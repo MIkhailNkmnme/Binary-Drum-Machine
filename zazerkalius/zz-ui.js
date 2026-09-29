@@ -2883,7 +2883,12 @@ function cone3DDraw(g, o){
   const m1 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.1), m2 = at(Math.max(0, N - 1), -Math.PI / 2, ringR(Math.max(0, N - 1)) + 0.6);
   g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = dpr; g.beginPath(); g.moveTo(m1[0], m1[1]); g.lineTo(m2[0], m2[1]); g.stroke(); g.globalAlpha = 1;
   g.fillStyle = cT; g.globalAlpha = 0.7; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
-  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, 8 * dpr, 16 * dpr);
+  /* v0.415, по снимку «◯ Конус» с текстом под ним — «за заголовком текст какой-то, подвинь его вправо»: строка 3D начинается сразу за
+     заголовком окна (текст заголовка меряется диапазоном — сама ячейка тянется на всю шапку); без шапки (страница конуса) — у края, как было */
+  let x3 = 8;
+  { const cvx = $("coneCv"), wt = document.querySelector("#w-cone .whead .wt");
+    if (cvx && wt && wt.getClientRects().length) { const rg = document.createRange(); rg.selectNodeContents(wt); x3 = Math.max(8, rg.getBoundingClientRect().right - cvx.getBoundingClientRect().left + 14); } }
+  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, x3 * dpr, 16 * dpr);
   g.globalAlpha = 1;
 }
 function coneRing(e){
@@ -3874,10 +3879,29 @@ function setupCone(){
      неактивна, пока звук не идёт и не на паузе */
   const sndUi = () => {
     const on = !!sndT || sndPaused, b = $("bSnd"); b.classList.toggle("on", on); b.classList.toggle("run", !!sndT);   // v0.351: звучит — рамка мигает (на паузе — нет)
-    b.textContent = sndT ? "⏸ пауза" : sndPaused ? "⏯ дальше" : "♫ звук";
+    b.textContent = sndT ? "⏸" : sndPaused ? "⏯" : "♫";   // v0.423, «звук — уменьши длину, оставь там только символ, без текста» (слова — в подсказке)
     b.title = sndT ? "⏸ Пауза: звук встаёт, место и подсветка бита остаются (■ рядом — стоп совсем)" : sndPaused ? "⏯ Дальше с того же места (■ рядом — стоп совсем)" : "♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса";
     { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0; if (bb) { bb.classList.toggle("on", back); bb.title = "◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление"; } if (bf) { bf.classList.toggle("on", !back); bf.title = "▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление"; } }   // v0.374
-    const p = $("bSndP"); if (p) { p.disabled = !on; p.classList.remove("on"); p.classList.toggle("run", !!sndT);   /* v0.377: ■ мигает вместе со звуком */ p.textContent = "■"; p.title = on ? "■ Стоп и в начало: звук встаёт совсем, следующий пуск — с первого бита" : "■ Стоп и в начало (звук не идёт)"; }
+    /* v0.425, «стоп — выполняет стоп и паузу; при стопе стрелки — шаг, при паузе — плей; пауза — нажать — стоп, ничего не меняется; плей не
+       нужен», «как запустить из стопа — поставить паузу»: ◆ показывает состояние (■ стоп, ⏸ пауза — горит, ♫ играет — мигает); стрелка
+       направления шире (jwide), ◆ сдвигается к другой */
+    /* v0.430, «начало: тишина, стрелка вправо горит одна, в середине значок плей (ноту убери); нажать плей — стрелка и плей объединятся
+       цветом и станут !) — вертикальная палка и стрелка, типа пауза со стрелкой; нажать на них — пауза»: стоп — в ◆ ⏵ (не ▶ — по ▶ joinTag
+       узнаёт стрелку), щелчок — играть в сторону горящей стрелки; играет — в ◆ ❙, ◆ и стрелка направления одного цвета и мигают вместе
+      (◆ ❙ + стрелка = «пауза со стрелкой»), щелчок по любой из них — пауза; пауза — ⏸, горит (щелчок — стоп, стрелка — играть). Двойную
+       «))» v0.430 было снял — v0.431 вернул: последняя нажатая стрелка двойная и горит */
+    const p = $("bSndP"); if (p) { p.disabled = false; p.classList.toggle("on", sndPaused || !!sndT); p.classList.toggle("run", !!sndT);
+      p.textContent = sndT ? "❙" : sndPaused ? "⏸" : "⏵";
+      p.title = sndT ? "❙ Играет — щелчок (или по горящей стрелке): пауза, место остаётся" : sndPaused ? "⏸ Пауза — стрелка: играть в её сторону; щелчок: стоп (место то же)" : "⏵ Играть — в сторону горящей стрелки. Стрелки на стопе — шаг"; }
+    { const bb = $("bSndB"), bf = $("bSndF"), back = Z.sndDir < 0, wide = (x, w) => { if (x && x.classList.contains("jwide") !== w) { x.classList.toggle("jwide", w); x._jw = 1; } };
+      wide(bb, back); wide(bf, !back);   // v0.431, «последняя нажатая кнопка двойная — цвет забирает»: стрелка направления (она и есть последняя нажатая) — снова двойная «))» и горит
+      // v0.427, «стрелка мигать должна фоном»: пока звук играет, фоном мигает стрелка направления; с v0.430 — вместе с ◆
+      if (bb) bb.classList.toggle("run", !!sndT && back); if (bf) bf.classList.toggle("run", !!sndT && !back);
+      // v0.430, «при плее другая стрелка становится красной — это стоп»
+      if (bb) bb.classList.toggle("jstop", !!sndT && !back); if (bf) bf.classList.toggle("jstop", !!sndT && back);
+      if (bb) bb.title = sndT ? (back ? "◀ Играет назад — щелчок: пауза" : "◀ Красная — стоп (место то же), направление — назад") : "◀ Назад: стоп — шаг назад; пауза — играть назад";   // v0.430
+      if (bf) bf.title = sndT ? (!back ? "▶ Играет вперёд — щелчок: пауза" : "▶ Красная — стоп (место то же), направление — вперёд") : "▶ Вперёд: стоп — шаг вперёд; пауза — играть вперёд";
+      if ((bb && bb._jw) || (bf && bf._jw)) { if (bb) bb._jw = 0; if (bf) bf._jw = 0; if (typeof joinTag === "function") joinTag(); } }
     snd2Label();   // v0.337: остановлен — «⁑ авто»
   };
   const sndSet = (on) => {
@@ -3935,8 +3959,31 @@ function setupCone(){
     const live = !!sndT || sndPaused;
     try { if (e.source) e.source.postMessage({ zerkSndOn: live, zerkSndPaused: sndPaused, zerkSndHeads: live ? [...sndHeadsOn] : [], zerkSndR: live && sndHeadsOn.has("r"), zerkSndC: live && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });
-  if ($("bSndP")) $("bSndP").onclick = () => { if (sndT || sndPaused) sndSet(false); };   // v0.371: ■ стоп
-  const sndDirSet = (d) => { const was = Z.sndDir < 0 ? -1 : 1; Z.sndDir = d; save(); if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); } else sndStepBy(d); };   // v0.374
+  // v0.425: ◆ — играет → пауза; пауза → стоп (место то же); стоп → пауза (дальше стрелка — играть)
+  // v0.430: стоп → ⏵ играть сразу (с того же места, в сторону горящей стрелки); прежде стоп → пауза, а играть — стрелкой
+  if ($("bSndP")) $("bSndP").onclick = () => {
+    if (sndT) sndPause(true);
+    else if (sndPaused) { sndPaused = false; sndUi(); }
+    else sndPause(false);
+  };
+  // v0.425: стрелка — направление; стоп — шаг (стоп остаётся), пауза — играть, играет — играть в её сторону
+  const sndStepStop = (d) => {
+    const per = sndPer(); if (!per) return;
+    sndCtx();
+    if (d < 0) sndStep = ((sndStep - 2) % per + per) % per; else sndStep = (sndStep % per + per) % per;
+    sndTick(); sndUi();
+  };
+  const sndDirSet = (d) => {
+    const was = Z.sndDir < 0 ? -1 : 1;
+    if (sndT && was === d) { sndPause(true); return; }   // v0.430: играет — щелчок по горящей стрелке («!)» вместе с ◆) — пауза
+    // v0.430, «при плее другая стрелка становится красной — это стоп» (место то же); v0.431: нажатая красная — последняя нажатая, направление
+    // переходит на неё (станет двойной и горит), следующий ⏵ — в её сторону
+    if (sndT) { clearTimeout(sndT); sndT = 0; sndPaused = false; Z.sndDir = d; save(); sndUi(); return; }
+    Z.sndDir = d; save();
+    if (sndT) { sndUi(); if (was !== d) say(d < 0 ? "◀ Звук — назад." : "▶ Звук — вперёд."); }
+    else if (sndPaused) sndPause(false);
+    else sndStepStop(d);
+  };
   if ($("bSndB")) $("bSndB").onclick = () => sndDirSet(-1);
   if ($("bSndF")) $("bSndF").onclick = () => sndDirSet(1);
   sndUi();
@@ -4818,6 +4865,681 @@ function setupPyr(){
   requestAnimationFrame(cutUi);
 }
 
+/* ─── ✦ Развёртка октаэдра (v0.398) ──────────────────────────────────────────────────────────────
+   «Разложи октаэдр на плоскость, разные варианты центровки вершин и рёбер» → «развёртку добавь в Зазеркалье». Октаэдр — как в окне
+   «◆ Октаэдр»: T — верх, B — низ, E0…E3 — экватор; грань Ui = (T, Ei, Ei+1), Di = (B, Ei, Ei+1). Развёртка — дерево склеек граней:
+   первая (U0) кладётся вершиной вверх, каждая следующая — отражением соседней через общее ребро. Строка k поля — ряд k грани от её
+   вершины (T или B), в нём k + 1 бит (короче — нули, длиннее — лишнее не влезает); у нижних граней биты инвертированы, а зеркальность
+   выходит сама — нижняя грань ложится отражением верхней. Центр варианта (вершина, середина ребра, середина грани) — в центре холста. */
+const RAZV_V = [
+  [[["U0","U1"],["U1","U2"],["U2","U3"],["U0","D0"],["U1","D1"],["U2","D2"],["U3","D3"]], ["v", "U0", "T"]],
+  [[["U0","U1"],["U1","D1"],["U0","D0"],["U1","U2"],["U0","U3"],["D1","D2"],["D0","D3"]], ["v", "U0", "E1"]],
+  [[["U0","D0"],["U0","U1"],["U0","U3"],["D0","D1"],["D0","D3"],["U1","U2"],["D3","D2"]], ["e", "U0", "E0", "E1"]],
+  [[["U0","U1"],["U0","D0"],["U1","D1"],["U1","U2"],["U0","U3"],["U2","D2"],["U3","D3"]], ["e", "U0", "T", "E1"]],
+  [[["U0","U1"],["U0","U3"],["U0","D0"],["U1","D1"],["D1","D2"],["D2","D3"],["D2","U2"]], ["f", "U0"]],
+  [[["U0","D0"],["D0","D1"],["D1","U1"],["U1","U2"],["U2","D2"],["D2","D3"],["D3","U3"]], ["e", "U1", "T", "E2"]],
+];
+/* v0.408, «и развёртку Зеркалидуса»: тело развёртки — Зеркалидус (3 грани у половины, 6 всего; знак Zerkalius) или октаэдр (4, 8) —
+   кнопки «△ Зеркалидус» / «◇ Октаэдр» (Z.razvNB, по умолчанию 3). Грань Ui = (T, Ei, Ei+1), Di = (B, Ei, Ei+1) при своём числе Ei; у
+   каждого тела — свой набор вариантов (RAZV_SETS). Оси — пары вершин с серединой в центре: у Зеркалидуса одна, Верх–Низ (углы
+   экватора все соседние), у октаэдра три. Вершина без оси — серая точка. */
+const RAZV_V3 = [
+  [[["U0","U1"],["U1","U2"],["U0","D0"],["U1","D1"],["U2","D2"]], ["v", "U0", "T"]],
+  [[["U0","U1"],["U1","D1"],["U0","D0"],["U1","U2"],["D1","D2"]], ["v", "U0", "E1"]],
+  [[["U0","D0"],["U0","U1"],["U0","U2"],["D0","D1"],["D0","D2"]], ["e", "U0", "E0", "E1"]],
+  [[["U0","U1"],["U0","D0"],["U1","D1"],["U1","U2"],["U2","D2"]], ["e", "U0", "T", "E1"]],
+  [[["U0","U1"],["U0","U2"],["U0","D0"],["U1","D1"],["U2","D2"]], ["f", "U0"]],
+  [[["U0","D0"],["D0","D1"],["D1","U1"],["U1","U2"],["U2","D2"]], ["e", "U1", "T", "E2"]],
+];
+const RAZV_NAME3 = ["А · центр — вершина T (веер из трёх)", "Б · центр — вершина экватора", "В · центр — ребро экватора (зеркало)", "Г · центр — боковое ребро",
+  "Д · центр — грань U0 (большой треугольник и два)", "Е · лента из 6 граней"];
+const razvSet = () => (Z.razvNB === 4 ? { nb: 4, V: RAZV_V, N: RAZV_NAME } : { nb: 3, V: RAZV_V3, N: RAZV_NAME3 });
+function razvUnfold(tree, nb){
+  nb = nb || 4;
+  const F = {}; for (let i = 0; i < nb; i++) { const a = "E" + i, b = "E" + ((i + 1) % nb); F["U" + i] = ["T", a, b]; F["D" + i] = ["B", a, b]; }
+  const s3 = Math.sqrt(3) / 2, pos = { U0: { T: [0, 0], E0: [-0.5, s3], E1: [0.5, s3] } }, todo = tree.slice();
+  while (todo.length) {
+    const i = todo.findIndex(([p, c]) => pos[p] && !pos[c]); if (i < 0) break;
+    const [p, c] = todo.splice(i, 1)[0], sh = F[p].filter(v => F[c].includes(v)), P = pos[p];
+    const o = F[p].find(v => !sh.includes(v)), n = F[c].find(v => !sh.includes(v));
+    const [x1, y1] = P[sh[0]], [x2, y2] = P[sh[1]], [ox, oy] = P[o], dx = x2 - x1, dy = y2 - y1;
+    const t = ((ox - x1) * dx + (oy - y1) * dy) / (dx * dx + dy * dy), fx = x1 + t * dx, fy = y1 + t * dy;
+    pos[c] = { [sh[0]]: P[sh[0]], [sh[1]]: P[sh[1]], [n]: [2 * fx - ox, 2 * fy - oy] };
+  }
+  return { F, pos };
+}
+/* v0.405, «развёртку покажи малыми картинками все сразу, и при выборе одной из них — крупно; выпадающий список не нужен»: над холстом —
+   шесть маленьких развёрток (щелчок — эта крупно, выбранная в золотой рамке, имя варианта — в подсказке), крупная — на холсте, как было.
+   Рисует одна razvDraw: у малой нет подписей, крест мельче, биты — только если клетка не мельче 1,2 px (иначе грани заливкой). Малые
+   перерисовываются, только когда поменялись строки, цвета или размер (razvThumbKey). */
+const RAZV_NAME = ["А · центр — вершина T", "Б · центр — вершина экватора", "В · центр — ребро экватора (зеркало)", "Г · центр — боковое ребро",
+  "Д · два больших треугольника", "Е · лента из 8 граней"];
+function razvDraw(cv, vi, big){
+  const dpr = window.devicePixelRatio || 1, W = Math.max(20, cv.clientWidth), H = Math.max(20, cv.clientHeight);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const RS = razvSet(), own = razvOwnOf(vi);
+  /* v0.438: своя развёртка (vi = "o<номер>") — список граней {u — верхняя, P — [вершина, левая, правая]}; центр — середина охвата */
+  let tree = [], C = null, F = {}, pos = {}, faces, cx, cy;
+  if (own) {
+    faces = own.f.map((f, i) => ({ n: (f.u ? "U" : "D") + own.f.slice(0, i).filter(q => !!q.u === !!f.u).length, up: !!f.u, P: f.P, ap: f.u ? "T" : "B" }));
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const f of faces) for (const [x, y] of f.P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+  } else {
+    [tree, C] = RS.V[vi] || RS.V[0]; ({ F, pos } = razvUnfold(tree, RS.nb));   // v0.408: тело — Зеркалидус или октаэдр
+    faces = Object.keys(pos).map(f => ({ n: f, up: f[0] === "U", P: F[f].map(v => pos[f][v]), ap: F[f][0] }));
+    if (C[0] === "v") [cx, cy] = pos[C[1]][C[2]];
+    else if (C[0] === "e") { const a = pos[C[1]][C[2]], b = pos[C[1]][C[3]]; cx = (a[0] + b[0]) / 2; cy = (a[1] + b[1]) / 2; }
+    else { const P = Object.values(pos[C[1]]); cx = (P[0][0] + P[1][0] + P[2][0]) / 3; cy = (P[0][1] + P[1][1] + P[2][1]) / 3; }
+  }
+  let ex = 0.01, ey = 0.01;
+  for (const f of faces) for (const [x, y] of f.P) { ex = Math.max(ex, Math.abs(x - cx)); ey = Math.max(ey, Math.abs(y - cy)); }
+  const pad = big ? 14 : 4, k = Math.min((W / 2 - pad) / ex, (H / 2 - pad) / ey), T = ([x, y]) => [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k];
+  if (big) razvXf = { cx, cy, k, W, H, own: own ? vi : null };   // v0.438: для щелчков по своей развёртке
+  const cs = getComputedStyle(document.documentElement), cU = cs.getPropertyValue("--acc2").trim() || "#4dd4ff", cD = cs.getPropertyValue("--gold").trim() || "#e8b64a";
+  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R0 = Math.max(2, Math.min(160, L.length));
+  const RB = big && Z.razvRomb ? razvRombs() : null, nRB = RB ? RB.list.length : 0;   // v0.440: ◇ ромбы из кадров
+  const R = nRB ? RB.h + 1 : R0;
+  const cell = k / R, rad1 = Math.max(0.7, cell * 0.3), rad0 = cell * 0.12, lbl = big && Z.razvLbl !== false, dots = big || cell >= 1.2;
+  for (const fc of faces) {
+    const f = fc.n, up = fc.up, col = up ? cU : cD, [A, Lv, Rv] = fc.P.map(T);
+    const rb = nRB ? RB.list[(razvRombSeq + (parseInt(f.slice(1), 10) || 0)) % nRB] : null;   // v0.440: ромб пары граней
+    g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(Lv[0], Lv[1]); g.lineTo(Rv[0], Rv[1]); g.closePath();
+    g.globalAlpha = dots ? 0.1 : 0.3; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = big ? 1.4 : 1; g.stroke();
+    if (dots) {
+      g.fillStyle = col;
+      for (let r = 0; r < R; r++) {
+        const row = rb ? (up ? rb.u : rb.d)[r] : (L[r] || "");
+        for (let q = 0; q <= r; q++) {
+          const v = rb ? row[q] : (row[q] === "1" ? 1 : 0) ^ (up ? 0 : 1);   // v0.440: у ромба низ — свой, без инверсии
+          if (!v && rad0 < 0.8) continue;
+          const a = (r - q + 1 / 3) / R, b = (q + 1 / 3) / R, x = A[0] + a * (Lv[0] - A[0]) + b * (Rv[0] - A[0]), y = A[1] + a * (Lv[1] - A[1]) + b * (Rv[1] - A[1]);
+          g.globalAlpha = v ? 1 : 0.3;
+          const rd = v ? rad1 : rad0;
+          if (rd < 1.6) g.fillRect(x - rd, y - rd, 2 * rd, 2 * rd); else { g.beginPath(); g.arc(x, y, rd, 0, 2 * Math.PI); g.fill(); }
+        }
+      }
+      g.globalAlpha = 1;
+    }
+    if (lbl) {
+      const mx = (A[0] + Lv[0] + Rv[0]) / 3 + (Lv[0] + Rv[0] - 2 * A[0]) / 6 * 0.55, my = (A[1] + Lv[1] + Rv[1]) / 3 + (Lv[1] + Rv[1] - 2 * A[1]) / 6 * 0.55;
+      g.font = "bold 12px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.75)"; g.strokeText(f, mx, my); g.fillStyle = "#e6edf3"; g.fillText(f, mx, my);
+      g.textAlign = "left"; g.font = "11px system-ui, sans-serif"; g.strokeText(fc.ap, A[0] + 4, A[1] - 5); g.fillStyle = "#ff9a9a"; g.fillText(fc.ap, A[0] + 4, A[1] - 5);
+    }
+  }
+  /* v0.406, «и в развёртке оси покажи»: у октаэдра грани со общим ребром — ромб, его дальние углы — противоположные вершины (концы оси).
+     Через каждую склейку дерева развёртки — штрих между ними цветом оси: Верх–Низ светлая, E0–E2 розовая, E1–E3 зелёная; все вершины
+     развёртки — точки цвета своей оси (одна вершина тела на развёртке бывает в нескольких местах). Только на крупной, кнопка «✛ оси». */
+  if (own) return;   // v0.438: у своей развёртки ни осей (нет дерева склеек), ни креста центра
+  if (big && Z.razvAx !== false) {
+    // v0.408: ось — пара вершин с серединой в центре тела (у Зеркалидуса только Верх–Низ); вершина без оси — серая
+    const P3 = { T: [0, 1, 0], B: [0, -1, 0] }; for (let i = 0; i < RS.nb; i++) P3["E" + i] = [Math.cos(2 * Math.PI * i / RS.nb), 0, Math.sin(2 * Math.PI * i / RS.nb)];
+    const opp = (a, b) => Math.hypot(P3[a][0] + P3[b][0], P3[a][1] + P3[b][1], P3[a][2] + P3[b][2]) < 1e-6;
+    const AXC0 = { T: "#e8edf5", B: "#e8edf5", E0: "#ff7ab6", E2: "#ff7ab6", E1: "#6ee7a0", E3: "#6ee7a0" };
+    const AXC = {}; for (const k of Object.keys(P3)) AXC[k] = Object.keys(P3).some(o => o !== k && opp(k, o)) ? AXC0[k] : "#8b949e";
+    g.save(); g.lineCap = "round"; g.lineWidth = 1.8; g.setLineDash([7, 5]); g.globalAlpha = 0.9;
+    for (const [p, c] of tree) {
+      const sh = F[p].filter(v => F[c].includes(v)), o = F[p].find(v => !sh.includes(v)), n = F[c].find(v => !sh.includes(v));
+      if (!opp(o, n)) continue;
+      const a = T(pos[p][o]), b = T(pos[c][n]);
+      g.strokeStyle = AXC[o]; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+    }
+    g.setLineDash([]); g.globalAlpha = 1;
+    for (const f of Object.keys(pos)) for (const v of F[f]) { const q = T(pos[f][v]); g.fillStyle = AXC[v]; g.beginPath(); g.arc(q[0], q[1], 3.4, 0, 2 * Math.PI); g.fill(); }
+    g.restore();
+  }
+  const m = big ? 9 : 4;
+  g.strokeStyle = "#ff3b3b"; g.lineWidth = big ? 2.5 : 1.5; g.beginPath(); g.moveTo(W / 2 - m, H / 2); g.lineTo(W / 2 + m, H / 2); g.moveTo(W / 2, H / 2 - m); g.lineTo(W / 2, H / 2 + m); g.stroke();
+}
+let razvThumbKey = "", razvXf = null;
+/* v0.438, по снимку развёртки Зеркалидуса с Серпинским — «добавь свою развёртку: из имеющихся создаёт копию, потом при клике по треугольнику
+   просто копирует его по всем трём граням — зеркалит; если по грани (ребру) ткнуть — по этой грани зеркалит». Свои — Z.razvOwn [{nb, f: [{u, P}]}],
+   u — верхняя (голубая, вершина T) или нижняя (золотая, B, биты инвертированы), P — [вершина, левая, правая] в единицах ребра. Зеркало грани
+   через ребро — отражение всех трёх её точек (порядок тот же — биты ложатся зеркально). Через основание (левая–правая) род меняется: верхняя ↔
+   нижняя, как U0 ↔ D0 через экватор; через боковое ребро — тот же род, как U0 ↔ U1. На место, где грань уже есть, копия не ложится. Выбранная
+   — Z.razvV = "o<номер>"; миниатюры своих — после шести обычных, правый щелчок по ней — удалить. */
+const razvOwnOf = (v) => (typeof v === "string" && v[0] === "o" && Array.isArray(Z.razvOwn) && Z.razvOwn[+v.slice(1)]) || null;
+const razvCur = () => { const RS = razvSet(); return razvOwnOf(Z.razvV) ? Z.razvV : Math.min(RS.V.length - 1, Math.max(0, Z.razvV | 0)); };
+function razvMirror(f, a, b){   // грань f через её ребро (a, b — номера вершин)
+  const [x1, y1] = f.P[a], [x2, y2] = f.P[b], dx = x2 - x1, dy = y2 - y1, L = dx * dx + dy * dy;
+  const P = f.P.map(([x, y]) => { const t = ((x - x1) * dx + (y - y1) * dy) / L, fx = x1 + t * dx, fy = y1 + t * dy; return [+(2 * fx - x).toFixed(6), +(2 * fy - y).toFixed(6)]; });
+  return { u: (a === 1 && b === 2) ? (f.u ? 0 : 1) : (f.u ? 1 : 0), P };
+}
+const razvCen = (f) => [(f.P[0][0] + f.P[1][0] + f.P[2][0]) / 3, (f.P[0][1] + f.P[1][1] + f.P[2][1]) / 3];
+const razvFree = (own, nf) => { const c = razvCen(nf); return !own.f.some(f => { const q = razvCen(f); return Math.hypot(q[0] - c[0], q[1] - c[1]) < 0.05; }); };
+function renderRazv(){
+  const cv = $("razvCv"), tb = $("razvThumbs"); if (!cv || !tb) return;
+  $("bRazvLbl").classList.toggle("on", Z.razvLbl !== false);   // v0.399: галка → кнопка
+  $("bRazvAx").classList.toggle("on", Z.razvAx !== false);   // v0.406
+  const RS = razvSet(), OW = Array.isArray(Z.razvOwn) ? Z.razvOwn : [];
+  const tk = RS.nb + "/" + OW.length;
+  if (tb.dataset.nb !== tk) {
+    tb.dataset.nb = tk; razvThumbKey = "";
+    tb.innerHTML = RS.V.map((_, i) => `<canvas data-v="${i}" title="${RS.N[i]} — щелчок: крупно"></canvas>`).join("")
+      + OW.map((_, i) => `<canvas data-v="o${i}" class="own" title="Своя ${i + 1} — щелчок: крупно и править (щелчок по треугольнику — зеркала через три ребра, у ребра — через него; правый — убрать треугольник). Правый щелчок здесь — удалить свою">`).join("");
+  }
+  $("bRazv3").classList.toggle("on", RS.nb === 3); $("bRazv4").classList.toggle("on", RS.nb === 4);   // v0.408
+  const vi = razvCur();
+  [...tb.children].forEach(c => c.classList.toggle("on", c.dataset.v === String(vi)));
+  cv.style.cursor = razvOwnOf(vi) ? "crosshair" : "";
+  if (!winOpen("w-razv")) return;
+  razvDraw(cv, vi, true);
+  const cs = getComputedStyle(document.documentElement), key = Z.rows.join("|") + "/" + cs.getPropertyValue("--acc2") + cs.getPropertyValue("--gold") + "/" + (window.devicePixelRatio || 1) + "/" + tb.clientWidth + "/" + (Z.razvOwnV | 0);
+  if (key !== razvThumbKey) { razvThumbKey = key; [...tb.children].forEach(c => razvDraw(c, c.classList.contains("own") ? c.dataset.v : +c.dataset.v, false)); }
+}
+if ($("bRazvOwn")) $("bRazvOwn").onclick = () => {   // v0.438: копия выбранной (обычной или своей) — новой своей
+  const RS = razvSet(), vi = razvCur(), src = razvOwnOf(vi);
+  let f;
+  if (src) f = src.f.map(q => ({ u: q.u, P: q.P.map(p => p.slice()) }));
+  else { const { F, pos } = razvUnfold(RS.V[vi][0], RS.nb); f = Object.keys(pos).map(n => ({ u: n[0] === "U" ? 1 : 0, P: F[n].map(v => pos[n][v].map(x => +x.toFixed(6))) })); }
+  if (!Array.isArray(Z.razvOwn)) Z.razvOwn = [];
+  Z.razvOwn.push({ nb: RS.nb, f }); Z.razvV = "o" + (Z.razvOwn.length - 1); Z.razvOwnV = (Z.razvOwnV | 0) + 1;
+  save(); renderRazv(); say(`✦ Своя развёртка ${Z.razvOwn.length} — копия. Щелчок по треугольнику — зеркала через три ребра, у ребра — через него, правый — убрать.`);
+};
+if ($("razvCv")) {
+  const cv = $("razvCv");
+  cv.addEventListener("contextmenu", (e) => { if (razvOwnOf(razvCur())) e.preventDefault(); });
+  cv.addEventListener("pointerdown", (e) => {
+    const vi = razvCur(), own = razvOwnOf(vi), X = razvXf; if (!own || !X || X.own !== vi) return;
+    const b = cv.getBoundingClientRect(), px = e.clientX - b.left, py = e.clientY - b.top;
+    const U = (p) => [X.W / 2 + (p[0] - X.cx) * X.k, X.H / 2 + (p[1] - X.cy) * X.k];   // единицы → пиксели
+    const inside = (f) => { const [A, B, C] = f.P.map(U), s = (p, q, w) => (p[0] - w[0]) * (q[1] - w[1]) - (q[0] - w[0]) * (p[1] - w[1]), P = [px, py], d1 = s(P, A, B), d2 = s(P, B, C), d3 = s(P, C, A); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
+    const segD = (p, q) => { const L = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2, t = Math.max(0, Math.min(1, ((px - p[0]) * (q[0] - p[0]) + (py - p[1]) * (q[1] - p[1])) / L)); return Math.hypot(px - p[0] - t * (q[0] - p[0]), py - p[1] - t * (q[1] - p[1])); };
+    const done = (n) => { Z.razvOwnV = (Z.razvOwnV | 0) + 1; save(); renderRazv(); if (!n) say("✦ Туда уже есть треугольники — зеркало не легло."); };
+    if (e.button === 2) {   // убрать треугольник (последний — нет)
+      const i = own.f.findIndex(inside); if (i < 0 || own.f.length < 2) return;
+      own.f.splice(i, 1); done(1); return;
+    }
+    if (e.button !== 0) return;
+    // у ребра (ближе 7 px) — зеркало через это ребро той грани, у которой по ту сторону пусто
+    const near = [];
+    for (const f of own.f) for (const [a, c] of [[0, 1], [0, 2], [1, 2]]) { const d = segD(U(f.P[a]), U(f.P[c])); if (d < 7) near.push([d, f, a, c]); }
+    near.sort((p, q) => p[0] - q[0]);
+    if (near.length) {
+      for (const [, f, a, c] of near) { const nf = razvMirror(f, a, c); if (razvFree(own, nf)) { own.f.push(nf); done(1); return; } }
+      done(0); return;
+    }
+    const f = own.f.find(inside); if (!f) return;
+    let n = 0; for (const [a, c] of [[1, 2], [0, 1], [0, 2]]) { const nf = razvMirror(f, a, c); if (razvFree(own, nf)) { own.f.push(nf); n++; } }
+    done(n);
+  });
+}
+if ($("razvThumbs")) $("razvThumbs").addEventListener("contextmenu", (e) => {   // v0.438: правый щелчок по своей — удалить
+  const c = e.target.closest("canvas.own"); if (!c) return; e.preventDefault();
+  const i = +c.dataset.v.slice(1), cur = razvOwnOf(Z.razvV) ? +String(Z.razvV).slice(1) : -1;
+  Z.razvOwn.splice(i, 1);
+  if (cur === i) Z.razvV = 0; else if (cur > i) Z.razvV = "o" + (cur - 1);
+  Z.razvOwnV = (Z.razvOwnV | 0) + 1; save(); renderRazv(); say(`✦ Своя развёртка ${i + 1} удалена.`);
+});
+if ($("razvThumbs")) $("razvThumbs").onclick = (e) => { const c = e.target.closest("canvas[data-v]"); if (!c) return; Z.razvV = c.classList.contains("own") ? c.dataset.v : +c.dataset.v; save(); renderRazv(); };
+if ($("bRazvLbl")) $("bRazvLbl").onclick = () => { Z.razvLbl = Z.razvLbl === false; save(); renderRazv(); };
+if ($("bRazv3")) $("bRazv3").onclick = () => { Z.razvNB = 3; save(); renderRazv(); };   // v0.408
+if ($("bRazv4")) $("bRazv4").onclick = () => { Z.razvNB = 4; save(); renderRazv(); };
+if ($("bRazvAx")) $("bRazvAx").onclick = () => { Z.razvAx = Z.razvAx === false; save(); renderRazv(); };   // v0.406
+if ($("razvCv") && window.ResizeObserver) new ResizeObserver(() => renderRazv()).observe($("razvCv"));
+
+/* v0.432, «сделай окно с этими треугольниками, чтобы можно было там сделать сцены: выделяю цветом какие-то, сохраняю сцену 1, потом 2…»:
+   окно «△ Сетка» — ряды равносторонних треугольников, как в кнопках (ряд — полвысоты кнопки, два ряда — кнопка). В ряду r треугольник c
+   смотрит вверх, если (r + c) чётное; он занимает по x [c·t, c·t + s], t = s / 2. Цвет — щелчком (тот же цвет ещё раз — стереть, правый
+   щелчок — стереть), протяжкой мыши — много. Сцены — Z.triScenes [{R, N, c: {"r_c": цвет}}]; «💾 сохранить» — в выбранную (Z.triCur), «＋ сцена» —
+   новой; щелчок по номеру — открыть, правый — удалить. «⧉ в буфер» — все сцены текстом: по цветам номера треугольников (счёт по рядам с 1). */
+const TRI_COL = [null, ["#8b949e", "серый"], ["#ffd166", "золотой"], ["#e5484d", "красный"], ["#22d3ee", "голубой"], ["#f472b6", "розовый"], ["#4ade80", "зелёный"], ["#a78bfa", "сиреневый"], ["#f8fafc", "белый"]];
+const triGeo = { s: 0, hh: 0, pad: 8 };
+const TRI_S1 = 24 / Math.sqrt(3), TRI_S9 = 90;   // v0.437: «масштаб до реального менять» — настоящая сторона (кнопка 24 px = два ряда) … крупно
+/* v0.437: инструменты палитры — Z.triCol: цвет 1…8 — кисть (красит треугольник), 0 — ластик, −1 ☝ выбор группы, −2 ✦ точка в узел,
+   −3 ╱ линия по ребру. У ✦ и ╱ свой цвет — Z.triTCol (выбирается в палитре, пока инструмент горит) */
+function triState(){
+  if (!Array.isArray(Z.triScenes)) Z.triScenes = [];
+  for (const k of ["triCells", "triGLn", "triGIn", "triGTx", "triDots", "triLines"]) if (!Z[k] || typeof Z[k] !== "object") Z[k] = {};
+  Z.triR = Math.max(1, Z.triR | 0 || 2); Z.triN = Math.max(1, Z.triN | 0 || 25);   // v0.437: считаются сами — сколько влезает в окно (renderTri)
+  if (!(Z.triS >= TRI_S1 - 0.001 && Z.triS <= TRI_S9)) Z.triS = 40;
+  if (!(Z.triCol >= -3 && Z.triCol < TRI_COL.length)) Z.triCol = 2;
+  if (!(Z.triTCol >= 1 && Z.triTCol < TRI_COL.length)) Z.triTCol = 2;
+  if (!(Z.triDotD > 0)) Z.triDotD = 3; if (!(Z.triLW > 0)) Z.triLW = 2;   // диаметр точки и толщина линии — в пикселях НАСТОЯЩЕГО размера
+  if (!(Z.triCur >= 0 && Z.triCur < Z.triScenes.length)) Z.triCur = -1;
+}
+function triPts(r, c){   // три вершины треугольника в пикселях холста (без учёта dpr)
+  const { s, hh, pad } = triGeo, t = s / 2, x = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh;
+  return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]];
+}
+function triHit(px, py){
+  const { s, hh, pad } = triGeo; if (!s) return null;
+  const r = Math.floor((py - pad) / hh); if (r < 0 || r >= Z.triR) return null;
+  const c0 = Math.floor((px - pad) / (s / 2));
+  for (const c of [c0, c0 - 1]) {
+    if (c < 0 || c >= Z.triN) continue;
+    const [a, b, d] = triPts(r, c), sg = (p, q, w) => (p[0] - w[0]) * (q[1] - w[1]) - (q[0] - w[0]) * (p[1] - w[1]), P = [px, py];
+    const d1 = sg(P, a, b), d2 = sg(P, b, d), d3 = sg(P, d, a);
+    if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) return [r, c];
+  }
+  return null;
+}
+/* v0.437, «ставить светящиеся точки в узлы», «с диаметром задаваемым»: узел — вершина сетки. Линия j (0…R) — y = pad + j·hh; на ней узлы
+   x = pad + i·t, где i + j нечётное. Точки — Z.triDots {"j_i": [цвет, диаметр]}; ✦ — щелчок у узла ставит точку (тот же цвет ещё раз или
+   правый щелчок — убрать). «рисовать чисто обводкой разного цвета»: ╱ — линия по ребру сетки, Z.triLines {"j1_i1|j2_i2": [цвет, толщина]},
+   щелчок и протяжка — по рёбрам под мышью (с того же цвета начал — стирает) */
+const triNodeXY = (j, i) => [triGeo.pad + i * triGeo.s / 2, triGeo.pad + j * triGeo.hh];
+const triNodeOf = (x, y) => [Math.round((y - triGeo.pad) / triGeo.hh), Math.round((x - triGeo.pad) / (triGeo.s / 2))];
+function triNode(px, py){
+  const { s, hh, pad } = triGeo; if (!s) return null;
+  const t = s / 2, j = Math.round((py - pad) / hh); if (j < 0 || j > Z.triR) return null;
+  let i = Math.round((px - pad) / t); if ((i + j) % 2 === 0) i += (px - pad) / t > i ? 1 : -1;
+  if (i < 0 || i > Z.triN + 1) return null;
+  return Math.hypot(pad + i * t - px, pad + j * hh - py) <= s * 0.4 ? [j, i] : null;
+}
+function triEdgeAt(px, py){   // ближайшее ребро треугольника под мышью — ключ "j1_i1|j2_i2" (узлы по порядку)
+  const h = triHit(px, py); if (!h) return null;
+  const P = triPts(h[0], h[1]); let best = null, bd = 1e9;
+  for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+    const [x1, y1] = P[a], [x2, y2] = P[b], L = (x2 - x1) ** 2 + (y2 - y1) ** 2, u = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / L));
+    const d = Math.hypot(px - x1 - u * (x2 - x1), py - y1 - u * (y2 - y1));
+    if (d < bd) { bd = d; best = [triNodeOf(x1, y1), triNodeOf(x2, y2)]; }
+  }
+  const k = best.map(n => n.join("_")).sort(); return k.join("|");
+}
+const triVal = (v) => Array.isArray(v) ? v : [v | 0, 0];   // [цвет, размер]
+function triLinesDraw(g, xy, sc){
+  g.save(); g.lineCap = "round";
+  for (const [key, v] of Object.entries(Z.triLines)) {
+    const [k, w] = triVal(v); if (!TRI_COL[k]) continue;
+    const [A, B] = key.split("|").map(p => p.split("_").map(Number)); if (Math.max(A[0], B[0]) > Z.triR || Math.max(A[1], B[1]) > Z.triN + 1) continue;
+    const p = xy(A[0], A[1]), q = xy(B[0], B[1]);
+    g.strokeStyle = TRI_COL[k][0]; g.lineWidth = Math.max(0.5, (w || Z.triLW) * sc); g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke();
+  }
+  g.restore();
+}
+function triDotsDraw(g, xy, sc){
+  for (const [key, v] of Object.entries(Z.triDots)) {
+    const [k, d] = triVal(v), [j, i] = key.split("_").map(Number); if (j > Z.triR || i > Z.triN + 1 || !TRI_COL[k]) continue;
+    const [x, y] = xy(j, i), c = TRI_COL[k][0], rad = Math.max(0.8, (d || Z.triDotD) * sc / 2);
+    g.save(); g.fillStyle = c; g.shadowColor = c; g.shadowBlur = rad * 3;
+    for (let n = 0; n < 2; n++) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); g.fill(); }   // дважды — свечение ярче
+    g.shadowBlur = 0; g.fillStyle = "#fff"; g.globalAlpha = 0.85; g.beginPath(); g.arc(x, y, rad * 0.45, 0, 2 * Math.PI); g.fill();
+    g.restore();
+  }
+}
+/* v0.437, по снимку «⬡ по группам» — «дать выбирать цвет обводки каждой группе, и внутри неё сетку или нет, и сетку вне групп», «ставить
+   буквы-символы на группы». ГРУППА — касающиеся рёбрами треугольники одного цвета (обход в ширину). Её настройки лежат на самих треугольниках
+   (Z.triGLn — цвет обводки, Z.triGIn — сетка внутри да/нет, Z.triGTx — символ; ключ "r_c"), группа берёт первое найденное у своих; «☝» выбирает
+   группу, настройка пишется всем её треугольникам. Перекрашенный или стёртый треугольник свои настройки теряет. Соседи: ▲ (r + c чётное) —
+   основание вниз (r + 1, c), бока (r, c − 1) и (r, c + 1); ▼ — основание вверх (r − 1, c). Рёбра в порядке вершин [0-1 основание, 0-2, 1-2]. */
+const triNb = (r, c) => [[0, 1, (r + c) % 2 === 0 ? [r + 1, c] : [r - 1, c]], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]];
+function triModel(d){
+  const R = d.R, N = d.N, K = (r, c) => { if (r < 0 || r >= R || c < 0 || c >= N) return 0; const k = d.c[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
+  const cid = {}, comps = [];
+  for (let r = 0; r < R; r++) for (let c = 0; c < N; c++) {
+    const k = K(r, c), key0 = r + "_" + c; if (!k || cid[key0] != null) continue;
+    const g = { k, cells: [], ln: null, inn: null, tx: "" }, q = [[r, c]]; cid[key0] = comps.length;
+    while (q.length) {
+      const [a, b] = q.shift(), key = a + "_" + b; g.cells.push([a, b]);
+      if (g.ln == null && d.gl && d.gl[key]) g.ln = d.gl[key];
+      if (g.inn == null && d.gi && typeof d.gi[key] === "boolean") g.inn = d.gi[key];
+      if (!g.tx && d.gt && d.gt[key]) g.tx = d.gt[key];
+      for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (K(n[0], n[1]) === k && cid[nk] == null) { cid[nk] = comps.length; q.push(n); } }
+    }
+    comps.push(g);
+  }
+  return { K, cid, comps };
+}
+const triCurData = () => ({ R: Z.triR, N: Z.triN, c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx });
+/* обводка по модели: граница группы — если режим не «без обводки»; рёбра внутри — если у группы «сетка внутри» (не задано — как режим: да в ▵ каждый,
+   нет в ⬡ по группам). Цвет — свой у группы, иначе общий. bw — толщина границы, sel — выбранная группа (пунктиром поверх) */
+function triEdges(g, M, pts, defLn, bw, sel, selCol){
+  const mode = Z.triLnMode == null ? 1 : Z.triLnMode;
+  g.lineCap = "round";
+  M.comps.forEach((gr, gi) => {
+    const inner = gr.inn != null ? gr.inn : mode === 1, B = new Path2D(), I = new Path2D();
+    for (const [r, c] of gr.cells) {
+      const P = pts(r, c);
+      for (const [a, b, n] of triNb(r, c)) {
+        const same = M.cid[n[0] + "_" + n[1]] === gi;
+        if (same) { if (!inner || n[0] * 1000 + n[1] < r * 1000 + c) continue; I.moveTo(P[a][0], P[a][1]); I.lineTo(P[b][0], P[b][1]); }
+        else { B.moveTo(P[a][0], P[a][1]); B.lineTo(P[b][0], P[b][1]); }
+      }
+    }
+    g.strokeStyle = gr.ln || defLn;
+    if (inner) { g.lineWidth = 1; g.stroke(I); }
+    if (mode) { g.lineWidth = bw; g.stroke(B); }
+    if (gi === sel) { g.save(); g.strokeStyle = selCol; g.lineWidth = 2; g.setLineDash([5, 4]); g.stroke(B); g.restore(); }
+  });
+}
+function triText(g, M, pts, col, size){   // символ группы — посередине её треугольников
+  g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${size}px Segoe UI, Arial`;
+  for (const gr of M.comps) {
+    if (!gr.tx) continue;
+    let x = 0, y = 0; for (const [r, c] of gr.cells) { const P = pts(r, c); x += (P[0][0] + P[1][0] + P[2][0]) / 3; y += (P[0][1] + P[1][1] + P[2][1]) / 3; }
+    g.fillStyle = col; g.fillText(gr.tx, x / gr.cells.length, y / gr.cells.length);
+  }
+}
+const triSelComp = (M) => { const i = Z.triSel != null ? M.cid[Z.triSel] : null; return i == null ? -1 : i; };
+function renderTri(){
+  const cv = $("triCv"); if (!cv) return;
+  triState();
+  $("triS").value = Z.triS; $("bTriS1").classList.toggle("on", Z.triS <= TRI_S1 + 0.01);
+  $("triDotD").value = Z.triDotD; $("triLW").value = Z.triLW;
+  $("bTriNum").classList.toggle("on", Z.triNum !== false);
+  $("bTriOut").classList.toggle("on", Z.triOut !== false);
+  const pal = $("triPal");
+  if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»). Alt + щелчок — то же любым инструментом">☝</button>`
+    + `<button data-c="-2" title="✦ Точка в узел: щелчок у вершины — светящаяся точка диаметром ⌀ (цвет — выбери в палитре, пока ✦ горит); ещё щелчок тем же цветом или правый — убрать">✦</button>`
+    + `<button data-c="-3" title="╱ Линия по ребру: щелчок или протяжка — рёбра сетки цветной линией толщиной ═ (цвет — в палитре, пока ╱ горит); начал с линии того же цвета или правой кнопкой — стирает">╱</button>`
+    + TRI_COL.map((k, i) => i ? `<button data-c="${i}" title="${k[1]}" style="background:${k[0]}"></button>` : `<button data-c="0" title="Ластик — стирать">⌫</button>`).join("");
+  const tool = Z.triCol < -1;
+  [...pal.children].forEach(b => { const c = +b.dataset.c; b.classList.toggle("on", c === Z.triCol || (tool && c === Z.triTCol)); });
+  for (const c of ["-2", "-3"]) pal.querySelector(`[data-c="${c}"]`).style.color = TRI_COL[Z.triTCol][0];
+  $("triScenes").innerHTML = Z.triScenes.map((_, i) => `<button data-i="${i}" class="${i === Z.triCur ? "on" : ""}" title="Сцена ${i + 1}: щелчок — открыть, правый — удалить">${i + 1}</button>`).join("");
+  $("bTriSave").textContent = Z.triCur >= 0 ? `💾 в ${Z.triCur + 1}` : "💾 сохранить";
+  if (!winOpen("w-tri")) return;
+  /* v0.437, «сделай сетку сразу на всё окно», «и масштаб до реального менять»: холст — на всё свободное место окна, треугольники — стороной
+     Z.triS (ползунок, от настоящей до крупной; «1:1» — сразу настоящая); рядов и треугольников в ряду — сколько целых влезает (прежде поля
+     «ряды / в ряду» и ручка снизу, v0.435 — сняты: рядов больше — окно выше). Закраска держится за номер ряда и места */
+  const W = cv.clientWidth || 400, H = cv.clientHeight || 200, pad = triGeo.pad, s = Z.triS, hh = s * Math.sqrt(3) / 2;
+  Z.triR = Math.max(1, Math.floor((H - 2 * pad) / hh)); Z.triN = Math.max(1, Math.floor((W - 2 * pad) / (s / 2)) - 1);
+  triGeo.s = s; triGeo.hh = hh;
+  const M = triModel(triCurData()), sel = triSelComp(M);
+  if (sel < 0) Z.triSel = null;
+  const cs = getComputedStyle(document.documentElement), line = cs.getPropertyValue("--line").trim() || "#555", txt = cs.getPropertyValue("--txt").trim() || "#ddd";
+  const hex = (c) => "#" + triRGB(c).map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const gr = sel >= 0 ? M.comps[sel] : null, mode = Z.triLnMode == null ? 1 : Z.triLnMode;
+  $("triGrp").hidden = !gr;   // строка «группа» — только когда группа выбрана
+  if (gr) {
+    $("triGrpLab").textContent = `группа · ${TRI_COL[gr.k][1]} · ${gr.cells.length}`;
+    $("triGLn").value = hex(gr.ln || Z.triLn || "#d8dde8");
+    $("bTriGIn").classList.toggle("on", gr.inn != null ? gr.inn : mode === 1);
+    if (document.activeElement !== $("triGTx")) $("triGTx").value = gr.tx || "";
+  }
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const num = Z.triNum !== false && s >= 26;
+  g.lineJoin = "round";
+  /* v0.436: фон и обводка — общие для сетки и живого вида; закрашенные — заливка без своих линий (шов в цвет), обводка — по режиму.
+     v0.437: пустые треугольники — бледной сеткой, если «▦ вне групп» горит (выключишь — пустое место чистое) */
+  cv.style.background = Z.triBg || "";
+  const tri = (P) => { g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); };
+  for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+    const P = triPts(r, c), k = M.K(r, c); tri(P);
+    if (k) { g.fillStyle = TRI_COL[k][0]; g.fill(); g.strokeStyle = TRI_COL[k][0]; g.lineWidth = 0.6; g.stroke(); }
+    else if (Z.triOut !== false) { g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
+  }
+  triEdges(g, M, triPts, Z.triLn || line, mode === 2 ? 2 : 1, sel, txt);
+  if (num) {
+    g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
+    for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+      const P = triPts(r, c), k = M.K(r, c), gt = k && M.comps[M.cid[r + "_" + c]].tx;
+      g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = gt ? 0.3 : k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
+    }
+  }
+  triText(g, M, triPts, "#0e1116", Math.max(9, Math.min(40, s * 0.62)));
+  // средняя черта каждой пары рядов (кнопка — два ряда) — пунктиром; v0.436 — только в режиме «каждый»
+  if (mode === 1 && Z.triOut !== false) {
+    g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]); g.lineWidth = 1;
+    for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
+    g.setLineDash([]); g.globalAlpha = 1;
+  }
+  const sc = s / TRI_S1;   // размеры точек и линий заданы для настоящего размера — в сетке крупнее во столько же раз
+  triLinesDraw(g, triNodeXY, sc);
+  triDotsDraw(g, triNodeXY, sc);
+  triLive(M);
+}
+/* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: та же сетка кнопками — высота двух рядов 24 px (с v0.434 — только 1:1), фон —
+   панель групп, пустые треугольники — фон. Цвета — как у кнопок сцепки: серый — светлая кнопка (panel2 + 16% текста), золотой — горящая
+   (+42% золота), красный — стоп (+60% красного), прочие — +42% своего. Обводка, символы, линии, точки, «▦ вне групп» — как в сетке (v0.437).
+   С v0.437 — только занятая часть сетки (от первого до последнего закрашенного ряда и места, с линиями и точками), иначе при сетке на всё
+   окно он раздувается; ориентация треугольников — по настоящим номерам */
+function triRGB(c){ const g = triRGB.g || (triRGB.g = document.createElement("canvas").getContext("2d")); g.fillStyle = "#000"; g.fillStyle = c; const v = g.fillStyle; if (v[0] === "#") return [1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)); const m = v.match(/[\d.]+/g) || [0, 0, 0]; return m.slice(0, 3).map(Number); }
+function triLive(M){
+  const box = $("triLive"); if (!box || !winOpen("w-tri")) return;
+  M = M || triModel(triCurData());
+  const cs = getComputedStyle(document.documentElement), V = (n, d) => cs.getPropertyValue(n).trim() || d;
+  const p2 = triRGB(V("--panel2", "#1c2230")), mix = (c, a) => { const q = triRGB(c); return `rgb(${p2.map((x, i) => Math.round(x + (q[i] - x) * a)).join(",")})`; };
+  const txt = V("--txt", "#e6edf3"), REAL = { 1: mix(txt, 0.16), 2: mix(V("--gold", "#ffd166"), 0.42), 3: mix("#e5484d", 0.6), 8: mix(txt, 0.7) };
+  const col = (k) => REAL[k] || mix(TRI_COL[k][0], 0.42), dpr = window.devicePixelRatio || 1;
+  // v0.434: фон живого вида и поля цветов (пустое значение — по теме; поле цвета показывает нынешний)
+  box.style.background = Z.triBg || "";
+  const hex = (c) => "#" + triRGB(c).map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+  $("triBg").value = hex(Z.triBg || V("--panel", "#161b22")); $("triLn").value = hex(Z.triLn || "#d8dde8");
+  const mode0 = Z.triLnMode == null ? 1 : Z.triLnMode, bl = $("bTriLn");
+  bl.textContent = ["— без обводки", "▵ каждый", "⬡ по группам"][mode0]; bl.classList.toggle("on", mode0 > 0);
+  let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1;
+  const grow = (a, b, c, d) => { r0 = Math.min(r0, a); r1 = Math.max(r1, b); c0 = Math.min(c0, c); c1 = Math.max(c1, d); };
+  for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) if (M.K(r, c)) grow(r, r, c, c);
+  const node = (j, i) => { if (j > Z.triR || i > Z.triN + 1) return; grow(Math.max(0, j - 1), Math.min(Z.triR - 1, j), Math.max(0, i - 2), Math.min(Z.triN - 1, i)); };
+  for (const key of Object.keys(Z.triDots)) { const [j, i] = key.split("_").map(Number); node(j, i); }
+  for (const key of Object.keys(Z.triLines)) for (const p of key.split("|")) { const [j, i] = p.split("_").map(Number); node(j, i); }
+  if (r1 < 0) { r0 = 0; r1 = 1; c0 = 0; c1 = 5; }
+  box.querySelectorAll("canvas").forEach(cv => {
+    const z = +cv.dataset.z || 1, s = 24 * z / Math.sqrt(3), hh = 12 * z, pad = 4 * z, t = s / 2;
+    const W = Math.ceil(2 * pad + (c1 - c0 + 2) * t), H = Math.ceil(2 * pad + (r1 - r0 + 1) * hh);
+    cv.style.width = W + "px"; cv.style.height = H + "px"; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const pts = (r, c) => { const x = pad + (c - c0) * t, y0 = pad + (r - r0) * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const k = M.K(r, c), P = pts(r, c);
+      g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
+      if (k) { g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke(); }   // шов в цвет — без просветов между треугольниками
+      else if (Z.triOut !== false) { g.strokeStyle = "rgba(216,221,232,.12)"; g.lineWidth = 1; g.stroke(); }
+    }
+    triEdges(g, M, pts, Z.triLn || "rgba(216,221,232,.2)", 1, -1, "");
+    triText(g, M, pts, txt, 12 * z);
+    const xy = (j, i) => [pad + (i - c0) * t, pad + (j - r0) * hh];
+    triLinesDraw(g, xy, z); triDotsDraw(g, xy, z);
+  });
+}
+if ($("triCv")) {
+  const cv = $("triCv"); let paint = -1, line = null;
+  const rel = (e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  const at = (e) => triHit(...rel(e));
+  cv.addEventListener("pointermove", (e) => { if (paint < 0 && !line) cv.style.cursor = Z.triCol === -1 ? "pointer" : Z.triCol < -1 ? "cell" : ""; });
+  const put = (h) => {
+    if (!h) return; const key = h[0] + "_" + h[1]; if ((Z.triCells[key] | 0) === paint) return;
+    if (paint) Z.triCells[key] = paint; else delete Z.triCells[key];
+    delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key];   // v0.437: перекрашенный — не в прежней группе, её настройки не несёт
+    renderTri();
+  };
+  const putLine = (key) => {   // v0.437: ╱ — ребро цветной линией (line.set) или стереть
+    if (!key) return; const v = Z.triLines[key];
+    if (line.set) { const nv = [Z.triTCol, Z.triLW]; if (v && triVal(v)[0] === nv[0] && triVal(v)[1] === nv[1]) return; Z.triLines[key] = nv; }
+    else { if (!v) return; delete Z.triLines[key]; }
+    renderTri();
+  };
+  cv.addEventListener("contextmenu", (e) => e.preventDefault());
+  cv.addEventListener("pointerdown", (e) => {
+    triState(); const h = at(e);
+    if (e.altKey && e.button === 0 || Z.triCol === -1) {   // v0.437: ☝ (или Alt) — выбрать группу, не красить
+      Z.triSel = h && Z.triCells[h[0] + "_" + h[1]] ? h[0] + "_" + h[1] : null; save(); renderTri(); return;
+    }
+    if (Z.triCol === -2) {   // v0.437: ✦ — точка в узел
+      const n = triNode(...rel(e)); if (!n) return;
+      const key = n[0] + "_" + n[1], v = Z.triDots[key];
+      if (e.button === 2 || (v && triVal(v)[0] === Z.triTCol)) delete Z.triDots[key]; else Z.triDots[key] = [Z.triTCol, Z.triDotD];
+      save(); renderTri(); return;
+    }
+    if (Z.triCol === -3) {
+      const key = triEdgeAt(...rel(e)); if (!key) return;
+      const v = Z.triLines[key]; line = { set: !(e.button === 2 || (v && triVal(v)[0] === Z.triTCol)) };
+      cv.setPointerCapture(e.pointerId); putLine(key); return;
+    }
+    if (!h) return;
+    const k = Z.triCells[h[0] + "_" + h[1]] | 0;
+    paint = e.button === 2 ? 0 : (k === Z.triCol ? 0 : Z.triCol);   // тот же цвет ещё раз — стереть
+    cv.setPointerCapture(e.pointerId); put(h);
+  });
+  cv.addEventListener("pointermove", (e) => { if (paint >= 0) put(at(e)); else if (line) putLine(triEdgeAt(...rel(e))); });
+  const end = () => { if (paint >= 0 || line) { paint = -1; line = null; save(); } };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  if (window.ResizeObserver) new ResizeObserver(() => renderTri()).observe(cv);
+  // v0.437: пока горит ✦ или ╱, цвет палитры — их цвет (инструмент остаётся); тот же инструмент ещё раз — назад к кисти
+  $("triPal").onclick = (e) => {
+    const b = e.target.closest("button[data-c]"); if (!b) return; const c = +b.dataset.c;
+    if (c < -1 && Z.triCol === c) Z.triCol = Z.triPrevCol > 0 ? Z.triPrevCol : 2;
+    else if (Z.triCol < -1 && c >= 1) Z.triTCol = c;
+    else { if (Z.triCol >= 1) Z.triPrevCol = Z.triCol; Z.triCol = c; }
+    save(); renderTri();
+  };
+  $("triS").oninput = () => { Z.triS = Math.max(TRI_S1, Math.min(TRI_S9, +$("triS").value || 40)); save(); renderTri(); };
+  $("bTriS1").onclick = () => { if (Z.triS <= TRI_S1 + 0.01) Z.triS = Z.triS0 > TRI_S1 ? Z.triS0 : 40; else { Z.triS0 = Z.triS; Z.triS = TRI_S1; } save(); renderTri(); };
+  $("triDotD").onchange = () => { Z.triDotD = Math.max(0.5, Math.min(40, +$("triDotD").value || 3)); save(); renderTri(); };
+  $("triLW").onchange = () => { Z.triLW = Math.max(0.5, Math.min(20, +$("triLW").value || 2)); save(); renderTri(); };
+  $("bTriNum").onclick = () => { Z.triNum = Z.triNum === false; save(); renderTri(); };
+  // v0.434: живой вид — фон, цвет обводки, режим обводки по кругу: каждый треугольник → по группам цветов → без обводки
+  // v0.436: фон и обводка — и в сетке построения, поэтому перерисовывается всё (renderTri зовёт и живой вид)
+  $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); renderTri(); };
+  $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); renderTri(); };
+  $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); renderTri(); };
+  $("bTriOut").onclick = () => { Z.triOut = Z.triOut === false; save(); renderTri(); };   // v0.437: сетка вне групп
+  $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; Z.triOut = true; save(); renderTri(); };
+  // v0.437: выбранная группа — своя обводка, сетка внутри, символ (пишутся всем её треугольникам)
+  const selGr = () => { const M = triModel(triCurData()), i = triSelComp(M); return i < 0 ? null : M.comps[i]; };
+  const setAll = (map, v) => { const gr = selGr(); if (!gr) return; for (const [r, c] of gr.cells) { const key = r + "_" + c; if (v === null || v === "") delete Z[map][key]; else Z[map][key] = v; } save(); renderTri(); };
+  $("triGLn").oninput = () => setAll("triGLn", $("triGLn").value);
+  $("bTriGIn").onclick = () => { const gr = selGr(); if (!gr) return; const mode = Z.triLnMode == null ? 1 : Z.triLnMode; setAll("triGIn", !(gr.inn != null ? gr.inn : mode === 1)); };
+  $("triGTx").oninput = () => setAll("triGTx", $("triGTx").value.trim());
+  $("bTriGDef").onclick = () => { const gr = selGr(); if (!gr) return; for (const [r, c] of gr.cells) { const key = r + "_" + c; delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key]; } save(); renderTri(); };
+  $("bTriClr").onclick = () => { triState(); for (const k of ["triCells", "triGLn", "triGIn", "triGTx", "triDots", "triLines"]) Z[k] = {}; Z.triSel = null; save(); renderTri(); };
+  const cp = (o) => Object.assign({}, o);
+  const snap = () => ({ R: Z.triR, N: Z.triN, c: cp(Z.triCells), gl: cp(Z.triGLn), gi: cp(Z.triGIn), gt: cp(Z.triGTx), d: cp(Z.triDots), l: cp(Z.triLines) });
+  $("bTriNew").onclick = () => { triState(); Z.triScenes.push(snap()); Z.triCur = Z.triScenes.length - 1; save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} сохранена.`); };
+  $("bTriSave").onclick = () => { triState(); if (Z.triCur < 0) { $("bTriNew").click(); return; } Z.triScenes[Z.triCur] = snap(); save(); renderTri(); say(`△ Сцена ${Z.triCur + 1} перезаписана.`); };
+  $("triScenes").onclick = (e) => {
+    const b = e.target.closest("button[data-i]"); if (!b) return; triState();
+    const i = +b.dataset.i, sc = Z.triScenes[i]; if (!sc) return;
+    Z.triCur = i; Z.triCells = cp(sc.c); Z.triGLn = cp(sc.gl); Z.triGIn = cp(sc.gi); Z.triGTx = cp(sc.gt); Z.triDots = cp(sc.d); Z.triLines = cp(sc.l); Z.triSel = null;
+    save(); renderTri();
+  };
+  $("triScenes").addEventListener("contextmenu", (e) => {
+    const b = e.target.closest("button[data-i]"); if (!b) return; e.preventDefault(); triState();
+    const i = +b.dataset.i; Z.triScenes.splice(i, 1);
+    if (Z.triCur === i) Z.triCur = -1; else if (Z.triCur > i) Z.triCur--;
+    save(); renderTri(); say(`△ Сцена ${i + 1} удалена; дальше номера сдвинулись.`);
+  });
+  $("bTriCopy").onclick = () => {
+    triState(); if (!Z.triScenes.length) { say("△ Сцен пока нет — «＋ сцена» сохраняет."); return; }
+    const NL = String.fromCharCode(10), cn = (k) => (TRI_COL[k] || [0, "?"])[1];
+    const out = Z.triScenes.map((sc, i) => {
+      const by = {};
+      for (const [key, k] of Object.entries(sc.c)) { const [r, c] = key.split("_").map(Number); (by[k] = by[k] || []).push(r * sc.N + c + 1); }
+      const parts = Object.keys(by).sort((a, b) => a - b).map(k => `${cn(k)}: ${by[k].sort((a, b) => a - b).join(", ")}`);
+      const M = triModel({ R: sc.R, N: sc.N, c: sc.c, gl: sc.gl, gi: sc.gi, gt: sc.gt }), more = [];
+      for (const g of M.comps) {   // v0.437: группы со своими настройками
+        if (!(g.tx || g.ln || g.inn != null)) continue;
+        const ids = g.cells.map(([r, c]) => r * sc.N + c + 1).sort((a, b) => a - b), bits = [];
+        if (g.tx) bits.push(`символ «${g.tx}»`); if (g.ln) bits.push(`обводка ${g.ln}`); if (g.inn != null) bits.push(`сетка внутри ${g.inn ? "да" : "нет"}`);
+        more.push(`  группа ${cn(g.k)} [${ids.join(", ")}]: ${bits.join(", ")}`);
+      }
+      const dots = {}; for (const [key, v] of Object.entries(sc.d || {})) { const [k, d] = triVal(v); (dots[k] = dots[k] || []).push(key.replace("_", ":") + (d ? ` ⌀${d}` : "")); }
+      for (const k of Object.keys(dots)) more.push(`  точки ${cn(k)} (линия:узел): ${dots[k].join(", ")}`);
+      const lines = {}; for (const [key, v] of Object.entries(sc.l || {})) { const [k, w] = triVal(v); (lines[k] = lines[k] || []).push(key.split("|").map(p => p.replace("_", ":")).join("–") + (w ? ` ═${w}` : "")); }
+      for (const k of Object.keys(lines)) more.push(`  линии ${cn(k)} (узел–узел): ${lines[k].join(", ")}`);
+      return `Сцена ${i + 1} (рядов ${sc.R}, в ряду ${sc.N}) — ${parts.length ? parts.join("; ") : "пусто"}` + (more.length ? NL + more.join(NL) : "");
+    }).join(NL);
+    const done = () => say(`△ ${Z.triScenes.length} сцен — в буфере.`);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(done, () => { prompt("Скопируй:", out); });
+    else prompt("Скопируй:", out);
+  };
+  renderTri();
+}
+
+/* ─── ◆ Октаэдр (v0.396) ─────────────────────────────────────────────────────────────────────
+   «Весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: в окне — страница Октаэдра целиком (?zz — своя память,
+   без значка Хаба). Грузится, когда окно впервые открыто; готова — шлёт zz-okt-ready, и ей уходит столбик строк (zz-rows).
+   Дальше строки уходят только при перемене и только с кнопкой «⇄ строки → грани» (Z.oktSync, по умолчанию вкл). */
+let oktSent = null, oktReady = false;
+function renderOkt(){
+  const fr = $("oktFr"); if (!fr) return;
+  $("bOktSync").classList.toggle("on", Z.oktSync !== false);   // v0.399: галка → кнопка
+  if (!winOpen("w-okt")) return;
+  if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz"; return; }
+  if (!oktReady || Z.oktSync === false) return;
+  if (Z.razvRomb) {   // v0.440: ◇ ромбы из кадров — на 3D-тело, пары граней по ромбу (четыре — хватит и октаэдру)
+    const RB = razvRombs(), n = RB.list.length;
+    if (n) {
+      const kk = "R" + RB.S + "/" + razvRombSeq + "/" + Z.rows.join("|"); if (kk === oktSent) return;
+      oktSent = kk;
+      const list = [0, 1, 2, 3].map(i => { const p = RB.list[(razvRombSeq + i) % n]; return { u: p.u, d: p.d }; });
+      try { fr.contentWindow.postMessage({ type: "zz-rhombs", h: RB.h, list }, "*"); } catch (e) {}
+      return;
+    }
+  }
+  const k = Z.rows.join("|"); if (k === oktSent) return;
+  oktSent = k;
+  try { fr.contentWindow.postMessage({ type: "zz-rows", rows: Z.rows.slice() }, "*"); } catch (e) {}
+}
+window.addEventListener("message", (e) => {
+  const fr = $("oktFr");
+  if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== "zz-okt-ready") return;
+  oktReady = true; oktSent = null; renderOkt();
+});
+if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
+if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
+/* v0.440: ◇ РОМБЫ ИЗ КАДРОВ НА ТРИРАМИДУСЕ (слова пользователя: «самое главное — натянуть Аниматрицу на ТриРамидус», «ромбы из
+   кадров», «раскадровка — развёртка есть», «на html — Зазеркалиус»; выбрано: кадры листаются, и на развёртке, и на 3D-теле). Ромбы —
+   те же, что режет ◇ сетка в Code (Code 35.54, 35.78), только в координатах поля: строка r, место q (в строке r — r + 1 бит).
+   Ромб высотой S = 2h с верхней вершиной (r0, q0) — { q0 ≤ q ≤ q0 + h, r0 − q0 ≤ r − q ≤ r0 − q0 + h }; вершины ромбов — (e·h, j·h),
+   j = 0…e, ряд e годится, пока r0 + 2h не ниже последней строки. Горизонтальная диагональ (строка r0 + h) режет ромб на две грани тела:
+   верх u — ряд k от вершины T, места q0…q0 + k; низ d — ряд k от вершины B = строка r0 + 2h − k, места q0 + h − k … q0 + h (место 0 —
+   у того же угла экватора Ei, что и у верхней, поэтому на общем ребре обе половины сходятся). Пара граней i (Ui + Di — ромб
+   развёртки «В») получает ромб (кадр + i) по кругу; кадр сдвигается на один каждые Z.razvRombMs мс. Низ — настоящий низ ромба,
+   не инверсия верха. На развёртке — только крупная (малые картинки — как были); в Гранидус уходит сообщение zz-rhombs (Гранидус v0.069). */
+var razvRombSeq = 0, razvRombTimer = 0;
+function razvRombs(){
+  const S = [8, 16, 32, 64].includes(+Z.razvRombS) ? +Z.razvRombS : 32, h = S / 2;
+  const L = Z.rows.map(s => String(s).replace(/[^01]/g, "")), R = L.length;
+  const bit = (r, q) => (L[r] && L[r][q] === "1" ? 1 : 0), list = [];
+  for (let e = 0; e * h + 2 * h <= R - 1; e++) for (let j = 0; j <= e; j++) {
+    const r0 = e * h, q0 = j * h, u = [], d = [];
+    for (let k = 0; k <= h; k++) {
+      const a = [], b = [];
+      for (let q = 0; q <= k; q++) { a.push(bit(r0 + k, q0 + q)); b.push(bit(r0 + 2 * h - k, q0 + h - k + q)); }
+      u.push(a); d.push(b);
+    }
+    list.push({ u, d, e, j });
+  }
+  return { S, h, list };
+}
+function razvRombTick(){
+  clearTimeout(razvRombTimer); razvRombTimer = 0;
+  if (!Z.razvRomb || Z.razvRombP) return;
+  razvRombTimer = setTimeout(() => {
+    razvRombTimer = 0;
+    const n = razvRombs().list.length; razvRombSeq = n ? (razvRombSeq + 1) % n : 0;
+    try { renderRazv(); } catch (e) { console.error(e); }
+    try { renderOkt(); } catch (e) { console.error(e); }
+    razvRombTick();
+  }, Math.max(20, +Z.razvRombMs || 400));
+}
+if ($("bRazvRomb")) {
+  const sync = () => {
+    $("bRazvRomb").classList.toggle("on", !!Z.razvRomb);
+    $("razvRombS").value = String([8, 16, 32, 64].includes(+Z.razvRombS) ? +Z.razvRombS : 32);
+    $("razvRombMs").value = String(+Z.razvRombMs || 400);
+    $("bRazvRombP").textContent = Z.razvRombP ? "▶" : "⏸";
+  };
+  $("bRazvRomb").onclick = () => {
+    Z.razvRomb = !Z.razvRomb; razvRombSeq = 0; oktSent = null; save(); sync(); renderRazv(); renderOkt(); razvRombTick();
+    if (Z.razvRomb) { const RB = razvRombs(); say(RB.list.length ? `◇ Ромбы из кадров: ${RB.list.length} ромбов по ${RB.S} строк — листаются по парам граней.` : `◇ Ромбы из кадров: в поле меньше ${RB.S + 1} строк — выберите ромб меньше.`); }
+  };
+  $("razvRombS").onchange = () => { Z.razvRombS = +$("razvRombS").value; razvRombSeq = 0; save(); renderRazv(); renderOkt(); };
+  $("razvRombMs").oninput = () => { Z.razvRombMs = +$("razvRombMs").value; save(); razvRombTick(); };
+  $("bRazvRombP").onclick = () => { Z.razvRombP = !Z.razvRombP; save(); sync(); razvRombTick(); };
+  sync(); razvRombTick();
+}
+/* v0.409, «клик вне поля окна — скролл листает окна». Активное окно — то, в котором последний раз нажали мышь (zActiveWin); нажали вне
+   окон — активного нет. Колесо над НЕактивным окном до его холстов и групп не доходит (перехват на входе, stopPropagation) — работает
+   обычная прокрутка, стол листается. Над активным — как было (масштаб конуса, пирамиды…). Окно Гранидуса — чужая страница в рамке, колесо
+   она забирает сама, поэтому пока оно не активно, над рамкой прозрачная крышка #oktShield (body без .okt-live): колесо над ней листает стол,
+   щелчок — окно активно, крышка снята. На странице одного окна (?solo=…) и в фоне Хаба — как прежде, колесо сразу окну. */
+let zActiveWin = null;
+function zActiveSet(w){ zActiveWin = w || null; document.body.classList.toggle("okt-live", !!w && w.id === "w-okt"); }
+document.addEventListener("pointerdown", (e) => { if (!ZZ_SOLO) zActiveSet(e.target.closest && e.target.closest(".win")); }, true);
+window.addEventListener("wheel", (e) => {
+  if (ZZ_SOLO || e.ctrlKey) return;
+  const w = e.target.closest && e.target.closest(".win");
+  if (w && w !== zActiveWin) e.stopPropagation();   // неактивное окно — колесо листает стол
+}, { capture: true, passive: true });
+// v0.410: кнопка «✦ развёртка» из окна Гранидуса переехала в шапку (закреплённое окно, см. razvPin0)
+
 /* ─── 🧪 Поиск структуры (v0.042) ─────────────────────────────────────────────────────────────
    Живое окно: считает при каждой отрисовке, если не свёрнуто; результат запоминается по ленте и номеру строки. */
 let structLast = null;
@@ -5629,7 +6351,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520], ["w-tri", 420],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -5662,6 +6384,9 @@ function defaultLayout(){
     "w-steps":   { x: mw + 2 * g, y: 3140 + 9 * g, w: cw, h: 460 },   // v0.062
     "w-tiles":   { x: g, y: 3600 + 10 * g, w: mw, h: 560 },   // v0.070
     "w-pyr":     { x: mw + 2 * g, y: 3600 + 10 * g, w: cw, h: 560 },   // v0.109
+    "w-okt":     { x: g, y: 4160 + 11 * g, w: mw, h: 560 },   // v0.396
+    "w-razv":    { x: mw + 2 * g, y: 4160 + 11 * g, w: cw, h: 560 },   // v0.398
+    "w-tri":     { x: g, y: 4720 + 12 * g, w: mw, h: 420 },   // v0.432
   };
 }
 function applyWin(el){
@@ -5903,6 +6628,24 @@ function ctwInit(){
    последняя тронутая — сверху. Двойной щелчок по подписи — обратно на полосу. Места — Z.cgrpPos { имя: { x, y } } в пикселях от
    угла полосы; меняет их только перетаскивание (сами не выравниваются и не переставляются). */
 // v0.258: кнопка или галка (метка с флажком), которая переезжает между группами конуса, и её место по ссылке ("#id" или селектор)
+/* v0.400, по снимку магнита Октаэдра — «такое же примагничивание надо» (группы конуса, окна): край ближе snap px к краю цели — встаёт на него,
+   по горизонтали и вертикали отдельно, ближайший; цели — [элемент, прямоугольник], экранные координаты. Те, к кому прилипли, светятся (.zsnap). */
+let zSnapOn = [];
+function zSnapGlow(els){
+  zSnapOn.forEach(e => { if (!els.includes(e)) e.classList.remove("zsnap"); });
+  els.forEach(e => e.classList.add("zsnap")); zSnapOn = els.slice();
+}
+function zSnapTo(x, y, w, h, targets, snap){
+  let dx = snap + 1, dy = snap + 1, ex = null, ey = null;
+  for (const [el, q] of targets) {
+    for (const t of [q.left, q.right]) for (const v of [x, x + w]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
+    for (const t of [q.top, q.bottom]) for (const v of [y, y + h]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
+  }
+  const hit = [];
+  if (Math.abs(dx) <= snap) { x += dx; if (ex) hit.push(ex); }
+  if (Math.abs(dy) <= snap) { y += dy; if (ey && !hit.includes(ey)) hit.push(ey); }
+  return [x, y, hit];
+}
 function cgrpMoveEl(src){   // v0.320: кнопка из блока .cunit (◀ [ось] ▶) переезжает вместе со всем блоком
   const u = src && src.closest && src.closest(".cunit"); if (u) return u;
   return src && src.tagName === "INPUT" ? src.closest("label") : src;
@@ -5970,13 +6713,10 @@ function cgrpInit(){
   /* v0.366: магнит — край тащимой группы ближе SNAP px к краю окна конуса, поля строк или другой группы (любой стороной: вплотную или вровень) —
      встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */
   const SNAP = 10;
-  const snapXY = (g, x, y, w, h) => {
-    const xs = [], ys = [], add = (q) => { if (q && q.width > 4 && q.height > 4) { xs.push(q.left, q.right); ys.push(q.top, q.bottom); } };
-    add(wb.getBoundingClientRect());
-    const F = $("field"); if (F && F.getClientRects().length) add(F.getBoundingClientRect());
-    groups.forEach(o => { if (o !== g && o.getClientRects().length) add(o.getBoundingClientRect()); });
-    const best = (v, len, list) => { let d = SNAP + 1; for (const t of list) for (const e of [v, v + len]) if (Math.abs(t - e) < Math.abs(d)) d = t - e; return Math.abs(d) <= SNAP ? v + d : v; };
-    return [best(x, w, xs), best(y, h, ys)];
+  const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
+    const T = [], add = (el) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q]); };
+    add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o); });
+    const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   const place = (g) => {
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
@@ -6063,7 +6803,7 @@ function cgrpInit(){
         g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up);
         if (!moved) return;
         const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
-        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover");
+        g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
         if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: целиком на поле строк
@@ -6098,7 +6838,8 @@ function cgrpInit(){
      Назад — вытащить за заголовок на холст или правый щелчок по заголовку (на полосу). Порядок — Z.cgrpDock, ширина — Z.paneW. */
   if (!Array.isArray(Z.cgrpDock)) Z.cgrpDock = [];
   const box = $("paneGrp"), head = $("paneGrpHead");
-  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right && y >= q.top && y <= q.bottom; };
+  // v0.400: магнит левой панели — ловит и в 40 px правее её края (как полоса магнита у Октаэдра)
+  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right + 40 && y >= q.top && y <= q.bottom; };
   const dockSync = () => {
     Z.cgrpDock = box ? [...box.children].map(c => c.dataset.g) : [];
     if (head) head.style.display = Z.cgrpDock.length ? "" : "none";
@@ -6583,7 +7324,76 @@ function cgrpCols(){   // v0.183: у каждой группы — столбц�
     const n = [...g.children].filter(c => !c.classList.contains("glab") && getComputedStyle(c).display !== "none").length;
     g.style.setProperty("--cols", Math.max(1, Math.ceil(n / 2)));
   });
+  rhombTag();   // v0.401
 }
+/* v0.401, «все кнопки ромбами, равнобедр» — кнопка группы (конус, левая панель) — вытянутым ромбом (класс .rh1, см. CSS).
+   v0.402, «размер 1, 2, 4, 8, 16 — сколько помещается целых ромбов», «треугольник — это стрелки, 4 штуки»: ромбом — кнопки всех размеров, в
+   которые помещается хотя бы один целый ромб 24 px; кнопка, на которой одна стрелка ◀ ▶ ▲ ▼ (◄ ►), — треугольником (.tri-l|r|u|d).
+   Ширина — вычисленная, а не измеренная: у спрятанной до поры кнопки (только для 3D и т.п.) она та же, и форма у неё сразу своя.
+   Стрелки ползунков (.zerk-arrow) не трогаются. */
+const RH_TRI = { "◀": "l", "◄": "l", "▶": "r", "►": "r", "▲": "u", "▼": "d" };
+/* v0.416, «цельные треугольники»: формы — из целых равносторонних треугольников. Высота кнопки h — два ряда по h / 2, сторона s = h / √3,
+   --t = s / 2 (глубина острия 120°). Ромб-кнопка — k = ⌊w / s⌋ треугольников по средней черте, поля --m = (w − k·s) / 2; стрелка ◀ ▶ —
+   шеврон шириной 3t (--m = (w − 3t) / 2), ▲ ▼ — шириной h и высотой 3t (--m = (w − h) / 2, --my = (h − 3t) / 2). */
+function rhombTag(){
+  document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
+    if (b.classList.contains("zerk-arrow")) return;
+    if (b.closest(".cjoin")) { b.classList.remove("rh1", "tri-l", "tri-r", "tri-u", "tri-d"); return; }   // v0.419: в сцепке — своя форма (joinTag)
+    const ar = RH_TRI[b.textContent.trim()], cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
+    const sd = h / Math.sqrt(3), t = sd / 2, px = (v) => Math.max(0, v).toFixed(2) + "px";
+    b.classList.toggle("rh1", !ar && w >= sd);
+    for (const k of ["l", "r", "u", "d"]) b.classList.toggle("tri-" + k, ar === k);
+    b.style.setProperty("--t", px(t)); b.style.setProperty("--h2", px(h / 2));
+    if (ar === "l" || ar === "r") b.style.setProperty("--m", px((w - 5 * t) / 2));   // v0.418: ◀ ▶ — из шести треугольников (5t)
+    else if (ar) { b.style.setProperty("--m", px((w - h) / 2)); b.style.setProperty("--my", px((h - 3 * t) / 2)); }
+    else { const k = Math.max(1, Math.floor((w + 0.01) / sd)); b.style.setProperty("--m", px((w - k * sd) / 2)); }
+  });
+}
+window.addEventListener("load", () => setTimeout(rhombTag, 0));
+/* v0.419: СЦЕПКА ряда (.cjoin, data-ends — по знаку на край: «(» остриём влево, «)» — вправо). Кнопка i: левый край — знак i («(» —
+   остриё, «)» — выемка), правый — знак i + 1 («)» — остриё, «(» — выемка). Глубина острия --t = h / (2√3) — остриё 120°, как у кнопок из
+   треугольников. Зовётся из rhombTag (после каждой раскладки групп). */
+function joinTag(){
+  document.querySelectorAll("span.cjoin").forEach(sp => {
+    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON" && !c.hidden);   // v0.425: спрятанные — не в сцепке
+    bs.forEach((b, i) => {
+      const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
+      /* v0.422, «(стоп) — из скольких собран так: ()()()?» → «2 — подгони все под целые треугольники»: длина кнопки сцепки — целое число
+         треугольников. В глубинах острия t: концы одного рода (остриё–остриё, выемка–выемка) — чётное 2k (k треугольников по ряду), разного
+         (остриё–выемка, как стрелка) — нечётное 2n + 1; ближайшее к нынешней ширине, не меньше 2 и 3. Стрелки — 3 (4 треугольника). */
+      if (!RH_TRI[b.textContent.trim()]) {
+        const tt = h / (2 * Math.sqrt(3)), same = (L === "(") === (R === ")"), w0 = parseFloat(b.dataset.w0 || getComputedStyle(b).width) || 0;
+        if (!b.dataset.w0) b.dataset.w0 = w0;
+        let u = w0 / tt; u = same ? Math.max(2, 2 * Math.round(u / 2)) : Math.max(3, 2 * Math.round((u - 1) / 2) + 1);
+        // v0.423, «на странице длинная какая-то СТОП»: длина может быть задана прямо — data-k (треугольников по средней черте): 2k, у «остриё–выемка» 2k + 1
+        if (+b.dataset.k > 0) u = same ? 2 * +b.dataset.k : 2 * +b.dataset.k + 1;
+        b.style.setProperty("width", (u * tt).toFixed(2) + "px", "important");
+      }
+      b.classList.add("jz");
+      b.classList.toggle("jl-tip", L === "("); b.classList.toggle("jl-notch", L === ")");
+      b.classList.toggle("jr-tip", R === ")"); b.classList.toggle("jr-notch", R === "(");
+      b.classList.toggle("jarrow", !!RH_TRI[b.textContent.trim()]);
+      b.style.setProperty("--t", (h / (2 * Math.sqrt(3))).toFixed(2) + "px");
+      /* v0.423, по рисунку (стоп) = ()()() — «тут правильно, а на странице»: внутри кнопки сцепки — сетка её треугольников, как на рисунке:
+         средняя черта и косые под ±60° через каждую вершину на средней черте (шаг — сторона s = 2t); от острия слева вершины — с x = 0, от
+         выемки — с x = t. Картинка SVG — пятым слоем фона, рамка кнопки её обрезает. */
+      { const t2 = h / (2 * Math.sqrt(3)), sd = 2 * t2, x0 = L === "(" ? 0 : t2;
+        const W = RH_TRI[b.textContent.trim()] ? (b.classList.contains("jwide") ? 5 : 3) * t2 : (parseFloat(b.style.width) || parseFloat(getComputedStyle(b).width) || 0);   // стрелка — 3t (широкая — 5t), до пересчёта стиля
+        let d = `M0 ${h / 2}H${W.toFixed(2)}`;
+        for (let M = x0 - sd; M <= W + sd; M += sd) d += `M${(M - t2).toFixed(2)} 0L${(M + t2).toFixed(2)} ${h}M${(M + t2).toFixed(2)} 0L${(M - t2).toFixed(2)} ${h}`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
+        b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+        /* v0.429, «две стрелки „))“»: у широкой стрелки (5t) — черта по стыку двух шевронов (маска для ::before, см. CSS). ▶ (выемка слева):
+           первый шеврон 0…3t, стык — (2t, 0) → (3t, h/2) → (2t, h); ◀ (остриё слева): стык — (3t, 0) → (2t, h/2) → (3t, h) */
+        if (RH_TRI[b.textContent.trim()] && b.classList.contains("jwide")) {
+          const a = L === "(" ? 3 * t2 : 2 * t2, m = L === "(" ? 2 * t2 : 3 * t2;
+          const dv = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="M${a.toFixed(2)} 0L${m.toFixed(2)} ${h / 2}L${a.toFixed(2)} ${h}" stroke="#000" stroke-width="2" fill="none"/></svg>`;
+          b.style.setProperty("--jdiv", `url("data:image/svg+xml,${encodeURIComponent(dv)}")`);
+        } else b.style.removeProperty("--jdiv"); }
+    });
+  });
+}
+{ const rt0 = rhombTag; rhombTag = function(){ rt0(); joinTag(); }; }
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
@@ -6625,6 +7435,9 @@ function setupWin(el){
     '<button class="bp" title="В отдельное окно браузера — например, на второй монитор. Ещё раз ⧉ или закрыть то окно — вернуть">⧉</button>' +
     '<button class="bc" title="Свернуть / развернуть">–</button>';
   el.insertBefore(head, el.firstChild);
+  /* v0.439, по снимку полосы «⇄ строки → грани | ↗» над Гранидусом — «и это тоже ненужная полоса»: обе кнопки — в шапку окна, перед ⛶,
+     полосы нет, место — Гранидусу */
+  if (el.id === "w-okt") { const tl = el.querySelector(".wbody > .tools"); if (tl) { const bm = head.querySelector(".bm"); [...tl.children].forEach(b => head.insertBefore(b, bm)); tl.remove(); } }
   // v0.043: полоса вдоль всего нижнего края — тянешь, меняется высота (угол справа внизу остаётся — ширина и высота)
   const grip = document.createElement("div");
   grip.className = "wgrip"; grip.title = "Тяни — высота окна";
@@ -6703,6 +7516,9 @@ function setupWin(el){
     if (!w.collapsed && el.id === "w-steps") renderSteps();   // v0.062
     if (!w.collapsed && el.id === "w-tiles") renderTiles();   // v0.070
     if (!w.collapsed && el.id === "w-pyr") renderPyr(true);   // v0.109
+    if (!w.collapsed && el.id === "w-okt") renderOkt();   // v0.396
+    if (!w.collapsed && el.id === "w-razv") renderRazv();   // v0.398
+    if (!w.collapsed && el.id === "w-tri") renderTri();   // v0.432
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -6730,13 +7546,21 @@ function setupWin(el){
     head.setPointerCapture(e.pointerId);
     const field = $("field");
     const overField = (ev) => { const f = field.getBoundingClientRect(); return ev.clientX >= f.left && ev.clientX <= f.right && ev.clientY >= f.top && ev.clientY <= f.bottom; };
+    /* v0.400, «такое же примагничивание надо» — окна: край окна ближе 10 px к краю другого окна, стола или поля строк — встаёт на него; сосед светится */
+    const wt = [], wadd = (o) => { if (!o || o === el || !o.getClientRects().length) return; const q = o.getBoundingClientRect(); if (q.width > 4 && q.height > 4) wt.push([o, q]); };
+    document.querySelectorAll(".win").forEach(o => { if (!o.classList.contains("docked") && o.style.display !== "none") wadd(o); });
+    wadd($("desk")); wadd(field);
     const move = (ev) => {
-      el.style.left = (ev.clientX - offX) + "px"; el.style.top = (ev.clientY - offY) + "px";
-      field.classList.toggle("dock-hint", overField(ev));
+      const of = overField(ev);
+      const [nx, ny, hit] = of ? [ev.clientX - offX, ev.clientY - offY, []] : zSnapTo(ev.clientX - offX, ev.clientY - offY, el.offsetWidth, el.offsetHeight, wt, 10);
+      zSnapGlow(hit);
+      el.style.left = nx + "px"; el.style.top = ny + "px";
+      field.classList.toggle("dock-hint", of);
     };
     const up = (ev) => {
       head.removeEventListener("pointermove", move); head.removeEventListener("pointerup", up);
-      field.classList.remove("dock-hint");
+      field.classList.remove("dock-hint"); zSnapGlow([]);   // v0.400
+      const rs = el.getBoundingClientRect();   // v0.400: место — с учётом магнита, а не голой мыши
       el.classList.remove("dragging");
       if (overField(ev)) {
         dockWin(el, ev.clientY);
@@ -6744,8 +7568,8 @@ function setupWin(el){
       } else {
         if (wasDocked) undockWin(el);
         const desk = $("desk"), d = desk.getBoundingClientRect();
-        w.x = Math.max(0, Math.round(ev.clientX - offX - d.left + desk.scrollLeft));
-        w.y = Math.max(0, Math.round(ev.clientY - offY - d.top + desk.scrollTop));
+        w.x = Math.max(0, Math.round(rs.left - d.left + desk.scrollLeft));
+        w.y = Math.max(0, Math.round(rs.top - d.top + desk.scrollTop));
         el.style.left = w.x + "px"; el.style.top = w.y + "px"; el.style.width = w.w + "px";
         w.px = w.x;   // v0.023: поставил — это желаемое место
       }
@@ -6937,7 +7761,7 @@ function applyView(){
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr]];
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   for (const [name, f] of parts) {
     try { f(); }
@@ -7604,6 +8428,7 @@ function init(){
   const winShow = (id) => {
     const el = $(id); if (!el) return;
     if (id === "w-help" && !Z.helpOn) { $("bHelp").click(); }
+    { const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); }   // v0.410: и из списка окон слева
     if (el.classList.contains("collapsed")) el.querySelector(".bc").click();
     Z.z++; el.style.zIndex = Z.z;
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -7639,6 +8464,19 @@ function init(){
   document.addEventListener("dblclick", pinCatch, true);
   document.addEventListener("pointerdown", (e) => { if (pinMode && e.target.closest(".whead") && !e.target.closest("button")) e.stopPropagation(); }, true);   // шапку не таскать
   document.addEventListener("keydown", (e) => { if (pinMode && e.key === "Escape") { e.preventDefault(); $("bPinMode").click(); } }, true);
+  /* v0.410, по снимкам «✦ развёртка» и шапки с «◆ Гранидус», «◯ Конус» — «сюда»: окно развёртки — закреплённой кнопкой в шапке, сразу за
+     Гранидусом (или в конце). Один раз (Z.razvPin0): открепишь правым щелчком — само не вернётся. */
+  if (!Z.razvPin0) {
+    Z.razvPin0 = true;
+    if (!Z.pins.some(p => p.t === "w" && p.id === "w-razv")) { const k = Z.pins.findIndex(p => p.t === "w" && p.id === "w-okt"); Z.pins.splice(k >= 0 ? k + 1 : Z.pins.length, 0, { t: "w", id: "w-razv" }); }
+    save();
+  }
+  // v0.432: окно «△ Сетка» — тоже кнопкой в шапке, сразу за развёрткой (один раз, Z.triPin0)
+  if (!Z.triPin0) {
+    Z.triPin0 = true;
+    if (!Z.pins.some(p => p.t === "w" && p.id === "w-tri")) { const k = Z.pins.findIndex(p => p.t === "w" && p.id === "w-razv"); Z.pins.splice(k >= 0 ? k + 1 : Z.pins.length, 0, { t: "w", id: "w-tri" }); }
+    save();
+  }
   renderPins();
   /* v0.052, «при изменении текста всё дёргается, на многих меню так же»: живые тексты окон меняют число строк
      (другая строка, наведение) — и всё, что под ними (холст конуса, таблицы, виды), прыгает вверх-вниз. Текст окна теперь
@@ -8020,7 +8858,20 @@ function init(){
     });
     $("paneWinsHead").style.display = list.length ? "" : "none";
     $("paneWins").innerHTML = list.map(el => `<button data-w="${el.id}" title="Развернуть окно «${esc(el.dataset.title || el.id)}» на стол">${esc(el.dataset.title || el.id)}</button>`).join("");
+    pwArrows();
   };
+  /* v0.397: светящиеся ▲ ▼ у списка окон — горят, пока выше / ниже есть кнопки за краем; щелчок листает на ¾ видимого */
+  function pwArrows(){
+    const P = $("paneWins"), bx = $("paneWinsBox"); if (!P || !bx) return;
+    const top = P.scrollTop > 2, bot = P.scrollTop + P.clientHeight < P.scrollHeight - 2;
+    bx.querySelector(".pwArr.up").classList.toggle("on", top);
+    bx.querySelector(".pwArr.dn").classList.toggle("on", bot);
+  }
+  $("paneWins").addEventListener("scroll", pwArrows, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(pwArrows).observe($("paneWins"));
+  document.querySelectorAll("#paneWinsBox .pwArr").forEach(a => a.addEventListener("click", () => {
+    const P = $("paneWins"); P.scrollBy({ top: (a.classList.contains("up") ? -1 : 1) * Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
+  }));
   $("paneWins").onclick = (e) => {
     const b = e.target.closest("button[data-w]"); if (!b) return;
     const el = $(b.dataset.w), w = Z.win[b.dataset.w]; if (!el || !w) return;
@@ -8028,7 +8879,8 @@ function init(){
     parkSync(); Z.z++; el.style.zIndex = Z.z; packWins(); save(); renderAll();
     el.scrollIntoView({ block: "nearest" });
   };
-  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldSide").classList.toggle("on", !!Z.fieldRight); };
+  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldSide").classList.toggle("on", !!Z.fieldRight);
+    $("bFieldSide").textContent = Z.fieldRight ? "⇆ строки слева" : "⇆ строки справа"; };   // v0.412, «строки — слева»: подпись — куда переставит щелчок
   sideUi(); requestAnimationFrame(() => { parkSync(); packWins(); });
   $("bFieldSide").onclick = () => { Z.fieldRight = !Z.fieldRight; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };

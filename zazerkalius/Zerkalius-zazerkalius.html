@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.395. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.440. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.395</title>
+<title>Zazerkalius — v0.440</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -202,7 +202,9 @@ body.nocur .rw.cur .bits > .bx,body.nocur .rw.cur .bits > .bxo{background:var(--
 #field.has-dock #fieldDock{max-height:none;overflow:visible;flex:0 0 auto}
 #fieldDock{flex:0 1 auto;max-height:72%;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:0 8px 8px;border-top:1px solid var(--line);background:var(--panel)}
 #fieldDock:empty{display:none}
-#field.dock-hint{box-shadow:inset 0 0 0 2px var(--acc)}
+#field.dock-hint{box-shadow:inset 0 0 0 2px var(--acc2),inset 0 0 18px color-mix(in srgb, var(--acc2) 45%, transparent)}   /* v0.400: светится, как магнит Октаэдра */
+/* v0.400, по снимку магнита Октаэдра — «такое же примагничивание надо» (группы конуса и окна): то, к чему прилипли, светится бирюзой */
+.zsnap{outline:2px solid var(--acc2) !important;outline-offset:-1px;box-shadow:0 0 14px color-mix(in srgb, var(--acc2) 70%, transparent) !important}
 #field.dock-hint::after{content:"отпусти — окно встанет под строками";position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;z-index:60;pointer-events:none}
 .win.docked{position:relative !important;left:auto !important;top:auto !important;width:auto !important;flex:0 0 auto;resize:vertical;margin-top:8px}
 .win.dragging{position:fixed !important;z-index:1000 !important;opacity:.93}
@@ -368,6 +370,46 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 .no .rc{display:inline-grid;grid-template-columns:minmax(3ch,auto) auto minmax(3ch,auto);align-items:baseline}
 .no .rc > :first-child{text-align:right} .no .rc > :last-child{text-align:left}
 #w-bal .wbody,#w-steps .wbody{display:flex;flex-direction:column}
+/* v0.396, «весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: окно «◆ Октаэдр» — страница Октаэдра целиком
+   (../oktaedr/Zerkalius-oktaedr.html?zz, своя память), холст растёт с окном, как у пирамиды */
+#w-okt .wbody{display:flex;flex-direction:column}
+#w-okt .wbody > *{flex:0 0 auto}
+#w-okt .wbody > #oktBox{flex:1 1 0;min-height:320px;position:relative}
+#oktBox > #oktFr{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:4px;background:#000;display:block}
+/* v0.409, «клик вне поля окна — скролл листает окна»: пока окно Гранидуса не активно (не щёлкнули в нём), поверх рамки — прозрачная крышка:
+   колесо над ней листает стол, щелчок — снимает её (окно активно), дальше колесо и мышь — Гранидусу */
+#oktShield{position:absolute;inset:0;display:none;cursor:pointer}
+body:not(.okt-live) #oktShield{display:block}
+/* v0.398, «развёртку добавь в Зазеркалье»: окно «✦ Развёртка» — октаэдр на плоскости из строк поля, холст растёт с окном */
+#w-razv .wbody{display:flex;flex-direction:column}
+#w-razv .wbody > *{flex:0 0 auto}
+#w-razv .wbody > #razvCv{flex:1 1 0;min-height:260px;width:100%;display:block;background:var(--panel2);border-radius:4px}
+/* v0.432, окно «△ Сетка» — сетка равносторонних треугольников, красить щелчком и мышью, сцены 1, 2, … */
+#w-tri .wbody{display:flex;flex-direction:column}
+#w-tri .wbody > *{flex:0 0 auto}
+#w-tri .tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+#w-tri #triCv{width:100%;display:block;background:var(--panel2);border-radius:4px;touch-action:none;cursor:crosshair}
+#w-tri input[type=number]{width:44px}
+/* v0.437, «сетку сразу на всё окно»: холст сетки занимает всё свободное место окна (рядов — сколько влезает); ползунок масштаба, поле символа */
+#w-tri .wbody > #triCv{flex:1 1 0;min-height:60px}
+#w-tri input[type=range]{width:110px;vertical-align:middle}
+#w-tri #triGTx{width:64px}
+#w-tri #triGrp[hidden]{display:none !important}
+#triPal,#triScenes{display:inline-flex;flex-wrap:wrap;gap:3px}
+#triPal button{width:24px;height:24px;padding:0;border-radius:4px}
+#triPal button.on{box-shadow:0 0 0 2px var(--txt)}
+#triScenes button{min-width:28px;padding:0 6px}
+/* v0.433, «можно сразу вживую смотреть, как будет выглядеть?»: под сеткой — она же кнопками, 1:1 и ×2, на фоне панели групп */
+#triLive{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;margin-top:6px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+#triLive canvas{display:block}
+/* v0.434, «только реальный размер, менять фон и цвет обводки, и отключать её»: ×2 убран; фон — у самого блока (Z.triBg), цветовые поля */
+#w-tri input[type=color]{width:28px;height:22px;padding:0 1px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;vertical-align:middle}
+/* v0.405, «развёртку покажи малыми картинками все сразу, при выборе одной из них — крупно; выпадающий список не нужен» */
+#razvThumbs{display:flex;flex-wrap:wrap;gap:4px}
+#razvThumbs canvas{width:72px;height:56px;display:block;box-sizing:border-box;border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer}
+#razvThumbs canvas:hover{border-color:var(--acc)}
+#razvThumbs canvas.own{border-style:dashed}   /* v0.438: свои развёртки — пунктирной рамкой */
+#razvThumbs canvas.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 #w-pyr .wbody{display:flex;flex-direction:column}   /* v0.109: холст пирамиды растёт с окном */
 #w-pyr .wbody > *{flex:0 0 auto}
 #w-pyr .wbody > #pyrCv{flex:1 1 0;min-height:260px}   /* основа 0: размер холста в пикселях не раздувает окно */
@@ -505,8 +547,21 @@ body.zen #bCutClr,body.bgmode #bCutClr{display:none !important}
 /* v0.156, «в один размер все, минимальный который»: кнопки и списки левой панели — одной высоты по самой низкой (24 px, как «＋ Строка») и с одними отступами */
 body:not(.pane-icons) #rowsPane button:not(#bPaneIcons):not(#paneGrp *),body:not(.pane-icons) #rowsPane select:not(#paneGrp *){box-sizing:border-box;height:24px;min-height:0;padding:2px 4px;line-height:1;font-size:13px}
 /* v0.094: свёрнутые окна в левой панели (при «⇆ поле справа») */
-#paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;max-height:45%}
+#paneWins{display:flex;flex-direction:column;gap:3px;padding:0 10px 10px;overflow:auto;flex:1 1 0;min-height:0;scrollbar-width:none}
+#paneWins::-webkit-scrollbar{display:none}
 #paneWins button{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v0.397, по снимку сплющенного списка «Окна» — «вниз клади окна за экран и покажи стрелками светящимися, что там что-то есть»: кнопки
+   держат свою высоту (прежде сжимались и налезали друг на друга), лишние уходят за нижний край; список — на всё место панели до низа.
+   Есть что-то ниже / выше — светится ▼ / ▲; щелчок по стрелке листает, колесо — как обычно */
+#paneWinsBox{position:relative;flex:1 1 auto;min-height:64px;display:flex;flex-direction:column}
+#paneWins > button{flex:0 0 auto}
+#paneWinsBox .pwArr{position:absolute;left:0;right:0;height:22px;display:none;align-items:center;justify-content:center;z-index:2;cursor:pointer;user-select:none;
+  color:var(--acc2);font-size:15px;line-height:1;text-shadow:0 0 5px var(--acc2),0 0 12px var(--acc2);animation:pwGlow 1.1s ease-in-out infinite alternate}
+#paneWinsBox .pwArr.up{top:0;background:linear-gradient(var(--panel) 35%,transparent)}
+#paneWinsBox .pwArr.dn{bottom:0;background:linear-gradient(transparent,var(--panel) 65%)}
+#paneWinsBox .pwArr.on{display:flex}
+#paneWinsBox .pwArr:hover{color:var(--gold);text-shadow:0 0 6px var(--gold),0 0 14px var(--gold)}
+@keyframes pwGlow{from{opacity:.5}to{opacity:1}}
 body.pane-icons #paneWins{padding:4px}
 /* v0.094, «верхняя граница поля конуса — до конца, заголовок — внутрь поля»: холст конуса — на всё окно, от верхнего края;
    шапка, кнопки и текст — поверх него, полупрозрачно */
@@ -706,7 +761,101 @@ label.pcol > span{font-size:11px;color:var(--dim)} label.pcol > input[type=color
    у кнопок, кнопок-галок и списков в группах одна ширина --bu (80 px); кнопка-значок (не больше двух знаков: ◀ ▶| ↻ ⏮ 01 — класс .ib,
    ставит cgbIcons) — в полширины, две такие = одна обычная. Сколько влезает в строку, столько и встаёт, столбцы ровные. Длинная
    подпись обрезается (целиком — во всплывающей подсказке у кнопки) */
-:root{--bu:80px}
+/* v0.402, «размер 1, 2, 4, 8, 16 — это сколько помещается целых ромбов» (ромб — 24 × 24 px, в пикселях 24 / 48 / 96 / 192 / 384):
+   --bu 80 → 99 px, чтобы прежние размеры встали на ромбы — полкнопки (99 − 3) / 2 = 48 = 2 ромба, одна 99 ⊃ 4, двойная 201 ⊃ 8, четверная
+   405 ⊃ 16; две полкнопки по-прежнему равны одной, столбцы ровные */
+:root{--bu:99px}
+/* v0.401, «все кнопки теперь ромбами» — «равнобедр» — «пока те, что 1 размера»: кнопки групп шириной в одну --bu (метит rhombTag — класс
+   .rh1) — вытянутым ромбом: верх и низ ровные, на концах — равнобедренные треугольники с вершиной посередине высоты (глубина 12 px — у кнопки
+   в 24 px это прямой угол). Нажимается только ромб (clip-path). Рамка скосов — четыре диагонали фоном (цвет --rbc: как рамка — обычная,
+   наведение сиреневое, включённая золотая), верх и низ — своя рамка кнопки. Полкнопки-значки (.ib) и кнопки в 2 и больше — как были */
+/* v0.416, по снимку развёртки — «кнопки собирать из таких, края кнопок такие же», «скосы под 120, остриё тупое, 120», «цельные треугольники»:
+   кнопка — полоса из ЦЕЛЫХ равносторонних треугольников в два ряда по полвысоты (сторона s = h / √3, ≈ 13,9 px при 24): верхний ряд
+   ▲▼▲…▲, нижний — зеркально; на концах остриё 120°, все углы 120°. Длина — сколько целых треугольников влезает в ширину кнопки (k · s),
+   по центру; --m — поле с каждой стороны, --t = s / 2 — глубина острия (ставит rhombTag). Прежде (v0.401) — острия 90°, глубина 12 px */
+button.rh1{--rbc:var(--line);--m:0px;--t:6.93px;clip-path:polygon(calc(var(--m) + var(--t)) 0,calc(100% - var(--m) - var(--t)) 0,calc(100% - var(--m)) 50%,calc(100% - var(--m) - var(--t)) 100%,calc(var(--m) + var(--t)) 100%,var(--m) 50%);border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:8px !important;padding-right:8px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));
+  background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(100% - var(--m)) 0,calc(100% - var(--m)) 100%;background-repeat:no-repeat}
+button.rh1:hover{--rbc:var(--acc)}
+button.rh1.on{--rbc:var(--gold)}
+/* v0.402, «треугольник — это стрелки, 4 штуки»: кнопка-стрелка ◀ ▶ ▲ ▼ (класс .tri-l|r|u|d, ставит rhombTag) — равнобедренный треугольник
+   остриём в сторону стрелки, основание — своя рамка кнопки, скосы — диагонали фоном, как у ромбов */
+button.tri-l,button.tri-r,button.tri-u,button.tri-d{--rbc:var(--line);border-radius:0 !important;padding:0 !important;background-repeat:no-repeat}
+button.tri-l:hover,button.tri-r:hover,button.tri-u:hover,button.tri-d:hover{--rbc:var(--acc)}
+button.tri-l.on,button.tri-r.on,button.tri-u.on,button.tri-d.on{--rbc:var(--gold)}
+/* v0.416, «вот стрелки, одна стрелка из 4 треугольников» (снимок: шеврон из развёртки): стрелка — шеврон из четырёх целых
+   равносторонних треугольников того же размера, что у кнопок (сторона s, --t = s / 2): остриё 120° в сторону стрелки, с другой стороны —
+   выемка. ◀ ▶ — 3t × h, ▲ ▼ — h × 3t (--h2 = h / 2); по центру места (--m, --my ставит rhombTag). Скосы — диагонали фоном, прямые края —
+   рамка кнопки или черта фоном. Прежде (v0.404) — четверти креста Х */
+button.tri-l,button.tri-r,button.tri-u,button.tri-d{--m:0px;--my:0px;--t:6.93px;--h2:12px;text-align:center}
+/* v0.419, «)( )звук((Стоп)) — вот так буду обозначать», «((звук((Стоп)) — да»: СЦЕПКА — кнопки ряда вплотную, остриё одной входит в выемку
+   соседней. Запись краёв ряда — data-ends у блока (.cjoin), по знаку на каждый край слева направо: «(» — край острием влево (у левой
+   кнопки на нём выемка, у правой — остриё), «)» — острием вправо (у левой — остриё, у правой — выемка). Остриё 120°, глубина --t (как у
+   кнопок из треугольников, ставит joinTag); соседняя кнопка заходит на --t (минус 2 px — волосок между). Скосы — диагонали фоном, их
+   направления — --g1…--g4 от формы края. Стрелки в сцепке — без знака. «Звук»: ◀ звук ■ ▶ = «((())». */
+span.cjoin{gap:0 !important}
+span.cjoin > button.jz{--rbc:var(--line);--t:6.93px;--l0:0px;--lm:0px;--r0:100%;--rm:100%;
+  clip-path:polygon(var(--l0) 0,var(--r0) 0,var(--rm) 50%,var(--r0) 100%,var(--l0) 100%,var(--lm) 50%);
+  border-left-width:0 !important;border-right-width:0 !important;border-radius:0 !important;padding-left:calc(var(--t) + 2px) !important;padding-right:calc(var(--t) + 2px) !important;
+  background-image:var(--g1),var(--g2),var(--g3),var(--g4),var(--lat, none);background-size:var(--t) 50%,var(--t) 50%,var(--t) 50%,var(--t) 50%,100% 100%;background-position:0 0,0 100%,100% 0,100% 100%,0 0;background-repeat:no-repeat}   /* v0.423: пятый слой — сетка треугольников (--lat, ставит joinTag) */
+/* v0.421, по снимку ряда «Звука» — «без пробелов соедини, различи фоном»: соседняя кнопка заходит ровно на --t (прежде минус 2 px —
+   волосок, он и выемки выглядели пробелами); кнопки различаются фоном — через одну светлее; выключенная в сцепке не прозрачная, а бледная
+   надписью (иначе на её месте — дыра) */
+span.cjoin > button.jz ~ button.jz{margin-left:calc(-1 * var(--t)) !important}   /* v0.429, «убери пробел между левой стрелкой и стопом»: «+» не
+   срабатывал, когда между кнопками спрятанная ♫ (она не .jz) — ◆ не заходила в выемку ◀; «~» — каждая следующая .jz, спрятанные не мешают */
+span.cjoin > button.jz:nth-child(even){background-color:color-mix(in srgb, var(--panel2) 84%, var(--txt)) !important}
+span.cjoin > button.jz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
+/* v0.424, «границы не делай, фоном подсветку меняй»: у кнопок сцепки ни контура, ни скосов — только заливка (через одну темнее / светлее)
+   и сетка треугольников; наведение — сиреневая заливка, включённая — золотая, «идёт» (звук играет) — заливка мигает вместо рамки */
+span.cjoin > button.jz.jz{--g1:none !important;--g2:none !important;--g3:none !important;--g4:none !important;border-width:0 !important;box-shadow:none !important}
+span.cjoin > button.jz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
+span.cjoin > button.jz.on{background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+/* v0.428, «(стрелка) не мигает»: мигание анимацией цвета фона гасил фон «включённой» с !important (такое правило сильнее анимации).
+   Теперь мигает отдельный слой поверх фона (::after, под надписью — isolation), рамкой кнопки он обрезается */
+span.cjoin > button.jz{position:relative;isolation:isolate}
+@keyframes zRunOv{0%,100%{opacity:.6}50%{opacity:0}}
+span.cjoin > button.jz.run::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
+/* v0.429, «стрелка, что нажата последней, — две стрелки „))“, обе мигают фоном»: широкая стрелка направления (5t) — две стрелки по 4
+   треугольника, вторая остриём в выемку первой; между ними черта цветом панели (маска --jdiv, ставит joinTag) — поверх мигания, обе мигают вместе */
+/* v0.430, «при плее другая стрелка становится красной — это стоп»: пока играет, стрелка НЕ текущего направления — красная (.jstop) */
+span.cjoin > button.jz.jstop{background-color:color-mix(in srgb, var(--panel2) 40%, #e5484d) !important}
+span.cjoin > button.jz.jstop:hover{background-color:color-mix(in srgb, var(--panel2) 15%, #e5484d) !important}
+span.cjoin > button.jarrow.jwide::before{content:"";position:absolute;inset:0;z-index:1;background:var(--panel);pointer-events:none;-webkit-mask:var(--jdiv, none) 0 0 / 100% 100% no-repeat;mask:var(--jdiv, none) 0 0 / 100% 100% no-repeat}
+/* v0.425, «( ( (!Стоп) ) )» — «( — стрелка, ! — ромб из 2 треугольников, пробел отделяет кнопки», «плей не нужен», «стоп смещается в сторону
+   другой стрелки, а текущая нажатая стрелка расширяется»: ряд «Звука» — ◀ ◆ ▶; ♫ спрятана (в сцепке не считается); ◆ — ромб из двух
+   треугольников; стрелка текущего направления — шире (5t вместо 3t), ◆ от этого сдвигается к другой */
+span.cjoin > button[hidden]{display:none !important}
+#w-cone .tools .cgb span.cjoin > button.jarrow.jwide,#paneGrp .cgb span.cjoin > button.jarrow.jwide{width:calc(5 * var(--t)) !important}
+/* v0.426, «(!Стоп) — стрелка 4 треугольника, ромб 2 и снова стрелка 4, итого 10»: ◆ — не ромб из двух, а кнопка из десяти, k = 3
+   (как на рисунке «()()()»): остриё слева и справа, посередине ромб */
+span.cjoin > button#bSndP{padding:0 !important;text-align:center}
+span.cjoin > button.jz:hover{--rbc:var(--acc)}
+span.cjoin > button.jz.on{--rbc:var(--gold)}
+span.cjoin > button.jl-tip{--l0:var(--t);--lm:0px;--g1:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g2:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jl-notch{--l0:0px;--lm:var(--t);--g1:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g2:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jr-tip{--r0:calc(100% - var(--t));--rm:100%;--g3:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g4:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jr-notch{--r0:100%;--rm:calc(100% - var(--t));--g3:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));--g4:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px))}
+span.cjoin > button.jarrow{color:transparent !important;text-shadow:none !important}
+/* v0.420, «( — это 4 треугольника, не удлинённая, по минимальной длине»: стрелка в сцепке — шеврон ровно из четырёх треугольников, шириной
+   3 · --t (≈ 20,8 px при высоте 24), а не на всё место полкнопки */
+#w-cone .tools .cgb span.cjoin > button.jarrow.jarrow,#paneGrp .cgb span.cjoin > button.jarrow.jarrow{width:calc(3 * var(--t)) !important;min-width:0 !important;padding:0 !important}
+/* v0.417, по снимку шеврона с ▶ внутри — «теперь значки им не нужны»: знак стрелки не виден (форма и есть стрелка); сам символ в кнопке
+   остался — по нему rhombTag узнаёт стрелку и её сторону */
+button.tri-l,button.tri-r,button.tri-u,button.tri-d{color:transparent !important;text-shadow:none !important}
+/* v0.418, по снимку «◀ ⏯ дальше ■ ▶» — «добавь слева два треугольника»: горизонтальные стрелки — шеврон из ШЕСТИ треугольников (5t):
+   два добавлены со стороны выемки — у ▶ слева, у ◀ справа; стрелка длиннее и ближе к соседней кнопке. ▲ ▼ — из четырёх (шесть по высоте не влезают) */
+button.tri-l{clip-path:polygon(var(--m) 50%,calc(var(--m) + var(--t)) 0,calc(var(--m) + 5 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 50%,calc(var(--m) + 5 * var(--t)) 100%,calc(var(--m) + var(--t)) 100%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 100%}
+button.tri-r{clip-path:polygon(var(--m) 0,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 5 * var(--t)) 50%,calc(var(--m) + 4 * var(--t)) 100%,var(--m) 100%,calc(var(--m) + var(--t)) 50%);border-width:1px 0 !important;font-size:10px !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px));background-size:var(--t) 50%;background-position:var(--m) 0,var(--m) 100%,calc(var(--m) + 4 * var(--t)) 0,calc(var(--m) + 4 * var(--t)) 100%}
+button.tri-u{clip-path:polygon(calc(var(--m) + var(--h2)) var(--my),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + 3 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) calc(var(--my) + 3 * var(--t)),var(--m) calc(var(--my) + var(--t)));border-width:0 !important;font-size:9px !important;line-height:1 !important;padding-bottom:3px !important;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(var(--rbc),var(--rbc)),linear-gradient(var(--rbc),var(--rbc));
+  background-size:var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),1.5px calc(2 * var(--t)),1.5px calc(2 * var(--t));
+  background-position:var(--m) var(--my),calc(var(--m) + var(--h2)) var(--my),var(--m) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2) - 1.5px) calc(var(--my) + var(--t))}
+button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) calc(var(--my) + var(--t)),calc(var(--m) + 2 * var(--h2)) var(--my),calc(var(--m) + 2 * var(--h2)) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 3 * var(--t)),var(--m) calc(var(--my) + 2 * var(--t)));border-width:0 !important;font-size:9px !important;line-height:1 !important;padding-top:3px !important;
+  background-image:linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to top right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(to bottom right,transparent calc(50% - .8px),var(--rbc) calc(50% - .8px),var(--rbc) calc(50% + .8px),transparent calc(50% + .8px)),linear-gradient(var(--rbc),var(--rbc)),linear-gradient(var(--rbc),var(--rbc));
+  background-size:var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),var(--h2) var(--t),1.5px calc(2 * var(--t)),1.5px calc(2 * var(--t));
+  background-position:var(--m) var(--my),calc(var(--m) + var(--h2)) var(--my),var(--m) calc(var(--my) + 2 * var(--t)),calc(var(--m) + var(--h2)) calc(var(--my) + 2 * var(--t)),var(--m) var(--my),calc(var(--m) + 2 * var(--h2) - 1.5px) var(--my)}
 #w-cone .tools .cgb button:not(.zerk-arrow),#w-cone .tools .cgb select,#w-cone .tools .cgb label:has(> input[type=checkbox]),#paneGrp .cgb button:not(.zerk-arrow),#paneGrp .cgb select,#paneGrp .cgb label:has(> input[type=checkbox]){width:var(--bu) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;box-sizing:border-box;overflow:hidden}
 #w-cone .tools .cgb button.ib:not(.zerk-arrow),#paneGrp .cgb button.ib:not(.zerk-arrow){width:calc((var(--bu) - 3px) / 2) !important;padding:0 !important}
 #w-cone .tools .cgb select,#paneGrp .cgb select{padding-left:3px !important;padding-right:0 !important}
@@ -938,7 +1087,7 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
 /* v0.141: ?solo=cone — отдельная страница «◯ Конус» (Zerkalius-konus.html): поле строк и одно окно на весь стол;
    всё, что про остальные окна (раскладка, свернуть, закрепить, подсказки), спрятано. Узкий экран — стопкой, как везде. */
 body.solo .win:not(.solo-win){display:none !important}
-body.solo #bPinMode,body.solo #pinBar,body.solo #bPack,body.solo #bLayout,body.solo #bCollapseAll,body.solo #bHelp,body.solo #paneWinsHead,body.solo #paneWins{display:none !important}
+body.solo #bPinMode,body.solo #pinBar,body.solo #bPack,body.solo #bLayout,body.solo #bCollapseAll,body.solo #bHelp,body.solo #paneWinsHead,body.solo #paneWins,body.solo #paneWinsBox{display:none !important}
 body.solo .solo-win .whead .bm,body.solo .solo-win .whead .bp,body.solo .solo-win .whead .bc,body.solo .solo-win .wgrip{display:none !important}
 body.solo .solo-win .whead{cursor:default}
 /* v0.142: текст конуса и лог лазера — под строками, в поле (soloApply переносит #coneBot туда) */
@@ -958,6 +1107,10 @@ body.solo #field > #coneBot #coneOut{flex:0 1 auto;min-height:0;overflow:auto;fo
 }
 /* v0.144, «кнопки слишком высокие, сделай компактнее»: на странице конуса кнопки, списки и группы — ниже и плотнее */
 body.solo #w-cone .wbody > .tools{padding:3px 8px;gap:3px 6px}
+/* v0.413, по снимку страницы конуса — «у конуса убери вверху отдельное какое-то поле»: полосы кнопок со своей чертой больше нет — холст на
+   всю страницу от самого верха, группы лежат поверх него (как в окне конуса, v0.094); пустые места полосы мышь пропускают к конусу */
+body.solo #w-cone .wbody > .tools{position:absolute;top:0;left:0;right:0;z-index:4;border-bottom:none;pointer-events:none}
+body.solo #w-cone .wbody > .tools > *{pointer-events:auto}
 body.solo #w-cone .tools button,body.solo #w-cone .tools select{padding:0 5px;font-size:12px;line-height:1.35;min-height:0}
 body.solo #w-cone .tools label{font-size:12px;line-height:1.35}
 body.solo #w-cone .tools input[type=checkbox]{width:12px;height:12px;margin:0 2px 0 0;vertical-align:-2px}
@@ -1007,10 +1160,16 @@ html.solo[data-theme="dark"]{--bg:#171b26; --panel:#1f2533; --panel2:#272f41; --
 #paneGrp .cgb input[type=range]{width:70px}
 #paneGrp .cgb select{max-width:100%}
 #paneGrp .cgrp.cmin{min-height:0 !important}
-#rowsPane.cgover{box-shadow:inset 0 0 0 2px var(--acc)}
+/* v0.411, по снимку «✎ Правка» — «убери»: кнопки режима правки панелей в шапке нет (код режима остался — свои названия и места кнопок,
+   сделанные в нём, держатся; вернуть — снять это правило) */
+#bEdit{display:none !important}
+/* v0.414, по снимку «⏺» в шапке — «видео, дубль вверху — удалить»: общей кнопки записи с выбором окна в шапке нет (у конуса — своя запись);
+   код остался — вернуть — снять это правило */
+#bRowsRec{display:none !important}
+#rowsPane.cgover{box-shadow:inset 0 0 0 2px var(--acc2),inset 0 0 18px color-mix(in srgb, var(--acc2) 45%, transparent)}   /* v0.400: светится */
 /* v0.348: группа, отпущенная целиком над полем строк, — поверх поля (zz-ui.js, cgrpInit: Z.cgrpFld); пока тащат над полем — поле в рамке */
 #w-cone .cgrp.cfloat.cfld{position:fixed;z-index:60}
-#field.cgover{box-shadow:inset 0 0 0 2px var(--acc)}
+#field.cgover{box-shadow:inset 0 0 0 2px var(--acc2),inset 0 0 18px color-mix(in srgb, var(--acc2) 45%, transparent)}
 body.pane-icons #paneGrp,body.pane-icons #paneGrpHead,body.pane-icons #paneEdge{display:none !important}
 #paneEdge{position:absolute;top:0;right:-3px;bottom:0;width:6px;cursor:ew-resize;z-index:5}
 #paneEdge:hover,body.wdrag #paneEdge{background:color-mix(in srgb, var(--acc) 35%, transparent)}
@@ -1050,7 +1209,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.395</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.440</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1070,7 +1229,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <button id="bEdit" title="✎ Правка панелей: щелчок по кнопке панели — не нажать, а дать ей своё название или оставить только значок; тяни кнопку — переставить (в своей группе или в другую). Ещё раз или Esc — выйти">✎ Правка</button>
   <button id="bTheme" title="Светлый или тёмный фон всей страницы. Выбор запоминается; пока не выбран — как в системе">☀ Светлый</button>
   <button id="bPack" title="Окна сами прижимаются к верху: свернул, растянул или перетащил окно — нижние поднимаются и занимают место. Щелчок — выключить / включить">⤒ К верху</button>
-  <button id="bFieldSide" title="⇆ Поле строк справа: окна (конус и остальные) — слева, поле строк — справа; ещё раз — как было. Ширина поля тянется разделителем, как прежде">⇆ поле справа</button>
+  <button id="bFieldSide" title="⇆ Строки справа / слева: поле строк переезжает на другую сторону, окна (конус и остальные) — на его место. Подпись — куда переставит щелчок; горит — строки справа. Ширина поля тянется разделителем, как прежде">⇆ строки справа</button>
   <button id="bFieldHide" title="▭ Свернуть поле строк: оно прячется целиком вместе с разделителем, окна (конус и остальные) занимают его место. Строки при этом не меняются, кнопки слева и окна работают с ними как прежде. Окна, прикреплённые под полем, прячутся вместе с ним. Ещё раз — поле на месте">▭ поле строк</button>
   <button id="bLayout" title="Разложить окна заново по местам по умолчанию — все развёрнуты">📐 Разложить</button>
   <button id="bCollapseAll" title="Свернуть все окна — видны одни шапки (места не меняются). Если все уже свёрнуты — развернуть все">▭ Свернуть</button>
@@ -1143,7 +1302,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <div id="paneGrp"></div>
     <div id="paneEdge" title="Тяни — ширина левой панели; двойной щелчок — ширина по умолчанию"></div>
     <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
-    <div id="paneWins"></div>
+    <div id="paneWinsBox"><div class="pwArr up" title="Выше есть ещё окна — щелчок: листать вверх">▲</div><div id="paneWins"></div><div class="pwArr dn" title="Ниже есть ещё окна — щелчок: листать вниз">▼</div></div>
   </aside>
 
   <!-- v0.010: поле строк — в центре, как в других машинах. Щелчок — текущая строка; двойной щелчок —
@@ -1712,7 +1871,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           </div>
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
           <div class="cgrp gc cg-snd" title="♫ Звук из бит (1 — нота, 0 — пауза, высота — по трём битам с этого места). ◀ ▶ — направление (горит) и шаг; ♫ звук → ⏸ пауза → ⏯ дальше; ■ — стоп и в начало. Ниже: что звучит, тембр, ◉ показать головки, ⁑ авто — сколько бит разом, лад, ♩ темп, 🔊 громкость"><span class="glab">Звук</span>
-            <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><!-- v0.368, по снимку «■ звук» — «раздели на 2 по 1 размера, паузу сюда»: ◀ [♫ звук] [⏸ пауза] ▶ — один блок, звук и пауза по 1 кнопке --><span class="cunit csnd"><button id="bSndB" title="◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление">◀</button><button id="bSnd" title="♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи">♫ звук</button><button id="bSndP" title="■ Стоп и в начало (звук не идёт)" disabled>■</button><button id="bSndF" title="▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление (по умолчанию)">▶</button></span>
+            <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><!-- v0.368, по снимку «■ звук» — «раздели на 2 по 1 размера, паузу сюда»: ◀ [♫ звук] [⏸ пауза] ▶ — один блок, звук и пауза по 1 кнопке --><span class="cunit csnd cjoin" data-ends="(())"><button id="bSndB" title="◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление">◀</button><button id="bSnd" hidden title="♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи" data-k="2">♫</button><button id="bSndP" data-k="3" title="◆ Стоп / пауза">■</button><button id="bSndF" title="▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление (по умолчанию)">▶</button></span>
             <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Разом — все выделенные строки (до 8) одновременно, каждая своим голосом. Подряд — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
               <!-- v0.341, «сократи, чтобы в размер 1 уместились»: было «выделенные разом», «по очереди», «по 2 строки» — список шёл в 2 кнопки -->
               <option value="row">строка</option><option value="sel" title="Все выделенные строки разом, каждая своим голосом">разом</option><option value="seq" title="По очереди: строки одна за другой, как текст">подряд</option><option value="pair" title="По 2 строки: пара разом, потом следующая">по 2</option><option value="col">столбцы</option><option value="rc" title="Строки + столбцы: две головки разом — одна читает строки подряд (бирюза), другая идёт по столбцам сверху вниз (золото, октавой ниже)">стр+стл</option>
@@ -1785,6 +1944,75 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <div id="coneLog" class="out" title="Новые сверху. ▮ 3:2→11 — упёрся в строку 3, ячейку 2, в ней стало 11 · ◎ 164п:1→1 — пойман пустым кольцом 164 (з — строкой для заполнения) · ↗ край — вышел наружу · ■ закрыт — вырез строки 1 в стороне · ⏹2–5 — встали кольца · ‖2–256 — прошёл щели этих строк. Наведи на запись — полностью, с ячейками у щелей"></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ◆ ОКТАЭДР (v0.396) — вся страница Октаэдра окном; строки поля ложатся гранью -->
+    <section class="win" id="w-okt" data-title="◆ Гранидус">   <!-- v0.407: общее имя тел (прежде «◆ Октаэдр») -->
+      <div class="wbody">
+        <div class="tools">
+          <button id="bOktSync" title="Строки поля — гранью тела: строка k — ряд k от вершины (k бит, короче — нулями, длиннее — лишнее не влезает), все грани одинаковые, низ — отражённый и инвертированный. Горит — меняются строки, меняется октаэдр; выключить — октаэдр живёт сам по себе">⇄ строки → грани</button>
+          <button id="bOktOpen" title="↗ Гранидус отдельной страницей, в новой вкладке (там своя память, строк поля нет)">↗</button>
+        </div>
+        <div id="oktBox"><iframe id="oktFr" title="Гранидус" allow="autoplay; fullscreen"></iframe><div id="oktShield" title="Щелчок — управлять Гранидусом (мышь, колесо); пока не щёлкнул, колесо листает окна"></div></div>
+      </div>
+    </section>
+
+    <!-- ✦ РАЗВЁРТКА ОКТАЭДРА (v0.398) — 8 граней на плоскости, строки поля гранью; шесть вариантов центра -->
+    <section class="win" id="w-razv" data-title="✦ Развёртка">
+      <div class="wbody">
+        <div class="tools">
+          <button id="bRazv3" title="Развёртка Зеркалидуса — треугольная пирамида и её зеркало, 6 граней (знак Zerkalius)">△ Зеркалидус</button>
+          <button id="bRazv4" title="Развёртка Четырёхгранидуса — октаэдр, 8 граней">◇ Октаэдр</button>
+          <div id="razvThumbs"></div>
+          <button id="bRazvOwn" title="＋ Своя развёртка: копия выбранной. На ней щелчок по треугольнику — его зеркала через все три ребра; щелчок у ребра — зеркало через это ребро; правый щелчок — убрать треугольник. Через основание зеркало меняет верх ↔ низ (цвет и биты), через бок — нет">＋ своя</button>
+          <button id="bRazvLbl" title="Подписи граней (U0–U3, D0–D3) и вершин T, B. Горит — видны">🏷 подписи</button>
+          <!-- v0.440: ◇ ромбы из кадров — ромбы Аниматрицы на парах граней Ui + Di, листаются; то же уходит в 3D Гранидуса -->
+          <button id="bRazvRomb" title="◇ Ромбы из кадров: поле строк режется на ромбы (как ◇ сетка в Code), каждый ромб — по горизонтальной диагонали: верх — на верхнюю грань Ui, низ — на нижнюю Di; пары граней берут ромбы подряд, и ромбы листаются как кадры. При идущей Аниматрице ромбы меняются вместе с волной. То же — на 3D-теле в окне «◆ Гранидус» (при «⇄ строки → грани»). Горит — включено">◇ ромбы из кадров</button>
+          <select id="razvRombS" title="Высота ромба в строках поля (как шаг ◇ сетки в Code); у половины — вдвое меньше рядов + 1"><option value="8">ромб 8</option><option value="16">ромб 16</option><option value="32">ромб 32</option><option value="64">ромб 64</option></select>
+          <label class="dim" title="Скорость: мс на кадр (сдвиг ромбов на один)">⏱ <input id="razvRombMs" type="range" min="30" max="3000" step="10"></label>
+          <button id="bRazvRombP" title="Пауза / дальше">⏸</button>
+          <button id="bRazvAx" title="Оси на развёртке: у октаэдра две грани с общим ребром — ромб, его дальние углы — противоположные вершины, концы оси; штрих через каждую склейку. Верх–Низ — светлая, E0–E2 — розовая, E1–E3 — зелёная; каждая вершина помечена точкой цвета своей оси. Горит — видны">✛ оси</button>
+        </div>
+        <canvas id="razvCv"></canvas>
+      </div>
+    </section>
+
+    <!-- △ СЕТКА (v0.432): «окно с этими треугольниками — сделать сцены: выделяю цветом какие-то, сохраняю сцену 1, потом 2…» -->
+    <section class="win" id="w-tri" data-title="△ Сетка">
+      <div class="wbody">
+        <div class="tools">
+          <span id="triPal"></span>
+          <!-- v0.437: рядов и треугольников в ряду — сколько влезает в окно; вместо полей «ряды / в ряду» — масштаб, ⌀ точки, толщина линии -->
+          <label class="dim" title="Масштаб сетки: сторона треугольника — от настоящей (как в кнопках, 1:1) до крупной">🔍 <input id="triS" type="range" min="13.8564" max="90" step="0.01"></label>
+          <button id="bTriS1" title="1:1 — настоящий размер (два ряда = кнопка 24 px); ещё раз — прежний масштаб">1:1</button>
+          <label class="dim" title="⌀ Диаметр новой точки ✦, px настоящего размера">⌀ <input id="triDotD" type="number" min="0.5" max="40" step="0.5"></label>
+          <label class="dim" title="═ Толщина новой линии ╱, px настоящего размера">═ <input id="triLW" type="number" min="0.5" max="20" step="0.5"></label>
+          <button id="bTriNum" title="Номера треугольников. Горит — видны">№</button>
+          <button id="bTriClr" title="Очистить сетку (сохранённые сцены не трогает)">✕ очистить</button>
+        </div>
+        <div class="tools">
+          <button id="bTriSave" title="Сохранить: в выбранную сцену (горит), а если ни одна не выбрана — новой">💾 сохранить</button>
+          <button id="bTriNew" title="Сохранить новой сценой — следующим номером">＋ сцена</button>
+          <span id="triScenes"></span>
+          <button id="bTriCopy" title="Все сцены — текстом в буфер обмена (вставить в сообщение Claude)">⧉ в буфер</button>
+        </div>
+        <div class="tools">   <!-- v0.436: фон и обводка — для сетки построения и живого вида вместе -->
+          <label class="dim" title="Фон сетки и живого вида (по умолчанию — по теме страницы)">фон <input id="triBg" type="color"></label>
+          <label class="dim" title="Цвет обводки закрашенных треугольников — в сетке и в живом виде">обводка <input id="triLn" type="color"></label>
+          <button id="bTriLn" title="Обводка закрашенных треугольников, по кругу: ▵ каждый — все рёбра; ⬡ по группам — только граница каждой группы касающихся треугольников одного цвета; без обводки. Пустые треугольники в сетке — всегда бледной сеткой">▵ обводка</button>
+          <button id="bTriOut" title="▦ Сетка вне групп: пустые треугольники — бледной сеткой (в сетке и в живом виде). Горит — видна">▦ вне групп</button>
+          <button id="bTriLiveDef" title="Фон и обводку — как были (по теме страницы)">↺</button>
+        </div>
+        <div class="tools" id="triGrp" hidden>   <!-- v0.437: выбранная ☝ группа — своя обводка, сетка внутри, символ -->
+          <span id="triGrpLab" class="dim"></span>
+          <label class="dim" title="Цвет обводки этой группы">обводка <input id="triGLn" type="color"></label>
+          <button id="bTriGIn" title="▦ Сетка внутри группы — рёбра между её треугольниками. Горит — видна">▦ внутри</button>
+          <label class="dim" title="Буква или символ посередине группы">символ <input id="triGTx" type="text" maxlength="12"></label>
+          <button id="bTriGDef" title="Снять свои настройки группы (обводка, сетка внутри, символ — как у всех)">↺</button>
+        </div>
+        <canvas id="triCv"></canvas>
+        <div id="triLive" title="Живьём: как сетка выглядит кнопками — в настоящем размере (высота 24 px); цвета — как у кнопок (серый — обычная, золотой — горящая, красный — стоп)"><canvas data-z="1"></canvas></div>
       </div>
     </section>
 
@@ -1899,8 +2127,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0395"></script>
-<script src="zz-ui.js?v=0395"></script>
+<script src="zz-core.js?v=0440"></script>
+<script src="zz-ui.js?v=0440"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

@@ -1,4 +1,4 @@
-<!-- Zerkalius Октаэдр — v0.043. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.069. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Октаэдр — v0.043</title>
+<title>Zerkalius Гранидус — v0.069</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -45,14 +45,21 @@
      тогда она проступает пунктиром — видно, куда можно бросить. Своя прокрутка: разделов много, а
      окно бывает низким. Снизу оставлено место под значок ⌂. */
   .dock{ position:fixed; top:12px; display:flex; flex-direction:column; gap:6px; width:196px;
-    max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:thin; }
+    max-height:calc(100vh - 70px); overflow-y:auto; scrollbar-width:none; }
+  /* v0.056, «скролл убери; если примагничивание делает высоту больше, чем окно влезает, — не магнитить»: полосы прокрутки у панелей нет
+     (колесо листает, если окно потом сузили); магнит не берёт раздел, с которым панель не влезла бы по высоте (см. SECS.fits) */
+  .dock::-webkit-scrollbar{ display:none; }
   #panel{ left:12px; }
   #panelR{ right:12px; top:40px; }
   .dock.empty{ display:none; }
   /* v0.030: пустая панель во время перетаскивания проступает на всю высоту — это и есть полоса магнита
      (см. SECS.dockUnder): видно, куда раздел прилипнет. */
-  body.tab-dragging .dock.empty{ display:flex; min-height:calc(100vh - 120px); border:1px dashed var(--line); border-radius:4px; }
-  .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; }
+  /* v0.062, по снимку пунктирного поля — «эти поля убери»: пустая панель больше не проступает пунктиром всё перетаскивание — только та, на
+     которую указывает магнит (светится, .drop-hover) */
+  body.tab-dragging .dock.empty.drop-hover{ display:flex; min-height:calc(100vh - 120px); border-radius:4px; }
+  .dock.drop-hover{ outline:2px solid var(--up); outline-offset:2px; border-radius:4px; box-shadow:0 0 16px var(--up); }
+  /* v0.046, «такое же примагничивание надо»: плавающий раздел прилипает к краям соседних разделов, панелей и окна — тот, к кому прилип, светится */
+  .tab-sec.snap, .dock.snap{ box-shadow:0 0 0 1px var(--up), 0 0 14px var(--up) !important; }
   /* РАЗДЕЛЫ (v0.026, запрос пользователя: «всё это меню распредели на группы кнопок, как в Layers и у
      остальных, чтобы можно передвигать»). Устроено как в Zerkalius Code: у раздела шапка «✥ имя ✕»,
      за неё раздел таскают — над панелью он встаёт между разделами там, где курсор, мимо панелей висит
@@ -100,6 +107,22 @@
   .set input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:11px; height:11px;
     border-radius:50%; background:var(--up); }
   .row{ display:flex; gap:4px; }
+  /* v0.047, «октаэдр — все виды разложи так же (малыми картинками)», «кнопки вида: сверху, снизу…»: шесть картинок-кнопок вида, по три в ряд */
+  #faceRow{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:3px; }
+  #faceRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
+  #faceRow .vw canvas{ width:100%; max-width:40px; height:auto; aspect-ratio:40 / 34; display:block; cursor:inherit; }
+  #edgeRow{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:3px; }
+  #edgeRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 1px 3px; text-align:center; font-size:10px; line-height:1.1; }
+  #edgeRow .vw canvas{ width:100%; max-width:40px; height:auto; aspect-ratio:40 / 34; display:block; cursor:inherit; }
+  /* v0.059, по снимку «Вида» с полосами прокрутки — «скролл»: сетки видов ужимаются по ширине раздела (прежде столбец не бывал уже
+     картинки и сетка выпирала вбок); у плавающих разделов, как у панелей (v0.056), полосы прокрутки нет — колесо листает */
+  #viewRow .vw, #faceRow .vw, #edgeRow .vw{ min-width:0; }
+  .tab-sec.floating{ scrollbar-width:none; }
+  .tab-sec.floating::-webkit-scrollbar{ display:none; }
+  #viewRow{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; }
+  #viewRow .vw{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 2px 3px; text-align:center; font-size:10px; line-height:1.1; }
+  #viewRow .vw canvas{ width:100%; max-width:52px; height:auto; aspect-ratio:52 / 40; display:block; cursor:inherit; }
+  #viewRow .vroll{ font-size:18px; line-height:1; text-align:center; padding:2px; }   /* v0.050: кувырок ↶ ↷ по бокам от «снизу» */
   /* v0.043: ноты До…Си — выключенная серая, включённая горит цветом своей ноты (--c), как в хабе */
   #noteRow{ flex-wrap:wrap; }
   #noteRow .note{ flex:1 0 40px; padding:5px 2px; font-weight:700; color:#7d8388; border-color:#4a5056; }
@@ -187,46 +210,101 @@
      Поэтому панель переезжает ВНИЗ отдельным листом: два столбца, своя прокрутка, ограничение по
      высоте и отступ под системную полосу (env(safe-area-inset-bottom) — вырез и «домашняя»
      полоска на iPhone). Кнопки крупнее: палец — не курсор. */
+  /* v0.068: в окне Zazerkalius (html.zzemb) узкого режима нет — ни листа снизу, ни ⚙; все разделы плавающие (см. SECS) */
   @media (max-width: 720px){
-    #ver{ font-size:10px; top:11px; }
-    #hint{ display:none; }
-    #gear{ display:block; }
+    :where(html:not(.zzemb)) #ver{ font-size:10px; top:11px; }
+    :where(html:not(.zzemb)) #hint{ display:none; }
+    :where(html:not(.zzemb)) #gear{ display:block; }
     /* v0.026: лист снизу — стопка разделов; кнопки внутри раздела по две в ряд, как раньше во всём
        листе. Правой панели и плавающих окон на телефоне нет: все разделы собираются в лист (см. SECS). */
-    #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
+    :where(html:not(.zzemb)) #panel{ left:0; right:0; bottom:0; top:auto; width:auto; z-index:2;
       display:flex; flex-direction:column; gap:6px;
       padding:9px 10px calc(10px + env(safe-area-inset-bottom));
       background:var(--panel); border-top:1px solid var(--line);
       max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-    #panel.hidden{ display:none; }
+    :where(html:not(.zzemb)) #panel.hidden{ display:none; }
     /* ⌂ «в Хаб» (v0.019) — с нижнего угла наверх, рядом с ⚙: внизу лист панели, значок лёг бы на него. */
-    body #zerkHubBtn{ top:8px; bottom:auto; left:58px; }
-    #panelR{ display:none !important; }
-    .tab-sec{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
-    .tab-sec > .set, .tab-sec > .cap, .tab-sec > .row, .tab-sec > #stepInfo, .tab-sec > .sec-head,
-    .tab-sec > #myBox{ grid-column:1 / -1; }
-    .sec-head{ cursor:default; }
-    #menuTabs{ top:50px; max-width:calc(100vw - 20px); }   /* ниже ⚙ и ⌂ в верхнем левом углу */
-    #stepInfo{ text-align:center; padding-bottom:2px; }
-    button{ padding:8px 10px; font-size:13px; }
-    .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
-    .set input[type=range]{ height:5px; }
-    .set input[type=range]::-webkit-slider-thumb{ width:17px; height:17px; }
+    :where(html:not(.zzemb)) body #zerkHubBtn{ top:8px; bottom:auto; left:58px; }
+    :where(html:not(.zzemb)) #panelR{ display:none !important; }
+    :where(html:not(.zzemb)) .tab-sec{ display:grid; grid-template-columns:1fr 1fr; gap:6px; align-content:start; }
+    :where(html:not(.zzemb)) .tab-sec > .set, :where(html:not(.zzemb)) .tab-sec > .cap, :where(html:not(.zzemb)) .tab-sec > .row, :where(html:not(.zzemb)) .tab-sec > #stepInfo, :where(html:not(.zzemb)) .tab-sec > .sec-head,
+    :where(html:not(.zzemb)) .tab-sec > #myBox{ grid-column:1 / -1; }
+    :where(html:not(.zzemb)) .sec-head{ cursor:default; }
+    :where(html:not(.zzemb)) #menuTabs{ top:50px; max-width:calc(100vw - 20px); }   /* ниже ⚙ и ⌂ в верхнем левом углу */
+    :where(html:not(.zzemb)) #stepInfo{ text-align:center; padding-bottom:2px; }
+    :where(html:not(.zzemb)) button{ padding:8px 10px; font-size:13px; }
+    :where(html:not(.zzemb)) .arr{ min-width:38px; padding:7px 4px; font-size:13px; }
+    :where(html:not(.zzemb)) .set input[type=range]{ height:5px; }
+    :where(html:not(.zzemb)) .set input[type=range]::-webkit-slider-thumb{ width:17px; height:17px; }
     /* На телефоне методичка занимает экран целиком: обрезать её рамкой там нечем и незачем. */
-    #help{ width:100vw; max-height:100vh; height:100%; border-radius:0; border:0;
+    :where(html:not(.zzemb)) #help{ width:100vw; max-height:100vh; height:100%; border-radius:0; border:0;
       padding:16px 16px calc(24px + env(safe-area-inset-bottom)); }
-    #help td:first-child{ width:104px; }
+    :where(html:not(.zzemb)) #help td:first-child{ width:104px; }
   }
+  /* v0.044: окно «◆ Октаэдр» в Zazerkalius (адрес ?zz) — значок «в Хаб» внутри окна не нужен, Хаб — у самой страницы */
+  html.zzemb #zerkHubBtn{ display:none !important; }
+  /* v0.045, по снимку окна «◆ Октаэдр» — «приведи группы кнопок и кнопки в стандарты кнопок Зазеркалиуса». Только в окне (?zz);
+     своя страница Октаэдра — как была. Кнопки — как в Zazerkalius: фон панели, скругление 4, шрифт 13 px системный, наведение — рамка
+     сиреневая, включённая — золотая рамка и надпись. Разделы — как группы конуса: рамка и фон своего цвета (13 % / 50 %), заголовок
+     прописными своим цветом. Надпись, версия и подсказка внизу в окне не показываются: имя — в шапке окна, подсказок на страницах не
+     делаем. Цвета тела (--up, --dn, …) не трогаются. */
+  html.zzemb{ --zbg:#0b0d12; --zp:#121620; --zp2:#171c28; --zl:#262d3d; --zt:#d8dde8; --zd:#7d8699; --zacc:#b98cf0; --zgold:#ffd166; }
+  html.zzemb body{ font:13px/1.4 system-ui, "Segoe UI", sans-serif; }
+  html.zzemb #title, html.zzemb #ver, html.zzemb #hint{ display:none !important; }
+  html.zzemb button{ background:var(--zp2); color:var(--zt); border:1px solid var(--zl); border-radius:4px; padding:3px 8px;
+    font:13px/1.25 system-ui, "Segoe UI", sans-serif; letter-spacing:0; text-align:center; white-space:nowrap; }
+  html.zzemb button:hover{ border-color:var(--zacc); color:var(--zt); }
+  html.zzemb button.act{ border-color:var(--zgold); color:var(--zgold); box-shadow:inset 0 0 0 1px var(--zgold); }
+  html.zzemb .row button{ padding:3px 2px; }
+  html.zzemb .arr{ padding:2px 5px; font-size:11px; color:var(--zd); }
+  html.zzemb .arr:active{ border-color:var(--zgold); color:var(--zgold); }
+  html.zzemb .tab-sec{ --gc:#6cb4ff; background:color-mix(in srgb, var(--gc) 13%, var(--zp)); border:1px solid color-mix(in srgb, var(--gc) 50%, transparent);
+    border-radius:6px; padding:3px 6px 6px; gap:4px; }
+  html.zzemb .tab-sec:hover, html.zzemb .tab-sec.floating{ border-color:var(--gc); }
+  /* v0.058, по снимку «Картины» с полосой прокрутки внизу — «нижний скролл»: ряд оснований ▽1 … ⬡6 с кнопками Зазеркалиуса был шире
+     раздела; кнопки ряда — компактнее, делят ширину поровну; горизонтальной прокрутки у разделов и панелей нет вовсе */
+  html.zzemb #baseRow{ gap:3px; }
+  html.zzemb #baseRow button{ flex:1 1 0; min-width:0; padding:3px 0; font-size:11.5px; letter-spacing:0; overflow:hidden; }
+  .tab-sec.floating, .dock{ overflow-x:hidden; }
+  html.zzemb .tab-sec[data-tab="pic"]{ --gc:#4fd1a0; }   html.zzemb .tab-sec[data-tab="view"]{ --gc:#6cb4ff; }
+  html.zzemb .tab-sec[data-tab="color"]{ --gc:#f0abfc; } html.zzemb .tab-sec[data-tab="notes"]{ --gc:#b98cff; }
+  html.zzemb .tab-sec[data-tab="rev"]{ --gc:#ff9a52; }   html.zzemb .tab-sec[data-tab="spin"]{ --gc:#ffd166; }   /* v0.060 */   html.zzemb .tab-sec[data-tab="links"]{ --gc:#ff6b8e; }
+  html.zzemb .sec-head{ color:var(--gc); font-size:10.5px; letter-spacing:.3px; text-transform:uppercase;
+    border-bottom-color:color-mix(in srgb, var(--gc) 35%, transparent); }
+  html.zzemb .set{ background:var(--zp2); border-color:var(--zl); border-radius:4px; padding:4px 7px 6px; }
+  html.zzemb .set label{ color:var(--zd); }
+  html.zzemb .set label b{ color:var(--zt); }
+  html.zzemb .set input[type=range]{ accent-color:var(--zacc); }
+  html.zzemb .set input[type=range]::-webkit-slider-thumb{ background:var(--zacc); }
+  html.zzemb .col{ background:var(--zp2); border-color:var(--zl); border-radius:4px; font:12px system-ui, "Segoe UI", sans-serif; }
+  html.zzemb .cap, html.zzemb #stepInfo, html.zzemb #myInfo{ color:var(--zd); }
+  html.zzemb #myBits{ background:var(--zbg); border-color:var(--zl); border-radius:4px; }
+  html.zzemb #myBits:focus{ border-color:var(--zacc); }
+  /* v0.046, «меню кнопки тоже надо ромбами делать» (как ноты в Хабе): вкладки в окне — ромбы зигзагом, ребро к ребру: каждый следующий
+     заходит на полромба влево и чередуется вверх-вниз на полвысоты. В ромбе — значок, имя — в подсказке. Ромб — clip-path, нажимается
+     только он; рамка — фон кнопки, середина — тёмный ::before. Включённая вкладка — золотая, наведение — сиреневое. */
+  html.zzemb #menuTabs{ --rw:46px; --rh:32px; background:none; border:0; border-radius:0; overflow:visible; flex-wrap:nowrap; gap:0;
+    min-width:0; max-width:none; padding-bottom:calc(var(--rh) / 2); top:4px; }
+  html.zzemb #menuTabs button{ position:relative; isolation:isolate; width:var(--rw); height:var(--rh); padding:0; margin:0 0 0 calc(var(--rw) / -2);
+    border:0; border-radius:0; box-shadow:none; background:#3a4256; color:var(--zd); font-size:15px; line-height:1; text-align:center;
+    clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  html.zzemb #menuTabs button:first-child{ margin-left:0; }
+  html.zzemb #menuTabs button:nth-of-type(even){ transform:translateY(calc(var(--rh) / 2)); }
+  html.zzemb #menuTabs button::before{ content:""; position:absolute; inset:1.5px; z-index:-1; background:var(--zp);
+    clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  html.zzemb #menuTabs button:hover{ background:var(--zacc); color:var(--zt); }
+  html.zzemb #menuTabs button.act{ background:var(--zgold); color:var(--zgold); }
+  html.zzemb #menuTabs button.act::before{ background:color-mix(in srgb, var(--zgold) 14%, var(--zp)); }
 </style>
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.043</div>
+<div id="ver">v0.069</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
   <h2>zerkalius</h2>
-  <p class="sub">Октаэдр — методичка. Версия страницы стоит в правом верхнем углу.</p>
+  <p class="sub">Гранидус (прежде «Октаэдр», v0.054) — методичка. Версия страницы стоит в правом верхнем углу.</p>
 
   <h3>Что это</h3>
   <p>Знак Zerkalius, показанный телом: пирамида и её зеркало, сложенные основаниями. Общее
@@ -418,7 +496,29 @@
     своей грани (ряд за рядом от вершины; 1 — звучит, 0 — пауза, высота — по трём битам с этого места) и звучит от своей ноты, поэтому
     несколько включённых дают созвучие. Нота, у которой грани нет, читает экватор — нижние ряды верхних граней по кругу (у бипирамиды
     из 3 граней это Си, внутреннее основание). Бит, который сейчас звучит, горит на теле цветом своей ноты. Темп — ползунком.</li>
-    <li><b>⌖ Вид сверху</b> — вернуть камеру в исходное положение.</li>
+    <li><b>▰ Подсветка граней</b> (v0.065) — полупрозрачная заливка граней вкл / выкл; без неё тело — одни рёбра и биты.</li>
+    <li><b>□ △ ▷ Клетки</b> (v0.061) — форма бита в режиме «⠿ Точки»: квадрат, треугольник с горизонтальным основанием (остриё к вершине
+    грани), треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально. Включает и сам режим точек.</li>
+    <li><b>Склейка разделов</b> (v0.059) — плавающие разделы, прилипшие один под другим, едут вместе, если тянуть верхний; нижний — отрывается.</li>
+    <li><b>Совпадения</b> (v0.058) — строка под видами, на ходу: вершины, рёбра, грани — всего → различимо в нынешнем виде (рёбра торцом —
+    точкой, грани ребром — линией), и оси — сколько видно торцом и сколько легло на ребро. Считается по линии взгляда, без перспективы.</li>
+    <li><b>Ребро на ребро</b> (v0.057) — картинки «×N» под видами на грань: виды, где рёбер совпадает больше всего (легли на одну прямую
+    или видны торцом), N — сколько совпадений. Считаются для нынешнего тела и пересчитываются при смене основания.</li>
+    <li><b>Щелчок по полю</b> (v0.055) — мимо битов, не сдвигая мышь: вращение стоп, ещё щелчок — снова крутится (как «⟳ Вращение» и пробел).
+    Потянул — это поворот, вращение не переключается. По биту — закрепление, как прежде.</li>
+    <li><b>✛ Оси</b> (v0.053) — оси через центр от вершины к противоположной (штрихом: Верх–Низ, у чётного основания и диаметры экватора;
+    у октаэдра их три) и внутренние диагонали — от вершины к вершине сквозь тело, не по ребру (точками: у 5 граней — диагонали
+    пятиугольника, у 6 — короткие). У треугольной бипирамиды ось одна — Верх–Низ.</li>
+    <li><b>Виды</b> (v0.047; v0.049 — розой ветров) — картинки в «Виде», как на компасе: СЗ С СВ / З сверху В / ЮЗ Ю ЮВ и «снизу». «Ю» — зритель на
+    юге. С С, В, Ю, З взгляд — на вершину, с СВ, ЮВ, ЮЗ, СЗ — на ребро; сверху — север наверху. На каждой — тело с этой стороны
+    (верхние рёбра цветом верха, нижние — низа, экватор — ярче). Щелчок — тело плавно поворачивается так и вращение останавливается,
+    чтобы вид держался; «⟳ Вращение» — снова крутить. С рёбер (СВ, ЮВ, ЮЗ, СЗ) переднее ребро ложится на заднее.
+    <b>◭ Грань</b> (v0.051) — выбери грань (кнопка и щелчок по грани или Alt + щелчок), и каждое нажатие: 1-е — прямо на неё, она ближе
+    всех; 2-е — с обратной стороны, она дальше всех, за другими гранями. Выбранная обведена светом, у задней — пунктир. Правый щелчок по
+    кнопке — выбрать другую.
+    По бокам от «снизу» — <b>↶ ↷ кувырок</b> (v0.050): картинка поворачивается на 90° вокруг взгляда, наверх встаёт соседняя вершина — так
+    получаются все положения (Ю посередине и В наверху, и т.д.). Вид из розы крен снимает.</li>
+    <li><b>Shift + тянуть</b> (v0.048) — крутить только по горизонтали, наклон стоит. Shift + щелчок без сдвига — по-прежнему правка бита.</li>
     <li><b>☯ Дзен</b> (первая кнопка в полосе меню сверху) — убрать с экрана всё, кроме тела: панель, заголовок, версию, подсказку.
     Вход и выход: кнопка, клавиша Z, щелчок колесом мыши, а из Дзена ещё и Escape. Состояние не
     запоминается — страница всегда открывается с панелью.</li>
@@ -441,7 +541,7 @@
 <div id="menuTabs">
   <!-- v0.033: Дзен — отдельной кнопкой в полосе, слева от названия (запрос пользователя) -->
   <button id="bZen" title="Z или щелчок колесом мыши. Прячет всё, кроме тела">☯ Дзен</button>
-  <span id="title">zerkalius · октаэдр</span>
+  <span id="title">zerkalius · гранидус</span>
   <button id="bLayout" title="Раскладка по умолчанию: все разделы открыты и стоят на своих местах в левой и правой панели">↺</button>
   <button id="bHelp" title="Методичка — H или F1">📖</button>
 </div>
@@ -480,24 +580,13 @@
       <button class="arr" data-for="sRows" data-d="1" title="На шаг больше; выше 32 — только так, до 256 (держать — быстро)">►</button>
     </div>
   </div>
-  </div>
-  <div class="tab-sec" data-tab="view" data-title="👁 Вид">
-  <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
-  <!-- v0.032: скорость — сразу под кнопкой вращения (запрос пользователя) -->
-  <div class="set">
-    <label>Скорость вращения: <b id="vSpeed">42</b></label>
-    <div class="srow">
-      <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
-      <input type="range" id="sSpeed" min="0" max="160" step="2" value="42">
-      <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
-    </div>
-  </div>
+  <!-- v0.063, по снимкам «Вида» и «Цветов» — «это в Картину всё», «туда же»: биты, точки и клетки, рёбра, размер цифр, свечение и цвета — здесь -->
   <button id="bDig" class="act" title="D">01 Биты</button>
   <button id="bDots" title="P. Бит — клетка, грань — картинка: для большой плотности, до 256 рядов">⠿ Точки</button>
+  <button id="bDotShape" title="Форма клетки бита в режиме «⠿ Точки», по кругу: □ квадрат → △ треугольник с горизонтальным основанием (остриё к вершине грани) → ▷ треугольник с вертикальным основанием (остриё вдоль ряда). У нижних граней — зеркально">□ Клетки</button>
   <button id="bEdges" class="act" title="E. Все рёбра тела, и экватор тоже">◇ Рёбра</button>
   <button id="bEdge" class="act">△ Скрытые рёбра</button>
-  <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
-  <button id="bReset">⌖ Вид сверху</button>
+  <button id="bFill" class="act" title="Подсветка граней: полупрозрачная заливка граней цветом верха и низа (в раскраске «каждая своим» — цветом грани) и внутреннего основания. Выключить — грани прозрачные, остаются рёбра и биты">▰ Подсветка граней</button>
   <div class="set">
     <label>Размер цифр: <b id="vSize">13</b></label>
     <div class="srow">
@@ -514,13 +603,39 @@
       <button class="arr" data-for="sGlow" data-d="1" title="Ярче (держать — быстро)">►</button>
     </div>
   </div>
-  </div>
-  <div class="tab-sec" data-tab="color" data-title="🎨 Цвета">
   <button id="bTheme" title="T">🎨 Зелень</button>
   <div class="row">
     <label class="col" title="Цвет нулей. Выбор цвета включает схему «Свои цвета»">0 <input type="color" id="c0" value="#4a78ff"></label>
     <label class="col" title="Цвет единиц. Выбор цвета включает схему «Свои цвета»">1 <input type="color" id="c1" value="#f2f5fa"></label>
   </div>
+  </div>
+  <!-- v0.060, по снимку «⟳ Вращение» и скорости — «отдельное»: вращение — своим разделом, из «Вида» -->
+  <div class="tab-sec" data-tab="spin" data-title="⟳ Вращение">
+  <button id="bSpin" class="act" title="Пробел">⟳ Вращение</button>
+  <!-- v0.032: скорость — сразу под кнопкой вращения (запрос пользователя) -->
+  <div class="set">
+    <label>Скорость вращения: <b id="vSpeed">42</b></label>
+    <div class="srow">
+      <button class="arr" data-for="sSpeed" data-d="-1" title="На шаг меньше (держать — быстро)">◄</button>
+      <input type="range" id="sSpeed" min="0" max="160" step="2" value="42">
+      <button class="arr" data-for="sSpeed" data-d="1" title="На шаг больше (держать — быстро)">►</button>
+    </div>
+  </div>
+  </div>
+  <div class="tab-sec" data-tab="view" data-title="👁 Вид">
+  <button id="bDirs" class="act" title="C">🧭 Стороны света</button>
+  <button id="bAxes" class="act" title="Оси — через центр от вершины к противоположной (штрихом) и внутренние диагонали — от вершины к вершине сквозь тело, не по ребру (точками)">✛ Оси</button>
+  <!-- v0.066, по снимку «⌖ Вид сверху» — «это лишняя»: кнопки нет (настоящий вид сверху — в розе видов) -->
+  <!-- v0.047: виды — картинками; щелчок — тело плавно встаёт так, вращение останавливается -->
+  <div class="row" id="viewRow"></div>
+  <!-- v0.050, «три ребра к нам»: виды прямо на грань — ▲ верхние слева, ▼ нижние справа, по сторонам света -->
+  <div class="row" id="faceRow"></div>
+  <!-- v0.057, «вот такие виды, где по максимуму возможного ребро на ребро» — считаются для нынешнего тела -->
+  <div class="row" id="edgeRow"></div>
+  <!-- v0.058, «также подсчёт всех вершин, граней — какие совпали при виде на меня», «и с осями»: счёт для нынешнего вида, на ходу -->
+  <div class="cap" id="coinInfo" title="Что совпало в нынешнем виде (по линии взгляда, без перспективы, с небольшим допуском): всего → различимо. Рёбра торцом — видны точкой; грани ребром — видны линией; оси торцом — точкой, по ребру — легли на ребро"></div>
+  <!-- v0.051, «кнопку: выделяю грань — первое нажатие — вид, она ближе, второе — она дальше, за другими гранями» -->
+  <button id="bFaceGo" title="Грань к себе / от себя. Выбрать грань: нажми кнопку и щёлкни грань на теле (или Alt + щелчок по грани в любой момент). Потом каждое нажатие: 1-е — прямо на неё, она ближе всех; 2-е — с обратной стороны, она дальше всех, за другими гранями; и так по кругу. Правый щелчок — выбрать другую">◭ Грань…</button>
   </div>
   <!-- v0.043, «каждую грань в свой цвет — 7-я внутренняя, варианты раскраски», «и ноты», «туда внедрить звук» -->
   <div class="tab-sec" data-tab="notes" data-title="🎵 Ноты">
@@ -596,9 +711,16 @@ const T = [0, 1, 0], B = [0, -1, 0];
    случай, NB = 4: две четырёхгранные пирамиды. При NB = 3 выходит треугольная бипирамида, 5 и 6 — пяти- и шестигранные.
    Углы основания — по кругу радиуса 1 в плоскости зеркала Y = 0, первый на +X; при NB = 4 это ровно прежние четыре
    точки. Всё, что было «на четыре», теперь «на NB»: грани, рёбра, картины бит по слотам, нити, свои биты. */
-let NB = 4;
+let NB = 3;   // v0.052, «Зеркалидус — это Три»: знак — треугольная пирамида и её зеркало; основание по умолчанию — 3 (своё сохранённое — как было)
 const EQ = [];
-const NB_NAME = { 1: "одна грань", 2: "крест из двух ромбов", 3: "треугольная бипирамида", 4: "октаэдр", 5: "пятигранная бипирамида", 6: "шестигранная бипирамида" };
+/* v0.044, «весь Октаэдр в Зазеркалье, как одно из окон, наравне с Конусом»: страница с ?zz открыта окном внутри Zazerkalius.
+   Своя память (ключи с «-zz»): настройки окна не трогают отдельную страницу Октаэдра, и наоборот. Строки поля Zazerkalius
+   приходят сообщением zz-rows и ложатся гранью (см. zzRows в конце). */
+const ZZ_EMB = /[?&]zz(=|&|$)/.test(location.search);
+if (ZZ_EMB) document.documentElement.classList.add("zzemb");
+/* v0.054, «названия пока оставим как-нибудь, замени на общее название»: страница — «Гранидус» (грань + «-дус», «дуо» — с зеркальной
+   половиной), тела — N-гранидус по числу граней у половины; знак Zerkalius — Зеркалидус (3). Файл и адрес — прежние. */
+const NB_NAME = { 1: "Одногранидус — ромб", 2: "Двугранидус — крест из двух ромбов", 3: "Зеркалидус — треугольная бипирамида", 4: "Четырёхгранидус — октаэдр", 5: "Пятигранидус — пятигранная бипирамида", 6: "Шестигранидус — шестигранная бипирамида" };
 /* v0.038: 2 и 1 грань (запрос пользователя «также надо 2 и 1 грань»). Тела уже нет — плоский ромб: верхний треугольник и
    его зеркало вниз, в плоскости Z = 0. Основание — отрезок из двух точек (±X). 1 грань — одна картина, и она
    видна с обеих сторон (с оборота — зеркально), как на стекле.
@@ -668,7 +790,7 @@ function buildBody(n){
     else if (nP > 2 || s === 0) EDGES.push({ a: EQ[s], b: EQ[(s + 1) % nP], kind: "eq" });   // у отрезка ребро одно
   }
 }
-buildBody(4);
+buildBody(3);   // v0.052
 
 /* ═══ КАРТИНА БИТ ═════════════════════════════════════════════════════════════════════════════
    Биты лежат рядами, ПАРАЛЛЕЛЬНЫМИ экватору: ряд 0 — у самой вершины (один бит), ряд r — r+1 бит.
@@ -685,6 +807,7 @@ let ROWS = 13, DIG = 13, SPEED = 42, GLOW = 0;   // v0.023: свечение п�
    Значение ползунка не трогаем: вернулись к 32 и ниже — свечение снова то, что было выставлено. */
 const GLOW_ROWS = 32;
 let bits = [];
+let botBits = null;   // v0.069: свои биты нижних граней (ромбы из кадров Zazerkalius); null — низ = инверсия верха
 /* СВОИ БИТЫ (v0.020, запрос пользователя: «нужна возможность свои биты вписывать»).
    myBits — вписанная строка из одних 0 и 1; пустая — картина случайная, как было всегда.
    Раскладка — по порядку чтения: грань за гранью (0…3), в грани ряд за рядом от вершины, в ряду слева
@@ -720,7 +843,7 @@ let stepNo = 0, stillPct = null;
    нулю, счётчик снова покажет 0, но память-то набрана — гасить её в этот момент было бы враньём. */
 let memOn = false;
 function rollBits(){
-  bits = []; keep = []; dotVer++;
+  bits = []; keep = []; botBits = null; dotVer++;   // v0.069: новая картина — низ снова зеркало верха
   const src = myBits;   // v0.020: вписанные свои биты; пусто — случайные
   let i = 0;
   for (let s = 0; s < NB; s++) {   // v0.034: слотов столько, сколько граней у основания
@@ -834,6 +957,12 @@ let showDirs = true;
    ЦВЕТ. 1 горит цветом своей половины, 0 — тёмный (DOT_DIM): у цифры 0 и 1 различает сам знак, а у
    клетки — только яркость. В схеме «Свои цвета» — цвета 0 и 1 как есть. Память и закрепления — как у цифр. */
 let dotMode = false;
+/* v0.061, по снимку режима точек — «из треугольников тоже — 2 версии, гориз и верт основания»: форма клетки бита — dotShape: 0 — квадрат
+   (как было), 1 — треугольник с горизонтальным основанием, остриём к вершине грани (у нижней половины — зеркально, остриём к низу),
+   2 — с вертикальным основанием, остриём вдоль ряда. Сетка та же: клетка ряда r, бита k — прежний прямоугольник (u ∈ [k, k+1), ряд ∈ [r,
+   r+1)), треугольник вписан в него; центры и выбор бита — прежние. */
+let dotShape = 0;
+const DOT_SHAPE_TXT = ["□ Клетки", "△ Клетки", "▷ Клетки"];
 const DOT_TEX = 512, DOT_DIM = 0.22, DOT_GAP = 0.12;
 let dotFaces = [];   // грани, нарисованные последним кадром в режиме точек, — для клика и наведения
 const DIRS = ["В", "Ю", "З", "С"], DIR_OUT = 1.16;
@@ -884,7 +1013,7 @@ function pickAt(mx, my){
    Пока клетка крупная (SS ≥ 4), у неё зазор DOT_GAP с каждой стороны — видно, что это точки; на 256 рядах
    клетка в 2 пикселя, и зазор съел бы картину целиком — там клетки идут сплошь. */
 function dotTexture(f, cUp, cDn, cMem, cPin){
-  const sig = dotVer + "|" + ROWS + "|" + memOn + "|" + bitCol + "|" + col0 + col1 + cUp + cDn + cMem + cPin;
+  const sig = dotVer + "|" + ROWS + "|" + memOn + "|" + bitCol + "|" + col0 + col1 + cUp + cDn + cMem + cPin + "|" + dotShape;   // v0.061: и форма клетки
   if (f._dot && f._dot.sig === sig) return f._dot.cv;
   const N = ROWS, SS = Math.max(1, Math.floor(DOT_TEX / N)), T = N * SS;
   const cvT = (f._dot && f._dot.cv) || document.createElement("canvas");
@@ -896,7 +1025,7 @@ function dotTexture(f, cUp, cDn, cMem, cPin){
   const col = new Uint32Array(N * (N + 1) / 2);
   const half = f.up ? CU : CD, face = bits[f.slot], mem = keep[f.slot];
   for (let r = 0, i = 0; r < N; r++) for (let k = 0; k <= r; k++, i++) {
-    const val = f.up ? face[r][k] : (face[r][k] ^ 1);
+    const val = f.up ? face[r][k] : (botBits ? botBits[f.slot][r][k] : (face[r][k] ^ 1));   // v0.069
     let c = bitCol ? (val ? C1 : C0) : half;
     if (!bitCol && !val) c = [c[0] * DOT_DIM | 0, c[1] * DOT_DIM | 0, c[2] * DOT_DIM | 0];
     let al = 255;
@@ -917,7 +1046,12 @@ function dotTexture(f, cUp, cDn, cMem, cPin){
       const X = (pxl + 0.5) / SS;
       if (X > Y) break;                                  // правее диагонали — вне треугольника
       const u = X * (r + 1) / Y, k = Math.min(r, Math.floor(u));
-      if (gap) { const fx = u - k; if (fx < gap || fx > 1 - gap) continue; }
+      if (dotShape) {   // v0.061: треугольник, вписанный в клетку (fx — поперёк ряда по биту, fy — от вершины грани)
+        const fx = u - k, g = gap, a = dotShape === 1 ? fy : 1 - fx, b = dotShape === 1 ? fx : fy;
+        if (a < g || a > 1 - g) continue;
+        const t = (a - g) / (1 - 2 * g);
+        if (Math.abs(b - 0.5) > 0.5 * t - g * 0.5) continue;
+      } else if (gap) { const fx = u - k; if (fx < gap || fx > 1 - gap) continue; }
       px[row + pxl] = col[base + k];
     }
   }
@@ -1006,6 +1140,12 @@ function bitPoint(f, r, k){
    зеркала (Y) и pitch вокруг горизонтали. Перспектива простая, в одно деление: чем дальше точка,
    тем меньше её масштаб, — этого хватает, чтобы объём читался, и ничего лишнего считать не надо. */
 let yaw = 0.6, pitch = -0.42, zoom = 1, spin = true, showDigits = true, showHidden = true;
+/* v0.050, «когда Ю посередине, В — верх, тоже все»: КРЕН — поворот картинки вокруг взгляда (после поворота и наклона). Им наверх встаёт
+   любая вершина: кнопки ↶ ↷ под розой видов крутят на 90°. Вращение (spin) по-прежнему вокруг оси тела Верх–Низ — с креном она на экране
+   наклонена, так и должно быть. Мышь с креном ведёт себя как без него: сдвиг пересчитывается в повёрнутую картинку. */
+let roll = 0;
+let showFill = true;   // v0.065: подсветка (заливка) граней — вкл / выкл
+let showAxes = true;   // v0.053: оси и внутренние диагонали (см. drawAxes)
 // v0.031: все рёбра разом (запрос: «кнопку скрытия рёбер»). «△ Скрытые рёбра» прячет только дальние.
 let showEdges = true;
 const CAM = 4.2;
@@ -1017,7 +1157,9 @@ function rot(p){
   const z = -p[0] * sy + p[2] * cy;
   const y = p[1] * cx - z * sx;
   const z2 = p[1] * sx + z * cx;
-  return [x, y, z2];
+  if (!roll) return [x, y, z2];
+  const cr = Math.cos(roll), sr = Math.sin(roll);   // v0.050: крен
+  return [x * cr - y * sr, x * sr + y * cr, z2];
 }
 const cv = document.getElementById("cv");
 const ctx = cv.getContext("2d");
@@ -1074,7 +1216,7 @@ const sndOn = new Set(), headPos = new Map();
 const sndHz = (deg) => { const P = [0, 2, 4, 7, 9], o = Math.floor(deg / 5); return 110 * Math.pow(2, (P[deg % 5] + 12 * o) / 12); };
 function noteSeq(n){   // что читает нота n: { len, at(i) → { f, r, k, val } }
   const FL = noteFaces(), T = ROWS * (ROWS + 1) / 2;
-  const valOf = (f, r, k) => { const raw = bits[f.slot] && bits[f.slot][r] ? bits[f.slot][r][k] : 0; return f.up ? raw : (raw ^ 1); };
+  const valOf = (f, r, k) => { const raw = bits[f.slot] && bits[f.slot][r] ? bits[f.slot][r][k] : 0; return f.up ? raw : (botBits && botBits[f.slot] && botBits[f.slot][r] ? botBits[f.slot][r][k] : (raw ^ 1)); };   // v0.069
   if (n < FL.length) { const f = FL[n];
     return { len: T, at: (i) => { i = ((i % T) + T) % T; const r = Math.floor((Math.sqrt(8 * i + 1) - 1) / 2), k = i - r * (r + 1) / 2; return { f, r, k, val: valOf(f, r, k) }; } }; }
   const tops = FTOP.slice(0, NB).filter(Boolean), L = tops.length * ROWS;
@@ -1156,14 +1298,14 @@ function draw(){
   shown.sort((a, b) => a.depth - b.depth);
 
   // v0.043: внутреннее основание (плоскость зеркала) — при раскраске граней рисуется полупрозрачным своим цветом, под лицевыми гранями
-  if (faceMode && NB >= 3) {
+  if (faceMode && NB >= 3 && showFill) {   // v0.065: и основание — с подсветкой граней
     ctx.beginPath();
     EQ.forEach((v, i) => { const q = project(v); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
     ctx.closePath(); ctx.fillStyle = innerCol(); ctx.globalAlpha = 0.16; ctx.fill(); ctx.globalAlpha = 1;
   }
   // 1. Заливка лицевых граней — еле заметная, чтобы биты не висели в пустоте.
   for (const s of shown) {
-    if (!s.front) continue;
+    if (!s.front || !showFill) continue;   // v0.065: «подсветку граней — откл / вкл»
     ctx.beginPath();
     ctx.moveTo(s.P[0].x, s.P[0].y); ctx.lineTo(s.P[1].x, s.P[1].y); ctx.lineTo(s.P[2].x, s.P[2].y);
     ctx.closePath();
@@ -1339,7 +1481,7 @@ function draw(){
       for (let r = 0; r < ROWS; r++) {
         for (let k = 0; k <= r; k++) {
           const raw = bits[f.slot][r][k];
-          const val = f.up ? raw : (raw ^ 1);
+          const val = f.up ? raw : (botBits ? botBits[f.slot][r][k] : (raw ^ 1));   // v0.069
           const rm = bitCol ? (val ? ramp1 : ramp0) : rmp;   // v0.026: цвет по значению или по половине
           const p = project(bitPoint(f, r, k));
           const size = DIG * p.k * zoom * (Math.min(W, HGT) / 700);
@@ -1400,7 +1542,9 @@ function draw(){
     for (const [n, h] of headPos) {
       if (!h || h.r >= ROWS) continue;
       const q = project(bitPoint(h.f, h.r, h.k)), rad = Math.max(3, DIG * 0.55 * q.k * zoom * (Math.min(W, HGT) / 700));
-      ctx.globalAlpha = fr.get(h.f) ? 1 : 0.35; ctx.fillStyle = NOTE_COL[n]; ctx.shadowColor = NOTE_COL[n]; ctx.shadowBlur = 12;
+      // v0.064, по снимку головки на нуле — «пусть на нулях не светится, а бледным будет»: на 1 — горит со свечением, на 0 — бледная, без свечения
+      const on = !!h.val;
+      ctx.globalAlpha = (fr.get(h.f) ? 1 : 0.35) * (on ? 1 : 0.28); ctx.fillStyle = NOTE_COL[n]; ctx.shadowColor = NOTE_COL[n]; ctx.shadowBlur = on ? 12 : 0;
       ctx.beginPath(); ctx.arc(q.x, q.y, rad, 0, 6.2832); ctx.fill();
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
@@ -1513,10 +1657,15 @@ cv.addEventListener("pointermove", (e) => {
     return;
   }
   if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
-  yaw += (e.clientX - lastX) * 0.008;
+  // v0.050: с креном сдвиг мыши — в повёрнутую картинку (без крена — как было: вправо — yaw, вниз — наклон)
+  const ddx = e.clientX - lastX, ddy = e.clientY - lastY, rc = Math.cos(roll), rs = Math.sin(roll);
+  const mX = ddx * rc - ddy * rs, mY = ddx * rs + ddy * rc;
+  yaw += mX * 0.008;
   // Наклон зажат чуть меньше прямого угла: ровно с ребра октаэдр вырождается в линию, и
   // смотреть там не на что.
-  pitch = Math.max(-1.45, Math.min(1.45, pitch - (e.clientY - lastY) * 0.008));
+  // v0.048, «с зажатым Shift — кручение по горизонтали только»: с Shift наклон не трогается (Shift + щелчок без сдвига — по-прежнему правка
+  // бита). Предел — не меньше нынешнего наклона: после вида ровно сверху / снизу (90°) тело больше не прыгает на 83° при первом движении.
+  if (!e.shiftKey) { const lim = Math.max(1.45, Math.abs(pitch)); pitch = Math.max(-lim, Math.min(lim, pitch - mY * 0.008)); }
   lastX = e.clientX; lastY = e.clientY;
 });
 // Положение тела запоминается тоже — вернувшись на страницу, застаёшь её той же стороной.
@@ -1526,7 +1675,11 @@ const stopDrag = (e) => {
   if (pts.size < 2) pinchD = 0;
   // Отпустили единственный палец, не сдвинув, — это клик по биту. Ищем ближайшую цифру там же,
   // где её ищет наведение, и по тому же списку: что нарисовано, то и берётся.
-  if (wasLast && !moved && e) {
+  if (wasLast && !moved && e && (faceArm || e.altKey)) {   // v0.051: выбор грани для «◭ Грань»
+    const r0 = cv.getBoundingClientRect(), fh = faceAt(e.clientX - r0.left, e.clientY - r0.top);
+    if (fh) { selFace = { slot: fh.slot, up: fh.up }; faceNext = 0; }
+    faceArm = false; faceUi();
+  } else if (wasLast && !moved && e) {
     const rect = cv.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const best = pickAt(mx, my);   // v0.031: и в режиме точек
@@ -1548,6 +1701,11 @@ const stopDrag = (e) => {
         dotVer++;
         syncUI();
       }
+    } else {
+      /* v0.055, «клик по полю — остановка вращения, и старт так же, но без перемещения — только если клик»: щелчок мимо битов (сдвиг
+         мыши не больше 4 px — иначе это поворот тела) — вращение стоп / пуск, как «⟳ Вращение» и пробел. По биту — как было: закрепить,
+         Shift — править, Alt — выбрать грань. */
+      spin = !spin; bSpin.classList.toggle("act", spin); save();
     }
   }
   // Второй палец подняли, первый остался — поворот подхватывается с ЕГО текущего места, иначе
@@ -1578,6 +1736,10 @@ bDig.onclick  = () => { showDigits = !showDigits; bDig.classList.toggle("act", s
 bEdge.onclick = () => { showHidden = !showHidden; bEdge.classList.toggle("act", showHidden); };
 bDirs.onclick = () => { showDirs = !showDirs; bDirs.classList.toggle("act", showDirs); };   // v0.029
 bDots.onclick = () => { dotMode = !dotMode; bDots.classList.toggle("act", dotMode); };      // v0.031
+const bDotShape = document.getElementById("bDotShape");   // v0.061
+const bFill = document.getElementById("bFill");   // v0.065
+bFill.onclick = () => { showFill = !showFill; bFill.classList.toggle("act", showFill); save(); };
+bDotShape.onclick = () => { dotShape = (dotShape + 1) % 3; bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); if (!dotMode) bDots.onclick(); save(); };
 bEdges.onclick = () => { showEdges = !showEdges; bEdges.classList.toggle("act", showEdges); }; // v0.031
 bRoll.onclick = () => { myBits = ""; sierp = false; rollBits(); myInfoUpd(); syncUI(); save(); };
 // v0.035: Серпинский — вкл/выкл; включение снимает свои биты (картина одна), выключение даёт новую случайную
@@ -1599,14 +1761,14 @@ bTheme.onclick = () => {
   else document.documentElement.setAttribute("data-theme", "green");
   syncUI();
 };
-bReset.onclick = () => { yaw = 0.6; pitch = -0.42; zoom = 1; save(); };
+if (bReset) bReset.onclick = () => { yaw = 0.6; pitch = -0.42; roll = 0; zoom = 1; save(); };   // v0.050: и крен; v0.066 — кнопки нет
 
 /* ═══ ПОЛЗУНКИ И ПАМЯТЬ БРАУЗЕРА ══════════════════════════════════════════════════════════════
    Настройки переживают перезагрузку — как и в самом приложении, где всё живёт в памяти браузера и
    сервера нет вовсе. Ключ один на всю страницу: набор маленький, дробить его не на что.
    Чтение обёрнуто в try: в приватном окне и при запрете на данные сайта localStorage бросает
    исключение, и без обёртки страница не поднялась бы вообще. */
-const KEY = "zerkalius-oktaedr-v1";
+const KEY = "zerkalius-oktaedr-v1" + (ZZ_EMB ? "-zz" : "");   // v0.044: у окна в Zazerkalius — своя
 const sRows = document.getElementById("sRows"), sSize = document.getElementById("sSize"),
       sSpeed = document.getElementById("sSpeed"), sGlow = document.getElementById("sGlow");
 const vRows = document.getElementById("vRows"), vSize = document.getElementById("vSize"),
@@ -1614,7 +1776,7 @@ const vRows = document.getElementById("vRows"), vSize = document.getElementById(
 function save(){
   try {
     localStorage.setItem(KEY, JSON.stringify({
-      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, zoom, yaw, pitch, stepOp, TICK,
+      ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, dotShape, zoom, yaw, pitch, roll, showAxes, showFill, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
       theme: document.documentElement.getAttribute("data-theme") || ""
     }));
@@ -1637,9 +1799,13 @@ function load(){
   if (typeof o.showEdges === "boolean") showEdges = o.showEdges;
   if (typeof o.showDirs === "boolean") showDirs = o.showDirs;
   if (typeof o.dotMode === "boolean") dotMode = o.dotMode;
+  if (o.dotShape >= 0 && o.dotShape <= 2) dotShape = o.dotShape | 0;   // v0.061
   if (o.zoom > 0.4 && o.zoom < 3.1) zoom = o.zoom;
   if (typeof o.yaw === "number") yaw = o.yaw;
   if (typeof o.pitch === "number") pitch = o.pitch;
+  if (typeof o.roll === "number") roll = o.roll;   // v0.050
+  if (typeof o.showAxes === "boolean") showAxes = o.showAxes;   // v0.053
+  if (typeof o.showFill === "boolean") showFill = o.showFill;   // v0.065
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
@@ -1838,6 +2004,7 @@ function zenToggle(on){
   bZen.classList.toggle("act", now);
 }
 const bZen = document.getElementById("bZen");
+if (ZZ_EMB) { bZen.title = "☯ Дзен — " + bZen.title; bZen.textContent = "☯"; }   // v0.046: вкладка-ромб — значком
 bZen.onclick = () => zenToggle();
 cv.addEventListener("pointerdown", (e) => { if (e.button === 1) { e.preventDefault(); zenToggle(); } });
 
@@ -1937,11 +2104,11 @@ c1In.addEventListener("input", () => { col1 = c1In.value; bitCol = true; syncUI(
    Поэтому на узком экране все разделы собираются в лист в исходном порядке, а раскладка не
    трогается и не пишется: вернёшься на широкий экран — всё встанет, как было. */
 const SECS = {
-  KEY_OFF: "zerkalius-oktaedr-tabs-off-v1",
+  KEY_OFF: "zerkalius-oktaedr-tabs-off-v1" + (ZZ_EMB ? "-zz" : ""),
   // v0.030: v1 → v2 — раскладка по умолчанию стала двухпанельной; старая запись (всё слева) иначе
   // перекрыла бы её у всех, кто уже открывал страницу.
-  KEY_LAY: "zerkalius-oktaedr-layout-v2",
-  narrow: window.matchMedia("(max-width: 720px)"),
+  KEY_LAY: "zerkalius-oktaedr-layout-v2" + (ZZ_EMB ? "-zz" : ""),
+  narrow: window.matchMedia(ZZ_EMB ? "not all" : "(max-width: 720px)"),   // v0.068: в окне Zazerkalius узкого режима (листа) нет
   drag: null,
   all(){ return Array.from(document.querySelectorAll(".tab-sec")); },
   docks(){ return [document.getElementById("panel"), document.getElementById("panelR")]; },
@@ -1956,6 +2123,7 @@ const SECS = {
       const b = document.createElement("button");
       b.type = "button"; b.textContent = sec.dataset.title;
       b.title = "Показать / спрятать раздел «" + sec.dataset.title + "»";
+      if (ZZ_EMB) { const t = sec.dataset.title, sp = t.indexOf(" "); if (sp > 0) b.textContent = t.slice(0, sp); }   // v0.046: в ромбе — значок
       b.onclick = () => { sec.classList.toggle("off"); this.sync(); };
       sec._tabBtn = b; bar.insertBefore(b, tail);
       this.addHead(sec);
@@ -1968,6 +2136,10 @@ const SECS = {
     };
     document.addEventListener("pointermove", (e) => this.move(e));
     document.addEventListener("pointerup", () => this.end());
+    // v0.062: отпустили мышь за рамкой (окно Зазеркалиуса) или ушли из окна — перетаскивание кончилось, а не повисло
+    document.addEventListener("pointercancel", () => this.end());
+    window.addEventListener("blur", () => this.end());
+    document.documentElement.addEventListener("pointerleave", (e) => { if (this.drag && !e.buttons) this.end(); });
     window.addEventListener("resize", () => this.all().filter(f => f.classList.contains("floating"))
       .forEach(f => this.clamp(f, parseFloat(f.style.left) || 0, parseFloat(f.style.top) || 0)));
     const onMode = () => this.applyMode();
@@ -2004,8 +2176,58 @@ const SECS = {
      попасть в неё было почти нельзя. Теперь у каждого края экрана своя полоса шириной в панель с запасом
      (MAG): курсор в ней — раздел прилипает к панели этого края, по высоте не важно где. Плавающим окном
      раздел становится только посередине. */
-  MAG: 240,
+  /* v0.046: полоса магнита — не шире 22 % окна: в узком окне Zazerkalius 240 px с двух сторон съедали почти всю ширину */
+  get MAG(){ return Math.min(240, Math.round(innerWidth * 0.22)); },
+  /* v0.046, «такое же примагничивание надо»: плавающий раздел — край ближе SNAP px к краю другого плавающего раздела, панели или окна —
+     встаёт на него (по горизонтали и вертикали отдельно); тот, к кому прилип, светится (.snap) */
+  SNAP: 10,
+  snapTo(sec, x, y){
+    const w = sec.offsetWidth, h = sec.offsetHeight, S = this.SNAP, T = [];
+    const att = (this.drag && this.drag.att) || [];   // v0.059: едущие следом — не цели магнита
+    this.all().forEach(o => { if (o !== sec && o.classList.contains("floating") && !o.classList.contains("off") && !att.some(a => a.el === o)) T.push([o, o.getBoundingClientRect()]); });
+    this.docks().forEach(p => { if (!p.classList.contains("empty")) T.push([p, p.getBoundingClientRect()]); });
+    T.push([null, { left: 0, right: innerWidth, top: 0, bottom: innerHeight }]);
+    let dx = S + 1, dy = S + 1, ex = null, ey = null;
+    for (const [el, q] of T) {
+      for (const t of [q.left, q.right]) for (const v of [x, x + w]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
+      for (const t of [q.top, q.bottom]) for (const v of [y, y + h]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
+    }
+    const hit = new Set();
+    if (Math.abs(dx) <= S) { x += dx; if (ex) hit.add(ex); }
+    if (Math.abs(dy) <= S) { y += dy; if (ey) hit.add(ey); }
+    this.snapGlow(hit);
+    return [x, y];
+  },
+  /* v0.059, по снимку «Цвета» над «Нотами» — «верхнюю, если тянуть, — не размагничивай»: плавающие разделы, прилипшие снизу (верх ровно
+     на низу, вровень хоть частью по ширине), и прилипшие к ним — цепочкой — едут вместе с тем, кого тянут; смещение каждого — от него.
+     Тянешь нижний — он отрывается, как прежде. */
+  chain(sec){
+    const R0 = sec.getBoundingClientRect(), out = [], q = [sec];
+    const fl = this.all().filter(o => o !== sec && o.classList.contains("floating") && !o.classList.contains("off"));
+    while (q.length) {
+      const ra = q.shift().getBoundingClientRect();
+      for (const o of fl) {
+        if (out.some(x => x.el === o)) continue;
+        const r = o.getBoundingClientRect();
+        if (Math.abs(r.top - ra.bottom) <= 3 && r.left < ra.right - 4 && r.right > ra.left + 4) { out.push({ el: o, dx: r.left - R0.left, dy: r.top - R0.top }); q.push(o); }
+      }
+    }
+    return out;
+  },
+  snapGlow(hit){ document.querySelectorAll(".tab-sec.snap, .dock.snap").forEach(o => { if (!hit || !hit.has(o)) o.classList.remove("snap"); }); if (hit) hit.forEach(o => o.classList.add("snap")); },
+  /* v0.056: влезет ли панель по высоте, если в неё встанет раздел sec. Уже стоящий в ней (переставляют) — влезает всегда. Предел — её
+     max-height (окно минус поля). Не влезает — магнит панель не берёт, раздел остаётся плавающим. */
+  fits(dock, sec){
+    if (sec.parentElement === dock) return true;
+    const lim = parseFloat(getComputedStyle(dock).maxHeight) || (innerHeight - 70);
+    const has = dock.classList.contains("empty") ? 0 : dock.scrollHeight;
+    return has + (has ? 6 : 0) + sec.offsetHeight <= lim;
+  },
   dockUnder(x, y){
+    /* v0.067, по снимку окна «◆ Гранидус» в Zazerkalius — «тут окна закрепляются ещё и справа, слева — два поля есть невидимых, убери их»:
+       в окне Zazerkalius (?zz) полос магнита у краёв нет — раздел, отпущенный у края, остаётся плавающим (прилипает только к соседям и
+       краям окна, snapTo). Отдельная страница Гранидуса — как была */
+    if (ZZ_EMB) return null;
     const [L, R] = this.docks();
     if (x <= this.MAG) return L;
     if (x >= innerWidth - this.MAG) return R;
@@ -2014,18 +2236,26 @@ const SECS = {
   // Плавающее окно не уводим за край: шапка должна оставаться на экране, иначе его не за что взять.
   clamp(f, x, y){
     const w = f.offsetWidth || 196, KEEP = 60;
+    if (ZZ_EMB) {   // v0.068: в окне Zazerkalius раздел целиком в окне по ширине (по снимку «ВИД» уходил за правый край), шапка — в окне по высоте
+      f.style.left = Math.round(Math.max(0, Math.min(innerWidth - w, x))) + "px";
+      f.style.top = Math.round(Math.max(0, Math.min(innerHeight - 24, y))) + "px";
+      return;
+    }
     f.style.left = Math.round(Math.min(innerWidth - KEEP, Math.max(KEEP - w, x))) + "px";
     f.style.top = Math.round(Math.min(innerHeight - 24, Math.max(0, y))) + "px";
   },
   move(e){
     const d = this.drag; if (!d) return;
+    if (!e.buttons) { this.end(); return; }   // v0.062: кнопку отпустили где-то вне страницы — не тащить дальше
     if (!d.started) {
       if (Math.abs(e.clientX - d.x0) < 4 && Math.abs(e.clientY - d.y0) < 4) return;   // это был щелчок
       const r = d.sec.getBoundingClientRect();
       d.dx = d.x0 - r.left; d.dy = d.y0 - r.top; d.started = true;
       d.sec.classList.add("dragging"); document.body.classList.add("tab-dragging");
+      d.att = d.sec.classList.contains("floating") ? this.chain(d.sec) : [];   // v0.059: прилипшие снизу едут следом
     }
-    const dock = this.dockUnder(e.clientX, e.clientY);
+    let dock = this.dockUnder(e.clientX, e.clientY);
+    if (dock && !this.fits(dock, d.sec)) dock = null;   // v0.056: не влезет по высоте — не магнитить
     this.docks().forEach(p => p.classList.toggle("drop-hover", p === dock));
     if (dock) {
       if (d.sec.classList.contains("floating")) { d.sec.classList.remove("floating"); d.sec.style.left = d.sec.style.top = ""; }
@@ -2035,14 +2265,19 @@ const SECS = {
       else if (dock.lastElementChild !== d.sec) dock.appendChild(d.sec);
     } else {
       if (!d.sec.classList.contains("floating")) { d.sec.classList.add("floating"); document.body.appendChild(d.sec); }
-      this.clamp(d.sec, e.clientX - d.dx, e.clientY - d.dy);
+      const [sx, sy] = this.snapTo(d.sec, e.clientX - d.dx, e.clientY - d.dy);   // v0.046: магнит
+      this.clamp(d.sec, sx, sy);
+      const bx = parseFloat(d.sec.style.left) || 0, by = parseFloat(d.sec.style.top) || 0;   // v0.059: цепочка — следом
+      (d.att || []).forEach(a => { a.el.style.left = Math.round(bx + a.dx) + "px"; a.el.style.top = Math.round(by + a.dy) + "px"; });
     }
+    if (dock) this.snapGlow(null);
   },
   end(){
     const d = this.drag; this.drag = null;
     if (!d || !d.started) return;
     d.sec.classList.remove("dragging"); document.body.classList.remove("tab-dragging");
     this.docks().forEach(p => p.classList.remove("drop-hover"));
+    this.snapGlow(null);   // v0.046
     this.save(); this.sync();
   },
   save(){
@@ -2080,7 +2315,31 @@ const SECS = {
       if (l && l.z === "float") { sec.classList.add("floating"); document.body.appendChild(sec); this.clamp(sec, l.x, l.y); }
     });
   },
-  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); this.sync(); }
+  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); if (ZZ_EMB) this.floatAll(); this.sync(); },
+  /* v0.068, по снимкам окна «◆ Гранидус» — «окна закрепляются ещё справа, слева — два поля невидимых, убери их»: в окне Zazerkalius боковых
+     панелей нет — все разделы плавающие. Лежавшие в панели (по умолчанию или в старой раскладке) встают плавающими столбиками: левой панели —
+     от левого края вправо, правой — от правого края влево, сверху вниз, не влезает по высоте — следующий столбик. Потом записывается */
+  floatAll(){
+    const [L, R] = this.docks(), G = 8, W = 196;
+    const groups = [[L, 1], [R, -1]].map(([dock, dir]) => [Array.from(dock.children).filter(c => c.classList.contains("tab-sec")), dir]);
+    if (!groups.some(([l]) => l.length)) return;
+    groups.forEach(([l]) => l.forEach(sec => { sec.classList.add("floating"); document.body.appendChild(sec); }));
+    const stack = () => groups.forEach(([l, dir]) => {
+      let col = 0, y = G;
+      l.forEach(sec => {
+        const off = sec.classList.contains("off");
+        sec.classList.remove("off");   // спрятанный — меряется открытым, потом прячется снова
+        const h = sec.offsetHeight || 120;
+        if (y > G && y + h > innerHeight - G) { col++; y = G; }
+        this.clamp(sec, dir > 0 ? G + col * (W + G) : innerWidth - G - W - col * (W + G), y);
+        y += h + G;
+        if (off) sec.classList.add("off");
+      });
+    });
+    stack(); this.save();
+    // высоты разделов (картинки «Вида» и т. п.) окончательны только после отрисовки — столбики ещё раз, если их пока не трогали
+    setTimeout(() => { if (!this.drag) { stack(); this.save(); } }, 400);
+  },
 };
 SECS.init();
 
@@ -2108,6 +2367,282 @@ noteUi();
   try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
 })();
 myArea.value = myBits; myInfoUpd();
+/* v0.047: ВИДЫ КАРТИНКАМИ (запрос: «октаэдр — все виды разложи так же», «кнопки вида: сверху, снизу…»). Шесть кнопок с картинкой тела с
+   этой стороны — та же камера rot(), только со своими yaw / pitch и без перспективы: рёбра верха, низа и экватор, ближние ярче, дальние —
+   тусклее. Щелчок — yaw / pitch плавно (≈ 0,35 с) едут к виду, вращение останавливается. Сверху — pitch = +90° (вершина T к зрителю),
+   снизу — −90°; спереди yaw 0, справа −90°, сзади 180°, слева +90°. Картинки перерисовываются вместе с syncUI (смена основания, цветов). */
+/* v0.049, по снимкам видов «ЮЗВ» и «ЮсВ» (подписи сторон света ложатся друг на друга) — «ещё эти ЮЗВ и ЮсВ, ну и далее ВЮС…»: виды —
+   розой ветров, 3 × 3 и «снизу» под ней: СЗ С СВ / З сверху В / ЮЗ Ю ЮВ. Вид «с Ю» — зритель на юге, Ю к нам. Стороны света — те же, что у
+   букв на теле (CARD: +X — В, +Z — Ю, −X — З, −Z — С); направление φ к зрителю — yaw = φ − 90°. У октаэдра вершины экватора стоят ровно
+   на С, В, Ю, З: с них взгляд — на вершину (крайние буквы по бокам, передняя и задняя — в середине друг на друге), с СВ, ЮВ, ЮЗ, СЗ — на
+   ребро (переднее ребро ложится на заднее, v0.048). Сверху — север наверху, восток справа, как на карте; снизу — та же карта, отражённая.
+   Прежние «спереди / сзади / слева / справа» (v0.047–v0.048) — это ЮВ, СЗ, СВ, ЮЗ. */
+const D2R = Math.PI / 180, vFrom = (deg) => (deg - 90) * D2R;
+const VIEWS = [["nw", "СЗ", vFrom(225), 0], ["n", "С", vFrom(270), 0], ["ne", "СВ", vFrom(315), 0],
+               ["w", "З", vFrom(180), 0], ["top", "сверху", 0, Math.PI / 2], ["e", "В", vFrom(0), 0],
+               ["sw", "ЮЗ", vFrom(135), 0], ["s", "Ю", vFrom(90), 0], ["se", "ЮВ", vFrom(45), 0],
+               "rl", ["bot", "снизу", 0, -Math.PI / 2], "rr"];
+const VIEW_TIP = { n: "с севера", ne: "с северо-востока", e: "с востока", se: "с юго-востока", s: "с юга", sw: "с юго-запада", w: "с запада", nw: "с северо-запада", top: "сверху", bot: "снизу" };
+const viewYaw = (v) => v[2];
+/* v0.050, «три ребра к нам» (снимок — вид с ребра): вид прямо на грань — её три ребра к нам, контур тела — шестиугольник. У октаэдра
+   нормаль грани Верх–Ю–В — (1, 1, 1): направление ЮВ (45°), подъём atan(1/√2) ≈ 35,3°; нижние — тот же угол вниз. */
+const FE = Math.atan(1 / Math.SQRT2);
+const FACEV = [["fu-nw", "▲СЗ", vFrom(225), FE], ["fu-ne", "▲СВ", vFrom(315), FE], ["fd-nw", "▼СЗ", vFrom(225), -FE], ["fd-ne", "▼СВ", vFrom(315), -FE],
+               ["fu-sw", "▲ЮЗ", vFrom(135), FE], ["fu-se", "▲ЮВ", vFrom(45), FE], ["fd-sw", "▼ЮЗ", vFrom(135), -FE], ["fd-se", "▼ЮВ", vFrom(45), -FE]];
+let EDGEV = [];   // v0.057: виды «ребро на ребро» — считаются для нынешнего тела (edgeViews)
+const viewRow = document.getElementById("viewRow"), faceRow = document.getElementById("faceRow");
+faceRow.innerHTML = FACEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Прямо на ${v[1][0] === "▲" ? "верхнюю" : "нижнюю"} грань ${v[1].slice(1)}: три её ребра к нам; вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
+viewRow.innerHTML = VIEWS.map(v => Array.isArray(v) ? `<button type="button" class="vw" data-v="${v[0]}" title="Вид ${VIEW_TIP[v[0]]}: тело плавно встаёт так, вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`
+  : `<button type="button" class="vroll" data-r="${v === "rl" ? 1 : -1}" title="Кувырок на 90° ${v === "rl" ? "против часовой" : "по часовой"} вокруг взгляда: наверх встаёт соседняя вершина (например, Ю посередине — В или З наверху)">${v === "rl" ? "↶" : "↷"}</button>`).join("");
+function viewThumbs(){
+  const cu = css("--up"), cd = css("--dn"), ce = css("--eq"), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  document.querySelectorAll("#viewRow .vw, #faceRow .vw, #edgeRow .vw").forEach(b => {
+    const v = VIEWS.concat(FACEV, EDGEV).find(x => Array.isArray(x) && x[0] === b.dataset.v), c = b.querySelector("canvas"), w = c.clientWidth || 52, h = c.clientHeight || 40;
+    if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const vy = viewYaw(v), cy = Math.cos(vy), sy = Math.sin(vy), cx = Math.cos(v[3]), sx = Math.sin(v[3]), S = Math.min(w, h) * 0.42;
+    const P = (p) => { const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1] * cx - z * sx, z2 = p[1] * sx + z * cx; return [w / 2 + x * S, h / 2 - y * S, z2]; };
+    const E = EDGES.map(e => { const a = P(e.a), q = P(e.b); return { a, q, z: (a[2] + q[2]) / 2, kind: e.kind }; }).sort((m, n) => m.z - n.z);
+    for (const e of E) {
+      g.strokeStyle = e.kind === "up" ? cu : e.kind === "dn" ? cd : ce;
+      g.globalAlpha = e.z < -0.05 ? 0.35 : 1; g.lineWidth = e.kind === "eq" ? 1.6 : 1.2;
+      g.setLineDash(e.z < -0.05 ? [2, 2] : []);
+      g.beginPath(); g.moveTo(e.a[0], e.a[1]); g.lineTo(e.q[0], e.q[1]); g.stroke();
+    }
+    g.setLineDash([]); g.globalAlpha = 1;
+  });
+}
+let viewAnim = 0;
+const shortA = (a) => { const TAU = 2 * Math.PI; a = ((a % TAU) + TAU) % TAU; return a > Math.PI ? a - TAU : a; };
+function viewGo(Y, Pt, Rl){   // v0.050: плавно к повороту Y, наклону Pt, крену Rl — кратчайшим путём; вращение стоп
+  spin = false; bSpin.classList.remove("act");
+  const y0 = yaw, p0 = pitch, r0 = roll, dy = shortA(Y - y0), dr = shortA(Rl - r0);
+  const t0 = performance.now(), D = 350, id = ++viewAnim;
+  const step = (t) => {
+    if (id !== viewAnim) return;
+    const u = Math.min(1, (t - t0) / D), k = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    yaw = y0 + dy * k; pitch = p0 + (Pt - p0) * k; roll = r0 + dr * k;
+    if (u < 1) requestAnimationFrame(step); else { roll = shortA(roll); if (Math.abs(roll) < 1e-9) roll = 0; save(); }
+  };
+  requestAnimationFrame(step);
+}
+const viewClick = (e) => {
+  const r = e.target.closest(".vroll");
+  if (r) { const q = Math.PI / 2; viewGo(yaw, pitch, Math.round((roll + q * +r.dataset.r) / q) * q); return; }   // кувырок — к ровным 90°
+  const b = e.target.closest(".vw"); if (!b) return;
+  const v = VIEWS.concat(FACEV, EDGEV).find(x => Array.isArray(x) && x[0] === b.dataset.v); if (!v) return;
+  viewGo(viewYaw(v), v[3], 0);   // вид из розы и на грань — без крена
+};
+viewRow.addEventListener("click", viewClick); faceRow.addEventListener("click", viewClick);
+/* v0.057, по снимку Зеркалидуса почти «ребро на ребро» — «вот такие виды, где по максимуму возможного ребро на ребро». Считается для
+   нынешнего тела (любое основание). Кандидаты взгляда: вдоль каждой пары вершин (они сливаются) и вдоль пересечений плоскостей, в которых
+   лежат пары рёбер (такая плоскость видна прямой — её рёбра ложатся на одну линию). Для каждого — счёт совпадений: сколько рёбер легло на
+   уже занятую прямую (k рёбер на прямой — k − 1) плюс сколько рёбер видно торцом (точкой). Берутся лучшие (верхний счёт; если их меньше
+   четырёх — и следующий), до восьми, картинками «×N» под видами на грань; из пары «d / −d» — вид сверху. Пересчёт — при смене основания. */
+const edgeRow = document.getElementById("edgeRow");
+function edgeViews(){
+  const V = [T, B, ...EQ], E = EDGES.map(e => [e.a, e.b]);
+  const nz = (v) => { const L = Math.hypot(v[0], v[1], v[2]); return L < 1e-9 ? null : [v[0] / L, v[1] / L, v[2] / L]; };
+  const cands = [], add = (d0) => {
+    let d = d0 && nz(d0); if (!d) return;
+    if (d[1] < -1e-9 || (Math.abs(d[1]) <= 1e-9 && d[2] < 0)) d = d.map(x => -x);
+    if (!cands.some(c => Math.abs(dot(c, d)) > 0.99995)) cands.push(d);
+  };
+  for (let i = 0; i < V.length; i++) for (let j = i + 1; j < V.length; j++) add(sub(V[j], V[i]));
+  const N = [];
+  for (let i = 0; i < E.length; i++) for (let j = i + 1; j < E.length; j++) {
+    const a = E[i], b = E[j], u = sub(a[1], a[0]), w = sub(b[1], b[0]), r = sub(b[0], a[0]);
+    if (Math.abs(dot(cross(u, w), r)) > 1e-6) continue;   // не в одной плоскости
+    const n = nz(cross(u, w)) || nz(cross(u, r)); if (!n) continue;
+    if (!N.some(m => Math.abs(dot(m, n)) > 0.99995)) N.push(n);
+  }
+  for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) add(cross(N[i], N[j]));
+  const score = (d) => {
+    const u = nz(cross(Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], d)), w = cross(d, u), P = (p) => [dot(p, u), dot(p, w)];
+    let deg = 0; const lines = [];
+    for (const [a, b] of E) {
+      const A = P(a), Q = P(b), dx = Q[0] - A[0], dy = Q[1] - A[1], L = Math.hypot(dx, dy);
+      if (L < 1e-6) { deg++; continue; }
+      let ux = dx / L, uy = dy / L; if (ux < -1e-9 || (Math.abs(ux) <= 1e-9 && uy < 0)) { ux = -ux; uy = -uy; }
+      const off = A[0] * uy - A[1] * ux;
+      const l = lines.find(q => Math.abs(q.ux * uy - q.uy * ux) < 1e-6 && Math.abs(q.off - off) < 1e-6);
+      if (l) l.k++; else lines.push({ ux, uy, off, k: 1 });
+    }
+    return deg + lines.reduce((t, l) => t + l.k - 1, 0);
+  };
+  const sc = cands.map(d => ({ d, s: score(d) })).filter(c => c.s > 0).sort((a, b) => b.s - a.s);
+  if (!sc.length) return [];
+  const top = sc[0].s, pick = sc.filter(c => c.s === top);
+  if (pick.length < 4) { const nx = sc.find(c => c.s < top); if (nx) pick.push(...sc.filter(c => c.s === nx.s)); }
+  return pick.slice(0, 8).map((c, i) => [`ee${i}`, `×${c.s}`, Math.atan2(-c.d[0], c.d[2]), Math.atan2(c.d[1], Math.hypot(c.d[0], c.d[2])), c.s]);
+}
+let edgeNB = -1;
+function edgeRowBuild(){
+  EDGEV = edgeViews(); edgeNB = NB;
+  edgeRow.innerHTML = EDGEV.map(v => `<button type="button" class="vw" data-v="${v[0]}" title="Ребро на ребро: совпадений ${v[4]} (рёбра на одной прямой и торцом); вращение останавливается"><canvas></canvas><span>${v[1]}</span></button>`).join("");
+}
+edgeRow.addEventListener("click", viewClick);
+/* v0.058, «также подсчёт всех вершин, граней — какие совпали при виде на меня», «и с осями». Под видами — строка для НЫНЕШНЕГО вида,
+   обновляется на ходу: вершины всего → различимо; рёбра всего → различимых прямых (торцом — видны точкой); грани всего → различимо
+   (одна легла на другую — одна; ребром — видны линией); оси и внутренние диагонали — сколько торцом и сколько легло на ребро. Считается по
+   линии взгляда без перспективы (rot, x и y), допуск 0,012 радиуса тела: при ручном повороте ровного совпадения не бывает. */
+const coinInfo = document.getElementById("coinInfo");
+let coinLast = "";
+function coinCount(){
+  const tol = 0.012, V = [T, B, ...EQ], R = V.map(v => rot(v)), n = V.length;
+  const gid = new Array(n).fill(-1); let g = 0;
+  for (let i = 0; i < n; i++) { if (gid[i] >= 0) continue; gid[i] = g; for (let j = i + 1; j < n; j++) if (gid[j] < 0 && Math.hypot(R[i][0] - R[j][0], R[i][1] - R[j][1]) < tol) gid[j] = g; g++; }
+  const idx = (p) => V.indexOf(p);
+  const lines = [];
+  const lineOf = (A, Q) => {   // прямая по двум точкам: { ux, uy, off } или null (точка)
+    const dx = Q[0] - A[0], dy = Q[1] - A[1], L = Math.hypot(dx, dy); if (L < tol) return null;
+    let ux = dx / L, uy = dy / L; if (ux < -1e-9 || (Math.abs(ux) <= 1e-9 && uy < 0)) { ux = -ux; uy = -uy; }
+    return { ux, uy, off: A[0] * uy - A[1] * ux };
+  };
+  const same = (a, b) => Math.abs(a.ux * b.uy - a.uy * b.ux) < tol && Math.abs(a.off - b.off) < tol;
+  let eDot = 0;
+  for (const e of EDGES) {
+    const l = lineOf(R[idx(e.a)], R[idx(e.b)]);
+    if (!l) { eDot++; continue; }
+    if (!lines.some(q => same(q, l))) lines.push(l);
+  }
+  const tri = new Set(); let fEdge = 0;
+  for (const f of FACES) {
+    const [a, b, c] = f.v.map(v => R[idx(v)]);
+    const area = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) / 2;
+    if (area < tol) { fEdge++; continue; }
+    tri.add(f.v.map(v => gid[idx(v)]).sort((x, y) => x - y).join(","));
+  }
+  let aDot = 0, aOn = 0, aN = 0;
+  for (const L of innerLines()) {
+    aN++;
+    const l = lineOf(R[idx(L.a)], R[idx(L.b)]);
+    if (!l) { aDot++; continue; }
+    if (lines.some(q => same(q, l))) aOn++;
+  }
+  return `вершины ${n}→${g} · рёбра ${EDGES.length}→${lines.length + eDot}${eDot ? ` (торцом ${eDot})` : ""}` +
+    ` · грани ${FACES.length}→${tri.size + fEdge}${fEdge ? ` (ребром ${fEdge})` : ""}` +
+    (aN ? ` · оси: торцом ${aDot}, по ребру ${aOn}` : "");
+}
+{ const draw2 = draw; draw = function(){ draw2.apply(this, arguments); const t = coinCount(); if (t !== coinLast) { coinLast = t; coinInfo.textContent = t; } }; }
+edgeRowBuild();
+{ const syncUI2 = syncUI; syncUI = function(){ syncUI2.apply(this, arguments); if (NB !== edgeNB) { edgeRowBuild(); viewThumbs(); } }; }
+viewThumbs();
+/* v0.051, «кнопку: выделяю грань — первое нажатие на неё — вид, она ближе, второе — она дальше, за другими гранями от меня». Выбранная
+   грань — { slot, up } (переживает смену основания, пока такая грань есть), обведена светящейся рамкой цвета закрепления, у отвёрнутой —
+   пунктир. Выбрать: «◭ Грань…» и щелчок по грани (или Alt + щелчок в любой момент) — берётся ближайшая к глазу грань под курсором.
+   Нажатие: взгляд вдоль наружной нормали грани — к себе (yaw = atan2(−nx, nz), наклон = atan2(ny, √(nx² + nz²))), следующее — вдоль
+   обратной: грань дальше всех. Крен снимается, вращение останавливается (viewGo). Подпись кнопки — что сделает следующее нажатие. */
+let selFace = null, faceArm = false, faceNext = 0;
+const bFaceGo = document.getElementById("bFaceGo");
+const selFaceObj = () => selFace && FACES.find(f => f.slot === selFace.slot && f.up === selFace.up);
+function faceName(f){ return (NB === 4 ? ["ЮВ", "ЮЗ", "СЗ", "СВ"][f.slot] : String(f.slot + 1)) + (f.up ? "▲" : "▼"); }
+function faceUi(){
+  const f = selFaceObj(); if (!f) selFace = null;
+  bFaceGo.classList.toggle("act", faceArm || !!f);
+  bFaceGo.textContent = faceArm ? "◭ Грань: выбор" : f ? `◭ ${faceName(f)} — ${faceNext ? "от себя" : "к себе"}` : "◭ Грань…";
+}
+function faceAt(mx, my){
+  let best = null, bz = -Infinity;
+  for (const f of FACES) {
+    const [a, b, c] = f.v.map(project);
+    const s1 = (b.x - a.x) * (my - a.y) - (b.y - a.y) * (mx - a.x), s2 = (c.x - b.x) * (my - b.y) - (c.y - b.y) * (mx - b.x), s3 = (a.x - c.x) * (my - c.y) - (a.y - c.y) * (mx - c.x);
+    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;
+    const z = (a.z + b.z + c.z) / 3; if (z > bz) { bz = z; best = f; }   // ближайшая к глазу
+  }
+  return best;
+}
+bFaceGo.addEventListener("click", () => {
+  const f = selFaceObj();
+  if (!f) { faceArm = !faceArm; faceUi(); return; }
+  const n = cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0])), L = Math.hypot(n[0], n[1], n[2]) || 1, sg = faceNext ? -1 : 1;
+  const nx = sg * n[0] / L, ny = sg * n[1] / L, nz = sg * n[2] / L;
+  viewGo(Math.atan2(-nx, nz), Math.atan2(ny, Math.hypot(nx, nz)), 0);
+  faceNext ^= 1; faceUi();
+});
+bFaceGo.addEventListener("contextmenu", (e) => { e.preventDefault(); selFace = null; faceArm = true; faceUi(); });
+function drawSelFace(){
+  const f = selFaceObj(); if (!f) return;
+  const P = f.v.map(project), n = rot(cross(sub(f.v[1], f.v[0]), sub(f.v[2], f.v[0]))), c3 = rot(f.c);
+  const front = f.two || dot(n, [-c3[0], -c3[1], CAM - c3[2]]) > 0, col = css("--pin");
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(P[0].x, P[0].y); ctx.lineTo(P[1].x, P[1].y); ctx.lineTo(P[2].x, P[2].y); ctx.closePath();
+  if (front) { ctx.globalAlpha = 0.14; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; }
+  ctx.setLineDash(front ? [] : [6, 5]); ctx.lineWidth = front ? 3 : 2; ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12; ctx.stroke();
+  ctx.restore();
+}
+{ const draw0 = draw; draw = function(){ draw0.apply(this, arguments); drawSelFace(); }; }
+/* v0.053, «сделай оси видными во всех фигурах, и те, что не оси, но от вершины к вершине не по ребру, а внутри идут». Все пары вершин тела
+   (Верх, Низ, углы основания), которые не ребро: середина в центре — ОСЬ (штрих, цвет экватора): Верх–Низ всегда, у чётного основания и
+   диаметры экватора (у октаэдра — три оси); остальные — ВНУТРЕННИЕ ДИАГОНАЛИ (точками, цвет закрепления): у 5 граней — пять диагоналей
+   пятиугольника, у 6 — шесть коротких. Рисуются поверх тела, полупрозрачно: они внутри, а грани у нас стеклянные. Кнопка «✛ Оси». */
+function innerLines(){
+  const V = [T, B, ...EQ], out = [];
+  const isEdge = (a, b) => EDGES.some(e => (e.a === a && e.b === b) || (e.a === b && e.b === a));
+  for (let i = 0; i < V.length; i++) for (let j = i + 1; j < V.length; j++) {
+    const a = V[i], b = V[j]; if (isEdge(a, b)) continue;
+    out.push({ a, b, axis: Math.hypot(a[0] + b[0], a[1] + b[1], a[2] + b[2]) < 1e-6 });
+  }
+  return out;
+}
+function drawAxes(){
+  if (!showAxes) return;
+  const cA = css("--eq"), cD = css("--pin");
+  ctx.save(); ctx.lineCap = "round";
+  for (const L of innerLines()) {
+    const p = project(L.a), q = project(L.b);
+    ctx.strokeStyle = L.axis ? cA : cD; ctx.globalAlpha = L.axis ? 0.6 : 0.5; ctx.lineWidth = L.axis ? 1.5 : 1.2;
+    ctx.setLineDash(L.axis ? [7, 5] : [1.5, 4]);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  }
+  ctx.restore();
+}
+{ const draw1 = draw; draw = function(){ draw1.apply(this, arguments); drawAxes(); }; }
+const bAxes = document.getElementById("bAxes");
+bAxes.onclick = () => { showAxes = !showAxes; bAxes.classList.toggle("act", showAxes); save(); };
+{ const syncUI1 = syncUI; syncUI = function(){ syncUI1.apply(this, arguments); faceUi(); bDotShape.textContent = DOT_SHAPE_TXT[dotShape]; bDotShape.classList.toggle("act", dotShape > 0); bFill.classList.toggle("act", showFill); if (typeof bAxes !== "undefined") bAxes.classList.toggle("act", showAxes); }; }
+faceUi();
+{ const syncUI0 = syncUI; syncUI = function(){ syncUI0.apply(this, arguments); viewThumbs(); }; }
+viewThumbs();
+/* v0.044: СТРОКИ ИЗ ZAZERKALIUS. Окно «◆ Октаэдр» шлёт столбик строк поля ({ type: "zz-rows", rows }) при открытии и при каждой
+   его перемене. Строка k (с нуля) — ряд k грани от вершины, в нём k + 1 бит: короче — добивается нулями справа, длиннее — лишнее
+   не влезает (у начального столбика 1, 11, 101, … длины как раз такие). Рядов — сколько строк (не меньше 2, не больше ROWS_MAX).
+   Все грани одинаковые (mySame), низ, как всегда, — та же картина, отражённая и инвертированная. Строки видны и в «Своих битах». */
+function zzRows(rows){
+  if (!Array.isArray(rows)) return;
+  const L = rows.map(r => String(r).replace(/[^01]/g, "")), R = Math.max(2, Math.min(ROWS_MAX, L.length));
+  let face = "";
+  for (let r = 0; r < R; r++) face += ((L[r] || "") + "0".repeat(r + 1)).slice(0, r + 1);
+  ROWS = R; sRows.value = R; vRows.textContent = R;
+  myBits = face; mySame = true; sierp = false;
+  rollBits(); if (typeof unpinAll === "function") unpinAll(); syncUI();
+  myArea.value = L.slice(0, R).join("\n"); myInfoUpd(); save();
+}
+/* v0.069: РОМБЫ ИЗ КАДРОВ ИЗ ZAZERKALIUS («натянуть Аниматрицу на ТриРамидус — ромбы из кадров»). Окно шлёт
+   { type: "zz-rhombs", h, list: [{ u, d }, …] }: ромб поля высотой 2h, разрезанный по горизонтальной диагонали, — u: верхняя
+   половина (ряд k от вершины T, k + 1 бит), d: нижняя (ряд k от вершины B, место k — от того же угла экватора, что у верхней).
+   Пара граней slot получает ромб list[slot % длина]. Нижняя грань берёт СВОИ биты (botBits), а не инверсию верхней: у ромба
+   низ — настоящее продолжение картины. Любая новая картина (rollBits: свои биты, строки, ↻) снимает botBits — низ снова зеркало. */
+function zzRhombs(list, h){
+  if (!Array.isArray(list) || !list.length) return;
+  const R = Math.max(2, Math.min(ROWS_MAX, (h | 0) + 1));
+  const fit = (rows) => { const out = []; for (let r = 0; r < R; r++) { const a = []; for (let k = 0; k <= r; k++) a.push(rows && rows[r] && rows[r][k] ? 1 : 0); out.push(a); } return out; };
+  const same = ROWS === R && bits.length === NB && botBits;
+  if (!same) {
+    ROWS = R; sRows.value = R; vRows.textContent = R;
+    myBits = ""; mySame = false; sierp = false;
+    rollBits(); if (typeof unpinAll === "function") unpinAll();
+  }
+  const top = [], bot = [];
+  for (let s = 0; s < NB; s++) { const p = list[s % list.length] || {}; top.push(fit(p.u)); bot.push(fit(p.d)); }
+  bits = top; botBits = bot; dotVer++;
+  if (!same) syncUI();
+}
+if (ZZ_EMB) {
+  window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rows") zzRows(e.data.rows); });
+  window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rhombs") zzRhombs(e.data.list, e.data.h); });   // v0.069
+  try { window.parent.postMessage({ type: "zz-okt-ready" }, "*"); } catch (e) {}
+}
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════
    ПРОБЕЛ — вращение, ENTER — цикл шагов, ◄ ► — шаг назад и вперёд, ▲ ▼ — такт цикла.
    Буквы продублированы в русской раскладке: переключать её ради кнопки — отдельная морока.

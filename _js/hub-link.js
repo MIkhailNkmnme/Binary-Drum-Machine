@@ -62,7 +62,7 @@
         const a = document.createElement('a');
         a.id = 'zerkHubBtn'; a.href = href;
         /* 2026-09-28, «кнопка хаба должна быть как в лого, но 3D, и крутящаяся, светящаяся»: знак Zerkalius (песочные часы: верх голубой,
-           низ золотой, пояс светлый) — объёмным октаэдром на холсте: крутится вокруг оси, светится, свечение дышит. Ближние рёбра ярче
+           низ золотой, пояс светлый) — объёмным телом на холсте (с 2026-09-29 — Зеркалидус, треугольная бипирамида; прежде октаэдр): крутится вокруг оси, светится, свечение дышит. Ближние рёбра ярче
            дальних. Вкладка скрыта — не рисуется (requestAnimationFrame стоит сам) */
         const cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); a.appendChild(cv);
         const draw = (t) => {
@@ -77,12 +77,13 @@
                 const y1 = y * Math.cos(tilt) - z1 * Math.sin(tilt), z2 = y * Math.sin(tilt) + z1 * Math.cos(tilt), k = 3.2 / (3.2 + z2);
                 return [cx + x1 * R * k, cy - y1 * R * 1.15 * k, z2];
             };
-            const top = P(0, 1, 0), bot = P(0, -1, 0), eq = [P(1, 0, 0), P(0, 0, 1), P(-1, 0, 0), P(0, 0, -1)];
+            // 2026-09-29, «Зеркалидус — это Три, переделай знак»: экватор — три вершины (треугольная пирамида и её зеркало), прежде — четыре (октаэдр)
+            const top = P(0, 1, 0), bot = P(0, -1, 0), eq = [0, 1, 2].map(i => P(Math.cos(i * 2 * Math.PI / 3), 0, Math.sin(i * 2 * Math.PI / 3)));
             const glow = 4 + 2.5 * Math.sin(t / 1000 * 2.2);
             g.lineWidth = 1.7; g.lineCap = 'round';
             const edge = (p, q, col) => { const z = (p[2] + q[2]) / 2; g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = z > 0.15 ? 0 : glow;
                 g.globalAlpha = z > 0.15 ? 0.32 : 1; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); };
-            eq.forEach((e, i) => { edge(top, e, '#7cd4ff'); edge(bot, e, '#ffcf6b'); edge(e, eq[(i + 1) % 4], '#d8dce6'); });
+            eq.forEach((e, i) => { edge(top, e, '#7cd4ff'); edge(bot, e, '#ffcf6b'); edge(e, eq[(i + 1) % eq.length], '#d8dce6'); });
             g.globalAlpha = 1; g.shadowBlur = 0;
             if (!document.hidden) requestAnimationFrame(draw); else document.addEventListener('visibilitychange', () => requestAnimationFrame(draw), { once: true });
         };
