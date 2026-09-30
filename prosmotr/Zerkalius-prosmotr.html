@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.010. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.011. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -38,13 +38,17 @@
              редакторе». Раскладка «по одному ромбу»: лента — весь фильм ромба 1, потом ромба 2 … (ряд за рядом, слева
              направо), размеры — по выбору (все — от мелких к крупным); ◇◀ ▶◇ и PageUp / PageDown — соседний ромб на том же
              кадре; двойной щелчок по ромбу в группе — он один. «💾 ромб» — фильм этого ромба одним GIF (мелкий — крупнее,
-             до 256 px). Ромбы режутся раз на размер, группы собираются из них; полоска-график считается раз на ленту. -->
+             до 256 px). Ромбы режутся раз на размер, группы собираются из них; полоска-график считается раз на ленту.
+     v0.011: «в просмотрщике можно менять форму 1 и 0? сейчас там квадраты, хотелось бы по умолчанию ромбы». Форма клеток:
+             ◆ ромбы (по умолчанию; у шахматной сетки треугольника соседи по диагонали смыкаются рёбрами), ◇ ромбы в клетке,
+             ● круги, ▪ квадраты (как в GIF). Кнопка «0» — нули внутри картинки тусклыми клетками той же формы. Видно от
+             увеличения ×2; сцена рисуется в m раз крупнее (3 … 12). PNG — с формой, GIF-файлы — исходными пикселями. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.010</title>
+<title>Zerkalius Просмотр GIF — v0.011</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -93,7 +97,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.010</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.011</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -178,7 +182,14 @@
         <option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option><option value="6">×6</option><option value="8">×8</option>
         <option value="custom" disabled>×?</option>
       </select>
-      <button id="pngBtn" title="Скачать то, что на экране (кадр или раскладку), картинкой PNG">🖼 PNG</button>
+      <select id="cellShape" title="Форма клеток на экране: ромбы — сетка ромбов, соседние по диагонали смыкаются рёбрами; ромбы в клетке, круги — каждая в своём квадрате; квадраты — как в самом GIF. Видно при увеличении; в GIF-файлы идут исходные пиксели">
+        <option value="rh" selected>◆ ромбы</option>
+        <option value="rhi">◇ ромбы в клетке</option>
+        <option value="ci">● круги</option>
+        <option value="sq">▪ квадраты</option>
+      </select>
+      <button id="zeroBtn" class="on" title="Нули внутри картинки — тусклыми клетками той же формы (видна вся сетка)">0</button>
+      <button id="pngBtn" title="Скачать то, что на экране (кадр или раскладку), картинкой PNG — с формой клеток">🖼 PNG</button>
     </div>
     <div class="bar">
       <input type="range" id="pos" min="0" max="0" value="0" title="Кадр">
@@ -409,7 +420,7 @@ function download(blob, name) { const a = document.createElement('a'); a.href = 
 
 /* ---------- состояние ---------- */
 const $ = id => document.getElementById(id);
-const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set(),
+const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set(), zeros: true,
   shift: 0, scr: false, scrDir: 1, scrN: 0, scrAcc: 0, scrLast: 0, scrRaf: 0, offKey: '' };   // v0.005: shift — сдвиг сцены в px (по кругу)
 const GAP = 4, GAP_COL = [16, 18, 24];   // v0.002: между клетками раскладки — тёмная щель
 const layout = () => $('laySel').value;
@@ -617,7 +628,7 @@ function draw() {
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
   const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, ref[3] === undefined ? -1 : ref[3], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
-    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0]);
+    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0, shapeNow(), !!S.zeros]);
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой; v0.010: или один ромб
@@ -652,14 +663,92 @@ function draw() {
     nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
   S.label = label; S.nameTxt = nameTxt;
+  if (shapeNow() !== 'sq') { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H); S.shapeKey = key; }   // v0.011
   blit();
 }
+/* ---------- форма клеток (v0.011) ----------
+   Сцена перерисовывается в m раз крупнее (m — от 3 до 12, чтобы вышло не больше ~12 млн точек), каждая клетка — штампом формы:
+   ◆ ромб радиусом m вокруг центра клетки (у шахматной сетки треугольника соседи по диагонали смыкаются рёбрами),
+   ◇ ромб и ● круг — вписанные в свою клетку. Нули — чёрные клетки внутри картинки: в строке между первой и последней светлой
+   (по кускам между щелями раскладки), той же чётности x + y, что первая светлая, — тусклым штампом. Щели раскладки — квадратами,
+   поверх, чтобы ромбы на краях резались по рамке. Прокрутка и масштаб берут эту картинку вместо исходной. */
+const offS = document.createElement('canvas'), osctx = offS.getContext('2d');
+const U32 = (r, g, b) => ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0;
+const BLK = U32(0, 0, 0), GAPC = U32(GAP_COL[0], GAP_COL[1], GAP_COL[2]), ZEROC = U32(30, 34, 44);
+const shapeNow = () => $('cellShape').value;
+const shapeM = (W, H) => Math.max(3, Math.min(12, Math.floor(Math.sqrt(12e6 / (W * H)))));
+const STAMPS = {};
+function stampOf(shape, m) {   // штамп строками: [dy, x0, x1) от левого верха клетки
+  const key = shape + m; if (STAMPS[key]) return STAMPS[key];
+  const out = [];
+  for (let oy = -m; oy < 2 * m; oy++) {
+    let a = null, b = null;
+    for (let ox = -m; ox < 2 * m; ox++) {
+      const px = ox + 0.5 - m / 2, py = oy + 0.5 - m / 2;
+      const ok = shape === 'rh' ? Math.abs(px) + Math.abs(py) <= m - 0.75
+        : shape === 'rhi' ? Math.abs(px) + Math.abs(py) <= Math.max(0.5, m / 2 - 0.25)
+        : px * px + py * py <= Math.pow(Math.max(0.5, m / 2 - 0.3), 2);
+      if (ok) { if (a === null) a = ox; b = ox + 1; }
+    }
+    if (a !== null) out.push(oy, a, b);
+  }
+  return (STAMPS[key] = Int16Array.from(out));
+}
+let SB = null, SID = null, SOUT = null;
+function buildShapes(d32, W, H) {
+  // цвета — в маленькие номера (0 фон, 1 щель, 2 ноль, 3… цвета): 32-битные цвета в горячем цикле медленные
+  const m = shapeM(W, H), OW = W * m, OH = H * m, st = stampOf(shapeNow(), m), n = W * H;
+  if (!SID || SID.length !== n) SID = new Uint8Array(n); else SID.fill(0);   // буферы — одни на все кадры
+  if (!SOUT || SOUT.length !== OW * OH) SOUT = new Uint8Array(OW * OH); else SOUT.fill(0);
+  const id = SID, out = SOUT, pal = [BLK, GAPC, ZEROC], cmap = new Map();
+  let last = -1, lastId = 0;
+  for (let p = 0; p < n; p++) {
+    const c = d32[p];
+    if (c === BLK) continue;
+    if (c === GAPC) { id[p] = 1; continue; }
+    if (c !== last) { last = c; lastId = cmap.get(c); if (lastId === undefined) { lastId = pal.length < 256 ? pal.length : 3; if (pal.length < 256) { cmap.set(c, lastId); pal.push(c); } } }
+    id[p] = lastId;
+  }
+  if (S.zeros) for (let y = 0; y < H; y++) {   // нули: чёрные внутри картинки, той же чётности, что первая светлая куска строки
+    const o = y * W; let x = 0;
+    while (x < W) {
+      while (x < W && id[o + x] === 1) x++;
+      const a = x; while (x < W && id[o + x] !== 1) x++;
+      let f = -1, l = -1; for (let q = a; q < x; q++) if (id[o + q] > 2) { if (f < 0) f = q; l = q; }
+      if (f < 0) continue;
+      const par = (f + y) & 1;
+      for (let q = f; q <= l; q++) if (id[o + q] === 0 && ((q + y) & 1) === par) id[o + q] = 2;
+    }
+  }
+  for (const pass of [2, 3]) for (let y = 0; y < H; y++) {   // сперва нули, поверх — светлые
+    const o = y * W;
+    for (let x = 0; x < W; x++) {
+      const v = id[o + x]; if (pass === 2 ? v !== 2 : v < 3) continue;
+      const bx = x * m, by = y * m;
+      for (let k = 0; k < st.length; k += 3) {
+        const Y = by + st[k]; if (Y < 0 || Y >= OH) continue;
+        const r = Y * OW, x0 = Math.max(0, bx + st[k + 1]), x1 = Math.min(OW, bx + st[k + 2]);
+        for (let X = x0; X < x1; X++) out[r + X] = v;
+      }
+    }
+  }
+  for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (id[o + x] === 1) for (let b = 0; b < m; b++) out.fill(1, (y * m + b) * OW + x * m, (y * m + b) * OW + x * m + m); }
+  if (offS.width !== OW || offS.height !== OH) { offS.width = OW; offS.height = OH; SB = null; }
+  if (!SB) SB = osctx.createImageData(OW, OH);
+  const o32 = new Uint32Array(SB.data.buffer), P = Uint32Array.from(pal);
+  for (let i = 0; i < out.length; i++) o32[i] = P[out[i]];
+  osctx.putImageData(SB, 0, 0); S.shapeM = m;
+}
+$('cellShape').addEventListener('change', () => { S.offKey = ''; draw(); });
+$('zeroBtn').addEventListener('click', () => { S.zeros = !S.zeros; $('zeroBtn').classList.toggle('on', S.zeros); S.offKey = ''; draw(); });
 // v0.005: вывод на экран — масштаб и сдвиг по кругу (строка shift источника — вверху экрана)
 function blit() {
   const W = off.width, H = off.height;
   const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
-  ctx.imageSmoothingEnabled = false;
+  // v0.011: с формой клеток источник — крупная картинка offS (в mm раз), при уменьшении — сглаживать, иначе рябит
+  const shp = shapeNow() !== 'sq' && S.shapeKey === S.offKey && offS.width === W * (S.shapeM || 1) && CW / W >= 2, SRC = shp ? offS : off, mm = shp ? S.shapeM : 1;
+  ctx.imageSmoothingEnabled = shp && CW / W < mm;
   /* v0.006: ось и нарезка. Точка экрана (x, y) показывает точку сцены (x + sx, y + sy) по кругу; у полосы k свой сдвиг —
      сдвиг × множитель (целиком 1, встречно ±1, лесенкой k + 1) × направление оси. Полосы режутся поперёк движения:
      по столбцам — горизонтальными лентами, иначе — вертикальными. Каждая полоса — до четырёх кусков сцены. */
@@ -670,7 +759,7 @@ function blit() {
   const piece = (rx, ry, rw, rh, sx, sy) => {
     for (const [dx, sx0, lw] of split(rx, rw, sx, W)) for (const [dy, sy0, lh] of split(ry, rh, sy, H)) {
       const X0 = Math.round(dx * kx), X1 = Math.round((dx + lw) * kx), Y0 = Math.round(dy * ky), Y1 = Math.round((dy + lh) * ky);
-      if (X1 > X0 && Y1 > Y0) ctx.drawImage(off, sx0, sy0, lw, lh, X0, Y0, X1 - X0, Y1 - Y0);
+      if (X1 > X0 && Y1 > Y0) ctx.drawImage(SRC, sx0 * mm, sy0 * mm, lw * mm, lh * mm, X0, Y0, X1 - X0, Y1 - Y0);
     }
   };
   const band = Math.max(1, jumpPx()), acrossX = ax !== 'cols', L = acrossX ? W : H;
@@ -1026,7 +1115,7 @@ $('selNoneBtn').addEventListener('click', () => { S.sel.clear(); refresh(); });
 $('pngBtn').addEventListener('click', () => {
   const ref = SEQ[S.i]; if (!ref) return;
   const nm = ref[0] === -1 ? 'Zerkalius-raskladka-' + layout() + '-kadr-' + (ref[1] + 1) : S.gifs[ref[0]].name.replace(/\.gif$/i, '') + '-kadr-' + (ref[1] + 1);
-  off.toBlob(bl => download(bl, nm + '.png'));
+  (shapeNow() !== 'sq' && S.shapeKey === S.offKey ? offS : off).toBlob(bl => download(bl, nm + '.png'));   // v0.011: с формой клеток
 });
 
 // общая палитра для нескольких GIF: фон (чёрный) — 0; щель раскладки — свой цвет
