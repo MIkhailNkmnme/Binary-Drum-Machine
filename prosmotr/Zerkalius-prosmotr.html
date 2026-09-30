@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.013. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.014. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -49,13 +49,17 @@
      v0.013: по снимку — «почему-то каждый 2-й кадр с наложением ромбов на пол-размера», и «в основном холсте (Треугольника) норм».
              В чётных кадрах GIF 526–781 заполнена и вторая шахматка (промежутки между клетками), и ромбы «вплотную» налезали.
              По умолчанию теперь ◆ ромбы, вписанные в клетку, как на холсте Треугольника; «◆ ромбы вплотную» — отдельно: шахматка
-             берётся от вершины (в нарезке ромбы встают, не сбивая её), точки вне шахматки — узлами. -->
+             берётся от вершины (в нарезке ромбы встают, не сбивая её), точки вне шахматки — узлами.
+     v0.014: «добавь возможность показа сетки, по умолчанию отключи, и настройки цвета её — это граница, обводка тонкой линией всех
+             ромбов-квадратов». Кнопка ▦ (выключена) и цвет рядом: у ромбов и кругов — кольцо снаружи каждой клетки, под клетками
+             (у мелкого ромба обводка по краю съедала его целиком), у квадратов — общая линия по верху и левому краю, поверх.
+             Клетки сетки — светлые и нули на шахматке; у квадратов — все точки внутри картинки. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.013</title>
+<title>Zerkalius Просмотр GIF — v0.014</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -104,7 +108,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.013</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.014</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -195,7 +199,9 @@
         <option value="ci">● круги</option>
         <option value="sq">▪ квадраты</option>
       </select>
-      <button id="zeroBtn" class="on" title="Нули внутри картинки — тусклыми клетками той же формы (видна вся сетка)">0</button>
+      <button id="zeroBtn" class="on" title="Нули внутри картинки — тусклыми клетками той же формы">0</button>
+      <button id="gridBtn" title="Сетка — тонкая обводка каждой клетки: ромба, квадрата, круга (видно при увеличении)">▦</button>
+      <input type="color" id="gridColor" value="#56627a" title="Цвет сетки" style="width:28px; height:24px; padding:1px; background:#202430; border:1px solid #3a3f4c; border-radius:3px; cursor:pointer;">
       <button id="pngBtn" title="Скачать то, что на экране (кадр или раскладку), картинкой PNG — с формой клеток">🖼 PNG</button>
     </div>
     <div class="bar">
@@ -639,7 +645,7 @@ function draw() {
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
   const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, ref[3] === undefined ? -1 : ref[3], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
-    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0, shapeNow(), !!S.zeros]);
+    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0, shapeNow(), !!S.zeros, !!S.grid, S.grid ? $('gridColor').value : 0]);
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой; v0.010: или один ромб
@@ -674,7 +680,7 @@ function draw() {
     nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
   S.label = label; S.nameTxt = nameTxt;
-  if (shapeNow() !== 'sq') { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H, par); S.shapeKey = key; }   // v0.011
+  if (useShp()) { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H, par); S.shapeKey = key; }   // v0.011
   blit();
 }
 /* ---------- форма клеток (v0.011) ----------
@@ -689,66 +695,101 @@ const BLK = U32(0, 0, 0), GAPC = U32(GAP_COL[0], GAP_COL[1], GAP_COL[2]), ZEROC 
 const shapeNow = () => $('cellShape').value;
 const shapeM = (W, H) => Math.max(3, Math.min(12, Math.floor(Math.sqrt(12e6 / (W * H)))));
 const STAMPS = {};
+const inShape = (shape, m, ox, oy) => {   // точка (ox, oy) от левого верха клетки — внутри формы?
+  const px = ox + 0.5 - m / 2, py = oy + 0.5 - m / 2;
+  return shape === 'rh' ? Math.abs(px) + Math.abs(py) <= m - 0.75
+    : shape === 'rhi' ? Math.abs(px) + Math.abs(py) <= Math.max(0.5, m / 2 - 0.25)
+    : shape === 'sq' ? Math.abs(px) < m / 2 && Math.abs(py) < m / 2
+    : px * px + py * py <= Math.pow(Math.max(0.5, m / 2 - 0.3), 2);
+};
 function stampOf(shape, m) {   // штамп строками: [dy, x0, x1) от левого верха клетки
   const key = shape + m; if (STAMPS[key]) return STAMPS[key];
   const out = [];
   for (let oy = -m; oy < 2 * m; oy++) {
     let a = null, b = null;
-    for (let ox = -m; ox < 2 * m; ox++) {
-      const px = ox + 0.5 - m / 2, py = oy + 0.5 - m / 2;
-      const ok = shape === 'rh' ? Math.abs(px) + Math.abs(py) <= m - 0.75
-        : shape === 'rhi' ? Math.abs(px) + Math.abs(py) <= Math.max(0.5, m / 2 - 0.25)
-        : px * px + py * py <= Math.pow(Math.max(0.5, m / 2 - 0.3), 2);
-      if (ok) { if (a === null) a = ox; b = ox + 1; }
-    }
+    for (let ox = -m; ox < 2 * m; ox++) if (inShape(shape, m, ox, oy)) { if (a === null) a = ox; b = ox + 1; }
     if (a !== null) out.push(oy, a, b);
   }
   return (STAMPS[key] = Int16Array.from(out));
 }
-let SB = null, SID = null, SOUT = null;
+// v0.014: обводка формы — точки [dy, dx] кольцом СНАРУЖИ неё (сосед сверху, снизу, слева или справа — внутри): мелкий ромб
+// (m = 4 — в нём всего несколько точек) обводка по краю съедала целиком. Кольцо рисуется под клетками — форма остаётся целой,
+// у ромбов вплотную ложится в щель между соседями. У квадрата — верх и левый край внутри (соседи делят линию), поверх
+function edgeOf(shape, m) {
+  const key = 'e' + shape + m; if (STAMPS[key]) return STAMPS[key];
+  const out = [];
+  if (shape === 'sq') { for (let k = 0; k < m; k++) out.push(0, k); for (let k = 1; k < m; k++) out.push(k, 0); }
+  else for (let oy = -m - 1; oy < 2 * m + 1; oy++) for (let ox = -m - 1; ox < 2 * m + 1; ox++) {
+    if (inShape(shape, m, ox, oy)) continue;
+    if (inShape(shape, m, ox - 1, oy) || inShape(shape, m, ox + 1, oy) || inShape(shape, m, ox, oy - 1) || inShape(shape, m, ox, oy + 1)) out.push(oy, ox);
+  }
+  return (STAMPS[key] = Int16Array.from(out));
+}
+let SB = null, SID = null, SOUT = null, SCELL = null;
 function buildShapes(d32, W, H, lat) {
-  // цвета — в маленькие номера (0 фон, 1 щель, 2 ноль, 3… цвета): 32-битные цвета в горячем цикле медленные
-  // v0.013: lat — чётность шахматки (x + y) клеток. У ◆ ромбов точки вне шахматки (в чётных кадрах GIF 526–781 их столько же,
+  // цвета — в маленькие номера (0 фон, 1 щель, 2 ноль, 3 сетка, 4… цвета): 32-битные цвета в горячем цикле медленные
+  // v0.013: lat — чётность шахматки (x + y) клеток. У ◆ ромбов вплотную точки вне шахматки (в чётных кадрах GIF 526–781 их столько же,
   // сколько на ней: заполнены промежутки) — не полным ромбом, он налезал на соседей на полразмера, а узлом в месте, где сходятся четыре
   const m = shapeM(W, H), OW = W * m, OH = H * m, sh = shapeNow(), st = stampOf(sh, m), stN = stampOf('rhi', m), n = W * H;
-  const node = sh === 'rh' && lat !== undefined;
+  const node = sh === 'rh' && lat !== undefined, grid = !!S.grid, eg = edgeOf(sh, m), egN = edgeOf('rhi', m);
   if (!SID || SID.length !== n) SID = new Uint8Array(n); else SID.fill(0);   // буферы — одни на все кадры
   if (!SOUT || SOUT.length !== OW * OH) SOUT = new Uint8Array(OW * OH); else SOUT.fill(0);
-  const id = SID, out = SOUT, pal = [BLK, GAPC, ZEROC], cmap = new Map();
+  if (grid) { if (!SCELL || SCELL.length !== n) SCELL = new Uint8Array(n); else SCELL.fill(0); }
+  const id = SID, out = SOUT, cell = SCELL, pal = [BLK, GAPC, ZEROC, gridCol()], cmap = new Map();
   let last = -1, lastId = 0;
   for (let p = 0; p < n; p++) {
     const c = d32[p];
     if (c === BLK) continue;
     if (c === GAPC) { id[p] = 1; continue; }
-    if (c !== last) { last = c; lastId = cmap.get(c); if (lastId === undefined) { lastId = pal.length < 256 ? pal.length : 3; if (pal.length < 256) { cmap.set(c, lastId); pal.push(c); } } }
+    if (c !== last) { last = c; lastId = cmap.get(c); if (lastId === undefined) { lastId = pal.length < 256 ? pal.length : 4; if (pal.length < 256) { cmap.set(c, lastId); pal.push(c); } } }
     id[p] = lastId;
   }
-  if (S.zeros) for (let y = 0; y < H; y++) {   // нули: чёрные внутри картинки, той же чётности, что первая светлая куска строки
+  // нули (и клетки сетки): чёрные внутри картинки — в строке между первой и последней светлой куска, на шахматке
+  if (S.zeros || grid) for (let y = 0; y < H; y++) {
     const o = y * W; let x = 0;
     while (x < W) {
       while (x < W && id[o + x] === 1) x++;
       const a = x; while (x < W && id[o + x] !== 1) x++;
-      let f = -1, l = -1; for (let q = a; q < x; q++) if (id[o + q] > 2) { if (f < 0) f = q; l = q; }
+      let f = -1, l = -1; for (let q = a; q < x; q++) if (id[o + q] > 3) { if (f < 0) f = q; l = q; }
       if (f < 0) continue;
       const par = lat !== undefined ? lat : (f + y) & 1;
-      for (let q = f; q <= l; q++) if (id[o + q] === 0 && ((q + y) & 1) === par) id[o + q] = 2;
-    }
-  }
-  // проходы: 2 — нули, 3 — светлые на шахматке (или все, если шахматки нет), 4 — светлые вне её — узлами, поверх
-  for (const pass of node ? [2, 3, 4] : [2, 3]) for (let y = 0; y < H; y++) {
-    const o = y * W, s = pass === 4 ? stN : st;
-    for (let x = 0; x < W; x++) {
-      const v = id[o + x];
-      if (pass === 2 ? v !== 2 : v < 3) continue;
-      if (node && pass > 2 && (((x + y) & 1) === lat) !== (pass === 3)) continue;
-      const bx = x * m, by = y * m;
-      for (let k = 0; k < s.length; k += 3) {
-        const Y = by + s[k]; if (Y < 0 || Y >= OH) continue;
-        const r = Y * OW, x0 = Math.max(0, bx + s[k + 1]), x1 = Math.min(OW, bx + s[k + 2]);
-        for (let X = x0; X < x1; X++) out[r + X] = v;
+      for (let q = f; q <= l; q++) if (id[o + q] === 0) {
+        if (((q + y) & 1) === par) id[o + q] = 2;
+        else if (grid && sh === 'sq') cell[o + q] = 1;   // у квадратов сетка — по всем клеткам, и между шахматкой
       }
     }
   }
+  // v0.014: сетка — тонкая обводка каждой клетки (светлые, нули, у квадратов — и между шахматкой); у квадратов — поверх клеток, у остальных — под ними
+  const gridPass = () => {
+    for (let y = 0; y < H; y++) {
+      const o = y * W;
+      for (let x = 0; x < W; x++) {
+        const v = id[o + x]; if (!(v === 2 || v >= 4 || cell[o + x])) continue;
+        const e = node && v >= 4 && ((x + y) & 1) !== lat ? egN : eg, bx = x * m, by = y * m;
+        for (let k = 0; k < e.length; k += 2) { const Y = by + e[k], X = bx + e[k + 1]; if (Y >= 0 && Y < OH && X >= 0 && X < OW) out[Y * OW + X] = 3; }
+      }
+    }
+  };
+  if (grid && sh !== 'sq') gridPass();
+  // проходы: 2 — нули, 3 — светлые на шахматке (или все, если шахматки нет), 4 — светлые вне её — узлами, поверх
+  for (const pass of node ? [2, 3, 4] : [2, 3]) {
+    if (pass === 2 && !S.zeros) continue;
+    for (let y = 0; y < H; y++) {
+      const o = y * W, s = pass === 4 ? stN : st;
+      for (let x = 0; x < W; x++) {
+        const v = id[o + x];
+        if (pass === 2 ? v !== 2 : v < 4) continue;
+        if (node && pass > 2 && (((x + y) & 1) === lat) !== (pass === 3)) continue;
+        const bx = x * m, by = y * m;
+        for (let k = 0; k < s.length; k += 3) {
+          const Y = by + s[k]; if (Y < 0 || Y >= OH) continue;
+          const r = Y * OW, x0 = Math.max(0, bx + s[k + 1]), x1 = Math.min(OW, bx + s[k + 2]);
+          for (let X = x0; X < x1; X++) out[r + X] = v;
+        }
+      }
+    }
+  }
+  if (grid && sh === 'sq') gridPass();
   for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (id[o + x] === 1) for (let b = 0; b < m; b++) out.fill(1, (y * m + b) * OW + x * m, (y * m + b) * OW + x * m + m); }
   if (offS.width !== OW || offS.height !== OH) { offS.width = OW; offS.height = OH; SB = null; }
   if (!SB) SB = osctx.createImageData(OW, OH);
@@ -756,6 +797,10 @@ function buildShapes(d32, W, H, lat) {
   for (let i = 0; i < out.length; i++) o32[i] = P[out[i]];
   osctx.putImageData(SB, 0, 0); S.shapeM = m;
 }
+const gridCol = () => { const h = ($('gridColor').value || '#56627a').replace('#', ''); return U32(parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)); };
+const useShp = () => shapeNow() !== 'sq' || !!S.grid;   // v0.014: у квадратов крупная картинка нужна только ради сетки
+$('gridBtn').addEventListener('click', () => { S.grid = !S.grid; $('gridBtn').classList.toggle('on', S.grid); S.offKey = ''; draw(); });
+$('gridColor').addEventListener('input', () => { if (S.grid) { S.offKey = ''; draw(); } });
 $('cellShape').addEventListener('change', () => { S.offKey = ''; draw(); });
 $('zeroBtn').addEventListener('click', () => { S.zeros = !S.zeros; $('zeroBtn').classList.toggle('on', S.zeros); S.offKey = ''; draw(); });
 // v0.005: вывод на экран — масштаб и сдвиг по кругу (строка shift источника — вверху экрана)
@@ -764,7 +809,7 @@ function blit() {
   const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
   // v0.011: с формой клеток источник — крупная картинка offS (в mm раз), при уменьшении — сглаживать, иначе рябит
-  const shp = shapeNow() !== 'sq' && S.shapeKey === S.offKey && offS.width === W * (S.shapeM || 1) && CW / W >= 2, SRC = shp ? offS : off, mm = shp ? S.shapeM : 1;
+  const shp = useShp() && S.shapeKey === S.offKey && offS.width === W * (S.shapeM || 1) && CW / W >= 2, SRC = shp ? offS : off, mm = shp ? S.shapeM : 1;
   ctx.imageSmoothingEnabled = shp && CW / W < mm;
   /* v0.006: ось и нарезка. Точка экрана (x, y) показывает точку сцены (x + sx, y + sy) по кругу; у полосы k свой сдвиг —
      сдвиг × множитель (целиком 1, встречно ±1, лесенкой k + 1) × направление оси. Полосы режутся поперёк движения:
@@ -1134,7 +1179,7 @@ $('selNoneBtn').addEventListener('click', () => { S.sel.clear(); refresh(); });
 $('pngBtn').addEventListener('click', () => {
   const ref = SEQ[S.i]; if (!ref) return;
   const nm = ref[0] === -1 ? 'Zerkalius-raskladka-' + layout() + '-kadr-' + (ref[1] + 1) : S.gifs[ref[0]].name.replace(/\.gif$/i, '') + '-kadr-' + (ref[1] + 1);
-  (shapeNow() !== 'sq' && S.shapeKey === S.offKey ? offS : off).toBlob(bl => download(bl, nm + '.png'));   // v0.011: с формой клеток
+  (useShp() && S.shapeKey === S.offKey ? offS : off).toBlob(bl => download(bl, nm + '.png'));   // v0.011: с формой клеток
 });
 
 // общая палитра для нескольких GIF: фон (чёрный) — 0; щель раскладки — свой цвет
