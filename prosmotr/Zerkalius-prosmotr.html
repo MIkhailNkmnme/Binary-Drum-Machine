@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.014. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.015. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -53,13 +53,14 @@
      v0.014: «добавь возможность показа сетки, по умолчанию отключи, и настройки цвета её — это граница, обводка тонкой линией всех
              ромбов-квадратов». Кнопка ▦ (выключена) и цвет рядом: у ромбов и кругов — кольцо снаружи каждой клетки, под клетками
              (у мелкого ромба обводка по краю съедала его целиком), у квадратов — общая линия по верху и левому краю, поверх.
-             Клетки сетки — светлые и нули на шахматке; у квадратов — все точки внутри картинки. -->
+             Клетки сетки — светлые и нули на шахматке; у квадратов — все точки внутри картинки.
+     v0.015: «в кнопках отдели сетку-фоновую от этой новой» — новое зовётся «обводка клеток»: кнопка ▢ (была ▦), подсказки. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.014</title>
+<title>Zerkalius Просмотр GIF — v0.015</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -108,7 +109,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.014</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.015</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -200,8 +201,8 @@
         <option value="sq">▪ квадраты</option>
       </select>
       <button id="zeroBtn" class="on" title="Нули внутри картинки — тусклыми клетками той же формы">0</button>
-      <button id="gridBtn" title="Сетка — тонкая обводка каждой клетки: ромба, квадрата, круга (видно при увеличении)">▦</button>
-      <input type="color" id="gridColor" value="#56627a" title="Цвет сетки" style="width:28px; height:24px; padding:1px; background:#202430; border:1px solid #3a3f4c; border-radius:3px; cursor:pointer;">
+      <button id="gridBtn" title="Обводка клеток — тонкая линия вокруг каждой клетки: ромба, квадрата, круга (видно при увеличении)">▢</button>
+      <input type="color" id="gridColor" value="#56627a" title="Цвет обводки клеток" style="width:28px; height:24px; padding:1px; background:#202430; border:1px solid #3a3f4c; border-radius:3px; cursor:pointer;">
       <button id="pngBtn" title="Скачать то, что на экране (кадр или раскладку), картинкой PNG — с формой клеток">🖼 PNG</button>
     </div>
     <div class="bar">
