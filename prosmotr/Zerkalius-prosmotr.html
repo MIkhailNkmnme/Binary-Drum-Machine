@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.008. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.009. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -30,13 +30,16 @@
              группу». «◇ Резать»: кадр режется по сетке ромбов от вершины треугольника (вершина и наклон ищутся сами), ромбы
              одного размера — группой: на своих местах с зазором, в строку или сеткой. Размер — 8 … 512 строк или «все»:
              весь фильм ромбами 16, потом 32, 64 … (или от крупных к мелким). Нарезку — в GIF. Чётность кадров теперь — по
-             номеру кадра в GIF, а не по месту в ленте (в склейке и нарезке они разные). -->
+             номеру кадра в GIF, а не по месту в ленте (в склейке и нарезке они разные).
+     v0.009: по снимку «◇ 64 × 0» — «пустые картинки»: размер ромба умножался на «строку … px» прокрутки, а там стояло 64 —
+             ромб 64 × 64 = 4096 px в кадр не влезал. Размер ромба теперь — px кадра, от прокрутки не зависит. «В строку»
+             переносится по ширине кадра (была лента до 8192 px, в окне мельчало до ×0.1). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.008</title>
+<title>Zerkalius Просмотр GIF — v0.009</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -85,7 +88,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.008</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.009</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -113,7 +116,7 @@
     <div class="lbl sel">◇ Нарезка по ромбам</div>
     <div class="bar">
       <button id="rcutBtn" title="Резать кадр по сетке ромбов от вершины треугольника — вкл / выкл (GIF или склейка; с раскладкой набора — нет)">◇ Резать</button>
-      <select id="rcutSize" title="Размер ромба в строках (строка — px из поля «строка» у прокрутки). «Все» — группы ромбов одного размера играют по очереди: весь фильм ромбами одного размера, потом следующего">
+      <select id="rcutSize" title="Размер ромба — строк (px) кадра. «Все» — группы ромбов одного размера играют по очереди: весь фильм ромбами одного размера, потом следующего">
         <option value="up" selected>все: мелкие → крупные</option>
         <option value="down">все: крупные → мелкие</option>
         <option value="8">ромб 8</option>
@@ -461,8 +464,7 @@ function rgeoOf(g) {
   const kr = Math.round(k * 4) / 4; if (kr > 0 && Math.abs(kr - k) / kr < 0.03) k = kr;   // почти ровный наклон — ровный
   return (g.rgeo = { t: t, cx: cx, k: Math.max(0.25, k) });
 }
-const rowPx = () => Math.max(1, parseInt($('scrPx').value, 10) || 1);
-const rFits = (g, s) => s * rowPx() <= g.H - rgeoOf(g).t;
+const rFits = (g, s) => s <= g.H - rgeoOf(g).t;   // v0.009: размер ромба — в px кадра, от «строки» прокрутки не зависит
 function rcutSizes(base) {
   const v = $('rcutSize').value, g = S.gifs[base[0][0]];
   if (v !== 'up' && v !== 'down') return [parseInt(v, 10) || 64];
@@ -471,7 +473,7 @@ function rcutSizes(base) {
 }
 // карта нарезки: откуда (пиксель кадра) и куда (пиксель сцены) — для размера, раскладки и зазора; кадр потом кладётся за один проход
 function rmap(g, size) {
-  const lay = $('rcutLay').value, gap = Math.max(0, parseInt($('rcutGap').value, 10) || 0), s = size * rowPx(), key = s + '|' + lay + '|' + gap;
+  const lay = $('rcutLay').value, gap = Math.max(0, parseInt($('rcutGap').value, 10) || 0), s = size, key = s + '|' + lay + '|' + gap;
   g.rmaps = g.rmaps || new Map(); if (g.rmaps.has(key)) return g.rmaps.get(key);
   if (g.rmaps.size > 12) g.rmaps.clear();
   const G = rgeoOf(g), W = g.W, H = g.H, hs = s / 2, k = G.k, tw = Math.ceil(s * k) + 1, th = s;
@@ -481,7 +483,7 @@ function rmap(g, size) {
   // места ромбов в сцене
   if (lay === 'place') for (const q of T) { q.X = q.bx + (q.i - q.j) * gap; q.Y = q.by + (q.i + q.j) * gap; }
   else {
-    const cols = lay === 'grid' ? Math.max(1, Math.ceil(Math.sqrt(T.length * th / tw))) : Math.max(1, Math.floor((8192 + gap) / (tw + gap)));
+    const cols = lay === 'grid' ? Math.max(1, Math.ceil(Math.sqrt(T.length * th / tw))) : Math.max(1, Math.floor((W + gap) / (tw + gap)));   // v0.009: строка переносится по ширине кадра
     T.forEach((q, n) => { q.X = (n % cols) * (tw + gap); q.Y = Math.floor(n / cols) * (th + gap); });
   }
   let mx = Infinity, my = Infinity, SW = 0, SH = 0;
@@ -534,7 +536,7 @@ function draw() {
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
   const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
-    ref[2] ? [$('rcutLay').value, $('rcutGap').value, $('scrPx').value] : 0]);
+    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0]);
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой
@@ -693,7 +695,7 @@ $('scrCut').addEventListener('change', () => { if (SEQ.length) blit(); });
 $('scrUpBtn').addEventListener('click', () => { jump(-1); if (SEQ.length) blit(); });
 $('scrDnBtn').addEventListener('click', () => { jump(1); if (SEQ.length) blit(); });
 $('scrZeroBtn').addEventListener('click', () => { S.shift = 0; S.scrN = 0; S.scrDir = 1; if (SEQ.length) blit(); });
-$('scrPx').addEventListener('input', () => { if (S.rcut) refresh(); else if (SEQ.length) blit(); });   // v0.008: строка px — и размер ромба нарезки
+$('scrPx').addEventListener('input', () => { if (SEQ.length) blit(); });
 
 /* ---------- разбор на ромбы (v0.007) ----------
    Дыра — чёрное место не меньше «px» в поперечнике: точка, у которой в квадрате px × px вокруг нет ни одной светлой.
