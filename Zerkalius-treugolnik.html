@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.038 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.039 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.038</title>
+    <title>Zerkalius Треугольник v0.039</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -393,7 +393,7 @@ VERSION: v0.038 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.038</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.039</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -839,7 +839,7 @@ VERSION: v0.038 (копия Zerkalius Code 35.74 целиком — отправ
                     <div class="compact-row" style="align-items:center;">
                         <button id="rcPickBtn" type="button" class="rs-btn" title="Затем щелчок по треугольнику — берётся ромб под курсором (размер — как в сводке). Alt+щелчок по холсту выбирает ромб в любое время">🎯 Выбрать щелчком</button>
                         <label class="checkbox-row" style="margin:0; flex:0.8;" title="Обвести на холсте все ромбы с тем же рисунком: голубым — такие же, розовым — зеркальные"><input type="checkbox" id="rcSameCheck" checked><span>такие же</span></label>
-                        <label class="checkbox-row" style="margin:0; flex:0.7;" title="Клетки крупной картинки, ленты кадров и сводки — ромбами: ромб вокруг клетки, соседи по диагонали (биты правила 90 стоят шахматкой) смыкаются рёбрами. Снять — квадраты, как в тексте"><input type="checkbox" id="rcRhombCheck" checked><span>◆ ромбы</span></label>
+                        <label class="checkbox-row" style="margin:0; flex:0.7;" title="Клетки крупной картинки, ленты кадров и сводки — ромбами, вписанными в клетку, как на главном холсте. Снять — квадраты, как в тексте"><input type="checkbox" id="rcRhombCheck" checked><span>◆ ромбы</span></label>
                     </div>
                     <canvas id="rcCanvas" width="264" height="264"></canvas>
                     <!-- v0.010: ⊕ низ, отражённый по горизонтали на верх, — XOR правилом волны -->
@@ -5018,12 +5018,15 @@ VERSION: v0.038 (копия Zerkalius Code 35.74 целиком — отправ
             paint: function(g, cells, gw, z, pal, x0, y0) {   // v0.010: прямоугольник gw × (длина / gw)
                 const gh = cells.length / gw;
                 g.fillStyle = pal[0]; g.fillRect(x0, y0, gw * z, gh * z);
-                /* v0.038 (слово пользователя «в Треугольнике тоже по умолчанию нужно представление ромбами»): ромб радиусом в клетку
-                   вокруг её центра — у шахматной сетки битов соседи по диагонали смыкаются рёбрами; сперва пробелы (тускло), поверх
-                   0 и 1; по пути на цвет — одна заливка. Мельче 3 px ромба не разглядеть — тогда квадраты */
+                /* v0.038 (слово пользователя «в Треугольнике тоже по умолчанию нужно представление ромбами»): 0 и 1 — ромбами;
+                   v0.039: ромб вписан в свою клетку, как на главном холсте («в основном холсте норм»). В v0.038 он был радиусом в
+                   клетку и смыкался с соседями, а где биты стоят вплотную, без пробелов, налезал на них на полразмера.
+                   Подложка фигуры — квадратами (тускло), поверх 0 и 1; на цвет — один путь. Мельче 3 px — квадраты */
                 if (z >= 3 && document.getElementById('rcRhombCheck')?.checked !== false) {
-                    const r = z - 0.6;
-                    for (const v of [1, 2, 3]) {
+                    const r = Math.max(1, z / 2 - 0.3);
+                    g.fillStyle = pal[1];
+                    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (cells[y * gw + x]) g.fillRect(x0 + x * z, y0 + y * z, z, z);
+                    for (const v of [2, 3]) {
                         g.beginPath(); let any = false;
                         for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
                             if (cells[y * gw + x] !== v) continue;

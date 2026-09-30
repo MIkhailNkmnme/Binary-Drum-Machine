@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.012. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.013. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -45,13 +45,17 @@
              увеличения ×2; сцена рисуется в m раз крупнее (3 … 12). PNG — с формой, GIF-файлы — исходными пикселями.
      v0.012: по снимку «5000 / с … сдвиг 543 столб.» — «тут дёргается при изменении текста, и скорость ещё больше надо». Скорость и
              сдвиг — поля постоянной ширины, цифры одной ширины; скорость — до 1 000 000 прыжков в секунду (ползунок 0 … 1000,
-             по умолчанию те же ~30 / с); сдвиг сворачивается по W·H, а не сбрасывается в ноль. -->
+             по умолчанию те же ~30 / с); сдвиг сворачивается по W·H, а не сбрасывается в ноль.
+     v0.013: по снимку — «почему-то каждый 2-й кадр с наложением ромбов на пол-размера», и «в основном холсте (Треугольника) норм».
+             В чётных кадрах GIF 526–781 заполнена и вторая шахматка (промежутки между клетками), и ромбы «вплотную» налезали.
+             По умолчанию теперь ◆ ромбы, вписанные в клетку, как на холсте Треугольника; «◆ ромбы вплотную» — отдельно: шахматка
+             берётся от вершины (в нарезке ромбы встают, не сбивая её), точки вне шахматки — узлами. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.012</title>
+<title>Zerkalius Просмотр GIF — v0.013</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -100,7 +104,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.012</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.013</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -185,9 +189,9 @@
         <option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option><option value="6">×6</option><option value="8">×8</option>
         <option value="custom" disabled>×?</option>
       </select>
-      <select id="cellShape" title="Форма клеток на экране: ромбы — сетка ромбов, соседние по диагонали смыкаются рёбрами; ромбы в клетке, круги — каждая в своём квадрате; квадраты — как в самом GIF. Видно при увеличении; в GIF-файлы идут исходные пиксели">
-        <option value="rh" selected>◆ ромбы</option>
-        <option value="rhi">◇ ромбы в клетке</option>
+      <select id="cellShape" title="Форма клеток на экране: ромбы — каждый вписан в свою клетку, как на холсте Треугольника; ромбы вплотную — соседи по диагонали смыкаются рёбрами (точки вне шахматки — узлами); круги — в своей клетке; квадраты — как в самом GIF. Видно при увеличении; в GIF-файлы идут исходные пиксели">
+        <option value="rhi" selected>◆ ромбы</option>
+        <option value="rh">◆ ромбы вплотную</option>
         <option value="ci">● круги</option>
         <option value="sq">▪ квадраты</option>
       </select>
@@ -536,21 +540,25 @@ function rmap(g, s) {
     const cols = lay === 'grid' ? Math.max(1, Math.ceil(Math.sqrt(T.length * th / tw))) : Math.max(1, Math.floor((g.W + gap) / (tw + gap)));   // v0.009: строка переносится по ширине кадра
     pos = T.map((_, n) => ({ X: (n % cols) * (tw + gap), Y: Math.floor(n / cols) * (th + gap) }));
   }
+  // v0.013: ромб встаёт так, чтобы шахматка клеток не сбивалась (x + y — той же чётности, что в кадре)
+  pos.forEach((P, n) => { if ((P.X + P.Y - T[n].bx - T[n].by) & 1) P.X += 1; });
   let mx = Infinity, my = Infinity, SW = 0, SH = 0;
   for (const P of pos) { mx = Math.min(mx, P.X); my = Math.min(my, P.Y); }
   for (const P of pos) { P.X -= mx; P.Y -= my; SW = Math.max(SW, P.X + tw); SH = Math.max(SH, P.Y + th); }
   let len = 0; for (const q of T) len += q.src.length;
   const src = new Int32Array(len), dst = new Int32Array(len); let o = 0;
   T.forEach((q, n) => { const P = pos[n]; for (let p = 0; p < q.src.length; p++) { const ly = (q.loc[p] / tw) | 0, lx = q.loc[p] - ly * tw; src[o] = q.src[p]; dst[o++] = (P.Y + ly) * SW + P.X + lx; } });
-  const M = { W: SW, H: SH, n: T.length, pos: pos, src: src, dst: dst };
+  const M = { W: SW, H: SH, n: T.length, pos: pos, src: src, dst: dst, par: (((latParOf(g) - mx - my) % 2) + 2) % 2 };
   g.rmaps.set(key, M); return M;
 }
+// v0.013: чётность шахматки клеток (x + y) — по вершине треугольника; у кадра она одна и та же
+const latParOf = g => { const G = rgeoOf(g); return ((Math.round(G.cx) + G.t) % 2 + 2) % 2; };
 // что кладётся на сцену для этого места ленты: группа или один ромб
 function sceneMap(ref) {
   const g = S.gifs[ref[0]];
   if (ref[3] === undefined) return rmap(g, ref[2]);
   const TT = tilesOf(g, ref[2]), q = TT.T[ref[3]];
-  return q ? { W: TT.tw, H: TT.th, n: 1, src: q.src, dst: q.loc, tile: q, of: TT.T.length } : { W: 1, H: 1, n: 0, src: new Int32Array(0), dst: new Int32Array(0) };
+  return q ? { W: TT.tw, H: TT.th, n: 1, src: q.src, dst: q.loc, tile: q, of: TT.T.length, par: (((latParOf(g) - q.bx - q.by) % 2) + 2) % 2 } : { W: 1, H: 1, n: 0, src: new Int32Array(0), dst: new Int32Array(0) };
 }
 function rcutRefresh(keep) {   // пересобрать ленту и встать на тот же кадр (и тот же ромб, если он есть)
   const ref = keep || SEQ[S.i]; refresh();
@@ -627,7 +635,7 @@ const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24
 function draw() {
   const ref = SEQ[S.i];
   if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; S.offKey = ''; return; }
-  let W, H, label, nameTxt = '';   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика
+  let W, H, label, nameTxt = '', par;   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика; v0.013: par — чётность шахматки
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
   const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, ref[3] === undefined ? -1 : ref[3], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
@@ -635,7 +643,7 @@ function draw() {
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой; v0.010: или один ромб
-    const g = S.gifs[ref[0]], M = sceneMap(ref), fr = g.frames[ref[1]], lut = lutOf(g); W = M.W; H = M.H;
+    const g = S.gifs[ref[0]], M = sceneMap(ref), fr = g.frames[ref[1]], lut = lutOf(g); W = M.W; H = M.H; par = M.par;
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
     const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer);
     d32.fill((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]);
@@ -657,7 +665,7 @@ function draw() {
     octx.putImageData(img, 0, 0);
     label = 'кадр ' + (S.i + 1) + ' / ' + SEQ.length; nameTxt = 'набор ' + setList().length + ' GIF · ' + G.cells.length + ' клеток';
   } else {
-    const g = S.gifs[ref[0]], fr = g.frames[ref[1]]; W = g.W; H = g.H;
+    const g = S.gifs[ref[0]], fr = g.frames[ref[1]]; W = g.W; H = g.H; par = latParOf(g);
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
     const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer), lut = lutOf(g);
     for (let k = 0; k < fr.length; k++) d32[k] = lut[fr[k]];
@@ -666,7 +674,7 @@ function draw() {
     nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
   S.label = label; S.nameTxt = nameTxt;
-  if (shapeNow() !== 'sq') { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H); S.shapeKey = key; }   // v0.011
+  if (shapeNow() !== 'sq') { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H, par); S.shapeKey = key; }   // v0.011
   blit();
 }
 /* ---------- форма клеток (v0.011) ----------
@@ -698,9 +706,12 @@ function stampOf(shape, m) {   // штамп строками: [dy, x0, x1) от
   return (STAMPS[key] = Int16Array.from(out));
 }
 let SB = null, SID = null, SOUT = null;
-function buildShapes(d32, W, H) {
+function buildShapes(d32, W, H, lat) {
   // цвета — в маленькие номера (0 фон, 1 щель, 2 ноль, 3… цвета): 32-битные цвета в горячем цикле медленные
-  const m = shapeM(W, H), OW = W * m, OH = H * m, st = stampOf(shapeNow(), m), n = W * H;
+  // v0.013: lat — чётность шахматки (x + y) клеток. У ◆ ромбов точки вне шахматки (в чётных кадрах GIF 526–781 их столько же,
+  // сколько на ней: заполнены промежутки) — не полным ромбом, он налезал на соседей на полразмера, а узлом в месте, где сходятся четыре
+  const m = shapeM(W, H), OW = W * m, OH = H * m, sh = shapeNow(), st = stampOf(sh, m), stN = stampOf('rhi', m), n = W * H;
+  const node = sh === 'rh' && lat !== undefined;
   if (!SID || SID.length !== n) SID = new Uint8Array(n); else SID.fill(0);   // буферы — одни на все кадры
   if (!SOUT || SOUT.length !== OW * OH) SOUT = new Uint8Array(OW * OH); else SOUT.fill(0);
   const id = SID, out = SOUT, pal = [BLK, GAPC, ZEROC], cmap = new Map();
@@ -719,18 +730,21 @@ function buildShapes(d32, W, H) {
       const a = x; while (x < W && id[o + x] !== 1) x++;
       let f = -1, l = -1; for (let q = a; q < x; q++) if (id[o + q] > 2) { if (f < 0) f = q; l = q; }
       if (f < 0) continue;
-      const par = (f + y) & 1;
+      const par = lat !== undefined ? lat : (f + y) & 1;
       for (let q = f; q <= l; q++) if (id[o + q] === 0 && ((q + y) & 1) === par) id[o + q] = 2;
     }
   }
-  for (const pass of [2, 3]) for (let y = 0; y < H; y++) {   // сперва нули, поверх — светлые
-    const o = y * W;
+  // проходы: 2 — нули, 3 — светлые на шахматке (или все, если шахматки нет), 4 — светлые вне её — узлами, поверх
+  for (const pass of node ? [2, 3, 4] : [2, 3]) for (let y = 0; y < H; y++) {
+    const o = y * W, s = pass === 4 ? stN : st;
     for (let x = 0; x < W; x++) {
-      const v = id[o + x]; if (pass === 2 ? v !== 2 : v < 3) continue;
+      const v = id[o + x];
+      if (pass === 2 ? v !== 2 : v < 3) continue;
+      if (node && pass > 2 && (((x + y) & 1) === lat) !== (pass === 3)) continue;
       const bx = x * m, by = y * m;
-      for (let k = 0; k < st.length; k += 3) {
-        const Y = by + st[k]; if (Y < 0 || Y >= OH) continue;
-        const r = Y * OW, x0 = Math.max(0, bx + st[k + 1]), x1 = Math.min(OW, bx + st[k + 2]);
+      for (let k = 0; k < s.length; k += 3) {
+        const Y = by + s[k]; if (Y < 0 || Y >= OH) continue;
+        const r = Y * OW, x0 = Math.max(0, bx + s[k + 1]), x1 = Math.min(OW, bx + s[k + 2]);
         for (let X = x0; X < x1; X++) out[r + X] = v;
       }
     }
