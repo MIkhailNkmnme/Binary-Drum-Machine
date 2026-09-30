@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.011. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.012. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -42,13 +42,16 @@
      v0.011: «в просмотрщике можно менять форму 1 и 0? сейчас там квадраты, хотелось бы по умолчанию ромбы». Форма клеток:
              ◆ ромбы (по умолчанию; у шахматной сетки треугольника соседи по диагонали смыкаются рёбрами), ◇ ромбы в клетке,
              ● круги, ▪ квадраты (как в GIF). Кнопка «0» — нули внутри картинки тусклыми клетками той же формы. Видно от
-             увеличения ×2; сцена рисуется в m раз крупнее (3 … 12). PNG — с формой, GIF-файлы — исходными пикселями. -->
+             увеличения ×2; сцена рисуется в m раз крупнее (3 … 12). PNG — с формой, GIF-файлы — исходными пикселями.
+     v0.012: по снимку «5000 / с … сдвиг 543 столб.» — «тут дёргается при изменении текста, и скорость ещё больше надо». Скорость и
+             сдвиг — поля постоянной ширины, цифры одной ширины; скорость — до 1 000 000 прыжков в секунду (ползунок 0 … 1000,
+             по умолчанию те же ~30 / с); сдвиг сворачивается по W·H, а не сбрасывается в ноль. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.011</title>
+<title>Zerkalius Просмотр GIF — v0.012</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -97,7 +100,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.011</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.012</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -238,12 +241,12 @@
       </select>
       <span class="lbl">строка</span><input type="number" id="scrPx" min="1" max="32" step="1" value="1" title="Сколько пикселей GIF в одной строке текста (у GIF из Code клетка бывает 2–4 px)" style="width:46px;"><span class="lbl">px</span>
       <span class="lbl">размах</span><input type="number" id="scrAmp" min="1" max="4096" step="1" value="8" title="Туда-сюда: сколько прыжков в одну сторону, потом обратно" style="width:56px;">
-      <input type="range" id="scrSpeed" min="0" max="100" value="40" title="Скорость: прыжков в секунду, от 1 до 5000 (вправо — быстрее)" style="width:110px; accent-color:#22d3ee;">
-      <span class="lbl" id="scrSpeedVal" style="min-width:64px;">—</span>
+      <input type="range" id="scrSpeed" min="0" max="1000" value="246" title="Скорость: прыжков в секунду, от 1 до 1 000 000 (вправо — быстрее)" style="width:140px; accent-color:#22d3ee;">
+      <span class="lbl" id="scrSpeedVal" style="display:inline-block; width:15ch; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;">—</span>
       <button id="scrUpBtn" class="mini" title="Прыжок вверх вручную (↑)">▲</button>
       <button id="scrDnBtn" class="mini" title="Прыжок вниз вручную (↓)">▼</button>
       <button id="scrZeroBtn" class="mini" title="Сдвиг — в ноль">0</button>
-      <span class="sel" id="scrVal">сдвиг 0</span>
+      <span class="sel" id="scrVal" style="display:inline-block; width:20ch; white-space:nowrap; font-variant-numeric:tabular-nums;">сдвиг 0</span>
     </div>
   </div>
 
@@ -827,12 +830,14 @@ window.addEventListener('mouseup', e => {   // v0.004: щелчок без пр�
    Сдвиг сцены по кругу, прыжками: прыжок = строк × px на строку. ↓ — картинка едет вниз, ↑ — вверх, ↕ — туда-сюда: размах
    прыжков в одну сторону, потом обратно. Скорость — прыжков в секунду по степени (1 … 5000); на больших скоростях за один кадр
    экрана делается сразу много прыжков, картинка выводится раз за кадр. */
-const scrSpeed = () => Math.round(Math.pow(5000, (parseInt($('scrSpeed').value, 10) || 0) / 100));
+const SCR_MAX = 1e6;   // v0.012: было 5000 — «скорость ещё больше надо»; ползунок 0 … 1000 — мельче шаг на больших скоростях
+const scrSpeed = () => Math.round(Math.pow(SCR_MAX, (parseInt($('scrSpeed').value, 10) || 0) / 1000));
 const jumpPx = () => (parseInt($('scrStep').value, 10) || 1) * Math.max(1, parseInt($('scrPx').value, 10) || 1);
 function jump(n) {   // n прыжков; + — картинка вниз
   if (!n || !off.height) return;
   S.shift -= n * jumpPx();   // v0.006: без свёртки по модулю — у полос свой множитель, каждая сворачивается сама
-  if (Math.abs(S.shift) > 1e12) S.shift = 0;
+  // v0.012: сворачивать по W·H: у полосы сдвиг × целый множитель, по x он берётся по модулю W, по y — H, картинка та же
+  { const P = Math.max(1, off.width * off.height); if (Math.abs(S.shift) > P * 1024) S.shift %= P; }
 }
 function scrTick(t) {
   if (!S.scr) return;
@@ -856,7 +861,7 @@ function scrOn(on) {
   $('scrBtn').classList.toggle('on', on);
   if (on) S.scrRaf = requestAnimationFrame(scrTick);
 }
-const showSpeed = () => { $('scrSpeedVal').textContent = scrSpeed() + ' / с'; };
+const showSpeed = () => { $('scrSpeedVal').textContent = scrSpeed().toLocaleString('ru-RU') + ' / с'; };
 showSpeed();
 $('scrSpeed').addEventListener('input', showSpeed);
 $('scrBtn').addEventListener('click', () => scrOn(!S.scr));
