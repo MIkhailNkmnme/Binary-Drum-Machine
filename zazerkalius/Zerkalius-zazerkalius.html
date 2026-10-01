@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.472. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.473. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.472</title>
+<title>Zazerkalius — v0.473</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -908,32 +908,32 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 /* v0.464, «стрелки у ползунков» (рисунок — два шеврона «<» «>» из 4 треугольников): у ползунка в группе стрелки ◂ ▸ — шевроны из четырёх треугольников
    во всю высоту, по краям: ◂ — остриём в левое остриё ползунка, ▸ — в правое; между ними значок и дорожка. Обёртка стрелок — display: contents,
    порядок — order (◂ первой, ▸ последней) */
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap){padding-left:0 !important;padding-right:0 !important;gap:3px;background-color:transparent !important}   /* по рисунку — без своей заливки и обводки */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap){padding-left:0 !important;padding-right:0 !important;gap:0 !important;background-color:transparent !important}   /* по рисунку — без своей заливки и обводки */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap)::after{content:none !important}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap{display:contents !important}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{order:1;flex:1 1 0 !important;width:auto !important;min-width:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{order:1;flex:1 1 0 !important;width:auto !important;min-width:0 !important;margin:0 calc(-1 * var(--t)) !important;position:relative;z-index:1}   /* v0.473: у краёв бегунок остриём — в выемку стрелки */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow{flex:0 0 auto !important;align-self:stretch;width:calc(3 * var(--t)) !important;height:24px !important;margin:0 !important;padding:0 !important;
   border:0 !important;border-radius:0 !important;box-shadow:none !important;color:transparent !important;background:var(--gfc, var(--txt)) !important}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:hover{filter:brightness(1.25)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:active{filter:brightness(.8)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:first-child{order:-1;clip-path:polygon(var(--t) 0,calc(3 * var(--t)) 0,calc(2 * var(--t)) 50%,calc(3 * var(--t)) 100%,var(--t) 100%,0 50%)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:last-of-type{order:2;clip-path:polygon(0 0,calc(2 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(2 * var(--t)) 100%,0 100%,var(--t) 50%)}
-/* v0.464, «сам ползунок» (рисунок — ромб из двух треугольников, ▲ над ▼) и «тонкая линия по оси»: бегунок — вертикальный ромб шириной в сторону
+/* v0.464, «сам ползунок» (рисунок — ромб из двух треугольников, ▲ над ▼; v0.473 — по новому рисунку шестигранник из шести) и «тонкая линия по оси»: бегунок — вертикальный ромб шириной в сторону
    треугольника и высотой в ряд, цветом акцента; дорожка — тонкая линия по средней черте; стрелки и линия — цветом группы (--gfc), своей заливки у
    ползунка нет (по рисунку: «<» —◆— «>») */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{-webkit-appearance:none;appearance:none;height:24px;margin:0;padding:0;background:transparent;cursor:pointer}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--gfc, var(--txt));border:0}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-track{height:2px;background:var(--gfc, var(--txt));border:0}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(2 * var(--t, 6.93px));height:24px;margin-top:-11px;border:0;border-radius:0;
-  background:var(--acc);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-thumb{width:calc(2 * var(--t, 6.93px));height:24px;border:0;border-radius:0;background:var(--acc);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(4 * var(--t, 6.93px));height:24px;margin-top:-11px;border:0;border-radius:0;
+  background:var(--acc);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-thumb{width:calc(4 * var(--t, 6.93px));height:24px;border:0;border-radius:0;background:var(--acc);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
 /* v0.466, «значок прямо в ромбе ползунка, а числа бегают с ним справа или слева»: значок — в ромбе-бегунке (--thx — центр ромба, ставит tzSliders),
    число — у бегунка справа, а если там тесно — слева (.rvl); мышь сквозь них */
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap) > .sli{position:absolute !important;top:0;left:var(--thx, 50%);width:calc(2 * var(--t));height:24px;margin:0 !important;
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap) > .sli{position:absolute !important;top:0;left:var(--thx, 50%);width:calc(4 * var(--t));height:24px;margin:0 !important;
   transform:translateX(-50%);display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;color:#0e1116;z-index:3;pointer-events:none;min-width:0 !important;overflow:hidden}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .rv{left:calc(var(--thx, 50%) + var(--t) + 3px) !important;right:auto !important;justify-content:flex-start !important;overflow:visible;z-index:3}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz.rvl > .zerk-range-wrap > .rv{left:auto !important;right:calc(100% - var(--thx, 50%) + var(--t) + 3px) !important;justify-content:flex-end !important}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .rv{left:calc(var(--thx, 50%) + 2 * var(--t) + 3px) !important;right:auto !important;justify-content:flex-start !important;overflow:visible;z-index:3}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz.rvl > .zerk-range-wrap > .rv{left:auto !important;right:calc(100% - var(--thx, 50%) + 2 * var(--t) + 3px) !important;justify-content:flex-end !important}
 /* v0.463, «и края самих полей групп теми же ромбами»: группа — зубчатые бока (tzgFrame): форма — clip-path, рамка — ::before её прежним цветом по маске;
    поля по бокам — шире на глубину зубца, ручка размера — внутрь */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg{border-style:none !important;border-radius:0 !important;clip-path:var(--gclip);padding-left:12px !important;padding-right:13px !important}
@@ -950,6 +950,16 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on:not(.blab)::before,:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked)::before{
   content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--gfc, var(--gold));-webkit-mask:var(--lato, none) 0 0 / 100% 100% no-repeat;mask:var(--lato, none) 0 0 / 100% 100% no-repeat}
 
+/* v0.473, «заголовок группы — это самая первая кнопка, и все следующие размещать на её же строке, если размер позволяет»: у зубчатой группы (не в
+   конструкторе) блок кнопок растворён (display: contents) — заголовок и кнопки текут одним рядом с переносом; заголовок — шестигранник с заливкой цветом
+   группы. Ширина группы без заданного размера — не больше 520 px (прежде ограничивал блок кнопок, 430) */
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(:has(> .cgb.tzc)){flex-direction:row !important;flex-wrap:wrap !important;align-items:flex-start !important;align-content:flex-start !important;gap:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):not(:has(> .cgb.tzc)) > .cgb{display:contents !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.csz):not(:has(> .cgb.tzc)){max-width:520px}
+:is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;flex:0 0 auto !important;height:24px !important;box-sizing:border-box;margin:0 !important;
+  clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);border:0 !important;border-radius:0 !important;
+  padding:0 calc(var(--t) + 2px) !important;display:flex !important;align-items:center;justify-content:center;background-color:color-mix(in srgb, var(--gfc, var(--line)) 26%, var(--panel2))}
+:is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1334,7 +1344,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.472</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.473</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2269,8 +2279,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0472"></script>
-<script src="zz-ui.js?v=0472"></script>
+<script src="zz-core.js?v=0473"></script>
+<script src="zz-ui.js?v=0473"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

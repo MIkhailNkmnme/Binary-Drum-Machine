@@ -7643,9 +7643,18 @@ function triTag(){
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
-  document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2)").forEach(b => {
+  document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2), #w-cone .tools .cgrp > .glab, #paneGrp .cgrp > .glab").forEach(b => {
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
     const cgb = b.closest(".cgb"); b._gcol = gcol(b);
+    /* v0.473, «заголовок группы — это самая первая кнопка, и все следующие размещать на её же строке, если размер позволяет»: подпись группы — шестигранник
+       в начале цепочки (у групп конструктора △ — как была: их раскладку задаёт рисунок) */
+    if (b.classList.contains("glab")) {
+      const g = b.parentElement, gb = g && g.querySelector(":scope > .cgb");
+      if (!g || !g.closest("#w-cone .tools, #paneGrp") || (gb && gb.classList.contains("tzc"))) { if (b.classList.contains("tz")) triOff(b); return; }
+      const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0;
+      b._tzar = ""; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP; b._tzn = wInl ? Math.max(3, Math.round(wInl / sd)) : 6;
+      tzGeo(b); bs.push(b); return;
+    }
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
       if (tzcItem(b, cgb) !== b || b.closest(".cjoin")) { if (b.classList.contains("tz")) triOff(b); return; }
       const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
@@ -7668,7 +7677,9 @@ function triTag(){
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
   const prevOf = (b) => { for (let x = b; ; ) { let p = x.previousElementSibling; while (p && !vis(p)) p = p.previousElementSibling; if (p) return lastOf(p);
-    x = x.parentElement; if (!x || x.tagName !== "SPAN" || x.classList.contains("cjoin")) return null; } };
+    x = x.parentElement;
+    if (x && x.classList.contains("cgb")) { let q = x.previousElementSibling; while (q && !vis(q)) q = q.previousElementSibling; return q && q.classList.contains("glab") ? q : null; }   // v0.473: первая — к заголовку
+    if (!x || x.tagName !== "SPAN" || x.classList.contains("cjoin")) return null; } };
   for (let pass = 0; pass < 2; pass++) {   // сцепка — по раскладке (одна строка — один верх); шаг от неё у стрелок меняется, поэтому второй проход
     let ch = false;
     bs.forEach(b => {
@@ -8091,13 +8102,13 @@ function tzcPreview(){
 function tzSliders(){
   document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz").forEach(L => {
     const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
-    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 2 * t;
+    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 4 * t;   // v0.473: бегунок — шестигранник 4t
     const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;
     const x = ir.left - lr.left + tw / 2 + f * (ir.width - tw), rv = L.querySelector(".rv");
     const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
     if (L._thk === k) return; L._thk = k;
     L.style.setProperty("--thx", x.toFixed(2) + "px");
-    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + t) - 3; L.classList.toggle("rvl", w > right); }
+    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2 * t) - 3; L.classList.toggle("rvl", w > right); }
   });
 }
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
