@@ -7569,6 +7569,9 @@ function joinTag(){
    разделяй их обводкой»: сетки внутри нет; кнопки ряда сцеплены — остриё одной входит в выемку следующей (следующая заходит на t, как в сцепке
    «Звука»), первая в строке (или после поля, списка, подписи) — остриём. Граница — светлая обводка по контуру каждой кнопки (у соседей она общая).
    Сцепка считается по раскладке (одна строка — один верх), длина кнопки от неё не меняется: шаг всегда n сторон. */
+/* v0.450, «три цвета короче; Своя и цвета — между цветами цвет фона Своя, и далее другие» (рисунок 215…302): «Своя» — остриём слева, выемкой
+   справа; в выемку входит цвет 1, за ним 0 и а — шестигранники из 6 треугольников, остриё к острию; просветы между ними — цветом «Своя» (фон
+   блока #palOwn, обрезан шестигранником). Блок — снова в две кнопки (24t). Трапеции v0.449 сняты. */
 /* v0.449, по снимку «Своя 1 0 а» — «что за квадраты 3?? вот так их можно» (рисунок 237…327: голубая, сиреневая, красная трапеции встык): три
    цвета своей гаммы (#palOwn > label.pcol) — трапеции со скосами / \ из целых треугольников, n = 4 стороны по средней черте; через одну —
    узкая сверху (/ \) и узкая снизу (\ /), так они ложатся полосой без щелей. Сцепка теперь — для любых краёв: край — три отступа (верх,
@@ -7599,17 +7602,16 @@ function triTag(){
   document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb")) triOff(b); });
   const bs = [];
   document.querySelectorAll("#w-cone .tools .cgb button, #w-cone .tools #palOwn > label.pcol").forEach(b => {
-    if (b.tagName === "LABEL") {   // цвет своей гаммы — трапеция: 0-я и 2-я узкие сверху, 1-я — снизу
-      const k = [...b.parentElement.querySelectorAll(":scope > label.pcol")].indexOf(b);
-      b._tzar = ""; b._tzn = 4; b._tzfix = true;
-      b._tzL = k % 2 ? [0, 1, 2] : [2, 1, 0]; b._tzR = k % 2 ? [0, 1, 2] : [2, 1, 0];
-      tzGeo(b); bs.push(b); return;
+    if (b.tagName === "LABEL") {   // v0.450: цвет своей гаммы — шестигранник из 6 треугольников (n = 2), остриё к острию; просветы — цветом «Своя» (фон блока, CSS)
+      b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP;
+      tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
     }
     const ar = RH_TRI[b.textContent.trim()];
     if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
     b._tzar = ar; b._tzn = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6;
     b._tzR = ar === "l" ? TZ_NOTCH : TZ_TIP; b._tzfix = !!ar;
     if (ar) b._tzL = ar === "r" ? TZ_NOTCH : TZ_TIP;
+    if (b.dataset.pal === "0" && b.parentElement.id === "palOwn") { b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_NOTCH; }   // v0.450: «Своя» — выемкой к цветам
     tzGeo(b); bs.push(b);
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.449. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.450. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.449</title>
+<title>Zazerkalius — v0.450</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -877,6 +877,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 /* v0.449, «что за квадраты 3?? вот так их можно» (рисунок 237…327): цвета своей гаммы 1 0 а в конусе — трапеции из треугольников (triTag),
    встык друг к другу и к «Своя» / «Янтарь»; заливка — сам цвет, обводка — слоем поверх (::after), знак — по середине */
 #w-cone .tools #palOwn#palOwn{width:auto !important}
+/* v0.450: просветы между цветами — цветом «Своя»: фон блока, обрезанный шестигранником (остриё «Своя» слева, остриё «а» справа) */
+#w-cone .tools #palOwn#palOwn:has(> label.pcol.tz){background:var(--panel2);clip-path:polygon(var(--t) 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,var(--t) 100%,0 50%)}
+#w-cone .tools #palOwn#palOwn:has(> label.pcol.tz):has(> button.on){background:color-mix(in srgb, var(--panel2) 58%, var(--gold))}
 #w-cone .tools #palOwn#palOwn > label.pcol.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;border-width:0 !important;border-radius:0 !important;
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%)}
 #w-cone .tools #palOwn#palOwn > label.pcol.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
@@ -1234,7 +1237,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.449</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.450</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2154,8 +2157,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0449"></script>
-<script src="zz-ui.js?v=0449"></script>
+<script src="zz-core.js?v=0450"></script>
+<script src="zz-ui.js?v=0450"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
