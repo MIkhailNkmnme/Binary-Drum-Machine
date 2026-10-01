@@ -7815,6 +7815,7 @@ function tzcApply(g){
     });
     out++; prev = L;
   }
+  g._tzcSh = {}; its.forEach(it => { g._tzcSh[it.w] = [it.dr, it.dc]; });   // v0.461: сдвиги переноса — их впечатывает tzcBake
   let R = 0, N = 0;
   const o2 = {}, live = new Set();
   for (const it of its) {
@@ -8012,11 +8013,28 @@ function tzcMine(){   // вернуть в сетку своё, отложенн
   Z.triBind = null; delete Z.triMine;
   TRI_COL.length = 9; if (Z.triCol >= 9) Z.triCol = 2;   // v0.454: кисти кнопок — только в конструкторе
 }
+/* v0.461, по снимку «Гаммы», перенесённой в четыре ряда, — «пусть в редактор попадает в таком расположении, в каком нажата кнопка в редактор»:
+   при △ перенос (раскладка под ширину группы) впечатывается в рисунок — треугольники, линии ╱ и свои цвета переезжают туда, где кнопки стоят на
+   экране; сетка показывает ровно то, что видно. Дальше рисунок уже такой (шире группу — он сам не «развернётся» обратно) */
+function tzcBake(g, d){
+  const sh = g._tzcSh; if (!sh || !Object.values(sh).some(([a, b]) => a || b)) return false;
+  const mv = (map) => { const out = {}; for (const [k, v] of Object.entries(map || {})) { const w = d.o && d.o[k], [dr, dc] = (w && sh[w]) || [0, 0], [r, c] = k.split("_").map(Number); out[(r + dr) + "_" + (c + dc)] = v; } return out; };
+  const l2 = {};
+  for (const [key, v] of Object.entries(d.l || {})) {
+    const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
+    l2[[[A[0] + dr, A[1] + dc], [Bn[0] + dr, Bn[1] + dc]].map(n => n.join("_")).sort().join("|")] = v;
+  }
+  d.c = mv(d.c); d.gl = mv(d.gl); d.gi = mv(d.gi); d.o = mv(d.o); d.l = l2; d.v = (d.v | 0) + 1;
+  g._tzcSh = null;
+  return true;
+}
 function tzcOpen(g){
   if (!g.closest("#w-cone")) { say("△ Конструктор — пока для групп в окне конуса."); return; }
   const key = g.dataset.g; if (!Z.cgrpTri || typeof Z.cgrpTri !== "object") Z.cgrpTri = {};
   triState();
   if (Z.triBind && Z.triBind !== key) tzcClose(true);
+  { const d0 = Z.cgrpTri[key];   // v0.461: как стоит на экране — так и в сетку
+    if (d0 && tzcBake(g, d0) && Z.triBind === key) { Z.triCells = Object.assign({}, d0.c); Z.triLines = Object.assign({}, d0.l); Z.triGLn = Object.assign({}, d0.gl); Z.triGIn = Object.assign({}, d0.gi); } }
   if (Z.triBind !== key) {
     Z.triMine = { c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx, l: Z.triLines, cur: Z.triCur, sel: Z.triSel };
     let d = Z.cgrpTri[key];
