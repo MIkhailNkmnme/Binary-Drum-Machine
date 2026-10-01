@@ -7102,17 +7102,20 @@ const CG_FREE = ".cgrp > .glab, .cgrp > .cgb > .glab2, .cgrp > .cgb > span:not(.
    каждый элемент: при ▶ волне счёт меняется каждый кадр) */
 const CG_BTN = ".cgrp > .cgb button:not(.zerk-arrow), .cgrp > .cgb label:has(> input[type=checkbox]), .cgrp > .cgb select";
 function cgbSnap(){
-  const bu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, gp = 3, W = (k) => k * bu + (k - 1) * gp;
-  const kOf = (w) => w <= W(1) + 0.5 ? 1 : w <= W(2) + 0.5 ? 2 : 4;
+  const bu0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, ct = document.querySelector("#w-cone .tools");
+  const buC = (ct && parseFloat(getComputedStyle(ct).getPropertyValue("--bu"))) || bu0;   // v0.447: в конусе своя --bu (6s) и без зазоров
+  const W = (k, el) => { const c = el.closest("#w-cone .tools"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };
+  const kOf = (w, el) => w <= W(1, el) + 0.5 ? 1 : w <= W(2, el) + 0.5 ? 2 : 4;
   const vis = (el) => el.getClientRects().length > 0;
   const free = [...document.querySelectorAll(CG_FREE)].filter(vis);
   const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
-  btn.forEach(el => el.classList.add("wm"));
+  btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width"); el.classList.add("wm"); });   // v0.447: ширина .tz — своя, на замер снять
   const wf = free.map(el => el.getBoundingClientRect().width), wb = btn.map(el => el.getBoundingClientRect().width);
-  btn.forEach(el => el.classList.remove("wm"));
-  free.forEach((el, i) => { el.style.width = W(kOf(wf[i])) + "px"; });
-  btn.forEach((el, i) => { const k = kOf(wb[i]); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
+  btn.forEach(el => { el.classList.remove("wm"); if (el._tzw) el.style.setProperty("width", el._tzw, "important"); });
+  free.forEach((el, i) => { el.style.width = W(kOf(wf[i], el), el) + "px"; });
+  btn.forEach((el, i) => { const k = kOf(wb[i], el); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
+  if (typeof triTag === "function") triTag();
 }
 function cgbIcons(){
   document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
@@ -7501,7 +7504,9 @@ function rhombTag(){
   document.querySelectorAll("#w-cone .tools .cgb button, #paneGrp .cgb button").forEach(b => {
     if (b.classList.contains("zerk-arrow")) return;
     if (b.closest(".cjoin")) { b.classList.remove("rh1", "tri-l", "tri-r", "tri-u", "tri-d"); return; }   // v0.419: в сцепке — своя форма (joinTag)
-    const ar = RH_TRI[b.textContent.trim()], cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
+    const ar = RH_TRI[b.textContent.trim()];
+    if (ar !== "u" && ar !== "d" && b.closest("#w-cone .tools")) { b.classList.remove("rh1", "tri-l", "tri-r"); return; }   // v0.447: в конусе — triTag
+    const cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
     const sd = h / Math.sqrt(3), t = sd / 2, px = (v) => Math.max(0, v).toFixed(2) + "px";
     b.classList.toggle("rh1", !ar && w >= sd);
     for (const k of ["l", "r", "u", "d"]) b.classList.toggle("tri-" + k, ar === k);
@@ -7556,6 +7561,31 @@ function joinTag(){
   });
 }
 { const rt0 = rhombTag; rhombTag = function(){ rt0(); joinTag(); }; }
+/* v0.447, по рисунку из «△ Сетки» — «пока только в группе Конус», «как на рисунке», стрелки — 46 47 / 102 103: кнопки групп окна конуса — из
+   целых треугольников (класс .tz, см. CSS). Обычная — шестигранник: острия с обоих концов, длина — n сторон s по средней черте (полкнопки .ib —
+   3, кнопка — 6, .w2 — 12, .w4 — 24); ◀ ▶ — шеврон из 4 треугольников (3t: выемка с одной стороны, остриё с другой); ▲ ▼ — как были (rhombTag).
+   Внутри — сетка треугольников (как joinTag). Ушла из конуса (группа на левой панели) — форма снимается. Счёт — раз на вид кнопки (b._tzk) */
+function triOff(b){ b.classList.remove("tz", "tzar"); b.style.removeProperty("width"); b.style.removeProperty("--lat"); b._tzk = ""; }
+function triTag(){
+  document.querySelectorAll("button.tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb")) triOff(b); });
+  document.querySelectorAll("#w-cone .tools .cgb button").forEach(b => {
+    const ar = RH_TRI[b.textContent.trim()];
+    if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
+    const h = parseFloat(getComputedStyle(b).height) || 24, t = h / (2 * Math.sqrt(3));
+    const n = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6, key = (ar || "") + n + "|" + h;
+    if (b._tzk === key && b.classList.contains("tz")) return;
+    b._tzk = key;
+    const L = ar === "r" ? [0, t, 0] : [t, 0, t], R = ar === "l" ? [0, t, 0] : [t, 0, t], W = L[1] + R[1] + 2 * n * t, px = (v) => v.toFixed(2) + "px";
+    b.classList.remove("rh1", "tri-l", "tri-r"); b.classList.add("tz"); b.classList.toggle("tzar", !!ar);
+    [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]], ["--t", t]].forEach(([k, v]) => b.style.setProperty(k, px(v)));
+    b.style.setProperty("width", px(W), "important");
+    let d = `M0 ${h / 2}H${W.toFixed(2)}`;
+    for (let M = L[1] - 2 * t; M <= W + 2 * t; M += 2 * t) d += `M${(M - t).toFixed(2)} 0L${(M + t).toFixed(2)} ${h}M${(M + t).toFixed(2)} 0L${(M - t).toFixed(2)} ${h}`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
+    b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+  });
+}
+{ const rt1 = rhombTag; rhombTag = function(){ rt1(); triTag(); }; }
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
