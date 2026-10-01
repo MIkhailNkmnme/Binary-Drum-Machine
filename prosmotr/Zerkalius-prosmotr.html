@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.017. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.018. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -61,13 +61,16 @@
              щелчок — к кадру. Лента «по одному» — фильм ОДНОГО ромба (у ромба 2 их 130 тыс., все подряд — 33 млн мест);
              ◇◀ ▶◇ — соседний; без 🔁 в конце фильма — следующий ромб, с 🔁 — этот же по кругу.
      v0.017: по снимку ромба 128 — «как так накладывается?»: стояли «ромбы вплотную» — браузер при F5 вернул прежний выбор по значению
-             «rh», а оно с v0.013 значит «вплотную». Форме клеток — autocomplete="off": после обновления всегда ◆ ромбы в клетке. -->
+             «rh», а оно с v0.013 значит «вплотную». Форме клеток — autocomplete="off": после обновления всегда ◆ ромбы в клетке.
+     v0.018: «каждый второй ромб всё равно так же». Чётные проходы GIF 526–781 — тот же узор дважды со сдвигом на клетку (обе шахматки
+             заняты): так нарисован сам GIF. Переключатель «шахматка»: вершины (по умолчанию) / вторая / обе — гасит клетки другой
+             чётности на холсте, в ленте кадров и в PNG; с одной шахматкой и «вплотную» — чистая ромбовая сетка. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.017</title>
+<title>Zerkalius Просмотр GIF — v0.018</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -125,7 +128,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.017</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.018</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -219,6 +222,11 @@
         <option value="rh">◆ ромбы вплотную</option>
         <option value="ci">● круги</option>
         <option value="sq">▪ квадраты</option>
+      </select>
+      <select id="latSel" autocomplete="off" title="Какие клетки показывать. В чётных кадрах GIF 526–781 узор нарисован дважды со сдвигом на клетку — заняты обе шахматки, и ромбы налезают друг на друга. Шахматка вершины — клетки той чётности (x + y), что вершина треугольника; вторая — остальные">
+        <option value="a" selected>◇ шахматка вершины</option>
+        <option value="b">◆ вторая шахматка</option>
+        <option value="both">▦ обе шахматки</option>
       </select>
       <button id="zeroBtn" class="on" title="Нули внутри картинки — тусклыми клетками той же формы">0</button>
       <button id="gridBtn" title="Обводка клеток — тонкая линия вокруг каждой клетки: ромба, квадрата, круга (видно при увеличении)">▢</button>
@@ -642,7 +650,7 @@ function rStrip() {
   const box = $('rStrip'), ref = SEQ[S.i];
   if (!rOne() || !ref || ref[3] === undefined) { if (box.style.display !== 'none') { box.style.display = 'none'; box.innerHTML = ''; } RS.stripKey = ''; return; }
   box.style.display = 'flex';
-  const g = S.gifs[ref[0]], w = parWant(), key = [g.id, ref[2], ref[3], SEQ.length, w, SEQ[0][1]].join('|');
+  const g = S.gifs[ref[0]], w = parWant(), key = [g.id, ref[2], ref[3], SEQ.length, w, SEQ[0][1], $('latSel').value].join('|');
   if (key !== RS.stripKey) {   // новый ромб — лента заново; картинки рисуются кусками, чтобы не подвесить страницу
     RS.stripKey = key; RS.cur = -1; box.innerHTML = '';
     const M = sceneMap(ref), TH = 56, big = M.H > TH, sc = TH / M.H, cw = Math.max(1, Math.round(M.W * sc)), lut = lutOf(g);
@@ -654,14 +662,20 @@ function rStrip() {
       const sp = document.createElement('span'); sp.textContent = '#' + (SEQ[i][1] + 1);
       d.appendChild(c); d.appendChild(sp); d.addEventListener('click', () => go(i, 1)); box.appendChild(d); return c;
     });
-    const job = ++RS.job, GC = (255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0];
+    const job = ++RS.job, GC = (255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0], BK0 = 255 << 24;
+    const lv = $('latSel').value, lk = lv === 'both' || M.par === undefined ? -1 : (lv === 'a' ? M.par : 1 - M.par);   // v0.018
     let k = 0;
     const chunk = () => {
       if (job !== RS.job) return;
       const t0 = performance.now();
       while (k < items.length && performance.now() - t0 < 25) {
         const fr = g.frames[SEQ[items[k]][1]], img = new ImageData(M.W, M.H), d32 = new Uint32Array(img.data.buffer);
-        d32.fill(GC); for (let p = 0; p < M.src.length; p++) d32[M.dst[p]] = lut[fr[M.src[p]]];
+        d32.fill(GC);
+        for (let p = 0; p < M.src.length; p++) {   // v0.018: и в ленте — только выбранная шахматка
+          const dd = M.dst[p];
+          if (lk >= 0) { const yy = (dd / M.W) | 0; if (((dd - yy * M.W + yy) & 1) !== lk) { d32[dd] = BK0; continue; } }
+          d32[dd] = lut[fr[M.src[p]]];
+        }
         if (big) { tmp.getContext('2d').putImageData(img, 0, 0); const x = els[k].getContext('2d'); x.imageSmoothingEnabled = true; x.drawImage(tmp, 0, 0, cw, TH); }
         else els[k].getContext('2d').putImageData(img, 0, 0);
         k++;
@@ -733,7 +747,7 @@ function draw() {
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
   const key = JSON.stringify([ref[0] === -1 ? -1 : gid(ref[0]), ref[1], ref[2] || 0, ref[3] === undefined ? -1 : ref[3], S.mont, layOn() ? [layout(), $('laySize').value, setList().map(gid)] : 0,
-    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0, shapeNow(), !!S.zeros, !!S.grid, S.grid ? $('gridColor').value : 0]);
+    ref[2] ? [$('rcutLay').value, $('rcutGap').value] : 0, shapeNow(), !!S.zeros, !!S.grid, S.grid ? $('gridColor').value : 0, $('latSel').value]);
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой; v0.010: или один ромб
@@ -768,6 +782,13 @@ function draw() {
     nameTxt = S.mont ? g.name.replace(/\.gif$/i, '') + ' #' + (ref[1] + 1) : '';
   }
   S.label = label; S.nameTxt = nameTxt;
+  // v0.018: одна шахматка — клетки другой чётности гасятся (чёрным); щели раскладки не трогаются
+  if (par !== undefined && $('latSel').value !== 'both') {
+    const keep = $('latSel').value === 'a' ? par : 1 - par, im = octx.getImageData(0, 0, W, H), d = new Uint32Array(im.data.buffer);
+    const BK = ((255 << 24) >>> 0), GP = ((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]) >>> 0;
+    for (let y = 0; y < H; y++) for (let x = ((keep + 1 + y) & 1), o = y * W; x < W; x += 2) { const c = d[o + x]; if (c !== GP) d[o + x] = BK; }
+    octx.putImageData(im, 0, 0);
+  }
   if (useShp()) { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H, par); S.shapeKey = key; }   // v0.011
   blit();
 }
@@ -890,6 +911,7 @@ const useShp = () => shapeNow() !== 'sq' || !!S.grid;   // v0.014: у квадр
 $('gridBtn').addEventListener('click', () => { S.grid = !S.grid; $('gridBtn').classList.toggle('on', S.grid); S.offKey = ''; draw(); });
 $('gridColor').addEventListener('input', () => { if (S.grid) { S.offKey = ''; draw(); } });
 $('cellShape').addEventListener('change', () => { S.offKey = ''; draw(); });
+$('latSel').addEventListener('change', () => { S.offKey = ''; draw(); });   // v0.018
 $('zeroBtn').addEventListener('click', () => { S.zeros = !S.zeros; $('zeroBtn').classList.toggle('on', S.zeros); S.offKey = ''; draw(); });
 // v0.005: вывод на экран — масштаб и сдвиг по кругу (строка shift источника — вверху экрана)
 function blit() {
