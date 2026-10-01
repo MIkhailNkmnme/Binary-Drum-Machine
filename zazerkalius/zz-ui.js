@@ -6903,7 +6903,56 @@ function cgrpInit(){
   /* v0.366: магнит — край тащимой группы ближе SNAP px к краю окна конуса, поля строк или другой группы (любой стороной: вплотную или вровень) —
      встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */
   const SNAP = 10;
+  /* v0.502, по снимку «Вида» и «Аниматрицы» рядом — «примагничивать к левой группе, размагничивать при перемещении правой»: группа, поднесённая
+     к соседней сбоку (ближе SNAP), входит в неё зубцами — выемки левого края на острия правого края соседки (заходит на t), ряд в ряд (шаг 24 px).
+     Отпустил так — правая прицеплена к левой (Z.cgrpLink { правая: { to: левая, dy } }): левую двигают, растягивают, перестраивают — правая едет
+     следом (linkSync); правую потянул — отцепилась. «И верхняя — нижняя так же, верхняя главная»: поднесённая под группу (или над ней) встаёт рамка
+     на рамку (заходит на 1 px), левые края вровень, если близко; нижняя прицеплена к верхней ({ to, v: 1, dx }) */
+  if (!Z.cgrpLink || typeof Z.cgrpLink !== "object") Z.cgrpLink = {};
+  const gByKey = (k) => groups.find(o => o.dataset.g === k);
+  const linkCycle = (right, left) => { for (let k = left, n = 0; k && n < 20; k = Z.cgrpLink[k] && Z.cgrpLink[k].to, n++) if (k === right) return true; return false; };
+  const meshSnap = (g, x, y, w, h) => {
+    const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H; let best = null;
+    groups.forEach(o => {
+      if (o === g || o.parentElement !== tl || !o.getClientRects().length || o.classList.contains("cfld") || !o.classList.contains("tzg")) return;
+      const q = o.getBoundingClientRect(); if (q.width < 4 || y >= q.bottom - P / 2 || y + h <= q.top + P / 2) return;
+      const yy = q.top + Math.round((y - q.top) / P) * P;
+      for (const [side, xx] of [["r", q.right - t], ["l", q.left - w + t]]) {
+        const d = Math.abs(x - xx); if (d >= SNAP + t || (best && d >= best.d)) continue;   // зона — и на глубину зубца (иначе брал простой магнит край в край)
+        if (side === "r" ? linkCycle(g.dataset.g, o.dataset.g) : linkCycle(o.dataset.g, g.dataset.g)) continue;
+        best = { d, x: xx, y: yy, o, side };
+      }
+    });
+    groups.forEach(o => {   // сверху вниз: рамка на рамку
+      if (o === g || o.parentElement !== tl || !o.getClientRects().length || o.classList.contains("cfld") || !o.classList.contains("tzg")) return;
+      const q = o.getBoundingClientRect(); if (q.width < 4 || x >= q.right - P / 2 || x + w <= q.left + P / 2) return;
+      const xx = Math.abs(x - q.left) < SNAP ? q.left : x;
+      for (const [side, yy] of [["b", q.bottom - 1], ["t", q.top - h + 1]]) {
+        const d = Math.abs(y - yy); if (d >= SNAP || (best && d >= best.d)) continue;
+        if (side === "b" ? linkCycle(g.dataset.g, o.dataset.g) : linkCycle(o.dataset.g, g.dataset.g)) continue;
+        best = { d, x: xx, y: yy, o, side };
+      }
+    });
+    return best;
+  };
+  let linkSaveT = 0;
+  const linkSync = () => {
+    const tr = tl.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)); let ch = false;
+    for (let pass = 0; pass < 6; pass++) { let any = false;
+      for (const [k, L] of Object.entries(Z.cgrpLink)) {
+        const g = gByKey(k), o = L && gByKey(L.to);
+        if (!g || !o) { delete Z.cgrpLink[k]; continue; }
+        if (g.parentElement !== tl || o.parentElement !== tl || g.classList.contains("cdrag") || Z.cgrpFld[k] || Z.cgrpFld[L.to] || !o.getClientRects().length || !g.getClientRects().length) continue;
+        const q = o.getBoundingClientRect(), x = L.v ? q.left - tr.left + (L.dx || 0) : q.right - t - tr.left, y = L.v ? q.bottom - 1 - tr.top : q.top - tr.top + (L.dy || 0), p = Z.cgrpPos[k];
+        if (!p || Math.abs(p.x - x) > 0.5 || Math.abs(p.y - y) > 0.5) { Z.cgrpPos[k] = { x, y }; place(g); any = ch = true; }
+      }
+      if (!any) break; }
+    if (ch && !document.body.classList.contains("cgdrag")) { clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
+  };
+  setInterval(() => { if (!document.hidden) linkSync(); }, 300);
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
+    const m = meshSnap(g, x, y, w, h); g._mesh = m;   // v0.502: зубцы в зубцы — сильнее прочего магнита
+    if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
     const T = [], add = (el, ov) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q, ov || 0]); };
     /* v0.478, «магнитить только там, но без щелей — обводка на обводку ложить»: группа к группе встык заходит на 1 px — их рамки ложатся одна на другую */
     add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
@@ -7005,9 +7054,10 @@ function cgrpInit(){
       g.style.zIndex = ++zTop;
       const mv = (ev) => {
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
-        if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); }
+        if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); delete Z.cgrpLink[g.dataset.g]; }   // v0.502: потянул правую — отцепилась
         lx = ev.clientX; ly = ev.clientY;
-        { const [sx, sy] = snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = Math.round(sx) + "px"; g.style.top = Math.round(sy) + "px"; }   // v0.366: магнит
+        { const [sx, sy] = snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px"; }   // v0.366: магнит
+        linkSync();   // v0.502: прицепленные справа — следом
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
         const F = $("field"); if (F) F.classList.toggle("cgover", !paneHit(lx, ly) && fldFits(g, g.getBoundingClientRect()));   // v0.348: целиком над полем
       };
@@ -7020,7 +7070,15 @@ function cgrpInit(){
         if (g.parentElement !== tl) undock(g);
         if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: целиком на поле строк
         delete Z.cgrpFld[g.dataset.g];
-        const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g); save();
+        const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g);
+        { const m = g._mesh; g._mesh = null;   // v0.502: отпустил зубцами в соседку — прицепить правую к левой
+          if (m && m.o.parentElement === tl) { const q = m.o.getBoundingClientRect(), g2 = g.getBoundingClientRect();
+            const mine = m.side === "r" || m.side === "b", kid = mine ? g : m.o, par = mine ? m.o : g, kr = mine ? g2 : q, pr = mine ? q : g2;
+            Z.cgrpLink[kid.dataset.g] = m.side === "r" || m.side === "l" ? { to: par.dataset.g, dy: Math.round(kr.top - pr.top) } : { to: par.dataset.g, v: 1, dx: Math.round(kr.left - pr.left) };
+            if (!Z.cgrpPos[kid.dataset.g]) Z.cgrpPos[kid.dataset.g] = { x: kr.left - tr.left, y: kr.top - tr.top };
+            say(`🧲 «${kid.dataset.g}» прицеплена ${m.side === "r" || m.side === "l" ? "справа" : "снизу"} к «${par.dataset.g}» — едет за ней; потянешь — отцепится.`); }
+          linkSync(); }
+        save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
