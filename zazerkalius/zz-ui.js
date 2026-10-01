@@ -7755,7 +7755,11 @@ function tzcLabels(){   // надпись кнопки в сетке — одн�
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const by = {}; for (const [k, w] of Object.entries(d.o || {})) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) (by[w] = by[w] || []).push([r, c]); }
   { const vis = {}; for (const [k, w] of Object.entries(d.o || {})) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) vis[k] = w; }
-    g.lineCap = "round"; if (!(d.l && Object.keys(d.l).length)) for (const h of tzcHulls(vis, new Set(Object.values(vis)), d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); } }
+    const lv = new Set(Object.values(vis));
+    g.lineCap = "round"; if (!tzcManual(d)) for (const h of tzcHulls(vis, lv, d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }
+    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }   // v0.459
+    if (tzcPick && tzcSel.size) for (const h of tzcRingPaths(vis, lv, [{ items: [...tzcSel], col: "#fff" }], triPts)) {   // выбранные — пунктиром
+      g.save(); g.strokeStyle = "#fff"; g.lineWidth = 2.5; g.setLineDash([6, 4]); g.stroke(new Path2D(h.d)); g.restore(); } }
   g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(9, Math.min(22, triGeo.s * 0.42))}px Segoe UI, Arial`; g.fillStyle = "#0e1116";
   for (const [w, cells] of Object.entries(by)) {
     const i = (d.items || []).indexOf(w), c = TRI_COL[TZC_K0 + i]; if (!c) continue;
@@ -7798,7 +7802,7 @@ function tzcApply(g){
   // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
   /* v0.455, «кнопки под одной обводкой — не переносятся на другие строки»: кнопки под общей границей (tzcHulls) — один блок, переносится целиком */
   const oAll = {}; its.forEach(it => it.cells.forEach(([r, c]) => { oAll[r + "_" + c] = it.w; }));
-  const uOf = tzcUnits(oAll, new Set(its.map(x => x.w))), units = {};
+  const uOf = tzcUnits(oAll, new Set(its.map(x => x.w)), d.rings), units = {};
   its.forEach(it => { const u = uOf[it.w] || it.w, U = units[u] || (units[u] = { m: [], r0: 1e9, c0: 1e9, c1: -1 }); U.m.push(it); U.r0 = Math.min(U.r0, it.r0); U.c0 = Math.min(U.c0, it.c0); U.c1 = Math.max(U.c1, it.c1); });
   const lines = {}; Object.values(units).forEach(U => { const L = Math.floor(U.r0 / 2); (lines[L] = lines[L] || []).push(U); });
   let out = 0, prev = null;
@@ -7841,9 +7845,10 @@ function tzcApply(g){
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);
   ov.style.width = px(W); ov.style.height = px(H);
   const Pg = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
-  const manual = !!(d.l && Object.keys(d.l).length);   // v0.457: нарисована своя обводка (╱) — общая граница сама не рисуется
+  const manual = tzcManual(d);   // v0.457 / v0.459: своя обводка (╱ или ⬚) — общая граница сама не рисуется
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
-  if (manual) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
+  hull += tzcRingPaths(o2, live, d.rings, Pg).map(h => `<path d="${h.d}" stroke="${esc(h.col)}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
+  if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
@@ -7864,7 +7869,32 @@ function tzcMain(cells){   // самый большой связный кусо�
 /* v0.454, «каждой кнопке, если между её гранями другие, — дай общую границу цвета»: кнопка из нескольких кусков, между которыми стоят другие
    кнопки (как «Своя» с цветами 1 0 а), обводится общей границей своим цветом (кисти): её треугольники и целиком каждая кнопка, у которой хоть
    один треугольник — в том же ряду между её крайними. P(r, c) — вершины треугольника в нужных координатах */
-function tzcUnits(o, live){   // v0.455: кнопки под общей границей — один блок: кнопка → корень блока
+/* v0.459, «обводка в редакторе кнопок — нужен режим, когда группы кнопок только выбираются, и потом, когда снова нажать кнопку режима, — всё
+   объединит одной обводкой, и цвет обводки разный, чтоб задавать»: «⬚ обвести» в строке конструктора — режим выбора: щелчок по кнопке в сетке
+   выбирает её (ещё щелчок — снимает), закраска не меняется; «⬚» ещё раз — выбранные кнопки получают одну общую обводку (граница их треугольников
+   вместе) цветом из поля рядом. Обводок сколько угодно, у каждой свой цвет (d.rings [{ items, col }]); щелчок по обводке в списке — снять.
+   Обведённые вместе кнопки при переносе рядов держатся одним блоком. Есть своя обводка — общая граница (v0.454) сама не рисуется */
+let tzcPick = false;
+const tzcSel = new Set();
+const tzcManual = (d) => !!((d.l && Object.keys(d.l).length) || (d.rings && d.rings.length));
+function tzcRingPaths(o, live, rings, P){   // обводка — граница объединения треугольников её кнопок
+  const out = [];
+  for (const rg of rings || []) {
+    const S = new Set((rg.items || []).filter(w => live.has(w))); if (!S.size) continue;
+    const H = new Set(Object.keys(o).filter(k => S.has(o[k]))); let d = "";
+    for (const k of H) { const [r, c] = k.split("_").map(Number), Q = P(r, c);
+      for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
+    out.push({ d, col: rg.col || "#ffd166" });
+  }
+  return out;
+}
+function tzcRingsUi(){
+  const b = $("bTriRing"), box = $("triRings"), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!b || !box) return;
+  b.classList.toggle("on", tzcPick); b.textContent = tzcPick ? `⬚ обвести · ${tzcSel.size}` : "⬚ обвести";
+  const lab = (w) => { const i = d && (d.items || []).indexOf(w), c = i >= 0 && TRI_COL[TZC_K0 + i]; return c ? c[1] : w; };
+  box.innerHTML = (d && d.rings || []).map((rg, i) => `<button data-ri="${i}" style="border-color:${esc(rg.col)};color:${esc(rg.col)}" title="Обводка: ${esc(rg.items.map(lab).join(", "))} — щелчок: снять">⬚ ${rg.items.length}</button>`).join("");
+}
+function tzcUnits(o, live, rings){   // v0.455: кнопки под общей границей — один блок: кнопка → корень блока
   const by = {}, par = {}, f = (x) => (par[x] && par[x] !== x ? (par[x] = f(par[x])) : x);
   for (const [k, w] of Object.entries(o)) if (live.has(w)) (by[w] = by[w] || []).push(k.split("_").map(Number));
   for (const [w, cells] of Object.entries(by)) {
@@ -7872,6 +7902,7 @@ function tzcUnits(o, live){   // v0.455: кнопки под общей гран
     const rows = {}; for (const [r, c] of cells) { const x = rows[r] || (rows[r] = [c, c]); x[0] = Math.min(x[0], c); x[1] = Math.max(x[1], c); }
     for (const [r, [a, b]] of Object.entries(rows)) for (let c = a; c <= b; c++) { const v = o[r + "_" + c]; if (v && v !== w && live.has(v)) { const A = f(v), B = f(w); if (A !== B) par[A] = B; } }
   }
+  for (const rg of rings || []) { const ws = (rg.items || []).filter(w => by[w]); for (let i = 1; i < ws.length; i++) { const A = f(ws[i]), B = f(ws[0]); if (A !== B) par[A] = B; } }   // v0.459: обведённые вместе — один блок
   const out = {}; for (const w of Object.keys(by)) out[w] = f(w); return out;
 }
 /* v0.457, по снимку «Своя 1 0 а» — «обводку не могу нормально положить для третьей кнопки, похоже, обводку надо отдельно рисовать»: в конструкторе
@@ -7949,8 +7980,9 @@ function tzcPreview(){
     x.fill(); x.strokeStyle = x.fillStyle; x.lineWidth = 0.6; x.stroke(); x.globalAlpha = 1;
   }
   x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
-  if (d.l && Object.keys(d.l).length) {   // v0.457: своя обводка
-    for (const [key, v] of Object.entries(d.l)) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
+  if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
+    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }
+    for (const [key, v] of Object.entries(d.l || {})) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
       x.strokeStyle = col; x.lineWidth = w || Z.triLW || 2; x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
   } else for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
   for (const [w, el] of Object.entries(els)) {   // подписи
@@ -7972,6 +8004,7 @@ function tzcMine(){   // вернуть в сетку своё, отложенн
   const m = Z.triMine || {};
   Z.triCells = m.c || {}; Z.triGLn = m.gl || {}; Z.triGIn = m.gi || {}; Z.triGTx = m.gt || {}; Z.triCur = m.cur != null ? m.cur : -1; Z.triSel = m.sel || null;
   if ("l" in m) Z.triLines = m.l || {};   // v0.457
+  tzcPick = false; tzcSel.clear();   // v0.459
   Z.triBind = null; delete Z.triMine;
   TRI_COL.length = 9; if (Z.triCol >= 9) Z.triCol = 2;   // v0.454: кисти кнопок — только в конструкторе
 }
@@ -7993,7 +8026,7 @@ function tzcOpen(g){
     Z.triS = Math.max(TRI_S1, Math.min(60, (W - 20) * 2 / (N + 2), (H - 20) / (R + 1) / (Math.sqrt(3) / 2)));   // вся группа — в окне
   }
   save(); renderTri(); tzcAll();
-  say(`△ «${key}» — в конструкторе: у каждой кнопки своя кисть (строка конструктора в «Сетке»): закрашенное ею — её, где бы ни стояло. Обводка — инструмент ╱ (цвет — кисть или палитра). Выход — ✓ готово.`);
+  say(`△ «${key}» — в конструкторе: у каждой кнопки своя кисть (строка конструктора в «Сетке»): закрашенное ею — её, где бы ни стояло. Обводка — «⬚ обвести» (выбрать кнопки, ⬚ ещё раз) или ╱ по рёбрам. Выход — ✓ готово.`);
 }
 function tzcClose(quiet){
   if (!Z.triBind) return;
@@ -8015,13 +8048,35 @@ function tzcReset(){
     r0();
     const pal = $("triPal"); if (pal) [...pal.children].forEach(b => { if (+b.dataset.c >= TZC_K0) b.remove(); });   // кисти — не в общей палитре
     const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; }
-    if (Z.triBind) { tzcSync(); tzcBrushes(); tzcLabels(); }
+    if (Z.triBind) { tzcSync(); tzcBrushes(); tzcRingsUi(); tzcLabels(); }
     tzcPreview(); tzcIcons(); }; }
 if ($("triBindPal")) $("triBindPal").onclick = (e) => { const b = e.target.closest("button[data-c]"); if (!b) return;
   if (Z.triCol < -1) Z.triTCol = +b.dataset.c; else Z.triCol = +b.dataset.c;   // v0.457: пока горит ╱ (или ✦) — кисть даёт им цвет
   save(); renderTri(); };
 if ($("bTriBindOk")) $("bTriBindOk").onclick = () => tzcClose();
 if ($("bTriBindReset")) $("bTriBindReset").onclick = () => tzcReset();
+if ($("bTriRing")) $("bTriRing").onclick = () => {   // v0.459: режим выбора — и обвести выбранные
+  const d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!d) return;
+  if (!tzcPick) { tzcPick = true; tzcSel.clear(); say("⬚ Щёлкай кнопки в сетке — выбрать (ещё щелчок — снять). Нажми «⬚» ещё раз — выбранные получат одну обводку цветом из поля рядом."); }
+  else {
+    tzcPick = false;
+    if (tzcSel.size) { (d.rings = d.rings || []).push({ items: [...tzcSel], col: $("triRingCol").value || "#ffd166" }); say(`⬚ Обведено кнопок: ${tzcSel.size}.`); }
+    tzcSel.clear();
+  }
+  save(); renderTri();
+};
+if ($("triRings")) $("triRings").onclick = (e) => {
+  const b = e.target.closest("button[data-ri]"), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!b || !d || !d.rings) return;
+  d.rings.splice(+b.dataset.ri, 1); save(); renderTri(); say("⬚ Обводка снята.");
+};
+if ($("triCv")) $("triCv").addEventListener("pointerdown", (e) => {   // в режиме выбора щелчок не красит, а выбирает кнопку
+  if (!tzcPick || !Z.triBind) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const r = $("triCv").getBoundingClientRect(), h = triHit(e.clientX - r.left, e.clientY - r.top), d = Z.cgrpTri && Z.cgrpTri[Z.triBind], w = h && d && d.o && d.o[h[0] + "_" + h[1]];
+  if (!w) return;
+  if (tzcSel.has(w)) tzcSel.delete(w); else tzcSel.add(w);
+  renderTri();
+}, true);
 { const rt2 = rhombTag; rhombTag = function(){ rt2(); tzcAll(); }; }
 window.addEventListener("load", () => setTimeout(() => { triState(); if (Z.triBind && !tzcGroup(Z.triBind)) tzcMine(); tzcAll(); tzcPreview(); }, 0));
 

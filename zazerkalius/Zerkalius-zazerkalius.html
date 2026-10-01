@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.458. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.459. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.458</title>
+<title>Zazerkalius — v0.459</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -902,6 +902,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 #triBindPal > button{color:#0e1116;font-weight:600;padding:2px 6px;max-width:96px;overflow:hidden;text-overflow:ellipsis;border-color:transparent}
 #triBindPal > button.on{outline:2px solid var(--txt);outline-offset:1px}
 #triBindPal > button.unused{opacity:.45}
+#triRings{display:inline-flex;flex-wrap:wrap;gap:3px}
+#triRings > button{border-width:2px;border-style:solid;background:none;padding:1px 6px;font-weight:600}
+#bTriRing.on{background:color-mix(in srgb, var(--panel2) 60%, var(--gold));color:var(--txt)}
 #triBtnLive{flex:0 0 auto;overflow:auto;max-height:40%;padding:4px 0;border-bottom:1px solid var(--line)}
 #triBtnLive > canvas{display:block}
 #w-cone#w-cone .tools .cgb.tzc .tzk{position:absolute !important;margin:0 !important;flex:none !important;min-width:0 !important;max-width:none !important;box-sizing:border-box !important;
@@ -1269,7 +1272,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.458</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.459</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2073,6 +2076,9 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
         <div class="tools" id="triBind" hidden>   <!-- v0.452: сетка привязана к группе конуса (△ в её заголовке) -->
           <span id="triBindLab" class="dim"></span>
           <span id="triBindPal"></span>   <!-- v0.454: кисти кнопок группы — у каждой свой цвет -->
+          <button id="bTriRing" title="⬚ Обвести: включи — щёлкай кнопки в сетке, чтобы выбрать (ещё щелчок — снять); нажми ещё раз — выбранные получат одну общую обводку цветом из поля рядом">⬚ обвести</button>
+          <input id="triRingCol" type="color" value="#ffd166" title="Цвет новой обводки">
+          <span id="triRings"></span>   <!-- v0.459: обводки группы — щелчок снимает -->
           <button id="bTriBindOk" title="✓ Готово: выйти из конструктора — раскладка группы остаётся, в сетку возвращается своё">✓ готово</button>
           <button id="bTriBindReset" title="↺ Как было: группа снова обычным рядом кнопок (рисунок группы забывается)">↺ как было</button>
         </div>
@@ -2202,8 +2208,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0458"></script>
-<script src="zz-ui.js?v=0458"></script>
+<script src="zz-core.js?v=0459"></script>
+<script src="zz-ui.js?v=0459"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
