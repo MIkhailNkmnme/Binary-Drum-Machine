@@ -7680,7 +7680,7 @@ function triTag(){
     if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
     b._tzar = ar; b._tzn = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6;
     b._tzR = ar === "l" ? TZ_NOTCH : TZ_TIP; b._tzfix = !!ar;
-    if (ar) b._tzL = ar === "r" ? TZ_NOTCH : TZ_TIP;
+    if (ar) b._tzL = TZ_NOTCH;   // v0.485: ▶ — «стрелка вправо» (выемка — остриё), ◀ — «песочные часы» (выемки с обеих сторон)
     if (b.dataset.pal === "0" && b.parentElement.id === "palOwn") { b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_NOTCH; }   // v0.450: «Своя» — выемкой к цветам
     b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
@@ -7695,7 +7695,8 @@ function triTag(){
       if (!vis(b)) return;
       const p = prevOf(b), lk = !!p && p.classList.contains("tz") && !p.classList.contains("tzk") && Math.abs(p.getBoundingClientRect().top - b.getBoundingClientRect().top) < 6;
       let L = b._tzL || TZ_TIP;
-      if (!b._tzfix) L = !lk || tzFits(p._tzR, TZ_NOTCH) ? TZ_NOTCH : TZ_TIP;   // v0.479: первая в ряду — выемкой, в стрелку левого края группы
+      /* v0.485, «все кнопки пусть по умолчанию, если не редактировать, — стрелки вправо»: слева всегда выемка, справа остриё — остриё соседа входит в выемку */
+      if (!b._tzfix) L = TZ_NOTCH;
       const m = lk && tzFits(p._tzR, L) ? p._tzR[1] + L[1] : 0;
       if (L !== b._tzL || m !== (b._tzm || 0)) { b._tzL = L; b._tzm = m; tzGeo(b); ch = true; }
     });
