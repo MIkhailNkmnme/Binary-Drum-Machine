@@ -10118,6 +10118,13 @@ function init(){
   packLabel();
   $("bPack").onclick = () => { Z.pack = !Z.pack; packLabel(); packWins(); save(); say(Z.pack ? "⤒ Окна прижимаются к верху." : "⤒ Выключено: окна стоят там, где их поставили."); };
   $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); };
+  /* v0.496, «тест: вообще убрать обводку — прозрачной сделать»: ▱ в шапке — обводки в группах (кнопки, ползунки, заголовки, рамки групп, кольца
+     конструктора) прозрачные или как были. Z.noLn, по умолчанию — прозрачные */
+  if (Z.noLn === undefined) Z.noLn = true;
+  const lnUi = () => { document.documentElement.classList.toggle("noln", !!Z.noLn); $("bLn").classList.toggle("on", !Z.noLn);
+    $("bLn").title = Z.noLn ? "▱ Обводки кнопок и групп — прозрачные; щелчок — показать" : "▱ Обводки кнопок и групп видны; щелчок — сделать прозрачными"; };
+  lnUi();
+  $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); say(Z.noLn ? "▱ Обводки — прозрачные." : "▱ Обводки — видны."); };
   // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
   $("bPal").onclick = () => { if (!window.cgrpShow) { palStep(1); return; } if (cgrpShown("гамма")) cgrpHide("гамма"); else cgrpShow("гамма"); palUi(); };
   $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(1); };
