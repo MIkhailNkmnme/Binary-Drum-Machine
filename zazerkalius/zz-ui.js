@@ -5430,6 +5430,7 @@ function renderTri(){
     g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
     for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
       const P = triPts(r, c), k = M.K(r, c), gt = k && M.comps[M.cid[r + "_" + c]].tx;
+      if (k) continue;   // v0.454, «номера ромбов закрашенных скрывай»: номер — только у пустых
       g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = gt ? 0.3 : k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
     }
   }
@@ -5525,7 +5526,11 @@ if ($("triCv")) {
     }
     if (!h) return;
     const k = Z.triCells[h[0] + "_" + h[1]] | 0;
-    paint = e.button === 2 ? 0 : (k === Z.triCol ? 0 : Z.triCol);   // тот же цвет ещё раз — стереть
+    if (e.button === 2) {   // v0.454, «правой кнопкой по закрашенному — берёт его при следующем клике»: пипетка — цвет (в конструкторе — кисть кнопки)
+      if (k && TRI_COL[k]) { Z.triCol = k; save(); renderTri(); say(`△ Кисть: ${TRI_COL[k][1]} — следующий щелчок красит ею.`); }
+      return;
+    }
+    paint = k === Z.triCol ? 0 : Z.triCol;   // тот же цвет ещё раз — стереть
     cv.setPointerCapture(e.pointerId); put(h);
   });
   cv.addEventListener("pointermove", (e) => { if (paint >= 0) put(at(e)); else if (line) putLine(triEdgeAt(...rel(e))); });
@@ -7668,48 +7673,73 @@ function tzcLabel(el){
   const t = (el.dataset.lab || el.textContent || "").replace(/\s+/g, " ").trim();
   return [...t].slice(0, 8).join("") || (el.tagName === "LABEL" ? "▭" : "");
 }
+/* v0.454, по снимку «Своя», доведённой тем же цветом (надпись «Своя» — на каждом куске) — «как-то надо возможность указывать, что это
+   относится к кнопке такой-то; у каждой кнопки пусть свой цвет будет»: в конструкторе у КАЖДОЙ кнопки группы своя кисть — свой цвет
+   (TRI_COL[100 + i], i — номер кнопки в d.items, оттенки через золотой угол) с её надписью; кисти — в строке конструктора. Треугольник,
+   закрашенный кистью кнопки, — её, где бы ни стоял (куски не обязаны касаться). Обычные цвета палитры — просто рисунок, кнопкам не
+   принадлежат. Надпись кнопки в сетке — одна, на самом большом куске (а не символ на каждом). Прежний рисунок (v0.452–0.453: хозяин в d.o)
+   переводится в кисти сам. */
+const TZC_K0 = 100;
+const tzcHue = (i) => `hsl(${Math.round((i * 137.508) % 360)}, 68%, 62%)`;
+function tzcItems(g, d){   // все кнопки группы — в d.items (новые — в конец), их кисти — в TRI_COL
+  const cgb = g.querySelector(".cgb"); if (!cgb) return;
+  if (!Array.isArray(d.items)) d.items = [];
+  [...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => !el.hidden && tzcItem(el, cgb) === el).forEach(el => { const k = tzcKey(el, cgb); if (!d.items.includes(k)) d.items.push(k); });
+  if (d.fmt !== 2) {   // рисунок v0.452–0.453 — в кисти
+    d.c = d.c || {};
+    for (const [k, w] of Object.entries(d.o || {})) { let i = d.items.indexOf(w); if (i < 0) { d.items.push(w); i = d.items.length - 1; } d.c[k] = TZC_K0 + i; }
+    d.gt = {}; d.fmt = 2;
+    if (Z.triBind === g.dataset.g) { Z.triCells = Object.assign({}, d.c); Z.triGTx = {}; }   // конструктор открыт — и сетке тот же рисунок, иначе она запишет поверх старый
+  }
+  TRI_COL.length = TZC_K0;
+  d.items.forEach((w, i) => { const el = tzcFind(w, cgb); TRI_COL[TZC_K0 + i] = [tzcHue(i), (el && tzcLabel(el)) || w]; });
+}
 function tzcGrab(g){   // нынешняя раскладка группы → треугольники: опрос точкой в центре каждого треугольника (elementFromPoint видит и clip-path)
   const cgb = g.querySelector(".cgb"), rc = cgb.getBoundingClientRect(), hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3));
   const its = [...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => el.getClientRects().length && tzcItem(el, cgb) === el);
   const tops = []; its.forEach(el => { const y = el.getBoundingClientRect().top; if (!tops.some(v => Math.abs(v - y) < 8)) tops.push(y); }); tops.sort((a, b) => a - b);
   let ox = rc.left; const f = its.find(el => el.classList.contains("tz"));
   if (f) { const X = Math.round((f.getBoundingClientRect().left + (f._tzL ? f._tzL[1] : 0) * t - ox) / t); if (((X % 2) + 2) % 2) ox -= t; }   // острия — в чётных узлах
-  const cols = Math.ceil((rc.width + 2 * t) / t) + 1, o = {}, c = {}, gt = {}, lab = {}, keyOf = new Map();
+  const cols = Math.ceil((rc.width + 2 * t) / t) + 1, o = {}, keyOf = new Map();
   tops.forEach((y0, j) => { for (let rr = 0; rr < 2; rr++) { const r = 2 * j + rr; for (let cc = 0; cc < cols; cc++) {
     const up = (r + cc) % 2 === 0, cx = ox + (cc + 1) * t, cy = y0 + rr * hh + (up ? 2 / 3 : 1 / 3) * hh;
     const it = tzcItem(document.elementFromPoint(cx, cy), cgb); if (!it) continue;
     if (!keyOf.has(it)) keyOf.set(it, tzcKey(it, cgb));
     o[r + "_" + cc] = keyOf.get(it); } } });
-  // цвета: соседние кнопки — разными (иначе сольются в одну фигуру); горящая — золотом, если можно
-  const nb = {};
-  for (const [k, v] of Object.entries(o)) { const [r, cc] = k.split("_").map(Number);
-    for (const [, , n] of triNb(r, cc)) { const w = o[n[0] + "_" + n[1]]; if (w && w !== v) { (nb[v] = nb[v] || new Set()).add(w); (nb[w] = nb[w] || new Set()).add(v); } } }
-  const ORD = [7, 4, 6, 5, 1, 3, 8, 2], col = {};
-  for (const [it, k] of keyOf) { const busy = new Set([...(nb[k] || [])].map(w => col[w])); col[k] = it.classList.contains("on") && !busy.has(2) ? 2 : (ORD.find(x => !busy.has(x)) || 1); lab[k] = tzcLabel(it); }
-  for (const [k, v] of Object.entries(o)) { c[k] = col[v]; if (lab[v]) gt[k] = lab[v]; }
-  return { o, c, gt, gl: {}, gi: {}, v: 1, on: true };
+  const d = { c: {}, gt: {}, gl: {}, gi: {}, o, items: [], v: 1, on: true, fmt: 2 };
+  tzcItems(g, d);
+  for (const [k, w] of Object.entries(o)) { let i = d.items.indexOf(w); if (i < 0) { d.items.push(w); i = d.items.length - 1; } d.c[k] = TZC_K0 + i; }
+  tzcItems(g, d);
+  return d;
 }
-function tzcSync(){   // окно → данные группы → кнопки
+function tzcSync(){   // окно → данные группы → кнопки: треугольник — той кнопки, чьей кистью закрашен
   const key = Z.triBind, d = Z.cgrpTri && Z.cgrpTri[key]; if (!d) return;
   const cp = (x) => Object.assign({}, x || {});
-  d.c = cp(Z.triCells); d.gt = cp(Z.triGTx); d.gl = cp(Z.triGLn); d.gi = cp(Z.triGIn);
-  const o = d.o = d.o || {};
-  for (const k of Object.keys(o)) if (!(d.c[k] | 0)) delete o[k];
-  let R = 0, N = 0; for (const k of Object.keys(d.c)) { const [r, cc] = k.split("_").map(Number); R = Math.max(R, r + 1); N = Math.max(N, cc + 1); }
-  const M = triModel({ R, N, c: d.c }), lone = [];
-  M.comps.forEach(gr => {
-    const n = {}; for (const [r, cc] of gr.cells) { const w = o[r + "_" + cc]; if (w) n[w] = (n[w] | 0) + 1; }
-    const best = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
-    if (best) for (const [r, cc] of gr.cells) o[r + "_" + cc] = best; else lone.push(gr);
-  });
-  lone.forEach(gr => {   // фигура без хозяина — ближайшей кнопке того же цвета
-    let best = null, bd = 1e9;
-    for (const [k, w] of Object.entries(o)) { if ((d.c[k] | 0) !== gr.k) continue; const [r, cc] = k.split("_").map(Number);
-      for (const [a, b] of gr.cells) { const dd = Math.abs(a - r) * 2 + Math.abs(b - cc); if (dd < bd) { bd = dd; best = w; } } }
-    if (best) for (const [r, cc] of gr.cells) o[r + "_" + cc] = best;
-  });
+  d.c = cp(Z.triCells); d.gl = cp(Z.triGLn); d.gi = cp(Z.triGIn); d.gt = {};
+  const o = d.o = {}, it = d.items || [];
+  for (const [k, v] of Object.entries(d.c)) { const w = it[(v | 0) - TZC_K0]; if (w) o[k] = w; }
   d.v = (d.v | 0) + 1;
   const g = tzcGroup(key); if (g) tzcApply(g);
+}
+function tzcBrushes(){   // кисти кнопок — в строке конструктора
+  const box = $("triBindPal"), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!box || !d) return;
+  const used = new Set(Object.values(d.o || {}));
+  box.innerHTML = (d.items || []).map((w, i) => { const k = TZC_K0 + i, c = TRI_COL[k]; if (!c) return "";
+    return `<button data-c="${k}" class="${Z.triCol === k ? "on" : ""}${used.has(w) ? "" : " unused"}" style="background:${c[0]}" title="Кисть кнопки «${esc(c[1])}»: закрашенное ею — её${used.has(w) ? "" : " (сейчас не нарисована — стоит под рисунком)"}">${esc(c[1])}</button>`; }).join("");
+}
+function tzcLabels(){   // надпись кнопки в сетке — одна, на самом большом её куске
+  const cv = $("triCv"), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!cv || !d || !winOpen("w-tri") || !triGeo.s) return;
+  const g = cv.getContext("2d"), dpr = window.devicePixelRatio || 1, t = triGeo.s / 2, hh = triGeo.hh, pad = triGeo.pad;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const by = {}; for (const [k, w] of Object.entries(d.o || {})) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) (by[w] = by[w] || []).push([r, c]); }
+  { const vis = {}; for (const [k, w] of Object.entries(d.o || {})) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) vis[k] = w; }
+    g.lineCap = "round"; for (const h of tzcHulls(vis, new Set(Object.values(vis)), d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); } }
+  g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(9, Math.min(22, triGeo.s * 0.42))}px Segoe UI, Arial`; g.fillStyle = "#0e1116";
+  for (const [w, cells] of Object.entries(by)) {
+    const i = (d.items || []).indexOf(w), c = TRI_COL[TZC_K0 + i]; if (!c) continue;
+    const m = tzcMain(cells);
+    g.fillText(c[1], pad + (m.c0 + m.c1 + 2) / 2 * t, pad + (m.r0 + m.r1 + 1) / 2 * hh);
+  }
 }
 function tzcClean(el){
   el.classList.remove("tzk"); el._tzk = "";
@@ -7783,7 +7813,9 @@ function tzcApply(g){
   let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);
   ov.style.width = px(W); ov.style.height = px(H);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
+  const Pg = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
+  const hull = tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/>${hull}</svg>`;
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 function tzcMain(cells){   // самый большой связный кусок: { c0, c1, r0, r1 }
@@ -7793,7 +7825,26 @@ function tzcMain(cells){   // самый большой связный кусо�
     while (q.length) { const [a, b] = q.shift(); part.push([a, b]); for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (set.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(n); } } }
     if (part.length > main.length) main = part;
   }
-  return { c0: Math.min(...main.map(x => x[1])), c1: Math.max(...main.map(x => x[1])), r0: Math.min(...main.map(x => x[0])), r1: Math.max(...main.map(x => x[0])) };
+  return { n: main.length, c0: Math.min(...main.map(x => x[1])), c1: Math.max(...main.map(x => x[1])), r0: Math.min(...main.map(x => x[0])), r1: Math.max(...main.map(x => x[0])) };
+}
+/* v0.454, «каждой кнопке, если между её гранями другие, — дай общую границу цвета»: кнопка из нескольких кусков, между которыми стоят другие
+   кнопки (как «Своя» с цветами 1 0 а), обводится общей границей своим цветом (кисти): её треугольники и целиком каждая кнопка, у которой хоть
+   один треугольник — в том же ряду между её крайними. P(r, c) — вершины треугольника в нужных координатах */
+function tzcHulls(o, live, items, P){
+  const out = [], by = {};
+  for (const [k, w] of Object.entries(o)) if (live.has(w)) (by[w] = by[w] || []).push(k.split("_").map(Number));
+  for (const [w, cells] of Object.entries(by)) {
+    if (tzcMain(cells).n === cells.length) continue;   // один кусок — обычная обводка
+    const rows = {}; for (const [r, c] of cells) { const x = rows[r] || (rows[r] = [c, c]); x[0] = Math.min(x[0], c); x[1] = Math.max(x[1], c); }
+    const H = new Set(cells.map(([r, c]) => r + "_" + c)), inner = new Set();
+    for (const [r, [a, b]] of Object.entries(rows)) for (let c = a; c <= b; c++) { const v = o[r + "_" + c]; if (v && v !== w && live.has(v)) inner.add(v); }
+    for (const v of inner) for (const [r, c] of by[v] || []) H.add(r + "_" + c);
+    let d = "";
+    for (const k of H) { const [r, c] = k.split("_").map(Number), Q = P(r, c);
+      for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
+    const i = items.indexOf(w); out.push({ d, col: tzcHue(i < 0 ? 0 : i) });
+  }
+  return out;
 }
 function tzcEdges(o, live, ox, oy){   // путь SVG: рёбра на границе кнопки (с другой кнопкой — один раз)
   const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t;
@@ -7838,6 +7889,7 @@ function tzcPreview(){
     x.fill(); x.strokeStyle = x.fillStyle; x.lineWidth = 0.6; x.stroke(); x.globalAlpha = 1;
   }
   x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
+  for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
   for (const [w, el] of Object.entries(els)) {   // подписи
     const cells = Object.keys(o).filter(k => o[k] === w).map(k => k.split("_").map(Number)), m = tzcMain(cells), cs = getComputedStyle(el);
     let txt = el.classList.contains("pcol") ? ((el.querySelector("span") || {}).textContent || "") : el.tagName === "SELECT" ? ((el.options[el.selectedIndex] || {}).text || "") : (el.dataset.lab || el.textContent || "");
@@ -7857,6 +7909,7 @@ function tzcMine(){   // вернуть в сетку своё, отложенн
   const m = Z.triMine || {};
   Z.triCells = m.c || {}; Z.triGLn = m.gl || {}; Z.triGIn = m.gi || {}; Z.triGTx = m.gt || {}; Z.triCur = m.cur != null ? m.cur : -1; Z.triSel = m.sel || null;
   Z.triBind = null; delete Z.triMine;
+  TRI_COL.length = 9; if (Z.triCol >= 9) Z.triCol = 2;   // v0.454: кисти кнопок — только в конструкторе
 }
 function tzcOpen(g){
   if (!g.closest("#w-cone")) { say("△ Конструктор — пока для групп в окне конуса."); return; }
@@ -7867,16 +7920,16 @@ function tzcOpen(g){
     Z.triMine = { c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx, cur: Z.triCur, sel: Z.triSel };
     let d = Z.cgrpTri[key];
     if (!d || !d.c || !Object.keys(d.c).length) d = Z.cgrpTri[key] = tzcGrab(g);
-    d.on = true;
+    d.on = true; tzcItems(g, d);
     const cp = (x) => Object.assign({}, x || {});
-    Z.triCells = cp(d.c); Z.triGTx = cp(d.gt); Z.triGLn = cp(d.gl); Z.triGIn = cp(d.gi); Z.triCur = -1; Z.triSel = null; Z.triBind = key;
+    Z.triCells = cp(d.c); Z.triGTx = {}; Z.triGLn = cp(d.gl); Z.triGIn = cp(d.gi); Z.triCur = -1; Z.triSel = null; Z.triBind = key;
     let N = 0, R = 0; for (const k of Object.keys(d.c)) { const [r, c] = k.split("_").map(Number); R = Math.max(R, r + 1); N = Math.max(N, c + 1); }
     if (typeof window.zzWinShow === "function") window.zzWinShow("w-tri");
     const cv = $("triCv"), W = (cv && cv.clientWidth) || 600, H = (cv && cv.clientHeight) || 300;
     Z.triS = Math.max(TRI_S1, Math.min(60, (W - 20) * 2 / (N + 2), (H - 20) / (R + 1) / (Math.sqrt(3) / 2)));   // вся группа — в окне
   }
   save(); renderTri(); tzcAll();
-  say(`△ «${key}» — в конструкторе: крась и стирай треугольники, кнопки встают по рисунку; цвет соседки — кусок отходит ей. Выход — ✓ готово в «Сетке».`);
+  say(`△ «${key}» — в конструкторе: у каждой кнопки своя кисть (строка конструктора в «Сетке»): закрашенное ею — её, где бы ни стояло. Выход — ✓ готово.`);
 }
 function tzcClose(quiet){
   if (!Z.triBind) return;
@@ -7891,7 +7944,14 @@ function tzcReset(){
   save(); renderTri(); if (typeof rhombTag === "function") rhombTag(); tzcIcons();
   say(`△ «${key}» — снова обычным рядом.`);
 }
-{ const r0 = renderTri; renderTri = function(){ r0(); const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; } if (Z.triBind) tzcSync(); tzcPreview(); tzcIcons(); }; }
+{ const r0 = renderTri; renderTri = function(){
+    if (Z.triBind && TRI_COL.length <= TZC_K0) { const g = tzcGroup(Z.triBind), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (g && d) tzcItems(g, d); }   // кисти — до triState
+    r0();
+    const pal = $("triPal"); if (pal) [...pal.children].forEach(b => { if (+b.dataset.c >= TZC_K0) b.remove(); });   // кисти — не в общей палитре
+    const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; }
+    if (Z.triBind) { tzcSync(); tzcBrushes(); tzcLabels(); }
+    tzcPreview(); tzcIcons(); }; }
+if ($("triBindPal")) $("triBindPal").onclick = (e) => { const b = e.target.closest("button[data-c]"); if (!b) return; Z.triCol = +b.dataset.c; save(); renderTri(); };
 if ($("bTriBindOk")) $("bTriBindOk").onclick = () => tzcClose();
 if ($("bTriBindReset")) $("bTriBindReset").onclick = () => tzcReset();
 { const rt2 = rhombTag; rhombTag = function(){ rt2(); tzcAll(); }; }
