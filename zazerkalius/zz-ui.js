@@ -8604,7 +8604,9 @@ function palUi(){   // v0.367: в группе «Гамма» горит выб�
     b.classList.toggle("on", i === k);
     b.style.setProperty("--pc1", v[0]); b.style.setProperty("--pc0", v[1]); b.style.setProperty("--pca", v[2]);
   });
-  const c = palColors(0);
+  /* v0.500, по снимку «Гаммы» — «тут цвета менять при нажатии на другие, а при нажатии на Своя — вернуть свои; но если изменить цвета, то это всё
+     сохр. в Своя»: 1 / 0 / а показывают цвета выбранной гаммы (прежде — всегда «Своей») */
+  const c = palColors(k);
   [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (el && document.activeElement !== el) el.value = palHex(c[i]); });
   const b = $("bPal"); if (b && window.cgrpShown) b.classList.toggle("on", cgrpShown("гамма"));
 }
@@ -10143,7 +10145,7 @@ function init(){
     if (b0) b0.oncontextmenu = (e) => { e.preventDefault(); if (Z.palCust) delete Z.palCust[palTheme()]; Z.pal = 0; palApply(); save(); renderAll(); say("🎨 Своя — цвета страницы (для этой темы)."); }; }
   { let raf = 0;   // v0.370: свои цвета «Настраиваемой»: 1, 0, акцент — для нынешней темы; тянешь в выборе цвета — меняется сразу
     [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (!el) return;
-      el.oninput = () => { const t = palTheme(); if (!Z.palCust || typeof Z.palCust !== "object") Z.palCust = {}; const c = (palCust() || palBase()).slice(); c[i] = el.value; Z.palCust[t] = c; Z.pal = 0; palApply();
+      el.oninput = () => { const t = palTheme(); if (!Z.palCust || typeof Z.palCust !== "object") Z.palCust = {}; const c = palColors((Z.pal | 0) % ZZ_PALS.length).slice(); c[i] = el.value; Z.palCust[t] = c; Z.pal = 0; palApply();   // v0.500: правка на другой гамме — её цвета с правкой уходят в «Свою»
         if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); };
       el.onchange = () => { save(); say(`🎨 Своя: ${["единицы", "нули", "акцент"][i]} — ${el.value}.`); }; }); }
   palUi();
