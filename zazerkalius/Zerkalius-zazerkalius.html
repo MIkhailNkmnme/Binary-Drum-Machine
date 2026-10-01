@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.503. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.504. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.503</title>
+<title>Zazerkalius — v0.504</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -929,8 +929,8 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-runnable-track{height:1px;background:transparent;border:0}   /* v0.487: «горизонт тоньше»; v0.492, «горизонт у ползунков убери вообще» — линии нет */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-track{height:1px;background:transparent;border:0}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(5 * var(--t, 6.93px));height:24px;margin-top:-11.5px;border:0;border-radius:0;
-  background:linear-gradient(90deg, color-mix(in srgb, var(--gfc, var(--acc)) calc(var(--thp, 100%) - 30%), var(--panel2)), color-mix(in srgb, var(--gfc, var(--acc)) var(--thp, 100%), var(--panel2)));clip-path:polygon(0 0,80% 0,100% 50%,80% 100%,0 100%,20% 50%)}   /* v0.501, «бегунки — цвета группы, и может как-то градиентом менять»: цветом группы (--gfc), от хвоста к острию светлее; чем больше значение — тем ярче (--thp, tzSliders) */
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-thumb{width:calc(5 * var(--t, 6.93px));height:24px;border:0;border-radius:0;background:linear-gradient(90deg, color-mix(in srgb, var(--gfc, var(--acc)) calc(var(--thp, 100%) - 30%), var(--panel2)), color-mix(in srgb, var(--gfc, var(--acc)) var(--thp, 100%), var(--panel2)));clip-path:polygon(0 0,80% 0,100% 50%,80% 100%,0 100%,20% 50%)}
+  background:linear-gradient(90deg, color-mix(in srgb, var(--gfc, var(--acc)) calc(var(--thp, 100%) - 18%), var(--panel2)), color-mix(in srgb, var(--gfc, var(--acc)) var(--thp, 100%), var(--panel2)));clip-path:polygon(0 0,80% 0,100% 50%,80% 100%,0 100%,20% 50%)}   /* v0.501, «бегунки — цвета группы, и может как-то градиентом менять»: цветом группы (--gfc), от хвоста к острию светлее; чем больше значение — тем ярче (--thp, tzSliders) */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-thumb{width:calc(5 * var(--t, 6.93px));height:24px;border:0;border-radius:0;background:linear-gradient(90deg, color-mix(in srgb, var(--gfc, var(--acc)) calc(var(--thp, 100%) - 18%), var(--panel2)), color-mix(in srgb, var(--gfc, var(--acc)) var(--thp, 100%), var(--panel2)));clip-path:polygon(0 0,80% 0,100% 50%,80% 100%,0 100%,20% 50%)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]:focus,:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]:focus-visible{outline:none !important;box-shadow:none !important}   /* v0.474, «какая-то лишняя обводка»: рамка фокуса после щелчка по ползунку */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{border:0 !important;border-radius:0 !important}   /* v0.474: и рамка поля — от общего правила для всех полей ввода, её и было видно сверху и снизу */
@@ -991,6 +991,12 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 /* v0.499, по снимку «Кручения» — «наладь тут размеры»: блоки внутри зубчатой группы (режимы кручения, шаг ◀ ползунок ▶|, «Своя»+цвета…) — по своему
    содержимому, а не по сетке --bu (cgbSnap давал режимам 2 клетки — вставали по одному в строку, шагу 4 — с пустым хвостом); добивку ряда делит tzJustify */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(:has(> .cgb.tzc)) .cgb > span:not(.glab2){width:auto !important;flex-wrap:nowrap !important}
+/* v0.504, по рисунку — «внутри ползунков покажи сетку»: в поле ползунка — сетка из тех же треугольников (сторона 2t, ряд 24 px: косые под ±60° и средняя
+   черта), цветом группы, бледно; вершины — от левого края ползунка (--a) */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap)::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:color-mix(in srgb, var(--gfc, var(--line)) 30%, transparent);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.856' height='24'%3E%3Cpath d='M0 0L13.856 24M13.856 0L0 24M0 12H13.856' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") var(--a, 0px) 0 / calc(2 * var(--t, 6.928px)) 24px repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.856' height='24'%3E%3Cpath d='M0 0L13.856 24M13.856 0L0 24M0 12H13.856' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") var(--a, 0px) 0 / calc(2 * var(--t, 6.928px)) 24px repeat}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1378,7 +1384,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.503</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.504</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1962,7 +1968,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off" title="без лучей">✳ нет</option><option value="cur" title="лучи от бит выделенных колец (текущего)">✳ выдел.</option><option value="all" title="лучи от бит всех колец">✳ все</option></select>
           </div>
           <div class="cgrp gc cg-ring" title="Строки-кольца: запрет сдвига, замки, поворот по биту, зеркало по оси"><span class="glab">Кольца</span>
-            <label class="dim" style="display:none" title="v0.212: скрыта — это общий замок над столбиком замков строк. Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
+            <label class="dim" style="display:none" title="Общий замок над столбиком замков строк. Кольца не крутятся мышью, и строки в поле не сдвигаются: тянешь — двигается весь вид, щелчок — выбрать строку. Снять — и кольца снова крутят сами строки"><input type="checkbox" id="coneLock"> запрет сдвига строк</label>
             <!-- v0.319, по снимку «Кольца» — «стрелки — между ними текст и поле»: ◁ по биту ▷, ◀ [ось] ▶ -->
             <!-- v0.320, «не отделяй их при перестановках — это одно»: стрелки со своей подписью / списком — один блок (.cunit), переносится
                  и перетаскивается целиком -->
@@ -2044,7 +2050,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <button id="bFzShow" class="on" title="👁 Вид: показывать замороженные клетки подсветкой в строках (▮ Столб — голубым, 🧱 Бит — кирпичным). По умолчанию вкл">👁 вид</button>
           </div>
           <!-- v0.240, «звук из бит»: поле звучит — строка тактом или столбцы аккордами -->
-          <div class="cgrp gc cg-snd" title="♫ Звук из бит (1 — нота, 0 — пауза, высота — по трём битам с этого места). ◀ ▶ — направление (горит) и шаг; ♫ звук → ⏸ пауза → ⏯ дальше; ■ — стоп и в начало. Ниже: что звучит, тембр, ◉ показать головки, ⁑ авто — сколько бит разом, лад, ♩ темп, 🔊 громкость"><span class="glab">Звук</span>
+          <div class="cgrp gc cg-snd" title="♫ Звук из бит (1 — нота, 0 — пауза, высота — по трём битам с этого места). ◀ ▶ — направление (горит) и шаг; ⏵ — играть в сторону горящей стрелки, ❙ — пауза, ⏸ — стоп. Дальше: что звучит, тембр, ⏺ запись, ◉ показать головки, ⁑ авто — сколько бит разом и ↔ на каком расстоянии, лад, ♩ темп, 🔊 громкость"><span class="glab">Звук</span>
             <!-- v0.345, «пауза и шаг вперёд-назад, стрелки справа-слева»: ◀ ♫ звук ▶ — один блок; ⏸ рядом --><!-- v0.368, по снимку «■ звук» — «раздели на 2 по 1 размера, паузу сюда»: ◀ [♫ звук] [⏸ пауза] ▶ — один блок, звук и пауза по 1 кнопке --><span class="cunit csnd cjoin" data-ends="(())"><button id="bSndB" title="◀ Назад: звучит — играть в обратную сторону; не звучит — шаг назад (звук на паузе). Горит — направление">◀</button><button id="bSnd" hidden title="♫ Звук: поле звучит; ещё щелчок — ⏸ пауза (место и головки остаются), ещё — ⏯ дальше; ■ рядом — стоп и в начало. Строки меняются на ходу — звучит уже новое. Идёт и в запись ⏺ / mp4 конуса — даже если включить посреди записи" data-k="2">♫</button><button id="bSndP" data-k="3" title="◆ Стоп / пауза">■</button><button id="bSndF" title="▶ Вперёд: звучит — играть вперёд; не звучит — шаг вперёд (звук на паузе). Горит — направление (по умолчанию)">▶</button></span>
             <select id="sndMode" title="Что звучит (1 — нота, 0 — пауза, высота — число из трёх бит с этого места). Строка — текущая тактом слева направо. Разом — все выделенные строки (до 8) одновременно, каждая своим голосом. Подряд — чтение: строки одна за другой, как текст (выделенные, нет выделения — всё поле). По 2 — пары строк разом, потом следующая пара. Столбцы — шаг — столбец поля: звучат строки с 1 в нём (до 8), высота — по номеру строки">
               <!-- v0.341, «сократи, чтобы в размер 1 уместились»: было «выделенные разом», «по очереди», «по 2 строки» — список шёл в 2 кнопки -->
@@ -2054,7 +2060,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
               <option value="mix">🎨 разные</option><option value="triangle">△ треугольник</option><option value="sine">∿ синус</option><option value="square">▢ квадрат</option><option value="sawtooth">⩘ пила</option><option value="bell">🔔 колокол</option>
             </select>
             <!-- v0.391, «кнопку записи звука»: ⏺ — запись «♫ Звука» в файл (только звук), значок — в полкнопки -->
-            <button id="bSndRec" title="⏺ Запись звука: пишет то, что играет «♫ звук», в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается">⏺</button>
+            <button id="bSndRec" title="⏺ Запись звука: пишет то, что играет ⏵, в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается">⏺</button>
             <button id="bSndMark" class="on" title="◉ Показать головки: звучащие биты (головки чтения) подсвечены в строках поля и на конусе — в 2D обводкой сектора, в 3D точкой (по умолчанию вкл)">◉ показать</button>
             <!-- v0.318, «кнопку режим 2 бита — чтобы сразу с 2 битов шёл звук, и задать как-то расстояние»: вторая «головка» чтения -->
             <button id="bSnd2" title="⁑ Авто: сколько бит строки звучит разом и на каком расстоянии — берётся из строки, следующей за ближайшей строкой из одних 1 выше читаемой: сколько в ней 1 — столько бит (до 8), где стоят — на таком расстоянии впереди читаемого, по кругу строки (у Серпинского под 1111 — 10001: два бита через 4). Читаешь дальше вниз — прошёл новую строку из 1, и шаблон меняется сам; что звучит сейчас — на кнопке («⁑ 2×8» — два бита через 8). Строки из одних 1 выше нет — два бита через ↔. ◉ подсвечивает все звучащие биты">⁑ авто</button>
@@ -2067,7 +2073,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           </div>
           <!-- v0.367, по снимку «🎨 Роза» — «группа кнопок: сразу все показать в ней, а сюда кнопку вызова этой группы, если группа закрыта» -->
           <div class="cgrp gc cg-pal" title="🎨 Гамма: цвета единиц, нулей и акцент — в строках, конусе и окнах; у каждой свои для тёмной и светлой темы. ✕ — закрыть группу, открыть — «🎨» в шапке"><span class="glab">Гамма</span>
-            <span class="cunit" id="palOwn" title="🎨 Своя гамма и её цвета: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — выбор цвета рядом (1, 0, а). Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) — в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) — в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент — рамки, подписи, выделение — в «Своей»"><span>а</span><input type="color" id="palCa"></label></span><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button>
+            <span class="cunit" id="palOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></span><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button>
           </div>
           <div class="cgrp gc cg-las" title="⌖ Луч-часы: пустые кольца до 256, ширина щели, довод строки 1, пауза на проходе"><span class="glab">Лазер</span>
             <label class="dim" title="⌖ Луч-часы: из центра через вырез в кольце строки 1 идёт луч наружу. Вырез один (золотой), крутится вместе с кольцом: тяни кольцо строки 1 мышью — крутится только оно и защёлкивается лучом в щели кольца 2; или ⌖◁ ⌖▷. Кольцо он проходит только в щель — там, где у кольца граница между битами; попал на бит — упирается в стену (красная черта), и этот бит красится золотом с «1» (упал ещё раз — «11», «111»…). Пока включены луч-часы, ячейки колец строк пустые — чёрные, без 0/1: единицы в них ставит лазер (биты строк в поле не меняются). Прошёл все кольца — падает в строку для заполнения, и её ячейка под лучом становится «1». Как зубья часов: крути кольца (▶ каждое по биту / навстречу, или мышью) — щели то сходятся, то расходятся; миг, когда сошлись, ловится и между кадрами (вспышка). Видно в плоском виде"><input type="checkbox" id="coneClock"> ⌖ луч-часы</label>
@@ -2314,8 +2320,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0503"></script>
-<script src="zz-ui.js?v=0503"></script>
+<script src="zz-core.js?v=0504"></script>
+<script src="zz-ui.js?v=0504"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

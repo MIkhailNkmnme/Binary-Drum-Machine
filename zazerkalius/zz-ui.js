@@ -4046,7 +4046,7 @@ function setupCone(){
     r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
     r.onstop = async () => {
       clearInterval(srecT); tr.stop(); srec = null; b.classList.remove("on"); b.textContent = "⏺";
-      b.title = "⏺ Запись звука: пишет то, что играет «♫ звук», в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается";
+      b.title = "⏺ Запись звука: пишет то, что играет ⏵, в файл .webm (только звук, без видео). Звук молчал — включится сам. Ещё щелчок — стоп, файл скачивается";
       let blob = new Blob(chunks, { type: m4a ? "audio/mp4" : "audio/webm" });
       const R = window.__zerkRecorder;   // как у видео: у webm из MediaRecorder в заголовке нет длительности — дописывает общий recorder.js
       if (!m4a && R && R.fixWebm) { try { blob = await R.fixWebm(blob, Date.now() - t0); } catch (err) { /* файл как есть */ } }
@@ -8268,7 +8268,7 @@ function tzSliders(){
     const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
     if (L._thk === k) return; L._thk = k;
     L.style.setProperty("--thx", x.toFixed(2) + "px");
-    L.style.setProperty("--thp", Math.round(55 + 45 * f) + "%");   // v0.501: насыщенность бегунка — по значению (слева тусклее, справа — цвет группы)
+    L.style.setProperty("--thp", Math.round(82 + 18 * f) + "%");   // v0.501: насыщенность бегунка — по значению (слева тусклее, справа — цвет группы); v0.504 — не темнее 82 %: тёмный значок в нём пропадал
     if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3; L.classList.toggle("rvl", w > right); }
   });
 }
