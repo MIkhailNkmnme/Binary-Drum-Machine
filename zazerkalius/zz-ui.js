@@ -7659,7 +7659,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
 function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
   /* v0.471, «у всех кнопок должна быть обводка цвета самой группы»: контур — цветом заголовка группы (как её рамка), берётся раз на группу */
-  const gcm = new Map(), gcol = (el) => { const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
+  const gcm = new Map(), lnBg = tzLnBg(), gcol = (el) => { if (lnBg) return lnBg; const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
   document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
   const bs = [];
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
@@ -7765,7 +7765,9 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
    (слой поверх группы). Что в рисунок не попало — ниже, обычным рядом. Своё (что было в сетке) на время конструктора откладывается
    (Z.triMine) и возвращается по «✓ готово»; «↺ как было» — группа снова обычным рядом. */
 const TZC_H = 24;
-const tzcGcol = (g) => { const l = g && g.querySelector(":scope > .glab"); return (l && getComputedStyle(l).color) || "rgba(232,235,242,.8)"; };   // v0.471: цвет группы
+/* v0.497, «сделай её в цвет фона холста»: при «▱» (Z.noLn) обводки кнопок, заголовков, колец и стыков — цветом фона холста (--bg), а не группы */
+function tzLnBg(){ return Z.noLn ? coneCss("--bg", "#0b0d12") : ""; }
+const tzcGcol = (g) => { const bg = tzLnBg(); if (bg) return bg; const l = g && g.querySelector(":scope > .glab"); return (l && getComputedStyle(l).color) || "rgba(232,235,242,.8)"; };   // v0.471: цвет группы
 const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.dataset.g === key) || null;
 function tzcItem(el, cgb){   // элемент группы под точкой: кнопка, поле, список, подпись (не блок-обёртка; попал в обёртку — её первая кнопка)
   { const gl = el && el.closest && el.closest(".glab"); if (gl && cgb && gl.parentElement === cgb.parentElement) return gl; }   // v0.486: и заголовок группы
@@ -7929,7 +7931,7 @@ function tzcApply(g){
     if (c1 - c0 + 1 > 2 * Math.max(gl._tzn0 || 6, 6) + 3) { glIn = false; glSkip = true; } }
   const tcw = gl && (gl.classList.contains("tz") || gl.classList.contains("tzk")) && !glIn ? (glSkip || gl.classList.contains("tzk") ? (1 + 2 * Math.max(gl._tzn0 || 6, 3)) * t : parseFloat(gl.style.width) || 0) : 0;   // v0.494: у «раздутого» — своя обычная ширина
   const tip = Math.round(tcw / t); let tc = tip; tc += tc % 2;   // tip — остриё заголовка (в t)
-  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc;
+  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc + "|" + tzcGcol(g);   // v0.497: и цвет обводки
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
   g._tzcv = key;
@@ -10119,12 +10121,12 @@ function init(){
   $("bPack").onclick = () => { Z.pack = !Z.pack; packLabel(); packWins(); save(); say(Z.pack ? "⤒ Окна прижимаются к верху." : "⤒ Выключено: окна стоят там, где их поставили."); };
   $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); };
   /* v0.496, «тест: вообще убрать обводку — прозрачной сделать»: ▱ в шапке — обводки в группах (кнопки, ползунки, заголовки, рамки групп, кольца
-     конструктора) прозрачные или как были. Z.noLn, по умолчанию — прозрачные */
+     конструктора) другие или как были. Z.noLn, по умолчанию — включено. v0.497, «сделай её в цвет фона холста»: не прозрачные, а цветом фона (tzLnBg) */
   if (Z.noLn === undefined) Z.noLn = true;
   const lnUi = () => { document.documentElement.classList.toggle("noln", !!Z.noLn); $("bLn").classList.toggle("on", !Z.noLn);
-    $("bLn").title = Z.noLn ? "▱ Обводки кнопок и групп — прозрачные; щелчок — показать" : "▱ Обводки кнопок и групп видны; щелчок — сделать прозрачными"; };
+    $("bLn").title = Z.noLn ? "▱ Обводки кнопок и групп — цветом фона холста; щелчок — цветом группы" : "▱ Обводки кнопок и групп — цветом группы; щелчок — цветом фона холста"; };
   lnUi();
-  $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); say(Z.noLn ? "▱ Обводки — прозрачные." : "▱ Обводки — видны."); };
+  $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); if (typeof triTag === "function") triTag(); if (typeof tzcAll === "function") tzcAll(); say(Z.noLn ? "▱ Обводки — цветом фона холста." : "▱ Обводки — цветом группы."); };
   // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
   $("bPal").onclick = () => { if (!window.cgrpShow) { palStep(1); return; } if (cgrpShown("гамма")) cgrpHide("гамма"); else cgrpShow("гамма"); palUi(); };
   $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(1); };
