@@ -7686,7 +7686,8 @@ function triTag(){
       const sd = TZC_H / Math.sqrt(3), wRaw = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
       const own = b._tzOwnW && Math.abs(wRaw - b._tzOwnW) < 0.5, wInl = own ? 0 : wRaw;   // v0.483: своя ширина — не «заданная» (см. заголовок)
       b._tzar = ""; b._tzfix = false; b._tzR = TZ_TIP;
-      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : b.classList.contains("glab2") && own && b._tzn0 ? b._tzn0 : 6;
+      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd))
+        : b.classList.contains("glab2") ? (() => { const rg = document.createRange(); rg.selectNodeContents(b); return Math.max(3, Math.ceil((rg.getBoundingClientRect().width + 6) / sd)); })() : 6;   // v0.499: подпись — по длине текста («весь:» — 3 стороны, не 6)
       b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); return;
     }
     if (b.closest("#paneGrp") && b.classList.contains("pcol")) { if (b.classList.contains("tz")) triOff(b); return; }
@@ -7730,18 +7731,24 @@ function tzJustify(g){
   if (cgb.classList.contains("tzc") || g.classList.contains("cmin")) { tzHandle(g); return; }
   const t = TZC_H / (2 * Math.sqrt(3)), its = [...g.querySelectorAll(".tz")].filter(e => !e.classList.contains("tzk") && e.getClientRects().length && e.closest(".cgrp") === g);
   const sz = g.classList.contains("csz") && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
-  g.style.width = sz ? Math.max(sz.w, tzMinW(g)) + "px" : "";
+  g.style.width = sz ? Math.max(sz.w, tzMinW(g)) + "px" : ""; g.style.flexShrink = "";
   its.forEach(e => { if (e._tzx) { e._tzx = 0; e._tzn = e._tzn0; tzGeo(e); } });
+  if (!sz) { const mw = tzMinW(g); if (g.offsetWidth < mw) { g.style.width = mw + "px"; g.style.flexShrink = "0"; } }   // v0.499: сразу не уже самого широкого блока — иначе ряды разложатся по узкой и так и останутся
   const gl = g.getBoundingClientRect().left, rows = new Map();
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
   const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1)   // v0.490: стрелки, цвета и data-w1 — не тянуть
-    && e.parentElement === cgb;   // v0.493: кнопки внутри блоков — не тянуть; v0.494, «ширина у заголовка — поправь»: и заголовок не тянуть
-  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02), c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1]).map(q => q[0]);
+    && (e.parentElement === cgb || inRow(e.parentElement));   // v0.493: кнопки внутри блоков — не тянуть; v0.494, «ширина у заголовка — поправь»: и заголовок не тянуть
+  /* v0.499, по снимку «Кручения» — «наладь тут размеры»: внутри блока, стоящего одной строкой (шаг: ◀ ползунок ▶|), — тянуть можно; блок в несколько
+     строк (режимы, когда не влезли в одну) — нет. Значки (◀ ▶| ⟲ ⟳) тянутся, только если больше в ряду тянуть нечего */
+  function inRow(w){ return w && w.parentElement === cgb && w.tagName === "SPAN" && w.getBoundingClientRect().height < 30; }
+  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02);
+    let c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1]).map(q => q[0]);
+    if (c.some(e => !e.classList.contains("ib"))) c = c.filter(e => !e.classList.contains("ib"));
     if (k <= 0 || !c.length) return;
     for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
     c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
-  if (maxR > 0) g.style.width = Math.ceil(maxR) + "px";
+  if (maxR > 0) { g.style.width = Math.ceil(maxR) + "px"; g.style.flexShrink = "0"; }   // v0.499: посчитанную ширину — не ужимать (доли пикселя переносили кнопку)
   tzHandle(g);
 }
 function tzHandle(g){   // ромб-ручка — на правом конце последней кнопки нижнего ряда
