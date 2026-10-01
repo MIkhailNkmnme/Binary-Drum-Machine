@@ -8207,6 +8207,7 @@ function tzSliders(){
     const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
     if (L._thk === k) return; L._thk = k;
     L.style.setProperty("--thx", x.toFixed(2) + "px");
+    L.style.setProperty("--thp", Math.round(55 + 45 * f) + "%");   // v0.501: насыщенность бегунка — по значению (слева тусклее, справа — цвет группы)
     if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3; L.classList.toggle("rvl", w > right); }
   });
 }
