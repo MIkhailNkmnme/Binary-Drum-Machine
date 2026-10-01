@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.041 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.041</title>
+    <title>Zerkalius Треугольник v0.042</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -393,7 +393,7 @@ VERSION: v0.041 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.041</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.042</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -2902,6 +2902,24 @@ VERSION: v0.041 (копия Zerkalius Code 35.74 целиком — отправ
                 else if (180 <= h && h < 240) {r=0; g=x; b=c;} else if (240 <= h && h < 300) {r=x; g=0; b=c;} else if (300 <= h && h < 360) {r=c; g=0; b=x;}
                 return `${Math.round((r+m)*255)}, ${Math.round((g+m)*255)}, ${Math.round((b+m)*255)}`;
             },
+            /* v0.042: при 🔝 закрепе первая строка — под полосой вкладок (запрос: «когда прижат к верху 1 строка — опусти ниже, меню
+               закрывает биты»). #menuTabs висит поверх холста (fixed, top 8px); отступ — её низ от верха холста + 4 px, 0 если её не видно
+               (дзен) или она выше холста. Меряется не на каждом кадре (getBoundingClientRect пересчитывает раскладку), а наблюдателем. */
+            menuPad: function() {
+                if (this._mp === undefined) {
+                    const m = document.getElementById('menuTabs');
+                    const upd = () => {
+                        const r = m ? m.getBoundingClientRect() : null, c = UI.canvas.getBoundingClientRect(), k = c.height ? UI.canvas.height / c.height : 1;
+                        const v = r && r.height > 0 && r.bottom > c.top ? Math.round((r.bottom - c.top + 4) * k) : 0;
+                        if (v !== this._mp) { this._mp = v; if (MODULE_STATE.pinTop && !MODULE_STATE.isPlaying) requestAnimationFrame(() => this.renderFrame()); }
+                    };
+                    this._mp = 0; upd();
+                    if (window.ResizeObserver && m) { const ro = new ResizeObserver(upd); ro.observe(m); ro.observe(UI.canvas); }
+                    window.addEventListener('resize', upd);
+                    new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ['class'] });   // дзен прячет полосу
+                }
+                return this._mp;
+            },
             resizeCanvas: function() {
                 // Раньше здесь на каждом кадре спрашивался getBoundingClientRect. Этот
                 // запрос заставляет браузер немедленно пересчитать стили и раскладку
@@ -3300,7 +3318,7 @@ VERSION: v0.041 (копия Zerkalius Code 35.74 целиком — отправ
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
-                const startY = pinTop ? lineSpacing / 2 + 2 : (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;   // v0.007: закреп — от верхнего края
+                const startY = pinTop ? this.menuPad() + lineSpacing / 2 + 2 : (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;   // v0.007: закреп — от верхнего края
                 // 35.38: плавно — сразу после шага строки рисуются там, где были (сдвиг на lastShift строк), и за время
                 // до следующего шага доезжают на своё место. Скачки — сдвига нет. Большой прыжок (длиннее экрана)
                 // и замороженный слой не скользят.
