@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.042</title>
+    <title>Zerkalius Треугольник v0.043</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -153,6 +153,14 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
         #alignLeftBtn { top: 8px; }
         #alignCenterBtn { top: 40px; background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); }
         #alignRightBtn { top: 72px; }
+        /* v0.043: «Биты» на холсте — строкой по центру, сразу под полосой вкладок (её низ меряется, top ставится из JS): по краям холст
+           обычно закрыт плавающими окнами. В дзене прячется, как прочие кнопки; 🔝 закреп опускает строки и под неё */
+        #bitShapeBar { position: fixed; z-index: 69; left: 50%; top: 44px; transform: translateX(-50%); display: flex; gap: 4px; }
+        #bitShapeBar button { width: 34px; height: 28px; padding: 0; border: 1px solid #1a2a50; border-radius: 4px; background: #0a1128; color: #00ccff;
+            font: bold 14px Consolas, monospace; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        #bitShapeBar button:hover { border-color: #00ccff; }
+        #bitShapeBar button.on { background: #00ccff; color: #000; box-shadow: 0 0 8px rgba(0, 204, 255, 0.5); }
+        body.zen-mode #bitShapeBar { opacity: 0; pointer-events: none; }
 
         .color-palette { display: flex; flex-direction: column; gap: 2px; background: #1a1a1a; padding: 4px; border-radius: 3px; margin-top: 2px; }
         .palette-row { display: flex; gap: 4px; align-items: center; justify-content: space-between; }
@@ -393,7 +401,7 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.042</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.043</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -752,9 +760,9 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                             <span style="display:flex; align-items:center; gap:3px; width:auto;"><b style="font-size:11px; color:#ddd; width:auto; margin-left:6px;">0</b><input type="color" id="zeroColorPicker" value="#3c82ff" title="Цвет «0» фигуры"><b style="font-size:11px; color:#ddd; width:auto; margin-left:6px;">1</b><input type="color" id="oneColorPicker" value="#d7e1eb" title="Цвет «1» фигуры"></span>
                         </div>
                         <!-- Треугольник v0.020: биты — знаками, квадратами или ромбами (цвета «0» и «1» — строкой выше) -->
-                        <div class="palette-row" title="Чем рисовать биты фигуры. «■ квадраты» — клетка текста заливается цветом своего бита, «◆ ромбы» — ромб, вписанный в клетку. Цвета — «0» и «1» строки «Фигура» выше (в этих режимах они берутся всегда, даже без галки), яркость полная; «Скрыть статику» по-прежнему прячет неизменившиеся. Клетка вытянута по высоте — подровнять «Интервалом» и «Разрядкой»">
+                        <div class="palette-row" title="Чем рисовать биты фигуры. «■ квадраты» — клетка текста заливается цветом своего бита, «◆ ромбы» — строки вложены друг в друга: ромб на две строки и два символа, нижняя половина — вровень с верхней половиной следующей строки; «◇ ромб в клетке» — вписанный в клетку. Цвета — «0» и «1» строки «Фигура» выше (в этих режимах они берутся всегда, даже без галки), яркость полная; «Скрыть статику» по-прежнему прячет неизменившиеся. Клетка вытянута по высоте — подровнять «Интервалом» и «Разрядкой»">
                             <span style="width:auto;">Биты:</span>
-                            <select id="glyphShapeSelect" style="width:auto; margin:0;"><option value="text" selected>1 0 знаками</option><option value="sq">■ квадраты</option><option value="rh">◆ ромбы</option></select>
+                            <select id="glyphShapeSelect" style="width:auto; margin:0;"><option value="text" selected>1 0 знаками</option><option value="sq">■ квадраты</option><option value="rh">◆ ромбы</option><option value="rhc">◇ ромб в клетке</option></select>
                         </div>
                         <!-- v0.041: обводка клеток — тонкая линия вокруг каждой клетки-бита; НЕ фоновая «Сетка-фон» (шахматка) ниже -->
                         <div class="palette-row" title="Обводка клеток — тонкая линия вокруг каждой клетки 0 и 1 в её форме: у «◆ ромбов» — ромбом, у «■ квадратов» и знаков — квадратом клетки. Это не «Сетка-фон» (шахматка 1010 за строками) — та ниже, отдельно. На мелком кегле (меньше 4 px) не рисуется">
@@ -1181,6 +1189,13 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
             <button id="alignCenterBtn" class="float-btn align-btn" title="По центру">&gt;|&lt;</button>
             <button id="alignRightBtn" class="float-btn align-btn" title="Выровнять вправо">&gt;|</button>
             
+            <!-- v0.043: «Биты» — кнопками прямо на холсте (то же, что список «Биты» в палитре) -->
+            <div id="bitShapeBar" title="Чем рисовать биты: знаками, квадратами, ромбами (строки вложены друг в друга) или ромбом в своей клетке">
+                <button type="button" data-v="text" title="1 0 знаками">10</button>
+                <button type="button" data-v="sq" title="■ квадраты — клетка текста заливается цветом бита">■</button>
+                <button type="button" data-v="rh" title="◆ ромбы — строки вложены: нижняя половина ромба вровень с верхней половиной следующей строки">◆</button>
+                <button type="button" data-v="rhc" title="◇ ромб в клетке — вписанный в свою клетку, ряды не вложены">◇</button>
+            </div>
             <canvas id="screenCanvas"></canvas>
         </div>
     </div>
@@ -2909,11 +2924,14 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                 if (this._mp === undefined) {
                     const m = document.getElementById('menuTabs');
                     const upd = () => {
-                        const r = m ? m.getBoundingClientRect() : null, c = UI.canvas.getBoundingClientRect(), k = c.height ? UI.canvas.height / c.height : 1;
+                        const zen = document.body.classList.contains('zen-mode'), bar = document.getElementById('bitShapeBar');
+                        const mr = m ? m.getBoundingClientRect() : null, br = bar && !zen ? bar.getBoundingClientRect() : null;   // v0.043: и кнопки «Битов» под ней
+                        const r = mr && mr.height > 0 ? (br && br.height > 0 ? { height: 1, bottom: Math.max(mr.bottom, br.bottom) } : mr) : (br && br.height > 0 ? br : null);
+                        const c = UI.canvas.getBoundingClientRect(), k = c.height ? UI.canvas.height / c.height : 1;
                         const v = r && r.height > 0 && r.bottom > c.top ? Math.round((r.bottom - c.top + 4) * k) : 0;
                         if (v !== this._mp) { this._mp = v; if (MODULE_STATE.pinTop && !MODULE_STATE.isPlaying) requestAnimationFrame(() => this.renderFrame()); }
                     };
-                    this._mp = 0; upd();
+                    this._mp = 0; this._mpUpd = upd; upd();
                     if (window.ResizeObserver && m) { const ro = new ResizeObserver(upd); ro.observe(m); ro.observe(UI.canvas); }
                     window.addEventListener('resize', upd);
                     new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ['class'] });   // дзен прячет полосу
@@ -3274,8 +3292,15 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                    вместо квадратов»). «■» — клетка текста (ширина символа × интервал) заливается цветом бита, «◆» — вписанный в неё
                    ромб. Цвета — «0» и «1» строки «Фигура» (здесь всегда), яркость полная. Фигуры копятся в Path2D по цвету и
                    заливаются разом в конце кадра; мелкий кегль (< 4 px) пишет их прямо в буфер пикселей. */
-                const glyphShape = document.getElementById('glyphShapeSelect')?.value || 'text', shapeMode = glyphShape === 'sq' || glyphShape === 'rh';
-                const shapePaths = new Map();
+                const glyphShape = document.getElementById('glyphShapeSelect')?.value || 'text', shapeMode = glyphShape === 'sq' || glyphShape === 'rh' || glyphShape === 'rhc';
+                const shapePaths = new Map(), shapePathsTop = new Map();
+                /* v0.043: ◆ РОМБЫ — СТРОКИ ВЛОЖЕНЫ (запрос: «в режиме ромбов нужно строки вкладывать как бы друг в друга: нижний треугольник
+                   ромба на уровне верхнего треугольника следующей строки»). Клетки треугольника — на шахматке (x + y той же чётности, что
+                   вершина): ромб такой клетки — на две строки и два символа (полудиагонали — интервал и ширина символа), и соседи по
+                   диагонали делят с ним ребро, нижняя половина ромба — вровень с верхней половиной ромбов следующей строки. Клетки вне
+                   шахматки (бывают: «1 10101 1») — маленьким ромбом в клетке поверх, в узле, где сходятся четыре больших. Прежний вид — «◇ ромб в клетке». */
+                const rhNest = glyphShape === 'rh', rhAny = rhNest || glyphShape === 'rhc';
+                const latC0 = rhNest && MODULE_STATE.lines[0] ? RHOMBS.apex(MODULE_STATE.lines[0].text || '') : null, latPar = latC0 === null ? -1 : latC0 & 1;
                 // v0.041: обводка клеток — контуры клеток-битов в один путь, штрих 1 px в конце кадра (не «Сетка-фон»)
                 const cellGridPath = document.getElementById('cellGridCheck')?.checked ? new Path2D() : null;
                 const bitCols = (document.getElementById('bitColorsCheck')?.checked || shapeMode) && !isCrypto && activeTheme !== 'mutation';
@@ -3318,7 +3343,7 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                 let lh = parseFloat(UI.lineHeightRange?.value || 1.2);
                 let lineSpacing = fontSize * lh;
                 
-                const startY = pinTop ? this.menuPad() + lineSpacing / 2 + 2 : (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;   // v0.007: закреп — от верхнего края
+                const startY = pinTop ? this.menuPad() + (rhNest ? lineSpacing : lineSpacing / 2) + 2 : (height - (visibleHeight - 1) * lineSpacing) / 2 + MODULE_STATE.offsetY;   // v0.007: закреп — от верхнего края
                 // 35.38: плавно — сразу после шага строки рисуются там, где были (сдвиг на lastShift строк), и за время
                 // до следующего шага доезжают на своё место. Скачки — сдвига нет. Большой прыжок (длиннее экрана)
                 // и замороженный слой не скользят.
@@ -3660,16 +3685,18 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                         if (cAlpha <= 0.01) continue; 
                         if (gridHide) occCells.push(x, y);   // 35.66, 35.72
                         if (shapeMode) cAlpha = 1;   // v0.020: фигурой — полная яркость
+                        const big = rhNest && (latPar < 0 || ((actualIdx + (visibleLines[i].globalIndex || 0)) & 1) === latPar);   // v0.043: ромб на две строки
+                        const cw2 = big ? charW : charW / 2, ch2 = big ? lineSpacing : lineSpacing / 2;
                         if (cellGridPath && !tinyGlyph) {   // v0.041: контур клетки — ромб или прямоугольник клетки
-                            const hw = charW / 2, hh = lineSpacing / 2;
-                            if (glyphShape === 'rh') { cellGridPath.moveTo(x, y - hh); cellGridPath.lineTo(x + hw, y); cellGridPath.lineTo(x, y + hh); cellGridPath.lineTo(x - hw, y); cellGridPath.closePath(); }
+                            const hw = cw2, hh = ch2;
+                            if (rhAny) { cellGridPath.moveTo(x, y - hh); cellGridPath.lineTo(x + hw, y); cellGridPath.lineTo(x, y + hh); cellGridPath.lineTo(x - hw, y); cellGridPath.closePath(); }
                             else cellGridPath.rect(x - hw, y - hh, 2 * hw, 2 * hh);
                         }
                         if (tinyGlyph && shapeMode) {   // v0.020: мелкая клетка — фигурой прямо в буфер пикселей
                             let px = tinyRgb.get(cRgb); if (!px) { px = String(cRgb).split(',').map(Number); tinyRgb.set(cRgb, px); }
-                            const hw = charW / 2, hh = lineSpacing / 2, yA = Math.max(0, Math.floor(y - hh)), yB = Math.min(TH, Math.ceil(y + hh));
+                            const hw = cw2, hh = ch2, yA = Math.max(0, Math.floor(y - hh)), yB = Math.min(TH, Math.ceil(y + hh));
                             for (let yy = yA; yy < yB; yy++) {
-                                const k = glyphShape === 'rh' ? Math.max(0, 1 - Math.abs(yy + 0.5 - y) / hh) : 1;
+                                const k = rhAny ? Math.max(0, 1 - Math.abs(yy + 0.5 - y) / hh) : 1;
                                 const xA = Math.max(0, Math.round(x - hw * k)), xB = Math.min(TW, Math.max(Math.round(x + hw * k), Math.round(x - hw * k) + 1));
                                 for (let xx = xA, o = (yy * TW + xA) * 4; xx < xB; xx++, o += 4) { tinyBuf[o] = px[0]; tinyBuf[o + 1] = px[1]; tinyBuf[o + 2] = px[2]; tinyBuf[o + 3] = 255; }
                             }
@@ -3677,8 +3704,9 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                         }
                         if (shapeMode) {   // v0.020: фигура в путь своего цвета; зазор 1 px, когда клетка крупная
                             const col = this.rgba(cRgb, 1);
-                            let pth = shapePaths.get(col); if (!pth) { pth = new Path2D(); shapePaths.set(col, pth); }
-                            const gap = Math.min(charW, lineSpacing) >= 6 ? 0.5 : 0, hw = charW / 2 - gap, hh = lineSpacing / 2 - gap;
+                            const PM = rhNest && !big ? shapePathsTop : shapePaths;   // v0.043: клетки вне шахматки — поверх больших ромбов
+                            let pth = PM.get(col); if (!pth) { pth = new Path2D(); PM.set(col, pth); }
+                            const gap = Math.min(charW, lineSpacing) >= 6 ? 0.5 : 0, hw = cw2 - gap, hh = ch2 - gap;
                             if (glyphShape === 'sq') pth.rect(x - hw, y - hh, 2 * hw, 2 * hh);
                             else { pth.moveTo(x, y - hh); pth.lineTo(x + hw, y); pth.lineTo(x, y + hh); pth.lineTo(x - hw, y); pth.closePath(); }
                             continue;
@@ -3711,9 +3739,10 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                         ctx.fillText(finalChar, x, y);
                     }
                 }
-                if (shapePaths.size) {   // v0.020: фигуры — по одной заливке на цвет
+                if (shapePaths.size || shapePathsTop.size) {   // v0.020: фигуры — по одной заливке на цвет
                     ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
                     shapePaths.forEach((pth, col) => { ctx.fillStyle = col; ctx.fill(pth); });
+                    shapePathsTop.forEach((pth, col) => { ctx.fillStyle = col; ctx.fill(pth); });
                     ctx.restore(); lastFillStyle = '';
                 }
                 if (cellGridPath) {   // v0.041: обводка клеток — поверх битов
@@ -4292,6 +4321,24 @@ VERSION: v0.042 (копия Zerkalius Code 35.74 целиком — отправ
                 ];
                 const scheduleRender = () => (window.__zerkScheduleRender || (() => RENDERER.renderFrame()))();
                 rerenderEvents.forEach(el => { if(el) { el.addEventListener('change', scheduleRender); el.addEventListener('input', scheduleRender); }});
+                // v0.043: кнопки «Битов» на холсте — ставят значение списка и шлют ему change (запоминается и перерисовывает, как выбор в списке)
+                (() => {
+                    const sel = document.getElementById('glyphShapeSelect'), bar = document.getElementById('bitShapeBar'); if (!sel || !bar) return;
+                    const sync = () => bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === sel.value));
+                    bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sel.value = b.dataset.v; sel.dispatchEvent(new Event('change', { bubbles: true })); sync(); });
+                    bar.addEventListener('dblclick', e => e.stopPropagation());   // двойной щелчок по кнопкам — не дзен
+                    sel.addEventListener('change', sync); sync(); setTimeout(sync, 0); setTimeout(sync, 800);   // значение могло прийти из памяти позже
+                    // место — под полосой вкладок; без неё (спрятана) — у верха холста
+                    const menu = document.getElementById('menuTabs');
+                    const place = () => {
+                        const r = menu ? menu.getBoundingClientRect() : null, c = UI.canvas.parentElement.getBoundingClientRect();
+                        bar.style.top = Math.round(r && r.height > 0 ? r.bottom + 4 : c.top + 8) + 'px';
+                        if (RENDERER._mpUpd) RENDERER._mpUpd();
+                    };
+                    place(); setTimeout(place, 800);
+                    if (window.ResizeObserver && menu) new ResizeObserver(place).observe(menu);
+                    window.addEventListener('resize', place);
+                })();
                 // 35.42: ⚓ поставили — слой 1 встаёт на ту строку, что сейчас в центре; сняли — идёт дальше с неё же,
                 // а не с того места, куда за это время ушёл счётчик кадров. Скачка нет ни в ту, ни в другую сторону.
                 // 35.43: счётчик циклов Аниматрицы виден, пока она включена
