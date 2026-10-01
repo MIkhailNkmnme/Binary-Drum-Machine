@@ -844,7 +844,7 @@ function renderRows(){
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
   if (ovControls()) { renderRowsOver(); return; }   // v0.018
   const L = $("rowList"), N = Z.laneCount || 1, qv = Z.bitView === "sq" || Z.bitView === "rh";
-  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv ? " vq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
+  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv ? " vq" : "") + (Z.bitView === "sq" ? " vsq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
   const qrh = (i) => {   // v0.456: ромбы — строке, чья длина отличается от соседней на нечётное (ряды сдвинуты на полсимвола)
     if (Z.bitView !== "rh" || (Z.rowsAlign || "center") !== "center" || Z.rows[i] === undefined) return false;
     const n = Z.rows[i].length, odd = (j) => Z.rows[j] !== undefined && Math.abs(Z.rows[j].length - n) % 2 === 1;
@@ -898,6 +898,7 @@ function renderRows(){
   if (qv) {   // v0.456: размеры фигур — символ и шаг рядов, как их поставил rowsFit
     const q = L.querySelector(".rw[data-r] i.q"), rw = L.querySelectorAll(".rl-inner > .rw[data-r] > .bits");
     if (q) L.style.setProperty("--qw", q.getBoundingClientRect().width.toFixed(2) + "px");
+    if (q && Z.bitView === "sq") L.style.setProperty("--qsq", q.getBoundingClientRect().width.toFixed(2) + "px");   // v0.458: шаг рядов = ширина символа — ячейка квадратная
     if (rw.length > 1) L.style.setProperty("--qh", (rw[1].getBoundingClientRect().top - rw[0].getBoundingClientRect().top).toFixed(2) + "px");
   }
   // v0.242, «черту тяну вниз — прыгает всё вверх»: пока черту тащат, поле не прокручивается к текущей строке
