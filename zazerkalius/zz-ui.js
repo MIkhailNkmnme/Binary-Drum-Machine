@@ -7141,7 +7141,8 @@ function cgbSnap(){
   const kOf = (w, el) => w <= W(1, el) + 0.5 ? 1 : w <= W(2, el) + 0.5 ? 2 : 4;
   const vis = (el) => el.getClientRects().length > 0;
   const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk"));   // v0.452: место и размер кнопок конструктора — свои
-  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk"));
+  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk") && !el.dataset.w1);   // v0.490: data-w1 — всегда в одну
+  document.querySelectorAll(".cgb [data-w1].w2, .cgb [data-w1].w4").forEach(el => el.classList.remove("w2", "w4"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
   btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width");
     el._tzf = el.classList.contains("tz") ? el.style.getPropertyValue("flex") : ""; if (el._tzf) el.style.removeProperty("flex");   // v0.479: и flex (у галок) — иначе замер берёт прежнюю ширину и раздувает кнопку
@@ -7717,8 +7718,9 @@ function tzJustify(g){
   const gl = g.getBoundingClientRect().left, rows = new Map();
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
-  rows.forEach(a => { const [e, x] = a.reduce((m, q) => q[1] > m[1] ? q : m); const k = Math.floor((maxR - x) / (2 * t) + 0.02);
-    if (k > 0 && e._tzn0 != null && !e._tzar && !e.classList.contains("pcol")) { e._tzx = k; e._tzn = e._tzn0 + k; tzGeo(e); } });
+  const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1);   // v0.490: стрелки, цвета и data-w1 — не тянуть
+  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02), c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1])[0];
+    if (k > 0 && c) { const e = c[0]; e._tzx = k; e._tzn = e._tzn0 + k; tzGeo(e); } });   // тянется самая правая из тех, что можно
   if (maxR > 0) g.style.width = Math.ceil(maxR) + "px";
   tzHandle(g);
 }

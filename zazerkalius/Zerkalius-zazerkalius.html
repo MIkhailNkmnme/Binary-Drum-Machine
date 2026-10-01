@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.489. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.490. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.489</title>
+<title>Zazerkalius — v0.490</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -981,6 +981,8 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgb #coneSpinModeB#coneSpinModeB > button.tz.tz{height:25px !important;margin:0 0 -1px !important}   /* режимы кручения — их правило отступов сильнее */
 /* v0.486: заголовок в рисунке конструктора — место и форма по рисунку (tzcApply: left, top, width, --tzp), как у кнопок */
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz.tzk{position:absolute !important;margin:0 !important;clip-path:var(--tzp) !important;z-index:6}
+/* v0.490, «эти кнопки как все сделай размером» (🔴 неп. ⇄, 🟢 неп. ⇄🔁): кнопка с data-w1 — всегда обычного размера (замер её не удваивает), надпись — плотнее */
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz[data-w1]{font-size:11px !important;letter-spacing:-.3px;padding-left:calc(var(--t) + 1px) !important;padding-right:var(--t) !important;text-overflow:clip}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1365,7 +1367,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.489</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.490</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1930,7 +1932,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <button id="bConeCanon" title="◯ К наименьшему: повернуть каждую строку к наименьшему виду — одинаковые кольца встанут одинаково и в поле строк (↩ вернёт)">◯ к мин.</button>
             <!-- v0.168, «рядом с кнопкой — Неподв.»: неподвижные биты — здесь, у «◯ к наименьшему» (прежде — над полем строк) -->
             <!-- v0.340, по снимку «🔴 неподв. ⇄» — «раздели на 2 кнопки, вкл либо либо»: прежде одна кнопка по кругу выкл → ⇄ → ⇄🔁 → выкл -->
-            <button id="bShowFix" title="🔴 Неподвижные при развороте ⇄ — прямо в строках: бит равен своему зеркальному (бит k и бит «длина−1−k»). Числа у номеров — по тому же. Включишь — 🟢 гаснет; ещё раз — выкл">🔴 неп. ⇄</button><button id="bShowFixIr" title="🟢 Неподвижные при реверс-инверсии ⇄🔁 — прямо в строках: бит НЕ равен зеркальному, разворот с инверсией возвращает его на место. Числа у номеров — по тому же. Включишь — 🔴 гаснет; ещё раз — выкл">🟢 неп. ⇄🔁</button>
+            <button id="bShowFix" data-w1="1" title="🔴 Неподвижные при развороте ⇄ — прямо в строках: бит равен своему зеркальному (бит k и бит «длина−1−k»). Числа у номеров — по тому же. Включишь — 🟢 гаснет; ещё раз — выкл">🔴 неп. ⇄</button><button id="bShowFixIr" data-w1="1" title="🟢 Неподвижные при реверс-инверсии ⇄🔁 — прямо в строках: бит НЕ равен зеркальному, разворот с инверсией возвращает его на место. Числа у номеров — по тому же. Включишь — 🔴 гаснет; ещё раз — выкл">🟢 неп. ⇄🔁</button>
             <label class="dim" title="🎨 Одинаковые — цветом: кольца с одним ожерельем (совпадают поворотом) — одной цветной обводкой; в плоском виде"><input type="checkbox" id="coneSame" checked> 🎨 одинак.</label>
             <label class="dim" title="Скрыть все кольца, кроме выделенных (и текущего). Выделить несколько — Ctrl + щелчок по кольцу (или по номерам строк в поле: Ctrl — добавить, Shift — диапазон)"><input type="checkbox" id="coneOnlySel"> 👁 выдел.</label>
             <label class="dim" title="🚫 Запрет выбора колец на холсте конуса: щелчок не делает кольцо текущим, Ctrl + щелчок не выделяет, наведение не обводит кольцо. Сдвиг вида, Shift + щелчок (бит) и Ctrl + тянуть (крутить кольцо) — как были. Строки в поле выбираются как обычно"><input type="checkbox" id="coneNoPick"> 🚫 выбор</label>
@@ -2300,8 +2302,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0489"></script>
-<script src="zz-ui.js?v=0489"></script>
+<script src="zz-core.js?v=0490"></script>
+<script src="zz-ui.js?v=0490"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
