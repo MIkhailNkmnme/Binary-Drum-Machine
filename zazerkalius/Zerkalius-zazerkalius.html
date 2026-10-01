@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.487. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.488. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.487</title>
+<title>Zazerkalius — v0.488</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -917,7 +917,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
   border:0 !important;border-radius:0 !important;box-shadow:none !important;color:transparent !important;background:var(--gfc, var(--txt)) !important}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:hover{filter:brightness(1.25)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:active{filter:brightness(.8)}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:first-child{order:-1;width:calc(4 * var(--t)) !important;clip-path:polygon(0 0,calc(4 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(4 * var(--t)) 100%,0 100%,var(--t) 50%)}   /* v0.485: левая — «песочные часы» (выемки с обеих сторон): слева — в стрелку соседа, справа — под бегунок */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:first-child{order:-1;clip-path:polygon(0 0,calc(2 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(2 * var(--t)) 100%,0 100%,var(--t) 50%)}   /* v0.488, «левый край ползунков как у кнопок»: и левая — «>» (прежде, v0.485, «песочные часы») */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow:last-of-type{order:2;clip-path:polygon(0 0,calc(2 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(2 * var(--t)) 100%,0 100%,var(--t) 50%)}
 /* v0.464, «сам ползунок» (рисунок — ромб из двух треугольников, ▲ над ▼; v0.473 — по новому рисунку шестигранник из шести) и «тонкая линия по оси»: бегунок — вертикальный ромб шириной в сторону
    треугольника и высотой в ряд, цветом акцента; дорожка — тонкая линия по средней черте; стрелки и линия — цветом группы (--gfc), своей заливки у
@@ -1365,7 +1365,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.487</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.488</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2300,8 +2300,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0487"></script>
-<script src="zz-ui.js?v=0487"></script>
+<script src="zz-core.js?v=0488"></script>
+<script src="zz-ui.js?v=0488"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
