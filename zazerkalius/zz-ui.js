@@ -7882,6 +7882,10 @@ function tzcRingPaths(o, live, rings, P){   // обводка — граница
   for (const rg of rings || []) {
     const S = new Set((rg.items || []).filter(w => live.has(w))); if (!S.size) continue;
     const H = new Set(Object.keys(o).filter(k => S.has(o[k]))); let d = "";
+    /* v0.460, «обводка как-то криво работает — пусть просто берёт крайние выделенные кнопки и общей обводкой их»: в каждом ряду — всё от первого до
+       последнего треугольника выбранных кнопок (просветы и кнопки между ними — внутри), обводка — по внешнему краю этого */
+    const rows = {}; for (const k of H) { const [r, c] = k.split("_").map(Number), x = rows[r] || (rows[r] = [c, c]); x[0] = Math.min(x[0], c); x[1] = Math.max(x[1], c); }
+    for (const [r, [c0, c1]] of Object.entries(rows)) for (let c = c0; c <= c1; c++) H.add(r + "_" + c);
     for (const k of H) { const [r, c] = k.split("_").map(Number), Q = P(r, c);
       for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
     out.push({ d, col: rg.col || "#ffd166" });
