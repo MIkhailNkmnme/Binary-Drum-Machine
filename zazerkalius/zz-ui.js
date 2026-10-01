@@ -6833,8 +6833,9 @@ function cgrpInit(){
      показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
   const sizeApply = (g) => {
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
-    if (!s) { g.style.width = g.style.height = ""; return; }
+    if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
     g.style.width = s.w + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам (выше — пустое место снизу)
+    if (typeof tzcApply === "function") tzcApply(g);   // v0.453: группа-конструктор переносит ряды рисунка под новую ширину
     const b = g.querySelector(":scope > .cgb"); if (!b) return;
     if (b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
     /* v0.334, «не давать размера больше, если пустые области появляются»: ширина прижимается к правому краю самого длинного ряда кнопок —
@@ -7723,20 +7724,46 @@ function tzcOff(g){
 function tzcApply(g){
   const d = Z.cgrpTri && Z.cgrpTri[g.dataset.g], cgb = g.querySelector(".cgb");
   if (!cgb || !d || !d.on || !g.closest("#w-cone")) { if (cgb && cgb.classList.contains("tzc")) tzcOff(g); return; }
-  if (g._tzcv === d.v && cgb.classList.contains("tzc")) return;
-  g._tzcv = d.v;
   const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t, px = (v) => v.toFixed(2) + "px";
+  /* v0.453, «не перестраиваются при изменении длины группы»: группа, которой задан размер (ручка в углу), переносит ряды рисунка — целыми
+     кнопками, как обычный ряд: что не влезло, уходит строкой ниже, к левому краю (сдвиг — на чётное число t, треугольники не переворачиваются) */
+  let avail = Infinity;
+  const sz = Z.cgrpSize && Z.cgrpSize[g.dataset.g];
+  if (sz && g.classList.contains("csz")) { const gr = g.getBoundingClientRect(), cr = cgb.getBoundingClientRect(), gs = getComputedStyle(g);
+    avail = sz.w - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }
+  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac;
+  if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
+  if (g._tzcv === key && cgb.classList.contains("tzc")) return;
+  g._tzcv = key;
   const by = {}; for (const [k, w] of Object.entries(d.o || {})) (by[w] = by[w] || []).push(k.split("_").map(Number));
   cgb.classList.add("tzc");
-  const els = [], live = new Set(); let R = 0, N = 0;
+  const its = [];
   for (const [w, cells] of Object.entries(by)) {
-    const el = tzcFind(w, cgb); if (!el || !cgb.contains(el) || els.includes(el)) continue;
-    els.push(el); live.add(w);
+    const el = tzcFind(w, cgb); if (!el || !cgb.contains(el) || its.some(x => x.el === el)) continue;
     let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1; for (const [r, c] of cells) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
-    R = Math.max(R, r1 + 1); N = Math.max(N, c1 + 2);
+    its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0 });
+  }
+  // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
+  const lines = {}; its.forEach(it => { const L = Math.floor(it.r0 / 2); (lines[L] = lines[L] || []).push(it); });
+  let out = 0, prev = null;
+  for (const L of Object.keys(lines).map(Number).sort((a, b) => a - b)) {
+    if (prev != null) out += L - prev - 1;
+    let start = 0;
+    lines[L].sort((a, b) => a.c0 - b.c0).forEach((it, i) => {
+      if (i && it.c1 + 2 - start > ac) { out++; start = it.c0 - (it.c0 % 2); }
+      it.dc = -start; it.dr = 2 * (out - L);
+    });
+    out++; prev = L;
+  }
+  let R = 0, N = 0;
+  const o2 = {}, live = new Set();
+  for (const it of its) {
+    const { el, cells } = it, r0 = it.r0 + it.dr, c0 = it.c0 + it.dc, r1 = it.r1 + it.dr, c1 = it.c1 + it.dc;
+    live.add(it.w); R = Math.max(R, r1 + 1); N = Math.max(N, c1 + 2);
+    for (const [r, c] of cells) o2[(r + it.dr) + "_" + (c + it.dc)] = it.w;
     let p = "";
     for (const [r, c] of cells) {   // все треугольники — одного обхода, иначе по общим рёбрам виден шов
-      const x = (c - c0) * t, y0 = (r - r0) * hh, y1 = y0 + hh;
+      const x = (c - it.c0) * t, y0 = (r - it.r0) * hh, y1 = y0 + hh;
       p += (r + c) % 2 === 0 ? `M${x.toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y1}L${(x + t).toFixed(2)} ${y0}Z` : `M${x.toFixed(2)} ${y0}L${(x + t).toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y0}Z`;
     }
     el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol")) el.classList.add("tz");
@@ -7745,21 +7772,32 @@ function tzcApply(g){
     el.style.setProperty("left", px(c0 * t), "important"); el.style.setProperty("top", px(r0 * hh), "important");
     el.style.setProperty("width", px((c1 + 2 - c0) * t), "important"); el.style.setProperty("height", px((r1 + 1 - r0) * hh), "important");
     el.style.setProperty("margin", "0", "important"); el.style.removeProperty("margin-left");
-    // подпись — посередине самого большого куска (кнопка бывает из нескольких кусков)
-    const set = new Set(cells.map(([r, c]) => r + "_" + c)), seen = new Set(); let main = [];
-    for (const [r, c] of cells) {
-      const k0 = r + "_" + c; if (seen.has(k0)) continue; const part = [], q = [[r, c]]; seen.add(k0);
-      while (q.length) { const [a, b] = q.shift(); part.push([a, b]); for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (set.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(n); } } }
-      if (part.length > main.length) main = part;
-    }
-    const mc0 = Math.min(...main.map(x => x[1])), mc1 = Math.max(...main.map(x => x[1]));
-    el.style.setProperty("padding-left", px((mc0 - c0) * t + 2), "important"); el.style.setProperty("padding-right", px((c1 - mc1) * t + 2), "important");
+    const m = tzcMain(cells);   // подпись — посередине самого большого куска (кнопка бывает из нескольких кусков)
+    el.style.setProperty("padding-left", px((m.c0 - it.c0) * t + 2), "important"); el.style.setProperty("padding-right", px((it.c1 - m.c1) * t + 2), "important");
   }
+  const els = its.map(x => x.el);
   (g._tzcEls || []).forEach(el => { if (!els.includes(el)) tzcClean(el); });
   g._tzcEls = els;
   cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
   // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
-  const o = d.o || {}, P = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
+  let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
+  const W = Math.max(1, N * t), H = Math.max(1, R * hh);
+  ov.style.width = px(W); ov.style.height = px(H);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
+  ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+function tzcMain(cells){   // самый большой связный кусок: { c0, c1, r0, r1 }
+  const set = new Set(cells.map(([r, c]) => r + "_" + c)), seen = new Set(); let main = [];
+  for (const [r, c] of cells) {
+    const k0 = r + "_" + c; if (seen.has(k0)) continue; const part = [], q = [[r, c]]; seen.add(k0);
+    while (q.length) { const [a, b] = q.shift(); part.push([a, b]); for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (set.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(n); } } }
+    if (part.length > main.length) main = part;
+  }
+  return { c0: Math.min(...main.map(x => x[1])), c1: Math.max(...main.map(x => x[1])), r0: Math.min(...main.map(x => x[0])), r1: Math.max(...main.map(x => x[0])) };
+}
+function tzcEdges(o, live, ox, oy){   // путь SVG: рёбра на границе кнопки (с другой кнопкой — один раз)
+  const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t;
+  const P = (r, c) => { const x = ox + c * t, y0 = oy + r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
   let ln = "";
   for (const [k, w] of Object.entries(o)) {
     if (!live.has(w)) continue;
@@ -7769,11 +7807,47 @@ function tzcApply(g){
       ln += `M${Q[a][0].toFixed(2)} ${Q[a][1]}L${Q[b][0].toFixed(2)} ${Q[b][1]}`;
     }
   }
-  let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
-  const W = Math.max(1, N * t), H = Math.max(1, R * hh);
-  ov.style.width = px(W); ov.style.height = px(H);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${ln}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
-  ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  return ln;
+}
+/* v0.453, «при редактировании покажи кнопки с надписями онлайн — как будет выглядеть»: под строкой конструктора в «△ Сетке» — живой вид
+   группы в настоящую величину, ровно по рисунку (без переноса): каждый треугольник — цветом своей кнопки (фон кнопки, у цветов гаммы — сам
+   цвет), подписи — шрифтом и цветом кнопки, на самом большом её куске; обводка — как на странице. Треугольники без кнопки — бледно цветом
+   кисти. Перерисовывается с каждой правкой */
+function tzcPreview(){
+  const box = $("triBtnLive"), cv = $("triBtnCv"); if (!box || !cv) return;
+  box.hidden = !Z.triBind; if (!Z.triBind) return;
+  const d = Z.cgrpTri && Z.cgrpTri[Z.triBind], g = tzcGroup(Z.triBind), cgb = g && g.querySelector(".cgb"); if (!d || !cgb) return;
+  const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t, pad = 6, o = d.o || {};
+  let R = 0, N = 0; for (const k of Object.keys(d.c || {})) { const [r, c] = k.split("_").map(Number); R = Math.max(R, r + 1); N = Math.max(N, c + 2); }
+  const W = Math.max(40, N * t + 2 * pad), H = Math.max(TZC_H, R * hh) + 2 * pad, dpr = window.devicePixelRatio || 1;
+  cv.style.width = W + "px"; cv.style.height = H + "px";
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const x = cv.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+  const P = (r, c) => { const X = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[X, y1], [X + s, y1], [X + t, y0]] : [[X, y0], [X + s, y0], [X + t, y1]]; };
+  const tri = (Q) => { x.moveTo(Q[0][0], Q[0][1]); x.lineTo(Q[1][0], Q[1][1]); x.lineTo(Q[2][0], Q[2][1]); x.closePath(); };
+  const els = {}, live = new Set();
+  for (const w of new Set(Object.values(o))) { const el = tzcFind(w, cgb); if (el && cgb.contains(el)) { els[w] = el; live.add(w); } }
+  const fill = (el) => {
+    if (el.classList.contains("pcol")) { const i = el.querySelector("input[type=color]"); if (i) return i.value; }
+    const b = getComputedStyle(el).backgroundColor; return !b || b === "transparent" || /rgba\(.*,\s*0\)$/.test(b) ? getComputedStyle(document.documentElement).getPropertyValue("--panel2").trim() || "#1c2230" : b;
+  };
+  for (const [k, kc] of Object.entries(d.c || {})) {
+    const [r, c] = k.split("_").map(Number), w = o[k], el = w && els[w];
+    x.beginPath(); tri(P(r, c));
+    if (el) { x.fillStyle = fill(el); x.globalAlpha = 1; } else { x.fillStyle = (TRI_COL[kc | 0] || TRI_COL[1])[0]; x.globalAlpha = 0.25; }
+    x.fill(); x.strokeStyle = x.fillStyle; x.lineWidth = 0.6; x.stroke(); x.globalAlpha = 1;
+  }
+  x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
+  for (const [w, el] of Object.entries(els)) {   // подписи
+    const cells = Object.keys(o).filter(k => o[k] === w).map(k => k.split("_").map(Number)), m = tzcMain(cells), cs = getComputedStyle(el);
+    let txt = el.classList.contains("pcol") ? ((el.querySelector("span") || {}).textContent || "") : el.tagName === "SELECT" ? ((el.options[el.selectedIndex] || {}).text || "") : (el.dataset.lab || el.textContent || "");
+    txt = txt.replace(/\s+/g, " ").trim(); if (!txt || /transparent|rgba\(.*,\s*0\)$/.test(cs.color)) continue;
+    const cx = pad + (m.c0 + m.c1 + 2) / 2 * t, cy = pad + (m.r0 + m.r1 + 1) / 2 * hh;
+    x.save(); x.beginPath(); for (const [r, c] of cells) tri(P(r, c)); x.clip();
+    x.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; x.fillStyle = el.classList.contains("pcol") ? "#fff" : cs.color; x.textAlign = "center"; x.textBaseline = "middle";
+    if (el.classList.contains("pcol")) { x.shadowColor = "#000"; x.shadowBlur = 2; }
+    x.fillText(txt, cx, cy + 0.5); x.restore();
+  }
 }
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
@@ -7817,11 +7891,11 @@ function tzcReset(){
   save(); renderTri(); if (typeof rhombTag === "function") rhombTag(); tzcIcons();
   say(`△ «${key}» — снова обычным рядом.`);
 }
-{ const r0 = renderTri; renderTri = function(){ r0(); const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; } if (Z.triBind) tzcSync(); tzcIcons(); }; }
+{ const r0 = renderTri; renderTri = function(){ r0(); const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; } if (Z.triBind) tzcSync(); tzcPreview(); tzcIcons(); }; }
 if ($("bTriBindOk")) $("bTriBindOk").onclick = () => tzcClose();
 if ($("bTriBindReset")) $("bTriBindReset").onclick = () => tzcReset();
 { const rt2 = rhombTag; rhombTag = function(){ rt2(); tzcAll(); }; }
-window.addEventListener("load", () => setTimeout(() => { triState(); if (Z.triBind && !tzcGroup(Z.triBind)) tzcMine(); tzcAll(); }, 0));
+window.addEventListener("load", () => setTimeout(() => { triState(); if (Z.triBind && !tzcGroup(Z.triBind)) tzcMine(); tzcAll(); tzcPreview(); }, 0));
 
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
