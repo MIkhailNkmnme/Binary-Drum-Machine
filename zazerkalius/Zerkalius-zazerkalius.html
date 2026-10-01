@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.478. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.479. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.478</title>
+<title>Zazerkalius — v0.479</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -960,7 +960,10 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.csz):not(:has(> .cgb.tzc)){max-width:520px}
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;flex:0 0 auto !important;height:24px !important;box-sizing:border-box;margin:0 !important;
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);border:0 !important;border-radius:0 !important;
-  padding:0 calc(var(--t) + 2px) !important;display:flex !important;align-items:center;justify-content:center;background-color:color-mix(in srgb, var(--gfc, var(--line)) 26%, var(--panel2))}
+  padding:0 calc(var(--t) + 2px) !important;display:flex !important;align-items:center;justify-content:center;background-color:var(--gfc, var(--line));-webkit-text-fill-color:#0e1116}   /* v0.479, «у всех заголовков убери прозрачность»: сплошь цветом группы, надпись тёмная (заливкой букв: сам color остаётся цветом группы — по нему рамка и контуры) */
+:is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz > :is(.gzen, .gtri, .gx){opacity:1 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp:not(.zenon) > .glab.tz.tz.tz > .gzen{filter:grayscale(1) brightness(.6)}
+:is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz > .gtri.on{text-shadow:0 0 3px #fff}
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
 /* v0.475: у группы конструктора заголовок — кнопка в первой строке: стоит поверх левого края рисунка (tzcApply сдвигает первую строку на его ширину) */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):has(> .cgb.tzc){gap:0 !important}
@@ -1354,7 +1357,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.478</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.479</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2289,8 +2292,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0478"></script>
-<script src="zz-ui.js?v=0478"></script>
+<script src="zz-core.js?v=0479"></script>
+<script src="zz-ui.js?v=0479"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

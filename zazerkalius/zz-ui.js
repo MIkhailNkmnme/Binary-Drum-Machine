@@ -7142,9 +7142,11 @@ function cgbSnap(){
   const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk"));   // v0.452: место и размер кнопок конструктора — свои
   const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
-  btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width"); el.classList.add("wm"); });   // v0.447: ширина .tz — своя, на замер снять
+  btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width");
+    el._tzf = el.classList.contains("tz") ? el.style.getPropertyValue("flex") : ""; if (el._tzf) el.style.removeProperty("flex");   // v0.479: и flex (у галок) — иначе замер берёт прежнюю ширину и раздувает кнопку
+    el.classList.add("wm"); });   // v0.447: ширина .tz — своя, на замер снять
   const wf = free.map(el => el.getBoundingClientRect().width), wb = btn.map(el => el.getBoundingClientRect().width);
-  btn.forEach(el => { el.classList.remove("wm"); if (el._tzw) el.style.setProperty("width", el._tzw, "important"); });
+  btn.forEach(el => { el.classList.remove("wm"); if (el._tzw) el.style.setProperty("width", el._tzw, "important"); if (el._tzf) el.style.setProperty("flex", el._tzf, "important"); });
   free.forEach((el, i) => { el.style.width = W(kOf(wf[i], el), el) + "px"; });
   btn.forEach((el, i) => { const k = kOf(wb[i], el); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
   if (typeof triTag === "function") triTag();
@@ -7654,7 +7656,7 @@ function triTag(){
       if (!g || !g.closest("#w-cone .tools, #paneGrp")) { if (b.classList.contains("tz")) triOff(b); return; }   // v0.475: и у групп конструктора
       const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0;
       const need = Math.ceil((b.scrollWidth || 0) / sd - 0.05);   // v0.475: надпись со значками не влезла — шире, кратно полкнопке
-      b._tzar = ""; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP; b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : 6, Math.ceil(need / 3) * 3);
+      b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP; b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : 6, Math.ceil(need / 3) * 3);
       tzGeo(b); bs.push(b); return;
     }
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
@@ -7688,7 +7690,7 @@ function triTag(){
       if (!vis(b)) return;
       const p = prevOf(b), lk = !!p && p.classList.contains("tz") && !p.classList.contains("tzk") && Math.abs(p.getBoundingClientRect().top - b.getBoundingClientRect().top) < 6;
       let L = b._tzL || TZ_TIP;
-      if (!b._tzfix) L = lk && tzFits(p._tzR, TZ_NOTCH) ? TZ_NOTCH : TZ_TIP;
+      if (!b._tzfix) L = !lk || tzFits(p._tzR, TZ_NOTCH) ? TZ_NOTCH : TZ_TIP;   // v0.479: первая в ряду — выемкой, в стрелку левого края группы
       const m = lk && tzFits(p._tzR, L) ? p._tzR[1] + L[1] : 0;
       if (L !== b._tzL || m !== (b._tzm || 0)) { b._tzL = L; b._tzm = m; tzGeo(b); ch = true; }
     });
@@ -8127,12 +8129,15 @@ function tzgFrame(g){
   g._tzgk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
   const ys = []; for (let y = 0; y < H; y += P / 2) ys.push(y); ys.push(H);
-  const pts = [...ys.map(y => [zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
+  /* v0.479, «левая граница у групп пусть будет стрелкой вправо всегда»: левый край — выемкой (в середине ряда внутрь на t), правый — остриём, как был:
+     вся группа — «стрелка вправо»; первая кнопка ряда — с выемкой слева, ложится в край вплотную (triTag) */
+  const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
   g.classList.add("tzg");
   g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;   // v0.464: рамка группы тоньше — видна половина, 1 px
   g.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   g.style.setProperty("--gfc", fc);
+  clearTimeout(tzgFrame._t); tzgFrame._t = setTimeout(() => { if (typeof triTag === "function") triTag(); }, 0);   // v0.479: ряды могли перестроиться — первые кнопки рядов заново
 }
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
