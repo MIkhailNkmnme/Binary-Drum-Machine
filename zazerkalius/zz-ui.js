@@ -7809,7 +7809,7 @@ function tzcLabels(){   // надпись кнопки в сетке — одн�
   { const vis = {}; for (const [k, w] of Object.entries(vo)) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) vis[k] = w; }
     const lv = new Set(Object.values(vis));
     g.lineCap = "round"; if (!tzcManual(d)) for (const h of tzcHulls(vis, lv, d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }
-    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.save(); g.clip(new Path2D(h.f)); g.strokeStyle = h.col; g.lineWidth = 2 * h.w * triGeo.s / TRI_S1; g.stroke(new Path2D(h.d)); g.restore(); }   // v0.459
+    for (const h of tzcRingPaths(vis, lv, (d.rings || []).map(rg => Object.assign({}, rg, { col: tzcGcol(tzcGroup(Z.triBind)) })), triPts)) { g.save(); g.clip(new Path2D(h.f)); g.strokeStyle = h.col; g.lineWidth = 2 * h.w * triGeo.s / TRI_S1; g.stroke(new Path2D(h.d)); g.restore(); }   // v0.459
     if (tzcPick && tzcSel.size) for (const h of tzcRingPaths(vis, lv, [{ items: [...tzcSel], col: "#fff" }], triPts)) {   // выбранные — пунктиром
       g.save(); g.strokeStyle = "#fff"; g.lineWidth = 2.5; g.setLineDash([6, 4]); g.stroke(new Path2D(h.d)); g.restore(); } }
   g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(9, Math.min(22, triGeo.s * 0.42))}px Segoe UI, Arial`; g.fillStyle = "#0e1116";
@@ -7925,10 +7925,10 @@ function tzcApply(g){
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
   /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
      области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
-  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { w: onSig[i] === "1" ? (rg.w > 0 ? Math.max(rg.w, 2) : 2.5) : 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
+  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { col: tzcGcol(g), w: onSig[i] === "1" ? (rg.w > 0 ? Math.max(rg.w, 2) : 2.5) : 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
-      const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
+      const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
       hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${w || Z.triLW || 2}" stroke-linecap="round"/>`;
     } }
@@ -7978,7 +7978,7 @@ function tzcRingsUi(){
   const b = $("bTriRing"), box = $("triRings"), d = Z.cgrpTri && Z.cgrpTri[Z.triBind]; if (!b || !box) return;
   b.classList.toggle("on", tzcPick); b.textContent = tzcPick ? `⬚ обвести · ${tzcSel.size}` : "⬚ обвести";
   const lab = (w) => { const i = d && (d.items || []).indexOf(w), c = i >= 0 && TRI_COL[TZC_K0 + i]; return c ? c[1] : w; };
-  box.innerHTML = (d && d.rings || []).map((rg, i) => `<button data-ri="${i}" style="border-color:${esc(rg.col)};color:${esc(rg.col)}" title="Обводка: ${esc(rg.items.map(lab).join(", "))} — щелчок: снять">⬚ ${rg.items.length}</button>`).join("");
+  box.innerHTML = (d && d.rings || []).map((rg, i) => `<button data-ri="${i}" style="border-color:${esc(tzcGcol(tzcGroup(Z.triBind)))};color:${esc(tzcGcol(tzcGroup(Z.triBind)))}" title="Обводка: ${esc(rg.items.map(lab).join(", "))} — щелчок: снять">⬚ ${rg.items.length}</button>`).join("");
 }
 function tzcUnits(o, live, rings){   // v0.455: кнопки под общей границей — один блок: кнопка → корень блока
   const by = {}, par = {}, f = (x) => (par[x] && par[x] !== x ? (par[x] = f(par[x])) : x);
@@ -8067,8 +8067,8 @@ function tzcPreview(){
   }
   x.strokeStyle = tzcGcol(g); x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
   if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
-    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.save(); x.clip(new Path2D(h.f)); x.strokeStyle = h.col; x.lineWidth = 2 * h.w; x.stroke(new Path2D(h.d)); x.restore(); }   // v0.465: внутрь
-    for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
+    for (const h of tzcRingPaths(o, live, (d.rings || []).map(rg => Object.assign({}, rg, { col: tzcGcol(g) })), P)) { x.save(); x.clip(new Path2D(h.f)); x.strokeStyle = h.col; x.lineWidth = 2 * h.w; x.stroke(new Path2D(h.d)); x.restore(); }   // v0.465: внутрь
+    for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */ const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
       x.strokeStyle = col; x.lineWidth = w || Z.triLW || 2; x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
   } else for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
   for (const [w, el] of Object.entries(els)) {   // подписи
@@ -8189,7 +8189,7 @@ if ($("bTriRing")) $("bTriRing").onclick = () => {   // v0.459: режим вы�
   if (!tzcPick) { tzcPick = true; tzcSel.clear(); say("⬚ Щёлкай кнопки в сетке — выбрать (ещё щелчок — снять). Нажми «⬚» ещё раз — выбранные получат одну обводку цветом из поля рядом."); }
   else {
     tzcPick = false;
-    if (tzcSel.size) { (d.rings = d.rings || []).push({ items: [...tzcSel], col: $("triRingCol").value || "#ffd166", w: Z.triLW > 0 ? Z.triLW : 1.5 }); say(`⬚ Обведено кнопок: ${tzcSel.size}.`); }
+    if (tzcSel.size) { (d.rings = d.rings || []).push({ items: [...tzcSel], w: Z.triLW > 0 ? Z.triLW : 1.5 }); /* v0.472: цвет — всегда цвет группы */ say(`⬚ Обведено кнопок: ${tzcSel.size}.`); }
     tzcSel.clear();
   }
   save(); renderTri();
