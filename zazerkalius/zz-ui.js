@@ -7633,6 +7633,7 @@ window.addEventListener("load", () => setTimeout(rhombTag, 0));
    треугольников. Зовётся из rhombTag (после каждой раскладки групп). */
 function joinTag(){
   document.querySelectorAll("span.cjoin").forEach(sp => {
+    if (sp.closest("#w-cone .tools .cgb, #paneGrp .cgb")) return;   // v0.503: в группах — общая цепочка из треугольников (triTag)
     const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON" && !c.hidden && !c.classList.contains("tzk"));   // v0.452: и не из конструктора   // v0.425: спрятанные — не в сцепке
     bs.forEach((b, i) => {
       const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
@@ -7754,7 +7755,9 @@ function triTag(){
       b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
     }
     const ar = RH_TRI[b.textContent.trim()];
-    if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
+    /* v0.503, по снимку «Звука» — «поправь все кнопки у звука»: блок ◀ ⏵ ▶ (.cjoin) рисовался по-старому, с косой сеткой внутри (крестики) — теперь
+       его кнопки в общей цепочке из треугольников, как все */
+    if (b.classList.contains("zerk-arrow") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
     b._tzar = ar; b._tzn = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6;
     b._tzR = ar === "l" ? TZ_NOTCH : TZ_TIP; b._tzfix = !!ar;
     if (ar) b._tzL = TZ_NOTCH;   // v0.485: ▶ — «стрелка вправо» (выемка — остриё), ◀ — «песочные часы» (выемки с обеих сторон)
@@ -8064,7 +8067,7 @@ function tzcApply(g){
       const Q = ex((r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + t, y1], [x + s, y0]]);
       p += `M${Q[0][0].toFixed(2)} ${Q[0][1].toFixed(2)}L${Q[1][0].toFixed(2)} ${Q[1][1].toFixed(2)}L${Q[2][0].toFixed(2)} ${Q[2][1].toFixed(2)}Z`;
     }
-    el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol") || el.classList.contains("glab")) el.classList.add("tz");   // v0.486: и заголовок
+    el.classList.add("tzk", "tz");   // v0.486: и заголовок; v0.503, «поправь все кнопки у звука»: и ползунки, поля, списки — общее оформление (бегунок-стрелка, без рамок браузера)
     el._tzk = "";
     el.style.setProperty("--tzp", `path("${p}")`); el.style.setProperty("--lat", "none");
     { const set = new Set(cells.map(([r, c]) => r + "_" + c)), W0 = (it.c1 + 2 - it.c0) * t, H0 = (it.r1 + 1 - it.r0) * hh; let e = "";   // v0.467: маска толстой обводки нажатой — по границе своих треугольников
