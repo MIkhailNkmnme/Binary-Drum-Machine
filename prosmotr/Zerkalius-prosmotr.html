@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.018. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.019. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -64,13 +64,17 @@
              «rh», а оно с v0.013 значит «вплотную». Форме клеток — autocomplete="off": после обновления всегда ◆ ромбы в клетке.
      v0.018: «каждый второй ромб всё равно так же». Чётные проходы GIF 526–781 — тот же узор дважды со сдвигом на клетку (обе шахматки
              заняты): так нарисован сам GIF. Переключатель «шахматка»: вершины (по умолчанию) / вторая / обе — гасит клетки другой
-             чётности на холсте, в ленте кадров и в PNG; с одной шахматкой и «вплотную» — чистая ромбовая сетка. -->
+             чётности на холсте, в ленте кадров и в PNG; с одной шахматкой и «вплотную» — чистая ромбовая сетка.
+     v0.019: по снимку «🔍 Крупно» Треугольника — «неправильно режет ромбы, смотри как в Треугольнике все норм». Ромб был
+             полуоткрытым: брал верхние два ребра, а нижние и нижнюю вершину отдавал соседям — s строк вместо s + 1, низ срезан.
+             Теперь ромб замкнутый, как в Треугольнике: строки 0 … s, все четыре ребра свои, соседи делят общее ребро; нижний ряд
+             ромбов — только если нижняя вершина в кадре (у 1025 × 530 ромбов 64 — 105, как в «Сводке»). -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.018</title>
+<title>Zerkalius Просмотр GIF — v0.019</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -128,7 +132,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.018</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.019</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -514,8 +518,8 @@ function geom() {
 
 /* ---------- нарезка по ромбам (v0.008) ----------
    Треугольник GIF: вершина (cx, t), по строке вниз край уходит на k px вбок. Сетка ромбов размера s (строк) — от вершины,
-   вдоль рёбер: u = (x − cx) / k + (y − t), v = (y − t) − (x − cx) / k; ромб (i, j) — где u в [i·s, (i + 1)·s), v в [j·s, (j + 1)·s).
-   Его верх — (cx + (i − j)·k·s/2, t + (i + j)·s/2), высота s, ширина k·s; ряд ромбов r = i + j — r + 1 штук. Берутся только
+   вдоль рёбер: u = (x − cx) / k + (y − t), v = (y − t) − (x − cx) / k; ромб (i, j) — где u в [i·s, (i + 1)·s], v в [j·s, (j + 1)·s] (v0.019: замкнутый, как в Треугольнике).
+   Его верх — (cx + (i − j)·k·s/2, t + (i + j)·s/2), высота s + 1 строк, ширина k·s + 1; ряд ромбов r = i + j — r + 1 штук. Берутся только
    целые ромбы. Вершину и наклон ищем по кадру: цвет клеток — самый частый не чёрный (так подпись «проход … · кадр …» другим
    цветом не мешает), вершина — первая строка с ним, наклон — наибольший полуразмах строки на её глубину. */
 const rcutOn = () => !!S.rcut && !layOn();
@@ -536,7 +540,7 @@ function rgeoOf(g) {
   const kr = Math.round(k * 4) / 4; if (kr > 0 && Math.abs(kr - k) / kr < 0.03) k = kr;   // почти ровный наклон — ровный
   return (g.rgeo = { t: t, cx: cx, k: Math.max(0.25, k) });
 }
-const rFits = (g, s) => s <= g.H - rgeoOf(g).t;   // v0.009: размер ромба — в px кадра, от «строки» прокрутки не зависит
+const rFits = (g, s) => s <= g.H - 1 - rgeoOf(g).t;   // v0.009: размер ромба — в px кадра, от «строки» прокрутки не зависит; v0.019: s + 1 строк
 function rcutSizes(base) {
   const v = $('rcutSize').value, g = S.gifs[base[0][0]];
   if (v !== 'up' && v !== 'down') return [parseInt(v, 10) || 64];
@@ -544,11 +548,11 @@ function rcutSizes(base) {
   return v === 'up' ? L : L.reverse();
 }
 // v0.010: ромбы размера s режутся один раз: у каждого — откуда (пиксель кадра) и где в своей рамке tw × th (loc)
-const tileCount = (g, s) => { const R = Math.floor((g.H - rgeoOf(g).t - s) / (s / 2)); return R < 0 ? 0 : (R + 1) * (R + 2) / 2; };
+const tileCount = (g, s) => { const R = Math.floor((g.H - 1 - rgeoOf(g).t - s) / (s / 2)); return R < 0 ? 0 : (R + 1) * (R + 2) / 2; };
 function tilesOf(g, s) {
   g.rtiles = g.rtiles || new Map(); if (g.rtiles.has(s)) return g.rtiles.get(s);
-  const G = rgeoOf(g), W = g.W, H = g.H, hs = s / 2, k = G.k, tw = Math.ceil(s * k) + 1, th = s;
-  const R = Math.floor((H - G.t - s) / hs), T = [];
+  const G = rgeoOf(g), W = g.W, H = g.H, hs = s / 2, k = G.k, tw = Math.ceil(s * k) + 1, th = s + 1, e = 1e-6;
+  const R = Math.floor((H - 1 - G.t - s) / hs), T = [];
   for (let r = 0; r <= R; r++) for (let i = 0; i <= r; i++) {
     const j = r - i, bx = Math.floor(G.cx + (i - j) * hs * k - hs * k), by = G.t + r * hs, src = [], loc = [];
     for (let yy = 0; yy < th; yy++) {
@@ -556,7 +560,8 @@ function tilesOf(g, s) {
       for (let xx = 0; xx < tw; xx++) {
         const x = bx + xx; if (x < 0 || x >= W) continue;
         const dx = (x - G.cx) / k, dy = y - G.t;
-        if (Math.floor((dx + dy) / s) !== i || Math.floor((dy - dx) / s) !== j) continue;
+        const u = dx + dy, v = dy - dx;   // v0.019: ромб замкнутый, как в Треугольнике — все четыре ребра и обе вершины свои, соседи делят ребро
+        if (u < i * s - e || u > (i + 1) * s + e || v < j * s - e || v > (j + 1) * s + e) continue;
         src.push(y * W + x); loc.push(yy * tw + xx);
       }
     }
