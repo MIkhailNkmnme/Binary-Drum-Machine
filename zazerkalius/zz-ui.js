@@ -7628,7 +7628,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   b.classList.remove("rh1", "tri-l", "tri-r"); b.classList.add("tz"); b.classList.toggle("tzar", !!b._tzar);
   [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]]].forEach(([k, v]) => b.style.setProperty(k, px(v * t)));
   b.style.setProperty("--t", px(t));
-  b.style.setProperty("width", px(W), "important");
+  b.style.setProperty("width", px(W), "important"); b._tzOwnW = parseFloat(px(W));   // v0.483: своя — чтобы не принять её за заданную
   if (b.tagName === "LABEL") b.style.setProperty("flex", "0 0 " + px(W), "important");
   if (m) b.style.setProperty("margin-left", px(-m * t - 1), "important"); else b.style.removeProperty("margin-left");
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
@@ -7655,16 +7655,20 @@ function triTag(){
     if (b.classList.contains("glab")) {
       const g = b.parentElement, gb = g && g.querySelector(":scope > .cgb");
       if (!g || !g.closest("#w-cone .tools, #paneGrp")) { if (b.classList.contains("tz")) triOff(b); return; }   // v0.475: и у групп конструктора
-      const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0;
-      const need = Math.ceil((b.scrollWidth || 0) / sd - 0.05);   // v0.475: надпись со значками не влезла — шире, кратно полкнопке
-      b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP; b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : 6, Math.ceil(need / 3) * 3);
+      const sd = TZC_H / Math.sqrt(3), wRaw = parseFloat(b.style.width) || 0, own = b._tzOwnW && Math.abs(wRaw - b._tzOwnW) < 0.5, wInl = own ? 0 : wRaw;
+      /* v0.483, «длина сама вытягивается»: своя ширина (её ставит tzGeo, с выемкой +t) — не «заданная»: иначе n + 0,5 округлялось в n + 1 при каждом
+         пересчёте, и подпись росла без конца. Нужное место — без своих краёв */
+      const edge = ((b._tzL || TZ_NOTCH)[1] + TZ_TIP[1]) * sd / 2, need = Math.ceil(((b.scrollWidth || 0) - edge) / sd - 0.05);
+      b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP;
+      b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : own ? Math.min(b._tzn || 6, Math.max(6, Math.ceil(need / 3) * 3)) : 6, Math.ceil(need / 3) * 3);
       tzGeo(b); bs.push(b); return;
     }
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
       if (tzcItem(b, cgb) !== b || b.closest(".cjoin")) { if (b.classList.contains("tz")) triOff(b); return; }
-      const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
+      const sd = TZC_H / Math.sqrt(3), wRaw = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
+      const own = b._tzOwnW && Math.abs(wRaw - b._tzOwnW) < 0.5, wInl = own ? 0 : wRaw;   // v0.483: своя ширина — не «заданная» (см. заголовок)
       b._tzar = ""; b._tzfix = false; b._tzR = TZ_TIP;
-      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : 6;
+      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : b.classList.contains("glab2") && own && b._tzn ? b._tzn : 6;
       tzGeo(b); bs.push(b); return;
     }
     if (b.closest("#paneGrp") && b.classList.contains("pcol")) { if (b.classList.contains("tz")) triOff(b); return; }
