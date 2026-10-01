@@ -7135,7 +7135,7 @@ const CG_BTN = ".cgrp > .cgb button:not(.zerk-arrow), .cgrp > .cgb label:has(> i
 function cgbSnap(){
   const bu0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, ct = document.querySelector("#w-cone .tools");
   const buC = (ct && parseFloat(getComputedStyle(ct).getPropertyValue("--bu"))) || bu0;   // v0.447: в конусе своя --bu (6s) и без зазоров
-  const W = (k, el) => { const c = el.closest("#w-cone .tools"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };
+  const W = (k, el) => { const c = el.closest("#w-cone .tools, #paneGrp"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };   // v0.463: и левая панель
   const kOf = (w, el) => w <= W(1, el) + 0.5 ? 1 : w <= W(2, el) + 0.5 ? 2 : 4;
   const vis = (el) => el.getClientRects().length > 0;
   const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk"));   // v0.452: место и размер кнопок конструктора — свои
@@ -7536,7 +7536,7 @@ function rhombTag(){
     if (b.classList.contains("zerk-arrow")) return;
     if (b.closest(".cjoin")) { b.classList.remove("rh1", "tri-l", "tri-r", "tri-u", "tri-d"); return; }   // v0.419: в сцепке — своя форма (joinTag)
     const ar = RH_TRI[b.textContent.trim()];
-    if (ar !== "u" && ar !== "d" && b.closest("#w-cone .tools")) { b.classList.remove("rh1", "tri-l", "tri-r"); return; }   // v0.447: в конусе — triTag
+    if (ar !== "u" && ar !== "d" && b.closest("#w-cone .tools, #paneGrp")) { b.classList.remove("rh1", "tri-l", "tri-r"); return; }   // v0.447: в конусе — triTag; v0.463 — и на левой панели
     const cs = getComputedStyle(b), w = parseFloat(cs.width) || 0, h = parseFloat(cs.height) || 24;
     const sd = h / Math.sqrt(3), t = sd / 2, px = (v) => Math.max(0, v).toFixed(2) + "px";
     b.classList.toggle("rh1", !ar && w >= sd);
@@ -7633,10 +7633,22 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
 }
 function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
-  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb")) triOff(b); });
+  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb")) triOff(b); });
   const bs = [];
-  document.querySelectorAll("#w-cone .tools .cgb button, #w-cone .tools #palOwn > label.pcol").forEach(b => {
+  /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
+     стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
+     Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
+  document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2)").forEach(b => {
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
+    const cgb = b.closest(".cgb");
+    if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
+      if (tzcItem(b, cgb) !== b || b.closest(".cjoin")) { if (b.classList.contains("tz")) triOff(b); return; }
+      const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
+      b._tzar = ""; b._tzfix = false; b._tzR = TZ_TIP;
+      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : 6;
+      tzGeo(b); bs.push(b); return;
+    }
+    if (b.closest("#paneGrp") && b.classList.contains("pcol")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.tagName === "LABEL") {   // v0.450: цвет своей гаммы — шестигранник из 6 треугольников (n = 2), остриё к острию; просветы — цветом «Своя» (фон блока, CSS)
       b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP;
       tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
@@ -8036,10 +8048,29 @@ function tzcPreview(){
     x.fillText(txt, cx, cy + 0.5); x.restore();
   }
 }
+/* v0.463, «и края самих полей групп теми же ромбами надо»: группа (окно конуса и левая панель) — с зубчатыми боками из тех же треугольников:
+   на каждые 24 px высоты (ряд кнопок) — остриё наружу, как у кнопки; верх и низ ровные. Форма — clip-path (--gclip), рамка — слой ::before цветом
+   прежней рамки группы (--gfc), обрезанный маской по контуру (--gmask). Пересчёт — при каждом изменении размера группы */
+function tzgFrame(g){
+  if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
+  if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
+  const W = g.offsetWidth, H = g.offsetHeight; if (!W || !H) return;
+  const fc = getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + fc;
+  if (g._tzgk === key && g.classList.contains("tzg")) return;
+  g._tzgk = key;
+  const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
+  const ys = []; for (let y = 0; y < H; y += P / 2) ys.push(y); ys.push(H);
+  const pts = [...ys.map(y => [zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
+  g.classList.add("tzg");
+  g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2.5"/></svg>`;
+  g.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+  g.style.setProperty("--gfc", fc);
+}
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
 }
-function tzcAll(){ document.querySelectorAll(".cgrp").forEach(g => { if (g.dataset.g) tzcApply(g); }); tzcIcons(); }
+function tzcAll(){ document.querySelectorAll(".cgrp").forEach(g => { if (g.dataset.g) tzcApply(g); tzgFrame(g); }); tzcIcons(); }
 function tzcMine(){   // вернуть в сетку своё, отложенное на время конструктора
   const m = Z.triMine || {};
   Z.triCells = m.c || {}; Z.triGLn = m.gl || {}; Z.triGIn = m.gi || {}; Z.triGTx = m.gt || {}; Z.triCur = m.cur != null ? m.cur : -1; Z.triSel = m.sel || null;

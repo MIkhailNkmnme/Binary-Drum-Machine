@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.462. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.463. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.462</title>
+<title>Zazerkalius — v0.463</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -874,20 +874,41 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    выемка 0 t 0. Длина — целое число сторон s (ставит triTag); --bu в конусе — 6s, зазоров по горизонтали нет (правило «всё по сетке t»).
    Левая панель — как была.
    v0.448: сетки внутри нет — --lat теперь светлая обводка по контуру; кнопки сцеплены вплотную (triTag, остриё в выемку соседа) */
-#w-cone .tools{--bu:83.14px}
-#w-cone .cgrp > .cgb,#w-cone .tools .cgb > span{column-gap:0 !important}
-#w-cone .tools .cgb button.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;isolation:isolate;
+#w-cone .tools,#paneGrp{--bu:83.14px}   /* v0.463: и левая панель */
+#w-cone .cgrp > .cgb,#w-cone .tools .cgb > span,#paneGrp .cgb,#paneGrp .cgb > span{column-gap:0 !important}
+#w-cone .cgrp > .cgb,#paneGrp .cgb{row-gap:0 !important}   /* v0.463: ряды кнопок — вплотную, как и в ряду */
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;isolation:isolate;
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);
   border-width:0 !important;border-radius:0 !important;box-shadow:none !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;padding:0 calc(var(--t) + 2px) !important;
   background-color:var(--panel2) !important;background-image:var(--lat, none) !important;background-size:100% 100% !important;background-position:0 0 !important;background-repeat:no-repeat !important}
-#w-cone .tools .cgb button.tz.tz.tz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
-#w-cone .tools .cgb button.tz.tz.tz.on{background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
-#w-cone .tools .cgb button.tz.tz.tz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
-#w-cone .tools .cgb button.tz.tz.tz.tzar{padding:0 !important;color:transparent !important;text-shadow:none !important}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on{background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.tzar{padding:0 !important;color:transparent !important;text-shadow:none !important}
 /* «идёт само» (▶ волна, ▶ крутить, ♫) — рамки нет, мигает заливка: слой поверх фона, под надписью (как в сцепке, v0.428) */
-#w-cone .tools .cgb button.tz:is(#bAnimPlay,#bConeAuto,#bConeMus,#bC3Auto).on::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz:is(#bAnimPlay,#bConeAuto,#bConeMus,#bC3Auto).on::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
 /* v0.449, «что за квадраты 3?? вот так их можно» (рисунок 237…327): цвета своей гаммы 1 0 а в конусе — трапеции из треугольников (triTag),
    встык друг к другу и к «Своя» / «Янтарь»; заливка — сам цвет, обводка — слоем поверх (::after), знак — по середине */
+/* v0.463, «у всех групп кнопок, включая ползунки и выпадающие списки, — чтоб всё было стандартно»: галки-кнопки, списки, ползунки, поля чисел, подписи
+   групп — той же формы, что кнопки (класс .tz, triTag): заливка, без рамки, края из треугольников, рамка — слоем ::after по контуру (у списка — фоном,
+   там же своя стрелка ▾). Галка горит — как включённая кнопка */
+:is(#w-cone .tools, #paneGrp) .cgb :is(label, select, span).tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;
+  clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);
+  border-width:0 !important;border-radius:0 !important;box-shadow:none !important;min-width:0 !important;max-width:none !important;height:24px;box-sizing:border-box;
+  padding-left:calc(var(--t) + 2px) !important;padding-right:calc(var(--t) + 2px) !important;background-color:var(--panel2)}
+:is(#w-cone .tools, #paneGrp) .cgb :is(label, span).tz.tz.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
+:is(#w-cone .tools, #paneGrp) .cgb span.glab2.tz.tz.tz{display:inline-flex;align-items:center;justify-content:center}   /* подпись — с той же заливкой: поверх конуса прозрачную не прочесть */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:hover,:is(#w-cone .tools, #paneGrp) .cgb select.tz.tz.tz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked){background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+:is(#w-cone .tools, #paneGrp) .cgb select.tz.tz.tz{-webkit-appearance:none;appearance:none;padding-right:calc(var(--t) + 13px) !important;
+  background-image:var(--lat, none),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%238b949e'/%3E%3C/svg%3E") !important;
+  background-size:100% 100%,8px 5px !important;background-position:0 0,right calc(var(--t) + 3px) center !important;background-repeat:no-repeat !important}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap){display:inline-flex !important;align-items:center}
+/* v0.463, «и края самих полей групп теми же ромбами»: группа — зубчатые бока (tzgFrame): форма — clip-path, рамка — ::before её прежним цветом по маске;
+   поля по бокам — шире на глубину зубца, ручка размера — внутрь */
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg{border-style:none !important;border-radius:0 !important;clip-path:var(--gclip);padding-left:12px !important;padding-right:13px !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--gfc, var(--line));-webkit-mask:var(--gmask) 0 0 / 100% 100% no-repeat;mask:var(--gmask) 0 0 / 100% 100% no-repeat}
+.cgrp.tzg > .cgsz{right:8px !important}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1272,7 +1293,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.462</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.463</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2208,8 +2229,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0462"></script>
-<script src="zz-ui.js?v=0462"></script>
+<script src="zz-core.js?v=0463"></script>
+<script src="zz-ui.js?v=0463"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
