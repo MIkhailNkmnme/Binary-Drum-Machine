@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.019. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.020. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -68,13 +68,17 @@
      v0.019: по снимку «🔍 Крупно» Треугольника — «неправильно режет ромбы, смотри как в Треугольнике все норм». Ромб был
              полуоткрытым: брал верхние два ребра, а нижние и нижнюю вершину отдавал соседям — s строк вместо s + 1, низ срезан.
              Теперь ромб замкнутый, как в Треугольнике: строки 0 … s, все четыре ребра свои, соседи делят общее ребро; нижний ряд
-             ромбов — только если нижняя вершина в кадре (у 1025 × 530 ромбов 64 — 105, как в «Сводке»). -->
+             ромбов — только если нижняя вершина в кадре (у 1025 × 530 ромбов 64 — 105, как в «Сводке»).
+     v0.020: по снимкам ромба 4 — «квадраты и ромбы вплотную — тут нужно только ромбы, почему вместе с квадратами? Вот так надо, как в
+             Треугольнике». Всё вокруг ромба в его рамке заливалось серой щелью раскладки, а щели у форм клеток рисуются квадратами
+             поверх — вокруг ромба стояли серые квадраты и обрезали крайние ромбы. Теперь вокруг ромбов чёрный фон (и в ленте, и в GIF
+             нарезки), квадратами он не рисуется; сцене дано поле в клетку — ромбы на вершинах не режет край холста. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Просмотр GIF — v0.019</title>
+<title>Zerkalius Просмотр GIF — v0.020</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -132,7 +136,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.019</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.020</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -469,6 +473,8 @@ const $ = id => document.getElementById(id);
 const S = { gifs: [], cur: -1, mont: false, segs: [], i: 0, a: null, b: null, playing: false, rev: false, timer: 0, zoom: 'fit', sel: new Set(), zeros: true,
   shift: 0, scr: false, scrDir: 1, scrN: 0, scrAcc: 0, scrLast: 0, scrRaf: 0, offKey: '' };   // v0.005: shift — сдвиг сцены в px (по кругу)
 const GAP = 4, GAP_COL = [16, 18, 24];   // v0.002: между клетками раскладки — тёмная щель
+// v0.020: вокруг ромбов нарезки — не щель, а фон: на вид чёрный (0, 0, 1), для форм клеток — граница куска, но квадратами поверх не рисуется
+const RPAD = 1, OUT_COL = [0, 0, 1], OUT32 = ((255 << 24) | (OUT_COL[2] << 16) | (OUT_COL[1] << 8) | OUT_COL[0]) >>> 0;
 const layout = () => $('laySel').value;
 const setList = () => S.gifs.map((_, k) => k).filter(k => S.sel.has(k));
 const layOn = () => !S.mont && layout() !== 'one' && setList().length > 0;
@@ -667,7 +673,7 @@ function rStrip() {
       const sp = document.createElement('span'); sp.textContent = '#' + (SEQ[i][1] + 1);
       d.appendChild(c); d.appendChild(sp); d.addEventListener('click', () => go(i, 1)); box.appendChild(d); return c;
     });
-    const job = ++RS.job, GC = (255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0], BK0 = 255 << 24;
+    const job = ++RS.job, BK0 = 255 << 24;
     const lv = $('latSel').value, lk = lv === 'both' || M.par === undefined ? -1 : (lv === 'a' ? M.par : 1 - M.par);   // v0.018
     let k = 0;
     const chunk = () => {
@@ -675,7 +681,7 @@ function rStrip() {
       const t0 = performance.now();
       while (k < items.length && performance.now() - t0 < 25) {
         const fr = g.frames[SEQ[items[k]][1]], img = new ImageData(M.W, M.H), d32 = new Uint32Array(img.data.buffer);
-        d32.fill(GC);
+        d32.fill(BK0);   // v0.020: вокруг ромба — чёрный, как в Треугольнике
         for (let p = 0; p < M.src.length; p++) {   // v0.018: и в ленте — только выбранная шахматка
           const dd = M.dst[p];
           if (lk >= 0) { const yy = (dd / M.W) | 0; if (((dd - yy * M.W + yy) & 1) !== lk) { d32[dd] = BK0; continue; } }
@@ -702,7 +708,7 @@ $('rNextBtn').addEventListener('click', () => rJump(1));
 $('view').addEventListener('dblclick', e => {   // (сам view объявлен ниже — здесь через $)
   const ref = SEQ[S.i]; if (!ref || !ref[2] || ref[3] !== undefined) return;
   const g = S.gifs[ref[0]], M = rmap(g, ref[2]), TT = tilesOf(g, ref[2]), r = cv.getBoundingClientRect();
-  const sx = Math.floor((e.clientX - r.left) / r.width * off.width), sy = Math.floor((e.clientY - r.top) / r.height * off.height);
+  const sx = Math.floor((e.clientX - r.left) / r.width * off.width) - RPAD, sy = Math.floor((e.clientY - r.top) / r.height * off.height) - RPAD;
   for (let q = 0; q < M.pos.length; q++) {
     const lx = sx - M.pos[q].X, ly = sy - M.pos[q].Y;
     if (lx < 0 || ly < 0 || lx >= TT.tw || ly >= TT.th || !TT.T[q].loc.includes(ly * TT.tw + lx)) continue;
@@ -711,7 +717,7 @@ $('view').addEventListener('dblclick', e => {   // (сам view объявлен
 });
 // нарезка — одним GIF: кадры с шагом и чётностью; группы разного размера — по центру общего поля
 function rcutGif(refs, name) {
-  const used = [...new Set(refs.map(r => r[0]))], U = unify(used, GAP_COL);
+  const used = [...new Set(refs.map(r => r[0]))], U = unify(used);   // v0.020: вокруг ромбов — чёрный
   if (!U) { alert('Вместе больше 256 цветов — одним GIF не собрать'); return; }
   const maps = refs.map(sceneMap);
   const W0 = Math.max(...maps.map(M => M.W)), H0 = Math.max(...maps.map(M => M.H)), sc = Math.max(1, Math.floor(256 / Math.max(W0, H0)));   // мелкий ромб — крупнее, до 256 px
@@ -756,11 +762,11 @@ function draw() {
   if (key === S.offKey) { blit(); return; }
   S.offKey = key;
   if (ref[2]) {   // v0.008: ромбы одного размера — группой; v0.010: или один ромб
-    const g = S.gifs[ref[0]], M = sceneMap(ref), fr = g.frames[ref[1]], lut = lutOf(g); W = M.W; H = M.H; par = M.par;
+    const g = S.gifs[ref[0]], M = sceneMap(ref), fr = g.frames[ref[1]], lut = lutOf(g); W = M.W + 2 * RPAD; H = M.H + 2 * RPAD; par = M.par;   // v0.020: поле в клетку — ромбы на краях не режутся рамкой
     if (off.width !== W || off.height !== H) { off.width = W; off.height = H; }
     const img = octx.createImageData(W, H), d32 = new Uint32Array(img.data.buffer);
-    d32.fill((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]);
-    const src = M.src, dst = M.dst; for (let p = 0; p < src.length; p++) d32[dst[p]] = lut[fr[src[p]]];
+    d32.fill(OUT32);   // v0.020: было серой щелью — у форм клеток она ложилась квадратами вокруг ромба и обрезала крайние
+    const src = M.src, dst = M.dst; for (let p = 0; p < src.length; p++) { const y = (dst[p] / M.W) | 0; d32[(y + RPAD) * W + dst[p] - y * M.W + RPAD] = lut[fr[src[p]]]; }
     octx.putImageData(img, 0, 0);
     label = (S.mont ? 'склейка ' : '') + 'кадр ' + (S.i + 1) + ' / ' + SEQ.length + ' · ' + g.delays[ref[1]] + ' мс';
     nameTxt = (M.tile ? '◇ ' + ref[2] + ' · ромб ' + (ref[3] + 1) + ' / ' + M.of + ' · ряд ' + (M.tile.r + 1) : '◇ ' + ref[2] + ' × ' + M.n)
@@ -791,7 +797,7 @@ function draw() {
   if (par !== undefined && $('latSel').value !== 'both') {
     const keep = $('latSel').value === 'a' ? par : 1 - par, im = octx.getImageData(0, 0, W, H), d = new Uint32Array(im.data.buffer);
     const BK = ((255 << 24) >>> 0), GP = ((255 << 24) | (GAP_COL[2] << 16) | (GAP_COL[1] << 8) | GAP_COL[0]) >>> 0;
-    for (let y = 0; y < H; y++) for (let x = ((keep + 1 + y) & 1), o = y * W; x < W; x += 2) { const c = d[o + x]; if (c !== GP) d[o + x] = BK; }
+    for (let y = 0; y < H; y++) for (let x = ((keep + 1 + y) & 1), o = y * W; x < W; x += 2) { const c = d[o + x]; if (c !== GP && c !== OUT32) d[o + x] = BK; }
     octx.putImageData(im, 0, 0);
   }
   if (useShp()) { buildShapes(new Uint32Array(octx.getImageData(0, 0, W, H).data.buffer), W, H, par); S.shapeKey = key; }   // v0.011
@@ -854,7 +860,7 @@ function buildShapes(d32, W, H, lat) {
   for (let p = 0; p < n; p++) {
     const c = d32[p];
     if (c === BLK) continue;
-    if (c === GAPC) { id[p] = 1; continue; }
+    if (c === GAPC || c === OUT32) { id[p] = 1; continue; }
     if (c !== last) { last = c; lastId = cmap.get(c); if (lastId === undefined) { lastId = pal.length < 256 ? pal.length : 4; if (pal.length < 256) { cmap.set(c, lastId); pal.push(c); } } }
     id[p] = lastId;
   }
@@ -904,7 +910,7 @@ function buildShapes(d32, W, H, lat) {
     }
   }
   if (grid && sh === 'sq') gridPass();
-  for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (id[o + x] === 1) for (let b = 0; b < m; b++) out.fill(1, (y * m + b) * OW + x * m, (y * m + b) * OW + x * m + m); }
+  for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (id[o + x] === 1 && d32[o + x] !== OUT32) for (let b = 0; b < m; b++) out.fill(1, (y * m + b) * OW + x * m, (y * m + b) * OW + x * m + m); }
   if (offS.width !== OW || offS.height !== OH) { offS.width = OW; offS.height = OH; SB = null; }
   if (!SB) SB = osctx.createImageData(OW, OH);
   const o32 = new Uint32Array(SB.data.buffer), P = Uint32Array.from(pal);
