@@ -8158,13 +8158,13 @@ function tzcPreview(){
 function tzSliders(){
   document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz").forEach(L => {
     const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
-    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 4 * t;   // v0.473: бегунок — шестигранник 4t
+    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 5 * t;   // v0.473: бегунок — шестигранник 4t; v0.489 — «стрелка вправо» 5t
     const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;
     const x = ir.left - lr.left + tw / 2 + f * (ir.width - tw), rv = L.querySelector(".rv");
     const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
     if (L._thk === k) return; L._thk = k;
     L.style.setProperty("--thx", x.toFixed(2) + "px");
-    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2 * t) - 3; L.classList.toggle("rvl", w > right); }
+    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3; L.classList.toggle("rvl", w > right); }
   });
 }
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
