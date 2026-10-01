@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.468. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.469. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.468</title>
+<title>Zazerkalius — v0.469</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -876,7 +876,8 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    v0.448: сетки внутри нет — --lat теперь светлая обводка по контуру; кнопки сцеплены вплотную (triTag, остриё в выемку соседа) */
 #w-cone .tools,#paneGrp{--bu:83.14px}   /* v0.463: и левая панель */
 #w-cone .cgrp > .cgb,#w-cone .tools .cgb > span,#paneGrp .cgb,#paneGrp .cgb > span{column-gap:0 !important}
-#w-cone .cgrp > .cgb,#paneGrp .cgb{row-gap:0 !important}   /* v0.463: ряды кнопок — вплотную, как и в ряду */
+#w-cone .cgrp > .cgb,#paneGrp .cgb,#w-cone .tools .cgb span,#paneGrp .cgb span{row-gap:0 !important}   /* v0.463: ряды кнопок — вплотную, как и в ряду; v0.469 — и в блоках внутри (режимы кручения) */
+:is(#w-cone .tools, #paneGrp) .cgb #coneSpinModeB#coneSpinModeB{gap:0 !important}   /* режимы кручения — вплотную (их правило 3 px сильнее общего) */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;isolation:isolate;
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);
   border-width:0 !important;border-radius:0 !important;box-shadow:none !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;padding:0 calc(var(--t) + 2px) !important;
@@ -938,6 +939,12 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg{border-style:none !important;border-radius:0 !important;clip-path:var(--gclip);padding-left:12px !important;padding-right:13px !important}
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--gfc, var(--line));-webkit-mask:var(--gmask) 0 0 / 100% 100% no-repeat;mask:var(--gmask) 0 0 / 100% 100% no-repeat}
 .cgrp.tzg > .cgsz{right:8px !important}
+/* v0.469, по снимку свёрнутой «Гаммы» — «лишняя высота»: высота группы — ровно ряды по 24 px (поля сверху и снизу — 0, подпись без отступа), чтобы
+   зубцы рамки шли ровно по рядам; свёрнутая — высотой в заголовок (прежде держала прежнюю высоту, v0.207) */
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg{padding-top:0 !important;padding-bottom:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg > .glab{margin-top:0 !important;margin-bottom:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg > .cgb{padding-top:0 !important;padding-bottom:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg.cmin{min-height:0 !important;height:24px !important;align-items:center !important}
 /* v0.467, на «жирная обводка была только у нажатых кнопок» — «так и надо»: у нажатой кнопки и включённой галки — толстая обводка ВНУТРИ своей формы
    (маска --lato, ставят tzGeo / tzcApply), на соседей не заходит; цвет — подсветка кнопки (у гаммы — её цвет --pca, у прочих — золото) */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on:not(.blab)::before,:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked)::before{
@@ -1327,7 +1334,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.468</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.469</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2263,8 +2270,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0468"></script>
-<script src="zz-ui.js?v=0468"></script>
+<script src="zz-core.js?v=0469"></script>
+<script src="zz-ui.js?v=0469"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
