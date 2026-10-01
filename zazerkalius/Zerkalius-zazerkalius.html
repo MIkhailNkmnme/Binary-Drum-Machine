@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.469. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.470. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.469</title>
+<title>Zazerkalius — v0.470</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1334,7 +1334,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.469</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.470</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2138,7 +2138,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
         <div class="tools" id="triBind" hidden>   <!-- v0.452: сетка привязана к группе конуса (△ в её заголовке) -->
           <span id="triBindLab" class="dim"></span>
           <span id="triBindPal"></span>   <!-- v0.454: кисти кнопок группы — у каждой свой цвет -->
-          <button id="bTriRing" title="⬚ Обвести: включи — щёлкай кнопки в сетке, чтобы выбрать (ещё щелчок — снять); нажми ещё раз — выбранные получат одну общую обводку цветом из поля рядом и толщиной «═» (вверху окна). Обводка вокруг одной кнопки видна, только пока кнопка нажата">⬚ обвести</button>
+          <button id="bTriRing" title="⬚ Обвести: включи — щёлкай кнопки в сетке, чтобы выбрать (ещё щелчок — снять); нажми ещё раз — выбранные получат одну общую обводку цветом из поля рядом и толщиной «═» (вверху окна). На странице обводка тонкая, а жирная — пока нажата одна из её кнопок">⬚ обвести</button>
           <input id="triRingCol" type="color" value="#ffd166" title="Цвет новой обводки">
           <span id="triRings"></span>   <!-- v0.459: обводки группы — щелчок снимает -->
           <button id="bTriBindOk" title="✓ Готово: выйти из конструктора — раскладка группы остаётся, в сетку возвращается своё">✓ готово</button>
@@ -2270,8 +2270,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0469"></script>
-<script src="zz-ui.js?v=0469"></script>
+<script src="zz-core.js?v=0470"></script>
+<script src="zz-ui.js?v=0470"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

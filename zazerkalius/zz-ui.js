@@ -7838,7 +7838,9 @@ function tzcApply(g){
     avail = sz.w - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }
   /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
      (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
-  const onSig = (d.rings || []).map(rg => (rg.items || []).length === 1 ? (tzcIsOn(tzcFind(rg.items[0], cgb)) ? 1 : 0) : 2).join("");
+  /* v0.470, «после редактирования жирность не уходит у обводки, которую сделал в редакторе; жирная — только у выделенной кнопки»: обводка ⬚ видна всегда,
+     но тонкая (1 px); жирная (её толщина «═») — пока нажата хоть одна из её кнопок */
+  const onSig = (d.rings || []).map(rg => (rg.items || []).some(w => tzcIsOn(tzcFind(w, cgb))) ? 1 : 0).join("");
   const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig;
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
@@ -7920,7 +7922,7 @@ function tzcApply(g){
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
   /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
      области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
-  hull += tzcRingPaths(o2, live, (d.rings || []).filter((rg, i) => onSig[i] !== "0"), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
+  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { w: onSig[i] === "1" ? (rg.w > 0 ? Math.max(rg.w, 2) : 2.5) : 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
