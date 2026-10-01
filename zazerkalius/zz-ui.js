@@ -6860,7 +6860,7 @@ function cgrpInit(){
   const sizeApply = (g) => {
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
     if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
-    g.style.width = s.w + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам (выше — пустое место снизу)
+    g.style.width = Math.max(s.w, tzMinW(g)) + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам; v0.480 — и не уже самого широкого блока
     if (typeof tzcApply === "function") tzcApply(g);   // v0.453: группа-конструктор переносит ряды рисунка под новую ширину
     const b = g.querySelector(":scope > .cgb"); if (!b) return;
     if (b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
@@ -7878,8 +7878,14 @@ function tzcApply(g){
   /* v0.455, «кнопки под одной обводкой — не переносятся на другие строки»: кнопки под общей границей (tzcHulls) — один блок, переносится целиком */
   const oAll = {}; its.forEach(it => it.cells.forEach(([r, c]) => { oAll[r + "_" + c] = it.w; }));
   const uOf = tzcUnits(oAll, new Set(its.map(x => x.w)), d.rings), units = {};
+  { /* v0.480, «группа не может быть короче, чем самая длинная группа кнопок; тут Своя + 3 цвета — это совмещённая кнопка»: кнопки одного блока-обёртки
+       (span внутри группы, как «Своя + 1 0 а») — одна единица переноса */
+    const byWrap = new Map();
+    its.forEach(it => { const p = it.el.parentElement; if (!p || p === cgb || p.tagName !== "SPAN") return; const r = uOf[it.w] || it.w;
+      if (!byWrap.has(p)) { byWrap.set(p, r); return; } const R0 = byWrap.get(p); if (r !== R0) for (const k of Object.keys(uOf)) if (uOf[k] === r) uOf[k] = R0; uOf[it.w] = R0; }); }
   its.forEach(it => { const u = uOf[it.w] || it.w, U = units[u] || (units[u] = { m: [], r0: 1e9, c0: 1e9, c1: -1 }); U.m.push(it); U.r0 = Math.min(U.r0, it.r0); U.c0 = Math.min(U.c0, it.c0); U.c1 = Math.max(U.c1, it.c1); });
   const lines = {}; Object.values(units).forEach(U => { const L = Math.floor(U.r0 / 2); (lines[L] = lines[L] || []).push(U); });
+  g._tzMinW = Math.ceil(Math.max(0, ...Object.values(units).map(U => (U.c1 + 2 - U.c0) * t)) + 1);   // v0.480: уже — нельзя
   /* v0.465, по снимку «Гаммы» в две строки при широкой группе — «не даёт в одну строку размер группы»: группа с заданным размером течёт, как текст, в обе
      стороны — строки рисунка идут подряд, следующая подтягивается на эту, если влезает (сдвиг — на чётное число t), не влезает — перенос. Без заданного
      размера — как нарисовано (переноса нет) */
@@ -8138,6 +8144,14 @@ function tzgFrame(g){
   g.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   g.style.setProperty("--gfc", fc);
   clearTimeout(tzgFrame._t); tzgFrame._t = setTimeout(() => { if (typeof triTag === "function") triTag(); }, 0);   // v0.479: ряды могли перестроиться — первые кнопки рядов заново
+}
+/* v0.480: самая широкая неразрывная часть группы (px) — уже её группу не сделать: у конструктора — блок переноса (tzcApply), у обычной — кнопка или
+   блок-обёртка (заголовок тоже) */
+function tzMinW(g){
+  const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
+  if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; m = Math.max(m, el.getBoundingClientRect().width); }
+  return Math.ceil(m) + 1;
 }
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
