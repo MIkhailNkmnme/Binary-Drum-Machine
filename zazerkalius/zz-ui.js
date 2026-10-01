@@ -7718,9 +7718,12 @@ function tzJustify(g){
   const gl = g.getBoundingClientRect().left, rows = new Map();
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
-  const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1);   // v0.490: стрелки, цвета и data-w1 — не тянуть
-  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02), c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1])[0];
-    if (k > 0 && c) { const e = c[0]; e._tzx = k; e._tzn = e._tzn0 + k; tzGeo(e); } });   // тянется самая правая из тех, что можно
+  const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1)   // v0.490: стрелки, цвета и data-w1 — не тянуть
+    && (e.parentElement === cgb || e.parentElement === g);   // v0.493, «проверь ширину» (режимы кручения во всю ширину): кнопки внутри блоков — не тянуть
+  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02), c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1]).map(q => q[0]);
+    if (k <= 0 || !c.length) return;
+    for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
+    c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
   if (maxR > 0) g.style.width = Math.ceil(maxR) + "px";
   tzHandle(g);
 }
