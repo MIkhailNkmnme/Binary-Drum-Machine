@@ -7774,14 +7774,18 @@ function tzcApply(g){
     its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0 });
   }
   // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
-  const lines = {}; its.forEach(it => { const L = Math.floor(it.r0 / 2); (lines[L] = lines[L] || []).push(it); });
+  /* v0.455, «кнопки под одной обводкой — не переносятся на другие строки»: кнопки под общей границей (tzcHulls) — один блок, переносится целиком */
+  const oAll = {}; its.forEach(it => it.cells.forEach(([r, c]) => { oAll[r + "_" + c] = it.w; }));
+  const uOf = tzcUnits(oAll, new Set(its.map(x => x.w))), units = {};
+  its.forEach(it => { const u = uOf[it.w] || it.w, U = units[u] || (units[u] = { m: [], r0: 1e9, c0: 1e9, c1: -1 }); U.m.push(it); U.r0 = Math.min(U.r0, it.r0); U.c0 = Math.min(U.c0, it.c0); U.c1 = Math.max(U.c1, it.c1); });
+  const lines = {}; Object.values(units).forEach(U => { const L = Math.floor(U.r0 / 2); (lines[L] = lines[L] || []).push(U); });
   let out = 0, prev = null;
   for (const L of Object.keys(lines).map(Number).sort((a, b) => a - b)) {
     if (prev != null) out += L - prev - 1;
     let start = 0;
-    lines[L].sort((a, b) => a.c0 - b.c0).forEach((it, i) => {
-      if (i && it.c1 + 2 - start > ac) { out++; start = it.c0 - (it.c0 % 2); }
-      it.dc = -start; it.dr = 2 * (out - L);
+    lines[L].sort((a, b) => a.c0 - b.c0).forEach((U, i) => {
+      if (i && U.c1 + 2 - start > ac) { out++; start = U.c0 - (U.c0 % 2); }
+      U.m.forEach(it => { it.dc = -start; it.dr = 2 * (out - L); });
     });
     out++; prev = L;
   }
@@ -7809,6 +7813,7 @@ function tzcApply(g){
   (g._tzcEls || []).forEach(el => { if (!els.includes(el)) tzcClean(el); });
   g._tzcEls = els;
   cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
+  if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (sz.w + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
   // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
   let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);
@@ -7830,6 +7835,16 @@ function tzcMain(cells){   // самый большой связный кусо�
 /* v0.454, «каждой кнопке, если между её гранями другие, — дай общую границу цвета»: кнопка из нескольких кусков, между которыми стоят другие
    кнопки (как «Своя» с цветами 1 0 а), обводится общей границей своим цветом (кисти): её треугольники и целиком каждая кнопка, у которой хоть
    один треугольник — в том же ряду между её крайними. P(r, c) — вершины треугольника в нужных координатах */
+function tzcUnits(o, live){   // v0.455: кнопки под общей границей — один блок: кнопка → корень блока
+  const by = {}, par = {}, f = (x) => (par[x] && par[x] !== x ? (par[x] = f(par[x])) : x);
+  for (const [k, w] of Object.entries(o)) if (live.has(w)) (by[w] = by[w] || []).push(k.split("_").map(Number));
+  for (const [w, cells] of Object.entries(by)) {
+    if (tzcMain(cells).n === cells.length) continue;
+    const rows = {}; for (const [r, c] of cells) { const x = rows[r] || (rows[r] = [c, c]); x[0] = Math.min(x[0], c); x[1] = Math.max(x[1], c); }
+    for (const [r, [a, b]] of Object.entries(rows)) for (let c = a; c <= b; c++) { const v = o[r + "_" + c]; if (v && v !== w && live.has(v)) { const A = f(v), B = f(w); if (A !== B) par[A] = B; } }
+  }
+  const out = {}; for (const w of Object.keys(by)) out[w] = f(w); return out;
+}
 function tzcHulls(o, live, items, P){
   const out = [], by = {};
   for (const [k, w] of Object.entries(o)) if (live.has(w)) (by[w] = by[w] || []).push(k.split("_").map(Number));
