@@ -7660,21 +7660,21 @@ function triTag(){
          пересчёте, и подпись росла без конца. Нужное место — без своих краёв */
       const edge = ((b._tzL || TZ_NOTCH)[1] + TZ_TIP[1]) * sd / 2, need = Math.ceil(((b.scrollWidth || 0) - edge) / sd - 0.05);
       b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP;
-      b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : own ? Math.min(b._tzn || 6, Math.max(6, Math.ceil(need / 3) * 3)) : 6, Math.ceil(need / 3) * 3);
-      tzGeo(b); bs.push(b); return;
+      b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : own ? Math.min(b._tzn0 || 6, Math.max(6, Math.ceil(need / 3) * 3)) : 6, Math.ceil(need / 3) * 3);
+      b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); return;
     }
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
       if (tzcItem(b, cgb) !== b || b.closest(".cjoin")) { if (b.classList.contains("tz")) triOff(b); return; }
       const sd = TZC_H / Math.sqrt(3), wRaw = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
       const own = b._tzOwnW && Math.abs(wRaw - b._tzOwnW) < 0.5, wInl = own ? 0 : wRaw;   // v0.483: своя ширина — не «заданная» (см. заголовок)
       b._tzar = ""; b._tzfix = false; b._tzR = TZ_TIP;
-      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : b.classList.contains("glab2") && own && b._tzn ? b._tzn : 6;
-      tzGeo(b); bs.push(b); return;
+      b._tzn = b.classList.contains("fh") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") || rng ? 12 : b.classList.contains("glab2") && wInl ? Math.max(3, Math.round(wInl / sd)) : b.classList.contains("glab2") && own && b._tzn0 ? b._tzn0 : 6;
+      b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); return;
     }
     if (b.closest("#paneGrp") && b.classList.contains("pcol")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.tagName === "LABEL") {   // v0.450: цвет своей гаммы — шестигранник из 6 треугольников (n = 2), остриё к острию; просветы — цветом «Своя» (фон блока, CSS)
       b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP;
-      tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
+      b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
     }
     const ar = RH_TRI[b.textContent.trim()];
     if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
@@ -7682,7 +7682,7 @@ function triTag(){
     b._tzR = ar === "l" ? TZ_NOTCH : TZ_TIP; b._tzfix = !!ar;
     if (ar) b._tzL = ar === "r" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.pal === "0" && b.parentElement.id === "palOwn") { b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_NOTCH; }   // v0.450: «Своя» — выемкой к цветам
-    tzGeo(b); bs.push(b);
+    b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
   const prevOf = (b) => { for (let x = b; ; ) { let p = x.previousElementSibling; while (p && !vis(p)) p = p.previousElementSibling; if (p) return lastOf(p);
@@ -7701,6 +7701,36 @@ function triTag(){
     });
     if (!ch) break;
   }
+  new Set(bs.map(b => b.closest(".cgrp")).filter(Boolean)).forEach(tzJustify);   // v0.484
+}
+/* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
+   ряда дотягивается до правого края (целыми сторонами), группа — по самому длинному ряду; ромб-ручка — на правом конце последней кнопки нижнего ряда.
+   У группы конструктора кнопки нарисованы — там только ширина по рисунку и ромб на последней кнопке (tzcApply) */
+function tzJustify(g){
+  const cgb = g.querySelector(":scope > .cgb"); if (!cgb || !g.closest("#w-cone .tools, #paneGrp") || !g.classList.contains("tzg")) return;
+  if (cgb.classList.contains("tzc") || g.classList.contains("cmin")) { tzHandle(g); return; }
+  const t = TZC_H / (2 * Math.sqrt(3)), its = [...g.querySelectorAll(".tz")].filter(e => !e.classList.contains("tzk") && e.getClientRects().length && e.closest(".cgrp") === g);
+  const sz = g.classList.contains("csz") && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
+  g.style.width = sz ? Math.max(sz.w, tzMinW(g)) + "px" : "";
+  its.forEach(e => { if (e._tzx) { e._tzx = 0; e._tzn = e._tzn0; tzGeo(e); } });
+  const gl = g.getBoundingClientRect().left, rows = new Map();
+  its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
+  let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
+  rows.forEach(a => { const [e, x] = a.reduce((m, q) => q[1] > m[1] ? q : m); const k = Math.floor((maxR - x) / (2 * t) + 0.02);
+    if (k > 0 && e._tzn0 != null && !e._tzar && !e.classList.contains("pcol")) { e._tzx = k; e._tzn = e._tzn0 + k; tzGeo(e); } });
+  if (maxR > 0) g.style.width = Math.ceil(maxR) + "px";
+  tzHandle(g);
+}
+function tzHandle(g){   // ромб-ручка — на правом конце последней кнопки нижнего ряда
+  const h = g.querySelector(":scope > .cgsz"); if (!h || !g.classList.contains("tzg")) return;
+  const its = [...g.querySelectorAll(".tz, .tzk")].filter(e => e.closest(".cgrp") === g && e.getClientRects().length && !e.closest(".zerk-range-wrap"));
+  if (!its.length) return;
+  const gr = g.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3));
+  let bot = -1e9; its.forEach(e => { bot = Math.max(bot, e.getBoundingClientRect().top); });
+  let last = null, lr = null; its.forEach(e => { const r = e.getBoundingClientRect(); if (Math.abs(r.top - bot) < 6 && (!lr || r.right > lr.right)) { last = e; lr = r; } });
+  if (!lr) return;
+  h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
+  h.style.setProperty("right", "auto", "important"); h.style.setProperty("bottom", "auto", "important");
 }
 { const rt1 = rhombTag; rhombTag = function(){ rt1(); triTag(); }; }
 /* v0.452, по снимкам «Гаммы» и «△ Сетки» — «сделай кнопку рядом с заголовком, маленький значок: при нажатии данная панель отображается
@@ -7945,6 +7975,7 @@ function tzcApply(g){
   g._tzcEls = els;
   cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
   if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (sz.w + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
+  else if (isFinite(avail)) g.style.width = (sz.w - Math.floor(avail - N * t)) + "px";   // v0.484: и не шире рисунка — пустого места справа нет
   // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
   let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);
@@ -7963,6 +7994,7 @@ function tzcApply(g){
     } }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="1.5" stroke-linecap="round" fill="none"/>${hull}</svg>`;
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  if (typeof tzHandle === "function") tzHandle(g);   // v0.484: ромб-ручка — на последней кнопке
 }
 function tzcMain(cells){   // самый большой связный кусок: { c0, c1, r0, r1 }
   const set = new Set(cells.map(([r, c]) => r + "_" + c)), seen = new Set(); let main = [];
@@ -8155,7 +8187,7 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; m = Math.max(m, el.getBoundingClientRect().width); }
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; m = Math.max(m, el.getBoundingClientRect().width - (el._tzx || 0) * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней)
   return Math.ceil(m) + 1;
 }
 function tzcIcons(){

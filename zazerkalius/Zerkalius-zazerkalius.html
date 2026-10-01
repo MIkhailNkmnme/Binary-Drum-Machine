@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.483. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.484. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.483</title>
+<title>Zazerkalius — v0.484</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -74,10 +74,11 @@ code{font-family:var(--ff);font-size:.95em}
 #cutAsk[hidden]{display:none}
 #cutCnt{position:fixed;z-index:61;pointer-events:none;padding:1px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:4px;font-size:12px;font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(0,0,0,.4)}   /* v0.338: число строк у курсора, пока тянут черту */
 #cutCnt[hidden]{display:none}
-/* v0.339: кнопка, галка-кнопка или список, которым мало одной ширины, — в 2 или 4 кнопки (cgbSnap); .wm — на миг замера.
+/* v0.339: кнопка, галка-кнопка или список, которым мало одной ширины, — в 2 или 4 кнопки (cgbSnap); .wm — на миг замера (v0.484: сильнее правил .w2/.w4 —
+   иначе замер брал уже назначенную ширину, и «двойная» при нулевых зазорах мерилась шире двойной и навсегда становилась «четверной»).
    Счёт Аниматрицы — полем: высотой в кнопку, с фоном и рамкой, текст по центру («также размер кнопок, и поле текста выдели фоном или
    рамкой, выровняй по центру») */
-#w-cone .tools .cgb .wm.wm.wm,#paneGrp .cgb .wm.wm.wm{width:max-content !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important}
+#w-cone#w-cone .tools .cgb .wm.wm.wm,#paneGrp#paneGrp .cgb .wm.wm.wm{width:max-content !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important}
 #w-cone .tools .cgb .w2.w2.w2,#paneGrp .cgb .w2.w2.w2{width:calc(var(--bu) * 2 + 3px) !important}
 #w-cone .tools .cgb .w4.w4.w4,#paneGrp .cgb .w4.w4.w4{width:calc(var(--bu) * 4 + 9px) !important}
 /* v0.356, по снимкам «⏸ на проходе» и «45°» — «размеры 2»: эти два — ровно в 2 кнопки, где бы ни стояли (на полосе, над холстом, на панели) */
@@ -1362,7 +1363,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.483</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.484</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2297,8 +2298,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0483"></script>
-<script src="zz-ui.js?v=0483"></script>
+<script src="zz-core.js?v=0484"></script>
+<script src="zz-ui.js?v=0484"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
