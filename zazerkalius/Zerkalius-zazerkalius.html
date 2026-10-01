@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.490. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.491. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.490</title>
+<title>Zazerkalius — v0.491</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1367,7 +1367,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.490</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.491</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1945,8 +1945,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <!-- v0.318, «в Вид — кнопку: подсветить 1 бит каждой строки» -->
             <label class="dim" title="① Первый бит каждой строки (самый левый в поле строк) — золотой обводкой на своём кольце: видно, откуда строка начинается и куда она повёрнута. В 3D — золотой чертой по биту"><input type="checkbox" id="coneBit1"> ① 1-й бит</label>
             <label class="dim" title="Высота конуса: насколько кольца разнесены по высоте (0 — плоско)">↕ <input type="range" id="cone3H" min="0" max="4" step="0.1" value="1" style="width:80px;vertical-align:middle"></label>
-            <label class="dim" title="▬ Толщина бит в 3D: ×0,2 — тонкие нити, ×4 — толстые полосы (сбоку — высота бит). Двойной щелчок — ×1">▬ <input type="range" id="cone3Bw" min="0.2" max="4" step="0.1" value="1" style="width:70px;vertical-align:middle"></label>
-            <label class="dim" title="✨ Свет: единицы и неподвижные биты светятся своим цветом, из центра (в 3D — от оси) идёт свет, в 3D ближнее ярче дальнего. На тёмном фоне — лампа горит. Тяжелее для отрисовки — на больших столбиках кручение может идти медленнее"><input type="checkbox" id="coneGlow"> ✨ свет</label>
+            <label class="dim" title="✨ Свет: единицы и неподвижные биты светятся своим цветом, из центра (в 3D — от оси) идёт свет, в 3D ближнее ярче дальнего. На тёмном фоне — лампа горит. Тяжелее для отрисовки — на больших столбиках кручение может идти медленнее"><input type="checkbox" id="coneGlow"> ✨ свет</label><!-- v0.491, «кн. свет между ползунками» --><label class="dim" title="▬ Толщина бит в 3D: ×0,2 — тонкие нити, ×4 — толстые полосы (сбоку — высота бит). Двойной щелчок — ×1">▬ <input type="range" id="cone3Bw" min="0.2" max="4" step="0.1" value="1" style="width:70px;vertical-align:middle"></label>
+            
             <select id="coneRays" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off" title="без лучей">✳ нет</option><option value="cur" title="лучи от бит выделенных колец (текущего)">✳ выдел.</option><option value="all" title="лучи от бит всех колец">✳ все</option></select>
           </div>
           <div class="cgrp gc cg-ring" title="Строки-кольца: запрет сдвига, замки, поворот по биту, зеркало по оси"><span class="glab">Кольца</span>
@@ -2302,8 +2302,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0490"></script>
-<script src="zz-ui.js?v=0490"></script>
+<script src="zz-core.js?v=0491"></script>
+<script src="zz-ui.js?v=0491"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

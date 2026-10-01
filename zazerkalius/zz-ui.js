@@ -7961,9 +7961,15 @@ function tzcApply(g){
     live.add(it.w); R = Math.max(R, r1 + 1); N = Math.max(N, c1 + 2);
     for (const [r, c] of cells) o2[(r + it.dr) + "_" + (c + it.dc)] = it.w;
     let p = "";
+    /* v0.491, «проверь двойной высоты обводки, чтоб не было нигде»: соседние кнопки сходились краями ровно на границе, и сглаживание оставляло тёмный шов
+       рядом с линией стыка — выглядело двойной обводкой. Каждый треугольник чуть больше (на 0,6 px от середины), коробка кнопки — на 1 px шире со всех
+       сторон: соседи перекрываются, шов закрыт заливкой, линия стыка (слой .tzco) — одна */
+    const EX = 0.6 / (s / Math.sqrt(3)), O = 1, ex = (P) => { const cx = (P[0][0] + P[1][0] + P[2][0]) / 3, cy = (P[0][1] + P[1][1] + P[2][1]) / 3;
+      return P.map(([x, y]) => [x + (x - cx) * EX + O, y + (y - cy) * EX + O]); };
     for (const [r, c] of cells) {   // все треугольники — одного обхода, иначе по общим рёбрам виден шов
       const x = (c - it.c0) * t, y0 = (r - it.r0) * hh, y1 = y0 + hh;
-      p += (r + c) % 2 === 0 ? `M${x.toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y1}L${(x + t).toFixed(2)} ${y0}Z` : `M${x.toFixed(2)} ${y0}L${(x + t).toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y0}Z`;
+      const Q = ex((r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + t, y1], [x + s, y0]]);
+      p += `M${Q[0][0].toFixed(2)} ${Q[0][1].toFixed(2)}L${Q[1][0].toFixed(2)} ${Q[1][1].toFixed(2)}L${Q[2][0].toFixed(2)} ${Q[2][1].toFixed(2)}Z`;
     }
     el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol") || el.classList.contains("glab")) el.classList.add("tz");   // v0.486: и заголовок
     el._tzk = "";
@@ -7972,8 +7978,8 @@ function tzcApply(g){
       for (const [r, c] of cells) { const x = (c - it.c0) * t, y0 = (r - it.r0) * hh, y1 = y0 + hh, Q = (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]];
         for (const [a, b, n] of triNb(r, c)) if (!set.has(n[0] + "_" + n[1])) e += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
       el.style.setProperty("--lato", `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${W0.toFixed(2)}" height="${H0.toFixed(2)}"><path d="${e}" stroke="#000" stroke-width="5" stroke-linecap="round" fill="none"/></svg>`)}")`); }
-    el.style.setProperty("left", px(c0 * t), "important"); el.style.setProperty("top", px(r0 * hh), "important");
-    el.style.setProperty("width", px((c1 + 2 - c0) * t), "important"); el.style.setProperty("height", px((r1 + 1 - r0) * hh), "important");
+    el.style.setProperty("left", px(c0 * t - 1), "important"); el.style.setProperty("top", px(r0 * hh - 1), "important");   // v0.491: коробка на 1 px шире со всех сторон
+    el.style.setProperty("width", px((c1 + 2 - c0) * t + 2), "important"); el.style.setProperty("height", px((r1 + 1 - r0) * hh + 2), "important");
     el.style.setProperty("margin", "0", "important"); el.style.removeProperty("margin-left");
     const m = tzcMain(cells);   // подпись — посередине самого большого куска (кнопка бывает из нескольких кусков)
     el.style.setProperty("padding-left", px((m.c0 - it.c0) * t + 2), "important"); el.style.setProperty("padding-right", px((it.c1 - m.c1) * t + 2), "important");
@@ -8000,7 +8006,7 @@ function tzcApply(g){
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
       hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${w || Z.triLW || 2}" stroke-linecap="round"/>`;
     } }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="1.5" stroke-linecap="round" fill="none"/>${hull}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="1" stroke-linecap="round" fill="none" transform="translate(0 0.5)"/>${hull}</svg>`;   // v0.491: линия стыка — 1 px по пикселю
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
   if (typeof tzHandle === "function") tzHandle(g);   // v0.484: ромб-ручка — на последней кнопке
 }
