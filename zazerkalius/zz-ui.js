@@ -6939,6 +6939,23 @@ function cgrpInit(){
       tb.title = "△ Конструктор: группа — в окне «△ Сетка» треугольниками; крась и стирай — кнопки встают по рисунку";
       tb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; tzcOpen(g); });
       tb.addEventListener("dblclick", (e) => e.stopPropagation()); }
+    /* v0.495, «у каждой группы независимый цвет фона нажатой кнопки свой пусть»: фон нажатых — цветом самой группы (--gon, по умолчанию — цвет
+       заголовка); ◆ в заголовке (закрашен тем фоном) — выбрать свой, правый щелчок — снова цвет группы. Z.cgrpOnC { имя: "#rrggbb" } */
+    if (!Z.cgrpOnC || typeof Z.cgrpOnC !== "object") Z.cgrpOnC = {};
+    { const ob = document.createElement("span"); ob.className = "gon"; ob.textContent = "◆"; lab.appendChild(ob);
+      const onUi = () => { const c = Z.cgrpOnC[g.dataset.g]; if (c) g.style.setProperty("--gon", c); else g.style.removeProperty("--gon");
+        ob.title = "◆ Цвет нажатых кнопок группы" + (c ? " — свой (правый щелчок — снова цвет группы)" : " — цвет группы; щелчок — выбрать свой"); };
+      onUi();
+      ob.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return;
+        const inp = document.createElement("input"); inp.type = "color"; inp.style.cssText = "position:fixed;left:" + e.clientX + "px;top:" + e.clientY + "px;width:0;height:0;opacity:0;border:0;padding:0";
+        const rgb = (getComputedStyle(lab).color.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number), hex = (a) => "#" + a.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+        inp.value = Z.cgrpOnC[g.dataset.g] || (rgb.length === 3 ? hex(rgb) : "#888888");
+        inp.addEventListener("input", () => { Z.cgrpOnC[g.dataset.g] = inp.value; onUi(); save(); });
+        inp.addEventListener("change", () => { Z.cgrpOnC[g.dataset.g] = inp.value; onUi(); save(); inp.remove(); });
+        inp.addEventListener("blur", () => setTimeout(() => inp.remove(), 0));
+        document.body.appendChild(inp); inp.click(); });
+      ob.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpOnC[g.dataset.g]) return; delete Z.cgrpOnC[g.dataset.g]; onUi(); save(); say("◆ Нажатые кнопки группы — снова её цветом."); });
+      ob.addEventListener("dblclick", (e) => e.stopPropagation()); }
     // v0.367: закрытая группа (Z.cgrpOff) не видна; у «Гаммы» — ✕ закрыть (открыть — «🎨» в шапке)
     if (!Z.cgrpOff || typeof Z.cgrpOff !== "object") Z.cgrpOff = {};
     g.classList.toggle("coff", !!Z.cgrpOff[g.dataset.g]);
@@ -8200,7 +8217,10 @@ function tzgFrame(g){
   const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
   g.classList.add("tzg");
   g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;   // v0.464: рамка группы тоньше — видна половина, 1 px
+  /* v0.495, «нет верхней обводки»: верх и низ рамки — на полпикселя внутрь (линия по самому краю — видна лишь её половина, 1 px, и при дробной
+     координате группы верх сглаживался до невидимого) */
+  const yIn = (y) => Math.min(Math.max(y, 0.5), H - 0.5);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + yIn(y).toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;   // v0.464: рамка группы тоньше — видна половина, 1 px
   g.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   g.style.setProperty("--gfc", fc);
   clearTimeout(tzgFrame._t); tzgFrame._t = setTimeout(() => { if (typeof triTag === "function") triTag(); }, 0);   // v0.479: ряды могли перестроиться — первые кнопки рядов заново
