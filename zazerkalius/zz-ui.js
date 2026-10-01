@@ -7803,7 +7803,7 @@ function tzcLabels(){   // надпись кнопки в сетке — одн�
   { const vis = {}; for (const [k, w] of Object.entries(vo)) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) vis[k] = w; }
     const lv = new Set(Object.values(vis));
     g.lineCap = "round"; if (!tzcManual(d)) for (const h of tzcHulls(vis, lv, d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }
-    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.strokeStyle = h.col; g.lineWidth = h.w * triGeo.s / TRI_S1; g.stroke(new Path2D(h.d)); }   // v0.459
+    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.save(); g.clip(new Path2D(h.f)); g.strokeStyle = h.col; g.lineWidth = 2 * h.w * triGeo.s / TRI_S1; g.stroke(new Path2D(h.d)); g.restore(); }   // v0.459
     if (tzcPick && tzcSel.size) for (const h of tzcRingPaths(vis, lv, [{ items: [...tzcSel], col: "#fff" }], triPts)) {   // выбранные — пунктиром
       g.save(); g.strokeStyle = "#fff"; g.lineWidth = 2.5; g.setLineDash([6, 4]); g.stroke(new Path2D(h.d)); g.restore(); } }
   g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(9, Math.min(22, triGeo.s * 0.42))}px Segoe UI, Arial`; g.fillStyle = "#0e1116";
@@ -7851,15 +7851,28 @@ function tzcApply(g){
   const uOf = tzcUnits(oAll, new Set(its.map(x => x.w)), d.rings), units = {};
   its.forEach(it => { const u = uOf[it.w] || it.w, U = units[u] || (units[u] = { m: [], r0: 1e9, c0: 1e9, c1: -1 }); U.m.push(it); U.r0 = Math.min(U.r0, it.r0); U.c0 = Math.min(U.c0, it.c0); U.c1 = Math.max(U.c1, it.c1); });
   const lines = {}; Object.values(units).forEach(U => { const L = Math.floor(U.r0 / 2); (lines[L] = lines[L] || []).push(U); });
-  let out = 0, prev = null;
-  for (const L of Object.keys(lines).map(Number).sort((a, b) => a - b)) {
-    if (prev != null) out += L - prev - 1;
-    let start = 0;
-    lines[L].sort((a, b) => a.c0 - b.c0).forEach((U, i) => {
-      if (i && U.c1 + 2 - start > ac) { out++; start = U.c0 - (U.c0 % 2); }
-      U.m.forEach(it => { it.dc = -start; it.dr = 2 * (out - L); });
-    });
-    out++; prev = L;
+  /* v0.465, по снимку «Гаммы» в две строки при широкой группе — «не даёт в одну строку размер группы»: группа с заданным размером течёт, как текст, в обе
+     стороны — строки рисунка идут подряд, следующая подтягивается на эту, если влезает (сдвиг — на чётное число t), не влезает — перенос. Без заданного
+     размера — как нарисовано (переноса нет) */
+  const ev0 = (c) => c - (((c % 2) + 2) % 2);   // к левому краю — на чётное t
+  const Ls = Object.keys(lines).map(Number).sort((a, b) => a - b);
+  if (!isFinite(avail)) {   // без заданного размера — как нарисовано
+    let out = 0, prev = null;
+    for (const L of Ls) { if (prev != null) out += L - prev - 1; lines[L].forEach(U => U.m.forEach(it => { it.dc = 0; it.dr = 2 * (out - L); })); out++; prev = L; }
+  } else {   // с заданным размером — поток
+    let out = 0, cur = 0, first = true;   // cur — правый край занятого в текущей строке (в t)
+    for (const L of Ls) {
+      let dc = 0;
+      lines[L].sort((a, b) => a.c0 - b.c0).forEach((U, i) => {
+        if (i === 0) {
+          let j = cur - U.c0; if (((j % 2) + 2) % 2) j++;
+          if (!first && U.c1 + 2 + j <= ac) dc = j;   // строка рисунка подтягивается на текущую
+          else { if (!first) out++; dc = -ev0(U.c0); cur = 0; }
+        } else if (U.c1 + 2 + dc > ac) { out++; dc = -ev0(U.c0); cur = 0; }
+        U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); });
+        cur = Math.max(cur, U.c1 + 2 + dc); first = false;
+      });
+    }
   }
   g._tzcSh = {}; its.forEach(it => { g._tzcSh[it.w] = [Number.isFinite(it.dr) ? it.dr : 0, Number.isFinite(it.dc) ? it.dc : 0]; });
   if (Z.triBind === g.dataset.g && !tzcEq(g._tzcSh, tzcViewSh)) setTimeout(() => renderTri(), 0);   // v0.462: перенос лёг иначе (тянут ширину) — сетке новый вид   // v0.461 / v0.462: сдвиги переноса — по ним сетка показывает вид (tzcView) и пишет правки назад (tzcUnview)
@@ -7895,7 +7908,9 @@ function tzcApply(g){
   const Pg = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
   const manual = tzcManual(d);   // v0.457 / v0.459: своя обводка (╱ или ⬚) — общая граница сама не рисуется
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
-  hull += tzcRingPaths(o2, live, d.rings, Pg).map(h => `<path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${h.w}" stroke-linecap="round" fill="none"/>`).join("");
+  /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
+     области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
+  hull += tzcRingPaths(o2, live, d.rings, Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
@@ -7934,9 +7949,12 @@ function tzcRingPaths(o, live, rings, P){   // обводка — граница
        последнего треугольника выбранных кнопок (просветы и кнопки между ними — внутри), обводка — по внешнему краю этого */
     const rows = {}; for (const k of H) { const [r, c] = k.split("_").map(Number), x = rows[r] || (rows[r] = [c, c]); x[0] = Math.min(x[0], c); x[1] = Math.max(x[1], c); }
     for (const [r, [c0, c1]] of Object.entries(rows)) for (let c = c0; c <= c1; c++) H.add(r + "_" + c);
+    let f = "";
     for (const k of H) { const [r, c] = k.split("_").map(Number), Q = P(r, c);
-      for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
-    out.push({ d, col: rg.col || "#ffd166", w: rg.w > 0 ? rg.w : 1.5 });   // v0.464: толщина — своя у обводки (═ при создании), прежние — 1,5
+      for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`;
+      const up = (r + c) % 2 === 0, V = up ? [Q[0], Q[1], Q[2]] : [Q[0], Q[2], Q[1]];   // одного обхода — для обрезки
+      f += `M${V[0][0].toFixed(2)} ${V[0][1].toFixed(2)}L${V[1][0].toFixed(2)} ${V[1][1].toFixed(2)}L${V[2][0].toFixed(2)} ${V[2][1].toFixed(2)}Z`; }
+    out.push({ d, f, col: rg.col || "#ffd166", w: rg.w > 0 ? rg.w : 1.5 });   // v0.464: толщина — своя у обводки (═ при создании), прежние — 1,5
   }
   return out;
 }
@@ -8033,7 +8051,7 @@ function tzcPreview(){
   }
   x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
   if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
-    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.strokeStyle = h.col; x.lineWidth = h.w; x.stroke(new Path2D(h.d)); }
+    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.save(); x.clip(new Path2D(h.f)); x.strokeStyle = h.col; x.lineWidth = 2 * h.w; x.stroke(new Path2D(h.d)); x.restore(); }   // v0.465: внутрь
     for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
       x.strokeStyle = col; x.lineWidth = w || Z.triLW || 2; x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
   } else for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
@@ -8087,7 +8105,12 @@ function tzcOpen(g){
   if (Z.triBind !== key) {
     Z.triMine = { c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx, l: Z.triLines, cur: Z.triCur, sel: Z.triSel };
     let d = Z.cgrpTri[key];
-    if (!d || !d.c || !Object.keys(d.c).length) d = Z.cgrpTri[key] = tzcGrab(g);
+    if (!d || !d.c || !Object.keys(d.c).length) {   // v0.465: снимок — только с видимой группы (опрос точками экрана), иначе рисунок выйдет пустым
+      g.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const nd = tzcGrab(g);
+      if (!Object.keys(nd.c).length) { delete Z.triMine; say("△ Группу не видно на экране — прокрути к ней (или вытащи из-под окон) и нажми △ ещё раз."); return; }
+      d = Z.cgrpTri[key] = nd;
+    }
     d.on = true; tzcItems(g, d);
     const cp = (x) => Object.assign({}, x || {});
     g._tzcv = null; tzcApply(g);   // v0.462: перенос — по этому рисунку, а не по прежнему
