@@ -7836,7 +7836,10 @@ function tzcApply(g){
   const sz = Z.cgrpSize && Z.cgrpSize[g.dataset.g];
   if (sz && g.classList.contains("csz")) { const gr = g.getBoundingClientRect(), cr = cgb.getBoundingClientRect(), gs = getComputedStyle(g);
     avail = sz.w - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }
-  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac;
+  /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
+     (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
+  const onSig = (d.rings || []).map(rg => (rg.items || []).length === 1 ? (tzcIsOn(tzcFind(rg.items[0], cgb)) ? 1 : 0) : 2).join("");
+  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig;
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
   g._tzcv = key;
@@ -7917,7 +7920,7 @@ function tzcApply(g){
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
   /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
      области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
-  hull += tzcRingPaths(o2, live, d.rings, Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
+  hull += tzcRingPaths(o2, live, (d.rings || []).filter((rg, i) => onSig[i] !== "0"), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
@@ -7946,6 +7949,7 @@ function tzcMain(cells){   // самый большой связный кусо�
    Обведённые вместе кнопки при переносе рядов держатся одним блоком. Есть своя обводка — общая граница (v0.454) сама не рисуется */
 let tzcPick = false;
 const tzcSel = new Set();
+const tzcIsOn = (el) => !!el && (el.classList.contains("on") || !!el.querySelector(":scope > input[type=checkbox]:checked"));   // v0.468: кнопка нажата / галка включена
 const tzcManual = (d) => !!((d.l && Object.keys(d.l).length) || (d.rings && d.rings.length));
 function tzcRingPaths(o, live, rings, P){   // обводка — граница объединения треугольников её кнопок
   const out = [];
@@ -8092,7 +8096,7 @@ function tzSliders(){
   });
 }
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
-setInterval(() => { if (!document.hidden) tzSliders(); }, 300);
+setInterval(() => { if (!document.hidden) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
 function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
