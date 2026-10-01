@@ -6825,9 +6825,9 @@ function zSnapGlow(els){
 }
 function zSnapTo(x, y, w, h, targets, snap){
   let dx = snap + 1, dy = snap + 1, ex = null, ey = null;
-  for (const [el, q] of targets) {
-    for (const t of [q.left, q.right]) for (const v of [x, x + w]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
-    for (const t of [q.top, q.bottom]) for (const v of [y, y + h]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
+  for (const [el, q, ov = 0] of targets) {   // v0.478: ov — насколько встык заходить на цель (группа к группе — 1 px: рамка на рамку)
+    for (const [t, v] of [[q.left, x], [q.right, x + w], [q.left + ov, x + w], [q.right - ov, x]]) if (Math.abs(t - v) < Math.abs(dx)) { dx = t - v; ex = el; }
+    for (const [t, v] of [[q.top, y], [q.bottom, y + h], [q.top + ov, y + h], [q.bottom - ov, y]]) if (Math.abs(t - v) < Math.abs(dy)) { dy = t - v; ey = el; }
   }
   const hit = [];
   if (Math.abs(dx) <= snap) { x += dx; if (ex) hit.push(ex); }
@@ -6903,8 +6903,9 @@ function cgrpInit(){
      встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */
   const SNAP = 10;
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
-    const T = [], add = (el) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q]); };
-    add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o); });
+    const T = [], add = (el, ov) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q, ov || 0]); };
+    /* v0.478, «магнитить только там, но без щелей — обводка на обводку ложить»: группа к группе встык заходит на 1 px — их рамки ложатся одна на другую */
+    add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   const place = (g) => {
@@ -7617,7 +7618,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   const key = [L, R, n, h, m, b._tzar || "", b._gcol || ""].join("|");
   if (b._tzk === key && b.classList.contains("tz")) return;
   b._tzk = key;
-  const t = h / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);
+  const t = Math.min(h, TZC_H) / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);   // v0.478: шаг — по ряду 24 px, даже если кнопка на 1 px выше (заходит на ряд ниже)
   /* v0.451, «убери двойную обводку между кнопками»: у сцепленных каждая обводила общий край со своей стороны, и между линиями просвечивал
      тёмный шов (сглаживание двух краёв). Теперь следующая заходит на соседку ещё на 1 px (шире на 1 px — шаг тот же) и её край ложится поверх
      линии соседки: стык — одна линия, без шва */

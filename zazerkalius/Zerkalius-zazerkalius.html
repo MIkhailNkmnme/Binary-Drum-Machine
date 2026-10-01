@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.477. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.478. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.477</title>
+<title>Zazerkalius — v0.478</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -965,6 +965,11 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 /* v0.475: у группы конструктора заголовок — кнопка в первой строке: стоит поверх левого края рисунка (tzcApply сдвигает первую строку на его ширину) */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):has(> .cgb.tzc){gap:0 !important}
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):has(> .cgb.tzc) > .glab.tz.tz.tz{position:absolute !important;left:0;top:0;z-index:6}
+/* v0.478, «когда кнопки одна под другой — обводка у них одна пусть будет, между ними не двойная»: всё в группах — на 1 px выше ряда и заходит на ряд ниже
+   (margin-bottom −1 px, шаг рядов по-прежнему 24 px): нижняя кнопка рисуется поверх и своей верхней линией закрывает нижнюю линию верхней — одна линия.
+   У нижнего ряда лишний 1 px срезает рамка группы, там своя линия */
+:is(#w-cone .tools, #paneGrp) .cgb :is(button, label, select, span).tz.tz.tz,:is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz{height:25px !important;margin-bottom:-1px !important}
+:is(#w-cone .tools, #paneGrp) .cgb #coneSpinModeB#coneSpinModeB > button.tz.tz{height:25px !important;margin:0 0 -1px !important}   /* режимы кручения — их правило отступов сильнее */
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1349,7 +1354,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.477</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.478</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2284,8 +2289,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0477"></script>
-<script src="zz-ui.js?v=0477"></script>
+<script src="zz-core.js?v=0478"></script>
+<script src="zz-ui.js?v=0478"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
