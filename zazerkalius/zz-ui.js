@@ -7614,7 +7614,7 @@ const tzFits = (r, l) => r[1] - r[0] <= l[0] - l[1] && r[1] - r[2] <= l[2] - l[1
 function triOff(b){ b.classList.remove("tz", "tzar"); ["width", "flex", "margin-left", "--lat"].forEach(k => b.style.removeProperty(k)); b._tzk = ""; b._tzL = null; b._tzm = 0; }
 function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn (сторон по средней черте), b._tzm (на сколько t зайти на соседа слева)
   const h = parseFloat(getComputedStyle(b).height) || 24, L = b._tzL || TZ_TIP, R = b._tzR, n = b._tzn, m = b._tzm || 0;
-  const key = [L, R, n, h, m, b._tzar || ""].join("|");
+  const key = [L, R, n, h, m, b._tzar || "", b._gcol || ""].join("|");
   if (b._tzk === key && b.classList.contains("tz")) return;
   b._tzk = key;
   const t = h / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);
@@ -7628,7 +7628,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   if (b.tagName === "LABEL") b.style.setProperty("flex", "0 0 " + px(W), "important");
   if (m) b.style.setProperty("margin-left", px(-m * t - 1), "important"); else b.style.removeProperty("margin-left");
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="rgba(232,235,242,.8)" stroke-width="2" fill="none"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="${b._gcol || "rgba(232,235,242,.8)"}" stroke-width="2" fill="none"/></svg>`;
   b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   // v0.467: маска толстой обводки нажатой (видна внутренняя половина — 2,5 px), цвет даёт CSS
   const so = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="#000" stroke-width="5" fill="none"/></svg>`;
@@ -7636,6 +7636,8 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
 }
 function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
+  /* v0.471, «у всех кнопок должна быть обводка цвета самой группы»: контур — цветом заголовка группы (как её рамка), берётся раз на группу */
+  const gcm = new Map(), gcol = (el) => { const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
   document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb")) triOff(b); });
   const bs = [];
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
@@ -7643,7 +7645,7 @@ function triTag(){
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
   document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2)").forEach(b => {
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
-    const cgb = b.closest(".cgb");
+    const cgb = b.closest(".cgb"); b._gcol = gcol(b);
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
       if (tzcItem(b, cgb) !== b || b.closest(".cjoin")) { if (b.classList.contains("tz")) triOff(b); return; }
       const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0, rng = !!b.querySelector(".zerk-range-wrap");
@@ -7690,6 +7692,7 @@ function triTag(){
    (слой поверх группы). Что в рисунок не попало — ниже, обычным рядом. Своё (что было в сетке) на время конструктора откладывается
    (Z.triMine) и возвращается по «✓ готово»; «↺ как было» — группа снова обычным рядом. */
 const TZC_H = 24;
+const tzcGcol = (g) => { const l = g && g.querySelector(":scope > .glab"); return (l && getComputedStyle(l).color) || "rgba(232,235,242,.8)"; };   // v0.471: цвет группы
 const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.dataset.g === key) || null;
 function tzcItem(el, cgb){   // элемент группы под точкой: кнопка, поле, список, подпись (не блок-обёртка; попал в обёртку — её первая кнопка)
   if (!el || el === cgb || !cgb.contains(el)) return null;
@@ -7929,7 +7932,7 @@ function tzcApply(g){
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
       hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${w || Z.triLW || 2}" stroke-linecap="round"/>`;
     } }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/>${hull}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="1.5" stroke-linecap="round" fill="none"/>${hull}</svg>`;
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 function tzcMain(cells){   // самый большой связный кусок: { c0, c1, r0, r1 }
@@ -8062,7 +8065,7 @@ function tzcPreview(){
     if (el) { x.fillStyle = fill(el); x.globalAlpha = 1; } else { x.fillStyle = (TRI_COL[kc | 0] || TRI_COL[1])[0]; x.globalAlpha = 0.25; }
     x.fill(); x.strokeStyle = x.fillStyle; x.lineWidth = 0.6; x.stroke(); x.globalAlpha = 1;
   }
-  x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
+  x.strokeStyle = tzcGcol(g); x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
   if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
     for (const h of tzcRingPaths(o, live, d.rings, P)) { x.save(); x.clip(new Path2D(h.f)); x.strokeStyle = h.col; x.lineWidth = 2 * h.w; x.stroke(new Path2D(h.d)); x.restore(); }   // v0.465: внутрь
     for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));

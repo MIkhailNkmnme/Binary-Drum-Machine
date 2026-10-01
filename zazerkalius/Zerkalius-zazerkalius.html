@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.470. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.471. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.470</title>
+<title>Zazerkalius — v0.471</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -821,7 +821,7 @@ span.cjoin > button.jz:disabled{opacity:1 !important;color:color-mix(in srgb, va
    и сетка треугольников; наведение — сиреневая заливка, включённая — золотая, «идёт» (звук играет) — заливка мигает вместо рамки */
 span.cjoin > button.jz.jz{--g1:none !important;--g2:none !important;--g3:none !important;--g4:none !important;border-width:0 !important;box-shadow:none !important}
 span.cjoin > button.jz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
-span.cjoin > button.jz.on{background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+span.cjoin > button.jz.on{background-color:color-mix(in srgb, var(--panel2) 45%, var(--acc)) !important;color:var(--txt) !important}   /* v0.471: и здесь — акцент гаммы */
 /* v0.428, «(стрелка) не мигает»: мигание анимацией цвета фона гасил фон «включённой» с !important (такое правило сильнее анимации).
    Теперь мигает отдельный слой поверх фона (::after, под надписью — isolation), рамкой кнопки он обрезается */
 span.cjoin > button.jz{position:relative;isolation:isolate}
@@ -883,7 +883,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
   border-width:0 !important;border-radius:0 !important;box-shadow:none !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;padding:0 calc(var(--t) + 2px) !important;
   background-color:var(--panel2) !important;background-image:var(--lat, none) !important;background-size:100% 100% !important;background-position:0 0 !important;background-repeat:no-repeat !important}
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
-:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on{background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+:is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on{background-color:color-mix(in srgb, var(--panel2) 45%, var(--acc)) !important;color:var(--txt) !important}   /* v0.471: фон нажатой — акцент текущей гаммы, во всех группах */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz:disabled{opacity:1 !important;color:color-mix(in srgb, var(--txt) 35%, transparent) !important}
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.tzar{padding:0 !important;color:transparent !important;text-shadow:none !important}
 /* «идёт само» (▶ волна, ▶ крутить, ♫) — рамки нет, мигает заливка: слой поверх фона, под надписью (как в сцепке, v0.428) */
@@ -900,7 +900,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgb :is(label, span).tz.tz.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
 :is(#w-cone .tools, #paneGrp) .cgb span.glab2.tz.tz.tz{display:inline-flex;align-items:center;justify-content:center}   /* подпись — с той же заливкой: поверх конуса прозрачную не прочесть */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:hover,:is(#w-cone .tools, #paneGrp) .cgb select.tz.tz.tz:hover{background-color:color-mix(in srgb, var(--panel2) 68%, var(--acc)) !important}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked){background-color:color-mix(in srgb, var(--panel2) 58%, var(--gold)) !important;color:var(--txt) !important}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked){background-color:color-mix(in srgb, var(--panel2) 45%, var(--acc)) !important;color:var(--txt) !important}
 :is(#w-cone .tools, #paneGrp) .cgb select.tz.tz.tz{-webkit-appearance:none;appearance:none;padding-right:calc(var(--t) + 13px) !important;
   background-image:var(--lat, none),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0h8L4 5z' fill='%238b949e'/%3E%3C/svg%3E") !important;
   background-size:100% 100%,8px 5px !important;background-position:0 0,right calc(var(--t) + 3px) center !important;background-repeat:no-repeat !important}
@@ -946,9 +946,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg > .cgb{padding-top:0 !important;padding-bottom:0 !important}
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg.cmin{min-height:0 !important;height:24px !important;align-items:center !important}
 /* v0.467, на «жирная обводка была только у нажатых кнопок» — «так и надо»: у нажатой кнопки и включённой галки — толстая обводка ВНУТРИ своей формы
-   (маска --lato, ставят tzGeo / tzcApply), на соседей не заходит; цвет — подсветка кнопки (у гаммы — её цвет --pca, у прочих — золото) */
+   (маска --lato, ставят tzGeo / tzcApply), на соседей не заходит; цвет — цвет группы (--gfc, v0.471; прежде — подсветка кнопки) */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on:not(.blab)::before,:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked)::before{
-  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--pca, var(--gold));-webkit-mask:var(--lato, none) 0 0 / 100% 100% no-repeat;mask:var(--lato, none) 0 0 / 100% 100% no-repeat}
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--gfc, var(--gold));-webkit-mask:var(--lato, none) 0 0 / 100% 100% no-repeat;mask:var(--lato, none) 0 0 / 100% 100% no-repeat}
 
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
@@ -1334,7 +1334,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.470</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.471</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2270,8 +2270,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0470"></script>
-<script src="zz-ui.js?v=0470"></script>
+<script src="zz-core.js?v=0471"></script>
+<script src="zz-ui.js?v=0471"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
