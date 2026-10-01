@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.481. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.482. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.481</title>
+<title>Zazerkalius — v0.482</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -941,7 +941,11 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg{border-style:none !important;border-radius:0 !important;clip-path:var(--gclip);padding-left:0 !important;padding-right:0 !important}   /* v0.477, «убери боковые отступы у групп»: острия крайних кнопок — прямо в зубцах рамки (та же форма) */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg::before{content:"";position:absolute;inset:0;z-index:7;pointer-events:none;   /* v0.481, «нижняя обводка потерялась»: рамка — поверх кнопок (нижний ряд на 1 px выше и закрывал её) */
   background:var(--gfc, var(--line));-webkit-mask:var(--gmask) 0 0 / 100% 100% no-repeat;mask:var(--gmask) 0 0 / 100% 100% no-repeat}
-.cgrp.tzg > .cgsz{right:8px !important}
+/* v0.482, «это замени — последний ромб сделай цветом группы, и за него тянуть»: ручка размера — ромб (▲ над ▼) цветом группы в правом нижнем углу,
+   ровно в последнем острие рамки */
+.cgrp.tzg > .cgsz{right:0 !important;bottom:0 !important;width:calc(2 * 24px / (2 * 1.7320508)) !important;height:24px !important;opacity:1 !important;z-index:8;
+  background:var(--gfc, var(--acc)) !important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0 !important}
+.cgrp.tzg > .cgsz:hover{filter:brightness(1.25)}
 /* v0.469, по снимку свёрнутой «Гаммы» — «лишняя высота»: высота группы — ровно ряды по 24 px (поля сверху и снизу — 0, подпись без отступа), чтобы
    зубцы рамки шли ровно по рядам; свёрнутая — высотой в заголовок (прежде держала прежнюю высоту, v0.207) */
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg{padding-top:0 !important;padding-bottom:0 !important}
@@ -1358,7 +1362,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.481</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.482</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2293,8 +2297,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0481"></script>
-<script src="zz-ui.js?v=0481"></script>
+<script src="zz-core.js?v=0482"></script>
+<script src="zz-ui.js?v=0482"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

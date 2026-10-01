@@ -6862,6 +6862,7 @@ function cgrpInit(){
     if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
     g.style.width = Math.max(s.w, tzMinW(g)) + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам; v0.480 — и не уже самого широкого блока
     if (typeof tzcApply === "function") tzcApply(g);   // v0.453: группа-конструктор переносит ряды рисунка под новую ширину
+    if (typeof tzgFrame === "function") tzgFrame(g);   // v0.482: рамка — сразу под новый размер (иначе угол с ручкой-ромбом на миг вне рамки и не хватается)
     const b = g.querySelector(":scope > .cgb"); if (!b) return;
     if (b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
     /* v0.334, «не давать размера больше, если пустые области появляются»: ширина прижимается к правому краю самого длинного ряда кнопок —
