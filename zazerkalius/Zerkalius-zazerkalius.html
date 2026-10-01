@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.474. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.476. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.474</title>
+<title>Zazerkalius — v0.476</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -947,10 +947,10 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg > .glab{margin-top:0 !important;margin-bottom:0 !important}
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg > .cgb{padding-top:0 !important;padding-bottom:0 !important}
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg.cmin{min-height:0 !important;height:24px !important;align-items:center !important}
-/* v0.467, на «жирная обводка была только у нажатых кнопок» — «так и надо»: у нажатой кнопки и включённой галки — толстая обводка ВНУТРИ своей формы
+/* v0.476, «убери вообще жирность обводки»: толстой обводки нажатой больше нет (content: none) — нажатую видно по заливке гаммы. Было: v0.467, на «жирная обводка была только у нажатых кнопок» — «так и надо»: у нажатой кнопки и включённой галки — толстая обводка ВНУТРИ своей формы
    (маска --lato, ставят tzGeo / tzcApply), на соседей не заходит; цвет — цвет группы (--gfc, v0.471; прежде — подсветка кнопки) */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz.on:not(.blab)::before,:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:not(.sunmode):has(> input[type=checkbox]:checked)::before{
-  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--gfc, var(--gold));-webkit-mask:var(--lato, none) 0 0 / 100% 100% no-repeat;mask:var(--lato, none) 0 0 / 100% 100% no-repeat}
+  content:none !important;position:absolute;inset:0;z-index:1;pointer-events:none;background:var(--gfc, var(--gold));-webkit-mask:var(--lato, none) 0 0 / 100% 100% no-repeat;mask:var(--lato, none) 0 0 / 100% 100% no-repeat}
 
 /* v0.473, «заголовок группы — это самая первая кнопка, и все следующие размещать на её же строке, если размер позволяет»: у зубчатой группы (не в
    конструкторе) блок кнопок растворён (display: contents) — заголовок и кнопки текут одним рядом с переносом; заголовок — шестигранник с заливкой цветом
@@ -962,6 +962,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);border:0 !important;border-radius:0 !important;
   padding:0 calc(var(--t) + 2px) !important;display:flex !important;align-items:center;justify-content:center;background-color:color-mix(in srgb, var(--gfc, var(--line)) 26%, var(--panel2))}
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
+/* v0.475: у группы конструктора заголовок — кнопка в первой строке: стоит поверх левого края рисунка (tzcApply сдвигает первую строку на его ширину) */
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):has(> .cgb.tzc){gap:0 !important}
+:is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.cmin):has(> .cgb.tzc) > .glab.tz.tz.tz{position:absolute !important;left:12px;top:0;z-index:6}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1346,7 +1349,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.474</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.476</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2150,7 +2153,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
         <div class="tools" id="triBind" hidden>   <!-- v0.452: сетка привязана к группе конуса (△ в её заголовке) -->
           <span id="triBindLab" class="dim"></span>
           <span id="triBindPal"></span>   <!-- v0.454: кисти кнопок группы — у каждой свой цвет -->
-          <button id="bTriRing" title="⬚ Обвести: включи — щёлкай кнопки в сетке, чтобы выбрать (ещё щелчок — снять); нажми ещё раз — выбранные получат одну общую обводку цветом группы и толщиной «═» (вверху окна). На странице обводка тонкая, а жирная — пока нажата одна из её кнопок">⬚ обвести</button>
+          <button id="bTriRing" title="⬚ Обвести: включи — щёлкай кнопки в сетке, чтобы выбрать (ещё щелчок — снять); нажми ещё раз — выбранные получат одну общую обводку цветом группы и толщиной «═» (вверху окна). На странице обводка тонкая">⬚ обвести</button>
           <span id="triRings"></span>   <!-- v0.459: обводки группы — щелчок снимает -->
           <button id="bTriBindOk" title="✓ Готово: выйти из конструктора — раскладка группы остаётся, в сетку возвращается своё">✓ готово</button>
           <button id="bTriBindReset" title="↺ Как было: группа снова обычным рядом кнопок (рисунок группы забывается)">↺ как было</button>
@@ -2281,8 +2284,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0474"></script>
-<script src="zz-ui.js?v=0474"></script>
+<script src="zz-core.js?v=0476"></script>
+<script src="zz-ui.js?v=0476"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

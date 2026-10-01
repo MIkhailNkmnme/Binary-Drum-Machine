@@ -7650,9 +7650,10 @@ function triTag(){
        в начале цепочки (у групп конструктора △ — как была: их раскладку задаёт рисунок) */
     if (b.classList.contains("glab")) {
       const g = b.parentElement, gb = g && g.querySelector(":scope > .cgb");
-      if (!g || !g.closest("#w-cone .tools, #paneGrp") || (gb && gb.classList.contains("tzc"))) { if (b.classList.contains("tz")) triOff(b); return; }
+      if (!g || !g.closest("#w-cone .tools, #paneGrp")) { if (b.classList.contains("tz")) triOff(b); return; }   // v0.475: и у групп конструктора
       const sd = TZC_H / Math.sqrt(3), wInl = parseFloat(b.style.width) || 0;
-      b._tzar = ""; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP; b._tzn = wInl ? Math.max(3, Math.round(wInl / sd)) : 6;
+      const need = Math.ceil((b.scrollWidth || 0) / sd - 0.05);   // v0.475: надпись со значками не влезла — шире, кратно полкнопке
+      b._tzar = ""; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP; b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : 6, Math.ceil(need / 3) * 3);
       tzGeo(b); bs.push(b); return;
     }
     if (b.tagName !== "BUTTON" && !b.classList.contains("pcol")) {   // v0.463: не кнопка — шестигранник по своей ширине
@@ -7852,10 +7853,13 @@ function tzcApply(g){
     avail = sz.w - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }
   /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
      (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
-  /* v0.470, «после редактирования жирность не уходит у обводки, которую сделал в редакторе; жирная — только у выделенной кнопки»: обводка ⬚ видна всегда,
-     но тонкая (1 px); жирная (её толщина «═») — пока нажата хоть одна из её кнопок */
+  /* v0.470: обводка ⬚ видна всегда, тонкая; v0.476, «убери вообще жирность обводки» — и у нажатой тонкая (жирной больше нет нигде) */
   const onSig = (d.rings || []).map(rg => (rg.items || []).some(w => tzcIsOn(tzcFind(w, cgb))) ? 1 : 0).join("");
-  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig;
+  /* v0.475, по снимку «Гаммы» (заголовок отдельной строкой над рисунком) — «заголовок — это как кнопка, в её строке надо их ставить»: заголовок стоит
+     поверх левого края первой строки, рисунок первой строки сдвинут вправо на его ширину (tc, в t, чётное); тесно — первая строка уходит под заголовок */
+  const gl = g.querySelector(":scope > .glab"), tcw = gl && gl.classList.contains("tz") ? parseFloat(gl.style.width) || 0 : 0;
+  let tc = Math.round(tcw / t); tc += tc % 2;
+  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc;
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
   g._tzcv = key;
@@ -7880,16 +7884,16 @@ function tzcApply(g){
   const Ls = Object.keys(lines).map(Number).sort((a, b) => a - b);
   if (!isFinite(avail)) {   // без заданного размера — как нарисовано
     let out = 0, prev = null;
-    for (const L of Ls) { if (prev != null) out += L - prev - 1; lines[L].forEach(U => U.m.forEach(it => { it.dc = 0; it.dr = 2 * (out - L); })); out++; prev = L; }
+    for (const L of Ls) { if (prev != null) out += L - prev - 1; const dc = prev == null ? tc : 0; lines[L].forEach(U => U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); })); out++; prev = L; }   // первая строка — правее заголовка
   } else {   // с заданным размером — поток
-    let out = 0, cur = 0, first = true;   // cur — правый край занятого в текущей строке (в t)
+    let out = 0, cur = tc, first = !tc;   // cur — правый край занятого в текущей строке (в t); заголовок — первый в ней
     for (const L of Ls) {
       let dc = 0;
       lines[L].sort((a, b) => a.c0 - b.c0).forEach((U, i) => {
         if (i === 0) {
           let j = cur - U.c0; if (((j % 2) + 2) % 2) j++;
           if (!first && U.c1 + 2 + j <= ac) dc = j;   // строка рисунка подтягивается на текущую
-          else { if (!first) out++; dc = -ev0(U.c0); cur = 0; }
+          else { if (!first) out++; dc = -ev0(U.c0); cur = 0; }   // (не влезла за заголовок — строкой ниже)
         } else if (U.c1 + 2 + dc > ac) { out++; dc = -ev0(U.c0); cur = 0; }
         U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); });
         cur = Math.max(cur, U.c1 + 2 + dc); first = false;
@@ -7898,7 +7902,7 @@ function tzcApply(g){
   }
   g._tzcSh = {}; its.forEach(it => { g._tzcSh[it.w] = [Number.isFinite(it.dr) ? it.dr : 0, Number.isFinite(it.dc) ? it.dc : 0]; });
   if (Z.triBind === g.dataset.g && !tzcEq(g._tzcSh, tzcViewSh)) setTimeout(() => renderTri(), 0);   // v0.462: перенос лёг иначе (тянут ширину) — сетке новый вид   // v0.461 / v0.462: сдвиги переноса — по ним сетка показывает вид (tzcView) и пишет правки назад (tzcUnview)
-  let R = 0, N = 0;
+  let R = tc ? 2 : 0, N = tc;   // заголовок — в первой строке
   const o2 = {}, live = new Set();
   for (const it of its) {
     const { el, cells } = it, r0 = it.r0 + it.dr, c0 = it.c0 + it.dc, r1 = it.r1 + it.dr, c1 = it.c1 + it.dc;
@@ -7936,7 +7940,7 @@ function tzcApply(g){
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
   /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
      области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
-  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { col: tzcGcol(g), w: onSig[i] === "1" ? (rg.w > 0 ? Math.max(rg.w, 2) : 2.5) : 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
+  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { col: tzcGcol(g), w: 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */
