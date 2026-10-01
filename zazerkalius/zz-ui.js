@@ -7630,6 +7630,9 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="rgba(232,235,242,.8)" stroke-width="2" fill="none"/></svg>`;
   b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+  // v0.467: маска толстой обводки нажатой (видна внутренняя половина — 2,5 px), цвет даёт CSS
+  const so = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="#000" stroke-width="5" fill="none"/></svg>`;
+  b.style.setProperty("--lato", `url("data:image/svg+xml,${encodeURIComponent(so)}")`);
 }
 function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
@@ -7815,7 +7818,7 @@ function tzcLabels(){   // надпись кнопки в сетке — одн�
 }
 function tzcClean(el){
   el.classList.remove("tzk"); el._tzk = "";
-  for (const k of ["width", "height", "left", "top", "margin", "margin-left", "padding-left", "padding-right", "--tzp", "--lat"]) el.style.removeProperty(k);
+  for (const k of ["width", "height", "left", "top", "margin", "margin-left", "padding-left", "padding-right", "--tzp", "--lat", "--lato"]) el.style.removeProperty(k);
 }
 function tzcOff(g){
   const cgb = g.querySelector(".cgb"); if (!cgb) return;
@@ -7890,6 +7893,10 @@ function tzcApply(g){
     el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol")) el.classList.add("tz");
     el._tzk = "";
     el.style.setProperty("--tzp", `path("${p}")`); el.style.setProperty("--lat", "none");
+    { const set = new Set(cells.map(([r, c]) => r + "_" + c)), W0 = (it.c1 + 2 - it.c0) * t, H0 = (it.r1 + 1 - it.r0) * hh; let e = "";   // v0.467: маска толстой обводки нажатой — по границе своих треугольников
+      for (const [r, c] of cells) { const x = (c - it.c0) * t, y0 = (r - it.r0) * hh, y1 = y0 + hh, Q = (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]];
+        for (const [a, b, n] of triNb(r, c)) if (!set.has(n[0] + "_" + n[1])) e += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
+      el.style.setProperty("--lato", `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${W0.toFixed(2)}" height="${H0.toFixed(2)}"><path d="${e}" stroke="#000" stroke-width="5" stroke-linecap="round" fill="none"/></svg>`)}")`); }
     el.style.setProperty("left", px(c0 * t), "important"); el.style.setProperty("top", px(r0 * hh), "important");
     el.style.setProperty("width", px((c1 + 2 - c0) * t), "important"); el.style.setProperty("height", px((r1 + 1 - r0) * hh), "important");
     el.style.setProperty("margin", "0", "important"); el.style.removeProperty("margin-left");
@@ -8069,6 +8076,23 @@ function tzcPreview(){
 /* v0.463, «и края самих полей групп теми же ромбами надо»: группа (окно конуса и левая панель) — с зубчатыми боками из тех же треугольников:
    на каждые 24 px высоты (ряд кнопок) — остриё наружу, как у кнопки; верх и низ ровные. Форма — clip-path (--gclip), рамка — слой ::before цветом
    заголовка группы (--gfc; с v0.464 — цвет её надписи, прежде — её рамки), обрезанный маской по контуру (--gmask). Пересчёт — при каждом изменении размера группы */
+/* v0.466, по снимку двух ползунков — «значок прямо в ромбе ползунка, а числа бегают с ним справа или слева»: у ползунка в группе значок (.sli) стоит
+   в ромбе-бегунке, число (.rv) — рядом с бегунком: справа, а если справа места нет — слева (.rvl). Место бегунка — --thx у метки (центр ромба, px);
+   пересчёт — на движение ползунка, раз в 300 мс (значение меняет и код) и после раскладки групп */
+function tzSliders(){
+  document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz").forEach(L => {
+    const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
+    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 2 * t;
+    const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;
+    const x = ir.left - lr.left + tw / 2 + f * (ir.width - tw), rv = L.querySelector(".rv");
+    const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
+    if (L._thk === k) return; L._thk = k;
+    L.style.setProperty("--thx", x.toFixed(2) + "px");
+    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + t) - 3; L.classList.toggle("rvl", w > right); }
+  });
+}
+document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
+setInterval(() => { if (!document.hidden) tzSliders(); }, 300);
 function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
@@ -8088,7 +8112,7 @@ function tzgFrame(g){
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
 }
-function tzcAll(){ document.querySelectorAll(".cgrp").forEach(g => { if (g.dataset.g) tzcApply(g); tzgFrame(g); }); tzcIcons(); }
+function tzcAll(){ document.querySelectorAll(".cgrp").forEach(g => { if (g.dataset.g) tzcApply(g); tzgFrame(g); }); tzcIcons(); tzSliders(); }
 function tzcMine(){   // вернуть в сетку своё, отложенное на время конструктора
   const m = Z.triMine || {};
   Z.triCells = m.c || {}; Z.triGLn = m.gl || {}; Z.triGIn = m.gi || {}; Z.triGTx = m.gt || {}; Z.triCur = m.cur != null ? m.cur : -1; Z.triSel = m.sel || null;
