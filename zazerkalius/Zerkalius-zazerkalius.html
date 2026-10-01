@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.455. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.456. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.455</title>
+<title>Zazerkalius — v0.456</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -452,6 +452,14 @@ body.bgmode ::highlight(sndbit){background-color:#ff5f6d} body.bgmode ::highligh
    а шаг строк 1.25, в ужатом поле до 0.7 — полупрозрачные полосы соседних строк налезали друг на друга ступенями. Ячейка бит режет
    всё, что выше / ниже её строки (по горизонтали — нет: ◸ 90° и «… ещё N бит» не трогаются) */
 #rowList .rw > .bits{overflow-y:clip;overflow-clip-margin:1px}
+/* v0.456: биты квадратами и ромбами (Z.bitView, bitsCells): цифра на месте, но прозрачная — фигура ::before цветом бита. Ромб — в символ шириной и в
+   два ряда высотой, выступает за свой ряд на половину соседних — поэтому у рядов в этом виде нет обрезки и фона (иначе ряд ниже закроет кончики) */
+#rowList.vq .rw i.q{font-style:normal;position:relative;-webkit-text-fill-color:transparent}
+#rowList.vq .rw i.q::before{content:"";position:absolute;left:50%;top:50%;width:calc(min(var(--qw, 1ch), var(--qh, 1.2em)) * .86);height:calc(min(var(--qw, 1ch), var(--qh, 1.2em)) * .86);
+  transform:translate(-50%, -50%);background:currentColor;border-radius:1px;pointer-events:none}
+#rowList.vq .rw i.q.b0::before{opacity:.2}
+#rowList.vq .rw.qrh i.q::before{width:calc(var(--qw, 1ch) * .97);height:calc(var(--qh, 1.2em) * 1.94);border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#rowList.vq .rw > .bits,#rowList.vq .rw > .bits > .bx,#rowList.vq .rw > .bits > .bxo{overflow:visible !important;background:none !important}
 /* v0.112, «под нижней строкой — линия-граница; за неё вверх — строки ниже неё бесцветные, и их как будто нет»: черта тащится
    вверх / вниз (cutAt в zz-ui.js), строки за ней — серые, не выбираются и не правятся */
 .cutln{grid-column:1 / -1;position:relative;height:14px;cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1257,7 +1265,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.455</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.456</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1390,6 +1398,10 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <button id="bOvOut" title="Итог наложения — в свободное поле (если все 4 заняты — в рабочее, ↩ вернёт): по каждой строке — сведённые биты слева направо">⤓ итог</button>
       <select id="rowsAlign" title="Выравнивание строк в поле">
         <option value="center">◫ по центру</option><option value="left">◧ влево</option><option value="right">◨ вправо</option>
+      </select>
+      <!-- v0.456: вид бит в поле строк -->
+      <select id="bitView" title="Вид бит в поле строк: цифры 0 1; ■ квадраты (единицы ярко, нули бледно); ◆ ромбы — у строк, чья длина отличается от соседней на нечётное, ромбы входят друг в друга (по центру); у остальных — квадраты">
+        <option value="txt">01 цифры</option><option value="sq">■ квадраты</option><option value="rh">◆ ромбы</option>
       </select>
       <!-- v0.170, по снимку «впиши или вставь строку из 0 и 1» — «удали это поле»: поля ввода строки нет; строки — Ctrl+V прямо в поле строк, 📂 из файла, двойной щелчок по строке — править -->
       <button id="bLoad" title="📂 Загрузить текстовый файл со строками (.txt) — каждая строка файла становится строкой столбика, всё кроме 0 и 1 выбрасывается, пустые строки пропускаются. Столбик заменяется целиком (↩ вернёт). Файл можно и просто перетащить на страницу">📂</button>
@@ -2186,8 +2198,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0455"></script>
-<script src="zz-ui.js?v=0455"></script>
+<script src="zz-core.js?v=0456"></script>
+<script src="zz-ui.js?v=0456"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

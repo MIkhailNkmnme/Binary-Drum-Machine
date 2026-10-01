@@ -277,6 +277,16 @@ function bitsShow(s){
   for (let i = 0; i < x.length; i++) h += '<span class="b' + x[i] + (fixAt(s, i) ? c : "") + '">' + x[i] + "</span>";
   return h;
 }
+/* v0.456, по снимку поля строк — «добавь отображение квадратами вместо бит и ромбами; ромбами — только когда чёт-нечет строки длиной идут, чтобы
+   ромбы вкладывались друг в друга»: вид бит в поле (Z.bitView: txt — цифры, sq — квадраты, rh — ромбы). Каждый бит — <i class="q"> с той же
+   цифрой (прозрачной — выделение, щелчки и счёт бит по тексту работают как прежде), фигура — ::before цветом бита (нули — бледно). Ромб —
+   шириной в символ и высотой в два ряда: у строк, чья длина отличается от соседней на нечётное (сдвиг на полсимвола, при выравнивании по центру),
+   ромбы соседних рядов входят друг в друга сплошной решёткой; у остальных строк — квадраты. Размеры — --qw (символ) и --qh (шаг рядов), меряет renderRows */
+function bitsCells(s){
+  const x = s.length > ROW_SHOW ? s.slice(0, ROW_SHOW) : s, fc = Z.showFix ? fixCls() : ""; let h = "";
+  for (let i = 0; i < x.length; i++) h += '<i class="q b' + x[i] + (fc && fixAt(s, i) ? fc : "") + '">' + x[i] + "</i>";
+  return h;
+}
 let rowEditing = -1;
 /* v0.012: выделенные строки (щелчок по номеру) — не сохраняются; любая правка строк их снимает (snapshot). */
 const rowSel = new Set();
@@ -833,8 +843,13 @@ function renderRows(){
   laneCountUi();   // v0.276
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
   if (ovControls()) { renderRowsOver(); return; }   // v0.018
-  const L = $("rowList"), N = Z.laneCount || 1;
-  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");   // v0.246: ужатость, 90° и подсветка номеров — не сбрасывать
+  const L = $("rowList"), N = Z.laneCount || 1, qv = Z.bitView === "sq" || Z.bitView === "rh";
+  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv ? " vq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
+  const qrh = (i) => {   // v0.456: ромбы — строке, чья длина отличается от соседней на нечётное (ряды сдвинуты на полсимвола)
+    if (Z.bitView !== "rh" || (Z.rowsAlign || "center") !== "center" || Z.rows[i] === undefined) return false;
+    const n = Z.rows[i].length, odd = (j) => Z.rows[j] !== undefined && Math.abs(Z.rows[j].length - n) % 2 === 1;
+    return odd(i - 1) || odd(i + 1);
+  };   // v0.246: ужатость, 90° и подсветка номеров — не сбрасывать
   L.style.setProperty("--lanes", N);
   const lanes = []; for (let l = 0; l < N; l++) lanes.push(l === Z.lane ? Z.rows : Z.lanes[l]);
   const H = Math.max(...lanes.map(x => x.length));
@@ -848,14 +863,14 @@ function renderRows(){
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
       // v0.012: биты — в своём .bx (только 0 и 1: по нему считаются места выделенных символов), «ещё N бит» — снаружи.
       // v0.015: .bx — только у рабочего поля; выделение и Del работают с ним.
       h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · щелчок по биту — выделить, протяжка — выделить строки, F2 / Enter — править">' +
-           '<span class="' + (act ? "bx" : "bxo") + '">' + bitsShow(s) + "</span>" +
+           '<span class="' + (act ? "bx" : "bxo") + '">' + (qv ? bitsCells(s) : bitsShow(s)) + "</span>" +
            (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "") + "</span>";
     }
     h += "</div>";
@@ -880,6 +895,11 @@ function renderRows(){
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
+  if (qv) {   // v0.456: размеры фигур — символ и шаг рядов, как их поставил rowsFit
+    const q = L.querySelector(".rw[data-r] i.q"), rw = L.querySelectorAll(".rl-inner > .rw[data-r] > .bits");
+    if (q) L.style.setProperty("--qw", q.getBoundingClientRect().width.toFixed(2) + "px");
+    if (rw.length > 1) L.style.setProperty("--qh", (rw[1].getBoundingClientRect().top - rw[0].getBoundingClientRect().top).toFixed(2) + "px");
+  }
   // v0.242, «черту тяну вниз — прыгает всё вверх»: пока черту тащат, поле не прокручивается к текущей строке
   if (document.body.classList.contains("cutdrag")) return;
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
@@ -8867,6 +8887,9 @@ function init(){
   $("bShowFixIr").onclick = () => showFixSet("ir");
   $("rowsAlign").value = Z.rowsAlign || "center";
   $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); };
+  if ($("bitView")) { $("bitView").value = Z.bitView || "txt";   // v0.456: вид бит — цифры, квадраты, ромбы
+    $("bitView").onchange = (e) => { Z.bitView = e.target.value; renderRows(); save();
+      if (Z.bitView === "rh") say((Z.rowsAlign || "center") !== "center" ? "◆ Ромбы — при выравнивании по центру; сейчас — квадраты." : "◆ Ромбы — у строк, чья длина отличается от соседней на нечётное (ромбы входят друг в друга); у остальных — квадраты."); }; }
   // 🧊 Вид (v0.024): кнопки, перетаскивание мышью, перерисовка при смене размера окна
   // v0.056: ① ② ③ — сохранённые виды, ⟋ — хорда концов
   const presetGo = (k, e, save_) => {
