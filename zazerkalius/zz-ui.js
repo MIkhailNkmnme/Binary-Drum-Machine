@@ -7719,7 +7719,7 @@ function tzJustify(g){
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
   const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1)   // v0.490: стрелки, цвета и data-w1 — не тянуть
-    && (e.parentElement === cgb || e.parentElement === g);   // v0.493, «проверь ширину» (режимы кручения во всю ширину): кнопки внутри блоков — не тянуть
+    && e.parentElement === cgb;   // v0.493: кнопки внутри блоков — не тянуть; v0.494, «ширина у заголовка — поправь»: и заголовок не тянуть
   rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02), c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1]).map(q => q[0]);
     if (k <= 0 || !c.length) return;
     for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
@@ -7905,14 +7905,18 @@ function tzcApply(g){
   const onSig = (d.rings || []).map(rg => (rg.items || []).some(w => tzcIsOn(tzcFind(w, cgb))) ? 1 : 0).join("");
   /* v0.475, по снимку «Гаммы» (заголовок отдельной строкой над рисунком) — «заголовок — это как кнопка, в её строке надо их ставить»: заголовок стоит
      поверх левого края первой строки, рисунок первой строки сдвинут вправо на его ширину (tc, в t, чётное); тесно — первая строка уходит под заголовок */
-  const gl = g.querySelector(":scope > .glab"), glIn = Object.values(d.o || {}).includes("glab");   // v0.486: заголовок в рисунке — стоит по рисунку
-  const tcw = gl && gl.classList.contains("tz") && !glIn ? parseFloat(gl.style.width) || 0 : 0;
-  let tc = Math.round(tcw / t); tc += tc % 2;
+  const gl = g.querySelector(":scope > .glab");
+  /* v0.494: заголовок в рисунке шире своего (так снимала добивка ряда до v0.494) — его клетки не в счёт: заголовок своей ширины, первой кнопкой (рисунок не трогаю) */
+  let glIn = Object.values(d.o || {}).includes("glab"), glSkip = false;
+  if (glIn && gl) { let c0 = 1e9, c1 = -1; for (const [k, w] of Object.entries(d.o)) if (w === "glab") { const c = +k.split("_")[1]; c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
+    if (c1 - c0 + 1 > 2 * Math.max(gl._tzn0 || 6, 6) + 3) { glIn = false; glSkip = true; } }
+  const tcw = gl && (gl.classList.contains("tz") || gl.classList.contains("tzk")) && !glIn ? (glSkip || gl.classList.contains("tzk") ? (1 + 2 * Math.max(gl._tzn0 || 6, 3)) * t : parseFloat(gl.style.width) || 0) : 0;   // v0.494: у «раздутого» — своя обычная ширина
+  const tip = Math.round(tcw / t); let tc = tip; tc += tc % 2;   // tip — остриё заголовка (в t)
   const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc;
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
   g._tzcv = key;
-  const by = {}; for (const [k, w] of Object.entries(d.o || {})) (by[w] = by[w] || []).push(k.split("_").map(Number));
+  const by = {}; for (const [k, w] of Object.entries(d.o || {})) { if (glSkip && w === "glab") continue; (by[w] = by[w] || []).push(k.split("_").map(Number)); }
   cgb.classList.add("tzc");
   const its = [];
   for (const [w, cells] of Object.entries(by)) {
@@ -7939,14 +7943,16 @@ function tzcApply(g){
   const Ls = Object.keys(lines).map(Number).sort((a, b) => a - b);
   if (!isFinite(avail)) {   // без заданного размера — как нарисовано
     let out = 0, prev = null;
-    for (const L of Ls) { if (prev != null) out += L - prev - 1; const dc = prev == null ? tc : 0; lines[L].forEach(U => U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); })); out++; prev = L; }   // первая строка — правее заголовка
+    for (const L of Ls) { if (prev != null) out += L - prev - 1;
+      let dc = 0; if (prev == null && tip) { dc = tip - 1 - Math.min(...lines[L].map(U => U.c0)); if (((dc % 2) + 2) % 2) dc--; }   // v0.494: первая строка — выемкой на остриё заголовка (не сходится по чётности — заходит на него, а не щель)
+      lines[L].forEach(U => U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); })); out++; prev = L; }
   } else {   // с заданным размером — поток
-    let out = 0, cur = tc, first = !tc;   // cur — правый край занятого в текущей строке (в t); заголовок — первый в ней
+    let out = 0, cur = tip ? tip - 1 : 0, first = !tip, afterTitle = !!tip;   // cur — правый край занятого в текущей строке (в t); заголовок — первый в ней
     for (const L of Ls) {
       let dc = 0;
       lines[L].sort((a, b) => a.c0 - b.c0).forEach((U, i) => {
         if (i === 0) {
-          let j = cur - U.c0; if (((j % 2) + 2) % 2) j++;
+          let j = cur - U.c0; if (((j % 2) + 2) % 2) j += afterTitle ? -1 : 1; afterTitle = false;
           if (!first && U.c1 + 2 + j <= ac) dc = j;   // строка рисунка подтягивается на текущую
           else { if (!first) out++; dc = -ev0(U.c0); cur = 0; }   // (не влезла за заголовок — строкой ниже)
         } else if (U.c1 + 2 + dc > ac) { out++; dc = -ev0(U.c0); cur = 0; }
