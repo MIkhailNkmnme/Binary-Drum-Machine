@@ -7642,7 +7642,7 @@ function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
   /* v0.471, «у всех кнопок должна быть обводка цвета самой группы»: контур — цветом заголовка группы (как её рамка), берётся раз на группу */
   const gcm = new Map(), gcol = (el) => { const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
-  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb")) triOff(b); });
+  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
   const bs = [];
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
@@ -7673,7 +7673,7 @@ function triTag(){
     }
     if (b.closest("#paneGrp") && b.classList.contains("pcol")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.tagName === "LABEL") {   // v0.450: цвет своей гаммы — шестигранник из 6 треугольников (n = 2), остриё к острию; просветы — цветом «Своя» (фон блока, CSS)
-      b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP;
+      b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP;   // v0.486: и цвета — «стрелки вправо»
       b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
     }
     const ar = RH_TRI[b.textContent.trim()];
@@ -7681,7 +7681,7 @@ function triTag(){
     b._tzar = ar; b._tzn = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6;
     b._tzR = ar === "l" ? TZ_NOTCH : TZ_TIP; b._tzfix = !!ar;
     if (ar) b._tzL = TZ_NOTCH;   // v0.485: ▶ — «стрелка вправо» (выемка — остриё), ◀ — «песочные часы» (выемки с обеих сторон)
-    if (b.dataset.pal === "0" && b.parentElement.id === "palOwn") { b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_NOTCH; }   // v0.450: «Своя» — выемкой к цветам
+    /* v0.486, «Своя также сделай»: «Своя» — как все, «стрелка вправо» (прежде, v0.450, — остриём слева и выемкой к цветам) */
     b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
@@ -7746,6 +7746,7 @@ const TZC_H = 24;
 const tzcGcol = (g) => { const l = g && g.querySelector(":scope > .glab"); return (l && getComputedStyle(l).color) || "rgba(232,235,242,.8)"; };   // v0.471: цвет группы
 const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.dataset.g === key) || null;
 function tzcItem(el, cgb){   // элемент группы под точкой: кнопка, поле, список, подпись (не блок-обёртка; попал в обёртку — её первая кнопка)
+  { const gl = el && el.closest && el.closest(".glab"); if (gl && cgb && gl.parentElement === cgb.parentElement) return gl; }   // v0.486: и заголовок группы
   if (!el || el === cgb || !cgb.contains(el)) return null;
   let x = el;
   while (x.parentElement && x.parentElement !== cgb) { const p = x.parentElement; if (p.tagName === "SPAN" && !p.closest("button, label, select")) break; x = p; }
@@ -7753,8 +7754,9 @@ function tzcItem(el, cgb){   // элемент группы под точкой:
   if (x.tagName === "SPAN" && x.querySelector("button, label, select, input")) return x.querySelector("button") || null;
   return x;
 }
-function tzcKey(el, cgb){ const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return "@" + p.join("/"); }
+function tzcKey(el, cgb){ if (el.classList.contains("glab")) return "glab"; const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return "@" + p.join("/"); }
 function tzcFind(key, cgb){
+  if (key === "glab") return cgb && cgb.parentElement ? cgb.parentElement.querySelector(":scope > .glab") : null;   // v0.486
   if (key[0] === "@") { let x = cgb; for (const i of key.slice(1).split("/")) x = x && x.children[+i]; return x || null; }
   try { return key[0] === "#" && !/[\s[>]/.test(key) ? document.getElementById(key.slice(1)) : document.querySelector(key); } catch (e) { return null; }
 }
@@ -7775,7 +7777,7 @@ function tzcItems(g, d){   // все кнопки группы — в d.items (�
   const cgb = g.querySelector(".cgb"); if (!cgb) return;
   if (!Array.isArray(d.items)) d.items = [];
   for (const m of [d.c, d.o, d.gl, d.gi]) if (m) for (const k of Object.keys(m)) if (!/^\d+_\d+$/.test(k)) delete m[k];   // v0.462: битые номера треугольников (NaN, минус) — вон
-  [...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => !el.hidden && tzcItem(el, cgb) === el).forEach(el => { const k = tzcKey(el, cgb); if (!d.items.includes(k)) d.items.push(k); });
+  [g.querySelector(":scope > .glab"), ...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => el && !el.hidden && tzcItem(el, cgb) === el).forEach(el => { const k = tzcKey(el, cgb); if (!d.items.includes(k)) d.items.push(k); });
   if (d.fmt !== 2) {   // рисунок v0.452–0.453 — в кисти
     d.c = d.c || {};
     for (const [k, w] of Object.entries(d.o || {})) { let i = d.items.indexOf(w); if (i < 0) { d.items.push(w); i = d.items.length - 1; } d.c[k] = TZC_K0 + i; }
@@ -7786,8 +7788,10 @@ function tzcItems(g, d){   // все кнопки группы — в d.items (�
   d.items.forEach((w, i) => { const el = tzcFind(w, cgb); TRI_COL[TZC_K0 + i] = [tzcHue(i), (el && tzcLabel(el)) || w]; });
 }
 function tzcGrab(g){   // нынешняя раскладка группы → треугольники: опрос точкой в центре каждого треугольника (elementFromPoint видит и clip-path)
-  const cgb = g.querySelector(".cgb"), rc = cgb.getBoundingClientRect(), hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3));
-  const its = [...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => el.getClientRects().length && tzcItem(el, cgb) === el);
+  /* v0.486, «эта группа в редактор не идёт почему-то»: с v0.473 блок кнопок растворён (display: contents), его прямоугольник нулевой — снимок выходил
+     пустым («группу не видно»). Мерить по самой группе; заголовок — тоже кнопка рисунка */
+  const cgb = g.querySelector(".cgb"), rc = g.getBoundingClientRect(), hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3));
+  const its = [g.querySelector(":scope > .glab"), ...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => el && el.getClientRects().length && tzcItem(el, cgb) === el);
   const tops = []; its.forEach(el => { const y = el.getBoundingClientRect().top; if (!tops.some(v => Math.abs(v - y) < 8)) tops.push(y); }); tops.sort((a, b) => a - b);
   let ox = rc.left; const f = its.find(el => el.classList.contains("tz"));
   if (f) { const X = Math.round((f.getBoundingClientRect().left + (f._tzL ? f._tzL[1] : 0) * t - ox) / t); if (((X % 2) + 2) % 2) ox -= t; }   // острия — в чётных узлах
@@ -7896,7 +7900,8 @@ function tzcApply(g){
   const onSig = (d.rings || []).map(rg => (rg.items || []).some(w => tzcIsOn(tzcFind(w, cgb))) ? 1 : 0).join("");
   /* v0.475, по снимку «Гаммы» (заголовок отдельной строкой над рисунком) — «заголовок — это как кнопка, в её строке надо их ставить»: заголовок стоит
      поверх левого края первой строки, рисунок первой строки сдвинут вправо на его ширину (tc, в t, чётное); тесно — первая строка уходит под заголовок */
-  const gl = g.querySelector(":scope > .glab"), tcw = gl && gl.classList.contains("tz") ? parseFloat(gl.style.width) || 0 : 0;
+  const gl = g.querySelector(":scope > .glab"), glIn = Object.values(d.o || {}).includes("glab");   // v0.486: заголовок в рисунке — стоит по рисунку
+  const tcw = gl && gl.classList.contains("tz") && !glIn ? parseFloat(gl.style.width) || 0 : 0;
   let tc = Math.round(tcw / t); tc += tc % 2;
   const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc;
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
@@ -7906,7 +7911,7 @@ function tzcApply(g){
   cgb.classList.add("tzc");
   const its = [];
   for (const [w, cells] of Object.entries(by)) {
-    const el = tzcFind(w, cgb); if (!el || !cgb.contains(el) || its.some(x => x.el === el)) continue;
+    const el = tzcFind(w, cgb); if (!el || !(cgb.contains(el) || el.parentElement === g) || its.some(x => x.el === el)) continue;
     let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1; for (const [r, c] of cells) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
     its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0 });
   }
@@ -7958,7 +7963,7 @@ function tzcApply(g){
       const x = (c - it.c0) * t, y0 = (r - it.r0) * hh, y1 = y0 + hh;
       p += (r + c) % 2 === 0 ? `M${x.toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y1}L${(x + t).toFixed(2)} ${y0}Z` : `M${x.toFixed(2)} ${y0}L${(x + t).toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y0}Z`;
     }
-    el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol")) el.classList.add("tz");
+    el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol") || el.classList.contains("glab")) el.classList.add("tz");   // v0.486: и заголовок
     el._tzk = "";
     el.style.setProperty("--tzp", `path("${p}")`); el.style.setProperty("--lat", "none");
     { const set = new Set(cells.map(([r, c]) => r + "_" + c)), W0 = (it.c1 + 2 - it.c0) * t, H0 = (it.r1 + 1 - it.r0) * hh; let e = "";   // v0.467: маска толстой обводки нажатой — по границе своих треугольников
@@ -8116,7 +8121,7 @@ function tzcPreview(){
   const P = (r, c) => { const X = pad + c * t, y0 = pad + r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[X, y1], [X + s, y1], [X + t, y0]] : [[X, y0], [X + s, y0], [X + t, y1]]; };
   const tri = (Q) => { x.moveTo(Q[0][0], Q[0][1]); x.lineTo(Q[1][0], Q[1][1]); x.lineTo(Q[2][0], Q[2][1]); x.closePath(); };
   const els = {}, live = new Set();
-  for (const w of new Set(Object.values(o))) { const el = tzcFind(w, cgb); if (el && cgb.contains(el)) { els[w] = el; live.add(w); } }
+  for (const w of new Set(Object.values(o))) { const el = tzcFind(w, cgb); if (el && (cgb.contains(el) || el.parentElement === g)) { els[w] = el; live.add(w); } }
   const fill = (el) => {
     if (el.classList.contains("pcol")) { const i = el.querySelector("input[type=color]"); if (i) return i.value; }
     const b = getComputedStyle(el).backgroundColor; return !b || b === "transparent" || /rgba\(.*,\s*0\)$/.test(b) ? getComputedStyle(document.documentElement).getPropertyValue("--panel2").trim() || "#1c2230" : b;
@@ -8213,7 +8218,14 @@ function tzcOpen(g){
     let d = Z.cgrpTri[key];
     if (!d || !d.c || !Object.keys(d.c).length) {   // v0.465: снимок — только с видимой группы (опрос точками экрана), иначе рисунок выйдет пустым
       g.scrollIntoView({ block: "nearest", inline: "nearest" });
+      /* v0.486: снимок — точками экрана: если группу закрывает другое окно, закрытые кнопки молча выпадали. На миг снимка — окно конуса и группа поверх всего */
+      const wc = $("w-cone"), z0 = wc ? wc.style.zIndex : "", gz0 = g.style.zIndex;
+      if (wc) wc.style.zIndex = 2147483646; g.style.zIndex = 2147483646;
       const nd = tzcGrab(g);
+      if (wc) wc.style.zIndex = z0; g.style.zIndex = gz0;
+      { const miss = [g.querySelector(":scope > .glab"), ...g.querySelectorAll(".cgb button, .cgb select, .cgb label, .cgb .glab2")]
+          .filter(el => el && el.getClientRects().length && tzcItem(el, g.querySelector(".cgb")) === el && !Object.values(nd.o).includes(tzcKey(el, g.querySelector(".cgb")))).length;
+        if (miss) setTimeout(() => say(`△ ${miss} кноп. группы не попали в рисунок (были закрыты или за краем экрана) — их кисти есть, дорисуй в «Сетке» или «↺ как было» и △ ещё раз.`), 50); }
       if (!Object.keys(nd.c).length) { delete Z.triMine; say("△ Группу не видно на экране — прокрути к ней (или вытащи из-под окон) и нажми △ ещё раз."); return; }
       d = Z.cgrpTri[key] = nd;
     }
