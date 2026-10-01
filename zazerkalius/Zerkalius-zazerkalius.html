@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.451. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.452. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.451</title>
+<title>Zazerkalius — v0.452</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -876,6 +876,17 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 #w-cone .tools .cgb button.tz:is(#bAnimPlay,#bConeAuto,#bConeMus,#bC3Auto).on::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
 /* v0.449, «что за квадраты 3?? вот так их можно» (рисунок 237…327): цвета своей гаммы 1 0 а в конусе — трапеции из треугольников (triTag),
    встык друг к другу и к «Своя» / «Янтарь»; заливка — сам цвет, обводка — слоем поверх (::after), знак — по середине */
+/* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
+   не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
+.cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
+.cgrp .gtri:hover{opacity:.85}
+.cgrp .gtri.on{opacity:1;color:var(--gold)}
+#w-cone .tools .cgb.tzc{position:relative}
+#w-cone .tools .cgb.tzc > span:not(.tzk),#w-cone .tools .cgb.tzc > span:not(.tzk) > span:not(.tzk){display:contents !important}
+#w-cone#w-cone .tools .cgb.tzc .tzk{position:absolute !important;margin:0 !important;flex:none !important;min-width:0 !important;max-width:none !important;box-sizing:border-box !important;
+  border-width:0 !important;border-radius:0 !important;box-shadow:none !important;clip-path:var(--tzp) !important;overflow:hidden}
+#w-cone#w-cone .tools .cgb.tzc :is(label,span).tzk:not(.pcol){background:var(--panel2)}
+#w-cone .tools .cgb.tzc > .tzco{position:absolute;left:0;top:0;z-index:5;pointer-events:none;background-repeat:no-repeat;background-size:100% 100%}
 #w-cone .tools #palOwn#palOwn{width:auto !important}
 /* v0.450: просветы между цветами — цветом «Своя»: фон блока, обрезанный шестигранником (остриё «Своя» слева, остриё «а» справа) */
 #w-cone .tools #palOwn#palOwn:has(> label.pcol.tz){background:var(--panel2);clip-path:polygon(var(--t) 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,var(--t) 100%,0 50%)}
@@ -1237,7 +1248,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.451</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.452</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2034,6 +2045,11 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
           <button id="bTriOut" title="▦ Сетка вне групп: пустые треугольники — бледной сеткой (в сетке и в живом виде). Горит — видна">▦ вне групп</button>
           <button id="bTriLiveDef" title="Фон и обводку — как были (по теме страницы)">↺</button>
         </div>
+        <div class="tools" id="triBind" hidden>   <!-- v0.452: сетка привязана к группе конуса (△ в её заголовке) -->
+          <span id="triBindLab" class="dim"></span>
+          <button id="bTriBindOk" title="✓ Готово: выйти из конструктора — раскладка группы остаётся, в сетку возвращается своё">✓ готово</button>
+          <button id="bTriBindReset" title="↺ Как было: группа снова обычным рядом кнопок (рисунок группы забывается)">↺ как было</button>
+        </div>
         <div class="tools" id="triGrp" hidden>   <!-- v0.437: выбранная ☝ группа — своя обводка, сетка внутри, символ -->
           <span id="triGrpLab" class="dim"></span>
           <label class="dim" title="Цвет обводки этой группы">обводка <input id="triGLn" type="color"></label>
@@ -2157,8 +2173,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0451"></script>
-<script src="zz-ui.js?v=0451"></script>
+<script src="zz-core.js?v=0452"></script>
+<script src="zz-ui.js?v=0452"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

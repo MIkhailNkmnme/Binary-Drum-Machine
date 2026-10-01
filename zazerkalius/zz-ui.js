@@ -6906,6 +6906,10 @@ function cgrpInit(){
     if (!Z.cgrpZen || typeof Z.cgrpZen !== "object") Z.cgrpZen = {};
     if (!Z.zenGrpInit) { Z.cgrpZen["дзен"] = true; Z.zenGrpInit = 1; }   // v0.281: группа «Дзен» — видна в дзене с первого раза (дальше — как отметишь 🧘)
     const zb = document.createElement("span"); zb.className = "gzen"; lab.appendChild(zb);
+    { const tb = document.createElement("span"); tb.className = "gtri"; tb.textContent = "△"; lab.appendChild(tb);   // v0.452: конструктор группы в «△ Сетке»
+      tb.title = "△ Конструктор: группа — в окне «△ Сетка» треугольниками; крась и стирай — кнопки встают по рисунку";
+      tb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; tzcOpen(g); });
+      tb.addEventListener("dblclick", (e) => e.stopPropagation()); }
     // v0.367: закрытая группа (Z.cgrpOff) не видна; у «Гаммы» — ✕ закрыть (открыть — «🎨» в шапке)
     if (!Z.cgrpOff || typeof Z.cgrpOff !== "object") Z.cgrpOff = {};
     g.classList.toggle("coff", !!Z.cgrpOff[g.dataset.g]);
@@ -7107,8 +7111,8 @@ function cgbSnap(){
   const W = (k, el) => { const c = el.closest("#w-cone .tools"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };
   const kOf = (w, el) => w <= W(1, el) + 0.5 ? 1 : w <= W(2, el) + 0.5 ? 2 : 4;
   const vis = (el) => el.getClientRects().length > 0;
-  const free = [...document.querySelectorAll(CG_FREE)].filter(vis);
-  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit"));
+  const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk"));   // v0.452: место и размер кнопок конструктора — свои
+  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
   btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width"); el.classList.add("wm"); });   // v0.447: ширина .tz — своя, на замер снять
   const wf = free.map(el => el.getBoundingClientRect().width), wb = btn.map(el => el.getBoundingClientRect().width);
@@ -7522,7 +7526,7 @@ window.addEventListener("load", () => setTimeout(rhombTag, 0));
    треугольников. Зовётся из rhombTag (после каждой раскладки групп). */
 function joinTag(){
   document.querySelectorAll("span.cjoin").forEach(sp => {
-    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON" && !c.hidden);   // v0.425: спрятанные — не в сцепке
+    const e = sp.dataset.ends || "", bs = [...sp.children].filter(c => c.tagName === "BUTTON" && !c.hidden && !c.classList.contains("tzk"));   // v0.452: и не из конструктора   // v0.425: спрятанные — не в сцепке
     bs.forEach((b, i) => {
       const L = e[i], R = e[i + 1], h = parseFloat(getComputedStyle(b).height) || 24;
       /* v0.422, «(стоп) — из скольких собран так: ()()()?» → «2 — подгони все под целые треугольники»: длина кнопки сцепки — целое число
@@ -7605,6 +7609,7 @@ function triTag(){
   document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb")) triOff(b); });
   const bs = [];
   document.querySelectorAll("#w-cone .tools .cgb button, #w-cone .tools #palOwn > label.pcol").forEach(b => {
+    if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
     if (b.tagName === "LABEL") {   // v0.450: цвет своей гаммы — шестигранник из 6 треугольников (n = 2), остриё к острию; просветы — цветом «Своя» (фон блока, CSS)
       b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_TIP; b._tzR = TZ_TIP;
       tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
@@ -7624,7 +7629,7 @@ function triTag(){
     let ch = false;
     bs.forEach(b => {
       if (!vis(b)) return;
-      const p = prevOf(b), lk = !!p && p.classList.contains("tz") && Math.abs(p.getBoundingClientRect().top - b.getBoundingClientRect().top) < 6;
+      const p = prevOf(b), lk = !!p && p.classList.contains("tz") && !p.classList.contains("tzk") && Math.abs(p.getBoundingClientRect().top - b.getBoundingClientRect().top) < 6;
       let L = b._tzL || TZ_TIP;
       if (!b._tzfix) L = lk && tzFits(p._tzR, TZ_NOTCH) ? TZ_NOTCH : TZ_TIP;
       const m = lk && tzFits(p._tzR, L) ? p._tzR[1] + L[1] : 0;
@@ -7634,6 +7639,190 @@ function triTag(){
   }
 }
 { const rt1 = rhombTag; rhombTag = function(){ rt1(); triTag(); }; }
+/* v0.452, по снимкам «Гаммы» и «△ Сетки» — «сделай кнопку рядом с заголовком, маленький значок: при нажатии данная панель отображается
+   конструктором; здесь и тут я правлю руками кнопки». △ в заголовке группы конуса открывает окно «△ Сетка», привязанное к группе: каждая
+   кнопка (и поле, список, цвет) — своя фигура из треугольников своего цвета с подписью. Красишь, стираешь, перекрашиваешь — кнопки группы на
+   странице сразу встают по рисунку: место и форма — ровно те треугольники, что за ней числятся (Z.cgrpTri[группа].o: "r_c" → кнопка).
+   Кому числится треугольник: касающиеся рёбрами одного цвета — одна фигура, она за той кнопкой, за которой большинство её треугольников;
+   фигура без хозяина — за ближайшей кнопкой того же цвета (так кнопка может быть и из нескольких кусков). Обводка — одна линия на стык
+   (слой поверх группы). Что в рисунок не попало — ниже, обычным рядом. Своё (что было в сетке) на время конструктора откладывается
+   (Z.triMine) и возвращается по «✓ готово»; «↺ как было» — группа снова обычным рядом. */
+const TZC_H = 24;
+const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.dataset.g === key) || null;
+function tzcItem(el, cgb){   // элемент группы под точкой: кнопка, поле, список, подпись (не блок-обёртка; попал в обёртку — её первая кнопка)
+  if (!el || el === cgb || !cgb.contains(el)) return null;
+  let x = el;
+  while (x.parentElement && x.parentElement !== cgb) { const p = x.parentElement; if (p.tagName === "SPAN" && !p.closest("button, label, select")) break; x = p; }
+  if (x.classList.contains("tzco")) return null;
+  if (x.tagName === "SPAN" && x.querySelector("button, label, select, input")) return x.querySelector("button") || null;
+  return x;
+}
+function tzcKey(el, cgb){ const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return "@" + p.join("/"); }
+function tzcFind(key, cgb){
+  if (key[0] === "@") { let x = cgb; for (const i of key.slice(1).split("/")) x = x && x.children[+i]; return x || null; }
+  try { return key[0] === "#" && !/[\s[>]/.test(key) ? document.getElementById(key.slice(1)) : document.querySelector(key); } catch (e) { return null; }
+}
+function tzcLabel(el){
+  if (el.tagName === "SELECT") return (el.options[el.selectedIndex] || {}).text || "▾";
+  const t = (el.dataset.lab || el.textContent || "").replace(/\s+/g, " ").trim();
+  return [...t].slice(0, 8).join("") || (el.tagName === "LABEL" ? "▭" : "");
+}
+function tzcGrab(g){   // нынешняя раскладка группы → треугольники: опрос точкой в центре каждого треугольника (elementFromPoint видит и clip-path)
+  const cgb = g.querySelector(".cgb"), rc = cgb.getBoundingClientRect(), hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3));
+  const its = [...cgb.querySelectorAll("button, select, label, .glab2")].filter(el => el.getClientRects().length && tzcItem(el, cgb) === el);
+  const tops = []; its.forEach(el => { const y = el.getBoundingClientRect().top; if (!tops.some(v => Math.abs(v - y) < 8)) tops.push(y); }); tops.sort((a, b) => a - b);
+  let ox = rc.left; const f = its.find(el => el.classList.contains("tz"));
+  if (f) { const X = Math.round((f.getBoundingClientRect().left + (f._tzL ? f._tzL[1] : 0) * t - ox) / t); if (((X % 2) + 2) % 2) ox -= t; }   // острия — в чётных узлах
+  const cols = Math.ceil((rc.width + 2 * t) / t) + 1, o = {}, c = {}, gt = {}, lab = {}, keyOf = new Map();
+  tops.forEach((y0, j) => { for (let rr = 0; rr < 2; rr++) { const r = 2 * j + rr; for (let cc = 0; cc < cols; cc++) {
+    const up = (r + cc) % 2 === 0, cx = ox + (cc + 1) * t, cy = y0 + rr * hh + (up ? 2 / 3 : 1 / 3) * hh;
+    const it = tzcItem(document.elementFromPoint(cx, cy), cgb); if (!it) continue;
+    if (!keyOf.has(it)) keyOf.set(it, tzcKey(it, cgb));
+    o[r + "_" + cc] = keyOf.get(it); } } });
+  // цвета: соседние кнопки — разными (иначе сольются в одну фигуру); горящая — золотом, если можно
+  const nb = {};
+  for (const [k, v] of Object.entries(o)) { const [r, cc] = k.split("_").map(Number);
+    for (const [, , n] of triNb(r, cc)) { const w = o[n[0] + "_" + n[1]]; if (w && w !== v) { (nb[v] = nb[v] || new Set()).add(w); (nb[w] = nb[w] || new Set()).add(v); } } }
+  const ORD = [7, 4, 6, 5, 1, 3, 8, 2], col = {};
+  for (const [it, k] of keyOf) { const busy = new Set([...(nb[k] || [])].map(w => col[w])); col[k] = it.classList.contains("on") && !busy.has(2) ? 2 : (ORD.find(x => !busy.has(x)) || 1); lab[k] = tzcLabel(it); }
+  for (const [k, v] of Object.entries(o)) { c[k] = col[v]; if (lab[v]) gt[k] = lab[v]; }
+  return { o, c, gt, gl: {}, gi: {}, v: 1, on: true };
+}
+function tzcSync(){   // окно → данные группы → кнопки
+  const key = Z.triBind, d = Z.cgrpTri && Z.cgrpTri[key]; if (!d) return;
+  const cp = (x) => Object.assign({}, x || {});
+  d.c = cp(Z.triCells); d.gt = cp(Z.triGTx); d.gl = cp(Z.triGLn); d.gi = cp(Z.triGIn);
+  const o = d.o = d.o || {};
+  for (const k of Object.keys(o)) if (!(d.c[k] | 0)) delete o[k];
+  let R = 0, N = 0; for (const k of Object.keys(d.c)) { const [r, cc] = k.split("_").map(Number); R = Math.max(R, r + 1); N = Math.max(N, cc + 1); }
+  const M = triModel({ R, N, c: d.c }), lone = [];
+  M.comps.forEach(gr => {
+    const n = {}; for (const [r, cc] of gr.cells) { const w = o[r + "_" + cc]; if (w) n[w] = (n[w] | 0) + 1; }
+    const best = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
+    if (best) for (const [r, cc] of gr.cells) o[r + "_" + cc] = best; else lone.push(gr);
+  });
+  lone.forEach(gr => {   // фигура без хозяина — ближайшей кнопке того же цвета
+    let best = null, bd = 1e9;
+    for (const [k, w] of Object.entries(o)) { if ((d.c[k] | 0) !== gr.k) continue; const [r, cc] = k.split("_").map(Number);
+      for (const [a, b] of gr.cells) { const dd = Math.abs(a - r) * 2 + Math.abs(b - cc); if (dd < bd) { bd = dd; best = w; } } }
+    if (best) for (const [r, cc] of gr.cells) o[r + "_" + cc] = best;
+  });
+  d.v = (d.v | 0) + 1;
+  const g = tzcGroup(key); if (g) tzcApply(g);
+}
+function tzcClean(el){
+  el.classList.remove("tzk"); el._tzk = "";
+  for (const k of ["width", "height", "left", "top", "margin", "margin-left", "padding-left", "padding-right", "--tzp", "--lat"]) el.style.removeProperty(k);
+}
+function tzcOff(g){
+  const cgb = g.querySelector(".cgb"); if (!cgb) return;
+  (g._tzcEls || []).forEach(tzcClean); g._tzcEls = []; g._tzcv = -1;
+  cgb.classList.remove("tzc"); cgb.style.removeProperty("padding-top"); cgb.style.removeProperty("min-width");
+  const ov = cgb.querySelector(":scope > .tzco"); if (ov) ov.remove();
+}
+function tzcApply(g){
+  const d = Z.cgrpTri && Z.cgrpTri[g.dataset.g], cgb = g.querySelector(".cgb");
+  if (!cgb || !d || !d.on || !g.closest("#w-cone")) { if (cgb && cgb.classList.contains("tzc")) tzcOff(g); return; }
+  if (g._tzcv === d.v && cgb.classList.contains("tzc")) return;
+  g._tzcv = d.v;
+  const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t, px = (v) => v.toFixed(2) + "px";
+  const by = {}; for (const [k, w] of Object.entries(d.o || {})) (by[w] = by[w] || []).push(k.split("_").map(Number));
+  cgb.classList.add("tzc");
+  const els = [], live = new Set(); let R = 0, N = 0;
+  for (const [w, cells] of Object.entries(by)) {
+    const el = tzcFind(w, cgb); if (!el || !cgb.contains(el) || els.includes(el)) continue;
+    els.push(el); live.add(w);
+    let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1; for (const [r, c] of cells) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
+    R = Math.max(R, r1 + 1); N = Math.max(N, c1 + 2);
+    let p = "";
+    for (const [r, c] of cells) {   // все треугольники — одного обхода, иначе по общим рёбрам виден шов
+      const x = (c - c0) * t, y0 = (r - r0) * hh, y1 = y0 + hh;
+      p += (r + c) % 2 === 0 ? `M${x.toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y1}L${(x + t).toFixed(2)} ${y0}Z` : `M${x.toFixed(2)} ${y0}L${(x + t).toFixed(2)} ${y1}L${(x + s).toFixed(2)} ${y0}Z`;
+    }
+    el.classList.add("tzk"); if (el.tagName === "BUTTON" || el.classList.contains("pcol")) el.classList.add("tz");
+    el._tzk = "";
+    el.style.setProperty("--tzp", `path("${p}")`); el.style.setProperty("--lat", "none");
+    el.style.setProperty("left", px(c0 * t), "important"); el.style.setProperty("top", px(r0 * hh), "important");
+    el.style.setProperty("width", px((c1 + 2 - c0) * t), "important"); el.style.setProperty("height", px((r1 + 1 - r0) * hh), "important");
+    el.style.setProperty("margin", "0", "important"); el.style.removeProperty("margin-left");
+    // подпись — посередине самого большого куска (кнопка бывает из нескольких кусков)
+    const set = new Set(cells.map(([r, c]) => r + "_" + c)), seen = new Set(); let main = [];
+    for (const [r, c] of cells) {
+      const k0 = r + "_" + c; if (seen.has(k0)) continue; const part = [], q = [[r, c]]; seen.add(k0);
+      while (q.length) { const [a, b] = q.shift(); part.push([a, b]); for (const [, , n] of triNb(a, b)) { const nk = n[0] + "_" + n[1]; if (set.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(n); } } }
+      if (part.length > main.length) main = part;
+    }
+    const mc0 = Math.min(...main.map(x => x[1])), mc1 = Math.max(...main.map(x => x[1]));
+    el.style.setProperty("padding-left", px((mc0 - c0) * t + 2), "important"); el.style.setProperty("padding-right", px((c1 - mc1) * t + 2), "important");
+  }
+  (g._tzcEls || []).forEach(el => { if (!els.includes(el)) tzcClean(el); });
+  g._tzcEls = els;
+  cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
+  // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
+  const o = d.o || {}, P = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
+  let ln = "";
+  for (const [k, w] of Object.entries(o)) {
+    if (!live.has(w)) continue;
+    const [r, c] = k.split("_").map(Number), Q = P(r, c);
+    for (const [a, b, n] of triNb(r, c)) {
+      const nk = n[0] + "_" + n[1], v = o[nk]; if (v === w) continue; if (v && live.has(v) && nk < k) continue;
+      ln += `M${Q[a][0].toFixed(2)} ${Q[a][1]}L${Q[b][0].toFixed(2)} ${Q[b][1]}`;
+    }
+  }
+  let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
+  const W = Math.max(1, N * t), H = Math.max(1, R * hh);
+  ov.style.width = px(W); ov.style.height = px(H);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${ln}" stroke="rgba(232,235,242,.8)" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
+  ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+function tzcIcons(){
+  document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
+}
+function tzcAll(){ document.querySelectorAll(".cgrp").forEach(g => { if (g.dataset.g) tzcApply(g); }); tzcIcons(); }
+function tzcMine(){   // вернуть в сетку своё, отложенное на время конструктора
+  const m = Z.triMine || {};
+  Z.triCells = m.c || {}; Z.triGLn = m.gl || {}; Z.triGIn = m.gi || {}; Z.triGTx = m.gt || {}; Z.triCur = m.cur != null ? m.cur : -1; Z.triSel = m.sel || null;
+  Z.triBind = null; delete Z.triMine;
+}
+function tzcOpen(g){
+  if (!g.closest("#w-cone")) { say("△ Конструктор — пока для групп в окне конуса."); return; }
+  const key = g.dataset.g; if (!Z.cgrpTri || typeof Z.cgrpTri !== "object") Z.cgrpTri = {};
+  triState();
+  if (Z.triBind && Z.triBind !== key) tzcClose(true);
+  if (Z.triBind !== key) {
+    Z.triMine = { c: Z.triCells, gl: Z.triGLn, gi: Z.triGIn, gt: Z.triGTx, cur: Z.triCur, sel: Z.triSel };
+    let d = Z.cgrpTri[key];
+    if (!d || !d.c || !Object.keys(d.c).length) d = Z.cgrpTri[key] = tzcGrab(g);
+    d.on = true;
+    const cp = (x) => Object.assign({}, x || {});
+    Z.triCells = cp(d.c); Z.triGTx = cp(d.gt); Z.triGLn = cp(d.gl); Z.triGIn = cp(d.gi); Z.triCur = -1; Z.triSel = null; Z.triBind = key;
+    let N = 0, R = 0; for (const k of Object.keys(d.c)) { const [r, c] = k.split("_").map(Number); R = Math.max(R, r + 1); N = Math.max(N, c + 1); }
+    if (typeof window.zzWinShow === "function") window.zzWinShow("w-tri");
+    const cv = $("triCv"), W = (cv && cv.clientWidth) || 600, H = (cv && cv.clientHeight) || 300;
+    Z.triS = Math.max(TRI_S1, Math.min(60, (W - 20) * 2 / (N + 2), (H - 20) / (R + 1) / (Math.sqrt(3) / 2)));   // вся группа — в окне
+  }
+  save(); renderTri(); tzcAll();
+  say(`△ «${key}» — в конструкторе: крась и стирай треугольники, кнопки встают по рисунку; цвет соседки — кусок отходит ей. Выход — ✓ готово в «Сетке».`);
+}
+function tzcClose(quiet){
+  if (!Z.triBind) return;
+  tzcSync(); tzcMine();
+  save(); renderTri(); tzcAll();
+  if (!quiet) say("△ Конструктор закрыт — раскладка группы осталась; вернуть обычный ряд — △ и «↺ как было».");
+}
+function tzcReset(){
+  const key = Z.triBind; if (!key) return;
+  delete Z.cgrpTri[key]; const g = tzcGroup(key);
+  tzcMine(); if (g) tzcOff(g);
+  save(); renderTri(); if (typeof rhombTag === "function") rhombTag(); tzcIcons();
+  say(`△ «${key}» — снова обычным рядом.`);
+}
+{ const r0 = renderTri; renderTri = function(){ r0(); const b = $("triBind"); if (b) { b.hidden = !Z.triBind; if (Z.triBind) $("triBindLab").textContent = `△ конструктор: ${Z.triBind}`; } if (Z.triBind) tzcSync(); tzcIcons(); }; }
+if ($("bTriBindOk")) $("bTriBindOk").onclick = () => tzcClose();
+if ($("bTriBindReset")) $("bTriBindReset").onclick = () => tzcReset();
+{ const rt2 = rhombTag; rhombTag = function(){ rt2(); tzcAll(); }; }
+window.addEventListener("load", () => setTimeout(() => { triState(); if (Z.triBind && !tzcGroup(Z.triBind)) tzcMine(); tzcAll(); }, 0));
+
 function soloApply(){
   const el = $(ZZ_SOLO); if (!el) return;
   document.body.classList.add("solo");
@@ -8674,6 +8863,7 @@ function init(){
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
     el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800);
   };
+  window.zzWinShow = winShow;   // v0.452: конструктор открывает «△ Сетку»
   $("pinBar").onclick = (e) => {
     const b = e.target.closest("button[data-k]"); if (!b) return;
     const p = Z.pins[+b.dataset.k]; if (!p) return;
