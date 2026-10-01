@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.448. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.449. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.448</title>
+<title>Zazerkalius — v0.449</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -874,6 +874,13 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 #w-cone .tools .cgb button.tz.tz.tz.tzar{padding:0 !important;color:transparent !important;text-shadow:none !important}
 /* «идёт само» (▶ волна, ▶ крутить, ♫) — рамки нет, мигает заливка: слой поверх фона, под надписью (как в сцепке, v0.428) */
 #w-cone .tools .cgb button.tz:is(#bAnimPlay,#bConeAuto,#bConeMus,#bC3Auto).on::after{content:"";position:absolute;inset:0;z-index:-1;background:var(--gold);pointer-events:none;animation:zRunOv 1.1s ease-in-out infinite}
+/* v0.449, «что за квадраты 3?? вот так их можно» (рисунок 237…327): цвета своей гаммы 1 0 а в конусе — трапеции из треугольников (triTag),
+   встык друг к другу и к «Своя» / «Янтарь»; заливка — сам цвет, обводка — слоем поверх (::after), знак — по середине */
+#w-cone .tools #palOwn#palOwn{width:auto !important}
+#w-cone .tools #palOwn#palOwn > label.pcol.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;border-width:0 !important;border-radius:0 !important;
+  clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%)}
+#w-cone .tools #palOwn#palOwn > label.pcol.tz::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--lat, none) 0 0 / 100% 100% no-repeat}
+#w-cone .tools #palOwn#palOwn > label.pcol.tz > span{left:0;right:0;top:0;bottom:0;z-index:3;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1}
 #w-cone .tools .cgb button:not(.zerk-arrow),#w-cone .tools .cgb select,#w-cone .tools .cgb label:has(> input[type=checkbox]),#paneGrp .cgb button:not(.zerk-arrow),#paneGrp .cgb select,#paneGrp .cgb label:has(> input[type=checkbox]){width:var(--bu) !important;min-width:0 !important;max-width:none !important;flex:0 0 auto !important;box-sizing:border-box;overflow:hidden}
 #w-cone .tools .cgb button.ib:not(.zerk-arrow),#paneGrp .cgb button.ib:not(.zerk-arrow){width:calc((var(--bu) - 3px) / 2) !important;padding:0 !important}
 #w-cone .tools .cgb select,#paneGrp .cgb select{padding-left:3px !important;padding-right:0 !important}
@@ -1227,7 +1234,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.448</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.449</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2147,8 +2154,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0448"></script>
-<script src="zz-ui.js?v=0448"></script>
+<script src="zz-core.js?v=0449"></script>
+<script src="zz-ui.js?v=0449"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
