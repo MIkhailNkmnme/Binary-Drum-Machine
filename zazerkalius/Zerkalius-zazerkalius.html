@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.486. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.487. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.486</title>
+<title>Zazerkalius — v0.487</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -910,7 +910,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    во всю высоту, по краям: ◂ — остриём в левое остриё ползунка, ▸ — в правое; между ними значок и дорожка. Обёртка стрелок — display: contents,
    порядок — order (◂ первой, ▸ последней) */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap){padding-left:0 !important;padding-right:0 !important;gap:0 !important;background-color:transparent !important}   /* по рисунку — без своей заливки и обводки */
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz:has(> .zerk-range-wrap)::after{content:none !important}
+/* v0.487, «у ползунков… верни им обводку»: обводка по контуру — как у кнопок (снята была в v0.464) */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap{display:contents !important}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{order:1;flex:1 1 0 !important;width:auto !important;min-width:0 !important;margin:0 calc(-1 * var(--t)) !important;position:relative;z-index:1}   /* v0.473: у краёв бегунок остриём — в выемку стрелки */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > .zerk-arrow{flex:0 0 auto !important;align-self:stretch;width:calc(3 * var(--t)) !important;height:24px !important;margin:0 !important;padding:0 !important;
@@ -923,9 +923,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    треугольника и высотой в ряд, цветом акцента; дорожка — тонкая линия по средней черте; стрелки и линия — цветом группы (--gfc), своей заливки у
    ползунка нет (по рисунку: «<» —◆— «>») */
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]{-webkit-appearance:none;appearance:none;height:24px;margin:0;padding:0;background:transparent;cursor:pointer}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--gfc, var(--txt));border:0}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-track{height:2px;background:var(--gfc, var(--txt));border:0}
-:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(4 * var(--t, 6.93px));height:24px;margin-top:-11px;border:0;border-radius:0;
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--gfc, var(--txt));border:0}   /* v0.487: «горизонт тоньше» */
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-track{height:1px;background:var(--gfc, var(--txt));border:0}
+:is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:calc(4 * var(--t, 6.93px));height:24px;margin-top:-11.5px;border:0;border-radius:0;
   background:var(--acc);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]::-moz-range-thumb{width:calc(4 * var(--t, 6.93px));height:24px;border:0;border-radius:0;background:var(--acc);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
 :is(#w-cone .tools, #paneGrp) .cgb label.tz.tz.tz > .zerk-range-wrap > input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
@@ -1365,7 +1365,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.486</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.487</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2300,8 +2300,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0486"></script>
-<script src="zz-ui.js?v=0486"></script>
+<script src="zz-core.js?v=0487"></script>
+<script src="zz-ui.js?v=0487"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
