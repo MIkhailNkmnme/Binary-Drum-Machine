@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.044 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.043</title>
+    <title>Zerkalius Треугольник v0.044</title>
     <style>
         /* 35.32: девять добавочных шрифтов холста лежат в самом проекте — _fonts/js/*.js (base64 внутри скрипта),
            и работают без интернета, в том числе когда страница открыта файлом с диска. См. CODE_FONTS в скрипте. */
@@ -401,7 +401,7 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.043</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.044</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -470,6 +470,7 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                     <label style="color:#ffcc00; text-align:center;">Генератор Форм</label>
                     <select id="zerkRuleSelect" style="margin: 4px 0; background: #222;">
                         <option value="90">Правило 90 (Классика)</option>
+                        <option value="pascal" title="Треугольник Паскаля по модулю 2: каждая строка на 1 бит длиннее (n бит → n + 1), бит — XOR двух соседних сверху. Это Правило 90 без нулей чужой шахматки, сжатое вдвое по ширине; строки по центру, со сдвигом на полсимвола">🔺 Паскаль mod 2 (+1 бит)</option>
                         <option value="30">Правило 30 (Хаос)</option>
                         <option value="110">Правило 110 (Правый Сдвиг)</option>
                         <option value="18">Правило 18 (Серпинский V2)</option>
@@ -2017,7 +2018,24 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                 let rule = UI.zerkRuleSelect.value;
                 let matrix = [];
                 
-                if (rule === 'orbital') {
+                if (rule === 'pascal') {
+                    // v0.044: треугольник Паскаля по модулю 2 от сида — строка на бит длиннее: обкладка нулями
+                    // по краям и XOR каждой пары (как 🔺+1 в Zazerkalius). Строки разной длины, рисуются
+                    // по центру — каждая сдвинута на полсимвола. Без «Обрезать фон» строки дополняются нулями
+                    // с обеих сторон почти до прямоугольника (длины через одну отличаются на 1: иначе сдвиг пропал бы).
+                    let row = /^[01]+$/.test(seed) ? seed : '1';
+                    const W = row.length + h - 1;
+                    for (let y = 0; y < h; y++) {
+                        let t = row;
+                        if (!UI.trimZerosCheck.checked) { const k = Math.floor((W - t.length) / 2); t = '0'.repeat(k) + t + '0'.repeat(k); }
+                        else if (t.indexOf('1') === -1) t = ' '.repeat(t.length);
+                        else t = ' '.repeat(t.indexOf('1')) + t.slice(t.indexOf('1'), t.lastIndexOf('1') + 1) + ' '.repeat(t.length - 1 - t.lastIndexOf('1'));
+                        matrix.push(t.split(''));
+                        const q = '0' + row + '0'; let nx = '';
+                        for (let i = 0; i + 1 < q.length; i++) nx += q[i] === q[i + 1] ? '0' : '1';
+                        row = nx;
+                    }
+                } else if (rule === 'orbital') {
                     for(let y=0; y<h; y++) {
                         let len = 2 + y * 4; 
                         let rowStr = "";
@@ -2095,11 +2113,11 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                 }
 
                 let shape = matrix.map(row => { return { text: row.join(''), color: ''}; });
-                let names = { 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
-                this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`);
+                let names = { 'pascal': 'Паскаль mod 2', 'ziggurat': 'Зиккурат', 'vortex': 'Воронка 3D', 'orbital': 'Орбитальный Конус', 'diagonal': 'Диагональная Сетка' };
+                this.implantOrReplace(shape, names[rule] || `Фрактал (R${rule})`, rule === 'pascal');
             },
 
-            implantOrReplace: function(shape, sourceName) {
+            implantOrReplace: function(shape, sourceName, centerRows) {
                 let symStatus = MODULE_ALGORITHMS.checkSymmetry(shape);
 
                 if (UI.implantModeCheck.checked && MODULE_STATE.originalLines.length > 0) {
@@ -2114,7 +2132,8 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                     for(let i=0; i<shH; i++) {
                         if(startY+i >= 0 && startY+i < bgH) {
                             let bgStr = MODULE_STATE.originalLines[startY+i].text;
-                            let shStr = shape[i].text.padEnd(shW, ' ');
+                            // v0.044: строки разной длины (Паскаль) — по центру фигуры, а не от левого края
+                            let shStr = centerRows ? (' '.repeat(Math.floor((shW - shape[i].text.length) / 2)) + shape[i].text).padEnd(shW, ' ') : shape[i].text.padEnd(shW, ' ');
                             
                             let newStrArr = bgStr.split('');
                             for(let k=0; k<shStr.length; k++) {
@@ -3301,6 +3320,10 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                    шахматки (бывают: «1 10101 1») — маленьким ромбом в клетке поверх, в узле, где сходятся четыре больших. Прежний вид — «◇ ромб в клетке». */
                 const rhNest = glyphShape === 'rh', rhAny = rhNest || glyphShape === 'rhc';
                 const latC0 = rhNest && MODULE_STATE.lines[0] ? RHOMBS.apex(MODULE_STATE.lines[0].text || '') : null, latPar = latC0 === null ? -1 : latC0 & 1;
+                // v0.044: строки через одну разной чётности длины (🔺 Паскаль mod 2) стоят по центру со сдвигом на полсимвола —
+                // шахматки нет, каждый бит — ромб в символ шириной и в две строки высотой, соседние ряды вкладываются друг в друга
+                const L0 = MODULE_STATE.lines[0], L1 = MODULE_STATE.lines[1];
+                const rhHalf = rhNest && !!L0 && !!L1 && ((L0.text.length - L1.text.length) & 1) === 1;
                 // v0.041: обводка клеток — контуры клеток-битов в один путь, штрих 1 px в конце кадра (не «Сетка-фон»)
                 const cellGridPath = document.getElementById('cellGridCheck')?.checked ? new Path2D() : null;
                 const bitCols = (document.getElementById('bitColorsCheck')?.checked || shapeMode) && !isCrypto && activeTheme !== 'mutation';
@@ -3685,8 +3708,8 @@ VERSION: v0.043 (копия Zerkalius Code 35.74 целиком — отправ
                         if (cAlpha <= 0.01) continue; 
                         if (gridHide) occCells.push(x, y);   // 35.66, 35.72
                         if (shapeMode) cAlpha = 1;   // v0.020: фигурой — полная яркость
-                        const big = rhNest && (latPar < 0 || ((actualIdx + (visibleLines[i].globalIndex || 0)) & 1) === latPar);   // v0.043: ромб на две строки
-                        const cw2 = big ? charW : charW / 2, ch2 = big ? lineSpacing : lineSpacing / 2;
+                        const big = rhNest && (rhHalf || latPar < 0 || ((actualIdx + (visibleLines[i].globalIndex || 0)) & 1) === latPar);   // v0.043: ромб на две строки
+                        const cw2 = big && !rhHalf ? charW : charW / 2, ch2 = big ? lineSpacing : lineSpacing / 2;
                         if (cellGridPath && !tinyGlyph) {   // v0.041: контур клетки — ромб или прямоугольник клетки
                             const hw = cw2, hh = ch2;
                             if (rhAny) { cellGridPath.moveTo(x, y - hh); cellGridPath.lineTo(x + hw, y); cellGridPath.lineTo(x, y + hh); cellGridPath.lineTo(x - hw, y); cellGridPath.closePath(); }
