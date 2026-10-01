@@ -7565,25 +7565,48 @@ function joinTag(){
    целых треугольников (класс .tz, см. CSS). Обычная — шестигранник: острия с обоих концов, длина — n сторон s по средней черте (полкнопки .ib —
    3, кнопка — 6, .w2 — 12, .w4 — 24); ◀ ▶ — шеврон из 4 треугольников (3t: выемка с одной стороны, остриё с другой); ▲ ▼ — как были (rhombTag).
    Внутри — сетка треугольников (как joinTag). Ушла из конуса (группа на левой панели) — форма снимается. Счёт — раз на вид кнопки (b._tzk) */
-function triOff(b){ b.classList.remove("tz", "tzar"); b.style.removeProperty("width"); b.style.removeProperty("--lat"); b._tzk = ""; }
+/* v0.448, по снимку «Своя» (сетка видна) и рисунку цепочки 215…303 — «внутри кнопок не надо сетку, все кнопки без зазора — прижать друг к другу,
+   разделяй их обводкой»: сетки внутри нет; кнопки ряда сцеплены — остриё одной входит в выемку следующей (следующая заходит на t, как в сцепке
+   «Звука»), первая в строке (или после поля, списка, подписи) — остриём. Граница — светлая обводка по контуру каждой кнопки (у соседей она общая).
+   Сцепка считается по раскладке (одна строка — один верх), длина кнопки от неё не меняется: шаг всегда n сторон. */
+function triOff(b){ b.classList.remove("tz", "tzar"); ["width", "margin-left", "--lat"].forEach(k => b.style.removeProperty(k)); b._tzk = ""; b._tzln = b._tzov = false; }
+function tzGeo(b){   // форма по b._tzar (стрелка), b._tzn (сторон), b._tzln (выемка слева), b._tzov (заходит на t в соседа слева)
+  const h = parseFloat(getComputedStyle(b).height) || 24, ar = b._tzar, n = b._tzn, ln = !!b._tzln, ov = !!b._tzov;
+  const key = [ar || "", n, h, +ln, +ov].join();
+  if (b._tzk === key && b.classList.contains("tz")) return;
+  b._tzk = key;
+  const t = h / (2 * Math.sqrt(3)), tip = [t, 0, t], notch = [0, t, 0], px = (v) => v.toFixed(2) + "px";
+  const L = ln ? notch : tip, R = ar === "l" ? notch : tip, W = L[1] + R[1] + 2 * n * t;
+  b.classList.remove("rh1", "tri-l", "tri-r"); b.classList.add("tz"); b.classList.toggle("tzar", !!ar);
+  [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]], ["--t", t]].forEach(([k, v]) => b.style.setProperty(k, px(v)));
+  b.style.setProperty("width", px(W), "important");
+  if (ov) b.style.setProperty("margin-left", px(-t), "important"); else b.style.removeProperty("margin-left");
+  const pts = [[L[0], 0], [W - R[0], 0], [W - R[1], h / 2], [W - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => x.toFixed(2) + "," + y).join(" ");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="rgba(232,235,242,.8)" stroke-width="2" fill="none"/></svg>`;
+  b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+}
 function triTag(){
   document.querySelectorAll("button.tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb")) triOff(b); });
+  const bs = [];
   document.querySelectorAll("#w-cone .tools .cgb button").forEach(b => {
     const ar = RH_TRI[b.textContent.trim()];
     if (b.classList.contains("zerk-arrow") || b.closest(".cjoin") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
-    const h = parseFloat(getComputedStyle(b).height) || 24, t = h / (2 * Math.sqrt(3));
-    const n = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6, key = (ar || "") + n + "|" + h;
-    if (b._tzk === key && b.classList.contains("tz")) return;
-    b._tzk = key;
-    const L = ar === "r" ? [0, t, 0] : [t, 0, t], R = ar === "l" ? [0, t, 0] : [t, 0, t], W = L[1] + R[1] + 2 * n * t, px = (v) => v.toFixed(2) + "px";
-    b.classList.remove("rh1", "tri-l", "tri-r"); b.classList.add("tz"); b.classList.toggle("tzar", !!ar);
-    [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]], ["--t", t]].forEach(([k, v]) => b.style.setProperty(k, px(v)));
-    b.style.setProperty("width", px(W), "important");
-    let d = `M0 ${h / 2}H${W.toFixed(2)}`;
-    for (let M = L[1] - 2 * t; M <= W + 2 * t; M += 2 * t) d += `M${(M - t).toFixed(2)} 0L${(M + t).toFixed(2)} ${h}M${(M + t).toFixed(2)} 0L${(M - t).toFixed(2)} ${h}`;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><path d="${d}" stroke="rgba(216,221,232,.2)" stroke-width="1" fill="none"/></svg>`;
-    b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+    b._tzar = ar; b._tzn = ar ? 1 : b.classList.contains("ib") ? 3 : b.classList.contains("w4") ? 24 : b.classList.contains("w2") ? 12 : 6;
+    if (ar === "r") b._tzln = true; else if (ar === "l") b._tzln = false;
+    tzGeo(b); bs.push(b);
   });
+  for (let pass = 0; pass < 2; pass++) {   // сцепка — по раскладке; у стрелок шаг от неё меняется (3t / 2t), поэтому второй проход
+    let ch = false;
+    bs.forEach(b => {
+      if (!b.getClientRects().length) return;
+      let p = b.previousElementSibling; while (p && !p.getClientRects().length) p = p.previousElementSibling;
+      const lk = !!p && p.classList.contains("tz") && Math.abs(p.getBoundingClientRect().top - b.getBoundingClientRect().top) < 6;
+      const pTip = lk && RH_TRI[p.textContent.trim()] !== "l";
+      const ln = b._tzar === "r" ? true : b._tzar === "l" ? false : pTip, ov = lk && pTip === ln;
+      if (ln !== !!b._tzln || ov !== !!b._tzov) { b._tzln = ln; b._tzov = ov; tzGeo(b); ch = true; }
+    });
+    if (!ch) break;
+  }
 }
 { const rt1 = rhombTag; rhombTag = function(){ rt1(); triTag(); }; }
 function soloApply(){
