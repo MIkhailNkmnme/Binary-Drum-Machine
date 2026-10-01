@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.497. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.498. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.497</title>
+<title>Zazerkalius — v0.498</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -986,9 +986,8 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz.tzk{position:absolute !important;margin:0 !important;clip-path:var(--tzp) !important;z-index:6}
 /* v0.490, «эти кнопки как все сделай размером» (🔴 неп. ⇄, 🟢 неп. ⇄🔁): кнопка с data-w1 — всегда обычного размера (замер её не удваивает), надпись — плотнее */
 :is(#w-cone .tools, #paneGrp) .cgb button.tz.tz.tz[data-w1]{font-size:11px !important;letter-spacing:-.3px;padding-left:calc(var(--t) + 1px) !important;padding-right:var(--t) !important;text-overflow:clip}
-/* v0.496 / v0.497, «сделай её в цвет фона холста» (▱ в шапке, html.noln): рамка группы — цветом фона; обводки кнопок, заголовков, колец и стыков
-   красит JS (tzLnBg) */
-html.noln :is(#w-cone .tools, #paneGrp) .cgrp.tzg::before{background:var(--bg) !important}
+/* v0.496 / v0.497, «сделай её в цвет фона холста» (▱ в шапке, html.noln): обводки кнопок, заголовков, колец и стыков — цветом фона (красит JS, tzLnBg);
+   v0.498, «сделай её толще, а обводку всей группы сделай цветом»: швы — 2 px с каждой кнопки, рамка группы — снова цветом группы */
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1376,7 +1375,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.497</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.498</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2312,8 +2311,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0497"></script>
-<script src="zz-ui.js?v=0497"></script>
+<script src="zz-core.js?v=0498"></script>
+<script src="zz-ui.js?v=0498"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

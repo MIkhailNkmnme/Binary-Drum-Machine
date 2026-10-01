@@ -7650,7 +7650,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   if (b.tagName === "LABEL") b.style.setProperty("flex", "0 0 " + px(W), "important");
   if (m) b.style.setProperty("margin-left", px(-m * t - 1), "important"); else b.style.removeProperty("margin-left");
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="${b._gcol || "rgba(232,235,242,.8)"}" stroke-width="2" fill="none"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="${b._gcol || "rgba(232,235,242,.8)"}" stroke-width="${Z.noLn ? 4 : 2}" fill="none"/></svg>`;   // v0.498: цветом фона — толще (видно 2 px)
   b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   // v0.467: маска толстой обводки нажатой (видна внутренняя половина — 2,5 px), цвет даёт CSS
   const so = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="#000" stroke-width="5" fill="none"/></svg>`;
@@ -8027,14 +8027,14 @@ function tzcApply(g){
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
   /* v0.465, «жирная обводка — и перекрывает обводку других кнопок»: обводка ⬚ — только ВНУТРИ своей области (линия двойной толщины, обрезанная по
      области): на соседние кнопки не заходит, видимая толщина — ровно «═» */
-  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { col: tzcGcol(g), w: 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
+  hull += tzcRingPaths(o2, live, (d.rings || []).map((rg, i) => Object.assign({}, rg, { col: tzcGcol(g), w: Z.noLn ? 2 : 1 })), Pg).map((h, i) => `<clipPath id="tzr${i}"><path d="${h.f}"/></clipPath><path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${2 * h.w}" stroke-linecap="round" fill="none" clip-path="url(#tzr${i})"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
       hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${w || Z.triLW || 2}" stroke-linecap="round"/>`;
     } }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="1" stroke-linecap="round" fill="none" transform="translate(0 0.5)"/>${hull}</svg>`;   // v0.491: линия стыка — 1 px по пикселю
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="${Z.noLn ? 3 : 1}" stroke-linecap="round" fill="none" transform="translate(0 0.5)"/>${hull}</svg>`;   // v0.491: линия стыка — 1 px по пикселю
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
   if (typeof tzHandle === "function") tzHandle(g);   // v0.484: ромб-ручка — на последней кнопке
 }
@@ -10124,7 +10124,7 @@ function init(){
      конструктора) другие или как были. Z.noLn, по умолчанию — включено. v0.497, «сделай её в цвет фона холста»: не прозрачные, а цветом фона (tzLnBg) */
   if (Z.noLn === undefined) Z.noLn = true;
   const lnUi = () => { document.documentElement.classList.toggle("noln", !!Z.noLn); $("bLn").classList.toggle("on", !Z.noLn);
-    $("bLn").title = Z.noLn ? "▱ Обводки кнопок и групп — цветом фона холста; щелчок — цветом группы" : "▱ Обводки кнопок и групп — цветом группы; щелчок — цветом фона холста"; };
+    $("bLn").title = Z.noLn ? "▱ Обводки кнопок — толще, цветом фона холста (рамка группы — её цветом); щелчок — цветом группы" : "▱ Обводки кнопок — цветом группы; щелчок — цветом фона холста"; };
   lnUi();
   $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); if (typeof triTag === "function") triTag(); if (typeof tzcAll === "function") tzcAll(); say(Z.noLn ? "▱ Обводки — цветом фона холста." : "▱ Обводки — цветом группы."); };
   // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
