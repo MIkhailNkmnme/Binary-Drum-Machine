@@ -7586,13 +7586,16 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   const key = [L, R, n, h, m, b._tzar || ""].join("|");
   if (b._tzk === key && b.classList.contains("tz")) return;
   b._tzk = key;
-  const t = h / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t;
+  const t = h / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);
+  /* v0.451, «убери двойную обводку между кнопками»: у сцепленных каждая обводила общий край со своей стороны, и между линиями просвечивал
+     тёмный шов (сглаживание двух краёв). Теперь следующая заходит на соседку ещё на 1 px (шире на 1 px — шаг тот же) и её край ложится поверх
+     линии соседки: стык — одна линия, без шва */
   b.classList.remove("rh1", "tri-l", "tri-r"); b.classList.add("tz"); b.classList.toggle("tzar", !!b._tzar);
   [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]]].forEach(([k, v]) => b.style.setProperty(k, px(v * t)));
   b.style.setProperty("--t", px(t));
   b.style.setProperty("width", px(W), "important");
   if (b.tagName === "LABEL") b.style.setProperty("flex", "0 0 " + px(W), "important");
-  if (m) b.style.setProperty("margin-left", px(-m * t), "important"); else b.style.removeProperty("margin-left");
+  if (m) b.style.setProperty("margin-left", px(-m * t - 1), "important"); else b.style.removeProperty("margin-left");
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="rgba(232,235,242,.8)" stroke-width="2" fill="none"/></svg>`;
   b.style.setProperty("--lat", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
