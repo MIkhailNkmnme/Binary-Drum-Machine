@@ -7803,7 +7803,7 @@ function tzcLabels(){   // надпись кнопки в сетке — одн�
   { const vis = {}; for (const [k, w] of Object.entries(vo)) { const [r, c] = k.split("_").map(Number); if (r < Z.triR && c < Z.triN) vis[k] = w; }
     const lv = new Set(Object.values(vis));
     g.lineCap = "round"; if (!tzcManual(d)) for (const h of tzcHulls(vis, lv, d.items || [], triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }
-    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.strokeStyle = h.col; g.lineWidth = 3; g.stroke(new Path2D(h.d)); }   // v0.459
+    for (const h of tzcRingPaths(vis, lv, d.rings, triPts)) { g.strokeStyle = h.col; g.lineWidth = h.w * triGeo.s / TRI_S1; g.stroke(new Path2D(h.d)); }   // v0.459
     if (tzcPick && tzcSel.size) for (const h of tzcRingPaths(vis, lv, [{ items: [...tzcSel], col: "#fff" }], triPts)) {   // выбранные — пунктиром
       g.save(); g.strokeStyle = "#fff"; g.lineWidth = 2.5; g.setLineDash([6, 4]); g.stroke(new Path2D(h.d)); g.restore(); } }
   g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(9, Math.min(22, triGeo.s * 0.42))}px Segoe UI, Arial`; g.fillStyle = "#0e1116";
@@ -7895,7 +7895,7 @@ function tzcApply(g){
   const Pg = (r, c) => { const x = c * t, y0 = r * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
   const manual = tzcManual(d);   // v0.457 / v0.459: своя обводка (╱ или ⬚) — общая граница сама не рисуется
   let hull = manual ? "" : tzcHulls(o2, live, d.items || [], Pg).map(h => `<path d="${h.d}" stroke="${h.col}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
-  hull += tzcRingPaths(o2, live, d.rings, Pg).map(h => `<path d="${h.d}" stroke="${esc(h.col)}" stroke-width="2.5" stroke-linecap="round" fill="none"/>`).join("");
+  hull += tzcRingPaths(o2, live, d.rings, Pg).map(h => `<path d="${h.d}" stroke="${esc(h.col)}" stroke-width="${h.w}" stroke-linecap="round" fill="none"/>`).join("");
   if (d.l && Object.keys(d.l).length) { const sh = {}; its.forEach(it => { sh[it.w] = [it.dr, it.dc]; });
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue;
@@ -7936,7 +7936,7 @@ function tzcRingPaths(o, live, rings, P){   // обводка — граница
     for (const [r, [c0, c1]] of Object.entries(rows)) for (let c = c0; c <= c1; c++) H.add(r + "_" + c);
     for (const k of H) { const [r, c] = k.split("_").map(Number), Q = P(r, c);
       for (const [a, b, n] of triNb(r, c)) if (!H.has(n[0] + "_" + n[1])) d += `M${Q[a][0].toFixed(2)} ${Q[a][1].toFixed(2)}L${Q[b][0].toFixed(2)} ${Q[b][1].toFixed(2)}`; }
-    out.push({ d, col: rg.col || "#ffd166" });
+    out.push({ d, col: rg.col || "#ffd166", w: rg.w > 0 ? rg.w : 1.5 });   // v0.464: толщина — своя у обводки (═ при создании), прежние — 1,5
   }
   return out;
 }
@@ -8033,7 +8033,7 @@ function tzcPreview(){
   }
   x.strokeStyle = "rgba(232,235,242,.8)"; x.lineWidth = 1.5; x.lineCap = "round"; x.stroke(new Path2D(tzcEdges(o, live, pad, pad)));
   if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
-    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }
+    for (const h of tzcRingPaths(o, live, d.rings, P)) { x.strokeStyle = h.col; x.lineWidth = h.w; x.stroke(new Path2D(h.d)); }
     for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcCol(k); if (!col) continue; const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
       x.strokeStyle = col; x.lineWidth = w || Z.triLW || 2; x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
   } else for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
@@ -8050,12 +8050,12 @@ function tzcPreview(){
 }
 /* v0.463, «и края самих полей групп теми же ромбами надо»: группа (окно конуса и левая панель) — с зубчатыми боками из тех же треугольников:
    на каждые 24 px высоты (ряд кнопок) — остриё наружу, как у кнопки; верх и низ ровные. Форма — clip-path (--gclip), рамка — слой ::before цветом
-   прежней рамки группы (--gfc), обрезанный маской по контуру (--gmask). Пересчёт — при каждом изменении размера группы */
+   заголовка группы (--gfc; с v0.464 — цвет её надписи, прежде — её рамки), обрезанный маской по контуру (--gmask). Пересчёт — при каждом изменении размера группы */
 function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
   const W = g.offsetWidth, H = g.offsetHeight; if (!W || !H) return;
-  const fc = getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + fc;
+  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + fc;   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
   if (g._tzgk === key && g.classList.contains("tzg")) return;
   g._tzgk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
@@ -8063,7 +8063,7 @@ function tzgFrame(g){
   const pts = [...ys.map(y => [zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
   g.classList.add("tzg");
   g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2.5"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;   // v0.464: рамка группы тоньше — видна половина, 1 px
   g.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   g.style.setProperty("--gfc", fc);
 }
@@ -8133,7 +8133,7 @@ if ($("bTriRing")) $("bTriRing").onclick = () => {   // v0.459: режим вы�
   if (!tzcPick) { tzcPick = true; tzcSel.clear(); say("⬚ Щёлкай кнопки в сетке — выбрать (ещё щелчок — снять). Нажми «⬚» ещё раз — выбранные получат одну обводку цветом из поля рядом."); }
   else {
     tzcPick = false;
-    if (tzcSel.size) { (d.rings = d.rings || []).push({ items: [...tzcSel], col: $("triRingCol").value || "#ffd166" }); say(`⬚ Обведено кнопок: ${tzcSel.size}.`); }
+    if (tzcSel.size) { (d.rings = d.rings || []).push({ items: [...tzcSel], col: $("triRingCol").value || "#ffd166", w: Z.triLW > 0 ? Z.triLW : 1.5 }); say(`⬚ Обведено кнопок: ${tzcSel.size}.`); }
     tzcSel.clear();
   }
   save(); renderTri();
