@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.019. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.020. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.019</title>
+<title>Zerkalius Пирамида — v0.020</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -99,6 +99,12 @@
   возрастанию q — сначала самые простые (q = 1 — стоит, q = 2 — двоится, q — столько положений по кругу). Первая — с ⟲ и ⟳ по
   бокам (± min(0,5; 0,2 % скорости) — ползёт назад / вперёд), ещё до трёх — следом. На медленных участках q большое
   (сотни положений) — там уже обычное вращение, но точку всё равно видно.
+  v0.020, «сделай перемещаемой, кнопки в стандарте ромбов, как последние правки в Zazerkalius (в стиле, не обязательно точно)»
+  и «виды — отдельно кнопки»: панель тащится за заголовок (draggable: left/top, место помнится в localStorage piramida_pos,
+  двойной щелчок по заголовку — на место). Кнопки рядов, стробоскопа и видов — шестигранники с остриями 120° (--t = 7 px,
+  clip-path), первая в ряду — остриём, следующие — выемкой и заходят на t (сцепка, как .tz у конуса Zazerkalius); обводка —
+  фоном кнопки, заливка — ::before на 1 px внутри; нажатая — зелёная обводка. Виды (⊤ ⊥ ◁ ◇ ◢ ⬙) и ⌖ ушли из панели
+  в отдельную полоску #views вверху посередине — своя ручка ⋮⋮, тоже тащится и помнит место (piramida_views).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -125,7 +131,20 @@
   #cMono.show{ display:block; }
   .srow{ display:flex; align-items:flex-start; gap:6px; }
   #strobe{ display:flex; gap:4px; justify-content:center; margin-top:3px; }
-  #strobe button{ flex:0 1 auto; padding:2px 8px; font:11px/18px monospace; }
+  #strobe button{ flex:0 1 auto; padding:2px calc(var(--t) + 5px); font:11px/18px monospace; }
+  body{ --t:7px; }
+  .row > button, #strobe > button, #views > button{ position:relative; isolation:isolate; border:none; border-radius:0; background:var(--line); clip-path:polygon(var(--t) 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, var(--t) 100%, 0 50%); }
+  .row > button::before, #strobe > button::before, #views > button::before{ content:""; position:absolute; inset:1px; z-index:-1; background:#0c0f14; clip-path:polygon(var(--t) 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, var(--t) 100%, 0 50%); }
+  .row > button:not(:first-of-type), #strobe > button:not(:first-of-type), #views > button:not(:first-of-type){ margin-left:calc(1px - var(--t)); clip-path:polygon(0 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, 0 100%, var(--t) 50%); }
+  .row > button:not(:first-of-type)::before, #strobe > button:not(:first-of-type)::before, #views > button:not(:first-of-type)::before{ clip-path:polygon(0 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, 0 100%, var(--t) 50%); }
+  .row > button:hover, #strobe > button:hover, #views > button:hover{ background:#4a525c; }
+  .row > button.on, #strobe > button.on, #views > button.on{ background:var(--acc); }
+  .row > button{ padding:5px calc(var(--t) + 6px); }
+  .row, #strobe{ gap:3px 0; }
+  #panel h1{ cursor:move; touch-action:none; }
+  #views{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:4; display:flex; align-items:center; padding:4px 6px; background:var(--panel); border:1px solid var(--line); border-radius:6px; }
+  #views > button{ flex:none; padding:4px calc(var(--t) + 5px); }
+  #views .grip{ color:var(--dim); padding:0 6px 0 2px; cursor:move; touch-action:none; letter-spacing:-3px; }
   .scol{ flex:1 1 auto; min-width:0; }
   button.sar{ flex:0 0 auto; width:18px; height:20px; margin:1px 2px 0; padding:0; border:none; border-radius:0; font-size:0; touch-action:none; background:var(--acc); opacity:.6; }
   button.sar[data-d="-1"]{ clip-path:polygon(0 50%, 100% 0, 100% 100%); }
@@ -146,7 +165,7 @@
   .ticks span::before{ content:""; position:absolute; left:50%; top:-3px; width:1px; height:3px; background:var(--dim); }
   .ticks span.on{ color:var(--acc); }
   #fineTicks span.on{ color:#4dd4ff; }
-  body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan{ display:none; }
+  body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views{ display:none; }
   button.fixb{ position:fixed; right:10px; z-index:5; flex:none; width:36px; height:36px; padding:0; border-radius:50%; font-size:18px; line-height:34px; background:var(--panel); }
   #bZen{ top:10px; }
   #bPan{ top:50%; transform:translateY(-50%); cursor:move; touch-action:none; }
@@ -162,6 +181,7 @@
     .rows{ flex-direction:row; flex-wrap:wrap; }
     .rows .row{ flex-wrap:nowrap; }
     button{ padding:4px 7px; }
+    .row > button{ padding:4px calc(var(--t) + 3px); }
     #count{ font-size:11px; }
   }
 </style>
@@ -170,7 +190,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.019</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.020</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -190,18 +210,11 @@
   </div>
   <div class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷<span class="t"> снимок</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
-  <div class="row">
-    <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
-    <button data-v="bot" title="Вид снизу">⊥<span class="t"> снизу</span></button>
-    <button data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁<span class="t"> сбоку</span></button>
-    <button data-v="edge" title="Вид сбоку — на боковое ребро">◇<span class="t"> ребро</span></button>
-    <button data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢<span class="t"> грань</span></button>
-    <button data-v="iso" title="Вид в три четверти, как в начале">⬙<span class="t"> 3D</span></button>
-  </div>
-  <div class="row"><button id="bView" title="Приближение и сдвиг — как было">⌖<span class="t"> вид</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div>
+  <div class="row"><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div>
   </div>
   <div id="count"></div>
 </div>
+<div id="views"><span class="grip" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span><button data-v="top" title="Вид сверху — на основание">⊤</button><button data-v="bot" title="Вид снизу">⊥</button><button data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" title="Приближение и сдвиг — как было">⌖</button></div>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
 <button id="bPan" class="fixb" title="Нажми и веди — сдвигает весь вид">✥</button>
 <div id="spdBar" title="Скорость вращения">
@@ -665,6 +678,22 @@ const setMin = (m) => { panel.classList.toggle("min", m); bMin.textContent = m ?
 let min0 = null; try { min0 = localStorage.getItem("piramida_min"); } catch (e) {}
 setMin(min0 === null ? matchMedia("(max-width:600px)").matches : min0 === "1");
 bMin.onclick = () => { const m = !panel.classList.contains("min"); setMin(m); try { localStorage.setItem("piramida_min", m ? "1" : "0"); } catch (e) {} };
+// v0.020: панель (за заголовок) и полоска видов (за ⋮⋮) перетаскиваются; место помнится, двойной щелчок по ручке — на место
+function draggable(el, handle, key){
+  const place = (x, y) => { const r = el.getBoundingClientRect(); x = Math.max(0, Math.min(innerWidth - r.width, x)); y = Math.max(0, Math.min(innerHeight - r.height, y));
+    Object.assign(el.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto", transform: "none" }); return [x, y]; };
+  let pos = null; try { pos = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) {}
+  if (Array.isArray(pos)) pos = place(pos[0], pos[1]);
+  let d = null;
+  handle.addEventListener("pointerdown", e => { if (e.target.closest("button, a")) return; const r = el.getBoundingClientRect(); d = [e.clientX - r.left, e.clientY - r.top]; handle.setPointerCapture(e.pointerId); e.preventDefault(); });
+  handle.addEventListener("pointermove", e => { if (d) pos = place(e.clientX - d[0], e.clientY - d[1]); });
+  const end = () => { if (!d) return; d = null; try { localStorage.setItem(key, JSON.stringify(pos)); } catch (e) {} };
+  handle.addEventListener("pointerup", end); handle.addEventListener("pointercancel", end);
+  handle.addEventListener("dblclick", e => { if (e.target.closest("button, a")) return; pos = null; ["left", "top", "right", "bottom", "transform"].forEach(k => el.style[k] = ""); try { localStorage.removeItem(key); } catch (e) {} });
+  addEventListener("resize", () => { if (pos) pos = place(pos[0], pos[1]); });
+}
+draggable(panel, panel.querySelector("h1"), "piramida_pos");
+draggable($("views"), $("views").querySelector(".grip"), "piramida_views");
 addEventListener("keydown", e => { if (e.code === "Escape" && zen) { setZen(false); return; } if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
 if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
 L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
