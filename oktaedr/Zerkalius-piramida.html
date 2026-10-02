@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.007. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.008. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.007</title>
+<title>Zerkalius Пирамида — v0.008</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -46,6 +46,7 @@
   (×1 → ×2 → … → ×32), после ×32 — снова с ×¼. Если вращение стояло, щелчок его включает.
   v0.007, «номер версии не видно после заголовка»: #ver переехал из правого нижнего угла (на телефоне он был спрятан) в заголовок
   панели — сразу после «ПИРАМИДА», виден и в свёрнутой панели.
+  v0.008, «×512»: скорость удваивается до ×512 (прежде до ×32), после ×512 — снова ×¼.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -86,7 +87,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.007</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.008</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -103,7 +104,7 @@
     <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button>
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×32 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×512 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
   <div class="row">
     <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
@@ -451,7 +452,7 @@ $("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
 $("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
 $("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
 $("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
-$("bSpd").onclick = () => { spd = spd >= 32 ? 0.25 : spd * 2; spin = true; tween = null; $("bSpd").textContent = "×" + (spd === 0.25 ? "¼" : spd === 0.5 ? "½" : spd); ui(); };
+$("bSpd").onclick = () => { spd = spd >= 512 ? 0.25 : spd * 2; spin = true; tween = null; $("bSpd").textContent = "×" + (spd === 0.25 ? "¼" : spd === 0.5 ? "½" : spd); ui(); };
 $("bFace").onclick = () => { showFace = !showFace; if (!showFace && !showEdge) showEdge = true; ui(); };
 $("bEdge").onclick = () => { showEdge = !showEdge; if (!showFace && !showEdge) showFace = true; ui(); };
 $("bCol").onclick = () => { colorOn = !colorOn; ui(); };
