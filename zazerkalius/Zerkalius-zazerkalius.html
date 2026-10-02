@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.561. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.562. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.561</title>
+<title>Zazerkalius — v0.562</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -358,6 +358,9 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #rowList .rw > .no{font-size:min(13px, calc(var(--fs) * .8)) !important;line-height:1 !important}
 /* v0.561, «эти кнопки (⇤ ▬ ⟲) прыгают при изменении ползунка»: ширины столбиков номера, замка и накрутки были в em — менялись вместе с размером цифр, и кнопки над ними (а с ними вся полоса и сам ползунок) съезжали; теперь ширины прежние (при 13 px), в пикселях, от шрифта не зависят */
 #rowList .rw > .no{grid-template-columns:30px 25px 34px !important;grid-auto-columns:60px !important;min-width:42px !important}
+/* v0.562: наведение на ⇤ ▬ ⟲ над столбиками — весь их столбик подсвечен; «⟳k» — строка сдвинута по кругу от исходной (не щёлкается) */
+#rowList[data-hc="rn"] .rw:not(.hid) > .no > .rn,#rowList[data-hc="rlk"] .rw:not(.hid) > .no > .rlk,#rowList[data-hc="rrot"] .rw:not(.hid) > .no > .rrot{background:color-mix(in srgb, var(--acc) 30%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--acc) 60%, transparent)}
+#rowList .rw > .no > .rrot[data-rs]{color:var(--gold);cursor:default;text-decoration:none !important}
 #rowList .rw > .no > *{line-height:1 !important}
 #rowList .rw > .no .rlk{font-size:min(10px, calc(var(--fs) * .62)) !important;padding-top:0 !important;padding-bottom:0 !important}
 #rowList .rw > .no .rrot{font-size:min(9px, calc(var(--fs) * .56)) !important}
@@ -1492,7 +1495,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.561</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.562</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2439,8 +2442,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0561"></script>
-<script src="zz-ui.js?v=0561"></script>
+<script src="zz-core.js?v=0562"></script>
+<script src="zz-ui.js?v=0562"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

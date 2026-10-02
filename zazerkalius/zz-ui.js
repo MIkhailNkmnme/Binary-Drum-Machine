@@ -240,7 +240,25 @@ const ROW_SHOW = 4096;
    последний сохранённый «＋ Столбик». Сравнение — строка в строку, рабочее поле; считается при каждой отрисовке,
    поэтому краска снимается сама, как только строка снова равна эталону. */
 function tplRefRows(){ const t = typeof Z.tplRef === "number" && Z.tpl[Z.tplRef]; return t ? t.rows : null; }
-function rowChanged(i){ const R = tplRefRows(); return !!R && (i >= R.length || Z.rows[i] !== R[i]); }
+/* v0.562, «изменённые строки или закрученные от оригинала надо помечать тут» (столбики у номеров): исходные строки поля — Z.rowsOrig[поле], их запоминает
+   построение (△ Построить, заготовка, ▦, шаблон, ⇤ начальные, файл); строки, добавленные потом (достройка чертой), входят в исходные, как появились.
+   Строка та же — ничего; сдвинута по кругу (⟲ ⟳, кольцо открыто) — «⟳k» в столбике кручений; иначе — номер золотом (если не выбран эталон ⚑ — с ним
+   по-прежнему сравнивается он) */
+function rowsOrig(){
+  if (!Z.rowsOrig || typeof Z.rowsOrig !== "object" || Array.isArray(Z.rowsOrig)) Z.rowsOrig = {};
+  const l = Z.lane | 0; let O = Z.rowsOrig[l]; if (!Array.isArray(O)) O = Z.rowsOrig[l] = Z.rows.slice();
+  while (O.length < Z.rows.length) O.push(Z.rows[O.length]);
+  return O;
+}
+function rowsOrigSet(){ rowsOrig(); Z.rowsOrig[Z.lane | 0] = Z.rows.slice(); }
+function rowOrigRot(i){   // 0 — как исходная; k > 0 — сдвинута по кругу на k бит; −1 — изменена
+  const s = Z.rows[i]; if (s === undefined) return 0;
+  const o = rowsOrig()[i]; if (o === s) return 0;
+  if (o.length === s.length) { const k = (o + o).indexOf(s); if (k > 0) return k; }
+  return -1;
+}
+function rowChanged(i){ const R = tplRefRows(); if (R) return i >= R.length || Z.rows[i] !== R[i]; return rowOrigRot(i) < 0; }
+const rowChgTip = () => tplRefRows() ? " — изменена против эталона ⚑" : " — изменена против исходной (построения, заготовки, ⇤)";
 /* v0.239, «как в Cellcosmos — энтропия и симметрия»: у текущей строки в сведениях поля — H (энтропия по тройкам бит) и ⇄
    (зеркальность); что это — в подсказке сведений. Счёт — zzRowEntropy / zzRowMirror в ядре. */
 const ROW_METR_TIP = "\nH — энтропия текущей строки по тройкам бит: 0 — один рисунок повторяется, 1 — шум (все восемь троек поровну)." +
@@ -379,7 +397,7 @@ function renderRowsOver(){
              list.map(e => "поле " + (e.l + 1) + ": " + e.b).join(", ") + " → " + v + '">' + v + "</span>";
       }
     }
-    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
+    h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
   h += '<div id="infoSlot"></div>' + cutLine() + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой; v0.112; v0.225: под чертой — кнопки достройки и шаблоны
@@ -447,11 +465,14 @@ function tri90Apply(){
 /* v0.097, «в 0-й строке не должно быть ничего, с 1-й строки вписываем биты»: строки нумеруются для глаза С ЕДИНИЦЫ — в поле,
    у замков, в таблицах, в текстах окон и сообщениях (строка треугольника номер k — k бит). Внутри всё по-прежнему с нуля. */
 /* v0.382, «покажи другими значками, просто полоской»: вместо 🔒 / 🔓 — полоска из CSS: заперто — сплошная, открыто — пустая золотая. */
+function rowSkK(i){ const k = rowOrigRot(i), n = (Z.rows[i] || "").length; return k > 0 ? (k <= n / 2 ? k : k - n) : 0; }   // v0.562: сдвиг от исходной, со знаком — короче
+function rowSk(i){ const k = rowSkK(i); return k ? ' data-rs="' + k + '" title="Строка сдвинута по кругу на ' + Math.abs(k) + " бит " + (k > 0 ? "влево" : "вправо") + ' от исходной (⟲ ⟳ при открытом кольце)"' : ""; }
+function rowSkTxt(i){ const k = rowSkK(i); return k ? (k > 0 ? "⟳" : "⟲") + Math.abs(k) : ""; }
 function rowLockBadge(i){
   if (typeof coneLocked !== "function") return "";
   const lk = coneLocked(i), own = Z.coneLocks && Z.coneLocks[i] !== undefined, rr = Math.round((typeof coneRot !== "undefined" && coneRot[i]) || 0);
   return '<span class="rlk' + (lk ? " on" : "") + (own ? " own" : "") + '" data-lk="' + i + '" title="Кольцо ' + (i + 1) + ' в конусе: ' + (lk ? "заперто — крутится только на вид" : "открыто — крутит саму строку") +
-    ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ' (общий замок над столбиком — все разом)"></span>' +'<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : "") + '>' + (rr ? "↻" + rr : "") + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
+    ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ' (общий замок над столбиком — все разом)"></span>' +'<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : rowSk(i)) + '>' + (rr ? "↻" + rr : rowSkTxt(i)) + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
 }
 /* v0.112, «под нижней строкой последней поставь линию-границу; если за неё вверх — пусть скрывает строки ниже неё, делая их
    бесцветными, и этих строк как будто нет». Строки за границей лежат отдельно — хвост Z.lanesHid[l] у поля l, а в Z.rows / Z.lanes
@@ -885,7 +906,7 @@ function renderRows(){
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? " — изменена против эталона ⚑" : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
@@ -1097,7 +1118,7 @@ function tplInsert(rows, name){
   if (!rows || !rows.length) return;
   snapshot();
   Z.rows.splice(Z.cur + 1, 0, ...rows);
-  Z.cur += rows.length;
+  Z.cur += rows.length; rowsOrigSet();   // v0.562
   renderAll(); save();
   say(`Шаблон «${name}»: ${rows.length === 1 ? "строка " + rows[0].length + " бит" : rows.length + " стр."} под текущей. ↩ вернёт.`);
 }
@@ -1106,7 +1127,7 @@ function tplInsert(rows, name){
 function tplReplace(rows, name){
   if (!rows || !rows.length) return;
   snapshot();
-  if (rows.length > 1) { Z.rows = rows; syncLane(); Z.cur = Math.min(Z.cur, rows.length - 1); }
+  if (rows.length > 1) { Z.rows = rows; syncLane(); Z.cur = Math.min(Z.cur, rows.length - 1); rowsOrigSet(); }   // v0.562: столбик — исходные строки
   else Z.rows[Z.cur] = rows[0];
   renderAll(); save();
   say(`Шаблон «${name}»: ${rows.length > 1 ? "столбик заменён — " + rows.length + " стр." : "строка " + Z.cur + " заменена"}. Shift + щелчок — вставить под текущей. ↩ вернёт.`);
@@ -3761,7 +3782,7 @@ function setupCone(){
   function animApply(rows, lab){   // v0.239: общее у списка заготовок и карты правил ▦
     animSet(false);
     try { snapshot(); } catch (err) { return; }
-    Z.rows = rows; syncLane(); Z.cur = 0;
+    Z.rows = rows; syncLane(); Z.cur = 0; rowsOrigSet();   // v0.562: заготовка — исходные строки
     animSig = null; animSync();
     renderAll(); save(); animUi(); rowsCenterX();   // v0.541: скролл — в центр
     say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
@@ -9230,7 +9251,7 @@ function loadRowsText(text, name){
   const rows = parseRows(text);
   if (!rows.length) { say(`📂 ${name || "Текст"}: строк из 0 и 1 не нашлось.`); return; }
   snapshot();
-  Z.rows = rows; Z.cur = 0;
+  Z.rows = rows; Z.cur = 0; rowsOrigSet();   // v0.562: из файла — исходные строки
   renderAll(); save();
   const maxLen = rows.reduce((m, r) => Math.max(m, r.length), 0);
   say(`📂 ${name || "Текст"}: загружено строк — ${rows.length}, самая длинная — ${maxLen} бит. Прежний столбик вернёт ↩.`);
@@ -9342,6 +9363,10 @@ function init(){
   leftBarsInit();   // v0.270
   if (window.ResizeObserver && $("fieldInfoBar")) new ResizeObserver(() => fieldInfoFit()).observe($("fieldInfoBar"));   // v0.209: поле шире/уже — сведения по месту
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fieldInfoFit());   // v0.212: шрифт догрузился — кнопки над колонками ещё раз по месту
+  /* v0.562, «при наведении на общие кнопки подсвечивай весь их столбик»: ⇤ — номера, ▬ — замки, ⟲ — кручения */
+  [["bRowsStartTop", "rn"], ["coneLockAll", "rlk"], ["bConeAllHome", "rrot"]].forEach(([id, c]) => { const b = $(id); if (!b) return;
+    b.addEventListener("mouseenter", () => { const L = $("rowList"); if (L) L.dataset.hc = c; });
+    b.addEventListener("mouseleave", () => { const L = $("rowList"); if (L && L.dataset.hc === c) delete L.dataset.hc; }); });
   $("bRowsStartTop").onclick = () => $("bRowsStart").click();   // v0.212: «↺» над номерами — то же, что «↺ Начало»
   $("coneLockAll").onclick = () => $("coneLock").click();   // v0.167: общий замок над столбиком замков — та же галка
   { const h1 = document.querySelector("#top h1"); if (h1) { h1.title = "Щелчок — перезагрузить страницу"; h1.style.cursor = "pointer"; h1.onclick = () => location.reload(); } }   // v0.162, «клик — перезагрузка» (по названию в шапке)
@@ -10115,6 +10140,7 @@ function init(){
     snapshot();
     Z.rows.splice(Z.cur + 1, 0, ...rows);
     Z.cur += 1;   // текущей становится вершина — от неё и смотреть
+    rowsOrigSet();   // v0.562: построили — исходные строки
     renderAll(); save(); rowsCenterX();   // v0.541: скролл — в центр
     const modeTxt = { pascal: "🔺 Паскаль от строки", descent: "▽ спуск от строки", ring: "◯ кольцом от строки", start: "маской, каждая с начала", tape: "маской, сплошной лентой" }[Z.maskMode] || "";
     let ringTxt = "";   // v0.046: у цилиндра — где вход, где петля, умер ли в ноль
@@ -10466,14 +10492,14 @@ function init(){
         Z.axisPos = Array.isArray(H.axisPos) ? H.axisPos.slice() : [];
       } else { Z.lanes = [H.rows.slice()]; Z.laneCount = 1; Z.lane = 0; Z.lanesHid = []; }
       Z.cur = H.cur | 0; Z.fillCells = H.fillCells ?? null;
-      laneInit();
+      laneInit(); Z.rowsOrig = {}; rowsOrigSet();   // v0.562: начальные — исходные строки
       const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount);
       renderAll(); save();
       const L = Z.lanes.slice(0, Z.laneCount);
       say(`↺ Начальные — из умолчания ⭐: полей ${L.length}, строк ${L.reduce((s, l) => s + l.length, 0)}. ↩ вернёт прежние.`);
       return;
     }
-    Z.rows = ZZ_ROWS0.slice(); Z.cur = 0;
+    Z.rows = ZZ_ROWS0.slice(); Z.cur = 0; rowsOrigSet();   // v0.562
     if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = [];
     renderAll(); save();
     say(`↺ Начальные строки: ${ZZ_ROWS0.length} — от «1» до «${ZZ_ROWS0[ZZ_ROWS0.length - 1]}». ↩ вернёт прежние. Своё умолчание — ⭐ в шапке.`);
