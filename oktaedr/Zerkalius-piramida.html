@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.093. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.094. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.093</title>
+<title>Zerkalius Пирамида — v0.094</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -317,6 +317,9 @@
   по ✥ переключает — кнопки собраны ромбом (ни одной утащенной) → ряд над скоростью (rowLayout); есть утащенные (ряд или
   россыпь) → ромб вокруг ручки там, где она стоит (утащенные возвращаются в свои места ромба). Перехват — на #views в фазе
   захвата, чтобы общий draggable не сбрасывал ромб в угол.
+  v0.094, «пауза возможна при записи?» → «отдельная кнопка паузы рядом с ⏺ — да»: пока идёт запись, слева от ⏺ — ромб ⏸
+  (#bRecP): пауза — MediaRecorder.pause() (звук тоже), значок ▶, ⏺ перестаёт мигать; ещё щелчок — resume() в тот же файл.
+  Счётчик времени паузу не считает (startedAt сдвигается на её длину). Запись кончилась — кнопка прячется.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -456,7 +459,9 @@
   button.fixb:hover{ background:#4a525c; }
   #bZen{ top:10px; }
   #bPng{ top:10px; right:52px; }
-  #bRec{ top:10px; right:94px; color:#ff6b6b; }   /* v0.092: видеозапись со звуком */
+  #bRec{ top:10px; right:94px; color:#ff6b6b; }
+  #bRecP{ top:10px; right:136px; display:none; }   /* v0.094: пауза записи — только пока пишет */
+  #bRecP.show{ display:flex; align-items:center; justify-content:center; }   /* v0.092: видеозапись со звуком */
   #zerkRecBtn{ display:none !important; }
   #zerkRecTimer{ right:auto !important; left:50% !important; bottom:auto !important; top:60px !important; transform:translateX(-50%); }
   body.zen-mode #bPng{ opacity:.3; }
@@ -482,7 +487,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.093</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.094</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -505,6 +510,7 @@
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bUndo" title="Отменить последнее действие, по шагу (Ctrl+Z)">↶<span class="t"> отменить</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
 <div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
+<button id="bRecP" class="fixb" title="Пауза записи / продолжить">⏸&#xFE0E;</button>
 <button id="bRec" class="fixb" title="Видеозапись со звуком (R): Chrome спросит, откуда взять звук — отметь «звук»">⏺</button>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
@@ -1234,7 +1240,13 @@ L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimatio
   const b = document.getElementById("bRec"); let cap = null, actx = null;
   const recBtn = () => document.getElementById("zerkRecBtn");
   const recOn = () => { const r = recBtn(); return !!r && (r.classList.contains("rec") || r.classList.contains("recpage")); };
-  const sync = () => { const on = recOn(); b.classList.toggle("on", on); b.classList.toggle("blink", on); if (!on && cap) { cap.getTracks().forEach(t => t.stop()); cap = null; } };
+  const p = document.getElementById("bRecP"); let pausedAt = 0;   /* v0.094: пауза записи */
+  const sync = () => { const on = recOn(); b.classList.toggle("on", on); b.classList.toggle("blink", on && !pausedAt); p.classList.toggle("show", on);
+    if (!on) { pausedAt = 0; p.textContent = "⏸\uFE0E"; if (cap) { cap.getTracks().forEach(t => t.stop()); cap = null; } } };
+  p.addEventListener("click", () => { const R = window.__zerkRecorder, mr = R && R.rec; if (!mr) return;
+    if (mr.state === "recording") { mr.pause(); pausedAt = Date.now(); p.textContent = "▶\uFE0E"; }
+    else if (mr.state === "paused") { mr.resume(); R.startedAt += Date.now() - pausedAt; pausedAt = 0; p.textContent = "⏸\uFE0E"; }
+    sync(); });
   const watch = () => { const r = recBtn(); if (!r) return setTimeout(watch, 300); new MutationObserver(sync).observe(r, { attributes: true, attributeFilter: ["class"] }); };
   watch();
   b.addEventListener("click", async () => {
