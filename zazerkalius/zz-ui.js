@@ -7757,7 +7757,7 @@ function triTag(){
       b._tzar = ""; b._tzn = 2; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP;   // v0.486: и цвета — «стрелки вправо»
       b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); b.parentElement.style.setProperty("--t", b.style.getPropertyValue("--t")); return;
     }
-    const ar = RH_TRI[b.textContent.trim()];
+    const ar = b.closest(".cjoin") ? "" : RH_TRI[b.textContent.trim()];   // v0.509: в блоке ◀ ⏵ ▶ «Звука» — не стрелки-формы, а кнопки со значками (ниже)
     /* v0.503, по снимку «Звука» — «поправь все кнопки у звука»: блок ◀ ⏵ ▶ (.cjoin) рисовался по-старому, с косой сеткой внутри (крестики) — теперь
        его кнопки в общей цепочке из треугольников, как все */
     if (b.classList.contains("zerk-arrow") || ar === "u" || ar === "d") { if (b.classList.contains("tz")) triOff(b); return; }
@@ -7801,6 +7801,9 @@ function tzJustify(g){
   const gl = g.getBoundingClientRect().left, rows = new Map();
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
+  /* v0.508, по снимкам «Кручения» — «так меняет высоту при изменении ползунка»: ряд дотягивался до края впритык, доли пикселя то влезали, то нет —
+     последняя кнопка (⟳) перескакивала строкой ниже. Перед растяжкой — ширина с запасом в 1 px */
+  if (maxR > 0) { g.style.width = (Math.ceil(maxR) + 1) + "px"; g.style.flexShrink = "0"; }
   const canGrow = (e) => e._tzn0 != null && !e._tzar && !e.classList.contains("pcol") && !(e.dataset && e.dataset.w1)   // v0.490: стрелки, цвета и data-w1 — не тянуть
     && (e.parentElement === cgb || inRow(e.parentElement));   // v0.493: кнопки внутри блоков — не тянуть; v0.494, «ширина у заголовка — поправь»: и заголовок не тянуть
   /* v0.499, по снимку «Кручения» — «наладь тут размеры»: внутри блока, стоящего одной строкой (шаг: ◀ ползунок ▶|), — тянуть можно; блок в несколько
@@ -7812,7 +7815,7 @@ function tzJustify(g){
     if (k <= 0 || !c.length) return;
     for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
     c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
-  if (maxR > 0) { g.style.width = Math.ceil(maxR) + "px"; g.style.flexShrink = "0"; }   // v0.499: посчитанную ширину — не ужимать (доли пикселя переносили кнопку)
+  if (maxR > 0) { g.style.width = (Math.ceil(maxR) + 1) + "px"; g.style.flexShrink = "0"; }   // v0.499: посчитанную ширину — не ужимать (доли пикселя переносили кнопку)
   tzHandle(g);
 }
 function tzHandle(g){   // ромб-ручка — на правом конце последней кнопки нижнего ряда
