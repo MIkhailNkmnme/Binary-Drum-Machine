@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.052. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.053. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.052</title>
+<title>Zerkalius Пирамида — v0.053</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -194,6 +194,8 @@
   21 × 21, поворачивается только треугольник внутри, поэтому и высота строки не скачет.
   v0.052, по снимку «Раздвинуть 26» — «текст назад, за бегунок»: подпись у бегунка (.slab) — под ромбом (z 2 < 3 у ползунка),
   ромб её не прячется под ней.
+  v0.053, по снимку ромба видов — «кнопки тоже в цвет»: у ромбиков видов, ручки и ◎ 📷 ✥ обводка всегда цветная — свой --acc
+  (радугой по порядку или выбранным цветом), приглушённая (60 % цвета), при наведении и у горящей ⟳ — полным цветом.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -288,6 +290,8 @@
   #bZen{ top:10px; }
   #bPng{ top:10px; right:52px; }
   body.zen-mode #bPng{ opacity:.3; }
+  body #views > button, body #views > .grip, button.fixb{ background:color-mix(in srgb, var(--acc) 60%, #2a3038); }   /* v0.053: обводка в цвет */
+  body #views > button:hover, body #views > .grip:hover, button.fixb:hover, body #views > button.on{ background:var(--acc); }
   #bPan{ top:50%; transform:translateY(-50%); cursor:move; touch-action:none; }
   body.zen-mode #bZen{ opacity:.3; }
   #ver{ margin-left:8px; color:var(--dim); font:11px monospace; letter-spacing:0; font-weight:400; }
@@ -308,7 +312,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.052</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.053</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -795,7 +799,7 @@ let monoRGB = rgb("#cfd9db");
   monoRGB = rgb(c.value); c.oninput = () => { monoRGB = rgb(c.value); paintUi(); try { localStorage.setItem("piramida_mono", c.value); } catch (e) {} }; }
 function paintUi(){   // v0.044: цвет кнопок — радугой (каждой свой цвет нот) или выбранным цветом
   const mono = document.getElementById("cMono").value;
-  document.querySelectorAll(".row > button, .row > .cgrp, #views > button, #strobe > button").forEach((el, i) => {
+  document.querySelectorAll(".row > button, .row > .cgrp, #views > button, #views > .grip, button.fixb, #strobe > button").forEach((el, i) => {
     if (colorOn) el.style.setProperty("--acc", NOTE_COL[i % 7]); else el.style.removeProperty("--acc"); });
   document.documentElement.style.setProperty("--acc", colorOn ? "#7ee787" : mono);
   document.querySelectorAll(".srow").forEach((r, i) => {   // v0.049: ползунки — тем же цветом: строка, стрелки, ромб-бегунок
