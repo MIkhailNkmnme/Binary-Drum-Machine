@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.095. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.096. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.095</title>
+<title>Zerkalius Пирамида — v0.096</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -322,6 +322,9 @@
   Счётчик времени паузу не считает (startedAt сдвигается на её длину). Запись кончилась — кнопка прячется.
   v0.095, «ещё две ромбо-кнопки + − масштаб»: ромбы ＋ и − (#bZin, #bZout) — приближают и отдаляют в 1,25 раза к середине экрана;
   живут вместе с кнопками видов (в ромбе — углы справа сверху и снизу, в ряду над скоростью — по бокам от ⌖), их тоже можно утащить.
+  v0.096, по снимку ромба — «пусть паузу с ×N тоже вокруг себя собирает; и второй вариант — всё в ряд или в два, как на телефоне»:
+  двойной щелчок по ✥ ходит по кругу: ромб → ряд → два ряда (зигзаг) → ромб (на узком экране ряд пропускается); выбор помнится
+  (piramida_lay). В ромбе ⏸ и ×N тоже вокруг ручки — слева снизу ((−24,5; 24,5) и (−49; 49)), а не над полосой.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -489,7 +492,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.095</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.096</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -1195,13 +1198,21 @@ freeEls.forEach(freeDrag);
   g.addEventListener("pointerup", gEnd); g.addEventListener("pointercancel", gEnd); }
 $("views").addEventListener("dblclick", e => {   /* v0.093: двойной щелчок по ✥ — ромб ⇄ ряд над скоростью */
   if (!e.target.closest(".grip")) return; e.stopPropagation();
-  const loose = freeEls.filter(el => el.style.position === "fixed");
-  if (!loose.length) { rowLayout(); return; }
-  loose.forEach(el => ["position", "left", "top", "zIndex", "transform", "opacity"].forEach(k => el.style[k] = "")); freePos = {}; freeSave();
+  let cur = "dia"; try { cur = localStorage.getItem("piramida_lay") || "dia"; } catch (e) {}
+  const wideOk = innerWidth >= 560, next = cur === "dia" ? (wideOk ? "row" : "zig") : cur === "row" ? "zig" : "dia";
+  if (next === "dia") diaLayout(); else rowLayout(next);
 }, true);
-function rowLayout(){   /* v0.091: ⊤ ◁ ⌖ ⏸ ×N ◇ ⊥ ⬙ ✥ ◢ — одним рядом над полосой скорости (на узком — зигзагом) */
+function diaLayout(){   /* v0.096: все кнопки ромбом вокруг ручки, ⏸ и ×N — тоже */
+  freeEls.forEach(el => { if (el.id === "bSpin" || el.id === "bSpd") return; ["position", "left", "top", "zIndex", "transform", "opacity"].forEach(k => el.style[k] = ""); delete freePos[freeId(el)]; });
+  const [gx, gy] = gripC();
+  [["bSpin", -24.5, 24.5], ["bSpd", -49, 49]].forEach(([id, dx, dy]) => { const el = $(id); el.style.transform = ""; el.style.opacity = ""; freePos[id] = freePlace(el, gx + dx - 23, gy + dy - 23); });
+  freeSave(); try { localStorage.setItem("piramida_lay", "dia"); } catch (e) {}
+}
+function rowLayout(kind){   /* v0.091: ⊤ ◁ ⌖ ⏸ ×N ◇ ⊥ ⬙ ✥ ◢ — одним рядом над полосой скорости; v0.096: kind "zig" — два ряда зигзагом */
+  if (!kind) kind = innerWidth >= 560 ? "row" : "zig";
+  try { localStorage.setItem("piramida_lay", kind); } catch (e) {}
   const order = ["top", "side", "bZout", "bView", "bZin", "bSpin", "bSpd", "edge", "bot", "iso", "grip", "face"], n = order.length;
-  const sb = $("spdBar"), barTop = innerHeight - sb.offsetHeight, wide = innerWidth >= 560, step = wide ? 50 : 24.5;
+  const sb = $("spdBar"), barTop = innerHeight - sb.offsetHeight, wide = kind === "row", step = wide ? 50 : 24.5;
   const cx = innerWidth / 2, cy = barTop - 8 - 23 - (wide ? 0 : 12.25), v = $("views");
   delete v.dataset.t0;
   order.forEach((k, i) => {
