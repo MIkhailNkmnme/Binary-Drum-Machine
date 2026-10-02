@@ -7734,7 +7734,7 @@ function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
   /* v0.471, «у всех кнопок должна быть обводка цвета самой группы»: контур — цветом заголовка группы (как её рамка), берётся раз на группу */
   const gcm = new Map(), lnBg = tzLnBg(), gcol = (el) => { if (lnBg) return lnBg; const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
-  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb, #rowsPane .lpb, #top.lpt") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
+  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb, #rowsPane .lpb, #top.lpt, .whead.lpt") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
   const bs = [];
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
@@ -7928,6 +7928,29 @@ function lpTop(col, vis){
   } else { lpTop.pad = 14; shape(); }
   /* v0.529: перенеслась на новую строку (узкое окно) — начинает её остриём и не заходит на кнопку строкой выше */
   runs.forEach(r => r.forEach((b, i) => { if (i && b._tzm && Math.abs(b.offsetTop - r[i - 1].offsetTop) > 4) { b._tzm = 0; b._tzL = TZ_TIP; tzGeo(b); } }));
+  lpWin(col, vis);
+}
+/* v0.532, «в процессе понемногу исправляй кнопки все под стандарт треугольников, сам смотри по дизайну»: кнопки в шапках окон (? ⛶ ↗ ⧉ – и
+   свои, как «⇄ строки» у октаэдра) — цепочкой, как в верхнем меню: первая остриём, следующие выемкой на остриё соседки, вплотную. Обводка — цветом
+   прежней рамки (⛶ развёрнутого окна — золотом) */
+function lpWin(col, vis){
+  const t = TZC_H / (2 * Math.sqrt(3)), sd = 2 * t;
+  document.querySelectorAll(".win > .whead").forEach(h => {
+    h.classList.add("lpt");
+    if (!h._lpObs && lpTag._mo) { h._lpObs = 1; lpTag._mo.observe(h, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "style"] }); lpTag._mo.observe(h.parentElement, { attributes: true, attributeFilter: ["class"] }); }
+    if (!vis(h)) return;
+    const runs = []; let run = [];
+    [...h.children].forEach(el => { if (el.tagName === "BUTTON") { if (vis(el)) run.push(el); } else if (vis(el) && run.length) { runs.push(run); run = []; } });
+    if (run.length) runs.push(run);
+    runs.forEach(r => r.forEach((b, i) => {
+      b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+      const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
+      b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true;
+      b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
+      b._tzn = b._tzn0 = Math.max(2, Math.ceil((tw + 8) / sd));
+      tzGeo(b);
+    }));
+  });
 }
 window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
