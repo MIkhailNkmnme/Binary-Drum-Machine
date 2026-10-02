@@ -7992,6 +7992,14 @@ function tzcItem(el, cgb){   // элемент группы под точкой:
 function tzcKey(el, cgb){ if (el.classList.contains("glab")) return "glab"; const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift(tzcKids(x.parentElement).indexOf(x)); return "@" + p.join("/"); }
 /* v0.507, по снимку «Вида» — «ширина огромная»: номер элемента («@18») считался среди всех детей блока, вместе со служебным слоем обводки (.tzco) —
    кнопку перенесли в конец, слой встал на её номер и растягивался как кнопка (596 px), а сама кнопка терялась. Слой и ручка в счёт не идут */
+/* v0.523: стандартная длина элемента группы, сторон по средней черте: полкнопки 3, кнопка 6, двойная 12, ползунок 12 (0 — не мерить: подписи, цвета, заголовок) */
+function tzcStd(el){
+  if (!el || el.classList.contains("glab") || el.classList.contains("glab2") || el.classList.contains("pcol")) return 0;
+  if (el.tagName === "BUTTON") return el.classList.contains("ib") ? 3 : el.classList.contains("w4") ? 24 : el.classList.contains("w2") ? 12 : 6;
+  if (el.querySelector && el.querySelector(".zerk-range-wrap, input[type=range]")) return 12;
+  if (el.tagName === "SELECT" || el.tagName === "LABEL") return el.classList.contains("fh") ? 3 : el.classList.contains("w4") ? 24 : el.classList.contains("w2") ? 12 : 6;
+  return 0;
+}
 function tzcKids(p){ return [...p.children].filter(c => !c.classList.contains("tzco") && !c.classList.contains("cgsz")); }
 function tzcFind(key, cgb){
   if (key === "glab") return cgb && cgb.parentElement ? cgb.parentElement.querySelector(":scope > .glab") : null;   // v0.486
@@ -8152,9 +8160,13 @@ function tzcApply(g){
   const by = {}; for (const [k, w] of Object.entries(d.o || {})) { if (glSkip && w === "glab") continue; (by[w] = by[w] || []).push(k.split("_").map(Number)); }
   cgb.classList.add("tzc");
   const its = [];
-  for (const [w, cells] of Object.entries(by)) {
+  for (let [w, cells] of Object.entries(by)) {
     const el = tzcFind(w, cgb); if (!el || !(cgb.contains(el) || el.parentElement === g) || its.some(x => x.el === el)) continue;
     let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1; for (const [r, c] of cells) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
+    /* v0.523, по снимку «Вида» — «ширина кнопок — стандарт»: кнопка, нарисованная шире своей стандартной ширины (рисунок снимали, когда ряды
+       растягивались до края: «👁 выдел.» — 141 px вместо 92), показывается стандартной — лишние столбцы справа не в счёт (рисунок не трогается).
+       Заодно кнопка из двух разнесённых кусков (ползунки «Звука» вперемешку) — только левым */
+    { const n = tzcStd(el); if (n) { const cm = c0 + 2 * n - 1; if (c1 > cm) { cells = cells.filter(([, c]) => c <= cm); c1 = Math.max(...cells.map(q => q[1])); } } }
     its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0 });
   }
   // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
