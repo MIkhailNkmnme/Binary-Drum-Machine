@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.543. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.544. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.543</title>
+<title>Zazerkalius — v0.544</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1477,7 +1477,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.543</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.544</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2140,7 +2140,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
               <option value="xor">⊕ XOR</option><option value="xnor">XNOR</option><option value="nand">NAND</option><option value="nor">NOR</option><option value="and">AND</option><option value="or">OR</option>
             </select>
             <label class="dim" title="⟳ Проходами: ▶ волна идёт целыми проходами — за шаг весь проход волны от верха до низа, конус показывает только готовые проходы (в Треугольнике это «Плеер — целыми циклами»). Скорость — проходов в секунду. Цикл — другое: число проходов, через которое картина повторяется (пишется справа, когда найден)"><input type="checkbox" id="animByPass"> ⟳ проходами</label>
-            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ проходами — проходов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
+            <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ проходами — проходов в секунду). Экран показывает ~60 кадров в секунду: быстрее — за кадр уходит несколько шагов и виден только последний; тогда рядом с числом — «каждый N-й» (с ⟳ проходами) или «N стр/кадр»">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
             <!-- v0.344, по снимку «📋 заготовка…» — «размер 2, внутри сократи „Правило“ — слишком часто слово»: «Правило 90» → «R90», длинные названия короче -->
             <!-- v0.517: «📋 заготовка…», «стр.» и «сид» — под чертой поля строк (#cutPanel) -->
             <button id="bEcaMap" title="▦ Карта всех 256 правил сеткой 16×16 (из нынешнего сида): наведение — правило и его энтропия, зеркальность, доля единиц; щелчок — правило строками в поле, как заготовка (↩ вернёт). Закрыть — ▦ ещё раз, Esc или щелчок мимо">▦ 256</button>
@@ -2424,8 +2424,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0543"></script>
-<script src="zz-ui.js?v=0543"></script>
+<script src="zz-core.js?v=0544"></script>
+<script src="zz-ui.js?v=0544"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

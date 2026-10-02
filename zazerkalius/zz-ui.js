@@ -3633,10 +3633,16 @@ function setupCone(){
     $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer} прох. (с ${aPer0}-го)` : "");
     animDial(N);
     { const L = $("rowList"), F = $("field"); if (L && F) F.style.setProperty("--aiTop", (L.offsetTop + 3) + "px"); }   // v0.358: у первой строки — по верху поля строк
-    const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с");   // v0.329: было «цикл/с» — считает проходы
+    const sp = animSpOf(Z.animSp ?? 40);
+    /* v0.544, по снимку «5000 прох/с» — «надо где-то показать, что при такой скорости показывается только каждый X-й кадр»: экран рисует кадр ~60 раз в
+       секунду, быстрее — за кадр уходит несколько шагов, видно только последний. Идёт волна — сколько шагов на кадр на деле (не успевает за 30 мс — меньше
+       заданного); стоит — расчёт на 60 кадров в секунду. Каждый кадр виден — ничего не дописывается */
+    const X = Math.round(animRaf && animPerFr ? animPerFr : sp / 60), skip = X > 1 ? (Z.animByPass ? ` · каждый ${X}-й` : ` · ${X} стр/кадр`) : "";
+    $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с") + skip;   // v0.329: было «цикл/с» — считает проходы
   };
   const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
   const animGuard = () => { if (rowsLocked()) return false; if (Z.rows.length < 2) { say("🌊 Аниматрице нужно хотя бы две строки."); return false; } return true; };
+  let animPerFr = 0;   // v0.544: шагов на показанный кадр, сглажено
   const animTick = (ts) => {
     if (!animRaf) return;
     const dt = animT0 ? Math.min(0.1, (ts - animT0) / 1000) : 0; animT0 = ts;
@@ -3646,14 +3652,17 @@ function setupCone(){
       animSync(); const t0 = performance.now();
       /* v0.199, «по циклу аниматрицы»: ⟳ циклами (с v0.329 — «⟳ проходами») — за шаг плеера весь проход волны (как «Плеер — целыми циклами» в Треугольнике);
          начат посреди прохода — сперва дойти до его конца. На экране — только картины на границе циклов. */
+      const n0 = n;
       if (Z.animByPass) while (n-- > 0) { const p = aPass; let g = Z.rows.length + 1; do animStep1(); while (aPass === p && --g > 0); if (performance.now() - t0 > 30) { animAcc = 0; break; } }
       else while (n-- > 0) { animStep1(); if ((n & 63) === 0 && performance.now() - t0 > 30) { animAcc = 0; break; } }   // не успевает — не копить долг
+      const done = n0 - Math.max(0, n);   // v0.544: сколько шагов (проходов / строк) ушло в этот кадр — на экране только последний
+      animPerFr = animPerFr ? animPerFr * 0.85 + done * 0.15 : done;
       animSig = animKey(); renderRows(); animUi();
     }
     animRaf = requestAnimationFrame(animTick);
   };
   const animSet = (on) => {
-    if (on && !animRaf) { if (!animGuard()) return; undoPush(undoState()); animSync(); animT0 = 0; animAcc = 0; animRaf = requestAnimationFrame(animTick); }
+    if (on && !animRaf) { if (!animGuard()) return; undoPush(undoState()); animSync(); animT0 = 0; animAcc = 0; animPerFr = 0; animRaf = requestAnimationFrame(animTick); }
     if (!on && animRaf) { cancelAnimationFrame(animRaf); animRaf = 0; animDone(); }
     $("bAnimPlay").classList.toggle("on", !!animRaf); $("bAnimPlay").textContent = animRaf ? "⏸ волна" : "▶ волна";
   };
