@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.091. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.092. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.091</title>
+<title>Zerkalius Пирамида — v0.092</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -307,6 +307,12 @@
   уже 560 px, — зигзагом ребро к ребру, шаг 24,5); ручка ставится сдвигом всего #views. Так — при первом заходе (нет сохранённых
   мест) и по двойному щелчку на ✥ (прежде он возвращал ромб в угол). Без вращения ряд уезжает вниз вместе с полосой, ручка тоже
   (у #views сдвигается top, transform нельзя — от него считались бы утащенные кнопки).
+  v0.092, «дзен — по колёсику мыши; видеозапись со звуком — ещё кнопку»: щелчок колёсиком по пирамиде (без сдвига) включает
+  и выключает дзен (с протяжкой колёсиком — как было, сдвиг вида). ⏺ — ромб рядом с 📷: пишет холсты пирамиды общим
+  _js/recorder.js (его плавающая кнопка спрятана, жмём её из своей), звук берётся из захвата экрана / вкладки (getDisplayMedia
+  с audio, systemAudio: include — Chrome спросит, что показать, и даст галку «звук»; картинка захвата сразу гасится, нужен
+  только звук): он подаётся рекордеру как AUDIO_VISUALIZER {audioCtx, source}. Отказался или звука нет — пишет без звука.
+  Пока пишет, ⏺ горит и мигает; второй щелчок или R — стоп, файл сохраняется как на других страницах.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -446,6 +452,9 @@
   button.fixb:hover{ background:#4a525c; }
   #bZen{ top:10px; }
   #bPng{ top:10px; right:52px; }
+  #bRec{ top:10px; right:94px; color:#ff6b6b; }   /* v0.092: видеозапись со звуком */
+  #zerkRecBtn{ display:none !important; }
+  #zerkRecTimer{ right:auto !important; left:50% !important; bottom:auto !important; top:60px !important; transform:translateX(-50%); }
   body.zen-mode #bPng{ opacity:.3; }
   body #views > button, body #views > .grip, button.fixb{ background:color-mix(in srgb, var(--acc) 60%, #2a3038); }   /* v0.053: обводка в цвет */
   body #views > button:hover, body #views > .grip:hover, button.fixb:hover, body #views > button.on{ background:var(--acc); }
@@ -469,7 +478,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.091</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.092</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -492,6 +501,7 @@
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bUndo" title="Отменить последнее действие, по шагу (Ctrl+Z)">↶<span class="t"> отменить</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
 <div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
+<button id="bRec" class="fixb" title="Видеозапись со звуком (R): Chrome спросит, откуда взять звук — отметь «звук»">⏺</button>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
 <button id="bPan" class="fixb" title="Нажми и веди — сдвигает весь вид">✥</button>
@@ -832,6 +842,7 @@ const ptrs = new Map(); let downX = 0, downY = 0, moved = false, btn = 0, lx = 0
 const zoomAt = (mx, my, z1) => { z1 = Math.max(0.2, Math.min(40, z1)); const qx = (mx - W / 2 - panX) / zoom, qy = (my - Hh / 2 - panY) / zoom; zoom = z1; panX = mx - W / 2 - qx * zoom; panY = my - Hh / 2 - qy * zoom; };
 const two = () => { const [p, q] = [...ptrs.values()]; return { d: Math.hypot(p.x - q.x, p.y - q.y), m: [(p.x + q.x) / 2, (p.y + q.y) / 2] }; };
 cv.addEventListener("pointerdown", e => {
+  if (e.button === 1) e.preventDefault();   /* v0.092: колёсико — без автопрокрутки браузера */
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId); tween = null;
   clearTimeout(lpT); lpDone = false;
   if (ptrs.size === 1 && zen) lpT = setTimeout(() => { if (!moved && ptrs.size === 1) { lpDone = true; setZen(false); } }, 600);   // v0.011: долгое нажатие — выход из дзен
@@ -866,6 +877,7 @@ const up = (e) => {
   if (lpDone) { if (!ptrs.size) lpDone = false; grabPend = null; return; }   // долгое нажатие вывело из дзен — щелчком не считается
   if (grab) { snap(grab); syncExtra(grab); grab = null; }   // v0.003: отпустил — в ближайший узел решётки
   else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") tap(e.clientX, e.clientY);
+  else if (was === 1 && !moved && btn === 1 && e.type === "pointerup") setZen(!zen);   /* v0.092: щелчок колёсиком — дзен */
   grabPend = null;
   if (!ptrs.size) { cv.style.cursor = "grab"; mouseMoved = true; }
 };
@@ -1206,6 +1218,33 @@ if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
 L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
 </script>
 <script src="../_js/hub-link.js"></script>
+<script src="../_js/recorder.js"></script>
+<script>
+// v0.092: видеозапись со звуком — свой ромб ⏺; запись — общим recorder.js, звук — из захвата экрана / вкладки
+(function(){
+  const b = document.getElementById("bRec"); let cap = null, actx = null;
+  const recBtn = () => document.getElementById("zerkRecBtn");
+  const recOn = () => { const r = recBtn(); return !!r && (r.classList.contains("rec") || r.classList.contains("recpage")); };
+  const sync = () => { const on = recOn(); b.classList.toggle("on", on); b.classList.toggle("blink", on); if (!on && cap) { cap.getTracks().forEach(t => t.stop()); cap = null; } };
+  const watch = () => { const r = recBtn(); if (!r) return setTimeout(watch, 300); new MutationObserver(sync).observe(r, { attributes: true, attributeFilter: ["class"] }); };
+  watch();
+  b.addEventListener("click", async () => {
+    const R = window.__zerkRecorder, r = recBtn(); if (!R || !r) return;
+    if (recOn()) { r.click(); return; }
+    try { R.setMode("canvas"); } catch (e) {}
+    try {
+      cap = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, systemAudio: "include" });
+      cap.getVideoTracks().forEach(t => t.stop());
+      if (cap.getAudioTracks().length) {
+        actx = actx || new AudioContext(); if (actx.state === "suspended") await actx.resume();
+        window.AUDIO_VISUALIZER = { audioCtx: actx, source: actx.createMediaStreamSource(new MediaStream(cap.getAudioTracks())) };
+        R._dest = null;
+      } else { window.AUDIO_VISUALIZER = null; R._dest = null; }
+    } catch (e) { cap = null; window.AUDIO_VISUALIZER = null; R._dest = null; }
+    r.click();
+  });
+})();
+</script>
 <script src="../_js/slider-arrows.js"></script>
 </body>
 </html>
