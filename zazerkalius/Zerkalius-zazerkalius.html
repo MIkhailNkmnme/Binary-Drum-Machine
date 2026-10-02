@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.547. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.548. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.547</title>
+<title>Zazerkalius — v0.548</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -725,6 +725,9 @@ body.zen #w-cone #coneMain{bottom:0}
 .cgrp.cg-vid{--gc:#6cb4ff} .cgrp.cg-ring{--gc:#4fd1a0} .cgrp.cg-anim{--gc:#ff9a52} .cgrp.cg-snd{--gc:#b98cff} .cgrp.cg-las{--gc:#ff6b8e} .cgrp.cg-pal{--gc:#f0abfc}
 #w-cone .cgrp.gc{background:color-mix(in srgb, var(--gc) 13%, transparent);border-color:color-mix(in srgb, var(--gc) 50%, transparent)}
 #w-cone .cgrp.gc.cfloat,#paneGrp .cgrp.gc,.cgrp.gc.cdrag{background:color-mix(in srgb, var(--gc) 13%, var(--panel));border-color:color-mix(in srgb, var(--gc) 50%, transparent)}
+/* v0.548, по снимку «Кручения» поверх конуса — «убери прозрачность у всех групп, всегда»: фон любой группы — сплошной (цвет группы по панели), где бы она ни стояла: в полосе, на поле, на левой панели, при перетаскивании и в дзене */
+:is(#w-cone, #paneGrp) .cgrp,.cgrp.cdrag{background-color:color-mix(in srgb, var(--gc, var(--panel)) 13%, var(--panel)) !important;opacity:1 !important}
+:is(#w-cone, #paneGrp) .cgrp.cg-spin,.cgrp.cg-spin.cdrag{background-color:color-mix(in srgb, rgb(255,209,102) 13%, var(--panel)) !important}
 #w-cone .cgrp.gc > .glab,#paneGrp .cgrp.gc > .glab,.cgrp.gc.cdrag > .glab{color:var(--gc)}
 /* v0.313, «сделай все ползунки стандартного размера раза в 2 длиннее»: ползунок со стрелками ◂ ▸ (обёртка .zerk-range-wrap из
    _js/slider-arrows.js) — у всех одной длины, 140 px вместо 60…90: сама дорожка ~108 px, прежде ~30…60 (стрелки съедали свои 32 px
@@ -1482,7 +1485,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.547</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.548</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2429,8 +2432,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0547"></script>
-<script src="zz-ui.js?v=0547"></script>
+<script src="zz-core.js?v=0548"></script>
+<script src="zz-ui.js?v=0548"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
