@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.017. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.018. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.017</title>
+<title>Zerkalius Пирамида — v0.018</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -89,6 +89,10 @@
   base = угол / 0,004 (523,6 и 785,4): ■ base — стоит; ⟲ base − 0,5 — медленно назад; ⟳ base + 0,5 — медленно вперёд;
   ✶ base / 2 — два положения чередуются; △ base / 3 — три по кругу. Шаг привязан к кадру, а не ко времени, поэтому стояние
   точное при любой частоте экрана. Набор меняется вместе с режимом (strobeBuild из bBi), нажатая подсвечена.
+  v0.018, «сделай бегунки ромбами и стрелки из треугольников равнобедренных»: бегунки обоих ползунков скорости — ромб 14 × 20
+  (картинкой SVG в фоне — так одинаково в Chrome и Firefox), верхний зелёный, нижний голубой; метки сдвинуты под середину
+  ромба (поле 7 px). Стрелки ◂ ▸ — равнобедренные треугольники 18 × 20 (clip-path, основание 20, боковые ≈ 20,6) цвета своего
+  ползунка; буква внутри скрыта, нажатая — ярче.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -117,16 +121,21 @@
   #strobe{ display:flex; gap:4px; justify-content:center; margin-top:3px; }
   #strobe button{ flex:0 1 auto; padding:2px 8px; font:11px/18px monospace; }
   .scol{ flex:1 1 auto; min-width:0; }
-  button.sar{ flex:0 0 auto; width:30px; height:20px; padding:0; font-size:12px; line-height:18px; touch-action:none; }
+  button.sar{ flex:0 0 auto; width:18px; height:20px; margin:1px 2px 0; padding:0; border:none; border-radius:0; font-size:0; touch-action:none; background:var(--acc); opacity:.6; }
+  button.sar[data-d="-1"]{ clip-path:polygon(0 50%, 100% 0, 100% 100%); }
+  button.sar[data-d="1"]{ clip-path:polygon(100% 50%, 0 0, 0 100%); }
+  button.sar[data-a="f"]{ background:#4dd4ff; }
+  button.sar:hover{ opacity:.85; }
+  button.sar:active{ opacity:1; }
   #spdBar{ position:fixed; left:0; right:0; bottom:0; padding:4px 8px 3px; background:rgba(5,6,8,.6); touch-action:none; }
-  .spd{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:18px; margin:0; background:none; }
+  .spd{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:22px; margin:0; background:none; }
   .spd::-webkit-slider-runnable-track{ height:4px; border-radius:2px; background:var(--line); }
   .spd::-moz-range-track{ height:4px; border-radius:2px; background:var(--line); }
-  .spd::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border-radius:50%; background:var(--acc); border:none; }
-  .spd::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:var(--acc); border:none; }
-  #sFine::-webkit-slider-thumb{ background:#4dd4ff; }
-  #sFine::-moz-range-thumb{ background:#4dd4ff; }
-  .ticks{ position:relative; height:13px; margin:0 8px; }
+  .spd::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:20px; margin-top:-8px; border-radius:0; border:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%237ee787'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+  .spd::-moz-range-thumb{ width:14px; height:20px; border-radius:0; border:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%237ee787'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+  #sFine::-webkit-slider-thumb{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%234dd4ff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+  #sFine::-moz-range-thumb{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%234dd4ff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+  .ticks{ position:relative; height:13px; margin:0 7px; }
   .ticks span{ position:absolute; top:0; transform:translateX(-50%); font:10px/13px monospace; color:var(--dim); cursor:pointer; }
   .ticks span::before{ content:""; position:absolute; left:50%; top:-3px; width:1px; height:3px; background:var(--dim); }
   .ticks span.on{ color:var(--acc); }
@@ -155,7 +164,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.017</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.018</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
