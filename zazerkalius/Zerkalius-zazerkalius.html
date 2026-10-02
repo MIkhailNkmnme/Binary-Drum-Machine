@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.527. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.528. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.527</title>
+<title>Zazerkalius — v0.528</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1064,7 +1064,7 @@ body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::after{clip-path:polygon(5.19px
 #top.lpt button.tz.tz.tz{height:25px !important;font-size:var(--tbfs, 12px);line-height:1;white-space:nowrap;overflow:hidden;flex:0 0 auto !important;text-align:center;justify-content:center;min-width:0 !important}
 /* v0.526: повтор — стрелка ↩, отражённая вправо */
 #bRedo .flipx{display:inline-block;transform:scaleX(-1)}
-#top.lpt #bUndo{margin-left:6px}#top.lpt #bRedo{margin-right:6px}   /* v0.527: стрелки-кнопки — отдельной парой */
+#top.lpt #bPinMode{margin-right:6px}#top.lpt #bUndo{margin-left:6px}#top.lpt #bRedo{margin-right:6px}   /* v0.527: стрелки-кнопки — отдельной парой */
 /* v0.525, «убери изначальную прозрачность в группах Конуса у кнопок»: неактивные (не действуют в нынешнем режиме, «Лазер» в 3D) — не прозрачные целиком
    (сквозь них просвечивал конус), а с бледной надписью: фон и обводка — как у всех */
 :is(#w-cone, #paneGrp) .cgrp :is(:disabled, label.dis, label.dis3),:is(#w-cone, #paneGrp) .cgrp :is(:disabled, label.dis, label.dis3).tz.tz.tz{opacity:1 !important;color:color-mix(in srgb, var(--txt) 38%, transparent) !important}
@@ -1464,9 +1464,10 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.527</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.528</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
-  <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
+  <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон, отдельно от соседних -->
+  <button id="bPinMode" data-tzl="t" data-tzr="t" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
   <span class="sp"></span>
   <!-- v0.268, «одну кнопку на всё — и потом выбор окна кликом: строки, конус, 3D»: ⏺ в шапке — щелчок, затем щелчок по окну -->
@@ -2405,8 +2406,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0527"></script>
-<script src="zz-ui.js?v=0527"></script>
+<script src="zz-core.js?v=0528"></script>
+<script src="zz-ui.js?v=0528"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
