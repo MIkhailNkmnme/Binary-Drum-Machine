@@ -280,6 +280,7 @@
   .scol::before{ background:#aab2ba; }
   .scol::after{ left:-1px; right:-1px; top:2px; height:29px; background:#0a0c10; }
   .srow.pr{ gap:0; }
+  .scol::before, .scol::after{ pointer-events:none; }   /* щелчок у края — в невидимую стрелку, а не в дорожку */
   .srow.pr button.sar{ width:18px; height:33px; margin:0; background:transparent; clip-path:none; cursor:pointer; }   /* v0.059: стрелки — невидимые края */
   .srow.pr .scol::before{ left:-18px; right:-18px; }
   .srow.pr .scol::after{ left:-15px; right:-15px; }
