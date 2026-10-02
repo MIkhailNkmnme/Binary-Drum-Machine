@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.097. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.098. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.097</title>
+<title>Zerkalius Пирамида — v0.098</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -328,6 +328,11 @@
   v0.097, по снимку ромба — «так не нажимаются пауза и ×N»: ⏸ и ×N живут внутри полосы скорости, а fixed-полоса — свой слой без
   z-index, ниже ромба видов (z 4): его пустой квадрат 144 px их и закрывал. Пустое поле #views больше не ловит щелчки
   (pointer-events только у самих кнопок), полоса скорости — z 5.
+  v0.098, «нужна кнопка — сохранить текущее движение, или, если можно, ссылкой»: ромб 🔗 (#bLink, наверху справа) кладёт в буфер
+  ссылку на этот же вид: в #s=… (base64url от JSON) — режим, слои, раздвинуть, срез, ▲◆▼, грани / рёбра / цвет / выбранный цвет /
+  ось, поворот и наклон, вращение и скорость, приближение и сдвиг, достроенное и снятое (до 300 частей, координаты до 4 знаков).
+  Открыл ссылку — всё встаёт как было и крутится так же (applyState после загрузки). Адрес вкладки тоже меняется на эту ссылку,
+  так что F5 возвращает тот же вид. Сообщение «ссылка скопирована» — всплывашкой #toast сверху (ничего не сдвигает).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -470,7 +475,9 @@
   #bZen{ top:10px; }
   #bPng{ top:10px; right:52px; }
   #bRec{ top:10px; right:94px; color:#ff6b6b; }
-  #bRecP{ top:10px; right:136px; display:none; }   /* v0.094: пауза записи — только пока пишет */
+  #bRecP{ top:10px; right:178px; display:none; }
+  #bLink{ top:10px; right:136px; font-size:15px; }   /* v0.098: ссылка на этот вид */
+  #toast{ position:fixed; top:60px; left:50%; transform:translateX(-50%); z-index:30; padding:4px 12px; font-size:13px; color:var(--fg); background:var(--panel); border:1px solid var(--line); display:none; pointer-events:none; }   /* v0.094: пауза записи — только пока пишет */
   #bRecP.show{ display:flex; align-items:center; justify-content:center; }   /* v0.092: видеозапись со звуком */
   #zerkRecBtn{ display:none !important; }
   #zerkRecTimer{ right:auto !important; left:50% !important; bottom:auto !important; top:60px !important; transform:translateX(-50%); }
@@ -497,7 +504,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.097</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.098</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -520,6 +527,8 @@
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bUndo" title="Отменить последнее действие, по шагу (Ctrl+Z)">↶<span class="t"> отменить</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
 <div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bZin" style="--x:49px;--y:-49px" title="Ближе (×1,25)">＋</button><button id="bZout" style="--x:49px;--y:49px" title="Дальше (÷1,25)">−</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
+<button id="bLink" class="fixb" title="Ссылка на этот вид и движение — в буфер (и в адрес вкладки)">🔗&#xFE0E;</button>
+<div id="toast"></div>
 <button id="bRecP" class="fixb" title="Пауза записи / продолжить">⏸&#xFE0E;</button>
 <button id="bRec" class="fixb" title="Видеозапись со звуком (R): Chrome спросит, откуда взять звук — отметь «звук»">⏺</button>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
@@ -1251,6 +1260,38 @@ addEventListener("keydown", e => { if (e.code === "Escape" && zen) { setZen(fals
 if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
 { let had = false; try { had = !!(localStorage.getItem("piramida_free") || localStorage.getItem("piramida_views")); } catch (e) {} if (!had) rowLayout(); }   /* v0.091: первый заход — кнопки рядом над скоростью */
 L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
+// v0.098: ссылка на текущий вид и движение — #s=<base64url(JSON)>
+function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(el._h); el._h = setTimeout(() => { el.style.display = "none"; }, 2200); }
+function getState(){
+  const r4 = (x) => +x.toFixed(4), st = { bi: +biMode, L, X: r4(X), sl: slice, u: +showUp, o: +showOct, d: +showDn, f: +showFace, e: +showEdge, c: +colorOn, mc: $("cMono").value, ax: +showAxis,
+    yw: r4(yaw % (2 * Math.PI)), pt: r4(pitch), sp: +spin, v: r4(Math.log2(spd)), z: r4(zoom), px: Math.round(panX), py: Math.round(panY) };
+  if (extra.length && extra.length <= 300) st.ex = extra.map(q => ({ k: q.kind, l: q.layer, t: q.tpl, c: q.col, r: q.ref ? 1 : 0, m: q.moved ? 1 : 0, v: q.v.map(a => a.map(r4)) }));
+  if (removed.size && removed.size <= 3000) st.rm = [...removed];
+  return st;
+}
+function applyState(st){
+  if ("bi" in st) biMode = !!st.bi;
+  ["u", "o", "d", "f", "e", "c", "ax"].forEach(k => { if (k in st) { const b = !!st[k]; if (k === "u") showUp = b; else if (k === "o") showOct = b; else if (k === "d") showDn = b; else if (k === "f") showFace = b; else if (k === "e") showEdge = b; else if (k === "c") colorOn = b; else showAxis = b; } });
+  if (st.mc) { $("cMono").value = st.mc; monoRGB = rgb(st.mc); }
+  if (st.L) { L = Math.max(1, Math.min(64, st.L)); sL.value = Math.min(L, +sL.max); sS.max = L; }
+  if ("X" in st) { X = st.X; sX.value = Math.round(X * 100); }
+  if ("sl" in st) { slice = Math.min(st.sl, L); sS.value = slice; }
+  if ("yw" in st) yaw = st.yw; if ("pt" in st) pitch = st.pt; if ("sp" in st) spin = !!st.sp;
+  if ("z" in st) zoom = st.z; if ("px" in st) panX = st.px; if ("py" in st) panY = st.py;
+  extra = (st.ex || []).map(q => ({ kind: q.k, layer: q.l, tpl: q.t, col: q.c, ref: !!q.r, moved: !!q.m, v: q.v }));
+  removed.clear(); (st.rm || []).forEach(k => removed.add(k));
+  hist.length = 0; undoUi(); tween = null;
+  ui(); rebuild(); strobeBuild(); if ("v" in st) setSpd(st.v); ui();
+}
+$("bLink").onclick = async () => {
+  const json = JSON.stringify(getState()), b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const url = location.origin + location.pathname + "#s=" + b64;
+  try { history.replaceState(null, "", "#s=" + b64); } catch (e) {}
+  try { await navigator.clipboard.writeText(url); toast("Ссылка на этот вид скопирована"); } catch (e) { toast("Ссылка — в адресной строке"); }
+};
+{ const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)/); if (m) { try {
+    const b = m[1].replace(/-/g, "+").replace(/_/g, "/"), json = decodeURIComponent(escape(atob(b + "===".slice((b.length + 3) % 4))));
+    applyState(JSON.parse(json)); } catch (e) { console.warn("Пирамида: ссылка не прочиталась", e); } } }
 </script>
 <script src="../_js/hub-link.js"></script>
 <script src="../_js/recorder.js"></script>
