@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.056. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.057. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.056</title>
+<title>Zerkalius Пирамида — v0.057</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -204,11 +204,15 @@
   (.scol::after на 1 px внутри); числа шкал, подписи и бегунок — поверх, как были.
   v0.056, по второму рисунку (светлый ромб поверх «Слоёв» и «Среза»): ромб дорожки — во всю высоту ползунка (33 px), острия
   заходят к стрелкам (на 4 px за края), контур светлый (#aab2ba) и толще — 2 px.
+  v0.057, «можно ли открывать новое окно» (значок хаба): у значка #zerkHubBtn вернул меню долгого нажатия браузера
+  (-webkit-touch-callout: default — на остальной странице оно выключено с v0.012), поэтому на телефоне долгое нажатие на значок
+  даёт «Открыть в новой вкладке». Обычное нажатие — как было, в этой же вкладке; на компьютере — колесо или Ctrl+щелчок.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.35 system-ui, sans-serif; overflow:hidden; }
   body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+  #zerkHubBtn{ -webkit-touch-callout:default; }   /* v0.057: долгое нажатие на значок хаба — меню «открыть в новой вкладке» */
   #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
   #cv{ touch-action:none; cursor:grab; }
   #ov{ pointer-events:none; }
@@ -322,7 +326,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.056</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.057</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
