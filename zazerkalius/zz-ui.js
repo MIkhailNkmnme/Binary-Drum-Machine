@@ -8800,8 +8800,8 @@ function layoutAll(reset){
   document.querySelectorAll(".win").forEach(el => {
     if (reset || !Z.win[el.id]) {
       /* v0.551, по снимку списка «Окна» — «все окна по умолчанию сверни сюда»: окно, у которого ещё нет своего места (первый запуск, новое окно), — свёрнуто
-         (при «⇆ строки справа» — кнопкой в списке «Окна» слева); развёрнуты только Конус и Подсказки. «📐 Разложить» — по-прежнему всё развёрнутым */
-      const fold = !reset && !ZZ_BG && el.id !== "w-cone" && el.id !== "w-help";
+         (при «⇆ строки справа» — кнопкой в списке «Окна» слева); развёрнут только Конус (v0.552 — и Подсказки свёрнуты). «📐 Разложить» — по-прежнему всё развёрнутым */
+      const fold = !reset && !ZZ_BG && el.id !== "w-cone";   // v0.552: и Подсказки
       Z.win[el.id] = Object.assign({ collapsed: fold, hint: false }, def[el.id] || { x: 20, y: 20, w: 320, h: 240 });
       Z.win[el.id].pw = Z.win[el.id].w; Z.win[el.id].px = Z.win[el.id].x;   // v0.023: желаемые ширина и место
     }
@@ -10248,7 +10248,7 @@ function init(){
   window.parkSync = () => {
     const on = !!Z.fieldRight, list = [];
     document.querySelectorAll(".win").forEach(el => {
-      if (el.id === "w-help" || el.classList.contains("popped") || el.classList.contains("docked")) return;
+      if ((el.id === "w-help" && !Z.helpOn) || el.classList.contains("popped") || el.classList.contains("docked")) return;   // v0.552: Подсказки (когда включены) — тоже в список
       const parked = on && el.classList.contains("collapsed");
       if (parked) { el.style.display = "none"; el.dataset.parked = "1"; list.push(el); }
       else if (el.dataset.parked) { el.style.display = ""; delete el.dataset.parked; }
@@ -10600,7 +10600,7 @@ function init(){
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; applyPaneIcons(); save(); packWins(); };
   new MutationObserver(() => { if (Z.paneIcons) iconizePane(); }).observe($("rowsPane"), { childList: true, subtree: true, characterData: true });
-  $("bHelp").onclick = () => { Z.helpOn = !Z.helpOn; layoutAll(false); save(); };
+  $("bHelp").onclick = () => { Z.helpOn = !Z.helpOn; layoutAll(false); if (window.parkSync) parkSync(); save(); };   // v0.552: свёрнутые Подсказки — сразу в список
 
   // Клавиши: ↑/↓ — по строкам, Ctrl+Z — отмена (не в полях ввода).
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
