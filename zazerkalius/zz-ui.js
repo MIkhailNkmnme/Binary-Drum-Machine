@@ -493,6 +493,16 @@ function cutHidUi(){
   const take = hidCount() > 0 && Z.cutTake !== false, m = Z.cutGen || "r90";
   t.classList.toggle("on", take);   // v0.253
   for (const [id, v] of [["bCutR90", "r90"], ["bCutR30", "r30"], ["bCutMask", "mask"]]) { const b = document.getElementById(id); if (b) b.classList.toggle("on", !take && m === v); }
+  const ps = document.getElementById("animPreset");   // v0.537: заготовка — тоже способ достройки
+  if (ps) { const pv = m.startsWith("p:") ? m.slice(2) : ""; if (ps.value !== pv) ps.value = pv; ps.classList.toggle("on", !take && !!pv); }
+}
+/* v0.537, «здесь заготовка тоже — выбираться вместо 90 и 30, чтобы при растяжении вниз она продолжалась»: выбранная заготовка (Z.cutGen = "p:" +
+   её значение) достраивает строки по номеру — строка i та же, что дала бы заготовка с нынешним сидом и столбом (правила — с фоном за краем, как в
+   заготовке; последовательности — их же продолжением) */
+function cutPresetRows(H){
+  const m = Z.cutGen || ""; if (!m.startsWith("p:")) return null;
+  const v = m.slice(2), seed = Z.animSeed || "1"; H = Math.min(CUT_GEN_MAX, H);
+  return v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : v.startsWith("s:") ? zzSeqRows(v.slice(2), H) : null;
 }
 function hidRows(l){ return (Z.lanesHid && Z.lanesHid[l]) || []; }
 function hidCopy(){ return Array.isArray(Z.lanesHid) ? Z.lanesHid.map(l => l.slice()) : null; }
@@ -611,7 +621,7 @@ function cutAt(k, gen){
          (Z.cutTake, по умолчанию вкл) — черта вниз сперва возвращает строки, что лежат под ней, и только когда они кончились — достраивает. */
       const vis = Z.lanes[l].slice(); let hid = hidRows(l).slice();
       if (Z.cutTake !== false) while (vis.length < k && hid.length) vis.push(hid.shift());
-      if (vis.length < k) { while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(cutGenNext(vis[vis.length - 1], vis[vis.length - 2])); }   // v0.361: «Заменить» снята — что под чертой, остаётся ниже новых
+      if (vis.length < k) { const pg = cutPresetRows(k); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(pg && pg[vis.length] != null ? pg[vis.length] : cutGenNext(vis[vis.length - 1], vis[vis.length - 2])); }   // v0.537: заготовка — её строкой с тем же номером   // v0.361: «Заменить» снята — что под чертой, остаётся ниже новых
       Z.lanes[l] = vis; Z.lanesHid[l] = hid;
       continue;
     }
@@ -3658,8 +3668,9 @@ function setupCone(){
   $("animSeed").value = Z.animSeed || "1";
   $("animSeed").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.animSeed = v || "1"; e.target.value = Z.animSeed; save(); };
   $("animPreset").onchange = (e) => {
-    const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v; e.target.value = "";
+    const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v;
     if (!v) return;
+    Z.cutGen = "p:" + v; Z.cutTake = false; if (typeof cutHidUi === "function") cutHidUi();   // v0.537: и способ достройки под чертой — эта заготовка (вместо 90 / 30 / маски)
     const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
     animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + столб " + barLab() : lab);   // v0.241: стенка
   };

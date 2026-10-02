@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.536. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.537. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.536</title>
+<title>Zazerkalius — v0.537</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -533,6 +533,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
 #cutPanel #animPreset{max-width:170px;font-size:12px}   /* v0.517: заготовки — под чертой */
+#cutPanel #animPreset.on{border-color:var(--gold);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}   /* v0.537: заготовка — способ достройки, горит как 90 / 30 */
 #cutPanel .cpl ~ .cpl{margin-left:8px}   /* v0.288: группы кнопок под чертой — отступ перед каждой подписью, кроме первой */
 /* v0.230, по снимку растянутых шаблонов под чертой — «тут жесть какая-то! без фона надо, это не поле, а кнопки под чертой, не растягивать»:
    под чертой — компактные кнопки своей ширины, без фона, в ряд с переносом; панель прижата к левому краю поля (не уезжает с широкими строками). */
@@ -1470,7 +1471,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.536</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.537</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2413,8 +2414,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0536"></script>
-<script src="zz-ui.js?v=0536"></script>
+<script src="zz-core.js?v=0537"></script>
+<script src="zz-ui.js?v=0537"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
