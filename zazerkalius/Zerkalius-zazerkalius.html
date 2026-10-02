@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.554. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.555. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.554</title>
+<title>Zazerkalius — v0.555</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -980,7 +980,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 :is(#w-cone .tools, #paneGrp) .cgrp.tzg:not(.csz):not(:has(> .cgb.tzc)){max-width:520px}
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz{--a:0px;--b:0px;--c:0px;--d:0px;--e:0px;--f:0px;position:relative;flex:0 0 auto !important;height:24px !important;box-sizing:border-box;margin:0 !important;
   clip-path:polygon(var(--a) 0,calc(100% - var(--d)) 0,calc(100% - var(--e)) 50%,calc(100% - var(--f)) 100%,var(--c) 100%,var(--b) 50%);border:0 !important;border-radius:0 !important;
-  padding:0 calc(var(--t) + 2px) !important;display:flex !important;align-items:center;justify-content:center;background-color:var(--gfc, var(--line));-webkit-text-fill-color:#0e1116;font-weight:700 !important}   /* v0.485: заголовки — жирным */   /* v0.479, «у всех заголовков убери прозрачность»: сплошь цветом группы, надпись тёмная (заливкой букв: сам color остаётся цветом группы — по нему рамка и контуры) */
+  padding:0 calc(var(--t) + 2px) 0 calc(2 * var(--t) + 4px) !important;display:flex !important;align-items:center;justify-content:center;background-color:var(--gfc, var(--line));-webkit-text-fill-color:#0e1116;font-weight:700 !important}   /* v0.485: заголовки — жирным */   /* v0.479, «у всех заголовков убери прозрачность»: сплошь цветом группы, надпись тёмная (заливкой букв: сам color остаётся цветом группы — по нему рамка и контуры) */   /* v0.555, по снимку «ЗВУК» — «подвинь заголовок текст от края»: слева у заголовка выемка и зубец рамки группы — текст отступает на 2t + 4 px (было t + 2) */
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz > :is(.gzen, .gtri, .gx, .gon){opacity:1 !important}
 :is(#w-cone .tools, #paneGrp) .cgrp:not(.zenon) > .glab.tz.tz.tz > .gzen{filter:grayscale(1) brightness(.6)}
 :is(#w-cone .tools, #paneGrp) .cgrp > .glab.tz.tz.tz > .gtri.on{text-shadow:0 0 3px #fff}
@@ -1485,7 +1485,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.554</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.555</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2432,8 +2432,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0554"></script>
-<script src="zz-ui.js?v=0554"></script>
+<script src="zz-core.js?v=0555"></script>
+<script src="zz-ui.js?v=0555"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
