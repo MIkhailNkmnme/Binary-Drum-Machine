@@ -7136,8 +7136,14 @@ function cgrpInit(){
     const R = document.documentElement.style;
     // v0.255, «ширину самого поля не менять, левого»: панель сама больше не расширяется — только если край тянули рукой
     if (auto && !Z.paneWUser) delete Z.paneW;
-    if (Z.paneW) R.setProperty("--paneW", Z.paneW + "px"); else R.removeProperty("--paneW");
+    /* v0.516, по снимку узкой левой панели — «помести текст в минимальную ширину и сделай её по умолчанию»: ширина панели — не меньше той, в которую
+       входит самый длинный заголовок раздела (lpMinW); она же — по умолчанию (прежде 250 px) */
+    const mw = lpMinW();
+    if (Z.paneW && mw && Z.paneW < mw) Z.paneW = mw;
+    if (Z.paneW) R.setProperty("--paneW", Z.paneW + "px"); else if (mw) R.setProperty("--paneW", mw + "px"); else R.removeProperty("--paneW");
   };
+  window.paneWApply = paneWApply;
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { paneWApply(false); if (typeof lpKick === "function") lpKick(); });
   if (box) {
     for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g) box.appendChild(g); }
     dockSync();
@@ -7148,7 +7154,7 @@ function cgrpInit(){
         const P = $("rowsPane"), w0 = P.getBoundingClientRect().width, x0 = e.clientX; document.body.classList.add("wdrag"); wShield(true);
         // v0.271: как у ширины поля — пока тянут, за мышью тонкая черта, ширина панели встаёт, когда отпустили (живая перекладка тормозила)
         const pr = P.getBoundingClientRect(); let lx = x0, raf = 0, done = false; const g = document.createElement("div"); g.id = "wGhost"; document.body.appendChild(g);
-        const wAt = () => Math.round(Math.max(180, Math.min(innerWidth * 0.7, w0 + lx - x0)));
+        const wAt = () => Math.round(Math.max(lpMinW() || 180, Math.min(innerWidth * 0.7, w0 + lx - x0)));   // v0.516: не уже заголовков
         const draw = () => { raf = 0; g.style.cssText = `left:${Math.round(pr.left + wAt()) - 1}px;top:${Math.round(pr.top)}px;height:${Math.round(pr.height)}px`; };
         draw();
         const mv = (ev) => { if (!(ev.buttons & 1)) { up(); return; } lx = ev.clientX; if (!raf) raf = requestAnimationFrame(draw); };
@@ -7796,6 +7802,19 @@ function triTag(){
    цепочкой «остриё в выемку»; длина по надписи (значок — полкнопки), каждый ряд дотягивается до правого края панели (по стороне на кнопку по кругу);
    «Окна» — по одной в ряд во всю ширину. Панель значками (◂) — как была */
 let lpBusy = false, lpRO = null;
+/* v0.516: ширина левой панели, в которую входят все заголовки разделов целиком (текст, поля заголовка, ▾, отступы; у первого — место под ◂) */
+function lpMinW(){
+  const pane = document.getElementById("rowsPane"); if (!pane || document.body.classList.contains("pane-icons")) return 0;
+  let m = 0;
+  pane.querySelectorAll(":scope > .pane-head").forEach(h => {
+    if (!h.getClientRects().length) return;
+    const rg = document.createRange(); rg.selectNodeContents(h); const tw = rg.getBoundingClientRect().width;
+    const extra = 2 * (6.93 + 10) + (h.classList.contains("pf") ? 18 : 0) + 16 + (h.previousElementSibling && h.previousElementSibling.id === "bPaneIcons" ? 44 : 0);
+    m = Math.max(m, tw + extra);
+  });
+  const sb = pane.offsetWidth - pane.clientWidth;   // полоса прокрутки панели
+  return m ? Math.ceil(m + sb + 2) : 0;
+}
 function lpKick(){ cancelAnimationFrame(lpKick._raf); lpKick._raf = requestAnimationFrame(lpTag); }
 function lpTag(){
   const pane = document.getElementById("rowsPane"); if (!pane || lpBusy) return;
