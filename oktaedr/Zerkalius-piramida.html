@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.020. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.021. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.020</title>
+<title>Zerkalius Пирамида — v0.021</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -105,6 +105,15 @@
   clip-path), первая в ряду — остриём, следующие — выемкой и заходят на t (сцепка, как .tz у конуса Zazerkalius); обводка —
   фоном кнопки, заливка — ::before на 1 px внутри; нажатая — зелёная обводка. Виды (⊤ ⊥ ◁ ◇ ◢ ⬙) и ⌖ ушли из панели
   в отдельную полоску #views вверху посередине — своя ручка ⋮⋮, тоже тащится и помнит место (piramida_views).
+  v0.021, «(верх(окта)низ) — так выровняй края ромбами» (запись скобками, как в Zazerkalius): в каждой строке кнопок края
+  наружу — остриями, середина — шестигранник ( ), слева от неё — «((» (.cl: остриё влево, выемка справа), справа — «))»
+  (.cr); соседи заходят друг в друга на t (.jn). Середина — c = ⌊(n − 1) / 2⌋, при чётном n шестигранник левее середины.
+  Строки считаются по факту раскладки (кнопки с одной высотой offsetTop — одна строка, перенос — новая), поэтому shapeRows
+  зовётся при изменении размеров (ResizeObserver) и после пересборки стробоскопа; два прохода — после сцепки строки могут
+  перестроиться.
+  Там же, «ползунки — как у скоростей, числа слева-справа от бегунков и название там же»: Слоёв / Раздвинуть / Срез — ромб-бегунок
+  и треугольные стрелки ◂ ▸ (data-for — шаг ползунка, удержание повторяет), подпись «название число» (.slab) едет рядом
+  с бегунком — справа от него, а у правого края — слева (placeLabels из ui() и при изменении размеров).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -118,9 +127,10 @@
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
   #panel.min > :not(h1){ display:none; }
   #panel.min{ width:auto; padding:6px 8px; }
-  .sl{ display:flex; flex-direction:column; gap:8px; }
-  label.s{ display:flex; flex-direction:column; gap:3px; color:var(--dim); }
-  label.s b{ color:var(--fg); }
+  .sl{ display:flex; flex-direction:column; gap:4px; }
+  .scol{ position:relative; }
+  .slab{ position:absolute; top:3px; left:0; font:11px/16px system-ui, sans-serif; color:var(--dim); background:rgba(12,14,18,.88); padding:0 4px; border-radius:3px; pointer-events:none; white-space:nowrap; }
+  .slab b{ color:var(--fg); }
   input[type=range]{ width:100%; }
   .rows{ display:flex; flex-direction:column; gap:4px; }
   .row{ display:flex; gap:4px; flex-wrap:wrap; }
@@ -135,8 +145,9 @@
   body{ --t:7px; }
   .row > button, #strobe > button, #views > button{ position:relative; isolation:isolate; border:none; border-radius:0; background:var(--line); clip-path:polygon(var(--t) 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, var(--t) 100%, 0 50%); }
   .row > button::before, #strobe > button::before, #views > button::before{ content:""; position:absolute; inset:1px; z-index:-1; background:#0c0f14; clip-path:polygon(var(--t) 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, var(--t) 100%, 0 50%); }
-  .row > button:not(:first-of-type), #strobe > button:not(:first-of-type), #views > button:not(:first-of-type){ margin-left:calc(1px - var(--t)); clip-path:polygon(0 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, 0 100%, var(--t) 50%); }
-  .row > button:not(:first-of-type)::before, #strobe > button:not(:first-of-type)::before, #views > button:not(:first-of-type)::before{ clip-path:polygon(0 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, 0 100%, var(--t) 50%); }
+  .row > button.jn, #strobe > button.jn, #views > button.jn{ margin-left:calc(1px - var(--t)); }
+  .row > button.cr, #strobe > button.cr, #views > button.cr, .row > button.cr::before, #strobe > button.cr::before, #views > button.cr::before{ clip-path:polygon(0 0, calc(100% - var(--t)) 0, 100% 50%, calc(100% - var(--t)) 100%, 0 100%, var(--t) 50%); }
+  .row > button.cl, #strobe > button.cl, #views > button.cl, .row > button.cl::before, #strobe > button.cl::before, #views > button.cl::before{ clip-path:polygon(var(--t) 0, 100% 0, calc(100% - var(--t)) 50%, 100% 100%, var(--t) 100%, 0 50%); }
   .row > button:hover, #strobe > button:hover, #views > button:hover{ background:#4a525c; }
   .row > button.on, #strobe > button.on, #views > button.on{ background:var(--acc); }
   .row > button{ padding:5px calc(var(--t) + 6px); }
@@ -176,7 +187,6 @@
     #panel.min{ right:auto; }
     #panel h1{ font-size:12px; }
     .sl{ flex-direction:row; gap:8px; }
-    .sl label.s{ flex:1 1 0; min-width:0; }
     .t{ display:none; }
     .rows{ flex-direction:row; flex-wrap:wrap; }
     .rows .row{ flex-wrap:nowrap; }
@@ -190,11 +200,11 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.020</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.021</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
-  <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
-  <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
-  <label class="s" title="Показать один слой (сверху — 1); в начале шкалы — все">Срез: <b id="vS">все</b><input type="range" id="sS" min="0" max="4" step="1" value="0"></label>
+  <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="64" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
+  <div class="srow pr"><button class="sar" data-for="sX" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sX" min="0" max="100" step="1" value="35" data-zerk-arrowed="1"><span class="slab">Раздвинуть <b id="vX">0</b></span></div><button class="sar" data-for="sX" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
+  <div class="srow pr" title="Показать один слой (сверху — 1); в начале шкалы — все"><button class="sar" data-for="sS" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sS" min="0" max="4" step="1" value="0" data-zerk-arrowed="1"><span class="slab">Срез <b id="vS">все</b></span></div><button class="sar" data-for="sS" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
   </div>
   <div class="rows">
   <div class="row">
@@ -577,7 +587,14 @@ cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "все";
-  [["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); };
+  [["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); placeLabels(); };
+function placeLabels(){   // v0.021: подпись «название число» рядом с бегунком: справа, у правого края — слева
+  document.querySelectorAll(".srow.pr").forEach(r => {
+    const inp = r.querySelector("input"), lab = r.querySelector(".slab"), w = inp.clientWidth; if (!w) return;
+    const mn = +inp.min, mx = +inp.max, f = mx > mn ? (+inp.value - mn) / (mx - mn) : 0, x = 7 + f * (w - 14), lw = lab.offsetWidth;
+    lab.style.left = (x + 12 + lw <= w ? x + 12 : Math.max(0, x - 12 - lw)) + "px";
+  });
+}
 sL.oninput = () => { L = +sL.value; sS.max = L; if (slice > L) { slice = L; sS.value = L; } ui(); rebuild(); };
 sX.oninput = () => { X = +sX.value / 100; ui(); mouseMoved = true; };
 sS.oninput = () => { slice = +sS.value; ui(); rebuild(); };
@@ -615,6 +632,7 @@ function strobeBuild(){   // v0.019: точки стробоскопа на те
   const f0 = found[0], d = Math.min(0.5, f0.s * 0.002);
   add("⟲", f0.s - d, "Чуть медленнее — медленно крутится назад"); add(ic(f0), f0.s, what(f0)); add("⟳", f0.s + d, "Чуть быстрее — медленно крутится вперёд");
   found.slice(1).sort((x, y) => x.s - y.s).forEach(f => add(ic(f), f.s, what(f)));
+  shapeSoon();
 }
 function fineBuild(){   // пять меток нижнего ползунка: концы промежутка и четверти
   strobeBuild();   // v0.019: точки стробоскопа — для этого промежутка
@@ -631,7 +649,8 @@ function spdStep(a, d){
 }
 document.querySelectorAll("button.sar").forEach(b => {
   let h = 0, r = 0; const stop = () => { clearTimeout(h); clearInterval(r); h = r = 0; };
-  b.addEventListener("pointerdown", e => { e.preventDefault(); stop(); const go = () => spdStep(b.dataset.a, +b.dataset.d); go(); h = setTimeout(() => { r = setInterval(go, 70); }, 380); });
+  b.addEventListener("pointerdown", e => { e.preventDefault(); stop(); const go = () => { if (!b.dataset.for) return spdStep(b.dataset.a, +b.dataset.d);   // v0.021: стрелки ползунков панели — шаг самого ползунка
+    const el = $(b.dataset.for), st = +el.step || 1, v = Math.max(+el.min, Math.min(+el.max, +el.value + +b.dataset.d * st)); if (v === +el.value) return; el.value = v; el.dispatchEvent(new Event("input")); }; go(); h = setTimeout(() => { r = setInterval(go, 70); }, 380); });
   ["pointerup", "pointerleave", "pointercancel"].forEach(t => b.addEventListener(t, stop));
 });
 sFine.oninput = () => { let t = +sFine.value; const r = Math.round(t * 4) / 4; if (Math.abs(t - r) < 0.015) t = r;
@@ -694,6 +713,22 @@ function draggable(el, handle, key){
 }
 draggable(panel, panel.querySelector("h1"), "piramida_pos");
 draggable($("views"), $("views").querySelector(".grip"), "piramida_views");
+// v0.021: края строк кнопок — ромбами: (лево(середина)право) — слева «((», середина «()», справа «))», соседи вплотную
+function shapeRows(){
+  document.querySelectorAll(".row, #strobe, #views").forEach(box => {
+    const bs = [...box.children].filter(b => b.tagName === "BUTTON" && b.offsetParent !== null);
+    for (let pass = 0; pass < 2; pass++) {
+      const ls = []; let top = null;
+      bs.forEach(b => { if (top === null || Math.abs(b.offsetTop - top) > 4) { ls.push([]); top = b.offsetTop; } ls[ls.length - 1].push(b); });
+      ls.forEach(l => { const c = Math.floor((l.length - 1) / 2); l.forEach((b, i) => { b.classList.toggle("cl", i < c); b.classList.toggle("cr", i > c); b.classList.toggle("jn", i > 0); }); });
+    }
+  });
+}
+var shapeQ = false;   // var: strobeBuild зовёт shapeSoon ещё до этой строки
+function shapeSoon(){ if (shapeQ) return; shapeQ = true; requestAnimationFrame(() => { shapeQ = false; shapeRows(); }); }
+{ const ro2 = new ResizeObserver(() => placeLabels()); document.querySelectorAll(".srow.pr").forEach(el => ro2.observe(el)); }
+{ const ro = new ResizeObserver(shapeSoon); document.querySelectorAll(".row, #strobe, #views, #panel").forEach(el => ro.observe(el)); }
+shapeSoon();
 addEventListener("keydown", e => { if (e.code === "Escape" && zen) { setZen(false); return; } if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
 if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
 L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
