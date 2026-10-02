@@ -7823,29 +7823,41 @@ function lpTag(){
         e._tzn0 = Math.max([...e.textContent.trim()].length <= 2 ? 3 : 6, Math.ceil((tw + 10) / sd));
         e._gcol = col; e._tzar = ""; e._tzfix = false; e._tzL = TZ_NOTCH; e._tzR = TZ_TIP; e._tzn = e._tzn0; e._tzx = 0;
       });
-      const cs = getComputedStyle(bl), padL = parseFloat(cs.paddingLeft) || 0, W = bl.clientWidth - padL - (parseFloat(cs.paddingRight) || 0);
-      const prevItem = (e) => {
-        let p = e.previousElementSibling; while (p && !vis(p)) p = p.previousElementSibling;
-        if (p && p.classList.contains("tpl") && !p.classList.contains("mine")) p = p.lastElementChild;   // заготовки — кнопка внутри .tpl
-        if (!p && e.parentElement.classList.contains("tpl")) { let q = e.parentElement.previousElementSibling; while (q && !vis(q)) q = q.previousElementSibling; p = q && q.classList.contains("tpl") && !q.classList.contains("mine") ? q.lastElementChild : null; }
-        return p;
-      };
-      for (let pass = 0; pass < 3; pass++) {   // сцепка — по раскладке: первая в ряду не заходит на соседку
-        shown.forEach(e => tzGeo(e));
-        let ch = false;
-        shown.forEach(e => { const top = Math.round(e.getBoundingClientRect().top), p = prevItem(e);
-          const m = !col1 && p && shown.includes(p) && Math.abs(Math.round(p.getBoundingClientRect().top) - top) < 6 ? 1 : 0;
-          if (m !== (e._tzm || 0)) { e._tzm = m; ch = true; } });
-        if (!ch) break;
-      }
-      shown.forEach(e => tzGeo(e));
-      const x0 = bl.getBoundingClientRect().left + padL, rows = new Map();
-      shown.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - x0]); });
-      rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((W - x - 0.5) / sd + 0.02); if (k <= 0) return;
-        let c = a.map(q => q[0]); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
-        c.sort((p, q) => q.getBoundingClientRect().left - p.getBoundingClientRect().left);
-        for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;
-        c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
+      const cs = getComputedStyle(bl), padL = parseFloat(cs.paddingLeft) || 0, W = bl.clientWidth - padL - (parseFloat(cs.paddingRight) || 0) - 0.5;
+      /* v0.515, по рисункам из «Сетки» — «боковое меню: для заголовков — шестигранник во всю ширину, для двух кнопок в ряд — острия по краям ряда,
+         а на стыке — выемки у обеих: кнопки касаются уголками, между ними ромбик фона». Ряды раскладываются здесь, по расчётной ширине (прежде — как
+         ляжет перенос, и после растяжки кнопки перескакивали в другой ряд, края путались): края ряда — остриём, стыки — выемка к выемке; потом ряд
+         дотягивается до края панели. Что не кнопка (поле «16») — в ряду своей шириной; разделители и свои заготовки — во всю строку */
+      const seq = [];
+      const add = (el) => {
+        if (el.classList.contains("tpl") && !el.classList.contains("mine")) { [...el.children].forEach(add); return; }   // обёртка растворена (display: contents) — у неё нет своих прямоугольников
+        if (!vis(el)) return;
+        if (shown.includes(el)) seq.push({ el, it: true });
+        else if (el.matches(".tpl-sep, .tpl.mine, #tplMine, .pwArr")) seq.push({ el, full: true });
+        else { const r = el.getBoundingClientRect(), m = getComputedStyle(el); seq.push({ el, w: r.width + (parseFloat(m.marginLeft) || 0) + (parseFloat(m.marginRight) || 0) }); } };
+      [...bl.children].forEach(add);
+      const wOf = (e, L, R) => (L[1] + R[1] + 2 * e._tzn) * t;
+      const rows = []; let row = [], used = 0;
+      const close = () => { if (row.length) rows.push(row); row = []; used = 0; };
+      seq.forEach(q => {
+        if (q.full) { close(); return; }
+        const w = q.it ? wOf(q.el, TZ_NOTCH, TZ_NOTCH) : q.w;
+        if (row.length && (col1 || used + w > W)) close();
+        row.push(q); used += w;
+      });
+      close();
+      rows.forEach(r => {
+        const its2 = r.filter(q => q.it).map(q => q.el);
+        r.forEach((q, i) => { if (!q.it) return; q.el._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; q.el._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH; q.el._tzm = 0; q.el._tzx = 0; q.el._tzn = q.el._tzn0; });
+        const sum = r.reduce((a, q) => a + (q.it ? wOf(q.el, q.el._tzL, q.el._tzR) : q.w), 0);
+        let k = Math.floor((W - sum) / sd + 0.001);
+        let c = its2.slice(); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
+        c.reverse();
+        for (let i = 0; k > 0 && c.length && i < k; i++) c[i % c.length]._tzx++;
+        /* «выровняй кнопки по ширине с заголовком»: остаток меньше стороны — дробной долей первой растяжимой кнопке, ряд кончается ровно у края */
+        if (c.length) { const s2 = r.reduce((a, q) => a + (q.it ? wOf(q.el, q.el._tzL, q.el._tzR) + 2 * (q.el._tzx || 0) * t : q.w), 0), rest = W - s2; if (rest > 0.2) c[c.length - 1]._tzx += rest / sd; }
+        its2.forEach(e => { e._tzn = e._tzn0 + e._tzx; tzGeo(e); });
+      });
     });
   } finally { lpBusy = false; }
 }

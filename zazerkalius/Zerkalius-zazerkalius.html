@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.514. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.515. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.514</title>
+<title>Zazerkalius — v0.515</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1008,16 +1008,17 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    цвет — акцент; заголовок раздела — залитая «стрелка вправо» тёмной надписью (свёрнутый — бледнее) */
 #rowsPane .lpb{--gfc:var(--acc);--gon:var(--acc);display:flex !important;flex-wrap:wrap !important;gap:0 !important;align-items:flex-start;align-content:flex-start;padding:2px 8px 8px 8px !important}
 #rowsPane #paneWins.lpb{flex-direction:column !important;flex-wrap:nowrap !important}
+#rowsPane #tplList.lpb{flex:0 0 auto !important;min-height:0 !important;overflow:visible !important}   /* v0.515, «убери пустоту по вертикали»: заготовки — по своим рядам, не во всю высоту */
 #rowsPane .lpb > .tpl:not(.mine){display:contents !important}
 #rowsPane .lpb > .tpl-sep,#rowsPane .lpb > .tpl.mine,#rowsPane .lpb > #tplMine{flex:0 0 100% !important}
 #rowsPane .lpb :is(button, select).tz.tz.tz{height:25px !important;margin-bottom:-1px !important;font-size:12px;line-height:1;text-align:center;justify-content:center;white-space:nowrap;overflow:hidden;flex:0 0 auto !important;min-width:0 !important}
 #rowsPane .lpb > input{height:24px;box-sizing:border-box;margin:0 2px}
-#rowsPane .pane-head.lph{width:max-content;max-width:calc(100% - 16px);box-sizing:border-box;margin:8px 8px 0;height:24px;padding:0 calc(6.93px + 16px) 0 calc(6.93px + 6px);display:flex;align-items:center;gap:6px;
-  background:color-mix(in srgb, var(--acc) 24%, var(--panel2));color:var(--txt);font-weight:700;clip-path:polygon(0 0,calc(100% - 6.93px) 0,100% 50%,calc(100% - 6.93px) 100%,0 100%,6.93px 50%)}
+#rowsPane .pane-head.lph{width:calc(100% - 16px);max-width:calc(100% - 16px);box-sizing:border-box;margin:8px 8px 0;height:24px;padding:0 calc(6.93px + 10px) 0 calc(6.93px + 10px);display:flex;align-items:center;gap:6px;
+  background:color-mix(in srgb, var(--acc) 24%, var(--panel2));color:var(--txt);font-weight:700;clip-path:polygon(6.93px 0,calc(100% - 6.93px) 0,100% 50%,calc(100% - 6.93px) 100%,6.93px 100%,0 50%)}   /* v0.515: шестигранник во всю ширину */
 /* v0.511, «не работает скрытие, тут кнопка наложилась, сделай фон менее заметным»: свёрнутый раздел — скрыт (display:flex блока перебивал скрытие);
    первый заголовок — не под ◂; фон заголовка — приглушённый акцент, надпись светлая */
 #rowsPane .lpb.pane-fold-hid{display:none !important}
-#rowsPane #bPaneIcons + .pane-head.lph{max-width:calc(100% - 52px)}
+#rowsPane #bPaneIcons + .pane-head.lph{width:calc(100% - 52px);max-width:calc(100% - 52px)}
 #rowsPane .pane-head.lph{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.03em;flex:0 0 auto}
 #rowsPane .pane-head.lph.pf::after{float:none;margin-left:auto;opacity:.8}
 #rowsPane .pane-head.lph.folded{opacity:.7}
@@ -1418,7 +1419,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.514</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.515</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2355,8 +2356,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0514"></script>
-<script src="zz-ui.js?v=0514"></script>
+<script src="zz-core.js?v=0515"></script>
+<script src="zz-ui.js?v=0515"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
