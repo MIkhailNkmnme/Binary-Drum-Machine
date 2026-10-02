@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.068. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.069. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.068</title>
+<title>Zerkalius Пирамида — v0.069</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -234,6 +234,9 @@
   тонов почти сливался). placeLabels берёт половину ширины бегунка своей строки (18 в панели, 10,5 у скорости).
   v0.067, по снимку таблички «Раздвинуть 79» — «подсказку без рамки»: у #tipLab нет рамки и подложки — только текст.
   v0.068, по снимку бегунка «все» — «не „все“, а знак бесконечности»: срез «все слои» показывается как ∞.
+  v0.069, по снимку стрелки у шкалы скорости — «у скоростей убери стрелки, а крайние ромбы закрась»: стрелок ◂ ▸ у ползунков
+  скорости больше нет, ползунки шире; крайние ромбы-деления (¼ и 1024 вверху, концы промежутка внизу) залиты цветом ползунка
+  (.ticks .end) и работают как стрелки: щелчок — шаг (вверху — к соседней метке, внизу — на 1/100), удержание — повтор.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -333,6 +336,10 @@
   .srow.pr .spd::-moz-range-thumb{ width:36px; height:33px; }
   #tipLab{ position:fixed; z-index:20; display:none; pointer-events:none; padding:3px 10px; font:13px/19px system-ui, sans-serif; color:var(--dim); background:none; border:none; white-space:nowrap; text-shadow:0 0 3px #000, 0 0 2px #000; }
   #tipLab b{ color:var(--fg); }   /* v0.052: подпись — за бегунком */
+  #spdBar .sar{ display:none; }   /* v0.069: стрелок у скорости нет — их делают крайние ромбы */
+  .ticks span.end{ background:var(--acc); pointer-events:auto; cursor:pointer; z-index:4; color:var(--anti, #000); font-weight:700; }
+  .ticks span.end::before{ background:var(--acc); opacity:.75; }
+  .ticks span.end:active::before{ opacity:1; }
   .ticks span.on{ color:var(--acc); }
   body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views, body.zen-mode #spinBox{ display:none; }
   #spinBox{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:4; flex-wrap:nowrap; }
@@ -369,7 +376,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.068</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.069</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -834,6 +841,16 @@ function fineBuild(){   // пять меток нижнего ползунка: 
   for (let i = 0; i <= 4; i++) { const s = a + (b - a) * i / 4, t = document.createElement("span");
     t.textContent = i === 0 || i === 4 ? (s < 1 ? spdTxt(s) : numTxt(s)) : numTxt(s); t.style.left = i * 25 + "%";
     t.onclick = () => { setSpd(Math.log2(s), true); spin = true; tween = null; ui(); }; fineTicks.appendChild(t); }
+  endTicks(fineTicks, "f");
+}
+function endTicks(box, a){   // v0.069: крайние ромбы-деления — стрелки (щелчок — шаг, удержание — повтор)
+  const ch = box.children; if (!ch.length) return;
+  [[ch[0], -1], [ch[ch.length - 1], 1]].forEach(([t, d]) => {
+    t.classList.add("end"); t.onclick = null; t.title = d < 0 ? "Медленнее (удержание — повтор)" : "Быстрее (удержание — повтор)";
+    let h = 0, r = 0; const stop = () => { clearTimeout(h); clearInterval(r); h = r = 0; }, go = () => spdStep(a, d);
+    t.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); stop(); go(); h = setTimeout(() => { r = setInterval(go, 70); }, 380); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(ev => t.addEventListener(ev, stop));
+  });
 }
 // v0.014: стрелки у ползунков скорости — верхние к соседней метке, нижние на 1/100 промежутка; удержание повторяет
 function spdStep(a, d){
@@ -852,6 +869,7 @@ sFine.oninput = () => { let t = +sFine.value; const r = Math.round(t * 4) / 4; i
   const [a, b] = fineAB(); setSpd(Math.log2(a + (b - a) * t), true); spin = true; ui(); };
 for (let i = -2; i <= 10; i++) { const t = document.createElement("span"); t.textContent = i === -2 ? "¼" : i === -1 ? "½" : 2 ** i; t.style.left = (i + 2) / 12 * 100 + "%";
   t.onclick = () => { setSpd(i); spin = true; tween = null; ui(); }; spdTicks.appendChild(t); }
+endTicks(spdTicks, "c");
 sSpd.oninput = () => { let v = +sSpd.value; const r = Math.round(v); if (Math.abs(v - r) < 0.08) v = r; setSpd(v); spin = true; ui(); };
 $("bSpd").onclick = () => { const v = Math.floor(Math.log2(spd) + 1e-6) + 1; setSpd(v > 10 ? -2 : v); spin = true; tween = null; ui(); };
 setSpd(0);
