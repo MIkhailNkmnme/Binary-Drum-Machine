@@ -91,7 +91,7 @@ function load(){
   try {
     let raw = localStorage.getItem(ZZ_KEY), first = false;
     if (!raw && ZZ_SOLO) { raw = localStorage.getItem("zazerkalius_v1"); first = true; }   // v0.141: первый запуск отдельной страницы
-    if (!raw) return;
+    if (!raw) { if (!ZZ_SOLO) Z.fieldRight = true; return; }   // v0.551: первый запуск — строки справа, окна свёрнуты в список «Окна» слева
     const u = JSON.parse(raw);
     if (first && u) { delete u.win; delete u.dockOrder; delete u.pins; }   // окна Zazerkalius ей ни к чему
     if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) Object.assign(Z, u);
@@ -8799,7 +8799,10 @@ function layoutAll(reset){
   if (reset) document.querySelectorAll(".win.docked").forEach(undockWin);   // v0.025: «📐 Разложить» — все окна на стол
   document.querySelectorAll(".win").forEach(el => {
     if (reset || !Z.win[el.id]) {
-      Z.win[el.id] = Object.assign({ collapsed: false, hint: false }, def[el.id] || { x: 20, y: 20, w: 320, h: 240 });
+      /* v0.551, по снимку списка «Окна» — «все окна по умолчанию сверни сюда»: окно, у которого ещё нет своего места (первый запуск, новое окно), — свёрнуто
+         (при «⇆ строки справа» — кнопкой в списке «Окна» слева); развёрнуты только Конус и Подсказки. «📐 Разложить» — по-прежнему всё развёрнутым */
+      const fold = !reset && !ZZ_BG && el.id !== "w-cone" && el.id !== "w-help";
+      Z.win[el.id] = Object.assign({ collapsed: fold, hint: false }, def[el.id] || { x: 20, y: 20, w: 320, h: 240 });
       Z.win[el.id].pw = Z.win[el.id].w; Z.win[el.id].px = Z.win[el.id].x;   // v0.023: желаемые ширина и место
     }
     applyWin(el);
