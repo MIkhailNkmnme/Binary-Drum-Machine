@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.541. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.542. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.541</title>
+<title>Zazerkalius — v0.542</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1471,7 +1471,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.541</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.542</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -1670,7 +1670,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
                 <option value="s:cnt">Счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
               </optgroup>
             </select>
-      <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="256" style="width:4.2em"> стр.</label>
+      <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="128" style="width:4.2em"> стр.</label>
       <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
       <div id="tplBar">
       <!-- v0.300, «шаблоны — только все строки, а не по одной»: «＋ Строка» снята -->
@@ -2417,8 +2417,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0541"></script>
-<script src="zz-ui.js?v=0541"></script>
+<script src="zz-core.js?v=0542"></script>
+<script src="zz-ui.js?v=0542"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

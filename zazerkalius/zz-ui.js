@@ -3670,15 +3670,15 @@ function setupCone(){
   $("animSp").onchange = () => save();
   /* v0.200, «заготовки, по умолчанию 256 строк: все серпинские правила и последовательности»: выбор в списке — поле строк
      заменяется целиком (↩ вернёт), счёт волны — заново. */
-  $("animRowsN").value = Z.animRowsN || 256;
-  $("animRowsN").onchange = (e) => { Z.animRowsN = Math.max(2, Math.min(1024, Math.round(+e.target.value) || 256)); e.target.value = Z.animRowsN; save(); };
+  $("animRowsN").value = Z.animRowsN || 128;
+  $("animRowsN").onchange = (e) => { Z.animRowsN = Math.max(2, Math.min(1024, Math.round(+e.target.value) || 128)); e.target.value = Z.animRowsN; save(); };   // v0.542: по умолчанию 128 строк (было 256)
   $("animSeed").value = Z.animSeed || "1";
   $("animSeed").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.animSeed = v || "1"; e.target.value = Z.animSeed; save(); };
   $("animPreset").onchange = (e) => {
     const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v;
     if (!v) return;
     Z.cutGen = "p:" + v; Z.cutTake = false; if (typeof cutHidUi === "function") cutHidUi();   // v0.537: и способ достройки под чертой — эта заготовка (вместо 90 / 30 / маски)
-    const H = Z.animRowsN || 256, seed = Z.animSeed || "1";
+    const H = Z.animRowsN || 128, seed = Z.animSeed || "1";
     animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + столб " + barLab() : lab);   // v0.241: стенка
   };
   function animApply(rows, lab){   // v0.239: общее у списка заготовок и карты правил ▦
@@ -3718,14 +3718,14 @@ function setupCone(){
       g.putImageData(im, 0, 0);
       const st = zzRowsStats(rows), cell = document.createElement("div"), nb = document.createElement("span");
       cell.className = "ecaC"; cell.dataset.r = r; nb.textContent = r;
-      cell.title = `Правило ${r} — щелчок: строками в поле (${Z.animRowsN || 256} стр., сид ${seed}; ↩ вернёт)\n` +
+      cell.title = `Правило ${r} — щелчок: строками в поле (${Z.animRowsN || 128} стр., сид ${seed}; ↩ вернёт)\n` +
         `энтропия ${st.h.toFixed(2)} · зеркальность ${Math.round(st.m * 100)}% · единиц ${Math.round(st.d * 100)}% (средние по миниатюре)`;
       cell.append(cv, nb); box.appendChild(cell);
     }
     box.onclick = (e) => {
       const c = e.target.closest(".ecaC"); if (!c) return;
       box.querySelectorAll(".ecaC.on").forEach(x => x.classList.remove("on")); c.classList.add("on");
-      animApply(ecaRowsBar(+c.dataset.r, seed, Z.animRowsN || 256), `Правило ${c.dataset.r}` + (Z.barOn ? " + столб " + barLab() : ""));   // v0.241: стенка
+      animApply(ecaRowsBar(+c.dataset.r, seed, Z.animRowsN || 128), `Правило ${c.dataset.r}` + (Z.barOn ? " + столб " + barLab() : ""));   // v0.241: стенка
     };
     m.appendChild(box); document.body.appendChild(m);
     const b = $("bEcaMap").getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
