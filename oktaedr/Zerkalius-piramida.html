@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.081. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.082. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.081</title>
+<title>Zerkalius Пирамида — v0.082</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -271,6 +271,9 @@
   v0.081, по снимку полосы скорости — «ромб-кнопку вращения сюда перемести, и множитель справа / слева»: ⟳/⏸ и ×N ушли из ромба
   видов в полосу скорости: ⟳ — большим ромбом слева от обоих ползунков, ×N — справа (.dbtn, 56 px; полоса — сетка из трёх
   столбцов, счёт — строкой под всем). Мигают при вращении, как раньше; в ромбе видов два места пустые.
+  v0.082, по снимкам счёта «▲ 20 (по слоям …) · ◆ 10 · ▼ 4» и кнопок «▲◆ укладка | ⧫ бипирамиды» — «это показывать при наведении,
+  сбоку»: строки счёта под полосой скорости больше нет; счёт показывает та же всплывашка #tipLab справа от панели, когда мышь
+  над строкой «укладка | бипирамиды» (row._tipHtml), и обновляется на ходу.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -357,7 +360,7 @@
   #spdBar{ position:fixed; left:0; right:0; bottom:0; padding:4px 8px 3px; background:rgba(5,6,8,.6); touch-action:none;
     display:grid; grid-template-columns:auto 1fr auto; column-gap:8px; align-items:center; }   /* v0.081: ⟳ | ползунки | ×N */
   #spdBar > .srow{ grid-column:2; }
-  #spdBar > #count{ grid-column:1 / -1; }
+  #spdBar > #count{ display:none; }   /* v0.082: счёт — всплывашкой у кнопок режима */
   #spdBar > #bSpin{ grid-column:1; grid-row:1 / span 2; } #spdBar > #bSpd{ grid-column:3; grid-row:1 / span 2; }
   button.dbtn{ position:relative; isolation:isolate; flex:none; width:56px; height:56px; padding:0; border:none; border-radius:0; font-size:22px; display:flex; align-items:center; justify-content:center;
     background:color-mix(in srgb, var(--acc) 60%, #2a3038); clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
@@ -431,7 +434,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.081</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.082</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -730,7 +733,7 @@ function draw(){
   const nRef = extra.filter(q => q.ref).length, nMov = extra.filter(q => q.moved).length;
   const bs = L > 7 ? "1, 2, 3, 4, 5, … " + L : rows.map((_, n) => n + 1).join(", ");
   const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12) · ") + (biMode ? `⧫ ${cnt.bi} (по ярусам ${bs})` : `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`) + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? ` · ${note}` : "");
-  if (txt !== lastCount) { document.getElementById("count").innerHTML = txt; lastCount = txt; }
+  if (txt !== lastCount) { document.getElementById("count").innerHTML = txt; lastCount = txt; if (tipRow && tipRow._tipHtml) tipShow(tipRow); }
 }
 function occupied(c2, nv){   // стоит ли уже часть с таким центром (все части пирамиды, без фильтров ▲ ◆ ▼ и среза)
   if (extra.some(q => q.v.length === nv && Math.hypot(...sub3(centroid(q.v), c2)) < 1e-6)) return true;
@@ -841,7 +844,7 @@ const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X *
 var tipRow = null, tipDrag = null;   // var — placeLabels зовут ещё до этой строки (setSpd при загрузке); v0.063: строка, чья подпись показана; строка, где тянут
 function tipShow(r){
   const t = document.getElementById("tipLab"); if (!r) { t.style.display = "none"; tipRow = null; return; }
-  tipRow = r; t.innerHTML = r.querySelector(".slab").innerHTML; t.style.display = "block";
+  tipRow = r; t.innerHTML = r._tipHtml ? r._tipHtml() : r.querySelector(".slab").innerHTML; t.style.display = "block";
   const rr = r.getBoundingClientRect(), pr = panel.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight;
   t.style.left = (pr.right + 8 + tw <= innerWidth ? pr.right + 8 : Math.max(0, pr.left - 8 - tw)) + "px";
   t.style.top = (rr.top + rr.height / 2 - th / 2) + "px";
@@ -1017,6 +1020,8 @@ function draggable(el, handle, key){
   addEventListener("resize", () => { if (pos) pos = place(pos[0], pos[1]); });
 }
 draggable(panel, panel.querySelector("h1"), "piramida_pos");
+{ const mr = $("bTet").parentNode; mr._tipHtml = () => $("count").innerHTML;   // v0.082: счёт частей — при наведении на «укладка | бипирамиды»
+  mr.addEventListener("pointerenter", () => tipShow(mr)); mr.addEventListener("pointerleave", () => tipShow(null)); }
 document.querySelectorAll(".srow.pr").forEach(r => {   // v0.063: подпись ползунка — при наведении и пока тянут
   r.addEventListener("pointerenter", () => tipShow(r));
   r.addEventListener("pointerleave", () => { if (tipDrag !== r) tipShow(null); });
