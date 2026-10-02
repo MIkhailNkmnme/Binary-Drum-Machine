@@ -7139,7 +7139,7 @@ function cgrpInit(){
     /* v0.516, по снимку узкой левой панели — «помести текст в минимальную ширину и сделай её по умолчанию»: ширина панели — не меньше той, в которую
        входит самый длинный заголовок раздела (lpMinW); она же — по умолчанию (прежде 250 px) */
     const mw = lpMinW();
-    if (Z.paneW && mw && Z.paneW < mw) Z.paneW = mw;
+    if (Z.paneW && mw && Z.paneW < mw) { delete Z.paneW; delete Z.paneWUser; }   // v0.517: уже заголовков — значит «по умолчанию» (по заголовкам), не своя
     if (Z.paneW) R.setProperty("--paneW", Z.paneW + "px"); else if (mw) R.setProperty("--paneW", mw + "px"); else R.removeProperty("--paneW");
   };
   window.paneWApply = paneWApply;
@@ -8826,7 +8826,11 @@ function paneFoldBody(h){
 function paneFoldApply(){
   if (!Z.paneFold || typeof Z.paneFold !== "object") Z.paneFold = {};
   document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
-    const k = h.textContent.trim(), f = !!Z.paneFold[k];
+    const k = h.textContent.trim();
+    /* v0.517, «здесь значки удали из заголовков»: «💾 Страница целиком», «△ Треугольник из строки», «✂ Нарезать треугольник» — без значков; свёрнутость,
+       записанная под прежним текстом (со значком), переходит на новый */
+    for (const o of Object.keys(Z.paneFold)) if (o !== k && o.replace(/^\S+\s+/, "") === k) { if (Z.paneFold[o]) Z.paneFold[k] = true; delete Z.paneFold[o]; }
+    const f = !!Z.paneFold[k];
     h.classList.add("pf"); h.classList.toggle("folded", f);
     paneFoldBody(h).forEach(e => e.classList.toggle("pane-fold-hid", f));
   });

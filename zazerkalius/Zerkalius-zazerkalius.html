@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.516. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.517. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.516</title>
+<title>Zazerkalius — v0.517</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -532,6 +532,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
 #infoSlot > #fieldInfo{position:sticky;left:0;top:auto;right:auto;display:block;width:max-content;text-align:left;background:none;padding:1px 8px 2px}   /* v0.227: ячейка панели — во всю ширину и не раздувает колонки (в v0.225 растянула колонку номеров) */
 #cutPanel{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px 10px;font-size:12px}   /* v0.225: под чертой поля */
 #cutPanel .cpl{color:var(--dim)}
+#cutPanel #animPreset{max-width:170px;font-size:12px}   /* v0.517: заготовки — под чертой */
 #cutPanel .cpl ~ .cpl{margin-left:8px}   /* v0.288: группы кнопок под чертой — отступ перед каждой подписью, кроме первой */
 /* v0.230, по снимку растянутых шаблонов под чертой — «тут жесть какая-то! без фона надо, это не поле, а кнопки под чертой, не растягивать»:
    под чертой — компактные кнопки своей ширины, без фона, в ряд с переносом; панель прижата к левому краю поля (не уезжает с широкими строками). */
@@ -1430,7 +1431,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.516</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.517</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -1465,7 +1466,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <!-- v0.297, по снимку «💾 Сохр» и своего шаблона в шапке — «убери их в левую, в самый верх, сделай там группу, и туда все кнопки
          сохранения настроек и пресетов»: 💾 Сохр и свои шаблоны (v0.296 — в шапке), ⭐ Умолчание (v0.125), 💾 Всё / 📂 Всё (v0.115) -->
     <!-- v0.302, просьба пользователя (переслана из другой сессии): «переименовать 💾 Всё и 📂 Всё и отделить их группу от Шаблонов» -->
-    <div class="pane-head">💾 Страница целиком</div>
+    <div class="pane-head">Страница целиком</div>
     <div id="fileBtns">
       <button id="bSaveAll" title="💾 Сохранить ВСЁ в файл .json: все поля строк, строки за чертой, строку для заполнения, свои шаблоны, окна, конус и все настройки. Файл переносится на другой компьютер и открывается там кнопкой «📂 Из файла» или перетаскиванием на страницу">💾 В файл</button>
       <button id="bLoadAll" title="📂 Открыть файл .json, сохранённый кнопкой «💾 В файл», — страница целиком станет как в нём (спросит перед заменой). Можно и просто перетащить файл на страницу">📂 Из файла</button>
@@ -1496,7 +1497,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <button id="bMan" title="МАНЧЕСТЕРСКИЙ КОД. Левый щелчок — сделать; правый — сменить режим по кругу (⇉ код ↔ ⇇ раскод). ⇉ Код: каждый бит текущей строки становится парой, 1 → 10, 0 → 01; строка удваивается, новая встаёт под текущей. Жми подряд от «0» — выйдет Туэ–Морс. ⇇ Раскод: от каждой пары берётся первый бит, строка вдвое короче; пары 00 и 11 в коде не бывают — если есть, это ошибка, и она показывается, а раскод не делается">⇉ Код</button>
     </div>
     <!-- v0.011: треугольник по маске — строки 1…N, каждая заполнена маской -->
-    <div class="pane-head">△ Треугольник из строки</div>
+    <div class="pane-head">Треугольник из строки</div>
     <!-- v0.047: «пусть строится от выделенной, поля рядом с кнопкой удали» — строка и число строк больше не вписываются -->
     <div id="maskBar2">
       <select id="maskMode" title="«с начала» — каждая строка начинает маску заново: 1, 10, 101, 1010…; «лентой» — маска идёт подряд через все строки, фаза сдвигается от строки к строке">
@@ -1506,7 +1507,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <button id="bMaskTri" title="Построить от текущей (выделенной) строки и вставить под ней (↩ вернёт). Строк: 🔺 Паскаль и маской — по длине строки, но не меньше 16; ▽ спуск — до одного бита; ◯ кольцом — пока строка не повторится">△ Строить</button>
     </div>
     <!-- v0.307: из-под черты поля строк — ✂ нарезка треугольника (v0.234) и встроенные шаблоны-заготовки (v0.010) -->
-    <div class="pane-head" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">✂ Нарезать треугольник</div>
+    <div class="pane-head" title="✂ Нарезать треугольник строк на маленькие ▲ высотой h (как в Треугольнике) и поставить их друг под другом">Нарезать треугольник</div>
     <div id="triBtns">
       <button id="bTriCut" title="✂ Нарезать треугольник строк на фигуры высотой h и поставить их друг под другом (↩ вернёт)">✂</button><button id="bTriUnit" title="Фигуры: ▲, ▼, ▼ перевёрнутые, ▲▼, ◇ ромбы, ⧗ часы — щелчок дальше, правый назад">▲</button><input id="triH" type="number" min="2" max="256" value="16" title="Высота ▲ — строк в каждом" style="width:46px">
       <button id="bTriOrd" title="Порядок: по рядам, вдоль левой стороны, вдоль правой — каждый в обе стороны; щелчок дальше, правый назад">по рядам →</button>
@@ -1520,7 +1521,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <!-- v0.225: шаблоны переехали под черту поля строк (#cutPanel) -->
     <!-- v0.094: при «⇆ поле справа» свёрнутые окна — здесь, кнопками -->
     <!-- v0.252: группы конуса, перенесённые на левую панель (тянуть за заголовок группы) -->
-    <div class="pane-head" id="paneGrpHead" style="display:none">◯ Группы конуса</div>
+    <div class="pane-head" id="paneGrpHead" style="display:none">Группы конуса</div>
     <div id="paneGrp"></div>
     <div id="paneEdge" title="Тяни — ширина левой панели; двойной щелчок — ширина по умолчанию"></div>
     <div class="pane-head" id="paneWinsHead" style="display:none">Окна</div>
@@ -1600,6 +1601,35 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
       <!-- v0.307, «отсюда убери то, что не относится к построению от линии»: ✂ нарезка и встроенные шаблоны — в левой панели -->
       <span class="cpl" title="Что делать со строками, которые уже лежат под чертой, когда тянешь её вниз. Подсветка — только когда там что-то есть">под чертой:</span>
       <button id="bCutTake" class="on" title="⤒ Из-под черты (по умолчанию вкл): тянешь черту вниз — сперва возвращаются строки, что лежат под чертой, и только когда они кончились — достраиваются новые. Выкл — сразу достраиваются новые. Вместе с «Заменить» не бывает: включил одну — другая гаснет">⤒ из-под черты</button>
+      <!-- v0.517, по снимку списка заготовок и полосы под чертой — «эти заготовки перенеси под горизонт строк, вот сюда»: «📋 заготовка…» (из «Аниматрицы»)
+           и её «стр.» и «сид» — здесь, рядом с достройкой «Серп 90 / 30 / маска»: заготовка заменяет поле строк целиком (↩ вернёт) -->
+      <select id="animPreset" title="Заготовка (R — правило элементарного автомата, R90 — правило 90; Паскаль — +1 бит на строку; дракон — складывание бумаги): поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
+              <option value="">📋 заготовка…</option>
+              <optgroup label="Серпинский">
+                <option value="pascal">🔺 Паскаль mod 2</option>
+                <option value="r90">R90</option>
+                <option value="r18">R18</option>
+                <option value="r26">R26</option>
+                <option value="r82">R82</option>
+                <option value="r146">R146</option>
+                <option value="r154">R154</option>
+                <option value="r210">R210</option>
+                <option value="r218">R218</option>
+              </optgroup>
+              <optgroup label="Родственные">
+                <option value="r22">R22</option><option value="r126">R126 — толстый</option><option value="r150">R150 — XOR трёх</option>
+                <option value="r60">R60 — Паскаль ←</option><option value="r102">R102 — Паскаль →</option>
+                <option value="r182">R182</option><option value="r195">R195 — инверсия R60</option><option value="r30">R30 — хаос</option><option value="r110">R110</option>
+              </optgroup>
+              <optgroup label="Последовательности">
+                <option value="s:tm">Туэ — Морс</option><option value="s:fib">Слово Фибоначчи</option><option value="s:rs">Рудин — Шапиро</option>
+                <option value="s:fold">Дракон (сгибы)</option><option value="s:pd">Удвоение периода</option><option value="s:bs">Баум — Свит</option>
+                <option value="s:kol">Колакоски</option><option value="s:prime">Простые числа</option><option value="s:sq">Квадраты</option>
+                <option value="s:cnt">Счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
+              </optgroup>
+            </select>
+      <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="256" style="width:4.2em"> стр.</label>
+      <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
       <div id="tplBar">
       <!-- v0.300, «шаблоны — только все строки, а не по одной»: «＋ Строка» снята -->
       <!-- v0.301: «＋ Столбик» снят — новый шаблон теперь «＋ новый» в группе «Сохранение» -->
@@ -2059,34 +2089,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <label class="dim" title="⟳ Проходами: ▶ волна идёт целыми проходами — за шаг весь проход волны от верха до низа, конус показывает только готовые проходы (в Треугольнике это «Плеер — целыми циклами»). Скорость — проходов в секунду. Цикл — другое: число проходов, через которое картина повторяется (пишется справа, когда найден)"><input type="checkbox" id="animByPass"> ⟳ проходами</label>
             <label class="dim" title="Скорость волны, по логарифму: 0,5…5000 строк в секунду (с ⟳ проходами — проходов в секунду)">⚡ <input type="range" id="animSp" min="0" max="100" step="1" value="40" style="width:90px;vertical-align:middle"> <span id="animSpV" style="display:inline-block;min-width:5em;font-variant-numeric:tabular-nums"></span></label>
             <!-- v0.344, по снимку «📋 заготовка…» — «размер 2, внутри сократи „Правило“ — слишком часто слово»: «Правило 90» → «R90», длинные названия короче -->
-            <select id="animPreset" title="Заготовка (R — правило элементарного автомата, R90 — правило 90; Паскаль — +1 бит на строку; дракон — складывание бумаги): поле строк заменяется целиком (↩ вернёт), строк — сколько в поле рядом (по умолчанию 256), сид — начальная строка. Правила — элементарные автоматы из сида, строка — световой конус (на 2 бита длиннее предыдущей); из одной «1» правила группы «Серпинский» дают один и тот же треугольник, различаются с сида, где единицы стоят рядом (11, 1101…). Последовательности — строка i из первых i + 1 членов">
-              <option value="">📋 заготовка…</option>
-              <optgroup label="Серпинский">
-                <option value="pascal">🔺 Паскаль mod 2</option>
-                <option value="r90">R90</option>
-                <option value="r18">R18</option>
-                <option value="r26">R26</option>
-                <option value="r82">R82</option>
-                <option value="r146">R146</option>
-                <option value="r154">R154</option>
-                <option value="r210">R210</option>
-                <option value="r218">R218</option>
-              </optgroup>
-              <optgroup label="Родственные">
-                <option value="r22">R22</option><option value="r126">R126 — толстый</option><option value="r150">R150 — XOR трёх</option>
-                <option value="r60">R60 — Паскаль ←</option><option value="r102">R102 — Паскаль →</option>
-                <option value="r182">R182</option><option value="r195">R195 — инверсия R60</option><option value="r30">R30 — хаос</option><option value="r110">R110</option>
-              </optgroup>
-              <optgroup label="Последовательности">
-                <option value="s:tm">Туэ — Морс</option><option value="s:fib">Слово Фибоначчи</option><option value="s:rs">Рудин — Шапиро</option>
-                <option value="s:fold">Дракон (сгибы)</option><option value="s:pd">Удвоение периода</option><option value="s:bs">Баум — Свит</option>
-                <option value="s:kol">Колакоски</option><option value="s:prime">Простые числа</option><option value="s:sq">Квадраты</option>
-                <option value="s:cnt">Счёт 1, 10, 11…</option><option value="s:rnd">🎲 Случайные</option>
-              </optgroup>
-            </select>
+            <!-- v0.517: «📋 заготовка…», «стр.» и «сид» — под чертой поля строк (#cutPanel) -->
             <button id="bEcaMap" title="▦ Карта всех 256 правил сеткой 16×16 (из нынешнего сида): наведение — правило и его энтропия, зеркальность, доля единиц; щелчок — правило строками в поле, как заготовка (↩ вернёт). Закрыть — ▦ ещё раз, Esc или щелчок мимо">▦ 256</button>
-            <label class="dim" title="Строк в заготовке (2…1024)"><input type="number" id="animRowsN" min="2" max="1024" step="1" value="256" style="width:4.2em"> стр.</label>
-            <label class="dim" title="Сид — начальная строка из 0 и 1 для правил и Паскаля (по умолчанию 1)">сид <input type="text" id="animSeed" value="1" style="width:4em;font-family:var(--ff)"></label>
             <!-- v0.353, «их в одну группу Заморозка, поместить её в Аниматрицу, назвать: Столб, Бит; показать в строках подсветом; Вид — кнопка, по умолчанию вкл, —
                  видимость замороженных»: ▮ Столб (прежняя ▮ стенка, v0.241) и 🧱 Бит (прежняя 🧱 стенка, v0.347) — вместе -->
             <span class="glab2 fzlab" title="❄ Заморозка: клетки, которые не меняются. ▮ Столб — один столбец от вершины, при построении строк по правилу (заготовки, ▦ 256, достройка). 🧱 Бит — выделенные биты, при волне. 👁 — показывать их подсветкой в строках">❄ Заморозка</span>
@@ -2367,8 +2371,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0516"></script>
-<script src="zz-ui.js?v=0516"></script>
+<script src="zz-core.js?v=0517"></script>
+<script src="zz-ui.js?v=0517"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
