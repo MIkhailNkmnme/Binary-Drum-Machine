@@ -7899,7 +7899,7 @@ function lpTop(col, vis){
   const end = () => { if (run.length) runs.push(run); run = []; };
   const walk = (el) => {
     if (el.id === "pinBar") { [...el.children].forEach(walk); return; }
-    if (el.tagName === "BUTTON") { if (vis(el)) run.push(el); return; }
+    if (el.tagName === "BUTTON") { if (vis(el)) { if (el.dataset.tzl || el.dataset.tzr) { end(); run.push(el); end(); } else run.push(el); } return; }
     if (vis(el) || el.classList.contains("sp")) end();
   };
   [...top.children].forEach(walk); end();
@@ -7908,6 +7908,10 @@ function lpTop(col, vis){
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
     b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH;
+    /* v0.527, «вправо стрелка — надо форму кнопки так же стрелкой вправо»: data-tzl / data-tzr — свой край кнопки (t — остриё, n — выемка);
+       такая кнопка стоит отдельно от соседних: ↩ — стрелка влево (остриё слева, выемка справа), ↪ — вправо */
+    if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
+    if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
     b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
     tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));

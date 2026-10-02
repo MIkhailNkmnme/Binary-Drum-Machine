@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.526. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.527. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.526</title>
+<title>Zazerkalius — v0.527</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1036,6 +1036,17 @@ body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::before{clip-path:polygon(2.6px
 #rowsPane #bPaneIcons#bPaneIcons:hover::before{background:color-mix(in srgb, var(--acc) 30%, var(--panel))}
 #rowsPane #bPaneIcons#bPaneIcons{flex:0 0 auto !important;min-height:24px !important;height:24px !important}   /* v0.517, «при скрытии невозможно потом развернуть левое меню»: в колонке панели значками пустая кнопка сжималась в 0 */
 body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{width:20.78px;margin:6px auto;clip-path:polygon(0 0,13.86px 0,100% 50%,13.86px 100%,0 100%,6.93px 50%)}
+/* v0.527, по снимку ◂ рядом с «Страница целиком» — «высота стрелки не как у кнопки: у кнопки обводка съедает высоту, у стрелки так же надо»: светлая
+   обводка стрелки торчала по самому краю, и стрелка казалась выше заголовка. Теперь край стрелки — тёмный, как у заголовка (та же заливка, те же 24 px),
+   а светлая обводка — внутри, на 1,5 px от края (::before — обводка, ::after — сердцевина на 3 px от края) */
+#rowsPane #bPaneIcons#bPaneIcons{background:color-mix(in srgb, var(--acc) 13%, var(--panel))}
+#rowsPane #bPaneIcons#bPaneIcons::before{background:color-mix(in srgb, var(--acc) 70%, var(--panel2))}
+#rowsPane #bPaneIcons#bPaneIcons::after{content:"";position:absolute;inset:0;background:color-mix(in srgb, var(--acc) 13%, var(--panel));
+  clip-path:polygon(8.66px 3px,15.59px 3px,10.4px 50%,15.59px calc(100% - 3px),8.66px calc(100% - 3px),3.46px 50%)}
+body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::after{clip-path:polygon(5.19px 3px,12.12px 3px,17.32px 50%,12.12px calc(100% - 3px),5.19px calc(100% - 3px),10.38px 50%)}
+#rowsPane #bPaneIcons#bPaneIcons:hover{background:color-mix(in srgb, var(--acc) 13%, var(--panel))}
+#rowsPane #bPaneIcons#bPaneIcons:hover::before{background:var(--acc)}
+#rowsPane #bPaneIcons#bPaneIcons:hover::after{background:color-mix(in srgb, var(--acc) 30%, var(--panel))}
 #rowsPane .pane-head.lph.pf::after{content:"" !important;flex:0 0 auto;width:13.86px;height:12px;background:currentColor;clip-path:polygon(0 0,100% 0,50% 100%);opacity:.5}
 #rowsPane .pane-head.lph.pf.folded::after{content:"" !important;width:12px;height:13.86px;clip-path:polygon(0 0,100% 50%,0 100%)}
 #rowsPane #bPaneIcons + .pane-head.lph{width:calc(100% - 52px);max-width:calc(100% - 52px);padding-right:calc(6.93px + 10px)}   /* v0.516: место под ◂ — уже в ширине, своё поле 44 px не нужно */
@@ -1053,6 +1064,7 @@ body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{width:20.78px;margin:6px auto;c
 #top.lpt button.tz.tz.tz{height:25px !important;font-size:var(--tbfs, 12px);line-height:1;white-space:nowrap;overflow:hidden;flex:0 0 auto !important;text-align:center;justify-content:center;min-width:0 !important}
 /* v0.526: повтор — стрелка ↩, отражённая вправо */
 #bRedo .flipx{display:inline-block;transform:scaleX(-1)}
+#top.lpt #bUndo{margin-left:6px}#top.lpt #bRedo{margin-right:6px}   /* v0.527: стрелки-кнопки — отдельной парой */
 /* v0.525, «убери изначальную прозрачность в группах Конуса у кнопок»: неактивные (не действуют в нынешнем режиме, «Лазер» в 3D) — не прозрачные целиком
    (сквозь них просвечивал конус), а с бледной надписью: фон и обводка — как у всех */
 :is(#w-cone, #paneGrp) .cgrp :is(:disabled, label.dis, label.dis3),:is(#w-cone, #paneGrp) .cgrp :is(:disabled, label.dis, label.dis3).tz.tz.tz{opacity:1 !important;color:color-mix(in srgb, var(--txt) 38%, transparent) !important}
@@ -1452,7 +1464,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.526</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.527</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
   <div id="pinBar"></div>
@@ -1462,8 +1474,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <!-- v0.155, «эту наверх перед Сохр.»: 🧘 дзен — в шапке, перед «💾 Всё» (прежде — в группе «Запись» у конуса) -->
   <!-- v0.158: ↩ отменить и ↪ повторить; v0.526, «стрелки пошире на 1 ромб, правую сделай стрелкой вправо, и перемести их правее — перед кнопкой Текст»:
        здесь, шире на ромб; повтор — та же стрелка ↩, отражённая вправо -->
-  <button id="bUndo" data-tzw="1" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
-  <button id="bRedo" data-tzw="1" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)"><span class="flipx">↩</span></button>
+  <button id="bUndo" data-tzw="1" data-tzl="t" data-tzr="n" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
+  <button id="bRedo" data-tzw="1" data-tzl="n" data-tzr="t" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)"><span class="flipx">↩</span></button>
   <button id="bConeTxt" title="📝 Текст конуса и лог лазера — полосой внизу окна конуса. Ещё раз — убрать">📝 Текст</button>
   <button id="bConeZen" title="🧘 Дзен: только конус и пульт у холста, на весь экран — без панелей и строк. Кручение, свет, 3D — как настроены. Щелчок колесом по конусу — войти и выйти, Esc — выйти. Колесо или + − — масштаб, тянуть с зажатым колесом или стрелки (Shift — крупнее шаг) — сдвиг">🧘 дзен</button>
   <!-- v0.115: «надо сохр настройки и все биты в файл, чтобы на другом компе» -->
@@ -2393,8 +2405,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0526"></script>
-<script src="zz-ui.js?v=0526"></script>
+<script src="zz-core.js?v=0527"></script>
+<script src="zz-ui.js?v=0527"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
