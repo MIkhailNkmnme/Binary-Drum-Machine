@@ -3664,7 +3664,7 @@ function setupCone(){
        секунду, быстрее — за кадр уходит несколько шагов, видно только последний. Идёт волна — сколько шагов на кадр на деле (не успевает за 30 мс — меньше
        заданного); стоит — расчёт на 60 кадров в секунду. Каждый кадр виден — ничего не дописывается */
     const X = Math.round(animRaf && animPerFr ? animPerFr : sp / 60), skip = X > 1 ? (Z.animByPass ? ` · каждый ${X}-й` : ` · ${X} стр/кадр`) : "";
-    $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с") + skip;   // v0.329: было «цикл/с» — считает проходы
+    { const t = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с") + skip, el = $("animSpV"); if (el.textContent !== t) { el.textContent = t; tzSliders(); } }   // v0.560: сменилась длина — место числа сразу   // v0.329: было «цикл/с» — считает проходы
   };
   const animDone = () => { animSig = animKey(); renderAll(); save(); animUi(); };
   const animGuard = () => { if (rowsLocked()) return false; if (Z.rows.length < 2) { say("🌊 Аниматрице нужно хотя бы две строки."); return false; } return true; };
@@ -8684,7 +8684,10 @@ function tzSliders(){
        ни туда — с той стороны, где места больше, и мельче (не меньше 7 px), чтобы войти целиком (прежде оставалось справа и обрезалось краем) */
     if (rv) {
       rv.style.fontSize = ""; const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3, left = x - 2.5 * t - 3;
-      const lft = w > right && (w + 6 <= left || left > right), room = lft ? left - 6 : right;
+      /* v0.560, по снимку «36» — «при перемещении, когда слева направо прыгает, надпись сбивается»: у самой границы число скакало туда-сюда на каждый пиксель
+         бегунка; теперь с запасом — перешло налево, обратно направо только когда справа места с лихвой (+10 px) */
+      const wasL = L.classList.contains("rvl");
+      const lft = wasL ? w + 10 > right && (w + 6 <= left || left > right) : w > right && (w + 6 <= left || left > right), room = lft ? left - 6 : right;
       L.classList.toggle("rvl", lft);
       if (w > room && room > 0) { const fs = parseFloat(getComputedStyle(rv).fontSize) || 10; rv.style.fontSize = Math.max(7, Math.floor(fs * room / w * 10) / 10) + "px"; }
     }
@@ -10607,7 +10610,7 @@ function init(){
   let fsRaf = 0;
   const fsNum = (v) => { const el = $("fsVal"), n = el && el.firstChild; if (n && n.nodeType === 3) { if (n.nodeValue !== String(v)) n.nodeValue = v; } else if (el) el.textContent = v; };
   $("fsRange").oninput = (e) => {
-    Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); fsNum(Z.fs);
+    Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); fsNum(Z.fs); tzSliders();   // v0.560: место числа — сразу по новому числу (прежде — по старому, до 0,3 с)
     if (fsRaf) return;
     fsRaf = requestAnimationFrame(() => { fsRaf = 0; const L = $("rowList"); if (L) L.style.setProperty("--fs", Z.fs + "px"); rowsCenterBit0(); });
   };
