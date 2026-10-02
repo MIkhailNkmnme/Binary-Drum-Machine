@@ -8634,7 +8634,14 @@ function tzSliders(){
     if (L._thk === k) return; L._thk = k;
     L.style.setProperty("--thx", x.toFixed(2) + "px");
     L.style.setProperty("--thp", Math.round(82 + 18 * f) + "%");   // v0.501: насыщенность бегунка — по значению (слева тусклее, справа — цвет группы); v0.504 — не темнее 82 %: тёмный значок в нём пропадал
-    if (rv) { const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3, left = x - 2.5 * t - 3; L.classList.toggle("rvl", w > right && w + 6 <= left); }   // v0.506: слева не влезает — остаётся справа (не за край)
+    /* v0.547, по снимку «792 пр…» — «чтобы текст отображался, когда надо, справа или слева от бегунка»: справа не влезает — слева; не влезает ни туда,
+       ни туда — с той стороны, где места больше, и мельче (не меньше 7 px), чтобы войти целиком (прежде оставалось справа и обрезалось краем) */
+    if (rv) {
+      rv.style.fontSize = ""; const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3, left = x - 2.5 * t - 3;
+      const lft = w > right && (w + 6 <= left || left > right), room = lft ? left - 6 : right;
+      L.classList.toggle("rvl", lft);
+      if (w > room && room > 0) { const fs = parseFloat(getComputedStyle(rv).fontSize) || 10; rv.style.fontSize = Math.max(7, Math.floor(fs * room / w * 10) / 10) + "px"; }
+    }
   });
 }
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
