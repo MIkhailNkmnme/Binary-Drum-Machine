@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.029. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.030. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.029</title>
+<title>Zerkalius Пирамида — v0.030</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -135,6 +135,8 @@
   слева от ◎; ◎, 📷 и ✥ — ромбы 40 px (clip-path, обводка фоном, заливка ::before), как кнопки видов. В дзене 📷 бледный, как ◎.
   v0.028, по снимку ⟲ ✥ ⇅ ✕ — «объедини в группу»: режимы щелчка и ✕ как было — одна строка в общей рамке .grp.
   v0.029, по снимку ⧫ бипирамиды — «на самый верх меню, под заголовком»: ⧫ — своей строкой сразу под «ПИРАМИДА», над ползунками.
+  v0.030, по снимку ⟳ вращение ×N — «посередине наверху и мигать, когда движение»: строка #spinBox ушла из панели наверх
+  по центру экрана; пока пирамида крутится (spin), обе кнопки мигают (#spinBox.go, раз в секунду). В дзене спрятана.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -204,7 +206,11 @@
   .ticks span::before{ content:""; position:absolute; left:50%; top:-3px; width:1px; height:3px; background:var(--dim); }
   .ticks span.on{ color:var(--acc); }
   #fineTicks span.on{ color:#4dd4ff; }
-  body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views{ display:none; }
+  body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views, body.zen-mode #spinBox{ display:none; }
+  #spinBox{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:4; padding:4px; background:var(--panel); border:1px solid var(--line); border-radius:6px; flex-wrap:nowrap; }
+  #spinBox > button{ flex:none; }
+  @keyframes zblink{ 50%{ opacity:.35; } }
+  #spinBox.go > button{ animation:zblink 1s ease-in-out infinite; }
   button.fixb{ position:fixed; right:10px; z-index:5; flex:none; width:40px; height:40px; padding:0; border:none; border-radius:0; font-size:16px; line-height:40px; isolation:isolate; background:var(--line); clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   button.fixb::before{ content:""; position:absolute; inset:1px; z-index:-1; background:#0c0f14; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   button.fixb:hover{ background:#4a525c; }
@@ -232,7 +238,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.029</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.030</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="64" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
@@ -250,11 +256,11 @@
     <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button><input type="color" id="cMono" value="#cfd9db" title="Цвет, когда радуга выключена">
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button></div>
   <div class="grp" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div>
   </div>
   <div id="count"></div>
 </div>
+<div id="spinBox" class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button></div>
 <div id="views"><button style="--x:0px;--y:-37px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:37px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-37px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:37px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:18.5px;--y:-18.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-18.5px;--y:-18.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:0px;--y:0px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:18.5px;--y:18.5px" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span></div>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
@@ -619,7 +625,7 @@ cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "все";
-  [["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); placeLabels(); };
+  [["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("spinBox").classList.toggle("go", spin); placeLabels(); };
 function placeLabels(){   // v0.021: подпись «название число» рядом с бегунком: справа, у правого края — слева
   document.querySelectorAll(".srow").forEach(r => {
     const inp = r.querySelector("input"), lab = r.querySelector(".slab"); if (!inp || !lab) return; const w = inp.clientWidth; if (!w) return;
