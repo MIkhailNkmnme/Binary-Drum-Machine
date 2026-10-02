@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.075. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.076. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.075</title>
+<title>Zerkalius Пирамида — v0.076</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -255,6 +255,8 @@
   ромб снова есть, но только внутренняя половина (у левого — правая, у правого — левая; clip-path-воздушный змей), внутри —
   ромб с бегунок одной цветной обводкой (кольцо, polygon evenodd). Когда бегунок ближе 45 px к крайнему делению, оно уходит
   под бегунок (.under: z 2, щелчки — бегунку), так что бегунок всегда впереди.
+  v0.076, «ось вращения — дальнюю от меня половину затемнить немного, после центра»: половина оси, что уходит от зрителя
+  (при взгляде сверху — нижняя, снизу — верхняя; глубина точки (0, y, 0) — sin(pitch)·y), рисуется бледнее (40 %).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -399,7 +401,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.075</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.076</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -686,7 +688,9 @@ function draw(){
   if (showAxis) {   // v0.073: ось вращения — вертикаль через центр; на экране отрезок x = cx, длина ∝ cos(pitch)
     const ext = (L * H * (1 + X) * 0.75 + 0.8) * sc, dy = Math.cos(pitch) * ext;
     o2.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--acc") || "#7ee787"; o2.lineWidth = 1.5; o2.setLineDash([6, 5]);
-    o2.beginPath(); o2.moveTo(cx, cy - dy); o2.lineTo(cx, cy + dy); o2.stroke(); o2.setLineDash([]);
+    const farUp = Math.sin(pitch) < 0;   // v0.076: дальняя половина — бледнее
+    [[-dy, farUp], [dy, !farUp]].forEach(([d, far]) => { o2.globalAlpha = far && Math.abs(Math.sin(pitch)) > 0.02 ? 0.4 : 1; o2.beginPath(); o2.moveTo(cx, cy); o2.lineTo(cx, cy + d); o2.stroke(); });
+    o2.globalAlpha = 1; o2.setLineDash([]);
     o2.beginPath(); o2.arc(cx, cy, 3, 0, 2 * Math.PI); o2.fillStyle = o2.strokeStyle; o2.fill();
   }
   const sum = (n) => n * (n + 1) / 2, rows = []; for (let n = 0; n < L; n++) rows.push(sum(n + 1));
