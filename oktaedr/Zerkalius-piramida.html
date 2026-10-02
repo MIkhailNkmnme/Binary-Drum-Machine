@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.006. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.007. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.006</title>
+<title>Zerkalius Пирамида — v0.007</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -44,6 +44,8 @@
   ⬙ 3D — поворот плавный, вращение при этом останавливается; 📷 — картинка PNG. Ползунки со стрелками ◂ ▸ (общий slider-arrows.js).
   v0.006, «кнопку скорости — умножает на 2 каждый раз»: рядом с ⟳ кнопка ×N — скорость вращения; щелчок удваивает
   (×1 → ×2 → … → ×32), после ×32 — снова с ×¼. Если вращение стояло, щелчок его включает.
+  v0.007, «номер версии не видно после заголовка»: #ver переехал из правого нижнего угла (на телефоне он был спрятан) в заголовок
+  панели — сразу после «ПИРАМИДА», виден и в свёрнутой панели.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -65,7 +67,7 @@
   button{ flex:1 0 auto; background:#0c0f14; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:5px 6px; cursor:pointer; font:inherit; }
   button.on{ color:var(--fg); border-color:var(--acc); }
   #count{ color:var(--dim); font-size:12px; }
-  #ver{ position:fixed; right:10px; bottom:8px; color:var(--dim); font:11px monospace; }
+  #ver{ margin-left:8px; color:var(--dim); font:11px monospace; letter-spacing:0; font-weight:400; }
   @media (max-width:600px){
     #panel{ left:6px; right:6px; top:auto; bottom:6px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
     #panel.min{ right:auto; }
@@ -77,7 +79,6 @@
     .rows .row{ flex-wrap:nowrap; }
     button{ padding:4px 7px; }
     #count{ font-size:11px; }
-    #ver{ display:none; }
   }
 </style>
 </head>
@@ -85,7 +86,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.007</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -116,7 +117,6 @@
   </div>
   <div id="count"></div>
 </div>
-<div id="ver">v0.006</div>
 <script>
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
