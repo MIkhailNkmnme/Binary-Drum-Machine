@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.065. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.066. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.065</title>
+<title>Zerkalius Пирамида — v0.066</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -229,6 +229,9 @@
   название — по-прежнему в табличке справа.
   v0.065, «числа — на бегунке, антицветом, фон их — за бегунком»: в ползунках панели число стоит прямо на ромбе-бегунке, по его
   середине, поверх (z 4, щелчки сквозь него), без своей подложки; цвет — обратный цвету ползунка (--anti из paintUi: 255 − канал).
+  v0.066, «числа на бегунках должны нормально читаться на фоне бегунка, и побольше»: ромб-бегунок у ползунков панели шире —
+  36 × 33 (было 21 × 30), число 14 px жирное; цвет числа — чёрный или белый по яркости цвета ползунка (обратный цвет у средних
+  тонов почти сливался). placeLabels берёт половину ширины бегунка своей строки (18 в панели, 10,5 у скорости).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -323,7 +326,9 @@
   #spdBar .srow + .srow{ margin-top:6px; }
   .slab{ z-index:2; }
   .srow.pr .slab{ font-size:0; padding:0; top:0; background:none; z-index:4; }   /* v0.063: название — всплывашкой; v0.065 — число на бегунке */
-  .srow.pr .slab b{ font:700 11px/33px system-ui, sans-serif; color:var(--anti, #000); }
+  .srow.pr .slab b{ font:700 14px/33px system-ui, sans-serif; color:var(--anti, #000); }
+  .srow.pr .spd::-webkit-slider-thumb{ width:36px; height:33px; margin-top:-13.5px; }   /* v0.066: бегунок панели шире — под число */
+  .srow.pr .spd::-moz-range-thumb{ width:36px; height:33px; }
   #tipLab{ position:fixed; z-index:20; display:none; pointer-events:none; padding:3px 10px; font:13px/19px system-ui, sans-serif; color:var(--dim); background:var(--panel); border:1px solid var(--line); white-space:nowrap; }
   #tipLab b{ color:var(--fg); }   /* v0.052: подпись — за бегунком */
   .ticks span.on{ color:var(--acc); }
@@ -362,7 +367,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.065</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.066</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -768,7 +773,7 @@ function tipShow(r){
 function placeLabels(){   // v0.021: подпись «название число» рядом с бегунком: справа, у правого края — слева
   document.querySelectorAll(".srow").forEach(r => {
     const inp = r.querySelector("input"), lab = r.querySelector(".slab"); if (!inp || !lab) return; const w = inp.clientWidth; if (!w) return;
-    const mn = +inp.min, mx = +inp.max, f = mx > mn ? (+inp.value - mn) / (mx - mn) : 0, x = 10.5 + f * (w - 21), lw = lab.offsetWidth;
+    const mn = +inp.min, mx = +inp.max, f = mx > mn ? (+inp.value - mn) / (mx - mn) : 0, hw = r.classList.contains("pr") ? 18 : 10.5, x = hw + f * (w - 2 * hw), lw = lab.offsetWidth;   // v0.066: половина ширины бегунка
     lab.style.left = (r.classList.contains("pr") ? x - lw / 2 : x + 20 + lw <= w ? x + 20 : Math.max(0, x - 20 - lw)) + "px";   // v0.065: в панели — по середине бегунка
     if (r === tipRow) tipShow(r);   // v0.063: число во всплывашке — на ходу
     if (r.classList.contains("pr")) { const sc = inp.parentNode; sc.style.setProperty("--tx", (x + 18) + "px"); sc.style.setProperty("--ta", (x + 15) + "px");
@@ -869,7 +874,7 @@ function paintUi(){   // v0.044: цвет кнопок — радугой (ка�
   document.documentElement.style.setProperty("--acc", colorOn ? "#7ee787" : mono);
   document.querySelectorAll(".srow").forEach((r, i) => {   // v0.049: ползунки — тем же цветом: строка, стрелки, ромб-бегунок
     const c = colorOn ? NOTE_COL[i % 7] : mono, inp = r.querySelector("input"); r.style.setProperty("--acc", c);
-    r.style.setProperty("--anti", "#" + (0xffffff ^ parseInt(c.slice(1), 16)).toString(16).padStart(6, "0"));   // v0.065: антицвет — для числа на бегунке
+    { const n = parseInt(c.slice(1), 16), yl = 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); r.style.setProperty("--anti", yl > 140 ? "#000" : "#fff"); }   // v0.066: число на бегунке — чёрным или белым, по яркости
     if (inp) inp.style.setProperty("--thumb", `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%23${c.slice(1)}'/%3E%3C/svg%3E")`);
   });
 }
