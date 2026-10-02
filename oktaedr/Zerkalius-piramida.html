@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.100. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.101. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.100</title>
+<title>Zerkalius Пирамида — v0.101</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -343,6 +343,11 @@
   TRAIL_A[уровень], потом новая картинка, потом текстура копируется на холст. Полуплавающая — чтобы старые кадры гасли до
   конца, а не застревали тенью (в 8 битах шаг затухания округлялся бы до нуля). Уровень помнится (piramida_trail) и едет
   в ссылке 🔗 (tr). 📷 при шлейфе берёт кадр как есть, без своей склейки 8 кадров. Запись видео пишет шлейф как видно.
+  v0.101, две ссылки 🔗 — «добавь в мультфильмы»: для живых карточек «Битмультфильмов» — режим ?kino (…html?kino#s=…): на экране
+  только пирамида, всё остальное (панель, ромбы, кнопки, значок Хаба) скрыто, и страница НИЧЕГО не пишет в память
+  (Storage.prototype.setItem в этом окне — пустышка), чтобы карточка не перетёрла настройки гостя. Сдвиг вида в ссылке
+  теперь с размером экрана (wh = min(ширина, высота)): на другом экране он пересчитывается в долю, и пирамида встаёт так же;
+  у ссылок без wh в ?kino сдвиг не берётся — пирамида по центру.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -488,6 +493,7 @@
   #bRecP{ top:10px; right:220px; display:none; }
   #bTrail{ top:10px; right:178px; font-size:15px; }   /* v0.100: размытие — шлейф */
   #bTrail.on{ background:var(--acc); }
+  body.kino > :not(#cv):not(#ov){ display:none !important; }   /* v0.101: ?kino — только пирамида */
   #bLink{ top:10px; right:136px; font-size:15px; }   /* v0.098: ссылка на этот вид */
   #toast{ position:fixed; top:60px; left:50%; transform:translateX(-50%); z-index:30; padding:4px 12px; font-size:13px; color:var(--fg); background:var(--panel); border:1px solid var(--line); display:none; pointer-events:none; }   /* v0.094: пауза записи — только пока пишет */
   #bRecP.show{ display:flex; align-items:center; justify-content:center; }   /* v0.092: видеозапись со звуком */
@@ -516,7 +522,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.100</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.101</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -556,6 +562,8 @@
   <div id="count"></div>
 </div>
 <script>
+const KINO = /[?&]kino\b/.test(location.search);   /* v0.101: только пирамида, без кнопок и без записи в память — для карточек */
+if (KINO) { document.body.classList.add("kino"); try { Storage.prototype.setItem = function(){}; } catch (e) {} }
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
 let L = 4, X = 0.35, showUp = true, showOct = true, showDn = true, spin = true, yaw = 0.5, pitch = 0.35;
@@ -1325,7 +1333,7 @@ L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimatio
 function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(el._h); el._h = setTimeout(() => { el.style.display = "none"; }, 2200); }
 function getState(){
   const r4 = (x) => +x.toFixed(4), st = { bi: +biMode, L, X: r4(X), sl: slice, u: +showUp, o: +showOct, d: +showDn, f: +showFace, e: +showEdge, c: +colorOn, mc: $("cMono").value, ax: +showAxis,
-    yw: r4(yaw % (2 * Math.PI)), pt: r4(pitch), sp: +spin, v: r4(Math.log2(spd)), z: r4(zoom), px: Math.round(panX), py: Math.round(panY), tr: trail };
+    yw: r4(yaw % (2 * Math.PI)), pt: r4(pitch), sp: +spin, v: r4(Math.log2(spd)), z: r4(zoom), px: Math.round(panX), py: Math.round(panY), wh: Math.round(Math.min(W, Hh)), tr: trail };
   if (extra.length && extra.length <= 300) st.ex = extra.map(q => ({ k: q.kind, l: q.layer, t: q.tpl, c: q.col, r: q.ref ? 1 : 0, m: q.moved ? 1 : 0, v: q.v.map(a => a.map(r4)) }));
   if (removed.size && removed.size <= 3000) st.rm = [...removed];
   return st;
@@ -1338,7 +1346,8 @@ function applyState(st){
   if ("X" in st) { X = st.X; sX.value = Math.round(X * 100); }
   if ("sl" in st) { slice = Math.min(st.sl, L); sS.value = slice; }
   if ("yw" in st) yaw = st.yw; if ("pt" in st) pitch = st.pt; if ("sp" in st) spin = !!st.sp;
-  if ("z" in st) zoom = st.z; if ("px" in st) panX = st.px; if ("py" in st) panY = st.py;
+  if ("z" in st) zoom = st.z;
+  { const k = st.wh ? Math.min(W, Hh) / st.wh : KINO ? 0 : 1; if ("px" in st) panX = st.px * k; if ("py" in st) panY = st.py * k; }   /* v0.101: сдвиг — в долях экрана */
   extra = (st.ex || []).map(q => ({ kind: q.k, layer: q.l, tpl: q.t, col: q.c, ref: !!q.r, moved: !!q.m, v: q.v }));
   removed.clear(); (st.rm || []).forEach(k => removed.add(k));
   hist.length = 0; undoUi(); tween = null; if ("tr" in st) setTrail(st.tr);

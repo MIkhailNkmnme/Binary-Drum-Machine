@@ -1,4 +1,4 @@
-<!-- Zerkalius Битмультфильмы — v0.011 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+<!-- Zerkalius Битмультфильмы — v0.012 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
      картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
      (Python по тем же правилам, что в Треугольнике), страница только показывает.
      v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
@@ -16,13 +16,15 @@
      v0.009: там же — «Столб: пингвин» (stolb-pingvin.png), крупно столб по оси: «тут целая история… пингвин появился».
      v0.010: в «Иероглифах» — сами файлы: текст цикла 512 (ieroglify-cikl-512.txt, «💾 Данные» из Code) и сцена «Мой шедевр» (256 строк). 
      v0.011: «Иероглифы Аниматрицы — уменьши картинки, огромные там»: узкие высокие снимки растягивались по ширине карточки
-             (столб 144 × 682 — почти до 1900 px в высоту); теперь рамка одной высоты 340 px, снимок вписан целиком, клетки чёткие. -->
+             (столб 144 × 682 — почти до 1900 px в высоту); теперь рамка одной высоты 340 px, снимок вписан целиком, клетки чёткие.
+     v0.012: раздел «Пирамиды — живые» (слово пользователя 2026-10-02 «добавь в мультфильмы» к двум ссылкам 🔗 Пирамиды): карточки
+             с iframe на Zerkalius-piramida.html?kino#s=… — только пирамида, крутится; щелчок — та же ссылка с кнопками. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Битмультфильмы — v0.011</title>
+<title>Zerkalius Битмультфильмы — v0.012</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --gold:#ffcc00; }
@@ -115,6 +117,19 @@
 <p class="lead">Строки треугольника кольцами конуса Zazerkalius — так, как их сохранили кнопкой «💾 Всё». Конус крутится прямо в карточке;
 щелчок — на весь экран. Твоя страница «◯ Конус» при этом не меняется.</p>
 <div class="grid" id="konusy"></div>
+</div>
+
+<!-- v0.012: живые пирамиды — ссылки 🔗 Пирамиды, в карточке режим ?kino (только пирамида, память гостя не трогается) -->
+<h2>Пирамиды — живые</h2>
+<p class="lead">Пирамида из тетраэдров, вид сверху, на стробоскопической скорости — так, как её сохранили кнопкой 🔗. Крутится прямо в карточке;
+щелчок — открыть с кнопками и крутить самому. Твои настройки Пирамиды при этом не меняются.</p>
+<div class="grid">
+  <div class="card"><div class="live"><iframe src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" loading="lazy" tabindex="-1" title="8 слоёв сверху · ×785"></iframe><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" target="_blank" title="Открыть с кнопками"></a></div>
+    <h3>8 слоёв сверху · ×785</h3><p>Тетраэдры вверх и вниз без октаэдров, радуга, вплотную. Скорость — около ×785: картинка будто стоит и переливается.</p>
+    <div class="more"><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" target="_blank">▶ открыть с кнопками</a></div></div>
+  <div class="card"><div class="live"><iframe src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" loading="lazy" tabindex="-1" title="13 слоёв, раздвинута · ×256"></iframe><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" target="_blank" title="Открыть с кнопками"></a></div>
+    <h3>13 слоёв, раздвинута · ×256</h3><p>Те же тетраэдры, слои чуть раздвинуты (12 %), ×256 — ровно на стробоскопической метке.</p>
+    <div class="more"><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" target="_blank">▶ открыть с кнопками</a></div></div>
 </div>
 
 <h2>Уникальные ромбы цикла — 1024 строки, семь размеров</h2>
