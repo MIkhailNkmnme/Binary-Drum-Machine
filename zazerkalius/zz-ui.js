@@ -8184,8 +8184,21 @@ function tzcApply(g){
        растягивались до края: «👁 выдел.» — 141 px вместо 92), показывается стандартной — лишние столбцы справа не в счёт (рисунок не трогается).
        Заодно кнопка из двух разнесённых кусков (ползунки «Звука» вперемешку) — только левым */
     { const n = tzcStd(el); if (n) { const cm = c0 + 2 * n - 1; if (c1 > cm) { cells = cells.filter(([, c]) => c <= cm); c1 = Math.max(...cells.map(q => q[1])); } } }
-    its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0 });
+    its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0, sh: 0 });
   }
+  /* v0.531, по снимку «Вида» — «поправь расположение и ширину ползунка, один слишком маленький»: ползунок, нарисованный уже своей стандартной
+     ширины (12 сторон), показывается стандартным — дорисовываются столбцы справа (на чётное число t, края не меняются), а что стоит правее в тех же
+     рядах рисунка, сдвигается на столько же (сам рисунок не трогается) */
+  its.forEach(it => {
+    if (!it.el.querySelector || !it.el.querySelector("input[type=range]")) return;
+    const need = it.c0 + 2 * tzcStd(it.el) - 1 - it.c1; if (need <= 0) return;
+    const k = need + (need % 2), rows = [...new Set(it.cells.map(([r]) => r))];
+    const nb = its.filter(o => o !== it && o.r1 >= it.r0 && o.r0 <= it.r1 && o.c0 > it.c1);   // правее в тех же рядах; сдвиг — только на нехватку места
+    let m = nb.length ? it.c1 + k + 1 - Math.min(...nb.map(o => o.c0)) : 0; if (m > 0) m += m % 2;
+    if (m > 0) nb.forEach(o => { o.cells = o.cells.map(([r, c]) => [r, c + m]); o.c0 += m; o.c1 += m; o.sh += m; });
+    for (const r of rows) for (let c = it.c1 + 1; c <= it.c1 + k; c++) it.cells.push([r, c]);
+    it.c1 += k;
+  });
   // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
   /* v0.455, «кнопки под одной обводкой — не переносятся на другие строки»: кнопки под общей границей (tzcHulls) — один блок, переносится целиком */
   const oAll = {}; its.forEach(it => it.cells.forEach(([r, c]) => { oAll[r + "_" + c] = it.w; }));
@@ -8223,7 +8236,7 @@ function tzcApply(g){
       });
     }
   }
-  g._tzcSh = {}; its.forEach(it => { g._tzcSh[it.w] = [Number.isFinite(it.dr) ? it.dr : 0, Number.isFinite(it.dc) ? it.dc : 0]; });
+  g._tzcSh = {}; its.forEach(it => { g._tzcSh[it.w] = [Number.isFinite(it.dr) ? it.dr : 0, (Number.isFinite(it.dc) ? it.dc : 0) + it.sh]; });   // v0.531: и сдвиг за дорисованным ползунком
   if (Z.triBind === g.dataset.g && !tzcEq(g._tzcSh, tzcViewSh)) setTimeout(() => renderTri(), 0);   // v0.462: перенос лёг иначе (тянут ширину) — сетке новый вид   // v0.461 / v0.462: сдвиги переноса — по ним сетка показывает вид (tzcView) и пишет правки назад (tzcUnview)
   let R = tc ? 2 : 0, N = tc;   // заголовок — в первой строке
   const o2 = {}, live = new Set();
