@@ -241,7 +241,10 @@
         }
     };
 
+    // Значок «в Хаб» (hub-link.js) — тоже холст: без этого исключения он растягивался на весь кадр
+    // и висел в каждом ролике огромными песочными часами. data-no-rec — так же убрать любой свой холст.
     const visibleCanvases = () =>[...document.querySelectorAll('canvas')].filter(c => {
+        if (c.closest('#zerkHubBtn, [data-no-rec]')) return false;
         const st = getComputedStyle(c);
         return c.width > 16 && c.height > 16 && st.display !== 'none' && st.visibility !== 'hidden' && +st.opacity > 0.01;
     });

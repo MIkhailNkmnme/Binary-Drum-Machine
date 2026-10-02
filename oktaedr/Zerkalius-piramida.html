@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.098. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.099. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.098</title>
+<title>Zerkalius Пирамида — v0.099</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -333,6 +333,10 @@
   ось, поворот и наклон, вращение и скорость, приближение и сдвиг, достроенное и снятое (до 300 частей, координаты до 4 знаков).
   Открыл ссылку — всё встаёт как было и крутится так же (applyState после загрузки). Адрес вкладки тоже меняется на эту ссылку,
   так что F5 возвращает тот же вид. Сообщение «ссылка скопирована» — всплывашкой #toast сверху (ничего не сдвигает).
+  v0.099, «на всех видео это что, водяной знак?»: нет — это значок «в Хаб» (холст hub-link.js у заголовка). Общий recorder.js
+  сводит в кадр ВСЕ видимые холсты, растягивая каждый до размера самого большого, и крошечный значок ложился на весь кадр
+  размытыми песочными часами. В recorder.js холсты внутри #zerkHubBtn (и с data-no-rec) из записи исключены — это чинит
+  запись на всех страницах. ?v=099 у подключения recorder.js — чтобы браузер не отдал старый из кэша.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -504,7 +508,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.098</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.099</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -1294,7 +1298,7 @@ $("bLink").onclick = async () => {
     applyState(JSON.parse(json)); } catch (e) { console.warn("Пирамида: ссылка не прочиталась", e); } } }
 </script>
 <script src="../_js/hub-link.js"></script>
-<script src="../_js/recorder.js"></script>
+<script src="../_js/recorder.js?v=099"></script>
 <script>
 // v0.092: видеозапись со звуком — свой ромб ⏺; запись — общим recorder.js, звук — из захвата экрана / вкладки
 (function(){
