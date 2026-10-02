@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.016. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.017. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.016</title>
+<title>Zerkalius Пирамида — v0.017</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -83,6 +83,12 @@
   v0.016, «в режиме без радуги нужен выбор цвета»: когда ◐ цвет выключен, рядом появляется квадратик #cMono — выбор цвета
   (input type=color); им красятся и грани, и рёбра (uMonoC в обоих шейдерах, прежде был зашит светлый #cfd9db). Выбор
   помнится (localStorage piramida_mono).
+  v0.017, «как скоростями поймать момент, когда кажется, крутится в одну сторону, а потом в другую; существует ли частота
+  стояния» → «просто кнопки такие под ползунками, сразу показать»: строка #strobe под ползунками скорости. Поворот за кадр —
+  0,004 · скорость, пирамида совпадает сама с собой через 120° (бипирамиды ⧫ — почти через 180°), поэтому
+  base = угол / 0,004 (523,6 и 785,4): ■ base — стоит; ⟲ base − 0,5 — медленно назад; ⟳ base + 0,5 — медленно вперёд;
+  ✶ base / 2 — два положения чередуются; △ base / 3 — три по кругу. Шаг привязан к кадру, а не ко времени, поэтому стояние
+  точное при любой частоте экрана. Набор меняется вместе с режимом (strobeBuild из bBi), нажатая подсвечена.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -91,7 +97,7 @@
   #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
   #cv{ touch-action:none; cursor:grab; }
   #ov{ pointer-events:none; }
-  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 96px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 124px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
   #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; display:flex; align-items:center; }
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
   #panel.min > :not(h1){ display:none; }
@@ -108,6 +114,8 @@
   #cMono{ flex:0 0 auto; width:32px; height:28px; padding:2px; border:1px solid var(--line); border-radius:4px; background:#0c0f14; cursor:pointer; display:none; }
   #cMono.show{ display:block; }
   .srow{ display:flex; align-items:flex-start; gap:6px; }
+  #strobe{ display:flex; gap:4px; justify-content:center; margin-top:3px; }
+  #strobe button{ flex:0 1 auto; padding:2px 8px; font:11px/18px monospace; }
   .scol{ flex:1 1 auto; min-width:0; }
   button.sar{ flex:0 0 auto; width:30px; height:20px; padding:0; font-size:12px; line-height:18px; touch-action:none; }
   #spdBar{ position:fixed; left:0; right:0; bottom:0; padding:4px 8px 3px; background:rgba(5,6,8,.6); touch-action:none; }
@@ -130,7 +138,7 @@
   body.zen-mode #bZen{ opacity:.3; }
   #ver{ margin-left:8px; color:var(--dim); font:11px monospace; letter-spacing:0; font-weight:400; }
   @media (max-width:600px){
-    #panel{ left:6px; right:6px; top:auto; bottom:76px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
+    #panel{ left:6px; right:6px; top:auto; bottom:104px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
     #panel.min{ right:auto; }
     #panel h1{ font-size:12px; }
     .sl{ flex-direction:row; gap:8px; }
@@ -147,7 +155,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.016</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.017</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -184,6 +192,7 @@
 <div id="spdBar" title="Скорость вращения">
   <div class="srow"><button class="sar" data-a="c" data-d="-1" title="К метке слева — вдвое медленнее">◂</button><div class="scol"><input type="range" class="spd" id="sSpd" min="-2" max="10" step="0.01" value="0" data-zerk-arrowed="1"><div class="ticks" id="spdTicks"></div></div><button class="sar" data-a="c" data-d="1" title="К метке справа — вдвое быстрее">▸</button></div>
   <div class="srow"><button class="sar" data-a="f" data-d="-1" title="Чуть медленнее (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sFine" min="0" max="1" step="0.001" value="0" data-zerk-arrowed="1" title="Точно: от левой метки до правой"><div class="ticks" id="fineTicks"></div></div><button class="sar" data-a="f" data-d="1" title="Чуть быстрее (удержание — повтор)">▸</button></div>
+  <div id="strobe"></div>
 </div>
 <script>
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
@@ -545,7 +554,7 @@ sL.oninput = () => { L = +sL.value; sS.max = L; if (slice > L) { slice = L; sS.v
 sX.oninput = () => { X = +sX.value / 100; ui(); mouseMoved = true; };
 sS.oninput = () => { slice = +sS.value; ui(); rebuild(); };
 $("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
-$("bBi").onclick = () => { biMode = !biMode; extra = []; removed.clear(); ui(); rebuild(); };   // v0.013
+$("bBi").onclick = () => { biMode = !biMode; extra = []; removed.clear(); ui(); rebuild(); strobeBuild(); setSpd(Math.log2(spd), true); };   // v0.013
 $("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
 $("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
 $("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
@@ -561,7 +570,17 @@ function setSpd(v, keepFine){ v = Math.max(-2, Math.min(10, v)); spd = 2 ** v; s
   [...spdTicks.children].forEach((t, i) => t.classList.toggle("on", Math.abs(v - (i - 2)) < 1e-6));
   if (!keepFine) { const n = Math.min(9, Math.floor(v + 1e-6)); if (n !== fineN) { fineN = n; fineBuild(); } }
   const [a, b] = fineAB(); sFine.value = (spd - a) / (b - a);
-  [...fineTicks.children].forEach((t, i) => t.classList.toggle("on", Math.abs(spd - (a + (b - a) * i / 4)) < (b - a) * 1e-4)); }
+  [...fineTicks.children].forEach((t, i) => t.classList.toggle("on", Math.abs(spd - (a + (b - a) * i / 4)) < (b - a) * 1e-4));
+  [...$("strobe").children].forEach(t => t.classList.toggle("on", Math.abs(spd - t._s) < 1e-6)); }
+// v0.017: стробоскоп — скорости, при которых пирамида стоит, ползёт назад / вперёд, двоится, троится
+function strobeBuild(){
+  const ang = biMode ? Math.PI : 2 * Math.PI / 3, base = ang / 0.004, deg = biMode ? "180°" : "120°", box = $("strobe"); box.textContent = "";
+  [["⟲", base - 0.5, "Чуть медленнее стояния — медленно крутится назад"], ["■", base, "Стоит: за кадр ровно " + deg + (biMode ? " (почти совпадает)" : "")],
+   ["⟳", base + 0.5, "Чуть быстрее стояния — медленно крутится вперёд"], ["✶", base / 2, "Два положения чередуются"], ["△", base / 3, "Три положения по кругу"]]
+  .forEach(([ic, s, tt]) => { const b = document.createElement("button"); b._s = s; b.title = tt + " · ×" + s.toFixed(2);
+    b.textContent = ic + " " + s.toFixed(1).replace(".", ","); b.onclick = () => { setSpd(Math.log2(s)); spin = true; tween = null; ui(); }; box.appendChild(b); });
+}
+strobeBuild();
 function fineBuild(){   // пять меток нижнего ползунка: концы промежутка и четверти
   const [a, b] = fineAB(); fineTicks.textContent = "";
   for (let i = 0; i <= 4; i++) { const s = a + (b - a) * i / 4, t = document.createElement("span");
