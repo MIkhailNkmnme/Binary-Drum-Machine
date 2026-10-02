@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.046. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.047. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.046</title>
+<title>Zerkalius Пирамида — v0.047</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -180,6 +180,8 @@
   v0.046, по снимку деления «2» — «засечки тоже ромбами — их рёбрами, только серыми, тёмно»: деление шкалы скорости — контур
   ромба высотой 30 px (как бегунок) тёмно-серыми рёбрами (#3a4048), число внутри; ширина — по числу (поля 13 px), прежние
   засечки-чёрточки сняты. Ромб-бегунок по-прежнему поверх.
+  v0.047, «углы 60°»: ромб деления — из двух равносторонних треугольников: острые углы 60° слева и справа, тупые 120° сверху
+  и снизу; 56 × 32 px (32 ≈ 56 / √3) у всех делений одинаково, число 11 px по центру.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -257,7 +259,7 @@
   #sFine::-webkit-slider-thumb{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%234dd4ff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
   #sFine::-moz-range-thumb{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%234dd4ff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
   .ticks{ position:relative; height:0; margin:0 10.5px; }
-  .ticks span{ position:absolute; top:-31.5px; z-index:2; transform:translateX(-50%); height:30px; font:12px/30px monospace; color:var(--dim); padding:0 13px; pointer-events:none;
+  .ticks span{ position:absolute; top:-32.5px; z-index:2; transform:translateX(-50%); width:56px; height:32px; font:11px/32px monospace; text-align:center; color:var(--dim); padding:0; pointer-events:none;
     isolation:isolate; background:#3a4048; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }   /* v0.046: деление — контур ромба, число внутри */
   .ticks span::before{ content:""; position:absolute; inset:1px; z-index:-1; background:#07080b; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   #spdBar .srow + .srow{ margin-top:6px; }
@@ -298,7 +300,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.046</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.047</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
