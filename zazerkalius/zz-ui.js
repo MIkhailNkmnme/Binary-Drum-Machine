@@ -6858,6 +6858,7 @@ function cgrpInit(){
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
      показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
   const sizeApply = (g) => {
+    { const s0 = Z.cgrpSize[g.dataset.g]; if (s0 && s0.w > Math.max(screen.availWidth || 0, window.innerWidth, 800)) { delete Z.cgrpSize[g.dataset.g]; save(); } }   // v0.505: шире экрана — сбой (см. ручку), размер снят
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
     if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
     g.style.width = Math.max(s.w, tzMinW(g)) + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам; v0.480 — и не уже самого широкого блока
@@ -7028,7 +7029,9 @@ function cgrpInit(){
         const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
         const mv = (ev) => { moved = true; Z.cgrpSize[g.dataset.g] = { w: Math.max(60, Math.round(r.width + ev.clientX - x0)), h: Math.max(24, Math.round(r.height + ev.clientY - y0)) }; sizeApply(g); };
         const up = () => { sz.removeEventListener("pointermove", mv); sz.removeEventListener("pointerup", up); sz.removeEventListener("pointercancel", up);
-          if (moved) { Z.cgrpSize[g.dataset.g] = { w: g.offsetWidth, h: g.offsetHeight }; place(g); save(); } };   // v0.332: помнится то, что видно
+          if (moved) { const q = Z.cgrpSize[g.dataset.g]; Z.cgrpSize[g.dataset.g] = { w: Math.min(q ? q.w : 1e9, g.offsetWidth), h: g.offsetHeight }; place(g); save(); } };   // v0.332: помнится то, что видно
+          /* v0.505, по снимку «Вида» в одну строку — «ширина съехала» (в настройках — 3922 px): запоминалась видимая ширина, а группа конструктора бывает шире
+             заданной (перенос рисунка) — каждое касание ромба прибавляло. Теперь — не больше того, что задано ручкой */
         sz.addEventListener("pointermove", mv); sz.addEventListener("pointerup", up); sz.addEventListener("pointercancel", up);
       });
       sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g]) return; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); place(g); save(); });
