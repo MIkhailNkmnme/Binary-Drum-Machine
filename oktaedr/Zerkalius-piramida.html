@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.089. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.090. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.089</title>
+<title>Zerkalius Пирамида — v0.090</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -298,6 +298,10 @@
   решётка ромбов (центры ручка + 24,5·(m, n), m + n чётное: рёбрами — (±1, ±1), по горизонтали — (±2, 0), по вертикали — (0, ±2));
   тащимая кнопка прилипает к её узлу первой (ближе 14 px). Щелчок по ручке собирает все утащенные кнопки в ближайшие свободные
   узлы вокруг неё (gripGather); кнопки, стоящие в узлах, ездят вместе с ручкой, когда тащишь весь ромб.
+  v0.090, по снимку с телефона — «на мобильном это меню — под ползунки скорости и за низ экрана»: панель никогда не заходит
+  на полосу скорости и за низ экрана (fitPanel): нижняя граница — над ⏸ ×N и полосой (когда крутится) или над низом экрана
+  (когда стоит); прижатая книзу панель (телефон) ставит bottom по этой границе, перетащенная — ограничивает max-height,
+  лишнее листается внутри. Зовётся из ui(), при повороте / смене размера, после перетаскивания и сворачивания.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -460,7 +464,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.089</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.090</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -866,7 +870,7 @@ cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clie
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "∞";
   [["bTet", !biMode], ["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn], ["bAxis", showAxis]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("colGrp").classList.toggle("on", colorOn); paintUi(); ["bSpin", "bSpd"].forEach(id => $(id).classList.toggle("blink", spin));
-  { const sb = $("spdBar"); sb.classList.toggle("off", !spin); sb.style.bottom = spin ? "" : -sb.offsetHeight + "px";
+  { const sb = $("spdBar"); sb.classList.toggle("off", !spin); sb.style.bottom = spin ? "" : -sb.offsetHeight + "px"; fitPanel();
     const h = sb.offsetHeight, barTop = innerHeight - h;   // v0.086: утащенные к полосе кнопки — вниз вместе с ней
     (window.freeEls || []).forEach(el => { if (el.style.position !== "fixed") { el.style.transform = ""; return; }
       const top = parseFloat(el.style.top) || 0, near = top + el.offsetHeight > barTop - 140;
@@ -1033,7 +1037,7 @@ try { const m = localStorage.getItem("piramida_mode"); if (m === "-") mode = nul
 modeUi();
 // v0.004: панель сворачивается до строки заголовка; на телефоне — свёрнута с начала, выбор помнится
 const panel = $("panel"), bMin = $("bMin");
-const setMin = (m) => { panel.classList.toggle("min", m); bMin.textContent = m ? "▸" : "▾"; };
+const setMin = (m) => { panel.classList.toggle("min", m); bMin.textContent = m ? "▸" : "▾"; fitPanel(); };
 let min0 = null; try { min0 = localStorage.getItem("piramida_min"); } catch (e) {}
 setMin(min0 === null ? matchMedia("(max-width:600px)").matches : min0 === "1");
 bMin.onclick = () => { const m = !panel.classList.contains("min"); setMin(m); try { localStorage.setItem("piramida_min", m ? "1" : "0"); } catch (e) {} };
@@ -1052,6 +1056,14 @@ function draggable(el, handle, key){
   addEventListener("resize", () => { if (pos) pos = place(pos[0], pos[1]); });
 }
 draggable(panel, panel.querySelector("h1"), "piramida_pos");
+panel.querySelector("h1").addEventListener("pointerup", () => setTimeout(fitPanel, 0)); addEventListener("resize", fitPanel);
+function fitPanel(){   /* v0.090: панель — не на полосу скорости и не за низ экрана */
+  const pn = document.getElementById("panel"), sb = document.getElementById("spdBar"); if (!pn || !sb) return;
+  const limit = spin && getComputedStyle(sb).display !== "none" ? innerHeight - sb.offsetHeight - 58 : innerHeight - 60;
+  if (pn.style.top) { pn.style.bottom = ""; pn.style.maxHeight = Math.max(80, limit - parseFloat(pn.style.top)) + "px"; return; }
+  if (getComputedStyle(pn).top === "auto" || matchMedia("(max-width:600px)").matches) { pn.style.bottom = (innerHeight - limit) + "px"; pn.style.maxHeight = Math.max(80, limit - 8) + "px"; }
+  else pn.style.maxHeight = Math.max(80, limit - pn.getBoundingClientRect().top) + "px";
+}
 { const mr = $("bTet").parentNode; mr._tipHtml = () => $("count").innerHTML;   // v0.082: счёт частей — при наведении на «укладка | бипирамиды»
   mr.addEventListener("pointerenter", () => tipShow(mr)); mr.addEventListener("pointerleave", () => tipShow(null)); }
 document.querySelectorAll(".srow.pr").forEach(r => {   // v0.063: подпись ползунка — при наведении и пока тянут
