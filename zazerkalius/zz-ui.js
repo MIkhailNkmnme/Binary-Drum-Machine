@@ -7864,6 +7864,10 @@ function tzJustify(g){
   const gl = g.getBoundingClientRect().left, rows = new Map();
   its.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - gl]); });
   let maxR = 0; rows.forEach(a => a.forEach(([, x]) => { maxR = Math.max(maxR, x); }));
+  /* v0.512, по снимку «Аниматрицы» — «дёргается ширина при нажатии некоторых кнопок»: ширина шла по самому длинному ряду, а кнопки, что показывают и
+     прячут поля (▮ Столб — «8» и «0»), меняли самый длинный ряд — и с ним всю группу. У группы с заданным размером ряды дотягиваются до самого
+     размера (без 1,5 px), так ширина от показанного почти не зависит */
+  if (sz) maxR = Math.max(maxR, g.getBoundingClientRect().width - 1.5);
   /* v0.508, по снимкам «Кручения» — «так меняет высоту при изменении ползунка»: ряд дотягивался до края впритык, доли пикселя то влезали, то нет —
      последняя кнопка (⟳) перескакивала строкой ниже. Перед растяжкой — ширина с запасом в 1 px */
   if (maxR > 0) { g.style.width = (Math.ceil(maxR) + 1) + "px"; g.style.flexShrink = "0"; }
@@ -7878,6 +7882,7 @@ function tzJustify(g){
     if (k <= 0 || !c.length) return;
     for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
     c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
+  { let r2 = 0; its.forEach(e => { r2 = Math.max(r2, e.getBoundingClientRect().right - gl); }); if (r2 > 0) maxR = r2; }   // v0.512: по рядам, как встали
   if (maxR > 0) { g.style.width = (Math.ceil(maxR) + 1) + "px"; g.style.flexShrink = "0"; }   // v0.499: посчитанную ширину — не ужимать (доли пикселя переносили кнопку)
   tzHandle(g);
 }
