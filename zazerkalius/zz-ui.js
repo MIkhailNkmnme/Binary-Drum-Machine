@@ -6864,11 +6864,11 @@ function cgrpInit(){
     { const s0 = Z.cgrpSize[g.dataset.g]; if (s0 && s0.w > Math.max(screen.availWidth || 0, window.innerWidth, 800)) { delete Z.cgrpSize[g.dataset.g]; save(); } }   // v0.505: шире экрана — сбой (см. ручку), размер снят
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
     if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
-    g.style.width = Math.max(s.w, tzMinW(g)) + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам; v0.480 — и не уже самого широкого блока
+    g.style.width = Math.max(tzSzW(g, s.w), tzMinW(g)) + "px"; g.style.height = "";   // v0.334: высота — всегда по кнопкам; v0.480 — и не уже самого широкого блока
     if (typeof tzcApply === "function") tzcApply(g);   // v0.453: группа-конструктор переносит ряды рисунка под новую ширину
     if (typeof tzgFrame === "function") tzgFrame(g);   // v0.482: рамка — сразу под новый размер (иначе угол с ручкой-ромбом на миг вне рамки и не хватается)
     const b = g.querySelector(":scope > .cgb"); if (!b) return;
-    if (b.scrollWidth > b.clientWidth + 1) g.style.width = (s.w + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
+    if (b.scrollWidth > b.clientWidth + 1) g.style.width = (tzSzW(g, s.w) + b.scrollWidth - b.clientWidth) + "px";   // не уже самой широкой кнопки
     /* v0.334, «не давать размера больше, если пустые области появляются»: ширина прижимается к правому краю самого длинного ряда кнопок —
        справа пустого места нет, и шире, чем все кнопки в один ряд, группа не становится */
     const br = b.getBoundingClientRect(); let right = br.left;
@@ -7858,7 +7858,7 @@ function tzJustify(g){
   if (cgb.classList.contains("tzc") || g.classList.contains("cmin")) { tzHandle(g); return; }
   const t = TZC_H / (2 * Math.sqrt(3)), its = [...g.querySelectorAll(".tz")].filter(e => !e.classList.contains("tzk") && e.getClientRects().length && e.closest(".cgrp") === g);
   const sz = g.classList.contains("csz") && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
-  g.style.width = sz ? Math.max(sz.w, tzMinW(g)) + "px" : ""; g.style.flexShrink = "";
+  g.style.width = sz ? Math.max(tzSzW(g, sz.w), tzMinW(g)) + "px" : ""; g.style.flexShrink = "";
   its.forEach(e => { if (e._tzx) { e._tzx = 0; e._tzn = e._tzn0; tzGeo(e); } });
   if (!sz) { const mw = tzMinW(g); if (g.offsetWidth < mw) { g.style.width = mw + "px"; g.style.flexShrink = "0"; } }   // v0.499: сразу не уже самого широкого блока — иначе ряды разложатся по узкой и так и останутся
   const gl = g.getBoundingClientRect().left, rows = new Map();
@@ -7911,6 +7911,9 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
    (Z.triMine) и возвращается по «✓ готово»; «↺ как было» — группа снова обычным рядом. */
 const TZC_H = 24;
 /* v0.497, «сделай её в цвет фона холста»: при «▱» (Z.noLn) обводки кнопок, заголовков, колец и стыков — цветом фона холста (--bg), а не группы */
+/* v0.513, «посмотри мобильную версию»: на узком экране (стопкой, ≤ 760 px) группы стоят под холстом во всю ширину окна — заданная ромбом ширина
+   (с настольного экрана) не больше этой ширины */
+function tzSzW(g, w){ if (!(window.matchMedia && matchMedia("(max-width:760px)").matches)) return w; const p = g.parentElement, lim = p ? p.clientWidth - 2 : 0; return lim > 100 ? Math.min(w, lim) : w; }
 function tzLnBg(){ return Z.noLn ? coneCss("--bg", "#0b0d12") : ""; }
 const tzcGcol = (g) => { const bg = tzLnBg(); if (bg) return bg; const l = g && g.querySelector(":scope > .glab"); return (l && getComputedStyle(l).color) || "rgba(232,235,242,.8)"; };   // v0.471: цвет группы
 const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.dataset.g === key) || null;
@@ -8065,7 +8068,7 @@ function tzcApply(g){
   let avail = Infinity;
   const sz = Z.cgrpSize && Z.cgrpSize[g.dataset.g];
   if (sz && g.classList.contains("csz")) { const gr = g.getBoundingClientRect(), cr = cgb.getBoundingClientRect(), gs = getComputedStyle(g);
-    avail = Math.max(sz.w, g._tzMinW || 0) - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }   // v0.507: не уже самого широкого блока
+    avail = Math.max(tzSzW(g, sz.w), g._tzMinW || 0) - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }   // v0.507: не уже самого широкого блока
   /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
      (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
   /* v0.470: обводка ⬚ видна всегда, тонкая; v0.476, «убери вообще жирность обводки» — и у нажатой тонкая (жирной больше нет нигде) */
@@ -8164,8 +8167,8 @@ function tzcApply(g){
   (g._tzcEls || []).forEach(el => { if (!els.includes(el)) tzcClean(el); });
   g._tzcEls = els;
   cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
-  if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (Math.max(sz.w, g._tzMinW || 0) + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
-  else if (isFinite(avail)) g.style.width = (Math.max(sz.w, g._tzMinW || 0) - Math.floor(avail - N * t)) + "px";   // v0.484: и не шире рисунка — пустого места справа нет
+  if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (Math.max(tzSzW(g, sz.w), g._tzMinW || 0) + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
+  else if (isFinite(avail)) g.style.width = (Math.max(tzSzW(g, sz.w), g._tzMinW || 0) - Math.floor(avail - N * t)) + "px";   // v0.484: и не шире рисунка — пустого места справа нет
   // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
   let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);

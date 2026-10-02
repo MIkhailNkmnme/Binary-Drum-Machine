@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.512. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.513. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.512</title>
+<title>Zazerkalius — v0.513</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1283,6 +1283,15 @@ input,textarea,.out{user-select:text;-webkit-user-select:text}
   #split{display:none}
   #desk{overflow:visible}
   .win{position:relative !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:8px 16px;resize:none}
+  /* v0.513, «посмотри мобильную версию»: шапка — в несколько строк (уходила за край экрана); окно конуса — холст сверху квадратом во всю ширину,
+     группы под ним стопкой своим ходом (на столе они лежат поверх холста по своим местам — на телефоне всё сваливалось в 60 px окна) */
+  #top{flex-wrap:wrap;height:auto;row-gap:4px;padding:4px 8px}
+  #w-cone > .wbody{position:relative !important;display:flex !important;flex-direction:column !important;overflow:visible !important}
+  #w-cone #coneMain{position:relative !important;inset:auto !important;order:-1;flex:0 0 auto !important;height:min(calc(100vw - 34px), 70vh) !important;min-height:0 !important}
+  #w-cone .tools{position:static !important;display:flex !important;flex-wrap:wrap !important;gap:4px !important;padding:6px 0 !important}
+  #w-cone .tools > .cgrp.cfloat{position:relative !important;left:auto !important;top:auto !important;z-index:auto !important}
+  #w-cone#w-cone .tools .cgrp.tzg .cgb > span:not(.glab2){flex-wrap:wrap !important;max-width:100% !important}   /* блок шире экрана (🎵 музыка × щель …) — переносится внутри себя */
+  #paneEdge{display:none !important}   /* ручка ширины левой панели — на телефоне не нужна (и вылезала за край) */
 }
 /* v0.141: ?solo=cone — отдельная страница «◯ Конус» (Zerkalius-konus.html): поле строк и одно окно на весь стол;
    всё, что про остальные окна (раскладка, свернуть, закрепить, подсказки), спрятано. Узкий экран — стопкой, как везде. */
@@ -1409,7 +1418,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.512</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.513</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2346,8 +2355,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0512"></script>
-<script src="zz-ui.js?v=0512"></script>
+<script src="zz-core.js?v=0513"></script>
+<script src="zz-ui.js?v=0513"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
