@@ -774,7 +774,7 @@ cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "∞";
-  [["bTet", !biMode], ["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("colGrp").classList.toggle("on", colorOn); paintUi(); ["bSpin", "bSpd"].forEach(id => $(id).classList.toggle("blink", spin)); $("bSpin").firstChild.nodeValue = spin ? "⏸\uFE0E" : "⟳";   // v0.071: крутится — значок паузы placeLabels(); };
+  [["bTet", !biMode], ["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("colGrp").classList.toggle("on", colorOn); paintUi(); ["bSpin", "bSpd"].forEach(id => $(id).classList.toggle("blink", spin)); $("bSpin").firstChild.nodeValue = spin ? "⏸\uFE0E" : "⟳"; placeLabels(); };   // v0.071: крутится — значок паузы
 var tipRow = null, tipDrag = null;   // var — placeLabels зовут ещё до этой строки (setSpd при загрузке); v0.063: строка, чья подпись показана; строка, где тянут
 function tipShow(r){
   const t = document.getElementById("tipLab"); if (!r) { t.style.display = "none"; tipRow = null; return; }
