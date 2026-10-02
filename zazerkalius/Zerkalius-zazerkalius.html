@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.510. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.511. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.510</title>
+<title>Zazerkalius — v0.511</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1013,9 +1013,14 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 #rowsPane .lpb :is(button, select).tz.tz.tz{height:25px !important;margin-bottom:-1px !important;font-size:12px;line-height:1;text-align:center;justify-content:center;white-space:nowrap;overflow:hidden;flex:0 0 auto !important;min-width:0 !important}
 #rowsPane .lpb > input{height:24px;box-sizing:border-box;margin:0 2px}
 #rowsPane .pane-head.lph{width:max-content;max-width:calc(100% - 16px);box-sizing:border-box;margin:8px 8px 0;height:24px;padding:0 calc(6.93px + 16px) 0 calc(6.93px + 6px);display:flex;align-items:center;gap:6px;
-  background:var(--acc);-webkit-text-fill-color:#0e1116;color:var(--acc);font-weight:700;clip-path:polygon(0 0,calc(100% - 6.93px) 0,100% 50%,calc(100% - 6.93px) 100%,0 100%,6.93px 50%)}
+  background:color-mix(in srgb, var(--acc) 24%, var(--panel2));color:var(--txt);font-weight:700;clip-path:polygon(0 0,calc(100% - 6.93px) 0,100% 50%,calc(100% - 6.93px) 100%,0 100%,6.93px 50%)}
+/* v0.511, «не работает скрытие, тут кнопка наложилась, сделай фон менее заметным»: свёрнутый раздел — скрыт (display:flex блока перебивал скрытие);
+   первый заголовок — не под ◂; фон заголовка — приглушённый акцент, надпись светлая */
+#rowsPane .lpb.pane-fold-hid{display:none !important}
+#rowsPane #bPaneIcons + .pane-head.lph{max-width:calc(100% - 52px)}
+#rowsPane .pane-head.lph{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.03em;flex:0 0 auto}
 #rowsPane .pane-head.lph.pf::after{float:none;margin-left:auto;opacity:.8}
-#rowsPane .pane-head.lph.folded{opacity:.62}
+#rowsPane .pane-head.lph.folded{opacity:.7}
 #rowsPane .pane-head.lph:hover{opacity:1}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
@@ -1404,7 +1409,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.510</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.511</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2012,9 +2017,10 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <button id="bConeSpinL" title="Крутить весь конус против часовой на один бит нижней строки (выделены строки — самой нижней из выделенных); держишь — дальше тем же шагом. Правый щелчок — вернуть к началу (0°)">⟲</button>
             <button id="bConeSpinR" title="Крутить весь конус по часовой на один бит нижней строки (выделены строки — самой нижней из выделенных); держишь — дальше тем же шагом. Правый щелчок — вернуть к началу (0°)">⟳</button>
             <select id="coneSpinMode" hidden style="display:none" title="Как крутить. Всё — весь конус одним поворотом. Каждое — каждое кольцо на бит за шаг (маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются). Встреч Стр — чётные кольца по часовой, нечётные против, с одной скоростью. Встреч Бит — как Каждое, на бит за шаг, но через строку в обратную сторону"><option value="all">Всё</option><option value="bit">Каждое</option><option value="opp">Встреч Стр</option><option value="obit">Встреч Бит</option></select><span id="coneSpinModeB" class="smb" title="Как крутить — щелчок выбирает режим"><button data-sm="all" title="Всё — весь конус одним поворотом">Всё</button><button data-sm="bit" title="Каждое — каждое кольцо на бит за шаг: маленькие вертятся быстрее, рисунок закручивается спиралью и раз в какое-то время все возвращаются">Каждое</button><button data-sm="opp" title="Встреч Стр — чётные кольца по часовой, нечётные против, с одной скоростью">Встреч Стр</button><button data-sm="obit" title="Встреч Бит — как Каждое, на бит за шаг, но через строку в обратную сторону">Встреч Бит</button></span>
-            <button id="bConeAuto" title="▶ Крутить весь конус само, без остановки: скорость — ползунок рядом, направление — кнопка ↻ / ↺. Ещё раз — стоп. Правый щелчок — всё кручение на места">▶ крутить</button>
-            <button id="bConeDir" title="Направление кручения: ↻ по часовой / ↺ против часовой — щелчок переключает. В эту сторону идут ▶ крутить и шаг ▶|, ◀ — в обратную">↻ по часовой</button>
-            <span class="cstep" style="display:inline-flex;align-items:center;gap:3px;white-space:nowrap"><button id="bConeStepB" title="◀ Шаг назад (против выбранного направления): крутить назад (выбранным режимом: Всё, Каждое, Встреч Стр или Встреч Бит) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button><label class="dim" title="Скорость кручения — только величина, по логарифму: во «Всё» и «Встреч Стр» — 1…3600 градусов в секунду, в «Каждое» и «Встреч Бит» — 0,1…360 бит в секунду. Число — внутри ползунка. Направление — кнопкой ↻ / ↺"><input type="range" id="coneAutoSp" min="0" max="100" step="1" value="42" style="width:90px;vertical-align:middle"> <span id="coneAutoSpV" style="display:inline-block;min-width:4.6em;font-variant-numeric:tabular-nums"></span></label><button id="bConeStepF" title="▶| Шаг вперёд (в выбранном направлении): крутить (выбранным режимом: Всё, Каждое, Встреч Стр или Встреч Бит) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button></span>
+            <!-- v0.511, по снимку «Кручения» — «перемести кнопку Крутить между стрелками шагов, и последняя нажатая шаг задаёт вращение направление, и кнопка Против — лишняя»: ◀ ▶ крутить ▶| — один блок; ползунок скорости — следом; «↻ / ↺» скрыта (пульт ↻ — через неё) -->
+            <button id="bConeDir" hidden style="display:none" title="Направление кручения: ↻ по часовой / ↺ против часовой — щелчок переключает. В эту сторону идут ▶ крутить и шаг ▶|, ◀ — в обратную">↻ по часовой</button>
+            <span class="cstep cunit" style="display:inline-flex;align-items:center;gap:3px;white-space:nowrap"><button id="bConeStepB" title="◀ Шаг против часовой (и направление кручения — против часовой, горит): крутить назад (выбранным режимом: Всё, Каждое, Встреч Стр или Встреч Бит) до прошлого события лазера — пока конец луча не сменится. Каждое событие — в лог лазера">◀</button><button id="bConeAuto" title="▶ Крутить весь конус само, без остановки: скорость — ползунок, направление — последняя нажатая стрелка шага (◀ — против часовой, ▶| — по часовой). Ещё раз — стоп. Правый щелчок — всё кручение на места">▶ крутить</button><button id="bConeStepF" title="▶| Шаг по часовой (и направление кручения — по часовой, горит): крутить (выбранным режимом: Всё, Каждое, Встреч Стр или Встреч Бит) до следующего события лазера — луч упёрся в другую ячейку, пойман другим кольцом или прошёл. Каждое событие — в лог лазера">▶|</button></span>
+            <label class="dim" title="Скорость кручения — только величина, по логарифму: во «Всё» и «Встреч Стр» — 1…3600 градусов в секунду, в «Каждое» и «Встреч Бит» — 0,1…360 бит в секунду. Число — внутри ползунка. Направление — кнопкой ↻ / ↺"><input type="range" id="coneAutoSp" min="0" max="100" step="1" value="42" style="width:90px;vertical-align:middle"> <span id="coneAutoSpV" style="display:inline-block;min-width:4.6em;font-variant-numeric:tabular-nums"></span></label>
             
             
             
@@ -2340,8 +2346,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0510"></script>
-<script src="zz-ui.js?v=0510"></script>
+<script src="zz-core.js?v=0511"></script>
+<script src="zz-ui.js?v=0511"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

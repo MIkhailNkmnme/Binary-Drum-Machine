@@ -2215,6 +2215,7 @@ function coneDirUi(){   // v0.136: ползунок — величина ско�
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
   $("coneAutoSp").value = spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
   const d3 = $("bC3Dir"); if (d3) d3.textContent = sp < 0 ? "↺" : "↻";   // v0.279: направление и в пульте
+  { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.511: горит стрелка направления
   coneSpinModeUi();
 }
 function coneSpinModeUi(){   // v0.279, «это вынеси в кнопки»: режим кручения — кнопками, горит выбранный (список coneSpinMode — скрытый, держит значение)
@@ -3265,8 +3266,10 @@ function setupCone(){
     const L = Z.coneLog && Z.coneLog.list, last = L && L[L.length - 1];
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
-  $("bConeStepB").onclick = () => coneStep(-1);
-  $("bConeStepF").onclick = () => coneStep(1);
+  /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
+  const stepDir = (neg) => { const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); };
+  $("bConeStepB").onclick = () => stepDir(true);
+  $("bConeStepF").onclick = () => stepDir(false);
   /* v0.188, «как сделать, чтобы луч дошёл до 10 строки» → «да» на «🎯 до строки N»: крутить (тем же режимом и шагом, что ◀ ▶) до мига,
      когда луч проходит строку N — выходит из её кольца через щель; там и встать. По пути всё как при ▶: кольца, которые луч прошёл,
      встают, стены красятся, лог пишется. Номер — в поле рядом (Z.coneGoN). Строка уже пройдена или до неё не дойти за круг — ничего
