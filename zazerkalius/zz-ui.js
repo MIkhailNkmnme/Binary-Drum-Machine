@@ -773,6 +773,13 @@ function wShield(on){   // v0.280: накладка с курсором ↔ на
 function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считает межсимвольный от шага строк
 /* v0.541, по снимку «проход 0 · волна 0/255» — «при построении сразу после построения ставь в центр поля скролл»: построили строки (заготовка, ▦,
    △ Построить, достройка чертой / «↧ до») — поле строк прокручено по ширине на середину, к вершине треугольника. Два кадра — после rowsFit и ◸ 90° */
+function rowsCenterBit0(){   // v0.543: первый бит первой строки — в середину видимого поля (по ширине и по высоте)
+  const L = document.getElementById("rowList"); if (!L) return;
+  const bx = L.querySelector(".rw[data-r] .bx"), b = bx && (bx.querySelector(".b0, .b1, i.q") || bx); if (!b) return;
+  const r = b.getBoundingClientRect(), lr = L.getBoundingClientRect(); if (!r.width && !r.height) return;
+  L.scrollLeft += (r.left + r.width / 2) - (lr.left + L.clientWidth / 2);
+  L.scrollTop += (r.top + r.height / 2) - (lr.top + L.clientHeight / 2);
+}
 function rowsCenterX(){
   requestAnimationFrame(() => requestAnimationFrame(() => { const L = document.getElementById("rowList"); if (L) L.scrollLeft = Math.max(0, (L.scrollWidth - L.clientWidth) / 2); }));
 }
@@ -3586,10 +3593,45 @@ function setupCone(){
     const lim = Math.max(8, Math.floor(2e7 / Math.max(1, k.length)));   // история ⏮ — не больше ~20 млн бит
     if (animHist.length > lim) animHist.splice(0, animHist.length - lim);
   };
+  /* v0.543, по снимку «Аниматрицы» — «тут справа показывать часы по проходам, циклам, как в Треугольнике»: циферблат цикла (как ⏲ в Code 35.100) — справа в
+     группе. Короткая золотая стрелка — где мы в цикле: (проход в цикле + доля волны) / период, делений — по периоду (до 128, больше — 12); длинная — волна
+     по строкам прохода. В середине — номер прохода в цикле и «/ период»; повтора ещё нет — номер прохода и «повтора нет», короткой стрелки нет */
+  let adTickN = -1;
+  const animDial = (N) => {
+    const g = document.querySelector(".cgrp.cg-anim"); if (!g) return;
+    let svg = $("animDial");
+    if (!svg) {
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "animDial"; svg.setAttribute("viewBox", "0 0 100 100");
+      svg.innerHTML = '<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,.45)" stroke="currentColor" stroke-width="3"/><g id="adTicks"></g>' +
+        '<g id="adHand2"><line x1="50" y1="56" x2="50" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><polygon points="50,5 46,13 54,13" fill="currentColor"/></g>' +
+        '<g id="adHand"><line x1="50" y1="54" x2="50" y2="26" stroke="var(--gold)" stroke-width="4.4" stroke-linecap="round"/><polygon points="50,18 44,30 56,30" fill="var(--gold)"/></g>' +
+        '<circle cx="50" cy="50" r="3.5" fill="var(--gold)"/>' +
+        '<text id="adNum" x="50" y="73" text-anchor="middle" font-size="20" font-weight="bold" fill="var(--txt)" font-family="monospace"></text>' +
+        '<text id="adSub" x="50" y="87" text-anchor="middle" font-size="11" fill="currentColor" font-family="monospace"></text>';
+      g.appendChild(svg); adTickN = -1;
+    }
+    const per = aPer, k = per ? (aPass >= aPer0 ? (aPass - aPer0) % per : aPass) : aPass, frac = N > 1 ? Math.max(0, Math.min(1, aRow / (N - 1))) : 0;
+    const n = per && per <= 128 ? per : 12;
+    if (n !== adTickN) {
+      let h = "";
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2, big = n <= 16 || i % Math.ceil(n / 8) === 0, r1 = big ? 37 : 41;
+        h += `<line x1="${(50 + Math.sin(a) * r1).toFixed(2)}" y1="${(50 - Math.cos(a) * r1).toFixed(2)}" x2="${(50 + Math.sin(a) * 45).toFixed(2)}" y2="${(50 - Math.cos(a) * 45).toFixed(2)}" stroke="currentColor" stroke-width="${big ? 2 : 1}"/>`;
+      }
+      $("adTicks").innerHTML = h; adTickN = n;
+    }
+    const hd = $("adHand"); hd.setAttribute("transform", `rotate(${(per ? (k + frac) / per * 360 : 0).toFixed(2)} 50 50)`); hd.style.display = per ? "" : "none";
+    $("adHand2").setAttribute("transform", `rotate(${(frac * 360).toFixed(2)} 50 50)`);
+    const t1 = String(k), t2 = per ? "/ " + per : "повтора нет";
+    if ($("adNum").textContent !== t1) $("adNum").textContent = t1;
+    if ($("adSub").textContent !== t2) $("adSub").textContent = t2;
+    svg.setAttribute("aria-label", per ? `проход ${k} из цикла ${per} (с ${aPer0}-го), волна ${aRow}/${Math.max(0, N - 1)}` : `проход ${aPass}, повтора нет, волна ${aRow}/${Math.max(0, N - 1)}`);
+  };
   const animUi = () => {
     const N = Z.rows.length;
     // v0.329, «проход — это же цикл?»: нет — проход = волна сверху донизу; цикл = через сколько проходов картина повторилась
     $("animInfo").textContent = `проход ${aPass} · волна ${aRow}/${Math.max(0, N - 1)}` + (aPer ? ` · цикл ${aPer} прох. (с ${aPer0}-го)` : "");
+    animDial(N);
     { const L = $("rowList"), F = $("field"); if (L && F) F.style.setProperty("--aiTop", (L.offsetTop + 3) + "px"); }   // v0.358: у первой строки — по верху поля строк
     const sp = animSpOf(Z.animSp ?? 40); $("animSpV").textContent = (sp < 10 ? sp.toFixed(1).replace(".", ",") : Math.round(sp)) + (Z.animByPass ? " прох/с" : " стр/с");   // v0.329: было «цикл/с» — считает проходы
   };
@@ -7929,6 +7971,7 @@ function lpTag(){
       });
     });
     lpTop(col, vis);
+    lpBar(col, vis);   // v0.543
   } finally { lpBusy = false; if (lpTag._mo) lpTag._mo.takeRecords(); }   // свои же правки — не повод пересчитывать заново
 }
 /* v0.521, «сделай меню верхнее в стиле треугольников также»: кнопки шапки — из тех же треугольников; кнопки, стоящие рядом, — одна цепочка
@@ -7994,6 +8037,35 @@ function lpWin(col, vis){
       tzGeo(b);
     }));
   });
+}
+/* v0.543, по снимку «⇤ ▬ ⟲ Roboto ◀ 12 ▶ колонками ◫◧◨ 01 цифры» — «здесь кнопки в треугольную форму, как и те»: полоса над полем строк — кнопки, списки и
+   ползунок размера цепочкой, как в шапках окон (lpWin): первая остриём, следующие выемкой на остриё соседки. Три кнопки над столбиками (⇤ ▬ ⟲) стоят над
+   своими столбиками (fieldInfoFit двигает их отступом) — каждая сама по себе, шестигранником, её отступ не трогается */
+function lpBar(col, vis){
+  const bar = document.getElementById("rowInputBar"); if (!bar) return;
+  bar.classList.add("lpt");
+  if (!bar._lpObs && lpTag._mo) { bar._lpObs = 1; lpTag._mo.observe(bar, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] }); }
+  const t = TZC_H / (2 * Math.sqrt(3)), sd = 2 * t, solo = new Set(["bRowsStartTop", "coneLockAll", "bConeAllHome"]), runs = []; let run = [];
+  const end = () => { if (run.length) runs.push(run); run = []; };
+  const walk = (el) => {
+    if (el.classList.contains("segi")) { [...el.children].forEach(walk); return; }
+    if (solo.has(el.id)) { end(); if (vis(el)) runs.push([el]); return; }
+    if (el.tagName === "BUTTON" || el.tagName === "SELECT" || (el.tagName === "LABEL" && el.querySelector("input[type=range]"))) { if (vis(el)) run.push(el); return; }
+    if (vis(el)) end();
+  };
+  [...bar.children].forEach(walk); end();
+  runs.forEach(r => r.forEach((b, i) => {
+    b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+    let tw = 0;
+    if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
+    else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; }
+    b._gcol = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._tzar = ""; b._tzfix = true;
+    b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
+    b._tzn = b._tzn0 = b.tagName === "LABEL" ? 12 : b.tagName === "SELECT" ? Math.max(3, Math.min(9, Math.ceil((tw + 10) / sd))) : Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 8) / sd));
+    const ml = solo.has(b.id) ? b.style.marginLeft : null;
+    tzGeo(b);
+    if (ml !== null && ml && b.style.marginLeft !== ml) b.style.marginLeft = ml;   // отступ над столбиком — его ставит fieldInfoFit
+  }));
 }
 window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
@@ -8518,7 +8590,7 @@ function tzcPreview(){
    в ромбе-бегунке, число (.rv) — рядом с бегунком: справа, а если справа места нет — слева (.rvl). Место бегунка — --thx у метки (центр ромба, px);
    пересчёт — на движение ползунка, раз в 300 мс (значение меняет и код) и после раскладки групп */
 function tzSliders(){
-  document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz").forEach(L => {
+  document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz, #rowInputBar label.tz").forEach(L => {   // v0.543: и размер цифр над полем
     const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
     const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 5 * t;   // v0.473: бегунок — шестигранник 4t; v0.489 — «стрелка вправо» 5t
     const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;
@@ -9195,7 +9267,7 @@ function init(){
   fillSelect("cycOp", opEntries, Z.cycOp);
   fillSelect("gf2Op", opEntries, Z.gf2Op);
   fillSelect("thruMode", Object.entries(ZZ_THRU_MODES), Z.thruMode);
-  $("fontSel").value = Z.ff; $("fsVal").textContent = Z.fs;   // v0.217: размер — числом между ◀ ▶
+  $("fontSel").value = Z.ff; $("fsVal").textContent = Z.fs; $("fsRange").value = Z.fs;   // v0.217: размер — числом; v0.543 — ползунком
   $("descentAlign").value = Z.descentAlign;
   $("cycHeat").checked = Z.cycHeat;
   $("gf2T").value = Z.gf2T;
@@ -10431,8 +10503,10 @@ function init(){
 
   // Шапка
   $("fontSel").onchange = (e) => { Z.ff = e.target.value; renderAll(); save(); };
-  const fsStep = (d) => { Z.fs = Math.max(11, Math.min(40, (Z.fs | 0 || 18) + d)); $("fsVal").textContent = Z.fs; renderAll(); save(); };   // v0.217: ◀ ▶ вместо ползунка
-  $("fsDn").onclick = () => fsStep(-1); $("fsUp").onclick = () => fsStep(1);
+  /* v0.543, «размер шрифта ползунком, при изменении ставить в середину первый бит первой строки»: ◀ ▶ (v0.217) сняты — ползунок 11…40; тянешь — поле
+     перерисовывается и прокручивается так, что первый бит первой строки — посередине видимого поля */
+  $("fsRange").oninput = (e) => { Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); $("fsVal").textContent = Z.fs; renderAll(); rowsCenterBit0(); };
+  $("fsRange").onchange = () => save();
   /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
      (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
   $("bLayout").onclick = () => {
