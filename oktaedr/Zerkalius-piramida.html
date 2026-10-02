@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.069. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.070. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.069</title>
+<title>Zerkalius Пирамида — v0.070</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -237,6 +237,8 @@
   v0.069, по снимку стрелки у шкалы скорости — «у скоростей убери стрелки, а крайние ромбы закрась»: стрелок ◂ ▸ у ползунков
   скорости больше нет, ползунки шире; крайние ромбы-деления (¼ и 1024 вверху, концы промежутка внизу) залиты цветом ползунка
   (.ticks .end) и работают как стрелки: щелчок — шаг (вверху — к соседней метке, внизу — на 1/100), удержание — повтор.
+  v0.070, по снимку бегунков «4 0 ∞» — «убери жирность с чисел»: числа на бегунках панели и на крайних ромбах скорости — обычным
+  начертанием (400).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -331,13 +333,13 @@
   #spdBar .srow + .srow{ margin-top:6px; }
   .slab{ z-index:2; }
   .srow.pr .slab{ font-size:0; padding:0; top:0; background:none; z-index:4; }   /* v0.063: название — всплывашкой; v0.065 — число на бегунке */
-  .srow.pr .slab b{ font:700 14px/33px system-ui, sans-serif; color:var(--anti, #000); }
+  .srow.pr .slab b{ font:400 14px/33px system-ui, sans-serif; color:var(--anti, #000); }
   .srow.pr .spd::-webkit-slider-thumb{ width:36px; height:33px; margin-top:-13.5px; }   /* v0.066: бегунок панели шире — под число */
   .srow.pr .spd::-moz-range-thumb{ width:36px; height:33px; }
   #tipLab{ position:fixed; z-index:20; display:none; pointer-events:none; padding:3px 10px; font:13px/19px system-ui, sans-serif; color:var(--dim); background:none; border:none; white-space:nowrap; text-shadow:0 0 3px #000, 0 0 2px #000; }
   #tipLab b{ color:var(--fg); }   /* v0.052: подпись — за бегунком */
   #spdBar .sar{ display:none; }   /* v0.069: стрелок у скорости нет — их делают крайние ромбы */
-  .ticks span.end{ background:var(--acc); pointer-events:auto; cursor:pointer; z-index:4; color:var(--anti, #000); font-weight:700; }
+  .ticks span.end{ background:var(--acc); pointer-events:auto; cursor:pointer; z-index:4; color:var(--anti, #000); }
   .ticks span.end::before{ background:var(--acc); opacity:.75; }
   .ticks span.end:active::before{ opacity:1; }
   .ticks span.on{ color:var(--acc); }
@@ -376,7 +378,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.069</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.070</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
