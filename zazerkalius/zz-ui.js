@@ -23,6 +23,9 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
 const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
+/* v0.564, «индекс тоже — тормозит он на мобиле»: фон хаба — этот конус в невидимом iframe (visibility: hidden — звук нот играет в нём). Пока его не видно,
+   конус не рисуется (кручение и звук идут), окна, которых нет на странице, не считаются, служебные таймеры групп не крутятся */
+const zzBgHidden = () => { if (!ZZ_BG) return false; try { const f = window.frameElement; return !!f && getComputedStyle(f).visibility === "hidden"; } catch (e) { return false; } };
 const ZZ_KEY = ZZ_BG ? "zazerkalius_bg" : ZZ_SOLO ? "zazerkalius_solo_" + ZZ_SOLO.slice(2) : "zazerkalius_v1";
 /* v0.030: окна можно вынести в отдельное окно браузера (⧉); их элементы живут уже в чужом документе,
    поэтому поиск по id смотрит и туда — иначе вынесенное окно перестало бы обновляться. */
@@ -3235,7 +3238,7 @@ function setupCone(){
     if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
     const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
     if (!autoStep(dt)) return;
-    renderCone();
+    if (!zzBgHidden()) renderCone();   // v0.564: фон хаба, которого не видно, — не рисуется
     autoRaf = requestAnimationFrame(autoTick);
   };
   /* v0.284: один шаг кручения на dt секунд — всё, что делал кадр анимации (режимы, лазер, ✺, остановки на проходе); false — кручение
@@ -3876,7 +3879,7 @@ function setupCone(){
     /* v0.522, хаб v0.074 — «не видно бегающего бита по треугольнику»: хаб, открытый файлом (file://), не может читать фон напрямую (другой «адрес»),
        поэтому фон сам шлёт ему звучащие биты сообщением */
     if (ZZ_BG && window.parent !== window) { try { window.parent.postMessage({ zerkHeads: window.zzSndHeads }, "*"); } catch (err) { /* нет родителя */ } }
-    if ((was || window.zzSndHeads) && !sndConeRaf) sndConeRaf = requestAnimationFrame(() => { sndConeRaf = 0; renderCone(); }); };
+    if ((was || window.zzSndHeads) && !sndConeRaf && !zzBgHidden()) sndConeRaf = requestAnimationFrame(() => { sndConeRaf = 0; renderCone(); }); };   // v0.564
   const sndMark = (P) => {
     sndMarkCone(P);   // v0.376
     if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
@@ -7063,7 +7066,7 @@ function cgrpInit(){
       if (!any) break; }
     if (ch && !document.body.classList.contains("cgdrag")) { clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
   };
-  setInterval(() => { if (!document.hidden) linkSync(); }, 300);
+  setInterval(() => { if (!document.hidden && !ZZ_BG) linkSync(); }, 300);
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
     const m = meshSnap(g, x, y, w, h); g._mesh = m;   // v0.502: зубцы в зубцы — сильнее прочего магнита
     if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
@@ -7131,7 +7134,7 @@ function cgrpInit(){
     }
     if (ch) { linkSync(); clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
   };
-  setInterval(() => { if (!document.hidden) grpFix(null); }, 300);
+  setInterval(() => { if (!document.hidden && !ZZ_BG) grpFix(null); }, 300);
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
@@ -8706,7 +8709,7 @@ function tzSliders(){
   });
 }
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
-setInterval(() => { if (!document.hidden) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
+setInterval(() => { if (!document.hidden && !ZZ_BG) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
 function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
@@ -9213,6 +9216,10 @@ function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
     ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
+  /* v0.564: отдельный конус (?solo=cone — страница «Конус», карточки «Битмультфильмов», фон хаба) — прочих окон на странице нет, их не считаем
+     (прежде при каждой перерисовке считались все: Спуск, GF(2), Лин. сложность… — на телефоне это и тормозило) */
+  if (ZZ_SOLO === "w-cone") { const keep = new Set(["вид страницы", "поле строк", "90°", "конус ◯"]); for (let i = parts.length - 1; i >= 0; i--) if (!keep.has(parts[i][0])) parts.splice(i, 1); }
+  if (zzBgHidden()) { const i = parts.findIndex(p => p[0] === "конус ◯"); if (i >= 0) parts.splice(i, 1); }
   for (const [name, f] of parts) {
     try { f(); }
     catch (e) {

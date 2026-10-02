@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.074. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.075. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.074</title>
+    <title>Zerkalius Control Hub — v0.075</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -425,7 +425,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.074</div>
+        <div class="ver">v0.075</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -655,10 +655,14 @@
             const sierDraw = () => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
-                if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
-                sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 let hd = null; try { hd = bg && bg.contentWindow && bg.contentWindow.zzSndHeads; } catch (e) {}
                 if (!hd) hd = hubHeads;   /* v0.074: открыт файлом — фон прочитать нельзя, звучащие биты он шлёт сам (zerkHeads) */
+                /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
+                   у звучащих бит) — теперь только когда сменились размер или звучащие биты */
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null);
+                if (key === sierDraw.k) return true; sierDraw.k = key;
+                if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
+                sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
                 const desk = !matchMedia('(pointer: coarse) and (max-width: 960px)').matches;   // v0.072: компьютер — один по центру, во всю высоту
                 const N = PR.length, land = W > H && !desk, bw = document.getElementById('hubSndBox').getBoundingClientRect().width;
