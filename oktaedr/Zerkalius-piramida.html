@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.033. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.034. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.033</title>
+<title>Zerkalius Пирамида — v0.034</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -144,6 +144,10 @@
   v0.033, по снимку группы ⟲ ✥ ⇅ ✕ — «отдели пустотой от меню, как бы два меню друг под другом, но примагничены всегда»:
   #panel — прозрачная обёртка из двух карточек (.card): #pMain (заголовок, ползунки, кнопки, счёт) и под ней через 10 px
   #pAct (отражать, двигать, перевернуть, как было). Тащатся вместе (за заголовок), свёрнутая панель прячет обе.
+  v0.034, по снимку счёта «▲ 1140 (по слоям 1, 3, 6…) · ◆ 969 · ▼ 816» — «это в одну строку под скоростями; деления скоростей
+  покажи прямо на линии ползунка»: #count переехал из панели в полосу скорости, под оба ползунка, одной строкой (nowrap,
+  многоточие; сообщения — через «·», а не с новой строки). Метки шкал скорости теперь пересекают саму линию ползунка
+  (засечка 8 px по центру дорожки), подписи — под ней, как были; ромб-бегунок поверх засечек.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -170,7 +174,7 @@
   .row{ display:flex; gap:4px; flex-wrap:wrap; }
   button{ flex:1 0 auto; background:#0c0f14; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:5px 6px; cursor:pointer; font:inherit; }
   button.on{ color:var(--fg); border-color:var(--acc); }
-  #count{ color:var(--dim); font-size:12px; }
+  #count{ color:var(--dim); font-size:11px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
   #cMono{ flex:0 0 auto; width:32px; height:28px; padding:2px; border:1px solid var(--line); border-radius:4px; background:#0c0f14; cursor:pointer; display:none; }
   #cMono.show{ display:block; }
   .srow{ display:flex; align-items:flex-start; gap:6px; }
@@ -202,7 +206,7 @@
   button.sar:active{ opacity:1; }
   #spdBar{ position:fixed; left:0; right:0; bottom:0; padding:4px 8px 3px; background:rgba(5,6,8,.6); touch-action:none; }
   @media (min-width:601px){ #spdBar{ left:16.667%; right:16.667%; border-radius:8px 8px 0 0; } }
-  .spd{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:22px; margin:0; background:none; }
+  .spd{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:22px; margin:0; background:none; position:relative; z-index:1; }
   .spd::-webkit-slider-runnable-track{ height:4px; border-radius:2px; background:var(--line); }
   .spd::-moz-range-track{ height:4px; border-radius:2px; background:var(--line); }
   .spd::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:20px; margin-top:-8px; border-radius:0; border:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%237ee787'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
@@ -211,7 +215,7 @@
   #sFine::-moz-range-thumb{ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M7 0L14 10L7 20L0 10Z' fill='%234dd4ff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
   .ticks{ position:relative; height:13px; margin:0 7px; }
   .ticks span{ position:absolute; top:0; transform:translateX(-50%); font:10px/13px monospace; color:var(--dim); cursor:pointer; }
-  .ticks span::before{ content:""; position:absolute; left:50%; top:-3px; width:1px; height:3px; background:var(--dim); }
+  .ticks span::before{ content:""; position:absolute; left:50%; top:-15px; width:1px; height:8px; background:var(--dim); }   /* v0.034: засечка — на самой линии */
   .ticks span.on{ color:var(--acc); }
   #fineTicks span.on{ color:#4dd4ff; }
   body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views, body.zen-mode #spinBox{ display:none; }
@@ -229,7 +233,7 @@
   body.zen-mode #bZen{ opacity:.3; }
   #ver{ margin-left:8px; color:var(--dim); font:11px monospace; letter-spacing:0; font-weight:400; }
   @media (max-width:600px){
-    #panel{ left:6px; right:6px; top:auto; bottom:104px; width:auto; max-height:45%; gap:6px; font-size:12px; }
+    #panel{ left:6px; right:6px; top:auto; bottom:120px; width:auto; max-height:45%; gap:6px; font-size:12px; }
     .card{ padding:6px 8px; gap:5px; }
     #panel.min{ right:auto; }
     #panel h1{ font-size:12px; }
@@ -239,7 +243,6 @@
     .rows .row{ flex-wrap:nowrap; }
     button{ padding:4px 7px; }
     .row > button{ padding:4px calc(var(--t) + 3px); }
-    #count{ font-size:11px; }
   }
 </style>
 </head>
@@ -247,7 +250,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.033</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.034</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -266,7 +269,6 @@
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button><input type="color" id="cMono" value="#cfd9db" title="Цвет, когда радуга выключена">
   </div>
   </div>
-  <div id="count"></div>
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
 <div id="spinBox" class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button></div>
@@ -278,6 +280,7 @@
   <div class="srow"><button class="sar" data-a="c" data-d="-1" title="К метке слева — вдвое медленнее">◂</button><div class="scol"><input type="range" class="spd" id="sSpd" min="-2" max="10" step="0.01" value="0" data-zerk-arrowed="1"><span class="slab" id="lSpd"></span><div class="ticks" id="spdTicks"></div></div><button class="sar" data-a="c" data-d="1" title="К метке справа — вдвое быстрее">▸</button></div>
   <div class="srow"><button class="sar" data-a="f" data-d="-1" title="Чуть медленнее (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sFine" min="0" max="1" step="0.001" value="0" data-zerk-arrowed="1" title="Точно: от левой метки до правой"><span class="slab" id="lFine"></span><div class="ticks" id="fineTicks"></div></div><button class="sar" data-a="f" data-d="1" title="Чуть быстрее (удержание — повтор)">▸</button></div>
   <div id="strobe"></div>
+  <div id="count"></div>
 </div>
 <script>
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
@@ -533,7 +536,7 @@ function draw(){
   const rs = rows.length > 7 ? rows.slice(0, 5).join(", ") + ", … " + rows[rows.length - 1] : rows.join(", ");
   const nRef = extra.filter(q => q.ref).length, nMov = extra.filter(q => q.moved).length;
   const bs = L > 7 ? "1, 2, 3, 4, 5, … " + L : rows.map((_, n) => n + 1).join(", ");
-  const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12)<br>") + (biMode ? `⧫ ${cnt.bi} (по ярусам ${bs})` : `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`) + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
+  const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12) · ") + (biMode ? `⧫ ${cnt.bi} (по ярусам ${bs})` : `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`) + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? ` · ${note}` : "");
   if (txt !== lastCount) { document.getElementById("count").innerHTML = txt; lastCount = txt; }
 }
 function occupied(c2, nv){   // стоит ли уже часть с таким центром (все части пирамиды, без фильтров ▲ ◆ ▼ и среза)
