@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.036. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.037. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.036</title>
+<title>Zerkalius Пирамида — v0.037</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -152,6 +152,8 @@
   v0.036, по снимку шкал — «нет, я о том, что перед линией — числа и засечки, и числа на линии, а не ниже»: числа шкал скорости
   стоят прямо на линии ползунка, поверх неё (тёмная подложка разрывает линию под числом), засечки — короткие, над и под числом.
   Строки .ticks больше не занимают места (height 0) — полоса ниже; между двумя ползунками 6 px.
+  v0.037, по снимку ромба видов — «повысь размер ромбов до больших»: ромбики видов 34 → 46 px (крупнее ◎ 📷 ✥), R = 49 px,
+  ромб целиком 144 px; значки крупнее; панель на компьютере опущена под него (top 164 px).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -160,7 +162,7 @@
   #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
   #cv{ touch-action:none; cursor:grab; }
   #ov{ pointer-events:none; }
-  #panel{ position:fixed; left:12px; top:132px; width:230px; max-height:calc(100% - 256px); overflow:auto; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
+  #panel{ position:fixed; left:12px; top:164px; width:230px; max-height:calc(100% - 288px); overflow:auto; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
   .card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
   #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; display:flex; align-items:center; }
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
@@ -196,11 +198,11 @@
   .row > button{ padding:5px calc(var(--t) + 6px); }
   .row, #strobe{ gap:3px 0; }
   #panel h1{ cursor:move; touch-action:none; }
-  #views{ position:fixed; top:12px; left:12px; z-index:4; width:108px; height:108px; }
-  body #views > button, body #views > .grip{ position:absolute; left:calc(50% - 17px + var(--x)); top:calc(50% - 17px + var(--y)); width:34px; height:34px; margin:0; padding:0;
+  #views{ position:fixed; top:12px; left:12px; z-index:4; width:144px; height:144px; }
+  body #views > button, body #views > .grip{ position:absolute; left:calc(50% - 23px + var(--x)); top:calc(50% - 23px + var(--y)); width:46px; height:46px; font-size:18px; margin:0; padding:0;
     display:flex; align-items:center; justify-content:center; flex:none; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   body #views > button::before{ clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-  #views .grip{ background:var(--line); color:var(--dim); cursor:move; touch-action:none; letter-spacing:-3px; font-size:12px; }
+  #views .grip{ background:var(--line); color:var(--dim); cursor:move; touch-action:none; letter-spacing:-3px; font-size:15px; }
   .scol{ flex:1 1 auto; min-width:0; }
   button.sar{ flex:0 0 auto; width:18px; height:20px; margin:1px 2px 0; padding:0; border:none; border-radius:0; font-size:0; touch-action:none; background:var(--acc); opacity:.6; }
   button.sar[data-d="-1"]{ clip-path:polygon(0 50%, 100% 0, 100% 100%); }
@@ -257,7 +259,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.036</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.037</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -279,7 +281,7 @@
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
 <div id="spinBox" class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button></div>
-<div id="views"><button style="--x:0px;--y:-37px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:37px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-37px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:37px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:18.5px;--y:-18.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-18.5px;--y:-18.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:0px;--y:0px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:18.5px;--y:18.5px" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span></div>
+<div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:0px;--y:0px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:24.5px;--y:24.5px" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span></div>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
 <button id="bPan" class="fixb" title="Нажми и веди — сдвигает весь вид">✥</button>
