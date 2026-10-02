@@ -484,26 +484,15 @@ const FIELD_INFO = document.getElementById("fieldInfo");   // v0.237, «эту �
 function cutPanelMount(){
   const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
-  const b = document.getElementById("bCutClr"); if (b) b.disabled = !hidCount();   // v0.245: 🗑 — только когда под чертой что-то есть
+  const b = document.getElementById("bCutClr"); if (b) b.classList.toggle("on", !!Z.cutDel);   // v0.563: 🗑 — переключатель
   cutHidUi();   // v0.288
-  clrPlace();   // v0.290
 }
 /* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
    полос прокрутки. Место пересчитывается при каждой отрисовке поля и при смене размеров поля (ResizeObserver). */
 /* v0.293, «убери влево значок и уведомление — за значки, если накладываются»: 🗑 — в ЛЕВОМ нижнем углу, выше полосы прокрутки, и
    лежит прямо в body (position:fixed, z-index 51) — из #field (там isolation) его над уведомлением #msg (z-index 50) не поднять.
    Место — по видимой части #rowList на экране; поле скрыто — 🗑 тоже. */
-const CLR_BTN = document.getElementById("bCutClr");
-if (CLR_BTN) document.body.appendChild(CLR_BTN);
-function clrPlace(){
-  const L = document.getElementById("rowList"); if (!CLR_BTN || !L) return;
-  const r = L.getBoundingClientRect(), off = !L.getClientRects().length || r.width < 40 || r.height < 30;
-  CLR_BTN.style.visibility = off ? "hidden" : ""; if (off) return;
-  CLR_BTN.style.left = (r.left + L.clientLeft + 6) + "px";
-  CLR_BTN.style.bottom = (window.innerHeight - (r.top + L.clientTop + L.clientHeight) + 4) + "px";
-}
-if (window.ResizeObserver) { const ro = new ResizeObserver(() => clrPlace()); ["rowList", "field"].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); }); }
-window.addEventListener("resize", () => clrPlace());
+/* v0.563: 🗑 больше не плавает в углу — она в панели под чертой (переключатель Z.cutDel) */
 /* v0.288, «убери выделение, когда нет внизу ничего»: «Заменить» и «⤒ из-под черты» — про строки, что уже лежат под чертой; когда там
    пусто, обе ничего не делают, и подсветка не горит. Сохранённый выбор не меняется — подсветится, как только под чертой появятся строки. */
 /* v0.361, «„Заменить“ удали; жёлтая обводка — либо-либо»: «Заменить» снята (строки под чертой при достройке больше не стираются — сдвигаются
@@ -641,7 +630,8 @@ function cutAt(k, gen){
       /* v0.253, «когда под линией у строк есть биты — кнопку, чтобы их включать, когда вниз тянуть; она по умолчанию»: «⤒ из-под черты»
          (Z.cutTake, по умолчанию вкл) — черта вниз сперва возвращает строки, что лежат под ней, и только когда они кончились — достраивает. */
       const vis = Z.lanes[l].slice(); let hid = hidRows(l).slice();
-      if (Z.cutTake !== false) while (vis.length < k && hid.length) vis.push(hid.shift());
+      if (Z.cutDel) hid = [];   // v0.563: 🗑 включена — прежние строки из-под черты не возвращаются и не сдвигаются, а стираются
+      else if (Z.cutTake !== false) while (vis.length < k && hid.length) vis.push(hid.shift());
       if (vis.length < k) { const pg = cutPresetRows(k); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(pg && pg[vis.length] != null ? pg[vis.length] : cutGenNext(vis[vis.length - 1], vis[vis.length - 2])); }   // v0.537: заготовка — её строкой с тем же номером   // v0.361: «Заменить» снята — что под чертой, остаётся ниже новых
       Z.lanes[l] = vis; Z.lanesHid[l] = hid;
       continue;
@@ -702,6 +692,7 @@ function cutAsk(k, down = true){
 function cutMove(k, pre){
   pre = pre || undoState();
   if (k !== null) cutAt(k === Infinity ? 1e9 : k);
+  if (Z.cutDel && hidCount()) Z.lanesHid = [];   // v0.563: 🗑 включена — ушедшее за черту стирается насовсем (↩ вернёт)
   let same = true;   // строк у поля всего столько же — состояние задаёт число строк за чертой
   for (let l = 0; l < (Z.laneCount || 1); l++) if (((pre.lanesHid && pre.lanesHid[l]) || []).length !== hidRows(l).length || ((pre.lanes && pre.lanes[l]) || []).length !== (Z.lanes[l] || []).length) same = false;   // v0.225: и достроенные строки
   if (same) { renderRows(); if (!hidCount()) say("⎯ Граница под нижней строкой — строк за ней нет. Тяни черту вверх, чтобы спрятать строки ниже неё."); return; }
@@ -10226,10 +10217,12 @@ function init(){
   $("bCutTake").onclick = () => { Z.cutTake = Z.cutTake === false; cutUi(); save();   // v0.253; v0.286: вкл — «Заменить» гаснет
     say((Z.cutTake !== false ? "⤒ Из-под черты — вкл: тянешь черту вниз — сперва возвращаются строки, что под ней, потом достраиваются новые." : "⤒ Из-под черты — выкл: черта вниз сразу достраивает новые строки, а те, что были под чертой, сдвигаются ниже.") + cutHidEmpty()); };
   const cutHidEmpty = () => hidCount() ? "" : " Под чертой сейчас пусто — подсветится, когда там будут строки.";   // v0.288
-  $("bCutClr").onclick = () => {   // v0.245, «и кнопку — стереть всё под линией»: строки за чертой — насовсем, во всех полях; ↩ вернёт
-    const n = hidCount(); if (!n) { say("🗑 Под чертой и так пусто."); return; }
-    const pre = undoState(); Z.lanesHid = []; undoPush(pre); renderAll(); save();
-    say(`🗑 Стёрто ${n} стр. под чертой. ↩ вернёт.`);
+  $("bCutClr").onclick = () => {   // v0.245: стереть всё под линией; v0.563 — переключатель «стирать под чертой»
+    Z.cutDel = !Z.cutDel; $("bCutClr").classList.toggle("on", Z.cutDel);
+    const n = Z.cutDel ? hidCount() : 0;
+    if (n) { const pre = undoState(); Z.lanesHid = []; undoPush(pre); renderAll(); }
+    save();
+    say(Z.cutDel ? `🗑 Стирать под чертой — вкл: черта вверх стирает строки, вниз — строит новые вместо прежних.${n ? ` Стёрто ${n} стр., что лежали под чертой (↩ вернёт).` : ""}` : "🗑 Стирать под чертой — выкл: строки за чертой снова прячутся и возвращаются.");
   };
   cutUi();
   const TRI_ORD = TRI_ORDERS;   // v0.234: ✂ нарезка; v0.237: все фигуры и порядки, щелчок — дальше, правый — назад

@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.562. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.563. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.562</title>
+<title>Zazerkalius — v0.563</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -553,9 +553,7 @@ body.field-hidden #fieldEdge,body.zen #fieldEdge{display:none}
    поверх; при прокрутке и при коротком поле стоит там же (место считает clrPlace в zz-ui.js). v0.289 — в конце панели. */
 /* v0.293, по снимку уведомления поверх 🗑 — «убери влево значок и уведомление убери за значки, если накладываются»: 🗑 — в ЛЕВОМ
    нижнем углу поля строк и лежит на уровне страницы (fixed), выше уведомления #msg (z-index 50). */
-#bCutClr{position:fixed;z-index:51;font-size:18px;line-height:1;padding:2px 4px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
-#bCutClr:disabled{opacity:.35;cursor:default}
-body.zen #bCutClr,body.bgmode #bCutClr{display:none !important}
+/* v0.563: 🗑 — переключатель под чертой, перед «Серп 90» (прежде, v0.290–0.293, — плавала в углу поля и стирала разом) */
 #cutPanel #tplBar{display:contents}
 #cutPanel #tplList{display:contents}
 #cutPanel .tpl{display:inline-flex;gap:2px;flex:0 0 auto;min-width:0}
@@ -1495,7 +1493,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.562</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.563</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -1657,10 +1655,13 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
     <div id="fieldInfoBar"><span id="fieldInfo" class="dim"></span></div>
     <div id="animInfo" title="Проход — сколько раз волна прошла поле сверху донизу; волна — до какой строки дошла в этом проходе; цикл — через сколько проходов картина повторилась (и с какого прохода), пишется, когда найден"></div>
     <div id="rowList" class="al-center"></div>
-    <button id="bCutClr" title="🗑 Стереть все строки под чертой — насовсем, во всех полях (↩ вернёт)">🗑</button>   <!-- v0.290: в правом нижнем углу поля строк -->
     <!-- v0.225: под чертой поля — достройка строк (тянешь черту вниз) и свои шаблоны; при отрисовке поля переносится в #cutSlot -->
     <div id="cutPanel">
       <!-- v0.361, по снимку «достроить: 🔺 Серп 90 · ⤒ из-под черты» — «„Заменить“ удали, слово „достроить“ убери, жёлтая обводка — либо-либо» -->
+      <!-- v0.563, по снимку 🗑 — «перенеси под линию перед Серп 90; если включена — удалять всё, что под линией, когда наверх тянуть», «и вниз — не смещать, а удалять»:
+           🗑 — переключатель (Z.cutDel). Включена: строки, ушедшие за черту вверх, стираются насовсем; вниз — строки из-под черты не возвращаются и не сдвигаются
+           ниже новых, а стираются; новые строятся способом достройки. Включил — стёрто и то, что уже лежит под чертой (↩ вернёт) -->
+      <button id="bCutClr" title="🗑 Стирать под чертой: включена — черта вверх стирает строки под ней насовсем, черта вниз — строит новые, а прежние из-под черты стирает (не возвращает и не сдвигает). Включил — стёрто и то, что уже под чертой. ↩ вернёт">🗑</button>
       <button id="bCutR90" title="🔺 Серп 90 — Серпинский по треугольнику: строки растут на 1 бит (или над чертой одна строка) — Паскаль, на бит длиннее (1 → 11 → 101…); растут на 2 — правило 90, на 2 бита">🔺 Серп 90</button>
       <button id="bCutR30" title="Правило 30 — строка на 2 бита длиннее, хаос">30</button>
       <button id="bCutMask" title="Маска: следующая строка — маска подряд, на бит длиннее">маска</button><input id="cutMask" value="01" title="Маска из 0 и 1 (по умолчанию 01)" style="width:52px">
@@ -2442,8 +2443,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0562"></script>
-<script src="zz-ui.js?v=0562"></script>
+<script src="zz-core.js?v=0563"></script>
+<script src="zz-ui.js?v=0563"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
