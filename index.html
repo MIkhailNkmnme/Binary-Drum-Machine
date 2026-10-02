@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.072. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.073. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -91,13 +91,16 @@
      v0.072: «убери блокировку кнопок, и при любом нажатии запускай все ноты сразу, и в комп. версии не видно треугольника почему-то»:
              меню не запирается (замок v0.055 снят, притушенного меню больше нет); первое нажатие где угодно — и по ноте, и по кнопке меню — включает
              все семь нот разом (фон — Zazerkalius v0.514); Серпинский из ромбов (#hubSier) — и на компьютере: один, по центру во всю высоту, фоном
-             за нотами и меню, приглушённо; звучащие биты горят цветом своих нот. -->
+             за нотами и меню, приглушённо; звучащие биты горят цветом своих нот.
+     v0.073: «убери включение по щелчку 7 нот; изначально пусть все неактивны, и только при нажатии начинает играть та, на которую нажал»:
+             первый щелчок больше ничего не включает; нота включает и выключает только себя; щелчок по пустому месту — пауза / дальше, только
+             когда что-то звучит. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.072</title>
+    <title>Zerkalius Control Hub — v0.073</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -417,7 +420,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.072</div>
+        <div class="ver">v0.073</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -554,7 +557,7 @@
                чтобы не остаться запертым навсегда */
             /* v0.072, «убери блокировку кнопок»: меню живое сразу — замок v0.055 снят */
             let unlocked = true;
-            let started = false, tries = 0, heard = false, nudgeT = 0;
+            let started = false, tries = 0, heard = false, nudgeT = 0, hubLive = false;
             const unlock = () => { if (unlocked) return; unlocked = true; document.body.classList.remove('hush'); try { localStorage.setItem('zerk_hub_all7', '1'); } catch (e) {} };
             const wake = () => { heard = true; };
             const fallback = () => setTimeout(() => { if (!heard) unlock(); }, 3000);
@@ -571,10 +574,11 @@
                 if (t.closest && t.closest('#hubRec, #hubDown')) return;   // v0.061: ⏺ работает и при запертом меню; v0.063 — и стрелки вниз
                 /* v0.072, «при любом нажатии запускай все ноты сразу»: первое нажатие — и по ноте, и по кнопке меню — включает все семь (фон на
                    { zerkSnd: true } включает все, Zazerkalius v0.514); нота при этом не переключается сама, кнопка меню ведёт дальше, как обычно */
-                if (note) { if (!started) { started = true; if (bg) sendAll(); fallback(); e.preventDefault(); e.stopPropagation(); } return; }
-                if (link) { if (!started) { started = true; if (bg) sendAll(); fallback(); } return; }
-                if (!started) { started = true; if (bg) sendAll(); fallback(); return; }
-                if (bg) post({ zerkSndToggle: true });
+                /* v0.073, «убери включение по щелчку 7 нот; изначально пусть все неактивны, и только при нажатии начинает играть та, на которую нажал»:
+                   нота — включает и выключает только себя (её onclick); кнопка меню — просто ведёт дальше; пустое место — пауза / дальше, только
+                   если что-то звучит (из тишины ничего не включает) */
+                if (note || link) return;
+                if (bg && hubLive) post({ zerkSndToggle: true });
             }, true);
             /* v0.067, «запустить нажатием — отправить в бесконечность»: обычный щелчок по кнопке меню (замок уже открыт — запертое меню
                щелчок гасит раньше) — кнопка улетает вдаль к середине экрана, потом переход. Ctrl, Shift, средняя кнопка — как обычно, без полёта.
@@ -597,7 +601,7 @@
               if (sbs.length && bg) { sbs.forEach(b => { b.onclick = () => { try { bg.contentWindow.postMessage({ zerkSndHead: b.dataset.h, on: !b.classList.contains('on') }, '*'); } catch (e) {} }; });
                 window.addEventListener('message', e => { if (e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
                   const d = e.data, hs = Array.isArray(d.zerkSndHeads) ? d.zerkSndHeads : (d.zerkSndOn ? ['r', 'c'] : []);   // v0.054: какие из семи звучат
-                  sbs.forEach(b => b.classList.toggle('on', hs.includes(b.dataset.h))); document.getElementById('hubSndBox').classList.toggle('paused', !!d.zerkSndPaused); wake(); if (sbs.every(b => b.classList.contains('on'))) unlock(); } }); } }   // v0.055: горят все семь — меню живое
+                  sbs.forEach(b => b.classList.toggle('on', hs.includes(b.dataset.h))); hubLive = !!d.zerkSndOn;   /* v0.073: звучит ли что-то (пауза — тоже) */ document.getElementById('hubSndBox').classList.toggle('paused', !!d.zerkSndPaused); wake(); if (sbs.every(b => b.classList.contains('on'))) unlock(); } }); } }   // v0.055: горят все семь — меню живое
             if (bg) { bg.addEventListener('load', () => setTimeout(titleStart, 300)); setTimeout(titleStart, 1500); }   // запасной путь
             const glitch = (y0, y1, mid) => {
                 if (CALM) { if (mid) mid(); return; }   // v0.028: тихий режим — язык меняется сразу, без полос
