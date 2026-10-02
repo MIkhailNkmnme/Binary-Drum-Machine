@@ -655,7 +655,7 @@ function cutAsk(k, down = true){
     const close = () => { box.hidden = true; removeEventListener("pointerdown", away, true); };
     const go = () => {
       const N = Math.min(CUT_GEN_MAX, Math.round(+inp.value));
-      if (N >= 1 && N !== cutHeight()) { const pre = undoState(); cutAt(N, !Z.rowLock); cutMove(null, pre); rowsFit(); fieldInfoFit(); }
+      if (N >= 1 && N !== cutHeight()) { const pre = undoState(); cutAt(N, !Z.rowLock); cutMove(null, pre); rowsFit(); fieldInfoFit(); rowsCenterX(); }   // v0.541: и скролл — в центр
       /* v0.355, по снимку «↧ до 64» — «после применения показать след. цифру»: в окошке — уже следующая степень двойки в ту же сторону
          (вниз: 64 → 128, вверх: 64 → 32), Enter — и дальше; своё число набирается поверх */
       const h = cutHeight(); let q = 1;
@@ -771,6 +771,11 @@ function wShield(on){   // v0.280: накладка с курсором ↔ на
   if (on && !s) { s = document.createElement("div"); s.id = "wShield"; document.body.appendChild(s); } else if (!on && s) s.remove();
 }
 function rowsFitDone(){ if (Z.tri90) tri90Apply(); }   // ◸ 90° считает межсимвольный от шага строк
+/* v0.541, по снимку «проход 0 · волна 0/255» — «при построении сразу после построения ставь в центр поля скролл»: построили строки (заготовка, ▦,
+   △ Построить, достройка чертой / «↧ до») — поле строк прокручено по ширине на середину, к вершине треугольника. Два кадра — после rowsFit и ◸ 90° */
+function rowsCenterX(){
+  requestAnimationFrame(() => requestAnimationFrame(() => { const L = document.getElementById("rowList"); if (L) L.scrollLeft = Math.max(0, (L.scrollWidth - L.clientWidth) / 2); }));
+}
 /* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
    сдвига строк» в «Кольцах»): щелчок — как по галке. Место по горизонтали — по замку первой строки (столбик номера стоит на месте
    при прокрутке вбок, а ширина его колонок в em — и мельчает в ужатом поле). */
@@ -3681,7 +3686,7 @@ function setupCone(){
     try { snapshot(); } catch (err) { return; }
     Z.rows = rows; syncLane(); Z.cur = 0;
     animSig = null; animSync();
-    renderAll(); save(); animUi();
+    renderAll(); save(); animUi(); rowsCenterX();   // v0.541: скролл — в центр
     say(`🌊 Заготовка «${lab.trim()}»: ${rows.length} стр., последняя — ${rows[rows.length - 1].length} бит. ↩ вернёт.`);
   }
   /* v0.239, «как в Cellcosmos — карта всех 256 правил сеткой 16×16»: ▦ рядом со списком заготовок — все элементарные
@@ -9475,6 +9480,7 @@ function init(){
       if (moved) cutMove(null, pre);
       document.body.classList.remove("cutdrag");   // v0.242: после итоговой перерисовки — поле остаётся там, где отпустили
       rowsFit(); fieldInfoFit();   // v0.265: шаг строк и кнопки над столбиками — один раз, когда отпустили
+      if (moved && cutHeight() > H0) rowsCenterX();   // v0.541: достроили чертой — скролл в центр
       cnt.hidden = true;
       if (moved && cutHeight() !== H0) cutAsk(cutHeight(), cutHeight() > H0);   // v0.324: протянул — окошко «до строки N»; v0.338 — и вверх
     };
@@ -9943,7 +9949,7 @@ function init(){
     snapshot();
     Z.rows.splice(Z.cur + 1, 0, ...rows);
     Z.cur += 1;   // текущей становится вершина — от неё и смотреть
-    renderAll(); save();
+    renderAll(); save(); rowsCenterX();   // v0.541: скролл — в центр
     const modeTxt = { pascal: "🔺 Паскаль от строки", descent: "▽ спуск от строки", ring: "◯ кольцом от строки", start: "маской, каждая с начала", tape: "маской, сплошной лентой" }[Z.maskMode] || "";
     let ringTxt = "";   // v0.046: у цилиндра — где вход, где петля, умер ли в ноль
     if (Z.maskMode === "ring") {
