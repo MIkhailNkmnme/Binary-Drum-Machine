@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.094. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.095. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.094</title>
+<title>Zerkalius Пирамида — v0.095</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -320,6 +320,8 @@
   v0.094, «пауза возможна при записи?» → «отдельная кнопка паузы рядом с ⏺ — да»: пока идёт запись, слева от ⏺ — ромб ⏸
   (#bRecP): пауза — MediaRecorder.pause() (звук тоже), значок ▶, ⏺ перестаёт мигать; ещё щелчок — resume() в тот же файл.
   Счётчик времени паузу не считает (startedAt сдвигается на её длину). Запись кончилась — кнопка прячется.
+  v0.095, «ещё две ромбо-кнопки + − масштаб»: ромбы ＋ и − (#bZin, #bZout) — приближают и отдаляют в 1,25 раза к середине экрана;
+  живут вместе с кнопками видов (в ромбе — углы справа сверху и снизу, в ряду над скоростью — по бокам от ⌖), их тоже можно утащить.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -487,7 +489,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.094</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.095</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -509,7 +511,7 @@
   </div>
 </div>
 <div class="card" id="pAct" title="Что делает щелчок по пирамиде"><div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань · ещё щелчок — выключить">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки · ещё щелчок — выключить">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз) · ещё щелчок — выключить">⇅<span class="t"> перевернуть</span></button><button id="bUndo" title="Отменить последнее действие, по шагу (Ctrl+Z)">↶<span class="t"> отменить</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div></div></div>
-<div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
+<div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bZin" style="--x:49px;--y:-49px" title="Ближе (×1,25)">＋</button><button id="bZout" style="--x:49px;--y:49px" title="Дальше (÷1,25)">−</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
 <button id="bRecP" class="fixb" title="Пауза записи / продолжить">⏸&#xFE0E;</button>
 <button id="bRec" class="fixb" title="Видеозапись со звуком (R): Chrome спросит, откуда взять звук — отметь «звук»">⏺</button>
 <button id="bPng" class="fixb" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷</button>
@@ -1047,6 +1049,8 @@ function paintUi(){   // v0.044: цвет кнопок — радугой (ка�
   });
 }
 $("bView").onclick = () => { zoom = 1; panX = panY = 0; };
+$("bZin").onclick = () => { zoomAt(W / 2, Hh / 2, zoom * 1.25); mouseMoved = true; };   /* v0.095: масштаб ромбами */
+$("bZout").onclick = () => { zoomAt(W / 2, Hh / 2, zoom / 1.25); mouseMoved = true; };
 $("bClr").onclick = () => { if (!extra.length && !removed.size) return; pushHist(); extra = []; removed.clear(); rebuild(); };
 $("bUndo").onclick = undo; undoUi();
 $("bPng").onclick = () => {   // v0.011: при вращении — 8 последних кадров слитно (так их видит глаз), без вращения — один кадр
@@ -1196,7 +1200,7 @@ $("views").addEventListener("dblclick", e => {   /* v0.093: двойной ще�
   loose.forEach(el => ["position", "left", "top", "zIndex", "transform", "opacity"].forEach(k => el.style[k] = "")); freePos = {}; freeSave();
 }, true);
 function rowLayout(){   /* v0.091: ⊤ ◁ ⌖ ⏸ ×N ◇ ⊥ ⬙ ✥ ◢ — одним рядом над полосой скорости (на узком — зигзагом) */
-  const order = ["top", "side", "bView", "bSpin", "bSpd", "edge", "bot", "iso", "grip", "face"], n = order.length;
+  const order = ["top", "side", "bZout", "bView", "bZin", "bSpin", "bSpd", "edge", "bot", "iso", "grip", "face"], n = order.length;
   const sb = $("spdBar"), barTop = innerHeight - sb.offsetHeight, wide = innerWidth >= 560, step = wide ? 50 : 24.5;
   const cx = innerWidth / 2, cy = barTop - 8 - 23 - (wide ? 0 : 12.25), v = $("views");
   delete v.dataset.t0;
@@ -1204,7 +1208,7 @@ function rowLayout(){   /* v0.091: ⊤ ◁ ⌖ ⏸ ×N ◇ ⊥ ⬙ ✥ ◢ — �
     const x = cx + (i - (n - 1) / 2) * step, y = cy + (wide ? 0 : (i % 2 ? 12.25 : -12.25));
     if (k === "grip") { Object.assign(v.style, { left: x - 72 + "px", top: y - 72 + "px", right: "auto", bottom: "auto", transform: "none" });
       try { localStorage.setItem("piramida_views", JSON.stringify([x - 72, y - 72])); } catch (e) {} return; }
-    const el = ["bView", "bSpin", "bSpd"].includes(k) ? $(k) : document.querySelector(`#views > button[data-v="${k}"]`); if (!el) return;
+    const el = k.startsWith("bZ") || ["bView", "bSpin", "bSpd"].includes(k) ? $(k) : document.querySelector(`#views > button[data-v="${k}"]`); if (!el) return;
     el.style.transform = ""; freePos[freeId(el)] = freePlace(el, x - 23, y - 23);
   });
   freeSave();
