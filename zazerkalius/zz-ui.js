@@ -3766,6 +3766,9 @@ function setupCone(){
      в строках (как было), и на конусе: в 2D — обводка сектора бита, в 3D — точка на бите (zzSndHeads — [строка, бит]) */
   let sndConeRaf = 0;
   const sndMarkCone = (P) => { const was = !!window.zzSndHeads; window.zzSndHeads = Z.sndMark === false || !P || !P.length ? null : P.slice();
+    /* v0.522, хаб v0.074 — «не видно бегающего бита по треугольнику»: хаб, открытый файлом (file://), не может читать фон напрямую (другой «адрес»),
+       поэтому фон сам шлёт ему звучащие биты сообщением */
+    if (ZZ_BG && window.parent !== window) { try { window.parent.postMessage({ zerkHeads: window.zzSndHeads }, "*"); } catch (err) { /* нет родителя */ } }
     if ((was || window.zzSndHeads) && !sndConeRaf) sndConeRaf = requestAnimationFrame(() => { sndConeRaf = 0; renderCone(); }); };
   const sndMark = (P) => {
     sndMarkCone(P);   // v0.376

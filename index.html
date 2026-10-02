@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.073. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.074. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -94,13 +94,16 @@
              за нотами и меню, приглушённо; звучащие биты горят цветом своих нот.
      v0.073: «убери включение по щелчку 7 нот; изначально пусть все неактивны, и только при нажатии начинает играть та, на которую нажал»:
              первый щелчок больше ничего не включает; нота включает и выключает только себя; щелчок по пустому месту — пауза / дальше, только
-             когда что-то звучит. -->
+             когда что-то звучит.
+     v0.074: «не видно бегающего бита по треугольнику»: хаб, открытый файлом (file://), не мог читать фон — звучащие биты фон теперь шлёт сам
+             (Zazerkalius v0.522); на компьютере треугольник бледнее битами, а бегущий бит — во всю яркость (прежде весь холст был вполсилы);
+             «убери выделение текста кнопок» — текст хаба не выделяется. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.073</title>
+    <title>Zerkalius Control Hub — v0.074</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -363,9 +366,11 @@
         }
         /* v0.063, телефон: первый экран — ноты и Серпинский по центру (#hubSier — свой холст хаба), кнопки меню — ниже, за краем экрана, в столбик
            по 1–2; внизу первого экрана — стрелки вниз, бегут и мигают (щелчок — к меню). По горизонту — так же, два Серпинских у своих краёв */
+        /* v0.074, по снимку «Треугольник» с выделенной надписью — «убери выделение текста кнопок»: в хабе текст не выделяется (полей ввода нет) */
+        body, .menu-btn, .panel-title { user-select: none; -webkit-user-select: none; }
         #hubSier, #hubDown { display: none; }
         /* v0.072, «в комп. версии не видно треугольника»: на компьютере #hubSier — фоном во весь экран (за нотами и меню), приглушённо */
-        #hubSier { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: .5; }
+        #hubSier { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }   /* v0.074: бледнее — сами биты (бегущий — во всю яркость) */
         @media (pointer: coarse) and (max-width: 960px) {
             html, body { height: auto; }
             body { overflow-x: hidden; overflow-y: auto; }
@@ -420,7 +425,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.073</div>
+        <div class="ver">v0.074</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -641,6 +646,10 @@
                Стоя — один треугольник по центру (строки по середине — равнобедренный), в верхней половине; лёжа — два прямоугольных у своих
                краёв, гипотенузой к нотам (как пирамиды у конуса, Zazerkalius v0.395). Рисуется, только пока холст виден (телефон) */
             const sier = document.getElementById('hubSier'), sg = sier && sier.getContext('2d');
+            /* v0.074, «не видно бегающего бита по треугольнику»: хаб, открытый файлом, не может читать фон (другой «адрес») — фон присылает
+               звучащие биты сообщением { zerkHeads } */
+            let hubHeads = null;
+            window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && 'zerkHeads' in e.data) hubHeads = e.data.zerkHeads; });
             const PR = ['1']; while (PR.length < 64) { const q = PR[PR.length - 1]; let nx = '1'; for (let i = 1; i < q.length; i++) nx += q[i - 1] !== q[i] ? '1' : '0'; PR.push(nx + '1'); }
             const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
             const sierDraw = () => {
@@ -649,6 +658,7 @@
                 if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 let hd = null; try { hd = bg && bg.contentWindow && bg.contentWindow.zzSndHeads; } catch (e) {}
+                if (!hd) hd = hubHeads;   /* v0.074: открыт файлом — фон прочитать нельзя, звучащие биты он шлёт сам (zerkHeads) */
                 const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
                 const desk = !matchMedia('(pointer: coarse) and (max-width: 960px)').matches;   // v0.072: компьютер — один по центру, во всю высоту
                 const N = PR.length, land = W > H && !desk, bw = document.getElementById('hubSndBox').getBoundingClientRect().width;
@@ -667,7 +677,7 @@
                 const rhomb = (x, y, k) => { const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); };
                 for (let r = 0; r < N; r++) { const row = PR[r];
                     for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', k = hc || on ? 0.9 : 0.36;
-                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : on ? 0.78 : 0.14;
+                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : (on ? 0.78 : 0.14) * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8; }
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, k); }
                         if (hc) sg.shadowBlur = 0; } }
