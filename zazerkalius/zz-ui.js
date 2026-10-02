@@ -7722,7 +7722,7 @@ function triTag(){
   const vis = (el) => el.getClientRects().length > 0;
   /* v0.471, «у всех кнопок должна быть обводка цвета самой группы»: контур — цветом заголовка группы (как её рамка), берётся раз на группу */
   const gcm = new Map(), lnBg = tzLnBg(), gcol = (el) => { if (lnBg) return lnBg; const g = el.closest(".cgrp"); if (!g) return ""; if (!gcm.has(g)) { const l = g.querySelector(":scope > .glab"); gcm.set(g, l ? getComputedStyle(l).color : ""); } return gcm.get(g); };
-  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
+  document.querySelectorAll(".tz").forEach(b => { if (!b.closest("#w-cone .tools .cgb, #paneGrp .cgb, #rowsPane .lpb") && !(b.classList.contains("glab") && b.closest("#w-cone .tools, #paneGrp"))) triOff(b); });   // v0.486: заголовок группы — не трогать (он вне блока кнопок)
   const bs = [];
   /* v0.463, «вообще переделай сам у всех групп кнопок, включая ползунки и выпадающие списки, чтоб всё было стандартно»: из треугольников — всё, что
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
@@ -7786,7 +7786,67 @@ function triTag(){
     if (!ch) break;
   }
   new Set(bs.map(b => b.closest(".cgrp")).filter(Boolean)).forEach(tzJustify);   // v0.484
+  lpTag();   // v0.510: и левая панель
 }
+/* v0.510, по снимку левой панели — «в этом же стиле попробуем тут»: разделы левой панели (Страница целиком, Шаблоны, Построения, Треугольник из строки,
+   Нарезать, Заготовки, Окна) — как группы конуса: заголовок раздела — залитая «стрелка вправо» цветом акцента, кнопки — из тех же треугольников,
+   цепочкой «остриё в выемку»; длина по надписи (значок — полкнопки), каждый ряд дотягивается до правого края панели (по стороне на кнопку по кругу);
+   «Окна» — по одной в ряд во всю ширину. Панель значками (◂) — как была */
+let lpBusy = false, lpRO = null;
+function lpKick(){ cancelAnimationFrame(lpKick._raf); lpKick._raf = requestAnimationFrame(lpTag); }
+function lpTag(){
+  const pane = document.getElementById("rowsPane"); if (!pane || lpBusy) return;
+  lpBusy = true;
+  try {
+    const on = !document.body.classList.contains("pane-icons"), t = TZC_H / (2 * Math.sqrt(3)), sd = 2 * t;
+    const col = tzLnBg() || getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
+    const vis = (el) => el.getClientRects().length > 0;
+    if (!lpRO && window.ResizeObserver) lpRO = new ResizeObserver(lpKick);
+    if (!lpTag._mo && window.MutationObserver) lpTag._mo = new MutationObserver(lpKick);
+    pane.querySelectorAll(":scope > .pane-head").forEach(h => {
+      if (h.id === "paneGrpHead") return;   // группы конуса на панели — свои (triTag)
+      let bl = h.nextElementSibling; if (bl && bl.id === "paneWinsBox") bl = document.getElementById("paneWins");
+      if (!bl) return;
+      h.classList.toggle("lph", on); bl.classList.toggle("lpb", on);
+      if (!bl._lpObs) { bl._lpObs = 1; if (lpRO) lpRO.observe(bl); if (lpTag._mo) lpTag._mo.observe(bl, { childList: true, subtree: true }); }
+      const its = [...bl.querySelectorAll("button, select")].filter(e => !e.closest(".tpl.mine") && !e.closest("#tplMine") && !e.classList.contains("zerk-arrow"));
+      if (!on) { its.forEach(e => { if (e.classList.contains("tz")) triOff(e); }); return; }
+      const shown = its.filter(vis); if (!shown.length) return;
+      const col1 = bl.id === "paneWins";
+      shown.forEach(e => {
+        let tw = 0;
+        if (e.tagName === "SELECT") { const o = e.options[e.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
+        else { const rg = document.createRange(); rg.selectNodeContents(e); tw = rg.getBoundingClientRect().width; }
+        e._tzn0 = Math.max([...e.textContent.trim()].length <= 2 ? 3 : 6, Math.ceil((tw + 10) / sd));
+        e._gcol = col; e._tzar = ""; e._tzfix = false; e._tzL = TZ_NOTCH; e._tzR = TZ_TIP; e._tzn = e._tzn0; e._tzx = 0;
+      });
+      const cs = getComputedStyle(bl), padL = parseFloat(cs.paddingLeft) || 0, W = bl.clientWidth - padL - (parseFloat(cs.paddingRight) || 0);
+      const prevItem = (e) => {
+        let p = e.previousElementSibling; while (p && !vis(p)) p = p.previousElementSibling;
+        if (p && p.classList.contains("tpl") && !p.classList.contains("mine")) p = p.lastElementChild;   // заготовки — кнопка внутри .tpl
+        if (!p && e.parentElement.classList.contains("tpl")) { let q = e.parentElement.previousElementSibling; while (q && !vis(q)) q = q.previousElementSibling; p = q && q.classList.contains("tpl") && !q.classList.contains("mine") ? q.lastElementChild : null; }
+        return p;
+      };
+      for (let pass = 0; pass < 3; pass++) {   // сцепка — по раскладке: первая в ряду не заходит на соседку
+        shown.forEach(e => tzGeo(e));
+        let ch = false;
+        shown.forEach(e => { const top = Math.round(e.getBoundingClientRect().top), p = prevItem(e);
+          const m = !col1 && p && shown.includes(p) && Math.abs(Math.round(p.getBoundingClientRect().top) - top) < 6 ? 1 : 0;
+          if (m !== (e._tzm || 0)) { e._tzm = m; ch = true; } });
+        if (!ch) break;
+      }
+      shown.forEach(e => tzGeo(e));
+      const x0 = bl.getBoundingClientRect().left + padL, rows = new Map();
+      shown.forEach(e => { const r = e.getBoundingClientRect(), k = Math.round(r.top); if (!rows.has(k)) rows.set(k, []); rows.get(k).push([e, r.right - x0]); });
+      rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((W - x - 0.5) / sd + 0.02); if (k <= 0) return;
+        let c = a.map(q => q[0]); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
+        c.sort((p, q) => q.getBoundingClientRect().left - p.getBoundingClientRect().left);
+        for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;
+        c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
+    });
+  } finally { lpBusy = false; }
+}
+window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
    ряда дотягивается до правого края (целыми сторонами), группа — по самому длинному ряду; ромб-ручка — на правом конце последней кнопки нижнего ряда.
    У группы конструктора кнопки нарисованы — там только ширина по рисунку и ромб на последней кнопке (tzcApply) */
