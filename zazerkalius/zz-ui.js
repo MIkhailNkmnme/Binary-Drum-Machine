@@ -7908,8 +7908,8 @@ function lpTop(col, vis){
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
     b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH;
-    b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd));   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
-    tzGeo(b);
+    b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
+    tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));
   /* v0.524: кнопки шире — на узком окне шапка может не влезть в строку: тогда шрифт её кнопок мельче (не меньше 10 px), пока не войдёт */
   if (!(window.matchMedia && matchMedia("(max-width:760px)").matches)) {
