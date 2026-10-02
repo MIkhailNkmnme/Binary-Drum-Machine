@@ -242,8 +242,8 @@
   v0.071, по снимку ⟳ — «значок паузы, когда крутится»: на кнопке вращения, пока пирамида крутится, — ⏸ (нажать — пауза),
   когда стоит — ⟳ (нажать — крутить).
   v0.072, по снимку залитого ромба ¼ — «крайние обесцветь, внутри них — ромб размером с бегунок, слева / справа»: крайние деления
-  снова тёмные, как остальные; внутри — цветной ромб размером с бегунок (21 × 30, ::after), у левого деления — у левого острия,
-  у правого — у правого. Щелчок и удержание — шаг, как были.
+  снова тёмные, как остальные; внутри — цветной ромб размером с бегунок (21 × 30, ::after) по середине (у острия он
+  обрезался бы плоским ромбом), число — на нём, чёрным или белым. Щелчок и удержание — шаг, как были.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -346,7 +346,8 @@
   #spdBar .sar{ display:none; }   /* v0.069: стрелок у скорости нет — их делают крайние ромбы */
   .ticks span.end{ pointer-events:auto; cursor:pointer; z-index:4; }   /* v0.072: крайние — тёмные, внутри ромб-бегунок */
   .ticks span.end::after{ content:""; position:absolute; top:1px; width:21px; height:30px; z-index:-1; background:var(--acc); opacity:.75; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-  .ticks span.end.l::after{ left:4px; } .ticks span.end.r::after{ right:4px; }
+  .ticks span.end::after{ left:calc(50% - 10.5px); }   /* по середине — так ромб с бегунок целиком помещается в плоский ромб деления */
+  .ticks span.end{ color:var(--anti, #000); }
   .ticks span.end:active::after{ opacity:1; }
   .ticks span.on{ color:var(--acc); }
   body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views, body.zen-mode #spinBox{ display:none; }
