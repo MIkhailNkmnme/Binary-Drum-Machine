@@ -7820,10 +7820,11 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   const its = [...g.querySelectorAll(".tz, .tzk")].filter(e => e.closest(".cgrp") === g && e.getClientRects().length && !e.closest(".zerk-range-wrap"));
   if (!its.length) return;
   const gr = g.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3));
-  /* v0.507, по снимку «Вида» — «ширина огромная»: у группы конструктора нижний ряд бывает коротким, ромб вставал у левого края — влево его не утянуть,
-     группу не сузить. Теперь ромб — на самой нижней из кнопок, что доходят до правого края группы: тянешь — край группы идёт за ним */
-  let maxR = -1e9; its.forEach(e => { maxR = Math.max(maxR, e.getBoundingClientRect().right); });
-  let last = null, lr = null; its.forEach(e => { const r = e.getBoundingClientRect(); if (r.right >= maxR - t - 1 && (!lr || r.top > lr.top + 6 || (Math.abs(r.top - lr.top) <= 6 && r.right > lr.right))) { last = e; lr = r; } });
+  /* v0.507, по снимку «Вида» — «ширина огромная»: у группы конструктора нижний ряд бывает коротким, ромб вставал у левого края — сузить группу им было нельзя.
+     v0.508, «ромб растяжки — внизу должен быть, а где-то гуляет»: ромб — всегда в нижнем ряду, у правого края группы (на последней кнопке ряда, если она
+     дошла до края; короткий ряд — на рамке справа от неё) */
+  let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
+  const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
   h.style.setProperty("right", "auto", "important"); h.style.setProperty("bottom", "auto", "important");
