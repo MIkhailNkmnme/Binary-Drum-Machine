@@ -7912,7 +7912,11 @@ function triTag(){
       const sd = TZC_H / Math.sqrt(3), wRaw = parseFloat(b.style.width) || 0, own = b._tzOwnW && Math.abs(wRaw - b._tzOwnW) < 0.5, wInl = own ? 0 : wRaw;
       /* v0.483, «длина сама вытягивается»: своя ширина (её ставит tzGeo, с выемкой +t) — не «заданная»: иначе n + 0,5 округлялось в n + 1 при каждом
          пересчёте, и подпись росла без конца. Нужное место — без своих краёв */
-      const edge = ((b._tzL || TZ_NOTCH)[1] + TZ_TIP[1]) * sd / 2, need = Math.ceil(((b.scrollWidth || 0) - edge) / sd - 0.05);
+      /* v0.559, по снимку «ЛАЗЕР» у самого края — «текст отодвинь от края»: ширина надписи — по самому тексту и полям (Range), а не scrollWidth: надпись
+         по центру, и не влезшая часть слева в scrollWidth не входит — ширина выходила меньше нужной, первая буква уходила под край */
+      const cs = getComputedStyle(b), rg = document.createRange(); rg.selectNodeContents(b);
+      const cw = rg.getBoundingClientRect().width + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const edge = ((b._tzL || TZ_NOTCH)[1] + TZ_TIP[1]) * sd / 2, need = Math.ceil((Math.max(cw, b.scrollWidth || 0) - edge) / sd - 0.05);
       b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP;
       b._tzn = Math.max(wInl ? Math.max(3, Math.round(wInl / sd)) : own ? Math.min(b._tzn0 || 6, Math.max(6, Math.ceil(need / 3) * 3)) : 6, Math.ceil(need / 3) * 3);
       b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b); return;
