@@ -7899,7 +7899,7 @@ function lpTop(col, vis){
   const end = () => { if (run.length) runs.push(run); run = []; };
   const walk = (el) => {
     if (el.id === "pinBar") { [...el.children].forEach(walk); return; }
-    if (el.tagName === "BUTTON") { if (vis(el)) { if (el.dataset.tzl || el.dataset.tzr) { end(); run.push(el); end(); } else run.push(el); } return; }
+    if (el.tagName === "BUTTON") { if (vis(el)) run.push(el); return; }
     if (vis(el) || el.classList.contains("sp")) end();
   };
   [...top.children].forEach(walk); end();
@@ -7907,7 +7907,9 @@ function lpTop(col, vis){
     b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
-    b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH;
+    /* v0.529, по снимку «📌 ✦ Развёртка» — «дальше кнопки вогнутые (внутрь) и прижми кнопки, и так везде, чтоб не было пустот»: цепочка — остриё
+       в выемку: у каждой кнопки справа остриё, у следующей слева выемка, и она заходит на соседку на t (прежде — выемка к выемке, ромбик фона между) */
+    b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
     /* v0.527, «вправо стрелка — надо форму кнопки так же стрелкой вправо»: data-tzl / data-tzr — свой край кнопки (t — остриё, n — выемка);
        такая кнопка стоит отдельно от соседних: ↩ — стрелка влево (остриё слева, выемка справа), ↪ — вправо */
     if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
@@ -7921,6 +7923,8 @@ function lpTop(col, vis){
     for (let k = 0; k < 4 && top.scrollWidth > top.clientWidth + 1 && fs > 10; k++) { fs = Math.max(10, Math.floor(fs * top.clientWidth / top.scrollWidth * 10) / 10); top.style.setProperty("--tbfs", fs + "px"); shape(); }
     if (top.scrollWidth > top.clientWidth + 1) { lpTop.pad = 2; shape(); }   // и так тесно — поля у надписей уже (надпись заходит в острия)
   } else { lpTop.pad = 14; shape(); }
+  /* v0.529: перенеслась на новую строку (узкое окно) — начинает её остриём и не заходит на кнопку строкой выше */
+  runs.forEach(r => r.forEach((b, i) => { if (i && b._tzm && Math.abs(b.offsetTop - r[i - 1].offsetTop) > 4) { b._tzm = 0; b._tzL = TZ_TIP; tzGeo(b); } }));
 }
 window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
