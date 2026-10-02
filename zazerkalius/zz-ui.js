@@ -10250,11 +10250,13 @@ function init(){
     document.querySelectorAll(".win").forEach(el => {
       if ((el.id === "w-help" && !Z.helpOn) || el.classList.contains("popped") || el.classList.contains("docked")) return;   // v0.552: Подсказки (когда включены) — тоже в список
       const parked = on && el.classList.contains("collapsed");
-      if (parked) { el.style.display = "none"; el.dataset.parked = "1"; list.push(el); }
+      if (parked) { el.style.display = "none"; el.dataset.parked = "1"; }
       else if (el.dataset.parked) { el.style.display = ""; delete el.dataset.parked; }
+      if (on) list.push(el);   // v0.553, «отсюда не убирай»: в списке — все окна, развёрнутые горят
     });
     $("paneWinsHead").style.display = list.length ? "" : "none";
-    $("paneWins").innerHTML = list.map(el => `<button data-w="${el.id}" title="Развернуть окно «${esc(el.dataset.title || el.id)}» на стол">${esc(el.dataset.title || el.id)}</button>`).join("");
+    $("paneWins").innerHTML = list.map(el => { const t = esc(el.dataset.title || el.id), op = !el.dataset.parked;
+      return `<button data-w="${el.id}"${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");
     pwArrows();
   };
   /* v0.397: светящиеся ▲ ▼ у списка окон — горят, пока выше / ниже есть кнопки за краем; щелчок листает на ¾ видимого */
@@ -10272,6 +10274,7 @@ function init(){
   $("paneWins").onclick = (e) => {
     const b = e.target.closest("button[data-w]"); if (!b) return;
     const el = $(b.dataset.w), w = Z.win[b.dataset.w]; if (!el || !w) return;
+    if (!el.dataset.parked) { const bc = el.querySelector(":scope > .whead .bc"); if (bc) bc.click(); return; }   // v0.553: развёрнутое — свернуть обратно в список
     w.collapsed = false; el.classList.remove("collapsed"); el.style.height = w.h + "px";
     parkSync(); Z.z++; el.style.zIndex = Z.z; packWins(); save(); renderAll();
     el.scrollIntoView({ block: "nearest" });
