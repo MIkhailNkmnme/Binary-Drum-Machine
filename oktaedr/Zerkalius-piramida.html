@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.070. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.071. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.070</title>
+<title>Zerkalius Пирамида — v0.071</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -239,6 +239,8 @@
   (.ticks .end) и работают как стрелки: щелчок — шаг (вверху — к соседней метке, внизу — на 1/100), удержание — повтор.
   v0.070, по снимку бегунков «4 0 ∞» — «убери жирность с чисел»: числа на бегунках панели и на крайних ромбах скорости — обычным
   начертанием (400).
+  v0.071, по снимку ⟳ — «значок паузы, когда крутится»: на кнопке вращения, пока пирамида крутится, — ⏸ (нажать — пауза),
+  когда стоит — ⟳ (нажать — крутить).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -378,7 +380,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.070</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.071</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -772,7 +774,7 @@ cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "∞";
-  [["bTet", !biMode], ["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("colGrp").classList.toggle("on", colorOn); paintUi(); ["bSpin", "bSpd"].forEach(id => $(id).classList.toggle("blink", spin)); placeLabels(); };
+  [["bTet", !biMode], ["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); $("cMono").classList.toggle("show", !colorOn); $("colGrp").classList.toggle("on", colorOn); paintUi(); ["bSpin", "bSpd"].forEach(id => $(id).classList.toggle("blink", spin)); $("bSpin").firstChild.nodeValue = spin ? "⏸\uFE0E" : "⟳";   // v0.071: крутится — значок паузы placeLabels(); };
 var tipRow = null, tipDrag = null;   // var — placeLabels зовут ещё до этой строки (setSpd при загрузке); v0.063: строка, чья подпись показана; строка, где тянут
 function tipShow(r){
   const t = document.getElementById("tipLab"); if (!r) { t.style.display = "none"; tipRow = null; return; }
