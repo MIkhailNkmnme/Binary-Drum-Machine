@@ -1578,6 +1578,9 @@ function renderCone(){
     if (!coneSpinning && coneWallPaint(clockRays)) save();   // v0.131: упёрся в бит — красит его (тянут строку 1, довод, щель)
   } else coneWallWas = null;
   { const cc = $("coneCycle"); if (cc) { const t = coneCycleText(); if (cc.textContent !== t) cc.textContent = t; } }   // v0.119: счёт кругов
+  { const g = document.querySelector(".cgrp.cg-spin"); if (g) { let v = $("coneVarN");   // v0.545: вариантов цикла — строкой внизу группы «Кручение»
+    if (!v) { v = document.createElement("div"); v.id = "coneVarN"; v.title = "Сколько разных картин конуса до повтора в выбранном режиме. Кольцо возвращается через свой период — наименьший сдвиг, после которого строка та же (1111 — через 1, 0101 — через 2). «Каждое» и «Встреч Бит» — НОК периодов всех колец; «Всё» — одна картина; «Встреч Стр» — плавно, без счёта"; g.appendChild(v); }
+    const t = coneVarText(); if (v.textContent !== t) v.textContent = t; } }
   const { nk, groups } = coneInfo();
   const HUES = [200, 30, 120, 290, 0, 60, 170, 330, 90, 250];
   const gcol = new Map(); let gi = 0;
@@ -2648,11 +2651,20 @@ function coneClockSweep(ph0, dph, m){
 /* Цикл кручения — через сколько все кольца (и кольцо для заполнения) разом встают на свои места. «Каждое по биту»: кольцо из n бит
    возвращается через n бит, все вместе — через НОК длин (BigInt: у сотни разных длин он астрономический). «Навстречу»: все кольца
    поворачиваются на один угол — все на местах через 360°. Круг — оборот стрелки (строки 1). */
+/* v0.545, «можно ли просчитать количество вариантов цикла»: кольцо возвращается не через свою длину, а через свой ПЕРИОД — наименьший сдвиг, после
+   которого строка та же (1111 — 1, 0101 — 2, обычная — длина). Цикл — НОК периодов (прежде — длин; у Паскаля выходило вчетверо больше настоящего) */
+const ROT_PER = new Map();
+function rotPer(s){
+  if (!s) return 0;
+  let p = ROT_PER.get(s); if (p !== undefined) return p;
+  p = (s + s).indexOf(s, 1); if (p <= 0) p = s.length;
+  if (ROT_PER.size > 20000) ROT_PER.clear(); ROT_PER.set(s, p); return p;
+}
 function coneCycleBits(){
   const N = Math.min(Z.rows.length, CONE_MAX), g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
   let L = 1n;
   const add = (n) => { if (n > 0) { const b = BigInt(n); L = L / g(L, b) * b; } };
-  for (let i = 0; i < N; i++) add(Z.rows[i].length);
+  for (let i = 0; i < N; i++) add(rotPer(Z.rows[i]));
   if (coneGeom && coneGeom.fill) add(fillLen());
   return L;
 }
@@ -2667,6 +2679,20 @@ function coneCycleText(){
   }
   if (m === "opp") return `⟳ круг ${Math.floor(ph / 360).toLocaleString("ru-RU")} · цикл — 1 круг (360°), каждый круг все кольца на местах` + pass;
   return Z.coneClock ? `⟳ всё целиком — кольца друг относительно друга не сдвигаются${pass}` : "";
+}
+/* v0.545, «вариантов цикла — внизу под группой» (Кручение): сколько разных картин конуса до повтора в выбранном режиме. «Всё» — одна (кольца друг
+   относительно друга не сдвигаются); «Каждое» и «Встреч Бит» — НОК периодов колец (кольцо за шаг — на свой бит, в любую сторону — тот же счёт);
+   «Встреч Стр» — вращение плавное, картин без счёта, повтор через 360° / НОД периодов */
+function coneVarText(){
+  const m = Z.coneSpinMode || "all";
+  if (m === "all") return "вариантов цикла: 1 — конус крутится целиком";
+  if (coneBitMode(m)) {
+    const L = coneCycleBits(), ph = Math.abs(Z.coneSpinPh || 0), Ln = Number(L);
+    return `вариантов цикла: ${coneBigFmt(L)}` + (Ln <= 1e15 ? ` · сейчас ${Math.floor(ph % Ln).toLocaleString("ru-RU")}` : "");
+  }
+  const N = Math.min(Z.rows.length, CONE_MAX), g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
+  let d = 0; for (let i = 0; i < N; i++) d = g(d, rotPer(Z.rows[i]));
+  return `вариантов — без счёта (плавно) · повтор через ${+(360 / Math.max(1, d)).toFixed(2)}°`;
 }
 function coneCycleCheck(ph0, ph1, m){
   let L = 0, n0 = (Z.rows[0] || "1").length || 1;
@@ -8640,8 +8666,8 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
-  return Math.ceil(m) + 1;
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
+  return Math.ceil(m) + 1 + (parseFloat(getComputedStyle(g).paddingLeft) || 0);   // v0.545: и отступ слева (под циферблат Аниматрицы)
 }
 function tzcIcons(){
   document.querySelectorAll(".cgrp .gtri").forEach(x => { const k = x.closest(".cgrp").dataset.g, d = Z.cgrpTri && Z.cgrpTri[k]; x.classList.toggle("on", Z.triBind === k || !!(d && d.on)); });
