@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.018. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.019. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.018</title>
+<title>Zerkalius Пирамида — v0.019</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -93,6 +93,12 @@
   (картинкой SVG в фоне — так одинаково в Chrome и Firefox), верхний зелёный, нижний голубой; метки сдвинуты под середину
   ромба (поле 7 px). Стрелки ◂ ▸ — равнобедренные треугольники 18 × 20 (clip-path, основание 20, боковые ≈ 20,6) цвета своего
   ползунка; буква внутри скрыта, нажатая — ярче.
+  v0.019, «на других скоростях тоже надо — пусть при перемещении ползунков для каждого участка найдёт»: кнопки стробоскопа
+  считаются заново для промежутка нижнего ползунка (2^n … 2^(n+1)), когда он меняется (из fineBuild). Ищутся скорости, где
+  шаг за кадр = p/q периода (период 120°, у бипирамид 180°): s = p/q · base, base = период / 0,004, дробь несократимая, по
+  возрастанию q — сначала самые простые (q = 1 — стоит, q = 2 — двоится, q — столько положений по кругу). Первая — с ⟲ и ⟳ по
+  бокам (± min(0,5; 0,2 % скорости) — ползёт назад / вперёд), ещё до трёх — следом. На медленных участках q большое
+  (сотни положений) — там уже обычное вращение, но точку всё равно видно.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -164,7 +170,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.018</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.019</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -582,15 +588,23 @@ function setSpd(v, keepFine){ v = Math.max(-2, Math.min(10, v)); spd = 2 ** v; s
   [...fineTicks.children].forEach((t, i) => t.classList.toggle("on", Math.abs(spd - (a + (b - a) * i / 4)) < (b - a) * 1e-4));
   [...$("strobe").children].forEach(t => t.classList.toggle("on", Math.abs(spd - t._s) < 1e-6)); }
 // v0.017: стробоскоп — скорости, при которых пирамида стоит, ползёт назад / вперёд, двоится, троится
-function strobeBuild(){
-  const ang = biMode ? Math.PI : 2 * Math.PI / 3, base = ang / 0.004, deg = biMode ? "180°" : "120°", box = $("strobe"); box.textContent = "";
-  [["⟲", base - 0.5, "Чуть медленнее стояния — медленно крутится назад"], ["■", base, "Стоит: за кадр ровно " + deg + (biMode ? " (почти совпадает)" : "")],
-   ["⟳", base + 0.5, "Чуть быстрее стояния — медленно крутится вперёд"], ["✶", base / 2, "Два положения чередуются"], ["△", base / 3, "Три положения по кругу"]]
-  .forEach(([ic, s, tt]) => { const b = document.createElement("button"); b._s = s; b.title = tt + " · ×" + s.toFixed(2);
-    b.textContent = ic + " " + s.toFixed(1).replace(".", ","); b.onclick = () => { setSpd(Math.log2(s)); spin = true; tween = null; ui(); }; box.appendChild(b); });
+function strobeBuild(){   // v0.019: точки стробоскопа на текущем промежутке нижнего ползунка — s = p/q · base, самые простые дроби
+  const ang = biMode ? Math.PI : 2 * Math.PI / 3, base = ang / 0.004, deg = biMode ? 180 : 120, box = $("strobe"); box.textContent = "";
+  const [a, b] = fineAB(), r0 = a / base, r1 = b / base, gcd = (x, y) => y ? gcd(y, x % y) : x, found = [];
+  for (let q = 1; q <= 5000 && found.length < 4; q++)
+    for (let p = Math.max(1, Math.ceil(r0 * q - 1e-9)); p <= Math.floor(r1 * q + 1e-9) && found.length < 4; p++) if (gcd(p, q) === 1) found.push({ p, q, s: base * p / q });
+  const fmt = (s) => s.toFixed(s < 10 ? 2 : 1).replace(".", ",");
+  const add = (ic, s, tt) => { if (s < a - 1e-9 || s > b + 1e-9) return; const el = document.createElement("button"); el._s = s; el.title = tt + " · ×" + s.toFixed(3);
+    el.textContent = ic + " " + fmt(s); el.onclick = () => { setSpd(Math.log2(s), true); spin = true; tween = null; ui(); }; box.appendChild(el); };
+  const what = (f) => f.q === 1 ? "Стоит: за кадр " + f.p * deg + "°" + (biMode ? " (почти совпадает)" : "") : f.q + " положений по кругу: за кадр " + f.p + "/" + f.q + " от " + deg + "°";
+  const ic = (f) => f.q === 1 ? "■" : f.q === 2 ? "✶" : f.q === 3 ? "△" : "◌" + f.q;
+  if (!found.length) return;
+  const f0 = found[0], d = Math.min(0.5, f0.s * 0.002);
+  add("⟲", f0.s - d, "Чуть медленнее — медленно крутится назад"); add(ic(f0), f0.s, what(f0)); add("⟳", f0.s + d, "Чуть быстрее — медленно крутится вперёд");
+  found.slice(1).sort((x, y) => x.s - y.s).forEach(f => add(ic(f), f.s, what(f)));
 }
-strobeBuild();
 function fineBuild(){   // пять меток нижнего ползунка: концы промежутка и четверти
+  strobeBuild();   // v0.019: точки стробоскопа — для этого промежутка
   const [a, b] = fineAB(); fineTicks.textContent = "";
   for (let i = 0; i <= 4; i++) { const s = a + (b - a) * i / 4, t = document.createElement("span");
     t.textContent = i === 0 || i === 4 ? (s < 1 ? spdTxt(s) : numTxt(s)) : numTxt(s); t.style.left = i * 25 + "%";
