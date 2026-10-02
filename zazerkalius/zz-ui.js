@@ -7082,6 +7082,44 @@ function cgrpInit(){
     const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
     g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
   };
+  /* v0.558, по снимку «Аниматрицы» поверх «Вида» — «не давай на друг друга ложить группы»: плавающая группа (поверх холста или на поле строк), налезшая на
+     другую больше чем на зубец (9 px — встык и зубцы в зубцы по-прежнему можно), сдвигается на ближайшее место вплотную к ней (справа, слева, снизу или сверху —
+     куда короче и что в пределах окна). Когда отпустили группу — двигается она; само (раз в 0,3 с: группа выросла, окно сузилось) — верхняя из двух.
+     Прицепленные 🧲 сами не двигаются — двигают другую */
+  const grpFix = (only) => {
+    if (document.body.classList.contains("cgdrag")) return;
+    const vis = groups.filter(g => g.parentElement === tl && !g.classList.contains("cdrag") && g.getClientRects().length && g.offsetWidth > 4);
+    const mov = (g) => g.classList.contains("cfloat") && !Z.cgrpLink[g.dataset.g] && !!(Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
+    const zOf = (g) => +g.style.zIndex || 0, TOL = 9;
+    let ch = false;
+    for (let pass = 0; pass < 12; pass++) {
+      let any = false;
+      for (const g of vis) {
+        if (only && g !== only) continue;
+        for (const o of vis) {
+          if (o === g) continue;
+          const a = g.getBoundingClientRect(), b = o.getBoundingClientRect();
+          const ix = Math.min(a.right, b.right) - Math.max(a.left, b.left), iy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (ix <= TOL || iy <= TOL) continue;
+          let m = g, q = o;   // кого двигать
+          if (!only) { if (!mov(g) || (mov(o) && zOf(o) > zOf(g))) { m = o; q = g; } }
+          if (!mov(m)) continue;
+          const A = m.getBoundingClientRect(), B = q.getBoundingClientRect(), k = m.dataset.g, F = Z.cgrpFld[k];
+          const fr = F ? fldRect() : null, br = wb.getBoundingClientRect();
+          const box = fr ? { l: fr.left, t: fr.top, r: fr.left + fr.width, b: fr.top + fr.height } : { l: br.left, t: wbTop(), r: br.right, b: br.bottom };
+          const cand = [[B.right - 1 - A.left, 0], [B.left + 1 - A.right, 0], [0, B.bottom - 1 - A.top], [0, B.top + 1 - A.bottom]]
+            .map(([dx, dy]) => ({ dx, dy, d: Math.abs(dx) + Math.abs(dy), ok: A.left + dx >= box.l - 0.5 && A.right + dx <= box.r + 0.5 && A.top + dy >= box.t - 0.5 && A.bottom + dy <= box.b + 0.5 }))
+            .sort((u, v) => (v.ok - u.ok) || (u.d - v.d));
+          const c = cand[0]; if (!c || c.d < 0.5) continue;
+          if (F) { F.x += c.dx; F.y += c.dy; } else { const P = Z.cgrpPos[k]; P.x += c.dx; P.y += c.dy; }
+          place(m); any = ch = true; break;
+        }
+      }
+      if (!any) break;
+    }
+    if (ch) { linkSync(); clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
+  };
+  setInterval(() => { if (!document.hidden) grpFix(null); }, 300);
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
@@ -7176,7 +7214,7 @@ function cgrpInit(){
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
-        if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); save(); return; }   // v0.348: целиком на поле строк
+        if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); grpFix(g); save(); return; }   // v0.348: целиком на поле строк; v0.558: не поверх другой
         delete Z.cgrpFld[g.dataset.g];
         const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g);
         { const m = g._mesh; g._mesh = null;   // v0.502: отпустил зубцами в соседку — прицепить правую к левой
@@ -7186,6 +7224,7 @@ function cgrpInit(){
             if (!Z.cgrpPos[kid.dataset.g]) Z.cgrpPos[kid.dataset.g] = { x: kr.left - tr.left, y: kr.top - tr.top };
             say(`🧲 «${kid.dataset.g}» прицеплена ${m.side === "r" || m.side === "l" ? "справа" : "снизу"} к «${par.dataset.g}» — едет за ней; потянешь — отцепится.`); }
           linkSync(); }
+        if (!Z.cgrpLink[g.dataset.g]) grpFix(g);   // v0.558: отпустил поверх другой — на ближайшее место рядом
         save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
@@ -10558,13 +10597,21 @@ function init(){
      перерисовывается и прокручивается так, что первый бит первой строки — посередине видимого поля */
   /* v0.557, «какие-то тормоза при изменении размера текста»: пока тянут — не перерисовка всей страницы (все окна, конус) на каждое движение, а раз в кадр
      только размер (--fs) и подгонка поля строк; всё остальное — один раз, когда отпустили */
+  /* v0.558, «тормозит, когда не щелчком, а перетяжкой меняю размер за бегунок»: --fs у корня страницы — пересчёт стилей всех окон на каждый кадр, а смена
+     числа (новый текстовый узел) будила наблюдатель полосы кнопок — она пересобиралась целиком. Пока тянут: размер — только полю строк (свой --fs у него),
+     число — правкой текста узла (наблюдатель его не видит), без подгонки шага строк; отпустили — размер всей странице, подгонка и перерисовка один раз */
   let fsRaf = 0;
+  const fsNum = (v) => { const el = $("fsVal"), n = el && el.firstChild; if (n && n.nodeType === 3) { if (n.nodeValue !== String(v)) n.nodeValue = v; } else if (el) el.textContent = v; };
   $("fsRange").oninput = (e) => {
-    Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); $("fsVal").textContent = Z.fs;
+    Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); fsNum(Z.fs);
     if (fsRaf) return;
-    fsRaf = requestAnimationFrame(() => { fsRaf = 0; applyView(); if (Z.tri90) tri90Apply(); rowsFit(); fieldInfoFit(); rowsCenterBit0(); });
+    fsRaf = requestAnimationFrame(() => { fsRaf = 0; const L = $("rowList"); if (L) L.style.setProperty("--fs", Z.fs + "px"); rowsCenterBit0(); });
   };
-  $("fsRange").onchange = () => { if (fsRaf) { cancelAnimationFrame(fsRaf); fsRaf = 0; } renderAll(); rowsCenterBit0(); save(); };
+  $("fsRange").onchange = () => {
+    if (fsRaf) { cancelAnimationFrame(fsRaf); fsRaf = 0; }
+    const L = $("rowList"); if (L) L.style.removeProperty("--fs");
+    renderAll(); rowsFit(); fieldInfoFit(); rowsCenterBit0(); save();
+  };
   /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
      (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
   $("bLayout").onclick = () => {
