@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.005. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.006. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.005</title>
+<title>Zerkalius Пирамида — v0.006</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -42,6 +42,8 @@
   части, потом треугольники. Новые кнопки: ▣ грани, ╱ рёбра, ◐ цвет (выключить — всё одним светлым), «Срез» — один слой из L;
   виды ⊤ сверху, ⊥ снизу, ◁ сбоку (на боковую грань по горизонтали), ◇ на ребро, ◢ на грань (перпендикулярно боковой грани),
   ⬙ 3D — поворот плавный, вращение при этом останавливается; 📷 — картинка PNG. Ползунки со стрелками ◂ ▸ (общий slider-arrows.js).
+  v0.006, «кнопку скорости — умножает на 2 каждый раз»: рядом с ⟳ кнопка ×N — скорость вращения; щелчок удваивает
+  (×1 → ×2 → … → ×32), после ×32 — снова с ×¼. Если вращение стояло, щелчок его включает.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -100,7 +102,7 @@
     <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button>
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×32 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
   <div class="row">
     <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
@@ -114,11 +116,12 @@
   </div>
   <div id="count"></div>
 </div>
-<div id="ver">v0.005</div>
+<div id="ver">v0.006</div>
 <script>
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
 let L = 4, X = 0.35, showUp = true, showOct = true, showDn = true, spin = true, yaw = 0.5, pitch = 0.35;
+let spd = 1;   // v0.006: скорость вращения, щелчок по ×N удваивает
 let slice = 0, showFace = true, showEdge = true, colorOn = true;   // v0.005: срез (0 — все слои), грани, рёбра, цвет
 // рёбра единичного тетраэдра от вершины вниз: основание — правильный треугольник, высота √(2/3)
 const H = Math.sqrt(2 / 3), R0 = 1 / Math.sqrt(3);
@@ -405,7 +408,7 @@ function flip(pc){   // 180° вокруг горизонтали (ось X) ч�
 function frame(now){
   if (tween) { const k = Math.min(1, (now - tween.t0) / 450), e = k * k * (3 - 2 * k);
     yaw = tween.y0 + tween.dy * e; pitch = tween.p0 + (tween.p1 - tween.p0) * e; if (k >= 1) tween = null; }
-  else if (spin && !ptrs.size) yaw += 0.004;
+  else if (spin && !ptrs.size) yaw += 0.004 * spd;
   draw(); requestAnimationFrame(frame);
 }
 const ptrs = new Map(); let downX = 0, downY = 0, moved = false, btn = 0, lx = 0, ly = 0, pinch0 = 0, zoom0 = 1, mid0 = null, pan0 = null;
@@ -448,6 +451,7 @@ $("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
 $("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
 $("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
 $("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
+$("bSpd").onclick = () => { spd = spd >= 32 ? 0.25 : spd * 2; spin = true; tween = null; $("bSpd").textContent = "×" + (spd === 0.25 ? "¼" : spd === 0.5 ? "½" : spd); ui(); };
 $("bFace").onclick = () => { showFace = !showFace; if (!showFace && !showEdge) showEdge = true; ui(); };
 $("bEdge").onclick = () => { showEdge = !showEdge; if (!showFace && !showEdge) showFace = true; ui(); };
 $("bCol").onclick = () => { colorOn = !colorOn; ui(); };
