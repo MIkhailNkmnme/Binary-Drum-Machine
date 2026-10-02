@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.103. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.104. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.103</title>
+<title>Zerkalius Пирамида — v0.104</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -360,6 +360,8 @@
   остальные приглушены, свет идёт от верхнего (у звезды — от центра) к последнему и начинается снова, ярус за 0,4 с (HI_MS).
   Номер яруса теперь едет в текстуру вместе с видом части: t0.w = вид + 4·отражена + 8·ярус (рёбра отражённых — по (tw & 4));
   в шейдерах uHi — дробное положение света (−99 — выкл), яркость яруса — 1 − |ярус − uHi|. Помнится (piramida_hi), едет в 🔗 (hi).
+  v0.104, «пусть только по нажатию переключает»: свет больше не бежит сам. Щелчок по ☼ — следующий ярус (выкл → 1 → 2 → … → L →
+  выкл), правый щелчок — предыдущий; номер горящего яруса — на ромбе. hiLv — номер (−1 — выкл), в 🔗 hi = hiLv + 1.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -536,7 +538,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.103</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.104</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bStar" title="Звезда бипирамид: ярус 2 — на двух остриях оси (остриё к острию), ярус 3 — на трёх вершинах пояса (пояс к поясу), дальше так же растёт от каждой новой">✶<span class="t"> звезда</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -561,7 +563,7 @@
 <div id="views"><button style="--x:0px;--y:-49px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:49px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-49px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:49px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:24.5px;--y:-24.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-24.5px;--y:-24.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bZin" style="--x:49px;--y:-49px" title="Ближе (×1,25)">＋</button><button id="bZout" style="--x:49px;--y:49px" title="Дальше (÷1,25)">−</button><button id="bView" style="--x:24.5px;--y:24.5px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:0px;--y:0px" title="Тащи — переставить; двойной щелчок — на место"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2l3.5 3.5h-2.5v5.5h5.5v-2.5l3.5 3.5-3.5 3.5v-2.5h-5.5v5.5h2.5l-3.5 3.5-3.5-3.5h2.5v-5.5h-5.5v2.5l-3.5-3.5 3.5-3.5v2.5h5.5v-5.5h-2.5z"/></svg></span></div>
 <button id="bLink" class="fixb" title="Ссылка на этот вид и движение — в буфер (и в адрес вкладки)">🔗&#xFE0E;</button>
 <div id="toast"></div>
-<button id="bHi" class="fixb" title="Подсвет по ярусам — свет бежит от яруса к ярусу">☼</button>
+<button id="bHi" class="fixb" title="Подсвет по ярусам: щелчок — следующий ярус, правый щелчок — предыдущий; после последнего — выкл">☼</button>
 <button id="bTrail" class="fixb" title="Размытие — прежний кадр гаснет не сразу. Щелчок: выкл → 1 → 2 → 3 → 4">≋</button>
 <button id="bRecP" class="fixb" title="Пауза записи / продолжить">⏸&#xFE0E;</button>
 <button id="bRec" class="fixb" title="Видеозапись со звуком (R): Chrome спросит, откуда взять звук — отметь «звук»">⏺</button>
@@ -938,8 +940,7 @@ function flip(pc){
 }
 // v0.100: размытие (шлейф) — сцена в свою текстуру, прежний кадр гаснет на TRAIL_A[trail] за кадр
 const TRAIL_A = [0, 0.35, 0.15, 0.06, 0.025];
-var hiOn = false, hiT0 = 0, hiPos = -99;   // v0.103: подсвет по ярусам — включён; начало; дробный ярус под светом
-const HI_MS = 400;
+var hiLv = -1, hiPos = -99;   // v0.103: подсвет по ярусам; v0.104 — горящий ярус (−1 — выкл), переключается щелчком
 let trail = 0, tFbo = null, tTex = null, tW = 0, tH = 0, tReset = true, progQ = null, progT = null;
 const VS_Q = `#version 300 es
 out vec2 vUv; void main(){ vec2 p = vec2(float((gl_VertexID & 1) * 4 - 1), float((gl_VertexID >> 1) * 4 - 1)); vUv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
@@ -986,7 +987,7 @@ function frame(now){
   if (tween) { const k = Math.min(1, (now - tween.t0) / 450), e = k * k * (3 - 2 * k);
     yaw = tween.y0 + tween.dy * e; pitch = tween.p0 + (tween.p1 - tween.p0) * e; if (k >= 1) tween = null; }
   else if (spin && !ptrs.size) yaw += 0.004 * spd;
-  hiPos = hiOn ? ((now - hiT0) / HI_MS) % (L + 2) - 1 : -99;   /* v0.103: свет идёт по ярусам 0 … L − 1 и начинается снова */
+  hiPos = hiLv >= 0 && hiLv < L ? hiLv : -99;   /* v0.104: только по щелчку */
   draw(); requestAnimationFrame(frame);
 }
 const ptrs = new Map(); let downX = 0, downY = 0, moved = false, btn = 0, lx = 0, ly = 0, pinch0 = 0, zoom0 = 1, mid0 = null, pan0 = null;
@@ -1193,9 +1194,11 @@ $("bZin").onclick = () => { zoomAt(W / 2, Hh / 2, zoom * 1.25); mouseMoved = tru
 $("bZout").onclick = () => { zoomAt(W / 2, Hh / 2, zoom / 1.25); mouseMoved = true; };
 $("bClr").onclick = () => { if (!extra.length && !removed.size) return; pushHist(); extra = []; removed.clear(); rebuild(); };
 $("bUndo").onclick = undo; undoUi();
-function setHi(b){ hiOn = !!b; hiT0 = performance.now(); const e = document.getElementById("bHi"); if (e) e.classList.toggle("on", hiOn); try { localStorage.setItem("piramida_hi", hiOn ? "1" : "0"); } catch (e2) {} }
-$("bHi").onclick = () => setHi(!hiOn);   /* v0.103 */
-try { setHi(localStorage.getItem("piramida_hi") === "1"); } catch (e) {}
+function setHi(v){ hiLv = v >= 0 && v < L ? v | 0 : -1; const e = document.getElementById("bHi"); if (e) { e.classList.toggle("on", hiLv >= 0); e.textContent = hiLv >= 0 ? "☼" + (hiLv + 1) : "☼"; }
+  try { localStorage.setItem("piramida_hi", hiLv); } catch (e2) {} }
+$("bHi").onclick = () => setHi(hiLv + 1 >= L ? -1 : hiLv + 1);   /* v0.104: следующий ярус; после последнего — выкл */
+$("bHi").addEventListener("contextmenu", e => { e.preventDefault(); setHi(hiLv < 0 ? L - 1 : hiLv - 1); });   /* правый щелчок — предыдущий */
+try { const h = localStorage.getItem("piramida_hi"); setHi(h === null ? -1 : +h); } catch (e) {}
 $("bTrail").onclick = () => { setTrail((trail + 1) % TRAIL_A.length); toast(trail ? "Размытие " + trail + " из " + (TRAIL_A.length - 1) : "Размытие выключено"); };   /* v0.100 */
 try { setTrail(+localStorage.getItem("piramida_trail") || 0); } catch (e) {}
 $("bPng").onclick = () => {   // v0.011: при вращении — 8 последних кадров слитно (так их видит глаз), без вращения — один кадр
@@ -1392,7 +1395,7 @@ L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimatio
 function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(el._h); el._h = setTimeout(() => { el.style.display = "none"; }, 2200); }
 function getState(){
   const r4 = (x) => +x.toFixed(4), st = { bi: +biMode, L, X: r4(X), sl: slice, u: +showUp, o: +showOct, d: +showDn, f: +showFace, e: +showEdge, c: +colorOn, mc: $("cMono").value, ax: +showAxis,
-    yw: r4(yaw % (2 * Math.PI)), pt: r4(pitch), sp: +spin, v: r4(Math.log2(spd)), z: r4(zoom), px: Math.round(panX), py: Math.round(panY), wh: Math.round(Math.min(W, Hh)), tr: trail, hi: +hiOn };
+    yw: r4(yaw % (2 * Math.PI)), pt: r4(pitch), sp: +spin, v: r4(Math.log2(spd)), z: r4(zoom), px: Math.round(panX), py: Math.round(panY), wh: Math.round(Math.min(W, Hh)), tr: trail, hi: hiLv + 1 };
   if (extra.length && extra.length <= 300) st.ex = extra.map(q => ({ k: q.kind, l: q.layer, t: q.tpl, c: q.col, r: q.ref ? 1 : 0, m: q.moved ? 1 : 0, v: q.v.map(a => a.map(r4)) }));
   if (removed.size && removed.size <= 3000) st.rm = [...removed];
   return st;
@@ -1409,7 +1412,7 @@ function applyState(st){
   { const k = st.wh ? Math.min(W, Hh) / st.wh : KINO ? 0 : 1; if ("px" in st) panX = st.px * k; if ("py" in st) panY = st.py * k; }   /* v0.101: сдвиг — в долях экрана */
   extra = (st.ex || []).map(q => ({ kind: q.k, layer: q.l, tpl: q.t, col: q.c, ref: !!q.r, moved: !!q.m, v: q.v }));
   removed.clear(); (st.rm || []).forEach(k => removed.add(k));
-  hist.length = 0; undoUi(); tween = null; if ("tr" in st) setTrail(st.tr); if ("hi" in st) setHi(st.hi);
+  hist.length = 0; undoUi(); tween = null; if ("tr" in st) setTrail(st.tr); if ("hi" in st) setHi(st.hi - 1);
   ui(); rebuild(); strobeBuild(); if ("v" in st) setSpd(st.v); ui();
 }
 $("bLink").onclick = async () => {
