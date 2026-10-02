@@ -3627,13 +3627,13 @@ function setupCone(){
     const g = document.querySelector(".cgrp.cg-anim"); if (!g) return;
     let svg = $("animDial");
     if (!svg) {
-      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "animDial"; svg.setAttribute("viewBox", "0 0 100 100");
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "animDial"; svg.setAttribute("viewBox", "0 0 100 124");   // v0.550: подпись — под циферблатом
       svg.innerHTML = '<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,.45)" stroke="currentColor" stroke-width="3"/><g id="adTicks"></g>' +
         '<g id="adHand2"><line x1="50" y1="56" x2="50" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><polygon points="50,5 46,13 54,13" fill="currentColor"/></g>' +
         '<g id="adHand"><line x1="50" y1="54" x2="50" y2="26" stroke="var(--gold)" stroke-width="4.4" stroke-linecap="round"/><polygon points="50,18 44,30 56,30" fill="var(--gold)"/></g>' +
         '<circle cx="50" cy="50" r="3.5" fill="var(--gold)"/>' +
         '<text id="adNum" x="50" y="73" text-anchor="middle" font-size="20" font-weight="bold" fill="var(--txt)" font-family="monospace"></text>' +
-        '<text id="adSub" x="50" y="87" text-anchor="middle" font-size="11" fill="currentColor" font-family="monospace"></text>';
+        '<text id="adSub" x="50" y="119" text-anchor="middle" font-size="16" font-weight="600" fill="var(--txt)" font-family="system-ui, sans-serif"></text>';
       g.appendChild(svg); adTickN = -1;
     }
     const per = aPer, k = per ? (aPass >= aPer0 ? (aPass - aPer0) % per : aPass) : aPass, frac = N > 1 ? Math.max(0, Math.min(1, aRow / (N - 1))) : 0;
