@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.092. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.093. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.092</title>
+<title>Zerkalius Пирамида — v0.093</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -313,6 +313,10 @@
   с audio, systemAudio: include — Chrome спросит, что показать, и даст галку «звук»; картинка захвата сразу гасится, нужен
   только звук): он подаётся рекордеру как AUDIO_VISUALIZER {audioCtx, source}. Отказался или звука нет — пишет без звука.
   Пока пишет, ⏺ горит и мигает; второй щелчок или R — стоп, файл сохраняется как на других страницах.
+  v0.093, по снимку ромба кнопок вокруг ✥ — «из такого положения пусть следующий двойной щелчок в ряд ставит их»: двойной щелчок
+  по ✥ переключает — кнопки собраны ромбом (ни одной утащенной) → ряд над скоростью (rowLayout); есть утащенные (ряд или
+  россыпь) → ромб вокруг ручки там, где она стоит (утащенные возвращаются в свои места ромба). Перехват — на #views в фазе
+  захвата, чтобы общий draggable не сбрасывал ромб в угол.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -478,7 +482,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.092</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.093</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -1179,7 +1183,12 @@ freeEls.forEach(freeDrag);
   const gEnd = () => { if (!gs) return; gs.att.forEach(([el]) => { freePos[freeId(el)] = [parseFloat(el.style.left), parseFloat(el.style.top)]; }); freeSave();
     if (!gs.moved) gripGather(); gs = null; };
   g.addEventListener("pointerup", gEnd); g.addEventListener("pointercancel", gEnd); }
-$("views").querySelector(".grip").addEventListener("dblclick", () => rowLayout());   /* v0.091: двойной щелчок по ✥ — всё рядом над скоростью */
+$("views").addEventListener("dblclick", e => {   /* v0.093: двойной щелчок по ✥ — ромб ⇄ ряд над скоростью */
+  if (!e.target.closest(".grip")) return; e.stopPropagation();
+  const loose = freeEls.filter(el => el.style.position === "fixed");
+  if (!loose.length) { rowLayout(); return; }
+  loose.forEach(el => ["position", "left", "top", "zIndex", "transform", "opacity"].forEach(k => el.style[k] = "")); freePos = {}; freeSave();
+}, true);
 function rowLayout(){   /* v0.091: ⊤ ◁ ⌖ ⏸ ×N ◇ ⊥ ⬙ ✥ ◢ — одним рядом над полосой скорости (на узком — зигзагом) */
   const order = ["top", "side", "bView", "bSpin", "bSpd", "edge", "bot", "iso", "grip", "face"], n = order.length;
   const sb = $("spdBar"), barTop = innerHeight - sb.offsetHeight, wide = innerWidth >= 560, step = wide ? 50 : 24.5;
