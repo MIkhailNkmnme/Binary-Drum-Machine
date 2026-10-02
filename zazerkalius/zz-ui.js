@@ -6965,6 +6965,7 @@ function cgrpInit(){
     add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
+  const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); return h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top; };
   const place = (g) => {
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
     g.classList.toggle("cfld", !!fr);
@@ -6980,7 +6981,10 @@ function cgrpInit(){
        только её заголовок — он всегда виден, за него и вытаскивают обратно. Влево заголовок первым, поэтому там — как было. */
     /* v0.366, по снимку «Кольца», ушедших под поле строк, — «группы не скрывать теперь, а примагничивать к границам, всем, по всему периметру»:
        группа — всегда целиком внутри окна конуса (v0.215 «уезжают под поле строк» снято); притягивается к краям при перетаскивании (snapXY) */
-    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(br.top - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    /* v0.536, по снимку свёрнутого «Звука», ушедшего под заголовок окна, — «скрылась за заголовком полоской и никак не вытащить»: верхняя граница —
+       низ заголовка окна (wb — само окно, его верх — это верх заголовка) */
+    const hb = wbTop();
+    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
     g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
   };
   groups.forEach((g) => {
@@ -7100,8 +7104,26 @@ function cgrpInit(){
       /* v0.207, «высота остаётся как была — нужно»: свёрнутая группа сужается до заголовка, а высоту держит прежнюю (Z.cgrpMin — её пиксели),
          чтобы соседние группы и полоса не прыгали. */
       const key = g.dataset.g, on = !Z.cgrpMin[key];
-      if (on) Z.cgrpMin[key] = g.offsetHeight; else delete Z.cgrpMin[key];
-      g.classList.toggle("cmin", on); g.style.minHeight = on ? Z.cgrpMin[key] + "px" : ""; cgbSnap(); sizeApply(g); cgrpCols(); place(g); save();
+      /* v0.536, «пусть при двойном клике по заголовку группа сворачивается и перемещается влево вверх поля»: группа на окне конуса, свернувшись,
+         уезжает в левый верхний угол (под заголовок окна), свёрнутые — столбиком одна под другой; своей прежней высоты не держит (Z.cgrpMin = -1).
+         Развернул — встаёт туда, где стояла (Z.cgrpMinPos) */
+      const corner = on && g.parentElement === tl && !document.body.classList.contains("zen");
+      if (!Z.cgrpMinPos || typeof Z.cgrpMinPos !== "object") Z.cgrpMinPos = {};
+      if (on) Z.cgrpMin[key] = corner ? -1 : g.offsetHeight; else delete Z.cgrpMin[key];
+      g.classList.toggle("cmin", on); g.style.minHeight = on && Z.cgrpMin[key] > 0 ? Z.cgrpMin[key] + "px" : ""; cgbSnap(); sizeApply(g); cgrpCols();
+      if (corner) {
+        Z.cgrpMinPos[key] = { pos: Z.cgrpPos[key] ? { ...Z.cgrpPos[key] } : null, fld: Z.cgrpFld[key] ? { ...Z.cgrpFld[key] } : null };
+        delete Z.cgrpFld[key]; delete Z.cgrpLink[key];
+        const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), x = br.left - tr.left, gw = g.offsetWidth, gh = g.offsetHeight;
+        let y = wbTop() - tr.top;
+        const others = groups.filter(o => o !== g && o.parentElement === tl && o.classList.contains("cmin") && o.getClientRects().length).map(o => { const r = o.getBoundingClientRect(); return { l: r.left - tr.left, t: r.top - tr.top, r: r.right - tr.left, b: r.bottom - tr.top }; });
+        for (let k = 0; k < 40; k++) { const hit = others.find(o => o.l < x + gw && o.r > x && o.t < y + gh && o.b > y); if (!hit) break; y = hit.b; }
+        Z.cgrpPos[key] = { x, y };
+      } else if (!on && Z.cgrpMinPos && Z.cgrpMinPos[key]) {
+        const m = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key];
+        if (m.fld) { Z.cgrpFld[key] = m.fld; delete Z.cgrpPos[key]; } else if (m.pos) Z.cgrpPos[key] = m.pos; else delete Z.cgrpPos[key];
+      }
+      place(g); linkSync(); save();
     });
     lab.addEventListener("contextmenu", (e) => {
       e.preventDefault();
