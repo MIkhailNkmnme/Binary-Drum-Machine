@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.012. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.013. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.012</title>
+<title>Zerkalius Пирамида — v0.013</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -66,6 +66,13 @@
   второй ползунок #sFine: линейно от 2^n до 2^(n+1), где n — метка слева от текущей скорости (fineN; при ×1024 — 512 … 1024),
   с пятью метками (концы и четверти, щелчком ставятся). Пока тянут его, промежуток не меняется (setSpd(v, true)), даже если
   скорость дошла до правой метки; меняют его верхний ползунок, кнопка ×N и метки верхней шкалы.
+  v0.013, «ещё режим би-три-рамиды — в каждом ярусе плюс одна»: кнопка ⧫ — вместо укладки тетраэдров и октаэдров ярусы
+  треугольных бипирамид (два правильных тетраэдра основанием к основанию: острия вверх и вниз, 5 вершин, 6 граней, 9 рёбер —
+  заготовка 3). В ярусе i (сверху, с нуля) их i + 1: центр (j − i/2, −i·H, 0), j = 0 … i; у треугольника-зеркала ребро
+  спереди, параллельно оси x. Сбоку это стопка ромбов 1, 2, 3…: соседи в ярусе касаются уголками зеркала, ярус с ярусом —
+  тоже в одной точке, без пересечений (грань к грани одинаковые бипирамиды не сходятся, см. шапку v0.001). Цвет — по ярусу. Отражать, двигать,
+  переворачивать — как с остальными; щелчок в узел бипирамид (snap по центру: x кратно ½, y кратно H, z = 0). Переключение
+  режима убирает достроенное (как ✕). Ключ части — keyOf с L·4 (было L·3: с четвёртой заготовкой номера бы совпали).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -121,7 +128,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.012</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.013</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -132,6 +139,7 @@
     <button id="bUp" class="on" title="Тетраэдры остриём вверх: в слоях 1, 3, 6, 10…">▲<span class="t"> верх</span></button>
     <button id="bOct" class="on" title="Октаэдры — между слоями, к ним тетраэдры прилегают гранями">◆<span class="t"> окта</span></button>
     <button id="bDn" class="on" title="Тетраэдры остриём вниз — в провалах между октаэдрами">▼<span class="t"> низ</span></button>
+    <button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button>
   </div>
   <div class="row">
     <button id="bFace" class="on" title="Грани — полупрозрачная заливка">▣<span class="t"> грани</span></button>
@@ -172,12 +180,17 @@ const S3 = add(add(E[0], E[1]), E[2]);
 const TV = [[[0, 0, 0], E[0], E[1], E[2]], [E[0], E[1], E[2], add(E[0], E[1]), add(E[1], E[2]), add(E[0], E[2])], [add(E[0], E[1]), add(E[1], E[2]), add(E[0], E[2]), S3]];
 // грани октаэдра: вершины a, b, c, a+b, b+c, a+c — восемь треугольников
 const OCT_F = [[0,1,3],[1,2,4],[2,0,5],[3,4,5],[0,3,5],[1,4,3],[2,5,4],[0,1,2]];
-const TF = [[[0,1,2],[0,2,3],[0,3,1],[1,3,2]], OCT_F, [[0,1,2],[0,1,3],[1,2,3],[0,2,3]]];
+// v0.013: 3 — треугольная бипирамида: острия (0, ±H, 0), зеркало — правильный треугольник в y = 0, ребро спереди вдоль x
+const BI_R = R0 / 2;
+TV.push([[0, H, 0], [0, -H, 0], [-0.5, 0, BI_R], [0.5, 0, BI_R], [0, 0, -R0]]);
+const TF = [[[0,1,2],[0,2,3],[0,3,1],[1,3,2]], OCT_F, [[0,1,2],[0,1,3],[1,2,3],[0,2,3]], [[0,2,3],[0,3,4],[0,4,2],[1,3,2],[1,4,3],[1,2,4]]];
 const TE = TF.map(fs => { const s = new Map(); fs.forEach(f => [[f[0], f[1]], [f[1], f[2]], [f[2], f[0]]].forEach(([a, b]) => s.set(Math.min(a, b) + ":" + Math.max(a, b), [a, b]))); return [...s.values()]; });
-const TC = TV.map(centroid), T_KIND = ["up", "oct", "dn"];
+const TC = TV.map(centroid), T_KIND = ["up", "oct", "dn", "bi"];
+let biMode = false;   // v0.013: ярусы бипирамид 1, 2, 3… вместо укладки тетраэдров и октаэдров
+const biPos = (i, j) => [j - i / 2, -i * H, 0];
 const removed = new Set();   // v0.003: части пирамиды, которые сдвинули или перевернули (их копии — среди extra); v0.005 — числа keyOf
-const keyOf = (t, i, j, k) => (((L * 3 + t) * 65 + i) * 65 + j) * 65 + k;
-const colOf = (pc) => pc.col || (pc.kind === "up" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a");
+const keyOf = (t, i, j, k) => (((L * 4 + t) * 65 + i) * 65 + j) * 65 + k;
+const colOf = (pc) => pc.col || (pc.kind === "up" || pc.kind === "bi" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a");
 const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 const NOTE_RGB = NOTE_COL.map(rgb), OCT_RGB = rgb("#8fa3b8"), DN_RGB = rgb("#5b4a7a");
 function inv3(m){   // обратная к 3×3 (по строкам)
@@ -193,7 +206,7 @@ function affine(pc){   // достроенная часть = M · загото�
 }
 // ── v0.005: части — записи в общих массивах; в текстуре данных по 4 текселя на часть ──
 const TW = 4096, PER_ROW = TW / 4;
-let cap = 0, N = 0, nP = 0, DATA = null, C0 = null, PI = null, ORD = null, ZK = null, KEY = null, TMP = null, dataVer = 0, cnt = { up: 0, oct: 0, dn: 0 };
+let cap = 0, N = 0, nP = 0, DATA = null, C0 = null, PI = null, ORD = null, ZK = null, KEY = null, TMP = null, dataVer = 0, cnt = { up: 0, oct: 0, dn: 0, bi: 0 };
 let extra = [], hover = null, note = "", noteT = 0;
 function setInst(n, o, tp, M, c, ctr){   // M — по строкам; в текстуру идут столбцы
   const d = n * 16;
@@ -206,14 +219,15 @@ function writeExtra(pc, n){ const { M, o } = affine(pc); setInst(n, o, pc.tpl + 
 function rebuild(){
   const tet = (m) => m > 0 ? m * (m + 1) * (m + 2) / 6 : 0, need = tet(L) + tet(L - 1) + tet(L - 2) + extra.length + 1;
   if (need > cap) grow(need);
-  N = 0; cnt = { up: 0, oct: 0, dn: 0 };
+  N = 0; cnt = { up: 0, oct: 0, dn: 0, bi: 0 };
   const put = (t, i, j, k, layer, p) => {
     if (slice && layer !== slice - 1) return;
     if (removed.has(keyOf(t, i, j, k))) return;
-    const n = N++; setInst(n, p, t, ID3, t === 0 ? NOTE_RGB[layer % 7] : t === 1 ? OCT_RGB : DN_RGB, add(p, TC[t]));
+    const n = N++; setInst(n, p, t, ID3, t === 0 || t === 3 ? NOTE_RGB[layer % 7] : t === 1 ? OCT_RGB : DN_RGB, add(p, TC[t]));
     PI[n * 4] = t; PI[n * 4 + 1] = i; PI[n * 4 + 2] = j; PI[n * 4 + 3] = k; cnt[T_KIND[t]]++;
   };
-  for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
+  if (biMode) for (let i = 0; i < L; i++) for (let j = 0; j <= i; j++) put(3, i, j, 0, i, biPos(i, j));   // v0.013: ярус i — i + 1 бипирамид
+  else for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
     const n = i + j + k, p = P(i, j, k);
     if (n <= L - 1 && showUp) put(0, i, j, k, n, p);
     if (n <= L - 2 && showOct) put(1, i, j, k, n + 1, p);
@@ -227,23 +241,23 @@ function rebuild(){
 }
 function pieceAt(n){   // часть под номером n — объектом, как в v0.003 (для отражения, сдвига, переворота)
   const t = PI[n * 4]; if (t < 0) return extra[-1 - t];
-  const i = PI[n * 4 + 1], j = PI[n * 4 + 2], k = PI[n * 4 + 3], p = P(i, j, k);
-  return { id: keyOf(t, i, j, k), kind: T_KIND[t], layer: i + j + k + t, tpl: t, v: TV[t].map(q => add(p, q)) };
+  const i = PI[n * 4 + 1], j = PI[n * 4 + 2], k = PI[n * 4 + 3], p = t === 3 ? biPos(i, j) : P(i, j, k);
+  return { id: keyOf(t, i, j, k), kind: T_KIND[t], layer: t === 3 ? i : i + j + k + t, tpl: t, v: TV[t].map(q => add(p, q)) };
 }
 // ── WebGL2 ──
 let gl = cv.getContext("webgl2", { antialias: true, alpha: false });
 const SH_HEAD = `#version 300 es
 precision highp float; precision highp int; precision highp sampler2D;
-uniform sampler2D uD; uniform vec3 uTc[3]; uniform mat3 uR; uniform vec3 uCen; uniform float uX; uniform vec4 uS; uniform float uMono;
+uniform sampler2D uD; uniform vec3 uTc[4]; uniform mat3 uR; uniform vec3 uCen; uniform float uX; uniform vec4 uS; uniform float uMono;
 in float aV; in uint aI; out vec4 vC;
 vec4 tx(int i){ return texelFetch(uD, ivec2(i & 4095, i >> 12), 0); }
 `;
-const VS_FACE = SH_HEAD + `uniform vec3 uT[72]; uniform vec2 uWH;
+const VS_FACE = SH_HEAD + `uniform vec3 uT[96]; uniform vec2 uWH;
 void main(){
   int v = int(aV + 0.5), hf = v / 24, tr = (v % 24) / 3, co = v % 3, b = int(aI) * 4;
   vec4 t0 = tx(b), t1 = tx(b + 1), t2 = tx(b + 2), t3 = tx(b + 3);
   int tp = int(t0.w + 0.5) & 3;
-  if (tp != 1 && tr >= 4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
+  if (tr >= (tp == 1 ? 8 : tp == 3 ? 6 : 4)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
   mat3 M = mat3(t1.xyz, t2.xyz, t3.xyz);
   vec3 c = M * uTc[tp] + t0.xyz, sh = t0.xyz + (c - uCen) * uX - uCen;
   int k = tp * 24 + tr * 3;
@@ -256,12 +270,12 @@ void main(){
   vec3 col = uMono > 0.5 ? vec3(0.81, 0.85, 0.86) : vec3(t1.w, t2.w, t3.w);
   vC = vec4(col, (tp == 1 ? 0.28 : 0.55) * (uMono > 0.5 ? 0.5 : 1.0) * (0.45 + 0.55 * abs(n.z) / nl));
 }`;
-const VS_EDGE = SH_HEAD + `uniform vec3 uE[72]; uniform vec2 uWH; uniform float uA;
+const VS_EDGE = SH_HEAD + `uniform vec3 uE[96]; uniform vec2 uWH; uniform float uA;
 void main(){
   int v = int(aV + 0.5), e = v / 2, b = int(aI) * 4;
   vec4 t0 = tx(b), t1 = tx(b + 1), t2 = tx(b + 2), t3 = tx(b + 3);
   int tw = int(t0.w + 0.5), tp = tw & 3;
-  if (tp != 1 && e >= 6) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
+  if (e >= (tp == 1 ? 12 : tp == 3 ? 9 : 6)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
   mat3 M = mat3(t1.xyz, t2.xyz, t3.xyz);
   vec3 c = M * uTc[tp] + t0.xyz, sh = t0.xyz + (c - uCen) * uX - uCen;
   vec3 p = uR * (M * uE[tp * 24 + v] + sh);
@@ -292,7 +306,7 @@ function glInit(){
   tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   const tri = [], edg = [];
-  for (let t = 0; t < 3; t++) {
+  for (let t = 0; t < TV.length; t++) {
     for (let f = 0; f < 8; f++) for (let c = 0; c < 3; c++) tri.push(...(TF[t][f] ? TV[t][TF[t][f][c]] : [0, 0, 0]));
     for (let e = 0; e < 12; e++) for (let c = 0; c < 2; c++) edg.push(...(TE[t][e] ? TV[t][TE[t][e][c]] : [0, 0, 0]));
   }
@@ -338,8 +352,8 @@ function rotM(){   // строки поворота вида: x — вправо
 }
 // v0.002: приближение и сдвиг вида
 let zoom = 1, panX = 0, panY = 0;
-const cenW = () => [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
-const scale = () => Math.min(W, Hh) / (L * 1.9 + 1) * zoom;
+const cenW = () => biMode ? [0, -(L - 1) * H / 2, 0] : [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
+const scale = () => Math.min(W, Hh) / (biMode ? L * 1.15 + 1.5 : L * 1.9 + 1) * zoom;
 function screenVerts(n, R, sc, cen){   // вершины части n на экране: [x, y, глубина]
   const d = n * 16, tp = (DATA[d + 3] | 0) & 3, c = [C0[n * 3], C0[n * 3 + 1], C0[n * 3 + 2]], cx = W / 2 + panX, cy = Hh * 0.5 + panY;
   const sh = [0, 1, 2].map(r => DATA[d + r] + (c[r] - cen[r]) * X - cen[r]);
@@ -400,11 +414,17 @@ function draw(){
   const sum = (n) => n * (n + 1) / 2, rows = []; for (let n = 0; n < L; n++) rows.push(sum(n + 1));
   const rs = rows.length > 7 ? rows.slice(0, 5).join(", ") + ", … " + rows[rows.length - 1] : rows.join(", ");
   const nRef = extra.filter(q => q.ref).length, nMov = extra.filter(q => q.moved).length;
-  const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12)<br>") + `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}` + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
+  const bs = L > 7 ? "1, 2, 3, 4, 5, … " + L : rows.map((_, n) => n + 1).join(", ");
+  const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12)<br>") + (biMode ? `⧫ ${cnt.bi} (по ярусам ${bs})` : `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}`) + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
   if (txt !== lastCount) { document.getElementById("count").innerHTML = txt; lastCount = txt; }
 }
 function occupied(c2, nv){   // стоит ли уже часть с таким центром (все части пирамиды, без фильтров ▲ ◆ ▼ и среза)
   if (extra.some(q => q.v.length === nv && Math.hypot(...sub3(centroid(q.v), c2)) < 1e-6)) return true;
+  if (biMode) {   // v0.013: узлы ярусов бипирамид
+    if (nv !== 5) return false;
+    const i = Math.round(-c2[1] / H), j = Math.round(c2[0] + i / 2);
+    return i >= 0 && i < L && j >= 0 && j <= i && Math.hypot(...sub3(biPos(i, j), c2)) < 1e-6 && !removed.has(keyOf(3, i, j, 0));
+  }
   for (let t = 0; t < 3; t++) {
     if ((t === 1) !== (nv === 6)) continue;
     const p = sub3(c2, TC[t]), f = MI.map(r => r[0] * p[0] + r[1] * p[1] + r[2] * p[2]), ijk = f.map(Math.round);
@@ -433,6 +453,9 @@ function unrot(p){   // обратный поворот вида: из коор�
 // узлы решётки: v = i·E0 + j·E1 + k·E2 — все вершины укладки стоят в них
 const MI = inv3([[E[0][0], E[1][0], E[2][0]], [E[0][1], E[1][1], E[2][1]], [E[0][2], E[1][2], E[2][2]]]);
 function snap(pc){
+  if (pc.tpl === 3) {   // v0.013: бипирамида — центр в ближайший узел ярусов (x кратно ½, y кратно H, z = 0)
+    const c = centroid(pc.v), d = sub3([Math.round(c[0] * 2) / 2, Math.round(c[1] / H) * H, 0], c); pc.v = pc.v.map(q => add(q, d)); return;
+  }
   const v = pc.v[0], ijk = MI.map(r => Math.round(r[0] * v[0] + r[1] * v[1] + r[2] * v[2])), t = P(ijk[0], ijk[1], ijk[2]), d = sub3(t, v);
   pc.v = pc.v.map(q => add(q, d));
 }
@@ -493,11 +516,12 @@ cv.addEventListener("contextmenu", e => e.preventDefault());
 cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
 const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
 const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "все";
-  [["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); };
+  [["bBi", biMode], ["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); };
 sL.oninput = () => { L = +sL.value; sS.max = L; if (slice > L) { slice = L; sS.value = L; } ui(); rebuild(); };
 sX.oninput = () => { X = +sX.value / 100; ui(); mouseMoved = true; };
 sS.oninput = () => { slice = +sS.value; ui(); rebuild(); };
 $("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
+$("bBi").onclick = () => { biMode = !biMode; extra = []; removed.clear(); ui(); rebuild(); };   // v0.013
 $("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
 $("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
 $("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
