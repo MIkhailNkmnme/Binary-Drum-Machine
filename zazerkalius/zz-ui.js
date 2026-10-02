@@ -3990,14 +3990,14 @@ function setupCone(){
     } else if (d.zerkSndToggle) {
       if (sndT) { sndPause(true); coneGo(false); }
       else if (sndPaused) { sndPause(false); coneGo(true); }
-      else { sndHeadsOn = RC(); sndSet(true); coneGo(true); }
+      else { sndHeadsOn = new Set(Object.keys(SND_HEADS)); sndSet(true); coneGo(true); }   // v0.514: из тишины — все семь нот
     } else if (d.zerkSndHead) {   // v0.387: одна головка — вкл / выкл; звук молчал — включается только она; все выключены — звук встаёт (v0.389 — любая из семи)
       const h = SND_HEADS[d.zerkSndHead] ? d.zerkSndHead : "r", on = !!d.on;
       if (sndPaused) {   // v0.392: на паузе — включил ноту: она добавляется, и всё идёт дальше с того же места; выключил последнюю — стоп
         if (on) { sndHeadsOn.add(h); sndPause(false); coneGo(true); } else { sndHeadsOn.delete(h); if (!sndHeadsOn.size) { sndSet(false); sndHeadsOn = RC(); } }
       } else if (!sndT) { if (!on) return; sndHeadsOn = new Set([h]); sndSet(true); }
       else { if (on) sndHeadsOn.add(h); else sndHeadsOn.delete(h); if (!sndHeadsOn.size) { sndSet(false); sndHeadsOn = RC(); } }
-    } else if (d.zerkSnd) { if (!sndT && !sndPaused) { sndHeadsOn = RC(); sndSet(true); } } else { sndSet(false); sndHeadsOn = RC(); }
+    } else if (d.zerkSnd) { if (!sndT && !sndPaused) { sndHeadsOn = new Set(Object.keys(SND_HEADS)); sndSet(true); } } else { sndSet(false); sndHeadsOn = RC(); }   // v0.514, хаб v0.072, «при любом нажатии запускай все ноты сразу»: включение — все семь нот (прежде — До и Ре)
     const live = !!sndT || sndPaused;
     try { if (e.source) e.source.postMessage({ zerkSndOn: live, zerkSndPaused: sndPaused, zerkSndHeads: live ? [...sndHeadsOn] : [], zerkSndR: live && sndHeadsOn.has("r"), zerkSndC: live && sndHeadsOn.has("c") }, "*"); } catch (err) { /* хаб с другого адреса */ }
   });

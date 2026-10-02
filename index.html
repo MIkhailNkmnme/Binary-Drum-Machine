@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.071. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.072. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -87,13 +87,17 @@
      v0.070: «в черн[овики]» — кнопка «Пирамида» (oktaedr/Zerkalius-piramida.html: сверху 1, под ней 3, 6, 10… — тетраэдры с октаэдрами
              гранями друг к другу).
      v0.071: «Просмотр GIF» (prosmotr/Zerkalius-prosmotr.html) в «Знаке и записях», за Битмультфильмами: покадровый просмотр
-             GIF, через 2 / 4 / 8, участки и склейка одним GIF. -->
+             GIF, через 2 / 4 / 8, участки и склейка одним GIF.
+     v0.072: «убери блокировку кнопок, и при любом нажатии запускай все ноты сразу, и в комп. версии не видно треугольника почему-то»:
+             меню не запирается (замок v0.055 снят, притушенного меню больше нет); первое нажатие где угодно — и по ноте, и по кнопке меню — включает
+             все семь нот разом (фон — Zazerkalius v0.514); Серпинский из ромбов (#hubSier) — и на компьютере: один, по центру во всю высоту, фоном
+             за нотами и меню, приглушённо; звучащие биты горят цветом своих нот. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.071</title>
+    <title>Zerkalius Control Hub — v0.072</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -357,10 +361,12 @@
         /* v0.063, телефон: первый экран — ноты и Серпинский по центру (#hubSier — свой холст хаба), кнопки меню — ниже, за краем экрана, в столбик
            по 1–2; внизу первого экрана — стрелки вниз, бегут и мигают (щелчок — к меню). По горизонту — так же, два Серпинских у своих краёв */
         #hubSier, #hubDown { display: none; }
+        /* v0.072, «в комп. версии не видно треугольника»: на компьютере #hubSier — фоном во весь экран (за нотами и меню), приглушённо */
+        #hubSier { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: .5; }
         @media (pointer: coarse) and (max-width: 960px) {
             html, body { height: auto; }
             body { overflow-x: hidden; overflow-y: auto; }
-            #hubSier { display: block; position: absolute; left: 0; top: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; }
+            #hubSier { display: block; position: absolute; left: 0; top: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; opacity: 1; }
             #hubSndBox { position: absolute; top: 55svh; }
             .hub { height: auto; margin-top: 100svh; justify-content: flex-start; overflow: visible; padding: 28px 12px 64px; }
             .mainrow { flex-direction: column; align-items: center; gap: 14px; }
@@ -411,7 +417,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.071</div>
+        <div class="ver">v0.072</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -546,8 +552,8 @@
                zerk_hub_all7 = 1, и дальше хаб открывается сразу живым (ноты потом можно гасить — меню не запирается). Новая отметка вместо
                zerk_hub_snd (v0.052: «хоть раз звучала»), чтобы через это прошли все. Фон не ответил ни разу за 3 с (звука нет) — меню отпирается,
                чтобы не остаться запертым навсегда */
-            let unlocked = false; try { unlocked = localStorage.getItem('zerk_hub_all7') === '1'; } catch (e) {}
-            if (!unlocked) document.body.classList.add('hush');
+            /* v0.072, «убери блокировку кнопок»: меню живое сразу — замок v0.055 снят */
+            let unlocked = true;
             let started = false, tries = 0, heard = false, nudgeT = 0;
             const unlock = () => { if (unlocked) return; unlocked = true; document.body.classList.remove('hush'); try { localStorage.setItem('zerk_hub_all7', '1'); } catch (e) {} };
             const wake = () => { heard = true; };
@@ -563,13 +569,10 @@
                 const t = e.target, note = t.closest && t.closest('.hubSnd'), link = t.closest && t.closest('a, button');
                 if (!e.isTrusted) return;   // v0.061: щелчки из кода (скачивание файла записи) замок не трогает
                 if (t.closest && t.closest('#hubRec, #hubDown')) return;   // v0.061: ⏺ работает и при запертом меню; v0.063 — и стрелки вниз
-                if (note) { if (!started) { started = true; fallback(); } return; }
-                if (link) {
-                    if (unlocked) return;
-                    e.preventDefault(); e.stopPropagation();
-                    if (!started) { started = true; if (bg) sendAll(); fallback(); } else nudge();
-                    return;
-                }
+                /* v0.072, «при любом нажатии запускай все ноты сразу»: первое нажатие — и по ноте, и по кнопке меню — включает все семь (фон на
+                   { zerkSnd: true } включает все, Zazerkalius v0.514); нота при этом не переключается сама, кнопка меню ведёт дальше, как обычно */
+                if (note) { if (!started) { started = true; if (bg) sendAll(); fallback(); e.preventDefault(); e.stopPropagation(); } return; }
+                if (link) { if (!started) { started = true; if (bg) sendAll(); fallback(); } return; }
                 if (!started) { started = true; if (bg) sendAll(); fallback(); return; }
                 if (bg) post({ zerkSndToggle: true });
             }, true);
@@ -643,12 +646,13 @@
                 sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 let hd = null; try { hd = bg && bg.contentWindow && bg.contentWindow.zzSndHeads; } catch (e) {}
                 const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
-                const N = PR.length, land = W > H, bw = document.getElementById('hubSndBox').getBoundingClientRect().width;
+                const desk = !matchMedia('(pointer: coarse) and (max-width: 960px)').matches;   // v0.072: компьютер — один по центру, во всю высоту
+                const N = PR.length, land = W > H && !desk, bw = document.getElementById('hubSndBox').getBoundingClientRect().width;
                 /* v0.065, «треугольник должен быть выполнен из бит-ромбов, а не квадратов»: бит — ромб шириной dw и высотой dh с центром в spots(r, j).
                    Стоя — ромбы 60°/120° (dh = √3·dw) ребро к ребру: ряд заходит в ряд наполовину (шаг рядов dh/2), как ноты, — треугольник
                    равносторонний. Лёжа строки не сдвигаются (прямоугольные треугольники) — ромб в своей клетке, соседи касаются вершинами */
                 let dw, dh, spots, side = false;
-                if (!land) { const top = H * 0.07, hMax = H * 0.42; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
+                if (!land) { const top = desk ? H * 0.03 : H * 0.07, hMax = desk ? H * 0.94 : H * 0.42; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
                     const cx = W / 2, y0 = top + (hMax - (N + 1) * dh / 2) / 2 + dh / 2;
                     spots = [(r, j) => [cx - r * dw / 2 + j * dw, y0 + r * dh / 2]]; }
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же
