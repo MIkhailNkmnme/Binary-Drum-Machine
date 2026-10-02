@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.518. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.519. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.518</title>
+<title>Zazerkalius — v0.519</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1025,8 +1025,15 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 /* v0.516, по рисунку из «Сетки» — «эту кнопку сделай из треугольников, вот так»: ◂ (свернуть панель в значки) — «стрелка влево» из четырёх
    треугольников (остриё слева, выемка справа: 3t × ряд), у свёрнутой — вправо; значок ▾ / ▸ у заголовков раздела — равносторонний треугольник ▽ / ▷ */
 #rowsPane #bPaneIcons#bPaneIcons{top:8px;right:12px;width:20.78px;height:24px;padding:0 !important;margin:0;border:0 !important;border-radius:0 !important;font-size:0 !important;color:transparent !important;
-  background:color-mix(in srgb, var(--acc) 55%, var(--panel2));clip-path:polygon(6.93px 0,100% 0,13.86px 50%,100% 100%,6.93px 100%,0 50%);cursor:pointer}
+  background:color-mix(in srgb, var(--acc) 70%, var(--panel2));clip-path:polygon(6.93px 0,100% 0,13.86px 50%,100% 100%,6.93px 100%,0 50%);cursor:pointer;position:absolute}
+/* v0.519, «надо обводку стрелки сделать, чтобы по высоте с заголовком стала»: стрелка — как заголовок: та же тёмная заливка (внутренняя стрелка на 1,5 px
+   меньше), по краю — светлая обводка; наведение — ярче */
+#rowsPane #bPaneIcons#bPaneIcons::before{content:"";position:absolute;inset:0;background:color-mix(in srgb, var(--acc) 13%, var(--panel));
+  clip-path:polygon(7.8px 1.5px,18.2px 1.5px,12.1px 50%,18.2px calc(100% - 1.5px),7.8px calc(100% - 1.5px),1.75px 50%)}
+body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{position:relative}
+body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::before{clip-path:polygon(2.6px 1.5px,13px 1.5px,19.05px 50%,13px calc(100% - 1.5px),2.6px calc(100% - 1.5px),8.7px 50%)}
 #rowsPane #bPaneIcons#bPaneIcons:hover{background:var(--acc)}
+#rowsPane #bPaneIcons#bPaneIcons:hover::before{background:color-mix(in srgb, var(--acc) 30%, var(--panel))}
 #rowsPane #bPaneIcons#bPaneIcons{flex:0 0 auto !important;min-height:24px !important;height:24px !important}   /* v0.517, «при скрытии невозможно потом развернуть левое меню»: в колонке панели значками пустая кнопка сжималась в 0 */
 body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{width:20.78px;margin:6px auto;clip-path:polygon(0 0,13.86px 0,100% 50%,13.86px 100%,0 100%,6.93px 50%)}
 #rowsPane .pane-head.lph.pf::after{content:"" !important;flex:0 0 auto;width:13.86px;height:12px;background:currentColor;clip-path:polygon(0 0,100% 0,50% 100%);opacity:.5}
@@ -1432,7 +1439,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.518</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.519</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2372,8 +2379,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0518"></script>
-<script src="zz-ui.js?v=0518"></script>
+<script src="zz-core.js?v=0519"></script>
+<script src="zz-ui.js?v=0519"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
