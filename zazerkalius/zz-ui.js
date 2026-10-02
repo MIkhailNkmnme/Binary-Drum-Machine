@@ -7820,8 +7820,10 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   const its = [...g.querySelectorAll(".tz, .tzk")].filter(e => e.closest(".cgrp") === g && e.getClientRects().length && !e.closest(".zerk-range-wrap"));
   if (!its.length) return;
   const gr = g.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3));
-  let bot = -1e9; its.forEach(e => { bot = Math.max(bot, e.getBoundingClientRect().top); });
-  let last = null, lr = null; its.forEach(e => { const r = e.getBoundingClientRect(); if (Math.abs(r.top - bot) < 6 && (!lr || r.right > lr.right)) { last = e; lr = r; } });
+  /* v0.507, по снимку «Вида» — «ширина огромная»: у группы конструктора нижний ряд бывает коротким, ромб вставал у левого края — влево его не утянуть,
+     группу не сузить. Теперь ромб — на самой нижней из кнопок, что доходят до правого края группы: тянешь — край группы идёт за ним */
+  let maxR = -1e9; its.forEach(e => { maxR = Math.max(maxR, e.getBoundingClientRect().right); });
+  let last = null, lr = null; its.forEach(e => { const r = e.getBoundingClientRect(); if (r.right >= maxR - t - 1 && (!lr || r.top > lr.top + 6 || (Math.abs(r.top - lr.top) <= 6 && r.right > lr.right))) { last = e; lr = r; } });
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
   h.style.setProperty("right", "auto", "important"); h.style.setProperty("bottom", "auto", "important");
@@ -7849,10 +7851,13 @@ function tzcItem(el, cgb){   // элемент группы под точкой:
   if (x.tagName === "SPAN" && x.querySelector("button, label, select, input")) return x.querySelector("button") || null;
   return x;
 }
-function tzcKey(el, cgb){ if (el.classList.contains("glab")) return "glab"; const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift([...x.parentElement.children].indexOf(x)); return "@" + p.join("/"); }
+function tzcKey(el, cgb){ if (el.classList.contains("glab")) return "glab"; const k = btnKey(el); if (k) return k; const p = []; for (let x = el; x && x !== cgb; x = x.parentElement) p.unshift(tzcKids(x.parentElement).indexOf(x)); return "@" + p.join("/"); }
+/* v0.507, по снимку «Вида» — «ширина огромная»: номер элемента («@18») считался среди всех детей блока, вместе со служебным слоем обводки (.tzco) —
+   кнопку перенесли в конец, слой встал на её номер и растягивался как кнопка (596 px), а сама кнопка терялась. Слой и ручка в счёт не идут */
+function tzcKids(p){ return [...p.children].filter(c => !c.classList.contains("tzco") && !c.classList.contains("cgsz")); }
 function tzcFind(key, cgb){
   if (key === "glab") return cgb && cgb.parentElement ? cgb.parentElement.querySelector(":scope > .glab") : null;   // v0.486
-  if (key[0] === "@") { let x = cgb; for (const i of key.slice(1).split("/")) x = x && x.children[+i]; return x || null; }
+  if (key[0] === "@") { let x = cgb; for (const i of key.slice(1).split("/")) x = x && tzcKids(x)[+i]; return x || null; }
   try { return key[0] === "#" && !/[\s[>]/.test(key) ? document.getElementById(key.slice(1)) : document.querySelector(key); } catch (e) { return null; }
 }
 function tzcLabel(el){
@@ -7988,7 +7993,7 @@ function tzcApply(g){
   let avail = Infinity;
   const sz = Z.cgrpSize && Z.cgrpSize[g.dataset.g];
   if (sz && g.classList.contains("csz")) { const gr = g.getBoundingClientRect(), cr = cgb.getBoundingClientRect(), gs = getComputedStyle(g);
-    avail = sz.w - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }
+    avail = Math.max(sz.w, g._tzMinW || 0) - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }   // v0.507: не уже самого широкого блока
   /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
      (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
   /* v0.470: обводка ⬚ видна всегда, тонкая; v0.476, «убери вообще жирность обводки» — и у нажатой тонкая (жирной больше нет нигде) */
@@ -8087,8 +8092,8 @@ function tzcApply(g){
   (g._tzcEls || []).forEach(el => { if (!els.includes(el)) tzcClean(el); });
   g._tzcEls = els;
   cgb.style.setProperty("padding-top", px(R * hh), "important"); cgb.style.setProperty("min-width", px(N * t), "important");
-  if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (sz.w + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
-  else if (isFinite(avail)) g.style.width = (sz.w - Math.floor(avail - N * t)) + "px";   // v0.484: и не шире рисунка — пустого места справа нет
+  if (isFinite(avail) && N * t > avail + 0.5) g.style.width = (Math.max(sz.w, g._tzMinW || 0) + Math.ceil(N * t - avail)) + "px";   // v0.455: блок шире группы — группа по нему, а не обрезка
+  else if (isFinite(avail)) g.style.width = (Math.max(sz.w, g._tzMinW || 0) - Math.floor(avail - N * t)) + "px";   // v0.484: и не шире рисунка — пустого места справа нет
   // обводка — одна линия на стык: граница кнопки с другой кнопкой или с пустым местом
   let ov = cgb.querySelector(":scope > .tzco"); if (!ov) { ov = document.createElement("i"); ov.className = "tzco"; cgb.appendChild(ov); }
   const W = Math.max(1, N * t), H = Math.max(1, R * hh);
@@ -8304,7 +8309,7 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; m = Math.max(m, el.getBoundingClientRect().width - (el._tzx || 0) * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней)
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
   return Math.ceil(m) + 1;
 }
 function tzcIcons(){
