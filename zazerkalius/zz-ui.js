@@ -7595,16 +7595,19 @@ function coneBtnsInit(){
   // любую кнопку (v0.249: и галку) можно потянуть: draggable ставится в миг нажатия (кнопки бывают и новые)
   /* v0.258, «не переносится на холст» (по снимку «⧗ зеркало»): у метки с флажком браузер решает, тащить ли, раньше, чем доходит
      нажатие, — с первого раза галка не тянулась. Теперь draggable ставится уже при наведении мыши. */
-  document.addEventListener("pointerover", (e) => {
-    const g = grabOf(e.target);
-    if (g && !g.draggable && refOf(ctlOf(g))) g.draggable = true;
-  }, true);
-  document.addEventListener("pointerdown", (e) => {
-    const g = grabOf(e.target);
-    if (g && !g.draggable && refOf(ctlOf(g))) g.draggable = true;
-  }, true);
+  /* v0.549, «убери перетаскивание по одной кнопок»: кнопки и галки тянутся (на холст, в другую панель, в «Дзен») только в ✎ Правке панелей; в обычной
+     работе — нет (нажал и чуть повёл — уезжала копия или сама кнопка). Копии на холсте и в «Дзене» переставляются, как прежде */
+  const dragOk = () => document.body.classList.contains("cedit");
+  const grabSet = (e) => {
+    const g = grabOf(e.target); if (!g || g.closest("#zenBtns")) return;   // копии в «Дзене» — свои (как были)
+    const ok = dragOk() && !!refOf(ctlOf(g));
+    if (g.draggable !== ok) g.draggable = ok;
+  };
+  document.addEventListener("pointerover", grabSet, true);
+  document.addEventListener("pointerdown", grabSet, true);
   document.addEventListener("dragstart", (e) => {
     const g = grabOf(e.target), r = g && refOf(ctlOf(g)); if (!r) return;
+    if (!dragOk() && !g.closest("#zenBtns")) { e.preventDefault(); return; }
     e.dataTransfer.setData(TYPE, JSON.stringify(r)); e.dataTransfer.effectAllowed = "copyMove";
   });
   const isBtn = (e) => !!e.dataTransfer && [...e.dataTransfer.types].includes(TYPE);
