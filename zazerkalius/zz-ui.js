@@ -7230,7 +7230,10 @@ function cgbSnap(){
   const W = (k, el) => { const c = el.closest("#w-cone .tools, #paneGrp"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };   // v0.463: и левая панель
   const kOf = (w, el) => w <= W(1, el) + 0.5 ? 1 : w <= W(2, el) + 0.5 ? 2 : 4;
   const vis = (el) => el.getClientRects().length > 0;
-  const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk"));   // v0.452: место и размер кнопок конструктора — свои
+  /* v0.535, по замеру из консоли пользователя («Кручение» прыгает при Аниматрице): «весь:» получал здесь ширину кнопки (83 px) поверх своей, triTag
+     принимал её за заданную — 6 сторон вместо 3, «⟳» уезжал строкой ниже; следующий пересчёт без cgbSnap — снова 3. Подписи и заголовки групп
+     из треугольников меряет только triTag */
+  const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk") && !(el.matches(".glab, .glab2") && el.closest("#w-cone .tools, #paneGrp")));   // v0.452: место и размер кнопок конструктора — свои
   const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk") && !el.dataset.w1);   // v0.490: data-w1 — всегда в одну
   document.querySelectorAll(".cgb [data-w1].w2, .cgb [data-w1].w4").forEach(el => el.classList.remove("w2", "w4"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
