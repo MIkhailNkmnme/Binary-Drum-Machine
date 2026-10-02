@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.004. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.005. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.004</title>
+<title>Zerkalius Пирамида — v0.005</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -32,12 +32,24 @@
   кнопки только значками (слова в span.t спрятаны, смысл — в title), оба ползунка в одну строку, счёт мелко. Кнопка ▾ у заголовка
   сворачивает панель до одной строки «ПИРАМИДА ▸» (на телефоне свёрнута с самого начала, на компьютере — открыта); выбор помнится
   в localStorage piramida_min.
+  v0.005, «а если до 64 слоёв? и возможность отключать цвет, чисто рёбрами, и несколько видов сверху, сбоку, и ещё кнопки»:
+  в 64 слоях 131 тыс. частей и 700 тыс. граней — холст 2D с сортировкой каждой грани такого не тянет, поэтому рисует WebGL2.
+  Части не хранятся объектами: каждая — запись в текстуре данных (4 текселя: сдвиг o и номер заготовки; столбцы матрицы M с цветом),
+  вершина = M · заготовка + o (заготовки: 0 — тетраэдр ▲, 1 — октаэдр, 2 — тетраэдр ▼; у пирамиды M единичная, у достроенных —
+  отражение или поворот, считается по четырём вершинам). Прозрачность: части сортируются по глубине на процессоре (поразрядно,
+  16 бит), а внутри части сначала идут дальние грани, потом ближние (сетка части — две копии граней, лишние сворачиваются
+  в шейдере) — как художник у v0.004, только по частям. Щелчок и наведение ищут грань на процессоре: сначала отбор по центру
+  части, потом треугольники. Новые кнопки: ▣ грани, ╱ рёбра, ◐ цвет (выключить — всё одним светлым), «Срез» — один слой из L;
+  виды ⊤ сверху, ⊥ снизу, ◁ сбоку (на боковую грань по горизонтали), ◇ на ребро, ◢ на грань (перпендикулярно боковой грани),
+  ⬙ 3D — поворот плавный, вращение при этом останавливается; 📷 — картинка PNG. Ползунки со стрелками ◂ ▸ (общий slider-arrows.js).
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.35 system-ui, sans-serif; overflow:hidden; }
-  #cv{ position:fixed; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
-  #panel{ position:fixed; left:12px; top:12px; width:210px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
+  #cv{ touch-action:none; cursor:grab; }
+  #ov{ pointer-events:none; }
+  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 24px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
   #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; display:flex; align-items:center; }
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
   #panel.min > :not(h1){ display:none; }
@@ -46,19 +58,20 @@
   label.s{ display:flex; flex-direction:column; gap:3px; color:var(--dim); }
   label.s b{ color:var(--fg); }
   input[type=range]{ width:100%; }
+  .rows{ display:flex; flex-direction:column; gap:4px; }
   .row{ display:flex; gap:4px; flex-wrap:wrap; }
   button{ flex:1 0 auto; background:#0c0f14; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:5px 6px; cursor:pointer; font:inherit; }
   button.on{ color:var(--fg); border-color:var(--acc); }
   #count{ color:var(--dim); font-size:12px; }
   #ver{ position:fixed; right:10px; bottom:8px; color:var(--dim); font:11px monospace; }
   @media (max-width:600px){
-    #panel{ left:6px; right:6px; top:auto; bottom:6px; width:auto; padding:6px 8px; gap:5px; font-size:12px; }
+    #panel{ left:6px; right:6px; top:auto; bottom:6px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
     #panel.min{ right:auto; }
     #panel h1{ font-size:12px; }
-    .sl{ flex-direction:row; gap:10px; }
+    .sl{ flex-direction:row; gap:8px; }
     .sl label.s{ flex:1 1 0; min-width:0; }
     .t{ display:none; }
-    .rows{ display:flex; flex-wrap:wrap; gap:4px; }
+    .rows{ flex-direction:row; flex-wrap:wrap; }
     .rows .row{ flex-wrap:nowrap; }
     button{ padding:4px 7px; }
     #count{ font-size:11px; }
@@ -68,11 +81,13 @@
 </head>
 <body>
 <canvas id="cv"></canvas>
+<canvas id="ov"></canvas>
 <div id="panel">
   <h1>ПИРАМИДА<button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
-  <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="7" step="1" value="4"></label>
+  <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
+  <label class="s" title="Показать один слой (сверху — 1); в начале шкалы — все">Срез: <b id="vS">все</b><input type="range" id="sS" min="0" max="4" step="1" value="0"></label>
   </div>
   <div class="rows">
   <div class="row">
@@ -80,101 +95,296 @@
     <button id="bOct" class="on" title="Октаэдры — между слоями, к ним тетраэдры прилегают гранями">◆<span class="t"> окта</span></button>
     <button id="bDn" class="on" title="Тетраэдры остриём вниз — в провалах между октаэдрами">▼<span class="t"> низ</span></button>
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button></div>
+  <div class="row">
+    <button id="bFace" class="on" title="Грани — полупрозрачная заливка">▣<span class="t"> грани</span></button>
+    <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
+    <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button>
+  </div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
+  <div class="row">
+    <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
+    <button data-v="bot" title="Вид снизу">⊥<span class="t"> снизу</span></button>
+    <button data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁<span class="t"> сбоку</span></button>
+    <button data-v="edge" title="Вид сбоку — на боковое ребро">◇<span class="t"> ребро</span></button>
+    <button data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢<span class="t"> грань</span></button>
+    <button data-v="iso" title="Вид в три четверти, как в начале">⬙<span class="t"> 3D</span></button>
+  </div>
   <div class="row"><button id="bView" title="Приближение и сдвиг — как было">⌖<span class="t"> вид</span></button><button id="bClr" title="Всё как было: убрать достроенное, вернуть сдвинутые и перевёрнутые части">✕<span class="t"> как было</span></button></div>
   </div>
   <div id="count"></div>
 </div>
-<div id="ver">v0.004</div>
+<div id="ver">v0.005</div>
 <script>
-const cv = document.getElementById("cv"), g = cv.getContext("2d");
+const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
 let L = 4, X = 0.35, showUp = true, showOct = true, showDn = true, spin = true, yaw = 0.5, pitch = 0.35;
+let slice = 0, showFace = true, showEdge = true, colorOn = true;   // v0.005: срез (0 — все слои), грани, рёбра, цвет
 // рёбра единичного тетраэдра от вершины вниз: основание — правильный треугольник, высота √(2/3)
 const H = Math.sqrt(2 / 3), R0 = 1 / Math.sqrt(3);
 const E = [0, 1, 2].map(i => { const a = Math.PI / 2 + i * 2 * Math.PI / 3; return [R0 * Math.cos(a), -H, R0 * Math.sin(a)]; });
 const P = (i, j, k) => [i * E[0][0] + j * E[1][0] + k * E[2][0], i * E[0][1] + j * E[1][1] + k * E[2][1], i * E[0][2] + j * E[1][2] + k * E[2][2]];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
-const removed = new Set();   // v0.003: части пирамиды, которые сдвинули или перевернули (их копии — среди extra)
-function pieces(all){   // all — все части, без фильтров ▲ ◆ ▼ (проверка, стоит ли уже часть на месте)
-  const out0 = [], sU = all || showUp, sO = all || showOct, sD = all || showDn;
-  for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
-    const n = i + j + k, p = P(i, j, k), a = E[0], b = E[1], c = E[2];
-    if (n <= L - 1 && sU) out0.push({ id: `up:${i}:${j}:${k}:${L}`, kind: "up", layer: n, v: [p, add(p, a), add(p, b), add(p, c)], f: [[0,1,2],[0,2,3],[0,3,1],[1,3,2]] });
-    if (n <= L - 2 && sO) { const q = [add(p, a), add(p, b), add(p, c), add(add(p, a), b), add(add(p, b), c), add(add(p, a), c)];
-      out0.push({ id: `oct:${i}:${j}:${k}:${L}`, kind: "oct", layer: n + 1, v: q, f: null }); }
-    if (n <= L - 3 && sD) { const ab = add(add(p, a), b), bc = add(add(p, b), c), ac = add(add(p, a), c), abc = add(ab, c);
-      out0.push({ id: `dn:${i}:${j}:${k}:${L}`, kind: "dn", layer: n + 2, v: [ab, bc, ac, abc], f: [[0,1,2],[0,1,3],[1,2,3],[0,2,3]] }); }
-  }
-  return out0.filter(q => !removed.has(q.id));
-}
-// грани октаэдра: вершины a, b, c, a+b, b+c, a+c — восемь треугольников
-const OCT_F = [[0,1,3],[1,2,4],[2,0,5],[3,4,5],[0,3,5],[1,4,3],[2,5,4],[0,1,2]];
-let W = 0, Hh = 0, dpr = 1;
-function resize(){ dpr = window.devicePixelRatio || 1; W = cv.clientWidth; Hh = cv.clientHeight; cv.width = W * dpr; cv.height = Hh * dpr; }
-addEventListener("resize", resize); resize();
-function rot(p){ const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const x = p[0] * cy + p[2] * sy, z = -p[0] * sy + p[2] * cy, y = p[1] * cp - z * sp, z2 = p[1] * sp + z * cp; return [x, y, z2]; }
-// v0.002: приближение, сдвиг вида и достроенные отражения (extra — части в мировых координатах, как у пирамиды)
-let zoom = 1, panX = 0, panY = 0, extra = [], hover = null, lastFaces = [], note = "", noteT = 0;
 const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const centroid = (v) => v.reduce((s, q) => add(s, q), [0, 0, 0]).map(x => x / v.length);
-const facesOf = (pc) => pc.kind === "oct" ? OCT_F : pc.f;
+// v0.005: заготовки частей (вершина решётки p = 0): 0 — тетраэдр остриём вверх, 1 — октаэдр, 2 — тетраэдр остриём вниз
+const S3 = add(add(E[0], E[1]), E[2]);
+const TV = [[[0, 0, 0], E[0], E[1], E[2]], [E[0], E[1], E[2], add(E[0], E[1]), add(E[1], E[2]), add(E[0], E[2])], [add(E[0], E[1]), add(E[1], E[2]), add(E[0], E[2]), S3]];
+// грани октаэдра: вершины a, b, c, a+b, b+c, a+c — восемь треугольников
+const OCT_F = [[0,1,3],[1,2,4],[2,0,5],[3,4,5],[0,3,5],[1,4,3],[2,5,4],[0,1,2]];
+const TF = [[[0,1,2],[0,2,3],[0,3,1],[1,3,2]], OCT_F, [[0,1,2],[0,1,3],[1,2,3],[0,2,3]]];
+const TE = TF.map(fs => { const s = new Map(); fs.forEach(f => [[f[0], f[1]], [f[1], f[2]], [f[2], f[0]]].forEach(([a, b]) => s.set(Math.min(a, b) + ":" + Math.max(a, b), [a, b]))); return [...s.values()]; });
+const TC = TV.map(centroid), T_KIND = ["up", "oct", "dn"];
+const removed = new Set();   // v0.003: части пирамиды, которые сдвинули или перевернули (их копии — среди extra); v0.005 — числа keyOf
+const keyOf = (t, i, j, k) => (((L * 3 + t) * 65 + i) * 65 + j) * 65 + k;
 const colOf = (pc) => pc.col || (pc.kind === "up" ? NOTE_COL[pc.layer % 7] : pc.kind === "oct" ? "#8fa3b8" : "#5b4a7a");
-function draw(){
-  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, Hh);
-  const list = pieces().concat(extra), cen = [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
-  const sc = Math.min(W, Hh) / (L * 1.9 + 1) * zoom, faces = [];
-  let cnt = { up: 0, oct: 0, dn: 0 };
-  for (const pc of list) {
-    if (!pc.ref && !pc.moved) cnt[pc.kind]++;
-    const c = centroid(pc.v), off = [(c[0] - cen[0]) * X, (c[1] - cen[1]) * X, (c[2] - cen[2]) * X];
-    const vs = pc.v.map(v => rot([v[0] + off[0] - cen[0], v[1] + off[1] - cen[1], v[2] + off[2] - cen[2]]));
-    const col = colOf(pc);
-    for (const fi of facesOf(pc)) {
-      const t = fi.map(i => vs[i]);
-      const n = cross3(sub3(t[1], t[0]), sub3(t[2], t[0])), nl = Math.hypot(...n) || 1, light = Math.abs(n[2] / nl);
-      faces.push({ t, z: (t[0][2] + t[1][2] + t[2][2]) / 3, col, light, kind: pc.kind, pc, fi });
+const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const NOTE_RGB = NOTE_COL.map(rgb), OCT_RGB = rgb("#8fa3b8"), DN_RGB = rgb("#5b4a7a");
+function inv3(m){   // обратная к 3×3 (по строкам)
+  const [a, b, c] = m[0], [d, e, f] = m[1], [g2, h, i] = m[2], det = a * (e * i - f * h) - b * (d * i - f * g2) + c * (d * h - e * g2);
+  return [[(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det], [(f * g2 - d * i) / det, (a * i - c * g2) / det, (c * d - a * f) / det], [(d * h - e * g2) / det, (b * g2 - a * h) / det, (a * e - b * d) / det]];
+}
+const cols3 = (v) => [0, 1, 2].map(r => [1, 2, 3].map(c => v[c][r] - v[0][r]));   // столбцы — рёбра от вершины 0 к 1, 2, 3
+const TINV = TV.map(t => inv3(cols3(t)));
+function affine(pc){   // достроенная часть = M · заготовка + o (M — отражение / поворот, найдена по четырём вершинам)
+  const V = cols3(pc.v), Ti = TINV[pc.tpl], M = [0, 1, 2].map(r => [0, 1, 2].map(c => V[r][0] * Ti[0][c] + V[r][1] * Ti[1][c] + V[r][2] * Ti[2][c]));
+  const t0 = TV[pc.tpl][0], o = [0, 1, 2].map(r => pc.v[0][r] - (M[r][0] * t0[0] + M[r][1] * t0[1] + M[r][2] * t0[2]));
+  return { M, o };
+}
+// ── v0.005: части — записи в общих массивах; в текстуре данных по 4 текселя на часть ──
+const TW = 4096, PER_ROW = TW / 4;
+let cap = 0, N = 0, nP = 0, DATA = null, C0 = null, PI = null, ORD = null, ZK = null, KEY = null, TMP = null, dataVer = 0, cnt = { up: 0, oct: 0, dn: 0 };
+let extra = [], hover = null, note = "", noteT = 0;
+function setInst(n, o, tp, M, c, ctr){   // M — по строкам; в текстуру идут столбцы
+  const d = n * 16;
+  DATA[d] = o[0]; DATA[d + 1] = o[1]; DATA[d + 2] = o[2]; DATA[d + 3] = tp;
+  for (let col = 0; col < 3; col++) { const q = d + 4 + col * 4; DATA[q] = M[0][col]; DATA[q + 1] = M[1][col]; DATA[q + 2] = M[2][col]; DATA[q + 3] = c[col]; }
+  C0[n * 3] = ctr[0]; C0[n * 3 + 1] = ctr[1]; C0[n * 3 + 2] = ctr[2];
+}
+const ID3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+function writeExtra(pc, n){ const { M, o } = affine(pc); setInst(n, o, pc.tpl + (pc.ref ? 4 : 0), M, rgb(colOf(pc)), centroid(pc.v)); }
+function rebuild(){
+  const tet = (m) => m > 0 ? m * (m + 1) * (m + 2) / 6 : 0, need = tet(L) + tet(L - 1) + tet(L - 2) + extra.length + 1;
+  if (need > cap) grow(need);
+  N = 0; cnt = { up: 0, oct: 0, dn: 0 };
+  const put = (t, i, j, k, layer, p) => {
+    if (slice && layer !== slice - 1) return;
+    if (removed.has(keyOf(t, i, j, k))) return;
+    const n = N++; setInst(n, p, t, ID3, t === 0 ? NOTE_RGB[layer % 7] : t === 1 ? OCT_RGB : DN_RGB, add(p, TC[t]));
+    PI[n * 4] = t; PI[n * 4 + 1] = i; PI[n * 4 + 2] = j; PI[n * 4 + 3] = k; cnt[T_KIND[t]]++;
+  };
+  for (let i = 0; i <= L; i++) for (let j = 0; i + j <= L; j++) for (let k = 0; i + j + k <= L; k++) {
+    const n = i + j + k, p = P(i, j, k);
+    if (n <= L - 1 && showUp) put(0, i, j, k, n, p);
+    if (n <= L - 2 && showOct) put(1, i, j, k, n + 1, p);
+    if (n <= L - 3 && showDn) put(2, i, j, k, n + 2, p);
+  }
+  nP = N;
+  extra.forEach((pc, x) => { pc._n = -1; if (slice && pc.layer !== slice - 1) return; const n = N++; pc._n = n; writeExtra(pc, n); PI[n * 4] = -1 - x; });
+  for (let n = 0; n < N; n++) ORD[n] = n;
+  hover = null; dataVer++;
+  if (gl) { upload(0, N); gl.bindBuffer(gl.ARRAY_BUFFER, ordBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, ORD, 0, N); }
+}
+function pieceAt(n){   // часть под номером n — объектом, как в v0.003 (для отражения, сдвига, переворота)
+  const t = PI[n * 4]; if (t < 0) return extra[-1 - t];
+  const i = PI[n * 4 + 1], j = PI[n * 4 + 2], k = PI[n * 4 + 3], p = P(i, j, k);
+  return { id: keyOf(t, i, j, k), kind: T_KIND[t], layer: i + j + k + t, tpl: t, v: TV[t].map(q => add(p, q)) };
+}
+// ── WebGL2 ──
+let gl = cv.getContext("webgl2", { antialias: true, alpha: false });
+const SH_HEAD = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uD; uniform vec3 uTc[3]; uniform mat3 uR; uniform vec3 uCen; uniform float uX; uniform vec4 uS; uniform float uMono;
+in float aV; in uint aI; out vec4 vC;
+vec4 tx(int i){ return texelFetch(uD, ivec2(i & 4095, i >> 12), 0); }
+`;
+const VS_FACE = SH_HEAD + `uniform vec3 uT[72]; uniform vec2 uWH;
+void main(){
+  int v = int(aV + 0.5), hf = v / 24, tr = (v % 24) / 3, co = v % 3, b = int(aI) * 4;
+  vec4 t0 = tx(b), t1 = tx(b + 1), t2 = tx(b + 2), t3 = tx(b + 3);
+  int tp = int(t0.w + 0.5) & 3;
+  if (tp != 1 && tr >= 4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
+  mat3 M = mat3(t1.xyz, t2.xyz, t3.xyz);
+  vec3 c = M * uTc[tp] + t0.xyz, sh = t0.xyz + (c - uCen) * uX - uCen;
+  int k = tp * 24 + tr * 3;
+  vec3 p0 = uR * (M * uT[k] + sh), p1 = uR * (M * uT[k + 1] + sh), p2 = uR * (M * uT[k + 2] + sh), cw = uR * ((c - uCen) * (1.0 + uX));
+  vec3 n = cross(p1 - p0, p2 - p0); float nl = length(n);
+  float oz = dot(n, (p0 + p1 + p2) / 3.0 - cw) > 0.0 ? n.z : -n.z;   // наружная нормаль смотрит на зрителя — грань ближняя
+  if (nl < 1e-9 || (oz > 0.0) != (hf == 1)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
+  vec3 p = co == 0 ? p0 : co == 1 ? p1 : p2;
+  gl_Position = vec4((uS.x + p.x * uS.z) * 2.0 / uWH.x - 1.0, 1.0 - (uS.y - p.y * uS.z) * 2.0 / uWH.y, 0.0, 1.0);
+  vec3 col = uMono > 0.5 ? vec3(0.81, 0.85, 0.86) : vec3(t1.w, t2.w, t3.w);
+  vC = vec4(col, (tp == 1 ? 0.28 : 0.55) * (uMono > 0.5 ? 0.5 : 1.0) * (0.45 + 0.55 * abs(n.z) / nl));
+}`;
+const VS_EDGE = SH_HEAD + `uniform vec3 uE[72]; uniform vec2 uWH; uniform float uA;
+void main(){
+  int v = int(aV + 0.5), e = v / 2, b = int(aI) * 4;
+  vec4 t0 = tx(b), t1 = tx(b + 1), t2 = tx(b + 2), t3 = tx(b + 3);
+  int tw = int(t0.w + 0.5), tp = tw & 3;
+  if (tp != 1 && e >= 6) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vC = vec4(0.0); return; }
+  mat3 M = mat3(t1.xyz, t2.xyz, t3.xyz);
+  vec3 c = M * uTc[tp] + t0.xyz, sh = t0.xyz + (c - uCen) * uX - uCen;
+  vec3 p = uR * (M * uE[tp * 24 + v] + sh);
+  gl_Position = vec4((uS.x + p.x * uS.z) * 2.0 / uWH.x - 1.0, 1.0 - (uS.y - p.y * uS.z) * 2.0 / uWH.y, 0.0, 1.0);
+  vec3 col = uMono > 0.5 ? vec3(0.81, 0.85, 0.86) : vec3(t1.w, t2.w, t3.w);
+  if (tw >= 4) col = mix(col, vec3(1.0), 0.35);   // отражённые — рёбра светлее (в v0.002 — толще)
+  vC = vec4(col, uA);
+}`;
+const FS = `#version 300 es
+precision mediump float; in vec4 vC; out vec4 o; void main(){ o = vC; }`;
+let progF = null, progE = null, vao = null, ordBuf = null, tex = null, texRows = 0;
+function mkProg(vs){
+  const p = gl.createProgram();
+  [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, FS]].forEach(([t, src]) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); gl.attachShader(p, s); });
+  gl.bindAttribLocation(p, 0, "aV"); gl.bindAttribLocation(p, 1, "aI"); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  p.u = {}; ["uD", "uTc", "uR", "uCen", "uX", "uS", "uMono", "uWH", "uT", "uE", "uA"].forEach(n => p.u[n] = gl.getUniformLocation(p, n));
+  return p;
+}
+function glInit(){
+  progF = mkProg(VS_FACE); progE = mkProg(VS_EDGE);
+  vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, Float32Array.from({ length: 48 }, (_, i) => i), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 1, gl.FLOAT, false, 0, 0);
+  ordBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ordBuf); gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribIPointer(1, 1, gl.UNSIGNED_INT, 0, 0); gl.vertexAttribDivisor(1, 1);
+  tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  const tri = [], edg = [];
+  for (let t = 0; t < 3; t++) {
+    for (let f = 0; f < 8; f++) for (let c = 0; c < 3; c++) tri.push(...(TF[t][f] ? TV[t][TF[t][f][c]] : [0, 0, 0]));
+    for (let e = 0; e < 12; e++) for (let c = 0; c < 2; c++) edg.push(...(TE[t][e] ? TV[t][TE[t][e][c]] : [0, 0, 0]));
+  }
+  gl.useProgram(progF); gl.uniform3fv(progF.u.uT, tri); gl.uniform3fv(progF.u.uTc, TC.flat());
+  gl.useProgram(progE); gl.uniform3fv(progE.u.uE, edg); gl.uniform3fv(progE.u.uTc, TC.flat());
+  gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+function grow(need){
+  cap = Math.ceil(need * 1.25 / PER_ROW) * PER_ROW;
+  DATA = new Float32Array(cap * 16); C0 = new Float32Array(cap * 3); PI = new Int16Array(cap * 4);
+  ORD = new Uint32Array(cap); ZK = new Float32Array(cap); KEY = new Uint16Array(cap); TMP = new Uint32Array(cap);
+  if (!gl) return;
+  texRows = cap / PER_ROW; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, TW, texRows, 0, gl.RGBA, gl.FLOAT, null);
+  gl.bindBuffer(gl.ARRAY_BUFFER, ordBuf); gl.bufferData(gl.ARRAY_BUFFER, cap * 4, gl.DYNAMIC_DRAW);
+}
+function upload(n0, n1){   // строки текстуры, где лежат части n0 … n1 − 1
+  if (n1 <= n0) return;
+  const r0 = Math.floor(n0 / PER_ROW), r1 = Math.ceil(n1 / PER_ROW);
+  gl.bindTexture(gl.TEXTURE_2D, tex); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, r0, TW, r1 - r0, gl.RGBA, gl.FLOAT, DATA, r0 * TW * 4);
+}
+function syncExtra(pc){ if (pc._n == null || pc._n < 0) return; writeExtra(pc, pc._n); if (gl) upload(pc._n, pc._n + 1); dataVer++; }
+const CNT = new Uint32Array(256);
+function sortOrder(rz, cen){   // от дальних к ближним по центру части — поразрядно, 16 бит
+  let mn = Infinity, mx = -Infinity;
+  for (let n = 0; n < N; n++) { const z = rz[0] * (C0[n * 3] - cen[0]) + rz[1] * (C0[n * 3 + 1] - cen[1]) + rz[2] * (C0[n * 3 + 2] - cen[2]); ZK[n] = z; if (z < mn) mn = z; if (z > mx) mx = z; }
+  const q = mx > mn ? 65535 / (mx - mn) : 0;
+  for (let n = 0; n < N; n++) KEY[n] = (ZK[n] - mn) * q;
+  CNT.fill(0); for (let n = 0; n < N; n++) CNT[KEY[n] & 255]++;
+  for (let i = 0, s = 0; i < 256; i++) { const c = CNT[i]; CNT[i] = s; s += c; }
+  for (let n = 0; n < N; n++) TMP[CNT[KEY[n] & 255]++] = n;
+  CNT.fill(0); for (let i = 0; i < N; i++) CNT[KEY[TMP[i]] >> 8]++;
+  for (let i = 0, s = 0; i < 256; i++) { const c = CNT[i]; CNT[i] = s; s += c; }
+  for (let i = 0; i < N; i++) { const n = TMP[i]; ORD[CNT[KEY[n] >> 8]++] = n; }
+  gl.bindBuffer(gl.ARRAY_BUFFER, ordBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, ORD, 0, N);
+}
+let W = 0, Hh = 0, dpr = 1;
+function resize(){ dpr = Math.min(window.devicePixelRatio || 1, 2); W = cv.clientWidth; Hh = cv.clientHeight;
+  cv.width = ov.width = Math.round(W * dpr); cv.height = ov.height = Math.round(Hh * dpr); }
+addEventListener("resize", resize); resize();
+function rotM(){   // строки поворота вида: x — вправо, y — вверх, z — к зрителю (то же, что rot() в v0.004)
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  return [[cy, 0, sy], [sy * sp, cp, -cy * sp], [-sy * cp, sp, cy * cp]];
+}
+// v0.002: приближение и сдвиг вида
+let zoom = 1, panX = 0, panY = 0;
+const cenW = () => [0, -H * L * 0.75, 0];   // центр большого тетраэдра: вершина в 0, центр — на ¾ высоты
+const scale = () => Math.min(W, Hh) / (L * 1.9 + 1) * zoom;
+function screenVerts(n, R, sc, cen){   // вершины части n на экране: [x, y, глубина]
+  const d = n * 16, tp = (DATA[d + 3] | 0) & 3, c = [C0[n * 3], C0[n * 3 + 1], C0[n * 3 + 2]], cx = W / 2 + panX, cy = Hh * 0.5 + panY;
+  const sh = [0, 1, 2].map(r => DATA[d + r] + (c[r] - cen[r]) * X - cen[r]);
+  return TV[tp].map(t => {
+    const w = [0, 1, 2].map(r => DATA[d + 4 + r] * t[0] + DATA[d + 8 + r] * t[1] + DATA[d + 12 + r] * t[2] + sh[r]);
+    return [cx + dot3(R[0], w) * sc, cy - dot3(R[1], w) * sc, dot3(R[2], w)];
+  });
+}
+function pick(x, y){   // ближняя грань под точкой: { n — часть, fi — номер грани в заготовке }
+  const R = rotM(), sc = scale(), cen = cenW(), cx = W / 2 + panX, cy = Hh * 0.5 + panY, rad = 0.8 * sc + 2;
+  let best = null, bz = -Infinity;
+  for (let n = 0; n < N; n++) {
+    const w0 = (C0[n * 3] - cen[0]) * (1 + X), w1 = (C0[n * 3 + 1] - cen[1]) * (1 + X), w2 = (C0[n * 3 + 2] - cen[2]) * (1 + X);
+    if (Math.abs(cx + (R[0][0] * w0 + R[0][1] * w1 + R[0][2] * w2) * sc - x) > rad || Math.abs(cy - (R[1][0] * w0 + R[1][1] * w1 + R[1][2] * w2) * sc - y) > rad) continue;
+    const s = screenVerts(n, R, sc, cen), fs = TF[(DATA[n * 16 + 3] | 0) & 3];
+    for (let fi = 0; fi < fs.length; fi++) {
+      const [a, b, c] = fs[fi].map(i => s[i]), den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+      if (Math.abs(den) < 1e-9) continue;
+      const l1 = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / den, l2 = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / den, l3 = 1 - l1 - l2;
+      if (l1 < 0 || l2 < 0 || l3 < 0) continue;
+      const z = l1 * a[2] + l2 * b[2] + l3 * c[2]; if (z > bz) { bz = z; best = { n, fi }; }
     }
   }
-  faces.sort((a, b) => a.z - b.z);
-  const cx = W / 2 + panX, cy = Hh * 0.5 + panY;
-  for (const f of faces) {
-    f.s = f.t.map(p => [cx + p[0] * sc, cy - p[1] * sc]);
-    g.beginPath(); f.s.forEach((q, i) => { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath();
-    g.globalAlpha = (f.kind === "oct" ? 0.28 : 0.55) * (0.45 + 0.55 * f.light); g.fillStyle = f.col; g.fill();
-    g.globalAlpha = 0.85; g.strokeStyle = f.col; g.lineWidth = f.pc.ref ? 1.6 : 1; g.stroke();
+  return best;
+}
+// v0.005: виды — направление на зрителя d переводится в поворот (yaw, pitch); переход плавный
+const lookAlong = (d) => { const h = Math.hypot(d[0], d[2]); return [h < 1e-9 ? 0 : Math.atan2(-d[0], d[2]), Math.atan2(d[1], h)]; };
+const FACE_N = (() => { let n = cross3(E[0], E[1]); if (dot3(n, E[2]) > 0) n = n.map(x => -x); const l = Math.hypot(...n); return n.map(x => x / l); })();
+const VIEWS = { top: lookAlong([0, 1, 0]), bot: lookAlong([0, -1, 0]), side: lookAlong([FACE_N[0], 0, FACE_N[2]]), edge: lookAlong([E[2][0], 0, E[2][2]]), face: lookAlong(FACE_N), iso: [0.5, 0.35] };
+let tween = null;
+function goView(k){
+  const [y1, p1] = VIEWS[k], dy = ((y1 - yaw) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+  tween = { y0: yaw, p0: pitch, dy, p1, t0: performance.now() }; spin = false; ui();
+}
+let lastSort = "", lastCount = "", mouse = null, mouseMoved = false;
+function draw(){
+  const R = rotM(), sc = scale(), cen = cenW(), cx = W / 2 + panX, cy = Hh * 0.5 + panY;
+  o2.setTransform(dpr, 0, 0, dpr, 0, 0); o2.clearRect(0, 0, W, Hh);
+  if (gl) {
+    gl.viewport(0, 0, cv.width, cv.height); gl.clearColor(5 / 255, 6 / 255, 8 / 255, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+    if (N) {
+      gl.bindVertexArray(vao); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+      const Rc = [R[0][0], R[1][0], R[2][0], R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]];
+      const common = (p) => { gl.useProgram(p); gl.uniform1i(p.u.uD, 0); gl.uniformMatrix3fv(p.u.uR, false, Rc); gl.uniform3fv(p.u.uCen, cen); gl.uniform1f(p.u.uX, X);
+        gl.uniform4f(p.u.uS, cx, cy, sc, 0); gl.uniform2f(p.u.uWH, W, Hh); gl.uniform1f(p.u.uMono, colorOn ? 0 : 1); };
+      if (showFace) {
+        const key = yaw + ":" + pitch + ":" + dataVer; if (key !== lastSort) { sortOrder(R[2], cen); lastSort = key; }
+        common(progF); gl.drawArraysInstanced(gl.TRIANGLES, 0, 48, N);
+      }
+      if (showEdge) { common(progE); gl.uniform1f(progE.u.uA, showFace ? 0.8 : colorOn ? 0.85 : 0.6); gl.drawArraysInstanced(gl.LINES, 0, 24, N); }
+    }
   }
-  if (hover) {   // грань под курсором — обведена: по ней щелчок и поставит отражение
-    const f = faces.find(q => q.pc === hover.pc && q.fi === hover.fi);
-    if (f) { g.globalAlpha = 1; g.strokeStyle = "#ffffff"; g.lineWidth = 2.5; g.beginPath(); f.s.forEach((q, i) => { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); g.stroke(); }
+  if (mouse && mouseMoved && !ptrs.size) { const f = pick(mouse[0], mouse[1]); hover = f; cv.style.cursor = f ? "pointer" : "grab"; mouseMoved = false; }
+  if (hover && hover.n < N) {   // грань под курсором — обведена: по ней щелчок и поставит отражение
+    const s = screenVerts(hover.n, R, sc, cen), fc = TF[(DATA[hover.n * 16 + 3] | 0) & 3][hover.fi];
+    o2.strokeStyle = "#ffffff"; o2.lineWidth = 2.5; o2.beginPath(); fc.forEach((i, q) => q ? o2.lineTo(s[i][0], s[i][1]) : o2.moveTo(s[i][0], s[i][1])); o2.closePath(); o2.stroke();
   }
-  lastFaces = faces;
-  g.globalAlpha = 1;
   const sum = (n) => n * (n + 1) / 2, rows = []; for (let n = 0; n < L; n++) rows.push(sum(n + 1));
-  document.getElementById("count").innerHTML = `▲ ${cnt.up} (по слоям ${rows.join(", ")}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}` + (extra.filter(q => q.ref).length ? ` · отражений ${extra.filter(q => q.ref).length}` : "") + (extra.filter(q => q.moved).length ? ` · сдвинуто ${extra.filter(q => q.moved).length}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
+  const rs = rows.length > 7 ? rows.slice(0, 5).join(", ") + ", … " + rows[rows.length - 1] : rows.join(", ");
+  const nRef = extra.filter(q => q.ref).length, nMov = extra.filter(q => q.moved).length;
+  const txt = (gl ? "" : "нет WebGL2 — рисовать нечем (консоль F12)<br>") + `▲ ${cnt.up} (по слоям ${rs}) · ◆ ${cnt.oct} · ▼ ${cnt.dn}` + (nRef ? ` · отражений ${nRef}` : "") + (nMov ? ` · сдвинуто ${nMov}` : "") + (note && performance.now() < noteT ? `<br>${note}` : "");
+  if (txt !== lastCount) { document.getElementById("count").innerHTML = txt; lastCount = txt; }
 }
-function pick(x, y){   // самая ближняя грань под точкой (грани отсортированы от дальних к ближним)
-  for (let i = lastFaces.length - 1; i >= 0; i--) {
-    const [a, b, c] = lastFaces[i].s, d1 = (x - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (y - b[1]), d2 = (x - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (y - c[1]), d3 = (x - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (y - a[1]);
-    if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) return lastFaces[i];
+function occupied(c2, nv){   // стоит ли уже часть с таким центром (все части пирамиды, без фильтров ▲ ◆ ▼ и среза)
+  if (extra.some(q => q.v.length === nv && Math.hypot(...sub3(centroid(q.v), c2)) < 1e-6)) return true;
+  for (let t = 0; t < 3; t++) {
+    if ((t === 1) !== (nv === 6)) continue;
+    const p = sub3(c2, TC[t]), f = MI.map(r => r[0] * p[0] + r[1] * p[1] + r[2] * p[2]), ijk = f.map(Math.round);
+    if (f.some((x, q) => Math.abs(x - ijk[q]) > 1e-6) || ijk.some(x => x < 0)) continue;
+    if (ijk[0] + ijk[1] + ijk[2] <= L - 1 - t && !removed.has(keyOf(t, ijk[0], ijk[1], ijk[2]))) return true;
   }
-  return null;
+  return false;
 }
-function reflect(f){   // зеркальная копия части через щёлкнутую грань — садится по ту сторону, грань к грани
-  const pc = f.pc, a = pc.v[f.fi[0]], b = pc.v[f.fi[1]], c = pc.v[f.fi[2]];
+function reflect(pc, face){   // зеркальная копия части через щёлкнутую грань — садится по ту сторону, грань к грани
+  const a = pc.v[face[0]], b = pc.v[face[1]], c = pc.v[face[2]];
   const n0 = cross3(sub3(b, a), sub3(c, a)), nl = Math.hypot(...n0), n = n0.map(x => x / nl);
   const v2 = pc.v.map(q => { const d = dot3(sub3(q, a), n); return [q[0] - 2 * d * n[0], q[1] - 2 * d * n[1], q[2] - 2 * d * n[2]]; });
-  const c2 = centroid(v2), all = pieces(true).concat(extra);
-  if (all.some(q => q.v.length === v2.length && Math.hypot(...sub3(centroid(q.v), c2)) < 1e-6)) { note = "здесь уже стоит такая часть"; noteT = performance.now() + 1500; return; }
-  extra.push({ kind: pc.kind, layer: pc.layer, v: v2, f: pc.f, col: colOf(pc), ref: true });
+  if (occupied(centroid(v2), v2.length)) { note = "здесь уже стоит такая часть"; noteT = performance.now() + 1500; return; }
+  extra.push({ kind: pc.kind, layer: pc.layer, tpl: pc.tpl, v: v2, col: colOf(pc), ref: true }); rebuild();
 }
 let mode = "ref", grab = null;   // v0.003: режим щелчка — ref отражать / move двигать / flip переворачивать; grab — часть, которую тащат
 function own(pc){   // часть пирамиды, которую трогают, — снимается из пирамиды и становится своей копией среди достроенных
   if (pc.ref || pc.moved) return pc;
-  removed.add(pc.id); const q = { kind: pc.kind, layer: pc.layer, v: pc.v.map(x => x.slice()), f: pc.f, col: colOf(pc), moved: true }; extra.push(q); return q;
+  removed.add(pc.id); const q = { kind: pc.kind, layer: pc.layer, tpl: pc.tpl, v: pc.v.map(x => x.slice()), col: colOf(pc), moved: true }; extra.push(q); rebuild(); return q;
 }
 function unrot(p){   // обратный поворот вида: из координат экрана — в мир
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -182,9 +392,7 @@ function unrot(p){   // обратный поворот вида: из коор�
   return [p[0] * cy - z * sy, y, p[0] * sy + z * cy];
 }
 // узлы решётки: v = i·E0 + j·E1 + k·E2 — все вершины укладки стоят в них
-const MI = (() => { const m = [[E[0][0], E[1][0], E[2][0]], [E[0][1], E[1][1], E[2][1]], [E[0][2], E[1][2], E[2][2]]];
-  const [a, b, c] = m[0], [d, e, f] = m[1], [g2, h, i] = m[2], det = a * (e * i - f * h) - b * (d * i - f * g2) + c * (d * h - e * g2);
-  return [[(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det], [(f * g2 - d * i) / det, (a * i - c * g2) / det, (c * d - a * f) / det], [(d * h - e * g2) / det, (b * g2 - a * h) / det, (a * e - b * d) / det]]; })();
+const MI = inv3([[E[0][0], E[1][0], E[2][0]], [E[0][1], E[1][1], E[2][1]], [E[0][2], E[1][2], E[2][2]]]);
 function snap(pc){
   const v = pc.v[0], ijk = MI.map(r => Math.round(r[0] * v[0] + r[1] * v[1] + r[2] * v[2])), t = P(ijk[0], ijk[1], ijk[2]), d = sub3(t, v);
   pc.v = pc.v.map(q => add(q, d));
@@ -192,58 +400,74 @@ function snap(pc){
 function flip(pc){   // 180° вокруг горизонтали (ось X) через середину: y, z отражаются — тетраэдр встаёт остриём вниз, как в провалах укладки
   const q = own(pc), c = centroid(q.v); q.v = q.v.map(v => [v[0], 2 * c[1] - v[1], 2 * c[2] - v[2]]); snap(q);
   if (q.kind === "up") q.kind = "dn"; else if (q.kind === "dn") q.kind = "up";
+  rebuild();
 }
-function frame(){ if (spin && !ptrs.size) yaw += 0.004; draw(); requestAnimationFrame(frame); }
+function frame(now){
+  if (tween) { const k = Math.min(1, (now - tween.t0) / 450), e = k * k * (3 - 2 * k);
+    yaw = tween.y0 + tween.dy * e; pitch = tween.p0 + (tween.p1 - tween.p0) * e; if (k >= 1) tween = null; }
+  else if (spin && !ptrs.size) yaw += 0.004;
+  draw(); requestAnimationFrame(frame);
+}
 const ptrs = new Map(); let downX = 0, downY = 0, moved = false, btn = 0, lx = 0, ly = 0, pinch0 = 0, zoom0 = 1, mid0 = null, pan0 = null;
-const zoomAt = (mx, my, z1) => { z1 = Math.max(0.2, Math.min(12, z1)); const qx = (mx - W / 2 - panX) / zoom, qy = (my - Hh / 2 - panY) / zoom; zoom = z1; panX = mx - W / 2 - qx * zoom; panY = my - Hh / 2 - qy * zoom; };
+const zoomAt = (mx, my, z1) => { z1 = Math.max(0.2, Math.min(40, z1)); const qx = (mx - W / 2 - panX) / zoom, qy = (my - Hh / 2 - panY) / zoom; zoom = z1; panX = mx - W / 2 - qx * zoom; panY = my - Hh / 2 - qy * zoom; };
 const two = () => { const [p, q] = [...ptrs.values()]; return { d: Math.hypot(p.x - q.x, p.y - q.y), m: [(p.x + q.x) / 2, (p.y + q.y) / 2] }; };
 cv.addEventListener("pointerdown", e => {
-  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId); tween = null;
   if (ptrs.size === 1) { downX = lx = e.clientX; downY = ly = e.clientY; moved = false; btn = e.button; cv.style.cursor = "grabbing";
-    grab = null; if (mode === "move" && btn === 0) { const f = pick(e.clientX, e.clientY); if (f) grab = own(f.pc); } }
+    grab = null; if (mode === "move" && btn === 0) { const f = pick(e.clientX, e.clientY); if (f) grab = own(pieceAt(f.n)); } }
   if (ptrs.size === 2) { const t = two(); pinch0 = t.d; zoom0 = zoom; mid0 = t.m; pan0 = [panX, panY]; moved = true; }
 });
 cv.addEventListener("pointermove", e => {
-  if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") { const f = pick(e.clientX, e.clientY); hover = f ? { pc: f.pc, fi: f.fi } : null; cv.style.cursor = f ? "pointer" : "grab"; } return; }
+  if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") { mouse = [e.clientX, e.clientY]; mouseMoved = true; } return; }
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (ptrs.size === 2) { const t = two(); zoom = zoom0; panX = pan0[0]; panY = pan0[1]; zoomAt(mid0[0], mid0[1], zoom0 * t.d / (pinch0 || 1)); panX += t.m[0] - mid0[0]; panY += t.m[1] - mid0[1]; return; }
   if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) moved = true;
   const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
-  if (grab) { const sc = Math.min(W, Hh) / (L * 1.9 + 1) * zoom, d = unrot([dx / sc, -dy / sc, 0]); grab.v = grab.v.map(q => add(q, d)); return; }   // v0.003: тащим часть
+  if (grab) { const sc = scale(), d = unrot([dx / sc, -dy / sc, 0]); grab.v = grab.v.map(q => add(q, d)); syncExtra(grab); return; }   // v0.003: тащим часть
   if (btn === 2 || btn === 1 || e.shiftKey) { panX += dx; panY += dy; }
-  else { yaw += dx * 0.008; pitch = Math.max(-1.5, Math.min(1.5, pitch + dy * 0.008)); }
+  else { yaw += dx * 0.008; pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + dy * 0.008)); }
 });
+cv.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" && !ptrs.size) { mouse = null; hover = null; } });
 const up = (e) => {
   const was = ptrs.size; ptrs.delete(e.pointerId);
-  if (grab) { snap(grab); grab = null; }   // v0.003: отпустил — в ближайший узел решётки
-  else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") { const f = pick(e.clientX, e.clientY); if (f) { if (mode === "flip") flip(f.pc); else if (mode === "ref") reflect(f); } }
-  if (!ptrs.size) cv.style.cursor = "grab";
+  if (grab) { snap(grab); syncExtra(grab); grab = null; }   // v0.003: отпустил — в ближайший узел решётки
+  else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") { const f = pick(e.clientX, e.clientY);
+    if (f) { const pc = pieceAt(f.n); if (mode === "flip") flip(pc); else if (mode === "ref") reflect(pc, TF[pc.tpl][f.fi]); } }
+  if (!ptrs.size) { cv.style.cursor = "grab"; mouseMoved = true; }
 };
 cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
 cv.addEventListener("contextmenu", e => e.preventDefault());
-cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
-const sL = document.getElementById("sL"), sX = document.getElementById("sX");
-const ui = () => { document.getElementById("vL").textContent = L; document.getElementById("vX").textContent = Math.round(X * 100);
-  [["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin]].forEach(([id, on]) => document.getElementById(id).classList.toggle("on", on)); };
-sL.oninput = () => { L = +sL.value; ui(); };
-sX.oninput = () => { X = +sX.value / 100; ui(); };
-document.getElementById("bUp").onclick = () => { showUp = !showUp; ui(); };
-document.getElementById("bOct").onclick = () => { showOct = !showOct; ui(); };
-document.getElementById("bDn").onclick = () => { showDn = !showDn; ui(); };
-document.getElementById("bSpin").onclick = () => { spin = !spin; ui(); };
-document.getElementById("bView").onclick = () => { zoom = 1; panX = panY = 0; };
-document.getElementById("bClr").onclick = () => { extra = []; removed.clear(); hover = null; };
-const modeUi = () => [["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => document.getElementById(id).classList.toggle("on", mode === m));
-[["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => document.getElementById(id).onclick = () => { mode = m; modeUi(); });
+cv.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, zoom * Math.exp(-e.deltaY * 0.0015)); mouseMoved = true; }, { passive: false });
+const $ = (id) => document.getElementById(id), sL = $("sL"), sX = $("sX"), sS = $("sS");
+const ui = () => { $("vL").textContent = L; $("vX").textContent = Math.round(X * 100); $("vS").textContent = slice ? slice : "все";
+  [["bUp", showUp], ["bOct", showOct], ["bDn", showDn], ["bSpin", spin], ["bFace", showFace], ["bEdge", showEdge], ["bCol", colorOn]].forEach(([id, on]) => $(id).classList.toggle("on", on)); };
+sL.oninput = () => { L = +sL.value; sS.max = L; if (slice > L) { slice = L; sS.value = L; } ui(); rebuild(); };
+sX.oninput = () => { X = +sX.value / 100; ui(); mouseMoved = true; };
+sS.oninput = () => { slice = +sS.value; ui(); rebuild(); };
+$("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
+$("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
+$("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
+$("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
+$("bFace").onclick = () => { showFace = !showFace; if (!showFace && !showEdge) showEdge = true; ui(); };
+$("bEdge").onclick = () => { showEdge = !showEdge; if (!showFace && !showEdge) showFace = true; ui(); };
+$("bCol").onclick = () => { colorOn = !colorOn; ui(); };
+$("bView").onclick = () => { zoom = 1; panX = panY = 0; };
+$("bClr").onclick = () => { extra = []; removed.clear(); rebuild(); };
+$("bPng").onclick = () => { draw(); const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = `zerkalius-piramida-${L}.png`; a.click(); };
+document.querySelectorAll("[data-v]").forEach(b => b.onclick = () => goView(b.dataset.v));
+const modeUi = () => [["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => $(id).classList.toggle("on", mode === m));
+[["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => $(id).onclick = () => { mode = m; modeUi(); });
 // v0.004: панель сворачивается до строки заголовка; на телефоне — свёрнута с начала, выбор помнится
-const panel = document.getElementById("panel"), bMin = document.getElementById("bMin");
+const panel = $("panel"), bMin = $("bMin");
 const setMin = (m) => { panel.classList.toggle("min", m); bMin.textContent = m ? "▸" : "▾"; };
 let min0 = null; try { min0 = localStorage.getItem("piramida_min"); } catch (e) {}
 setMin(min0 === null ? matchMedia("(max-width:600px)").matches : min0 === "1");
 bMin.onclick = () => { const m = !panel.classList.contains("min"); setMin(m); try { localStorage.setItem("piramida_min", m ? "1" : "0"); } catch (e) {} };
-addEventListener("keydown", e => { if (e.code === "Space") { spin = !spin; ui(); e.preventDefault(); } });
-L = +sL.value; X = +sX.value / 100; ui(); frame();
+addEventListener("keydown", e => { if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
+if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
+L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
 </script>
 <script src="../_js/hub-link.js"></script>
+<script src="../_js/slider-arrows.js"></script>
 </body>
 </html>
