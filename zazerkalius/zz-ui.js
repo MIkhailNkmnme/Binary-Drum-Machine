@@ -7868,6 +7868,10 @@ function lpTag(){
       rows.forEach(r => {
         const its2 = r.filter(q => q.it).map(q => q.el);
         r.forEach((q, i) => { if (!q.it) return; q.el._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; q.el._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH; q.el._tzm = 0; q.el._tzx = 0; q.el._tzn = q.el._tzn0; });
+        /* v0.520, по снимку «Заготовок» — «выровняй все кнопки под стандарт ширин»: кнопки ряда — одной ширины (две в ряд — ровно пополам, во всех
+           разделах одинаково), если каждой хватает своей доли; иначе — как прежде, лишнее по стороне по кругу */
+        if (its2.length > 1) { const nonIt = r.reduce((a, q) => a + (q.it ? 0 : q.w), 0), wEq = (W - nonIt) / its2.length, nOf = (e) => (wEq - (e._tzL[1] + e._tzR[1]) * t) / sd;   // одна ширина, края у кнопок разные
+          if (its2.every(e => e._tzn0 <= nOf(e) + 1e-6)) { its2.forEach(e => { e._tzn = nOf(e); e._tzx = e._tzn - e._tzn0; tzGeo(e); }); return; } }
         const sum = r.reduce((a, q) => a + (q.it ? wOf(q.el, q.el._tzL, q.el._tzR) : q.w), 0);
         let k = Math.floor((W - sum) / sd + 0.001);
         let c = its2.slice(); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
