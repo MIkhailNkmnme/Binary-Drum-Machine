@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.076. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.077. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.076</title>
+<title>Zerkalius Пирамида — v0.077</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -257,6 +257,8 @@
   под бегунок (.under: z 2, щелчки — бегунку), так что бегунок всегда впереди.
   v0.076, «ось вращения — дальнюю от меня половину затемнить немного, после центра»: половина оси, что уходит от зрителя
   (при взгляде сверху — нижняя, снизу — верхняя; глубина точки (0, y, 0) — sin(pitch)·y), рисуется бледнее (40 %).
+  v0.077, по снимку крайнего деления — «обводка слева нормально, а справа — по треугольнику, правее»: цветная обводка — по контуру
+  всего деления-змея (слева его рёбра совпадают с ромбом-бегунком, справа — рёбра половины плоского ромба), кольцо ::after снято.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -362,8 +364,8 @@
   .ticks span.end{ pointer-events:auto; cursor:pointer; z-index:4; color:var(--fg); }   /* v0.075: крайнее — половина плоского ромба (внутрь шкалы) + ромб с бегунок обводкой */
   .ticks span.end.l{ clip-path:polygon(17.5px 50%, 50% 0, 100% 50%, 50% 100%); } .ticks span.end.l::before{ clip-path:polygon(16.5px 50%, 50% 0, 100% 50%, 50% 100%); }
   .ticks span.end.r{ clip-path:polygon(0 50%, 50% 0, calc(100% - 17.5px) 50%, 50% 100%); } .ticks span.end.r::before{ clip-path:polygon(0 50%, 50% 0, calc(100% - 16.5px) 50%, 50% 100%); }
-  .ticks span.end::after{ content:""; position:absolute; left:calc(50% - 10.5px); top:1px; width:21px; height:30px; z-index:-1; background:var(--acc); opacity:.8; clip-path:polygon(evenodd, 50% 0, 100% 50%, 50% 100%, 0 50%, 50% 0, 50% 8%, 10% 50%, 50% 92%, 90% 50%, 50% 8%); }
-  .ticks span.end:hover::after, .ticks span.end:active::after{ opacity:1; }
+  .ticks span.end{ background:color-mix(in srgb, var(--acc) 80%, transparent); }   /* v0.077: обводка — по всему змею: слева рёбра ромба-бегунка, справа — рёбра треугольника */
+  .ticks span.end:hover, .ticks span.end:active{ background:var(--acc); }
   .ticks span.end.under{ z-index:2; pointer-events:none; }   /* бегунок рядом — он впереди */
   .ticks span.on{ color:var(--acc); }
   body.zen-mode #panel, body.zen-mode #spdBar, body.zen-mode #bPan, body.zen-mode #views, body.zen-mode #spinBox{ display:none; }
@@ -401,7 +403,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.076</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.077</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
