@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.009. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.010. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.009</title>
+<title>Zerkalius Пирамида — v0.010</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -49,6 +49,10 @@
   v0.008, «×512»: скорость удваивается до ×512 (прежде до ×32), после ×512 — снова ×¼.
   v0.009, «смена вида пусть не останавливает вращение»: goView больше не выключает ⟳ — после плавного перехода вращение
   идёт дальше вокруг вертикали с того же наклона (сверху и снизу — крутится на месте).
+  v0.010, «двойной клик — пауза / старт вращения»: два щелчка (касания) в одном месте за 300 мс включают и выключают ⟳.
+  Поэтому одиночный щелчок (отразить, перевернуть) выполняется через 300 мс, если второго не было; часть и грань при этом
+  берутся в миг щелчка. В режиме ✥ часть снимается с пирамиды только когда её действительно потащили (grabPend), а не
+  при нажатии — иначе двойной щелчок оставлял «сдвинутую» часть на прежнем месте.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -89,7 +93,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.009</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.010</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -106,7 +110,7 @@
     <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button>
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×512 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×512 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
   <div class="row">
     <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
@@ -420,8 +424,8 @@ const two = () => { const [p, q] = [...ptrs.values()]; return { d: Math.hypot(p.
 cv.addEventListener("pointerdown", e => {
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId); tween = null;
   if (ptrs.size === 1) { downX = lx = e.clientX; downY = ly = e.clientY; moved = false; btn = e.button; cv.style.cursor = "grabbing";
-    grab = null; if (mode === "move" && btn === 0) { const f = pick(e.clientX, e.clientY); if (f) grab = own(pieceAt(f.n)); } }
-  if (ptrs.size === 2) { const t = two(); pinch0 = t.d; zoom0 = zoom; mid0 = t.m; pan0 = [panX, panY]; moved = true; }
+    grab = null; grabPend = mode === "move" && btn === 0 ? pick(e.clientX, e.clientY) : null; }
+  if (ptrs.size === 2) { grabPend = null; const t = two(); pinch0 = t.d; zoom0 = zoom; mid0 = t.m; pan0 = [panX, panY]; moved = true; }
 });
 cv.addEventListener("pointermove", e => {
   if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") { mouse = [e.clientX, e.clientY]; mouseMoved = true; } return; }
@@ -429,16 +433,26 @@ cv.addEventListener("pointermove", e => {
   if (ptrs.size === 2) { const t = two(); zoom = zoom0; panX = pan0[0]; panY = pan0[1]; zoomAt(mid0[0], mid0[1], zoom0 * t.d / (pinch0 || 1)); panX += t.m[0] - mid0[0]; panY += t.m[1] - mid0[1]; return; }
   if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) moved = true;
   const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+  if (grabPend) { if (!moved) return; grab = own(pieceAt(grabPend.n)); grabPend = null; }   // v0.010: снимается с пирамиды, только когда потащили
   if (grab) { const sc = scale(), d = unrot([dx / sc, -dy / sc, 0]); grab.v = grab.v.map(q => add(q, d)); syncExtra(grab); return; }   // v0.003: тащим часть
   if (btn === 2 || btn === 1 || e.shiftKey) { panX += dx; panY += dy; }
   else { yaw += dx * 0.008; pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + dy * 0.008)); }
 });
 cv.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" && !ptrs.size) { mouse = null; hover = null; } });
+let grabPend = null, tapT = null;   // v0.010: часть под нажатием в режиме ✥; ждущий одиночный щелчок
+function tap(x, y){   // два щелчка в одном месте за 300 мс — пауза / старт вращения; одиночный — отразить / перевернуть, через 300 мс
+  const now = performance.now();
+  if (tapT && now - tapT.t < 300 && Math.hypot(x - tapT.x, y - tapT.y) < 30) { clearTimeout(tapT.h); tapT = null; spin = !spin; ui(); return; }
+  if (tapT) { clearTimeout(tapT.h); const a = tapT.act; tapT = null; a(); }
+  const f = pick(x, y), pc = f ? pieceAt(f.n) : null, face = f ? TF[pc.tpl][f.fi] : null;
+  const act = () => { if (!pc) return; if (mode === "flip") flip(pc); else if (mode === "ref") reflect(pc, face); };
+  tapT = { t: now, x, y, act, h: setTimeout(() => { tapT = null; act(); }, 300) };
+}
 const up = (e) => {
   const was = ptrs.size; ptrs.delete(e.pointerId);
   if (grab) { snap(grab); syncExtra(grab); grab = null; }   // v0.003: отпустил — в ближайший узел решётки
-  else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") { const f = pick(e.clientX, e.clientY);
-    if (f) { const pc = pieceAt(f.n); if (mode === "flip") flip(pc); else if (mode === "ref") reflect(pc, TF[pc.tpl][f.fi]); } }
+  else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") tap(e.clientX, e.clientY);
+  grabPend = null;
   if (!ptrs.size) { cv.style.cursor = "grab"; mouseMoved = true; }
 };
 cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
