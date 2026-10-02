@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.053. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.054. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.053</title>
+<title>Zerkalius Пирамида — v0.054</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -196,6 +196,9 @@
   ромб её не прячется под ней.
   v0.053, по снимку ромба видов — «кнопки тоже в цвет»: у ромбиков видов, ручки и ◎ 📷 ✥ обводка всегда цветная — свой --acc
   (радугой по порядку или выбранным цветом), приглушённая (60 % цвета), при наведении и у горящей ⟳ — полным цветом.
+  v0.054, по снимку «×1» у ромба скорости, наполовину под ним — «текст бегунка (цветной) — на передний план»: значения у
+  бегунков скорости (#lSpd, #lFine) — поверх ромба (z 4), подписи ползунков панели остаются за ним; отступ подписи от
+  середины ромба — 20 px вместо 16, чтобы не наезжала.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -217,7 +220,7 @@
   .scol{ position:relative; }
   .slab{ position:absolute; top:7px; left:0; font:13px/19px system-ui, sans-serif; color:var(--dim); background:rgba(12,14,18,.88); padding:0 4px; border-radius:3px; pointer-events:none; white-space:nowrap; }
   .slab b{ color:var(--fg); }
-  #lSpd, #lFine{ color:var(--acc); }
+  #lSpd, #lFine{ color:var(--acc); z-index:4; }   /* v0.054: значение скорости — поверх ромба */
   @media (max-width:600px){ #spdBar .slab{ display:none; } }
   input[type=range]{ width:100%; }
   .rows{ display:flex; flex-direction:column; gap:4px; }
@@ -312,7 +315,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel"><div class="card" id="pMain">
-  <h1>ПИРАМИДА<span id="ver">v0.053</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.054</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="row"><button id="bTet" title="Укладка тетраэдров и октаэдров гранями — слои 1, 3, 6, 10…">▲◆<span class="t"> укладка</span></button><button id="bBi" title="Би-три-рамиды: треугольные бипирамиды (два тетраэдра основанием к основанию), в каждом ярусе на одну больше — 1, 2, 3…">⧫<span class="t"> бипирамиды</span></button></div>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="32" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше — стрелкой до 64 (удержание — повтор)">▸</button></div>
@@ -710,7 +713,7 @@ function placeLabels(){   // v0.021: подпись «название числ�
   document.querySelectorAll(".srow").forEach(r => {
     const inp = r.querySelector("input"), lab = r.querySelector(".slab"); if (!inp || !lab) return; const w = inp.clientWidth; if (!w) return;
     const mn = +inp.min, mx = +inp.max, f = mx > mn ? (+inp.value - mn) / (mx - mn) : 0, x = 10.5 + f * (w - 21), lw = lab.offsetWidth;
-    lab.style.left = (x + 16 + lw <= w ? x + 16 : Math.max(0, x - 16 - lw)) + "px";
+    lab.style.left = (x + 20 + lw <= w ? x + 20 : Math.max(0, x - 20 - lw)) + "px";
   });
 }
 function setL(v){ L = v; sL.value = Math.min(v, +sL.max); sS.max = L; if (slice > L) { slice = L; sS.value = L; } ui(); rebuild(); }   // v0.031: ползунок до 32, стрелкой до 64
