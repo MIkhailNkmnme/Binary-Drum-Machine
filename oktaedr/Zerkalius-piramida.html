@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.010. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.011. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.010</title>
+<title>Zerkalius Пирамида — v0.011</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -53,6 +53,14 @@
   Поэтому одиночный щелчок (отразить, перевернуть) выполняется через 300 мс, если второго не было; часть и грань при этом
   берутся в миг щелчка. В режиме ✥ часть снимается с пирамиды только когда её действительно потащили (grabPend), а не
   при нажатии — иначе двойной щелчок оставлял «сдвинутую» часть на прежнем месте.
+  v0.011, «кнопка дзен и выход по долгому нажатию, картинку сохранять так, как видно на скорости, ×1024, ползунок на всю
+  ширину экрана — плавный, но с метками»:
+  ◎ дзен — прячет панель и полосу скорости (body.zen-mode; значок хаба hub-link сам гасит до .18); выход — долгое нажатие
+  (600 мс, не сдвигая) на пирамиде или Esc. Скорость — полоса #spdBar внизу во всю ширину: ползунок по степени двойки
+  (−2 … 10, т. е. ×¼ … ×1024) с шагом 0,01, у целых степеней прилипает (±0,08); метки ¼ ½ 1 2 … 1024 — щелчок по метке ставит
+  её скорость. Кнопка ×N по-прежнему удваивает (до ×1024, потом ×¼) и двигает ползунок. 📷 при вращении складывает 8 последних
+  кадров (то, что глаз видит слитно, ~0,13 с при 60 кадрах в секунду): каждый кадр с поворотом на шаг вращения назад,
+  среднее по каждой точке; без вращения — один кадр, как было.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -60,7 +68,7 @@
   #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
   #cv{ touch-action:none; cursor:grab; }
   #ov{ pointer-events:none; }
-  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 24px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 64px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
   #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; display:flex; align-items:center; }
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
   #panel.min > :not(h1){ display:none; }
@@ -74,9 +82,20 @@
   button{ flex:1 0 auto; background:#0c0f14; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:5px 6px; cursor:pointer; font:inherit; }
   button.on{ color:var(--fg); border-color:var(--acc); }
   #count{ color:var(--dim); font-size:12px; }
+  #spdBar{ position:fixed; left:0; right:0; bottom:0; padding:4px 14px 3px; background:rgba(5,6,8,.6); touch-action:none; }
+  #sSpd{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:18px; margin:0; background:none; }
+  #sSpd::-webkit-slider-runnable-track{ height:4px; border-radius:2px; background:var(--line); }
+  #sSpd::-moz-range-track{ height:4px; border-radius:2px; background:var(--line); }
+  #sSpd::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border-radius:50%; background:var(--acc); border:none; }
+  #sSpd::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:var(--acc); border:none; }
+  #spdTicks{ position:relative; height:13px; margin:0 8px; }
+  #spdTicks span{ position:absolute; top:0; transform:translateX(-50%); font:10px/13px monospace; color:var(--dim); cursor:pointer; user-select:none; }
+  #spdTicks span::before{ content:""; position:absolute; left:50%; top:-3px; width:1px; height:3px; background:var(--dim); }
+  #spdTicks span.on{ color:var(--acc); }
+  body.zen-mode #panel, body.zen-mode #spdBar{ display:none; }
   #ver{ margin-left:8px; color:var(--dim); font:11px monospace; letter-spacing:0; font-weight:400; }
   @media (max-width:600px){
-    #panel{ left:6px; right:6px; top:auto; bottom:6px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
+    #panel{ left:6px; right:6px; top:auto; bottom:44px; width:auto; max-height:45%; padding:6px 8px; gap:5px; font-size:12px; }
     #panel.min{ right:auto; }
     #panel h1{ font-size:12px; }
     .sl{ flex-direction:row; gap:8px; }
@@ -93,7 +112,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.010</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.011</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <label class="s">Слоёв: <b id="vL">4</b><input type="range" id="sL" min="1" max="64" step="1" value="4"></label>
   <label class="s">Раздвинуть: <b id="vX">0</b><input type="range" id="sX" min="0" max="100" step="1" value="35"></label>
@@ -110,7 +129,7 @@
     <button id="bEdge" class="on" title="Рёбра">╱<span class="t"> рёбра</span></button>
     <button id="bCol" class="on" title="Цвет: по слоям и видам частей; выключен — всё одним светлым">◐<span class="t"> цвет</span></button>
   </div>
-  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×512 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG">📷<span class="t"> снимок</span></button></div>
+  <div class="row"><button id="bSpin" class="on" title="Вращение (пробел или двойной щелчок по пирамиде)">⟳<span class="t"> вращение</span></button><button id="bSpd" title="Скорость вращения: щелчок — вдвое быстрее; после ×1024 — снова ×¼">×1</button><button id="bPng" title="Сохранить картинку PNG; при вращении — как видно глазу: 8 последних кадров слитно">📷<span class="t"> снимок</span></button><button id="bZen" title="Дзен: спрятать панели; выйти — долгое нажатие на пирамиде или Esc">◎<span class="t"> дзен</span></button></div>
   <div class="row"><button id="mRef" class="on" title="Щелчок по грани — зеркальная копия части через эту грань">⟲<span class="t"> отражать</span></button><button id="mMove" title="Тащи часть мышью или пальцем; отпустил — встаёт в ближайший узел решётки">✥<span class="t"> двигать</span></button><button id="mFlip" title="Щелчок по части — перевернуть её вверх ногами (тетраэдр остриём вверх ⇄ вниз)">⇅<span class="t"> перевернуть</span></button></div>
   <div class="row">
     <button data-v="top" title="Вид сверху — на основание">⊤<span class="t"> сверху</span></button>
@@ -124,6 +143,7 @@
   </div>
   <div id="count"></div>
 </div>
+<div id="spdBar" title="Скорость вращения"><input type="range" id="sSpd" min="-2" max="10" step="0.01" value="0" data-zerk-arrowed="1"><div id="spdTicks"></div></div>
 <script>
 const cv = document.getElementById("cv"), ov = document.getElementById("ov"), o2 = ov.getContext("2d");
 const NOTE_COL = ["#ff5f6d", "#ff9f43", "#ffe066", "#7ee787", "#4dd4ff", "#6b8cff", "#c38cf5"];
@@ -423,6 +443,8 @@ const zoomAt = (mx, my, z1) => { z1 = Math.max(0.2, Math.min(40, z1)); const qx 
 const two = () => { const [p, q] = [...ptrs.values()]; return { d: Math.hypot(p.x - q.x, p.y - q.y), m: [(p.x + q.x) / 2, (p.y + q.y) / 2] }; };
 cv.addEventListener("pointerdown", e => {
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId); tween = null;
+  clearTimeout(lpT); lpDone = false;
+  if (ptrs.size === 1 && zen) lpT = setTimeout(() => { if (!moved && ptrs.size === 1) { lpDone = true; setZen(false); } }, 600);   // v0.011: долгое нажатие — выход из дзен
   if (ptrs.size === 1) { downX = lx = e.clientX; downY = ly = e.clientY; moved = false; btn = e.button; cv.style.cursor = "grabbing";
     grab = null; grabPend = mode === "move" && btn === 0 ? pick(e.clientX, e.clientY) : null; }
   if (ptrs.size === 2) { grabPend = null; const t = two(); pinch0 = t.d; zoom0 = zoom; mid0 = t.m; pan0 = [panX, panY]; moved = true; }
@@ -431,7 +453,7 @@ cv.addEventListener("pointermove", e => {
   if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") { mouse = [e.clientX, e.clientY]; mouseMoved = true; } return; }
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (ptrs.size === 2) { const t = two(); zoom = zoom0; panX = pan0[0]; panY = pan0[1]; zoomAt(mid0[0], mid0[1], zoom0 * t.d / (pinch0 || 1)); panX += t.m[0] - mid0[0]; panY += t.m[1] - mid0[1]; return; }
-  if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) moved = true;
+  if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) { moved = true; clearTimeout(lpT); }
   const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
   if (grabPend) { if (!moved) return; grab = own(pieceAt(grabPend.n)); grabPend = null; }   // v0.010: снимается с пирамиды, только когда потащили
   if (grab) { const sc = scale(), d = unrot([dx / sc, -dy / sc, 0]); grab.v = grab.v.map(q => add(q, d)); syncExtra(grab); return; }   // v0.003: тащим часть
@@ -439,6 +461,7 @@ cv.addEventListener("pointermove", e => {
   else { yaw += dx * 0.008; pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch + dy * 0.008)); }
 });
 cv.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" && !ptrs.size) { mouse = null; hover = null; } });
+let lpT = 0, lpDone = false, zen = false;   // v0.011: таймер долгого нажатия; оно уже сработало; режим дзен
 let grabPend = null, tapT = null;   // v0.010: часть под нажатием в режиме ✥; ждущий одиночный щелчок
 function tap(x, y){   // два щелчка в одном месте за 300 мс — пауза / старт вращения; одиночный — отразить / перевернуть, через 300 мс
   const now = performance.now();
@@ -449,7 +472,8 @@ function tap(x, y){   // два щелчка в одном месте за 300 �
   tapT = { t: now, x, y, act, h: setTimeout(() => { tapT = null; act(); }, 300) };
 }
 const up = (e) => {
-  const was = ptrs.size; ptrs.delete(e.pointerId);
+  const was = ptrs.size; ptrs.delete(e.pointerId); clearTimeout(lpT);
+  if (lpDone) { if (!ptrs.size) lpDone = false; grabPend = null; return; }   // долгое нажатие вывело из дзен — щелчком не считается
   if (grab) { snap(grab); syncExtra(grab); grab = null; }   // v0.003: отпустил — в ближайший узел решётки
   else if (was === 1 && !moved && btn === 0 && e.type === "pointerup") tap(e.clientX, e.clientY);
   grabPend = null;
@@ -468,13 +492,38 @@ $("bUp").onclick = () => { showUp = !showUp; ui(); rebuild(); };
 $("bOct").onclick = () => { showOct = !showOct; ui(); rebuild(); };
 $("bDn").onclick = () => { showDn = !showDn; ui(); rebuild(); };
 $("bSpin").onclick = () => { spin = !spin; tween = null; ui(); };
-$("bSpd").onclick = () => { spd = spd >= 512 ? 0.25 : spd * 2; spin = true; tween = null; $("bSpd").textContent = "×" + (spd === 0.25 ? "¼" : spd === 0.5 ? "½" : spd); ui(); };
+// v0.011: скорость = 2^v, v от −2 до 10 (×¼ … ×1024); ползунок плавный, у целых степеней прилипает; метки — щелчком
+const sSpd = $("sSpd"), spdTicks = $("spdTicks");
+const spdTxt = (s) => { const v = Math.log2(s), r = Math.round(v);
+  if (Math.abs(v - r) < 1e-6) return r === -2 ? "¼" : r === -1 ? "½" : String(2 ** r);
+  return s < 1 ? s.toFixed(2) : s < 10 ? s.toFixed(1) : String(Math.round(s)); };
+function setSpd(v){ v = Math.max(-2, Math.min(10, v)); spd = 2 ** v; sSpd.value = v; $("bSpd").textContent = "×" + spdTxt(spd);
+  [...spdTicks.children].forEach((t, i) => t.classList.toggle("on", Math.abs(v - (i - 2)) < 1e-6)); }
+for (let i = -2; i <= 10; i++) { const t = document.createElement("span"); t.textContent = i === -2 ? "¼" : i === -1 ? "½" : 2 ** i; t.style.left = (i + 2) / 12 * 100 + "%";
+  t.onclick = () => { setSpd(i); spin = true; tween = null; ui(); }; spdTicks.appendChild(t); }
+sSpd.oninput = () => { let v = +sSpd.value; const r = Math.round(v); if (Math.abs(v - r) < 0.08) v = r; setSpd(v); spin = true; ui(); };
+$("bSpd").onclick = () => { const v = Math.floor(Math.log2(spd) + 1e-6) + 1; setSpd(v > 10 ? -2 : v); spin = true; tween = null; ui(); };
+setSpd(0);
+// v0.011: дзен — панели спрятаны, выход долгим нажатием или Esc
+function setZen(z){ zen = z; document.body.classList.toggle("zen-mode", z); }
+$("bZen").onclick = () => setZen(true);
 $("bFace").onclick = () => { showFace = !showFace; if (!showFace && !showEdge) showEdge = true; ui(); };
 $("bEdge").onclick = () => { showEdge = !showEdge; if (!showFace && !showEdge) showFace = true; ui(); };
 $("bCol").onclick = () => { colorOn = !colorOn; ui(); };
 $("bView").onclick = () => { zoom = 1; panX = panY = 0; };
 $("bClr").onclick = () => { extra = []; removed.clear(); rebuild(); };
-$("bPng").onclick = () => { draw(); const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = `zerkalius-piramida-${L}.png`; a.click(); };
+$("bPng").onclick = () => {   // v0.011: при вращении — 8 последних кадров слитно (так их видит глаз), без вращения — один кадр
+  const K = spin ? 8 : 1, step = 0.004 * spd, y0 = yaw, w = cv.width, h = cv.height;
+  const c2 = document.createElement("canvas"); c2.width = w; c2.height = h; const g2 = c2.getContext("2d", { willReadFrequently: true });
+  const acc = K > 1 ? new Float32Array(w * h * 4) : null;
+  for (let k = 0; k < K; k++) {
+    yaw = y0 - (K - 1 - k) * step; draw(); g2.drawImage(cv, 0, 0);
+    if (acc) { const d = g2.getImageData(0, 0, w, h).data; for (let i = 0; i < d.length; i++) acc[i] += d[i]; }
+  }
+  yaw = y0;
+  if (acc) { const im = g2.createImageData(w, h); for (let i = 0; i < acc.length; i++) im.data[i] = acc[i] / K; g2.putImageData(im, 0, 0); }
+  const a = document.createElement("a"); a.href = c2.toDataURL("image/png"); a.download = `zerkalius-piramida-${L}` + (K > 1 ? `-x${spdTxt(spd).replace("¼", "0.25").replace("½", "0.5")}` : "") + ".png"; a.click();
+};
 document.querySelectorAll("[data-v]").forEach(b => b.onclick = () => goView(b.dataset.v));
 const modeUi = () => [["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => $(id).classList.toggle("on", mode === m));
 [["mRef", "ref"], ["mMove", "move"], ["mFlip", "flip"]].forEach(([id, m]) => $(id).onclick = () => { mode = m; modeUi(); });
@@ -484,7 +533,7 @@ const setMin = (m) => { panel.classList.toggle("min", m); bMin.textContent = m ?
 let min0 = null; try { min0 = localStorage.getItem("piramida_min"); } catch (e) {}
 setMin(min0 === null ? matchMedia("(max-width:600px)").matches : min0 === "1");
 bMin.onclick = () => { const m = !panel.classList.contains("min"); setMin(m); try { localStorage.setItem("piramida_min", m ? "1" : "0"); } catch (e) {} };
-addEventListener("keydown", e => { if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
+addEventListener("keydown", e => { if (e.code === "Escape" && zen) { setZen(false); return; } if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
 if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
 L = +sL.value; X = +sX.value / 100; sS.max = L; ui(); rebuild(); requestAnimationFrame(frame);
 </script>
