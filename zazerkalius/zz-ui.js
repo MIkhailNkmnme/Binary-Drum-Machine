@@ -3165,6 +3165,7 @@ function setupCone(){
     ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => { if (spinT || spinI) spinStop(); }));
     b.addEventListener("contextmenu", (e) => { e.preventDefault(); Z.coneSpin = 0; save(); renderCone(); say("◯ Конус — снова в начальном положении."); });
   }
+  $("bConeSpin0").onclick = () => { Z.coneSpin = 0; save(); renderCone(); say("◯ Весь конус — в начальном положении (0°)."); };   // v0.539: «весь» между ⟲ ⟳ — к 0°
   const ringStep = (dir) => {   // dir: +1 — по часовой, −1 — против
     const T = rowSel.size ? [...rowSel].filter(i => i < Z.rows.length) : [Z.cur], free = T.filter(i => !coneLocked(i)), sel = [...rowSel];
     if (free.length) { snapshot(); free.forEach(i => { Z.rows[i] = coneRotStr(Z.rows[i], -dir); }); sel.forEach(i => rowSel.add(i)); }
