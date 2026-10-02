@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.556. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.557. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.556</title>
+<title>Zazerkalius — v0.557</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -354,6 +354,11 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 /* v0.093, «тут шрифт и значки покрупнее, и выровняй всё, может, столбики — границы между ними тонкие»: у номера строки —
    ровные столбики: замок | поворот ↻ | номер | неподв.·меняющ. | 0:1; между столбиками тонкие черты; шрифт крупнее */
 .rw > .no{display:grid !important;grid-template-columns:2.3em 1.9em 2.6em;grid-auto-flow:column;grid-auto-columns:4.6em;justify-content:start;align-items:stretch;font-size:13px;padding:0}   /* v0.144, «тут слева отступ ненужный»: колонки счётчиков (н·м, 0·1) — только когда они включены, прежде 2 × 4.6em пустовали всегда */
+/* v0.557, «уменьши отступы, когда маленький шрифт» — «междустрочные отступы»: номер строки, замок и счётчик накрутки были своего размера (13 px) и при мелких цифрах раздвигали строки — теперь мельчают вместе с ними (не крупнее 13 px), высота строки — по битам */
+#rowList .rw > .no{font-size:min(13px, calc(var(--fs) * .8)) !important;line-height:1 !important}
+#rowList .rw > .no > *{line-height:1 !important}
+#rowList .rw > .no .rlk{font-size:min(10px, calc(var(--fs) * .62)) !important;padding-top:0 !important;padding-bottom:0 !important}
+#rowList .rw > .no .rrot{font-size:min(9px, calc(var(--fs) * .56)) !important}
 /* v0.096, «номера гуляют при выделениях»: столбики чисел были «auto» и выравнивались по правому краю — у выделенной (жирной)
    строки числа шире, и весь ряд уезжал влево. Теперь у каждого столбика своя постоянная ширина и ряд прижат влево. */
 .rw > .no > .rc{overflow:hidden}
@@ -1485,7 +1490,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.556</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.557</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2432,8 +2437,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0556"></script>
-<script src="zz-ui.js?v=0556"></script>
+<script src="zz-core.js?v=0557"></script>
+<script src="zz-ui.js?v=0557"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

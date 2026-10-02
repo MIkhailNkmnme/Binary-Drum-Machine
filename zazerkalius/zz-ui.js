@@ -10556,8 +10556,15 @@ function init(){
   $("fontSel").onchange = (e) => { Z.ff = e.target.value; renderAll(); save(); };
   /* v0.543, «размер шрифта ползунком, при изменении ставить в середину первый бит первой строки»: ◀ ▶ (v0.217) сняты — ползунок 11…40; тянешь — поле
      перерисовывается и прокручивается так, что первый бит первой строки — посередине видимого поля */
-  $("fsRange").oninput = (e) => { Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); $("fsVal").textContent = Z.fs; renderAll(); rowsCenterBit0(); };
-  $("fsRange").onchange = () => save();
+  /* v0.557, «какие-то тормоза при изменении размера текста»: пока тянут — не перерисовка всей страницы (все окна, конус) на каждое движение, а раз в кадр
+     только размер (--fs) и подгонка поля строк; всё остальное — один раз, когда отпустили */
+  let fsRaf = 0;
+  $("fsRange").oninput = (e) => {
+    Z.fs = Math.max(11, Math.min(40, Math.round(+e.target.value) || 18)); $("fsVal").textContent = Z.fs;
+    if (fsRaf) return;
+    fsRaf = requestAnimationFrame(() => { fsRaf = 0; applyView(); if (Z.tri90) tri90Apply(); rowsFit(); fieldInfoFit(); rowsCenterBit0(); });
+  };
+  $("fsRange").onchange = () => { if (fsRaf) { cancelAnimationFrame(fsRaf); fsRaf = 0; } renderAll(); rowsCenterBit0(); save(); };
   /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
      (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
   $("bLayout").onclick = () => {
