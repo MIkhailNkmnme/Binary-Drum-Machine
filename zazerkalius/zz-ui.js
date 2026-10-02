@@ -7903,14 +7903,20 @@ function lpTop(col, vis){
     if (vis(el) || el.classList.contains("sp")) end();
   };
   [...top.children].forEach(walk); end();
-  runs.forEach(r => r.forEach((b, i) => {
+  const shape = () => runs.forEach(r => r.forEach((b, i) => {
     b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
     b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH;
-    b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 10 - (b._tzL[1] + b._tzR[1]) * t) / sd));   // + поля 4 px; выемка сама добавляет ширину
+    b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd));   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
     tzGeo(b);
   }));
+  /* v0.524: кнопки шире — на узком окне шапка может не влезть в строку: тогда шрифт её кнопок мельче (не меньше 10 px), пока не войдёт */
+  if (!(window.matchMedia && matchMedia("(max-width:760px)").matches)) {
+    let fs = 12; lpTop.pad = 14; top.style.setProperty("--tbfs", fs + "px"); shape();
+    for (let k = 0; k < 4 && top.scrollWidth > top.clientWidth + 1 && fs > 10; k++) { fs = Math.max(10, Math.floor(fs * top.clientWidth / top.scrollWidth * 10) / 10); top.style.setProperty("--tbfs", fs + "px"); shape(); }
+    if (top.scrollWidth > top.clientWidth + 1) { lpTop.pad = 2; shape(); }   // и так тесно — поля у надписей уже (надпись заходит в острия)
+  } else { lpTop.pad = 14; shape(); }
 }
 window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
