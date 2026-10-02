@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.537. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.538. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.537</title>
+<title>Zazerkalius — v0.538</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1031,7 +1031,7 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
    меньше), по краю — светлая обводка; наведение — ярче */
 #rowsPane #bPaneIcons#bPaneIcons::before{content:"";position:absolute;inset:0;background:color-mix(in srgb, var(--acc) 13%, var(--panel));
   clip-path:polygon(7.8px 1.5px,18.2px 1.5px,12.1px 50%,18.2px calc(100% - 1.5px),7.8px calc(100% - 1.5px),1.75px 50%)}
-body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{position:relative}
+body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{position:relative;top:auto;right:auto}   /* v0.538, «криво стрелка меню лежит»: в столбике значков — без углового сдвига (right 12, top 8), по центру */
 body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::before{clip-path:polygon(2.6px 1.5px,13px 1.5px,19.05px 50%,13px calc(100% - 1.5px),2.6px calc(100% - 1.5px),8.7px 50%)}
 #rowsPane #bPaneIcons#bPaneIcons:hover{background:var(--acc)}
 #rowsPane #bPaneIcons#bPaneIcons:hover::before{background:color-mix(in srgb, var(--acc) 30%, var(--panel))}
@@ -1471,7 +1471,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.537</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.538</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2414,8 +2414,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0537"></script>
-<script src="zz-ui.js?v=0537"></script>
+<script src="zz-core.js?v=0538"></script>
+<script src="zz-ui.js?v=0538"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
