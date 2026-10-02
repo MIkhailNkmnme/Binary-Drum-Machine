@@ -1,10 +1,10 @@
-<!-- Zerkalius Пирамида — v0.025. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
+<!-- Zerkalius Пирамида — v0.026. Сверху одна, под ней три, под ними шесть, дальше десять… — пирамида из тетраэдров и октаэдров. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Пирамида — v0.025</title>
+<title>Zerkalius Пирамида — v0.026</title>
 <!--
   ═══ ПИРАМИДА (заведена 2026-09-29) ═══════════════════════════════════════════════════════════════
   Вопрос пользователя: «а можно ли вообще расположить единичные [тела] гранями друг к другу так: 1, 2, 3» → «верх, под ней 3,
@@ -125,6 +125,12 @@
   v0.025, по снимку «◌1571 0,50 …» — «при таких скоростях эффекта нет? зачем они? пусть появляются, только когда что-то есть»:
   точки стробоскопа — только с q ≤ 12 (до 12 положений за круг глаз ещё видит как рисунок); на медленных участках, где таких нет
   (ниже ×32, у бипирамид ниже ×64), строка кнопок пуста и спрятана (#strobe:empty).
+  v0.026, по снимку полоски видов — «в ромб по вершинам и сторонам и помести слева вверху»: виды — ромб из ромбиков (решётка
+  3 × 3, повёрнутая на 45°, R = 37 px от центра): вершины — ⊤ сверху, ◇ ребро (справа), ⊥ снизу, ◁ сбоку (слева); стороны —
+  ⬙ 3D, ◢ грань, ручка ⋮⋮ (низ-право); в центре — ⌖. Каждая кнопка — ромб 34 px, соседи сходятся сторонами. Ромб стоит слева
+  вверху, панель на компьютере опущена под него (top 132 px); на телефоне панель внизу, как была. Полоска больше не идёт
+  через shapeRows. И «пусть над ползунками появляется, чтобы не дёргались»: строка стробоскопа #strobe — над полосой скорости
+  (absolute, bottom: 100%), полоса больше не меняет высоту, когда кнопки появляются и пропадают.
 -->
 <style>
   :root{ --bg:#050608; --panel:rgba(12,14,18,.92); --line:#2a3038; --fg:#cfd8dc; --dim:#7d8388; --acc:#7ee787; }
@@ -133,7 +139,7 @@
   #cv, #ov{ position:fixed; inset:0; width:100%; height:100%; }
   #cv{ touch-action:none; cursor:grab; }
   #ov{ pointer-events:none; }
-  #panel{ position:fixed; left:12px; top:12px; width:230px; max-height:calc(100% - 124px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  #panel{ position:fixed; left:12px; top:132px; width:230px; max-height:calc(100% - 256px); overflow:auto; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px; }
   #panel h1{ margin:0; font-size:14px; letter-spacing:2px; color:var(--acc); font-weight:600; display:flex; align-items:center; }
   #bMin{ flex:0 0 auto; margin-left:auto; padding:0 6px; border:none; background:none; color:var(--dim); font-size:14px; letter-spacing:0; }
   #panel.min > :not(h1){ display:none; }
@@ -153,7 +159,7 @@
   #cMono{ flex:0 0 auto; width:32px; height:28px; padding:2px; border:1px solid var(--line); border-radius:4px; background:#0c0f14; cursor:pointer; display:none; }
   #cMono.show{ display:block; }
   .srow{ display:flex; align-items:flex-start; gap:6px; }
-  #strobe{ display:flex; gap:4px; justify-content:center; margin-top:3px; }
+  #strobe{ position:absolute; left:0; right:0; bottom:100%; margin-bottom:4px; display:flex; gap:4px; justify-content:center; }   /* v0.026: над ползунками — они не прыгают */
   #strobe:empty{ display:none; }
   #strobe button{ flex:0 1 auto; padding:2px calc(var(--t) + 5px); font:11px/18px monospace; }
   body{ --t:7px; }
@@ -167,9 +173,11 @@
   .row > button{ padding:5px calc(var(--t) + 6px); }
   .row, #strobe{ gap:3px 0; }
   #panel h1{ cursor:move; touch-action:none; }
-  #views{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:4; display:flex; align-items:center; padding:4px 6px; background:var(--panel); border:1px solid var(--line); border-radius:6px; }
-  #views > button{ flex:none; padding:4px calc(var(--t) + 5px); }
-  #views .grip{ color:var(--dim); padding:0 6px 0 2px; cursor:move; touch-action:none; letter-spacing:-3px; }
+  #views{ position:fixed; top:12px; left:12px; z-index:4; width:108px; height:108px; }
+  body #views > button, body #views > .grip{ position:absolute; left:calc(50% - 17px + var(--x)); top:calc(50% - 17px + var(--y)); width:34px; height:34px; margin:0; padding:0;
+    display:flex; align-items:center; justify-content:center; flex:none; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  body #views > button::before{ clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  #views .grip{ background:var(--line); color:var(--dim); cursor:move; touch-action:none; letter-spacing:-3px; font-size:12px; }
   .scol{ flex:1 1 auto; min-width:0; }
   button.sar{ flex:0 0 auto; width:18px; height:20px; margin:1px 2px 0; padding:0; border:none; border-radius:0; font-size:0; touch-action:none; background:var(--acc); opacity:.6; }
   button.sar[data-d="-1"]{ clip-path:polygon(0 50%, 100% 0, 100% 100%); }
@@ -215,7 +223,7 @@
 <canvas id="cv"></canvas>
 <canvas id="ov"></canvas>
 <div id="panel">
-  <h1>ПИРАМИДА<span id="ver">v0.025</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
+  <h1>ПИРАМИДА<span id="ver">v0.026</span><button id="bMin" title="Свернуть / развернуть панель">▾</button></h1>
   <div class="sl">
   <div class="srow pr"><button class="sar" data-for="sL" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sL" min="1" max="64" step="1" value="4" data-zerk-arrowed="1"><span class="slab">Слоёв <b id="vL">4</b></span></div><button class="sar" data-for="sL" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
   <div class="srow pr"><button class="sar" data-for="sX" data-d="-1" title="Меньше (удержание — повтор)">◂</button><div class="scol"><input type="range" class="spd" id="sX" min="0" max="100" step="1" value="35" data-zerk-arrowed="1"><span class="slab">Раздвинуть <b id="vX">0</b></span></div><button class="sar" data-for="sX" data-d="1" title="Больше (удержание — повтор)">▸</button></div>
@@ -239,7 +247,7 @@
   </div>
   <div id="count"></div>
 </div>
-<div id="views"><span class="grip" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span><button data-v="top" title="Вид сверху — на основание">⊤</button><button data-v="bot" title="Вид снизу">⊥</button><button data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" title="Приближение и сдвиг — как было">⌖</button></div>
+<div id="views"><button style="--x:0px;--y:-37px" data-v="top" title="Вид сверху — на основание">⊤</button><button style="--x:0px;--y:37px" data-v="bot" title="Вид снизу">⊥</button><button style="--x:-37px;--y:0px" data-v="side" title="Вид сбоку — на боковую грань, по горизонтали">◁</button><button style="--x:37px;--y:0px" data-v="edge" title="Вид сбоку — на боковое ребро">◇</button><button style="--x:18.5px;--y:-18.5px" data-v="face" title="Вид прямо на боковую грань — перпендикулярно ей">◢</button><button style="--x:-18.5px;--y:-18.5px" data-v="iso" title="Вид в три четверти, как в начале">⬙</button><button id="bView" style="--x:0px;--y:0px" title="Приближение и сдвиг — как было">⌖</button><span class="grip" style="--x:18.5px;--y:18.5px" title="Тащи — переставить; двойной щелчок — на место">⋮⋮</span></div>
 <button id="bZen" class="fixb" title="Дзен: спрятать панели; выйти — ещё раз сюда, долгое нажатие на пирамиде или Esc">◎</button>
 <button id="bPan" class="fixb" title="Нажми и веди — сдвигает весь вид">✥</button>
 <div id="spdBar" title="Скорость вращения">
@@ -734,7 +742,7 @@ draggable(panel, panel.querySelector("h1"), "piramida_pos");
 draggable($("views"), $("views").querySelector(".grip"), "piramida_views");
 // v0.021: края строк кнопок — ромбами: (лево(середина)право) — слева «((», середина «()», справа «))», соседи вплотную
 function shapeRows(){
-  document.querySelectorAll(".row, #strobe, #views").forEach(box => {
+  document.querySelectorAll(".row, #strobe").forEach(box => {
     const bs = [...box.children].filter(b => b.tagName === "BUTTON" && b.offsetParent !== null);
     for (let pass = 0; pass < 2; pass++) {
       const ls = []; let top = null;
@@ -746,7 +754,7 @@ function shapeRows(){
 var shapeQ = false;   // var: strobeBuild зовёт shapeSoon ещё до этой строки
 function shapeSoon(){ if (shapeQ) return; shapeQ = true; requestAnimationFrame(() => { shapeQ = false; shapeRows(); }); }
 { const ro2 = new ResizeObserver(() => placeLabels()); document.querySelectorAll(".srow").forEach(el => ro2.observe(el)); }
-{ const ro = new ResizeObserver(shapeSoon); document.querySelectorAll(".row, #strobe, #views, #panel").forEach(el => ro.observe(el)); }
+{ const ro = new ResizeObserver(shapeSoon); document.querySelectorAll(".row, #strobe, #panel").forEach(el => ro.observe(el)); }
 shapeSoon();
 addEventListener("keydown", e => { if (e.code === "Escape" && zen) { setZen(false); return; } if (e.code === "Space") { spin = !spin; tween = null; ui(); e.preventDefault(); } });
 if (gl) { try { glInit(); } catch (err) { console.error(err); gl = null; } }
