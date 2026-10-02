@@ -1069,7 +1069,8 @@ draggable(panel, panel.querySelector("h1"), "piramida_pos");
 panel.querySelector("h1").addEventListener("pointerup", () => setTimeout(fitPanel, 0)); addEventListener("resize", fitPanel);
 function fitPanel(){   /* v0.090: панель — не на полосу скорости и не за низ экрана */
   const pn = document.getElementById("panel"), sb = document.getElementById("spdBar"); if (!pn || !sb) return;
-  const limit = spin && getComputedStyle(sb).display !== "none" ? innerHeight - sb.offsetHeight - 58 : innerHeight - 60;
+  let limit = spin && getComputedStyle(sb).display !== "none" ? innerHeight - sb.offsetHeight - 58 : innerHeight - 60;
+  if (spin) (window.freeEls || []).forEach(el => { if (el.style.position === "fixed") { const t = parseFloat(el.style.top); if (t > innerHeight / 2) limit = Math.min(limit, t - 6); } });   /* ряд кнопок над скоростью — панель выше него */
   if (pn.style.top) { pn.style.bottom = ""; pn.style.maxHeight = Math.max(80, limit - parseFloat(pn.style.top)) + "px"; return; }
   if (getComputedStyle(pn).top === "auto" || matchMedia("(max-width:600px)").matches) { pn.style.bottom = (innerHeight - limit) + "px"; pn.style.maxHeight = Math.max(80, limit - 8) + "px"; }
   else pn.style.maxHeight = Math.max(80, limit - pn.getBoundingClientRect().top) + "px";
