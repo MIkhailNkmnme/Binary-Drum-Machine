@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.505. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.506. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.505</title>
+<title>Zazerkalius — v0.506</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -997,6 +997,9 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
   background:color-mix(in srgb, var(--gfc, var(--line)) 30%, transparent);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.856' height='24'%3E%3Cpath d='M0 0L13.856 24M13.856 0L0 24M0 12H13.856' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") var(--a, 0px) 0 / calc(2 * var(--t, 6.928px)) 24px repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.856' height='24'%3E%3Cpath d='M0 0L13.856 24M13.856 0L0 24M0 12H13.856' stroke='%23000' stroke-width='1' fill='none'/%3E%3C/svg%3E") var(--a, 0px) 0 / calc(2 * var(--t, 6.928px)) 24px repeat}
+/* v0.506, по снимку «Звука» — «ползунок не там ставит цифры своего значения» (и «Вид»): у элементов группы конструктора --t не задан (его ставит tzGeo
+   только обычным кнопкам) — правило места числа (calc с var(--t)) становилось недействительным, число прилипало к левому краю. Общее --t — на все группы */
+:is(#w-cone .tools, #paneGrp){--t:6.9282px}
 /* v0.452: конструктор группы (△ в заголовке, tzcApply): кнопки — на своих треугольниках, поверх места рисунка (padding-top у .cgb); блоки-обёртки
    не мешают (display: contents); обводка — слоем .tzco поверх, одна линия на стык */
 .cgrp .gtri{margin-left:5px;font-size:11px;cursor:pointer;opacity:.35;text-transform:none}
@@ -1384,7 +1387,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.505</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.506</span>
   <!-- v0.158, «и повтор — слева от всех кнопок»: ↩ отменить и ↪ повторить — первыми в шапке -->
   <button id="bUndo" title="Отменить последнюю правку строк (Ctrl+Z)">↩</button>
   <button id="bRedo" title="Повторить отменённое ↩ (Ctrl+Y или Ctrl+Shift+Z)">↪</button>
@@ -2320,8 +2323,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0505"></script>
-<script src="zz-ui.js?v=0505"></script>
+<script src="zz-core.js?v=0506b"></script>
+<script src="zz-ui.js?v=0506b"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
