@@ -8030,6 +8030,7 @@ function triTag(){
     /* v0.486, «Своя также сделай»: «Своя» — как все, «стрелка вправо» (прежде, v0.450, — остриём слева и выемкой к цветам) */
     if (b.dataset.tzl) { b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP; b._tzfix = true; }   /* v0.604: свои края кнопки (t — остриё, n — выемка), как в шапке: (выдел)лучи(все) */
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
+    if (b.dataset.tzadd) b._tzn += +b.dataset.tzadd / 2;   /* v0.613: data-tzadd — шире на столько t (остриё соседа съедает t у кнопки перед ним) */
     b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
