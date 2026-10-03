@@ -8200,7 +8200,19 @@ function lpTag(){
     });
     lpTop(col, vis);
     lpBar(col, vis);   // v0.543
+    paneZig();   // v0.634
   } finally { lpBusy = false; if (lpTag._mo) lpTag._mo.takeRecords(); }   // свои же правки — не повод пересчитывать заново
+}
+/* v0.634, по снимку края левой панели — «сделай ромбовидной вертикальную границу левого меню»: вместо прямой черты справа — зубцы из тех же треугольников
+   (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
+   месте, пока панель листается; за линией — фон страницы. Цвета — из темы (--line, фон body), рисунок пересобирается, когда они сменились */
+function paneZig(){
+  const pane = document.getElementById("rowsPane"); if (!pane) return;
+  const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d", bg = getComputedStyle(document.body).backgroundColor, key = ln + "|" + bg;
+  if (pane._zk === key) return; pane._zk = key;
+  const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, H = TZC_H, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
+  pane.style.setProperty("--pzig", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); pane.style.setProperty("--pzigw", w.toFixed(2) + "px");
 }
 /* v0.521, «сделай меню верхнее в стиле треугольников также»: кнопки шапки — из тех же треугольников; кнопки, стоящие рядом, — одна цепочка
    (как ряд левой панели: по краям острия, на стыке выемка к выемке — ромбик фона). Длина — по надписи. Обводка — цветом прежней рамки кнопки
@@ -8346,6 +8358,9 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
      v0.508, «ромб растяжки — внизу должен быть, а где-то гуляет»: ромб — всегда в нижнем ряду, у правого края группы (на последней кнопке ряда, если она
      дошла до края; короткий ряд — на рамке справа от неё) */
   let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
+  /* v0.634, по снимку «Кручения» — «поправь границы»: под кнопками там ещё строка «вариантов цикла» (#coneVarN, не из треугольников), а ромб-ручка
+     вставал над ней — на третьем ряду, поверх рамки. Нижний ряд — и такая строка: ромб — в её правом острие, в углу группы */
+  g.querySelectorAll(":scope > #coneVarN").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) { bot = r.top; maxR = gr.right; } });
   const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
@@ -10865,7 +10880,7 @@ function init(){
   const packLabel = () => $("bPack").classList.toggle("on", !!Z.pack);
   packLabel();
   $("bPack").onclick = () => { Z.pack = !Z.pack; packLabel(); packWins(); save(); say(Z.pack ? "⤒ Окна прижимаются к верху." : "⤒ Выключено: окна стоят там, где их поставили."); };
-  $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); };
+  $("bTheme").onclick = () => { Z.theme = themeIsLight() ? "dark" : "light"; applyTheme(); save(); renderAll(); paneZig(); };
   /* v0.496, «тест: вообще убрать обводку — прозрачной сделать»: ▱ в шапке — обводки в группах (кнопки, ползунки, заголовки, рамки групп, кольца
      конструктора) другие или как были. Z.noLn, по умолчанию — включено. v0.497, «сделай её в цвет фона холста»: не прозрачные, а цветом фона (tzLnBg) */
   if (Z.noLn === undefined) Z.noLn = true;
