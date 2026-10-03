@@ -3782,6 +3782,21 @@ function setupCone(){
     lasHist.push(b); if (lasHist.length > 500) lasHist.shift();
     fillAutoCommit();   // v0.698: строка за чертой вся «1» — в строки, черта вниз (только по шагу)
   };
+  /* v0.699, «сделай кнопку — шаг ровно на 1/2 часть текущего кольца» (после ответа, что «шаг ↷» идёт до следующего события, а не на долю круга): «½ шаг» —
+     поворот ровно на полчасти кольца текущей строки (частей: n бит, в вырезах T−1 — 2n − 1), в выбранном направлении. «Каждое» / «Встреч Бит» — фаза в частях:
+     +½, все кольца на полчасти своих; «Встреч Стр» — фаза в градусах: 360° / частей / 2; «Всё» — весь конус на тот же угол. Запоминается для «↶ откат»; краска
+     — как всегда при отрисовке; готовая строка за чертой — в строки (это шаг) */
+  if ($("bLasHalf")) $("bLasHalf").onclick = () => {
+    const i = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0)), n = (Z.rows[i] || "").length || 1, P = coneCutGeo(i, n).cut ? 2 * n - 1 : n;
+    const m = Z.coneSpinMode || "all", dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, deg = 360 / P / 2;
+    lasHist.push(lasSnap()); if (lasHist.length > 500) lasHist.shift();
+    if (coneBitMode(m)) Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * 0.5;
+    else if (m === "opp") Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * deg;
+    else Z.coneSpin = (Z.coneSpin || 0) + dir * deg;
+    save(); renderCone(); coneLogRender(); fillAutoCommit();
+    say(`½ Шаг ${dir > 0 ? "по часовой" : "против часовой"}: кольцо ${i + 1} — на полчасти (${(Math.round(deg * 100) / 100).toString().replace(".", ",")}° из ${P} частей)` +
+      (coneBitMode(m) ? ", прочие — на полчасти своих." : m === "opp" ? ", прочие — на тот же угол, через одно навстречу." : ", весь конус целиком."));
+  };
   if ($("bLasPeek")) {   // v0.695: ◌ след. — показать, куда солнце будет светить после шага
     $("bLasPeek").classList.toggle("on", !!Z.lasPeek);
     $("bLasPeek").onclick = () => { Z.lasPeek = !Z.lasPeek; $("bLasPeek").classList.toggle("on", Z.lasPeek); save(); renderCone();
