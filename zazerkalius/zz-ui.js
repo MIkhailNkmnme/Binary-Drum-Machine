@@ -3643,7 +3643,8 @@ function setupCone(){
     let svg = $("animDial");
     if (!svg) {
       svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "animDial"; svg.setAttribute("viewBox", "0 0 100 124");   // v0.550: подпись — под циферблатом
-      svg.innerHTML = '<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,.45)" stroke="currentColor" stroke-width="3"/><g id="adTicks"></g>' +
+      svg.innerHTML = '<title>Часы цикла Аниматрицы: короткая золотая стрелка — где мы в цикле (проход в цикле и доля волны / период), длинная — волна по строкам прохода. В середине — номер прохода в цикле, внизу — «/ период» или «повтора нет», пока картина не повторилась</title>' +   // v0.570: подсказка у часов
+        '<circle cx="50" cy="50" r="46" fill="rgba(0,0,0,.45)" stroke="currentColor" stroke-width="3"/><g id="adTicks"></g>' +
         '<g id="adHand2"><line x1="50" y1="56" x2="50" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><polygon points="50,5 46,13 54,13" fill="currentColor"/></g>' +
         '<g id="adHand"><line x1="50" y1="54" x2="50" y2="26" stroke="var(--gold)" stroke-width="4.4" stroke-linecap="round"/><polygon points="50,18 44,30 56,30" fill="var(--gold)"/></g>' +
         '<circle cx="50" cy="50" r="3.5" fill="var(--gold)"/>' +
