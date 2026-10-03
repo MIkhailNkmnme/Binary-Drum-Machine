@@ -2544,7 +2544,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2600,7 +2600,11 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     /* v0.713, по снимку «☀ 1/15» — «вот тут 1/15 часть солнца вылетела только из всех колец — значит, такая же луна с другой стороны только»: зеркалится
        свет, вылетевший из ВСЕХ колец, включая кольцо за чертой (прошёл и его вырез), — луна той же доли напротив. Начинается у кольца за чертой (красит там
        нули, где накрыла ячейку целиком), дальше — на кольцо наружу. Не вылетело ничего — луны нет */
-    const base = pastN.length && !full(pastN) ? pastN : [], nf = base.length ? [N] : null;
+    /* v0.717, «сделай кнопку, по которой луна будет светить, только когда всё солнце скрыто за единицами, также через лучи из центра в обратном направлении»:
+       «☾ затм.» (Z.moonEcl) — луна только при затмении: ничего не вылетело (весь свет лёг на биты), и тогда зеркалится свет, упавший на последнее кольцо, куда
+       он дошёл (через центр, в обратную сторону); вылетело хоть что-то — луны нет. Дальше — как обычно: от кольца за чертой, нули, на кольцо наружу */
+    const passN = pastN.some(([x, y]) => y - x > 1e-9), lastIn = bands.filter(([k]) => k <= N).pop();
+    const base = Z.moonEcl ? (!passN && lastIn && lastIn[1].length && !full(lastIn[1]) ? lastIn[1] : []) : pastN.length && !full(pastN) ? pastN : [], nf = base.length ? [N] : null;
     const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
     let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9); a0 = A; akb = nf ? nf[0] : N + 1;
     if (akb > N) aout = A;
@@ -3916,6 +3920,11 @@ function setupCone(){
     $("bLasPeek").classList.toggle("on", !!Z.lasPeek);
     $("bLasPeek").onclick = () => { Z.lasPeek = !Z.lasPeek; $("bLasPeek").classList.toggle("on", Z.lasPeek); save(); renderCone();
       say(Z.lasPeek ? (coneSunOn() ? "◌ След.: белым пунктиром — куда солнце будет светить после следующего шага." : "◌ След. включено — показ для ☀ солнца (включи его).") : "◌ След. выключено."); };
+  }
+  if ($("bMoonEcl")) {   // v0.717: ☾ затм. — луна только при затмении солнца
+    $("bMoonEcl").classList.toggle("on", !!Z.moonEcl);
+    $("bMoonEcl").onclick = () => { Z.moonEcl = !Z.moonEcl; $("bMoonEcl").classList.toggle("on", Z.moonEcl); save(); renderCone();
+      say(Z.moonEcl ? "☾ Затмение: луна светит, только когда всё солнце скрыто за битами — зеркало света, упавшего на них, через центр." : "☾ Затмение выключено: луна — зеркало вылетевшего света."); };
   }
   if ($("bLasUndo")) $("bLasUndo").onclick = () => {
     if (!lasHist.length) { say("↶ Откатывать нечего — шагов с последней перезагрузки страницы не было."); return; }
