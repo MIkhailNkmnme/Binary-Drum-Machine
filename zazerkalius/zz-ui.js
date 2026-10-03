@@ -10278,7 +10278,8 @@ function init(){
     const t = (el.textContent || "").trim().replace(/\s+/g, " ");
     return t ? (t.length > 24 ? t.slice(0, 23) + "…" : t) : p.id;
   };
-  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];   // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
+  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-view"];   // v0.661, по снимку шапки: «здесь надо не Структура, а это окно» — 🧊 (бывший «Вид», теперь «Лесенка»); «🧪 Структура» — снова в списке «Другое»
+    // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
   const renderPins = () => {
     let h = "";
     Z.pins.forEach((p, k) => {
@@ -10756,7 +10757,7 @@ function init(){
     });
     /* v0.631, «переименуй — Другое, и убери из них дубликаты, что в верхнем меню теперь всегда»: шесть окон шапки в списке не видны (кнопки остаются
        скрытыми — через них шапка сворачивает и разворачивает окна), заголовок списка — «Другое» */
-    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];
+    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-view"];   // v0.661: как PIN_WINS
     $("paneWinsHead").style.display = list.some(el => !PINNED.includes(el.id)) ? "" : "none";
     $("paneWins").innerHTML = list.map(el => { const t = esc(el.dataset.title || el.id), op = !el.dataset.parked;
       return `<button data-w="${el.id}"${PINNED.includes(el.id) ? " hidden" : ""}${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");
