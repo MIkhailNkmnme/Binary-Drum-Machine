@@ -10026,7 +10026,7 @@ function init(){
     PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
       if (el.classList.contains("popped")) return;
       const t = ({ "w-pyr": "▲ Паскаль", "w-okt": "◆ Бирамида" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
-      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: развернуть, поднять, показать")}">${esc(t)}</button>`;
+      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные пять — свернуть")}">${esc(t)}</button>`;
     });
     if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
     $("pinBar").innerHTML = h;
@@ -10057,7 +10057,12 @@ function init(){
         const isOpen = (w) => !w.dataset.parked && !w.classList.contains("collapsed") && w.style.display !== "none";
         PIN_WINS.forEach(id => { const w = $(id); if (!w || w === el || !isOpen(w)) return;
           const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); else { const bc = w.querySelector(".bc"); if (bc) bc.click(); } });
-        winShow(el.id); return; } }
+        winShow(el.id);
+        /* v0.630, «разворачивать сразу на все поле»: нажатое окно встаёт на весь стол — тем же ⛶ из его шапки (уже развёрнутое во всю ширину не трогается,
+           иначе ⛶ вернул бы его на прежнее место) */
+        const bm = el.querySelector(":scope > .whead .bm") || el.querySelector(".bm"), desk = $("desk");
+        if (bm && !(el.classList.contains("maxed") && el.offsetWidth >= desk.clientWidth - 40)) bm.click();
+        return; } }
     const b = e.target.closest("button[data-k]"); if (!b) return;
     const p = Z.pins[+b.dataset.k]; if (!p) return;
     if (p.t === "w") winShow(p.id); else { const src = $(p.id); if (src) src.click(); else say("📌 Этой кнопки больше нет."); }
