@@ -2562,9 +2562,13 @@ function coneFillCut(){
    есть). На каждом кольце ось режет ячейку — бит или часть выреза T−1 — на месте f (доля от её начала); f = p / q (несократимая, q до 64) — ячейка
    делится на q равных частей: внутри неё синие черты на 1/q, 2/q…, рядом подпись «÷q». Ось по границе ячеек — точка. Кольцо из одного бита — круг,
    его ось не делит */
-function coneScanFrac(f){   // доля → знаменатель несократимой дроби (до 64) или 0
-  for (let q = 2; q <= 64; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f * q - p) < 1e-4 * q) return q; }
-  return 0;
+/* v0.688, по снимку «83%» и «67%» — «можно не в %, а в точных дробях? и показать линиями части»: проценты были там, где ось режет бит не в простой дроби
+   (после шагов лазера кольца стоят на мелких фазах). Теперь доля — дробью: точная (знаменатель до 64) — «5/6», иначе ближайшая простая (знаменатель
+   до 32, ошибка не больше 0,005) — «≈5/6», черты пунктиром; ничего не подошло — десятичная «0,83» без черт. → { p, q, ok } */
+function coneScanFrac(f){
+  for (let q = 2; q <= 64; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f * q - p) < 1e-4 * q) return { p, q, ok: true }; }
+  for (let q = 2; q <= 32; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f - p / q) <= 0.005) return { p, q, ok: false }; }
+  return null;
 }
 function coneScanDraw(g, o){
   const { i, a, step, N, cx, cy, r0, dr, band, dpr } = o, TAU = 2 * Math.PI, kMax = coneGeom && coneGeom.fill ? N : N - 1, rLim = r0 + (Math.max(kMax, i) + 1) * dr, rings = [];
@@ -2598,13 +2602,13 @@ function coneScanDraw(g, o){
       const x = ((((t + Math.PI / 2) / R.step + R.rot) % R.P) + R.P) % R.P, c = Math.floor(x), f = x - c;
       if (f < 1e-4 || f > 1 - 1e-4) { g.fillStyle = o.cg; g.beginPath(); g.arc(cx + rm * Math.cos(t), cy + rm * Math.sin(t), Math.max(3, 3 * dpr), 0, TAU); g.fill(); continue; }   // по границе ячеек
       const key = R.k + ":" + c; if (seen.has(key)) continue; seen.add(key);   // обе стороны оси в одной ячейке — один раз
-      const q = coneScanFrac(f), t0 = t - f * R.step;   // начало ячейки
-      if (q) {   // разбивка ячейки на q равных частей — синими чертами
-        g.strokeStyle = BLUE; g.lineWidth = Math.max(2, 2 * dpr); g.beginPath();
+      const F = coneScanFrac(f), q = F ? F.q : 0, t0 = t - f * R.step;   // начало ячейки
+      if (q) {   // разбивка ячейки на q равных частей — синими чертами (приближённая — пунктиром)
+        g.strokeStyle = BLUE; g.lineWidth = Math.max(2, 2 * dpr); g.setLineDash(F.ok ? [] : [3 * dpr, 3 * dpr]); g.beginPath();
         for (let m = 1; m < q; m++) { const e = t0 + R.step * m / q; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
-        g.stroke();
+        g.stroke(); g.setLineDash([]);
       }
-      const tx = q ? "÷" + q : Math.round(f * 100) + "%", am = t0 + R.step * (q ? 0.5 / q : f / 2), px = cx + rm * Math.cos(am), py = cy + rm * Math.sin(am);   // подпись — в первой части ячейки
+      const tx = F ? (F.ok ? "" : "≈") + F.p + "/" + F.q : f.toFixed(2).replace(".", ","), am = t0 + R.step * (q ? 0.5 / q : f / 2), px = cx + rm * Math.cos(am), py = cy + rm * Math.sin(am);   // подпись — в первой части ячейки
       const w = g.measureText(tx).width + 6 * dpr, h = fsz + 4 * dpr;
       g.fillStyle = o.cBg; g.globalAlpha = 0.85; g.fillRect(px - w / 2, py - h / 2, w, h); g.globalAlpha = 1;
       g.strokeStyle = BLUE; g.lineWidth = Math.max(1, dpr); g.strokeRect(px - w / 2, py - h / 2, w, h);
