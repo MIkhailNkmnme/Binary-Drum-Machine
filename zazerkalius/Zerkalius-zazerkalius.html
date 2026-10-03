@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.571. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.572. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.571</title>
+<title>Zazerkalius — v0.572</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -1036,6 +1036,12 @@ button.tri-d{clip-path:polygon(var(--m) var(--my),calc(var(--m) + var(--h2)) cal
 #rowsPane #tplList.lpb{flex:0 0 auto !important;min-height:0 !important;overflow:visible !important}   /* v0.515, «убери пустоту по вертикали»: заготовки — по своим рядам, не во всю высоту */
 #rowsPane .lpb > .tpl:not(.mine){display:contents !important}
 #rowsPane .lpb > .tpl-sep,#rowsPane .lpb > .tpl.mine,#rowsPane .lpb > #tplMine{flex:0 0 100% !important}
+/* v0.572: свои шаблоны — в цепочке треугольников (lpTag): обёртки растворены, текущий шаблон — горит (заливка) и золотой надписью */
+body:not(.pane-icons) #rowsPane .lpb #tplMine,body:not(.pane-icons) #rowsPane .lpb #tplMine > .tpl.mine{display:contents !important}
+#rowsPane #tplMine .tpl.mine > button.tb.tz.tz.tz{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rowsPane #tplMine .tpl.mine.cur > button.tb.tz.tz.tz{color:var(--gold) !important;background-color:color-mix(in srgb, var(--panel2) 45%, var(--gon)) !important}
+#rowsPane #tplMine .tpl.mine > button.tx.tz.tz.tz{color:var(--dim) !important}
+#rowsPane #tplMine .tpl.mine > button.tx.tz.tz.tz:hover{color:#ff6b6b !important}
 /* v0.516, «цвет серый слишком яркий для заголовков, а у подкнопок наоборот слишком незаметно — выровняй дизайн»: заголовок — тусклее (13 % акцента
    на фоне панели), кнопки — заметнее (16 % акцента на своём фоне, надпись светлая) */
 #rowsPane .lpb :is(button, select).tz.tz.tz.tz{background-color:color-mix(in srgb, var(--acc) 16%, var(--panel2)) !important;color:var(--txt) !important}
@@ -1502,7 +1508,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.571</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.572</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2456,8 +2462,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0571"></script>
-<script src="zz-ui.js?v=0571"></script>
+<script src="zz-core.js?v=0572"></script>
+<script src="zz-ui.js?v=0572"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

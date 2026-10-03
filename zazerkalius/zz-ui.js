@@ -8021,7 +8021,7 @@ function lpTag(){
       if (!bl) return;
       h.classList.toggle("lph", on); bl.classList.toggle("lpb", on);
       if (!bl._lpObs) { bl._lpObs = 1; if (lpRO) lpRO.observe(bl); if (lpTag._mo) lpTag._mo.observe(bl, { childList: true, subtree: true }); }
-      const its = [...bl.querySelectorAll("button, select")].filter(e => !e.closest(".tpl.mine") && !e.closest("#tplMine") && !e.classList.contains("zerk-arrow"));
+      const its = [...bl.querySelectorAll("button, select")].filter(e => !e.classList.contains("zerk-arrow"));   // v0.572: и свои шаблоны (#tplMine) — в общей цепочке
       if (!on) { its.forEach(e => { if (e.classList.contains("tz")) triOff(e); }); return; }
       const shown = its.filter(vis); if (!shown.length) return;
       const col1 = bl.id === "paneWins";
@@ -8040,6 +8040,10 @@ function lpTag(){
       const seq = [];
       const add = (el) => {
         if (el.classList.contains("tpl") && !el.classList.contains("mine")) { [...el.children].forEach(add); return; }   // обёртка растворена (display: contents) — у неё нет своих прямоугольников
+        /* v0.572, по снимку «Шаблонов» — «обнови кнопки шаблонов в ромбовидном стандарте»: свои шаблоны — тоже ряды цепочки: имя во всю ширину, ✕ — ромб
+           в конце ряда (#tplMine и .tpl.mine растворены, display: contents); ряд шаблона — всегда свой, без деления пополам (_tzNoEq у ✕) */
+        if (el.id === "tplMine") { [...el.children].forEach(add); return; }
+        if (el.classList.contains("tpl") && el.classList.contains("mine")) { seq.push({ el, full: true }); [...el.children].forEach(c => { c._tzNoEq = c.classList.contains("tx"); add(c); }); seq.push({ el, full: true }); return; }
         if (!vis(el)) return;
         if (shown.includes(el)) seq.push({ el, it: true });
         else if (el.matches(".tpl-sep, .tpl.mine, #tplMine, .pwArr")) seq.push({ el, full: true });
@@ -8060,7 +8064,7 @@ function lpTag(){
         r.forEach((q, i) => { if (!q.it) return; q.el._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; q.el._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH; q.el._tzm = 0; q.el._tzx = 0; q.el._tzn = q.el._tzn0; });
         /* v0.520, по снимку «Заготовок» — «выровняй все кнопки под стандарт ширин»: кнопки ряда — одной ширины (две в ряд — ровно пополам, во всех
            разделах одинаково), если каждой хватает своей доли; иначе — как прежде, лишнее по стороне по кругу */
-        if (its2.length > 1) { const nonIt = r.reduce((a, q) => a + (q.it ? 0 : q.w), 0), wEq = (W - nonIt) / its2.length, nOf = (e) => (wEq - (e._tzL[1] + e._tzR[1]) * t) / sd;   // одна ширина, края у кнопок разные
+        if (its2.length > 1 && !its2.some(e => e._tzNoEq)) { const nonIt = r.reduce((a, q) => a + (q.it ? 0 : q.w), 0), wEq = (W - nonIt) / its2.length, nOf = (e) => (wEq - (e._tzL[1] + e._tzR[1]) * t) / sd;   // одна ширина, края у кнопок разные
           if (its2.every(e => e._tzn0 <= nOf(e) + 1e-6)) { its2.forEach(e => { e._tzn = nOf(e); e._tzx = e._tzn - e._tzn0; tzGeo(e); }); return; } }
         const sum = r.reduce((a, q) => a + (q.it ? wOf(q.el, q.el._tzL, q.el._tzR) : q.w), 0);
         let k = Math.floor((W - sum) / sd + 0.001);
