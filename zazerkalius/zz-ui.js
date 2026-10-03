@@ -5182,7 +5182,9 @@ function leftBarsInit(){
   const B = document.body;
   /* v0.272, «скролл и граница — друг на друге»: у левого края стола — хват ширины левой панели (#paneEdge, 3 px в стол); полоса — правее него */
   const paneEdgeR = () => { const e = $("paneEdge"); if (!e || !e.getClientRects().length) return 0; return Math.max(0, Math.ceil(e.getBoundingClientRect().right - $("desk").getBoundingClientRect().left) + 1); };
-  mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"), paneEdgeR);
+  /* v0.645, по снимку «▲ Пирамиды Паскаля» у левой панели — «у окон левую границу надо как-то убрать и продолжить фон под меню, чтобы не было вертикали»:
+     полоса прокрутки стола стояла у его левого края, вплотную к зубцам панели, и читалась границей окна. Теперь она — у правого края стола (у поля строк) */
+  mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"), () => Math.max(0, $("desk").clientWidth - 8));
   /* v0.601, «всё равно показывает скролл»: у левой панели своей полосы (paneBar) больше нет — вместо неё светящиеся ▲ ▼ (v0.599, .rpArr) */
 }
 function setupPyr(){
@@ -8304,7 +8306,12 @@ function paneZig(){
   const pane = document.getElementById("rowsPane"); if (!pane) return;
   if (!paneZig._on) { paneZig._on = 1; const k = () => requestAnimationFrame(paneZig), d = document.getElementById("desk");
     if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => setTimeout(paneZig, 60)); }
-  const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d", bg = getComputedStyle(document.body).backgroundColor;
+  const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d";
+  /* v0.645: выемки зубцов — цветом того, что справа от панели (окно на столе — его фон), а не фона страницы: фон окна продолжается под зубцы */
+  let bg = getComputedStyle(document.body).backgroundColor;
+  { const pr = pane.getBoundingClientRect(), ys = [0.3, 0.5, 0.7].map(k => pr.top + pr.height * k), seen = {};
+    for (const y of ys) { let e = document.elementFromPoint(pr.right + 12, y); for (; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\(\s*0,\s*0,\s*0,\s*0\s*\)|transparent/.test(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
+    const best = Object.entries(seen).sort((a, b) => b[1] - a[1])[0]; if (best) bg = best[0]; }
   const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
   let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
   pane.style.setProperty("--pzigy", dy.toFixed(1) + "px");
