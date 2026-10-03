@@ -10389,6 +10389,24 @@ function init(){
   }
   $("paneWins").addEventListener("scroll", pwArrows, { passive: true });
   if (window.ResizeObserver) new ResizeObserver(pwArrows).observe($("paneWins"));
+  /* v0.599, по снимку столбика значков — «убери скролл слева, сделай светящиеся стрелки вверх-вниз, если уходят из видимости»: у левой панели полосы
+     прокрутки нет; ушло вверх — над панелью светится ▲, вниз — ▼ (над ромбом дзена); щелчок — листать на три четверти высоты, колесо — как прежде */
+  { const P = $("rowsPane");
+    if (P) {
+      const mk = (cls, ch) => { const a = document.createElement("div"); a.className = "rpArr " + cls; a.textContent = ch; a.title = cls === "up" ? "Выше есть ещё — щелчок: листать вверх" : "Ниже есть ещё — щелчок: листать вниз"; document.body.appendChild(a); return a; };
+      const up = mk("up", "▲"), dn = mk("dn", "▼");
+      const upd = () => {
+        const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
+        const t = vis && P.scrollTop > 2, b = vis && P.scrollTop + P.clientHeight < P.scrollHeight - 2, zb = $("bConeZen"), zh = zb && zb.parentElement === P ? 46 : 0;
+        [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
+      };
+      P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);
+      if (window.ResizeObserver) { const ro = new ResizeObserver(upd); ro.observe(P); [...P.children].forEach(c => ro.observe(c)); }
+      new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      up.onclick = () => P.scrollBy({ top: -Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
+      dn.onclick = () => P.scrollBy({ top: Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
+      setTimeout(upd, 300);
+    } }
   document.querySelectorAll("#paneWinsBox .pwArr").forEach(a => a.addEventListener("click", () => {
     const P = $("paneWins"); P.scrollBy({ top: (a.classList.contains("up") ? -1 : 1) * Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
   }));
