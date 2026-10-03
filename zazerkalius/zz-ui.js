@@ -5695,7 +5695,7 @@ function renderTri(){
   $("bTriBold").classList.toggle("on", !!Z.triBold);   // v0.632
   $("bTriOut").classList.toggle("on", Z.triOut !== false);
   const pal = $("triPal");
-  if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»); Shift + щелчок — добавить группу к выбранным или снять. Потяни выбранную — все выбранные группы едут по сетке целиком (треугольники не переворачиваются, за край не уходят). Alt + щелчок — то же любым инструментом">☝</button>`
+  if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»); Ctrl (или Shift) + щелчок — добавить группу к выбранным или снять. Потяни выбранную — все выбранные группы едут по сетке целиком (треугольники не переворачиваются, за край не уходят). Пока ☝ горит, щелчок по цвету палитры перекрашивает выбранные группы. Alt + щелчок — то же любым инструментом">☝</button>`
     + `<button data-c="-2" title="✦ Точка в узел: щелчок у вершины — светящаяся точка диаметром ⌀ (цвет — выбери в палитре, пока ✦ горит); ещё щелчок тем же цветом или правый — убрать">✦</button>`
     + `<button data-c="-3" title="╱ Линия по ребру: щелчок или протяжка — рёбра сетки цветной линией толщиной ═ (цвет — в палитре, пока ╱ горит); начал с линии того же цвета или правой кнопкой — стирает">╱</button>`
     + TRI_COL.map((k, i) => i ? `<button data-c="${i}" title="${k[1]}" style="background:${k[0]}"></button>` : `<button data-c="0" title="Ластик — стирать">⌫</button>`).join("");
@@ -5830,7 +5830,8 @@ if ($("triCv")) {
       if (e.button !== 0) return;
       const key = h && Z.triCells[h[0] + "_" + h[1]] ? h[0] + "_" + h[1] : null, M = triModel(triCurData()), S0 = triSelSet(M), gi = key ? M.cid[key] : null;
       if (!Array.isArray(Z.triSelMore)) Z.triSelMore = [];
-      if (e.shiftKey && key) {
+      const addK = e.shiftKey || e.ctrlKey || e.metaKey;   // v0.647, «когда выделить надо — Ctrl, несколько»: Ctrl (и Shift) + щелчок — добавить / снять
+      if (addK && key) {
         if (S0.has(gi)) { if (M.cid[Z.triSel] === gi) { Z.triSel = Z.triSelMore.find(k => M.cid[k] != null && M.cid[k] !== gi) || null; } Z.triSelMore = Z.triSelMore.filter(k => M.cid[k] !== gi && k !== Z.triSel); }
         else if (Z.triSel == null) Z.triSel = key; else Z.triSelMore.push(key);
       } else if (!key || !S0.has(gi)) { Z.triSel = key; Z.triSelMore = []; }
@@ -5838,7 +5839,7 @@ if ($("triCv")) {
       if (!key) return;
       const M1 = triModel(triCurData()), S = triSelSet(M1), cells = [];
       S.forEach(i => M1.comps[i].cells.forEach(([r, c]) => cells.push([r, c])));
-      if (!cells.length || (e.shiftKey && !S.has(M1.cid[key]))) return;
+      if (!cells.length || (addK && !S.has(M1.cid[key]))) return;
       const cp = (o) => Object.assign({}, o);
       mv = { pre: triSnap(), h0: at(e) || h, cells,   /* h0 — заново после renderTri: строка «группа» над сеткой могла появиться и сдвинуть холст */ c: cp(Z.triCells), gl: cp(Z.triGLn), gi: cp(Z.triGIn), gt: cp(Z.triGTx), sel: Z.triSel, more: Z.triSelMore.slice(), d: "0_0" };
       cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; return;
@@ -5886,6 +5887,9 @@ if ($("triCv")) {
   // v0.437: пока горит ✦ или ╱, цвет палитры — их цвет (инструмент остаётся); тот же инструмент ещё раз — назад к кисти
   $("triPal").onclick = (e) => {
     const b = e.target.closest("button[data-c]"); if (!b) return; const c = +b.dataset.c;
+    /* v0.647, «…и цвет менять у выделенных»: пока горит ☝ и выбраны группы — щелчок по цвету палитры перекрашивает их (шаг ↩), инструмент остаётся ☝ */
+    if (Z.triCol === -1 && c >= 1 && TRI_COL[c]) { const M = triModel(triCurData()), S = triSelSet(M);
+      if (S.size) { triPush(); let n = 0; S.forEach(i => M.comps[i].cells.forEach(([r, q]) => { Z.triCells[r + "_" + q] = c; n++; })); save(); renderTri(); say(`☝ Перекрашено в «${TRI_COL[c][1]}»: групп ${S.size}, треугольников ${n}. ↩ — вернуть.`); return; } }
     if (c < -1 && Z.triCol === c) Z.triCol = Z.triPrevCol > 0 ? Z.triPrevCol : 2;
     else if (Z.triCol < -1 && c >= 1) Z.triTCol = c;
     else { if (Z.triCol >= 1) Z.triPrevCol = Z.triCol; Z.triCol = c; }
