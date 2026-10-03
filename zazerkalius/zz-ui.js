@@ -752,11 +752,29 @@ function fillCycle(k){
    при замке строк ⛔ (снимок ↩ на каждую). v0.698, «только при шаге надо расширять линию горизонта вниз, а не автоматом»: зовётся только после шага —
    «шаг ↷» в «Лазере» и |◀ ▶| в «Кручении»; само по себе (кручение ▶, отрисовка) — нет. v0.702, «когда строка вся битами заполнена, следующий шаг — сначала
    просто сдвинуть горизонт без кручения, а потом следующее нажатие крутить»: зовётся В НАЧАЛЕ шага; ушла строка — это нажатие на этом и кончается */
+/* v0.709, «шаг назад также и строки из-под горизонта должен обратно возвращать»: |◀ — зеркало шага вперёд. Строка ушла в поле по шагу (fillAutoCommit) —
+   перед этим запоминается всё, что меняется (строки, строка за чертой, счёт попаданий, накрутка, поворот кольца за чертой); |◀ сперва возвращает её за черту
+   (черта вверх), ничего не крутя, крутит следующее нажатие. Строки с тех пор менялись иначе — память забыта. Снимок ↩ на каждое */
+const fillStack = [];
+function fillUncommit(){
+  if (!fillStack.length) return false;
+  const S = JSON.parse(fillStack[fillStack.length - 1]);
+  if (Z.rows.length !== S.rows.length + 1 || Z.rows.slice(0, -1).join(",") !== S.rows.join(",")) { fillStack.length = 0; return false; }
+  try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
+  fillStack.pop();
+  Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
+  Z.fillCells = S.fill; if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
+  coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = S.ft || 0;
+  renderAll(); save();
+  say(`◀ Строка ${S.rows.length + 1} — обратно за черту (черта вверх). Следующее |◀ — крутить назад. ↩ вернёт.`);
+  return true;
+}
 function fillAutoCommit(){
   const f = Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
   if (typeof f !== "string" || !f.length || (sunCut ? /\./.test(f) : /[^1]/.test(f)) || f.length !== fillLen()) return false;
   if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
+  fillStack.push(JSON.stringify({ rows: Z.rows.slice(), cur: Z.cur | 0, fill: f, vh: Z.voidHits || null, rot: coneRot.slice(), ft: Z.coneFillTurn || 0 })); if (fillStack.length > 200) fillStack.shift();   // v0.709: для |◀
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
@@ -3822,7 +3840,7 @@ function setupCone(){
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
-  const stepDir = (neg) => lasRec(() => { if (fillAutoCommit()) return; const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); });   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения; v0.706: в историю отката
+  const stepDir = (neg) => lasRec(() => { if (neg ? fillUncommit() : fillAutoCommit()) return; /* v0.709: |◀ — сперва строка обратно за черту */ const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); });   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения; v0.706: в историю отката
   $("bConeStepB").onclick = () => stepDir(true);
   $("bConeStepF").onclick = () => stepDir(false);
   /* v0.687, «для лазера надо сделать отдельные кнопки кручения, которые как шаги можно откатывать назад, всё стирая закрашенное на место»: «шаг ↷» в
