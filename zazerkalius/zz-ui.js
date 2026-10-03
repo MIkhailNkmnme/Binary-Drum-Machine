@@ -7105,7 +7105,9 @@ function cgrpInit(){
     add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
-  const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); return h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top; };
+  const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); let t = h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top;
+    const tb = document.getElementById("cgTabs"); if (tb && tb.getClientRects().length && !document.body.classList.contains("zen")) t = Math.max(t, tb.getBoundingClientRect().bottom);   // v0.608: «не дай группам наезжать на кнопки меню» — верх для групп ниже полосы вкладок
+    return t; };
   const place = (g) => {
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
     g.classList.toggle("cfld", !!fr);
@@ -7155,7 +7157,7 @@ function cgrpInit(){
           const cand = [[B.right - 1 - A.left, 0], [B.left + 1 - A.right, 0], [0, B.bottom - 1 - A.top], [0, B.top + 1 - A.bottom]]
             .map(([dx, dy]) => ({ dx, dy, d: Math.abs(dx) + Math.abs(dy), ok: A.left + dx >= box.l - 0.5 && A.right + dx <= box.r + 0.5 && A.top + dy >= box.t - 0.5 && A.bottom + dy <= box.b + 0.5 }))
             .sort((u, v) => (v.ok - u.ok) || (u.d - v.d));
-          const c = cand[0]; if (!c || c.d < 0.5) continue;
+          const c = cand[0]; if (!c || c.d < 0.5 || !c.ok) continue;   // v0.608, «группы не могут найти себе место и дёргаются по вертикали»: места рядом нет — не двигать (прежде сдвигал, place() возвращал в окно, и так раз в 0,3 с)
           if (F) { F.x += c.dx; F.y += c.dy; } else { const P = Z.cgrpPos[k]; P.x += c.dx; P.y += c.dy; }
           place(m); any = ch = true; break;
         }
@@ -7432,6 +7434,7 @@ function cgrpInit(){
     cgTabs.appendChild(t);
   });
   wb.insertBefore(cgTabs, tl);
+  { const hU = () => wb.style.setProperty("--cgTabsH", cgTabs.offsetHeight + "px"); hU(); if (window.ResizeObserver) new ResizeObserver(hU).observe(cgTabs); }   // v0.608: высота полосы вкладок — для «◯ Конуса» (там полоса групп absolute сверху)
   /* v0.587, по снимку «📝 Текст» в шапке — «эту в конус-кнопки перемести»: кнопка текста конуса и лога лазера — последней вкладкой в полосе групп
      (тот же элемент, обработчики при нём; горит, пока открыта полоса текста) */
   { const tb = $("bConeTxt"); if (tb) { tb.style.setProperty("--tc", "#e2c06b"); cgTabs.appendChild(tb); } }
