@@ -1829,8 +1829,16 @@ function renderCone(){
     g.shadowBlur = 0;
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
-    const f = fillDraft(), n = f.length, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rotF = coneFillRot();   // v0.117: крутится со всеми
-    const gp = n > 1 && !coneNoGap() && !Z.coneClean ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
+    const f = fillDraft(), n = f.length, FC = clockRays && f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
+    const gp = n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
+    if (FC) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
+      const e0 = -Math.PI / 2 + (n - rotF) * step;
+      g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
+      for (const e of [e0, e0 + (n - 1) * step]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
+      g.stroke(); g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+      for (let k = 1; k < n - 1; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
+      g.stroke(); g.restore();
+    }
     g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
     for (let k = 0; k < n; k++) {
       const a = -Math.PI / 2 + (k - rotF) * step;
@@ -2469,6 +2477,14 @@ function coneFreezePassed(R){   // кольца, из которых луч вы
   return got;
 }
 function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
+/* v0.675, по снимку строки для заполнения под чертой — «в режиме T−1 рисуй кольцо за чертой также с вырезом, и для битов части покажи их все»: кольцо
+   для заполнения (на бит длиннее нижней строки, n) в вырезах — как кольца строк: 2n − 1 частей, n — его ячейки (каждая видна своим контуром), n − 1 —
+   вырез; сдвиг — по чётности, как у строк (coneCutGeo). Луч в ячейку — ловится, в вырез — идёт дальше, к пустым кольцам. null — не в вырезах */
+function coneFillCut(){
+  const N = Math.min(Z.rows.length, CONE_MAX), n = fillLen(); if (!N || n < 2 || !coneCutOn()) return null;
+  return { n, P: 2 * n - 1, step: 2 * Math.PI / (2 * n - 1), off: coneCutGeo(N, n).off };
+}
+function coneFillPart(u){ const F = coneFillCut(); return (((u / F.step + coneFillRot() - F.off) % F.P) + F.P) % F.P; }   // u — угол от верха; → место в частях
 function coneVoidHits(){
   const N = Math.min(Z.rows.length, CONE_MAX), s = Z.rows[N - 1], sig = N + ":" + (s ? s.length : 0);
   if (!Z.voidHits || Z.voidHits.sig !== sig || typeof Z.voidHits.h !== "object") { if (Z.voidHits && Z.voidHits.ex) coneExArchive(true); Z.voidHits = { sig, h: {}, lph: Z.coneSpinPh || 0 }; }   // v0.193: вылеты — в статистику
@@ -2499,7 +2515,13 @@ function coneClockTrace(){
     /* v0.129, «после того как прошли через какое-то кольцо — ловить лазер следующим кольцом, его битами, и т. д.»: пустые кольца —
        тоже стены. Луч идёт дальше только в щель между ячейками; первое пустое кольцо, где он попал в ячейку, его ловит — там луч
        и стоит, и эта ячейка получает единицу. Прошёл щели всех пустых колец — уходит за край, ничего не метит. */
+    const FC = coneFillCut();
     if (pass) for (let j = N; j < T; j++) {
+      if (j === N && FC) {   // v0.675: кольцо для заполнения в вырезах — ячейка ловит, вырез пропускает
+        const x = coneFillPart((((a + Math.PI / 2) % TAU) + TAU) % TAU);
+        if (x < FC.n) { const c = Math.floor(x); cells.push([j, c]); cell = c; vstop = j; break; }
+        g.push(j, FC.n - 1); continue;
+      }
       const n = coneVoidLen(j, N), st = TAU / n, q = ((((a + Math.PI / 2) % TAU) + TAU) % TAU) / st + coneVoidRot(j, n);
       if (Math.abs(q - Math.round(q)) * st <= coneSlitHalf(n)) { g.push(j, ((Math.round(q) % n) + n) % n); continue; }   // в щель между ячейками — дальше
       const c = ((Math.floor(q) % n) + n) % n;
@@ -3100,6 +3122,7 @@ function coneRing(e){
   }
   if (G.fill && Math.floor((rr - G.r0) / G.dr) === G.N && (i === -1 || i >= G.N)) {   // v0.114: кольцо для заполнения — какая ячейка
     const n = fillLen(), t = Math.atan2(y, x) - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    if (coneFillCut()) { const p = coneFillPart(u); return p < n ? { i: G.N, a: Math.atan2(y, x), fill: Math.floor(p) } : { i: G.N, a: Math.atan2(y, x) }; }   // v0.675: в вырезе ячейки нет
     return { i: G.N, a: Math.atan2(y, x), fill: ((Math.floor(u / (2 * Math.PI / n) + coneFillRot()) % n) + n) % n };   // v0.117: кольцо повёрнуто кручением
   }
   return i >= 0 && i < G.N ? { i, a: Math.atan2(y, x) } : -1;
@@ -8466,12 +8489,16 @@ function paneZig(){
      смена размера окна, отпустил мышь (перетащил окно) */
   const pane = document.getElementById("rowsPane"); if (!pane) return;
   if (!paneZig._on) { paneZig._on = 1; const k = () => requestAnimationFrame(paneZig), d = document.getElementById("desk");
-    if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => setTimeout(paneZig, 60)); }
+    if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => { setTimeout(paneZig, 60); setTimeout(paneZig, 450); }); }   // v0.675: и после разворота / сворачивания окна
   const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d";
   /* v0.645: выемки зубцов — цветом того, что справа от панели (окно на столе — его фон), а не фона страницы: фон окна продолжается под зубцы */
   let bg = getComputedStyle(document.body).backgroundColor;
-  { const pr = pane.getBoundingClientRect(), ys = [0.3, 0.5, 0.7].map(k => pr.top + pr.height * k), seen = {};
-    for (const y of ys) { let e = document.elementFromPoint(pr.right + 12, y); for (; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\(\s*0,\s*0,\s*0,\s*0\s*\)|transparent/.test(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
+  /* v0.675, по снимку края левого меню — «убери лишний фон у всех окон, когда раскрыты, сейчас это Конус, чтобы не было прямой вертикальной линии»: цвет
+     брался в 12 px от края и вверх по родителям — попадал в холст или группу внутри окна (выемки синие, а у самого края — чёрный фон, отсюда прямая
+     черта). Теперь — вплотную к краю (там, где лягут зубцы), по стопке слоёв (что видно глазом), в девяти точках по высоте; большинство */
+  { const pr = pane.getBoundingClientRect(), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
+    for (let k = 1; k <= 9; k++) { const y = pr.top + pr.height * k / 10;
+      for (const e of document.elementsFromPoint(pr.right + 2, y)) { if (e === pane || pane.contains(e)) continue; const c = getComputedStyle(e).backgroundColor; if (op(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
     const best = Object.entries(seen).sort((a, b) => b[1] - a[1])[0]; if (best) bg = best[0]; }
   const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
   let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
@@ -8849,7 +8876,7 @@ function tzcApply(g){
     if (c1 - c0 + 1 > 2 * Math.max(gl._tzn0 || 6, 6) + 3) { glIn = false; glSkip = true; } }
   const tcw = gl && (gl.classList.contains("tz") || gl.classList.contains("tzk")) && !glIn ? (glSkip || gl.classList.contains("tzk") ? (1 + 2 * Math.max(gl._tzn0 || 6, 3)) * t : parseFloat(gl.style.width) || 0) : 0;   // v0.494: у «раздутого» — своя обычная ширина
   const tip = Math.round(tcw / t); let tc = tip; tc += tc % 2;   // tip — остриё заголовка (в t)
-  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc + "|" + tzcGcol(g);   // v0.497: и цвет обводки
+  const ac = isFinite(avail) ? Math.max(4, Math.floor(avail / t)) : 1e9, key = d.v + "|" + ac + "|" + onSig + "|" + tc + "|" + tzcGcol(g) + "|" + tzcKids(cgb).map(e => getComputedStyle(e).display === "none" ? 0 : 1).join("");   // v0.497: и цвет обводки; v0.675: и что спрятано
   if (!g._tzcRO && window.ResizeObserver) { g._tzcRO = new ResizeObserver(() => tzcApply(g)); g._tzcRO.observe(g); }
   if (g._tzcv === key && cgb.classList.contains("tzc")) return;
   g._tzcv = key;
@@ -8858,6 +8885,7 @@ function tzcApply(g){
   const its = [];
   for (let [w, cells] of Object.entries(by)) {
     const el = tzcFind(w, cgb); if (!el || !(cgb.contains(el) || el.parentElement === g) || its.some(x => x.el === el)) continue;
+    if (el !== gl && getComputedStyle(el).display === "none") continue;   // v0.675: спрятанный элемент места в рисунке не держит (иначе — пустота)
     let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1; for (const [r, c] of cells) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); }
     /* v0.523, по снимку «Вида» — «ширина кнопок — стандарт»: кнопка, нарисованная шире своей стандартной ширины (рисунок снимали, когда ряды
        растягивались до края: «👁 выдел.» — 141 px вместо 92), показывается стандартной — лишние столбцы справа не в счёт (рисунок не трогается).
@@ -8865,6 +8893,20 @@ function tzcApply(g){
     { const n = tzcStd(el); if (n) { const cm = c0 + 2 * n - 1; if (c1 > cm) { cells = cells.filter(([, c]) => c <= cm); c1 = Math.max(...cells.map(q => q[1])); } } }
     its.push({ w, el, cells, r0, r1, c0, c1, dr: 0, dc: 0, sh: 0 });
   }
+  /* v0.675, по снимку «Вида» — «не должно быть такого пустого пространства»: рисунок помнит кнопки без id по номеру места («@13»), а порядок кнопок
+     в группе с тех пор сдвинулся — часть номеров легла на спрятанные элементы (пустые места), а «👁 выдел.» и «✨ свет» в рисунок не попали и стояли
+     отдельной строкой под ним. Теперь видимые элементы группы, которых в рисунке нет, — кнопками стандартной ширины строкой после рисунка, и поток
+     (группа с размером) подтягивает их, как прочие. Сам рисунок не меняется */
+  { let L = -1; its.forEach(it => { L = Math.max(L, Math.floor(it.r1 / 2)); });
+    let c = 1;
+    for (const el of tzcKids(cgb)) {
+      if (its.some(x => x.el === el) || el.classList.contains("glab") || getComputedStyle(el).display === "none") continue;
+      const n = tzcStd(el) || Math.max(3, Math.round((el.getBoundingClientRect().width - t) / s)); if (!n) continue;
+      const cells = [], r0 = 2 * (L + 1), c1 = c + 2 * n - 1;
+      for (let r = r0; r <= r0 + 1; r++) for (let k = c; k <= c1; k++) cells.push([r, k]);
+      its.push({ w: tzcKey(el, cgb), el, cells, r0, r1: r0 + 1, c0: c, c1, dr: 0, dc: 0, sh: 0 });
+      c = c1 + 1;
+    } }
   /* v0.531, по снимку «Вида» — «поправь расположение и ширину ползунка, один слишком маленький»: ползунок, нарисованный уже своей стандартной
      ширины (12 сторон), показывается стандартным — дорисовываются столбцы справа (на чётное число t, края не меняются), а что стоит правее в тех же
      рядах рисунка, сдвигается на столько же (сам рисунок не трогается) */
