@@ -1999,7 +1999,25 @@ function renderCone(){
       g.globalAlpha = 0.3;
       for (const [b, lit] of S.bands) for (const [lo, hi] of lit) sect(rIn(b), rAt(b), lo, hi);
       for (const [lo, hi] of S.out) sect(rIn(S.end), rEnd, lo, hi);
-      g.globalAlpha = 1;
+      /* v0.683, по снимку солнца в вырезах — «пусть показывает расходящиеся лучи от солнца, границы, до строки за чертой»: края каждого освещённого
+         сектора — золотые линии от места, где свет вышел, через кольцо, куда он упал, до внешнего края строки за чертой (дальше — нет) */
+      const roF = r0 + (fillOn ? N : N - 1) * dr + Math.max(1, dr * band);   // внешний край строки за чертой (или нижней строки)
+      for (const dash of [true, false]) {   // пунктир — продолжение края за кольцо, где свет пойман, до строки за чертой; сплошная — где свет идёт
+      g.globalAlpha = dash ? 0.4 : 0.9; g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.lineCap = "round"; g.setLineDash(dash ? [4 * dpr, 4 * dpr] : []); g.beginPath();
+      for (const [b, lit] of S.bands) {
+        if (b > N) continue;
+        const ri = dash ? r0 + b * dr + Math.max(1, dr * band) : b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ro = dash ? roF : r0 + b * dr + Math.max(1, dr * band);
+        if (ro <= ri) continue;
+        const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
+        for (const [lo, hi] of lit) {
+          if (hi - lo > 2 * Math.PI - 1e-6) continue;   // весь круг — краёв нет
+          for (const e of [lo, hi]) { if (seam && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue;
+            const t = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(t), cy + ri * Math.sin(t)); g.lineTo(cx + ro * Math.cos(t), cy + ro * Math.sin(t)); }
+        }
+      }
+      g.stroke();
+      }
+      g.setLineDash([]); g.globalAlpha = 1;
     } else if (coneSlitMode() !== "cut") {   // v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
       const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
