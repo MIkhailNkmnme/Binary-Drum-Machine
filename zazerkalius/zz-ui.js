@@ -7375,17 +7375,37 @@ function cgrpInit(){
   /* v0.367: снаружи (кнопка «🎨» в шапке) — открыть группу: снять «закрыта» и «свёрнута», мигнуть рамкой; если её всё равно не видно
      (окно конуса закрыто или свёрнуто) — поставить на левую панель. Закрыть — спрятать. Открыта ли и видна — cgrpShown */
   window.cgrpShown = (k) => { const g = groups.find(c => c.dataset.g === k); return !!g && !Z.cgrpOff[k] && !g.classList.contains("cmin") && g.getClientRects().length > 0; };
-  window.cgrpHide = (k) => { const g = groups.find(c => c.dataset.g === k); if (!g) return; Z.cgrpOff[k] = true; g.classList.add("coff"); save(); if (window.palUi) palUi(); };
+  window.cgrpHide = (k) => { const g = groups.find(c => c.dataset.g === k); if (!g) return; Z.cgrpOff[k] = true; g.classList.add("coff"); save(); if (window.palUi) palUi(); cgTabsUi(); };
   window.cgrpShow = (k) => {
     const g = groups.find(c => c.dataset.g === k); if (!g) return;
     delete Z.cgrpOff[k]; g.classList.remove("coff");
     if (Z.cgrpMin[k]) { delete Z.cgrpMin[k]; g.classList.remove("cmin"); g.style.minHeight = ""; }
     cgbSnap(); sizeApply(g); place(g);
-    if (!g.getClientRects().length && g.parentElement === tl && box && !document.body.classList.contains("pane-icons")) { delete Z.cgrpPos[k]; delete Z.cgrpFld[k]; g.classList.remove("cfloat", "cfld"); g.style.left = g.style.top = ""; box.appendChild(g); dockSync(); }
+    if (PANE_DOCK && !g.getClientRects().length && g.parentElement === tl && box && !document.body.classList.contains("pane-icons")) {   /* v0.579: на левую панель — больше нет */ delete Z.cgrpPos[k]; delete Z.cgrpFld[k]; g.classList.remove("cfloat", "cfld"); g.style.left = g.style.top = ""; box.appendChild(g); dockSync(); }
     g.style.zIndex = ++zTop; g.classList.remove("cflash"); void g.offsetWidth; g.classList.add("cflash"); setTimeout(() => g.classList.remove("cflash"), 1600);
     try { g.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* нет места */ }
-    save(); if (window.palUi) palUi();
+    save(); if (window.palUi) palUi(); cgTabsUi();
   };
+  /* v0.579, по снимку свёрнутых групп рядком — «в конусе сверху так расположи кнопки вызова групп, и погашай их цвет при включении; сами кнопки на
+     месте, а группы можно скрывать в них»: над группами конуса — полоса вкладок #cgTabs (Лазер · Кручение · Вид · Звук · Кольца · Аниматрица, дальше —
+     прочие), каждая — шеврон цветом своей группы. Щелчок: группа видна — спрятать (Z.cgrpOff), спрятана или свёрнута — показать развёрнутой.
+     Видна — вкладка погашена (бледнее), спрятана — горит своим цветом. Вкладки всегда на месте, сами не двигаются */
+  const CG_TAB_ORD = ["лазер", "кручение", "вид", "звук", "кольца", "аниматрица"];
+  const cgOpen = (g) => !Z.cgrpOff[g.dataset.g] && !g.classList.contains("cmin");
+  const cgTabs = document.createElement("div"); cgTabs.id = "cgTabs";
+  groups.filter(g => g.dataset.g !== "гамма").sort((a, b) => { const ia = CG_TAB_ORD.indexOf(a.dataset.g), ib = CG_TAB_ORD.indexOf(b.dataset.g); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); }).forEach(g => {
+    const k = g.dataset.g, lab = g.querySelector(":scope > .glab"), t = document.createElement("button");
+    t.type = "button"; t.dataset.g = k; t.textContent = (lab && lab.firstChild && lab.firstChild.nodeType === 3 ? lab.firstChild.textContent : k).trim();
+    t.style.setProperty("--tc", getComputedStyle(g).getPropertyValue("--gc").trim() || "var(--acc)");
+    t.onclick = () => { if (cgOpen(g)) window.cgrpHide(k); else window.cgrpShow(k); };
+    cgTabs.appendChild(t);
+  });
+  wb.insertBefore(cgTabs, tl);
+  function cgTabsUi(){ cgTabs.querySelectorAll("button").forEach(t => { const g = groups.find(c => c.dataset.g === t.dataset.g); const on = !!g && cgOpen(g);
+    t.classList.toggle("on", on); t.title = (on ? "Группа «" + t.textContent + "» видна — щелчок: спрятать в эту кнопку" : "Группа «" + t.textContent + "» спрятана — щелчок: показать"); }); }
+  window.cgTabsUi = cgTabsUi;
+  { const mo = new MutationObserver(() => cgTabsUi()); groups.forEach(g => mo.observe(g, { attributes: true, attributeFilter: ["class"] })); }
+  cgTabsUi();
   { // v0.348: поле строк меняет место и размер (ширина поля, панель, спрятать, дзен) — группы на нём едут следом
     const F = $("field"), re = () => groups.forEach(g => { if (Z.cgrpFld[g.dataset.g] && !g.classList.contains("cdrag")) place(g); });   // тащимую — не трогать
     if (F && window.ResizeObserver) new ResizeObserver(re).observe(F);
