@@ -2021,11 +2021,43 @@ function renderCone(){
         g.fillStyle = gr; g.globalAlpha = 1;
         for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
       }
+      /* v0.690, по снимку — «у нижнего бита границ не видно совсем под солнцем; и покажи за солнцем — из через центр проходящих его лучей — в обратную сторону
+         от выреза также подсвет, лунный, синевой, и всё продолжи даже немного дальше крайнего кольца». (1) Поверх свечения — черты между ячейками колец, на
+         которые падает свет (цветом фона), края вырезов — золотом. (2) Луна: края каждого сектора продолжены через центр в обратную сторону, сектор напротив —
+         синеватый градиент от диска солнца наружу. (3) Все лучи (и пунктир солнца, и луна) — до чуть дальше крайнего кольца (на 0,6 кольца) */
+      const roE = roF + dr * 0.6, rDisk = r0 + Math.max(1, dr * band);
+      for (const [b, lit] of S.bands) {
+        if (b > N || !lit.some(([lo, hi]) => hi - lo > 1e-6)) continue;
+        const C = coneSunCutR(b, N), R = C ? { n: C.n, st: C.st, rot: C.rot } : (() => { const q = coneRingNR(b); return q ? { n: q.n, st: 2 * Math.PI / q.n, rot: q.rot } : null; })(); if (!R || R.n < 2) continue;
+        const ri = r0 + b * dr, ro = ri + Math.max(1, dr * band), kk = C && C.P > C.n ? R.n : R.n - 1;
+        g.save(); g.strokeStyle = cBg; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.setLineDash([]); g.beginPath();
+        for (let k = C && C.P > C.n ? 1 : 0; k <= kk - (C && C.P > C.n ? 1 : 0); k++) { const a = -Math.PI / 2 + (k - R.rot) * R.st; g.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); g.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); }
+        g.stroke();
+        if (C && C.P > C.n) { g.strokeStyle = cg; g.globalAlpha = 0.95; g.beginPath(); for (const k of [0, R.n]) { const a = -Math.PI / 2 + (k - R.rot) * R.st; g.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); g.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); } g.stroke(); }
+        g.restore();
+      }
+      for (const [b, lit] of S.bands) {   // луна — напротив каждого сектора
+        if (b > N) continue;
+        for (const [lo, hi] of lit) {
+          if (hi - lo > 2 * Math.PI - 1e-6 || hi - lo < 1e-6) continue;
+          const gm = g.createRadialGradient(cx, cy, rDisk, cx, cy, roE);
+          gm.addColorStop(0, "rgba(140, 185, 255, 0.16)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.02)");
+          g.fillStyle = gm; g.globalAlpha = 1; sect(rDisk, roE, lo + Math.PI, hi + Math.PI);
+        }
+      }
+      g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([]); g.beginPath();
+      for (const [b, lit] of S.bands) {
+        if (b > N) continue;
+        const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);
+        for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue;
+          for (const e of [lo, hi]) { if (seam && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const t = e + Math.PI / 2; g.moveTo(cx + rDisk * Math.cos(t), cy + rDisk * Math.sin(t)); g.lineTo(cx + roE * Math.cos(t), cy + roE * Math.sin(t)); } }
+      }
+      g.stroke(); g.restore();
       for (const dash of [true, false]) {   // пунктир — продолжение края за кольцо, где свет пойман, до строки за чертой; сплошная — где свет идёт
       g.globalAlpha = dash ? 0.4 : 0.9; g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.lineCap = "round"; g.setLineDash(dash ? [4 * dpr, 4 * dpr] : []); g.beginPath();
       for (const [b, lit] of S.bands) {
         if (b > N) continue;
-        const ri = dash ? r0 + b * dr + Math.max(1, dr * band) : b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ro = dash ? roF : r0 + b * dr + Math.max(1, dr * band);
+        const ri = dash ? r0 + b * dr + Math.max(1, dr * band) : b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ro = dash ? roE : r0 + b * dr + Math.max(1, dr * band);   // v0.690: пунктир — чуть дальше крайнего кольца
         if (ro <= ri) continue;
         const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
         for (const [lo, hi] of lit) {
