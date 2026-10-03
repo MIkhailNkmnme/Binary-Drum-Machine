@@ -8792,14 +8792,19 @@ function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
   const W = g.offsetWidth, H = g.offsetHeight; if (!W || !H) return;
-  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + fc;   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
+  /* v0.615, «границы группы и кнопки наложить друг на друга»: острия кнопок ряда кончаются на 1–2 px левее края группы (ширина группы целая, кнопки —
+     из дробных треугольников), и между ними и рамкой была щель. Правый край рамки — по самому дальнему остриё кнопок (если оно в 3 px от края) */
+  let Wr = W; { const gl = g.getBoundingClientRect().left; let mx = 0;
+    g.querySelectorAll(".tz:not(.glab):not(.tzk)").forEach(e => { if (!e.getClientRects().length) return; const r = e.getBoundingClientRect(); mx = Math.max(mx, r.right - gl); });
+    if (mx > 0 && W - mx > 0 && W - mx < 3) Wr = mx; }
+  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + Wr.toFixed(1) + "|" + fc;   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
   if (g._tzgk === key && g.classList.contains("tzg")) return;
   g._tzgk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
   const ys = []; for (let y = 0; y < H; y += P / 2) ys.push(y); ys.push(H);
   /* v0.479, «левая граница у групп пусть будет стрелкой вправо всегда»: левый край — выемкой (в середине ряда внутрь на t), правый — остриём, как был:
      вся группа — «стрелка вправо»; первая кнопка ряда — с выемкой слева, ложится в край вплотную (triTag) */
-  const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])];
+  const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [Wr - zig(y), y])];
   g.classList.add("tzg");
   g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
   /* v0.495, «нет верхней обводки»: верх и низ рамки — на полпикселя внутрь (линия по самому краю — видна лишь её половина, 1 px, и при дробной
