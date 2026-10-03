@@ -5080,6 +5080,16 @@ function pyrAnimPass(D){
     for (let j = 0; j < nB; j++) B[j] = f(A[Math.min(nA - 1, Math.floor((j + 0.5) * nA / nB))], B[j]); } });
   pyrPts(D);
 }
+/* v0.646: формы точек пирамиды — [ключ, надпись кнопки] */
+const PYR_SHAPES = [["ball", "● шарики"], ["tri", "▲ треугольники"], ["cube", "■ кубы"], ["rhomb", "◆ ромбы"], ["bits", "1 0 биты"]];
+/* нули показанных этажей — экранные x, y, глубина (для «1 0 биты»); на каждый кадр — заново, их не бывает больше единиц на порядок */
+function pyrZeros(D, show, one, P){
+  const out = [];
+  D.layers.forEach((L, li) => { if (one ? li !== show - 1 : li >= show) return; const k = D.K0 + li;
+    for (let r = 0; r < L.length; r++) { const row = L[r];
+      for (let a = 0; a <= r; a++) if (!row[a]) { const b = r - a, cc = k - r, p = P(a * D.E[0][0] + b * D.E[1][0] + cc * D.E[2][0], a * D.E[0][1] + b * D.E[1][1] + cc * D.E[2][1], -k * D.hz); out.push(p[0], p[1], p[2]); } } });
+  return out;
+}
 function pyrPts(D){
   const pts = [], perLayer = [];
   D.layers.forEach((L, li) => { const k = D.K0 + li; let c = 0;
@@ -5098,7 +5108,8 @@ function renderPyr(force){
   const c1 = coneCss("--b1", "#22d3ee"), cBg = coneCss("--panel2", "#11151d"), cg = coneCss("--gold", "#ffd166"), cT = coneCss("--txt", "#d8dde8");
   const show = Math.max(1, Math.min(D.n, Z.pyrShow || D.n)), one = !!Z.pyrOne && show <= D.n, hue = !!Z.pyrHue;
   const yawD = Z.pyrYaw ?? 30, elD = Z.pyrEl ?? 25;
-  const dk = [D.key, W, H, show, one, hue, yawD, elD, pyrZoom, pyrPan.join(","), c1, cBg].join("|");
+  const shp = PYR_SHAPES.some(q => q[0] === Z.pyrShape) ? Z.pyrShape : "ball";   // v0.646
+  const dk = [D.key, D.animN, W, H, show, one, hue, yawD, elD, pyrZoom, pyrPan.join(","), c1, cBg, shp].join("|");
   if (!force && dk === pyrDrawKey) return;
   pyrDrawKey = dk;
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
@@ -5125,13 +5136,37 @@ function renderPyr(force){
   idx.sort((p, q) => sz[p] - sz[q]);
   let zMin = Infinity, zMax = -Infinity; for (const q of idx) { if (sz[q] < zMin) zMin = sz[q]; if (sz[q] > zMax) zMax = sz[q]; }
   const rad = Math.max(0.7 * dpr, 0.42 * sc), round = rad >= 2 * dpr;
+  /* v0.646, «менять шарики на треугольники, кубы, ромбы в построении и на биты 1, 0»: форма точки — Z.pyrShape. ▲ — треугольник остриём вверх, лицом к
+     зрителю; ■ — куб (видимые три грани, оттенками); ◆ — ромб на экране; 1 0 —
+     цифрами, и нули тоже (бледнее). Мелко (меньше 2 px) — квадратиками, как прежде */
+  const big = rad >= 2 * dpr, shOff = (v) => { const p = P(v[0], v[1], v[2]), o = P(0, 0, 0); return [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; };
+  let triO = null, cube = null;
+  if (shp === "tri" && big) { const a = rad * 1.3; triO = [[0, -a], [a * 0.866 * 1.15, a * 0.5], [-a * 0.866 * 1.15, a * 0.5]]; }   // ▲ к зрителю (в плоскости этажа при малом наклоне выходили щепки)
+  if (shp === "cube" && big) {
+    const h = 0.3 * Math.hypot(D.E[0][0] - D.E[1][0], D.E[0][1] - D.E[1][1]), ax = [shOff([h, 0, 0]), shOff([0, h, 0]), shOff([0, 0, h])];
+    cube = []; for (let a = 0; a < 3; a++) { const n = ax[a], s2 = n[2] >= 0 ? 1 : -1, u = ax[(a + 1) % 3], v = ax[(a + 2) % 3];
+      cube.push({ k: [1, 0.78, 0.6][a], q: [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([i, j]) => [s2 * n[0] + i * u[0] + j * v[0], s2 * n[1] + i * u[1] + j * v[1]]) }); }
+  }
+  const zs = shp === "bits" ? pyrZeros(D, show, one, P) : null;
+  if (zs && big) {   // нули — бледные «0», дальние раньше
+    g.fillStyle = cT; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`;
+    for (let q = 0; q < zs.length; q += 3) { g.globalAlpha = 0.28; g.fillText("0", zs[q], zs[q + 1]); }
+  }
   g.fillStyle = c1;
+  if (shp === "bits" && big) { g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`; }
   for (const q of idx) {
     const lit = zMax > zMin ? 0.35 + 0.65 * (sz[q] - zMin) / (zMax - zMin) : 1;
     if (hue) g.fillStyle = `hsl(${Math.round(200 + 300 * T[q * 4 + 3] / Math.max(1, D.n))} 80% 60%)`;
     g.globalAlpha = lit;
-    if (round) { g.beginPath(); g.arc(sx[q], sy[q], rad, 0, 2 * Math.PI); g.fill(); } else g.fillRect(sx[q] - rad, sy[q] - rad, 2 * rad, 2 * rad);
+    const x = sx[q], y = sy[q];
+    if (!big) { g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad); continue; }
+    if (shp === "tri") { g.beginPath(); g.moveTo(x + triO[0][0], y + triO[0][1]); g.lineTo(x + triO[1][0], y + triO[1][1]); g.lineTo(x + triO[2][0], y + triO[2][1]); g.closePath(); g.fill(); }
+    else if (shp === "cube") { const f0 = g.fillStyle; for (const f of cube) { g.globalAlpha = lit * f.k; g.beginPath(); g.moveTo(x + f.q[0][0], y + f.q[0][1]); for (let j = 1; j < 4; j++) g.lineTo(x + f.q[j][0], y + f.q[j][1]); g.closePath(); g.fill(); } g.fillStyle = f0; }
+    else if (shp === "rhomb") { const a = rad * 1.25; g.beginPath(); g.moveTo(x, y - a); g.lineTo(x + a * 0.72, y); g.lineTo(x, y + a); g.lineTo(x - a * 0.72, y); g.closePath(); g.fill(); }
+    else if (shp === "bits") g.fillText("1", x, y);
+    else if (round) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); g.fill(); } else g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad);
   }
+  g.textAlign = "left"; g.textBaseline = "alphabetic";
   g.globalAlpha = 0.7; g.fillStyle = cT; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
   g.fillText(`поворот ${Math.round(((yawD % 360) + 360) % 360)}° · наклон ${Math.round(elD)}°`, 8 * dpr, 16 * dpr);
   g.globalAlpha = 1;
@@ -5242,6 +5277,12 @@ function setupPyr(){
     Z.pyrYaw = ((Z.pyrYaw ?? 30) + 25 * dt) % 360; renderPyr();
     spinRaf = requestAnimationFrame(spinTick);
   };
+  /* v0.646: форма точек — по кругу (правый щелчок — назад) */
+  const shpUi = () => { const i = Math.max(0, PYR_SHAPES.findIndex(q => q[0] === Z.pyrShape)); $("bPyrShape").textContent = PYR_SHAPES[i][1]; };
+  shpUi();
+  const shpGo = (d) => { const i = Math.max(0, PYR_SHAPES.findIndex(q => q[0] === Z.pyrShape)); Z.pyrShape = PYR_SHAPES[(i + d + PYR_SHAPES.length) % PYR_SHAPES.length][0]; shpUi(); save(); renderPyr(true); };
+  $("bPyrShape").onclick = () => shpGo(1);
+  $("bPyrShape").oncontextmenu = (e) => { e.preventDefault(); shpGo(-1); };
   $("bPyrSpin").onclick = () => {
     if (spinRaf) { cancelAnimationFrame(spinRaf); spinRaf = 0; save(); $("bPyrSpin").classList.remove("on"); return; }
     spinT = 0; spinRaf = requestAnimationFrame(spinTick); $("bPyrSpin").classList.add("on");
@@ -8292,6 +8333,7 @@ function lpTag(){
     });
     lpTop(col, vis);
     lpBar(col, vis);   // v0.543
+    lpTools(col, vis);   // v0.646
     paneZig();   // v0.634
   } finally { lpBusy = false; if (lpTag._mo) lpTag._mo.takeRecords(); }   // свои же правки — не повод пересчитывать заново
 }
@@ -8413,6 +8455,29 @@ function lpBar(col, vis){
     tzGeo(b);
     if (ml !== null && ml && b.style.marginLeft !== ml) b.style.marginLeft = ml;   // отступ над столбиком — его ставит fieldInfoFit
   }));
+}
+/* v0.646, по снимку «▲ Пирамиды Паскаля» — «всё в ромбовидные кнопки»: полоса инструментов окна (.tools.lpw) — цепочкой из треугольников, как полоса
+   над полем строк (lpBar): кнопки, списки, галки (галка — заливкой, без квадратика) и ползунки с подписью; первая в ряду — остриём, следующие — выемкой
+   на остриё соседки. Перенеслась на новый ряд — начинает его остриём */
+function lpTools(col, vis){
+  const t = TZC_H / (2 * Math.sqrt(3)), sd = 2 * t;
+  document.querySelectorAll(".win .tools.lpw").forEach(bar => {
+    if (!bar._lpObs && lpTag._mo) { bar._lpObs = 1; lpTag._mo.observe(bar, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] }); if (lpRO) lpRO.observe(bar); }
+    if (!vis(bar)) return;
+    const its = [...bar.children].filter(el => vis(el) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.tagName === "LABEL"));
+    its.forEach((b, i) => {
+      b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+      let tw = 0;
+      if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
+      else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + 120; }
+      else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; if (b.tagName === "LABEL") tw -= 16; }
+      b._gcol = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._tzar = ""; b._tzfix = true;
+      b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
+      b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 10) / sd));
+      tzGeo(b);
+    });
+    its.forEach((b, i) => { if (i && b._tzm && Math.abs(b.offsetTop - its[i - 1].offsetTop) > 4) { b._tzm = 0; b._tzL = TZ_TIP; tzGeo(b); } });
+  });
 }
 window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
