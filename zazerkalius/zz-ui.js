@@ -8142,13 +8142,14 @@ function lpTag(){
       if (!bl) return;
       h.classList.toggle("lph", on); bl.classList.toggle("lpb", on);
       if (!bl._lpObs) { bl._lpObs = 1; if (lpRO) lpRO.observe(bl); if (lpTag._mo) lpTag._mo.observe(bl, { childList: true, subtree: true }); }
-      const its = [...bl.querySelectorAll("button, select")].filter(e => !e.classList.contains("zerk-arrow"));   // v0.572: и свои шаблоны (#tplMine) — в общей цепочке
+      const its = [...bl.querySelectorAll("button, select, label.lpnum")].filter(e => !e.classList.contains("zerk-arrow"));   // v0.633: и поле числа (label.lpnum)   // v0.572: и свои шаблоны (#tplMine) — в общей цепочке
       if (!on) { its.forEach(e => { if (e.classList.contains("tz")) triOff(e); }); return; }
       const shown = its.filter(vis); if (!shown.length) return;
       const col1 = bl.id === "paneWins";
       shown.forEach(e => {
         let tw = 0;
         if (e.tagName === "SELECT") { const o = e.options[e.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
+        else if (e.classList.contains("lpnum")) tw = 40;   // v0.633: поле числа — постоянной ширины (поле тянется по подписи — мерить его нельзя, росло бы)
         else { const rg = document.createRange(); rg.selectNodeContents(e); tw = rg.getBoundingClientRect().width; }
         e._tzn0 = Math.max([...e.textContent.trim()].length <= 2 ? 3 : 6, Math.ceil((tw + 10) / sd));
         e._gcol = col; e._tzar = ""; e._tzfix = false; e._tzL = TZ_NOTCH; e._tzR = TZ_TIP; e._tzn = e._tzn0; e._tzx = 0;
