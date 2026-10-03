@@ -2548,7 +2548,9 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
         for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, z)) zhits.add(k + ":" + q); } }   // v0.705
       if (k === N) break;
       const s1 = Z.rows[k], ones = []; for (let q = 0; q < C.n; q++) if (s1[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, ones);
-      const O = ivUnion(ones); z = ivUnion([...ivAnd(z, ivUnion([...open, ...O])), ...ivAnd(L, O)]).filter(([a, c]) => c - a > 1e-9);
+      /* v0.706, «пусть только за одной единицей луна красит в 0, а не за несколькими»: «нулевой» свет, упавший на вторую «1», гаснет — дальше идёт только
+         сквозь вырез; новый рождается там, где основной свет упал на «1» */
+      const O = ivUnion(ones); z = ivUnion([...ivAnd(z, open), ...ivAnd(L, O)]).filter(([a, c]) => c - a > 1e-9);
     }
   }
   return { bands, hits: [...hits], zhits: [...zhits], out: lit, end: b };
@@ -3815,54 +3817,58 @@ function setupCone(){
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
-  const stepDir = (neg) => { if (fillAutoCommit()) return; const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); };   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения
+  const stepDir = (neg) => lasRec(() => { if (fillAutoCommit()) return; const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); });   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения; v0.706: в историю отката
   $("bConeStepB").onclick = () => stepDir(true);
   $("bConeStepF").onclick = () => stepDir(false);
   /* v0.687, «для лазера надо сделать отдельные кнопки кручения, которые как шаги можно откатывать назад, всё стирая закрашенное на место»: «шаг ↷» в
      «Лазере» — тот же шаг, что ▶| / |◀ (до следующего события лазера, в выбранном направлении), но перед ним запоминается всё, что меняет кручение и
      луч: фаза и поворот конуса, накрутка колец, довод строки 1, краска и остановленные кольца (Z.voidHits), строка за чертой, лог, счёт проходов, память
      конца луча. «↶ откат» — вернуть последнее запомненное; подряд — дальше назад (до 500 шагов). История — на время сессии; сменились строки — забыта */
+  /* v0.706, «откат не сработал»: история писалась только у «шаг ↷» и «½ шаг», а строки в снимке были лишь подписью — стоило черте опуститься (готовая строка
+     уходит в поле), откат стирал всю историю. Теперь снимок полный (строки поля и за его границей, текущая, поворот кольца за чертой), откат возвращает и черту,
+     а в историю идут все шаги: «шаг ↷», «½ шаг», |◀ ▶| и нажатие, которое только опускает черту (lasRec). Только в памяти страницы, до 500 шагов */
   const lasHist = [];
-  const lasSnap = () => JSON.stringify({ rows: Z.rows.join(","), ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(), vh: Z.voidHits || null,
-    fill: Z.fillCells ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
-  if ($("bLasStep")) $("bLasStep").onclick = () => {
+  const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
+    ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
+  const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null]);
+  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); fn(); if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } }
+  if ($("bLasStep")) $("bLasStep").onclick = () => lasRec(() => {
     if (fillAutoCommit()) return;   // v0.702: строка готова — этим нажатием только черта вниз, крутит следующее
-    const b = lasSnap(); const ph0 = Z.coneSpinPh || 0, vh0 = JSON.stringify(Z.voidHits || null);
     coneStep(1);
-    if ((Z.coneSpinPh || 0) === ph0 && JSON.stringify(Z.voidHits || null) === vh0) return;   // шаг не состоялся — помнить нечего
-    lasHist.push(b); if (lasHist.length > 500) lasHist.shift();
-  };
+  });
   /* v0.699, «сделай кнопку — шаг ровно на 1/2 часть текущего кольца» (после ответа, что «шаг ↷» идёт до следующего события, а не на долю круга): «½ шаг» —
      поворот ровно на полчасти кольца текущей строки (частей: n бит, в вырезах T−1 — 2n − 1), в выбранном направлении. «Каждое» / «Встреч Бит» — фаза в частях:
      +½, все кольца на полчасти своих; «Встреч Стр» — фаза в градусах: 360° / частей / 2; «Всё» — весь конус на тот же угол. Запоминается для «↶ откат»; краска
      — как всегда при отрисовке; готовая строка за чертой — в строки (это шаг) */
-  if ($("bLasHalf")) $("bLasHalf").onclick = () => {
+  if ($("bLasHalf")) $("bLasHalf").onclick = () => lasRec(() => {
     if (fillAutoCommit()) return;   // v0.702: строка готова — сперва только черта вниз
     const i = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0)), n = (Z.rows[i] || "").length || 1, P = coneCutGeo(i, n).cut ? 2 * n - 1 : n;
     const m = Z.coneSpinMode || "all", dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, deg = 360 / P / 2;
-    lasHist.push(lasSnap()); if (lasHist.length > 500) lasHist.shift();
     if (coneBitMode(m)) Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * 0.5;
     else if (m === "opp") Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * deg;
     else Z.coneSpin = (Z.coneSpin || 0) + dir * deg;
     save(); renderCone(); coneLogRender();
     say(`½ Шаг ${dir > 0 ? "по часовой" : "против часовой"}: кольцо ${i + 1} — на полчасти (${(Math.round(deg * 100) / 100).toString().replace(".", ",")}° из ${P} частей)` +
       (coneBitMode(m) ? ", прочие — на полчасти своих." : m === "opp" ? ", прочие — на тот же угол, через одно навстречу." : ", весь конус целиком."));
-  };
+  });
   if ($("bLasPeek")) {   // v0.695: ◌ след. — показать, куда солнце будет светить после шага
     $("bLasPeek").classList.toggle("on", !!Z.lasPeek);
     $("bLasPeek").onclick = () => { Z.lasPeek = !Z.lasPeek; $("bLasPeek").classList.toggle("on", Z.lasPeek); save(); renderCone();
       say(Z.lasPeek ? (coneSunOn() ? "◌ След.: белым пунктиром — куда солнце будет светить после следующего шага." : "◌ След. включено — показ для ☀ солнца (включи его).") : "◌ След. выключено."); };
   }
   if ($("bLasUndo")) $("bLasUndo").onclick = () => {
-    if (!lasHist.length) { say("↶ Откатывать нечего — «шаг ↷» ещё не делали (или строки сменились)."); return; }
-    const S = JSON.parse(lasHist.pop());
-    if (S.rows !== Z.rows.join(",")) { lasHist.length = 0; say("↶ Строки сменились — история шагов лазера забыта."); return; }
-    Z.coneSpinPh = S.ph; Z.coneSpin = S.spin; Z.coneAimRot = S.aim; coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
+    if (!lasHist.length) { say("↶ Откатывать нечего — шагов с последней перезагрузки страницы не было."); return; }
+    const S = JSON.parse(lasHist.pop()), rowsBack = S.rows.join(",") !== Z.rows.join(",");
+    if (rowsBack) {   // v0.706: черта опускалась — строки обратно
+      Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = S.hid.slice();
+      Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
+    }
+    Z.coneSpinPh = S.ph; Z.coneSpin = S.spin; Z.coneAimRot = S.aim; coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = S.ft || 0;
     if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
     Z.fillCells = S.fill; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
     coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm; coneSunWas = S.sun ? new Set(S.sun) : undefined;
-    save(); renderRows(); renderCone(); coneLogRender();
-    say(`↶ Откат шага лазера: всё как было${lasHist.length ? ` (назад ещё ${lasHist.length})` : ""}.`);
+    save(); renderAll(); coneLogRender();
+    say(`↶ Откат шага${rowsBack ? " (черта поднята обратно)" : ""}: всё как было${lasHist.length ? ` (назад ещё ${lasHist.length})` : ""}.`);
   };
   /* v0.188, «как сделать, чтобы луч дошёл до 10 строки» → «да» на «🎯 до строки N»: крутить (тем же режимом и шагом, что ◀ ▶) до мига,
      когда луч проходит строку N — выходит из её кольца через щель; там и встать. По пути всё как при ▶: кольца, которые луч прошёл,
