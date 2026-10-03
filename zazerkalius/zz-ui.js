@@ -2556,6 +2556,14 @@ function coneSunPeek(){
 /* v0.705, «красить 1 или 0 только когда весь бит будет лучами покрыт»: в вырезах T−1 ячейка красится светом (1) или «нулевым» светом (0), только если он
    покрывает её целиком; задетая краем — не красится. coneCellCovered: дуга ячейки q (шаг st, поворот rot) вся внутри света L */
 function coneCellCovered(q, st, rot, L){ const c = []; ivNorm((q - rot) * st, (q + 1 - rot) * st, c); return ivMinus(ivUnion(c), L).every(([a, b]) => b - a < 1e-6); }
+/* v0.716, по снимку — «когда стык битов, не рисуются вообще лучи [луны], хотя солнце вылетело» → выбрано «насквозь пустой ячейки»: ячейка кольца за
+   чертой, ещё пустая («.») и накрытая светом не целиком, свет не держит — он проходит её и вылетает дальше (как сквозь вырез). Накрытая целиком — краска
+   (1 от солнца, 0 от луны), закрашенная — стена. coneFillPass: к проходу open добавить такие ячейки (свет L, геометрия C) */
+function coneFillPass(open, L, C){
+  const f = fillDraft(), add = open.slice();
+  for (let q = 0; q < C.n; q++) if (f[q] === "." && !coneCellCovered(q, C.st, C.rot, L)) ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, add);
+  return ivUnion(add);
+}
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
   const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {}, zbands = [];
   let lit = [[0, TAU2]], b = 1, pastN = [];   // pastN — свет, прошедший и кольцо за чертой (v0.713)
@@ -2567,6 +2575,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
+    if (C && b === N) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
     for (const [lo, hi] of ivMinus(lit, open)) {
       if (hi - lo < 1e-9) continue;
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
@@ -2598,7 +2607,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     for (let k = akb; k <= N && k < T && A.length; k++) {
       const C = coneSunCutR(k, N); if (!C) break;
       zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
-      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
+      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole);
       for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
         for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, A)) zhits.add(k + ":" + q); } }
       A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9);
