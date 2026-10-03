@@ -5520,7 +5520,7 @@ function triLinesDraw(g, xy, sc){
     const [k, w] = triVal(v); if (!TRI_COL[k]) continue;
     const [A, B] = key.split("|").map(p => p.split("_").map(Number)); if (Math.max(A[0], B[0]) > Z.triR || Math.max(A[1], B[1]) > Z.triN + 1) continue;
     const p = xy(A[0], A[1]), q = xy(B[0], B[1]);
-    g.strokeStyle = TRI_COL[k][0]; g.lineWidth = Math.max(0.5, (w || Z.triLW) * sc); g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke();
+    g.strokeStyle = TRI_COL[k][0]; g.lineWidth = Math.max(0.5, (w || Z.triLW) * sc * (Z.triBold ? 2 : 1)); g.beginPath();   /* v0.632: ▬ жирн — вдвое */ g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke();
   }
   g.restore();
 }
@@ -5594,6 +5594,7 @@ function renderTri(){
   $("triS").value = Z.triS; $("bTriS1").classList.toggle("on", Z.triS <= TRI_S1 + 0.01);
   $("triDotD").value = Z.triDotD; $("triLW").value = Z.triLW;
   $("bTriNum").classList.toggle("on", Z.triNum !== false);
+  $("bTriBold").classList.toggle("on", !!Z.triBold);   // v0.632
   $("bTriOut").classList.toggle("on", Z.triOut !== false);
   const pal = $("triPal");
   if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»). Alt + щелчок — то же любым инструментом">☝</button>`
@@ -5763,6 +5764,9 @@ if ($("triCv")) {
   $("triDotD").onchange = () => { Z.triDotD = Math.max(0.5, Math.min(40, +$("triDotD").value || 3)); save(); renderTri(); };
   $("triLW").onchange = () => { Z.triLW = Math.max(0.5, Math.min(20, +$("triLW").value || 2)); save(); renderTri(); };
   $("bTriNum").onclick = () => { Z.triNum = Z.triNum === false; save(); renderTri(); };
+  /* v0.632, по снимку ☝ ✦ ╱ ⌫ — «сделай настройку обводки — жирн и нет» (выбрано: линии ╱ в сетке): все линии ╱ — вдвое толще своей «═», в сетке,
+     в живом виде и в группах конуса; ещё раз — как были. Толщина каждой линии не меняется — это вид */
+  $("bTriBold").onclick = () => { Z.triBold = !Z.triBold; save(); renderTri(); if (typeof tzcAll === "function") tzcAll(); };
   // v0.434: живой вид — фон, цвет обводки, режим обводки по кругу: каждый треугольник → по группам цветов → без обводки
   // v0.436: фон и обводка — и в сетке построения, поэтому перерисовывается всё (renderTri зовёт и живой вид)
   $("triBg").oninput = () => { Z.triBg = $("triBg").value; save(); renderTri(); };
@@ -8654,7 +8658,7 @@ function tzcApply(g){
     for (const [key, v] of Object.entries(d.l)) {
       const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */
       const [A, Bn] = key.split("|").map(q => q.split("_").map(Number)), [dr, dc] = tzcLineShift(A, Bn, d.o || {}, sh);
-      hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${w || Z.triLW || 2}" stroke-linecap="round"/>`;
+      hull += `<path d="M${((A[1] + dc) * t).toFixed(2)} ${((A[0] + dr) * hh).toFixed(2)}L${((Bn[1] + dc) * t).toFixed(2)} ${((Bn[0] + dr) * hh).toFixed(2)}" stroke="${col}" stroke-width="${(w || Z.triLW || 2) * (Z.triBold ? 2 : 1)}" stroke-linecap="round"/>`;   /* v0.632: ▬ жирн */
     } }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${H}"><path d="${tzcEdges(o2, live, 0, 0)}" stroke="${tzcGcol(g)}" stroke-width="${Z.noLn ? 3 : 1}" stroke-linecap="round" fill="none" transform="translate(0 0.5)"/>${hull}</svg>`;   // v0.491: линия стыка — 1 px по пикселю
   ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
@@ -8794,7 +8798,7 @@ function tzcPreview(){
   if (tzcManual(d)) {   // v0.457 / v0.459: своя обводка
     for (const h of tzcRingPaths(o, live, (d.rings || []).map(rg => Object.assign({}, rg, { col: tzcGcol(g) })), P)) { x.save(); x.clip(new Path2D(h.f)); x.strokeStyle = h.col; x.lineWidth = 2 * h.w; x.stroke(new Path2D(h.d)); x.restore(); }   // v0.465: внутрь
     for (const [key, v] of Object.entries(Z.triLines || {})) { const [k, w] = triVal(v), col = tzcGcol(g); if (!TRI_COL[k] && k < TZC_K0) continue; /* v0.472: обводка — только цветом группы */ const [A, Bn] = key.split("|").map(q => q.split("_").map(Number));
-      x.strokeStyle = col; x.lineWidth = w || Z.triLW || 2; x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
+      x.strokeStyle = col; x.lineWidth = (w || Z.triLW || 2) * (Z.triBold ? 2 : 1); x.beginPath(); x.moveTo(pad + A[1] * t, pad + A[0] * hh); x.lineTo(pad + Bn[1] * t, pad + Bn[0] * hh); x.stroke(); }
   } else for (const h of tzcHulls(o, live, d.items || [], P)) { x.strokeStyle = h.col; x.lineWidth = 2.5; x.stroke(new Path2D(h.d)); }   // v0.454: общая граница
   for (const [w, el] of Object.entries(els)) {   // подписи
     const cells = Object.keys(o).filter(k => o[k] === w).map(k => k.split("_").map(Number)), m = tzcMain(cells), cs = getComputedStyle(el);
