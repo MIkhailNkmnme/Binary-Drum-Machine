@@ -7014,8 +7014,8 @@ function cgrpInit(){
     if (!pre.length && !post.length) return;
     const mk = (nodes, cls) => { if (!nodes.length) return 0; const t = nodes.map(n => n.textContent.trim()).join(" "); nodes.forEach(n => n.remove()); const sp = document.createElement("span"); sp.className = cls; sp.textContent = t; l.appendChild(sp); return [...t].length; };
     const a = mk(pre, "fpre"), b = mk(post, "fpost"); l.classList.add("fin");
-    if (a) inp.style.paddingLeft = `calc(${a}ch + 6px)`;
-    if (b) inp.style.paddingRight = `calc(${b}ch + 6px)`;
+    if (a) inp.style.paddingLeft = `calc(${a}ch + 6px + var(--t, 0px))`;   // v0.568: и мимо скоса края (--t у .tz)
+    if (b) inp.style.paddingRight = `calc(${b}ch + 6px + var(--t, 0px))`;
   }));
   /* v0.366: магнит — край тащимой группы ближе SNAP px к краю окна конуса, поля строк или другой группы (любой стороной: вплотную или вровень) —
      встаёт ровно на него; по горизонтали и вертикали — отдельно, ближайший край. Координаты — экранные */

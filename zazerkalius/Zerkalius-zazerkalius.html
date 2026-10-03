@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.567. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.568. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.567</title>
+<title>Zazerkalius — v0.568</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -93,7 +93,7 @@ code{font-family:var(--ff);font-size:.95em}
    а не две — «⏸ на проходе», «↻ по часовой», «🎨 разные» и пары «🎯 до строки | 10», «↻ | 45°» теперь ровно в 1 кнопку (правила выше).
    Длинная подпись не обрезается, а ложится в две строки мельче */
 #w-cone .tools .cgb #bConeClockStop#bConeClockStop,#paneGrp .cgb #bConeClockStop#bConeClockStop,#w-cone .tools .cgb #bConeDir#bConeDir,#paneGrp .cgb #bConeDir#bConeDir,#w-cone .tools .cgb > span.cu2 > #bConeGo#bConeGo,#paneGrp .cgb > span.cu2 > #bConeGo#bConeGo{white-space:normal !important;font-size:10px !important;line-height:1.05 !important;padding:0 2px !important;text-align:center}
-#w-cone .tools .cgb #sndWave#sndWave,#paneGrp .cgb #sndWave#sndWave,#w-cone .tools .cgb > span.cu2 > #coneLaserStepK#coneLaserStepK,#paneGrp .cgb > span.cu2 > #coneLaserStepK#coneLaserStepK{font-size:11px !important;padding:0 1px !important}
+#w-cone .tools .cgb #sndWave#sndWave,#paneGrp .cgb #sndWave#sndWave,#w-cone .tools .cgb > span.cu2 > #coneLaserStepK#coneLaserStepK,#paneGrp .cgb > span.cu2 > #coneLaserStepK#coneLaserStepK{font-size:11px !important;padding:0 1px 0 calc(var(--t, 0px) + 3px) !important}   /* v0.568: текст — мимо скоса и острия соседа */
 /* v0.358, по снимку «проход 0 · волна 0/63» — «перемести прямо в поле строк, где первая строка, прижми вправо, биты — на передний план, удали дубль»:
    счёт Аниматрицы — один, в самом поле строк: у правого края, на уровне первой строки (--aiTop — под шапкой поля), позади строк — биты поверх него */
 #field > #animInfo{position:absolute;right:14px;top:var(--aiTop, 44px);z-index:0;pointer-events:none;display:flex;align-items:center;height:22px;box-sizing:border-box;padding:0 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel2);color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -786,13 +786,15 @@ label.pcol > span{font-size:11px;color:var(--dim)} label.pcol > input[type=color
 #w-cone .tools > .cgrp:not(.cmin) > .glab,#paneGrp .cgrp:not(.cmin) > .glab{align-self:flex-start;height:24px;min-width:0;box-sizing:border-box;margin:1px 0 0 !important;padding:0 4px !important;display:flex;align-items:center;justify-content:center}
 /* v0.327, «текст убрать в поля»: поле с подписью (стр., сид, от … °, ↔, ⌖×) — шириной в кнопку, подпись — мелко внутри поля (cgrpInit),
    слева или справа, мышь сквозь неё; стрелок-вертушек у числа нет (колесо и ↑ ↓ меняют число, как прежде) */
-#w-cone .tools .cgb > label.fin,#paneGrp .cgb > label.fin{position:relative;width:var(--bu) !important;flex:0 0 auto !important;padding:0 !important;justify-content:flex-start !important}
-#w-cone .tools .cgb > label.fin.fh,#paneGrp .cgb > label.fin.fh{width:calc((var(--bu) - 3px) / 2) !important}   /* v0.357: поле в полкнопки (▮ Столб: слева | справа) */
-#w-cone .tools .cgb > label.fin > input,#paneGrp .cgb > label.fin > input{width:100% !important;height:24px;margin:0 !important;box-sizing:border-box;text-align:center;line-height:22px;-moz-appearance:textfield;appearance:textfield}
-#w-cone .tools .cgb > label.fin > input::-webkit-inner-spin-button,#w-cone .tools .cgb > label.fin > input::-webkit-outer-spin-button,#paneGrp .cgb > label.fin > input::-webkit-inner-spin-button,#paneGrp .cgb > label.fin > input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-#w-cone .tools .cgb > label.fin > .fpre,#w-cone .tools .cgb > label.fin > .fpost,#paneGrp .cgb > label.fin > .fpre,#paneGrp .cgb > label.fin > .fpost{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-size:10px;color:var(--dim);pointer-events:none;white-space:nowrap}
-#w-cone .tools .cgb > label.fin > .fpre,#paneGrp .cgb > label.fin > .fpre{left:5px}
-#w-cone .tools .cgb > label.fin > .fpost,#paneGrp .cgb > label.fin > .fpost{right:5px}
+/* v0.568, по снимку «Лазера» — «поправь кнопки, ничего не видно»: поля в метке внутри span (⌖×, от °, × у музыки) не попадали под «.cgb > label.fin» —
+   поле оставалось 40 px со стрелками и отступом под подпись, числа не помещались. Теперь правила — для любой глубины; подписи в поле — мимо скоса края (--t) */
+#w-cone .tools .cgb label.fin,#paneGrp .cgb label.fin{position:relative;width:var(--bu) !important;flex:0 0 auto !important;padding:0 !important;justify-content:flex-start !important}
+#w-cone .tools .cgb label.fin.fh,#paneGrp .cgb label.fin.fh{width:calc((var(--bu) - 3px) / 2) !important}   /* v0.357: поле в полкнопки (▮ Столб: слева | справа) */
+#w-cone .tools .cgb label.fin > input,#paneGrp .cgb label.fin > input{width:100% !important;height:24px;margin:0 !important;box-sizing:border-box;text-align:center;line-height:22px;-moz-appearance:textfield;appearance:textfield}
+#w-cone .tools .cgb label.fin > input::-webkit-inner-spin-button,#w-cone .tools .cgb label.fin > input::-webkit-outer-spin-button,#paneGrp .cgb label.fin > input::-webkit-inner-spin-button,#paneGrp .cgb label.fin > input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#w-cone .tools .cgb label.fin > .fpre,#w-cone .tools .cgb label.fin > .fpost,#paneGrp .cgb label.fin > .fpre,#paneGrp .cgb label.fin > .fpost{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-size:10px;color:var(--dim);pointer-events:none;white-space:nowrap}
+#w-cone .tools .cgb label.fin > .fpre,#paneGrp .cgb label.fin > .fpre{left:calc(var(--t, 0px) + 3px)}
+#w-cone .tools .cgb label.fin > .fpost,#paneGrp .cgb label.fin > .fpost{right:calc(var(--t, 0px) + 3px)}
 /* v0.317, по снимку группы «Звук» — «всем кнопкам и спискам — стандарт длины кнопок, если в строку более чем 1 помещается, то туда»:
    у кнопок, кнопок-галок и списков в группах одна ширина --bu (80 px); кнопка-значок (не больше двух знаков: ◀ ▶| ↻ ⏮ 01 — класс .ib,
    ставит cgbIcons) — в полширины, две такие = одна обычная. Сколько влезает в строку, столько и встаёт, столбцы ровные. Длинная
@@ -1500,7 +1502,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.567</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.568</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2450,8 +2452,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0567"></script>
-<script src="zz-ui.js?v=0567"></script>
+<script src="zz-core.js?v=0568"></script>
+<script src="zz-ui.js?v=0568"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
