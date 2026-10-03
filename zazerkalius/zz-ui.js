@@ -9691,7 +9691,7 @@ function loadSession(text, name){
    каждом открытии даёт то же. Свои строки гость может забрать «💾 В файл» */
 function zzB64u(bytes){ let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
 function zzUnB64u(t){ const b = atob(t.replace(/-/g, "+").replace(/_/g, "/")), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
-async function zzLinkMake(){
+async function zzLinkMake(toFile){   // v0.654: toFile — правый щелчок по 🔗: ссылка — текстовым файлом в «Загрузки»
   if (!window.CompressionStream) { say("🔗 Этот браузер не умеет сжимать — ссылку не собрать. Chrome, Edge, Firefox 113+, Safari 16.4+."); return; }
   save();
   const st = JSON.parse(JSON.stringify(Z)); delete st.home;
@@ -9700,6 +9700,13 @@ async function zzLinkMake(){
   const local = location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   const base = local ? "https://1001100.online/zazerkalius/Zerkalius-zazerkalius.html" : location.origin + location.pathname;
   const url = base + "#z=" + zzB64u(new Uint8Array(buf)), kb = (url.length / 1024).toFixed(1);
+  if (toFile) {
+    const d = new Date(), p2 = (x) => String(x).padStart(2, "0"), a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([url + "\r\n"], { type: "text/plain" }));
+    a.download = `zazerkalius-ssylka-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.txt`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    say(`🔗 Ссылка на всё состояние — в файл ${a.download} (${kb} КБ). Открыть — скопировать строку из файла в адрес браузера.`); return;
+  }
   let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { ok = false; }
   if (!ok) prompt("🔗 Ссылка на это состояние — скопируй:", url);
   say(`🔗 Ссылка на всё состояние страницы${ok ? " — в буфере обмена" : ""} (${kb} КБ${url.length > 60000 ? "; длинная — мессенджер может обрезать, надёжнее «💾 В файл»" : ""}). Открывший увидит ровно это; его собственные строки и настройки не тронутся.`);
@@ -10830,7 +10837,7 @@ function init(){
   $("fileIn").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
   $("bSaveTxt").onclick = saveRowsTxt;
   $("bSaveAll").onclick = saveSession;   // v0.115
-  if ($("bLink")) $("bLink").onclick = () => zzLinkMake();   // v0.650
+  if ($("bLink")) { $("bLink").onclick = () => zzLinkMake(); $("bLink").oncontextmenu = (e) => { e.preventDefault(); zzLinkMake(true); }; }   // v0.650; v0.654 — правый щелчок: в файл
   $("bHome").onclick = homeSave; $("bHome").oncontextmenu = (e) => { e.preventDefault(); homeForget(); }; homeBtn();   // v0.125
   $("bLoadAll").onclick = () => $("fileAll").click();
   $("fileAll").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
