@@ -3193,7 +3193,8 @@ function setupCone(){
       return;
     }
     e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
-    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i), v0: coneRot[h.i] || 0 };
+    const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).off !== 0;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
+    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD, cut: cutD, v0: coneRot[h.i] || 0 };
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
@@ -3207,7 +3208,7 @@ function setupCone(){
     const a = Math.atan2((e.clientY - cvr.top) * G.dpr - G.cy, (e.clientX - cvr.left) * G.dpr - G.cx);
     let da = a - D.last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
     D.turn += da; D.last = a;
-    const n = D.base.length, rot = -D.turn / (2 * Math.PI / n), k = Math.round(rot);
+    const n = D.base.length, rot = -D.turn / (D.cut ? 2 * Math.PI / (2 * n - 1) : 2 * Math.PI / n), k = Math.round(rot);   // v0.671: в вырезах — шаг части
     if (D.view) { coneRot[D.i] = D.v0 + rot; renderCone(); return; }   // запертое — только вид
     if (k !== D.applied) {   // целый бит — крутим саму строку, поле видит сразу
       if (!D.snap) { snapshot(); D.snap = true; }
@@ -3228,9 +3229,10 @@ function setupCone(){
       say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные.")); return;
     }
     if (D.view) {   // запертое кольцо: поворот вида — целым битом, запомнить у кольца
-      coneRot[D.i] = ((Math.round(coneRot[D.i]) % n) + n) % n; Z.coneRot = coneRot.map(x => Math.round(x || 0));
+      const P = D.cut ? 2 * n - 1 : n;   // v0.671: в вырезах полный круг — 2E − 1 частей
+      coneRot[D.i] = ((Math.round(coneRot[D.i]) % P) + P) % P; Z.coneRot = coneRot.map(x => Math.round(x || 0));
       if (Z.cur !== D.i) Z.cur = D.i;
-      renderAll(); save(); say(`◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
+      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${coneRot[D.i]} ${coneRot[D.i] === 1 ? "часть" : "частей"} из ${P} (вырезы T−1) — только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
     }
     coneRot[D.i] = D.v0;
     if (Z.cur !== D.i) Z.cur = D.i;
