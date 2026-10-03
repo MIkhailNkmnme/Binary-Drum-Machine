@@ -1726,7 +1726,8 @@ function renderCone(){
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
       if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
       if (Z.coneArcs === false) continue;   // v0.375: «◠ дуги» выключены — дуг битов нет (границы, кольца, лучи — как были)
-      g.beginPath(); coneArc(g, cx, cy, i, rout, a + gap, a + step - gap); coneArc(g, cx, cy, i, rin, a + step - gap, a + gap, true); g.closePath();   // v0.109: у многоугольника — сторона
+      const one1 = !!clockRays && coneOneSlit() && !coneSunOn(), ga = one1 && j !== 0 ? 0 : gap, gb = one1 && j !== n - 1 ? 0 : gap;   // v0.664: одна щель — прорезь только перед первым битом
+      g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();   // v0.109: у многоугольника — сторона
       /* v0.078, «чётче границы внутри кольца и цвета ярче — сливаются»: заливка плотнее (у единиц и неподвижных — почти
          сплошная, у нулей — заметная), символ поверх единицы — цветом фона (контраст на плотной заливке), у нуля — своим
          цветом; между битами — тёмные черты, по краям кольца — контур. */
@@ -1791,7 +1792,8 @@ function renderCone(){
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
       const gp = n >= 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
-      g.beginPath(); coneArc(g, cx, cy, i, rout, a + gp, a + step - gp); coneArc(g, cx, cy, i, rin, a + step - gp, a + gp, true); g.closePath();
+      const one1 = coneOneSlit() && !coneSunOn(), ga = one1 && j !== 0 ? 0 : gp, gb = one1 && j !== n - 1 ? 0 : gp;   // v0.664
+      g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();
       g.fillStyle = cg; g.globalAlpha = Math.min(0.95, 0.6 + 0.12 * cnt); g.fill(); g.globalAlpha = 1;
       if (fsz >= 7 * dpr) {
         const tx = "1".repeat(Math.min(cnt, 9)), am = a + step / 2, rm = (rin + rout) / 2 * coneRho(i, am);
@@ -1992,8 +1994,8 @@ function renderCone(){
           const a0 = -Math.PI / 2 + (R.wall[1] - rot) * st;
           g.save(); g.shadowColor = cR; g.shadowBlur = lite ? 0 : 12 * dpr; g.strokeStyle = cR; g.lineWidth = Math.max(2.5 * dpr, dr * 0.07); g.lineCap = "butt";
           g.beginPath(); if (n > 1) coneArc(g, cx, cy, b, ri, a0 + gp, a0 + st - gp); else { g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, 2 * Math.PI); } g.stroke();
-          const u = (R.a + Math.PI / 2) / st + rot, ab = -Math.PI / 2 + (Math.round(u) - rot) * st;
-          if (n > 1 && Math.abs(u - Math.round(u)) * st < 3 * Math.max(hs, gp)) {
+          const u = (R.a + Math.PI / 2) / st + rot, ku = coneOneSlit() ? Math.round(u / n) * n : Math.round(u), ab = -Math.PI / 2 + (ku - rot) * st;   // v0.664: одна щель — ближняя только она
+          if (n > 1 && Math.abs(u - ku) * st < 3 * Math.max(hs, gp)) {
             g.strokeStyle = cg; g.shadowColor = cg; g.lineWidth = Math.max(2 * dpr, dr * 0.05);
             for (const e of [ab - gp, ab + gp]) { g.beginPath(); g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); g.stroke(); }
           }
@@ -2091,6 +2093,11 @@ function coneOuterHit(i, a){
 /* v0.124: щель — ползунок «щель» (Z.coneSlit, градусов во всю ширину, по умолчанию 2). Луч проходит кольцо, если граница его бит не
    дальше половины щели от середины луча. У кольца с мелкими битами щель не шире 0,9 бита — иначе в щель превратилось бы всё кольцо.
    Та же половина щели — прорезь между битами на рисунке и полуширина клина лазера. */
+/* v0.664, «понял, в чём ошибка: выход из кольца — одна щель, только на границе между первым и последним битом строки-кольца, а не через каждый
+   бит; нужен такой режим по умолчанию»: Z.coneSlits — "one" (по умолчанию, и когда не задано) или "all" (как было: щель на каждой границе бит).
+   Одна щель — у колец строк (кроме строки 1 — у неё свой вырез-затвор); кольцо для заполнения и пустые «до 256» ловят луч по-прежнему, щели
+   у них на каждой границе ячеек. ☀ солнце — со своим пропуском, его это не касается */
+function coneOneSlit(){ return Z.coneSlits !== "all"; }
 function coneSlitHalf(n){
   const w = Math.max(0.1, Math.min(20, +Z.coneSlit || 2)) * Math.PI / 360;
   return n ? Math.min(w, Math.PI / n * 0.9) : w;
@@ -2426,7 +2433,7 @@ function coneClockTrace(){
     for (; b < N; b++) {
       const n = Z.rows[b].length; if (!n) break;
       const st = TAU / n, u = (a + Math.PI / 2) / st + coneRotOf(b);
-      if (Math.abs(u - Math.round(u)) * st > coneSlitHalf(n)) { wall = [b, ((Math.floor(u) % n) + n) % n]; break; }
+      if (Math.abs(u - Math.round(u)) * st > coneSlitHalf(n) || (coneOneSlit() && ((Math.round(u) % n) + n) % n !== 0)) { wall = [b, ((Math.floor(u) % n) + n) % n]; break; }   // v0.664: одна щель — только граница «последний | первый»
       g.push(b, ((Math.round(u) % n) + n) % n);   // на бит — стена (v0.124: щель с ползунка); v0.131: [кольцо, бит] — его красит
     }
     const pass = b >= N, cells = [];   // cells: [кольцо, ячейка] — где луч поймали (кольцо N — для заполнения)
@@ -3630,6 +3637,12 @@ function setupCone(){
     $(id).oncontextmenu = (e) => { e.preventDefault(); Z.coneAimRot = 0; coneClockWas = coneClockTrace().some(R => R.pass); save(); renderCone(); say("⌖ Довод строки 1 снят — она снова на своём месте."); };
   }
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
+  const slitsUi = () => { const b = $("bConeSlits"); if (b) { b.textContent = coneOneSlit() ? "1 щель" : "все щели"; b.classList.toggle("on", coneOneSlit()); } };   // v0.664
+  slitsUi();
+  if ($("bConeSlits")) $("bConeSlits").onclick = () => {
+    Z.coneSlits = coneOneSlit() ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
+    say(coneOneSlit() ? "1 щель: выход из кольца — только граница между последним и первым битом строки." : "Все щели: луч проходит кольцо на любой границе бит (как было).");
+  };
   $("bConeClockStop").onclick = () => {
     Z.coneClockStop = !Z.coneClockStop; $("bConeClockStop").classList.toggle("on", Z.coneClockStop);
     if (Z.coneClockStop && !Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
