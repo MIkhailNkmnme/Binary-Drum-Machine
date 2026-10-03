@@ -1653,8 +1653,8 @@ function renderCone(){
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
     const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
-    const gap = Z.coneClean ? 0 : clockRays && n > 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   // v0.222: «чистые кольца» — без прорезей   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
-      : n > 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
+    const gap = Z.coneClean ? 0 : clockRays && n >= 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   /* v0.573: и у строки из 1 бита — одна щель (граница бита с самим собой) */   // v0.222: «чистые кольца» — без прорезей   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
+      : n >= 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.95, arcLen * 0.85);
     const glyph = fsz >= 5 * dpr;   // v0.162, «вид сверху на все — пиши 1 и 0 на секторах»: символ — почти во всю ширину кольца и с 5 px (прежде 0.8 ширины и с 8 px — у узких колец цифр не было)
     /* v0.110, «почему так? может, надо крест и точку?» — на «строки из 1 и 2 бит остаются кругами»: у одного бита многоугольника
@@ -1719,7 +1719,7 @@ function renderCone(){
     }
     /* v0.090, «граница — цветом, сами построятся», «где надо»: граница красится по тому, что разделяет. Биты разные — яркая:
        0→1 (по часовой) — сиреневая, 1→0 — бирюзовая; одинаковые — тонкая бледная. Края серий видны сразу, узор проступает. */
-    if (n > 1 && step * rin > 3 * dpr) {
+    if (n >= 1 && step * rin > 3 * dpr) {   /* v0.573: у 1 бита — одна черта границы */
       for (let j = 0; j < n; j++) {
         const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = !blank && pv !== nx;
         g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff && !clockRays ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);   // v0.124: при луч-часах черта тонкая — щель видна пустой
@@ -1764,7 +1764,7 @@ function renderCone(){
       const [i, j] = k.split(":").map(Number); if (i >= N || !shown(i)) continue;
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
       const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneRotOf(i)) * step;
-      const gp = n > 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
+      const gp = n >= 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + gp, a + step - gp); coneArc(g, cx, cy, i, rin, a + step - gp, a + gp, true); g.closePath();
       g.fillStyle = cg; g.globalAlpha = Math.min(0.95, 0.6 + 0.12 * cnt); g.fill(); g.globalAlpha = 1;
       if (fsz >= 7 * dpr) {
@@ -1962,7 +1962,7 @@ function renderCone(){
            упёрся, светится во всю ячейку; если луч лёг рядом со щелью (ближе трёх её ширин), светится и граница этой щели —
            видно, насколько не довёл. */
         if (R.wall) {
-          const b = R.wall[0], n = Z.rows[b].length, st = 2 * Math.PI / n, rot = coneRotOf(b), gp = n > 1 ? coneSlitHalf(n) : 0, ri = r0 + b * dr, ro = ri + Math.max(1, dr * band);
+          const b = R.wall[0], n = Z.rows[b].length, st = 2 * Math.PI / n, rot = coneRotOf(b), gp = n >= 1 ? coneSlitHalf(n) : 0, ri = r0 + b * dr, ro = ri + Math.max(1, dr * band);
           const a0 = -Math.PI / 2 + (R.wall[1] - rot) * st;
           g.save(); g.shadowColor = cR; g.shadowBlur = lite ? 0 : 12 * dpr; g.strokeStyle = cR; g.lineWidth = Math.max(2.5 * dpr, dr * 0.07); g.lineCap = "butt";
           g.beginPath(); if (n > 1) coneArc(g, cx, cy, b, ri, a0 + gp, a0 + st - gp); else { g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, 2 * Math.PI); } g.stroke();
@@ -2830,7 +2830,7 @@ function cone3DDraw(g, o){
       let col = fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
       if (MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
       const strong = s[j] === "1" || fix || !!(MI && MI.odd), pts = [];
-      const gap = n > 1 ? step * 0.06 : 0, tiny = Z.conePoly && n <= 2;   // v0.110: 1 бит — точка, 2 — крест
+      const gap = Math.min(step, Math.PI) * 0.06, tiny = Z.conePoly && n <= 2;   // v0.573: и у 1 бита — щель (как у 2)   // v0.110: 1 бит — точка, 2 — крест
       if (tiny && n === 1) pts.push(at(i, a, 0));
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
@@ -2851,7 +2851,7 @@ function cone3DDraw(g, o){
   const octaSet = octa && Z.coneOctaSel === "cur" ? new Set(coneFocus()) : null;   // v0.359: ⧗ выдел. — только кольца в фокусе
   if (octa) for (let i = 0; i < N - 1; i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i) || (octaSet && !octaSet.has(i))) continue;
-    const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = n > 1 ? step * 0.06 : 0;
+    const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = Math.min(step, Math.PI) * 0.06;
     const atM = (a, rr = r) => { const q = rr * coneRho(i, a); return P(q * Math.cos(a), -q * Math.sin(a), zm); }, tiny = Z.conePoly && n <= 2;
     for (let j = 0; j < n; j++) {
       const a = -Math.PI / 2 + (j - rot) * step, inv = s[j] === "1" ? "0" : "1", fix = Z.showFix && fixAt(s, j);
