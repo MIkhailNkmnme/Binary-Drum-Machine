@@ -2515,14 +2515,14 @@ function coneSunPeek(){
   conePeekC = { k, S }; return S;
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
-  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set();
+  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {};
   let lit = [[0, TAU2]], b = 1;
   /* v0.701, «теперь так: пусть свет от лучей проходит, когда через единицы, — то он закрашивает следующую нулями; и когда все биты строки закрасятся либо 1,
      либо 0 — строка готова»: в вырезах T−1 свет, упавший на бит «1» кольца строки, проходит его и красит ячейки СЛЕДУЮЩЕГО кольца нулями (zhits, по тем же
      углам — расходящимся); дальше этот свет не идёт. Свет через вырез — как был, единицами */
   for (; b < T && lit.length; b++) {
     const R = coneRingNR(b); if (!R) break;
-    bands.push([b, lit]);
+    bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
     for (const [lo, hi] of ivMinus(lit, open)) {
@@ -2530,14 +2530,22 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
       for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P; if (q < nb) hits.add(b + ":" + q); }
     }
-    if (C && b < N && b + 1 < T) {   // v0.701: свет сквозь «1» — нулями на следующее кольцо
-      const zl = [], s1 = Z.rows[b];
-      for (let q = 0; q < nb; q++) if (s1[q] === "1") { const B = []; ivNorm((q - rot) * st, (q + 1 - rot) * st, B); for (const x of ivAnd(lit, ivUnion(B))) if (x[1] - x[0] > 1e-9) zl.push(x); }
-      const C2 = zl.length ? coneSunCutR(b + 1, N) : null;
-      if (C2) for (const [lo, hi] of ivUnion(zl)) { const v0 = Math.floor(lo / C2.st + C2.rot + 1e-7), v1 = Math.ceil(hi / C2.st + C2.rot - 1e-7);
-        for (let u = v0; u < v1 && u - v0 < C2.P; u++) { const q = ((u % C2.P) + C2.P) % C2.P; if (q < C2.n) zhits.add((b + 1) + ":" + q); } }
-    }
     lit = ivAnd(lit, open);
+  }
+  /* v0.703, «лучи прошли через единицы 2 строки и единицы 3 строки на 4-ю — там надо 0 ставить, почему-то не ставит»: в v0.701 свет сквозь «1» красил только
+     следующее кольцо и гас. Теперь «нулевой» свет идёт по кольцам: на кольце b он красит нулями ячейки, куда упал (бит или ячейку строки за чертой), и проходит
+     дальше сквозь вырез и сквозь биты «1» (на «0» гаснет); к нему добавляется основной свет, упавший на «1» кольца b. На строке за чертой — нули, дальше нет */
+  if (coneCutOn()) {
+    let z = [];
+    for (let k = 1; k <= N && k < T; k++) {
+      const C = coneSunCutR(k, N); if (!C) break;
+      const L = litAt[k] || [], hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
+      for (const [lo, hi] of ivMinus(z, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
+        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n) zhits.add(k + ":" + q); } }
+      if (k === N) break;
+      const s1 = Z.rows[k], ones = []; for (let q = 0; q < C.n; q++) if (s1[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, ones);
+      const O = ivUnion(ones); z = ivUnion([...ivAnd(z, ivUnion([...open, ...O])), ...ivAnd(L, O)]).filter(([a, c]) => c - a > 1e-9);
+    }
   }
   return { bands, hits: [...hits], zhits: [...zhits], out: lit, end: b };
 }
