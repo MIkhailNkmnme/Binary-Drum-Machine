@@ -10592,11 +10592,20 @@ function init(){
         [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
       };
       P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);
+      /* v0.638, «потом сделай скролл ступенчатым по зубцам — одна кнопка скролл»: колесо листает панель ровно на ряд (24 px) за щелчок, и место всегда
+         кратно ряду — ряды остаются в зубцах границы. Листнули иначе (палец, полоса, клавиши) — по остановке встаёт на ближайший ряд */
+      const ROW = TZC_H, snapTo = (y) => Math.max(0, Math.min(P.scrollHeight - P.clientHeight, Math.round(y / ROW) * ROW));
+      P.addEventListener("wheel", (e) => {
+        if (e.ctrlKey || document.body.classList.contains("pane-icons") || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+        const W = e.target.closest && e.target.closest("#paneWins"); if (W && W.scrollHeight > W.clientHeight + 2) return;   // список окон листается сам
+        e.preventDefault(); P.scrollTop = snapTo(Math.round(P.scrollTop / ROW) * ROW + Math.sign(e.deltaY) * ROW);
+      }, { passive: false });
+      { let st = 0; P.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { if (document.body.classList.contains("pane-icons")) return; const y = snapTo(P.scrollTop); if (Math.abs(y - P.scrollTop) > 0.5) P.scrollTop = y; }, 140); }, { passive: true }); }
       if (window.ResizeObserver) { const ro = new ResizeObserver(upd); ro.observe(P); [...P.children].forEach(c => ro.observe(c)); }
       new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ["class"] });
       const PWs = () => { const W = $("paneWins"); return W && W.getClientRects().length && W.scrollHeight > W.clientHeight + 2 ? W : null; };
-      up.onclick = () => { const W = PWs(); if (P.scrollTop <= 2 && W && W.scrollTop > 2) W.scrollBy({ top: -Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollBy({ top: -Math.max(40, P.clientHeight * 0.75), behavior: "smooth" }); };
-      dn.onclick = () => { const W = PWs(); if (W && W.scrollTop + W.clientHeight < W.scrollHeight - 2) W.scrollBy({ top: Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollBy({ top: Math.max(40, P.clientHeight * 0.75), behavior: "smooth" }); };
+      up.onclick = () => { const W = PWs(); if (P.scrollTop <= 2 && W && W.scrollTop > 2) W.scrollBy({ top: -Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollTop = snapTo(P.scrollTop - Math.max(1, Math.floor(P.clientHeight * 0.75 / ROW)) * ROW); };   // v0.638: рядами
+      dn.onclick = () => { const W = PWs(); if (W && W.scrollTop + W.clientHeight < W.scrollHeight - 2) W.scrollBy({ top: Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollTop = snapTo(P.scrollTop + Math.max(1, Math.floor(P.clientHeight * 0.75 / ROW)) * ROW); };   // v0.638: рядами
       { const W = $("paneWins"); if (W) W.addEventListener("scroll", upd, { passive: true }); }
       setTimeout(upd, 300); setInterval(upd, 1000);   // v0.609: окно конуса двигают и тянут — ромб дзена держит высоту полосы записи
       { const C = $("w-cone"); if (C && window.ResizeObserver) new ResizeObserver(upd).observe(C); }
