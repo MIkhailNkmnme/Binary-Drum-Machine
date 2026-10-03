@@ -5097,7 +5097,7 @@ function leftBarsInit(){
   /* v0.272, «скролл и граница — друг на друге»: у левого края стола — хват ширины левой панели (#paneEdge, 3 px в стол); полоса — правее него */
   const paneEdgeR = () => { const e = $("paneEdge"); if (!e || !e.getClientRects().length) return 0; return Math.max(0, Math.ceil(e.getBoundingClientRect().right - $("desk").getBoundingClientRect().left) + 1); };
   mk($("desk"), "deskBar", () => B.classList.contains("field-right") && !B.classList.contains("zen"), paneEdgeR);
-  mk($("rowsPane"), "paneBar", () => !B.classList.contains("zen"));
+  /* v0.601, «всё равно показывает скролл»: у левой панели своей полосы (paneBar) больше нет — вместо неё светящиеся ▲ ▼ (v0.599, .rpArr) */
 }
 function setupPyr(){
   const cv = $("pyrCv"); if (!cv) return;
