@@ -2572,7 +2572,10 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
   let aout = [], a0 = [], akb = 0;
   if (coneCutOn()) {
     const full = (L) => L.length === 1 && L[0][1] - L[0][0] > TAU2 - 1e-6;
-    const nf = bands.find(([, L]) => L.length && !full(L)), base = nf ? nf[1] : (lit.length && !full(lit) ? lit : []);
+    /* v0.711, «свет от луны задать таким, что только от вылетевших лучей солнца угол задаётся — от тех, что вышли за все кольца через зазоры, имеющиеся
+       до кольца ниже горизонта, а не как сейчас»: зеркалится только свет, дошедший сквозь вырезы всех колец строк до кольца за чертой (перед ним), и
+       антисвет начинается у этого кольца. Не дошёл ничего — антисвета нет */
+    const nb = bands.find(([k]) => k === N), base = nb && nb[1].length && !full(nb[1]) ? nb[1] : [], nf = base.length ? nb : null;
     const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
     let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9); a0 = A; akb = nf ? nf[0] : N + 1;
     if (akb > N) aout = A;
