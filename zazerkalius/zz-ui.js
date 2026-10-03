@@ -5033,6 +5033,24 @@ function pyrBuild(){
   pyrData = { key, what: sd.what, layers: res.layers, K0, n: res.layers.length, want: n, cut: res.cut, ones: res.ones, pts: new Float32Array(pts), perLayer, hz, E };
   return pyrData;
 }
+/* v0.627, «Паскаль — надо там Аниматрицу крутить»: 🌊 в окне пирамиды — волна Аниматрицы по каждому этажу (треугольнику): строка r переписывается
+   операцией с уже переписанной строкой r − 1 над ней (бит строки выше — по углу, как в конусе: j → ⌊(j + ½)·r / (r + 1)⌋), операция — из «Аниматрицы»
+   (Z.animOp). Проход — по всем этажам сразу; точки пирамиды пересчитываются (pyrPts) */
+const PYR_OPS = { xor: (a, b) => a ^ b, xnor: (a, b) => 1 - (a ^ b), nand: (a, b) => 1 - (a & b), nor: (a, b) => 1 - (a | b), and: (a, b) => a & b, or: (a, b) => a | b };
+function pyrAnimPass(D){
+  const f = PYR_OPS[Z.animOp] || PYR_OPS.xor;
+  D.layers.forEach(L => { for (let r = 1; r < L.length; r++) { const A = L[r - 1], B = L[r], nA = A.length, nB = B.length;
+    for (let j = 0; j < nB; j++) B[j] = f(A[Math.min(nA - 1, Math.floor((j + 0.5) * nA / nB))], B[j]); } });
+  pyrPts(D);
+}
+function pyrPts(D){
+  const pts = [], perLayer = [];
+  D.layers.forEach((L, li) => { const k = D.K0 + li; let c = 0;
+    for (let r = 0; r < L.length; r++) { const row = L[r];
+      for (let a = 0; a <= r; a++) if (row[a]) { const b = r - a, cc = k - r; pts.push(a * D.E[0][0] + b * D.E[1][0] + cc * D.E[2][0], a * D.E[0][1] + b * D.E[1][1] + cc * D.E[2][1], -k * D.hz, li); c++; } }
+    perLayer.push(c); });
+  D.pts = new Float32Array(pts); D.perLayer = perLayer; D.ones = perLayer.reduce((x, y) => x + y, 0); D.animN = (D.animN | 0) + 1;
+}
 function renderPyr(force){
   if (!winOpen("w-pyr")) return;
   const cv = $("pyrCv"); if (!cv) return;
@@ -5188,6 +5206,18 @@ function setupPyr(){
   $("bPyrSpin").onclick = () => {
     if (spinRaf) { cancelAnimationFrame(spinRaf); spinRaf = 0; save(); $("bPyrSpin").classList.remove("on"); return; }
     spinT = 0; spinRaf = requestAnimationFrame(spinTick); $("bPyrSpin").classList.add("on");
+  };
+  // v0.627: 🌊 аниматрица — проходы волны по этажам, 6 в секунду
+  let aniRaf = 0, aniT = 0;
+  const aniTick = (ts) => {
+    if (!aniRaf) return;
+    if (!aniT || ts - aniT >= 1000 / 6) { aniT = ts; pyrAnimPass(pyrBuild()); pyrDrawKey = ""; renderPyr(true); }
+    aniRaf = requestAnimationFrame(aniTick);
+  };
+  $("bPyrAnim").onclick = () => {
+    if (aniRaf) { cancelAnimationFrame(aniRaf); aniRaf = 0; $("bPyrAnim").classList.remove("on"); say(`🌊 Аниматрица пирамиды — стоп (проходов ${(pyrData && pyrData.animN) | 0}). Вернуть пирамиду как была — смени «этажей» или затравку.`); return; }
+    aniT = 0; aniRaf = requestAnimationFrame(aniTick); $("bPyrAnim").classList.add("on");
+    say(`🌊 Аниматрица по этажам пирамиды: операция ${(Z.animOp || "xor").toUpperCase()} (как в «Аниматрице»), 6 проходов в секунду. Ещё раз — стоп.`);
   };
   $("bPyrOut").onclick = () => {
     const D = pyrBuild(), show = Math.max(1, Math.min(D.n, Z.pyrShow || D.n)), L = D.layers[show - 1], k = D.K0 + show - 1;
