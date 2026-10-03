@@ -5085,7 +5085,7 @@ function pyrAnimPass(D){
   pyrPts(D);
 }
 /* v0.646: формы точек пирамиды — [ключ, надпись кнопки] */
-const PYR_SHAPES = [["ball", "● шарики"], ["dot", "· точки"], ["tri", "▲ треугольники"], ["cube", "■ кубы"], ["rhomb", "◆ ромбы"], ["bits", "1 0 биты"]];   // v0.648: и мелкие точки
+const PYR_SHAPES = [["ball", "● шарики"], ["dot", "· точки"], ["tri", "▲ треугольники"], ["cube", "■ кубы"], ["rhomb", "◆ ромбы"], ["bits", "1 0 биты"], ["ones", "1 биты без нулей"]];   // v0.652: и одни единицы   // v0.648: и мелкие точки
 /* нули показанных этажей — экранные x, y, глубина (для «1 0 биты»); на каждый кадр — заново, их не бывает больше единиц на порядок */
 function pyrZeros(D, show, one, P){
   const out = [];
@@ -5119,7 +5119,7 @@ function renderPyr(force){
   pyrDrawKey = dk;
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
   const g = cv.getContext("2d");
-  g.fillStyle = cBg; g.fillRect(0, 0, W, H);
+  g.clearRect(0, 0, W, H);   // v0.652, «тут дополнительный фон у Паскаля убери»: холст прозрачный — под ним фон окна (прежде свой, --panel2)
   const yaw = yawD * Math.PI / 180, el = elD * Math.PI / 180, cyw = Math.cos(yaw), syw = Math.sin(yaw), ce = Math.cos(el), se = Math.sin(el);
   /* v0.648, «надо кнопку — зеркало вниз всей фигуры»: ⇣ — под основанием (последний этаж) та же пирамида отражённой, остриём вниз; вместе — бипирамида.
      Середина вида — плоскость основания, размах — вдвое выше */
@@ -5163,7 +5163,7 @@ function renderPyr(force){
   }
   g.fillStyle = c1; g.lineWidth = Math.max(dpr, rad * 0.14); g.lineJoin = "round";   // v0.648: ▱ — только грани: обводка вместо заливки
   const fin = () => { if (wire) { g.strokeStyle = g.fillStyle; g.stroke(); } else g.fill(); };
-  if (shp === "bits" && big) { g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`; }
+  if ((shp === "bits" || shp === "ones") && big) { g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`; }
   for (const q of idx) {
     const lit = zMax > zMin ? 0.35 + 0.65 * (sz[q] - zMin) / (zMax - zMin) : 1;
     if (hue) g.fillStyle = `hsl(${Math.round(200 + 300 * T[(q % cnt) * 4 + 3] / Math.max(1, D.n))} 80% 60%)`;
@@ -5174,7 +5174,7 @@ function renderPyr(force){
     if (shp === "tri") { g.beginPath(); g.moveTo(x + triO[0][0], y + triO[0][1]); g.lineTo(x + triO[1][0], y + triO[1][1]); g.lineTo(x + triO[2][0], y + triO[2][1]); g.closePath(); fin(); }
     else if (shp === "cube") { const f0 = g.fillStyle; for (const f of cube) { g.globalAlpha = lit * (wire ? 1 : f.k); g.beginPath(); g.moveTo(x + f.q[0][0], y + f.q[0][1]); for (let j = 1; j < 4; j++) g.lineTo(x + f.q[j][0], y + f.q[j][1]); g.closePath(); fin(); } g.fillStyle = f0; }
     else if (shp === "rhomb") { const a = rad * 1.25; g.beginPath(); g.moveTo(x, y - a); g.lineTo(x + a * 0.72, y); g.lineTo(x, y + a); g.lineTo(x - a * 0.72, y); g.closePath(); fin(); }
-    else if (shp === "bits") g.fillText("1", x, y);
+    else if (shp === "bits" || shp === "ones") g.fillText("1", x, y);
     else if (round) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); fin(); } else g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad);
   }
   g.textAlign = "left"; g.textBaseline = "alphabetic";
