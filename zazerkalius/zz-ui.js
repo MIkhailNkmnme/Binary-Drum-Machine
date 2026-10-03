@@ -2067,7 +2067,7 @@ function renderConeList(){
   const L = $("coneList"); if (!L) return;
   const only = !!Z.coneOnlySel;
   const key = Z.cur + "|" + [...rowSel].join(",") + "|" + JSON.stringify(Z.coneLocks || {}) + "|" + (Z.coneLock !== false) + "|" + Z.showFix + "|" + only + "|" +
-    coneRot.map(x => Math.round(x || 0)).join(",") + "|" + Z.rows.join("|");
+    coneRot.map((x, i) => coneRotKeep(x, i)).join(",") + "|" + Z.rows.join("|");
   if (key === coneListKey) return;
   const curChanged = coneListKey.split("|")[0] !== String(Z.cur);
   coneListKey = key;
@@ -2126,6 +2126,11 @@ function coneSlitMode(){ return Z.coneSlits === "all" ? "all" : Z.coneSlits === 
    выреза, луч идёт мимо. coneCutGeo — шаг и сдвиг для рисунка, мыши и расчёта луча */
 function coneCutOn(){ return !!Z.coneClock && !Z.cone3d && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut" && !coneSunOn(); }
 function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { step: 2 * Math.PI / (2 * n - 1), off: -n / 2 } : { step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
+/* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
+   расположить относительно вертикали симметрично». У кольца в вырезах одна ось симметрии — через середину бит и середину дыры. Вертикальна она
+   при накрутке 0 (биты по центру сверху) и n − ½ (дыра по центру сверху) — второе целыми частями не достать. Теперь кольцо в вырезах встаёт на
+   половины частей, и полчасти помнится (coneRotKeep); у остальных колец — как было, целыми битами */
+function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).off ? Math.round(x * 2) / 2 : Math.round(x); }
 function coneCutWin(b, N){   // вырез кольца строки b (с 0, b ≥ 1) в долях его бита от начала бита 0: [от, до]; null — открыто всё
   const n = Z.rows[b].length, m = b + 1 < N ? Z.rows[b + 1].length : n + 1;
   if (!n || !m || n - 1 >= m) return null;
@@ -3230,9 +3235,9 @@ function setupCone(){
     }
     if (D.view) {   // запертое кольцо: поворот вида — целым битом, запомнить у кольца
       const P = D.cut ? 2 * n - 1 : n;   // v0.671: в вырезах полный круг — 2E − 1 частей
-      coneRot[D.i] = ((Math.round(coneRot[D.i]) % P) + P) % P; Z.coneRot = coneRot.map(x => Math.round(x || 0));
+      coneRot[D.i] = ((coneRotKeep(coneRot[D.i], D.i) % P) + P) % P; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
       if (Z.cur !== D.i) Z.cur = D.i;
-      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${coneRot[D.i]} ${coneRot[D.i] === 1 ? "часть" : "частей"} из ${P} (вырезы T−1) — только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
+      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${String(coneRot[D.i]).replace(".", ",")} из ${P} частей (вырезы T−1)${coneRot[D.i] === 0 ? " — биты по центру сверху, симметрично" : coneRot[D.i] === n - 0.5 ? " — дыра по центру сверху, симметрично" : ""}. Только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
     }
     coneRot[D.i] = D.v0;
     if (Z.cur !== D.i) Z.cur = D.i;
@@ -3243,7 +3248,7 @@ function setupCone(){
   $("bConeCanon").onclick = () => {
     if (Z.rows.some((_, i) => coneLocked(i))) {   // v0.085: запертые кольца — к наименьшему только на вид, незапертые — сами строки
       let kv = 0; Z.rows.forEach((s, i) => { if (coneLocked(i)) { const sh = zzNecklace(s).shift; if (sh !== (coneRot[i] || 0)) kv++; coneRot[i] = sh; } });
-      Z.coneRot = coneRot.map(x => Math.round(x || 0));
+      Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
       const free = Z.rows.map((s, i) => [s, i]).filter(([s, i]) => !coneLocked(i) && zzNecklace(s).shift);
       if (free.length) { snapshot(); free.forEach(([s, i]) => { Z.rows[i] = zzNecklace(s).canon; }); syncLane(); }
       renderAll(); save(); say(`◯ К наименьшему: запертые кольца — на вид (${kv}), незапертые строки повёрнуты (${free.length}).`); return;
@@ -3301,7 +3306,7 @@ function setupCone(){
     const T = rowSel.size ? [...rowSel].filter(i => i < Z.rows.length) : [Z.cur], free = T.filter(i => !coneLocked(i)), sel = [...rowSel];
     if (free.length) { snapshot(); free.forEach(i => { Z.rows[i] = coneRotStr(Z.rows[i], -dir); }); sel.forEach(i => rowSel.add(i)); }
     T.filter(i => coneLocked(i)).forEach(i => { const n = Z.rows[i].length; coneRot[i] = (((Math.round(coneRot[i] || 0) - dir) % n) + n) % n; });
-    Z.coneRot = coneRot.map(x => Math.round(x || 0));
+    Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
     renderAll(); save();
   };
   /* v0.102, «как запустить кручение — пока что обычное, всех сразу» и «и видеозапись». ▶ крутить — весь конус крутится сам
@@ -3602,7 +3607,7 @@ function setupCone(){
     autoSet(false);
     const H = Z.home;
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
-      coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
+      coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach((x, i) => coneRot.push(coneRotKeep(x, i))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
       /* v0.668, «почему-то кнопки сброса кручения и лазера делают потом 3D-вид»: ⭐ было запомнено в 3D, и ⟲ (а с ним ⌖✕ сброс) возвращал из него и
          настройки вида — 3D, октаэдр, свечение, лучи, зеркало — и переключатели лазера. Теперь сброс возвращает только положения и кручение (кольца,
@@ -4414,7 +4419,7 @@ function setupCone(){
     }
     const show = () => { if (!musT) return; window.zzMusRay = rays; if (ch || fch) renderRows(); else renderCone(); sndMark(P); };   // как у «Звука» (v0.388): картинка — вместе со звуком
     const L = sndLat(); if (L > 0.015) setTimeout(show, L * 1000); else show();
-    if (Date.now() - musSaved > 5000) { musSaved = Date.now(); Z.coneRot = coneRot.map(x => Math.round(x || 0)); save(); }
+    if (Date.now() - musSaved > 5000) { musSaved = Date.now(); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); save(); }
   };
   const musLoop = () => {
     if (!musT) return;
@@ -4429,7 +4434,7 @@ function setupCone(){
       if (Z.coneClock) { const c = $("coneClock"); c.checked = false; c.onchange({ target: c }); }
       undoPush(undoState()); sndCtx(); musInit(); musSaved = Date.now(); musT = setTimeout(musLoop, 0);
       say(`🎵 Музыка лазера: ${musN()} голов${musN() === 1 ? "ка" : musN() < 5 ? "ки" : "ок"} через ${Math.round(3600 / musN()) / 10}°, у каждой своя нота (строка — октава). Из центра наружу: «0» — щель, головка встаёт на кольцо и крутит его полный круг, играя его «1»; «1» — стена: гаснет, головка отражается сквозь центр. Занятое кольцо другие проходят мимо. ↩ вернёт строки.`);
-    } else { clearTimeout(musT); musT = 0; window.zzMusRay = null; sndMark(null); Z.coneRot = coneRot.map(x => Math.round(x || 0)); renderCone(); save(); }
+    } else { clearTimeout(musT); musT = 0; window.zzMusRay = null; sndMark(null); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); renderCone(); save(); }
     musUi();
   };
   if ($("bConeMus")) {
@@ -4940,7 +4945,7 @@ function setupCone(){
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
     let k = 0; T.forEach(i => { if (Math.round(coneRot[i] || 0)) k++; coneRot[i] = 0; });
-    Z.coneRot = coneRot.map(x => Math.round(x || 0)); save(); renderRows(); renderCone();
+    Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); save(); renderRows(); renderCone();
     say(k ? `◯ Накрутка снята у колец: ${k}${rowSel.size ? " (выделенных)" : ""}. Строки не менялись.` : "◯ Накрученных колец нет.");
   };
   $("bConeRingL").onclick = () => ringStep(-1);
@@ -9865,7 +9870,7 @@ function init(){
   $("rowList").addEventListener("click", (e) => {   // v0.101: щелчок по «↻k» у номера — снять накрутку этого кольца
     const q = e.target.closest(".rrot[data-rr]"); if (!q) return;
     e.stopPropagation(); e.preventDefault();
-    const i = +q.dataset.rr; coneRot[i] = 0; Z.coneRot = coneRot.map(x => Math.round(x || 0)); save(); renderRows(); renderCone();
+    const i = +q.dataset.rr; coneRot[i] = 0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); save(); renderRows(); renderCone();
     say(`◯ Кольцо ${i + 1}: накрутка снята — стоит как строка.`);
   }, true);
   $("rowList").addEventListener("click", (e) => {
