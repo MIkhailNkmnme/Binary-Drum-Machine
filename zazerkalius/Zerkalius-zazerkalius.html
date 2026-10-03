@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.573. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.574. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.573</title>
+<title>Zazerkalius — v0.574</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -67,8 +67,9 @@ select{padding:2px 4px}
 code{font-family:var(--ff);font-size:.95em}
 
 /* ─── каркас ─── */
-#top{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+#top{display:flex;align-items:center;gap:10px;height:30px;padding:0 12px;box-sizing:border-box;border-bottom:1px solid var(--line);background:var(--panel)}
 #top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.04em}
+/* v0.574, по снимку шапки — «высоту сократи, уменьшив отступы от кнопок по вертикали»: шапка 40 → 30 px (кнопки 25 px, по 2 px сверху и снизу), поле — сразу под ней */
 /* v0.324: окошко «↧ до [N] ✓ ✕» у черты под строками — появляется, когда черту протянули вниз (cutAsk в zz-ui.js) */
 #cutAsk{position:fixed;z-index:60;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.45);font-size:12px}
 #cutAsk[hidden]{display:none}
@@ -130,7 +131,7 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 .win.flash{box-shadow:0 0 0 2px var(--gold),0 8px 24px rgba(0,0,0,.35)}
 /* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
    разделитель, его тянут (ширина поля — --rowsW, запоминается). */
-#main{position:absolute;top:40px;left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--paneW, 250px) var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
+#main{position:absolute;top:30px;left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--paneW, 250px) var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
 #rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
 /* v0.035: панель значками в один столбик — кнопка ◂/▸ в углу, узкая колонка, у кнопок только значки */
 #rowsPane{position:relative}
@@ -1508,7 +1509,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 </head>
 <body>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.573</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.574</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2462,8 +2463,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0573"></script>
-<script src="zz-ui.js?v=0573"></script>
+<script src="zz-core.js?v=0574"></script>
+<script src="zz-ui.js?v=0574"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
