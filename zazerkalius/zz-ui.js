@@ -7408,7 +7408,10 @@ function cgrpInit(){
     cgTabs.appendChild(t);
   });
   wb.insertBefore(cgTabs, tl);
-  function cgTabsUi(){ cgTabs.querySelectorAll("button").forEach(t => { const g = groups.find(c => c.dataset.g === t.dataset.g); const on = !!g && cgOpen(g);
+  /* v0.587, по снимку «📝 Текст» в шапке — «эту в конус-кнопки перемести»: кнопка текста конуса и лога лазера — последней вкладкой в полосе групп
+     (тот же элемент, обработчики при нём; горит, пока открыта полоса текста) */
+  { const tb = $("bConeTxt"); if (tb) { tb.style.setProperty("--tc", "#e2c06b"); cgTabs.appendChild(tb); } }
+  function cgTabsUi(){ cgTabs.querySelectorAll("button[data-g]").forEach(t => { const g = groups.find(c => c.dataset.g === t.dataset.g); const on = !!g && cgOpen(g);
     t.classList.toggle("on", on); t.title = (on ? "Группа «" + t.textContent + "» видна — щелчок: спрятать в эту кнопку" : "Группа «" + t.textContent + "» спрятана — щелчок: показать"); }); }
   window.cgTabsUi = cgTabsUi;
   { const mo = new MutationObserver(() => cgTabsUi()); groups.forEach(g => mo.observe(g, { attributes: true, attributeFilter: ["class"] })); }
