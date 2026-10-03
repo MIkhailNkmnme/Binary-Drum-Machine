@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.603. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.604. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.603</title>
+<title>Zazerkalius — v0.604</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -625,6 +625,15 @@ body.pane-icons #paneWins{padding:3px 4px}
 #w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
 #coneRecBar{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:4px;align-items:center}   /* v0.256: кнопки записи одной полосой */
 #w-cone #coneRecBar > button{position:relative;min-width:32px;height:32px;padding:0 7px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;margin:0}
+/* v0.604, по снимку кнопок записи — «ромбами, как дзен»: ● mp4 🎞 ↻1 ⏸ ▣ — ромбы 40 × 40 с тонкой рамкой цветом акцента и тёмной заливкой (как ◎ дзена и кнопки Пирамиды) */
+#w-cone #coneRecBar{gap:2px}
+#w-cone #coneRecBar > button{width:40px !important;min-width:0 !important;height:40px !important;padding:0 !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb, var(--acc) 60%, #2a3038) !important;color:var(--acc) !important;font-size:15px}
+#w-cone #coneRecBar > button::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#w-cone #coneRecBar > button:hover{background:var(--acc) !important}
+#w-cone #coneRecBar > #bConeRec{color:#ff6b6b !important}
+#w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:11px !important}
+#w-cone #coneRecBar > button.on{background:var(--gold) !important;color:var(--gold) !important}
 #w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:12px}
 body.conerec2 #coneCv{pointer-events:none}   /* v0.283: пока ↻1 пишет покадрово — холст мышью не трогается (ни наведения, ни сдвига) */
 #w-cone #coneRecBar > #bConeRecTurn.on{color:var(--gold);border-color:var(--gold)}   /* v0.270: ↻1 — идёт запись одного оборота */
@@ -1573,7 +1582,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.603</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.604</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2192,7 +2201,9 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
             <label class="dim" title="✨ Свет: единицы и неподвижные биты светятся своим цветом, из центра (в 3D — от оси) идёт свет, в 3D ближнее ярче дальнего. На тёмном фоне — лампа горит. Тяжелее для отрисовки — на больших столбиках кручение может идти медленнее"><input type="checkbox" id="coneGlow"> ✨ свет</label><!-- v0.491, «кн. свет между ползунками» --><label class="dim" title="▬ Толщина бит в 3D: ×0,2 — тонкие нити, ×4 — толстые полосы (сбоку — высота бит). Двойной щелчок — ×1">▬ <input type="range" id="cone3Bw" min="0.2" max="4" step="0.1" value="1" style="width:70px;vertical-align:middle"></label>
             
             <!-- v0.576, по снимку списка «✳ все» — «Вид: разложи на кнопки»: лучи к центру — три кнопки (горит выбранная), список — скрытый, держит значение -->
-            <span class="cunit" id="coneRaysB" title="✳ Лучи к центру от центров бит: нет / от выделенных колец / от всех"><button data-rays="off" title="✳ Без лучей к центру">✳ нет</button><button data-rays="cur" title="✳ Лучи к центру от бит выделенных колец (или текущего): видно, какие биты соседних колец стоят на одном луче">✳ выдел.</button><button data-rays="all" title="✳ Лучи к центру от бит всех колец">✳ все</button></span>
+            <!-- v0.604, «(выдел)лучи(все)»: выдел. и все — шестигранники (острия с обеих сторон, data-tzl / tzr), «лучи» посередине — выемки с обеих сторон, вкл / выкл;
+                 горят: «лучи», пока включены, и выбранная сторона; выключены — гаснут все три -->
+            <span class="cunit" id="coneRaysB" title="✳ Лучи к центру от центров бит: от выделенных колец или от всех; «лучи» — вкл / выкл"><button data-rays="cur" data-tzl="t" data-tzr="t" title="✳ Лучи к центру от бит выделенных колец (или текущего): видно, какие биты соседних колец стоят на одном луче. Лучи выключены — включит">выдел.</button><button id="bRaysOn" data-tzl="n" data-tzr="n" title="✳ Лучи к центру — вкл / выкл (включаются от тех колец, что выбраны рядом: выдел. или все)">✳ лучи</button><button data-rays="all" data-tzl="t" data-tzr="t" title="✳ Лучи к центру от бит всех колец. Лучи выключены — включит">все</button></span>
             <select id="coneRays" hidden style="display:none" title="Лучи к центру от ЦЕНТРОВ бит (не от границ): видно, какие биты соседних колец стоят на одном луче и в какую границу или бит внутреннего кольца луч попадает. Границы бит — черты на самом кольце"><option value="off" title="без лучей">✳ нет</option><option value="cur" title="лучи от бит выделенных колец (текущего)">✳ выдел.</option><option value="all" title="лучи от бит всех колец">✳ все</option></select>
           </div>
           <div class="cgrp gc cg-ring" title="Строки-кольца: запрет сдвига, замки, поворот по биту, зеркало по оси"><span class="glab">Кольца</span>
@@ -2529,8 +2540,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0603"></script>
-<script src="zz-ui.js?v=0603"></script>
+<script src="zz-core.js?v=0604"></script>
+<script src="zz-ui.js?v=0604"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
