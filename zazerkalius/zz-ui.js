@@ -760,6 +760,7 @@ function fillAutoCommit(){
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
+  while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N] = Z.coneFillTurn || 0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;   // v0.704: поворот кольца за чертой — кольцу строки
   let nf = ""; for (let c = 0; c <= f.length; c++) nf += (carry[(N + 1) + ":" + c] | 0) > 0 ? "1" : ".";
   Z.fillCells = nf.includes("1") ? (sunCut ? nf : nf.replace(/\./g, "0")) : null;
   if (V) { V.h = carry; V.sig = (N + 1) + ":" + f.length; }
@@ -2349,7 +2350,7 @@ function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").l
 function coneCutHome(){
   if (!coneCutOn()) return 0;
   let k = 0; for (let i = 1; i < Z.rows.length; i++) { if (coneRot[i]) k++; coneRot[i] = 0; }
-  Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
+  Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;   // v0.704: и кольцо за чертой
   Z.coneSpin = 0; Z.coneSpinPh = 0;   // поворот всего конуса и фаза кручения тоже уводили кольца от вертикали
   const V = Z.voidHits; if (V) { V.fz = {}; V.off = {}; V.lph = 0; }
   return k;
@@ -2505,7 +2506,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2738,7 +2739,10 @@ function coneFreezePassed(R){   // кольца, из которых луч вы
   for (let q = 0; q < R.g.length; q += 2) if (coneFreezeRing(R.g[q])) got.push(R.g[q]);
   return got;
 }
-function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()); }
+/* v0.704, «в режиме лазера дай крутить последнее кольцо руками»: кольцо за чертой крутится мышью с Ctrl (как прочие кольца, v0.248) — свой поворот
+   Z.coneFillTurn (в ячейках, в вырезах — в частях) поверх кручения; отпустил — на целую ячейку (в вырезах — на половину части). Ушла строка в поле — поворот
+   переходит к кольцу этой строки (coneRot), у новой строки за чертой — 0; ⟲ и вход в вырезы — тоже 0 */
+function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()) + (Z.coneFillTurn || 0); }
 /* v0.675, по снимку строки для заполнения под чертой — «в режиме T−1 рисуй кольцо за чертой также с вырезом, и для битов части покажи их все»: кольцо
    для заполнения (на бит длиннее нижней строки, n) в вырезах — как кольца строк: 2n − 1 частей, n — его ячейки (каждая видна своим контуром), n − 1 —
    вырез; сдвиг — по чётности, как у строк (coneCutGeo). Луч в ячейку — ловится, в вырез — идёт дальше, к пустым кольцам. null — не в вырезах */
@@ -3517,6 +3521,18 @@ function setupCone(){
     const ctrlK = e.ctrlKey || e.metaKey;
     // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
     const hFill = h !== -1 && h.fill !== undefined;
+    if (hFill && ctrlK && !e.shiftKey && Z.coneClock) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
+      e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
+      const F = coneFillCut(), stp = F ? F.step : 2 * Math.PI / fillLen(), t0 = Z.coneFillTurn || 0;
+      const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
+      let last = ang(e), turn = 0;
+      const mv = (ev) => { const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a; Z.coneFillTurn = t0 - turn / stp; renderCone(); };
+      const up = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
+        const P = F ? F.P : fillLen(), v = F ? Math.round(Z.coneFillTurn * 2) / 2 : Math.round(Z.coneFillTurn); Z.coneFillTurn = ((v % P) + P) % P;
+        save(); renderRows(); renderCone(); say(`◯ Кольцо за чертой повёрнуто на ${String(Z.coneFillTurn).replace(".", ",")} из ${P} ${F ? "частей" : "ячеек"}. Ушла строка в поле — поворот остаётся у её кольца.`); };
+      cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+      return;
+    }
     if (h !== -1 && h.i === 0 && Z.coneClock && ctrlK && !e.shiftKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно; v0.248: с Ctrl
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
       const x0 = e.clientX, y0 = e.clientY, r0v = Z.coneAimRot || 0;
@@ -4035,14 +4051,14 @@ function setupCone(){
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
-      coneCutHome();   // v0.674: в вырезах T−1 — симметричная расстановка, не накрутка из ⭐
+      coneCutHome(); Z.coneFillTurn = 0;   // v0.674: в вырезах T−1 — симметричная расстановка, не накрутка из ⭐; v0.704: и кольцо за чертой
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
       save(); renderRows(); renderCone();
       say("⟲ Всё на местах — из умолчания ⭐: положения колец, кручение, довод строки 1 и настройки конуса. Счёт проходов — с нуля. Биты строк не менялись.");
       return;
     }
     const k = coneRot.filter(x => Math.round(x || 0)).length;
-    coneRot.fill(0); Z.coneRot = coneRot.slice();
+    coneRot.fill(0); Z.coneRot = coneRot.slice(); Z.coneFillTurn = 0;   // v0.704
     Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; Z.coneAimRot = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
     coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
     save(); renderRows(); renderCone();
