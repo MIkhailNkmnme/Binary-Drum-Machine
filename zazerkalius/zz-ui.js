@@ -752,17 +752,18 @@ function fillCycle(k){
    при замке строк ⛔ (снимок ↩ на каждую). v0.698, «только при шаге надо расширять линию горизонта вниз, а не автоматом»: зовётся только после шага —
    «шаг ↷» в «Лазере» и |◀ ▶| в «Кручении»; само по себе (кручение ▶, отрисовка) — нет */
 function fillAutoCommit(){
-  const f = Z.fillCells; if (typeof f !== "string" || !f.length || /[^1]/.test(f) || f.length !== fillLen()) return false;
+  const f = Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
+  if (typeof f !== "string" || !f.length || (sunCut ? /\./.test(f) : /[^1]/.test(f)) || f.length !== fillLen()) return false;
   if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
   let nf = ""; for (let c = 0; c <= f.length; c++) nf += (carry[(N + 1) + ":" + c] | 0) > 0 ? "1" : ".";
-  Z.fillCells = nf.includes("1") ? nf.replace(/\./g, "0") : null;
+  Z.fillCells = nf.includes("1") ? (sunCut ? nf : nf.replace(/\./g, "0")) : null;
   if (V) { V.h = carry; V.sig = (N + 1) + ":" + f.length; }
   renderAll(); save();
-  say(`✔ Строка ${N + 1} готова — вся «1» (${f.length} бит): она в строках, черта — под ней. За чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
+  say(`✔ Строка ${N + 1} готова — ${sunCut ? "все биты закрашены" : "вся «1»"} (${f.length} бит): она в строках, черта — под ней. За чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
   return true;   // v0.698: по шагу — одна строка; следующая готовая уйдёт со следующим шагом
 }
 function fillCommit(){
@@ -2513,8 +2514,11 @@ function coneSunPeek(){
   conePeekC = { k, S }; return S;
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
-  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set();
+  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set();
   let lit = [[0, TAU2]], b = 1;
+  /* v0.701, «теперь так: пусть свет от лучей проходит, когда через единицы, — то он закрашивает следующую нулями; и когда все биты строки закрасятся либо 1,
+     либо 0 — строка готова»: в вырезах T−1 свет, упавший на бит «1» кольца строки, проходит его и красит ячейки СЛЕДУЮЩЕГО кольца нулями (zhits, по тем же
+     углам — расходящимся); дальше этот свет не идёт. Свет через вырез — как был, единицами */
   for (; b < T && lit.length; b++) {
     const R = coneRingNR(b); if (!R) break;
     bands.push([b, lit]);
@@ -2525,9 +2529,16 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
       for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P; if (q < nb) hits.add(b + ":" + q); }
     }
+    if (C && b < N && b + 1 < T) {   // v0.701: свет сквозь «1» — нулями на следующее кольцо
+      const zl = [], s1 = Z.rows[b];
+      for (let q = 0; q < nb; q++) if (s1[q] === "1") { const B = []; ivNorm((q - rot) * st, (q + 1 - rot) * st, B); for (const x of ivAnd(lit, ivUnion(B))) if (x[1] - x[0] > 1e-9) zl.push(x); }
+      const C2 = zl.length ? coneSunCutR(b + 1, N) : null;
+      if (C2) for (const [lo, hi] of ivUnion(zl)) { const v0 = Math.floor(lo / C2.st + C2.rot + 1e-7), v1 = Math.ceil(hi / C2.st + C2.rot - 1e-7);
+        for (let u = v0; u < v1 && u - v0 < C2.P; u++) { const q = ((u % C2.P) + C2.P) % C2.P; if (q < C2.n) zhits.add((b + 1) + ":" + q); } }
+    }
     lit = ivAnd(lit, open);
   }
-  return { bands, hits: [...hits], out: lit, end: b };
+  return { bands, hits: [...hits], zhits: [...zhits], out: lit, end: b };
 }
 /* v0.208, «в этом режиме сделай неактивными те кнопки, которые не влияют» (по снимку «щель» и «⌖→ след.»): при ☀ гаснут всё лазерное —
    довод строки 1, ⏸ на проходе, 🔮, 🎯 с номером, число лазеров и «от …°», ⌖→ след., 📌 лазер, ↻ с шагом; при «0 — проход» ещё «щель» и
@@ -2549,7 +2560,9 @@ function coneSunPaint(){
      Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
   { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
     for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
-    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
+    const cutZ = coneCutOn();   // v0.701: в вырезах — нули только от света сквозь «1» (не «остальные — нулями»)
+    if (cutZ) for (const k of S.zhits || []) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] === ".") { f = f.slice(0, c) + "0" + f.slice(c + 1); fc = true; } }
+    if (fc) { Z.fillCells = cutZ ? f : f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
   if (ch) coneLogDirty();
   return ch;
 }
