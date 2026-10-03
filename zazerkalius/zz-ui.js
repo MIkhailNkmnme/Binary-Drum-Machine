@@ -9115,7 +9115,7 @@ function palApply(){
 }
 function palUi(){   // v0.367: в группе «Гамма» горит выбранная; «🎨» в шапке горит, пока группа открыта; v0.370 — кнопки своими цветами
   const k = (Z.pal | 0) % ZZ_PALS.length;
-  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => {
+  document.querySelectorAll("#palMenu button[data-pal]").forEach(b => {   // v0.578: гаммы — в меню под «🎨 Гамма»
     const i = +b.dataset.pal, v = palColors(i);
     b.classList.toggle("on", i === k);
     b.style.setProperty("--pc1", v[0]); b.style.setProperty("--pc0", v[1]); b.style.setProperty("--pca", v[2]);
@@ -9124,7 +9124,7 @@ function palUi(){   // v0.367: в группе «Гамма» горит выб�
      сохр. в Своя»: 1 / 0 / а показывают цвета выбранной гаммы (прежде — всегда «Своей») */
   const c = palColors(k);
   [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (el && document.activeElement !== el) el.value = palHex(c[i]); });
-  const b = $("bPal"); if (b && window.cgrpShown) b.classList.toggle("on", cgrpShown("гамма"));
+  const b = $("bPal"), m = $("palMenu"); if (b && m) b.classList.toggle("on", !m.hidden);
 }
 function palStep(d){
   Z.pal = (((Z.pal | 0) + d) % ZZ_PALS.length + ZZ_PALS.length) % ZZ_PALS.length; palApply(); save(); renderAll();
@@ -10689,11 +10689,21 @@ function init(){
   lnUi();
   $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); if (typeof triTag === "function") triTag(); if (typeof tzcAll === "function") tzcAll(); say(Z.noLn ? "▱ Обводки — цветом фона холста." : "▱ Обводки — цветом группы."); };
   // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
-  $("bPal").onclick = () => { if (!window.cgrpShow) { palStep(1); return; } if (cgrpShown("гамма")) cgrpHide("гамма"); else cgrpShow("гамма"); palUi(); };
+  /* v0.578, «Гамму сделай не группой конуса, а просто в меню — списком вниз, но в стиле ромбов»: «🎨 Гамма» открывает #palMenu под собой;
+     выбор гаммы меню не закрывает (можно перебирать); закрыть — ещё щелчок, Esc, щелчок мимо */
+  const palMenuPlace = () => { const m = $("palMenu"), r = $("bPal").getBoundingClientRect(); m.style.top = Math.round(r.bottom + 3) + "px";
+    m.style.left = Math.round(Math.max(4, Math.min(innerWidth - m.offsetWidth - 4, r.left + r.width / 2 - m.offsetWidth / 2))) + "px"; };
+  const palMenuOut = (e) => { const m = $("palMenu"); if (!m.contains(e.target) && !$("bPal").contains(e.target)) palMenuSet(false); };
+  const palMenuKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); palMenuSet(false); } };
+  const palMenuSet = (on) => { const m = $("palMenu"); if (!m) return; m.hidden = !on;
+    if (on) { palMenuPlace(); document.addEventListener("pointerdown", palMenuOut, true); document.addEventListener("keydown", palMenuKey, true); addEventListener("resize", palMenuPlace); }
+    else { document.removeEventListener("pointerdown", palMenuOut, true); document.removeEventListener("keydown", palMenuKey, true); removeEventListener("resize", palMenuPlace); }
+    palUi(); };
+  $("bPal").onclick = () => palMenuSet($("palMenu").hidden);
   $("bPal").oncontextmenu = (e) => { e.preventDefault(); palStep(1); };
-  document.querySelectorAll(".cg-pal button[data-pal]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#palMenu button[data-pal]").forEach(b => b.onclick = () => {
     Z.pal = +b.dataset.pal; palApply(); save(); renderAll(); say(`🎨 Гамма «${ZZ_PALS[Z.pal].name}».` + (Z.pal ? "" : " Цвета 1, 0 и акцента — рядом; правый щелчок — цвета страницы.")); });
-  { const b0 = document.querySelector('.cg-pal button[data-pal="0"]');   // v0.370: правый щелчок по «Настраиваемой» — цвета страницы
+  { const b0 = document.querySelector('#palMenu button[data-pal="0"]');   // v0.370: правый щелчок по «Настраиваемой» — цвета страницы
     if (b0) b0.oncontextmenu = (e) => { e.preventDefault(); if (Z.palCust) delete Z.palCust[palTheme()]; Z.pal = 0; palApply(); save(); renderAll(); say("🎨 Своя — цвета страницы (для этой темы)."); }; }
   { let raf = 0;   // v0.370: свои цвета «Настраиваемой»: 1, 0, акцент — для нынешней темы; тянешь в выборе цвета — меняется сразу
     [["palC1", 0], ["palC0", 1], ["palCa", 2]].forEach(([id, i]) => { const el = $(id); if (!el) return;
