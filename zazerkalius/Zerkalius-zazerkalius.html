@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.639. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.640. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.639</title>
+<title>Zazerkalius — v0.640</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -176,6 +176,13 @@ body.pane-icons #rowsPane #bPaneIcons{width:auto;padding:2px 0}
    24 px высотой, заливка акцентом 16 %, без рамки; горящая — 45 %. Столбиком — по 3 px */
 body.pane-icons #rowsPane button:not(#bPaneIcons):not(#bConeZen){--t:6.93px;height:24px;min-height:0;line-height:24px;padding:0 !important;font-size:14px;border:0 !important;border-radius:0 !important;box-shadow:none !important;
   clip-path:polygon(var(--t) 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,var(--t) 100%,0 50%);background:color-mix(in srgb, var(--acc) 16%, var(--panel2)) !important}
+/* v0.640, по снимку столбика значков — «левое меню: поправь ромбоид для числа»: поле «16» (высота ▲ нарезки) в свёрнутой панели — такой же шестигранник,
+   как кнопки столбика: 24 px, острия по бокам, заливка акцентом 16 %; само поле — прозрачное, цифры посередине */
+body.pane-icons #rowsPane label.lpnum{--t:6.93px;box-sizing:border-box;display:flex !important;align-items:center;justify-content:center;width:40px;height:24px;margin:0 auto;padding:0 var(--t);cursor:text;
+  clip-path:polygon(var(--t) 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,var(--t) 100%,0 50%);background:color-mix(in srgb, var(--acc) 16%, var(--panel2))}
+body.pane-icons #rowsPane label.lpnum:hover{background:color-mix(in srgb, var(--acc) 30%, var(--panel2))}
+body.pane-icons #rowsPane label.lpnum > input{width:100% !important;min-width:0;height:24px;box-sizing:border-box;margin:0;padding:0 !important;border:0 !important;border-radius:0;background:transparent !important;color:var(--txt);text-align:center;font-size:13px;outline:none;-moz-appearance:textfield;appearance:textfield}
+body.pane-icons #rowsPane label.lpnum > input::-webkit-inner-spin-button,body.pane-icons #rowsPane label.lpnum > input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 body.pane-icons #rowsPane button:not(#bPaneIcons):not(#bConeZen):hover{background:color-mix(in srgb, var(--acc) 30%, var(--panel2)) !important}
 body.pane-icons #rowsPane button:not(#bPaneIcons):not(#bConeZen).on,body.pane-icons #rowsPane .tpl.mine.cur > button{background:color-mix(in srgb, var(--acc) 45%, var(--panel2)) !important}
 body.pane-icons #rowBtns,body.pane-icons #triBtns,body.pane-icons #fileBtns,body.pane-icons #lookBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList,body.pane-icons #paneWins{gap:3px !important}
@@ -1612,7 +1619,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.639</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.640</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2576,8 +2583,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0639"></script>
-<script src="zz-ui.js?v=0639"></script>
+<script src="zz-core.js?v=0640"></script>
+<script src="zz-ui.js?v=0640"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
