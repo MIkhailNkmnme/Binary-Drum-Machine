@@ -2113,6 +2113,19 @@ function renderCone(){
       g.stroke();
       }
       g.setLineDash([]); g.globalAlpha = 1;
+      if (Z.lasPeek) {   // v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
+        const S1 = coneSunPeek();
+        if (S1) {
+          for (const [b, lit] of S1.bands) { if (b > N) continue; const ri = b === 1 ? rDisk : rIn(b), ro = r0 + b * dr + Math.max(1, dr * band);
+            g.fillStyle = "rgba(255, 255, 255, 0.07)"; for (const [lo, hi] of lit) if (hi - lo < 2 * Math.PI - 1e-6) sect(ri, ro, lo, hi); }
+          g.save(); g.strokeStyle = "#ffffff"; g.globalAlpha = 0.8; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.setLineDash([3 * dpr, 4 * dpr]); g.beginPath();
+          for (const [b, lit] of S1.bands) { if (b > N) continue; const ri = b === 1 ? rDisk : rIn(b), ro = r0 + b * dr + Math.max(1, dr * band);
+            const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);
+            for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue;
+              for (const e of [lo, hi]) { if (seam && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); } } }
+          g.stroke(); g.restore();
+        }
+      }
     } else if (coneSlitMode() !== "cut") {   // v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
       const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
@@ -2426,6 +2439,22 @@ function coneSunCutR(b, N){
   if (b === N) { const F = coneFillCut(); if (F) return { n: F.n, P: F.P, st: F.step, rot: coneFillRot() - F.off }; }
   if (b > N) { const V = coneVoidCut(b, N); if (V) return { n: V.n, P: V.P, st: V.step, rot: V.rot }; }   // v0.684: пустые — тоже с вырезом
   const n = b === N ? fillLen() : coneVoidLen(b, N); return { n, P: n, st: TAU2 / n, rot: b === N ? coneFillRot() : coneVoidRot(b, n) };   // сплошное
+}
+/* v0.695, по снимку «↶ откат · шаг ↷» — «при шаге показывай, куда будет светить солнце в следующем шаге, если включить кнопку; сделай кнопку рядом с кнопкой
+   Шаг»: «◌ след.» (Z.lasPeek). Следующий шаг ищется тем же ходом, что ▶| у солнца: фаза кручения мелкими шагами, пока свет не упадёт иначе (до 3000), — на
+   копии, фаза возвращается. Итог запоминается по фазе, строкам, накрутке и режимам — пересчёт только когда они сменились. null — шага нет (режим «Всё»,
+   не солнце, свет не меняется) */
+let conePeekC = { k: "", S: null };
+function coneSunPeek(){
+  const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  if (conePeekC.k === k) return conePeekC.S;
+  let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
+  const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
+  const p0 = Z.coneSpinPh || 0, k0 = coneSunTrace().hits.join("|"); let S = null;
+  try { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (T.hits.join("|") !== k0) { S = T; break; } } }
+  finally { Z.coneSpinPh = p0; }
+  conePeekC = { k, S }; return S;
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
   const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set();
@@ -3703,6 +3732,11 @@ function setupCone(){
     if ((Z.coneSpinPh || 0) === ph0 && JSON.stringify(Z.voidHits || null) === vh0) return;   // шаг не состоялся — помнить нечего
     lasHist.push(b); if (lasHist.length > 500) lasHist.shift();
   };
+  if ($("bLasPeek")) {   // v0.695: ◌ след. — показать, куда солнце будет светить после шага
+    $("bLasPeek").classList.toggle("on", !!Z.lasPeek);
+    $("bLasPeek").onclick = () => { Z.lasPeek = !Z.lasPeek; $("bLasPeek").classList.toggle("on", Z.lasPeek); save(); renderCone();
+      say(Z.lasPeek ? (coneSunOn() ? "◌ След.: белым пунктиром — куда солнце будет светить после следующего шага." : "◌ След. включено — показ для ☀ солнца (включи его).") : "◌ След. выключено."); };
+  }
   if ($("bLasUndo")) $("bLasUndo").onclick = () => {
     if (!lasHist.length) { say("↶ Откатывать нечего — «шаг ↷» ещё не делали (или строки сменились)."); return; }
     const S = JSON.parse(lasHist.pop());
