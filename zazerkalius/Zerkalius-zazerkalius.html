@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.601. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.602. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.601</title>
+<title>Zazerkalius — v0.602</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -696,8 +696,8 @@ body.bgmode #coneBtns{display:none}
 #cone3Pad button{width:28px;height:28px;padding:0;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;background:var(--panel)}
 /* v0.176, «режим дзен с показом кнопок пульта»: в дзене пульт у холста (кнопки 3D и ↺) — виден */
 /* v0.158: плавающее окно текста конуса и лога лазера — поверх всего */
-#coneTxtWin{position:fixed;z-index:900;left:0;top:0;width:420px;height:260px;min-width:220px;min-height:110px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.45);resize:both;overflow:hidden}
-#coneTxtWin[hidden]{display:none}
+#coneTxtWin{position:fixed;z-index:50000;left:0;top:0;width:420px;height:260px;min-width:220px;min-height:110px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.45);resize:both;overflow:hidden}
+#coneTxtWin[hidden]{display:none}   /* v0.602: z-index 900 → 50000 — у окон он растёт с каждым щелчком (Z.z), окно конуса уходило выше и закрывало текст: вкладка горит, а окна не видно */
 #coneTxtWin .ctwHead{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:2px 4px 2px 10px;border-bottom:1px solid var(--line);background:var(--panel2);font-size:12px;cursor:move;user-select:none;-webkit-user-select:none;touch-action:none}
 #coneTxtWin .ctwHead .sp{flex:1}
 #coneTxtWin .ctwHead button{padding:0 6px;height:20px;line-height:1;cursor:pointer}
@@ -1570,7 +1570,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.601</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.602</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2526,8 +2526,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0601"></script>
-<script src="zz-ui.js?v=0601"></script>
+<script src="zz-core.js?v=0602"></script>
+<script src="zz-ui.js?v=0602"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
