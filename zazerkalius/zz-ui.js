@@ -8207,12 +8207,22 @@ function lpTag(){
    (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
    месте, пока панель листается; за линией — фон страницы. Цвета — из темы (--line, фон body), рисунок пересобирается, когда они сменились */
 function paneZig(){
+  /* v0.635, по снимку «Оформления» — «отступ сверху для меню, чтобы вклинились зубцы»: зубцы шли сеткой по 24 px от верха панели, а ряды — со своими
+     отступами (заголовок с 4 px, между разделами 4 + 1 + 4), и острия рядов попадали мимо выемок. Теперь зубец — у каждого ряда панели: остриё на
+     середине ряда, между рядами — прямая черта. Рисунок — во всю высоту листаемого содержимого и листается вместе с рядами */
   const pane = document.getElementById("rowsPane"); if (!pane) return;
-  const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d", bg = getComputedStyle(document.body).backgroundColor, key = ln + "|" + bg;
+  const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d", bg = getComputedStyle(document.body).backgroundColor;
+  const pr = pane.getBoundingClientRect(), y0 = pane.scrollTop - pr.top, H = Math.max(pane.scrollHeight, pane.clientHeight), rows = new Map();
+  pane.querySelectorAll(".tz, .lph").forEach(e => { if (!e.getClientRects().length || e.closest("#paneGrp")) return; const r = e.getBoundingClientRect(); if (r.height < 12) return;
+    const a = Math.round(r.top + y0), b = Math.round(r.bottom + y0); if (!rows.has(a) || rows.get(a) < b) rows.set(a, b); });
+  const ys = [...rows.entries()].sort((p, q) => p[0] - q[0]), key = ln + "|" + bg + "|" + H + "|" + ys.join(";");
   if (pane._zk === key) return; pane._zk = key;
-  const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, H = TZC_H, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
+  const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, xn = 0.5, xt = t + 0.5, pts = [[xn, 0]];
+  let last = 0; ys.forEach(([a, b]) => { if (a < last) return; pts.push([xn, a], [xt, (a + b) / 2], [xn, b]); last = b; });
+  pts.push([xn, H]);
+  const zz = pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(1)).join(" ");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
-  pane.style.setProperty("--pzig", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); pane.style.setProperty("--pzigw", w.toFixed(2) + "px");
+  pane.style.setProperty("--pzig", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); pane.style.setProperty("--pzigw", w.toFixed(2) + "px"); pane.style.setProperty("--pzigh", H + "px");
 }
 /* v0.521, «сделай меню верхнее в стиле треугольников также»: кнопки шапки — из тех же треугольников; кнопки, стоящие рядом, — одна цепочка
    (как ряд левой панели: по краям острия, на стыке выемка к выемке — ромбик фона). Длина — по надписи. Обводка — цветом прежней рамки кнопки
