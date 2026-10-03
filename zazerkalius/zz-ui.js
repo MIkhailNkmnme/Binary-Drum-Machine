@@ -422,7 +422,7 @@ function renderRowsOver(){
     for (const [p, list] of ovRowMap(j, A, OV_SHOW, true)) t += '<span class="ob" style="left:' + (p / 2) + 'ch">' + (list.length === 1 ? list[0].b : ovCombine(list)) + "</span>";
     h += hidRowHtml(H + j, '<span class="trk" style="width:' + W + '">' + lines + t + "</span>").replace('class="rw hid"', 'class="rw ovr hid"');
   }
-  L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
+  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true);   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr();
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
@@ -767,6 +767,27 @@ function fillRowHtml(N){
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
+/* v0.693, по снимку конуса с пустыми кольцами «до 256» — «пусть вживую сразу дорисовывает биты в строках под чертой (…сдвигать черту при выходе на уровень —
+   пока непонятно как), в общем под чертой проставь в режиме 256 сразу все 0000 и сразу их заполняй»: при «▦ до 256» внизу поля, под строкой для заполнения
+   (и под строками за границей), — строки пустых колец N + 1 … 255, каждая на бит длиннее: 0, где луч / свет ещё не попадал, 1 (золотом) — где попал (счёт
+   Z.voidHits). Перерисовываются на ходу, когда счёт поменялся (renderCone → voidRowsFill). Это вид, а не строки поля: в счёт и правку не идут */
+let voidRowsSig = "";
+function voidRowsFill(force){
+  const box = document.getElementById("voidRows"); if (!box) return;
+  const N = Math.min(Z.rows.length, CONE_MAX), on = coneVoidOn() && !Z.cone3d && Z.rows.length <= CONE_MAX, T = on ? coneRingsTotal(N) : 0, h = on ? coneVoidHits() : {};
+  let sig = on ? N + "|" + T + "|" + (Z.rows[N - 1] || "").length : "off";
+  if (on) { const ks = Object.keys(h).filter(k => +k.split(":")[0] > N).sort(); sig += "|" + ks.join(","); }
+  if (!force && sig === voidRowsSig) return; voidRowsSig = sig;
+  if (!on) { box.innerHTML = ""; return; }
+  let o = "";
+  for (let j = N + 1; j < T; j++) {
+    const n = coneVoidLen(j, N), m = Math.min(n, ROW_SHOW); let b = "";
+    for (let c = 0; c < m; c++) b += (h[j + ":" + c] | 0) > 0 ? '<b class="v1">1</b>' : "0";
+    o += '<div class="rw hid vrw"><span class="no" title="пустое кольцо ' + (j + 1) + ' (до 256) — ' + n + ' бит: 1 — куда попал луч или свет"><span class="rn">' + (j + 1) + '</span><span></span><span></span></span>' +
+         '<span class="bits la"><span class="bxh">' + b + "</span>" + (n > ROW_SHOW ? '<span class="more"> … ещё ' + (n - ROW_SHOW) + " бит</span>" : "") + "</span></div>";
+  }
+  box.innerHTML = o;
+}
 function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span class="rn">' + (i + 1) + "</span><span></span><span></span></span>" + cells + "</div>"; }
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: после отрисовки поле
    меряется; влезают — межстрочный обычный (1.25), нет — сжимается ровно настолько, чтобы влезли, но не ниже 0.7 (дальше — прокрутка).
@@ -954,7 +975,7 @@ function renderRows(){
     }
     h += hidRowHtml(H + j, t);
   }
-  L.innerHTML = h + "</div>"; cutPanelMount();   // v0.225
+  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true);   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
@@ -1631,6 +1652,7 @@ function renderCone(){
     const any = clockRays.some(R => R.pass);
     if (!coneSpinning) { if (any && coneClockWas === false) { clockRays.forEach(R => { if (R.pass) coneClockRecord(R); }); save(); } coneClockWas = any; }
     if (!coneSpinning && coneWallPaint(clockRays)) save();   // v0.131: упёрся в бит — красит его (тянут строку 1, довод, щель)
+    if (!voidRowsFill._q) { voidRowsFill._q = 1; requestAnimationFrame(() => { voidRowsFill._q = 0; voidRowsFill(); }); }   // v0.693: строки пустых колец под чертой — вживую
   } else coneWallWas = null;
   { const cc = $("coneCycle"); if (cc) { const t = coneCycleText(); if (cc.textContent !== t) cc.textContent = t; } }   // v0.119: счёт кругов
   { const g = document.querySelector(".cgrp.cg-spin"); if (g) { let v = $("coneVarN");   // v0.545: вариантов цикла — строкой внизу группы «Кручение»
