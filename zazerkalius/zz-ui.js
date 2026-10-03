@@ -750,7 +750,8 @@ function fillCycle(k){
    ставшая вся «1» (лазер или солнце), сама уходит в строки поля, черта — под неё. Счёт попаданий не теряется: кольца нумеруются так же, и попадания в
    следующее кольцо (оно теперь за чертой) переходят в его ячейки — «1», остальные «0» (стала и она вся «1» — уйдёт со следующим шагом). Не во время прогноза 🔮 и не
    при замке строк ⛔ (снимок ↩ на каждую). v0.698, «только при шаге надо расширять линию горизонта вниз, а не автоматом»: зовётся только после шага —
-   «шаг ↷» в «Лазере» и |◀ ▶| в «Кручении»; само по себе (кручение ▶, отрисовка) — нет */
+   «шаг ↷» в «Лазере» и |◀ ▶| в «Кручении»; само по себе (кручение ▶, отрисовка) — нет. v0.702, «когда строка вся битами заполнена, следующий шаг — сначала
+   просто сдвинуть горизонт без кручения, а потом следующее нажатие крутить»: зовётся В НАЧАЛЕ шага; ушла строка — это нажатие на этом и кончается */
 function fillAutoCommit(){
   const f = Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
   if (typeof f !== "string" || !f.length || (sunCut ? /\./.test(f) : /[^1]/.test(f)) || f.length !== fillLen()) return false;
@@ -3787,7 +3788,7 @@ function setupCone(){
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
-  const stepDir = (neg) => { const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); fillAutoCommit(); };   // v0.698: готовая строка — в строки только по шагу
+  const stepDir = (neg) => { if (fillAutoCommit()) return; const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); };   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения
   $("bConeStepB").onclick = () => stepDir(true);
   $("bConeStepF").onclick = () => stepDir(false);
   /* v0.687, «для лазера надо сделать отдельные кнопки кручения, которые как шаги можно откатывать назад, всё стирая закрашенное на место»: «шаг ↷» в
@@ -3798,24 +3799,25 @@ function setupCone(){
   const lasSnap = () => JSON.stringify({ rows: Z.rows.join(","), ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(), vh: Z.voidHits || null,
     fill: Z.fillCells ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
   if ($("bLasStep")) $("bLasStep").onclick = () => {
+    if (fillAutoCommit()) return;   // v0.702: строка готова — этим нажатием только черта вниз, крутит следующее
     const b = lasSnap(); const ph0 = Z.coneSpinPh || 0, vh0 = JSON.stringify(Z.voidHits || null);
     coneStep(1);
     if ((Z.coneSpinPh || 0) === ph0 && JSON.stringify(Z.voidHits || null) === vh0) return;   // шаг не состоялся — помнить нечего
     lasHist.push(b); if (lasHist.length > 500) lasHist.shift();
-    fillAutoCommit();   // v0.698: строка за чертой вся «1» — в строки, черта вниз (только по шагу)
   };
   /* v0.699, «сделай кнопку — шаг ровно на 1/2 часть текущего кольца» (после ответа, что «шаг ↷» идёт до следующего события, а не на долю круга): «½ шаг» —
      поворот ровно на полчасти кольца текущей строки (частей: n бит, в вырезах T−1 — 2n − 1), в выбранном направлении. «Каждое» / «Встреч Бит» — фаза в частях:
      +½, все кольца на полчасти своих; «Встреч Стр» — фаза в градусах: 360° / частей / 2; «Всё» — весь конус на тот же угол. Запоминается для «↶ откат»; краска
      — как всегда при отрисовке; готовая строка за чертой — в строки (это шаг) */
   if ($("bLasHalf")) $("bLasHalf").onclick = () => {
+    if (fillAutoCommit()) return;   // v0.702: строка готова — сперва только черта вниз
     const i = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0)), n = (Z.rows[i] || "").length || 1, P = coneCutGeo(i, n).cut ? 2 * n - 1 : n;
     const m = Z.coneSpinMode || "all", dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, deg = 360 / P / 2;
     lasHist.push(lasSnap()); if (lasHist.length > 500) lasHist.shift();
     if (coneBitMode(m)) Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * 0.5;
     else if (m === "opp") Z.coneSpinPh = (Z.coneSpinPh || 0) + dir * deg;
     else Z.coneSpin = (Z.coneSpin || 0) + dir * deg;
-    save(); renderCone(); coneLogRender(); fillAutoCommit();
+    save(); renderCone(); coneLogRender();
     say(`½ Шаг ${dir > 0 ? "по часовой" : "против часовой"}: кольцо ${i + 1} — на полчасти (${(Math.round(deg * 100) / 100).toString().replace(".", ",")}° из ${P} частей)` +
       (coneBitMode(m) ? ", прочие — на полчасти своих." : m === "opp" ? ", прочие — на тот же угол, через одно навстречу." : ", весь конус целиком."));
   };
