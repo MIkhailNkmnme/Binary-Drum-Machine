@@ -5564,7 +5564,9 @@ const TRI_S1 = 24 / Math.sqrt(3), TRI_S9 = 90;   // v0.437: «масштаб д�
 const TRI_RINGS = [["2_4","2_5","2_6","2_7","2_8","3_4","3_5","3_7","3_8","4_5","4_6","4_7"],["2_4","2_5","2_6","2_7","2_8","3_3","3_4","3_8","3_9","4_3","4_4","4_8","4_9","5_4","5_5","5_6","5_7","5_8"],["1_5","1_6","1_7","2_2","2_3","2_4","2_5","2_7","2_8","2_9","2_10","3_2","3_3","3_9","3_10","4_2","4_3","4_9","4_10","5_2","5_3","5_4","5_5","5_7","5_8","5_9","5_10","6_5","6_6","6_7"]];
 function triState(){
   if (!Array.isArray(Z.triScenes)) Z.triScenes = [];
-  if (!Z.triRingsV) { Z.triRingsV = 1; for (const L of TRI_RINGS) Z.triScenes.push({ R: 8, N: 14, c: Object.fromEntries(L.map(k => [k, 2])), gl: {}, gi: {}, gt: {}, d: {}, l: {} }); }
+  /* v0.659, «не вижу»: triState зовут и до load() — флаг вставал на умолчании, а сохранённые сцены потом ложились поверх, флаг оставался. Теперь — только
+     после load (zzLoaded), флаг новый (2), и кольцо, которое уже есть среди сцен (метка ring), второй раз не кладётся */
+  if (zzLoaded && Z.triRingsV !== 2) { Z.triRingsV = 2; TRI_RINGS.forEach((L, i) => { if (!Z.triScenes.some(sc => sc && sc.ring === i + 1)) Z.triScenes.push({ R: 8, N: 14, ring: i + 1, c: Object.fromEntries(L.map(k => [k, 2])), gl: {}, gi: {}, gt: {}, d: {}, l: {} }); }); save(); }
   for (const k of ["triCells", "triGLn", "triGIn", "triGTx", "triDots", "triLines"]) if (!Z[k] || typeof Z[k] !== "object") Z[k] = {};
   Z.triR = Math.max(1, Z.triR | 0 || 2); Z.triN = Math.max(1, Z.triN | 0 || 25);   // v0.437: считаются сами — сколько влезает в окно (renderTri)
   if (!(Z.triS >= TRI_S1 - 0.001 && Z.triS <= TRI_S9)) Z.triS = 40;
@@ -9731,8 +9733,9 @@ async function zzLinkOpen(code){
 }
 function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random() < 0.5 ? "0" : "1"; return o; }
 
+var zzLoaded = false;   // v0.659 (var — triState зовут и выше по файлу): load() отработал — память прочитана
 function init(){
-  load();
+  load(); zzLoaded = true;
   /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
      теперь помнится (Z.noCur) — следим за классом и пишем, когда он меняется */
   if (Z.noCur) document.body.classList.add("nocur");
