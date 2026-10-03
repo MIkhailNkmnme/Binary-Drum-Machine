@@ -2511,9 +2511,17 @@ function coneFillCut(){
    золотом, середина — бирюзой) до внешнего края следующего кольца. На каждом другом кольце (строки и кольцо для заполнения) луч попадает в бит на
    месте x: дробная доля f — где он его режет; подпись — «p:q» (доли бита по обе стороны, f = p / (p + q), знаменатель до 48), иначе проценты; луч
    по границе бит — точка. В вырезах T−1 — только биты (в дыре бита нет) */
-function coneScanFrac(f){
-  for (let q = 2; q <= 48; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f * q - p) < 1e-4 * q) return p + ":" + (q - p); }
-  return Math.round(f * 100) + "%";
+function coneScanParts(fs){   // v0.680: места разрезов внутри бита (доли 0…1) → части по порядку «a:b:c» (общий знаменатель до 96), иначе проценты
+  const f = [...new Set(fs.map(v => Math.round(v * 1e6) / 1e6))].sort((x, y) => x - y), ed = [0, ...f, 1];
+  for (let q = 2; q <= 96; q++) {
+    if (!f.every(v => Math.abs(v * q - Math.round(v * q)) < 1e-4 * q)) continue;
+    const p = []; for (let k = 1; k < ed.length; k++) p.push(Math.round(ed[k] * q) - Math.round(ed[k - 1] * q));
+    if (p.some(v => v <= 0)) continue;
+    const gcd = (x, y) => y ? gcd(y, x % y) : x, d = p.reduce(gcd);
+    return p.map(v => v / d).join(":");
+  }
+  const p = []; for (let k = 1; k < ed.length; k++) p.push(Math.round((ed[k] - ed[k - 1]) * 100) + "%");
+  return p.join(":");
 }
 function coneScanDraw(g, o){
   const { i, a, step, N, cx, cy, r0, dr, band, dpr } = o, TAU = 2 * Math.PI, rLim = r0 + (i + 2) * dr, rings = [];
@@ -2532,13 +2540,19 @@ function coneScanDraw(g, o){
   g.setLineDash([]); g.globalAlpha = 1;
   const fsz = Math.round(Math.max(10 * dpr, Math.min(dr * band * 0.32, 15 * dpr)));
   g.font = `700 ${fsz}px ${o.ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+  /* v0.680, по снимку «2:1» на кольце за чертой — «тут надо все части разрезать показать, вот тут на 3 части поделен будет»: лучи, попавшие в один бит,
+     считаются вместе — подпись одна на бит, посередине него, со всеми частями по порядку (по часовой): два луча внутри — «1:1:1», «1:2:3»… */
   for (const R of rings) {
-    const rin = r0 + R.k * dr, rm = rin + dr * band / 2;
+    const rin = r0 + R.k * dr, rm = rin + dr * band / 2, cells = new Map();
     for (const [t, col] of lines) {
       const x = ((((t + Math.PI / 2) / R.step + R.rot) % R.P) + R.P) % R.P; if (x >= R.n + 1e-6 && R.P > R.n) continue;   // в дыре выреза — не бит
       const f = x - Math.floor(x), px = cx + rm * Math.cos(t), py = cy + rm * Math.sin(t);
       if (f < 1e-4 || f > 1 - 1e-4) { g.fillStyle = col; g.beginPath(); g.arc(px, py, Math.max(3, 3 * dpr), 0, TAU); g.fill(); continue; }   // по границе бит
-      const tx = coneScanFrac(f), w = g.measureText(tx).width + 6 * dpr, h = fsz + 4 * dpr;
+      const c = Math.floor(x); if (!cells.has(c)) cells.set(c, { fs: [], gold: false, t0: t - f * R.step }); const C = cells.get(c); C.fs.push(f); if (col === o.cg) C.gold = true;
+    }
+    for (const C of cells.values()) {
+      const tx = coneScanParts(C.fs), col = C.gold ? o.cg : o.cA, am = C.t0 + R.step / 2, px = cx + rm * Math.cos(am), py = cy + rm * Math.sin(am);
+      const w = g.measureText(tx).width + 6 * dpr, h = fsz + 4 * dpr;
       g.fillStyle = o.cBg; g.globalAlpha = 0.85; g.fillRect(px - w / 2, py - h / 2, w, h); g.globalAlpha = 1;
       g.strokeStyle = col; g.lineWidth = Math.max(1, dpr); g.strokeRect(px - w / 2, py - h / 2, w, h);
       g.fillStyle = col; g.fillText(tx, px, py);
