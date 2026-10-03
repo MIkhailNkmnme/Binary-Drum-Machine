@@ -5081,7 +5081,7 @@ function pyrAnimPass(D){
   pyrPts(D);
 }
 /* v0.646: формы точек пирамиды — [ключ, надпись кнопки] */
-const PYR_SHAPES = [["ball", "● шарики"], ["tri", "▲ треугольники"], ["cube", "■ кубы"], ["rhomb", "◆ ромбы"], ["bits", "1 0 биты"]];
+const PYR_SHAPES = [["ball", "● шарики"], ["dot", "· точки"], ["tri", "▲ треугольники"], ["cube", "■ кубы"], ["rhomb", "◆ ромбы"], ["bits", "1 0 биты"]];   // v0.648: и мелкие точки
 /* нули показанных этажей — экранные x, y, глубина (для «1 0 биты»); на каждый кадр — заново, их не бывает больше единиц на порядок */
 function pyrZeros(D, show, one, P){
   const out = [];
@@ -5109,15 +5109,18 @@ function renderPyr(force){
   const show = Math.max(1, Math.min(D.n, Z.pyrShow || D.n)), one = !!Z.pyrOne && show <= D.n, hue = !!Z.pyrHue;
   const yawD = Z.pyrYaw ?? 30, elD = Z.pyrEl ?? 25;
   const shp = PYR_SHAPES.some(q => q[0] === Z.pyrShape) ? Z.pyrShape : "ball";   // v0.646
-  const dk = [D.key, D.animN, W, H, show, one, hue, yawD, elD, pyrZoom, pyrPan.join(","), c1, cBg, shp].join("|");
+  const mir = !!Z.pyrMirror, wire = !!Z.pyrWire;   // v0.648: ⇣ зеркало вниз, ▱ только грани
+  const dk = [D.key, D.animN, W, H, show, one, hue, yawD, elD, pyrZoom, pyrPan.join(","), c1, cBg, shp, mir, wire].join("|");
   if (!force && dk === pyrDrawKey) return;
   pyrDrawKey = dk;
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
   const g = cv.getContext("2d");
   g.fillStyle = cBg; g.fillRect(0, 0, W, H);
   const yaw = yawD * Math.PI / 180, el = elD * Math.PI / 180, cyw = Math.cos(yaw), syw = Math.sin(yaw), ce = Math.cos(el), se = Math.sin(el);
-  const Kend = D.K0 + D.n - 1, zMid = -(D.K0 + Kend) / 2 * D.hz;
-  const span = Math.max(Kend / Math.sqrt(3) + 1, (Kend - D.K0 + 1) * D.hz * 0.6 + Kend / Math.sqrt(3) * se, 2) * 1.08;
+  /* v0.648, «надо кнопку — зеркало вниз всей фигуры»: ⇣ — под основанием (последний этаж) та же пирамида отражённой, остриём вниз; вместе — бипирамида.
+     Середина вида — плоскость основания, размах — вдвое выше */
+  const Kend = D.K0 + D.n - 1, zB = -Kend * D.hz, zMid = mir ? zB : -(D.K0 + Kend) / 2 * D.hz;
+  const span = Math.max(Kend / Math.sqrt(3) + 1, (Kend - D.K0 + 1) * D.hz * (mir ? 1.2 : 0.6) + Kend / Math.sqrt(3) * se, 2) * 1.08;
   const sc = (Math.min(W, H) / 2 - 8 * dpr) / span * pyrZoom, cx = W / 2 + pyrPan[0], cy = H / 2 + pyrPan[1];
   // наклон el: 0° — сбоку, 90° — сверху; ось пирамиды — вертикаль экрана
   const P = (x, y, z) => { const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw, zz = z - zMid; return [cx + x1 * sc, cy - (zz * ce + y1 * se) * sc, zz * se - y1 * ce]; };
@@ -5126,12 +5129,13 @@ function renderPyr(force){
   g.save(); g.strokeStyle = cg; g.globalAlpha = 0.35; g.lineWidth = Math.max(1, dpr); g.setLineDash([5 * dpr, 5 * dpr]); g.beginPath();
   for (const c of cor) { g.moveTo(ap[0], ap[1]); g.lineTo(c[0], c[1]); }
   for (let q = 0; q < 3; q++) { g.moveTo(cor[q][0], cor[q][1]); g.lineTo(cor[(q + 1) % 3][0], cor[(q + 1) % 3][1]); }
+  if (mir) { const am = P(0, 0, 2 * zB); for (const c of cor) { g.moveTo(am[0], am[1]); g.lineTo(c[0], c[1]); } }   // v0.648: и нижняя половина каркаса
   g.stroke(); g.restore();
   // точки — по глубине, дальние раньше
-  const T = D.pts, cnt = T.length / 4, idx = [], sx = new Float32Array(cnt), sy = new Float32Array(cnt), sz = new Float32Array(cnt);
-  for (let q = 0; q < cnt; q++) {
-    const li = T[q * 4 + 3]; if (one ? li !== show - 1 : li >= show) continue;
-    const p = P(T[q * 4], T[q * 4 + 1], T[q * 4 + 2]); sx[q] = p[0]; sy[q] = p[1]; sz[q] = p[2]; idx.push(q);
+  const T = D.pts, cnt = T.length / 4, cn2 = mir ? 2 * cnt : cnt, idx = [], sx = new Float32Array(cn2), sy = new Float32Array(cn2), sz = new Float32Array(cn2);
+  for (let q = 0; q < cn2; q++) {
+    const o = q % cnt, li = T[o * 4 + 3]; if (one ? li !== show - 1 : li >= show) continue;
+    const p = P(T[o * 4], T[o * 4 + 1], q < cnt ? T[o * 4 + 2] : 2 * zB - T[o * 4 + 2]); sx[q] = p[0]; sy[q] = p[1]; sz[q] = p[2]; idx.push(q);   // q ≥ cnt — отражённая
   }
   idx.sort((p, q) => sz[p] - sz[q]);
   let zMin = Infinity, zMax = -Infinity; for (const q of idx) { if (sz[q] < zMin) zMin = sz[q]; if (sz[q] > zMax) zMax = sz[q]; }
@@ -5147,24 +5151,27 @@ function renderPyr(force){
     cube = []; for (let a = 0; a < 3; a++) { const n = ax[a], s2 = n[2] >= 0 ? 1 : -1, u = ax[(a + 1) % 3], v = ax[(a + 2) % 3];
       cube.push({ k: [1, 0.78, 0.6][a], q: [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([i, j]) => [s2 * n[0] + i * u[0] + j * v[0], s2 * n[1] + i * u[1] + j * v[1]]) }); }
   }
-  const zs = shp === "bits" ? pyrZeros(D, show, one, P) : null;
+  let zs = shp === "bits" ? pyrZeros(D, show, one, P) : null;
+  if (zs && mir) zs = zs.concat(pyrZeros(D, show, one, (x, y, z) => P(x, y, 2 * zB - z)));
   if (zs && big) {   // нули — бледные «0», дальние раньше
     g.fillStyle = cT; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`;
     for (let q = 0; q < zs.length; q += 3) { g.globalAlpha = 0.28; g.fillText("0", zs[q], zs[q + 1]); }
   }
-  g.fillStyle = c1;
+  g.fillStyle = c1; g.lineWidth = Math.max(dpr, rad * 0.14); g.lineJoin = "round";   // v0.648: ▱ — только грани: обводка вместо заливки
+  const fin = () => { if (wire) { g.strokeStyle = g.fillStyle; g.stroke(); } else g.fill(); };
   if (shp === "bits" && big) { g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold ${Math.max(6, Math.round(rad * 2.1))}px ui-monospace, Consolas, monospace`; }
   for (const q of idx) {
     const lit = zMax > zMin ? 0.35 + 0.65 * (sz[q] - zMin) / (zMax - zMin) : 1;
-    if (hue) g.fillStyle = `hsl(${Math.round(200 + 300 * T[q * 4 + 3] / Math.max(1, D.n))} 80% 60%)`;
+    if (hue) g.fillStyle = `hsl(${Math.round(200 + 300 * T[(q % cnt) * 4 + 3] / Math.max(1, D.n))} 80% 60%)`;
     g.globalAlpha = lit;
     const x = sx[q], y = sy[q];
+    if (shp === "dot") { const d = Math.max(0.8 * dpr, rad * 0.32); g.beginPath(); g.arc(x, y, d, 0, 2 * Math.PI); g.fill(); continue; }   // v0.648: · мелкие точки
     if (!big) { g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad); continue; }
-    if (shp === "tri") { g.beginPath(); g.moveTo(x + triO[0][0], y + triO[0][1]); g.lineTo(x + triO[1][0], y + triO[1][1]); g.lineTo(x + triO[2][0], y + triO[2][1]); g.closePath(); g.fill(); }
-    else if (shp === "cube") { const f0 = g.fillStyle; for (const f of cube) { g.globalAlpha = lit * f.k; g.beginPath(); g.moveTo(x + f.q[0][0], y + f.q[0][1]); for (let j = 1; j < 4; j++) g.lineTo(x + f.q[j][0], y + f.q[j][1]); g.closePath(); g.fill(); } g.fillStyle = f0; }
-    else if (shp === "rhomb") { const a = rad * 1.25; g.beginPath(); g.moveTo(x, y - a); g.lineTo(x + a * 0.72, y); g.lineTo(x, y + a); g.lineTo(x - a * 0.72, y); g.closePath(); g.fill(); }
+    if (shp === "tri") { g.beginPath(); g.moveTo(x + triO[0][0], y + triO[0][1]); g.lineTo(x + triO[1][0], y + triO[1][1]); g.lineTo(x + triO[2][0], y + triO[2][1]); g.closePath(); fin(); }
+    else if (shp === "cube") { const f0 = g.fillStyle; for (const f of cube) { g.globalAlpha = lit * (wire ? 1 : f.k); g.beginPath(); g.moveTo(x + f.q[0][0], y + f.q[0][1]); for (let j = 1; j < 4; j++) g.lineTo(x + f.q[j][0], y + f.q[j][1]); g.closePath(); fin(); } g.fillStyle = f0; }
+    else if (shp === "rhomb") { const a = rad * 1.25; g.beginPath(); g.moveTo(x, y - a); g.lineTo(x + a * 0.72, y); g.lineTo(x, y + a); g.lineTo(x - a * 0.72, y); g.closePath(); fin(); }
     else if (shp === "bits") g.fillText("1", x, y);
-    else if (round) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); g.fill(); } else g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad);
+    else if (round) { g.beginPath(); g.arc(x, y, rad, 0, 2 * Math.PI); fin(); } else g.fillRect(x - rad, y - rad, 2 * rad, 2 * rad);
   }
   g.textAlign = "left"; g.textBaseline = "alphabetic";
   g.globalAlpha = 0.7; g.fillStyle = cT; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
@@ -5277,12 +5284,14 @@ function setupPyr(){
     Z.pyrYaw = ((Z.pyrYaw ?? 30) + 25 * dt) % 360; renderPyr();
     spinRaf = requestAnimationFrame(spinTick);
   };
-  /* v0.646: форма точек — по кругу (правый щелчок — назад) */
-  const shpUi = () => { const i = Math.max(0, PYR_SHAPES.findIndex(q => q[0] === Z.pyrShape)); $("bPyrShape").textContent = PYR_SHAPES[i][1]; };
+  /* v0.648, «и кнопки все покажи эти»: формы точек — каждая своей кнопкой (горит выбранная), рядом ▱ грани и ⇣ зеркало */
+  const shpUi = () => { const cur = PYR_SHAPES.some(q => q[0] === Z.pyrShape) ? Z.pyrShape : "ball";
+    document.querySelectorAll("#w-pyr button[data-shp]").forEach(b => b.classList.toggle("on", b.dataset.shp === cur));
+    $("bPyrWire").classList.toggle("on", !!Z.pyrWire); $("bPyrMirror").classList.toggle("on", !!Z.pyrMirror); };
   shpUi();
-  const shpGo = (d) => { const i = Math.max(0, PYR_SHAPES.findIndex(q => q[0] === Z.pyrShape)); Z.pyrShape = PYR_SHAPES[(i + d + PYR_SHAPES.length) % PYR_SHAPES.length][0]; shpUi(); save(); renderPyr(true); };
-  $("bPyrShape").onclick = () => shpGo(1);
-  $("bPyrShape").oncontextmenu = (e) => { e.preventDefault(); shpGo(-1); };
+  document.querySelectorAll("#w-pyr button[data-shp]").forEach(b => { b.onclick = () => { Z.pyrShape = b.dataset.shp; shpUi(); save(); renderPyr(true); }; });
+  $("bPyrWire").onclick = () => { Z.pyrWire = !Z.pyrWire; shpUi(); save(); renderPyr(true); };
+  $("bPyrMirror").onclick = () => { Z.pyrMirror = !Z.pyrMirror; shpUi(); save(); renderPyr(true); };
   $("bPyrSpin").onclick = () => {
     if (spinRaf) { cancelAnimationFrame(spinRaf); spinRaf = 0; save(); $("bPyrSpin").classList.remove("on"); return; }
     spinT = 0; spinRaf = requestAnimationFrame(spinTick); $("bPyrSpin").classList.add("on");
@@ -10735,11 +10744,11 @@ function init(){
          кратно ряду — ряды остаются в зубцах границы. Листнули иначе (палец, полоса, клавиши) — по остановке встаёт на ближайший ряд */
       const ROW = TZC_H, snapTo = (y) => Math.max(0, Math.min(P.scrollHeight - P.clientHeight, Math.round(y / ROW) * ROW));
       P.addEventListener("wheel", (e) => {
-        if (e.ctrlKey || document.body.classList.contains("pane-icons") || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+        if (e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;   // v0.649: и в столбике значков
         const W = e.target.closest && e.target.closest("#paneWins"); if (W && W.scrollHeight > W.clientHeight + 2) return;   // список окон листается сам
         e.preventDefault(); P.scrollTop = snapTo(Math.round(P.scrollTop / ROW) * ROW + Math.sign(e.deltaY) * ROW);
       }, { passive: false });
-      { let st = 0; P.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { if (document.body.classList.contains("pane-icons")) return; const y = snapTo(P.scrollTop); if (Math.abs(y - P.scrollTop) > 0.5) P.scrollTop = y; }, 140); }, { passive: true }); }
+      { let st = 0; P.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { const y = snapTo(P.scrollTop); if (Math.abs(y - P.scrollTop) > 0.5) P.scrollTop = y; }, 140); }, { passive: true }); }
       if (window.ResizeObserver) { const ro = new ResizeObserver(upd); ro.observe(P); [...P.children].forEach(c => ro.observe(c)); }
       new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ["class"] });
       const PWs = () => { const W = $("paneWins"); return W && W.getClientRects().length && W.scrollHeight > W.clientHeight + 2 ? W : null; };
