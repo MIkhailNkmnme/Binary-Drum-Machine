@@ -3597,8 +3597,10 @@ function setupCone(){
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach(x => coneRot.push(Math.round(x || 0))); Z.coneRot = coneRot.slice();
       Z.coneSpin = H.coneSpin || 0; Z.coneSpinPh = H.coneSpinPh || 0; Z.coneAimRot = H.coneAimRot || 0; Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll();   // v0.138
-      const keys = ["coneClock", "coneClockStop", "coneVoid", "coneSlit", "coneSpinMode", "coneAutoSp", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "cone3H", "cone3Bw", "animOp", "animSp", "animByPass", "animRowsN", "animSeed",
-                    "coneRays", "coneMir", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs", "coneOctaSel"];   // v0.359: и что отражает зеркало
+      /* v0.668, «почему-то кнопки сброса кручения и лазера делают потом 3D-вид»: ⭐ было запомнено в 3D, и ⟲ (а с ним ⌖✕ сброс) возвращал из него и
+         настройки вида — 3D, октаэдр, свечение, лучи, зеркало — и переключатели лазера. Теперь сброс возвращает только положения и кручение (кольца,
+         режим и скорость кручения, замки, оси, Аниматрица); как конус показан и что включено у лазера — не трогает */
+      const keys = ["coneSpinMode", "coneAutoSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
