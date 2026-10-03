@@ -913,13 +913,13 @@ function renderRows(){
     h += "</div>";
   }
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + "</span>";
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
       // v0.012: биты — в своём .bx (только 0 и 1: по нему считаются места выделенных символов), «ещё N бит» — снаружи.
       // v0.015: .bx — только у рабочего поля; выделение и Del работают с ним.
-      h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · щелчок по биту — выделить, протяжка — выделить строки, F2 / Enter — править">' +
+      h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · щелчок по биту — выделить, протяжка — выделить строки, F2, Enter или правый щелчок — править">' +
            '<span class="' + (act ? "bx" : "bxo") + '">' + (qv ? bitsCells(s) : bitsShow(s)) + "</span>" +
            (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "") + "</span>";
     }
@@ -9960,6 +9960,15 @@ function init(){
       addEventListener("click", eat, true); setTimeout(() => removeEventListener("click", eat, true), 0);
     };
     addEventListener("pointermove", mv); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+  });
+  /* v0.670, по снимку поля строк — «дай возможность менять строки прямо там по правому клику на строке»: правый щелчок по строке (её битам или
+     номеру) — правка на месте, как F2 / Enter. Замок 🔒, ↻, строка для заполнения и строки под чертой — со своими правыми щелчками, их не трогаем */
+  $("rowList").addEventListener("contextmenu", (e) => {
+    if (e.defaultPrevented || e.target.closest(".rlk, .rrot, .fillrw, #cutPanel, input")) return;
+    const rw = e.target.closest(".rw[data-r]"); if (!rw || rw.classList.contains("ovr")) return;
+    const i = +rw.dataset.r; if (!(i >= 0 && i < Z.rows.length) || rowEditing >= 0) return;
+    if (Z.laneCount > 1 && Z.laneView === "over") return;
+    e.preventDefault(); editRowInPlace(i);
   });
   document.addEventListener("keydown", (e) => {   // v0.254: F2 / Enter — править текущую строку на месте
     if ((e.key !== "F2" && e.key !== "Enter") || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || rowEditing >= 0) return;
