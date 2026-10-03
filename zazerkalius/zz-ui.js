@@ -22,6 +22,8 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
+if (window.ZZ_LINK_DECODE && !ZZ_PRESET) zzLinkOpen(window.ZZ_LINK_DECODE);   // v0.650: ссылка #z=… — раскрыть и открыть заново (zzLinkOpen)
+window.addEventListener("hashchange", () => { if (location.hash.indexOf("#z=") === 0) location.reload(); });   // ссылку вставили в адрес этой же вкладки — браузер страницу не грузит, грузим сами
 const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
 /* v0.564, «индекс тоже — тормозит он на мобиле»: фон хаба — этот конус в невидимом iframe (visibility: hidden — звук нот играет в нём). Пока его не видно,
    конус не рисуется (кручение и звук идут), окна, которых нет на странице, не считаются, служебные таймеры групп не крутятся */
@@ -108,6 +110,7 @@ function save(){
   if (ZZ_BG) return;   // v0.184: фон хаба ничего не запоминает
   if (ZZ_PRESET_FULL) return;   // v0.196: пресет по ссылке — тоже
   if (sessLoading) return;
+  if (window.ZZ_LINK_DECODE) return;   // v0.650: ссылка #z=… раскрывается — страница сейчас перезагрузится, память гостя не трогать
   try { localStorage.setItem(ZZ_KEY, JSON.stringify(Z)); } catch (e) { /* нет хранилища — не беда */ }
 }
 let msgTimer = 0, tipEl = null, tipTimer = 0, tipShown = false;
@@ -9679,6 +9682,35 @@ function loadSession(text, name){
   } else location.reload();
   return true;
 }
+/* v0.650, по снимку цепочки ◎ ● mp4 ↻1 ▣ — «надо сохранять ссылкой, кнопку сюда»: 🔗 — всё состояние страницы ссылкой. Z (без «умолчания» ⭐ —
+   оно копия) → JSON → сжатие deflate (CompressionStream) → base64url в адрес после #z=. Ссылка — на сайт (с localhost и с диска — тоже на
+   1001100.online), в буфер обмена. Открыли ссылку: шапка страницы видит #z=, раскрывает (DecompressionStream, это не мгновенно), кладёт в
+   sessionStorage и перезагружает — со второго раза состояние берётся как пресет (?preset): память гостя не читается и не пишется, ссылка при
+   каждом открытии даёт то же. Свои строки гость может забрать «💾 В файл» */
+function zzB64u(bytes){ let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function zzUnB64u(t){ const b = atob(t.replace(/-/g, "+").replace(/_/g, "/")), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+async function zzLinkMake(){
+  if (!window.CompressionStream) { say("🔗 Этот браузер не умеет сжимать — ссылку не собрать. Chrome, Edge, Firefox 113+, Safari 16.4+."); return; }
+  save();
+  const st = JSON.parse(JSON.stringify(Z)); delete st.home;
+  const raw = new TextEncoder().encode(JSON.stringify({ v: 1, saved: new Date().toISOString(), state: st }));
+  const buf = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer();
+  const local = location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const base = local ? "https://1001100.online/zazerkalius/Zerkalius-zazerkalius.html" : location.origin + location.pathname;
+  const url = base + "#z=" + zzB64u(new Uint8Array(buf)), kb = (url.length / 1024).toFixed(1);
+  let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { ok = false; }
+  if (!ok) prompt("🔗 Ссылка на это состояние — скопируй:", url);
+  say(`🔗 Ссылка на всё состояние страницы${ok ? " — в буфере обмена" : ""} (${kb} КБ${url.length > 60000 ? "; длинная — мессенджер может обрезать, надёжнее «💾 В файл»" : ""}). Открывший увидит ровно это; его собственные строки и настройки не тронутся.`);
+}
+async function zzLinkOpen(code){
+  try {
+    const buf = await new Response(new Blob([zzUnB64u(code)]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
+    const d = JSON.parse(new TextDecoder().decode(buf));
+    if (!d || !d.state || !Array.isArray(d.state.rows)) throw new Error("нет строк");
+    sessionStorage.setItem(window.ZZ_LINK_KEY, JSON.stringify({ name: "ssylka", title: "по ссылке" + (d.saved ? " от " + new Date(d.saved).toLocaleDateString() : ""), state: d.state }));
+    location.reload();
+  } catch (e) { setTimeout(() => say("🔗 Ссылка испорчена или обрезана — открыто как обычно (" + e.message + ")."), 800); }
+}
 function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random() < 0.5 ? "0" : "1"; return o; }
 
 function init(){
@@ -10796,6 +10828,7 @@ function init(){
   $("fileIn").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
   $("bSaveTxt").onclick = saveRowsTxt;
   $("bSaveAll").onclick = saveSession;   // v0.115
+  if ($("bLink")) $("bLink").onclick = () => zzLinkMake();   // v0.650
   $("bHome").onclick = homeSave; $("bHome").oncontextmenu = (e) => { e.preventDefault(); homeForget(); }; homeBtn();   // v0.125
   $("bLoadAll").onclick = () => $("fileAll").click();
   $("fileAll").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
