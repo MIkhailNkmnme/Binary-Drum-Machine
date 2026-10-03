@@ -2132,6 +2132,27 @@ function renderCone(){
       g.stroke();
       }
       g.setLineDash([]); g.globalAlpha = 1;
+      /* v0.697, по снимку солнца — «по краям за последним кольцом покажи, сколько частей разделило солнце светом, то есть сколько частей света и сколько лучей и
+         между ними»: свет, дошедший до крайнего кольца (или вышедший за него), делит круг на части — светлые и тёмные. За крайним кольцом у каждой части —
+         её доля круга («☀ 1/3», «◐ 2/3»; не простая дробь — «≈»), сверху — сводка: частей света, лучей (краёв), тёмных частей */
+      { const outs = S.out.filter(([lo, hi]) => hi - lo > 1e-6), lastB = S.bands.filter(([b]) => b <= N).pop();
+        let lit = outs.length ? outs : lastB ? lastB[1] : [];
+        lit = lit.filter(([lo, hi]) => hi - lo > 1e-6).map(([lo, hi]) => [lo, hi]).sort((x, y) => x[0] - y[0]);
+        if (lit.length > 1 && lit[0][0] < 1e-6 && lit[lit.length - 1][1] > 2 * Math.PI - 1e-6) { const f = lit.shift(); lit[lit.length - 1][1] = 2 * Math.PI + f[1]; }   // сектор через 0 — один
+        const full = lit.length === 1 && lit[0][1] - lit[0][0] > 2 * Math.PI - 1e-6;
+        if (lit.length && !full) {
+          const dark = lit.map(([, hi], k) => [hi, k + 1 < lit.length ? lit[k + 1][0] : lit[0][0] + 2 * Math.PI]).filter(([a, z]) => z - a > 1e-6);
+          const rL = roE + Math.max(10 * dpr, dr * 0.35), fs = Math.round(Math.max(10 * dpr, Math.min(14 * dpr, dr * 0.4)));
+          const lab = (tx, am, col, bg) => { const px = cx + rL * Math.cos(am - Math.PI / 2), py = cy + rL * Math.sin(am - Math.PI / 2); g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+            const w = g.measureText(tx).width + 8 * dpr, h = fs + 5 * dpr; g.globalAlpha = 0.88; g.fillStyle = bg; g.fillRect(px - w / 2, py - h / 2, w, h); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = Math.max(1, dpr); g.strokeRect(px - w / 2, py - h / 2, w, h); g.fillStyle = col; g.fillText(tx, px, py); };
+          const fr = (a) => { const F = coneScanFrac(a / (2 * Math.PI)); return F ? (F.ok ? "" : "≈") + F.p + "/" + F.q : Math.round(a / (2 * Math.PI) * 100) + "%"; };
+          g.save();
+          for (const [a, z] of lit) lab("☀ " + fr(z - a), (a + z) / 2, cg, cBg);
+          for (const [a, z] of dark) lab("◐ " + fr(z - a), (a + z) / 2, "#9cc3ff", cBg);
+          const rS = rL + fs * 1.8; g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = cg; g.globalAlpha = 0.95;
+          g.fillText(`☀ частей ${lit.length} · лучей ${lit.length * 2} · ◐ между ${dark.length}`, cx, cy - rS);
+          g.restore();
+        } }
       if (Z.lasPeek) {   // v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
         const S1 = coneSunPeek();
         if (S1) {
@@ -3456,7 +3477,8 @@ function setupCone(){
        тянуть его с Ctrl; без Ctrl тянешь — сдвигается весь вид (как мимо колец), щелчок — выбрать строку. Ctrl + щелчок без движения —
        выделить / снять, как прежде. */
     const ctrlK = e.ctrlKey || e.metaKey;
-    if (h !== -1 && h.fill !== undefined && !ctrlK) { e.preventDefault(); fillCycle(h.fill); return; }   // v0.114: ячейка кольца для заполнения
+    // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
+    const hFill = h !== -1 && h.fill !== undefined;
     if (h !== -1 && h.i === 0 && Z.coneClock && ctrlK && !e.shiftKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно; v0.248: с Ctrl
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
       const x0 = e.clientX, y0 = e.clientY, r0v = Z.coneAimRot || 0;
@@ -3479,7 +3501,7 @@ function setupCone(){
       return;
     }
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
-    if (h === -1 || !ctrlK || e.shiftKey) {   // v0.049: мимо колец — сдвиг всего вида; v0.173: и с Shift; v0.248: и без Ctrl (кольцо крутит только Ctrl)
+    if (h === -1 || hFill || !ctrlK || e.shiftKey) {   // v0.049: мимо колец — сдвиг всего вида; v0.173: и с Shift; v0.248: и без Ctrl (кольцо крутит только Ctrl)
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
       const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
       let movedP = false;
@@ -3491,6 +3513,7 @@ function setupCone(){
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
         if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.231: Shift + щелчок по сектору — сменить бит (v0.173 — Ctrl)
         if (!movedP && !ctrl && !shift) { conePan = p0; coneUnsel(); return; }   // v0.309: щелчок без сдвига — снять выделение
+        if (!movedP && (h === -1 || hFill)) { if (!ctrl && !shift) { conePan = p0; coneUnsel(); } return; }   // v0.697: кольцо за чертой — как мимо
         if (!movedP && h !== -1 && Z.coneNoPick) { conePan = p0; renderCone(); return; }   // v0.281, «нужна кнопка запрета выделения колец»: 🚫 выбор — щелчок по кольцу ничего не выбирает
         if (!movedP && h !== -1 && ctrl) {   // v0.231: с Ctrl; v0.076: щелчок по кольцу — выделить / снять (то же выделение, что в поле); v0.173 — с Shift (Ctrl — смена бита)
           conePan = p0;
