@@ -1675,7 +1675,9 @@ function renderCone(){
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = 2 * Math.PI / n, rot = coneRotOf(i);
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
-    const MI = mirMap.get(i), blank = !!clockRays;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
+    /* v0.666, по снимку конуса с лазером — «так ничего непонятно, надо биты показать, не надо затемнять, когда включён лазер, где 1, где 0 у строк»:
+       ячейки колец при луч-часах больше не пустые — биты строк, как без лазера (v0.131 их гасил) */
+    const MI = mirMap.get(i), blank = false;   // v0.131: при луч-часах ячейки колец строк пустые — чёрные, 1 ставит лазер
     /* v0.660, «почему у 1 бита 2 щели?» → «1» (убрать собственную): кольцо строки 1 при луч-часах — затвор, выход только через вырез (золотые
        края); своей щели между битами и черт границ у него нет — через них луч всё равно не шёл. При ☀ солнце выреза нет — там как было */
     const shut = !!clockRays && i === 0 && !coneSunOn();
@@ -1804,11 +1806,13 @@ function renderCone(){
       const gp = n >= 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
       const sm1 = !coneSunOn() ? coneSlitMode() : "all", ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gp, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gp;   // v0.664; v0.665
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();
-      g.fillStyle = cg; g.globalAlpha = Math.min(0.95, 0.6 + 0.12 * cnt); g.fill(); g.globalAlpha = 1;
-      if (fsz >= 7 * dpr) {
-        const tx = "1".repeat(Math.min(cnt, 9)), am = a + step / 2, rm = (rin + rout) / 2 * coneRho(i, am);
+      /* v0.666: бит теперь виден — попадание не заливкой поверх, а золотой рамкой ячейки; сколько раз — «×2», «×3»… мелко у внешнего края */
+      g.save(); g.strokeStyle = cg; g.lineJoin = "round"; g.lineWidth = Math.max(2 * dpr, Math.min(dr * band * 0.14, 5 * dpr)); g.globalAlpha = Math.min(1, 0.75 + 0.08 * cnt);
+      g.shadowColor = cg; g.shadowBlur = 6 * dpr; g.stroke(); g.restore();
+      if (cnt > 1 && fsz >= 7 * dpr) {
+        const tx = "×" + cnt, am = a + step / 2, rm = (rout - fsz * 0.28) * coneRho(i, am);
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
-        g.fillStyle = cBg; g.font = `bold ${Math.round(tx.length > 1 ? fsz / Math.min(3, tx.length) * 1.4 : fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
+        g.fillStyle = cg; g.font = `bold ${Math.round(Math.max(6 * dpr, fsz * 0.4))}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
       }
     }
   }
