@@ -2086,12 +2086,12 @@ function renderCone(){
         if (C && C.P > C.n) { g.strokeStyle = cg; g.globalAlpha = 0.95; g.beginPath(); for (const k of [0, R.n]) { const a = -Math.PI / 2 + (k - R.rot) * R.st; g.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); g.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); } g.stroke(); }
         g.restore();
       }
-      /* v0.707, по снимку «луна только часть бита осветила, но поставила 0» → выбрано «луна = свет сквозь 1»: синим рисуется не сектор напротив солнца
-         (v0.690), а тот самый «нулевой» свет, что ставит нули: перед каждым кольцом — от края прежнего кольца до внешнего края этого, синеватый градиент
-         и голубые края. Где синее накрыло ячейку целиком — там 0 */
+      /* v0.707 / v0.708: синим — антисолнце (лучи солнца, продолженные через центр), тот самый свет, что ставит нули: перед каждым кольцом — от края
+         прежнего (у первого — от диска) до внешнего края этого, синеватый градиент и голубые края; прошёл крайнее кольцо — ещё на кольцо наружу. Где синее
+         накрыло ячейку целиком — там 0 */
       for (const [k, zl] of S.zbands || []) {
         if (k > N) continue;
-        const ri = rIn(k), ro = r0 + k * dr + Math.max(1, dr * band); if (ro <= ri) continue;
+        const ri = k === 1 ? rDisk : rIn(k), ro = r0 + k * dr + Math.max(1, dr * band); if (ro <= ri) continue;
         const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.08)");
         g.fillStyle = gm; g.globalAlpha = 1; for (const [lo, hi] of zl) if (hi - lo < 2 * Math.PI - 1e-6) sect(ri, ro, lo, hi);
         const seamZ = zl.some(([x]) => x < 1e-6) && zl.some(([, y]) => y > 2 * Math.PI - 1e-6);
@@ -2099,6 +2099,12 @@ function renderCone(){
         for (const [lo, hi] of zl) { if (hi - lo > 2 * Math.PI - 1e-6) continue; for (const e of [lo, hi]) { if (seamZ && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); } }
         g.stroke(); g.restore();
       }
+      { const ao = (S.aout || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), ri = r0 + N * dr + Math.max(1, dr * band), ro = ri + dr;
+        if (ao.length) { const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.03)"); g.fillStyle = gm; g.globalAlpha = 1;
+          for (const [lo, hi] of ao) sect(ri, ro, lo, hi);
+          g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
+          for (const [lo, hi] of ao) for (const e of [lo, hi]) { const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); }
+          g.stroke(); g.restore(); } }
       /* v0.691, по снимку солнца с одной строкой — «тут солнце лучи также пусть на 1 кольцо выходят из 2 в пустоту, и также зарево между ними»: свет, прошедший
          последнее кольцо (S.out), — золотое зарево и края-лучи ещё на одно кольцо наружу, в пустоту; напротив — луна, как у прочих секторов */
       { const rO0 = rIn(S.end), rO1 = rO0 + dr, outs = S.out.filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6);
@@ -2134,7 +2140,7 @@ function renderCone(){
          между ними»: свет, дошедший до крайнего кольца (или вышедший за него), делит круг на части — светлые и тёмные. За крайним кольцом у каждой части —
          её доля круга («☀ 1/3», «◐ 2/3»; не простая дробь — «≈»), сверху — сводка: частей света, лучей (краёв), тёмных частей */
       { const outs = S.out.filter(([lo, hi]) => hi - lo > 1e-6), lastB = S.bands.filter(([b]) => b <= N).pop();
-        const zRing = outs.length ? null : lastB ? (S.zbands || []).find(([k]) => k === lastB[0]) : null;   // v0.707: луна — нулевой свет у того же кольца
+        const zRing = outs.length ? [0, S.aout || []] : lastB ? (S.zbands || []).find(([k]) => k === lastB[0]) : null;   // v0.707 / v0.708: луна — антисвет там же, где считается солнце
         let lit = outs.length ? outs : lastB ? lastB[1] : [];
         lit = lit.filter(([lo, hi]) => hi - lo > 1e-6).map(([lo, hi]) => [lo, hi]).sort((x, y) => x[0] - y[0]);
         if (lit.length > 1 && lit[0][0] < 1e-6 && lit[lit.length - 1][1] > 2 * Math.PI - 1e-6) { const f = lit.shift(); lit[lit.length - 1][1] = 2 * Math.PI + f[1]; }   // сектор через 0 — один
@@ -2532,25 +2538,27 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     }
     lit = ivAnd(lit, open);
   }
-  /* v0.703, «лучи прошли через единицы 2 строки и единицы 3 строки на 4-ю — там надо 0 ставить, почему-то не ставит»: в v0.701 свет сквозь «1» красил только
-     следующее кольцо и гас. Теперь «нулевой» свет идёт по кольцам: на кольце b он красит нулями ячейки, куда упал (бит или ячейку строки за чертой), и проходит
-     дальше сквозь вырез и сквозь биты «1» (на «0» гаснет); к нему добавляется основной свет, упавший на «1» кольца b. На строке за чертой — нули, дальше нет */
+  /* v0.708, «нет, свет лучей — это антисолнце-лучами, как было: они так же, как солнце, светят, но синим, и только когда полностью бит осветят — тогда красить
+     в 0». Антисолнце — лучи солнца, продолженные через центр в обратную сторону (как сектор луны v0.690): направления — зеркало солнечного пучка (первый
+     освещённый не весь круг, а если такого нет — свет, вышедший за крайнее кольцо). Светит, как солнце: из центра наружу, кольцо за кольцом — сквозь вырез
+     проходит, на битах останавливается; ячейка, накрытая им целиком, — 0 (на строке за чертой). Прежние правила «свет сквозь единицу» (v0.701–v0.707) сняты */
+  let aout = [];
   if (coneCutOn()) {
-    let z = [];
-    for (let k = 1; k <= N && k < T; k++) {
+    const full = (L) => L.length === 1 && L[0][1] - L[0][0] > TAU2 - 1e-6;
+    const nf = bands.find(([, L]) => L.length && !full(L)), base = nf ? nf[1] : (lit.length && !full(lit) ? lit : []);
+    const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
+    let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9);
+    for (let k = 1; k <= N && k < T && A.length; k++) {
       const C = coneSunCutR(k, N); if (!C) break;
-      if (z.length) zbands.push([k, z]);   // v0.707: «луна» — нулевой свет перед кольцом k (для рисунка)
-      const L = litAt[k] || [], hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
-      for (const [lo, hi] of ivMinus(z, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
-        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, z)) zhits.add(k + ":" + q); } }   // v0.705
-      if (k === N) break;
-      const s1 = Z.rows[k], ones = []; for (let q = 0; q < C.n; q++) if (s1[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, ones);
-      /* v0.706, «пусть только за одной единицей луна красит в 0, а не за несколькими»: «нулевой» свет, упавший на вторую «1», гаснет — дальше идёт только
-         сквозь вырез; новый рождается там, где основной свет упал на «1» */
-      const O = ivUnion(ones); z = ivUnion([...ivAnd(z, open), ...ivAnd(L, O)]).filter(([a, c]) => c - a > 1e-9);
+      zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
+      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
+      for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
+        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, A)) zhits.add(k + ":" + q); } }
+      A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9);
+      if (k === N) { aout = A; break; }
     }
   }
-  return { bands, hits: [...hits], zhits: [...zhits], zbands, out: lit, end: b };
+  return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, out: lit, end: b };
 }
 /* v0.208, «в этом режиме сделай неактивными те кнопки, которые не влияют» (по снимку «щель» и «⌖→ след.»): при ☀ гаснут всё лазерное —
    довод строки 1, ⏸ на проходе, 🔮, 🎯 с номером, число лазеров и «от …°», ⌖→ след., 📌 лазер, ↻ с шагом; при «0 — проход» ещё «щель» и
