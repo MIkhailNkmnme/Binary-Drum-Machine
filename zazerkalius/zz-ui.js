@@ -9969,8 +9969,20 @@ function init(){
       const tip = p.t === "w" ? `Окно «${lab}»: развернуть, поднять, показать` : (($(p.id) || {}).title || lab);
       h += `<button data-k="${k}"${p.t === "w" ? ' class="pinw"' : ""} title="${esc(tip + " · правый щелчок — открепить")}">${esc(lab)}</button>`;
     });
+    /* v0.619, по снимку списка «Окна» слева и шапки — «эти все дублируй в верхнее меню»: после закреплённых — кнопки всех окон, как в списке слева
+       (горит — окно развёрнуто на столе; щелчок — свернуть / развернуть и показать). Закреплённые 📌 окна второй раз не повторяются */
+    document.querySelectorAll(".win").forEach(el => {
+      if ((el.id === "w-help" && !Z.helpOn) || el.classList.contains("popped")) return;
+      if (Z.pins.some(p => p.t === "w" && p.id === el.id)) return;
+      const t = el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";
+      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: развернуть, поднять, показать")}">${esc(t)}</button>`;
+    });
+    if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
     $("pinBar").innerHTML = h;
   };
+  window.renderPins = renderPins;
+  { let q = 0; const mo = new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; renderPins(); }); });
+    document.querySelectorAll(".win").forEach(el => mo.observe(el, { attributes: true, attributeFilter: ["class", "style", "data-parked"] })); }
   const pinToggle = (p) => {
     const k = Z.pins.findIndex(q => q.t === p.t && q.id === p.id);
     if (k >= 0) Z.pins.splice(k, 1); else Z.pins.push(p);
@@ -9988,6 +10000,9 @@ function init(){
   };
   window.zzWinShow = winShow;   // v0.452: конструктор открывает «△ Сетку»
   $("pinBar").onclick = (e) => {
+    { const a = e.target.closest("button[data-aw]"); if (a) { const el = $(a.dataset.aw); if (!el) return;   // v0.619: кнопка окна — как в списке «Окна»
+        const pb = document.querySelector('#paneWins button[data-w="' + el.id + '"]');
+        if (a.classList.contains("on")) { if (pb) pb.click(); else { const bc = el.querySelector(".bc"); if (bc) bc.click(); } } else winShow(el.id); return; } }
     const b = e.target.closest("button[data-k]"); if (!b) return;
     const p = Z.pins[+b.dataset.k]; if (!p) return;
     if (p.t === "w") winShow(p.id); else { const src = $(p.id); if (src) src.click(); else say("📌 Этой кнопки больше нет."); }
