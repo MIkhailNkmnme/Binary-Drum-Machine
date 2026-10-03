@@ -2011,6 +2011,16 @@ function renderCone(){
       /* v0.683, по снимку солнца в вырезах — «пусть показывает расходящиеся лучи от солнца, границы, до строки за чертой»: края каждого освещённого
          сектора — золотые линии от места, где свет вышел, через кольцо, куда он упал, до внешнего края строки за чертой (дальше — нет) */
       const roF = r0 + (fillOn ? N : N - 1) * dr + Math.max(1, dr * band);   // внешний край строки за чертой (или нижней строки)
+      /* v0.686, по снимку солнца — «между 2 лучами солнца как-то градиентом сектор золотой, несильно, только светить»: сектор между краями — мягкий
+         золотой свет от места выхода (сильнее) к кольцу, куда он упал (слабее), поверх колец */
+      for (const [b, lit] of S.bands) {
+        if (b > N || b === 1) continue;
+        const ri = rIn(b), ro = r0 + b * dr + Math.max(1, dr * band); if (ro <= ri) continue;
+        const gr = g.createRadialGradient(cx, cy, ri, cx, cy, ro);
+        gr.addColorStop(0, "rgba(255, 205, 100, 0.30)"); gr.addColorStop(1, "rgba(255, 205, 100, 0.06)");
+        g.fillStyle = gr; g.globalAlpha = 1;
+        for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
+      }
       for (const dash of [true, false]) {   // пунктир — продолжение края за кольцо, где свет пойман, до строки за чертой; сплошная — где свет идёт
       g.globalAlpha = dash ? 0.4 : 0.9; g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.lineCap = "round"; g.setLineDash(dash ? [4 * dpr, 4 * dpr] : []); g.beginPath();
       for (const [b, lit] of S.bands) {
