@@ -7397,10 +7397,10 @@ function cgrpInit(){
      месте, а группы можно скрывать в них»: над группами конуса — полоса вкладок #cgTabs (Лазер · Кручение · Вид · Звук · Кольца · Аниматрица, дальше —
      прочие), каждая — шеврон цветом своей группы. Щелчок: группа видна — спрятать (Z.cgrpOff), спрятана или свёрнута — показать развёрнутой.
      Видна — вкладка погашена (бледнее), спрятана — горит своим цветом. Вкладки всегда на месте, сами не двигаются */
-  const CG_TAB_ORD = ["лазер", "кручение", "вид", "звук", "кольца", "аниматрица"];
+  const CG_TAB_ORD = ["лазер", "кручение", "вид", "звук", "кольца", "аниматрица"];   // v0.589, «отсюда удали» (вкладка «Дзен»): пульта дзена во вкладках нет — он виден только в дзене
   const cgOpen = (g) => !Z.cgrpOff[g.dataset.g] && !g.classList.contains("cmin");
   const cgTabs = document.createElement("div"); cgTabs.id = "cgTabs";
-  groups.filter(g => g.dataset.g !== "гамма").sort((a, b) => { const ia = CG_TAB_ORD.indexOf(a.dataset.g), ib = CG_TAB_ORD.indexOf(b.dataset.g); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); }).forEach(g => {
+  groups.filter(g => g.dataset.g !== "гамма" && !g.classList.contains("cg-zen")).sort((a, b) => { const ia = CG_TAB_ORD.indexOf(a.dataset.g), ib = CG_TAB_ORD.indexOf(b.dataset.g); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); }).forEach(g => {
     const k = g.dataset.g, lab = g.querySelector(":scope > .glab"), t = document.createElement("button");
     t.type = "button"; t.dataset.g = k; t.textContent = (lab && lab.firstChild && lab.firstChild.nodeType === 3 ? lab.firstChild.textContent : k).trim();
     t.style.setProperty("--tc", getComputedStyle(g).getPropertyValue("--gc").trim() || "var(--acc)");
