@@ -11252,3 +11252,8 @@ if (ZZ_BG) bgApply();
     hook(sel, upd); sel.addEventListener("change", upd); upd();
   });
 })();
+/* v0.653, «почему при F5 сначала показывает старый дизайн?»: ромбы, цепочки, зубцы и раскладку групп ставит этот скрипт — после того как страница
+   уже нарисовала обычные прямоугольные кнопки HTML. Пока он не закончил (шрифты загружены + два кадра на пересчёт), страница прозрачна (html.zzload,
+   ставит шапка); запасной выход — 4 с в самой шапке */
+(function(){ const done = () => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove("zzload"))));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(done, done); else done(); })();
