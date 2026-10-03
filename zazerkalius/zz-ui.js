@@ -746,6 +746,25 @@ function fillCycle(k){
   Z.fillCells = f.slice(0, k) + nx + f.slice(k + 1);
   renderRows(); save();
 }
+/* v0.696, «если все биты заполнились единицами в кольце, то строка готова — её открывай в строках, линию под неё смещай, горизонт»: строка за чертой,
+   ставшая вся «1» (лазер или солнце), сама уходит в строки поля, черта — под неё. Счёт попаданий не теряется: кольца нумеруются так же, и попадания в
+   следующее кольцо (оно теперь за чертой) переходят в его ячейки — «1», остальные «0»; стала и она вся «1» — следом и она. Не во время прогноза 🔮 и не
+   при замке строк ⛔ (снимок ↩ на каждую) */
+function fillAutoCommit(){
+  const f = Z.fillCells; if (typeof f !== "string" || !f.length || /[^1]/.test(f) || f.length !== fillLen()) return false;
+  if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
+  try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
+  const N = Z.rows.length, V = Z.voidHits, carry = {};
+  if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
+  Z.rows.push(f); Z.cur = Z.rows.length - 1;
+  let nf = ""; for (let c = 0; c <= f.length; c++) nf += (carry[(N + 1) + ":" + c] | 0) > 0 ? "1" : ".";
+  Z.fillCells = nf.includes("1") ? nf.replace(/\./g, "0") : null;
+  if (V) { V.h = carry; V.sig = (N + 1) + ":" + f.length; }
+  renderAll(); save();
+  say(`✔ Строка ${N + 1} готова — вся «1» (${f.length} бит): она в строках, черта — под ней. За чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
+  setTimeout(fillAutoCommit, 0);
+  return true;
+}
 function fillCommit(){
   const f = fillDraft(), row = f.replace(/\./g, "0"), empty = (f.match(/\./g) || []).length;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
@@ -2493,7 +2512,7 @@ function coneSunPaint(){
      Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
   { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
     for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
-    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
+    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); setTimeout(fillAutoCommit, 0); } }   // v0.696
   if (ch) coneLogDirty();
   return ch;
 }
@@ -2993,7 +3012,7 @@ function coneClockMark(hits){
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
   if (!ch.length) return;
   f = f.replace(/\./g, "0");   // v0.136, «когда бит покрасил в строке — покажи остальные нулями, заполни»: лазер поставил «1» — пустые ячейки строки становятся 0
-  Z.fillCells = f; renderRows(); save();
+  Z.fillCells = f; renderRows(); save(); setTimeout(fillAutoCommit, 0);   // v0.696: вся строка — «1» → в строки
   say(`⌖ Луч прошёл все кольца — в строке для заполнения «1» в ячейке ${ch.join(", ")}.`);
 }
 /* v0.119, «сделай кнопку остановка по проходу лазера, пауза, потом вручную продолжить, и показывай цикл — сколько прошло кругов
