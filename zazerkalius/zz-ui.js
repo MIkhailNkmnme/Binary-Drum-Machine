@@ -8143,7 +8143,7 @@ function lpTop(col, vis){
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
     /* v0.530, «↩ ↪ — обе шире и одинаковой ширины, между ними пропуск-ромб, стрелка влево и вправо»: заходит на соседку, только если у той справа
        остриё (выемка к выемке — стоят встык уголками, между ними ромб фона) */
-    if (i && (b._tzL !== TZ_NOTCH || r[i - 1]._tzR !== TZ_TIP)) b._tzm = 0;
+    if (i && (b._tzL !== TZ_NOTCH || r[i - 1]._tzR !== TZ_TIP) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // v0.591: data-tzin — остриё входит в выемку соседки
     b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
     tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));
@@ -10396,18 +10396,18 @@ function init(){
     parkSync(); Z.z++; el.style.zIndex = Z.z; packWins(); save(); renderAll();
     el.scrollIntoView({ block: "nearest" });
   };
-  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldSide").classList.toggle("on", !!Z.fieldRight);
-    $("bFieldSide").textContent = Z.fieldRight ? "⇆ строки слева" : "⇆ строки справа"; };   // v0.412, «строки — слева»: подпись — куда переставит щелчок
+  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldL").classList.toggle("on", !Z.fieldRight); $("bFieldR").classList.toggle("on", !!Z.fieldRight); };   // v0.591: (слева(строки)справа) — горит одна   // v0.412, «строки — слева»: подпись — куда переставит щелчок
   sideUi(); requestAnimationFrame(() => { parkSync(); packWins(); });
-  $("bFieldSide").onclick = () => { Z.fieldRight = !Z.fieldRight; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
+  const sideSet = (right) => { if (!!Z.fieldRight === right) return; Z.fieldRight = right; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };
+  $("bFieldL").onclick = () => sideSet(false); $("bFieldR").onclick = () => sideSet(true);
   /* v0.109, «кнопка свернуть поле строк»: поле строк прячется целиком, окна берут его место (стол шире — окна раскладываются
      заново по ширине: «⤒ К верху» и ужатие по краю работают как при разделителе). Строки живут дальше — меняются кнопками
      слева и окнами; вернуть поле — ещё раз. Запоминается. */
-  const hideUi = () => { document.body.classList.toggle("field-hidden", !!Z.fieldHidden); $("bFieldHide").classList.toggle("on", !!Z.fieldHidden); };
+  const hideUi = () => { document.body.classList.toggle("field-hidden", !!Z.fieldHidden); $("bFieldHide").classList.toggle("on", !Z.fieldHidden); };   // v0.591: «строки» горит, пока поле видно
   hideUi();
   $("bFieldHide").onclick = () => { Z.fieldHidden = !Z.fieldHidden; hideUi(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
-    say(Z.fieldHidden ? "▭ Поле строк свёрнуто — окна на всю ширину. Строки те же; вернуть — ещё раз «▭ поле строк»." : "▭ Поле строк снова на месте."); };
+    say(Z.fieldHidden ? "Поле строк спрятано — окна на всю ширину. Строки те же; вернуть — ещё раз «строки»." : "Поле строк снова на месте."); };
   if ($("rowInput")) $("rowInput").addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
