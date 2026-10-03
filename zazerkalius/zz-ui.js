@@ -10488,9 +10488,12 @@ function init(){
       else if (el.dataset.parked) { el.style.display = ""; delete el.dataset.parked; }
       if (on) list.push(el);   // v0.553, «отсюда не убирай»: в списке — все окна, развёрнутые горят
     });
-    $("paneWinsHead").style.display = list.length ? "" : "none";
+    /* v0.631, «переименуй — Другое, и убери из них дубликаты, что в верхнем меню теперь всегда»: шесть окон шапки в списке не видны (кнопки остаются
+       скрытыми — через них шапка сворачивает и разворачивает окна), заголовок списка — «Другое» */
+    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];
+    $("paneWinsHead").style.display = list.some(el => !PINNED.includes(el.id)) ? "" : "none";
     $("paneWins").innerHTML = list.map(el => { const t = esc(el.dataset.title || el.id), op = !el.dataset.parked;
-      return `<button data-w="${el.id}"${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");
+      return `<button data-w="${el.id}"${PINNED.includes(el.id) ? " hidden" : ""}${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");
     pwArrows();
   };
   /* v0.397: светящиеся ▲ ▼ у списка окон — горят, пока выше / ниже есть кнопки за краем; щелчок листает на ¾ видимого */
