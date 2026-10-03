@@ -2117,6 +2117,11 @@ function renderCone(){
         for (const [lo, hi] of zl) { if (hi - lo > 2 * Math.PI - 1e-6) continue; for (const e of [lo, hi]) { if (seamZ && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); } }
         g.stroke(); g.restore();
       }
+      { const a0 = (S.a0 || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), rK = S.akb > N ? r0 + N * dr + Math.max(1, dr * band) : S.akb === 1 ? rDisk : rIn(S.akb);
+        if (a0.length && rK > rDisk) {   // v0.710: от диска до уровня пучка — голубые лучи-края (сквозь кольца, как продолжение солнечных через центр)
+          g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.6; g.lineWidth = Math.max(1, dpr); g.setLineDash([4 * dpr, 4 * dpr]); g.beginPath();
+          for (const [lo, hi] of a0) for (const e of [lo, hi]) { const tt = e - Math.PI / 2; g.moveTo(cx + rDisk * Math.cos(tt), cy + rDisk * Math.sin(tt)); g.lineTo(cx + rK * Math.cos(tt), cy + rK * Math.sin(tt)); }
+          g.stroke(); g.restore(); } }
       { const ao = (S.aout || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), ri = r0 + N * dr + Math.max(1, dr * band), ro = ri + dr;
         if (ao.length) { const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.03)"); g.fillStyle = gm; g.globalAlpha = 1;
           for (const [lo, hi] of ao) sect(ri, ro, lo, hi);
@@ -2163,7 +2168,7 @@ function renderCone(){
         lit = lit.filter(([lo, hi]) => hi - lo > 1e-6).map(([lo, hi]) => [lo, hi]).sort((x, y) => x[0] - y[0]);
         if (lit.length > 1 && lit[0][0] < 1e-6 && lit[lit.length - 1][1] > 2 * Math.PI - 1e-6) { const f = lit.shift(); lit[lit.length - 1][1] = 2 * Math.PI + f[1]; }   // сектор через 0 — один
         const full = lit.length === 1 && lit[0][1] - lit[0][0] > 2 * Math.PI - 1e-6;
-        if (lit.length && !full) {
+        {   // v0.710, «верни отображение частей»: подписи — всегда (свет весь круг или не дошёл — одна часть на весь круг)
           /* v0.698, по снимку «◐ 2/3 · ☀ 1/3» — «луна 2/3 показывает, солнце 1/3, а что остаётся между ними? покажи у каждой части её количество от целой»: «◐» был
              всей тёмной частью и читался как луна. Теперь круг делится на солнце ☀ (свет), луну ☾ (сектор напротив света, через центр) и остаток ◌ между ними
              (оба сразу — ☀☾); у каждой части — её доля целого круга, в сводке — сколько частей каждого вида */
@@ -2171,6 +2176,7 @@ function renderCone(){
           const sunL = lit.map(([lo, hi]) => [nrm(lo), nrm(lo) + (hi - lo)]), moonL = (zRing ? zRing[1] : []).filter(([lo, hi]) => hi - lo > 1e-6).map(([lo, hi]) => [nrm(lo), nrm(lo) + (hi - lo)]);   // v0.707: луна — нулевой свет, а не сектор напротив
           const cuts = [...new Set([...sunL, ...moonL].flatMap(([lo, hi]) => [nrm(lo), nrm(hi)]).map(x => Math.round(x * 1e6) / 1e6))].sort((x, y) => x - y);
           let segs = cuts.map((c, k) => { const z = k + 1 < cuts.length ? cuts[k + 1] : cuts[0] + TT, m = (c + z) / 2, sn = inL(m, sunL), mn = inL(m, moonL); return { a: c, z, t: sn && mn ? "sm" : sn ? "s" : mn ? "m" : "o" }; }).filter(q => q.z - q.a > 1e-6);
+          if (!segs.length) { const sn = full || inL(0.001, sunL), mn = inL(0.001, moonL); segs = [{ a: 0, z: TT, t: sn && mn ? "sm" : sn ? "s" : mn ? "m" : "o" }]; }   // v0.710: делить нечего — весь круг одной частью
           for (let k = 0; segs.length > 1 && k < segs.length; ) { const nx = (k + 1) % segs.length; if (nx !== k && segs[nx].t === segs[k].t) { segs[k].z = segs[nx].a > segs[k].a ? segs[nx].z : segs[nx].z + TT; segs.splice(nx, 1); if (nx < k) k--; } else k++; }   // соседние одного вида — одна часть
           const rL = roE + Math.max(10 * dpr, dr * 0.35), fs = Math.round(Math.max(10 * dpr, Math.min(14 * dpr, dr * 0.4)));
           const lab = (tx, am, col, bg) => { const px = cx + rL * Math.cos(am - Math.PI / 2), py = cy + rL * Math.sin(am - Math.PI / 2); g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
@@ -2189,7 +2195,7 @@ function renderCone(){
           const gcdN = (x, y) => y ? gcdN(y, x % y) : x, frC = (k) => { if (!common) return fr(segs[k].z - segs[k].a); const p = common.ps[k], d = gcdN(p, common.qq); return (common.ok ? "" : "≈") + p / d + "/" + common.qq / d; };
           segs.forEach((q, k) => { const [ic, col] = look[q.t]; cnt[q.t]++; lab(ic + " " + frC(k), (q.a + q.z) / 2, col, cBg); });
           const rS = rL + fs * 1.8; g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = cg; g.globalAlpha = 0.95;
-          g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${lit.length * 2}`, cx, cy - rS);
+          g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${full ? 0 : lit.length * 2}`, cx, cy - rS);
           g.restore();
         } }
       if (Z.lasPeek) {   // v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
@@ -2560,13 +2566,17 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
      в 0». Антисолнце — лучи солнца, продолженные через центр в обратную сторону (как сектор луны v0.690): направления — зеркало солнечного пучка (первый
      освещённый не весь круг, а если такого нет — свет, вышедший за крайнее кольцо). Светит, как солнце: из центра наружу, кольцо за кольцом — сквозь вырез
      проходит, на битах останавливается; ячейка, накрытая им целиком, — 0 (на строке за чертой). Прежние правила «свет сквозь единицу» (v0.701–v0.707) сняты */
-  let aout = [];
+  /* v0.710, по снимку — «свет лучей также продолжи на следующую строку во внешнюю»: антисвет шёл от самого центра и упирался в биты первого же кольца (напротив
+     выреза у кольца — его биты). Теперь он начинается там же, где солнечный пучок: перед кольцом kb, на которое этот пучок падает (свет вышел за крайнее —
+     сразу за ним), и идёт дальше наружу; от центра до kb — только лучи-края */
+  let aout = [], a0 = [], akb = 0;
   if (coneCutOn()) {
     const full = (L) => L.length === 1 && L[0][1] - L[0][0] > TAU2 - 1e-6;
     const nf = bands.find(([, L]) => L.length && !full(L)), base = nf ? nf[1] : (lit.length && !full(lit) ? lit : []);
     const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
-    let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9);
-    for (let k = 1; k <= N && k < T && A.length; k++) {
+    let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9); a0 = A; akb = nf ? nf[0] : N + 1;
+    if (akb > N) aout = A;
+    for (let k = akb; k <= N && k < T && A.length; k++) {
       const C = coneSunCutR(k, N); if (!C) break;
       zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
       const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
@@ -2576,7 +2586,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       if (k === N) { aout = A; break; }
     }
   }
-  return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, out: lit, end: b };
+  return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, a0, akb, out: lit, end: b };
 }
 /* v0.208, «в этом режиме сделай неактивными те кнопки, которые не влияют» (по снимку «щель» и «⌖→ след.»): при ☀ гаснут всё лазерное —
    довод строки 1, ⏸ на проходе, 🔮, 🎯 с номером, число лазеров и «от …°», ⌖→ след., 📌 лазер, ↻ с шагом; при «0 — проход» ещё «щель» и
