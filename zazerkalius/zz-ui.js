@@ -6878,12 +6878,16 @@ function ctwInit(){
   const place = () => {   // приколотое — под конусом; свободное — где поставили, но в пределах экрана
     const c = Z.ctw, min = !!c.min, vw = innerWidth, vh = innerHeight;
     if (c.pin) {
-      const r = coneBox(); W.style.visibility = r ? "" : "hidden"; if (!r) return;
-      const h = min ? head.offsetHeight + 2 : c.h, top = Math.min(Math.round(r.bottom + 2), vh - h);
-      const L = Math.max(0, Math.round(r.left)), R = Math.min(vw, Math.round(r.right)), wd = Math.max(220, R - L);   // v0.352: не шире экрана
+      /* v0.598, «„Текст“ так и не появляется» → «может, просто в поле конуса текст писать — сверху справа»: приколотое окно — поверх холста конуса,
+         в его правом верхнем углу (ширина — до 45 % холста, 220…460 px; высота — своя, не выше 70 % холста), полупрозрачное. Прежде вставало под окном
+         конуса — а оно обычно до низа экрана, и текст уезжал за край */
+      const cv = $("coneCv"), r = cv && cv.getClientRects().length && cv.getBoundingClientRect().width > 20 ? cv.getBoundingClientRect() : coneBox();
+      W.style.visibility = r ? "" : "hidden"; if (!r) return;
+      const wd = Math.round(Math.max(220, Math.min(460, r.width * 0.45))), h = min ? head.offsetHeight + 2 : Math.round(Math.max(80, Math.min(c.h, r.height * 0.7)));
+      const L = Math.max(0, Math.min(vw - wd, Math.round(r.right - wd - 6))), top = Math.max(0, Math.min(vh - h, Math.round(r.top + 6)));
       const k = [L, top, wd, h, min].join(); if (k === last) return; last = k;
-      W.style.left = Math.min(L, Math.max(0, vw - wd)) + "px"; W.style.top = Math.max(0, top) + "px"; W.style.width = wd + "px";
-      W.style.height = min ? "" : c.h + "px";
+      W.style.left = L + "px"; W.style.top = top + "px"; W.style.width = wd + "px";
+      W.style.height = min ? "" : h + "px";
     } else {
       W.style.visibility = ""; last = "";
       const w = Math.max(220, Math.min(c.w || 420, vw)), h = min ? head.offsetHeight + 2 : Math.max(110, Math.min(c.fh || 260, vh));
@@ -6900,7 +6904,7 @@ function ctwInit(){
     $("bConeTxt").classList.toggle("on", open);
     bMin.textContent = min ? "▴" : "▾"; bMin.title = min ? "Показать текст конуса и лог лазера" : "Свернуть до заголовка (двойной щелчок по заголовку — то же)";
     bPin.classList.toggle("on", !!c.pin);
-    bPin.title = c.pin ? "📌 Приколото под конусом — ходит за ним. Потяни за заголовок — открепить и поставить куда угодно" : "📌 Приколоть под окно конуса";
+    bPin.title = c.pin ? "📌 Приколото в правом верхнем углу конуса — ходит за ним. Потяни за заголовок — открепить и поставить куда угодно" : "📌 Приколоть в угол конуса";
     bPin.textContent = "📌";
     last = ""; place();
     if (open && c.pin && !raf) raf = requestAnimationFrame(loop);
