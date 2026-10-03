@@ -9119,6 +9119,7 @@ function tzcApply(g){
      стороны — строки рисунка идут подряд, следующая подтягивается на эту, если влезает (сдвиг — на чётное число t), не влезает — перенос. Без заданного
      размера — как нарисовано (переноса нет) */
   const ev0 = (c) => c - (((c % 2) + 2) % 2);   // к левому краю — на чётное t
+  const cst = (c) => (((c % 2) + 2) % 2 ? 1 : 2) - c;   // v0.689: начало строки — столбец 1 (выемкой в рамку) или 2 (остриём в её выемку), сдвиг чётный
   const Ls = Object.keys(lines).map(Number).sort((a, b) => a - b);
   if (!isFinite(avail)) {   // без заданного размера — как нарисовано
     let out = 0, prev = null;
@@ -9133,8 +9134,8 @@ function tzcApply(g){
         if (i === 0) {
           let j = cur - U.c0; if (((j % 2) + 2) % 2) j += afterTitle ? -1 : 1; afterTitle = false;
           if (!first && U.c1 + 2 + j <= ac) dc = j;   // строка рисунка подтягивается на текущую
-          else { if (!first) out++; dc = -ev0(U.c0); cur = 0; }   // (не влезла за заголовок — строкой ниже)
-        } else if (U.c1 + 2 + dc > ac) { out++; dc = -ev0(U.c0); cur = 0; }
+          else { if (!first) out++; dc = cst(U.c0); cur = 0; }   // (не влезла за заголовок — строкой ниже)
+        } else if (U.c1 + 2 + dc > ac) { out++; dc = cst(U.c0); cur = 0; }
         U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); });
         cur = Math.max(cur, U.c1 + 2 + dc); first = false;
       });
@@ -9385,14 +9386,17 @@ function tzgFrame(g){
   let Wr = W; { const gl = g.getBoundingClientRect().left; let mx = 0;
     g.querySelectorAll(".tz:not(.glab):not(.tzk)").forEach(e => { if (!e.getClientRects().length) return; const r = e.getBoundingClientRect(); mx = Math.max(mx, r.right - gl); });
     if (mx > 0 && W - mx > 0 && W - mx < 3) Wr = mx; }
-  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + Wr.toFixed(1) + "|" + fc + "|" + (Z.noLn ? 1 : 0);   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
+  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + Wr.toFixed(1) + "|" + fc + "|" + (Z.noLn ? 1 : 0) + "|" + (g.querySelector(".cgb.tzc") ? 1 : 0);   // v0.464, «пусть группа — обводка цвет, как у её текста»; v0.689: и раскладка конструктора: рамка — цветом заголовка группы
   if (g._tzgk === key && g.classList.contains("tzg")) return;
   g._tzgk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
   const ys = []; for (let y = 0; y < H; y += P / 2) ys.push(y); ys.push(H);
   /* v0.479, «левая граница у групп пусть будет стрелкой вправо всегда»: левый край — выемкой (в середине ряда внутрь на t), правый — остриём, как был:
      вся группа — «стрелка вправо»; первая кнопка ряда — с выемкой слева, ложится в край вплотную (triTag) */
-  const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [Wr - zig(y), y])];
+  /* v0.689, по снимку «Вида» — «левая граница группы двойная почему-то»: у группы с рисунком конструктора первая кнопка ряда стоит со столбца 1 —
+     её левый край (выемка) на t правее рамки, и два одинаковых зубчатых края шли рядом. Рамка такой группы — на t правее, ровно по кнопкам */
+  const L0 = g.querySelector(".cgb.tzc") ? t : 0;
+  const pts = [...ys.map(y => [L0 + t - zig(y), y]), ...ys.slice().reverse().map(y => [Wr - zig(y), y])];
   g.classList.add("tzg");
   /* v0.617, «осталась граница» (▱ обводка выкл): обводка кнопок цветом фона — по 2 px внутрь каждой, и по внешнему краю группы она лежала тёмной
      каймой. Без обводки группа обрезается на эти 2 px по всему контуру (по бокам 2,3 — край косой): швы между кнопками остаются, каймы нет */
