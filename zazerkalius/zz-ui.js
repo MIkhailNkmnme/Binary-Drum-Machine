@@ -2119,14 +2119,20 @@ function renderCone(){
       }
       { const a0 = (S.a0 || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), rK = S.akb > N ? r0 + N * dr + Math.max(1, dr * band) : S.akb === 1 ? rDisk : rIn(S.akb);
         if (a0.length && rK > rDisk) {   // v0.710: от диска до уровня пучка — голубые лучи-края (сквозь кольца, как продолжение солнечных через центр)
-          g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.6; g.lineWidth = Math.max(1, dpr); g.setLineDash([4 * dpr, 4 * dpr]); g.beginPath();
-          for (const [lo, hi] of a0) for (const e of [lo, hi]) { const tt = e - Math.PI / 2; g.moveTo(cx + rDisk * Math.cos(tt), cy + rDisk * Math.sin(tt)); g.lineTo(cx + rK * Math.cos(tt), cy + rK * Math.sin(tt)); }
+          /* v0.712, по снимку — «свет от луны правильно покажи»: луна — те же солнечные лучи, продолженные через центр, поэтому она, как солнце, выходит из
+             диска: от диска до кольца, где начинает действовать, — слабое синее свечение между лучами и сплошные голубые края (было — один пунктир) */
+          const gm0 = g.createRadialGradient(cx, cy, rDisk, cx, cy, rK); gm0.addColorStop(0, "rgba(140, 185, 255, 0.22)"); gm0.addColorStop(1, "rgba(140, 185, 255, 0.06)");
+          g.fillStyle = gm0; g.globalAlpha = 1; for (const [lo, hi] of a0) sect(rDisk, rK, lo, hi);
+          g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.setLineDash([]); g.beginPath();
+          const seamA = a0.some(([x]) => x < 1e-6) && a0.some(([, y]) => y > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
+          for (const [lo, hi] of a0) for (const e of [lo, hi]) { if (seamA && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + rDisk * Math.cos(tt), cy + rDisk * Math.sin(tt)); g.lineTo(cx + rK * Math.cos(tt), cy + rK * Math.sin(tt)); }
           g.stroke(); g.restore(); } }
       { const ao = (S.aout || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), ri = r0 + N * dr + Math.max(1, dr * band), ro = ri + dr;
         if (ao.length) { const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.03)"); g.fillStyle = gm; g.globalAlpha = 1;
           for (const [lo, hi] of ao) sect(ri, ro, lo, hi);
           g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
-          for (const [lo, hi] of ao) for (const e of [lo, hi]) { const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); }
+          const seamO = ao.some(([x]) => x < 1e-6) && ao.some(([, y]) => y > 2 * Math.PI - 1e-6);
+          for (const [lo, hi] of ao) for (const e of [lo, hi]) { if (seamO && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); }
           g.stroke(); g.restore(); } }
       /* v0.691, по снимку солнца с одной строкой — «тут солнце лучи также пусть на 1 кольцо выходят из 2 в пустоту, и также зарево между ними»: свет, прошедший
          последнее кольцо (S.out), — золотое зарево и края-лучи ещё на одно кольцо наружу, в пустоту; напротив — луна, как у прочих секторов */
