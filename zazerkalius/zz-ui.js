@@ -2529,8 +2529,10 @@ function coneScanParts(fs){   // v0.680: места разрезов внутр�
   return p.join(":");
 }
 function coneScanDraw(g, o){
-  const { i, a, step, N, cx, cy, r0, dr, band, dpr } = o, TAU = 2 * Math.PI, rLim = r0 + (i + 2) * dr, rings = [];
-  for (let k = 0; k <= Math.min(i + 1, N); k++) {
+  /* v0.682, «так и не показывает части разделённые; пусть ещё и следующую строку, крайнюю, — в общем все биты делит, которые проходит линия от бита»: лучи —
+     не на одно кольцо наружу, а через все кольца до крайнего (строка за чертой, если она есть), и доли — у каждого задетого бита */
+  const { i, a, step, N, cx, cy, r0, dr, band, dpr } = o, TAU = 2 * Math.PI, kMax = coneGeom && coneGeom.fill ? N : N - 1, rLim = r0 + (Math.max(kMax, i) + 1) * dr, rings = [];
+  for (let k = 0; k <= kMax; k++) {
     if (k === i) continue;
     if (k < N) { const n = (Z.rows[k] || "").length; if (n < 2) continue; /* бит во весь круг луч не делит */ const CG = coneCutGeo(k, n); rings.push({ k, n, step: CG.step, P: CG.cut ? 2 * n - 1 : n, rot: coneRotOf(k) - CG.off }); }
     else if (o.fillCut !== undefined && coneGeom && coneGeom.fill) { const n = fillLen(), F = o.fillCut ? coneFillCut() : null;
@@ -5183,6 +5185,21 @@ function setupCone(){
   }
   $("bC3d").onclick = () => $("cone3d").click();   // v0.270: 🧊 3D и ⧗ зеркало над пультом жмут те же галки «Вида»
   $("bC3Octa").onclick = () => $("coneOcta").click();
+  /* v0.682, по снимку ромбового пульта — «сделай подсказки при наведении этим»: полная подсказка уходит в уведомление внизу по центру (v0.294) — от пульта
+     в углу далеко, её не видно. Теперь у самой кнопки — короткое название (до « — », «: », « (») плашкой слева от пульта; полный текст — по-прежнему внизу */
+  { const P = $("cone3Pad"); let tip = null;
+    const hide = () => { if (tip) tip.hidden = true; };
+    P.addEventListener("pointerover", (e) => {
+      const b = e.target.closest && e.target.closest("button"); if (!b || !P.contains(b)) { hide(); return; }
+      const full = b.dataset.zzTip || b.getAttribute("title") || ""; if (!full.trim()) { hide(); return; }
+      let t = full; for (const sep of [" — ", ": ", " (", ". "]) { const k = t.indexOf(sep); if (k > 0) t = t.slice(0, k); }
+      if (!tip) { tip = document.createElement("div"); tip.id = "c3tip"; document.body.appendChild(tip); }
+      tip.textContent = t; tip.hidden = false;
+      const r = b.getBoundingClientRect(), pr = P.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      tip.style.left = Math.max(4, pr.left - w - 6) + "px"; tip.style.top = Math.max(4, Math.min(innerHeight - h - 4, r.top + r.height / 2 - h / 2)) + "px";
+    });
+    P.addEventListener("pointerleave", hide); P.addEventListener("pointerdown", hide);
+  }
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
     e.preventDefault(); const k = b.dataset.c3;
