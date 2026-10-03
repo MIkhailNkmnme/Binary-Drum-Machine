@@ -9087,8 +9087,9 @@ function soloApply(){
   const t = el.dataset.title || ZZ_SOLO, h = document.querySelector("#top h1");
   if (h) {   // v0.226, «тут название — после Zazerkalius, а не вместо»: «Zazerkalius ◯ Конус»
     /* v0.616, «при клике на заголовок Zazerkalius — переход из соло-режима»: «Zazerkalius» — ссылка на всю страницу (тот же адрес без ?solo=…) */
-    h.textContent = ""; const a = document.createElement("a"); a.href = location.pathname; a.className = "h1home"; a.textContent = "Zazerkalius";
-    a.title = "Открыть всю страницу Zazerkalius — с полем строк, окнами и панелями (настройки у неё свои)"; h.append(a, " " + t); }
+    const lg = h.querySelector("svg.zzlogo");   // v0.642: название — надпись из треугольников
+    h.textContent = ""; const a = document.createElement("a"); a.href = location.pathname; a.className = "h1home"; if (lg) a.append(lg); else a.textContent = "Zazerkalius";
+    a.title = "Открыть всю страницу Zazerkalius — с полем строк, окнами и панелями (настройки у неё свои)"; h.append(a, "\u00a0" + t); }
   document.title = "Zazerkalius " + t + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
   $("desk").scrollTop = 0;
 }
