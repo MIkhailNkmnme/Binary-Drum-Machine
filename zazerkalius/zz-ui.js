@@ -10012,9 +10012,9 @@ function init(){
     const t = (el.textContent || "").trim().replace(/\s+/g, " ");
     return t ? (t.length > 24 ? t.slice(0, 23) + "…" : t) : p.id;
   };
+  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];   // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
   const renderPins = () => {
     let h = "";
-    const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];   // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
     Z.pins.forEach((p, k) => {
       if (p.t === "w" && PIN_WINS.includes(p.id)) return;   // они и так в шапке ниже — не дважды
       const lab = pinLabel(p); if (!lab) return;
@@ -10052,8 +10052,12 @@ function init(){
   window.zzWinShow = winShow;   // v0.452: конструктор открывает «△ Сетку»
   $("pinBar").onclick = (e) => {
     { const a = e.target.closest("button[data-aw]"); if (a) { const el = $(a.dataset.aw); if (!el) return;   // v0.619: кнопка окна — как в списке «Окна»
-        const pb = document.querySelector('#paneWins button[data-w="' + el.id + '"]');
-        if (a.classList.contains("on")) { if (pb) pb.click(); else { const bc = el.querySelector(".bc"); if (bc) bc.click(); } } else winShow(el.id); return; } }
+        /* v0.629, «если нажать — пусть либо-либо переключает: только одно окно оставляет, и сразу развёрнутым»: из шести окон шапки развёрнуто одно —
+           нажатое; остальные пять сворачиваются (в список слева или до шапки). Прочие окна не трогаются */
+        const isOpen = (w) => !w.dataset.parked && !w.classList.contains("collapsed") && w.style.display !== "none";
+        PIN_WINS.forEach(id => { const w = $(id); if (!w || w === el || !isOpen(w)) return;
+          const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); else { const bc = w.querySelector(".bc"); if (bc) bc.click(); } });
+        winShow(el.id); return; } }
     const b = e.target.closest("button[data-k]"); if (!b) return;
     const p = Z.pins[+b.dataset.k]; if (!p) return;
     if (p.t === "w") winShow(p.id); else { const src = $(p.id); if (src) src.click(); else say("📌 Этой кнопки больше нет."); }
