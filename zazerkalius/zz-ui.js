@@ -2515,6 +2515,9 @@ function coneSunPeek(){
   finally { Z.coneSpinPh = p0; }
   conePeekC = { k, S }; return S;
 }
+/* v0.705, «красить 1 или 0 только когда весь бит будет лучами покрыт»: в вырезах T−1 ячейка красится светом (1) или «нулевым» светом (0), только если он
+   покрывает её целиком; задетая краем — не красится. coneCellCovered: дуга ячейки q (шаг st, поворот rot) вся внутри света L */
+function coneCellCovered(q, st, rot, L){ const c = []; ivNorm((q - rot) * st, (q + 1 - rot) * st, c); return ivMinus(ivUnion(c), L).every(([a, b]) => b - a < 1e-6); }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
   const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {};
   let lit = [[0, TAU2]], b = 1;
@@ -2529,7 +2532,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     for (const [lo, hi] of ivMinus(lit, open)) {
       if (hi - lo < 1e-9) continue;
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
-      for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P; if (q < nb) hits.add(b + ":" + q); }
+      for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P; if (q < nb && (!C || coneCellCovered(q, st, rot, lit))) hits.add(b + ":" + q); }   // v0.705: в вырезах — только покрытая целиком
     }
     lit = ivAnd(lit, open);
   }
@@ -2542,7 +2545,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       const C = coneSunCutR(k, N); if (!C) break;
       const L = litAt[k] || [], hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = ivUnion(hole);
       for (const [lo, hi] of ivMinus(z, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
-        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n) zhits.add(k + ":" + q); } }
+        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, z)) zhits.add(k + ":" + q); } }   // v0.705
       if (k === N) break;
       const s1 = Z.rows[k], ones = []; for (let q = 0; q < C.n; q++) if (s1[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, ones);
       const O = ivUnion(ones); z = ivUnion([...ivAnd(z, ivUnion([...open, ...O])), ...ivAnd(L, O)]).filter(([a, c]) => c - a > 1e-9);
