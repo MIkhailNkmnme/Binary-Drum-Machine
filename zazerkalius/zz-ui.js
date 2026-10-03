@@ -9975,7 +9975,7 @@ function init(){
        (горит — окно развёрнуто на столе; щелчок — свернуть / развернуть и показать). Закреплённые 📌 окна второй раз не повторяются */
     PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
       if (el.classList.contains("popped")) return;
-      const t = ({ "w-pyr": "▲ Паскаль" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
+      const t = ({ "w-pyr": "▲ Паскаль", "w-okt": "◆ Бирамида" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
       h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: развернуть, поднять, показать")}">${esc(t)}</button>`;
     });
     if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
