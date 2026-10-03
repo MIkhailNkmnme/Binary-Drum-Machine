@@ -2045,6 +2045,22 @@ function renderCone(){
           g.fillStyle = gm; g.globalAlpha = 1; sect(rDisk, roE, lo + Math.PI, hi + Math.PI);
         }
       }
+      /* v0.691, по снимку солнца с одной строкой — «тут солнце лучи также пусть на 1 кольцо выходят из 2 в пустоту, и также зарево между ними»: свет, прошедший
+         последнее кольцо (S.out), — золотое зарево и края-лучи ещё на одно кольцо наружу, в пустоту; напротив — луна, как у прочих секторов */
+      { const rO0 = rIn(S.end), rO1 = rO0 + dr, outs = S.out.filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6);
+        if (outs.length) {
+          const go = g.createRadialGradient(cx, cy, rO0, cx, cy, rO1); go.addColorStop(0, "rgba(255, 205, 100, 0.30)"); go.addColorStop(1, "rgba(255, 205, 100, 0.03)");
+          g.fillStyle = go; g.globalAlpha = 1; for (const [lo, hi] of outs) sect(rO0, rO1, lo, hi);
+          for (const [lo, hi] of outs) { const gm = g.createRadialGradient(cx, cy, rDisk, cx, cy, Math.max(roE, rO1)); gm.addColorStop(0, "rgba(140, 185, 255, 0.16)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.02)"); g.fillStyle = gm; sect(rDisk, Math.max(roE, rO1), lo + Math.PI, hi + Math.PI); }
+          const seamO = outs.some(([a]) => a < 1e-6) && outs.some(([, z]) => z > 2 * Math.PI - 1e-6);
+          g.save(); g.lineCap = "round"; g.setLineDash([]);
+          for (const [col, al, r1, r2, sh] of [[cg, 0.9, rO0, rO1, 0], ["#9cc3ff", 0.7, rDisk, Math.max(roE, rO1), Math.PI]]) {
+            g.strokeStyle = col; g.globalAlpha = al; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
+            for (const [lo, hi] of outs) for (const e of [lo, hi]) { if (seamO && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2 + sh; g.moveTo(cx + r1 * Math.cos(tt), cy + r1 * Math.sin(tt)); g.lineTo(cx + r2 * Math.cos(tt), cy + r2 * Math.sin(tt)); }
+            g.stroke();
+          }
+          g.restore();
+        } }
       g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([]); g.beginPath();
       for (const [b, lit] of S.bands) {
         if (b > N) continue;
@@ -9126,8 +9142,14 @@ function tzcApply(g){
      ширины (12 сторон), показывается стандартным — дорисовываются столбцы справа (на чётное число t, края не меняются), а что стоит правее в тех же
      рядах рисунка, сдвигается на столько же (сам рисунок не трогается) */
   its.forEach(it => {
-    if (!it.el.querySelector || !it.el.querySelector("input[type=range]")) return;
-    const need = it.c0 + 2 * tzcStd(it.el) - 1 - it.c1; if (need <= 0) return;
+    /* v0.691, по снимку «Вида» — «кнопки наложились тут»: на месте одной кнопки рисунка стоит блок-обёртка из трёх («выдел. · ✳ лучи · все», номера мест
+       сдвинулись) — её кнопки вылезали на соседнюю. Блок, которому мало места (scrollWidth шире коробки), дорисовывается до своей ширины, как ползунок */
+    let need = 0;
+    if (it.el.querySelector && it.el.querySelector("input[type=range]")) need = it.c0 + 2 * tzcStd(it.el) - 1 - it.c1;
+    else if (it.el.tagName === "SPAN" && it.el.classList.contains("cunit")) {   // ширина — по числу его кнопок (цепочка: каждая 2n столбцов, стык — заход на столбец), не замером: замер коробки, уже расширенной, рос бы по кругу
+      const kids = [...it.el.children].filter(c => getComputedStyle(c).display !== "none" && getComputedStyle(c).flexGrow === "0");   // кнопки своей ширины — от коробки не зависят
+      if (kids.length > 1) { const L = Math.min(...kids.map(c => c.offsetLeft)), R = Math.max(...kids.map(c => c.offsetLeft + c.offsetWidth)), cols = Math.ceil((R - L + 4) / t) - 1; need = it.c0 + cols - 1 - it.c1; } }
+    if (need <= 0) return;
     const k = need + (need % 2), rows = [...new Set(it.cells.map(([r]) => r))];
     const nb = its.filter(o => o !== it && o.r1 >= it.r0 && o.r0 <= it.r1 && o.c0 > it.c1);   // правее в тех же рядах; сдвиг — только на нехватку места
     let m = nb.length ? it.c1 + k + 1 - Math.min(...nb.map(o => o.c0)) : 0; if (m > 0) m += m % 2;
