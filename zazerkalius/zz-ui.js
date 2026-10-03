@@ -9964,16 +9964,17 @@ function init(){
   };
   const renderPins = () => {
     let h = "";
+    const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-struct"];   // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
     Z.pins.forEach((p, k) => {
+      if (p.t === "w" && PIN_WINS.includes(p.id)) return;   // они и так в шапке ниже — не дважды
       const lab = pinLabel(p); if (!lab) return;
       const tip = p.t === "w" ? `Окно «${lab}»: развернуть, поднять, показать` : (($(p.id) || {}).title || lab);
       h += `<button data-k="${k}"${p.t === "w" ? ' class="pinw"' : ""} title="${esc(tip + " · правый щелчок — открепить")}">${esc(lab)}</button>`;
     });
     /* v0.619, по снимку списка «Окна» слева и шапки — «эти все дублируй в верхнее меню»: после закреплённых — кнопки всех окон, как в списке слева
        (горит — окно развёрнуто на столе; щелчок — свернуть / развернуть и показать). Закреплённые 📌 окна второй раз не повторяются */
-    document.querySelectorAll(".win").forEach(el => {
-      if ((el.id === "w-help" && !Z.helpOn) || el.classList.contains("popped")) return;
-      if (Z.pins.some(p => p.t === "w" && p.id === el.id)) return;
+    PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
+      if (el.classList.contains("popped")) return;
       const t = el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";
       h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: развернуть, поднять, показать")}">${esc(t)}</button>`;
     });
