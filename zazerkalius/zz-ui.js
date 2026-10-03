@@ -1630,6 +1630,10 @@ const CONE_MAX = 256;   // v0.200: было 160 — заготовки Аним�
    шрифтом поля. Поворот кольца теперь поворачивает САМУ строку: пока тянешь — строка в поле крутится вместе (на
    каждом целом бите), отпустил — записано (↩ вернёт весь поворот разом). Поле строк меняется — конус перерисован. */
 let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1;
+/* v0.715, «когда кольцо добавляет — пусть масштаб не меняет»: шаг колец dr делился на число колец, и каждое новое кольцо (строка ушла в поле, |◀, ↶,
+   новая строка руками) сжимало весь конус. Теперь делитель (coneDen) держится, пока колец стало на одно больше или меньше; новое кольцо выходит наружу, дальше —
+   колесом. Пересчёт по месту — когда строк сменилось сразу много (загрузка, вставка), сменились режимы (до 256, 3D) или сброс вида (Alt + двойной щелчок, ⌂) */
+let coneDen = 0, coneDenN = -1, coneDenWant = 0;
 let coneZoom = 1, conePan = [0, 0];   // v0.049: масштаб вокруг курсора и сдвиг (в пикселях холста)
 function coneCss(v, dflt){ try { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || dflt; } catch (e) { return dflt; } }
 function coneInfo(){
@@ -1683,7 +1687,7 @@ function renderCone(){
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, dr = (rMax - r0) / Math.max(1, fillOn ? coneRingsTotal(N) : N);   // v0.127: и пустые кольца до 256
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, r0 = rMax * 0.05, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), dr = (rMax - r0) / ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen);   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays) {
@@ -5524,7 +5528,7 @@ function setupCone(){
     if (k === "yaw-" || k === "yaw+") Z.cone3Yaw = (Z.cone3Yaw ?? 30) + (k === "yaw+" ? 15 : -15);
     else if (k === "el+" || k === "el-") Z.cone3El = Math.max(0, Math.min(90, (Z.cone3El ?? 50) + (k === "el+" ? 10 : -10)));
     else if (k === "z+" || k === "z-") { const z1 = Math.max(0.3, Math.min(60, coneZoom * (k === "z+" ? 1.25 : 0.8))), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; }
-    else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; }
+    else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
     renderCone();
   };
   /* v0.179, по снимку пульта — «перемещаемым»: пульт тянут за ручку ⠿ (или за фон между кнопками) куда угодно по холсту; двойной
@@ -5576,7 +5580,7 @@ function setupCone(){
     const up = () => { clearTimeout(t); save(); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };
     addEventListener("pointerup", up); addEventListener("pointercancel", up);
   });
-  cv.addEventListener("dblclick", (e) => { if (!Z.cone3d || !e.altKey) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; save(); renderCone(); });
+  cv.addEventListener("dblclick", (e) => { if (!Z.cone3d || !e.altKey) return; Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; coneDen = 0; save(); renderCone(); });
   $("coneSect").checked = !!Z.coneSect;   // v0.079
   $("coneSect").onchange = (e) => { Z.coneSect = e.target.checked; save(); renderCone(); };
   $("coneOnlySel").checked = !!Z.coneOnlySel;   // v0.076
@@ -5606,7 +5610,7 @@ function setupCone(){
     conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
     coneZoom = z1; renderCone();
   }, { passive: false });
-  cv.addEventListener("dblclick", (e) => { if (!e.altKey) return; coneZoom = 1;   /* v0.173: сброс вида — Alt + двойной щелчок (Ctrl + щелчок меняет бит) */ conePan = [0, 0]; renderCone(); });
+  cv.addEventListener("dblclick", (e) => { if (!e.altKey) return; coneZoom = 1; coneDen = 0;   /* v0.173: сброс вида — Alt + двойной щелчок (Ctrl + щелчок меняет бит) */ conePan = [0, 0]; renderCone(); });
   if (window.ResizeObserver) new ResizeObserver(() => renderCone()).observe(cv);
 }
 
