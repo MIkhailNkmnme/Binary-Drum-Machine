@@ -2037,6 +2037,7 @@ function renderCone(){
     const { i, j } = coneBitHover, n = Z.rows[i].length, CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
     g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
     g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
+    if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });   // v0.676
   }
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
@@ -2483,6 +2484,46 @@ function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return cone
 function coneFillCut(){
   const N = Math.min(Z.rows.length, CONE_MAX), n = fillLen(); if (!N || n < 2 || !coneCutOn()) return null;
   return { n, P: 2 * n - 1, step: 2 * Math.PI / (2 * n - 1), off: coneCutGeo(N, n).off };
+}
+/* v0.676, «сделай кнопку — сканер симметрии: навожу на бит в кольце — из него в центр линии от его границ и наружу на 1 уровень, и от его середины
+   также; когда эта линия проходит через другой бит — показать, на сколько частей он его делит»: ⌖ в «Кольцах». Три луча из центра (две границы бита
+   золотом, середина — бирюзой) до внешнего края следующего кольца. На каждом другом кольце (строки и кольцо для заполнения) луч попадает в бит на
+   месте x: дробная доля f — где он его режет; подпись — «p:q» (доли бита по обе стороны, f = p / (p + q), знаменатель до 48), иначе проценты; луч
+   по границе бит — точка. В вырезах T−1 — только биты (в дыре бита нет) */
+function coneScanFrac(f){
+  for (let q = 2; q <= 48; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f * q - p) < 1e-4 * q) return p + ":" + (q - p); }
+  return Math.round(f * 100) + "%";
+}
+function coneScanDraw(g, o){
+  const { i, a, step, N, cx, cy, r0, dr, band, dpr } = o, TAU = 2 * Math.PI, rLim = r0 + (i + 2) * dr, rings = [];
+  for (let k = 0; k <= Math.min(i + 1, N); k++) {
+    if (k === i) continue;
+    if (k < N) { const n = (Z.rows[k] || "").length; if (n < 2) continue; /* бит во весь круг луч не делит */ const CG = coneCutGeo(k, n); rings.push({ k, n, step: CG.step, P: CG.cut ? 2 * n - 1 : n, rot: coneRotOf(k) - CG.off }); }
+    else if (o.fillCut !== undefined && coneGeom && coneGeom.fill) { const n = fillLen(), F = o.fillCut ? coneFillCut() : null;
+      rings.push({ k, n, step: F ? F.step : TAU / n, P: F ? F.P : n, rot: coneFillRot() - (F ? F.off : 0) }); }
+  }
+  const lines = [[a, o.cg], [a + step / 2, o.cA], [a + step, o.cg]];
+  g.save(); g.lineCap = "round";
+  for (const [t, col] of lines) {
+    g.strokeStyle = col; g.globalAlpha = 0.9; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.setLineDash(col === o.cA ? [5 * dpr, 4 * dpr] : []);
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + rLim * Math.cos(t), cy + rLim * Math.sin(t)); g.stroke();
+  }
+  g.setLineDash([]); g.globalAlpha = 1;
+  const fsz = Math.round(Math.max(10 * dpr, Math.min(dr * band * 0.32, 15 * dpr)));
+  g.font = `700 ${fsz}px ${o.ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+  for (const R of rings) {
+    const rin = r0 + R.k * dr, rm = rin + dr * band / 2;
+    for (const [t, col] of lines) {
+      const x = ((((t + Math.PI / 2) / R.step + R.rot) % R.P) + R.P) % R.P; if (x >= R.n + 1e-6 && R.P > R.n) continue;   // в дыре выреза — не бит
+      const f = x - Math.floor(x), px = cx + rm * Math.cos(t), py = cy + rm * Math.sin(t);
+      if (f < 1e-4 || f > 1 - 1e-4) { g.fillStyle = col; g.beginPath(); g.arc(px, py, Math.max(3, 3 * dpr), 0, TAU); g.fill(); continue; }   // по границе бит
+      const tx = coneScanFrac(f), w = g.measureText(tx).width + 6 * dpr, h = fsz + 4 * dpr;
+      g.fillStyle = o.cBg; g.globalAlpha = 0.85; g.fillRect(px - w / 2, py - h / 2, w, h); g.globalAlpha = 1;
+      g.strokeStyle = col; g.lineWidth = Math.max(1, dpr); g.strokeRect(px - w / 2, py - h / 2, w, h);
+      g.fillStyle = col; g.fillText(tx, px, py);
+    }
+  }
+  g.restore();
 }
 function coneFillPart(u){ const F = coneFillCut(); return (((u / F.step + coneFillRot() - F.off) % F.P) + F.P) % F.P; }   // u — угол от верха; → место в частях
 function coneVoidHits(){
@@ -4983,6 +5024,11 @@ function setupCone(){
     document.body.classList.add("recpick"); rrUi();
     say("⏺ Щёлкни, что записывать: поле строк, ◯ конус, 🧊 вид или ▲ пирамиду (обводится под мышью). Esc — отмена.");
   };
+  if ($("bConeScan")) {   // v0.676: ⌖ сканер симметрии
+    $("bConeScan").classList.toggle("on", !!Z.coneScan);
+    $("bConeScan").onclick = () => { Z.coneScan = !Z.coneScan; $("bConeScan").classList.toggle("on", Z.coneScan); save(); renderCone();
+      say(Z.coneScan ? "⌖ Сканер: наведи на бит кольца — линии от его границ и середины; доля — где линия режет бит другого кольца." : "⌖ Сканер выключен."); };
+  }
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
     const T = rowSel.size ? [...rowSel] : Z.rows.map((_, i) => i);
     let k = 0; T.forEach(i => { if (Math.round(coneRot[i] || 0)) k++; coneRot[i] = 0; });
