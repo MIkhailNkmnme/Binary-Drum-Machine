@@ -517,7 +517,7 @@ function cutHidUi(){
   const t = document.getElementById("bCutTake"); if (!t) return;
   const take = hidCount() > 0 && Z.cutTake !== false, m = Z.cutGen || "r90";
   t.classList.toggle("on", take);   // v0.253
-  for (const [id, v] of [["bCutR90", "r90"], ["bCutR30", "r30"], ["bCutMask", "mask"]]) { const b = document.getElementById(id); if (b) b.classList.toggle("on", !take && m === v); }
+  for (const [id, v] of [["bCutR90", "r90"], ["bCutR30", "r30"], ["bCutMask", "mask"], ["bCutLas", "las"]]) { const b = document.getElementById(id); if (b) b.classList.toggle("on", !take && m === v); }
   const ps = document.getElementById("animPreset");   // v0.537: заготовка — тоже способ достройки
   if (ps) { const pv = m.startsWith("p:") ? m.slice(2) : ""; if (ps.value !== pv) ps.value = pv; ps.classList.toggle("on", !take && !!pv); }
 }
@@ -629,6 +629,15 @@ function cutEcaNext(rule, s){
   for (let x = -1; x <= L; x++) o += (rule >> (b(x - 1) * 4 + b(x) * 2 + b(x + 1))) & 1 ? "1" : "0";
   return o;
 }
+/* v0.679, по снимку полосы под чертой — «тут надо возможность отключать Серп 90, и чтобы когда вниз тянуть — заполнялось то, что подсвечено лазером, те
+   биты»: способ достройки «⌖ лазер» (Z.cutGen = "las"; включается кнопкой или повторным щелчком по горящей «Серп 90» / «30» / «маске»). Черта вниз —
+   новая строка из строки за чертой: ячейка, где лазер поставил «1» (Z.fillCells) или куда попал луч / свет солнца (счёт Z.voidHits кольца N), — 1,
+   остальные — 0. Только одна строка за протяжку: для следующей лазер ещё не прошёл */
+function cutLaserRow(){
+  const f = fillDraft(), N = Math.min(Z.rows.length, CONE_MAX), h = coneVoidHits(); let o = "";
+  for (let k = 0; k < f.length; k++) o += f[k] === "1" || (h[N + ":" + k] | 0) > 0 ? "1" : "0";
+  return o;
+}
 function cutGenNext(s, prev){
   const m = Z.cutGen || "r90";
   // v0.237, «при построении учитывай: если стоит Серпинский — строит не с 1, а с 11»: треугольник +1 (или строка одна) — Паскаль, +1 бит;
@@ -647,6 +656,7 @@ function cutAt(k, gen){
       const vis = Z.lanes[l].slice(); let hid = hidRows(l).slice();
       if (Z.cutDel) hid = [];   // v0.563: 🗑 включена — прежние строки из-под черты не возвращаются и не сдвигаются, а стираются
       else if (Z.cutTake !== false) while (vis.length < k && hid.length) vis.push(hid.shift());
+      if (vis.length < k && (Z.cutGen || "r90") === "las") { vis.push(cutLaserRow()); k = vis.length; }   // v0.679: ⌖ лазер — одна строка из отмеченного лазером
       if (vis.length < k) { const pg = cutPresetRows(k); while (vis.length < k && vis.length < CUT_GEN_MAX) vis.push(pg && pg[vis.length] != null ? pg[vis.length] : cutGenNext(vis[vis.length - 1], vis[vis.length - 2])); }   // v0.537: заготовка — её строкой с тем же номером   // v0.361: «Заменить» снята — что под чертой, остаётся ниже новых
       Z.lanes[l] = vis; Z.lanesHid[l] = hid;
       continue;
@@ -10837,9 +10847,12 @@ function init(){
     cutHidUi();   // v0.288: подсветка — только когда под чертой что-то есть
   };
   const cutPick = (m, what) => { Z.cutGen = m; Z.cutTake = false; cutUi(); save(); say(`⎯ Тянешь черту вниз — строки достраиваются от верхней: ${what}. «⤒ Из-под черты» выключено.`); };   // v0.361: либо-либо
-  $("bCutR90").onclick = () => cutPick("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
-  $("bCutR30").onclick = () => cutPick("r30", "правило 30 (на 2 бита длиннее)");
-  $("bCutMask").onclick = () => cutPick("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
+  const cutLas = () => cutPick("las", "⌖ лазер — строка из бит, что отметил лазер в строке за чертой (по одной)");   // v0.679
+  const cutTog = (m, what) => (Z.cutGen || "r90") === m && Z.cutTake === false || (Z.cutGen || "r90") === m && hidCount() === 0 ? cutLas() : cutPick(m, what);   // повторный щелчок по горящей — выключить (→ лазер)
+  $("bCutR90").onclick = () => cutTog("r90", "🔺 Серп 90 (правило 90, на 2 бита длиннее)");
+  $("bCutR30").onclick = () => cutTog("r30", "правило 30 (на 2 бита длиннее)");
+  $("bCutMask").onclick = () => cutTog("mask", `маска ${Z.cutMask || "01"} подряд (на бит длиннее)`);
+  if ($("bCutLas")) $("bCutLas").onclick = cutLas;
   $("cutMask").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.cutMask = v || "01"; e.target.value = Z.cutMask; Z.cutGen = "mask"; Z.cutTake = false; cutUi(); save(); say(`⎯ Маска достройки — ${Z.cutMask}.`); };
   $("bBar").onclick = () => { Z.barOn = !Z.barOn; cutUi(); save(); wallMark();   // v0.353: ▮ Столб — и подсветка в строках
     say(Z.barOn ? (barOffs().length ? `▮ Столб: ${barLab()} от вершины заморожено — держит начальное значение; достройка и заготовки Аниматрицы строятся с ним.` : "▮ Столб включён, но оба поля — 0: столбов нет. Задай, сколько бит влево и вправо от вершины.") : "▮ Столб снят — правила как есть."); };
