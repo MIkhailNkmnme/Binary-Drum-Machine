@@ -2258,6 +2258,9 @@ function coneDirUi(){   // v0.136: ползунок — величина ско�
   { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.511: горит стрелка направления
   coneSpinModeUi();
 }
+function coneRaysUi(){   // v0.576: лучи к центру — кнопками, горит выбранная (список coneRays — скрытый, держит значение)
+  const m = Z.coneRays || "off"; document.querySelectorAll("#coneRaysB > button").forEach(b => b.classList.toggle("on", b.dataset.rays === m));
+}
 function coneSpinModeUi(){   // v0.279, «это вынеси в кнопки»: режим кручения — кнопками, горит выбранный (список coneSpinMode — скрытый, держит значение)
   const m = Z.coneSpinMode || "all"; document.querySelectorAll("#coneSpinModeB > button").forEach(b => b.classList.toggle("on", b.dataset.sm === m));
 }
@@ -3518,7 +3521,7 @@ function setupCone(){
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
-      $("coneRays").value = Z.coneRays || "off"; $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
+      $("coneRays").value = Z.coneRays || "off"; coneRaysUi(); $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
@@ -4938,7 +4941,9 @@ function setupCone(){
   $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; Z.coneLocks = {}; save(); renderRows(); renderCone(); say(Z.coneLock ? "🔒 Все кольца заперты: крутятся только на вид, строки не сдвигаются." : "🔓 Все кольца открыты: тянешь кольцо (с Ctrl) — крутится и сама строка в поле."); };
   cv.addEventListener("contextmenu", (e) => { const h = coneRing(e); if (h !== -1 && h.fill !== undefined) { e.preventDefault(); fillReset(); } });   // v0.118: правый щелчок по кольцу для заполнения — заново
   $("coneRays").value = Z.coneRays || "off";
-  $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; save(); renderCone(); };
+  $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; coneRaysUi(); save(); renderCone(); };
+  coneRaysUi();   // v0.576: кнопки ✳ нет / выдел. / все
+  $("coneRaysB").onclick = (e) => { const b = e.target.closest("button[data-rays]"); if (!b) return; const sel = $("coneRays"); sel.value = b.dataset.rays; sel.onchange({ target: sel }); };
   // v0.049: колесо — масштаб вокруг курсора (точка под курсором остаётся на месте); двойной щелчок мимо колец — как было
   cv.addEventListener("wheel", (e) => {
     e.preventDefault();
