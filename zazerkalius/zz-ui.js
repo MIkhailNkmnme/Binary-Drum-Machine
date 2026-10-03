@@ -8155,6 +8155,7 @@ function lpTop(col, vis){
   const end = () => { if (run.length) runs.push(run); run = []; };
   const walk = (el) => {
     if (el.id === "pinBar") { [...el.children].forEach(walk); return; }
+    if (el.id === "undoBox") { end(); [...el.children].forEach(walk); end(); return; }   // v0.611: ↩ ↪ посередине — своя сцепка
     if (el.tagName === "BUTTON") { if (vis(el)) run.push(el); return; }
     if (vis(el) || el.classList.contains("sp")) end();
   };
