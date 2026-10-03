@@ -8555,7 +8555,9 @@ function paneZig(){
      черта). Теперь — вплотную к краю (там, где лягут зубцы), по стопке слоёв (что видно глазом), в девяти точках по высоте; большинство */
   { const pr = pane.getBoundingClientRect(), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
     for (let k = 1; k <= 9; k++) { const y = pr.top + pr.height * k / 10;
-      for (const e of document.elementsFromPoint(pr.right + 2, y)) { if (e === pane || pane.contains(e)) continue; const c = getComputedStyle(e).backgroundColor; if (op(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
+      for (const e of document.elementsFromPoint(pr.right + 2, y)) { if (e === pane || pane.contains(e)) continue;
+        /* v0.678, «так и осталась вертикальная полоса из-за фона»: холст (конус) сам заливается цветом темы --bg, а его CSS-фон другой (синий) — у холста берём --bg */
+        const c = e.tagName === "CANVAS" ? (getComputedStyle(e).getPropertyValue("--bg").trim() || getComputedStyle(e).backgroundColor) : getComputedStyle(e).backgroundColor; if (op(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
     const best = Object.entries(seen).sort((a, b) => b[1] - a[1])[0]; if (best) bg = best[0]; }
   const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
   let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
