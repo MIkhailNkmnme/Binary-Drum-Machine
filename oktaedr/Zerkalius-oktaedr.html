@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.069. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.070. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.069</title>
+<title>Zerkalius Гранидус — v0.070</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -299,7 +299,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.069</div>
+<div id="ver">v0.070</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -2124,7 +2124,7 @@ const SECS = {
       b.type = "button"; b.textContent = sec.dataset.title;
       b.title = "Показать / спрятать раздел «" + sec.dataset.title + "»";
       if (ZZ_EMB) { const t = sec.dataset.title, sp = t.indexOf(" "); if (sp > 0) b.textContent = t.slice(0, sp); }   // v0.046: в ромбе — значок
-      b.onclick = () => { sec.classList.toggle("off"); this.sync(); };
+      b.onclick = () => { sec.classList.toggle("off"); if (!sec.classList.contains("off")) { this.free([sec]); this.save(); } this.sync(); };   // v0.070: показанный — на свободное место
       sec._tabBtn = b; bar.insertBefore(b, tail);
       this.addHead(sec);
     });
@@ -2140,8 +2140,8 @@ const SECS = {
     document.addEventListener("pointercancel", () => this.end());
     window.addEventListener("blur", () => this.end());
     document.documentElement.addEventListener("pointerleave", (e) => { if (this.drag && !e.buttons) this.end(); });
-    window.addEventListener("resize", () => this.all().filter(f => f.classList.contains("floating"))
-      .forEach(f => this.clamp(f, parseFloat(f.style.left) || 0, parseFloat(f.style.top) || 0)));
+    window.addEventListener("resize", () => { this.all().filter(f => f.classList.contains("floating"))
+      .forEach(f => this.clamp(f, parseFloat(f.style.left) || 0, parseFloat(f.style.top) || 0)); this.freeAll(); });   // v0.070: и развести
     const onMode = () => this.applyMode();
     if (this.narrow.addEventListener) this.narrow.addEventListener("change", onMode); else this.narrow.addListener(onMode);
     this.applyMode();
@@ -2244,6 +2244,36 @@ const SECS = {
     f.style.left = Math.round(Math.min(innerWidth - KEEP, Math.max(KEEP - w, x))) + "px";
     f.style.top = Math.round(Math.min(innerHeight - 24, Math.max(0, y))) + "px";
   },
+  /* v0.070, по снимку «Вращение» поверх «Картины» в окне Zazerkalius — «окна друг на друга не ставим»: плавающий раздел (вместе с едущими
+     следом, list) не ложится на другой плавающий. Встал на чужой — уходит на ближайшее свободное место: вплотную к соседям (справа, слева,
+     снизу, сверху) или по сетке через 12 px, в пределах окна. Свободного нет — остаётся, где был */
+  free(list){
+    list = list.filter(f => f.classList.contains("floating") && !f.classList.contains("off"));
+    if (!list.length) return;
+    const B = (r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom });
+    let u = null;
+    list.forEach(f => { const r = B(f.getBoundingClientRect()); u = u ? { l: Math.min(u.l, r.l), t: Math.min(u.t, r.t), r: Math.max(u.r, r.r), b: Math.max(u.b, r.b) } : r; });
+    const w = u.r - u.l, h = u.b - u.t;
+    const O = this.all().filter(o => !list.includes(o) && o.classList.contains("floating") && !o.classList.contains("off")).map(o => B(o.getBoundingClientRect()));
+    const hit = (x, y) => O.some(r => x < r.r - 1 && x + w > r.l + 1 && y < r.b - 1 && y + h > r.t + 1);
+    if (!hit(u.l, u.t)) return;
+    const mx = Math.max(0, innerWidth - w), my = Math.max(0, innerHeight - h);
+    const C = [];
+    O.forEach(r => { C.push([r.r, u.t], [r.l - w, u.t], [u.l, r.b], [u.l, r.t - h], [r.r, r.t], [r.l, r.b], [r.l - w, r.t], [r.l, r.t - h]); });
+    for (let y = 0; y <= my; y += 12) for (let x = 0; x <= mx; x += 12) C.push([x, y]);
+    let best = null, bd = Infinity;
+    C.forEach(([x, y]) => {
+      x = Math.max(0, Math.min(mx, x)); y = Math.max(0, Math.min(my, y));
+      if (hit(x, y)) return;
+      const d = (x - u.l) * (x - u.l) + (y - u.t) * (y - u.t);
+      if (d < bd) { bd = d; best = [x, y]; }
+    });
+    if (!best) return;
+    const dx = best[0] - u.l, dy = best[1] - u.t;
+    list.forEach(f => { f.style.left = Math.round((parseFloat(f.style.left) || 0) + dx) + "px"; f.style.top = Math.round((parseFloat(f.style.top) || 0) + dy) + "px"; });
+  },
+  /* все плавающие по очереди — каждый следующий обходит уже стоящих */
+  freeAll(){ this.all().filter(f => f.classList.contains("floating") && !f.classList.contains("off")).forEach(f => this.free([f])); },
   move(e){
     const d = this.drag; if (!d) return;
     if (!e.buttons) { this.end(); return; }   // v0.062: кнопку отпустили где-то вне страницы — не тащить дальше
@@ -2278,6 +2308,7 @@ const SECS = {
     d.sec.classList.remove("dragging"); document.body.classList.remove("tab-dragging");
     this.docks().forEach(p => p.classList.remove("drop-hover"));
     this.snapGlow(null);   // v0.046
+    if (d.sec.classList.contains("floating")) this.free([d.sec].concat((d.att || []).map(a => a.el)));   // v0.070: не на другой раздел
     this.save(); this.sync();
   },
   save(){
@@ -2315,7 +2346,7 @@ const SECS = {
       if (l && l.z === "float") { sec.classList.add("floating"); document.body.appendChild(sec); this.clamp(sec, l.x, l.y); }
     });
   },
-  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); if (ZZ_EMB) this.floatAll(); this.sync(); },
+  applyMode(){ if (this.narrow.matches) this.home(true); else this.restore(); if (ZZ_EMB) this.floatAll(); if (!this.narrow.matches) this.freeAll(); this.sync(); },   // v0.070: наложенные разводятся на экране; запись раскладки — только когда тронут
   /* v0.068, по снимкам окна «◆ Гранидус» — «окна закрепляются ещё справа, слева — два поля невидимых, убери их»: в окне Zazerkalius боковых
      панелей нет — все разделы плавающие. Лежавшие в панели (по умолчанию или в старой раскладке) встают плавающими столбиками: левой панели —
      от левого края вправо, правой — от правого края влево, сверху вниз, не влезает по высоте — следующий столбик. Потом записывается */
@@ -2338,7 +2369,7 @@ const SECS = {
     });
     stack(); this.save();
     // высоты разделов (картинки «Вида» и т. п.) окончательны только после отрисовки — столбики ещё раз, если их пока не трогали
-    setTimeout(() => { if (!this.drag) { stack(); this.save(); } }, 400);
+    setTimeout(() => { if (!this.drag) { stack(); this.freeAll(); this.save(); } }, 400);   // v0.070
   },
 };
 SECS.init();
