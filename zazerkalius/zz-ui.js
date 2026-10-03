@@ -9131,12 +9131,10 @@ function setupWin(el){
    :root, у каждой темы свой набор (см. стили); кнопка ставит data-theme на <html>. Пока ничего не
    выбрано, страница идёт за системой. Надпись — то, что включится по щелчку. */
 function themeIsLight(){
-  if (Z.theme) return Z.theme === "light";
-  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+  return Z.theme === "light";   // v0.614: по умолчанию — тёмная (прежде — как у системы)
 }
 function applyTheme(){
-  if (Z.theme) document.documentElement.setAttribute("data-theme", Z.theme);
-  else document.documentElement.removeAttribute("data-theme");
+  document.documentElement.setAttribute("data-theme", Z.theme === "light" ? "light" : "dark");   // v0.614: не выбрано — тёмная
   const b = $("bTheme");
   if (b) b.textContent = themeIsLight() ? "🌙 Тёмный" : "☀ Светлый";
   palApply();   // v0.182: у гаммы свои цвета для светлой и тёмной темы
