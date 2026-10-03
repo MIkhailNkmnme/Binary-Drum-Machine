@@ -944,6 +944,17 @@ function renderRows(){
   if (document.body.classList.contains("cutdrag")) return;
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
   if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
+  /* v0.625, «всегда при изменении строк — скроллить в середину видного поля по первой строке, первому биту»: сменилось число строк или их длины
+     (не биты — волна Аниматрицы прокрутку не дёргает) — по ширине первый бит первой строки встаёт в середину видимого поля */
+  { let mx = 0; for (const r of Z.rows) if (r.length > mx) mx = r.length;
+    const sig = Z.rows.length + ":" + ((Z.rows[0] || "").length) + ":" + mx + ":" + (Z.lane | 0);
+    if (renderRows._sig !== sig) { renderRows._sig = sig; requestAnimationFrame(rowsCenterBit0X); } }
+}
+function rowsCenterBit0X(){   // v0.625: как rowsCenterBit0, только по ширине
+  const L = document.getElementById("rowList"); if (!L) return;
+  const bx = L.querySelector(".rw[data-r] .bx"), b = bx && (bx.querySelector(".b0, .b1, i.q") || bx); if (!b) return;
+  const r = b.getBoundingClientRect(), lr = L.getBoundingClientRect(); if (!r.width && !r.height) return;
+  L.scrollLeft += (r.left + r.width / 2) - (lr.left + L.clientWidth / 2);
 }
 /* ─── Выделение символов мышью (v0.012) ─────────────────────────────────────────────────────
    Запрос пользователя: «выделение, удаление по Del, выделение посимвольно без лишних пробелов в фоне
