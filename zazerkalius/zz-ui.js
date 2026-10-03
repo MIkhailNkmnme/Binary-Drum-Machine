@@ -7290,7 +7290,11 @@ function cgrpInit(){
   if (!Array.isArray(Z.cgrpDock)) Z.cgrpDock = [];
   const box = $("paneGrp"), head = $("paneGrpHead");
   // v0.400: магнит левой панели — ловит и в 40 px правее её края (как полоса магнита у Октаэдра)
-  const paneHit = (x, y) => { const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right + 40 && y >= q.top && y <= q.bottom; };
+  /* v0.571, по снимку «Группы конуса» на левой панели — «группы конуса не надо в левую панель, чтоб попадали»: панель группы больше не ловит
+     (paneHit — всегда ложь, магнит и подсветка выключены); те, что уже стояли на панели, при загрузке возвращаются на полосу конуса,
+     прежний список — в Z.cgrpDockOld (на случай «верни») */
+  const PANE_DOCK = false;
+  const paneHit = (x, y) => { if (!PANE_DOCK) return false; const P = $("rowsPane"); if (!P || !box || document.body.classList.contains("pane-icons")) return false; const q = P.getBoundingClientRect(); return x >= q.left && x <= q.right + 40 && y >= q.top && y <= q.bottom; };
   const dockSync = () => {
     Z.cgrpDock = box ? [...box.children].map(c => c.dataset.g) : [];
     if (head) head.style.display = Z.cgrpDock.length ? "" : "none";
@@ -7320,7 +7324,8 @@ function cgrpInit(){
   window.paneWApply = paneWApply;
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { paneWApply(false); if (typeof lpKick === "function") lpKick(); });
   if (box) {
-    for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g) box.appendChild(g); }
+    if (PANE_DOCK) for (const k of Z.cgrpDock) { const g = groups.find(c => c.dataset.g === k); if (g) box.appendChild(g); }
+    else if (Z.cgrpDock.length) { Z.cgrpDockOld = Z.cgrpDock.slice(); [...box.children].forEach(g => undock(g)); }   // v0.571: с панели — на полосу
     dockSync();
     const edge = $("paneEdge");
     if (edge) {
