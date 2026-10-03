@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.596. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.597. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.596</title>
+<title>Zazerkalius — v0.597</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -160,7 +160,7 @@ body.pane-icons #rowsPane{overflow-y:auto;overflow-x:hidden}
 body.pane-icons #bPaneIcons{position:static;margin:6px 4px;font-size:13px}
 body.pane-icons #rowsPane .pane-head,body.pane-icons #maskBar,body.pane-icons #maskBar2 select,
 body.pane-icons #rowsPane #tplList .tpl-sep,body.pane-icons #rowsPane #tplList .tx,body.pane-icons #rowsPane #tplList input,body.pane-icons #tplMine .tref,body.pane-icons #tplMine .tx,body.pane-icons #tplMine .tsv{display:none}
-body.pane-icons #rowBtns,body.pane-icons #triBtns,body.pane-icons #fileBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:6px 4px;border-top:1px solid var(--line)}
+body.pane-icons #rowBtns,body.pane-icons #triBtns,body.pane-icons #fileBtns,body.pane-icons #saveBtns,body.pane-icons #maskBar2,body.pane-icons #rowsPane #tplBar,body.pane-icons #rowsPane #tplList{display:flex;flex-direction:column;gap:4px;padding:3px 4px;border-top:1px solid var(--line)}   /* v0.597, «тут отступы поправь»: в столбике значков — от черты раздела до кнопок по 3 px, как между кнопками */
 body.pane-icons #rowsPane #tplList{flex:0 0 auto;overflow:visible;min-height:0}
 body.pane-icons #rowsPane #tplList .tpl{display:block}
 body.pane-icons #rowsPane button{width:100%;padding:4px 0;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden}
@@ -606,7 +606,7 @@ body:not(.pane-icons) #rowsPane button:not(#bPaneIcons):not(#paneGrp *):not(.lpb
 #paneWinsBox .pwArr.on{display:flex}
 #paneWinsBox .pwArr:hover{color:var(--gold);text-shadow:0 0 6px var(--gold),0 0 14px var(--gold)}
 @keyframes pwGlow{from{opacity:.5}to{opacity:1}}
-body.pane-icons #paneWins{padding:4px}
+body.pane-icons #paneWins{padding:3px 4px}
 /* v0.094, «верхняя граница поля конуса — до конца, заголовок — внутрь поля»: холст конуса — на всё окно, от верхнего края;
    шапка, кнопки и текст — поверх него, полупрозрачно */
 #w-cone .wbody{position:static;padding:0}
@@ -1114,7 +1114,7 @@ body.pane-icons #rowsPane #bPaneIcons#bPaneIcons::before{clip-path:polygon(2.6px
 #rowsPane #bPaneIcons#bPaneIcons:hover{background:var(--acc)}
 #rowsPane #bPaneIcons#bPaneIcons:hover::before{background:color-mix(in srgb, var(--acc) 30%, var(--panel))}
 #rowsPane #bPaneIcons#bPaneIcons{flex:0 0 auto !important;min-height:24px !important;height:24px !important}   /* v0.517, «при скрытии невозможно потом развернуть левое меню»: в колонке панели значками пустая кнопка сжималась в 0 */
-body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{width:20.78px;margin:6px auto;clip-path:polygon(0 0,13.86px 0,100% 50%,13.86px 100%,0 100%,6.93px 50%)}
+body.pane-icons #rowsPane #bPaneIcons#bPaneIcons{width:20.78px;margin:4px auto;clip-path:polygon(0 0,13.86px 0,100% 50%,13.86px 100%,0 100%,6.93px 50%)}
 /* v0.527, по снимку ◂ рядом с «Страница целиком» — «высота стрелки не как у кнопки: у кнопки обводка съедает высоту, у стрелки так же надо»: светлая
    обводка стрелки торчала по самому краю, и стрелка казалась выше заголовка. Теперь край стрелки — тёмный, как у заголовка (та же заливка, те же 24 px),
    а светлая обводка — внутри, на 1,5 px от края (::before — обводка, ::after — сердцевина на 3 px от края) */
@@ -1560,7 +1560,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.596</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.597</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2516,8 +2516,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0596"></script>
-<script src="zz-ui.js?v=0596"></script>
+<script src="zz-core.js?v=0597"></script>
+<script src="zz-ui.js?v=0597"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
