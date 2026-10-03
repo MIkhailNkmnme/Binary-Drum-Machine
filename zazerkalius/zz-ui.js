@@ -8207,22 +8207,21 @@ function lpTag(){
    (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
    месте, пока панель листается; за линией — фон страницы. Цвета — из темы (--line, фон body), рисунок пересобирается, когда они сменились */
 function paneZig(){
-  /* v0.635, по снимку «Оформления» — «отступ сверху для меню, чтобы вклинились зубцы»: зубцы шли сеткой по 24 px от верха панели, а ряды — со своими
-     отступами (заголовок с 4 px, между разделами 4 + 1 + 4), и острия рядов попадали мимо выемок. Теперь зубец — у каждого ряда панели: остриё на
-     середине ряда, между рядами — прямая черта. Рисунок — во всю высоту листаемого содержимого и листается вместе с рядами */
+  /* v0.636, «нет, граница пусть стоит, просто подвинь её так, чтобы кнопки эти (вкладки групп конуса — Лазер, Кручение…) в неё вписались, а кнопки левого
+     меню — пускай не всегда»: зубцы — снова ровной сеткой по 24 px (как в v0.634, зубцы по рядам панели из v0.635 сняты) и стоят на месте, но сетка
+     сдвинута по высоте так, что остриё приходится на середину полосы вкладок #cgTabs. Сдвиг пересчитывается, когда вкладки могли уехать: листание стола,
+     смена размера окна, отпустил мышь (перетащил окно) */
   const pane = document.getElementById("rowsPane"); if (!pane) return;
+  if (!paneZig._on) { paneZig._on = 1; const k = () => requestAnimationFrame(paneZig), d = document.getElementById("desk");
+    if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => setTimeout(paneZig, 60)); }
   const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d", bg = getComputedStyle(document.body).backgroundColor;
-  const pr = pane.getBoundingClientRect(), y0 = pane.scrollTop - pr.top, H = Math.max(pane.scrollHeight, pane.clientHeight), rows = new Map();
-  pane.querySelectorAll(".tz, .lph").forEach(e => { if (!e.getClientRects().length || e.closest("#paneGrp")) return; const r = e.getBoundingClientRect(); if (r.height < 12) return;
-    const a = Math.round(r.top + y0), b = Math.round(r.bottom + y0); if (!rows.has(a) || rows.get(a) < b) rows.set(a, b); });
-  const ys = [...rows.entries()].sort((p, q) => p[0] - q[0]), key = ln + "|" + bg + "|" + H + "|" + ys.join(";");
-  if (pane._zk === key) return; pane._zk = key;
-  const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, xn = 0.5, xt = t + 0.5, pts = [[xn, 0]];
-  let last = 0; ys.forEach(([a, b]) => { if (a < last) return; pts.push([xn, a], [xt, (a + b) / 2], [xn, b]); last = b; });
-  pts.push([xn, H]);
-  const zz = pts.map(([x, y]) => x.toFixed(2) + "," + y.toFixed(1)).join(" ");
+  const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
+  let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
+  pane.style.setProperty("--pzigy", dy.toFixed(1) + "px");
+  const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
+  const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
-  pane.style.setProperty("--pzig", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); pane.style.setProperty("--pzigw", w.toFixed(2) + "px"); pane.style.setProperty("--pzigh", H + "px");
+  pane.style.setProperty("--pzig", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); pane.style.setProperty("--pzigw", w.toFixed(2) + "px");
 }
 /* v0.521, «сделай меню верхнее в стиле треугольников также»: кнопки шапки — из тех же треугольников; кнопки, стоящие рядом, — одна цепочка
    (как ряд левой панели: по краям острия, на стыке выемка к выемке — ромбик фона). Длина — по надписи. Обводка — цветом прежней рамки кнопки
@@ -8345,11 +8344,14 @@ function tzJustify(g){
   /* v0.499, по снимку «Кручения» — «наладь тут размеры»: внутри блока, стоящего одной строкой (шаг: ◀ ползунок ▶|), — тянуть можно; блок в несколько
      строк (режимы, когда не влезли в одну) — нет. Значки (◀ ▶| ⟲ ⟳) тянутся, только если больше в ряду тянуть нечего */
   function inRow(w){ return w && w.parentElement === cgb && w.tagName === "SPAN" && w.getBoundingClientRect().height < 30; }
-  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), k = Math.floor((maxR - x) / (2 * t) + 0.02);
+  rows.forEach(a => { const x = Math.max(...a.map(q => q[1])), room = maxR - x - 0.3, k = Math.max(0, Math.floor(room / (2 * t) + 0.02));
     let c = a.filter(q => canGrow(q[0])).sort((p, q) => q[1] - p[1]).map(q => q[0]);
     if (c.some(e => !e.classList.contains("ib"))) c = c.filter(e => !e.classList.contains("ib"));
-    if (k <= 0 || !c.length) return;
+    if (room <= 0.3 || !c.length) return;
     for (let i = 0; i < k; i++) c[i % c.length]._tzx = (c[i % c.length]._tzx || 0) + 1;   // v0.493: недостающее — поровну, по стороне на кнопку по кругу (справа налево)
+    /* v0.636, по снимку «Кручения» — «границы обводки»: остаток меньше стороны не добирался, и острия коротких рядов не доходили до рамки на 5–13 px —
+       справа стояли две ломаные. Остаток — дробной долей крайней кнопке ряда (как в левой панели), ряд кончается у рамки */
+    { const fr = (room - k * 2 * t) / (2 * t); if (fr > 0.01) c[0]._tzx = (c[0]._tzx || 0) + fr; }
     c.forEach(e => { if (e._tzx) { e._tzn = e._tzn0 + e._tzx; tzGeo(e); } }); });
   /* v0.534, по двум снимкам «Кручения» — «прыгают кнопки при Аниматрице включённой»: у группы с заданным размером ширина под конец подрезалась до самого
      длинного ряда (383 вместо 390), а следующий пересчёт (их зовут и перемены надписей, и Аниматрица) раскладывал ряды уже от другой ширины —
@@ -8370,7 +8372,7 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
   /* v0.634, по снимку «Кручения» — «поправь границы»: под кнопками там ещё строка «вариантов цикла» (#coneVarN, не из треугольников), а ромб-ручка
      вставал над ней — на третьем ряду, поверх рамки. Нижний ряд — и такая строка: ромб — в её правом острие, в углу группы */
-  g.querySelectorAll(":scope > #coneVarN").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) { bot = r.top; maxR = gr.right; } });
+  g.querySelectorAll(":scope > #coneVarN").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) bot = r.top; });   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
   const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
