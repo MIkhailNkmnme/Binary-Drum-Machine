@@ -864,6 +864,12 @@ function coneBitAt(e){
   if (CG.cut) { const P = 2 * n - 1, x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P; return x < n ? { i: h.i, j: Math.floor(x) } : null; }   // v0.667: в дыре выреза бита нет
   return { i: h.i, j: ((Math.floor(u / step + coneRotOf(h.i)) % n) + n) % n };
 }
+/* v0.692, по снимку — «почему сканер при наводке на 1 синий тут не делает ничего» (одна строка «1», под мышью ячейка кольца за чертой): наведение на кольцо
+   за чертой битом не считалось. При ⌖ сканере его ячейка — тоже «бит под мышью» ({ i: N, j, fill }): золотая рамка и ось сканера; Shift + щелчок её не трогает */
+function coneFillHoverAt(e){
+  if (!Z.coneScan || Z.cone3d || !coneGeom) return null;
+  const h = coneRing(e); return h !== -1 && h.fill !== undefined ? { i: Math.min(Z.rows.length, CONE_MAX), j: h.fill, fill: true } : null;
+}
 function rowBitMark(){
   if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
   CSS.highlights.delete("conebit");
@@ -2133,6 +2139,11 @@ function renderCone(){
     g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
     g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
     if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });   // v0.676
+  } else if (coneBitHover && coneBitHover.fill && coneBitHover.i === N && fillOn && Z.coneScan) {   // v0.692: ячейка кольца за чертой — тоже со сканером
+    const j = coneBitHover.j, n = fillLen(), F = clockRays ? coneFillCut() : null, step = F ? F.step : 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneFillRot() + (F ? F.off : 0)) * step;
+    const rin = r0 + N * dr, rout = rin + Math.max(1, dr * band);
+    g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
+    coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });
   }
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
@@ -2419,7 +2430,7 @@ function coneSunUi(){
   const sun = coneSunOn(), zero = sun && coneSunCut() === "zero";
   const set = (id, off) => { const el = document.getElementById(id); if (!el) return; el.disabled = off; const lb = el.closest("label"); if (lb) lb.classList.toggle("dis", off); };
   CONE_SUN_OFF.forEach(id => set(id, sun));
-  set("coneSlit", zero); set("coneVoid", zero); set("coneSunCut", !sun);
+  set("coneSlit", zero); set("coneVoid", zero && !coneCutOn());   // v0.692: в вырезах T−1 «до 256» не блокируется set("coneSunCut", !sun);
   { const lb = document.getElementById("coneClock"); if (lb && lb.closest("label")) lb.closest("label").classList.toggle("sunmode", sun); }   // v0.208: либо лазер, либо солнце — горит одно
 }
 let coneSunWas;   // ячейки, освещённые на прошлом шаге; undefined — ещё не смотрели (тогда красим только нетронутые)
@@ -2520,7 +2531,9 @@ function coneAimStep(d){   // v0.139: ⌖▷ / ⌖◁ — крутить стр�
    засчитывается один раз (пока щели держатся вместе — это один проход); каждый проход прибавляет ячейке единицу: 1, 11, 111…
    Счёт — Z.voidHits: { sig, h: { "кольцо:ячейка": сколько } }; сменилось число строк или длина нижней — счёт начинается заново. */
 const CONE_VOID_TO = 256;
-function coneVoidOn(){ return Z.coneVoid !== false && !!Z.coneClock && !coneNoGap(); }   // v0.216: «Без щелей» — свет ловит строка для заполнения, пустые кольца не нужны   // только при луч-часах — без луча они лишь сжимали бы кольца строк
+/* v0.692, по снимку «▦ до 256» — «не могу нажать при режиме T−1»: галку гасило «Без щелей» солнца (там пустые кольца не нужны), но в вырезах проход задают
+   вырезы, и пустые кольца — тоже с вырезами (v0.684). В T−1 «до 256» работает при любом выборе солнца */
+function coneVoidOn(){ return Z.coneVoid !== false && !!Z.coneClock && (!coneNoGap() || coneCutOn()); }   // v0.216: «Без щелей» — свет ловит строка для заполнения, пустые кольца не нужны   // только при луч-часах — без луча они лишь сжимали бы кольца строк
 // сколько колец всего в плоском конусе: строки + кольцо для заполнения (+ пустые до 256)
 function coneRingsTotal(N){ return coneVoidOn() ? Math.max(N + 1, CONE_VOID_TO) : N + 1; }
 function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) + (j - N + 1); }   // кольцо j ≥ N: на ячейку длиннее предыдущего
@@ -3427,8 +3440,8 @@ function setupCone(){
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick ? -1 : h.i;   // v0.281: 🚫 выбор — и без обводки при наведении
-      const b = coneBitAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
-      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · Ctrl + тянуть — крутить кольцо` : ""; }
+      const b = coneBitAt(e) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · Ctrl + тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
@@ -3937,7 +3950,7 @@ function setupCone(){
   slitsUi();
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
     const m = coneSlitMode(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null;
-    const kc = coneCutHome(); save(); renderRows(); renderCone();   // v0.674: вход в T−1 — кольца симметрично вертикали
+    const kc = coneCutHome(); save(); renderRows(); renderCone(); coneSunUi();   // v0.674: вход в T−1 — кольца симметрично вертикали; v0.692: и доступность «до 256»
     say({ one: "1 щель: выход из кольца — только граница между последним и первым битом строки.",
           cut: "Вырезы T−1: кольца симметрично вертикали — у чётных строк сверху середина бит, у нечётных — середина выреза; строка 1 без затвора, луч идёт мимо." + (kc ? ` Накрутка снята у колец: ${kc}.` : ""),
           all: "Все щели: луч проходит кольцо на любой границе бит (как было)." }[coneSlitMode()]);
@@ -9138,6 +9151,24 @@ function tzcApply(g){
       its.push({ w: tzcKey(el, cgb), el, cells, r0, r1: r0 + 1, c0: c, c1, dr: 0, dc: 0, sh: 0 });
       c = c1 + 1;
     } }
+  /* v0.692, по снимку «Вида» — «ВИД)) к мин)неп)неп))одинак) и т. д. — направление стрелок вправо всё время»: каждая кнопка рисунка из двух рядов треугольников
+     и сплошных столбцов — стрелкой вправо: слева выемка (первый столбец нечётный), справа остриё (последний чётный), соседние — остриё в выемку вплотную.
+     Кнопка в рисунке другой формы (остриём влево, шестигранник) — перестраивается: край на столбец шире в нужную сторону, правее стоящие в той же строке
+     сдвигаются. Сам рисунок не меняется */
+  { const byL = {}; its.forEach(it => { (byL[Math.floor(it.r0 / 2)] = byL[Math.floor(it.r0 / 2)] || []).push(it); });
+    for (const L of Object.keys(byL)) {
+      let shift = 0, prev = -1e9;
+      for (const it of byL[L].sort((x, y) => x.c0 - y.c0)) {
+        const rows = [...new Set(it.cells.map(([r]) => r))], w0 = it.c1 - it.c0 + 1;
+        const rect = it.r1 - it.r0 === 1 && it.r0 % 2 === 0 && it.cells.length === 2 * w0;   // два ряда строки, сплошь
+        let a = it.c0 + shift; if (!rect) { it.cells = it.cells.map(([r, c]) => [r, c + shift]); it.c0 += shift; it.c1 += shift; it.sh += shift; prev = Math.max(prev, it.c1); continue; }
+        if (prev > -1e9) a = prev + 1;   // вплотную к соседу слева — остриё в выемку, без щелей
+        if (a % 2 === 0) a = a - 1 > prev ? a - 1 : a + 1;   // слева — выемка
+        const w = w0 + (w0 % 2), b = a + w - 1;   // справа — остриё (столбцов чётное число)
+        it.cells = []; for (const r of rows) for (let c = a; c <= b; c++) it.cells.push([r, c]);
+        it.sh += a - it.c0; shift = b - it.c1; it.c0 = a; it.c1 = b; prev = b;
+      }
+    } }
   /* v0.531, по снимку «Вида» — «поправь расположение и ширину ползунка, один слишком маленький»: ползунок, нарисованный уже своей стандартной
      ширины (12 сторон), показывается стандартным — дорисовываются столбцы справа (на чётное число t, края не меняются), а что стоит правее в тех же
      рядах рисунка, сдвигается на столько же (сам рисунок не трогается) */
@@ -9191,7 +9222,7 @@ function tzcApply(g){
           else { if (!first) out++; dc = cst(U.c0); cur = 0; }   // (не влезла за заголовок — строкой ниже)
         } else if (U.c1 + 2 + dc > ac) { out++; dc = cst(U.c0); cur = 0; }
         U.m.forEach(it => { it.dc = dc; it.dr = 2 * (out - L); });
-        cur = Math.max(cur, U.c1 + 2 + dc); first = false;
+        cur = Math.max(cur, U.c1 + 1 + dc); first = false;   // v0.692: следующая — со столбца сразу за остриём (было + 2 — щель в ромбик)
       });
     }
   }
