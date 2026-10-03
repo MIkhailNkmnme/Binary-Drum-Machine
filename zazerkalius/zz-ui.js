@@ -5211,12 +5211,20 @@ function setupPyr(){
   let aniRaf = 0, aniT = 0;
   const aniTick = (ts) => {
     if (!aniRaf) return;
-    if (!aniT || ts - aniT >= 1000 / 6) { aniT = ts; pyrAnimPass(pyrBuild()); pyrDrawKey = ""; renderPyr(true); }
+    if (!aniT || ts - aniT >= 1000 / 6) { aniT = ts; pyrAnimPass(pyrBuild()); pyrDrawKey = ""; renderPyr(true); aniUi(); }
     aniRaf = requestAnimationFrame(aniTick);
   };
+  /* v0.628, «по проходам за шаг есть?» → «да, и в автоплей по проходам тоже»: ▷| — один проход волны по всем этажам; на обеих кнопках — номер прохода
+     (автоплей идёт целыми проходами, по 6 в секунду; номер — сколько их прошло от исходной пирамиды) */
+  const aniUi = () => { const n = (pyrData && pyrData.animN) | 0; $("bPyrAnim").textContent = aniRaf ? `⏸ проход ${n}` : "🌊 аниматрица"; $("bPyrStep").textContent = n ? `▷| ${n}` : "▷| проход"; };
+  $("bPyrStep").onclick = () => {
+    if (aniRaf) { cancelAnimationFrame(aniRaf); aniRaf = 0; $("bPyrAnim").classList.remove("on"); }
+    pyrAnimPass(pyrBuild()); pyrDrawKey = ""; renderPyr(true); aniUi();
+    say(`▷| Проход ${pyrData.animN} волны по этажам (${(Z.animOp || "xor").toUpperCase()}). Вернуть исходную пирамиду — сменить «этажей» или затравку.`);
+  };
   $("bPyrAnim").onclick = () => {
-    if (aniRaf) { cancelAnimationFrame(aniRaf); aniRaf = 0; $("bPyrAnim").classList.remove("on"); say(`🌊 Аниматрица пирамиды — стоп (проходов ${(pyrData && pyrData.animN) | 0}). Вернуть пирамиду как была — смени «этажей» или затравку.`); return; }
-    aniT = 0; aniRaf = requestAnimationFrame(aniTick); $("bPyrAnim").classList.add("on");
+    if (aniRaf) { cancelAnimationFrame(aniRaf); aniRaf = 0; $("bPyrAnim").classList.remove("on"); aniUi(); say(`🌊 Аниматрица пирамиды — стоп (проходов ${(pyrData && pyrData.animN) | 0}). Вернуть пирамиду как была — смени «этажей» или затравку.`); return; }
+    aniT = 0; aniRaf = requestAnimationFrame(aniTick); $("bPyrAnim").classList.add("on"); aniUi();
     say(`🌊 Аниматрица по этажам пирамиды: операция ${(Z.animOp || "xor").toUpperCase()} (как в «Аниматрице»), 6 проходов в секунду. Ещё раз — стоп.`);
   };
   $("bPyrOut").onclick = () => {
