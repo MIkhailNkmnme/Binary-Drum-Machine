@@ -4376,13 +4376,35 @@ function setupCone(){
      отдаётся только с «Весь экран» и галкой «Поделиться системным звуком», у вкладки — «звук вкладки». Картинка захвата в
      файл не идёт — только его звук. Захват закрыли кнопкой браузера — запись останавливается и сохраняется. */
   let rec = null, recT = 0, recBusy = false;
+  /* v0.637, «поставь под меню, где стоит Дзен, и пусть они работают на любое открытое окно»: ⏺ / mp4 / ▣ пишут не только конус, а верхнее из
+     открытых окон с холстом (то, что поднято последним: из шапки — нажатое), — ◯ Конус, ◆ Гранидус (его холст в рамке), ✦ Развёртку, △ Сетку,
+     ▲ Паскаля, 🧊 Вид… Окно берётся в миг старта и пишется до стопа. 🎞 и ↻1 крутят конус — они, как прежде, только для конуса */
+  let recSrc = null;
+  const REC_CV = { "w-cone": "coneCv", "w-view": "viewCv", "w-razv": "razvCv", "w-tri": "triCv", "w-pyr": "pyrCv" };
+  const REC_NM = { "w-cone": "konus", "w-okt": "granidus", "w-razv": "razvertka", "w-tri": "setka", "w-pyr": "piramida", "w-view": "vid", "w-struct": "struktura" };
+  const recBig = (list) => list.filter(c => c.width > 40 && c.height > 40 && !c.hasAttribute("data-no-rec") && c.getClientRects().length).sort((a, b) => b.width * b.height - a.width * a.height)[0] || null;
+  const recPick = () => {
+    let best = null, bz = -1;
+    document.querySelectorAll(".win").forEach(w => {
+      if (w.dataset.parked || w.classList.contains("collapsed") || w.classList.contains("popped") || !w.getClientRects().length || getComputedStyle(w).display === "none") return;
+      let cv = REC_CV[w.id] ? $(REC_CV[w.id]) : null;
+      if (cv && !cv.getClientRects().length) cv = null;
+      if (!cv) { const fr = w.querySelector("iframe"); try { const d = fr && fr.contentDocument; if (d) cv = recBig([...d.querySelectorAll("canvas")]); } catch (e) { cv = null; } }
+      if (!cv) cv = recBig([...w.querySelectorAll("canvas")]);
+      if (!cv) return;
+      const z = parseInt(w.style.zIndex, 10) || 0; if (z > bz) { bz = z; best = { w, cv }; }
+    });
+    return best || { w: $("w-cone"), cv: $("coneCv") };
+  };
+  const recCur = () => (rec && recSrc) ? recSrc : (typeof turnOn !== "undefined" && turnOn) ? { w: $("w-cone"), cv: $("coneCv") } : recPick();
+  const recName = (t) => (t && t.w && (t.w.dataset.title || t.w.id)) || "◯ Конус";
   let recPause = 0, recPausedAt = 0, frameOn = false;   // v0.256: сколько мс стояли на паузе, с какого мига пауза; ▣ кадр включён
   const recUi = () => {
     const b = $("bConeRec");
     b.classList.toggle("snd", !!Z.coneRecSnd);
-    if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись холста конуса (только сам конус, без кнопок) в файл .webm. Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»";   // v0.610: подсказки сверены
+    if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись открытого окна — верхнего из открытых (только его картинка, без кнопок) в файл .webm: ◯ Конус, ◆ Гранидус, ✦ Развёртка, △ Сетка, ▲ Паскаль… Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл";   // v0.637: любое окно
     const m = $("bConeRecMp4");   // v0.250
-    if (m) { m.classList.toggle("snd", !!Z.coneRecSnd); if (!rec) m.title = (Z.coneRecSnd ? "⏺♪ mp4 со звуком ПК" : "⏺ mp4") + ": запись холста конуса в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Наведи — рамка кадра. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл"; }
+    if (m) { m.classList.toggle("snd", !!Z.coneRecSnd); if (!rec) m.title = (Z.coneRecSnd ? "⏺♪ mp4 со звуком ПК" : "⏺ mp4") + ": запись открытого окна (верхнего из открытых) в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Наведи — рамка кадра. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл"; }
   };
   recUi();
   /* v0.236, «рамкой показать размер видео при записи конуса и расположить его изначально посередине»: пока идёт запись (и пока
@@ -4405,7 +4427,7 @@ function setupCone(){
   const recBg = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\(\s*0,\s*0,\s*0,\s*0\s*\)|transparent/.test(c)) return c; } return "#000"; };
   let recCv = null;
   const recDraw = (F) => {
-    const cv = $("coneCv"); if (!recCv) recCv = document.createElement("canvas");
+    const cv = (rec && recSrc) ? recSrc.cv : $("coneCv"); if (!recCv) recCv = document.createElement("canvas");   // v0.637: живая запись — своё окно, 🎞 / ↻1 — конус
     if (recCv.width !== F.W) recCv.width = F.W; if (recCv.height !== F.H) recCv.height = F.H;
     const g = recCv.getContext("2d"), R = recRect(cv, F), s = F.W / R.w;
     g.fillStyle = recBg(cv); g.fillRect(0, 0, F.W, F.H);
@@ -4413,26 +4435,31 @@ function setupCone(){
     return recCv;
   };
   const recFrame = (on) => {
-    const cv = $("coneCv"); let f = $("coneRecFrame");
+    let f = $("coneRecFrame");
     if (!on) { if (f) f.style.display = "none"; return; }
-    if (!f) { f = document.createElement("div"); f.id = "coneRecFrame"; f.appendChild(document.createElement("span")); cv.parentNode.appendChild(f); }
-    const F = recFmt(), R = recRect(cv, F), k = cv.offsetWidth / (cv.width || 1);   // v0.393: рамка — область кадра, видимая часть холста
+    const T = recCur(), cv = T.cv;
+    if (!f) { f = document.createElement("div"); f.id = "coneRecFrame"; f.appendChild(document.createElement("span")); }
+    if (f.parentNode !== document.body) document.body.appendChild(f);   // v0.637: рамка — поверх любого окна (fixed), и холста в рамке Гранидуса тоже
+    let cr = cv.getBoundingClientRect(), ox = 0, oy = 0;
+    if (cv.ownerDocument !== document) { const fr = [...document.querySelectorAll("iframe")].find(x => { try { return x.contentDocument === cv.ownerDocument; } catch (e) { return false; } }); if (fr) { const q = fr.getBoundingClientRect(); ox = q.left + fr.clientLeft; oy = q.top + fr.clientTop; } }
+    const F = recFmt(), R = recRect(cv, F), k = cr.width / (cv.width || 1);   // v0.393: рамка — область кадра, видимая часть холста
     const x0 = Math.max(0, R.x) * k, y0 = Math.max(0, R.y) * k, x1 = Math.min(cv.width, R.x + R.w) * k, y1 = Math.min(cv.height, R.y + R.h) * k;
-    f.style.cssText = `display:block;left:${cv.offsetLeft + x0}px;top:${cv.offsetTop + y0}px;width:${x1 - x0}px;height:${y1 - y0}px`;
+    f.style.cssText = `display:block;left:${ox + cr.left + x0}px;top:${oy + cr.top + y0}px;width:${x1 - x0}px;height:${y1 - y0}px`;
     f.classList.toggle("paused", !!recPausedAt); f.classList.toggle("preview", !rec);   // v0.256: пауза — жёлтая, без записи (▣ кадр) — бледная
-    f.firstChild.textContent = `${F.W}×${F.H} ${F.mob ? "📱" : "🖥"}` + (recPausedAt ? " · ⏸ пауза" : "");
+    f.firstChild.textContent = `${recName(T)} · ${F.W}×${F.H} ${F.mob ? "📱" : "🖥"}` + (recPausedAt ? " · ⏸ пауза" : "");
   };
   if (window.ResizeObserver) new ResizeObserver(() => { if (rec || frameOn) recFrame(true); }).observe($("coneCv"));   // v0.256: и в дзене, и при смене размера окна
+  setInterval(() => { if (frameOn && !rec) recFrame(true); }, 700);   // v0.637: ▣ — за тем окном, что сейчас сверху (окна поднимают, двигают, разворачивают)
   /* v0.256, «видео — когда запись, на паузу можно?» → «да»: ⏸ (видна, пока идёт запись) — запись встаёт, конус можно крутить и
      настраивать, в файл это не идёт; ещё раз — дальше в тот же файл. Рамка кадра на паузе — жёлтая. */
   const pauseUi = () => {
     const p = $("bConeRecPause"); if (!p) return;
     p.classList.toggle("on", !!recPausedAt); p.textContent = recPausedAt ? "▶" : "⏸";
-    p.title = recPausedAt ? "▶ Дальше — запись продолжается в тот же файл" : "⏸ Пауза записи: конус можно крутить и настраивать — в файл это не пойдёт; ещё раз — дальше";
+    p.title = recPausedAt ? "▶ Дальше — запись продолжается в тот же файл" : "⏸ Пауза записи: окно можно настраивать — в файл это не пойдёт; ещё раз — дальше";
   };
   $("bConeRecPause").onclick = () => {
     if (!rec) return;
-    if (rec.state === "recording") { rec.pause(); recPausedAt = Date.now(); say("⏸ Запись на паузе — крути и настраивай, в файл не идёт. ▶ — дальше."); }
+    if (rec.state === "recording") { rec.pause(); recPausedAt = Date.now(); say("⏸ Запись на паузе — настраивай, в файл не идёт. ▶ — дальше."); }
     else if (rec.state === "paused") { rec.resume(); recPause += Date.now() - recPausedAt; recPausedAt = 0; say("▶ Запись идёт дальше — в тот же файл."); }
     pauseUi(); recFrame(true);
   };
@@ -4440,9 +4467,9 @@ function setupCone(){
      сдвиг сброшен, масштаб тот же) и рамка кадра на холсте, пока не нажмёшь ещё раз. В файл рамка не идёт. */
   $("bConeFrame").onclick = () => {
     frameOn = !frameOn; $("bConeFrame").classList.toggle("on", frameOn);
-    if (frameOn) { conePan = [0, 0]; renderCone(); }
+    const T = recCur(); if (frameOn && T.w && T.w.id === "w-cone") { conePan = [0, 0]; renderCone(); }
     recFrame(frameOn || !!rec);
-    say(frameOn ? "▣ Кадр видео: конус — в середине, рамка — то, что попадёт в файл (размер — вверху рамки). Ещё раз ▣ — убрать рамку." : "▣ Рамка кадра убрана.");
+    say(frameOn ? `▣ Кадр видео — «${recName(T)}»: рамка — то, что попадёт в файл (окно и размер — вверху рамки)${T.w && T.w.id === "w-cone" ? ", конус — в середине" : ""}. Ещё раз ▣ — убрать рамку.` : "▣ Рамка кадра убрана.");
   };
   $("bConeRec").onmouseenter = $("bConeRecMp4").onmouseenter = () => recFrame(true);
   $("bConeRec").onmouseleave = $("bConeRecMp4").onmouseleave = () => { if (!rec && !frameOn) recFrame(false); };
@@ -4450,15 +4477,16 @@ function setupCone(){
     e.preventDefault();
     if (rec || recBusy) return;
     Z.coneRecSnd = !Z.coneRecSnd; save(); recUi();
-    say(Z.coneRecSnd ? "⏺♪ Запись конуса — со звуком ПК. При старте браузер спросит, откуда звук: «Весь экран» + галка «Поделиться системным звуком»." : "⏺ Запись конуса — без звука.");
+    say(Z.coneRecSnd ? "⏺♪ Запись окна — со звуком ПК. При старте браузер спросит, откуда звук: «Весь экран» + галка «Поделиться системным звуком»." : "⏺ Запись окна — без звука.");
   };
   /* v0.250, «что с кнопкой видео? mp4 пишет?» → «добавь кнопку туда рядом с имеющейся»: ⏺ пишет .webm, рядом — «mp4» пишет .mp4 (H.264,
      со звуком — AAC): его открывает любой плеер и телефон без перекодировки. Идёт запись любой из двух — щелчок по любой её останавливает. */
   const recGo = async (fmt) => {
-    const mp4 = fmt === "mp4", b = $(mp4 ? "bConeRecMp4" : "bConeRec"), cvx = $("coneCv");
+    const mp4 = fmt === "mp4", b = $(mp4 ? "bConeRecMp4" : "bConeRec");
     if (rec) { rec.stop(); return; }
     if (recBusy) return;
-    if (!cvx.captureStream || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать холст."); return; }
+    if (!HTMLCanvasElement.prototype.captureStream || typeof MediaRecorder === "undefined") { say("⏺ Этот браузер не умеет записывать холст."); return; }
+    const src = recPick(), isCone = src.w && src.w.id === "w-cone", nm = REC_NM[src.w && src.w.id] || "okno";   // v0.637: окно — в миг старта
     let cap = null, at = null;
     if (Z.coneRecSnd) {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { say("⏺♪ Этот браузер не умеет брать звук ПК."); return; }
@@ -4484,7 +4512,9 @@ function setupCone(){
       : at ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     const mime = want.find(m => MediaRecorder.isTypeSupported(m)) || "";
     if (mp4 && !mime) { if (cap) cap.getTracks().forEach(t => t.stop()); say("⏺ Этот браузер не пишет mp4 — жми ⏺ (webm). В Chrome и Edge mp4 есть с весны 2024."); return; }
-    const F = recFmt(); recDraw(F);   // v0.393: пишется кадр формата устройства, собранный из холста
+    recSrc = src;
+    const F = recFmt(); rec = null; recCv = recCv || document.createElement("canvas");
+    { const cv = src.cv, R = recRect(cv, F), s2 = F.W / R.w; if (recCv.width !== F.W) recCv.width = F.W; if (recCv.height !== F.H) recCv.height = F.H; const g = recCv.getContext("2d"); g.fillStyle = recBg(cv); g.fillRect(0, 0, F.W, F.H); g.drawImage(cv, -R.x * s2, -R.y * s2, cv.width * s2, cv.height * s2); }   // v0.393: пишется кадр формата устройства, собранный из холста
     const chunks = [], stream = recCv.captureStream(30);
     if (at) stream.addTrack(at);
     rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : undefined);
@@ -4501,9 +4531,9 @@ function setupCone(){
       if (!mp4 && R && R.fixWebm) blob = await R.fixWebm(blob, Date.now() - t0 - pausedMs);   // v0.250: у mp4 длительность в заголовке и так есть; v0.256: без пауз
       const a = document.createElement("a");
       const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
-      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-konus-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
+      a.href = URL.createObjectURL(blob); a.download = `Zerkalius-${nm}-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${mp4 ? "mp4" : "webm"}`;
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      rec = null; b.classList.remove("on"); b.textContent = mp4 ? "mp4" : "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
+      rec = null; recSrc = null; b.classList.remove("on"); b.textContent = mp4 ? "mp4" : "⏺"; recUi();   // v0.155: кнопка квадратная — только значок
       recFrame(frameOn);   // v0.256: ▣ включён — рамка остаётся
       say(`⏺ Видео сохранено: ${a.download} (${(blob.size / 1048576).toFixed(1)} МБ${sndLab ? "," + sndLab : ""}).`);
     };
@@ -4513,9 +4543,9 @@ function setupCone(){
     const t0 = Date.now(); b.classList.add("on"); b.textContent = "⏹";
     recPause = 0; recPausedAt = 0; document.body.classList.add("conerec"); pauseUi();   // v0.256: ⏸ — видна, пока идёт запись
     const tick = () => { recFrame(true); const s = Math.floor((Date.now() - t0 - recPause - (recPausedAt ? Date.now() - recPausedAt : 0)) / 1000); b.title = `⏹ ${recPausedAt ? "Пауза" : "Идёт запись"}${sndLab} ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")} — щелчок: стоп и сохранить`; };   // v0.155: время — в подсказке, на квадратной кнопке только ⏹
-    conePan = [0, 0];   // v0.236: конус — в середину кадра
-    renderCone(); tick(); recT = setInterval(tick, 500);
-    say(`⏺ Пишу конус${mp4 ? " в mp4" : ""}${sndLab}… Ещё раз ${mp4 ? "⏹" : "⏺"} — стоп и сохранить. Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам.`);
+    if (isCone) { conePan = [0, 0]; renderCone(); }   // v0.236: конус — в середину кадра
+    tick(); recT = setInterval(tick, 500);
+    say(`⏺ Пишу «${recName(src)}»${mp4 ? " в mp4" : ""}${sndLab}… Ещё раз ${mp4 ? "⏹" : "⏺"} — стоп и сохранить.${isCone ? " Холст пишется, только когда меняется, — включи «▶ крутить» или крути сам." : " Другое окно — потом: запись держится за это, пока не остановишь."}`);
   };
   $("bConeRec").onclick = () => recGo("webm");
   $("bConeRecMp4").onclick = () => recGo("mp4");   // v0.250
@@ -4711,11 +4741,11 @@ function setupCone(){
     const name = offSave(blob, "kadry");
     say(`🎞 Сохранено: ${name} — ${tFmt(k / fps)} ролика (${k} кадров по ${fps} к/с), ${W}×${H}, ${(blob.size / 1048576).toFixed(1)} МБ; писалось ${tFmt((performance.now() - T0) / 1000)}.`);
   };
-  const offTitle = () => `🎞 mp4 покадрово: пишется кручение, каждый кадр — ровно 1/${Z.coneRecFps === 30 ? 30 : 60} с (режимы, лазер, краска — всё как у ▶), в ролике ровно, даже если браузер тормозит. Пишется, пока крутится (▶ стоп — запись ждёт). Ручки крутить можно. Без звука. Ещё раз — стоп и сохранить. Правый щелчок — 30 / 60 кадров/с (общий с ↻1)`;
+  const offTitle = () => `🎞 mp4 покадрово (только ◯ Конус, какое бы окно ни было сверху): пишется кручение, каждый кадр — ровно 1/${Z.coneRecFps === 30 ? 30 : 60} с (режимы, лазер, краска — всё как у ▶), в ролике ровно, даже если браузер тормозит. Пишется, пока крутится (▶ стоп — запись ждёт). Ручки крутить можно. Без звука. Ещё раз — стоп и сохранить. Правый щелчок — 30 / 60 кадров/с (общий с ↻1)`;
   $("bConeRecOff").title = offTitle();
   $("bConeRecOff").onclick = recOff;
   $("bConeRecOff").oncontextmenu = (e) => { e.preventDefault(); if (offRec || offRun) return; Z.coneRecFps = Z.coneRecFps === 30 ? 60 : 30; save(); $("bConeRecOff").title = offTitle(); $("bConeRecTurn").title = turnTitle(); say(`🎞 ↻1 Покадровая запись — ${Z.coneRecFps} кадров/с.`); };
-  const turnTitle = () => `↻1 Ровно один оборот для обоев — покадрово: каждый кадр считается сколько нужно, в ролике всё ровно, даже если браузер тормозит (${Z.coneRecFps === 30 ? 30 : 60} кадров/с, .mp4, без звука). Ролик замыкается без скачка. «Всё» и «Встреч Стр» — 360°, «Каждое» и «Встреч Бит» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Лазер на время записи выключен. Ещё раз — отмена. Правый щелчок — 30 / 60 кадров/с`;
+  const turnTitle = () => `↻1 Ровно один оборот конуса для обоев (только ◯ Конус) — покадрово: каждый кадр считается сколько нужно, в ролике всё ровно, даже если браузер тормозит (${Z.coneRecFps === 30 ? 30 : 60} кадров/с, .mp4, без звука). Ролик замыкается без скачка. «Всё» и «Встреч Стр» — 360°, «Каждое» и «Встреч Бит» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Лазер на время записи выключен. Ещё раз — отмена. Правый щелчок — 30 / 60 кадров/с`;
   $("bConeRecTurn").title = turnTitle();
   $("bConeRecTurn").onclick = () => (window.VideoEncoder && window.VideoFrame ? recTurnOff() : recTurn());
   $("bConeRecTurn").oncontextmenu = (e) => { e.preventDefault(); if (offRun || offRec) return; Z.coneRecFps = Z.coneRecFps === 30 ? 60 : 30; save(); $("bConeRecTurn").title = turnTitle(); $("bConeRecOff").title = offTitle(); say(`↻1 🎞 Покадровая запись — ${Z.coneRecFps} кадров/с.`); };
@@ -10543,16 +10573,22 @@ function init(){
     if (P) {
       const mk = (cls, ch) => { const a = document.createElement("div"); a.className = "rpArr " + cls; a.textContent = ch; a.title = cls === "up" ? "Выше есть ещё — щелчок: листать вверх" : "Ниже есть ещё — щелчок: листать вниз"; document.body.appendChild(a); return a; };
       const up = mk("up", "▲"), dn = mk("dn", "▼"), zb = $("bConeZen"); if (zb) document.body.appendChild(zb);   // v0.603: ромб дзена — fixed у низа панели
+      const rb = $("coneRecBar"); if (rb) document.body.appendChild(rb);   // v0.637: и кнопки записи — из холста конуса сюда же
       const upd = () => {
         const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
         /* v0.617, «стрелки только две — вверху и внизу»: и список окон (#paneWins листается сам) — через эти же две, своих ▲ ▼ у него больше нет */
         const PW = $("paneWins"), pwV = PW && PW.getClientRects().length && PW.scrollHeight > PW.clientHeight + 2;
-        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 48 || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2)), zh = zb ? 48 : 0;
+        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 72 || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2)), zh = zb ? 72 : 0;
         /* v0.609, «по вертикали выровняй» (◎ дзена и ● mp4 🎞 ↻1 ▣ записи): ромб дзена — на одной высоте с полосой записи на холсте конуса, если она у низа
            (не дальше 80 px от низа панели); иначе — как было, у низа панели */
-        let zy = r.bottom - 44; { const rb = $("coneRecBar"), q = rb && rb.getClientRects().length ? rb.getBoundingClientRect() : null;
-          if (q && q.height > 0 && Math.abs(q.top + q.height / 2 - (r.bottom - 24)) < 80) zy = q.top + q.height / 2 - 20; }
-        if (zb) { zb.style.display = vis ? "" : "none"; zb.style.top = Math.round(zy) + "px"; zb.style.left = Math.round(document.body.classList.contains("pane-icons") ? r.left + (r.width - 40) / 2 : r.left + 8) + "px"; }
+        /* v0.637, «поставь под меню, где стоит Дзен»: ◎ дзена и кнопки записи (● mp4 🎞 ↻1 ⏸ ▣) — одной цепочкой ромбов внизу левой панели: ромбы
+           касаются сторонами — каждый следующий на полромба правее и попеременно на полромба выше (как ряды из треугольников). В дзене панели нет —
+           цепочка записи стоит в левом нижнем углу экрана */
+        const zen = document.body.classList.contains("zen"), x0 = zen ? 8 : Math.round(document.body.classList.contains("pane-icons") ? r.left + (r.width - 40) / 2 : r.left + 8), yb = Math.round(zen ? innerHeight - 48 : r.bottom - 44);
+        const chain = [...(zb && vis ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
+        if (zb) zb.style.display = vis ? "" : "none";
+        if (rb) rb.style.display = vis || zen ? "" : "none";
+        chain.forEach((x, i) => { x.style.left = (x0 + 20 * i) + "px"; x.style.top = (yb - (i % 2 ? 20 : 0)) + "px"; });
         [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
       };
       P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);

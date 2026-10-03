@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.636. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.637. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.636</title>
+<title>Zazerkalius — v0.637</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -143,14 +143,14 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 /* v0.588, по снимку «🧘 дзен» в шапке — «в левое меню, вниз в угол, ромбоидным квадратной формы значком, без текста»: ромб 34 × 34 в левом нижнем углу
    левой панели; место под ним панель держит (padding-bottom), чтобы ромб не закрывал список окон */
 /* v0.590, «вот дзен-значок из Пирамиды — сюда»: ◎ в ромбе 40 × 40, как #bZen Пирамиды — рамка цветом акцента (60 %), внутри тёмная заливка, значок акцентом */
-#rowsPane{padding-bottom:48px;box-sizing:border-box}
+#rowsPane{padding-bottom:72px;box-sizing:border-box}   /* v0.637: внизу — цепочка ромбов дзена и записи (два полуряда, 60 px) */
 #bConeZen{position:fixed;left:8px;top:auto;bottom:auto;z-index:61;width:40px;height:40px;min-width:0;padding:0 !important;margin:0;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
   clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb, var(--acc) 60%, #2a3038) !important;color:var(--acc) !important;font-size:16px;line-height:40px;text-align:center;cursor:pointer}
 #bConeZen::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 #bConeZen:hover{background:var(--acc) !important}
 /* v0.603, «дзен накладывается на кнопки»: в столбике значков панель листается, и ромб (absolute внутри неё) ехал вместе с кнопками и ложился на них.
    Теперь ромб — fixed, в body, место ставит zz-ui.js по краю панели; нижние 48 px панели срезаны (clip-path) — кнопки уходят под край, а не под ромб */
-#rowsPane{clip-path:inset(0 0 48px 0)}
+#rowsPane{clip-path:inset(0 0 72px 0)}
 body.zen #bConeZen{display:none !important}
 #bPaneIcons{position:absolute;top:4px;right:8px;padding:0 7px;font-size:12px;line-height:18px;z-index:2}
 body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 1fr}
@@ -643,39 +643,39 @@ body.pane-icons #paneWins{padding:3px 4px}
    шапка, кнопки и текст — поверх него, полупрозрачно */
 #w-cone .wbody{position:static;padding:0}
 #w-cone #coneMain{position:absolute;inset:0;z-index:0;min-height:0}
-#coneRecBar{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:4px;align-items:center}   /* v0.256: кнопки записи одной полосой */
-#w-cone #coneRecBar > button{position:relative;min-width:32px;height:32px;padding:0 7px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;margin:0}
+#coneRecBar{display:contents}   /* v0.637: кнопки записи — внизу левой панели цепочкой с ◎ дзена: каждая fixed, место ставит zz-ui.js */
+#coneRecBar > button{position:fixed;z-index:61;min-width:32px;height:32px;padding:0 7px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;margin:0}
 /* v0.604, по снимку кнопок записи — «ромбами, как дзен»: ● mp4 🎞 ↻1 ⏸ ▣ — ромбы 40 × 40 с тонкой рамкой цветом акцента и тёмной заливкой (как ◎ дзена и кнопки Пирамиды) */
-#w-cone #coneRecBar{gap:2px}
-#w-cone #coneRecBar > button{width:40px !important;min-width:0 !important;height:40px !important;padding:0 !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
+#coneRecBar{gap:2px}
+#coneRecBar > button{width:40px !important;min-width:0 !important;height:40px !important;padding:0 !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
   clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb, var(--acc) 60%, #2a3038) !important;color:var(--acc) !important;font-size:15px}
-#w-cone #coneRecBar > button::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#w-cone #coneRecBar > button:hover{background:var(--acc) !important}
-#w-cone #coneRecBar > #bConeRec{color:#ff6b6b !important}
-#w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:11px !important}
-#w-cone #coneRecBar > button.on{background:var(--gold) !important;color:var(--gold) !important}
-#w-cone #coneRecBar > #bConeRecMp4,#w-cone #coneRecBar > #bConeRecTurn{font-size:12px}
+#coneRecBar > button::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#coneRecBar > button:hover{background:var(--acc) !important}
+#coneRecBar > #bConeRec{color:#ff6b6b !important}
+#coneRecBar > #bConeRecMp4,#coneRecBar > #bConeRecTurn{font-size:11px !important}
+#coneRecBar > button.on{background:var(--gold) !important;color:var(--gold) !important}
+#coneRecBar > #bConeRecMp4,#coneRecBar > #bConeRecTurn{font-size:12px}
 body.conerec2 #coneCv{pointer-events:none}   /* v0.283: пока ↻1 пишет покадрово — холст мышью не трогается (ни наведения, ни сдвига) */
-#w-cone #coneRecBar > #bConeRecTurn.on{color:var(--gold);border-color:var(--gold)}   /* v0.270: ↻1 — идёт запись одного оборота */
-#w-cone #coneRecBar > #bConeRecPause{display:none} body.conerec #w-cone #coneRecBar > #bConeRecPause{display:flex}
-#w-cone #coneRecBar > #bConeRecPause.on,#w-cone #coneRecBar > #bConeFrame.on{color:var(--gold);border-color:var(--gold)}
+#coneRecBar > #bConeRecTurn.on{color:var(--gold);border-color:var(--gold)}   /* v0.270: ↻1 — идёт запись одного оборота */
+#coneRecBar > #bConeRecPause{display:none} body.conerec #coneRecBar > #bConeRecPause{display:flex !important}
+#coneRecBar > #bConeRecPause.on,#coneRecBar > #bConeFrame.on{color:var(--gold);border-color:var(--gold)}
 #coneRecFrame.paused{border-color:var(--gold)} #coneRecFrame.paused span{color:var(--gold)}
 #coneRecFrame.preview{border-color:color-mix(in srgb, var(--acc) 70%, transparent)} #coneRecFrame.preview span{color:var(--acc)}   /* v0.155: квадратная, внизу холста слева */
-#w-cone #bConeRec.on,#w-cone #bConeRecMp4.on{color:var(--red);border-color:var(--red)}
-#w-cone #bConeRec.snd::after,#w-cone #bConeRecMp4.snd::after{content:"♪";position:absolute;right:2px;top:0;font-size:10px;line-height:1;color:var(--gold)}   /* v0.235: запись со звуком ПК (правый щелчок) */
+#bConeRec.on,#bConeRecMp4.on{color:var(--red);border-color:var(--red)}
+#bConeRec.snd::after,#bConeRecMp4.snd::after{content:"♪";position:absolute;right:2px;top:0;font-size:10px;line-height:1;color:var(--gold)}   /* v0.235: запись со звуком ПК (правый щелчок) */
 #ecaMap{position:fixed;z-index:100000;width:min(96vw,1040px);max-height:90vh;overflow:auto;box-sizing:border-box;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.55)}   /* v0.239: карта 256 правил */
 #ecaMap .ecaGrid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
 #ecaMap .ecaC{position:relative;cursor:pointer;line-height:0;background:var(--panel2);border:1px solid transparent;border-radius:3px}
 #ecaMap .ecaC:hover{border-color:var(--acc2)} #ecaMap .ecaC.on{border-color:var(--gold)}
 #ecaMap canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
 #ecaMap .ecaC span{position:absolute;left:2px;top:2px;font:9px/1 monospace;color:var(--dim);pointer-events:none}
-#coneRecFrame{position:absolute;z-index:1;display:none;pointer-events:none;box-sizing:border-box;border:2px dashed var(--red);border-radius:4px}   /* v0.236: кадр видео при записи конуса */
+#coneRecFrame{position:fixed;z-index:70;display:none;pointer-events:none;box-sizing:border-box;border:2px dashed var(--red);border-radius:4px}   /* v0.236: кадр видео при записи конуса */
 #coneRecFrame span{position:absolute;top:4px;left:50%;transform:translateX(-50%);font:11px/1.3 monospace;color:var(--red);background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;white-space:nowrap}
 #bRowsRecPause{display:none} body.rowsrec #bRowsRecPause{display:inline-block}   /* v0.267–0.268: видео — одна ⏺ в шапке */
 #bRowsRec.on,#bRowsRecPause.on{color:var(--gold);border-color:var(--gold)}
 .recon{outline:2px dashed #e11d48 !important;outline-offset:1px} body.rowsrecp .recon{outline-color:var(--gold) !important}
 body.recpick .recpk{outline:3px solid var(--gold) !important;outline-offset:1px;cursor:crosshair !important}   /* v0.268: выбор окна для записи */   /* рамка — снаружи поля, в файл не идёт */
-body.zen #coneRecBar{z-index:6}   /* v0.256: «кнопки записи видео — всегда»: в дзене видны (прежде — прятались) */
+body.zen #coneRecBar > button{z-index:70}   /* v0.256: «кнопки записи видео — всегда»: в дзене видны (прежде — прятались) */
 /* v0.203: кнопки на холсте конуса (как в Layers) — слой поверх холста, мышь ловят только сами кнопки */
 #coneBtns{position:absolute;inset:0;pointer-events:none;z-index:3}
 #coneBtns > button{position:absolute;pointer-events:auto;background:color-mix(in srgb,var(--panel) 75%,transparent)}
@@ -1604,7 +1604,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.636</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.637</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2344,8 +2344,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
         <div id="coneMain">
           <canvas id="coneCv" style="flex:1 1 auto;min-width:0;width:0;min-height:260px;display:block;cursor:grab;background:var(--panel2);border-radius:4px;touch-action:none"></canvas>
           <!-- v0.155, «в одну квадратную кнопку внизу холста слева»: группа «Запись» — одна кнопка ⏺ в левом нижнем углу холста -->
-          <!-- v0.256: кнопки записи — одной полосой в левом нижнем углу холста (видны и в дзене): ⏺ webm, mp4, ⏸ пауза (пока пишет), ▣ кадр -->
-          <div id="coneRecBar"><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button><button id="bConeRecMp4" title="⏺ mp4: запись холста конуса в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Наведи — рамка кадра. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл">mp4</button><button id="bConeRecOff" title="🎞 mp4 покадрово: пишется кручение, в ролике ровно, даже если браузер тормозит">🎞</button><button id="bConeRecTurn" title="↻1 Ровно один оборот для обоев — покадрово, ролик замыкается без скачка. «Всё» и «Встреч Стр» — 360°, «Каждое» и «Встреч Бит» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Лазер на время записи выключен. Ещё раз — отмена. Правый щелчок — 30 / 60 кадров/с">↻1</button><button id="bConeRecPause" title="⏸ Пауза записи">⏸</button><button id="bConeFrame" title="▣ Кадр видео: конус — в середину кадра, как будет на видео, и рамка кадра на холсте (в файл не идёт). Ещё раз — убрать рамку">▣</button></div>
+          <!-- v0.256: кнопки записи — одной полосой в левом нижнем углу холста (видны и в дзене): ⏺ webm, mp4, ⏸ пауза (пока пишет), ▣ кадр; v0.637 — zz-ui.js переносит их вниз левой панели, к ◎ дзена -->
+          <div id="coneRecBar"><button id="bConeRec" title="⏺ Видео: запись холста конуса (только сам конус, без кнопок) в файл .webm. Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл. Удобно вместе с «▶ крутить»">⏺</button><button id="bConeRecMp4" title="⏺ mp4: запись холста конуса в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Наведи — рамка кадра. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл">mp4</button><button id="bConeRecOff" title="🎞 mp4 покадрово: пишется кручение, в ролике ровно, даже если браузер тормозит">🎞</button><button id="bConeRecTurn" title="↻1 Ровно один оборот для обоев — покадрово, ролик замыкается без скачка. «Всё» и «Встреч Стр» — 360°, «Каждое» и «Встреч Бит» — пока все кольца разом не вернутся на места. Скорость и направление — с «▶ крутить». Лазер на время записи выключен. Ещё раз — отмена. Правый щелчок — 30 / 60 кадров/с">↻1</button><button id="bConeRecPause" title="⏸ Пауза записи">⏸</button><button id="bConeFrame" title="▣ Кадр видео: рамка того, что попадёт в файл, — у верхнего открытого окна (вверху рамки — имя окна и размер; в файл не идёт); у конуса он ещё встаёт в середину кадра. Ещё раз — убрать рамку">▣</button></div>
           <!-- v0.157, «в поле конуса кнопки управления для 3D»: в правом нижнем углу холста, только в 3D -->
           <div id="cone3Pad" class="flat">
             <!-- v0.270, по снимку пульта с «🧊 3D» над ним — «сюда выбор 3D поставь примерно так» и «⧗ зеркало — туда же»: те же галки, что в «Виде», — кнопками над пультом, видны всегда -->
@@ -2568,8 +2568,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0636"></script>
-<script src="zz-ui.js?v=0636"></script>
+<script src="zz-core.js?v=0637"></script>
+<script src="zz-ui.js?v=0637"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
