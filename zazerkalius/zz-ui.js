@@ -9342,6 +9342,8 @@ function iconizePane(){
 /* v0.310, «скрывай вкладки при нажатии заголовка»: щелчок по заголовку группы левой панели (.pane-head) сворачивает всё, что под ним,
    до следующего заголовка; ещё щелчок — разворачивает. Какие свёрнуты — Z.paneFold (по тексту заголовка), помнится. Заголовки с id
    (◯ Группы конуса, Окна — их показывает и прячет код) и хват ширины панели не трогаются. В панели значками свёрнутое видно. */
+/* v0.639, по снимку «Другое» — «сделай скрываемой группой, как все»: и список окон «Другое» (#paneWinsHead) сворачивается щелчком по заголовку; его
+   показывает и прячет parkSync (есть ли что в нём), свёрнутость — отдельно, в Z.paneFold. Скрытые кнопки шести окон шапки щёлкаются и в свёрнутом */
 function paneFoldBody(h){
   const out = [];
   for (let e = h.nextElementSibling; e && !e.classList.contains("pane-head"); e = e.nextElementSibling) if (e.id !== "paneEdge") out.push(e);
@@ -9349,7 +9351,7 @@ function paneFoldBody(h){
 }
 function paneFoldApply(){
   if (!Z.paneFold || typeof Z.paneFold !== "object") Z.paneFold = {};
-  document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
+  document.querySelectorAll("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)").forEach(h => {
     const k = h.textContent.trim();
     /* v0.517, «здесь значки удали из заголовков»: «💾 Страница целиком», «△ Треугольник из строки», «✂ Нарезать треугольник» — без значков; свёрнутость,
        записанная под прежним текстом (со значком), переходит на новый */
@@ -9378,12 +9380,12 @@ function paneWheelInit(){
   }, { passive: false });
 }
 function paneFoldInit(){
-  document.querySelectorAll("#rowsPane > .pane-head:not([id])").forEach(h => {
+  document.querySelectorAll("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)").forEach(h => {
     const t = h.getAttribute("title"); h.setAttribute("title", (t ? t + " · " : "") + "Щелчок по заголовку — свернуть / развернуть группу");
   });
   paneFoldApply();
   $("rowsPane").addEventListener("click", (e) => {
-    const h = e.target.closest("#rowsPane > .pane-head:not([id])"); if (!h) return;
+    const h = e.target.closest("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)"); if (!h) return;
     const k = h.textContent.trim(); Z.paneFold[k] = !Z.paneFold[k]; if (!Z.paneFold[k]) delete Z.paneFold[k];
     paneFoldApply(); save(); if (typeof packWins === "function") packWins();
   });
