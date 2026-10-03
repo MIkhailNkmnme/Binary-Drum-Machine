@@ -1762,6 +1762,11 @@ function renderCone(){
       g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e1]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
       g.stroke(); g.restore();
+      if (n > 2) {   // v0.669, «вырез тоже покажи разделённым на части»: внутри дыры — границы её E − 1 частей, золотым пунктиром
+        g.save(); g.strokeStyle = cg; g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+        for (let k = 1; k < n - 1; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
+        g.stroke(); g.restore();
+      }
     }
     if (dr > 4 * dpr && !Z.coneClean) {   // v0.222: «чистые кольца» — без контура; контур кольца — v0.087, «границу внутреннюю и внешнюю кольца надо как-то различать, цветом»: внутренняя голубая, внешняя оранжевая
       g.lineWidth = Math.max(1, dpr * 1.1);
