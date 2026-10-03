@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.602. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.603. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.602</title>
+<title>Zazerkalius — v0.603</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -140,11 +140,14 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
    левой панели; место под ним панель держит (padding-bottom), чтобы ромб не закрывал список окон */
 /* v0.590, «вот дзен-значок из Пирамиды — сюда»: ◎ в ромбе 40 × 40, как #bZen Пирамиды — рамка цветом акцента (60 %), внутри тёмная заливка, значок акцентом */
 #rowsPane{padding-bottom:48px;box-sizing:border-box}
-#rowsPane > #bConeZen{position:absolute;left:8px;bottom:4px;z-index:3;width:40px;height:40px;min-width:0;padding:0 !important;margin:0;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
+#bConeZen{position:fixed;left:8px;top:auto;bottom:auto;z-index:61;width:40px;height:40px;min-width:0;padding:0 !important;margin:0;border:0 !important;border-radius:0 !important;box-shadow:none !important;isolation:isolate;
   clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb, var(--acc) 60%, #2a3038) !important;color:var(--acc) !important;font-size:16px;line-height:40px;text-align:center;cursor:pointer}
-#rowsPane > #bConeZen::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#rowsPane > #bConeZen:hover{background:var(--acc) !important}
-body.pane-icons #rowsPane > #bConeZen{left:50%;transform:translateX(-50%)}
+#bConeZen::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--bg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#bConeZen:hover{background:var(--acc) !important}
+/* v0.603, «дзен накладывается на кнопки»: в столбике значков панель листается, и ромб (absolute внутри неё) ехал вместе с кнопками и ложился на них.
+   Теперь ромб — fixed, в body, место ставит zz-ui.js по краю панели; нижние 48 px панели срезаны (clip-path) — кнопки уходят под край, а не под ромб */
+#rowsPane{clip-path:inset(0 0 48px 0)}
+body.zen #bConeZen{display:none !important}
 #bPaneIcons{position:absolute;top:4px;right:8px;padding:0 7px;font-size:12px;line-height:18px;z-index:2}
 body.pane-icons #main{grid-template-columns:48px var(--rowsW, 44%) 1fr}
 /* v0.091, «строки перемести с их меню туда — справа от конуса, или просто конус дай располагать слева от поля строк»: колонки
@@ -1570,7 +1573,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.602</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.603</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2526,8 +2529,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0602"></script>
-<script src="zz-ui.js?v=0602"></script>
+<script src="zz-core.js?v=0603"></script>
+<script src="zz-ui.js?v=0603"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>

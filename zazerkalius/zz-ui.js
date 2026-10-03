@@ -10396,10 +10396,11 @@ function init(){
   { const P = $("rowsPane");
     if (P) {
       const mk = (cls, ch) => { const a = document.createElement("div"); a.className = "rpArr " + cls; a.textContent = ch; a.title = cls === "up" ? "Выше есть ещё — щелчок: листать вверх" : "Ниже есть ещё — щелчок: листать вниз"; document.body.appendChild(a); return a; };
-      const up = mk("up", "▲"), dn = mk("dn", "▼");
+      const up = mk("up", "▲"), dn = mk("dn", "▼"), zb = $("bConeZen"); if (zb) document.body.appendChild(zb);   // v0.603: ромб дзена — fixed у низа панели
       const upd = () => {
         const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
-        const t = vis && P.scrollTop > 2, b = vis && P.scrollTop + P.clientHeight < P.scrollHeight - 2, zb = $("bConeZen"), zh = zb && zb.parentElement === P ? 46 : 0;
+        const t = vis && P.scrollTop > 2, b = vis && P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 48, zh = zb ? 48 : 0;
+        if (zb) { zb.style.display = vis ? "" : "none"; zb.style.top = Math.round(r.bottom - 44) + "px"; zb.style.left = Math.round(document.body.classList.contains("pane-icons") ? r.left + (r.width - 40) / 2 : r.left + 8) + "px"; }
         [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
       };
       P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);
