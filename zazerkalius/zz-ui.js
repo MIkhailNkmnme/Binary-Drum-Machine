@@ -10396,15 +10396,16 @@ function init(){
     parkSync(); Z.z++; el.style.zIndex = Z.z; packWins(); save(); renderAll();
     el.scrollIntoView({ block: "nearest" });
   };
-  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldL").classList.toggle("on", !Z.fieldRight); $("bFieldR").classList.toggle("on", !!Z.fieldRight); };   // v0.591: (слева(строки)справа) — горит одна   // v0.412, «строки — слева»: подпись — куда переставит щелчок
+  const sideUi = () => { document.body.classList.toggle("field-right", !!Z.fieldRight); $("bFieldL").classList.toggle("on", !Z.fieldRight && !Z.fieldHidden); $("bFieldR").classList.toggle("on", !!Z.fieldRight && !Z.fieldHidden); };   // v0.595: поле спрятано — гаснут все три   // v0.591: (слева(строки)справа) — горит одна   // v0.412, «строки — слева»: подпись — куда переставит щелчок
   sideUi(); requestAnimationFrame(() => { parkSync(); packWins(); });
-  const sideSet = (right) => { if (!!Z.fieldRight === right) return; Z.fieldRight = right; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
+  const sideSet = (right) => { if (Z.fieldHidden) { $("bFieldHide").click(); if (!!Z.fieldRight === right) return; }   /* v0.595: поле спрятано — «слева» / «справа» сперва его показывает */
+    if (!!Z.fieldRight === right) return; Z.fieldRight = right; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };
   $("bFieldL").onclick = () => sideSet(false); $("bFieldR").onclick = () => sideSet(true);
   /* v0.109, «кнопка свернуть поле строк»: поле строк прячется целиком, окна берут его место (стол шире — окна раскладываются
      заново по ширине: «⤒ К верху» и ужатие по краю работают как при разделителе). Строки живут дальше — меняются кнопками
      слева и окнами; вернуть поле — ещё раз. Запоминается. */
-  const hideUi = () => { document.body.classList.toggle("field-hidden", !!Z.fieldHidden); $("bFieldHide").classList.toggle("on", !Z.fieldHidden); };   // v0.591: «строки» горит, пока поле видно
+  const hideUi = () => { document.body.classList.toggle("field-hidden", !!Z.fieldHidden); $("bFieldHide").classList.toggle("on", !Z.fieldHidden); if ($("bFieldL")) sideUi(); };   // v0.591: «строки» горит, пока поле видно
   hideUi();
   $("bFieldHide").onclick = () => { Z.fieldHidden = !Z.fieldHidden; hideUi(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldHidden ? "Поле строк спрятано — окна на всю ширину. Строки те же; вернуть — ещё раз «строки»." : "Поле строк снова на месте."); };
