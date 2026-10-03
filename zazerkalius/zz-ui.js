@@ -2155,7 +2155,16 @@ function renderCone(){
           const fr = (a) => { const F = coneScanFrac(a / (2 * Math.PI)); return F ? (F.ok ? "" : "≈") + F.p + "/" + F.q : Math.round(a / (2 * Math.PI) * 100) + "%"; };
           g.save();
           const look = { s: ["☀", cg], m: ["☾", "#9cc3ff"], sm: ["☀☾", "#e8e0ff"], o: ["◌", "#8a93a6"] }, cnt = { s: 0, m: 0, sm: 0, o: 0 };
-          for (const q of segs) { const [ic, col] = look[q.t]; cnt[q.t]++; lab(ic + " " + fr(q.z - q.a), (q.a + q.z) / 2, col, cBg); }
+          /* v0.700, по снимку «☀ ≈2/15 · ☾ ≈2/15 · ◌ ≈4/11 · ◌ ≈4/11» — «потом остальное же 11/15, обе части — если их как 11/30? неправильно»: каждая часть
+             округлялась сама по себе (у ◌ ближайшей простой вышла 4/11), и в сумме не выходил целый круг. Теперь доли подбираются к ОДНОМУ знаменателю: q, при
+             котором все части — целые p и Σ p = q: точно — первый такой; иначе (q до 60, ошибка до 0,004, «≈») — заметно точнейший; дроби сокращаются по одной */
+          const fsP = segs.map(q => (q.z - q.a) / TT); let common = null;
+          for (let qq = 2; qq <= 240; qq++) {   // точная — первая же; приближённая (q до 60, ошибка до 0,004) — та, что заметно (вдвое) точнее прежней найденной
+            const ps = fsP.map(f => Math.round(f * qq)); if (!ps.every(v => v > 0) || ps.reduce((x, y) => x + y, 0) !== qq) continue;
+            const e = Math.max(...fsP.map((f, k) => Math.abs(f - ps[k] / qq))); if (e < 1e-5) { common = { qq, ps, ok: true, e }; break; }
+            if (qq <= 60 && e <= 0.004 && (!common || e < common.e / 2)) common = { qq, ps, ok: false, e }; }
+          const gcdN = (x, y) => y ? gcdN(y, x % y) : x, frC = (k) => { if (!common) return fr(segs[k].z - segs[k].a); const p = common.ps[k], d = gcdN(p, common.qq); return (common.ok ? "" : "≈") + p / d + "/" + common.qq / d; };
+          segs.forEach((q, k) => { const [ic, col] = look[q.t]; cnt[q.t]++; lab(ic + " " + frC(k), (q.a + q.z) / 2, col, cBg); });
           const rS = rL + fs * 1.8; g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = cg; g.globalAlpha = 0.95;
           g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${lit.length * 2}`, cx, cy - rS);
           g.restore();
