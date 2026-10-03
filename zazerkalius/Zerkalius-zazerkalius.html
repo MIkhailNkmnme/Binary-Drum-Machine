@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.584. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.585. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.584</title>
+<title>Zazerkalius — v0.585</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -67,8 +67,9 @@ select{padding:2px 4px}
 code{font-family:var(--ff);font-size:.95em}
 
 /* ─── каркас ─── */
-#top{display:flex;align-items:center;gap:10px;height:30px;padding:0 12px;box-sizing:border-box;border-bottom:1px solid var(--line);background:var(--panel)}
+#top{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;box-sizing:border-box;border-bottom:1px solid var(--line);background:var(--panel)}
 #top h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.04em}
+/* v0.585, «у верхнего меню отступ меньше, чем у этих, — сделай средний для всех»: шапка, вкладки групп и полоса над полем строк — по 4 px над и под кнопками (было 2 и 6) */
 /* v0.574, по снимку шапки — «высоту сократи, уменьшив отступы от кнопок по вертикали»: шапка 40 → 30 px (кнопки 25 px, по 2 px сверху и снизу), поле — сразу под ней */
 /* v0.324: окошко «↧ до [N] ✓ ✕» у черты под строками — появляется, когда черту протянули вниз (cutAsk в zz-ui.js) */
 #cutAsk{position:fixed;z-index:60;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--panel);border:1px solid var(--acc);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.45);font-size:12px}
@@ -131,7 +132,7 @@ body.pinmode button:not(#bPinMode):not(#top button):not(#pinBar button),body.pin
 .win.flash{box-shadow:0 0 0 2px var(--gold),0 8px 24px rgba(0,0,0,.35)}
 /* v0.010: три колонки — слева кнопки и шаблоны, В ЦЕНТРЕ поле строк, справа окна; между полем и окнами
    разделитель, его тянут (ширина поля — --rowsW, запоминается). */
-#main{position:absolute;top:30px;left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--paneW, 250px) var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
+#main{position:absolute;top:34px;left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--paneW, 250px) var(--rowsW, 44%) 1fr}   /* v0.218: без разделителя (6px) — ширину меняет столбик номеров */
 #rowsPane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
 /* v0.035: панель значками в один столбик — кнопка ◂/▸ в углу, узкая колонка, у кнопок только значки */
 #rowsPane{position:relative}
@@ -324,7 +325,7 @@ body.dragover #rowsPane{box-shadow:inset 0 0 0 2px var(--acc)}
 #maskBar2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}   /* v0.153: список и кнопка — пополам */
 #maskBar2 > button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* v0.012: ввод строки — над полем строк */
-#field #rowInputBar{padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+#field #rowInputBar{padding:4px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
 #field #rowInput{font-size:14px}
 /* v0.012: выделение — строки по номеру (.sel), символы мышью; номера в выделение текста не попадают */
 .rw .no{user-select:none;-webkit-user-select:none;cursor:pointer}
@@ -716,7 +717,7 @@ body.zen #w-cone #coneMain{bottom:0}
 /* v0.135: группы кнопок конуса — рамкой с подписью; всё, что меняет текст, — постоянной ширины, чтобы ряды не дёргались */
 #w-cone .tools{gap:4px 8px}
 /* v0.579: вкладки групп конуса — полоса шевронов над группами; горит — группа спрятана, погашена — видна */
-#cgTabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0;padding:6px 0;flex:0 0 auto}   /* v0.583, «стандартизируй отступы по вертикали между кнопками»: как у полосы над полем строк — 6 px сверху и снизу, кнопки 25 px */
+#cgTabs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding:4px 0;flex:0 0 auto}   /* v0.583, «стандартизируй отступы по вертикали между кнопками»: как у полосы над полем строк — 6 px сверху и снизу, кнопки 25 px */
 #cgTabs > button{--t:6.93px;flex:0 0 auto;height:25px;min-width:92px;margin:0 0 0 calc(2px - var(--t));padding:0 calc(var(--t) + 8px) 0 calc(var(--t) + 6px);border:0 !important;border-radius:0 !important;box-shadow:none !important;
   clip-path:polygon(0 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,0 100%,var(--t) 50%);background:color-mix(in srgb, var(--tc) 22%, var(--panel2)) !important;color:color-mix(in srgb, var(--tc) 60%, var(--dim)) !important;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
 #cgTabs > button:first-child{margin-left:0}   /* v0.582, «первая кнопка также )), а не !)»: и у первой слева выемка, как у всех */
@@ -1536,7 +1537,7 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-  <h1>Zazerkalius</h1><span class="ver">v0.584</span>
+  <h1>Zazerkalius</h1><span class="ver">v0.585</span>
   <!-- v0.054: «сюда — возможность закреплять кнопки для вывода вверх панелей» -->
   <!-- v0.528, «тут у кнопки стрелки обе наружу сделай»: 📌 — остриё с обеих сторон (первая в цепочке; v0.529 — следующие заходят на неё выемкой) -->
   <button id="bPinMode" title="📌 Закрепить наверху: включи и щёлкни любую кнопку — её копия встанет сюда, в шапку; щёлкни шапку окна — встанет кнопка, которая показывает и поднимает это окно. Закреплённая: щелчок — как оригинал, правый щелчок — открепить. Ещё раз 📌 или Esc — выход">📌</button>
@@ -2489,8 +2490,8 @@ body:not(.cedit):not(.zen) #zenGrp,body:not(.cedit) #zenGrp.empty{display:none !
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=0584"></script>
-<script src="zz-ui.js?v=0584"></script>
+<script src="zz-core.js?v=0585"></script>
+<script src="zz-ui.js?v=0585"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
