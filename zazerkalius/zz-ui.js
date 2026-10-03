@@ -6913,7 +6913,9 @@ function ctwInit(){
   bMin.onclick = flip;
   bPin.onclick = () => { Z.ctw.pin = !Z.ctw.pin; lay(); save(); };
   head.addEventListener("dblclick", (e) => { if (!e.target.closest("button")) flip(); });
-  $("bConeTxt").onclick = () => { Z.ctw.open = Z.ctw.open === false; lay(); save(); };
+  /* v0.600, «если кнопкой скрыть — потом не появляется»: открывает «📝 Текст» всегда развёрнутым и в углу конуса (сохранённое «свёрнуто до заголовка»
+     или откреплённое где-то в стороне окно выглядело так, будто его нет) */
+  $("bConeTxt").onclick = () => { const c = Z.ctw; c.open = c.open === false; if (c.open) { c.min = false; c.pin = true; } lay(); save(); };
   $("bCtwClose").onclick = () => { Z.ctw.open = false; lay(); save(); };
   head.addEventListener("pointerdown", (e) => {   // заголовок — хват: тянешь — окно открепляется и едет за мышью
     if (e.button !== 0 || e.target.closest("button")) return;
