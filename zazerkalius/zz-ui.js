@@ -7256,6 +7256,13 @@ function cgrpInit(){
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .cgsz")) return;
       e.preventDefault(); e.stopPropagation();
+      /* v0.581, по снимку свёрнутой «Звука» под вкладками — «двойной клик по заголовку — просто скрыть всю группу и затемнить кнопку вверху»: группа прячется
+         целиком (как щелчок по её вкладке), вкладка гаснет; показать — щелчок по вкладке. Свёрнутая по-старому (cmin) — сперва разворачивается на прежнее место */
+      { const key = g.dataset.g;
+        if (Z.cgrpMin[key]) { delete Z.cgrpMin[key]; g.classList.remove("cmin"); g.style.minHeight = "";
+          if (Z.cgrpMinPos && Z.cgrpMinPos[key]) { const m = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key]; if (m.fld) { Z.cgrpFld[key] = m.fld; delete Z.cgrpPos[key]; } else if (m.pos) Z.cgrpPos[key] = m.pos; else delete Z.cgrpPos[key]; }
+          cgbSnap(); sizeApply(g); place(g); }
+        window.cgrpHide(key); return; }
       /* v0.207, «высота остаётся как была — нужно»: свёрнутая группа сужается до заголовка, а высоту держит прежнюю (Z.cgrpMin — её пиксели),
          чтобы соседние группы и полоса не прыгали. */
       const key = g.dataset.g, on = !Z.cgrpMin[key];
