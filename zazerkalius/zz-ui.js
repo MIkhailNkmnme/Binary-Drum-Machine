@@ -8797,7 +8797,7 @@ function tzgFrame(g){
   let Wr = W; { const gl = g.getBoundingClientRect().left; let mx = 0;
     g.querySelectorAll(".tz:not(.glab):not(.tzk)").forEach(e => { if (!e.getClientRects().length) return; const r = e.getBoundingClientRect(); mx = Math.max(mx, r.right - gl); });
     if (mx > 0 && W - mx > 0 && W - mx < 3) Wr = mx; }
-  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + Wr.toFixed(1) + "|" + fc;   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
+  const lab = g.querySelector(":scope > .glab"), fc = lab ? getComputedStyle(lab).color : getComputedStyle(g).borderTopColor, key = W + "x" + H + "|" + Wr.toFixed(1) + "|" + fc + "|" + (Z.noLn ? 1 : 0);   // v0.464, «пусть группа — обводка цвет, как у её текста»: рамка — цветом заголовка группы
   if (g._tzgk === key && g.classList.contains("tzg")) return;
   g._tzgk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H, zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2);
@@ -8806,7 +8806,10 @@ function tzgFrame(g){
      вся группа — «стрелка вправо»; первая кнопка ряда — с выемкой слева, ложится в край вплотную (triTag) */
   const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [Wr - zig(y), y])];
   g.classList.add("tzg");
-  g.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
+  /* v0.617, «осталась граница» (▱ обводка выкл): обводка кнопок цветом фона — по 2 px внутрь каждой, и по внешнему краю группы она лежала тёмной
+     каймой. Без обводки группа обрезается на эти 2 px по всему контуру (по бокам 2,3 — край косой): швы между кнопками остаются, каймы нет */
+  const ix = Z.noLn ? 2.3 : 0, iy = Z.noLn ? 2 : 0, cl = pts.map(([x, y], k) => [k < ys.length ? x + ix : x - ix, Math.min(Math.max(y, iy), H - iy)]);
+  g.style.setProperty("--gclip", `polygon(${cl.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
   /* v0.495, «нет верхней обводки»: верх и низ рамки — на полпикселя внутрь (линия по самому краю — видна лишь её половина, 1 px, и при дробной
      координате группы верх сглаживался до невидимого) */
   const yIn = (y) => Math.min(Math.max(y, 0.5), H - 0.5);
@@ -10432,7 +10435,9 @@ function init(){
       const up = mk("up", "▲"), dn = mk("dn", "▼"), zb = $("bConeZen"); if (zb) document.body.appendChild(zb);   // v0.603: ромб дзена — fixed у низа панели
       const upd = () => {
         const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
-        const t = vis && P.scrollTop > 2, b = vis && P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 48, zh = zb ? 48 : 0;
+        /* v0.617, «стрелки только две — вверху и внизу»: и список окон (#paneWins листается сам) — через эти же две, своих ▲ ▼ у него больше нет */
+        const PW = $("paneWins"), pwV = PW && PW.getClientRects().length && PW.scrollHeight > PW.clientHeight + 2;
+        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 48 || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2)), zh = zb ? 48 : 0;
         /* v0.609, «по вертикали выровняй» (◎ дзена и ● mp4 🎞 ↻1 ▣ записи): ромб дзена — на одной высоте с полосой записи на холсте конуса, если она у низа
            (не дальше 80 px от низа панели); иначе — как было, у низа панели */
         let zy = r.bottom - 44; { const rb = $("coneRecBar"), q = rb && rb.getClientRects().length ? rb.getBoundingClientRect() : null;
@@ -10443,8 +10448,10 @@ function init(){
       P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);
       if (window.ResizeObserver) { const ro = new ResizeObserver(upd); ro.observe(P); [...P.children].forEach(c => ro.observe(c)); }
       new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ["class"] });
-      up.onclick = () => P.scrollBy({ top: -Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
-      dn.onclick = () => P.scrollBy({ top: Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
+      const PWs = () => { const W = $("paneWins"); return W && W.getClientRects().length && W.scrollHeight > W.clientHeight + 2 ? W : null; };
+      up.onclick = () => { const W = PWs(); if (P.scrollTop <= 2 && W && W.scrollTop > 2) W.scrollBy({ top: -Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollBy({ top: -Math.max(40, P.clientHeight * 0.75), behavior: "smooth" }); };
+      dn.onclick = () => { const W = PWs(); if (W && W.scrollTop + W.clientHeight < W.scrollHeight - 2) W.scrollBy({ top: Math.max(40, W.clientHeight * 0.75), behavior: "smooth" }); else P.scrollBy({ top: Math.max(40, P.clientHeight * 0.75), behavior: "smooth" }); };
+      { const W = $("paneWins"); if (W) W.addEventListener("scroll", upd, { passive: true }); }
       setTimeout(upd, 300); setInterval(upd, 1000);   // v0.609: окно конуса двигают и тянут — ромб дзена держит высоту полосы записи
       { const C = $("w-cone"); if (C && window.ResizeObserver) new ResizeObserver(upd).observe(C); }
     } }
