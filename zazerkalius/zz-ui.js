@@ -851,7 +851,7 @@ function coneBitAt(e){
   const h = coneRing(e); if (h === -1 || h.fill !== undefined) return null;
   const s = Z.rows[h.i], n = s && s.length; if (!n) return null;
   const CG = coneCutGeo(h.i, n), step = CG.step, t = h.a - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  if (CG.off) { const P = 2 * n - 1, x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P; return x < n ? { i: h.i, j: Math.floor(x) } : null; }   // v0.667: в дыре выреза бита нет
+  if (CG.cut) { const P = 2 * n - 1, x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P; return x < n ? { i: h.i, j: Math.floor(x) } : null; }   // v0.667: в дыре выреза бита нет
   return { i: h.i, j: ((Math.floor(u / step + coneRotOf(h.i)) % n) + n) % n };
 }
 function rowBitMark(){
@@ -2125,12 +2125,16 @@ function coneSlitMode(){ return Z.coneSlits === "all" ? "all" : Z.coneSlits === 
    края золотые). Изначально биты — по центру сверху, вырез — по центру снизу. Шаг кольца — часть; накрутка «на бит» — на часть. Строка 1 — без
    выреза, луч идёт мимо. coneCutGeo — шаг и сдвиг для рисунка, мыши и расчёта луча */
 function coneCutOn(){ return !!Z.coneClock && !Z.cone3d && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut" && !coneSunOn(); }
-function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { step: 2 * Math.PI / (2 * n - 1), off: -n / 2 } : { step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
+/* v0.673, по снимку — «не располагает: луч лазера — вертикаль вверх, по нему 1; 2 строка — так, чтобы между битами вертикаль; у 3 строки получается
+   вертикаль между 2 частями пустоты, и так далее»: начальная расстановка по вертикали чередуется — у чётных строк (2, 4, …) по центру сверху
+   биты (вертикаль — между средними битами), у нечётных (3, 5, …) — дыра (вертикаль — между средними частями пустоты). Сдвиг off в частях:
+   биты по центру — −n/2, дыра по центру — (n − 1)/2 */
+function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / (2 * n - 1), off: i % 2 ? -n / 2 : (n - 1) / 2 } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
 /* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
    расположить относительно вертикали симметрично». У кольца в вырезах одна ось симметрии — через середину бит и середину дыры. Вертикальна она
    при накрутке 0 (биты по центру сверху) и n − ½ (дыра по центру сверху) — второе целыми частями не достать. Теперь кольцо в вырезах встаёт на
    половины частей, и полчасти помнится (coneRotKeep); у остальных колец — как было, целыми битами */
-function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).off ? Math.round(x * 2) / 2 : Math.round(x); }
+function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).cut ? Math.round(x * 2) / 2 : Math.round(x); }
 function coneCutWin(b, N){   // вырез кольца строки b (с 0, b ≥ 1) в долях его бита от начала бита 0: [от, до]; null — открыто всё
   const n = Z.rows[b].length, m = b + 1 < N ? Z.rows[b + 1].length : n + 1;
   if (!n || !m || n - 1 >= m) return null;
@@ -2472,7 +2476,7 @@ function coneClockTrace(){
       const n = Z.rows[b].length; if (!n) break;
       const st = TAU / n, u = (a + Math.PI / 2) / st + coneRotOf(b);
       if (coneSlitMode() === "cut") {   // v0.667: кольцо — 2E − 1 частей: первые E — биты (стена), остальные E − 1 — вырез
-        const P = 2 * n - 1, x = ((((a + Math.PI / 2) / (TAU / P) + coneRotOf(b) + n / 2) % P) + P) % P;
+        const P = 2 * n - 1, x = ((((a + Math.PI / 2) / (TAU / P) + coneRotOf(b) - coneCutGeo(b, n).off) % P) + P) % P;   // v0.673: сдвиг — по чётности строки
         if (x < n) { wall = [b, Math.floor(x)]; break; }
         g.push(b, n - 1); continue;
       }
@@ -3198,7 +3202,7 @@ function setupCone(){
       return;
     }
     e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
-    const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).off !== 0;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
+    const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).cut;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
     coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD, cut: cutD, v0: coneRot[h.i] || 0 };
   });
   cv.addEventListener("pointermove", (e) => {
@@ -3237,7 +3241,8 @@ function setupCone(){
       const P = D.cut ? 2 * n - 1 : n;   // v0.671: в вырезах полный круг — 2E − 1 частей
       coneRot[D.i] = ((coneRotKeep(coneRot[D.i], D.i) % P) + P) % P; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
       if (Z.cur !== D.i) Z.cur = D.i;
-      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${String(coneRot[D.i]).replace(".", ",")} из ${P} частей (вырезы T−1)${coneRot[D.i] === 0 ? " — биты по центру сверху, симметрично" : coneRot[D.i] === n - 0.5 ? " — дыра по центру сверху, симметрично" : ""}. Только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
+      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${String(coneRot[D.i]).replace(".", ",")} из ${P} частей (вырезы T−1)${(() => { const o = coneCutGeo(D.i, n).off, q = (v) => (((v - coneRot[D.i]) % P) + P) % P < 1e-6 || (((coneRot[D.i] - v) % P) + P) % P < 1e-6;
+      return q(o + n / 2) ? " — биты по центру сверху, симметрично" : q(o + n / 2 + n - 0.5) ? " — дыра по центру сверху, симметрично" : ""; })()}. Только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
     }
     coneRot[D.i] = D.v0;
     if (Z.cur !== D.i) Z.cur = D.i;
