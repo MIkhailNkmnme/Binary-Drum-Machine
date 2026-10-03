@@ -168,7 +168,9 @@ function undoState(){
            laneCount: Z.laneCount, axisPos: Array.isArray(Z.axisPos) ? Z.axisPos.slice() : [],   // v0.022: и поля, и оси
            lanesHid: hidCopy() };   // v0.112: и строки за границей — иначе ↩ задвоил бы спрятанные
 }
-function undoPush(u){ undoStack.push(u); if (undoStack.length > 200) undoStack.shift(); redoStack.length = 0; }   // v0.158: новая правка — повторять больше нечего
+function undoPush(u){ undoStack.push(u); if (undoStack.length > 200) undoStack.shift(); redoStack.length = 0; undoUi(); }
+/* v0.612, «подсвечивай, когда есть что отменять, повторять»: ↩ горит, пока есть шаги назад, ↪ — пока есть отменённое */
+function undoUi(){ const u = document.getElementById("bUndo"), r = document.getElementById("bRedo"); if (u) u.classList.toggle("on", undoStack.length > 0); if (r) r.classList.toggle("on", redoStack.length > 0); }   // v0.158: новая правка — повторять больше нечего
 /* v0.158, «и повтор — слева от всех кнопок»: ↪ Повторить — то, что отменил ↩. Отмена кладёт состояние до себя в redoStack,
    повтор — обратно в undoStack; любая новая правка (undoPush) повторы стирает. */
 const redoStack = [];
@@ -185,14 +187,14 @@ function undo(){
   const u = undoStack.pop();
   if (!u) { say("↩ Отменять нечего."); return; }
   redoStack.push(undoState()); if (redoStack.length > 200) redoStack.shift();
-  undoApply(u); say("↩ Отменено. ↪ — повторить.");
+  undoApply(u); undoUi(); say("↩ Отменено. ↪ — повторить.");
 }
 function redo(){
   if (rowsLocked()) return;
   const u = redoStack.pop();
   if (!u) { say("↪ Повторять нечего."); return; }
   undoStack.push(undoState()); if (undoStack.length > 200) undoStack.shift();
-  undoApply(u); say("↪ Повторено.");
+  undoApply(u); undoUi(); say("↪ Повторено.");
 }
 /* Сделать рабочим поле k (и строку row, если задана). */
 function switchLane(k, row, quiet){
@@ -10761,6 +10763,7 @@ function init(){
   };
   $("bUndo").onclick = undo;
   $("bRedo").onclick = redo;   // v0.158
+  undoUi();
   // v0.015: ⤒ окна к верху — вкл/выкл
   const packLabel = () => $("bPack").classList.toggle("on", !!Z.pack);
   packLabel();
