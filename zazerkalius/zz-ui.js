@@ -748,8 +748,9 @@ function fillCycle(k){
 }
 /* v0.696, «если все биты заполнились единицами в кольце, то строка готова — её открывай в строках, линию под неё смещай, горизонт»: строка за чертой,
    ставшая вся «1» (лазер или солнце), сама уходит в строки поля, черта — под неё. Счёт попаданий не теряется: кольца нумеруются так же, и попадания в
-   следующее кольцо (оно теперь за чертой) переходят в его ячейки — «1», остальные «0»; стала и она вся «1» — следом и она. Не во время прогноза 🔮 и не
-   при замке строк ⛔ (снимок ↩ на каждую) */
+   следующее кольцо (оно теперь за чертой) переходят в его ячейки — «1», остальные «0» (стала и она вся «1» — уйдёт со следующим шагом). Не во время прогноза 🔮 и не
+   при замке строк ⛔ (снимок ↩ на каждую). v0.698, «только при шаге надо расширять линию горизонта вниз, а не автоматом»: зовётся только после шага —
+   «шаг ↷» в «Лазере» и |◀ ▶| в «Кручении»; само по себе (кручение ▶, отрисовка) — нет */
 function fillAutoCommit(){
   const f = Z.fillCells; if (typeof f !== "string" || !f.length || /[^1]/.test(f) || f.length !== fillLen()) return false;
   if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
@@ -762,8 +763,7 @@ function fillAutoCommit(){
   if (V) { V.h = carry; V.sig = (N + 1) + ":" + f.length; }
   renderAll(); save();
   say(`✔ Строка ${N + 1} готова — вся «1» (${f.length} бит): она в строках, черта — под ней. За чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
-  setTimeout(fillAutoCommit, 0);
-  return true;
+  return true;   // v0.698: по шагу — одна строка; следующая готовая уйдёт со следующим шагом
 }
 function fillCommit(){
   const f = fillDraft(), row = f.replace(/\./g, "0"), empty = (f.match(/\./g) || []).length;
@@ -2141,16 +2141,23 @@ function renderCone(){
         if (lit.length > 1 && lit[0][0] < 1e-6 && lit[lit.length - 1][1] > 2 * Math.PI - 1e-6) { const f = lit.shift(); lit[lit.length - 1][1] = 2 * Math.PI + f[1]; }   // сектор через 0 — один
         const full = lit.length === 1 && lit[0][1] - lit[0][0] > 2 * Math.PI - 1e-6;
         if (lit.length && !full) {
-          const dark = lit.map(([, hi], k) => [hi, k + 1 < lit.length ? lit[k + 1][0] : lit[0][0] + 2 * Math.PI]).filter(([a, z]) => z - a > 1e-6);
+          /* v0.698, по снимку «◐ 2/3 · ☀ 1/3» — «луна 2/3 показывает, солнце 1/3, а что остаётся между ними? покажи у каждой части её количество от целой»: «◐» был
+             всей тёмной частью и читался как луна. Теперь круг делится на солнце ☀ (свет), луну ☾ (сектор напротив света, через центр) и остаток ◌ между ними
+             (оба сразу — ☀☾); у каждой части — её доля целого круга, в сводке — сколько частей каждого вида */
+          const TT = 2 * Math.PI, nrm = (x) => ((x % TT) + TT) % TT, inL = (x, L) => L.some(([lo, hi]) => { const d = nrm(x - lo); return d < hi - lo; });
+          const sunL = lit.map(([lo, hi]) => [nrm(lo), nrm(lo) + (hi - lo)]), moonL = sunL.map(([lo, hi]) => [nrm(lo + Math.PI), nrm(lo + Math.PI) + (hi - lo)]);
+          const cuts = [...new Set([...sunL, ...moonL].flatMap(([lo, hi]) => [nrm(lo), nrm(hi)]).map(x => Math.round(x * 1e6) / 1e6))].sort((x, y) => x - y);
+          let segs = cuts.map((c, k) => { const z = k + 1 < cuts.length ? cuts[k + 1] : cuts[0] + TT, m = (c + z) / 2, sn = inL(m, sunL), mn = inL(m, moonL); return { a: c, z, t: sn && mn ? "sm" : sn ? "s" : mn ? "m" : "o" }; }).filter(q => q.z - q.a > 1e-6);
+          for (let k = 0; segs.length > 1 && k < segs.length; ) { const nx = (k + 1) % segs.length; if (nx !== k && segs[nx].t === segs[k].t) { segs[k].z = segs[nx].a > segs[k].a ? segs[nx].z : segs[nx].z + TT; segs.splice(nx, 1); if (nx < k) k--; } else k++; }   // соседние одного вида — одна часть
           const rL = roE + Math.max(10 * dpr, dr * 0.35), fs = Math.round(Math.max(10 * dpr, Math.min(14 * dpr, dr * 0.4)));
           const lab = (tx, am, col, bg) => { const px = cx + rL * Math.cos(am - Math.PI / 2), py = cy + rL * Math.sin(am - Math.PI / 2); g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
             const w = g.measureText(tx).width + 8 * dpr, h = fs + 5 * dpr; g.globalAlpha = 0.88; g.fillStyle = bg; g.fillRect(px - w / 2, py - h / 2, w, h); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = Math.max(1, dpr); g.strokeRect(px - w / 2, py - h / 2, w, h); g.fillStyle = col; g.fillText(tx, px, py); };
           const fr = (a) => { const F = coneScanFrac(a / (2 * Math.PI)); return F ? (F.ok ? "" : "≈") + F.p + "/" + F.q : Math.round(a / (2 * Math.PI) * 100) + "%"; };
           g.save();
-          for (const [a, z] of lit) lab("☀ " + fr(z - a), (a + z) / 2, cg, cBg);
-          for (const [a, z] of dark) lab("◐ " + fr(z - a), (a + z) / 2, "#9cc3ff", cBg);
+          const look = { s: ["☀", cg], m: ["☾", "#9cc3ff"], sm: ["☀☾", "#e8e0ff"], o: ["◌", "#8a93a6"] }, cnt = { s: 0, m: 0, sm: 0, o: 0 };
+          for (const q of segs) { const [ic, col] = look[q.t]; cnt[q.t]++; lab(ic + " " + fr(q.z - q.a), (q.a + q.z) / 2, col, cBg); }
           const rS = rL + fs * 1.8; g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = cg; g.globalAlpha = 0.95;
-          g.fillText(`☀ частей ${lit.length} · лучей ${lit.length * 2} · ◐ между ${dark.length}`, cx, cy - rS);
+          g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${lit.length * 2}`, cx, cy - rS);
           g.restore();
         } }
       if (Z.lasPeek) {   // v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
@@ -2533,7 +2540,7 @@ function coneSunPaint(){
      Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
   { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
     for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
-    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); setTimeout(fillAutoCommit, 0); } }   // v0.696
+    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
   if (ch) coneLogDirty();
   return ch;
 }
@@ -3033,7 +3040,7 @@ function coneClockMark(hits){
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
   if (!ch.length) return;
   f = f.replace(/\./g, "0");   // v0.136, «когда бит покрасил в строке — покажи остальные нулями, заполни»: лазер поставил «1» — пустые ячейки строки становятся 0
-  Z.fillCells = f; renderRows(); save(); setTimeout(fillAutoCommit, 0);   // v0.696: вся строка — «1» → в строки
+  Z.fillCells = f; renderRows(); save();
   say(`⌖ Луч прошёл все кольца — в строке для заполнения «1» в ячейке ${ch.join(", ")}.`);
 }
 /* v0.119, «сделай кнопку остановка по проходу лазера, пауза, потом вручную продолжить, и показывай цикл — сколько прошло кругов
@@ -3758,7 +3765,7 @@ function setupCone(){
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
-  const stepDir = (neg) => { const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); };
+  const stepDir = (neg) => { const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); fillAutoCommit(); };   // v0.698: готовая строка — в строки только по шагу
   $("bConeStepB").onclick = () => stepDir(true);
   $("bConeStepF").onclick = () => stepDir(false);
   /* v0.687, «для лазера надо сделать отдельные кнопки кручения, которые как шаги можно откатывать назад, всё стирая закрашенное на место»: «шаг ↷» в
@@ -3773,6 +3780,7 @@ function setupCone(){
     coneStep(1);
     if ((Z.coneSpinPh || 0) === ph0 && JSON.stringify(Z.voidHits || null) === vh0) return;   // шаг не состоялся — помнить нечего
     lasHist.push(b); if (lasHist.length > 500) lasHist.shift();
+    fillAutoCommit();   // v0.698: строка за чертой вся «1» — в строки, черта вниз (только по шагу)
   };
   if ($("bLasPeek")) {   // v0.695: ◌ след. — показать, куда солнце будет светить после шага
     $("bLasPeek").classList.toggle("on", !!Z.lasPeek);
