@@ -7333,7 +7333,11 @@ function cgrpInit(){
     /* v0.536, по снимку свёрнутого «Звука», ушедшего под заголовок окна, — «скрылась за заголовком полоской и никак не вытащить»: верхняя граница —
        низ заголовка окна (wb — само окно, его верх — это верх заголовка) */
     const hb = wbTop();
-    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw)), y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw));
+    let y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    /* v0.656, «…чтобы зубцами синхронизировалась группа»: по вертикали группа встаёт на ряды сетки — шагом 24 px от низа полосы вкладок (ряды зубцов
+       левой панели выровнены по вкладкам, v0.636); прижатая к меню — ровно под ним */
+    { const k = Math.round((tr.top + y - hb) / 24); let y2 = hb - tr.top + k * 24; if (y2 + gh > br.bottom - tr.top + 0.5) y2 -= 24; if (y2 >= hb - tr.top - 0.5) y = y2; }
     g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
   };
   /* v0.558, по снимку «Аниматрицы» поверх «Вида» — «не давай на друг друга ложить группы»: плавающая группа (поверх холста или на поле строк), налезшая на
