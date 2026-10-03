@@ -10657,12 +10657,12 @@ function init(){
   };
   /* v0.067, «Разложить не раскрывает окна; надо ещё кнопку Свернуть»: 📐 снова раскладывает и разворачивает все окна
      (как до v0.058), а сворачивание — отдельной кнопкой ▭: свернуть все; если все уже свёрнуты — развернуть все. */
-  $("bLayout").onclick = () => {
+  if ($("bLayout")) $("bLayout").onclick = () => {   // v0.575: кнопки в шапке нет (Окна — в левой панели); обработчик — если вернут
     layoutAll(true); document.querySelectorAll(".win.maxed").forEach(el => el.classList.remove("maxed"));   // v0.060: ⛶ сбрасывается раскладкой
     packWins(); save(); renderPointers(); renderAll();
     say("📐 Окна разложены по местам и развёрнуты. ▭ — свернуть все.");
   };
-  $("bCollapseAll").onclick = () => {
+  if ($("bCollapseAll")) $("bCollapseAll").onclick = () => {
     const wins = Array.from(document.querySelectorAll(".win")).filter(el => el.id !== "w-help" && !el.classList.contains("popped") && el.style.display !== "none" && Z.win[el.id]);
     const open = wins.some(el => !el.classList.contains("collapsed"));
     wins.forEach(el => { const w = Z.win[el.id]; w.collapsed = open; el.classList.toggle("collapsed", open); if (!open) el.style.height = w.h + "px"; });
