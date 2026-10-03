@@ -2334,6 +2334,11 @@ function coneSunPaint(){
   const S = coneSunTrace(), now = new Set(S.hits), first = coneSunWas === undefined, h = coneVoidHits(); let ch = false;
   for (const k of now) if (first ? !h[k] : !coneSunWas.has(k)) { h[k] = (h[k] | 0) + 1; ch = true; }
   coneSunWas = now;
+  /* v0.681, по снимку солнца с одной строкой — «в какой момент он будет красить?»: попадания в кольцо за чертой шли только в счёт и нигде не были видны.
+     Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
+  { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
+    for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
+    if (fc) { Z.fillCells = f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
   if (ch) coneLogDirty();
   return ch;
 }
