@@ -5193,9 +5193,10 @@ function setupPyr(){
     const D = pyrBuild(), show = Math.max(1, Math.min(D.n, Z.pyrShow || D.n)), L = D.layers[show - 1], k = D.K0 + show - 1;
     const rows = L.map(row => Array.from(row).join(""));
     snapshot();
-    Z.rows.splice(Z.cur + 1, 0, ...rows); Z.cur += 1;
+    /* v0.626, «класть с первой строки, а то, что было, — удалить»: этаж заменяет всё поле строк, с первой строки (прежде — вставлялся под текущей) */
+    Z.rows = rows; syncLane(); Z.cur = 0; if (typeof rowsOrigSet === "function") rowsOrigSet();
     renderAll(); save();
-    say(`⤓ Этаж k = ${k} — в поле: ${rows.length} строк (длины 1…${rows.length}) под бывшей текущей. Последняя из них — грань пирамиды. ↩ вернёт.`);
+    say(`⤓ Этаж k = ${k} — в поле с первой строки: ${rows.length} строк (длины 1…${rows.length}), прежние строки убраны. Последняя — грань пирамиды. ↩ вернёт.`);
   };
   if (window.ResizeObserver) new ResizeObserver(() => renderPyr()).observe(cv);
   requestAnimationFrame(cutUi);
