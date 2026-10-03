@@ -2135,6 +2135,17 @@ function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true,
    при накрутке 0 (биты по центру сверху) и n − ½ (дыра по центру сверху) — второе целыми частями не достать. Теперь кольцо в вырезах встаёт на
    половины частей, и полчасти помнится (coneRotKeep); у остальных колец — как было, целыми битами */
 function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).cut ? Math.round(x * 2) / 2 : Math.round(x); }
+/* v0.674, «когда лазер T−1 — нужно расставить симметрично вертикали: чётные — между центральными битами, нечётные — по средней части выреза»:
+   расстановка v0.673 (накрутка 0) держалась только без своей накрутки — вход в режим оставлял прежнюю, а ⟲ / ⌖✕ при умолчании ⭐ возвращали
+   накрутку из ⭐. Теперь кольца с вырезом (строки 2, 3, …) встают на 0 при входе в T−1 и при каждом сбросе в этом режиме; → сколько сдвинуто */
+function coneCutHome(){
+  if (!coneCutOn()) return 0;
+  let k = 0; for (let i = 1; i < Z.rows.length; i++) { if (coneRot[i]) k++; coneRot[i] = 0; }
+  Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
+  Z.coneSpin = 0; Z.coneSpinPh = 0;   // поворот всего конуса и фаза кручения тоже уводили кольца от вертикали
+  const V = Z.voidHits; if (V) { V.fz = {}; V.off = {}; V.lph = 0; }
+  return k;
+}
 function coneCutWin(b, N){   // вырез кольца строки b (с 0, b ≥ 1) в долях его бита от начала бита 0: [от, до]; null — открыто всё
   const n = Z.rows[b].length, m = b + 1 < N ? Z.rows[b + 1].length : n + 1;
   if (!n || !m || n - 1 >= m) return null;
@@ -3626,6 +3637,7 @@ function setupCone(){
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
+      coneCutHome();   // v0.674: в вырезах T−1 — симметричная расстановка, не накрутка из ⭐
       coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
       save(); renderRows(); renderCone();
       say("⟲ Всё на местах — из умолчания ⭐: положения колец, кручение, довод строки 1 и настройки конуса. Счёт проходов — с нуля. Биты строк не менялись.");
@@ -3692,9 +3704,10 @@ function setupCone(){
   const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitMode(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
   slitsUi();
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
-    const m = coneSlitMode(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
+    const m = coneSlitMode(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null;
+    const kc = coneCutHome(); save(); renderRows(); renderCone();   // v0.674: вход в T−1 — кольца симметрично вертикали
     say({ one: "1 щель: выход из кольца — только граница между последним и первым битом строки.",
-          cut: "Вырезы T−1: у кольца строки вырез шириной (её длина − 1) бит следующей строки — под её битами 2…k, как в треугольнике; строка 1 без затвора, луч идёт мимо.",
+          cut: "Вырезы T−1: кольца симметрично вертикали — у чётных строк сверху середина бит, у нечётных — середина выреза; строка 1 без затвора, луч идёт мимо." + (kc ? ` Накрутка снята у колец: ${kc}.` : ""),
           all: "Все щели: луч проходит кольцо на любой границе бит (как было)." }[coneSlitMode()]);
   };
   $("bConeClockStop").onclick = () => {
