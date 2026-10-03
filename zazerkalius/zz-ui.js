@@ -5038,7 +5038,8 @@ function setupCone(){
 const PYR_ROWMAX = 160, PYR_MAXONES = 120000;
 let pyrData = null, pyrZoom = 1, pyrPan = [0, 0], pyrDrawKey = "";
 function pyrSeedLayer(){
-  const mode = Z.pyrSeed || "one", bits = (s, len) => { const u = new Uint8Array(len); for (let a = 0; a < len && a < s.length; a++) u[a] = s[a] === "1" ? 1 : 0; return u; };
+  /* v0.651, «Паскаль должен строить из строк, а не по-своему»: по умолчанию — строки поля верхним этажом (прежде «1»); «1» осталось в списке последним */
+  const mode = Z.pyrSeed || "tri", bits = (s, len) => { const u = new Uint8Array(len); for (let a = 0; a < len && a < s.length; a++) u[a] = s[a] === "1" ? 1 : 0; return u; };
   if (mode === "row") {
     let s = cur() || "1"; const cut = s.length > PYR_ROWMAX; if (cut) s = s.slice(0, PYR_ROWMAX);
     const L = []; for (let r = 0; r < s.length; r++) L.push(new Uint8Array(r + 1));
@@ -5185,7 +5186,7 @@ function renderPyr(force){
   const shownOnes = one ? onesK : D.perLayer.slice(0, show).reduce((s, x) => s + x, 0);
   $("pyrOut").innerHTML = `Затравка: ${esc(D.what)}. Этажей ${D.n} (k = ${D.K0}…${Kend})` + (D.cut ? ` — остановлено на ${D.n} из ${D.want}: больше ${PYR_MAXONES} единиц не рисую` : "") + `.\n` +
     (one ? `Показан один этаж k = ${kShow}` : show < D.n ? `Показаны этажи до k = ${kShow}` : "Показаны все этажи") + `: единиц <b>${shownOnes}</b>` + (one ? "" : ` из ${D.ones}`) + `. На этаже k = ${kShow} единиц <b>${onesK}</b>` +
-    ((Z.pyrSeed || "one") === "one" ? ` = 3^${pc} (в двоичной записи ${kShow} = ${kShow.toString(2)} единиц ${pc}) — у тетраэдра Серпинского всегда так.` : ".");
+    ((Z.pyrSeed || "tri") === "one" ? ` = 3^${pc} (в двоичной записи ${kShow} = ${kShow.toString(2)} единиц ${pc}) — у тетраэдра Серпинского всегда так.` : ".");
 }
 /* v0.270, по снимку полосы прокрутки вплотную к номерам строк — «этот скролл перемести влево конуса»: у колонки слева от поля строк
    (стол с конусом при «⇆ поле справа», левая панель) полоса прокрутки стояла справа — между ней и номерами. Теперь полоса — у левого
@@ -5256,7 +5257,8 @@ function setupPyr(){
   }, { passive: false });
   cv.addEventListener("dblclick", () => { Z.pyrYaw = 30; Z.pyrEl = 25; pyrZoom = 1; pyrPan = [0, 0]; save(); renderPyr(); });
   const cutUi = () => { const n = pyrData ? pyrData.n : (Z.pyrN ?? 32); $("pyrShow").max = n; $("pyrShow").value = Math.min(n, Z.pyrShow || n); };
-  $("pyrSeed").value = Z.pyrSeed || "one";
+  if ((Z.pyrSeedV | 0) < 1) { Z.pyrSeed = "tri"; Z.pyrSeedV = 1; Z.pyrShow = 0; }   // v0.651: по слову пользователя — один раз на строки поля, дальше как выберет
+  $("pyrSeed").value = Z.pyrSeed || "tri";
   $("pyrSeed").onchange = (e) => { Z.pyrSeed = e.target.value; Z.pyrShow = 0; save(); renderPyr(); cutUi();
     say({ one: "▲ От «1»: тетраэдр Серпинского — каждый этаж треугольник, клетка = XOR трёх соседей этажом выше.", row: "▲ От строки: текущая строка — нижний край верхнего этажа. Грань под ней растёт, как 🔺+1 от этой строки.", tri: "▲ От строк поля: весь столбик (или выделенные ≥ 2) — верхний этаж; лучше всего — треугольник, у которого длины растут по 1." }[Z.pyrSeed]); };
   $("pyrN").value = Z.pyrN ?? 32;
