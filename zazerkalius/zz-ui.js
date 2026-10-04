@@ -2897,7 +2897,7 @@ let rmbCur = null, rmbVals = [], rmbHeat = [], rmbAge = [], rmbFrame = 0, rmbKey
 const RMB_AGE = [[0.5, "#ff3b3b"], [1, "#ff8a3d"], [2, "#ffd166"], [4, "#9be564"], [8, "#22d3ee"], [16, "#5b7cfa"]];
 function rmbSt(){ if (!Z.rmb || typeof Z.rmb !== "object") Z.rmb = {}; const r = Z.rmb;
   if (!["c", "zz", "l", "r"].includes(r.al)) r.al = "zz"; if (!["each", "rmb", "grp", "none"].includes(r.ln)) r.ln = "each";
-  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; return r; }
+  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; if (r.wave !== "mir") r.wave = "fld"; return r; }
 function rmbLayout(R, M, al, cell){   /* → hs — начало каждого ряда в полуклетках, ok — лежит ли ряд на сетке ряда выше, u0 — первый треугольник ряда ▼ (1)
    или ▲ (0), base — как стоят ряды. «▲ бит»: ряд i — ▲ j на hs[i] + 2j, ряды по центру. «◇ бит» (v0.794): бит j — треугольники 2j и 2j + 1, ряды — как в поле */
   const rm = cell === "rmb", base = rm ? (Z.rowsAlign || "center") : "center", u0 = rm && al !== "l" ? 1 : 0;
@@ -2912,6 +2912,74 @@ function rmbLayout(R, M, al, cell){   /* → hs — начало каждого 
   }
   return { hs, ok, u0, base };
 }
+/* v0.795, по снимку «▲▼» — «Аниматрица изначально строилась так, можно её тут: волна — зеркало по горизонтали на каждую строку до 1 строки и так
+   по циклу; вариации — зеркало с инверсией, горизонт через 1, 2, 4, 8… строки вместо каждой, только чётные биты, только чётные группы по 2-4-8…».
+   «⇕ зеркало» в «◇ Ромбоидах» — своя волна. Шаг: горизонт — нижний край строки a; всё, что над ним (строки a, a − 1, … до строки 1), отражается
+   вниз: строка a + k получает отражение строки a + 1 − k. Отражение в треугольной сетке переворачивает треугольники: ▼ верхней строки ложится на ▲
+   нижней ровно под ним (▼ — инверсия ▲ над ним, как везде в «▲▼»); ▲ верхних ложатся на ▼ нижних, а ▼ сами — инверсия ▲ над ними, поэтому пишутся
+   только биты строк (▲). Горизонт идёт вниз на 1 (или 2, 4, 8, 16) строк за шаг; дошёл до низа — проход, и снова сверху. Читается только то, что
+   над горизонтом, пишется только под ним — порядок внутри шага не важен. Варианты: «¬» — зеркало с инверсией; биты — все, чётные (2-й, 4-й, …),
+   чётные группы по 2, 4, 8, 16 (вторая, четвёртая…); «⊕» — не заменять бит, а XOR со старым. Повтор картины — цикл (сообщение), как в Аниматрице */
+const rmbW = { on: 0, raf: 0, h: 0, pass: 0, start: null, last: "", seen: new Map(), t: 0, acc: 0, used: false, sv: 0 };
+function rmbWHash(R){ let h1 = 0x811c9dc5, h2 = 0x1b873593; for (const s of R) { for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619); h2 = Math.imul(h2 ^ c, 2246822519); } h1 = Math.imul(h1 ^ 44, 16777619); }
+  return (h1 >>> 0).toString(36) + ":" + (h2 >>> 0).toString(36) + ":" + R.length; }
+function rmbWStep(){
+  const R = Z.rows, N = R.length, r = rmbSt(); if (N < 2) return false;
+  const key = R.join(",");
+  if (key !== rmbW.last) { rmbW.h = 0; rmbW.pass = 0; rmbW.start = R.slice(); rmbW.seen = new Map([[rmbWHash(R), 0]]); snapshot(); }   // строки правили не этой волной — счёт заново, ↩ вернёт
+  rmbW.used = true;
+  const M = Math.min(N, 4096), { hs } = rmbLayout(R, M, r.al, "tri"), a = Math.min(rmbW.h, M - 2);
+  const g = +r.wmask || 0, inv = !!r.winv, xr = !!r.wxor, src = R.slice(0, a + 1);
+  const up = (i, P) => { const s = src[i], k = P - hs[i]; return s && k >= 0 && !(k & 1) && (k >> 1) < s.length ? s.charCodeAt(k >> 1) & 1 : -1; };   // ▲ строки i на месте P
+  for (let k = 1; a + k < M && a + 1 - k >= 0; k++) {
+    const d = a + k, m = a + 1 - k, s = R[d], n = s.length; let o = "", ch = false;
+    for (let j = 0; j < n; j++) {
+      const old = s.charCodeAt(j) & 1;
+      if (g && Math.floor(j / g) % 2 !== 1) { o += old ? "1" : "0"; continue; }
+      const P = hs[d] + 2 * j, km = P - hs[m];   // над ▲ (d, j) в зеркале — ▼ строки m на том же месте: середина между её ▲, и ▲ строки m − 1 над ним
+      let v = -1;
+      if ((km & 1) && km > 0 && km < 2 * src[m].length - 1 && m > 0) { const u = up(m - 1, P); if (u >= 0) v = 1 - u; }
+      if (v < 0) { o += old ? "1" : "0"; continue; }
+      if (inv) v = 1 - v; if (xr) v ^= old;
+      if (v !== old) ch = true; o += v ? "1" : "0";
+    }
+    if (ch) R[d] = o;
+  }
+  rmbW.h += Math.max(1, +r.whz || 1);
+  if (rmbW.h >= M - 1) { rmbW.h = 0; rmbW.pass++;
+    const hh = rmbWHash(R);
+    if (rmbW.seen.has(hh)) { if (!rmbW.per) { rmbW.per0 = rmbW.seen.get(hh); rmbW.per = rmbW.pass - rmbW.per0; say(`🔁 Зеркальная волна: проход ${rmbW.pass} повторяет проход ${rmbW.per0} — цикл ${rmbW.per}.`); } }
+    else if (rmbW.seen.size < 200000) rmbW.seen.set(hh, rmbW.pass); }
+  rmbW.last = R.join(",");
+  return true;
+}
+function rmbWReset(){ rmbW.per = 0; rmbW.per0 = 0; }
+function rmbWStop(){ if (rmbW.raf) cancelAnimationFrame(rmbW.raf); rmbW.raf = 0; rmbW.on = 0; save(); rmbUi(); }
+function rmbWPlay(){
+  if (rmbW.on) { rmbWStop(); return; }
+  if (rowsLocked()) return;
+  if (Z.rows.join(",") !== rmbW.last) rmbWReset();
+  rmbW.on = 1; rmbW.t = performance.now(); rmbW.acc = 0; rmbW.sv = rmbW.t;
+  const tick = (now) => {
+    if (!rmbW.on) return;
+    const sp = 0.5 * Math.pow(10000, (+rmbSt().wsp >= 0 ? +rmbSt().wsp : 40) / 100);   // шагов горизонта в секунду, 0,5…5000
+    rmbW.acc = Math.min(rmbW.acc + (now - rmbW.t) / 1000 * sp, 4000); rmbW.t = now;
+    let n = 0; const t0 = performance.now();
+    while (rmbW.acc >= 1 && performance.now() - t0 < 30) { rmbW.acc--; if (!rmbWStep()) { rmbWStop(); return; } n++; }
+    if (n) { renderAll(); if (now - rmbW.sv > 3000) { rmbW.sv = now; save(); } }
+    rmbW.raf = requestAnimationFrame(tick);
+  };
+  rmbW.raf = requestAnimationFrame(tick); rmbUi();
+  const r = rmbSt(); say(`⇕ Зеркальная волна${r.winv ? " с инверсией" : ""}: горизонт через ${+r.whz || 1}, ${RMB_WMASK[+r.wmask || 0]}${r.wxor ? ", ⊕ со старым" : ""}. ↩ вернёт строки.`);
+}
+function rmbWHome(){
+  rmbWStop();
+  if (!rmbW.start) { say("⇕ Зеркальная волна ещё не шла."); return; }
+  if (rowsLocked()) return;
+  snapshot(); Z.rows.splice(0, Z.rows.length, ...rmbW.start); rmbW.h = 0; rmbW.pass = 0; rmbW.last = Z.rows.join(","); rmbWReset();
+  rmbW.seen = new Map([[rmbWHash(Z.rows), 0]]); Z.cur = Math.min(Z.cur, Z.rows.length - 1); renderAll(); save(); say("⤺ Строки — какими были до зеркальной волны.");
+}
+const RMB_WMASK = { 0: "все биты", 1: "чётные биты", 2: "чётные пары", 4: "чётные четвёрки", 8: "чётные восьмёрки", 16: "чётные по 16" };
 function rmbFit(){
   const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = Z.rows, M = Math.min(R.length, 4096); if (!M) return;
   const { hs } = rmbLayout(R, M, r.al, r.cell), rm = r.cell === "rmb"; let a = Infinity, b = -Infinity;
@@ -2929,7 +2997,11 @@ function rmbUi(){
   const bl = $("bRmbLn"); if (bl && bl.textContent !== L[r.ln]) bl.textContent = L[r.ln];
   const bg = $("bRmbGl"); if (bg) { if (bg.textContent !== G[r.gl]) bg.textContent = G[r.gl]; bg.classList.toggle("on", !!r.gl); }
   [["bRmbNum", r.num], ["bRmbSh", r.sh], ["bRmbOut", r.out], ["bRmbFol", r.fol]].forEach(([id, v]) => { const b = $(id); if (b) b.classList.toggle("on", !!v); });
-  const p = $("bRmbPlay"), a = $("bAnimPlay"); if (p && a) { const on = a.classList.contains("on"); p.classList.toggle("on", on); const t = on ? "⏸" : "▶"; if (p.textContent !== t) p.textContent = t; }
+  const p = $("bRmbPlay"), a = $("bAnimPlay"); if (p && a) { const on = r.wave === "mir" ? !!rmbW.on : a.classList.contains("on"); p.classList.toggle("on", on); const t = on ? "⏸" : "▶"; if (p.textContent !== t) p.textContent = t; }
+  { const mw = r.wave === "mir"; const el = $("rmbWOpt"); if (el && el.hidden === mw) el.hidden = !mw;   // v0.795: варианты зеркальной волны — только при ней
+    const ws = $("rmbWave"); if (ws && document.activeElement !== ws && ws.value !== r.wave) ws.value = r.wave;
+    [["rmbWHz", String(+r.whz || 1)], ["rmbWMask", String(+r.wmask || 0)], ["rmbWSp", String(+r.wsp >= 0 ? +r.wsp : 40)]].forEach(([id, v]) => { const el = $(id); if (el && document.activeElement !== el && el.value !== v) el.value = v; });
+    [["bRmbWInv", r.winv], ["bRmbWXor", r.wxor]].forEach(([id, v]) => { const b = $(id); if (b) b.classList.toggle("on", !!v); }); }
   [["rmbBg", r.bg, "--panel2", "#141a24"], ["rmbC1", r.c1, "--b1", "#22d3ee"], ["rmbC0", r.c0, "--b0", "#7d8699"], ["rmbLnC", r.lc, "", "#e6e9ef"]].forEach(([id, v, css, d]) => {
     const el = $(id); if (!el || document.activeElement === el) return; let c = v || (css ? coneCss(css, d) : d); if (!/^#[0-9a-f]{6}$/i.test(c)) c = d; if (el.value !== c) el.value = c; });
 }
@@ -2947,9 +3019,16 @@ function rmbWire(){
   $("bRmbFit").onclick = () => { rmbFit(); re(); };
   $("bRmbDef").onclick = () => { const r = rmbSt(); delete r.bg; delete r.c1; delete r.c0; delete r.lc; re(); };
   [["rmbBg", "bg"], ["rmbC1", "c1"], ["rmbC0", "c0"], ["rmbLnC", "lc"]].forEach(([id, k]) => { const el = $(id); el.oninput = () => { rmbSt()[k] = el.value; renderRmb(); }; el.onchange = () => save(); });
-  $("bRmbPlay").onclick = () => { $("bAnimPlay").click(); setTimeout(rmbUi, 0); };
-  $("bRmbStep").onclick = () => $("bAnimStep").click();
-  $("bRmbHome").onclick = () => $("bAnimHome").click();
+  const mir = () => rmbSt().wave === "mir";
+  $("bRmbPlay").onclick = () => { if (mir()) { rmbWPlay(); return; } $("bAnimPlay").click(); setTimeout(rmbUi, 0); };
+  $("bRmbStep").onclick = () => { if (!mir()) { $("bAnimStep").click(); return; } if (rowsLocked()) return; if (Z.rows.join(",") !== rmbW.last) rmbWReset(); rmbWStep(); renderAll(); save(); };
+  $("bRmbHome").onclick = () => { if (mir()) rmbWHome(); else $("bAnimHome").click(); };
+  $("rmbWave").onchange = (e) => { if (rmbW.on) rmbWStop(); if ($("bAnimPlay").classList.contains("on")) $("bAnimPlay").click(); rmbSt().wave = e.target.value; re(); };
+  $("rmbWHz").onchange = (e) => { rmbSt().whz = +e.target.value; re(); };
+  $("rmbWMask").onchange = (e) => { rmbSt().wmask = +e.target.value; re(); };
+  $("rmbWSp").oninput = (e) => { rmbSt().wsp = +e.target.value; }; $("rmbWSp").onchange = () => save();
+  $("bRmbWInv").onclick = () => { const r = rmbSt(); r.winv = !r.winv; re(); };
+  $("bRmbWXor").onclick = () => { const r = rmbSt(); r.wxor = !r.wxor; re(); };
   if (window.ResizeObserver) new ResizeObserver(() => { if (winOpen("w-rmb")) renderRmb(); }).observe(cv);
   // колесо — наезд к мыши, тянешь — сдвиг, щелчок — текущая строка, двойной — вписать
   cv.addEventListener("wheel", (e) => { e.preventDefault(); const r = rmbSt(); if (!r.s) rmbFit();
@@ -2972,7 +3051,7 @@ function renderRmb(){
   if (!winOpen("w-rmb")) { rmbCur = null; return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
   const R = Z.rows, r = rmbSt(), M = Math.min(R.length, 4096);
   let fresh = false;
-  const AN = typeof window.zzAnim === "function" ? window.zzAnim() : null;
+  const AN = r.wave === "mir" && rmbW.used ? { on: !!rmbW.on, row: rmbW.h, pass: rmbW.pass } : typeof window.zzAnim === "function" ? window.zzAnim() : null;   // v0.795: часы возраста и ⇣ — от той волны, что идёт
   if (!rmbCur || rmbCur.length !== R.length || rmbCur.some((s, i) => s !== R[i])) { fresh = !!rmbCur; rmbCur = R.slice(); rmbFrame++;
     const t = AN ? AN.pass + AN.row / Math.max(1, M) : null;   // часы в проходах волны: идут вперёд всегда (⤺ и правки руками — на шаг)
     rmbClock += t !== null && rmbLastA !== null && t > rmbLastA ? t - rmbLastA : 1 / Math.max(1, M); rmbLastA = t; }
