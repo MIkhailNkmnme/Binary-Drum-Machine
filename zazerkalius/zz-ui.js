@@ -1715,7 +1715,9 @@ function coneHoverRow(i){
    поэтому все кнопки, поля и списки группы «Лазер» в 3D неактивны (бледные, не жмутся, подсказка — почему); группу можно двигать.
    Вышел из 3D — возвращаются, как были (то, что было неактивно само по себе, — таким и остаётся). Метка — data-d3 / .dis3 */
 function lasUi3d(){
-  const G = document.querySelector(".cgrp.cg-las"); if (!G) return;
+  document.querySelectorAll(".cgrp.cg-lx").forEach(lasUi3dG);   // v0.757: «Лазер» разобран на шесть групп — в 3D неактивны все
+}
+function lasUi3dG(G){
   const on = !!Z.cone3d;
   G.querySelectorAll("button, input, select").forEach(el => {
     if (on) { if (!el.dataset.d3) el.dataset.d3 = el.disabled ? "was" : "1"; if (!el.disabled) el.disabled = true; }   // и если что-то включило его заново
@@ -1724,8 +1726,103 @@ function lasUi3d(){
   G.querySelectorAll("label").forEach(l => l.classList.toggle("dis3", on));
   if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { G.dataset.tip0 = G.title; G.title = "⌖ Лазер в 3D пока не работает — кнопки неактивны. Выйди из 3D (🧊), чтобы включить лазер"; } else if (G.dataset.tip0 !== undefined) { G.title = G.dataset.tip0; delete G.dataset.tip0; } }
 }
+/* v0.757, «надо разобрать группу кнопок Лазера на подвиды… разграничить лазер от солнца, и разные режимы построения строк и симметрии, все кнопки сразу
+   показывать и на что они влияют, затемнять кнопки, которые неактивны при нажатых уже других, и внизу подсказку писать, что в итоге получается за алгоритм»:
+   прежняя группа «Лазер» — шесть групп (Лазер, Солнце, Строка 1, Щели, За чертой, Алгоритм; класс .cg-lx). lasDeps — у каждой кнопки, при каком режиме она
+   действует: не действует — затемнена (.ldim; жать можно — настройка запомнится), причина — первой строкой её подсказки. Внизу «Алгоритма» (#lasAlgo) — что в
+   итоге делает лазер или солнце, по строкам: источник, строка 1, кольца, за чертой, луна, ход. У каждой кнопки — data-la, ключ её строки: наведи на кнопку —
+   строка светится, наведи на строку — светятся её кнопки. Пересчёт — из renderCone, только когда что-то из режимов сменилось */
+const LAS_KEY = {
+  src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
+  r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bConeAimL", "bConeAimR"],
+  ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "coneSunCut"],
+  fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
+  moon: ["bMoonEcl", "bMoonOne"],
+  run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasPeek", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
+};
+let lasDepsK = "";
+function lasDeps(){
+  const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
+  const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length].join("|");
+  if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
+  /* что когда не действует (первая подошедшая причина — в подсказку) */
+  const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
+  need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
+    "bSunHalf", "bSunGate", "bMoonEcl", "bMoonOne", "bSunXor", "bSunSweep", "bCutFree", "bLasPeek"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
+  need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
+  need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
+  need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
+  need(["coneSunCut", "bLasPeek", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonOne", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonOne", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
+  need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
+  need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
+  need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
+  need(["bConeAimL", "bConeAimR"], cut && !r1 && !quad, "в вырезах T−1 строка 1 прозрачна — доводить нечего (включи ▮ щель 1)");
+  need(["coneSlit"], zero, "«Без щелей» — ширина щели ни на что не влияет");
+  need(["coneVoid"], zero && !cut, "«Без щелей» — свет ловит строка за чертой, пустых колец нет");
+  for (const [key, ids] of Object.entries(LAS_KEY)) for (const id of ids) {
+    const el = document.getElementById(id); if (!el) continue;
+    const box = el.tagName === "BUTTON" ? el : (el.closest("label") || el), w = why[id] || "";
+    if (box.dataset.t0 === undefined) box.dataset.t0 = box.title || "";
+    box.dataset.la = key;
+    if (box.classList.contains("ldim") !== !!w) box.classList.toggle("ldim", !!w);
+    const t = w ? "⛔ Сейчас не действует: " + w + ".\n\n" + box.dataset.t0 : box.dataset.t0; if (box.title !== t) box.title = t;
+  }
+  /* что в итоге получается */
+  const dg = (x) => String(Math.round(x * 10) / 10).replace(".", ",") + "°", L = [], slit = dg(+Z.coneSlit || 2), who = sun ? "свет" : "луч";
+  if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D не считаются — выйди из 3D (🧊), чтобы они заработали."]);
+  else if (!clk) L.push(["src", "<b>Выключено</b>: ни луча, ни солнца. ⌖ луч-часы — луч из центра, ☀ солнце — свет во все стороны, ✺ все лучи — лучи по кругу сразу."]);
+  else {
+    if (sun) L.push(["src", "<b>Источник</b>: ☀ солнце в центре светит во все стороны; ▶ крутить — свет красит то, на что упал."]);
+    else if (fan) { const n = coneFanN(); L.push(["src", `<b>Источник</b>: ✺ ${n} лучей из центра через ${dg(360 / n)}, первый — на ${dg(+Z.coneLaser0 || 0)}; вылетевший гаснет и отпускает кольца, ▶ — пока не вылетят все. ${coneLaserFixed() ? "📌 Лучи стоят, конус крутится под ними" : "Лучи крутятся вместе с конусом"}.`]); }
+    else { const n = coneLasersN(); L.push(["src", `<b>Источник</b>: ⌖ луч из центра на ${dg(coneLaserDeg())}` + (n > 1 ? `; лазеров ${n} через ${dg(360 / n)}, светит один — ${Z.coneLaserChain ? "вылетел за край, включается следующий" : "вылетел за край, пауза (⌖→ след. выключено)"}` : "") + `. ${coneLaserFixed() ? "📌 Лазер стоит, конус крутится под ним" : "Лазер крутится вместе с конусом"}.`]); }
+    let t;
+    if (cut) {
+      if (quad) t = sun ? "круг из 4 четвертей, солнце в центре светит только через чёрные" : "круг из 4 четвертей — луч выходит только через чёрную, на белой встаёт";
+      else if (r1) { const a = +Z.row1SlitDeg || +Z.coneSlit || 2; t = a >= 360 ? "▮ щель во весь круг — выход всегда открыт" : sun ? `солнце светит из ▮ щели ${dg(a)}` : `▮ щель ${dg(a)} — луч выходит, только когда щель на нём`; }
+      else if (sun && Z.sunHalf) t = "◐ полукольцо с битом, солнце внутри — свет только через открытую половину";
+      else t = `прозрачна — ${who} идёт мимо`;
+      if (quad || r1 || (sun && Z.sunHalf)) t += ", крутится вместе с кольцом строки 1";
+      if (sun && Z.sunGate) t += "; ☀ накрыты: светит, только когда бит строки 1 целиком накрыт единицами строки 2";
+    } else t = sun ? "светит во все стороны" : "затвор — луч выходит, когда щель строки 1 проезжает мимо лазера (⌖◁ ⌖▷ — довести)";
+    L.push(["r1", "<b>Строка 1</b>: " + t + "."]);
+    const stop = sun ? "свет проходит, на битах останавливается и красит их" : "проходит — кольцо встаёт, бит под лучом — стена (золотая рамка)";
+    if (zero) t = "Без щелей — «0» пропускает свет во всю ширину, «1» — стена";
+    else if (cut) t = "вырезы T−1 — у кольца из E бит E бит подряд (стена) и вырез из E − 1 частей, " + ({ l: "вырез начинается от вертикали по часовой", r: "биты начинаются от вертикали" }[Z.cutAlign] || "кольца симметричны вертикали") +
+      (Z.cutGaps && !sun ? `; ⌖ ещё и щели ${slit} между битами` : "") + "; в вырез " + stop;
+    else if (mode === "one") t = `у каждого одна щель ${slit} — граница последнего и первого бита; в щель ${stop}`;
+    else t = `щель ${slit} на любой границе бит; в щель ${stop}`;
+    L.push(["ring", "<b>Кольца</b>: " + t + "."]);
+    t = sun ? (Z.sunSweep ? "ячейка, которую свет прошёл всю за один проход (слева направо или справа налево), → 1" : "ячейка, которую свет накрыл целиком, → 1") + (Z.sunXor ? "; ⊕ свет упал заново — 1 ↔ 0" : "")
+      : "луч прошёл все кольца — ячейка под ним → 1";
+    if (cut && Z.cutFree) t += "; ▦ любые: бит встаёт в первую целиком накрытую часть, следующие — вплотную, набралось n — строка уходит в поле";
+    if (coneVoidOn()) t += `; дальше — пустые кольца до 256, ${who} метит каждую пройденную ячейку (1, 11, 111…)`;
+    if (Z.coneOutOn) t += `; ✎ попадания пишутся в поле ${coneOutLane() + 1}`;
+    L.push(["fill", "<b>За чертой</b>: " + t + "."]);
+    if (sun && cut) L.push(["moon", "<b>Луна</b>: " + (Z.moonEcl ? "☾ только при затмении (ничего не вылетело) — зеркало света, упавшего на последнее кольцо" : "зеркало вылетевшего света через центр") +
+      (Z.moonOne !== false ? "; идёт из центра сквозь «1», считая их, — 0 в ячейку, целиком накрытую светом с одинаковым числом «1»" : "; начинается у кольца за чертой — 0 там, где накрыла ячейку целиком") + "."]);
+    const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
+    L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + (sun && Z.lasPeek ? "; ◌ пунктиром — куда посветит после шага" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
+  }
+  let box = GA.querySelector(":scope > #lasAlgo");
+  if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; GA.appendChild(box); }
+  const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
+  if (box.innerHTML !== h) box.innerHTML = h;
+  if (!lasDeps._h) { lasDeps._h = 1;   // наведение: кнопка ↔ её строка алгоритма
+    const clr = () => document.querySelectorAll(".cgrp .lhl, #lasAlgo > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
+    document.addEventListener("pointerover", (e) => {
+      const x = e.target.closest && e.target.closest(".cgrp [data-la]"); clr(); if (!x) return;
+      const key = x.dataset.la;
+      if (x.parentElement && x.parentElement.id === "lasAlgo") { x.classList.add("hl"); document.querySelectorAll('.cgrp :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
+      else { const r = document.querySelector('#lasAlgo > div[data-la="' + key + '"]'); if (r) r.classList.add("hl"); }
+    }, { passive: true });
+  }
+}
 function renderCone(){
   lasUi3d();   // v0.373
+  lasDeps();   // v0.757
   if (!winOpen("w-cone")) return;
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
@@ -5355,7 +5452,7 @@ function setupCone(){
     return best || { w: $("w-cone"), cv: $("coneCv") };
   };
   const recCur = () => (rec && recSrc) ? recSrc : (typeof turnOn !== "undefined" && turnOn) ? { w: $("w-cone"), cv: $("coneCv") } : recPick();
-  const recName = (t) => (t && t.w && (t.w.dataset.title || t.w.id)) || "◯ Конус";
+  const recName = (t) => (t && t.w && (t.w.dataset.title || t.w.id)) || "◯ Solarius";
   let recPause = 0, recPausedAt = 0, frameOn = false;   // v0.256: сколько мс стояли на паузе, с какого мига пауза; ▣ кадр включён
   const recUi = () => {
     const b = $("bConeRec");
@@ -8590,6 +8687,13 @@ function cgrpInit(){
   };
   // v0.258: у каждой кнопки группы — её «дом» (куда вернуть); перенесённые между группами — на свои места
   groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) b.querySelectorAll("button, label, select, input, .cunit").forEach(el => { if (!el.dataset.home) el.dataset.home = g.dataset.g; }); });
+  /* v0.757: «Лазер» разобран на шесть групп — записи «кнопка переставлена в группу „лазер“» (Z.cgrpMove, Z.btnMove) вернули бы кнопки, уехавшие в новые группы,
+     обратно; один раз такие записи снимаются, прежние — копией рядом (Z.cgrpMove_pered_razborom, Z.btnMove_pered_razborom). Переносы в другие группы — как были */
+  if (!Z.lasSplit) { Z.lasSplit = 1; const NEW = new Set(["солнце", "строка 1", "щели", "за чертой", "алгоритм"]);
+    for (const [st, f] of [["cgrpMove", "g"], ["btnMove", "p"]]) { const M = Z[st]; if (!M || typeof M !== "object") continue; let bak = null;
+      for (const [k, m] of Object.entries(M)) { if (!m || m[f] !== "лазер") continue; const el = cgrpMoveEl(cgrpRefEl(k)); if (!el || !NEW.has(el.dataset.home)) continue;
+        if (!bak) bak = JSON.parse(JSON.stringify(M)); delete M[k]; }
+      if (bak) Z[st + "_pered_razborom"] = bak; } }
   // v0.281: и исходный сосед справа (ссылкой, "" — последней): перенос в конец своей же группы теперь запоминается (прежде забывался)
   groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) [...b.children].forEach(el => { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; }); });
   if (Z.cgrpMove && typeof Z.cgrpMove === "object") for (const [k, m] of Object.entries(Z.cgrpMove)) {
@@ -8616,7 +8720,7 @@ function cgrpInit(){
      месте, а группы можно скрывать в них»: над группами конуса — полоса вкладок #cgTabs (Лазер · Кручение · Вид · Звук · Кольца · Аниматрица, дальше —
      прочие), каждая — шеврон цветом своей группы. Щелчок: группа видна — спрятать (Z.cgrpOff), спрятана или свёрнута — показать развёрнутой.
      Видна — вкладка погашена (бледнее), спрятана — горит своим цветом. Вкладки всегда на месте, сами не двигаются */
-  const CG_TAB_ORD = ["лазер", "кручение", "вид", "звук", "кольца", "аниматрица"];   // v0.589, «отсюда удали» (вкладка «Дзен»): пульта дзена во вкладках нет — он виден только в дзене
+  const CG_TAB_ORD = ["лазер", "солнце", "строка 1", "щели", "за чертой", "алгоритм", "кручение", "вид", "звук", "кольца", "аниматрица"];   // v0.589, «отсюда удали» (вкладка «Дзен»): пульта дзена во вкладках нет — он виден только в дзене
   const cgOpen = (g) => !Z.cgrpOff[g.dataset.g] && !g.classList.contains("cmin");
   const cgTabs = document.createElement("div"); cgTabs.id = "cgTabs";
   groups.filter(g => g.dataset.g !== "гамма" && !g.classList.contains("cg-zen")).sort((a, b) => { const ia = CG_TAB_ORD.indexOf(a.dataset.g), ib = CG_TAB_ORD.indexOf(b.dataset.g); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); }).forEach(g => {
@@ -9561,7 +9665,7 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
   /* v0.634, по снимку «Кручения» — «поправь границы»: под кнопками там ещё строка «вариантов цикла» (#coneVarN, не из треугольников), а ромб-ручка
      вставал над ней — на третьем ряду, поверх рамки. Нижний ряд — и такая строка: ромб — в её правом острие, в углу группы */
-  g.querySelectorAll(":scope > #coneVarN").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) bot = r.top; });   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
+  g.querySelectorAll(":scope > #coneVarN, :scope > #lasAlgo").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) bot = r.top; });   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
   const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
@@ -10137,7 +10241,7 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
   return Math.ceil(m) + 1 + (parseFloat(getComputedStyle(g).paddingLeft) || 0);   // v0.545: и отступ слева (под циферблат Аниматрицы)
 }
 function tzcIcons(){
@@ -12299,7 +12403,7 @@ function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
   if (ZZ_PRESET) {   // v0.185: пресет — как сохранён, только крутится
     rowSel.clear(); renderAll();
     if (!document.getElementById("bConeAuto").classList.contains("on")) $("bConeAuto").click();
-    document.title = "Zerkalius Конус — " + (ZZ_PRESET.title || ZZ_PRESET.name || "пресет");
+    document.title = "Zerkalius Solarius — " + (ZZ_PRESET.title || ZZ_PRESET.name || "пресет");
     return;
   }
   const r = ["1"]; while (r.length < 64) r.push(zzPascalNext(r[r.length - 1]));
