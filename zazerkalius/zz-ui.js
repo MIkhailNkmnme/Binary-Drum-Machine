@@ -9367,6 +9367,19 @@ function paneZig(){
   const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
   let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
   pane.style.setProperty("--pzigy", dy.toFixed(1) + "px");
+  /* v0.755, по снимку края левого меню — «вкладывай в зубья левого меню все кнопки группы и верхнее меню полоску»: зубцы были вырезаны внутри панели, а вкладки
+     и группы окна у края начинаются за ней — выемки их левого края с остриями не сходились, между ними оставались ромбики фона. Теперь край панели прямой, а
+     зубцы (цветом панели, с чертой) выступают наружу на глубину выемки, поверх окон (#paneZigOv, сквозь него щелчки проходят): острие — в выемку вкладки
+     или ряда группы, что стоит у края. Сетка та же — остриё на середине полосы вкладок */
+  { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov); }
+    const pr = pane.getBoundingClientRect(), on = innerWidth > 760 && pr.width > 4 && pane.offsetParent !== null;
+    ov.style.display = on ? "" : "none";
+    if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
+      ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = pr.height + "px"; ov.style.width = wq.toFixed(2) + "px";
+      ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
+      if (ov._k !== kq) { ov._k = kq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
+        const sq = `<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
+        ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(sq)}")`; ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
