@@ -778,6 +778,19 @@ function coneZeroOpen(b, N, C, open){
    открытую половину; полукольцо крутится, как кольцо строки 1 (полоборота на шаг). coneSunHalfArc — открытая дуга (углы от верха, по часовой) */
 function coneSunHalf(){ return !!Z.sunHalf && coneSunOn() && coneCutOn(); }
 function coneSunHalfArc(){ const r = coneRotOf(0), o = []; if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; ivNorm((0.5 - r) * Math.PI, (1.5 - r) * Math.PI, o); return ivUnion(o); }
+/* v0.728, «ещё кнопку рядом с полукольцом: что солнце из текущего кольца светит дальше только тогда, когда все единицы этого кольца закрыты единицами
+   внешнего кольца»: «☀ накрыты» (Z.sunGate) — свет идёт из кольца строки b − 1 в кольцо b, только если каждая «1» кольца b − 1 целиком закрыта (по углу)
+   единицами кольца b; нет — свет встаёт на кольце b − 1. Проверяются кольца строк (кольцо за чертой ещё пустое — не проверяется); строка 1 — только
+   полукольцом (◐), целое солнце закрыть нельзя. coneSunGateOk(b) — можно ли свету войти в кольцо b */
+function coneSunGateOn(){ return !!Z.sunGate && coneSunOn() && coneCutOn(); }
+function coneSunOnes(b, N){
+  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
+  const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, false) : [];
+}
+function coneSunGateOk(b, N){
+  if (b >= N || (b === 1 && !coneSunHalf())) return true;
+  return ivMinus(coneSunOnes(b - 1, N), coneSunOnes(b, N)).every(([x, y]) => y - x < 1e-6);
+}
 function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» кольца b (у кольца за чертой — поставленные; fr — «▦ любые», части 2n − 1)
   const s = b < N ? (Z.rows[b] || "") : fr ? fillFreeDraft() : fillDraft(), K = fr ? C.P : C.n, o = [];
   for (let q = 0; q < K; q++) if (s[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, o);
@@ -2599,7 +2612,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2627,6 +2640,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
      углам — расходящимся); дальше этот свет не идёт. Свет через вырез — как был, единицами */
   for (; b < T && lit.length; b++) {
     const R = coneRingNR(b); if (!R) break;
+    if (coneSunGateOn() && !coneSunGateOk(b, N)) { lit = []; break; }   // v0.728: ☀ накрыты — единицы прежнего кольца не закрыты, дальше не светит
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
@@ -4080,6 +4094,11 @@ function setupCone(){
     $("bSunHalf").classList.toggle("on", !!Z.sunHalf);
     $("bSunHalf").onclick = () => { Z.sunHalf = !Z.sunHalf; $("bSunHalf").classList.toggle("on", Z.sunHalf); save(); renderCone();
       say(Z.sunHalf ? "◐ Полукольцо: строка 1 — половина кольца, солнце внутри; свет выходит только через открытую половину и крутится вместе с ней." : "◐ Полукольцо выключено: строка 1 — целое солнце."); };
+  }
+  if ($("bSunGate")) {   // v0.728: ☀ накрыты — свет дальше, только когда единицы кольца закрыты единицами внешнего
+    $("bSunGate").classList.toggle("on", !!Z.sunGate);
+    $("bSunGate").onclick = () => { Z.sunGate = !Z.sunGate; $("bSunGate").classList.toggle("on", Z.sunGate); save(); renderCone();
+      say(Z.sunGate ? "☀ Накрыты: солнце светит из кольца дальше, только когда все его единицы закрыты единицами следующего кольца (строка 1 — при ◐ полукольце)." : "☀ Накрыты выключено: солнце светит сквозь вырезы и нули, как обычно."); };
   }
   if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
     $("bCutFree").classList.toggle("on", !!Z.cutFree);
