@@ -1766,7 +1766,7 @@ function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.qu
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
   r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bConeAimL", "bConeAimR"],
-  ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "coneSunCut"],
+  ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut"],
   fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne"],
   run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
@@ -1775,19 +1775,19 @@ let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
-    "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
+    "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
-  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
-  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
+  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
@@ -1833,6 +1833,7 @@ function lasDeps(){
       (Z.cutGaps && !sun ? `; ⌖ ещё и щели ${slit} между битами` : "") + "; в вырез " + stop;
     else if (mode === "one") t = `у каждого одна щель ${slit} — граница последнего и первого бита; в щель ${stop}`;
     else t = `щель ${slit} на любой границе бит; в щель ${stop}`;
+    if (cut && sun && Z.cutLen) t += "; 📏 по длине — свет переходит на следующее кольцо той же длиной дуги: с кольца строки m на m + 1 сужается в m / (m + 1)";
     L.push(["ring", "<b>Кольца</b>: " + t + "."]);
     t = sun ? (Z.sunSweep ? "ячейка, которую свет прошёл всю за один проход (слева направо или справа налево), → 1" : "ячейка, которую свет накрыл целиком, → 1") + (Z.sunXor ? "; ⊕ свет упал заново — 1 ↔ 0" : "")
       : "луч прошёл все кольца — ячейка под ним → 1";
@@ -2636,6 +2637,19 @@ function coneSlitMode(){ return Z.coneSlits === "all" ? "all" : Z.coneSlits === 
 function coneSlitRaw(){ return Z.coneSlits === "cut2" ? "cut2" : coneSlitMode(); }
 function coneCut2n(){ return Z.coneSlits === "cut2" && coneCutOn(); }
 function coneCutP(n){ return Z.coneSlits === "cut2" ? 2 * n : 2 * n - 1; }
+/* v0.773, «да» на «режим „по длине“: проход проверяется по длине дуги, а не по углу» (вопрос — как вместить в вырез 1/3 половину круга, что ближе к центру):
+   «📏 по длине» (Z.cutLen, солнце в вырезах) — свет переходит на следующее кольцо той же ДЛИНОЙ дуги, а не тем же углом, как полоса параллельных лучей:
+   радиус кольца — номер его строки (строка 1 — 1, строка 2 — 2, …), и каждый кусок света, сохраняя середину, сужается по углу в m / (m + 1) при
+   переходе с кольца строки m на кольцо строки m + 1. Половина круга у строки 1 (длина π) на кольце строки 2 — уже четверть, и в вырез 1/3 проходит.
+   Свет во весь круг остаётся во весь круг (у него нет середины). Луна, лазер и ✺ — по углу, как были */
+function coneLenOn(){ return !!Z.cutLen && coneSunOn() && coneCutOn(); }
+function coneLenScale(L, k){
+  if (!L.length || (L.length === 1 && L[0][1] - L[0][0] > TAU2 - 1e-6)) return L;
+  const A = L.map(x => x.slice()).sort((x, y) => x[0] - y[0]);
+  if (A.length > 1 && A[0][0] < 1e-9 && A[A.length - 1][1] > TAU2 - 1e-9) { const f = A.shift(); A[A.length - 1][1] = TAU2 + f[1]; }   // кусок через 0 — один
+  const o = []; for (const [lo, hi] of A) { const c = (lo + hi) / 2, h = (hi - lo) / 2 * k; if (h > 1e-12) ivNorm(c - h, c + h, o); }
+  return ivUnion(o);
+}
 function coneHalfOpen(a){ const t = (((a + Math.PI / 2) % TAU2) + TAU2) % TAU2; return coneSunHalfArc().some(([lo, hi]) => t >= lo - 1e-9 && t <= hi + 1e-9); }   // v0.772: угол луча (от оси x) — в открытой половине строки 1
 /* v0.667, по снимку — «не вижу у 2 кольца выреза в 1 бит; получается, всё кольцо разделить надо на E + E − 1 частей, где E − 1 — это вырез»:
    в режиме вырезов кольцо строки из E бит делится на 2E − 1 равных частей: E — биты подряд (стена), E − 1 — вырез одной дырой (на рисунке пусто,
@@ -2819,7 +2833,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.cutLen ? 1 : 0, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2848,6 +2862,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
   for (; b < T && lit.length; b++) {
     const R = coneRingNR(b); if (!R) break;
     if (coneSunGateOn() && !coneSunGateOk(b, N)) { lit = []; break; }   // v0.728: ☀ накрыты — единицы прежнего кольца не закрыты, дальше не светит
+    if (coneLenOn()) { lit = coneLenScale(lit, b / (b + 1)); if (!lit.length) break; }   // v0.773: 📏 по длине — с кольца строки b на кольцо строки b + 1
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
@@ -4767,6 +4782,11 @@ function setupCone(){
     $("bCutGaps").classList.toggle("on", !!Z.cutGaps);
     $("bCutGaps").onclick = () => { Z.cutGaps = !Z.cutGaps; $("bCutGaps").classList.toggle("on", Z.cutGaps); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
       say(Z.cutGaps ? "⌖ Меж битами: в вырезах T−1 лазер проходит кольцо и через вырез, и через щель между соседними битами (ширина — ползунок «щель»)." : "⌖ Меж битами выключено: в вырезах лазер проходит только через вырез."); };
+  }
+  if ($("bCutLen")) {   // v0.773: 📏 по длине — свет на следующее кольцо той же длиной дуги
+    $("bCutLen").classList.toggle("on", !!Z.cutLen);
+    $("bCutLen").onclick = () => { Z.cutLen = !Z.cutLen; $("bCutLen").classList.toggle("on", Z.cutLen); coneSunWas = undefined; save(); renderCone(); coneLogRender();
+      say(Z.cutLen ? "📏 По длине: свет идёт на следующее кольцо той же длиной дуги, а не тем же углом — с кольца строки m на m + 1 сужается в m / (m + 1)." : "📏 По длине выключено: свет идёт лучами из центра — тем же углом."); };
   }
   if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
