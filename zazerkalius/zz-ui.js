@@ -2877,6 +2877,171 @@ function triViewSync(){
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && digs[q + 2] === "0" ? "#fff7d6" : "#05070b"; g.fillText(digs[q + 2], digs[q], digs[q + 1]); } g.textAlign = "left"; }
   if (R.length > M) { g.fillStyle = c0; g.font = "11px sans-serif"; g.fillText(`… ещё ${R.length - M} строк`, cx - 40, Hc - 4); }
 }
+/* v0.793, по снимку «△ Сетки» и разбору «▲▼» — «вбок лев, прав; и вообще сетку бы такую же, как в Сетке, но с масштабом и всякими наездами, границами,
+   тенями, фонами, аниматрицами — похоже, новое окно нужно Ромбоидам, не загромождать обычные строки… и без номеров могла ромбы показывать».
+   «◇ Ромбоиды» — строки поля ковром из треугольников, как «▲▼», но в своём окне: колесо — наезд к мыши, тянешь — сдвиг, двойной щелчок — вписать.
+   ▲ — бит строки, ▼ между ними — инверсия ▲ прямо над ним (по месту в сетке, а не по номеру). Выравнивание рядов:
+   · центр — каждая строка по середине (как в «▲▼»): растущие на бит строки складываются в треугольник, равные стоят столбиками и сетка не смыкается;
+   · ёлочка — где центр ломает сетку (длины расходятся на чётное), ряд сдвигается на полклетки то влево, то вправо: полоса остаётся прямой;
+   · ← вбок / вбок → — такой ряд всегда сдвигается в одну сторону: полоса — параллелограммом.
+   Растущие на бит строки во всех режимах стоят по центру. Границы: ▵ каждый треугольник, ◇ ромбы (▼ с ▲ справа от него — по правилу сдвига они
+   равны), ⬡ группы (граница между разными битами), без границ. «тени» — единицы отбрасывают тень на нули. Аниматрица — кнопки ▶ ▷| ⤺ те же, что в
+   поле; «👓» — след изменённых клеток, остывает за T картин (T — строк), или «пары» — ▲, не равная ▼ слева. Своё — в Z.rmb */
+let rmbCur = null, rmbVals = [], rmbHeat = [], rmbFrame = 0, rmbKey = "";
+function rmbSt(){ if (!Z.rmb || typeof Z.rmb !== "object") Z.rmb = {}; const r = Z.rmb;
+  if (!["c", "zz", "l", "r"].includes(r.al)) r.al = "zz"; if (!["each", "rmb", "grp", "none"].includes(r.ln)) r.ln = "each";
+  if (!["", "chg", "pair"].includes(r.gl)) r.gl = ""; return r; }
+function rmbLayout(R, M, al){   // → начало каждого ряда в полуклетках (ряд i: ▲ j на hs[i] + 2j), и лежит ли ряд на сетке ряда выше
+  const hs = new Int32Array(M), ok = new Uint8Array(M); let z = -1;
+  for (let i = 0; i < M; i++) {
+    const n = (R[i] || "").length;
+    if (!i) { hs[0] = -n; ok[0] = 1; continue; }
+    const d = (R[i - 1] || "").length - n;   // по центру ряд съезжает на d полуклеток
+    if (al === "c" || (d & 1)) { hs[i] = hs[i - 1] + d; ok[i] = d & 1 ? 1 : 0; continue; }
+    const sg = al === "l" ? -1 : al === "r" ? 1 : (z = -z);
+    hs[i] = hs[i - 1] + d + sg; ok[i] = 1;
+  }
+  return { hs, ok };
+}
+function rmbFit(){
+  const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = Z.rows, M = Math.min(R.length, 4096); if (!M) return;
+  const { hs } = rmbLayout(R, M, r.al); let a = Infinity, b = -Infinity;
+  for (let i = 0; i < M; i++) { const n = (R[i] || "").length; if (!n) continue; a = Math.min(a, hs[i]); b = Math.max(b, hs[i] + 2 * n); }
+  if (!isFinite(a)) return;
+  const W = cv.clientWidth || 300, H = cv.clientHeight || 200, pd = 10;
+  const tw = Math.max(2, Math.min(80, (W - 2 * pd) / Math.max(1, (b - a) / 2), (H - 2 * pd) / (M * 0.8660254)));
+  r.s = tw; r.ox = pd + (W - 2 * pd - (b - a) * tw / 2) / 2 - a * tw / 2; r.oy = pd;
+}
+function rmbUi(){
+  const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
+  q("button[data-ral]").forEach(b => b.classList.toggle("on", b.dataset.ral === r.al));
+  const L = { each: "▵ каждый", rmb: "◇ ромбы", grp: "⬡ группы", none: "без границ" }, G = { "": "👓", chg: "👓 изм.", pair: "👓 пары" };
+  const bl = $("bRmbLn"); if (bl && bl.textContent !== L[r.ln]) bl.textContent = L[r.ln];
+  const bg = $("bRmbGl"); if (bg) { if (bg.textContent !== G[r.gl]) bg.textContent = G[r.gl]; bg.classList.toggle("on", !!r.gl); }
+  [["bRmbNum", r.num], ["bRmbSh", r.sh], ["bRmbOut", r.out]].forEach(([id, v]) => { const b = $(id); if (b) b.classList.toggle("on", !!v); });
+  const p = $("bRmbPlay"), a = $("bAnimPlay"); if (p && a) { const on = a.classList.contains("on"); p.classList.toggle("on", on); const t = on ? "⏸" : "▶"; if (p.textContent !== t) p.textContent = t; }
+  [["rmbBg", r.bg, "--panel2", "#141a24"], ["rmbC1", r.c1, "--b1", "#22d3ee"], ["rmbC0", r.c0, "--b0", "#7d8699"], ["rmbLnC", r.lc, "", "#e6e9ef"]].forEach(([id, v, css, d]) => {
+    const el = $(id); if (!el || document.activeElement === el) return; let c = v || (css ? coneCss(css, d) : d); if (!/^#[0-9a-f]{6}$/i.test(c)) c = d; if (el.value !== c) el.value = c; });
+}
+function rmbWire(){
+  const W = $("w-rmb"), cv = $("rmbCv"); if (!W || !cv || cv._wired) return; cv._wired = 1;
+  const re = () => { rmbUi(); save(); renderRmb(); };
+  W.querySelectorAll("button[data-ral]").forEach(b => b.onclick = () => { rmbSt().al = b.dataset.ral; re(); });
+  $("bRmbLn").onclick = () => { const r = rmbSt(), o = ["each", "rmb", "grp", "none"]; r.ln = o[(o.indexOf(r.ln) + 1) % o.length]; re(); };
+  $("bRmbGl").onclick = () => { const r = rmbSt(), o = ["", "chg", "pair"]; r.gl = o[(o.indexOf(r.gl) + 1) % o.length]; re(); };
+  $("bRmbNum").onclick = () => { const r = rmbSt(); r.num = !r.num; re(); };
+  $("bRmbSh").onclick = () => { const r = rmbSt(); r.sh = !r.sh; re(); };
+  $("bRmbOut").onclick = () => { const r = rmbSt(); r.out = !r.out; re(); };
+  $("bRmbFit").onclick = () => { rmbFit(); re(); };
+  $("bRmbDef").onclick = () => { const r = rmbSt(); delete r.bg; delete r.c1; delete r.c0; delete r.lc; re(); };
+  [["rmbBg", "bg"], ["rmbC1", "c1"], ["rmbC0", "c0"], ["rmbLnC", "lc"]].forEach(([id, k]) => { const el = $(id); el.oninput = () => { rmbSt()[k] = el.value; renderRmb(); }; el.onchange = () => save(); });
+  $("bRmbPlay").onclick = () => { $("bAnimPlay").click(); setTimeout(rmbUi, 0); };
+  $("bRmbStep").onclick = () => $("bAnimStep").click();
+  $("bRmbHome").onclick = () => $("bAnimHome").click();
+  if (window.ResizeObserver) new ResizeObserver(() => { if (winOpen("w-rmb")) renderRmb(); }).observe(cv);
+  // колесо — наезд к мыши, тянешь — сдвиг, щелчок — текущая строка, двойной — вписать
+  cv.addEventListener("wheel", (e) => { e.preventDefault(); const r = rmbSt(); if (!r.s) rmbFit();
+    const k = Math.pow(1.0015, -e.deltaY), s = Math.max(2, Math.min(160, r.s * k)), f = s / r.s, mx = e.offsetX, my = e.offsetY;
+    r.ox = mx - (mx - r.ox) * f; r.oy = my - (my - r.oy) * f; r.s = s; renderRmb(); clearTimeout(cv._sv); cv._sv = setTimeout(save, 400); }, { passive: false });
+  let dr = null;
+  cv.addEventListener("pointerdown", (e) => { if (e.button) return; const r = rmbSt(); if (!r.s) rmbFit(); dr = { x: e.clientX, y: e.clientY, ox: r.ox, oy: r.oy, mv: false }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", (e) => { if (!dr) return; const dx = e.clientX - dr.x, dy = e.clientY - dr.y; if (Math.abs(dx) + Math.abs(dy) > 3) dr.mv = true;
+    if (dr.mv) { const r = rmbSt(); r.ox = dr.ox + dx; r.oy = dr.oy + dy; cv.style.cursor = "grabbing"; renderRmb(); } });
+  const up = (e) => { if (!dr) return; const was = dr; dr = null; cv.style.cursor = "";
+    if (was.mv) { save(); return; }
+    const r = rmbSt(), h = r.s * 0.8660254, i = Math.floor((e.offsetY - r.oy) / h);
+    if (i >= 0 && i < Z.rows.length && i !== Z.cur) { Z.cur = i; renderAll(); save(); } };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", () => { dr = null; cv.style.cursor = ""; });
+  cv.addEventListener("dblclick", () => { rmbFit(); save(); renderRmb(); });
+  rmbUi();
+}
+function renderRmb(){
+  rmbWire();
+  if (!winOpen("w-rmb")) { rmbCur = null; return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
+  const R = Z.rows, r = rmbSt(), M = Math.min(R.length, 4096);
+  let fresh = false;
+  if (!rmbCur || rmbCur.length !== R.length || rmbCur.some((s, i) => s !== R[i])) { fresh = !!rmbCur; rmbCur = R.slice(); rmbFrame++; }
+  const { hs, ok } = rmbLayout(R, M, r.al), key = r.al;
+  /* значения клеток: 1 / 0, 9 — ▼ без ▲ над ним; ▼ — инверсия ▲ над ним по месту в сетке (ряд не на сетке ряда выше — по номеру, как в «▲▼») */
+  if (fresh || rmbKey !== key || rmbVals.length !== M) {
+    const NV = [];
+    for (let i = 0; i < M; i++) {
+      const s = R[i] || "", n = s.length, v = new Uint8Array(Math.max(0, 2 * n - 1)), ps = i ? R[i - 1] || "" : "";
+      for (let k = 0; k < v.length; k++) {
+        if (!(k & 1)) { v[k] = s[k >> 1] === "1" ? 1 : 0; continue; }
+        const m = ok[i] ? (hs[i] + k - hs[i - 1]) >> 1 : k >> 1, c = i ? ps[m] : undefined;
+        v[k] = c === undefined || m < 0 ? 9 : cpInv(c) === "1" ? 1 : 0;
+      }
+      if (fresh && rmbKey === key) { const o = rmbVals[i]; let H = rmbHeat[i];
+        if (!H || H.length !== v.length) H = rmbHeat[i] = new Float64Array(v.length).fill(-1e9);
+        for (let k = 0; k < v.length; k++) if (!o || o.length !== v.length || o[k] !== v[k]) H[k] = rmbFrame; }
+      NV.push(v);
+    }
+    rmbVals = NV; rmbKey = key; if (rmbHeat.length > M) rmbHeat.length = M;
+  }
+  rmbUi();
+  const cv = $("rmbCv"); if (!cv) return;
+  const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
+  if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); }
+  if (!r.s) rmbFit();
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const tw = r.s, hw = tw / 2, h = tw * 0.8660254, X = (p) => r.ox + p * hw, Y = (i) => r.oy + i * h;
+  const c1 = r.c1 || coneCss("--b1", "#22d3ee"), c0 = r.c0 || coneCss("--b0", "#7d8699");
+  g.fillStyle = r.bg || coneCss("--panel2", "#141a24"); g.fillRect(0, 0, Wc, Hc);
+  // ▦ сетка — решётка на всё окно, от ряда 1
+  if (r.out && M) { const E = new Path2D(), sl = hw / h, y1 = Y(1), base = hs[0];
+    for (let i = Math.floor(-r.oy / h); i <= Math.ceil((Hc - r.oy) / h); i++) { E.moveTo(0, Y(i)); E.lineTo(Wc, Y(i)); }
+    const span = Hc * sl + tw, j0 = Math.floor((-span - X(base)) / tw) - 1, j1 = Math.ceil((Wc + span - X(base)) / tw) + 1;
+    if (j1 - j0 < 4000) for (let j = j0; j <= j1; j++) { const xb = X(base) + j * tw;
+      E.moveTo(xb + y1 * sl, 0); E.lineTo(xb - (Hc - y1) * sl, Hc); E.moveTo(xb - y1 * sl, 0); E.lineTo(xb + (Hc - y1) * sl, Hc); }
+    g.strokeStyle = "rgba(160,170,190,.16)"; g.lineWidth = 1; g.stroke(E); }
+  const i0 = Math.max(0, Math.floor(-r.oy / h) - 1), i1 = Math.min(M - 1, Math.ceil((Hc - r.oy) / h) + 1);
+  if (Z.cur >= i0 && Z.cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(Z.cur), Wc, h); g.globalAlpha = 1; }
+  const P = { u1: new Path2D(), u0: new Path2D(), d1: new Path2D(), d0: new Path2D(), e: new Path2D() }, HT = [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]);
+  const L = new Path2D(), TL = Math.max(1, M), gm = r.gl, lm = r.ln, digs = r.num && tw >= 14 ? [] : null;
+  const val = (i, p) => { if (i < 0 || i >= M) return -1; const v = rmbVals[i], k = p - hs[i]; return v && k >= 0 && k < v.length ? (v[k] === 9 ? -1 : v[k]) : -1; };
+  const isDn = (i, p) => i >= 0 && i < M && ((p - hs[i]) & 1) === 1;
+  const ln = (x1, y1, x2, y2) => { L.moveTo(x1, y1); L.lineTo(x2, y2); };
+  const edge = (a, b, idA, idB) => lm === "each" ? true : lm === "grp" ? b < 0 || a !== b : lm === "rmb" ? b < 0 || idA !== idB : false;
+  for (let i = i0; i <= i1; i++) {
+    const v = rmbVals[i]; if (!v || !v.length) continue;
+    const kA = Math.max(0, Math.floor(-r.ox / hw - hs[i]) - 2), kB = Math.min(v.length - 1, Math.ceil((Wc - r.ox) / hw - hs[i]) + 1), yt = Y(i), yb = yt + h;
+    const H = rmbHeat[i];
+    for (let k = kA; k <= kB; k++) {
+      const p = hs[i] + k, up = !(k & 1), x = X(p), a = v[k];
+      if (a === 9) { P.e.moveTo(x, yt); P.e.lineTo(x + tw, yt); P.e.lineTo(x + hw, yb); P.e.closePath(); continue; }
+      const q = up ? (a ? P.u1 : P.u0) : (a ? P.d1 : P.d0);
+      if (up) { q.moveTo(x, yb); q.lineTo(x + tw, yb); q.lineTo(x + hw, yt); } else { q.moveTo(x, yt); q.lineTo(x + tw, yt); q.lineTo(x + hw, yb); }
+      q.closePath();
+      let b = -1;
+      if (gm === "chg" && H) { const age = rmbFrame - H[k]; if (age < TL) b = Math.min(3, Math.floor(age / TL * 4)); }
+      else if (gm === "pair" && up && k > 0 && v[k - 1] !== 9 && v[k - 1] !== a) b = 0;
+      if (b >= 0) { const t = HT[b][a ? 0 : 1]; if (up) { t.moveTo(x, yb); t.lineTo(x + tw, yb); t.lineTo(x + hw, yt); } else { t.moveTo(x, yt); t.lineTo(x + tw, yt); t.lineTo(x + hw, yb); } t.closePath(); }
+      if (lm !== "none") {
+        if (up) {   // ▲ — левое, правое, нижнее ребро; у ▼ — только края, где ▲ рядом нет
+          const id = p, l = val(i, p - 1), rr = val(i, p + 1), dn = isDn(i + 1, p) ? val(i + 1, p) : -1;
+          if (edge(a, l, id, p)) ln(x, yb, x + hw, yt);
+          if (edge(a, rr, id, p + 2)) ln(x + hw, yt, x + tw, yb);
+          if (edge(a, dn, 0, 1)) ln(x, yb, x + tw, yb);
+        } else { const upn = i > 0 && !isDn(i - 1, p) ? val(i - 1, p) : -1; if (upn < 0) ln(x, yt, x + tw, yt); }
+      }
+      if (digs) digs.push(x + hw, up ? yb - h * 0.3 : yt + h * 0.32, a, b >= 0);
+    }
+    if (r.num && h >= 8) { g.fillStyle = c0; g.font = `${Math.min(12, Math.max(7, h * 0.6))}px ${coneCss("--ff", "monospace")}`; g.textAlign = "right"; g.textBaseline = "middle"; g.fillText(String(i + 1), X(hs[i]) - 3, yt + h / 2); g.textAlign = "left"; }
+  }
+  const fill = (p, col, al) => { g.globalAlpha = al; g.fillStyle = col; g.fill(p); };
+  fill(P.u0, c0, 1); fill(P.d0, c0, 0.62);
+  if (r.sh) { g.save(); g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = Math.max(2, tw * 0.35); g.shadowOffsetX = tw * 0.1; g.shadowOffsetY = tw * 0.14; }
+  fill(P.u1, c1, 1); fill(P.d1, c1, 0.62);
+  if (r.sh) g.restore();
+  [1, 0.8, 0.6, 0.42].forEach((al, b) => { fill(HT[b][0], "#ffd166", al); fill(HT[b][1], "#b8860b", al); });
+  g.globalAlpha = 1;
+  g.strokeStyle = "rgba(160,170,190,.25)"; g.lineWidth = 0.6; g.stroke(P.e);
+  if (lm !== "none") { g.lineJoin = "round"; g.lineCap = "round";
+    g.strokeStyle = r.lc || (lm === "each" ? "rgba(5,7,11,.45)" : "#e6e9ef"); g.lineWidth = lm === "each" ? Math.max(0.5, tw * 0.035) : Math.max(1, tw * 0.07); g.stroke(L); }
+  if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
+    for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
+}
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
   const P = 2 * n - 1;
@@ -5966,8 +6131,8 @@ function setupCone(){
      открытых окон с холстом (то, что поднято последним: из шапки — нажатое), — ◯ Конус, ◆ Гранидус (его холст в рамке), ✦ Развёртку, △ Сетку,
      ▲ Паскаля, 🧊 Вид… Окно берётся в миг старта и пишется до стопа. 🎞 и ↻1 крутят конус — они, как прежде, только для конуса */
   let recSrc = null;
-  const REC_CV = { "w-cone": "coneCv", "w-view": "viewCv", "w-razv": "razvCv", "w-tri": "triCv", "w-pyr": "pyrCv" };
-  const REC_NM = { "w-cone": "konus", "w-okt": "granidus", "w-razv": "razvertka", "w-tri": "setka", "w-pyr": "piramida", "w-view": "vid", "w-struct": "struktura" };
+  const REC_CV = { "w-cone": "coneCv", "w-view": "viewCv", "w-razv": "razvCv", "w-tri": "triCv", "w-rmb": "rmbCv", "w-pyr": "pyrCv" };
+  const REC_NM = { "w-cone": "konus", "w-okt": "granidus", "w-razv": "razvertka", "w-tri": "setka", "w-rmb": "romboidy", "w-pyr": "piramida", "w-view": "vid", "w-struct": "struktura" };
   const recBig = (list) => list.filter(c => c.width > 40 && c.height > 40 && !c.hasAttribute("data-no-rec") && c.getClientRects().length).sort((a, b) => b.width * b.height - a.width * a.height)[0] || null;
   const recPick = () => {
     let best = null, bz = -1;
@@ -8520,7 +8685,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520], ["w-tri", 420],
+    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520], ["w-tri", 420], ["w-rmb", 520],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -8556,6 +8721,7 @@ function defaultLayout(){
     "w-okt":     { x: g, y: 4160 + 11 * g, w: mw, h: 560 },   // v0.396
     "w-razv":    { x: mw + 2 * g, y: 4160 + 11 * g, w: cw, h: 560 },   // v0.398
     "w-tri":     { x: g, y: 4720 + 12 * g, w: mw, h: 420 },   // v0.432
+    "w-rmb":     { x: mw + 2 * g, y: 4720 + 12 * g, w: cw, h: 520 },   // v0.793
   };
 }
 function applyWin(el){
@@ -11135,6 +11301,7 @@ function setupWin(el){
     if (!w.collapsed && el.id === "w-okt") renderOkt();   // v0.396
     if (!w.collapsed && el.id === "w-razv") renderRazv();   // v0.398
     if (!w.collapsed && el.id === "w-tri") renderTri();   // v0.432
+    if (!w.collapsed && el.id === "w-rmb") renderRmb();   // v0.793
     save();
   };
   // v0.016, запрос пользователя «двойной щелчок по заголовку»: свернуть / развернуть, как «–».
@@ -11401,7 +11568,7 @@ function applyView(){
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
-    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv]];
+    ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv], ["ромбоиды ◇", renderRmb]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
   /* v0.564: отдельный конус (?solo=cone — страница «Конус», карточки «Битмультфильмов», фон хаба) — прочих окон на странице нет, их не считаем
      (прежде при каждой перерисовке считались все: Спуск, GF(2), Лин. сложность… — на телефоне это и тормозило) */
@@ -12108,7 +12275,7 @@ function init(){
     const t = (el.textContent || "").trim().replace(/\s+/g, " ");
     return t ? (t.length > 24 ? t.slice(0, 23) + "…" : t) : p.id;
   };
-  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-view"];   // v0.661, по снимку шапки: «здесь надо не Структура, а это окно» — 🧊 (бывший «Вид», теперь «Лесенка»); «🧪 Структура» — снова в списке «Другое»
+  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661, по снимку шапки: «здесь надо не Структура, а это окно» — 🧊 (бывший «Вид», теперь «Лесенка»); «🧪 Структура» — снова в списке «Другое»
     // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
   const renderPins = () => {
     let h = "";
@@ -12590,7 +12757,7 @@ function init(){
     });
     /* v0.631, «переименуй — Другое, и убери из них дубликаты, что в верхнем меню теперь всегда»: шесть окон шапки в списке не видны (кнопки остаются
        скрытыми — через них шапка сворачивает и разворачивает окна), заголовок списка — «Другое» */
-    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-pyr", "w-view"];   // v0.661: как PIN_WINS
+    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661: как PIN_WINS
     $("paneWinsHead").style.display = list.some(el => !PINNED.includes(el.id)) ? "" : "none";
     $("paneWins").innerHTML = list.map(el => { const t = esc(el.dataset.title || el.id), op = !el.dataset.parked;
       return `<button data-w="${el.id}"${PINNED.includes(el.id) ? " hidden" : ""}${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");
