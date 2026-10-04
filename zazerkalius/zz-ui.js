@@ -2790,12 +2790,16 @@ function coneSweepStep(S, N){   // → { s: ["N:q" — прошёл весь с�
   if (!coneSweepAcc || coneSweepAcc.sig !== sig) coneSweepAcc = { sig, s: {}, m: {} };
   const band = (S.bands.find(([k]) => k === N) || [0, []])[1], moon = (S.zN || []).reduce((x, L) => x.concat(L), []), out = { s: [], m: [] };
   for (const [kind, L] of [["s", band], ["m", moon]]) {
-    if (!L.length) continue;
+    /* v0.753, по снимку «⟿ проход» — «за один проход, а не по накапливающей, то есть слева направо полностью или справа налево»: копится только
+       непрерывный проход — освещённый кусок ячейки, что тянется за светом без перерыва; свет ушёл с ячейки — счёт заново; кусок, оторванный от света
+       (освещён раньше, а сейчас между ним и светом темно), — тоже отпадает. Дотянулся от края до края — ячейка прошла */
     for (let q = 0; q < C.n; q++) {
-      const add = coneSweepGet(L, C, q); if (!add.length) continue;
-      const acc = ivUnion((coneSweepAcc[kind][q] || []).concat(add));
+      const add = L.length ? ivUnion(coneSweepGet(L, C, q)) : [];
+      if (!add.length) { delete coneSweepAcc[kind][q]; continue; }
+      const all = ivUnion((coneSweepAcc[kind][q] || []).map(x => x.slice()).concat(add.map(x => x.slice())));
+      const acc = all.filter(([x, y]) => add.some(([u, v]) => v >= x - 1e-9 && u <= y + 1e-9));   // только куски, где свет сейчас
       coneSweepAcc[kind][q] = acc;
-      if (acc.length === 1 && acc[0][0] < 1e-6 && acc[0][1] > 1 - 1e-6) out[kind].push(N + ":" + q);
+      if (acc.some(([x, y]) => x < 1e-6 && y > 1 - 1e-6)) out[kind].push(N + ":" + q);
     }
   }
   return out;
@@ -4244,7 +4248,7 @@ function setupCone(){
   if ($("bSunSweep")) {   // v0.748: ⟿ проход — ячейка красится, когда свет прошёл её всю
     $("bSunSweep").classList.toggle("on", !!Z.sunSweep);
     $("bSunSweep").onclick = () => { Z.sunSweep = !Z.sunSweep; coneSweepAcc = null; $("bSunSweep").classList.toggle("on", Z.sunSweep); save(); renderCone();
-      say(Z.sunSweep ? "⟿ Проход: ячейка за чертой красится, когда свет за кручение прошёл её всю, от начала до конца (солнце — 1, луна — 0)." : "⟿ Проход выключено: красится только ячейка, накрытая светом целиком разом."); };
+      say(Z.sunSweep ? "⟿ Проход: ячейка за чертой красится, когда свет прошёл её всю за один проход — от края до края без перерыва (солнце — 1, луна — 0)." : "⟿ Проход выключено: красится только ячейка, накрытая светом целиком разом."); };
   }
   if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
     $("bCutFree").classList.toggle("on", !!Z.cutFree);
