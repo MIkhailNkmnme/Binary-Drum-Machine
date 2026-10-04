@@ -784,7 +784,7 @@ function coneSunHalfArc(){ const r = coneRotOf(0), o = []; if ((Z.rows[0] || "1"
    полукольцом (◐), целое солнце закрыть нельзя. coneSunGateOk(b) — можно ли свету войти в кольцо b */
 function coneSunGateOn(){ return !!Z.sunGate && coneSunOn() && coneCutOn(); }
 function coneSunOnes(b, N){
-  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
+  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (coneQuadOn()) return coneQuadArcs(false);   /* v0.744: ✚ — белые четверти */ if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
   const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, b === N && coneFreeOn()) : [];   // v0.731: у кольца за чертой — поставленные единицы
 }
 function coneSunGateOk(b, N){
@@ -2138,7 +2138,15 @@ function renderCone(){
     if (coneSunOn()) {   // v0.206: солнце — диск строки 1 и освещённые сектора до каждого кольца
       const S = coneSunTrace(), rIn = (b) => r0 + (b - 1) * dr + Math.max(1, dr * band), rAt = (b) => r0 + b * dr;
       const sect = (ri, ro, lo, hi) => { g.beginPath(); g.arc(cx, cy, ro, lo - Math.PI / 2, hi - Math.PI / 2); g.arc(cx, cy, Math.max(0, ri), hi - Math.PI / 2, lo - Math.PI / 2, true); g.closePath(); g.fill(); };
-      if (coneSunHalf()) {   // v0.727: ◐ — солнце внутри полукольца строки 1
+      if (coneQuadOn()) {   // v0.744: ✚ — круг из четвертей, солнце — маленьким кругом внутри
+        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.32, q0 = -Math.PI / 2 + coneRotOf(0) * Math.PI / 2;
+        g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
+        for (let q = 0; q < 4; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * Math.PI / 2, q0 + (q + 1) * Math.PI / 2); g.closePath(); g.fill(); }
+        g.save(); g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
+        for (let q = 0; q < 4; q++) { const e = q0 + q * Math.PI / 2; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
+        g.stroke(); g.restore();
+        g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+      } else if (coneSunHalf()) {   // v0.727: ◐ — солнце внутри полукольца строки 1
         const rD = r0 + Math.max(1, dr * band), rS = Math.max(3 * dpr, dr * 0.08), ri = 0,   /* v0.732, «да, все кольца одинаковой толщины должны быть»; v0.733, «по идее оно же должно быть 0 толщины, а у полукольца внутреннее кольцо 0 длины, то есть это круг»: строка 1 — полукруг от центра до толщины кольца, солнце — точка в центре (рисуется поверх) */ b0 = (-0.5 - coneRotOf(0)) * Math.PI - Math.PI / 2, bit = (Z.rows[0] || "1")[0];
         g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
         g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.95 : 0.55; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, b0, b0 + Math.PI); g.closePath(); g.fill();
@@ -2655,7 +2663,7 @@ function coneFillPass(open, L, C){
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
   const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {}, zbands = [];
-  let lit = coneSunHalf() ? coneSunHalfArc() : [[0, TAU2]], b = 1, pastN = [];   // v0.727: ◐ — свет только из открытой половины   // pastN — свет, прошедший и кольцо за чертой (v0.713)
+  let lit = coneQuadOn() ? coneQuadArcs(true) : coneSunHalf() ? coneSunHalfArc() : [[0, TAU2]], b = 1, pastN = [];   // v0.744: ✚ — свет из чёрных четвертей   // v0.727: ◐ — свет только из открытой половины   // pastN — свет, прошедший и кольцо за чертой (v0.713)
   /* v0.701, «теперь так: пусть свет от лучей проходит, когда через единицы, — то он закрашивает следующую нулями; и когда все биты строки закрасятся либо 1,
      либо 0 — строка готова»: в вырезах T−1 свет, упавший на бит «1» кольца строки, проходит его и красит ячейки СЛЕДУЮЩЕГО кольца нулями (zhits, по тем же
      углам — расходящимся); дальше этот свет не идёт. Свет через вырез — как был, единицами */
@@ -3024,7 +3032,11 @@ function coneCutGap(x, n, st){ if (!Z.cutGaps) return false; const r = Math.roun
 /* v0.743, «нужен вариант лазер-луча, который из центра проходит через щель первого бита T−1, и где T−1 бит состоит из 4 частей — круг, поделённый на 4 части:
    чёрн-бел-чёрн-бел»: «✚ 4 части» (Z.laserQuad, лазер в вырезах T−1) — строка 1 — круг от центра на 4 четверти: от верха по часовой чёрная, белая, чёрная,
    белая. Чёрная — щель: луч из центра проходит; белая — бит: стена, луч встаёт. Круг крутится, как кольцо строки 1, — на четверть за шаг */
-function coneQuadOn(){ return !!Z.laserQuad && !!Z.coneClock && coneCutOn() && !coneSunOn(); }
+function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || coneSunOn()); }   // v0.744: и у солнца
+/* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
+   круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
+   четверти углами от верха по часовой */
+function coneQuadArcs(open){ const r = coneRotOf(0), o = []; for (let q = open ? 0 : 1; q < 4; q += 2) ivNorm((q + r) * Math.PI / 2, (q + 1 + r) * Math.PI / 2, o); return ivUnion(o); }
 function coneQuadOpen(a){ const x = ((((a + Math.PI / 2) / (Math.PI / 2) - coneRotOf(0)) % 4) + 4) % 4; return Math.floor(x) % 2 === 0; }   // a — угол холста
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
