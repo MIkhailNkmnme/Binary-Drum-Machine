@@ -3820,6 +3820,7 @@ function setupCone(){
     /* v0.718, по снимку «▶ крутить» — «когда не через шаги, а в кручении крутит, то надо также расширять горизонт, когда все биты заполнит»: строка за
        чертой готова (как у шага: у солнца в вырезах — без пустых, иначе — вся «1») — сразу уходит в поле, черта вниз, кручение идёт дальше на следующую */
     if (Z.coneClock || coneSunOn()) fillAutoCommit();
+    tapeRec();   // v0.720: кадр — на ленту перемотки
     return true;
   };
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
@@ -3838,7 +3839,7 @@ function setupCone(){
       if (coneFanOn() && !coneFanAlive().length) { say(`⏹ Все ${coneFanN()} лучей уже вылетели. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); on = false; }   // v0.201
       else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNextIf())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
     }
-    if (on && !autoRaf) { autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
+    if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }   // v0.279: копия в пульте; v0.655 — в ромбе одним значком
@@ -3899,7 +3900,61 @@ function setupCone(){
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
     ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null]);
-  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); fn(); if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } }
+  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); fn(); if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
+  /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
+     при этом откатывая шаги назад — не то что шаги, а как будто перемотку назад кручения». Лента: пока солнце в вырезах крутится (▶ крутить, шаги), каждый
+     кадр пишется — фаза и поворот конуса (лёгкое) и ссылка на состояние (строки, краска, строка за чертой, лог…) — само состояние пишется заново, только когда
+     оно сменилось. Ползунок #coneTape внизу посередине холста — по ленте: тянешь назад — всё как было в тот миг (кручение встаёт), вперёд — обратно до конца
+     записанного. Крутить дальше с отмотанного места — лента впереди стирается и пишется заново (как на магнитофоне). Только в памяти страницы; ⌖✕ — с нуля */
+  const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
+  const tapeOn = () => coneSunOn() && coneCutOn() && !Z.cone3d;
+  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
+  function tapeUi(){
+    const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
+    const on = tapeOn() && tape.length > 1; box.classList.toggle("on", on); if (!on) return;
+    el.max = tape.length - 1; el.value = tapeHead;
+  }
+  function tapeClear(){ tape.length = 0; tapeSt.length = 0; tapeHead = -1; tapeKey = ""; tapeAt = -1; tapeUi(); }
+  function tapeRec(){
+    if (!tapeOn()) return;
+    if (tapeHead >= 0 && tapeHead < tape.length - 1) { tape.length = tapeHead + 1; tapeSt.length = tape[tapeHead].s + 1; }   // отмотали и крутят дальше — впереди стереть
+    const k = tapeK();
+    if (k !== tapeKey || !tapeSt.length) { tapeSt.push(lasSnap()); tapeKey = k; }
+    const si = tapeSt.length - 1, ph = Z.coneSpinPh || 0, sp = Z.coneSpin || 0, L = tape[tape.length - 1];
+    if (!L || L.ph !== ph || L.sp !== sp || L.s !== si) { tape.push({ ph, sp, s: si }); if (tape.length > 60000) { tape.splice(0, 20000); } }
+    tapeHead = tape.length - 1; tapeAt = si;
+    const el = $("coneTape"); if (el && $("coneTapeBox").classList.contains("on")) { el.max = tape.length - 1; el.value = tapeHead; } else tapeUi();
+  }
+  function tapeGo(i){
+    i = Math.max(0, Math.min(tape.length - 1, i | 0)); const T = tape[i]; if (!T) return;
+    let heavy = false;
+    if (T.s !== tapeAt) {   // состояние — как в тот миг (так же, как ↶ откат)
+      const S = JSON.parse(tapeSt[T.s]);
+      if (S.rows.join(",") !== Z.rows.join(",")) {
+        Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = S.hid.slice();
+        Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
+      }
+      Z.coneAimRot = S.aim; coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, j) => coneRotKeep(x, j)); Z.coneFillTurn = S.ft || 0;
+      if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
+      Z.fillCells = S.fill; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
+      coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm;
+      tapeAt = T.s; heavy = true;
+    }
+    Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; tapeHead = i; tapeKey = tapeK();
+    coneSunWas = new Set(coneSunTrace().hits);   // что светит сейчас — уже учтено: показ ленты ничего не красит
+    if (heavy) { renderAll(); coneLogRender(); } else renderCone();
+  }
+  { const main = $("coneMain");
+    if (main && !$("coneTapeBox")) {
+      const box = document.createElement("div"); box.id = "coneTapeBox";
+      box.innerHTML = '<input type="range" id="coneTape" min="0" max="0" step="1" value="0" title="⏪ Перемотка кручения (солнце, вырезы T−1): тяни назад — всё как было в тот миг (кольца, краска, строки), вперёд — обратно до конца записанного. Крутить дальше с отмотанного места — запись впереди стирается и идёт заново">';
+      main.appendChild(box);
+      const el = box.querySelector("input");
+      el.addEventListener("input", () => { if (autoRaf) autoSet(false); tapeGo(+el.value); });
+      el.addEventListener("change", () => save());
+      ["pointerdown", "wheel", "dblclick"].forEach(t => box.addEventListener(t, e => e.stopPropagation()));
+    }
+  }
   if ($("bLasStep")) $("bLasStep").onclick = () => lasRec(() => {
     if (fillAutoCommit()) return;   // v0.702: строка готова — этим нажатием только черта вниз, крутит следующее
     coneStep(1);
@@ -4158,7 +4213,7 @@ function setupCone(){
       cut = Z.rows.length - 2; Z.rows.splice(2); Z.lanes[Z.lane] = Z.rows; Z.cur = Math.min(Z.cur | 0, 1); for (const k of [...rowSel]) if (k >= 2) rowSel.delete(k);
       coneRot.length = 2; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); fillStack.length = 0; coneDen = 0;
     }
-    fillReset(); $("bConeAllHome").click(); if (cut) renderAll();
+    fillReset(); $("bConeAllHome").click(); if (cut) renderAll(); tapeClear();   // v0.720: лента — с нуля
     say(`⌖✕ Сброс: ${cut ? `строки 3–${cut + 2} сняты — остались солнце и строка 2; ` : ""}золото и строка за чертой стёрты, кольца на своих местах, кручение с нуля.${cut ? " ↩ вернёт." : ""}`);
   };
   /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
