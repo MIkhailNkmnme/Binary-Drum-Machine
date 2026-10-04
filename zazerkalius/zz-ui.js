@@ -1786,8 +1786,8 @@ function lasDeps(){
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
-  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
-  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
+  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
@@ -2417,7 +2417,10 @@ function renderCone(){
         lit = lit.filter(([lo, hi]) => hi - lo > 1e-6).map(([lo, hi]) => [lo, hi]).sort((x, y) => x[0] - y[0]);
         if (lit.length > 1 && lit[0][0] < 1e-6 && lit[lit.length - 1][1] > 2 * Math.PI - 1e-6) { const f = lit.shift(); lit[lit.length - 1][1] = 2 * Math.PI + f[1]; }   // сектор через 0 — один
         const full = lit.length === 1 && lit[0][1] - lit[0][0] > 2 * Math.PI - 1e-6;
-        {   // v0.710, «верни отображение частей»: подписи — всегда (свет весь круг или не дошёл — одна часть на весь круг)
+        /* v0.771, по снимкам «☾ ≈4/9» и «☀ 2 · ☾ 3 · ◌ между 5 · лучей 4» — «сделай кнопку откл этих подсчётов и показов, похоже, они тормозят»: «☀ доли»
+           (Z.sunParts, по умолчанию включено) — выключено: доли частей за крайним кольцом и сводка над конусом не считаются и не рисуются (подбор общего
+           знаменателя — до 240 проб на каждый кадр) */
+        if (Z.sunParts !== false) {   // v0.710, «верни отображение частей»: подписи — всегда (свет весь круг или не дошёл — одна часть на весь круг)
           /* v0.698, по снимку «◐ 2/3 · ☀ 1/3» — «луна 2/3 показывает, солнце 1/3, а что остаётся между ними? покажи у каждой части её количество от целой»: «◐» был
              всей тёмной частью и читался как луна. Теперь круг делится на солнце ☀ (свет), луну ☾ (сектор напротив света, через центр) и остаток ◌ между ними
              (оба сразу — ☀☾); у каждой части — её доля целого круга, в сводке — сколько частей каждого вида */
@@ -4411,6 +4414,11 @@ function setupCone(){
     $("bMoonBlk").classList.toggle("on", !!Z.moonBlk);
     $("bMoonBlk").onclick = () => { Z.moonBlk = !Z.moonBlk; if (Z.moonBlk) Z.moonEcl = false; $("bMoonBlk").classList.toggle("on", Z.moonBlk); if ($("bMoonEcl")) $("bMoonEcl").classList.toggle("on", !!Z.moonEcl); save(); renderCone();
       say(Z.moonBlk ? "☾ За 1: луна светит, когда солнце упёрлось в «1», — зеркало остановленного ими света, через центр." : "☾ За 1 выключено: луна — зеркало вылетевшего света."); };
+  }
+  if ($("bSunParts")) {   // v0.771: ☀ доли — подписи долей и сводка у солнца (по умолчанию включено)
+    const ui = () => $("bSunParts").classList.toggle("on", Z.sunParts !== false); ui();
+    $("bSunParts").onclick = () => { Z.sunParts = Z.sunParts === false; ui(); save(); renderCone();
+      say(Z.sunParts !== false ? "☀ Доли: у каждой части круга — её доля, сверху — сводка." : "☀ Доли выключены: подписи и сводка не считаются и не рисуются."); };
   }
   if ($("bMoonOne")) {   // v0.725: ☾ сквозь 1 — луна из центра, одну «1» проходит насквозь (по умолчанию включено)
     const ui = () => $("bMoonOne").classList.toggle("on", Z.moonOne !== false); ui();
