@@ -2148,7 +2148,7 @@ function renderCone(){
         for (const q of [1, 3]) coneGlyph(g, cx, cy, q0 + (q + 0.5) * Math.PI / 2, rD * 0.66, rD * 0.4, (Z.rows[0] || "1")[0], cBg, ff);   // v0.750: цифра на белых четвертях
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
       } else if (coneSunSlit()) {   // v0.746: ▮ — солнце внутри кольца-бита строки 1, свет — из его щели
-        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.3, ri = 0, a = coneCutAngle(), h = Math.max(coneSlitHalf(), 1.5 * dpr / Math.max(1, rD)), bit = (Z.rows[0] || "1")[0];
+        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.3, ri = 0, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Half(), 1.5 * dpr / Math.max(1, rD))), bit = (Z.rows[0] || "1")[0];   // v0.751: угол ▮
         g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
         g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.95 : 0.55; g.beginPath(); g.arc(cx, cy, rD, a + h, a - h + 2 * Math.PI); g.arc(cx, cy, ri, a - h + 2 * Math.PI, a + h, true); g.closePath(); g.fill();
         g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.beginPath();
@@ -2324,7 +2324,7 @@ function renderCone(){
       g.moveTo(cx + rD, cy); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
       for (const q of [1, 3]) coneGlyph(g, cx, cy, q0 + (q + 0.5) * Math.PI / 2, rD * 0.62, rD * 0.4, (Z.rows[0] || "1")[0], cBg, ff);   // v0.750: цифра на белых четвертях
     } else if (coneSlitMode() !== "cut" || coneRow1Slit()) {   // v0.745: ▮ щель 1 — и в вырезах; v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
-      const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));   // v0.139: вырез — отдельно от лазера
+      const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Slit() ? coneRow1Half() : hs, 1.5 * dpr / Math.max(1, ri)));   // v0.751: ▮ — свой угол   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
       g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dpr); g.lineCap = "butt"; g.beginPath();
       for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); }
@@ -3087,8 +3087,12 @@ function coneRow1Slit(){ return !!Z.cutRow1Slit && coneCutOn() && !coneQuadOn();
 /* v0.750, по снимку «▮ щель 1» с солнцем — «толщина 1 бита всегда равна всем остальным, и там 1 тоже покажи цифру»: бит строки 1 (◐, ✚, ▮) — во всю
    толщину кольца от самого центра (у ▮ было — тоньше, от 0,42), и на нём — его цифра, как у битов прочих колец. coneGlyph — цифра на бите (угол холста am) */
 function coneGlyph(g, cx, cy, am, rr, fsz, ch, col, ff){ g.save(); g.translate(cx + rr * Math.cos(am), cy + rr * Math.sin(am)); g.rotate(am + Math.PI / 2); g.fillStyle = col; g.globalAlpha = 1; g.font = `${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 0, 0); g.restore(); }
+/* v0.751, по снимку «▮ щель 1» с солнцем — «дай задать угол щели вплоть до 360° — это будет как режим солнца»: у щели строки 1 (▮) свой угол — ползунок
+   «∠» рядом с кнопкой, 1…360° (Z.row1SlitDeg; не задан — как общая «щель»). 360° — щель во весь круг: солнце светит всё, как без ▮; лазер выходит всегда.
+   Общая «щель» колец (до 10°) не меняется. coneRow1Half — половина угла щели строки 1, радианы */
+function coneRow1Half(){ return Math.max(0.1, Math.min(360, +Z.row1SlitDeg || +Z.coneSlit || 2)) * Math.PI / 360; }
 function coneSunSlit(){ return !!Z.cutRow1Slit && coneSunOn() && coneCutOn() && !coneQuadOn(); }
-function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; const t = coneCutAngle() + Math.PI / 2, h = coneSlitHalf(), o = []; ivNorm(t - h, t + h, o); return ivUnion(o); }
+function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; const t = coneCutAngle() + Math.PI / 2, h = coneRow1Half(), o = []; if (h >= Math.PI - 1e-9) return [[0, TAU2]]; ivNorm(t - h, t + h, o); return ivUnion(o); }
 function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || coneSunOn()); }   // v0.744: и у солнца
 /* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
    круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
@@ -3100,7 +3104,7 @@ function coneClockTrace(){
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
   if (coneSunOn()) return [];   // v0.206: у солнца лучей-лазеров нет — свет считает coneSunTrace
   const rays = coneFanOn() ? coneFanAlive().map(k => [k, coneFanAngle(k)]) : [[undefined, coneLaserAngle()]];   // v0.201: ✺ — все живые лучи
-  const cut = coneCutAngle(), cutH = coneSlitHalf();
+  const cut = coneCutAngle(), cutH = coneRow1Slit() ? coneRow1Half() : coneSlitHalf();   // v0.751: ▮ — свой угол щели строки 1
   for (const [k, a] of rays) {   // v0.139: лазер неподвижный, вверх; выход — вырез строки 1
     if (((coneSlitMode() !== "cut" || coneRow1Slit()) && Math.abs(coneAngDiff(cut, a)) > cutH) || (coneQuadOn() && !coneQuadOpen(a))) { out.push({ a, k, stop: 0, pass: false, cell: -1, cells: [], vstop: T, wall: null, g: [] }); continue; }   // вырез в стороне — выход закрыт; v0.743: ✚ — луч на белой четверти
     let b = 1, wall = null; const g = [];   // v0.134: g — щели, сквозь которые прошёл: кольцо, граница (перед ячейкой), подряд
@@ -4525,6 +4529,11 @@ function setupCone(){
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
   const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitMode(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
   slitsUi();
+  if ($("row1Slit")) {   // v0.751: ∠ угол щели строки 1 — до 360°
+    const el = $("row1Slit"); el.value = Math.round(+Z.row1SlitDeg || +Z.coneSlit || 2);
+    el.addEventListener("input", () => { Z.row1SlitDeg = +el.value; coneWallWas = undefined; coneClockWas = null; save(); renderCone(); });
+    el.addEventListener("dblclick", () => { el.value = 180; el.dispatchEvent(new Event("input")); });
+  }
   if ($("bRow1Slit")) {   // v0.745: ▮ щель 1 — у строки 1 в вырезах T−1 щель
     $("bRow1Slit").classList.toggle("on", !!Z.cutRow1Slit);
     $("bRow1Slit").onclick = () => { Z.cutRow1Slit = !Z.cutRow1Slit; $("bRow1Slit").classList.toggle("on", Z.cutRow1Slit); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
