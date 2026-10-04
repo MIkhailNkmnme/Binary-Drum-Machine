@@ -10567,12 +10567,14 @@ function lpTools(col, vis){
   document.querySelectorAll(".win .tools.lpw").forEach(bar => {
     if (!bar._lpObs && lpTag._mo) { bar._lpObs = 1; lpTag._mo.observe(bar, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] }); if (lpRO) lpRO.observe(bar); }
     if (!vis(bar)) return;
-    const its = [...bar.children].filter(el => vis(el) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.tagName === "LABEL"));
+    const flat = (els) => els.flatMap(el => el.tagName === "SPAN" && !el.classList.contains("zerk-range-wrap") && getComputedStyle(el).display === "contents" ? flat([...el.children]) : [el]);   // v0.798: растворённая обёртка (display: contents) — её кнопки в общей цепочке
+    const its = flat([...bar.children]).filter(el => vis(el) && (el.tagName === "BUTTON" || el.tagName === "SELECT" || el.tagName === "LABEL"));
     its.forEach((b, i) => {
       b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
       let tw = 0;
       if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
       else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + 120; }
+      else if (b.tagName === "LABEL" && b.querySelector("input[type=color]")) { tw = [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join("").length * 7.5 + 32; }   // v0.798: подпись + образец цвета 22 px
       else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; if (b.tagName === "LABEL") tw -= 16; }
       b._gcol0 = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._gcol = (b.dataset && b.dataset.gcol) || b._gcol0; b._tzar = ""; b._tzfix = true;   // v0.791: data-gcol — свой цвет обводки (▲▼ по режиму)
       b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
