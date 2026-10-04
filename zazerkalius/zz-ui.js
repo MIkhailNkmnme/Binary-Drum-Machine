@@ -10572,7 +10572,11 @@ function lpTools(col, vis){
     its.forEach((b, i) => {
       b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
       let tw = 0;
-      if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
+      /* v0.799, по снимку «👓 возраст» — «не меняй ширину кнопок»: кнопка, чья надпись меняется по кругу (data-labels — все надписи через «|»), и список —
+         шириной по самой длинной надписи, а не по нынешней: переключение не двигает соседей */
+      const mt = (txt) => { const c = lpTools._c || (lpTools._c = document.createElement("canvas").getContext("2d")); c.font = getComputedStyle(b).font; return c.measureText(txt).width; };
+      if (b.tagName === "SELECT") { tw = Math.max(0, ...[...b.options].map(o => [...o.text].length * 7 + 14)); }
+      else if (b.dataset && b.dataset.labels) { tw = Math.max(...b.dataset.labels.split("|").map(mt)); }
       else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + 120; }
       else if (b.tagName === "LABEL" && b.querySelector("input[type=color]")) { tw = [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join("").length * 7.5 + 32; }   // v0.798: подпись + образец цвета 22 px
       else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; if (b.tagName === "LABEL") tw -= 16; }
