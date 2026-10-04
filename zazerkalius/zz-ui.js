@@ -1926,6 +1926,7 @@ function renderCone(){
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays) {
@@ -4885,6 +4886,13 @@ function r1RayPlace(el){
   if (Array.isArray(Z.r1RayXY)) Z.r1RayXY = [x, y];
   el.style.left = x + "px"; el.style.top = y + "px";
 }
+function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
+  const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
+  const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 80;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 + host.scrollTop;
+  const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
+}
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
   if (!L) { if (el && !el.hidden) el.hidden = true; return; }
@@ -5713,7 +5721,8 @@ function setupCone(){
      (кольца, кручение, довод строки 1). Строки поля и лог не трогает */
   /* v0.719, по снимку «⌖✕ сброс» — «пусть возвращает всё до начала, когда есть только солнце и 2 строка»: строки, ушедшие в поле после второй (по шагу или
      кручению), тоже снимаются — остаются строка 1 (солнце) и строка 2, за чертой — пустая третья. ↩ вернёт (снимок перед сбросом) */
-  if ($("bC3Reset")) $("bC3Reset").onclick = () => { const b = $("bLaserReset"); if (b) b.click(); };   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
+  if ($("bC3Reset")) { $("bC3Reset").onclick = () => { const b = $("bLaserReset"); if (b) b.click(); };
+    const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset")); c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     let cut = 0;
     if (Z.rows.length > 2) {
