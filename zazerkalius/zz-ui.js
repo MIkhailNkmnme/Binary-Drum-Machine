@@ -785,10 +785,11 @@ function coneSunHalfArc(){ const r = coneRotOf(0), o = []; if ((Z.rows[0] || "1"
 function coneSunGateOn(){ return !!Z.sunGate && coneSunOn() && coneCutOn(); }
 function coneSunOnes(b, N){
   if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
-  const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, false) : [];
+  const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, b === N && coneFreeOn()) : [];   // v0.731: у кольца за чертой — поставленные единицы
 }
 function coneSunGateOk(b, N){
-  if (b >= N || b !== 1) return true;   // v0.729: строка 1 (солнце, полукольцо) — проверяется всегда; v0.730: «пусть только 1 строки касается» — прочие кольца не проверяются
+  if (b !== 1) return true;   /* v0.731, по снимку «всё равно светит, почему»: при одной строке (только солнце) строка 2 — кольцо за чертой, и проверка пропускалась; теперь
+     и там: бит строки 1 должен быть накрыт её поставленными единицами */   // v0.729: строка 1 (солнце, полукольцо) — проверяется всегда; v0.730: «пусть только 1 строки касается» — прочие кольца не проверяются
   return ivMinus(coneSunOnes(b - 1, N), coneSunOnes(b, N)).every(([x, y]) => y - x < 1e-6);
 }
 function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» кольца b (у кольца за чертой — поставленные; fr — «▦ любые», части 2n − 1)
