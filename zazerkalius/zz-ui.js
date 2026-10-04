@@ -9556,7 +9556,7 @@ function cgrpInit(){
     /* v0.334, «не давать размера больше, если пустые области появляются»: ширина прижимается к правому краю самого длинного ряда кнопок —
        справа пустого места нет, и шире, чем все кнопки в один ряд, группа не становится */
     const br = b.getBoundingClientRect(); let right = br.left;
-    for (const c of b.children) { const r = c.getBoundingClientRect(); if (r.width) right = Math.max(right, r.right); }
+    for (const c of b.children) { if (c.classList.contains("cgnl")) continue; const r = c.getBoundingClientRect(); if (r.width) right = Math.max(right, r.right); }   // v0.825: перенос строки (во всю ширину) — не кнопка: с ним ширина росла сама
     const extra = Math.floor(br.right - right - 1); if (right > br.left && extra > 0) g.style.width = (parseFloat(g.style.width) - extra) + "px";
   };
   const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
@@ -9625,6 +9625,17 @@ function cgrpInit(){
         best = { d, x: xx, y: yy, o, side };
       }
     });
+    /* v0.825, по снимку «За чертой» у края поля строк — «магнит к зубцам», «правая колонка строки, левая»: зубцы левого меню (#paneZigOv) и поля строк
+       (#fieldZigOv) — такая же цель, как группа-соседка. Острия вправо (меню, поле слева): левый край группы — у основания зубцов, выемки на острия, ряд в
+       ряд с их сеткой. Острия влево (поле справа): правый край группы — у основания, её острия — в выемки (полряда сдвиг). Ни к чему не прицепляется */
+    for (const id of ["paneZigOv", "fieldZigOv"]) {
+      const ov = document.getElementById(id); if (!ov || ov.style.display === "none" || !ov.getClientRects().length) continue;
+      const q = ov.getBoundingClientRect(); if (q.height < P || y >= q.bottom || y + h <= q.top) continue;
+      const off = parseFloat(String(ov.style.backgroundPosition || "0 0").split(" ")[1]) || 0, left = id === "fieldZigOv" && document.body.classList.contains("field-right");
+      const y0 = q.top + off - (left ? P / 2 : 0), xx = left ? q.right - w : q.left, yy = y0 + Math.round((y - y0) / P) * P;
+      const d = Math.abs(x - xx); if (d >= SNAP + t || (best && d >= best.d)) continue;
+      best = { d, x: xx, y: yy, o: ov, side: "z" };
+    }
     return best;
   };
   let linkSaveT = 0;
@@ -10813,7 +10824,8 @@ function fieldZig(dy, ln){
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
   const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
   ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = fr.height + "px"; ov.style.width = w.toFixed(2) + "px";
-  ov.style.backgroundPosition = "0 " + ((((dy + fr.top - (document.getElementById("rowsPane") || f).getBoundingClientRect().top) % H) + H) % H).toFixed(1) + "px";
+  /* v0.825: поле справа — острия влево, на полряда ниже сетки меню: встают в выемки правого края групп, стоящих рядами (группы — острия на середине ряда) */
+  ov.style.backgroundPosition = "0 " + ((((dy + (R ? H / 2 : 0) + fr.top - (document.getElementById("rowsPane") || f).getBoundingClientRect().top) % H) + H) % H).toFixed(1) + "px";
   const k = ln + "|" + fc + "|" + R; if (ov._k === k) return; ov._k = k;
   const z = R ? `${w.toFixed(2)},0 ${(w - t).toFixed(2)},${H / 2} ${w.toFixed(2)},${H}` : `0,0 ${t.toFixed(2)},${H / 2} 0,${H}`;
   const sv = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${z}" fill="${fc}"/><polyline points="${z}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
@@ -11626,7 +11638,7 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.classList.contains("cgsz") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота
   return Math.ceil(m) + 1 + (parseFloat(getComputedStyle(g).paddingLeft) || 0);   // v0.545: и отступ слева (под циферблат Аниматрицы)
 }
 function tzcIcons(){
