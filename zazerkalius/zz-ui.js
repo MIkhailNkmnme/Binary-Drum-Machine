@@ -3880,8 +3880,8 @@ function setupCone(){
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
-      const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick || (h.i === 0 && coneSunHalf()) ? -1 : h.i;   // v0.736: и полукруг строки 1 — без обводки   // v0.281: 🚫 выбор — и без обводки при наведении
-      const b = coneBitAt(e) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
+      const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick || h.i === 0 ? -1 : h.i;   /* v0.749, «убери эффект, когда на первое кольцо навожу — всё остальное пропадает»: кольцо строки 1 наведением не берётся вовсе (ни обводки, ни рамки бита, ни сканера) */   // v0.736: и полукруг строки 1 — без обводки   // v0.281: 🚫 выбор — и без обводки при наведении
+      const b0 = coneBitAt(e), b = (b0 && b0.i === 0 ? null : b0) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
       if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · правой кнопкой (или Ctrl) тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
