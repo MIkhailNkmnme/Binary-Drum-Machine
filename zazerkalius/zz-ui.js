@@ -1033,7 +1033,7 @@ function laneCountUi(){
 }
 function renderRows(){
   if (rowEditing >= 0) return;
-  if (!renderRows._tv) { renderRows._tv = 1; queueMicrotask(() => { renderRows._tv = 0; triViewSync(); }); }   // v0.788: ▲▼ — после отрисовки поля
+  if (!renderRows._tv) { renderRows._tv = 1; queueMicrotask(() => { renderRows._tv = 0; triViewSync(); bipyTgUi(); }); }   // v0.788: ▲▼ — после отрисовки поля; v0.791: горят ли ◇ сдвиг / строить
   syncLane();
   laneCountUi();   // v0.276
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
@@ -2125,10 +2125,10 @@ function renderCone(){
     if (rowSel.has(i)) { g.strokeStyle = cS; g.lineWidth = Math.max(1.5 * dpr, dr * 0.12); g.beginPath(); coneArc(g, cx, cy, i, (rin + rout) / 2, 0, 2 * Math.PI); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1; }
     if (i === Z.cur && !document.body.classList.contains("nocur") && !Z.coneClean) {   // v0.222: у чистых колец текущее видно по яркости (остальные гаснут); v0.107: Esc гасит и в конусе; v0.087: текущее — те же цвета краёв, толще (внутри голубой, снаружи оранжевый)
       g.lineWidth = Math.max(2 * dpr, dr * 0.12);
-      g.strokeStyle = cIn; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.04, 0, 2 * Math.PI); g.stroke();
+      g.strokeStyle = cIn; g.beginPath(); coneArc(g, cx, cy, i, Math.max(0, rin - dr * 0.04), 0, 2 * Math.PI); g.stroke();
       g.strokeStyle = cOut; g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.04, 0, 2 * Math.PI); g.stroke();
     }
-    if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); coneArc(g, cx, cy, i, rin - dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
+    if (i === coneHover) { g.strokeStyle = cA; g.lineWidth = Math.max(2 * dpr, dr * 0.14); g.globalAlpha = 0.85; g.beginPath(); coneArc(g, cx, cy, i, Math.max(0, rin - dr * 0.06), 0, 2 * Math.PI); g.stroke(); g.beginPath(); coneArc(g, cx, cy, i, rout + dr * 0.06, 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
     if (Z.coneBit1 && !(Z.conePoly && n <= 2)) {   // v0.318, «подсветить 1 бит каждой строки»: бит 0 — золотой обводкой
       const a = -Math.PI / 2 - rot * step;
       g.strokeStyle = cg; g.globalAlpha = 1; g.lineJoin = "round"; g.lineWidth = Math.max(1.5 * dpr, Math.min(dr * 0.12, 4 * dpr));
@@ -2748,6 +2748,26 @@ function bipyMode(){ return Z.coneBipy && Z.cone3d && !Z.coneTor ? (Z.coneBipyM 
    внутренняя ▲ = не ▼ строки выше = (две инверсии) ▲ строки через одну, со сдвигом на одну: s[n][j] = s[n−2][j−1], j = 1…n−2. Свободны только два
    крайних бита каждой строки (их и задаёт пользователь), строки 1 и 2 — целиком. Строится сверху вниз, только там, где строки идут подряд по длине
    (n − 2, n − 1, n); остальные не трогаются. Меняет строки поля — только кнопкой, ↩ вернёт */
+/* v0.791, по снимку «◇ сдвиг» — «тут бы цикл-кнопку: обратно чтоб ставила, а то сейчас не убрать»: «◇ сдвиг» и «◇ строить» — переключатели. Первое
+   нажатие перестраивает строки и помнит, какими они были; второе (пока строки те же, что дала кнопка) — возвращает их как было. Кнопка горит, пока
+   строки — её результат; тронул строки руками — гаснет, следующее нажатие строит заново от новых. Оба шага — в ↩ */
+const bipyTg = {};   // id кнопки → { was: строки до, got: строки после }
+function bipyToggle(id, run){
+  const T = bipyTg[id], same = (a) => a && a.length === Z.rows.length && a.every((x, i) => x === Z.rows[i]);
+  if (T && same(T.got)) {
+    if (rowsLocked()) return;
+    snapshot(); Z.rows.splice(0, Z.rows.length, ...T.was); delete bipyTg[id]; Z.cur = Math.max(0, Math.min(Z.cur, Z.rows.length - 1));
+    renderAll(); save(); say("↶ Строки — как были до этой кнопки. ↩ вернёт перестроенные."); return;
+  }
+  const was = Z.rows.slice();
+  run();
+  if (Z.rows.length !== was.length || Z.rows.some((x, i) => x !== was[i])) bipyTg[id] = { was, got: Z.rows.slice() }; else delete bipyTg[id];
+  bipyTgUi();
+}
+function bipyTgUi(){
+  for (const id of ["bBipyShift", "bBipyBuild"]) { const b = $(id); if (!b) continue; const T = bipyTg[id];
+    const on = !!T && T.got.length === Z.rows.length && T.got.every((x, i) => x === Z.rows[i]); if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }
+}
 function bipyBuild(){
   if (rowsLocked()) return;
   const R = Z.rows.slice(); let ch = 0, ok = 0;
@@ -2794,8 +2814,16 @@ let tvCur = null, tvPrev = null, tvHeat = [], tvFrame = 0;   /* v0.790: след
 function triViewSync(){
   const L = $("rowList"); if (!L) return; let T = $("triView");
   const on = !!Z.triView && !ovControls();
-  { const b = $("bTriView"); if (b) b.classList.toggle("on", !!Z.triView); }
   const gm = Z.triGlass === "chg" || Z.triGlass === "pair" ? Z.triGlass : "";
+  /* v0.791, «сделай одной кнопкой, одной ширины, но с 3 разноцветными обводками»: «▲▼» — одна кнопка на всё, щелчок по кругу: поле → ▲▼ (голубая
+     обводка) → ▲▼ + изм. (золотая) → ▲▼ + пары (розовая) → поле. Надпись не меняется — ширина та же; режим — цветом обводки */
+  { const b = $("bTriView"); if (b) { const st = !Z.triView ? "" : gm || "view", col = { view: "#22d3ee", chg: "#ffd166", pair: "#ff6bd5" }[st];
+      b.classList.toggle("on", !!st);
+      if ((b.dataset.gcol || "") !== (col || "")) { if (col) b.dataset.gcol = col; else delete b.dataset.gcol; }
+      const want = col || b._gcol0 || b._gcol; if (b._gcol !== want) { b._gcol = want; b._tzk = ""; if (b.classList.contains("tz") && typeof tzGeo === "function") tzGeo(b); }
+      b.title = ["▲▼ — щелчок по кругу (режим — цветом обводки):", (st === "" ? "▶ " : "") + "без цвета — обычное поле строк", (st === "view" ? "▶ " : "") + "голубая — поле треугольником: ▲ — бит строки, ▼ — инверсия бита над ним",
+        (st === "chg" ? "▶ " : "") + "золотая — треугольник + изм.: золотом клетки, поменявшиеся последним изменением строк (шаг Аниматрицы, ◇ сдвиг, ◇ строить, правка); след остывает за T шагов",
+        (st === "pair" ? "▶ " : "") + "розовая — треугольник + пары: золотом ▲, не равная ▼ слева (где ломается правило сдвига)"].join("\n"); } }
   { const b = $("bTriGlass"); if (b) { const t = gm === "chg" ? "👓 изм." : gm === "pair" ? "👓 пары" : "👓"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", !!gm); } }
   const R = Z.rows;
   let fresh = false;
@@ -6502,9 +6530,13 @@ function setupCone(){
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
-  if ($("bBipyBuild")) $("bBipyBuild").onclick = bipyBuild;   // v0.787
-  if ($("bBipyShift")) $("bBipyShift").onclick = bipyShift;   // v0.788
-  if ($("bTriView")) $("bTriView").onclick = () => { Z.triView = !Z.triView; save(); renderRows(); };   // v0.788
+  if ($("bBipyBuild")) $("bBipyBuild").onclick = () => bipyToggle("bBipyBuild", bipyBuild);   // v0.787; v0.791 — переключатель
+  if ($("bBipyShift")) $("bBipyShift").onclick = () => bipyToggle("bBipyShift", bipyShift);   // v0.788; v0.791 — переключатель
+  if ($("bTriView")) $("bTriView").onclick = () => {   // v0.788; v0.791 — одна кнопка по кругу: поле → ▲▼ → изм. → пары → поле
+    if (!Z.triView) { Z.triView = true; Z.triGlass = ""; } else if (!Z.triGlass) Z.triGlass = "chg"; else if (Z.triGlass === "chg") Z.triGlass = "pair"; else { Z.triView = false; Z.triGlass = ""; }
+    save(); renderRows();
+    say(!Z.triView ? "▲▼ снято — обычное поле строк." : Z.triGlass === "chg" ? "▲▼ изм. (золотая обводка): золотом — что поменялось; след остывает за T шагов." : Z.triGlass === "pair" ? "▲▼ пары (розовая обводка): золотом — ▲, не равная ▼ слева." : "▲▼ (голубая обводка): поле треугольником.");
+  };
   if ($("bTriGlass")) $("bTriGlass").onclick = () => {   // v0.789: 👓 — нет → изм. → пары → нет; включает «▲▼»
     Z.triGlass = Z.triGlass === "chg" ? "pair" : Z.triGlass === "pair" ? "" : "chg"; if (Z.triGlass) Z.triView = true; save(); renderRows();
     say(Z.triGlass === "chg" ? (undoStack.length ? "👓 Изм.: золотом — клетки, которые поменялись последним изменением строк: шагом Аниматрицы, ◇ сдвиг, ◇ строить, правкой." : "👓 Изм.: золотом — клетки, которые поменялись последним изменением строк: шагом Аниматрицы, ◇ сдвиг, ◇ строить, правкой.")
@@ -10201,7 +10233,7 @@ function lpBar(col, vis){
     let tw = 0;
     if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
     else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; }
-    b._gcol = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._tzar = ""; b._tzfix = true;
+    b._gcol0 = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._gcol = (b.dataset && b.dataset.gcol) || b._gcol0; b._tzar = ""; b._tzfix = true;   // v0.791: data-gcol — свой цвет обводки (▲▼ по режиму)
     b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
     b._tzn = b._tzn0 = b.tagName === "LABEL" ? 12 : b.tagName === "SELECT" ? Math.max(3, Math.min(9, Math.ceil((tw + 10) / sd))) : Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 8) / sd));
     const ml = solo.has(b.id) ? b.style.marginLeft : null;
@@ -10224,7 +10256,7 @@ function lpTools(col, vis){
       if (b.tagName === "SELECT") { const o = b.options[b.selectedIndex]; tw = (o ? [...o.text].length : 4) * 7 + 14; }
       else if (b.tagName === "LABEL" && b.querySelector("input[type=range]")) { const txt = [...b.childNodes].filter(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName === "SPAN" && !n.classList.contains("zerk-range-wrap"))).map(n => n.textContent).join("").trim(); tw = [...txt].length * 7 + 120; }
       else { const rg = document.createRange(); rg.selectNodeContents(b); tw = rg.getBoundingClientRect().width; if (b.tagName === "LABEL") tw -= 16; }
-      b._gcol = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._tzar = ""; b._tzfix = true;
+      b._gcol0 = tzLnBg() || (b.tagName === "BUTTON" ? bc : "") || col; b._gcol = (b.dataset && b.dataset.gcol) || b._gcol0; b._tzar = ""; b._tzfix = true;   // v0.791: data-gcol — свой цвет обводки (▲▼ по режиму)
       b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
       b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + 10) / sd));
       tzGeo(b);
