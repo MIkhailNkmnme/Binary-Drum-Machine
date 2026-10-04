@@ -1896,7 +1896,8 @@ function renderCone(){
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = (coneSunHalf() || coneQuadOn() || coneRow1Slit()) && fillOn ? 0 : rMax * 0.05, dr = (rMax - r0) / den;   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
+     (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
@@ -2313,9 +2314,14 @@ function renderCone(){
         g.stroke(); g.restore();
         coneGlyph(g, cx, cy, b0 + Math.PI / 2, rD * 0.62, rD * 0.45, bit, bit === "1" ? cBg : c1, ff);   // v0.750: цифра посередине полукруга
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
-      } else {
-      g.fillStyle = cg; g.globalAlpha = 0.85; g.shadowColor = cg; g.shadowBlur = 18 * dpr;
-      g.beginPath(); g.arc(cx, cy, r0 + Math.max(1, dr * band), 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+      } else {   /* v0.774: строка 1 — круг от центра, солнце — точка в его середине (было — золотой диск во всю строку 1). Свет её проходит, как и прежде,
+         поэтому круг полупрозрачный, цветом своего бита, с цифрой */
+        const rD = r0 + Math.max(1, dr * band), rS = Math.max(3 * dpr, dr * 0.08), bit = (Z.rows[0] || "1")[0];
+        g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
+        g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.35 : 0.2; g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.fill();
+        g.save(); g.strokeStyle = cg; g.globalAlpha = 0.8; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
+        coneGlyph(g, cx, cy, -Math.PI / 2 - coneRotOf(0) * 2 * Math.PI, rD * 0.6, rD * 0.4, bit, bit === "1" ? c1 : c0, ff);
+        g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
       }
       g.globalAlpha = 0.3;
       for (const [b, lit] of S.bands) for (const [lo, hi] of lit) sect(rIn(b), rAt(b), lo, hi);
@@ -2483,7 +2489,7 @@ function renderCone(){
       g.stroke(); g.restore();
       coneGlyph(g, cx, cy, b0 + Math.PI / 2, rD * 0.62, rD * 0.45, bit, bit === "1" ? cBg : c1, ff);
     } else if (coneSlitMode() !== "cut" || coneRow1Slit()) {   // v0.745: ▮ щель 1 — и в вырезах; v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
-      const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Slit() ? coneRow1Half() : hs, 1.5 * dpr / Math.max(1, ri)));   // v0.751: ▮ — свой угол   // v0.139: вырез — отдельно от лазера
+      const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Slit() ? coneRow1Half() : hs, 1.5 * dpr / Math.max(1, ro)));   // v0.774: внутренний край — точка, ширина — по внешнему   // v0.751: ▮ — свой угол   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
       g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dpr); g.lineCap = "butt"; g.beginPath();
       for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); }
@@ -2494,7 +2500,7 @@ function renderCone(){
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + rEnd * Math.cos(a), cy + rEnd * Math.sin(a)); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
     }
     for (const R of clockRays) {
-      const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : (r0 + R.stop * dr) * coneRho(R.stop, R.a), px = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);   // v0.129: пойман пустым кольцом — до его ячейки
+      const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : Math.max(R.stop ? 0 : 4 * dpr, (r0 + R.stop * dr) * coneRho(R.stop, R.a)), px = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);   /* v0.774: встал в строке 1 — красная дужка у самой точки (r0 = 0) */   // v0.129: пойман пустым кольцом — до его ячейки
       const holes = R.stop > 0 || R.pass ? [[Math.max(0, r0 - dpr), r0 + Math.max(1, dr * band) + dpr]] : [];   // v0.750: при круге от центра (r0 = 0) радиус не в минус   // v0.134: вырез строки 1 (v0.139: если открыт) и щели, пройденные лучом
       for (let q = 0; q < R.g.length; q += 2) { const ri = r0 + R.g[q] * dr; holes.push([ri - dpr, ri + Math.max(1, dr * band) + dpr]); }
       beam(R.a, rs, R.pass ? 1 : 0.9, R.pass, holes);
