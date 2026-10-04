@@ -2897,7 +2897,7 @@ let rmbCur = null, rmbVals = [], rmbHeat = [], rmbAge = [], rmbFrame = 0, rmbKey
 const RMB_AGE = [[0.5, "#ff3b3b"], [1, "#ff8a3d"], [2, "#ffd166"], [4, "#9be564"], [8, "#22d3ee"], [16, "#5b7cfa"]];
 function rmbSt(){ if (!Z.rmb || typeof Z.rmb !== "object") Z.rmb = {}; const r = Z.rmb;
   if (!["c", "zz", "l", "r"].includes(r.al)) r.al = "zz"; if (!["each", "rmb", "grp", "none"].includes(r.ln)) r.ln = "each";
-  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; if (r.wave !== "mir") r.wave = "fld"; return r; }
+  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; if (r.wave !== "mir") r.wave = "fld"; if (!["l", "d", "r"].includes(r.cpri)) r.cpri = "l"; return r; }
 function rmbLayout(R, M, al, cell){   /* → hs — начало каждого ряда в полуклетках, ok — лежит ли ряд на сетке ряда выше, u0 — первый треугольник ряда ▼ (1)
    или ▲ (0), base — как стоят ряды. «▲ бит»: ряд i — ▲ j на hs[i] + 2j, ряды по центру. «◇ бит» (v0.794): бит j — треугольники 2j и 2j + 1, ряды — как в поле */
   const rm = cell === "rmb", base = rm ? (Z.rowsAlign || "center") : "center", u0 = rm && al !== "l" ? 1 : 0;
@@ -2993,6 +2993,8 @@ function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
   q("button[data-ral]").forEach(b => b.classList.toggle("on", b.dataset.ral === r.al));
   const L = { each: "▵ каждый", rmb: "◇ ромбы", grp: "⬡ группы", none: "без границ" }, G = { "": "👓", chg: "👓 изм.", age: "👓 возраст", pair: "👓 пары" };
+  { const b = $("bRmbCube"), c = $("bRmbCPri"); if (b) { b.classList.toggle("on", !!r.cube); b.title = "🧊 Кубы: треугольники склеиваются в ромбы с равным соседом — три направления ромба = три грани кубика (светлая «/», средняя «◆», тёмная «\\»); без пары — бледный с красной обводкой" + (r.cube ? `\nСейчас: ромбов ${rmbPairStat.n}, без пары ${rmbPairStat.bad} (из них ${rmbPairStat.ex} неизбежно — ▲ и ▼ не поровну)` : ""); }
+    if (c) { c.hidden = !r.cube; const t = { l: "сперва \\", d: "сперва ◆", r: "сперва /" }[r.cpri]; if (c.textContent !== t) c.textContent = t; } }
   { const b = $("bRmbCell"); if (b) { const t = r.cell === "rmb" ? "◇ бит" : "▲ бит"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", r.cell === "rmb"); } }
   const bl = $("bRmbLn"); if (bl && bl.textContent !== L[r.ln]) bl.textContent = L[r.ln];
   const bg = $("bRmbGl"); if (bg) { if (bg.textContent !== G[r.gl]) bg.textContent = G[r.gl]; bg.classList.toggle("on", !!r.gl); }
@@ -3013,6 +3015,8 @@ function rmbWire(){
   $("bRmbGl").onclick = () => { const r = rmbSt(), o = ["", "chg", "age", "pair"]; r.gl = o[(o.indexOf(r.gl) + 1) % o.length]; re(); };
   $("bRmbCell").onclick = () => { const r = rmbSt(); r.cell = r.cell === "rmb" ? "tri" : "rmb"; rmbFit(); re(); };
   $("bRmbFol").onclick = () => { const r = rmbSt(); r.fol = !r.fol; re(); };
+  $("bRmbCube").onclick = () => { const r = rmbSt(); r.cube = !r.cube; re(); if (r.cube) { const st = rmbPairStat, x = st.bad - st.ex; say(`🧊 Кубы: ромбов ${st.n}, без пары ${st.bad}` + (st.ex ? ` (${st.ex} неизбежно: ▲ и ▼ не поровну)` : "") + (x > 0 ? ` — лишних разрывов ${x}, они красные.` : " — сверх неизбежного всё сложилось в кубики.")); } };
+  $("bRmbCPri").onclick = () => { const r = rmbSt(), o = ["l", "d", "r"]; r.cpri = o[(o.indexOf(r.cpri) + 1) % 3]; re(); say(`🧊 Кубы, ${$("bRmbCPri").textContent}: ромбов ${rmbPairStat.n}, без пары ${rmbPairStat.bad} (неизбежно ${rmbPairStat.ex}).`); };
   $("bRmbNum").onclick = () => { const r = rmbSt(); r.num = !r.num; re(); };
   $("bRmbSh").onclick = () => { const r = rmbSt(); r.sh = !r.sh; re(); };
   $("bRmbOut").onclick = () => { const r = rmbSt(); r.out = !r.out; re(); };
@@ -3046,6 +3050,35 @@ function rmbWire(){
   cv.addEventListener("dblclick", () => { rmbFit(); save(); renderRmb(); });
   rmbUi();
 }
+/* v0.796, «да, делай кубы» (по разбору: ромб из двух треугольников бывает трёх направлений — «\» ▼ + ▲ справа, «/» ▲ + ▼ справа, «◆» ▲ над ▼, —
+   и это три видимые грани кубика): «🧊 кубы» в «◇ Ромбоидах». Каждый ▲ берёт себе в пару равный по биту свободный ▼ из трёх соседей: слева («\»),
+   снизу («◆»), справа («/»); кто первым — выбирает «сперва \ / ◆ / /» (жадно, сверху вниз и слева направо, поэтому от порядка зависит, какие ромбы
+   выйдут). Ромб красится как грань: «/» — светлая, «◆» — средняя, «\» — тёмная, тем же цветом бита; треугольник без пары — бледный с красной
+   обводкой: там картина в кубики не складывается. У «◇ бит» пары — сами биты. Счёт — rmbPairStat (ромбов, без пары) */
+let rmbPair = null, rmbPairOf = null, rmbPairKey = "", rmbPairStat = { n: 0, bad: 0 };
+function rmbPairs(M, hs, upK, rm, pri){
+  const PR = []; for (let i = 0; i < M; i++) PR.push(new Int8Array((rmbVals[i] || []).length));
+  let n = 0, bad = 0;
+  const ord = pri === "d" ? "DLR" : pri === "r" ? "RDL" : "LDR";
+  for (let i = 0; i < M; i++) { const v = rmbVals[i]; if (!v) continue;
+    for (let k = 0; k < v.length; k++) {
+      const a = v[k]; if (a === 9 || PR[i][k]) continue;
+      if (rm) { if (!(k & 1) && k + 1 < v.length && v[k + 1] !== 9) { PR[i][k] = 2; PR[i][k + 1] = 1; n++; } continue; }
+      if (!upK(k)) continue;
+      for (const c of ord) {
+        if (c === "L") { if (k > 0 && !PR[i][k - 1] && v[k - 1] === a) { PR[i][k] = 1; PR[i][k - 1] = 2; n++; break; } }
+        else if (c === "R") { if (k + 1 < v.length && !PR[i][k + 1] && v[k + 1] === a) { PR[i][k] = 2; PR[i][k + 1] = 1; n++; break; } }
+        else if (i + 1 < M) { const w = rmbVals[i + 1], kk = hs[i] + k - hs[i + 1];
+          if (w && kk >= 0 && kk < w.length && !upK(kk) && !PR[i + 1][kk] && w[kk] === a) { PR[i][k] = 4; PR[i + 1][kk] = 3; n++; break; } }
+      }
+    }
+  }
+  let nu = 0, nd = 0;
+  for (let i = 0; i < M; i++) { const v = rmbVals[i]; if (v) for (let k = 0; k < v.length; k++) if (v[k] !== 9) { if (upK(k)) nu++; else nd++; if (!PR[i][k]) bad++; } }
+  rmbPairStat = { n, bad, ex: Math.abs(nu - nd) };   // ex — без пары неизбежно: ▲ и ▼ поровну не бывает (в треугольнике из n строк ▲ на n больше)
+  return PR;
+}
+const rmbFace = (up, c) => !c ? 3 : up ? (c === 1 ? 2 : c === 2 ? 0 : 1) : (c === 2 ? 2 : c === 1 ? 0 : 1);   // 0 «/», 1 «◆», 2 «\», 3 без пары
 function renderRmb(){
   rmbWire();
   if (!winOpen("w-rmb")) { rmbCur = null; return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
@@ -3075,6 +3108,8 @@ function renderRmb(){
     if (rmbKey !== key) { rmbHeat = []; rmbAge = []; }
     rmbVals = NV; rmbKey = key; if (rmbHeat.length > M) rmbHeat.length = M; if (rmbAge.length > M) rmbAge.length = M;
   }
+  const upK = (k) => ((k + u0) & 1) === 0, cube = !!r.cube;
+  if (cube && (rmbPairOf !== rmbVals || rmbPairKey !== key + r.cpri)) { rmbPair = rmbPairs(M, hs, upK, rm, r.cpri); rmbPairOf = rmbVals; rmbPairKey = key + r.cpri; }
   rmbUi();
   const cv = $("rmbCv"); if (!cv) return;
   const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
@@ -3097,7 +3132,7 @@ function renderRmb(){
   const P = { u1: new Path2D(), u0: new Path2D(), d1: new Path2D(), d0: new Path2D(), e: new Path2D() }, HT = [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]);
   const L = new Path2D(), TL = Math.max(1, M), gm = r.gl, lm = r.ln, digs = r.num && tw >= (rm ? 18 : 22) ? [] : null;   // v0.794: цифры — только крупно
   const AG = gm === "age" ? RMB_AGE.map(() => [new Path2D(), new Path2D()]) : null;
-  const upK = (k) => ((k + u0) & 1) === 0;
+  const CB = cube ? [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]) : null, UL = cube ? new Path2D() : null;
   const val = (i, p) => { if (i < 0 || i >= M) return -1; const v = rmbVals[i], k = p - hs[i]; return v && k >= 0 && k < v.length ? (v[k] === 9 ? -1 : v[k]) : -1; };
   const isDn = (i, p) => i >= 0 && i < M && !upK(p - hs[i]);
   const rid = (i, p) => { const k = p - hs[i]; return i * 1e7 + (rm ? k >> 1 : upK(k) ? p : p + 1); };   // ромб: «◇ бит» — бит, «▲ бит» — ▼ с ▲ справа
@@ -3106,12 +3141,14 @@ function renderRmb(){
   for (let i = i0; i <= i1; i++) {
     const v = rmbVals[i]; if (!v || !v.length) continue;
     const kA = Math.max(0, Math.floor(-r.ox / hw - hs[i]) - 2), kB = Math.min(v.length - 1, Math.ceil((Wc - r.ox) / hw - hs[i]) + 1), yt = Y(i), yb = yt + h;
-    const H = rmbHeat[i], AA = rmbAge[i];
+    const H = rmbHeat[i], AA = rmbAge[i], PC = cube && rmbPair ? rmbPair[i] : null;
     for (let k = kA; k <= kB; k++) {
       const p = hs[i] + k, up = upK(k), x = X(p), a = v[k];
       if (a === 9) { P.e.moveTo(x, yt); P.e.lineTo(x + tw, yt); P.e.lineTo(x + hw, yb); P.e.closePath(); continue; }
       let ab = -1; if (AG && AA && AA[k] > -1e8) { const ag = rmbClock - AA[k]; ab = RMB_AGE.findIndex(e => ag < e[0]); }
-      const q = ab >= 0 ? AG[ab][a ? 0 : 1] : up ? (a ? P.u1 : P.u0) : (a ? P.d1 : P.d0);
+      const pc = PC ? PC[k] : 0, fc = PC ? rmbFace(up, pc) : -1;
+      const q = ab >= 0 ? AG[ab][a ? 0 : 1] : fc >= 0 ? CB[fc][a ? 0 : 1] : up ? (a ? P.u1 : P.u0) : (a ? P.d1 : P.d0);
+      if (fc === 3) { if (up) { UL.moveTo(x, yb); UL.lineTo(x + tw, yb); UL.lineTo(x + hw, yt); } else { UL.moveTo(x, yt); UL.lineTo(x + tw, yt); UL.lineTo(x + hw, yb); } UL.closePath(); }
       if (up) { q.moveTo(x, yb); q.lineTo(x + tw, yb); q.lineTo(x + hw, yt); } else { q.moveTo(x, yt); q.lineTo(x + tw, yt); q.lineTo(x + hw, yb); }
       q.closePath();
       let b = -1;
@@ -3121,9 +3158,11 @@ function renderRmb(){
       if (lm !== "none") {
         if (up) {   // ▲ — левое, правое, нижнее ребро; у ▼ — только края, где ▲ рядом нет
           const id = rid(i, p), l = val(i, p - 1), rr = val(i, p + 1), dn = isDn(i + 1, p) ? val(i + 1, p) : -1;
+          if (PC) { if (pc !== 1) ln(x, yb, x + hw, yt); if (pc !== 2) ln(x + hw, yt, x + tw, yb); if (pc !== 4) ln(x, yb, x + tw, yb); }   // 🧊: граница — всюду, кроме стыка с парой
+          else {
           if (edge(a, l, id, l < 0 ? -1 : rid(i, p - 1))) ln(x, yb, x + hw, yt);
           if (edge(a, rr, id, rr < 0 ? -1 : rid(i, p + 1))) ln(x + hw, yt, x + tw, yb);
-          if (edge(a, dn, 0, 1)) ln(x, yb, x + tw, yb);
+          if (edge(a, dn, 0, 1)) ln(x, yb, x + tw, yb); }
         } else { const upn = i > 0 && !isDn(i - 1, p) ? val(i - 1, p) : -1; if (upn < 0) ln(x, yt, x + tw, yt);
           if (val(i, p - 1) < 0) ln(x, yt, x + hw, yb); if (val(i, p + 1) < 0) ln(x + hw, yb, x + tw, yt); }   // v0.794: у «◇ бит» ряд может начаться и кончиться ▼
       }
@@ -3134,6 +3173,11 @@ function renderRmb(){
   const fill = (p, col, al) => { g.globalAlpha = al; g.fillStyle = col; g.fill(p); };
   const dA = rm ? 0.8 : 0.62;   // ▼ бледнее ▲ (у «◇ бит» — чуть: половинки одного бита)
   fill(P.u0, c0, 1); fill(P.d0, c0, dA);
+  if (CB) {   // 🧊 грани: тот же цвет бита, светлее / темнее по направлению ромба
+    const rgb = (c) => { g.fillStyle = "#000"; g.fillStyle = c; const t = String(g.fillStyle); if (t[0] === "#") return [1, 3, 5].map(j => parseInt(t.slice(j, j + 2), 16)); const m = t.match(/[\d.]+/g) || [0, 0, 0]; return m.slice(0, 3).map(Number); };
+    const sh = (c, f) => { const [R0, G0, B0] = rgb(c); return `rgb(${Math.round(R0 * f)},${Math.round(G0 * f)},${Math.round(B0 * f)})`; };
+    [1, 0.7, 0.45].forEach((f, j) => { fill(CB[j][0], sh(c1, f), 1); fill(CB[j][1], sh(c0, f), 1); });
+    fill(CB[3][0], c1, 0.3); fill(CB[3][1], c0, 0.3); }
   if (AG) AG.forEach((q, b) => fill(q[1], RMB_AGE[b][1], 0.38));   // возраст: нули — цветом возраста, бледно
   if (r.sh) { g.save(); g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = Math.max(2, tw * 0.35); g.shadowOffsetX = tw * 0.1; g.shadowOffsetY = tw * 0.14; }
   fill(P.u1, c1, 1); fill(P.d1, c1, dA);
@@ -3143,7 +3187,8 @@ function renderRmb(){
   g.globalAlpha = 1;
   g.strokeStyle = "rgba(160,170,190,.25)"; g.lineWidth = 0.6; g.stroke(P.e);
   if (lm !== "none") { g.lineJoin = "round"; g.lineCap = "round";
-    g.strokeStyle = r.lc || (lm === "each" ? "rgba(5,7,11,.45)" : "#e6e9ef"); g.lineWidth = lm === "each" ? Math.max(0.5, tw * 0.035) : Math.max(1, tw * 0.07); g.stroke(L); }
+    g.strokeStyle = r.lc || (cube ? "rgba(5,7,11,.6)" : lm === "each" ? "rgba(5,7,11,.45)" : "#e6e9ef"); g.lineWidth = cube || lm === "each" ? Math.max(0.5, tw * 0.035) : Math.max(1, tw * 0.07); g.stroke(L); }
+  if (UL) { g.strokeStyle = "#ff4d4d"; g.lineWidth = Math.max(0.8, tw * 0.05); g.stroke(UL); }
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
 }
