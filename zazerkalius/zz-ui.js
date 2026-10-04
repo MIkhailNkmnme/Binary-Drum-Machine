@@ -784,11 +784,11 @@ function coneSunHalfArc(){ const r = coneRotOf(0), o = []; if ((Z.rows[0] || "1"
    полукольцом (◐), целое солнце закрыть нельзя. coneSunGateOk(b) — можно ли свету войти в кольцо b */
 function coneSunGateOn(){ return !!Z.sunGate && coneSunOn() && coneCutOn(); }
 function coneSunOnes(b, N){
-  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
+  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
   const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, false) : [];
 }
 function coneSunGateOk(b, N){
-  if (b >= N || (b === 1 && !coneSunHalf())) return true;
+  if (b >= N) return true;   // v0.729: строка 1 (солнце, полукольцо) — проверяется всегда: светит, только когда целиком закрыта единицами снаружи
   return ivMinus(coneSunOnes(b - 1, N), coneSunOnes(b, N)).every(([x, y]) => y - x < 1e-6);
 }
 function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» кольца b (у кольца за чертой — поставленные; fr — «▦ любые», части 2n − 1)
@@ -4097,8 +4097,10 @@ function setupCone(){
   }
   if ($("bSunGate")) {   // v0.728: ☀ накрыты — свет дальше, только когда единицы кольца закрыты единицами внешнего
     $("bSunGate").classList.toggle("on", !!Z.sunGate);
-    $("bSunGate").onclick = () => { Z.sunGate = !Z.sunGate; $("bSunGate").classList.toggle("on", Z.sunGate); save(); renderCone();
-      say(Z.sunGate ? "☀ Накрыты: солнце светит из кольца дальше, только когда все его единицы закрыты единицами следующего кольца (строка 1 — при ◐ полукольце)." : "☀ Накрыты выключено: солнце светит сквозь вырезы и нули, как обычно."); };
+    $("bSunGate").onclick = () => { Z.sunGate = !Z.sunGate; $("bSunGate").classList.toggle("on", Z.sunGate);
+      if (Z.sunGate && !Z.sunHalf && $("bSunHalf")) { Z.sunHalf = true; $("bSunHalf").classList.add("on"); }   // v0.729: полукольцо считается тоже — включается вместе
+      save(); renderCone();
+      say(Z.sunGate ? "☀ Накрыты: солнце светит, только когда полукольцо строки 1 целиком закрыто единицами снаружи; и из каждого кольца дальше — только когда все его единицы закрыты единицами следующего (◐ включено вместе)." : "☀ Накрыты выключено: солнце светит сквозь вырезы и нули, как обычно."); };
   }
   if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
     $("bCutFree").classList.toggle("on", !!Z.cutFree);
