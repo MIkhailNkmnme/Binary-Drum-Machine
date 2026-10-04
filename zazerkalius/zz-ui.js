@@ -977,6 +977,7 @@ let coneBitHover = null;
 function coneBitAt(e){
   if (Z.cone3d || !coneGeom) return null;
   const h = coneRing(e); if (h === -1 || h.fill !== undefined) return null;
+  if (h.i === 0 && coneSunHalf()) return null;   // v0.736, «при наведении на 1 бит, когда он полукруг, всё остальное пропадает — убери этот эффект»: полукруг строки 1 наведением не берётся
   const s = Z.rows[h.i], n = s && s.length; if (!n) return null;
   const CG = coneCutGeo(h.i, n), step = CG.step, t = h.a - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
   if (CG.cut) { const P = 2 * n - 1, x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P; return x < n ? { i: h.i, j: Math.floor(x) } : null; }   // v0.667: в дыре выреза бита нет
@@ -3768,7 +3769,7 @@ function setupCone(){
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
-      const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick ? -1 : h.i;   // v0.281: 🚫 выбор — и без обводки при наведении
+      const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick || (h.i === 0 && coneSunHalf()) ? -1 : h.i;   // v0.736: и полукруг строки 1 — без обводки   // v0.281: 🚫 выбор — и без обводки при наведении
       const b = coneBitAt(e) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
       if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · правой кнопкой (или Ctrl) тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
