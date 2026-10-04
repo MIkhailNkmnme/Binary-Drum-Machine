@@ -155,6 +155,9 @@ function laneInit(){
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
   if (!Array.isArray(Z.lanesHid) || !Z.lanesHid.every(l => Array.isArray(l) && l.every(zzIsBits))) Z.lanesHid = [];   // v0.112
   Z.lanesHid = Z.lanesHid.slice(0, 4); while (Z.lanesHid.length < 4) Z.lanesHid.push([]);
+  /* v0.754, после снятия конструктора групп (v0.752) — «вроде сделал, сбрось все, посмотрим»: один раз, по слову пользователя, рисунки групп (Z.cgrpTri) сняты —
+     кнопки снова в обычной раскладке. Прежние — копией в Z.cgrpTri_pered_sbrosom (вернуть: Z.cgrpTri = Z.cgrpTri_pered_sbrosom; save(); location.reload()) */
+  if (!Z.cgrpTriReset754) { Z.cgrpTriReset754 = 1; if (Z.cgrpTri && typeof Z.cgrpTri === "object" && Object.keys(Z.cgrpTri).length) { Z.cgrpTri_pered_sbrosom = JSON.parse(JSON.stringify(Z.cgrpTri)); Z.cgrpTri = {}; } }
 }
 /* v0.061, «замок на изменение строк» (снимок кнопок над полем). Почти каждая правка строк начинается со snapshot() — точки
    отмены; при закрытом замке он прерывает правку до изменения (ZZ_LOCK — тихо, без «⚠ ошибки»). Правка на месте и ↩ —
