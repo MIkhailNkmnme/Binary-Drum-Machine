@@ -433,7 +433,7 @@ function renderRowsOver(){
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
   const c = L.querySelector(".rw.cur > .no");
-  if (c) c.scrollIntoView({ block: "nearest" });
+  if (c) scrollNear(c, { block: "nearest" });   // v0.783
 }
 /* «⤓ итог»: по каждой строке — места слева направо; совпавшие сведены, пустые целые клетки между — нули. */
 function ovResult(){
@@ -1098,7 +1098,7 @@ function renderRows(){
   // v0.242, «черту тяну вниз — прыгает всё вверх»: пока черту тащат, поле не прокручивается к текущей строке
   if (document.body.classList.contains("cutdrag")) return;
   const c = L.querySelector(".rw.cur > .bits.la") || L.querySelector(".rw.cur > .no");
-  if (c) c.scrollIntoView({ block: "nearest", inline: "nearest" });
+  if (c) scrollNear(c, { block: "nearest", inline: "nearest" });   // v0.783
   /* v0.625, «всегда при изменении строк — скроллить в середину видного поля по первой строке, первому биту»: сменилось число строк или их длины
      (не биты — волна Аниматрицы прокрутку не дёргает) — по ширине первый бит первой строки встаёт в середину видимого поля */
   { let mx = 0; for (const r of Z.rows) if (r.length > mx) mx = r.length;
@@ -11140,8 +11140,26 @@ function paneFoldInit(){
     paneFoldApply(); save(); if (typeof packWins === "function") packWins();
   });
 }
+/* v0.783: на телефоне окна стоят стопкой в общей прокрутке страницы, и scrollIntoView текущей строки при каждой перерисовке строк уводил всю
+   страницу к полю (тронул кнопку под конусом — экран прыгнул вниз). На узком экране прокручивается только ближайший прокручиваемый предок — само поле */
+function scrollNear(el, o){
+  if (!(window.matchMedia && matchMedia("(max-width:760px)").matches)) { el.scrollIntoView(o); return; }
+  for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    const cs = getComputedStyle(p), sy = /(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 1, sx = /(auto|scroll)/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 1;
+    if (!sy && !sx) continue;
+    const R = el.getBoundingClientRect(), Q = p.getBoundingClientRect();
+    if (sy) { if (R.top < Q.top) p.scrollTop += R.top - Q.top; else if (R.bottom > Q.bottom) p.scrollTop += R.bottom - Q.bottom; }
+    if (sx) { if (R.left < Q.left) p.scrollLeft += R.left - Q.left; else if (R.right > Q.right) p.scrollLeft += R.right - Q.right; }
+    return;
+  }
+}
+function paneMobInit(){   // v0.783: на телефоне левая панель свёрнута в «☰ Панель»; щелчок — открыть / свернуть (не запоминается: каждый раз свёрнута)
+  const b = $("bPaneMob"), P = $("rowsPane"); if (!b || !P || b._ok) return; b._ok = 1;
+  b.onclick = () => { const on = P.classList.toggle("mopen"); document.body.classList.toggle("pmob", on); b.textContent = on ? "✕ Свернуть панель" : "☰ Панель"; };
+}
 function applyPaneIcons(){
   document.body.classList.toggle("pane-icons", !!Z.paneIcons);
+  paneMobInit();   // v0.783
   const t = $("bPaneIcons");
   if (t) { t.textContent = Z.paneIcons ? "▸" : "◂"; t.title = Z.paneIcons ? "Развернуть панель — кнопки с подписями" : "Свернуть панель в столбик значков (подписи — во всплывающих подсказках)"; }
   if (Z.paneIcons) { iconizePane(); return; }
