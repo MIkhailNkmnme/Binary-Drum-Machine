@@ -10644,7 +10644,7 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
   /* v0.634, по снимку «Кручения» — «поправь границы»: под кнопками там ещё строка «вариантов цикла» (#coneVarN, не из треугольников), а ромб-ручка
      вставал над ней — на третьем ряду, поверх рамки. Нижний ряд — и такая строка: ромб — в её правом острие, в углу группы */
-  g.querySelectorAll(":scope > #coneVarN, :scope > #lasAlgo").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(); if (r.top > bot + 1) bot = r.top; });   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
+  g.querySelectorAll(":scope > #coneVarN, :scope > #lasAlgo").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(), y = Math.max(r.top, r.bottom - TZC_H); if (y > bot + 1) bot = y; });   // v0.801, «тянуть не в углу»: ромб — в нижнем ряду этой строки (текст алгоритма бывает в несколько рядов), в углу группы   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
   const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
@@ -11185,6 +11185,11 @@ setInterval(() => { if (!document.hidden && !ZZ_BG) tzcAll(); }, 300);   // и �
 function tzgFrame(g){
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
+  /* v0.801, по снимку «Алгоритма» — «лишний полуромб внизу»: под кнопками строка текста (#lasAlgo, #coneVarN) любой высоты, а зубцы рамки идут
+     шагом в ряд (24 px) — низ обрывался посреди зубца. Текст дотягивается до целого ряда: группа — целое число рядов, рамка кончается целым зубцом */
+  { const sn = g.querySelector(":scope > #lasAlgo, :scope > #coneVarN");
+    if (sn && sn.getClientRects().length) { const old = sn.style.minHeight; sn.style.minHeight = ""; const H0 = g.offsetHeight, ex = H0 % TZC_H, add = ex > 0.5 && TZC_H - ex > 0.5 ? TZC_H - ex : 0;
+      const want = add ? (sn.offsetHeight + add).toFixed(2) + "px" : ""; sn.style.minHeight = want; if (want !== old) g._tzgk = ""; } }
   const W = g.offsetWidth, H = g.offsetHeight; if (!W || !H) return;
   /* v0.615, «границы группы и кнопки наложить друг на друга»: острия кнопок ряда кончаются на 1–2 px левее края группы (ширина группы целая, кнопки —
      из дробных треугольников), и между ними и рамкой была щель. Правый край рамки — по самому дальнему остриё кнопок (если оно в 3 px от края) */
