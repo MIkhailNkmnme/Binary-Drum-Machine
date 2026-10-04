@@ -1765,7 +1765,7 @@ function lasSegInit(){
 function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.querySelectorAll('.lseg[data-seg="' + d.id + '"] > button').forEach(b => { const on = b.dataset.v === v; if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }); } }
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
-  r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bConeAimL", "bConeAimR"],
+  r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut"],
   fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne"],
@@ -1775,7 +1775,7 @@ let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
@@ -1792,6 +1792,8 @@ function lasDeps(){
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
   need(["bSunHalf"], Z.coneSlits === "cut2", "в «вырезах 2n» строка 1 — полукольцо и так");   // v0.772
+  need(["bSunRow1"], !sun, "только при ☀ солнце");   // v0.775
+  need(["bSunRow1"], quad || coneSunHalf() || coneSunSlit(), "строка 1 — четверти / полукольцо / ▮ щель, солнце в ней — точка");
   need(["bConeAimL", "bConeAimR"], cut && !r1 && !quad, "в вырезах T−1 строка 1 прозрачна — доводить нечего (включи ▮ щель 1)");
   need(["coneSlit"], zero, "«Без щелей» — ширина щели ни на что не влияет");
   need(["coneVoid"], zero && !cut, "«Без щелей» — свет ловит строка за чертой, пустых колец нет");
@@ -2314,6 +2316,11 @@ function renderCone(){
         g.stroke(); g.restore();
         coneGlyph(g, cx, cy, b0 + Math.PI / 2, rD * 0.62, rD * 0.45, bit, bit === "1" ? cBg : c1, ff);   // v0.750: цифра посередине полукруга
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+      } else if (Z.sunRow1) {   /* v0.775, «кнопку для понятия надо, что 1 бит — солнце»: «☀ = 1 бит» (Z.sunRow1) — строка 1 сама и есть солнце: золотой светящийся
+         круг во всю строку 1 (как до v0.774), с цифрой бита. Свет считается так же — меняется только вид */
+        const rD = r0 + Math.max(1, dr * band), bit = (Z.rows[0] || "1")[0];
+        g.fillStyle = cg; g.globalAlpha = bit === "1" ? 0.9 : 0.5; g.shadowColor = cg; g.shadowBlur = 18 * dpr; g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+        coneGlyph(g, cx, cy, -Math.PI / 2 - coneRotOf(0) * 2 * Math.PI, rD * 0.6, rD * 0.4, bit, cBg, ff);
       } else {   /* v0.774: строка 1 — круг от центра, солнце — точка в его середине (было — золотой диск во всю строку 1). Свет её проходит, как и прежде,
          поэтому круг полупрозрачный, цветом своего бита, с цифрой */
         const rD = r0 + Math.max(1, dr * band), rS = Math.max(3 * dpr, dr * 0.08), bit = (Z.rows[0] || "1")[0];
@@ -4463,6 +4470,11 @@ function setupCone(){
     const ui = () => $("bMoonOne").classList.toggle("on", Z.moonOne !== false); ui();
     $("bMoonOne").onclick = () => { Z.moonOne = Z.moonOne === false; ui(); save(); renderCone();
       say(Z.moonOne !== false ? "☾ Сквозь 1: луна идёт из центра и проходит «1» насквозь, считая их; ноль — только в ячейку, целиком накрытую светом с одинаковым числом пройденных «1»." : "☾ Сквозь 1 выключено: луна начинается у кольца за чертой."); };
+  }
+  if ($("bSunRow1")) {   // v0.775: ☀ = 1 бит — строка 1 рисуется самим солнцем
+    $("bSunRow1").classList.toggle("on", !!Z.sunRow1);
+    $("bSunRow1").onclick = () => { Z.sunRow1 = !Z.sunRow1; $("bSunRow1").classList.toggle("on", Z.sunRow1); save(); renderCone();
+      say(Z.sunRow1 ? "☀ = 1 бит: строка 1 — само солнце, золотой круг во всю строку." : "☀ — точка в центре, строка 1 вокруг — полупрозрачный круг своего бита."); };
   }
   if ($("bSunHalf")) {   // v0.727: ◐ полукольцо — строка 1 полукольцом, солнце внутри
     $("bSunHalf").classList.toggle("on", !!Z.sunHalf);
