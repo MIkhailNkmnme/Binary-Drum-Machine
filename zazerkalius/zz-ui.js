@@ -4196,6 +4196,36 @@ function coneClockMark(hits){
    проход (coneClockWas — был ли проход на прошлом шаге). Z.coneClockN — счёт проходов. С «⏸ на проходе» sweep возвращает фазу
    первого прохода — там кручение и встаёт. Возвращает null, если вставать не надо. */
 let coneClockWas = null, coneSpinning = false;   // v0.127: null — ещё не смотрели (загрузка страницы проходом не считается)
+/* v0.804, «крутить побитно — это значит: биты-границы стоят во всех кольцах недвижно, перемещаются лишь сами 1 и 0 в них, одно смещение по кругу
+   за шаг» (и на вопрос — «и в поле тоже»). «▦ побитно» (Z.coneBitStep === true) больше не крутит кольца: фаза кручения стоит, ячейки и вырезы на месте,
+   а каждая строка конуса за шаг сдвигается по кругу на один бит — в поле тоже (по часовой: бит из ячейки j уходит в j + 1; «по биту навстречу» —
+   нечётные строки в другую сторону). Без вырезов картина та же, что прежний поворот на бит; в вырезах T−1 прежде с битами ехал и вырез. Не крутятся
+   кольца со своим замком 🔒 (общая галка запрета сдвига — нет: она про руки) и остановленные лазером. Проход лазера и закраска — после каждого шага
+   (промежуточных положений у сдвига нет). ↩ — одним шагом весь прогон ▶ (снимок в начале). «½ бита» и «◫ части пред.» — по-прежнему поворотом */
+let coneStrSnap = false;
+function coneStrSteps(m, n){   // n шагов (знак — направление); → true, если «⏸ на проходе» и надо встать
+  const N = Math.min(Z.rows.length, CONE_MAX), sg = n > 0 ? 1 : -1, t = performance.now();
+  if (!coneStrSnap) { snapshot(); coneStrSnap = true; }
+  for (let k = 0; k < Math.abs(n); k++) {
+    for (let i = 0; i < N; i++) {
+      const str = Z.rows[i]; if (!str || str.length < 2 || (Z.coneLocks && Z.coneLocks[i] === true) || coneRingFrozen(i)) continue;
+      const d = m === "obit" && i % 2 ? -sg : sg; Z.rows[i] = coneRotStr(str, -d);
+    }
+    if (!Z.coneClock) continue;
+    const tr = coneClockTrace(); let any = false; const hits = [];
+    for (const R of tr) if (R.pass) { any = true; if (R.cell >= 0) hits.push(R); }
+    if (any && !coneClockWas) {
+      Z.coneClockN = (Z.coneClockN | 0) + 1;
+      for (const R of tr) if (R.pass) { coneClockRecord(R); coneClockFlash.push({ a: R.a, t, j: R.vstop }); }
+      if (hits.length) coneClockMark(hits);
+      if (Z.coneClockStop) { coneClockWas = any; syncLane(); return true; }
+    }
+    coneClockWas = any;
+    if (coneWallPaint(tr) && coneSunOn()) fillAutoCommit();
+  }
+  syncLane();
+  return false;
+}
 function coneClockSweep(ph0, dph, m){
   if (!dph || !coneGeom || !coneGeom.fill) return null;   // нет кольца для заполнения (3D, слишком много строк) — не метим
   const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return null;
@@ -5010,6 +5040,10 @@ function setupCone(){
         bitAcc += dph; const n = (bitAcc >= 0 ? Math.floor(bitAcc / q) : Math.ceil(bitAcc / q)) * q; bitAcc -= n;
         const ph0r = Math.round((Z.coneSpinPh || 0) / q) * q; if (Math.abs((Z.coneSpinPh || 0) - ph0r) > 1e-9) Z.coneSpinPh = ph0r;
         if (!n) return true; dph = n; }
+      if (Z.coneBitStep === true && coneBitMode(m)) {   // v0.804: ▦ побитно — сдвигаются сами строки, кольца стоят
+        const stop = coneStrSteps(m, dph); renderRows();
+        if (stop) { autoSet(false); renderCone(); save(); say(`⏸ Лазер прошёл все кольца (проход ${Z.coneClockN | 0}) — пауза. ▶ крутить — дальше.`); return false; }
+      } else {
       if (coneFanOn()) dph = coneFanClampDph(dph, m);   // v0.201: ✺ — не быстрее, чем успеваем считать
       const ph0 = Z.coneSpinPh || 0;
       const st = Z.coneClock ? coneClockSweep(ph0, dph, m) : null;   // v0.116: луч-часы — миг, когда щели сошлись, между кадрами
@@ -5020,6 +5054,7 @@ function setupCone(){
       }
       Z.coneSpinPh = st && st.part ? st.ph : ph0 + dph;   // v0.201: ✺ — кольца только до просчитанного; v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
       coneCycleCheck(ph0, Z.coneSpinPh, m);
+      }
       if (coneFanOn()) {   // v0.201: ✺ — вылетевшие гаснут, затор — отпустить; погасли все — пауза
         const F = coneFanStep(coneClockTrace());
         if (F.out || F.freed) { save(); coneLogRender(); }
@@ -5044,7 +5079,7 @@ function setupCone(){
     if (Z.coneBitStep && !coneBitMode(Z.coneSpinMode || "all")) { const sel = $("coneSpinMode"); sel.value = "bit"; sel.onchange({ target: sel }); }
     if (Z.coneBitStep) Z.coneSpinPh = Math.round(Z.coneSpinPh || 0);
     bitStepUi(); save(); renderCone();
-    say(Z.coneBitStep ? "▦ Побитно: ▶ крутить — скачками, каждое кольцо за шаг на один бит." : "▦ Кручение снова плавное.");
+    say(Z.coneBitStep ? "▦ Побитно: ▶ крутить — кольца и границы стоят, за шаг каждая строка сдвигается по кругу на один бит (и в поле). Свой замок 🔒 — строка не крутится. ↩ вернёт весь прогон." : "▦ Кручение снова плавное.");
   };
   if ($("bConePrevStep")) $("bConePrevStep").onclick = () => {   // v0.769: ◫ части пред. — за шаг на клетку соседа внутри
     Z.coneBitStep = Z.coneBitStep === "prev" ? false : "prev"; bitAcc = 0;
@@ -5068,6 +5103,7 @@ function setupCone(){
     }
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
+    if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }   // v0.279: копия в пульте; v0.655 — в ромбе одним значком
   };
