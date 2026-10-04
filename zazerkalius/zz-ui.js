@@ -2592,6 +2592,10 @@ function renderCone(){
     g.save(); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
     g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore();
   }
+  if (coneMagLine !== null && coneDrag) {   // v0.803: 🧲 — линия привязки через центр
+    g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
+    g.beginPath(); g.moveTo(cx - L * Math.cos(coneMagLine), cy - L * Math.sin(coneMagLine)); g.lineTo(cx + L * Math.cos(coneMagLine), cy + L * Math.sin(coneMagLine)); g.stroke(); g.restore();
+  }
   // метка «начала» строк — сверху: сюда встаёт бит 0
   g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - rMax + 2 * dpr); g.lineTo(cx, cy - rMax - 14 * dpr);   /* v0.086: метка начала — короткий штрих снаружи колец, а не черта от центра (её принимали за луч) */ g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
   if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
@@ -3236,7 +3240,8 @@ function coneSol3d(){ return !!Z.cone3d && (!!Z.coneTor || !!bipyMode()) && Z.ro
    на плоскости основания (z = 0, там лежит кольцо последней строки), кольца бипирамиды — в масштабе плоского вида */
 function coneFlat(){ return !Z.cone3d || coneSol3d(); }
 function coneTorCut(){ return !!Z.cone3d && !!Z.coneTor && coneSlitMode() === "cut" && Z.rows.length <= CONE_MAX; }
-function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).cut || (i >= 1 && coneTorCut()) ? Math.round(x * 2) / 2 : Math.round(x); }
+function coneRotKeep(x, i){ x = x || 0; if (Z.coneFree && Z.coneFree[i]) return Math.round(x * 1e6) / 1e6;   // v0.803: повёрнуто магнитом — как есть
+  return coneCutGeo(i, (Z.rows[i] || "").length).cut || (i >= 1 && coneTorCut()) ? Math.round(x * 2) / 2 : Math.round(x); }
 /* v0.674, «когда лазер T−1 — нужно расставить симметрично вертикали: чётные — между центральными битами, нечётные — по средней части выреза»:
    расстановка v0.673 (накрутка 0) держалась только без своей накрутки — вход в режим оставлял прежнюю, а ⟲ / ⌖✕ при умолчании ⭐ возвращали
    накрутку из ⭐. Теперь кольца с вырезом (строки 2, 3, …) встают на 0 при входе в T−1 и при каждом сбросе в этом режиме; → сколько сдвинуто */
@@ -3777,6 +3782,50 @@ function coneFillCut(){
 /* v0.688, по снимку «83%» и «67%» — «можно не в %, а в точных дробях? и показать линиями части»: проценты были там, где ось режет бит не в простой дроби
    (после шагов лазера кольца стоят на мелких фазах). Теперь доля — дробью: точная (знаменатель до 64) — «5/6», иначе ближайшая простая (знаменатель
    до 32, ошибка не больше 0,005) — «≈5/6», черты пунктиром; ничего не подошло — десятичная «0,83» без черт. → { p, q, ok } */
+/* v0.803, по снимку конуса с солнцем — «тут нужен режим ручного редактирования — вращения — с магнитной привязкой к осям симметрии, границам битов
+   через центр, серединам, частям из Сканера и осям». «🧲 магнит»: кольцо тянется мышью без Ctrl и крутится свободно (на вид — строка та же), а у
+   значимых положений примагничивается. Что к чему: у тянутого кольца — его границы битов, середины битов и оси его симметрии (зеркальные оси узора
+   кольца); цели — ✛ вертикаль и горизонталь, границы, середины и оси симметрии ДРУГИХ колец, ⌖ ось Сканера и черты его частей. Ближайшая пара в
+   пределах 7 px на радиусе кольца — защёлка, линия привязки видна золотом, пока тянешь. Отпустил — поворот остаётся как есть, дробный
+   (Z.coneFree[i] — у такого кольца поворот не округляется до бита; обычный поворот без магнита снимает метку). Виды целей — кнопками рядом */
+let coneMagLine = null, coneScanTargets = [];
+const coneSymCache = new Map();
+function coneSymAxes(s){   // оси зеркала узора кольца — в битах от начала строки (2c целое): s[j] = s[2c − j − 1]
+  if (coneSymCache.has(s)) return coneSymCache.get(s);
+  const n = s.length, out = [];
+  if (n >= 2 && n <= 512) for (let c2 = 0; c2 < 2 * n; c2++) { let ok = true; for (let j = 0; j < n && ok; j++) if (s[j] !== s[(((c2 - j - 1) % n) + n) % n]) ok = false; if (ok) out.push(c2 / 2); }
+  if (coneSymCache.size > 4000) coneSymCache.clear(); coneSymCache.set(s, out); return out;
+}
+function coneMagK(){ const k = Z.coneMagK && typeof Z.coneMagK === "object" ? Z.coneMagK : (Z.coneMagK = {}); for (const q of ["ax", "sym", "bnd", "mid", "scan"]) if (k[q] === undefined) k[q] = true; return k; }
+function coneMagRing(i){   // { step, P, x0 } — угол бита x: −π/2 + (x − x0)·step, x0 = поворот − сдвиг выреза
+  const n = (Z.rows[i] || "").length; if (!n) return null; const CG = coneCutGeo(i, n);
+  return { n, cut: CG.cut, step: CG.step, P: CG.cut ? coneCutP(n) : n, x0: coneRotOf(i) - CG.off };
+}
+function coneMagSnap(i, rot){   // → { rot, line, what } — поворот кольца i (coneRot[i]) с привязкой
+  const K = coneMagK(), G = coneGeom; coneRot[i] = rot; const R = coneMagRing(i); if (!R || !G) return { rot, line: null };
+  const rm = Math.max(20 * (G.dpr || 1), G.r0 + (i + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm, TAU = 2 * Math.PI;
+  const xOf = (t) => (t + Math.PI / 2) / R.step + R.x0;   // место (в битах кольца) под углом t
+  const sym = K.sym && !R.cut ? coneSymAxes(Z.rows[i]) : [];
+  let best = null;
+  const tryT = (t, what) => {
+    const x = xOf(t), fam = [];
+    if (K.bnd) fam.push([Math.round(x), "граница"]);
+    if (K.mid) fam.push([Math.round(x - 0.5) + 0.5, "середина"]);
+    for (const c of sym) { let d = ((c - x) % R.P + R.P) % R.P; if (d > R.P / 2) d -= R.P; fam.push([x + d, "ось симметрии"]); }
+    for (const [xf, own] of fam) { const dx = xf - x, da = Math.abs(dx) * R.step; if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own + " → " + what }; }
+  };
+  if (K.ax) for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");
+  if (K.bnd || K.mid || K.sym) for (let k = 0; k < Math.min(G.N, Z.rows.length); k++) {
+    if (k === i) continue; const Q = coneMagRing(k); if (!Q || Q.P > 720) continue;
+    const A = (x) => -Math.PI / 2 + (x - Q.x0) * Q.step;
+    if (K.bnd) for (let j = 0; j < Q.P; j++) tryT(A(j), "граница кольца " + (k + 1));
+    if (K.mid) for (let j = 0; j < Q.P; j++) tryT(A(j + 0.5), "середина бита кольца " + (k + 1));
+    if (K.sym && !Q.cut) for (const c of coneSymAxes(Z.rows[k])) { tryT(A(c), "ось симметрии кольца " + (k + 1)); tryT(A(c) + Math.PI, "ось симметрии кольца " + (k + 1)); }
+  }
+  if (K.scan && Z.coneScan) for (const T of coneScanTargets) if (T.k !== i) tryT(T.t, T.what);
+  if (!best) return { rot, line: null };
+  const r2 = rot + best.dx; coneRot[i] = r2; return { rot: r2, line: best.t, what: best.what };
+}
 function coneScanFrac(f){
   for (let q = 2; q <= 64; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f * q - p) < 1e-4 * q) return { p, q, ok: true }; }
   for (let q = 2; q <= 32; q++) { const p = Math.round(f * q); if (p > 0 && p < q && Math.abs(f - p / q) <= 0.005) return { p, q, ok: false }; }
@@ -3790,6 +3839,7 @@ function coneScanDraw(g, o){
       rings.push({ k, n, step: F ? F.step : TAU / n, P: F ? F.P : n, rot: coneFillRot() - (F ? F.off : 0) }); }
   }
   const t1 = a + step / 2, t2 = t1 + Math.PI, BLUE = "#2563eb";
+  coneScanTargets = [{ k: -1, t: t1, what: "ось Сканера" }, { k: -1, t: t2, what: "ось Сканера" }];   // v0.803: цели 🧲 — ось и черты частей
   g.save(); g.lineCap = "round";
   /* v0.685, «и когда навожу на бит — затемни остальные, которые не участвуют в показе»: вуаль цветом фона на весь круг колец, кроме ячеек, которые режет
      ось (ось по границе — обе соседние) */
@@ -3817,7 +3867,7 @@ function coneScanDraw(g, o){
       const F = coneScanFrac(f), q = F ? F.q : 0, t0 = t - f * R.step;   // начало ячейки
       if (q) {   // разбивка ячейки на q равных частей — синими чертами (приближённая — пунктиром)
         g.strokeStyle = BLUE; g.lineWidth = Math.max(2, 2 * dpr); g.setLineDash(F.ok ? [] : [3 * dpr, 3 * dpr]); g.beginPath();
-        for (let m = 1; m < q; m++) { const e = t0 + R.step * m / q; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
+        for (let m = 1; m < q; m++) { const e = t0 + R.step * m / q; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); coneScanTargets.push({ k: R.k, t: e, what: `часть ${m}/${q} Сканера (кольцо ${R.k + 1})` }); }
         g.stroke(); g.setLineDash([]);
       }
       const tx = F ? (F.ok ? "" : "≈") + F.p + "/" + F.q : f.toFixed(2).replace(".", ","), am = t0 + R.step * (q ? 0.5 / q : f / 2), px = cx + rm * Math.cos(am), py = cy + rm * Math.sin(am);   // подпись — в первой части ячейки
@@ -4740,6 +4790,7 @@ function setupCone(){
        тянуть его с Ctrl; без Ctrl тянешь — сдвигается весь вид (как мимо колец), щелчок — выбрать строку. Ctrl + щелчок без движения —
        выделить / снять, как прежде. */
     const ctrlK = e.ctrlKey || e.metaKey || rb;   // v0.735: правая кнопка — как Ctrl
+    const magOn = !!Z.coneMag && h !== -1 && h.fill === undefined && !e.shiftKey && !rb;   // v0.803: 🧲 — кольцо тянется и без Ctrl
     // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
     const hFill = h !== -1 && h.fill !== undefined;
     if (hFill && ctrlK && !e.shiftKey && Z.coneClock) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
@@ -4755,7 +4806,7 @@ function setupCone(){
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
       return;
     }
-    if (h !== -1 && h.i === 0 && Z.coneClock && ctrlK && !e.shiftKey) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно; v0.248: с Ctrl
+    if (h !== -1 && h.i === 0 && Z.coneClock && ctrlK && !e.shiftKey && !magOn) {   // v0.119: кольцо строки 1 при луч-часах — щелчок: вырез; v0.120: тянешь — крутится только оно; v0.248: с Ctrl
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
       const x0 = e.clientX, y0 = e.clientY, r0v = Z.coneAimRot || 0;
       const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
@@ -4777,7 +4828,7 @@ function setupCone(){
       return;
     }
     // v0.085: запертое кольцо (своим замком или общей галкой) крутится только на вид; сдвиг вида — мимо колец или с Ctrl
-    if (h === -1 || hFill || !ctrlK || e.shiftKey) {   // v0.049: мимо колец — сдвиг всего вида; v0.173: и с Shift; v0.248: и без Ctrl (кольцо крутит только Ctrl)
+    if ((h === -1 || hFill || !ctrlK || e.shiftKey) && !magOn) {   // v0.049: мимо колец — сдвиг всего вида; v0.173: и с Shift; v0.248: и без Ctrl (кольцо крутит только Ctrl)
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "move";
       const x0 = e.clientX, y0 = e.clientY, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1;
       let movedP = false;
@@ -4805,7 +4856,7 @@ function setupCone(){
     }
     e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
     const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).cut;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
-    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD, cut: cutD, v0: coneRot[h.i] || 0, rb };
+    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD || magOn, cut: cutD, v0: coneRot[h.i] || 0, rb, mag: magOn };
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
@@ -4820,6 +4871,7 @@ function setupCone(){
     let da = a - D.last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
     D.turn += da; D.last = a;
     const n = D.base.length, rot = -D.turn / (D.cut ? 2 * Math.PI / coneCutP(n) : 2 * Math.PI / n), k = Math.round(rot);   // v0.671: в вырезах — шаг части
+    if (D.mag) { const S = coneMagSnap(D.i, D.v0 + rot); coneMagLine = S.line; D.what = S.what || ""; renderCone(); return; }   // v0.803: 🧲 — свободно, с привязкой
     if (D.view) { coneRot[D.i] = D.v0 + rot; renderCone(); return; }   // запертое — только вид
     if (k !== D.applied) {   // целый бит — крутим саму строку, поле видит сразу
       if (!D.snap) { snapshot(); D.snap = true; }
@@ -4839,6 +4891,12 @@ function setupCone(){
       coneRot[D.i] = D.v0; if (rowSel.has(D.i)) rowSel.delete(D.i); else rowSel.add(D.i); renderRows(); renderCone();
       say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные.")); return;
     }
+    if (D.mag) {   // v0.803: 🧲 — поворот остаётся дробным, как защёлкнулся
+      coneMagLine = null; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true;
+      Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i;
+      renderAll(); save(); say(`🧲 Кольцо ${D.i + 1}: поворот ${(Math.round(coneRot[D.i] * 1000) / 1000).toString().replace(".", ",")} бита${D.what ? " — привязка: " + D.what : " — без привязки"}. Только на вид, строка та же.`); return;
+    }
+    if (D.view && Z.coneFree) delete Z.coneFree[D.i];   // обычный поворот — снова целыми битами
     if (D.view) {   // запертое кольцо: поворот вида — целым битом, запомнить у кольца
       const P = D.cut ? coneCutP(n) : n;   // v0.671: в вырезах полный круг — 2E − 1 частей
       coneRot[D.i] = ((coneRotKeep(coneRot[D.i], D.i) % P) + P) % P; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
@@ -6781,7 +6839,15 @@ function setupCone(){
   }
   if ($("bConeScan")) {   // v0.676: ⌖ сканер симметрии
     $("bConeScan").classList.toggle("on", !!Z.coneScan);
-    $("bConeScan").onclick = () => { Z.coneScan = !Z.coneScan; $("bConeScan").classList.toggle("on", Z.coneScan); save(); renderCone();
+    if ($("bConeMag")) {   // v0.803: 🧲 магнит и виды целей
+    const ui = () => { const K = coneMagK(); $("bConeMag").classList.toggle("on", !!Z.coneMag);
+      document.querySelectorAll("[data-magk]").forEach(b => { b.hidden = !Z.coneMag; b.classList.toggle("on", !!K[b.dataset.magk]); }); };
+    ui();
+    $("bConeMag").onclick = () => { Z.coneMag = !Z.coneMag; ui(); save();
+      say(Z.coneMag ? "🧲 Магнит: тяни кольцо мышью (без Ctrl) — крутится свободно, у осей, границ, середин и осей симметрии защёлкивается (золотая линия). Строки не меняются — только вид." : "🧲 Магнит выключен: кольца снова крутятся с Ctrl, целыми битами."); };
+    document.querySelectorAll("[data-magk]").forEach(b => { b.onclick = () => { const K = coneMagK(); K[b.dataset.magk] = !K[b.dataset.magk]; ui(); save(); }; });
+  }
+  $("bConeScan").onclick = () => { Z.coneScan = !Z.coneScan; $("bConeScan").classList.toggle("on", Z.coneScan); save(); renderCone();
       say(Z.coneScan ? "⌖ Сканер: наведи на бит кольца — ось через его середину и центр; биты и части вырезов, которые она режет, поделены на равные части." : "⌖ Сканер выключен."); };
   }
   $("bConeRotClear").onclick = () => {   // v0.101: «как это снять — накрутку?»
