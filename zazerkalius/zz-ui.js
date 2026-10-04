@@ -2064,7 +2064,7 @@ function renderCone(){
     if (CP && Z.coneArcs !== false) {   // v0.781: биты предыдущей строки в своих частях — бледнее своих, цифра цветом текста
       const ps = Z.rows[i - 1] || "";
       for (const [p, k] of cutPrevCells(i, n)) {
-        const a = -Math.PI / 2 + (p - rot) * step, ch = ps[k];
+        const a = -Math.PI / 2 + (p - rot) * step, ch = ps[k] === undefined ? undefined : cpInv(ps[k]);   // v0.787: инверсия
         g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
         if (ch === undefined) { g.save(); g.strokeStyle = cT; g.globalAlpha = 0.35; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.stroke(); g.restore(); continue; }
         g.globalAlpha = 0.5; g.fillStyle = ch === "1" ? c1 : c0; g.fill(); g.globalAlpha = 1;
@@ -2730,16 +2730,39 @@ function cutPrevCells(i, n){   // [[часть, k]] — бит k предыду�
   for (let k = 0; k < n - 1; k++) o.push([m === "alt" ? 2 * k + 1 : n + k, k]);
   return o;
 }
+/* v0.787, «1 с первой даёт 0 в центр 2, потом снова 1 в центр 3 строки» → «да, делай оба»: зеркало вниз инвертирует, поэтому ▼ кольца строки n —
+   НЕ бит строки выше, а его инверсия (0 ↔ 1); центр по строкам идёт 1, 0, 1, 0… Так и в «◇ пред.» (вырез), и в торах, и в «◇ бипирамиде» */
+function cpInv(c){ return c === "1" ? "0" : c === "0" ? "1" : c; }
 function cutPrevSeq(i, n){   // символы по частям кольца: свой бит, бит предыдущей строки или "" (пусто)
   const P = coneCutP(n), q = new Array(P).fill(""), s = Z.rows[i] || "", ps = Z.rows[i - 1] || "";
   for (let j = 0; j < n; j++) q[cutPrevPos(i, j)] = s[j];
-  for (const [p, k] of cutPrevCells(i, n)) q[p] = ps[k] || "";
+  for (const [p, k] of cutPrevCells(i, n)) q[p] = cpInv(ps[k] || "");   // v0.787: инверсия
   return q;
 }
 /* v0.782, «делай любой пока, потом посмотрю» (к бипирамиде): «◇ бипирамида» (Z.coneBipy, группа «3D», без ◎ торов) — конус в объёме, кольцо строки n
    (n ≥ 2) — 2n − 1 ячеек: свои n бит и n − 1 бит строки выше, по умолчанию через одну (▲▼▲, как ряд треугольника), при «◇ блоком» — блоком; под
    основанием — зеркало с инверсией (⧗) всегда, как в «Гранидусе». Кручение — тем же углом, что у обычного кольца (v0.784) */
 function bipyMode(){ return Z.coneBipy && Z.cone3d && !Z.coneTor ? (Z.coneBipyM === "blk" ? "blk" : "alt") : ""; }
+/* v0.787, «◇ строить»: каждое следующее кольцо собирается само по зеркалу с инверсией. В ряду треугольника строки n: ▼ = не ▲ строки выше,
+   внутренняя ▲ = не ▼ строки выше = (две инверсии) ▲ строки через одну, со сдвигом на одну: s[n][j] = s[n−2][j−1], j = 1…n−2. Свободны только два
+   крайних бита каждой строки (их и задаёт пользователь), строки 1 и 2 — целиком. Строится сверху вниз, только там, где строки идут подряд по длине
+   (n − 2, n − 1, n); остальные не трогаются. Меняет строки поля — только кнопкой, ↩ вернёт */
+function bipyBuild(){
+  if (rowsLocked()) return;
+  const R = Z.rows.slice(); let ch = 0, ok = 0;
+  for (let i = 2; i < R.length; i++) {
+    const s = R[i], n = s.length; if (n < 3 || R[i - 1].length !== n - 1 || R[i - 2].length !== n - 2) continue;
+    ok++; const a = R[i - 2]; let t = s[0];
+    for (let j = 1; j < n - 1; j++) t += a[j - 1];
+    t += s[n - 1];
+    if (t !== s) { R[i] = t; ch++; }
+  }
+  if (!ok) { say("◇ Строить: нет строк, идущих подряд по длине (n − 2, n − 1, n) — строить нечего."); return; }
+  if (!ch) { say(`◇ Строить: все ${ok} строк уже построены по зеркалу — свободны только крайние биты.`); return; }
+  snapshot(); for (let i = 0; i < R.length; i++) Z.rows[i] = R[i];
+  renderAll(); save();
+  say(`◇ Строить: перестроено строк ${ch} из ${ok} — середина каждой = строка через одну (зеркало с инверсией дважды), крайние биты — твои. ↩ вернёт.`);
+}
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
   const P = 2 * n - 1;
@@ -2751,7 +2774,7 @@ function bipyCells(i, s){   // → { P — ячеек, c: [{ p — ячейка,
   const n = s.length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
   const ps = Z.rows[i - 1] || "", c = [];
   for (let j = 0; j < n; j++) c.push({ p: m === "alt" ? 2 * j : j, ch: s[j], j });
-  for (let k = 0; k < n - 1; k++) if (ps[k] !== undefined) c.push({ p: m === "alt" ? 2 * k + 1 : n + k, ch: ps[k], pv: true });
+  for (let k = 0; k < n - 1; k++) if (ps[k] !== undefined) c.push({ p: m === "alt" ? 2 * k + 1 : n + k, ch: cpInv(ps[k]), pv: true });   // v0.787: инверсия
   /* v0.784, «тормозит каждый круг, остановка небольшая»: поворот был «в своих битах ×2» (блоком — ×1), а счёт кручения на каждом круге
      перескакивает с n на 0 — у n бит это незаметно, а у 2n − 1 ячеек кольцо прыгало на ячейку назад. Теперь поворот — тот же угол, что у
      обычного кольца: n бит оборота = 2n − 1 ячеек, круг замыкается без скачка */
@@ -3904,7 +3927,7 @@ function cone3DDraw(g, o){
       const PP = cutT ? coneCutP(n) : n, step = 2 * Math.PI / PP, rot = coneRotOf(i) - (cutT ? coneCutOff(i, n) : 0), r = ringR(i), MI = mirMap.get(i);
       const CP = cutT ? cutPrevMode() : "", ps = Z.rows[i - 1] || "", cells = [];   // v0.781: ◇ пред. — в вырезе биты предыдущей строки
       for (let j = 0; j < n; j++) cells.push({ p: CP ? cutPrevPos(i, j) : j, j });
-      for (const [p, k] of cutPrevCells(i, n)) if (ps[k] !== undefined) cells.push({ p, pv: ps[k] });
+      for (const [p, k] of cutPrevCells(i, n)) if (ps[k] !== undefined) cells.push({ p, pv: cpInv(ps[k]) });   // v0.787: инверсия
       for (const C of cells) {
         const j = C.j, a0 = -Math.PI / 2 + (C.p - rot) * step, fix = C.pv ? false : MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
         let col = C.pv ? (C.pv === "1" ? c1 : c0) : fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
@@ -6393,6 +6416,7 @@ function setupCone(){
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
+  if ($("bBipyBuild")) $("bBipyBuild").onclick = bipyBuild;   // v0.787
   if ($("coneBipySel")) { $("coneBipySel").value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off";   // v0.782: ◇ бипирамида — включает 3D, снимает ◎ торы
     $("coneBipySel").onchange = (e) => { const v = e.target.value; Z.coneBipy = v !== "off"; if (Z.coneBipy) Z.coneBipyM = v;
       if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
