@@ -765,10 +765,10 @@ const fillStack = [];
 function coneFreeOn(){ return !!Z.cutFree && coneCutOn() && !!coneFillCut(); }
 function fillFreeDraft(){ const F = coneFillCut(), P = F ? F.P : 0; return typeof Z.fillFree === "string" && Z.fillFree.length === P ? Z.fillFree : ".".repeat(P); }
 function coneFreeCan(f, u, n){ const P = f.length, c = (f.match(/[01]/g) || []).length; return f[u] === "." && c < n && (c === 0 || f[(u + 1) % P] !== "." || f[(u - 1 + P) % P] !== "."); }
-function coneFreeRing(L, C, set, b){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком части, что могут стать битом, — в set
+function coneFreeRing(L, C, set, b, Lh = L){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (светом Lh) части, что могут стать битом, — в set
   const f = fillFreeDraft(), op = [];
   for (let u = 0; u < C.P; u++) { if (f[u] !== ".") continue;
-    if (coneFreeCan(f, u, C.n) && coneCellCovered(u, C.st, C.rot, L)) { set.add(b + ":" + u); continue; }
+    if (coneFreeCan(f, u, C.n) && coneCellCovered(u, C.st, C.rot, Lh)) { set.add(b + ":" + u); continue; }
     ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); }
   return ivUnion(op);
 }
@@ -2634,14 +2634,20 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     const base = Z.moonEcl ? (!passN && lastIn && lastIn[1].length && !full(lastIn[1]) ? lastIn[1] : []) : pastN.length && !full(pastN) ? pastN : [], nf = base.length ? [N] : null;
     const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
     let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9); a0 = A; akb = nf ? nf[0] : N + 1;
+    /* v0.723, «когда ставит 0, то нельзя ставить их через кольцо от того кольца, где солнце упёрлось в единицы, — только прилегающему (следующему от того
+       кольца, где солнце упёрлось)»: ноль на кольце за чертой (N) — только там, где напротив (через центр) солнце упёрлось в биты кольца N − 1: свет дошёл до
+       него, но в N не прошёл. zOk — зеркало такого света; ячейка — 0, только если её целиком накрыла луна внутри zOk */
+    const bandOf = (k) => { const e = bands.find(([j]) => j === k); return e ? e[1] : []; }, zm = [];
+    for (const [lo, hi] of N >= 2 ? ivMinus(bandOf(N - 1), bandOf(N)) : []) if (hi - lo > 1e-9) ivNorm(lo + Math.PI, hi + Math.PI, zm);
+    const zOk = ivUnion(zm);
     if (akb > N) aout = A;
     for (let k = akb; k <= N && k < T && A.length; k++) {
       const C = coneSunCutR(k, N); if (!C) break;
       zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
-      if (k === N && coneFreeOn()) { A = ivAnd(A, coneFreeRing(A, C, zhits, k)).filter(([x, y]) => y - x > 1e-9); aout = A; break; }   // v0.722
+      if (k === N && coneFreeOn()) { A = ivAnd(A, coneFreeRing(A, C, zhits, k, ivAnd(A, zOk))).filter(([x, y]) => y - x > 1e-9); aout = A; break; }   // v0.722
       const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole);
       for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
-        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, A)) zhits.add(k + ":" + q); } }
+        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, ivAnd(A, zOk))) zhits.add(k + ":" + q); } }
       A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9);
       if (k === N) { aout = A; break; }
     }
