@@ -784,7 +784,7 @@ function coneSunHalfArc(){ const r = coneRotOf(0), o = []; if ((Z.rows[0] || "1"
    полукольцом (◐), целое солнце закрыть нельзя. coneSunGateOk(b) — можно ли свету войти в кольцо b */
 function coneSunGateOn(){ return !!Z.sunGate && coneSunOn() && coneCutOn(); }
 function coneSunOnes(b, N){
-  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (coneQuadOn()) return coneQuadArcs(false);   /* v0.744: ✚ — белые четверти */ if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
+  if (b === 0) { if ((Z.rows[0] || "1")[0] !== "1") return []; if (coneQuadOn()) return coneQuadArcs(false);   /* v0.744: ✚ — белые четверти */ if (coneSunSlit()) return ivMinus([[0, TAU2]], coneSunSlitArc());   /* v0.746: ▮ — всё, кроме щели */ if (!coneSunHalf()) return [[0, TAU2]]; const r = coneRotOf(0), o = []; ivNorm((-0.5 - r) * Math.PI, (0.5 - r) * Math.PI, o); return ivUnion(o); }
   const C = coneSunCutR(b, N); return C ? coneOnesArcs(b, N, C, b === N && coneFreeOn()) : [];   // v0.731: у кольца за чертой — поставленные единицы
 }
 function coneSunGateOk(b, N){
@@ -1748,7 +1748,7 @@ function renderCone(){
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = (coneSunHalf() || coneQuadOn()) && fillOn ? 0 : rMax * 0.05, dr = (rMax - r0) / den;   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = (coneSunHalf() || coneQuadOn() || coneSunSlit()) && fillOn ? 0 : rMax * 0.05, dr = (rMax - r0) / den;   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
@@ -2144,6 +2144,14 @@ function renderCone(){
         for (let q = 0; q < 4; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * Math.PI / 2, q0 + (q + 1) * Math.PI / 2); g.closePath(); g.fill(); }
         g.save(); g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
         for (let q = 0; q < 4; q++) { const e = q0 + q * Math.PI / 2; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
+        g.stroke(); g.restore();
+        g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+      } else if (coneSunSlit()) {   // v0.746: ▮ — солнце внутри кольца-бита строки 1, свет — из его щели
+        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.3, ri = rD * 0.42, a = coneCutAngle(), h = Math.max(coneSlitHalf(), 1.5 * dpr / Math.max(1, rD)), bit = (Z.rows[0] || "1")[0];
+        g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
+        g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.95 : 0.55; g.beginPath(); g.arc(cx, cy, rD, a + h, a - h + 2 * Math.PI); g.arc(cx, cy, ri, a - h + 2 * Math.PI, a + h, true); g.closePath(); g.fill();
+        g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.beginPath();
+        for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
         g.stroke(); g.restore();
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
       } else if (coneSunHalf()) {   // v0.727: ◐ — солнце внутри полукольца строки 1
@@ -2663,7 +2671,7 @@ function coneFillPass(open, L, C){
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
   const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {}, zbands = [];
-  let lit = coneQuadOn() ? coneQuadArcs(true) : coneSunHalf() ? coneSunHalfArc() : [[0, TAU2]], b = 1, pastN = [];   // v0.744: ✚ — свет из чёрных четвертей   // v0.727: ◐ — свет только из открытой половины   // pastN — свет, прошедший и кольцо за чертой (v0.713)
+  let lit = coneQuadOn() ? coneQuadArcs(true) : coneSunSlit() ? coneSunSlitArc() : coneSunHalf() ? coneSunHalfArc() : [[0, TAU2]], b = 1, pastN = [];   // v0.746: ▮ — из щели   // v0.744: ✚ — свет из чёрных четвертей   // v0.727: ◐ — свет только из открытой половины   // pastN — свет, прошедший и кольцо за чертой (v0.713)
   /* v0.701, «теперь так: пусть свет от лучей проходит, когда через единицы, — то он закрашивает следующую нулями; и когда все биты строки закрасятся либо 1,
      либо 0 — строка готова»: в вырезах T−1 свет, упавший на бит «1» кольца строки, проходит его и красит ячейки СЛЕДУЮЩЕГО кольца нулями (zhits, по тем же
      углам — расходящимся); дальше этот свет не идёт. Свет через вырез — как был, единицами */
@@ -3036,6 +3044,10 @@ function coneCutGap(x, n, st){ if (!Z.cutGaps) return false; const r = Math.roun
    выреза — пусть мимо идёт»). «▮ щель 1» (Z.cutRow1Slit) — у строки 1 и в вырезах щель, как в прочих режимах: луч выходит, только когда щель на нём (ширина —
    ползунок «щель», крутится с кольцом строки 1, довод ⌖◁ ⌖▷) */
 function coneRow1Slit(){ return !!Z.cutRow1Slit && coneCutOn() && !coneQuadOn(); }
+/* v0.746, по снимку «▮ щель 1 · ☀ солнце» — «а так надо: солнце из щели»: при ▮ и солнце строка 1 — кольцо-бит со щелью, солнце — маленьким кругом внутри;
+   свет выходит только через щель (сектор шириной в щель, где она сейчас), дальше — как всегда. coneSunSlitArc — щель углами от верха */
+function coneSunSlit(){ return !!Z.cutRow1Slit && coneSunOn() && coneCutOn() && !coneQuadOn(); }
+function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; const t = coneCutAngle() + Math.PI / 2, h = coneSlitHalf(), o = []; ivNorm(t - h, t + h, o); return ivUnion(o); }
 function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || coneSunOn()); }   // v0.744: и у солнца
 /* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
    круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
@@ -4470,7 +4482,7 @@ function setupCone(){
   if ($("bRow1Slit")) {   // v0.745: ▮ щель 1 — у строки 1 в вырезах T−1 щель
     $("bRow1Slit").classList.toggle("on", !!Z.cutRow1Slit);
     $("bRow1Slit").onclick = () => { Z.cutRow1Slit = !Z.cutRow1Slit; $("bRow1Slit").classList.toggle("on", Z.cutRow1Slit); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
-      say(Z.cutRow1Slit ? "▮ Щель 1: в вырезах T−1 у строки 1 есть щель — лазер выходит из неё, только когда щель на луче (крутится с кольцом строки 1, ширина — «щель»)." : "▮ Щель 1 выключено: в вырезах строка 1 прозрачна, лазер идёт мимо."); };
+      say(Z.cutRow1Slit ? "▮ Щель 1: в вырезах T−1 у строки 1 есть щель — лазер выходит из неё, только когда щель на луче; солнце — внутри, светит только из щели (крутится с кольцом строки 1, ширина — «щель»)." : "▮ Щель 1 выключено: в вырезах строка 1 прозрачна, лазер идёт мимо."); };
   }
   if ($("bLaserQuad")) {   // v0.743: ✚ 4 части — строка 1 кругом из четвертей, луч из центра через чёрную
     $("bLaserQuad").classList.toggle("on", !!Z.laserQuad);
