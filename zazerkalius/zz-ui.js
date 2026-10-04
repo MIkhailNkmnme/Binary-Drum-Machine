@@ -4899,7 +4899,7 @@ function coneBalShow(o1, o0){   // v0.812: баланс ромбами на ве
   const host = document.getElementById("coneMain") && document.getElementById("coneMain").parentElement; if (!host) return;
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = document.createElement("div"); el.id = "coneBal";
     el.innerHTML = '<div class="bw"><div class="bd b1"></div></div><div class="bs"></div><div class="bw"><div class="bd b0"></div></div>'; host.appendChild(el); }
-  const eq = o1 === o0 && o1 > 0, t1 = String(o1), t0 = String(o0), ts = eq ? "=" : "≠";
+  const eq = o1 === o0 && o1 > 0, t1 = String(o1), t0 = String(o0), ts = "";   // v0.814: знака нет — поровну ромбы горят
   const q1 = el.querySelector(".b1"), q0 = el.querySelector(".b0"), qs = el.querySelector(".bs");
   if (q1.textContent !== t1) q1.textContent = t1; if (q0.textContent !== t0) q0.textContent = t0; if (qs.textContent !== ts) qs.textContent = ts;
   el.classList.toggle("eq", eq); el.title = `Баланс всех строк конуса: единиц ${o1}, нулей ${o0}` + (eq ? " — поровну" : `, разница ${o1 - o0 > 0 ? "+" : ""}${o1 - o0}`);
