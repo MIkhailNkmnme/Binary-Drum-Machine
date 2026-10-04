@@ -2333,6 +2333,10 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
+  if (Z.coneAxes) {   // v0.734, «нужна кнопка: ось из центра — вертикаль и горизонталь»: «✛ оси» — две черты через центр конуса во весь холст
+    g.save(); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
+    g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore();
+  }
   // метка «начала» строк — сверху: сюда встаёт бит 0
   g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - rMax + 2 * dpr); g.lineTo(cx, cy - rMax - 14 * dpr);   /* v0.086: метка начала — короткий штрих снаружи колец, а не черта от центра (её принимали за луч) */ g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
   if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
@@ -5643,6 +5647,10 @@ function setupCone(){
     document.body.classList.add("recpick"); rrUi();
     say("⏺ Щёлкни, что записывать: поле строк, ◯ конус, 🧊 вид или ▲ пирамиду (обводится под мышью). Esc — отмена.");
   };
+  if ($("bConeAxes")) {   // v0.734: ✛ оси — вертикаль и горизонталь через центр
+    $("bConeAxes").classList.toggle("on", !!Z.coneAxes);
+    $("bConeAxes").onclick = () => { Z.coneAxes = !Z.coneAxes; $("bConeAxes").classList.toggle("on", Z.coneAxes); save(); renderCone(); };
+  }
   if ($("bConeScan")) {   // v0.676: ⌖ сканер симметрии
     $("bConeScan").classList.toggle("on", !!Z.coneScan);
     $("bConeScan").onclick = () => { Z.coneScan = !Z.coneScan; $("bConeScan").classList.toggle("on", Z.coneScan); save(); renderCone();
