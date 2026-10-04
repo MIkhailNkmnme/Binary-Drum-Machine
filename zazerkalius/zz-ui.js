@@ -9341,6 +9341,9 @@ function lpTag(){
     paneZig();   // v0.634
   } finally { lpBusy = false; if (lpTag._mo) lpTag._mo.takeRecords(); }   // свои же правки — не повод пересчитывать заново
 }
+/* v0.756, «при перетаскивании групп кнопок пропадают зубцы у левого меню»: слой зубцов стоял на постоянном z-index 45, а окно поднимается каждым щелчком
+   по нему (Z.z растёт и хранится) — щёлкнул по группе в окне у края, и окно легло поверх зубцов. Теперь слой всегда на ступень выше самого верхнего окна */
+function paneZigZ(){ const ov = document.getElementById("paneZigOv"); if (ov) ov.style.zIndex = Math.max(45, (+Z.z || 0) + 1); }
 /* v0.634, по снимку края левой панели — «сделай ромбовидной вертикальную границу левого меню»: вместо прямой черты справа — зубцы из тех же треугольников
    (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
    месте, пока панель листается; за линией — фон страницы. Цвета — из темы (--line, фон body), рисунок пересобирается, когда они сменились */
@@ -9351,7 +9354,8 @@ function paneZig(){
      смена размера окна, отпустил мышь (перетащил окно) */
   const pane = document.getElementById("rowsPane"); if (!pane) return;
   if (!paneZig._on) { paneZig._on = 1; const k = () => requestAnimationFrame(paneZig), d = document.getElementById("desk");
-    if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => { setTimeout(paneZig, 60); setTimeout(paneZig, 450); }); }   // v0.675: и после разворота / сворачивания окна
+    if (d) d.addEventListener("scroll", k, { passive: true }); window.addEventListener("resize", k); document.addEventListener("pointerup", () => { setTimeout(paneZig, 60); setTimeout(paneZig, 450); });   // v0.675: и после разворота / сворачивания окна
+    document.addEventListener("pointerdown", () => requestAnimationFrame(paneZigZ), true); }   // v0.756: окно поднялось щелчком — зубцы над ним (ловим в захвате: заголовок окна гасит всплытие)
   const ln = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "#262d3d";
   /* v0.645: выемки зубцов — цветом того, что справа от панели (окно на столе — его фон), а не фона страницы: фон окна продолжается под зубцы */
   let bg = getComputedStyle(document.body).backgroundColor;
@@ -9373,7 +9377,7 @@ function paneZig(){
      или ряда группы, что стоит у края. Сетка та же — остриё на середине полосы вкладок */
   { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov); }
     const pr = pane.getBoundingClientRect(), on = innerWidth > 760 && pr.width > 4 && pane.offsetParent !== null;
-    ov.style.display = on ? "" : "none";
+    ov.style.display = on ? "" : "none"; paneZigZ();
     if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = pr.height + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
