@@ -1033,6 +1033,7 @@ function laneCountUi(){
 }
 function renderRows(){
   if (rowEditing >= 0) return;
+  if (!renderRows._tv) { renderRows._tv = 1; queueMicrotask(() => { renderRows._tv = 0; triViewSync(); }); }   // v0.788: ▲▼ — после отрисовки поля
   syncLane();
   laneCountUi();   // v0.276
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
@@ -2762,6 +2763,47 @@ function bipyBuild(){
   snapshot(); for (let i = 0; i < R.length; i++) Z.rows[i] = R[i];
   renderAll(); save();
   say(`◇ Строить: перестроено строк ${ch} из ${ok} — середина каждой = строка через одну (зеркало с инверсией дважды), крайние биты — твои. ↩ вернёт.`);
+}
+/* v0.788, по разбору «1, 11, 111 → 1000 — это сдвиг» и «правило с самого верха, 1 первый бит слева каждой T строки + 1»: строка n + 1 = её
+   левый бит (свой) + инверсия строки n; строка 1 — своя. Так ▼ строки n + 1 (= не ▲ строки n над ней) съезжает на полклетки и становится её ▲.
+   «◇ сдвиг» перестраивает строки поля сверху вниз там, где каждая на бит длиннее предыдущей; левый бит не трогает; ↩ вернёт */
+function bipyShift(){
+  if (rowsLocked()) return;
+  const R = Z.rows.slice(); let ch = 0, ok = 0;
+  for (let i = 1; i < R.length; i++) {
+    const s = R[i], n = s.length; if (n < 2 || R[i - 1].length !== n - 1) continue;
+    ok++; let t = s[0]; for (const c of R[i - 1]) t += cpInv(c);
+    if (t !== s) { R[i] = t; ch++; }
+  }
+  if (!ok) { say("◇ Сдвиг: нет строк, где каждая на бит длиннее предыдущей, — строить нечего."); return; }
+  if (!ch) { say(`◇ Сдвиг: все ${ok} строк уже по правилу — левый бит свой, дальше инверсия строки выше.`); return; }
+  snapshot(); for (let i = 0; i < R.length; i++) Z.rows[i] = R[i];
+  renderAll(); save();
+  say(`◇ Сдвиг: перестроено строк ${ch} из ${ok} — левый бит твой, дальше инверсия строки выше. ↩ вернёт.`);
+}
+/* v0.788, «в строках бы такую кнопку, чтобы всё так же показала» (по разбору ▲1 ▼0 ▲0 …): «▲▼» над полем — поле строк треугольником: каждая клетка
+   — треугольник с цифрой, ▲ — бит строки, ▼ между ними — инверсия бита строки над ним (бледнее). Строки по центру — ряды сами складываются в
+   треугольник. Только вид: щелчок по ряду — текущая строка; править — в обычном поле (▲▼ ещё раз). Показывает первые 400 строк */
+function triViewSync(){
+  const L = $("rowList"); if (!L) return; let T = $("triView");
+  const on = !!Z.triView && !ovControls();
+  { const b = $("bTriView"); if (b) b.classList.toggle("on", !!Z.triView); }
+  if (!on) { if (T && !T.hidden) T.hidden = true; if (L.style.display === "none") L.style.display = ""; return; }
+  if (!T) { T = document.createElement("div"); T.id = "triView"; L.after(T);
+    T.addEventListener("click", (e) => { const r = e.target.closest(".tvr"); if (!r) return; Z.cur = +r.dataset.r; renderAll(); save(); }); }
+  if (T.hidden) T.hidden = false; L.style.display = "none";
+  const R = Z.rows, M = Math.min(R.length, 400), out = [];
+  for (let i = 0; i < M; i++) {
+    const s = R[i] || "", ps = i ? R[i - 1] || "" : "", cells = [];
+    for (let j = 0; j < s.length; j++) {
+      cells.push(`<s class="u v${s[j]}">${s[j]}</s>`);
+      if (j < s.length - 1) { const v = ps[j] === undefined ? "" : cpInv(ps[j]); cells.push(`<s class="d v${v || "x"}">${v}</s>`); }
+    }
+    out.push(`<div class="tvr${i === Z.cur ? " cur" : ""}" data-r="${i}"><span class="tvn">${i + 1}</span>${cells.join("")}</div>`);
+  }
+  if (R.length > M) out.push(`<div class="tvmore">… ещё ${R.length - M} строк</div>`);
+  const h = out.join("");
+  if (T._h !== h) { T.innerHTML = h; T._h = h; }
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
@@ -6417,6 +6459,8 @@ function setupCone(){
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
   if ($("bBipyBuild")) $("bBipyBuild").onclick = bipyBuild;   // v0.787
+  if ($("bBipyShift")) $("bBipyShift").onclick = bipyShift;   // v0.788
+  if ($("bTriView")) $("bTriView").onclick = () => { Z.triView = !Z.triView; save(); renderRows(); };   // v0.788
   if ($("coneBipySel")) { $("coneBipySel").value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off";   // v0.782: ◇ бипирамида — включает 3D, снимает ◎ торы
     $("coneBipySel").onchange = (e) => { const v = e.target.value; Z.coneBipy = v !== "off"; if (Z.coneBipy) Z.coneBipyM = v;
       if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
