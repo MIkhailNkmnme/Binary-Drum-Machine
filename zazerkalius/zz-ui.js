@@ -983,7 +983,13 @@ function coneBitAt(e){
   if (h.i === 0 && coneSunHalf()) return null;   // v0.736, «при наведении на 1 бит, когда он полукруг, всё остальное пропадает — убери этот эффект»: полукруг строки 1 наведением не берётся
   const s = Z.rows[h.i], n = s && s.length; if (!n) return null;
   const CG = coneCutGeo(h.i, n), step = CG.step, t = h.a - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  if (CG.cut) { const P = coneCutP(n), x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P; return x < n ? { i: h.i, j: Math.floor(x) } : null; }   // v0.667: в дыре выреза бита нет
+  if (CG.cut) { const P = coneCutP(n), x = (((u / step + coneRotOf(h.i) - CG.off) % P) + P) % P, p = Math.floor(x), m = cutPrevMode();
+    if (m) {   // v0.781: ◇ пред. — часть с битом предыдущей строки отдаёт её бит (Ctrl + щелчок меняет его в той строке)
+      const own = m === "alt" ? p % 2 === 0 : p < n, k = m === "alt" ? (own ? p / 2 : (p - 1) / 2) : own ? p : p - n;
+      if (own) return { i: h.i, j: k };
+      return h.i >= 1 && k < (Z.rows[h.i - 1] || "").length ? { i: h.i - 1, j: k } : null;
+    }
+    return x < n ? { i: h.i, j: p } : null; }   // v0.667: в дыре выреза бита нет
   return { i: h.i, j: ((Math.floor(u / step + coneRotOf(h.i)) % n) + n) % n };
 }
 /* v0.692, по снимку — «почему сканер при наводке на 1 синий тут не делает ничего» (одна строка «1», под мышью ячейка кольца за чертой): наведение на кольцо
@@ -1742,6 +1748,8 @@ const LAS_SEG = [
     t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] },
   { id: "bCutAlign", v: ["c", "l", "r"], l: ["▥ центр", "◧ лево", "◨ право"], get: () => Z.cutAlign || "c", pre: (v) => { Z.cutAlign = { c: "r", l: "c", r: "l" }[v]; },
     t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
+  { id: "bCutPrev", v: ["off", "blk", "alt"], l: ["◇ нет", "◇ блоком", "◇ через 1"], get: () => Z.cutPrev === "blk" || Z.cutPrev === "alt" ? Z.cutPrev : "off", pre: (v) => { Z.cutPrev = { off: "alt", blk: "off", alt: "blk" }[v]; },   // v0.781
+    t: ["◇ Вырез пустой, как было", "◇ Блоком: свои n бит подряд, вырез из n − 1 частей заполнен битами предыдущей строки по порядку (пока только вид — свет считает вырез, как раньше)", "◇ Через 1: как ряд треугольника ▲▼▲▼▲ — свой бит, бит предыдущей строки, свой бит… (пока только вид — свет считает вырез, как раньше)"] },
   { id: "coneSunCut", v: ["gaps", "zero"], l: ["щели", "Без щелей"], get: () => coneSunCut(), pre: (v) => { Z.coneSunCut = v === "zero" ? "gaps" : "zero"; },
     t: ["Пропуск света при ☀ — щели между битами (ширина — ползунок «щель»)", "Без щелей: «0» пропускает свет во всю ширину, «1» — стена"] },
   { id: "coneOctaSel", sel: 1, v: ["off", "cur", "all"], l: ["⧗ нет", "⧗ выдел.", "⧗ все"], get: () => Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off",   // v0.766: группа «3D»
@@ -1766,7 +1774,7 @@ function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.qu
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
   r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
-  ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut"],
+  ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
   fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne"],
   run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
@@ -1775,7 +1783,7 @@ let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
@@ -1787,7 +1795,8 @@ function lasDeps(){
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
   need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
-  need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
+  need(["bCutPrev"], cut && coneSlitRaw() === "cut2", "только в «вырезах T−1»: в «2n» вырез из n частей, а у предыдущей строки n − 1 бит");   // v0.781
+  need(["bCutAlign", "bCutPrev", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
@@ -2022,8 +2031,9 @@ function renderCone(){
         g.globalAlpha = 1;
       }
     } else {
+    const CP = CG.cut ? cutPrevMode() : "";   // v0.781: ◇ пред.
     for (let j = 0; j < n; j++) {
-      const a = -Math.PI / 2 + (j - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
+      const a = -Math.PI / 2 + ((CP ? cutPrevPos(i, j) : j) - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
       let col = fix ? (MI ? (MI.c180 ? coneCss("--green", "#6ee7a0") : cR) : Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
       if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
@@ -2046,6 +2056,27 @@ function renderCone(){
         g.fillText(s[j], 0, 0); g.restore();
       }
     }
+    if (CP && Z.coneArcs !== false) {   // v0.781: биты предыдущей строки в своих частях — бледнее своих, цифра цветом текста
+      const ps = Z.rows[i - 1] || "";
+      for (const [p, k] of cutPrevCells(i, n)) {
+        const a = -Math.PI / 2 + (p - rot) * step, ch = ps[k];
+        g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
+        if (ch === undefined) { g.save(); g.strokeStyle = cT; g.globalAlpha = 0.35; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.stroke(); g.restore(); continue; }
+        g.globalAlpha = 0.5; g.fillStyle = ch === "1" ? c1 : c0; g.fill(); g.globalAlpha = 1;
+        if (glyph) { const am = a + step / 2, rm = (rin + rout) / 2 * coneRho(i, am);
+          g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
+          g.fillStyle = cT; g.globalAlpha = 0.85; g.font = `700 ${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 0, 0); g.restore(); }
+      }
+    }
+    if (CP && n >= 1 && step * rin > 3 * dpr) {   // v0.781: границы — между всеми частями, цветом по тому, что разделяют (свои и чужие подряд)
+      const q = cutPrevSeq(i, n), P = q.length;
+      for (let p = 0; p < P; p++) {
+        const a = -Math.PI / 2 + (p - rot) * step, pv = q[(p - 1 + P) % P], nx = q[p], diff = pv && nx && pv !== nx;
+        g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);
+        g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
+      }
+      g.globalAlpha = 1;
+    } else
     /* v0.090, «граница — цветом, сами построятся», «где надо»: граница красится по тому, что разделяет. Биты разные — яркая:
        0→1 (по часовой) — сиреневая, 1→0 — бирюзовая; одинаковые — тонкая бледная. Края серий видны сразу, узор проступает. */
     if (n >= 1 && step * rin > 3 * dpr && !shut) {   /* v0.573: у 1 бита — одна черта границы; v0.660: у затвора строки 1 — ни одной */
@@ -2056,12 +2087,12 @@ function renderCone(){
       }
       g.globalAlpha = 1;
     }
-    if (clockRays && i >= 1 && n >= 2 && coneCutOn()) {   // v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
+    if (clockRays && i >= 1 && n >= 2 && coneCutOn() && CP !== "alt") {   // v0.781: «через 1» — единого выреза нет; v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
       const e0 = -Math.PI / 2 - rot * step + n * step, e1 = e0 + (coneCutP(n) - n) * step;   // v0.772: вырез — частей − n
       g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e1]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
       g.stroke(); g.restore();
-      if (coneCutP(n) - n > 1) {   // v0.669, «вырез тоже покажи разделённым на части»: внутри дыры — границы её E − 1 частей, золотым пунктиром
+      if (coneCutP(n) - n > 1 && !CP) {   // v0.781: при ◇ пред. части выреза заняты битами; v0.669, «вырез тоже покажи разделённым на части»: внутри дыры — границы её E − 1 частей, золотым пунктиром
         g.save(); g.strokeStyle = cg; g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
         for (let k = 1; k < coneCutP(n) - n; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
         g.stroke(); g.restore();
@@ -2103,7 +2134,7 @@ function renderCone(){
     for (const k in VH) {
       const [i, j] = k.split(":").map(Number); if (i >= N || !shown(i)) continue;
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
-      const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
+      const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + ((CG.cut ? cutPrevPos(i, j) : j) - coneRotOf(i) + CG.off) * step;   // v0.667
       const gp = n >= 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
       const sm1 = coneCutOn() || !coneSunOn() ? coneSlitMode() : "all", ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gp, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gp;   // v0.664; v0.665
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();
@@ -2122,7 +2153,7 @@ function renderCone(){
     for (const [i, j, kd] of window.zzSndHeads) {
       g.strokeStyle = g.shadowColor = sndHeadCol(kd);   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
-      const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
+      const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + ((CG.cut ? cutPrevPos(i, j) : j) - coneRotOf(i) + CG.off) * step;   // v0.667
       g.beginPath(); if (n > 1) { coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); } else { g.arc(cx, cy, rout, 0, 2 * Math.PI); } g.stroke();
     }
     g.shadowBlur = 0;
@@ -2683,6 +2714,23 @@ function coneCutOn(){ return !!Z.coneClock && coneFlat() && Z.rows.length <= CON
    нечётные — биты); по левому — левый край выреза на вертикали (вырез идёт от неё по часовой, биты кончаются на ней); по правому — правый край выреза на
    вертикали (биты начинаются на ней). off — в частях */
 function coneCutOff(i, n){ const m = Z.cutAlign || "c"; return m === "l" ? -n : m === "r" ? 0 : i % 2 ? -n / 2 : (coneCutP(n) - n) / 2; }   // v0.772: дыра по центру — (частей − n) / 2
+/* v0.781, «вообще надо к бипирамиде прийти: в каждой строке T−1 ячеек — это их предыдущей строки биты» (сперва в 2D, «два варианта надо смотреть»):
+   «◇ пред.» (Z.cutPrev, «Щели», только «вырезы T−1») — кольцо строки n из 2n − 1 частей: n своих бит и n − 1 бит строки выше (предыдущей). «блоком» —
+   свои подряд, как были, а вырез заполнен битами предыдущей строки по порядку; «через 1» — как ряд треугольника ▲▼▲▼▲: часть 2j — свой бит j, часть
+   2k + 1 — бит k предыдущей строки. Пока это вид: лазер и солнце считают вырез, как раньше. Предыдущая строка короче n − 1 — недостающие ячейки пустые */
+function cutPrevMode(){ const m = Z.cutPrev; return (m === "blk" || m === "alt") && (coneCutOn() || coneTorCut()) && coneSlitRaw() === "cut" ? m : ""; }
+function cutPrevPos(i, j){ return i >= 1 && cutPrevMode() === "alt" ? 2 * j : j; }   // часть своего бита j
+function cutPrevCells(i, n){   // [[часть, k]] — бит k предыдущей строки в кольце строки i
+  const m = cutPrevMode(), o = []; if (!m || i < 1 || n < 2) return o;
+  for (let k = 0; k < n - 1; k++) o.push([m === "alt" ? 2 * k + 1 : n + k, k]);
+  return o;
+}
+function cutPrevSeq(i, n){   // символы по частям кольца: свой бит, бит предыдущей строки или "" (пусто)
+  const P = coneCutP(n), q = new Array(P).fill(""), s = Z.rows[i] || "", ps = Z.rows[i - 1] || "";
+  for (let j = 0; j < n; j++) q[cutPrevPos(i, j)] = s[j];
+  for (const [p, k] of cutPrevCells(i, n)) q[p] = ps[k] || "";
+  return q;
+}
 function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / coneCutP(n), off: coneCutOff(i, n) } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
 /* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
    расположить относительно вертикали симметрично». У кольца в вырезах одна ось симметрии — через середину бит и середину дыры. Вертикальна она
@@ -3824,15 +3872,18 @@ function cone3DDraw(g, o){
       const cur = i === Z.cur && !document.body.classList.contains("nocur"), sel = rowSel.has(i);
       if (!i) { const c = P(0, 0, 0), b = s[0]; items.push({ ball: true, pts: [c], pc: c, col: b === "1" ? c1 : c0, a: 1, near: c[2], cur, sel, ch: b, w: 2 * sc, cd: c[2], m: false }); continue; }
       const PP = cutT ? coneCutP(n) : n, step = 2 * Math.PI / PP, rot = coneRotOf(i) - (cutT ? coneCutOff(i, n) : 0), r = ringR(i), MI = mirMap.get(i);
-      for (let j = 0; j < n; j++) {
-        const a0 = -Math.PI / 2 + (j - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
-        let col = fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
-        if (MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
+      const CP = cutT ? cutPrevMode() : "", ps = Z.rows[i - 1] || "", cells = [];   // v0.781: ◇ пред. — в вырезе биты предыдущей строки
+      for (let j = 0; j < n; j++) cells.push({ p: CP ? cutPrevPos(i, j) : j, j });
+      for (const [p, k] of cutPrevCells(i, n)) if (ps[k] !== undefined) cells.push({ p, pv: ps[k] });
+      for (const C of cells) {
+        const j = C.j, a0 = -Math.PI / 2 + (C.p - rot) * step, fix = C.pv ? false : MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
+        let col = C.pv ? (C.pv === "1" ? c1 : c0) : fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
+        if (!C.pv && MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
         const pcs = Math.max(1, Math.ceil(step / 0.25));
         for (let q = 0; q < pcs; q++) {
           const b0 = a0 + step * q / pcs, b1 = a0 + step * (q + 1) / pcs, pts = []; for (let t = 0; t <= 4; t++) pts.push(at(i, b0 + (b1 - b0) * t / 4, r));
-          items.push({ tor: true, pts, col, a: 1, near: at(i, (b0 + b1) / 2, r)[2], cur, sel, ch: s[j], pc: at(i, a0 + step / 2, r), w: 0, cd: P(0, 0, 0)[2], m: false,
-            cap0: cutT && j === 0 && q === 0, cap1: cutT && j === n - 1 && q === pcs - 1, edge: q === 0 && !(cutT && j === 0) });
+          items.push({ tor: true, pts, col, a: 1, pv: !!C.pv, near: at(i, (b0 + b1) / 2, r)[2], cur, sel, ch: C.pv || s[j], pc: at(i, a0 + step / 2, r), w: 0, cd: P(0, 0, 0)[2], m: false,
+            cap0: cutT && !CP && j === 0 && q === 0, cap1: cutT && !CP && j === n - 1 && q === pcs - 1, edge: q === 0 && !(cutT && !CP && j === 0) });
         }
       }
     }
@@ -3893,7 +3944,7 @@ function cone3DDraw(g, o){
     }
     if (it.tor) {   // v0.776: кусок трубки — средняя линия толщиной d, блик сверху; у выреза — полусфера
       const tw = sc * 0.98, pp = it.pts, path = (dy) => { g.beginPath(); g.moveTo(pp[0][0], pp[0][1] + dy); for (let q = 1; q < pp.length; q++) g.lineTo(pp[q][0], pp[q][1] + dy); };
-      g.lineCap = "butt"; g.globalAlpha = 1; g.strokeStyle = it.col; g.lineWidth = tw; path(0); g.stroke();
+      g.lineCap = "butt"; g.globalAlpha = it.pv ? 0.55 : 1; g.strokeStyle = it.col; g.lineWidth = tw; path(0); g.stroke(); g.globalAlpha = 1;   // v0.781: бит предыдущей строки — бледнее
       g.fillStyle = it.col; for (const [k, on] of [[0, it.cap0], [pp.length - 1, it.cap1]]) if (on) { g.beginPath(); g.arc(pp[k][0], pp[k][1], tw / 2, 0, 2 * Math.PI); g.fill(); }
       g.strokeStyle = "#05070b"; g.globalAlpha = 0.35; g.lineWidth = tw * 0.22; path(tw * 0.34); g.stroke();
       g.strokeStyle = "#ffffff"; g.globalAlpha = 0.3; g.lineWidth = tw * 0.22; path(-tw * 0.22); g.stroke();
@@ -4898,6 +4949,11 @@ function setupCone(){
     $("bCutLen").classList.toggle("on", !!Z.cutLen);
     $("bCutLen").onclick = () => { Z.cutLen = !Z.cutLen; $("bCutLen").classList.toggle("on", Z.cutLen); coneSunWas = undefined; save(); renderCone(); coneLogRender();
       say(Z.cutLen ? "📏 По длине: свет идёт на следующее кольцо той же длиной дуги, а не тем же углом — с кольца строки m на m + 1 сужается в m / (m + 1)." : "📏 По длине выключено: свет идёт лучами из центра — тем же углом."); };
+  }
+  if ($("bCutPrev")) {   // v0.781: ◇ пред. — щелчок по кругу: нет → блоком → через 1
+    const ui = () => { const m = Z.cutPrev, b = $("bCutPrev"); b.textContent = m === "blk" ? "◇ блоком" : m === "alt" ? "◇ через 1" : "◇ нет"; b.classList.toggle("on", m === "blk" || m === "alt"); };
+    ui(); $("bCutPrev").onclick = () => { const m = Z.cutPrev; Z.cutPrev = m === "blk" ? "alt" : m === "alt" ? "" : "blk"; ui(); save(); renderCone();
+      say(Z.cutPrev === "blk" ? "◇ Блоком: вырез кольца строки n заполнен n − 1 битами предыдущей строки" : Z.cutPrev === "alt" ? "◇ Через 1: свой бит, бит предыдущей строки, свой… — как ряд треугольника" : "◇ Вырез снова пустой"); };
   }
   if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
