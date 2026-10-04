@@ -1731,7 +1731,7 @@ function lasUi3dG(G){
   });
   G.querySelectorAll("label").forEach(l => l.classList.toggle("dis3", on));
   const GL = G.querySelector(":scope > .glab") || G;   // v0.760: подсказка группы — на заголовке
-  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { GL.dataset.tip0 = GL.title; GL.title = "⌖ В 3D лазер и солнце работают только с ◎ торами (группа «3D»): там все кольца в одной плоскости. Включи ◎ торы или выйди из 3D (🧊)"; } else if (GL.dataset.tip0 !== undefined) { GL.title = GL.dataset.tip0; delete GL.dataset.tip0; } }
+  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { GL.dataset.tip0 = GL.title; GL.title = "⌖ В 3D лазер и солнце работают только с ◎ торами или ◇ бипирамидой (группа «3D»). Включи одно из них или выйди из 3D (🧊)"; } else if (GL.dataset.tip0 !== undefined) { GL.title = GL.dataset.tip0; delete GL.dataset.tip0; } }
 }
 /* v0.757, «надо разобрать группу кнопок Лазера на подвиды… разграничить лазер от солнца, и разные режимы построения строк и симметрии, все кнопки сразу
    показывать и на что они влияют, затемнять кнопки, которые неактивны при нажатых уже других, и внизу подсказку писать, что в итоге получается за алгоритм»:
@@ -1823,7 +1823,7 @@ function lasDeps(){
   lasSegSync();
   /* что в итоге получается */
   const dg = (x) => String(Math.round(x * 10) / 10).replace(".", ",") + "°", L = [], slit = dg(+Z.coneSlit || 2), who = sun ? "свет" : "луч";
-  if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D считаются только с ◎ торами (все кольца в одной плоскости) — включи ◎ торы в группе «3D» или выйди из 3D (🧊)."]);
+  if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D считаются только с ◎ торами или ◇ бипирамидой — включи одно из них в группе «3D» или выйди из 3D (🧊)."]);
   else if (!clk) L.push(["src", "<b>Выключено</b>: ни луча, ни солнца. ⌖ луч-часы — луч из центра, ☀ солнце — свет во все стороны, ✺ все лучи — лучи по кругу сразу."]);
   else {
     if (sun) L.push(["src", "<b>Источник</b>: ☀ солнце в центре светит во все стороны; ▶ крутить — свет красит то, на что упал."]);
@@ -1977,7 +1977,10 @@ function renderCone(){
   const mirMode = Z.coneMir || "off", mirMap = new Map();
   if (mirMode !== "off") for (const i of coneFocus()) if (i < N && Z.rows[i]) { const mi = coneMirInfo(Z.rows[i], mirMode, i); if (mi) mirMap.set(i, mi); }
   const coneDots = [];   // v0.111: точки (строки из 1 бита) — поверх колец
-  if (Z.cone3d && !sol3) { coneGeom = null; cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS }); } else {   // v0.082: объём
+  const bip3 = sol3 && !!bipyMode();   /* v0.785: ◇ бипирамида — расчёт света плоский (coneGeom остаётся для него), а рисуется свет прямо на её кольцах в
+     объёме (cone3DDraw, o.light): у колец бипирамиды свои высоты, на одну плоскость слой света не ляжет */
+  if (Z.cone3d && (!sol3 || bip3)) { if (!bip3) coneGeom = null; cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS,
+    light: bip3 ? { rays: clockRays, sun: coneSunOn() ? coneSunTrace() : null } : null }); } else {   // v0.082: объём
   if (sol3) {   // v0.780: торы в масштабе плоского вида (d = dr), поверх — плоский слой света на их плоскости; сами кольца строк — торами, плоско не рисуются
     cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS, sc: dr, cx, cy });
     g.save(); g.setTransform(...cone3Aff(cx, cy));
@@ -2720,7 +2723,7 @@ function coneCutOff(i, n){ const m = Z.cutAlign || "c"; return m === "l" ? -n : 
    «◇ пред.» (Z.cutPrev, «Щели», только «вырезы T−1») — кольцо строки n из 2n − 1 частей: n своих бит и n − 1 бит строки выше (предыдущей). «блоком» —
    свои подряд, как были, а вырез заполнен битами предыдущей строки по порядку; «через 1» — как ряд треугольника ▲▼▲▼▲: часть 2j — свой бит j, часть
    2k + 1 — бит k предыдущей строки. Пока это вид: лазер и солнце считают вырез, как раньше. Предыдущая строка короче n − 1 — недостающие ячейки пустые */
-function cutPrevMode(){ const m = Z.cutPrev; return (m === "blk" || m === "alt") && (coneCutOn() || coneTorCut()) && coneSlitRaw() === "cut" ? m : ""; }
+function cutPrevMode(){ const m = bipyMode() || Z.cutPrev; return (m === "blk" || m === "alt") && (coneCutOn() || coneTorCut()) && coneSlitRaw() === "cut" ? m : ""; }
 function cutPrevPos(i, j){ return i >= 1 && cutPrevMode() === "alt" ? 2 * j : j; }   // часть своего бита j
 function cutPrevCells(i, n){   // [[часть, k]] — бит k предыдущей строки в кольце строки i
   const m = cutPrevMode(), o = []; if (!m || i < 1 || n < 2) return o;
@@ -2737,6 +2740,13 @@ function cutPrevSeq(i, n){   // символы по частям кольца: �
    (n ≥ 2) — 2n − 1 ячеек: свои n бит и n − 1 бит строки выше, по умолчанию через одну (▲▼▲, как ряд треугольника), при «◇ блоком» — блоком; под
    основанием — зеркало с инверсией (⧗) всегда, как в «Гранидусе». Кручение — тем же углом, что у обычного кольца (v0.784) */
 function bipyMode(){ return Z.coneBipy && Z.cone3d && !Z.coneTor ? (Z.coneBipyM === "blk" ? "blk" : "alt") : ""; }
+function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
+  const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
+  const P = 2 * n - 1;
+  /* при лазере / солнце в «вырезах T−1» — ровно та же раскладка, что у плоского расчёта (поворот в частях и сдвиг выреза coneCutOff), иначе свет
+     падал бы не на те ячейки; без них — тот же угол, что у обычного кольца (v0.784) */
+  return { P, m, rot: coneCutOn() ? coneRotOf(i) - coneCutOff(i, n) : coneRotOf(i) * P / n };
+}
 function bipyCells(i, s){   // → { P — ячеек, c: [{ p — ячейка, ch, j — свой бит | pv — бит строки выше }], rot — в ячейках } или null
   const n = s.length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
   const ps = Z.rows[i - 1] || "", c = [];
@@ -2745,7 +2755,7 @@ function bipyCells(i, s){   // → { P — ячеек, c: [{ p — ячейка,
   /* v0.784, «тормозит каждый круг, остановка небольшая»: поворот был «в своих битах ×2» (блоком — ×1), а счёт кручения на каждом круге
      перескакивает с n на 0 — у n бит это незаметно, а у 2n − 1 ячеек кольцо прыгало на ячейку назад. Теперь поворот — тот же угол, что у
      обычного кольца: n бит оборота = 2n − 1 ячеек, круг замыкается без скачка */
-  return { P: 2 * n - 1, c, rot: coneRotOf(i) * (2 * n - 1) / n };
+  return { P: 2 * n - 1, c, rot: bipyGeo(i).rot };
 }
 function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / coneCutP(n), off: coneCutOff(i, n) } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
 /* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
@@ -2759,7 +2769,8 @@ function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true,
    (те же углы, те же кольца, строки за чертой строятся так же), а весь плоский слой света (лучи, освещённые сектора, кольцо за чертой, пустые кольца)
    рисуется на плоскость торов аффинным преобразованием проекции (cone3Aff): кольцо строки i плоского вида [i·d, (i + 1)·d] = тор строки i + 1.
    Без ◎ (кольца на разных высотах) — как было: в 3D лазер и солнце не считаются. coneFlat() — «считать как в плоском» */
-function coneSol3d(){ return !!Z.cone3d && !!Z.coneTor && Z.rows.length <= CONE_MAX; }
+function coneSol3d(){ return !!Z.cone3d && (!!Z.coneTor || !!bipyMode()) && Z.rows.length <= CONE_MAX; }   /* v0.785: и ◇ бипирамида — расчёт плоский, слой света —
+   на плоскости основания (z = 0, там лежит кольцо последней строки), кольца бипирамиды — в масштабе плоского вида */
 function coneFlat(){ return !Z.cone3d || coneSol3d(); }
 function coneTorCut(){ return !!Z.cone3d && !!Z.coneTor && coneSlitMode() === "cut" && Z.rows.length <= CONE_MAX; }
 function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).cut || (i >= 1 && coneTorCut()) ? Math.round(x * 2) / 2 : Math.round(x); }
@@ -3770,6 +3781,9 @@ function coneCycleCheck(ph0, ph1, m){
 function conePoly(i){ const n = (Z.rows[i] || "").length; return Z.conePoly && n >= 3 ? n : 0; }
 // во сколько раз точка многоугольника кольца i под углом t ближе к центру, чем окружность через его вершины
 function coneRho(i, t){
+  if (Z.conePoly && Z.coneBipy) { const B = bipyGeo(i); if (B) {   // v0.785: ◇ бипирамида + ⬡ — кольцо (2n − 1)-угольник, ячейка — сторона
+    const st = 2 * Math.PI / B.P, u = (t + Math.PI / 2) / st + B.rot, m = -Math.PI / 2 + (Math.floor(u) + 0.5 - B.rot) * st;
+    return Math.cos(st / 2) / Math.cos(t - m); } }
   const n = conePoly(i); if (!n) return 1;
   const step = 2 * Math.PI / n, rot = coneRotOf(i), u = (t + Math.PI / 2) / step + rot, m = -Math.PI / 2 + (Math.floor(u) + 0.5 - rot) * step;
   return Math.cos(step / 2) / Math.cos(t - m);
@@ -3992,6 +4006,28 @@ function cone3DDraw(g, o){
   g.globalAlpha = 1;
   g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.08, 4 * dpr));
   for (const t of ticks) { g.strokeStyle = t.col; g.beginPath(); g.moveTo(t.p[0], t.p[1]); g.lineTo(t.q[0], t.q[1]); g.stroke(); }
+  if (o.light) {   /* v0.785: свет на ◇ бипирамиде — по тому же плоскому расчёту: ☀ — освещённые дуги на внутреннем крае колец (куда свет пришёл), ⌖ — луч
+     ломаной от вершины по кольцам до стены (красная точка) или насквозь (золотая за основанием). Углы — те же, что в плоском виде */
+    const L = o.light, top = P(0, 0, ringZ(0)), arcPts = (i, a0, a1, rr) => { const K = Math.max(2, Math.ceil(Math.abs(a1 - a0) / 0.08)), q = []; for (let k = 0; k <= K; k++) q.push(at(i, a0 + (a1 - a0) * k / K, rr)); return q; };
+    const line = (pts) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) g.lineTo(pts[k][0], pts[k][1]); g.stroke(); };
+    g.save(); g.lineCap = "round"; g.lineJoin = "round"; g.strokeStyle = cg; g.shadowColor = cg;
+    if (L.sun) {
+      g.fillStyle = cg; g.shadowBlur = 18 * dpr; g.globalAlpha = 1; g.beginPath(); g.arc(top[0], top[1], Math.max(4 * dpr, sc * 0.35), 0, 2 * Math.PI); g.fill();
+      g.lineWidth = Math.max(2 * dpr, Math.min(lw * 0.55, 8 * dpr)); g.shadowBlur = 10 * dpr; g.globalAlpha = 0.85;
+      for (const [b, lit] of L.sun.bands || []) { if (b >= N || !shown(b)) continue; for (const [lo, hi] of lit) line(arcPts(b, lo - Math.PI / 2, hi - Math.PI / 2, ringR(b) - 0.32)); }
+    }
+    if (L.rays && L.rays.length) {
+      g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.06, 3 * dpr)); g.shadowBlur = L.rays.length > 12 ? 0 : 10 * dpr; g.globalAlpha = 0.95;
+      for (const R of L.rays) {
+        const k = R.pass ? N - 1 : Math.min(N - 1, R.stop | 0), pts = [top];
+        for (let i = 1; i <= k; i++) pts.push(at(i, R.a, ringR(i)));
+        if (R.pass) pts.push(at(N - 1, R.a, ringR(N - 1) + 0.9));
+        g.strokeStyle = cg; line(pts);
+        const e = pts[pts.length - 1]; g.fillStyle = R.pass ? "#fff7d6" : cR; g.beginPath(); g.arc(e[0], e[1], Math.max(3 * dpr, sc * 0.12), 0, 2 * Math.PI); g.fill();
+      }
+    }
+    g.restore();
+  }
   if (window.zzSndHeads) {   // v0.376: ◉ головки звука — точка на звучащем бите
     g.shadowBlur = 10 * dpr;
     for (const [i, j, kd] of window.zzSndHeads) {
