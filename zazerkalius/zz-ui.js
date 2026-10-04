@@ -756,6 +756,28 @@ function fillCycle(k){
    перед этим запоминается всё, что меняется (строки, строка за чертой, счёт попаданий, накрутка, поворот кольца за чертой); |◀ сперва возвращает её за черту
    (черта вверх), ничего не крутя, крутит следующее нажатие. Строки с тех пор менялись иначе — память забыта. Снимок ↩ на каждое */
 const fillStack = [];
+/* v0.722, «нужна кнопка: считать кольцо T−1 — все ячейки могут стать битами, но становятся только те, в которые первыми попал свет, потом переход на
+   следующее кольцо по счёту» → «первые n — биты»; «первый бит уже определяет, что все последующие будут находиться только у него рядом — он либо крайний,
+   либо где-то средний, поэтому вырез всегда будет какой нужно». «▦ любые» (Z.cutFree): кольцо за чертой — 2n − 1 одинаковых частей без готового выреза
+   (Z.fillFree — по знаку на часть: «.» пусто, «1» / «0»). Часть, которую свет (☀ — 1, ☾ — 0) накрыл целиком, становится битом, если это первый бит или она
+   вплотную к уже стоящим; прочие пустые свет проходит. n бит набралось — строка готова: в поле — эти n бит подряд, кольцо повёрнуто так, что они на своих
+   местах, а оставшиеся n − 1 частей — вырез, одним куском */
+function coneFreeOn(){ return !!Z.cutFree && coneCutOn() && !!coneFillCut(); }
+function fillFreeDraft(){ const F = coneFillCut(), P = F ? F.P : 0; return typeof Z.fillFree === "string" && Z.fillFree.length === P ? Z.fillFree : ".".repeat(P); }
+function coneFreeCan(f, u, n){ const P = f.length, c = (f.match(/[01]/g) || []).length; return f[u] === "." && c < n && (c === 0 || f[(u + 1) % P] !== "." || f[(u - 1 + P) % P] !== "."); }
+function coneFreeRing(L, C, set, b){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком части, что могут стать битом, — в set
+  const f = fillFreeDraft(), op = [];
+  for (let u = 0; u < C.P; u++) { if (f[u] !== ".") continue;
+    if (coneFreeCan(f, u, C.n) && coneCellCovered(u, C.st, C.rot, L)) { set.add(b + ":" + u); continue; }
+    ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); }
+  return ivUnion(op);
+}
+function coneFreeRow(){   // n бит набралось → { row — биты подряд, a — часть, где первый из них } или null
+  const F = coneFillCut(), f = fillFreeDraft(); if (!F || (f.match(/[01]/g) || []).length < F.n) return null;
+  let a = 0; for (let u = 0; u < F.P; u++) if (f[u] !== "." && f[(u - 1 + F.P) % F.P] === ".") { a = u; break; }
+  let row = ""; for (let j = 0; j < F.n; j++) row += f[(a + j) % F.P];
+  return /\./.test(row) ? null : { row, a };
+}
 function fillUncommit(){
   if (!fillStack.length) return false;
   const S = JSON.parse(fillStack[fillStack.length - 1]);
@@ -763,18 +785,20 @@ function fillUncommit(){
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
   fillStack.pop();
   Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
-  Z.fillCells = S.fill; if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
+  Z.fillCells = S.ff ? null : S.fill; if (S.ff) Z.fillFree = S.ff; if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;   // v0.722: «▦ любые» — части как были
   coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = S.ft || 0;
   renderAll(); save();
   say(`◀ Строка ${S.rows.length + 1} — обратно за черту (черта вверх). Следующее |◀ — крутить назад. ↩ вернёт.`);
   return true;
 }
 function fillAutoCommit(){
-  const f = Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
+  const fm = coneFreeOn(), fr = fm ? coneFreeRow() : null;   // v0.722: «▦ любые» — строка из набранных бит
+  const f = fm ? (fr && fr.row) : Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
   if (typeof f !== "string" || !f.length || (sunCut ? /\./.test(f) : /[^1]/.test(f)) || f.length !== fillLen()) return false;
   if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
-  fillStack.push(JSON.stringify({ rows: Z.rows.slice(), cur: Z.cur | 0, fill: f, vh: Z.voidHits || null, rot: coneRot.slice(), ft: Z.coneFillTurn || 0 })); if (fillStack.length > 200) fillStack.shift();   // v0.709: для |◀
+  fillStack.push(JSON.stringify({ rows: Z.rows.slice(), cur: Z.cur | 0, fill: f, vh: Z.voidHits || null, rot: coneRot.slice(), ft: Z.coneFillTurn || 0, ff: fr ? Z.fillFree : null })); if (fillStack.length > 200) fillStack.shift();   // v0.709: для |◀
+  if (fr) { Z.coneFillTurn = (Z.coneFillTurn || 0) - fr.a; Z.fillFree = null; }   // v0.722: кольцо повёрнуто так, что набранные биты — на местах 0…n − 1
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
@@ -797,7 +821,7 @@ function fillCommit(){
    в конусе) — черновик стирается, строка снова пустая (v0.128: без «1» в первой ячейке). Строки поля не трогает. */
 function fillReset(){
   const f = fillDraft(), was = f.replace(/\./g, "").length, hv = Z.voidHits && Z.voidHits.h ? Object.keys(Z.voidHits.h).length : 0;
-  Z.fillCells = null; if (Z.voidHits) { Z.voidHits.h = {}; coneLaserResetAll(); } renderRows(); save();   // v0.138: и остановленные кольца снова крутятся   // v0.127: и счёт проходов в пустых кольцах
+  Z.fillCells = null; Z.fillFree = null; if (Z.voidHits) { Z.voidHits.h = {}; coneLaserResetAll(); } renderRows(); save();   // v0.138: и остановленные кольца снова крутятся   // v0.127: и счёт проходов в пустых кольцах
   say(was || hv ? `✕ Строка для заполнения — заново: ${fillLen()} пустых ячеек` + (hv ? `; пустые кольца до 256 — тоже без меток (было ${hv}).` : ".") : "✕ Строка для заполнения и так пустая.");   // v0.128: без начальной «1»
 }
 function fillRowHtml(N){
@@ -1914,7 +1938,8 @@ function renderCone(){
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, FC = clockRays && f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
     const gp = n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
-    if (FC) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
+    const FR = FC && coneFreeOn(), fD = FR ? fillFreeDraft() : f, nD = FR ? FC.P : n;   // v0.722: «▦ любые» — все 2n − 1 частей — места, выреза ещё нет
+    if (FC && !FR) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
       const e0 = -Math.PI / 2 + (n - rotF) * step;
       g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e0 + (n - 1) * step]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
@@ -1923,15 +1948,15 @@ function renderCone(){
       g.stroke(); g.restore();
     }
     g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
-    for (let k = 0; k < n; k++) {
+    for (let k = 0; k < nD; k++) {
       const a = -Math.PI / 2 + (k - rotF) * step;
       g.beginPath();
-      if (n > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
+      if (nD > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
       else { g.arc(cx, cy, rout, 0, 2 * Math.PI); g.moveTo(cx + rin, cy); g.arc(cx, cy, rin, 0, 2 * Math.PI, true); }
-      if (f[k] !== ".") { g.fillStyle = f[k] === "1" ? c1 : c0; g.globalAlpha = f[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
+      if (fD[k] !== ".") { g.fillStyle = fD[k] === "1" ? c1 : c0; g.globalAlpha = fD[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
       g.strokeStyle = cA; g.globalAlpha = 0.75; g.stroke(); g.globalAlpha = 1;
-      if (f[k] !== "." && fsz >= 8 * dpr) {
-        const am = a + step / 2, rm = (rin + rout) / 2, hc = f[k] === "1" ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : f[k];   // v0.127: прошёл 2+ раз — 11, 111…
+      if (fD[k] !== "." && fsz >= 8 * dpr) {
+        const am = a + step / 2, rm = (rin + rout) / 2, hc = fD[k] === "1" ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : fD[k];   // v0.127: прошёл 2+ раз — 11, 111…
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
         g.fillStyle = cBg; g.font = `${Math.round(tx.length > 1 ? fsz / Math.min(3, tx.length) * 1.4 : fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
       }
@@ -2101,7 +2126,7 @@ function renderCone(){
       const roE = roF + dr * 0.6, rDisk = r0 + Math.max(1, dr * band);
       for (const [b, lit] of S.bands) {
         if (b > N || !lit.some(([lo, hi]) => hi - lo > 1e-6)) continue;
-        const C = coneSunCutR(b, N), R = C ? { n: C.n, st: C.st, rot: C.rot } : (() => { const q = coneRingNR(b); return q ? { n: q.n, st: 2 * Math.PI / q.n, rot: q.rot } : null; })(); if (!R || R.n < 2) continue;
+        const C0 = coneSunCutR(b, N), C = C0 && b === N && coneFreeOn() ? { n: C0.P, P: C0.P, st: C0.st, rot: C0.rot } : C0, R = C ? { n: C.n, st: C.st, rot: C.rot } : (() => { const q = coneRingNR(b); return q ? { n: q.n, st: 2 * Math.PI / q.n, rot: q.rot } : null; })(); if (!R || R.n < 2) continue;
         const ri = r0 + b * dr, ro = ri + Math.max(1, dr * band), kk = C && C.P > C.n ? R.n : R.n - 1;
         g.save(); g.strokeStyle = cBg; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.setLineDash([]); g.beginPath();
         for (let k = C && C.P > C.n ? 1 : 0; k <= kk - (C && C.P > C.n ? 1 : 0); k++) { const a = -Math.PI / 2 + (k - R.rot) * R.st; g.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); g.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); }
@@ -2545,7 +2570,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2576,6 +2601,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
+    if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
     if (C && b === N) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
     for (const [lo, hi] of ivMinus(lit, open)) {
       if (hi - lo < 1e-9) continue;
@@ -2612,6 +2638,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     for (let k = akb; k <= N && k < T && A.length; k++) {
       const C = coneSunCutR(k, N); if (!C) break;
       zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
+      if (k === N && coneFreeOn()) { A = ivAnd(A, coneFreeRing(A, C, zhits, k)).filter(([x, y]) => y - x > 1e-9); aout = A; break; }   // v0.722
       const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole);
       for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
         for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, A)) zhits.add(k + ":" + q); } }
@@ -2639,6 +2666,12 @@ function coneSunPaint(){
   coneSunWas = now;
   /* v0.681, по снимку солнца с одной строкой — «в какой момент он будет красить?»: попадания в кольцо за чертой шли только в счёт и нигде не были видны.
      Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
+  if (coneFreeOn()) {   // v0.722: «▦ любые» — по одной части, первый бит где угодно, следующие — вплотную; 1 сперва, потом 0
+    const N = Math.min(Z.rows.length, CONE_MAX), F = coneFillCut(); let f = fillFreeDraft(), fc = false;
+    const put = (list, chr) => { for (let more = true; more; ) { more = false; for (const k of list) { const [b, u] = k.split(":").map(Number); if (b === N && u < F.P && coneFreeCan(f, u, F.n)) { f = f.slice(0, u) + chr + f.slice(u + 1); fc = more = true; } } } };
+    put([...now], "1"); put(S.zhits || [], "0");
+    if (fc) { Z.fillFree = f; ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); }
+  } else
   { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
     for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
     const cutZ = coneCutOn();   // v0.701: в вырезах — нули только от света сквозь «1» (не «остальные — нулями»)
@@ -3899,8 +3932,8 @@ function setupCone(){
      а в историю идут все шаги: «шаг ↷», «½ шаг», |◀ ▶| и нажатие, которое только опускает черту (lasRec). Только в памяти страницы, до 500 шагов */
   const lasHist = [];
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
-    ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
-  const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null]);
+    ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
+  const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
   function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); fn(); if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
      при этом откатывая шаги назад — не то что шаги, а как будто перемотку назад кручения». Лента: пока солнце в вырезах крутится (▶ крутить, шаги), каждый
@@ -3909,7 +3942,7 @@ function setupCone(){
      записанного. Крутить дальше с отмотанного места — лента впереди стирается и пишется заново (как на магнитофоне). Только в памяти страницы; ⌖✕ — с нуля */
   const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
   const tapeOn = () => coneSunOn() && coneCutOn() && !Z.cone3d;
-  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
+  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
   function tapeUi(){
     const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
     const on = tapeOn() && tape.length > 1; box.classList.toggle("on", on); if (!on) return;
@@ -3937,7 +3970,7 @@ function setupCone(){
       }
       Z.coneAimRot = S.aim; coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, j) => coneRotKeep(x, j)); Z.coneFillTurn = S.ft || 0;
       if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
-      Z.fillCells = S.fill; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
+      Z.fillCells = S.fill; Z.fillFree = S.ff ?? null; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
       coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm;
       tapeAt = T.s; heavy = true;
     }
@@ -3985,6 +4018,11 @@ function setupCone(){
     $("bMoonEcl").onclick = () => { Z.moonEcl = !Z.moonEcl; $("bMoonEcl").classList.toggle("on", Z.moonEcl); save(); renderCone();
       say(Z.moonEcl ? "☾ Затмение: луна светит, только когда всё солнце скрыто за битами — зеркало света, упавшего на них, через центр." : "☾ Затмение выключено: луна — зеркало вылетевшего света."); };
   }
+  if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
+    $("bCutFree").classList.toggle("on", !!Z.cutFree);
+    $("bCutFree").onclick = () => { Z.cutFree = !Z.cutFree; $("bCutFree").classList.toggle("on", Z.cutFree); save(); renderAll();
+      say(Z.cutFree ? "▦ Любые: у кольца за чертой все 2n − 1 частей — места. Бит встаёт, где свет первым накрыл часть целиком, следующие — только вплотную к нему; n набралось — строка готова, вырез — остаток одним куском." : "▦ Любые выключено: места бит и вырез — как обычно."); };
+  }
   if ($("bLasUndo")) $("bLasUndo").onclick = () => {
     if (!lasHist.length) { say("↶ Откатывать нечего — шагов с последней перезагрузки страницы не было."); return; }
     const S = JSON.parse(lasHist.pop()), rowsBack = S.rows.join(",") !== Z.rows.join(",");
@@ -3994,7 +4032,7 @@ function setupCone(){
     }
     Z.coneSpinPh = S.ph; Z.coneSpin = S.spin; Z.coneAimRot = S.aim; coneRot.length = 0; S.rot.forEach(x => coneRot.push(x)); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = S.ft || 0;
     if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
-    Z.fillCells = S.fill; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
+    Z.fillCells = S.fill; Z.fillFree = S.ff ?? null; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
     coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm; coneSunWas = S.sun ? new Set(S.sun) : undefined;
     save(); renderAll(); coneLogRender();
     say(`↶ Откат шага${rowsBack ? " (черта поднята обратно)" : ""}: всё как было${lasHist.length ? ` (назад ещё ${lasHist.length})` : ""}.`);
