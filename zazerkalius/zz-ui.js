@@ -2784,37 +2784,70 @@ function bipyShift(){
 /* v0.788, «в строках бы такую кнопку, чтобы всё так же показала» (по разбору ▲1 ▼0 ▲0 …): «▲▼» над полем — поле строк треугольником: каждая клетка
    — треугольник с цифрой, ▲ — бит строки, ▼ между ними — инверсия бита строки над ним (бледнее). Строки по центру — ряды сами складываются в
    треугольник. Только вид: щелчок по ряду — текущая строка; править — в обычном поле (▲▼ ещё раз). Показывает первые 400 строк */
+/* v0.790, «вот Аниматрицу если так сделать в треугольниках и с фоновыми цветами изменённых бит… ковёр такой — долго глядеть можно, а то в Экселе тормозило
+   всё»: «▲▼» рисуется на холсте (#tvCv), не тысячами элементов — треугольники одного цвета заливаются одним путём, так что Аниматрица идёт и в этом виде.
+   Сторона треугольника подгоняется под ширину поля (самая длинная строка — во всю ширину, от 3 до 26 px), цифры — от 14 px. «👓 изм.» — теперь
+   сравнение с предыдущей НЕ такой же картиной: на волне Аниматрицы — что поменялось за шаг, после «◇ сдвиг» и правок — что поменялось ими
+   (пока строки те же — подсветка держится). Строк — до 2048 */
+let tvCur = null, tvPrev = null, tvHeat = [], tvFrame = 0;   /* v0.790: след «👓 изм.» — до T-уровня: клетка, поменявшаяся на шаге, горит золотом и
+   остывает за T новых картин (T — строк в поле), в 4 ступени яркости: за один проход волны виден весь ковёр изменений */
 function triViewSync(){
   const L = $("rowList"); if (!L) return; let T = $("triView");
   const on = !!Z.triView && !ovControls();
   { const b = $("bTriView"); if (b) b.classList.toggle("on", !!Z.triView); }
+  const gm = Z.triGlass === "chg" || Z.triGlass === "pair" ? Z.triGlass : "";
+  { const b = $("bTriGlass"); if (b) { const t = gm === "chg" ? "👓 изм." : gm === "pair" ? "👓 пары" : "👓"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", !!gm); } }
+  const R = Z.rows;
+  let fresh = false;
+  if (!tvCur || tvCur.length !== R.length || tvCur.some((s, i) => s !== R[i])) { tvPrev = tvCur; tvCur = R.slice(); fresh = !!tvPrev; tvFrame++; }   // предыдущая другая картина
   if (!on) { if (T && !T.hidden) T.hidden = true; if (L.style.display === "none") L.style.display = ""; return; }
   if (!T) { T = document.createElement("div"); T.id = "triView"; L.after(T);
-    T.addEventListener("click", (e) => { const r = e.target.closest(".tvr"); if (!r) return; Z.cur = +r.dataset.r; renderAll(); save(); }); }
-  if (T.hidden) T.hidden = false; L.style.display = "none";
-  const R = Z.rows, M = Math.min(R.length, 400), out = [];
-  /* v0.789, «мне бы ещё спецочки для обнаружения изменённых треуглов — цветом выделить фоном, кнопку, а то всё очень интересно и очень запутанно»:
-     «👓» (Z.triGlass, по кругу): «изм.» — клетки, чьё значение другое, чем до последней правки (↩-снимок: после «◇ сдвиг», «◇ строить», правки
-     строки); «пары» — ▲, не равная ▼ слева от неё (где ломается правило сдвига). Подсвеченные — золотом (1 — светлым, 0 — тёмным) */
-  const gm = Z.triGlass === "chg" || Z.triGlass === "pair" ? Z.triGlass : "", U = gm === "chg" && undoStack.length ? undoStack[undoStack.length - 1].rows || null : null;
-  const cell = (cls, v, hit) => `<s class="${cls} v${v || "x"}${hit ? " g" : ""}">${v}</s>`;
+    const cv = document.createElement("canvas"); cv.id = "tvCv"; T.appendChild(cv);
+    cv.addEventListener("click", (e) => { const q = cv._g; if (!q) return; const r = Math.floor((e.offsetY - q.y0) / q.h); if (r >= 0 && r < q.M) { Z.cur = r; renderAll(); save(); } });
+    if (window.ResizeObserver) new ResizeObserver(() => { if (!T.hidden) triViewSync(); }).observe(T); }
+  if (T.hidden) T.hidden = false; if (L.style.display !== "none") L.style.display = "none";
+  const cv = $("tvCv"), dpr = window.devicePixelRatio || 1, M = Math.min(R.length, 2048);
+  let maxN = 1; for (let i = 0; i < M; i++) maxN = Math.max(maxN, (R[i] || "").length);
+  const Wc = Math.max(60, T.clientWidth - 2), padL = 30, tw = Math.max(3, Math.min(26, Math.floor((Wc - padL - 8) / maxN))), h = tw * 0.866, y0 = 6, Hc = Math.ceil(y0 + M * h + 10);
+  if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); cv.style.width = Wc + "px"; cv.style.height = Hc + "px"; }
+  cv._g = { y0, h, M };
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wc, Hc);
+  const c1 = coneCss("--b1", "#22d3ee"), c0 = coneCss("--b0", "#7d8699"), cx = padL + (Wc - padL) / 2;
+  const U = tvPrev, TL = Math.max(1, M);
+  // пути по цветам: [▲1, ▲0, ▼1, ▼0], дальше след по 4 ступеням остывания: [свет1, свет0] × 4
+  const P = []; for (let q = 0; q < 12; q++) P.push(new Path2D()); const digs = tw >= 14 ? [] : null;
+  if (tvHeat.length > M) tvHeat.length = M;
+  if (Z.cur < M) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.14; g.fillRect(0, y0 + Z.cur * h, Wc, h); g.globalAlpha = 1; }
   for (let i = 0; i < M; i++) {
-    const s = R[i] || "", ps = i ? R[i - 1] || "" : "", cells = [];
-    const os = U ? U[i] : null, ops = U && i ? U[i - 1] : null;
-    for (let j = 0; j < s.length; j++) {
-      const dl = j && ps[j - 1] !== undefined ? cpInv(ps[j - 1]) : "";
-      const hu = gm === "chg" ? !!U && (os == null || os[j] !== s[j]) : gm === "pair" ? !!dl && j > 0 && dl !== s[j] : false;
-      cells.push(cell("u", s[j], hu));
-      if (j < s.length - 1) { const v = ps[j] === undefined ? "" : cpInv(ps[j]);
-        const ov = ops == null || ops[j] === undefined ? null : cpInv(ops[j]), hd = gm === "chg" && !!U && !!v && ov !== v;
-        cells.push(cell("d", v, hd)); }
+    const s = R[i] || "", n = s.length; if (!n) continue;
+    const ps = i ? R[i - 1] || "" : "", os = U ? U[i] : null, ops = U && i ? U[i - 1] : null, yt = y0 + i * h, yb = yt + h, x0 = cx - n * tw / 2;
+    let H = tvHeat[i]; if (!H || H.length !== 2 * n - 1) { H = tvHeat[i] = new Float64Array(2 * n - 1).fill(-1e9); }
+    for (let k = 0; k < 2 * n - 1; k++) {
+      const xl = x0 + k * tw / 2, up = !(k & 1), j = k >> 1;
+      let v, hit = false, chg = false;
+      if (up) { v = s[j]; chg = !!U && (os == null || os[j] !== v);
+        if (gm === "pair") { const dl = j && ps[j - 1] !== undefined ? cpInv(ps[j - 1]) : ""; hit = !!dl && dl !== v; } }
+      else { if (ps[j] === undefined) continue; v = cpInv(ps[j]); chg = !!U && (ops == null || ops[j] === undefined || cpInv(ops[j]) !== v); }
+      if (fresh && chg) H[k] = tvFrame;
+      let b = -1;
+      if (gm === "chg") { const age = tvFrame - H[k]; if (age < TL) b = Math.min(3, Math.floor(age / TL * 4)); }
+      else if (hit) b = 0;
+      hit = b >= 0;
+      const p = P[hit ? 4 + b * 2 + (v === "1" ? 0 : 1) : (up ? 0 : 2) + (v === "1" ? 0 : 1)];
+      if (up) { p.moveTo(xl, yb); p.lineTo(xl + tw, yb); p.lineTo(xl + tw / 2, yt); } else { p.moveTo(xl, yt); p.lineTo(xl + tw, yt); p.lineTo(xl + tw / 2, yb); }
+      p.closePath();
+      if (digs) digs.push(xl + tw / 2, up ? yb - h * 0.3 : yt + h * 0.32, v, hit);
     }
-    out.push(`<div class="tvr${i === Z.cur ? " cur" : ""}" data-r="${i}"><span class="tvn">${i + 1}</span>${cells.join("")}</div>`);
+    if (tw >= 8 && (h >= 9 || i % Math.ceil(9 / h) === 0)) { g.fillStyle = c0; g.font = `${Math.min(10, Math.max(7, h * 0.8))}px ${coneCss("--ff", "monospace")}`; g.textBaseline = "middle"; g.fillText(String(i + 1), 4, yt + h / 2); }
   }
-  if (R.length > M) out.push(`<div class="tvmore">… ещё ${R.length - M} строк</div>`);
-  { const b = $("bTriGlass"); if (b) { b.textContent = gm === "chg" ? "👓 изм." : gm === "pair" ? "👓 пары" : "👓"; b.classList.toggle("on", !!gm); } }
-  const h = out.join("");
-  if (T._h !== h) { T.innerHTML = h; T._h = h; }
+  const fill = (p, col, a) => { g.globalAlpha = a; g.fillStyle = col; g.fill(p); };
+  fill(P[0], c1, 1); fill(P[1], c0, 1); fill(P[2], c1, 0.62); fill(P[3], c0, 0.62);
+  [1, 0.8, 0.6, 0.42].forEach((a, b) => { fill(P[4 + b * 2], c1, 1); fill(P[4 + b * 2], "#ffd166", a); fill(P[5 + b * 2], c0, 1); fill(P[5 + b * 2], "#b8860b", a); });   // остывание: золото поверх цвета бита
+  g.globalAlpha = 1;
+  if (tw >= 6) { g.strokeStyle = "rgba(5,7,11,.35)"; g.lineWidth = 0.5; for (const p of P) g.stroke(p); }
+  if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
+    for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && digs[q + 2] === "0" ? "#fff7d6" : "#05070b"; g.fillText(digs[q + 2], digs[q], digs[q + 1]); } g.textAlign = "left"; }
+  if (R.length > M) { g.fillStyle = c0; g.font = "11px sans-serif"; g.fillText(`… ещё ${R.length - M} строк`, cx - 40, Hc - 4); }
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
@@ -6474,7 +6507,7 @@ function setupCone(){
   if ($("bTriView")) $("bTriView").onclick = () => { Z.triView = !Z.triView; save(); renderRows(); };   // v0.788
   if ($("bTriGlass")) $("bTriGlass").onclick = () => {   // v0.789: 👓 — нет → изм. → пары → нет; включает «▲▼»
     Z.triGlass = Z.triGlass === "chg" ? "pair" : Z.triGlass === "pair" ? "" : "chg"; if (Z.triGlass) Z.triView = true; save(); renderRows();
-    say(Z.triGlass === "chg" ? (undoStack.length ? "👓 Изм.: золотом — клетки, которые поменялись последней правкой (◇ сдвиг, ◇ строить, правка строки)." : "👓 Изм.: правок ещё не было — подсвечивать нечего.")
+    say(Z.triGlass === "chg" ? (undoStack.length ? "👓 Изм.: золотом — клетки, которые поменялись последним изменением строк: шагом Аниматрицы, ◇ сдвиг, ◇ строить, правкой." : "👓 Изм.: золотом — клетки, которые поменялись последним изменением строк: шагом Аниматрицы, ◇ сдвиг, ◇ строить, правкой.")
       : Z.triGlass === "pair" ? "👓 Пары: золотом — ▲, которая не равна ▼ слева от неё: тут ломается правило сдвига." : "👓 Очки сняты.");
   };
   if ($("coneBipySel")) { $("coneBipySel").value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off";   // v0.782: ◇ бипирамида — включает 3D, снимает ◎ торы
