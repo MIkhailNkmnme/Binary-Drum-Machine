@@ -3762,8 +3762,8 @@ function coneDirUi(){   // v0.136: ползунок — величина ско�
   coneSpinModeUi();
 }
 function coneRaysUi(){   // v0.576: лучи к центру — кнопками, горит выбранная (список coneRays — скрытый, держит значение)
-  const m = Z.coneRays || "off"; document.querySelectorAll("#coneRaysB > button[data-rays]").forEach(b => b.classList.toggle("on", b.dataset.rays === m));
-  const r = document.getElementById("bRaysOn"); if (r) r.classList.toggle("on", m !== "off");   // v0.604: «лучи» горит, пока включены
+  const m = Z.coneRays || "off", b = document.getElementById("coneRaysB"); if (!b) return;   // v0.824: одна кнопка по кругу выкл → выдел. → все
+  const t = m === "cur" ? "✳ выдел." : m === "all" ? "✳ все" : "✳ лучи"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", m !== "off");
 }
 function coneSpinModeUi(){   // v0.279, «это вынеси в кнопки»: режим кручения — кнопками, горит выбранный (список coneSpinMode — скрытый, держит значение)
   const m = Z.coneSpinMode || "all"; document.querySelectorAll("#coneSpinModeB > button").forEach(b => b.classList.toggle("on", b.dataset.sm === m));
@@ -7339,9 +7339,8 @@ function setupCone(){
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; coneRaysUi(); save(); renderCone(); };
   coneRaysUi();   // v0.576: кнопки ✳ нет / выдел. / все
   $("coneRaysB").onclick = (e) => {   // v0.604: (выдел)лучи(все) — стороны выбирают, от каких колец (и включают), «лучи» — вкл / выкл, помня сторону
-    const b = e.target.closest("button"); if (!b) return; const sel = $("coneRays"), cur = Z.coneRays || "off";
-    let v = b.dataset.rays; if (!v) { if (cur !== "off") { Z.coneRaysLast = cur; v = "off"; } else v = Z.coneRaysLast === "cur" ? "cur" : "all"; }
-    if (v !== "off") Z.coneRaysLast = v; if (v === cur) return; sel.value = v; sel.onchange({ target: sel }); };
+    const sel = $("coneRays"), cur = Z.coneRays || "off", v = cur === "off" ? "cur" : cur === "cur" ? "all" : "off";   // v0.824: по кругу
+    sel.value = v; sel.onchange({ target: sel }); };
   // v0.049: колесо — масштаб вокруг курсора (точка под курсором остаётся на месте); двойной щелчок мимо колец — как было
   cv.addEventListener("wheel", (e) => {
     e.preventDefault();
