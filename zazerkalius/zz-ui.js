@@ -3079,7 +3079,11 @@ const RMB_FONT = (() => {
   return F;
 })();
 function rmbTextRows(txt){   // → строки поля: 7 рядов букв + по строке нулей сверху и снизу, по столбцу нулей по краям
-  const gl = [...String(txt).toUpperCase()].map(c => (RMB_FONT[c] || RMB_FONT["?"]).split("|"));
+  /* v0.810, по снимку «ZAZERKALIUS» — «между I лишние пробелы справа, слева»: шрифт пропорциональный — у буквы срезаются пустые крайние столбцы
+     (у «I», «1», знаков), между буквами — ровно один столбец; пробел (вся клетка пустая) остаётся пробелом */
+  const trim = (g) => { const w = g[0].length, empty = (x) => g.every(r => r[x] === "."); let a = 0, b = w - 1;
+    if (g.every(r => !r.includes("#"))) return g; while (a < b && empty(a)) a++; while (b > a && empty(b)) b--; return g.map(r => r.slice(a, b + 1)); };
+  const gl = [...String(txt).toUpperCase()].map(c => trim((RMB_FONT[c] || RMB_FONT["?"]).split("|")));
   const rows = [];
   for (let r = 0; r < 7; r++) rows.push("0" + gl.map(g => g[r].replace(/#/g, "1").replace(/\./g, "0")).join("0") + "0");
   const z = "0".repeat(rows[0].length); return [z, ...rows, z];
