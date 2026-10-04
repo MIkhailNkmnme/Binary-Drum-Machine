@@ -1932,6 +1932,7 @@ function renderCone(){
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
+  if (window.c3PadPlace) window.c3PadPlace();   // v0.813: пульт — на горизонтали через центр
   if (!coneSunOn()) coneBalShow(null); else coneBalPlace();   // v0.812: баланс — при солнце
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
@@ -7239,24 +7240,33 @@ function setupCone(){
     else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
     renderCone();
   };
-  /* v0.179, по снимку пульта — «перемещаемым»: пульт тянут за ручку ⠿ (или за фон между кнопками) куда угодно по холсту; двойной
-     щелчок по ручке — обратно в правый нижний угол. Место — Z.padPos { x, y } в пикселях от угла холста; меняет только перетаскивание. */
+  /* v0.179 → v0.813, по снимку пульта — «это по горизонтали от центра прижми вправо и дай переместить влево»: пульт стоит на горизонтали через центр
+     конуса (⌂ — ровно на ней, едет за центром, когда конус сдвигают), прижат к правому краю холста; тянешь за ⠿ или фон между кнопками и отпускаешь
+     левее середины холста — встаёт слева, правее — справа (Z.padSide "r" / "l"); двойной щелчок по ⠿ — на другую сторону. Прежнее свободное место
+     (Z.padPos) сохранено один раз копией Z.padPos_pered_os и больше не действует */
   { const P = $("cone3Pad"), host = P.parentElement;
+    if (Z.padPos && !Z.padPos_pered_os) Z.padPos_pered_os = Z.padPos; delete Z.padPos;
     const place = () => {
-      const p = Z.padPos; P.classList.toggle("moved", !!p);
-      if (!p) { P.style.left = P.style.top = ""; return; }
-      const x = Math.max(0, Math.min(p.x, host.clientWidth - P.offsetWidth)), y = Math.max(0, Math.min(p.y, host.clientHeight - P.offsetHeight));
-      P.style.left = Math.round(x) + "px"; P.style.top = Math.round(y) + "px";
+      if (P._drag) return; P.classList.add("moved");
+      const cv = $("coneCv"), hr = host.getBoundingClientRect(), cr = cv ? cv.getBoundingClientRect() : hr, G = coneGeom;
+      const cyp = G && G.dpr ? G.cy / G.dpr : cr.height / 2, h = P.offsetHeight || 160, w = P.offsetWidth || 120;
+      const y = Math.max(0, Math.min(host.clientHeight - h, cr.top - hr.top + cyp - h / 2)) + host.scrollTop;
+      const left = Z.padSide === "l", x = left ? cr.left - hr.left + 8 : cr.right - hr.left - w - 8;
+      const l = Math.round(Math.max(0, x)) + "px", t = Math.round(y) + "px"; if (P.style.left !== l) P.style.left = l; if (P.style.top !== t) P.style.top = t;
     };
+    window.c3PadPlace = place;
     P.addEventListener("pointerdown", (e) => {
       if (e.button !== 0 || e.target.closest("button")) return;
       e.preventDefault(); e.stopPropagation(); try { P.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
-      const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = Z.padPos || { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
-      const mv = (ev) => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; Z.padPos = { x: p0.x + ev.clientX - x0, y: p0.y + ev.clientY - y0 }; place(); };
-      const up = () => { P.removeEventListener("pointermove", mv); P.removeEventListener("pointerup", up); P.removeEventListener("pointercancel", up); if (moved) save(); };
+      const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
+      const mv = (ev) => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; P._drag = true;
+        P.style.left = Math.round(p0.x + ev.clientX - x0) + "px"; P.style.top = Math.round(p0.y + ev.clientY - y0) + "px"; };
+      const up = (ev) => { P.removeEventListener("pointermove", mv); P.removeEventListener("pointerup", up); P.removeEventListener("pointercancel", up); P._drag = false;
+        if (moved) { const cv = $("coneCv"), cr = cv ? cv.getBoundingClientRect() : hr; Z.padSide = ev.clientX < cr.left + cr.width / 2 ? "l" : "r"; save(); }
+        place(); };
       P.addEventListener("pointermove", mv); P.addEventListener("pointerup", up); P.addEventListener("pointercancel", up);
     });
-    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); if (!Z.padPos) return; delete Z.padPos; place(); save(); });
+    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padSide = Z.padSide === "l" ? "r" : "l"; place(); save(); });
     place();
     if (window.ResizeObserver) new ResizeObserver(place).observe(host);
   }
