@@ -8580,7 +8580,10 @@ function cgrpInit(){
       let mates = [];
       if (g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
         const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
-        const T = TZC_H / Math.sqrt(3) + 3, near = (a, b) => { const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); return A.left <= B.right + T && B.left <= A.right + T && A.top <= B.bottom + 3 && B.top <= A.bottom + 3; };
+        /* v0.759: соседи — сцепленные (Z.cgrpLink) или почти касаются: по вертикали — до полуряда (группы стоят по сетке рядов 24 px, и под сцепленной сверху
+           бывает зазор в несколько px — с допуском 3 px блок рвался: «Алгоритм» уезжал один, остальные догоняли сцепками и упирались в край окна) */
+        const T = TZC_H / Math.sqrt(3) + 3, V = TZC_H / 2 + 1, lk = (a, b) => { const L = Z.cgrpLink[a.dataset.g]; return !!L && L.to === b.dataset.g; };
+        const near = (a, b) => { if (lk(a, b) || lk(b, a)) return true; const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); return A.left <= B.right + T && B.left <= A.right + T && A.top <= B.bottom + V && B.top <= A.bottom + V; };
         const seen = new Set([g]), q = [g];
         while (q.length) { const a = q.shift(); for (const o of fl) if (!seen.has(o) && near(a, o)) { seen.add(o); q.push(o); } }
         mates = [...seen].filter(o => o !== g).map(o => { const b = o.getBoundingClientRect(); return { o, dx: b.left - r.left, dy: b.top - r.top, w: b.width }; });
@@ -8603,12 +8606,18 @@ function cgrpInit(){
         if (!moved) return;
         const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
-        if (mates.length) {   // v0.758: блок лазера — встаёт там, куда отпустили, весь разом (сдвиг по сетке — общий)
-          const tr = tl.getBoundingClientRect(), all = [g, ...mates.map(m => m.o)], at = all.map(x => { x.classList.remove("cdrag"); sizeApply(x); return x.getBoundingClientRect(); });
-          g._mesh = null; delete Z.cgrpFld[g.dataset.g];
-          Z.cgrpPos[g.dataset.g] = { x: at[0].left - tr.left, y: at[0].top - tr.top }; place(g);
-          const g2 = g.getBoundingClientRect(), ddx = g2.left - at[0].left, ddy = g2.top - at[0].top;
-          mates.forEach((m, i) => { const b = at[i + 1]; delete Z.cgrpFld[m.o.dataset.g]; Z.cgrpPos[m.o.dataset.g] = { x: b.left + ddx - tr.left, y: b.top + ddy - tr.top }; place(m.o); });
+        if (mates.length) {   // v0.758: блок лазера — встаёт там, куда отпустили, весь разом
+          /* v0.759, «у меня строки справа, прилипают к правому краю, не даёт двигать группы»: места замерялись уже после снятия .cdrag — группа из «на весу»
+             (fixed, от края экрана) становилась absolute с теми же left / top, но от края окна, и прыгала вбок на отступ окна; каждое перетаскивание уносило
+             блок дальше, пока край окна не прижимал группы по одной (наезжали друг на друга). Теперь замер — пока на весу (у тащимой — gr, снят до этого),
+             и в окно загоняется весь блок разом, общим сдвигом, а не каждая группа сама по себе */
+          const tr = tl.getBoundingClientRect(), all = [g, ...mates.map(m => m.o)], at = all.map((x, i) => i ? x.getBoundingClientRect() : gr);
+          mates.forEach(m => { m.o.classList.remove("cdrag"); sizeApply(m.o); });
+          g._mesh = null;
+          const L = Math.min(...at.map(q => q.left)), R = Math.max(...at.map(q => q.right)), T = Math.min(...at.map(q => q.top)), B = Math.max(...at.map(q => q.bottom));
+          const wr = wb.getBoundingClientRect(), wt = wbTop();
+          const sx = R - L > wr.width ? wr.left - L : Math.max(wr.left - L, Math.min(0, wr.right - R)), sy = B - T > wr.bottom - wt ? wt - T : Math.max(wt - T, Math.min(0, wr.bottom - B));
+          all.forEach((x, i) => { delete Z.cgrpFld[x.dataset.g]; Z.cgrpPos[x.dataset.g] = { x: at[i].left + sx - tr.left, y: at[i].top + sy - tr.top }; place(x); });
           linkSync(); save(); return;
         }
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
