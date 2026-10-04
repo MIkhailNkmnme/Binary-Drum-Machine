@@ -8592,7 +8592,7 @@ function cgrpInit(){
     zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
       say(Z.cgrpZen[k] ? `🧘 Группа «${k}» — видна и в дзене.` : `🧘 Группа «${k}» в дзене не видна.`); });
     zb.addEventListener("dblclick", (e) => e.stopPropagation());
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу" + (g.classList.contains("cg-lx") ? ". Группы лазера: верхняя тянет весь блок, прицепленная — отрывается; с Alt — тянется одна; «Алгоритм» — всегда один, в блок не входит" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу" + (g.classList.contains("cg-lx") ? ". Группы лазера: тянешь — отцепляется (прицепленные к ней — следом); с Shift — весь блок; с Alt — совсем одна" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни — размер группы; двойной щелчок — прежний размер"; g.appendChild(sz);
@@ -8634,10 +8634,11 @@ function cgrpInit(){
       let mates = [];
       /* v0.760, «прилипли друг к другу, не оторвать»: блоком едет, только если тянуть верхнюю группу блока (ту, что сама ни к какой группе лазера не
          прицеплена); прицепленную тянешь — отрывается, как прежде (её прицепленные — следом); с Alt любая группа тянется одна */
-      const upL = Z.cgrpLink[g.dataset.g], upG = upL && gByKey(upL.to);
       /* v0.764, «алгоритм не могу отцепить»: «Алгоритм» — табло, в блок не входит: тянешь его — едет один (прицепленные к нему остаются), блок без него */
+      /* v0.765, «пусть всё можно отцеплять»: тянешь любую группу — отцепляется (её прицепленные — следом, как до v0.758); весь блок лазера — с Shift,
+         с Alt — совсем одна (прицепленные к ней остаются на месте). «Алгоритм» в блок не входит */
       const solo = e.altKey || g.dataset.g === "алгоритм";
-      if (!solo && !(upG && upG.classList.contains("cg-lx")) && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
+      if (e.shiftKey && !solo && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
         const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
         /* v0.759: соседи — сцепленные (Z.cgrpLink) или почти касаются: по вертикали — до полуряда (группы стоят по сетке рядов 24 px, и под сцепленной сверху
            бывает зазор в несколько px — с допуском 3 px блок рвался: «Алгоритм» уезжал один, остальные догоняли сцепками и упирались в край окна) */
