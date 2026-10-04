@@ -10802,7 +10802,24 @@ function lpTag(){
 }
 /* v0.756, «при перетаскивании групп кнопок пропадают зубцы у левого меню»: слой зубцов стоял на постоянном z-index 45, а окно поднимается каждым щелчком
    по нему (Z.z растёт и хранится) — щёлкнул по группе в окне у края, и окно легло поверх зубцов. Теперь слой всегда на ступень выше самого верхнего окна */
-function paneZigZ(){ const ov = document.getElementById("paneZigOv"); if (ov) ov.style.zIndex = Math.max(45, (+Z.z || 0) + 1); }
+function paneZigZ(){ for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = Math.max(45, (+Z.z || 0) + 1); } }
+/* v0.823, по снимку края поля строк — «строки: границу зубцами, так же как левое меню»: вместо прямой черты у края поля (#fieldEdge::after) — те же
+   зубцы, что у левого меню: слой #fieldZigOv поверх окон (щелчки сквозь него), острия — в сторону стола, цветом фона поля с чертой, сетка та же (сдвиг dy
+   от полосы вкладок). Хват ширины (#fieldEdge) остался на месте */
+function fieldZig(dy, ln){
+  const f = document.getElementById("field"); if (!f) return;
+  let ov = document.getElementById("fieldZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "fieldZigOv"; document.body.appendChild(ov);
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
+  const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
+  B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
+  const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
+  ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = fr.height + "px"; ov.style.width = w.toFixed(2) + "px";
+  ov.style.backgroundPosition = "0 " + ((((dy + fr.top - (document.getElementById("rowsPane") || f).getBoundingClientRect().top) % H) + H) % H).toFixed(1) + "px";
+  const k = ln + "|" + fc + "|" + R; if (ov._k === k) return; ov._k = k;
+  const z = R ? `${w.toFixed(2)},0 ${(w - t).toFixed(2)},${H / 2} ${w.toFixed(2)},${H}` : `0,0 ${t.toFixed(2)},${H / 2} 0,${H}`;
+  const sv = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${z}" fill="${fc}"/><polyline points="${z}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
+  ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(sv)}")`; ov.style.backgroundSize = w.toFixed(2) + "px " + H + "px";
+}
 /* v0.634, по снимку края левой панели — «сделай ромбовидной вертикальную границу левого меню»: вместо прямой черты справа — зубцы из тех же треугольников
    (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
    месте, пока панель листается; за линией — фон страницы. Цвета — из темы (--line, фон body), рисунок пересобирается, когда они сменились */
@@ -10830,6 +10847,7 @@ function paneZig(){
   const H = TZC_H, tab = [...document.querySelectorAll("#cgTabs > button")].find(b => b.getClientRects().length);
   let dy = 0; if (tab) { const r = tab.getBoundingClientRect(), y = r.top + r.height / 2 - pane.getBoundingClientRect().top; dy = (((y - H / 2) % H) + H) % H; }
   pane.style.setProperty("--pzigy", dy.toFixed(1) + "px");
+  fieldZig(dy, ln);   // v0.823: и край поля строк
   /* v0.755, по снимку края левого меню — «вкладывай в зубья левого меню все кнопки группы и верхнее меню полоску»: зубцы были вырезаны внутри панели, а вкладки
      и группы окна у края начинаются за ней — выемки их левого края с остриями не сходились, между ними оставались ромбики фона. Теперь край панели прямой, а
      зубцы (цветом панели, с чертой) выступают наружу на глубину выемки, поверх окон (#paneZigOv, сквозь него щелчки проходят): острие — в выемку вкладки
