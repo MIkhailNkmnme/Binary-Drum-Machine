@@ -2744,7 +2744,8 @@ let coneSunWas;   // ячейки, освещённые на прошлом ша
 function coneSunPaint(){
   const S = coneSunTrace(), now = new Set(S.hits), first = coneSunWas === undefined, h = coneVoidHits(); let ch = false;
   { const N0 = Math.min(Z.rows.length, CONE_MAX); if ((S.hits.some(k => +k.split(":")[0] >= N0) || (S.zhits || []).length) && hidAutoBack()) return true; }   // v0.738: дошло до спрятанных — черта вниз
-  for (const k of now) if (first ? !h[k] : !coneSunWas.has(k)) { h[k] = (h[k] | 0) + 1; ch = true; }
+  const fresh = [];   // v0.740: впервые освещённые на этом шаге (для ⊕ xor)
+  for (const k of now) if (first ? !h[k] : !coneSunWas.has(k)) { h[k] = (h[k] | 0) + 1; ch = true; fresh.push(k); }
   coneSunWas = now;
   /* v0.681, по снимку солнца с одной строкой — «в какой момент он будет красить?»: попадания в кольцо за чертой шли только в счёт и нигде не были видны.
      Теперь, как у лазера (coneClockMark), освещённая ячейка строки за чертой получает «1», пустые — «0» */
@@ -2755,7 +2756,10 @@ function coneSunPaint(){
     if (fc) { Z.fillFree = f; ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); }
   } else
   { const N = Math.min(Z.rows.length, CONE_MAX); let f = fillDraft(), fc = false;
-    for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
+    /* v0.740, «сделай кнопку Xor: если второй раз солнце тут, а уже 1 там, то 0, и если было 0, то ставить 1 — всё, в общем»: «⊕ xor» (Z.sunXor) — ячейка за
+       чертой, на которую свет упал заново (не держится с прошлого шага), меняется: 1 → 0, 0 → 1, пусто → 1. Без xor — как было: свет ставит 1 */
+    if (Z.sunXor) { for (const k of fresh) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length) { f = f.slice(0, c) + (f[c] === "1" ? "0" : "1") + f.slice(c + 1); fc = true; } } }
+    else for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
     const cutZ = coneCutOn();   // v0.701: в вырезах — нули только от света сквозь «1» (не «остальные — нулями»)
     if (cutZ) for (const k of S.zhits || []) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] === ".") { f = f.slice(0, c) + "0" + f.slice(c + 1); fc = true; } }
     if (fc) { Z.fillCells = cutZ ? f : f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
@@ -4143,6 +4147,11 @@ function setupCone(){
       if (Z.sunGate && !Z.sunHalf && $("bSunHalf")) { Z.sunHalf = true; $("bSunHalf").classList.add("on"); }   // v0.729: полукольцо считается тоже — включается вместе
       save(); renderCone();
       say(Z.sunGate ? "☀ Накрыты: солнце светит, только когда бит строки 1 (полукольцо) целиком накрыт единицами строки 2 (◐ включено вместе)." : "☀ Накрыты выключено: солнце светит сквозь вырезы и нули, как обычно."); };
+  }
+  if ($("bSunXor")) {   // v0.740: ⊕ xor — свет заново на ячейке: 1 ↔ 0
+    $("bSunXor").classList.toggle("on", !!Z.sunXor);
+    $("bSunXor").onclick = () => { Z.sunXor = !Z.sunXor; $("bSunXor").classList.toggle("on", Z.sunXor); save(); renderCone();
+      say(Z.sunXor ? "⊕ Xor: ячейка за чертой, на которую солнце упало заново, меняется — 1 → 0, 0 → 1, пустая → 1." : "⊕ Xor выключено: солнце ставит 1, как было."); };
   }
   if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
     $("bCutFree").classList.toggle("on", !!Z.cutFree);
