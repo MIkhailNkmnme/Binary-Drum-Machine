@@ -1729,7 +1729,7 @@ function lasUi3dG(G){
 /* v0.757, «надо разобрать группу кнопок Лазера на подвиды… разграничить лазер от солнца, и разные режимы построения строк и симметрии, все кнопки сразу
    показывать и на что они влияют, затемнять кнопки, которые неактивны при нажатых уже других, и внизу подсказку писать, что в итоге получается за алгоритм»:
    прежняя группа «Лазер» — шесть групп (Лазер, Солнце, Строка 1, Щели, За чертой, Алгоритм; класс .cg-lx). lasDeps — у каждой кнопки, при каком режиме она
-   действует: не действует — затемнена (.ldim; жать можно — настройка запомнится), причина — первой строкой её подсказки. Внизу «Алгоритма» (#lasAlgo) — что в
+   действует: не действует — затемнена (.ldim; с v0.758 не жмётся), причина — первой строкой её подсказки. Внизу «Алгоритма» (#lasAlgo) — что в
    итоге делает лазер или солнце, по строкам: источник, строка 1, кольца, за чертой, луна, ход. У каждой кнопки — data-la, ключ её строки: наведи на кнопку —
    строка светится, наведи на строку — светятся её кнопки. Пересчёт — из renderCone, только когда что-то из режимов сменилось */
 const LAS_KEY = {
@@ -1768,6 +1768,7 @@ function lasDeps(){
     if (box.dataset.t0 === undefined) box.dataset.t0 = box.title || "";
     box.dataset.la = key;
     if (box.classList.contains("ldim") !== !!w) box.classList.toggle("ldim", !!w);
+    if (w) box.dataset.why = w; else delete box.dataset.why;
     const t = w ? "⛔ Сейчас не действует: " + w + ".\n\n" + box.dataset.t0 : box.dataset.t0; if (box.title !== t) box.title = t;
   }
   /* что в итоге получается */
@@ -1810,6 +1811,14 @@ function lasDeps(){
   if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; GA.appendChild(box); }
   const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
   if (box.innerHTML !== h) box.innerHTML = h;
+  /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
+     раньше всех (в захвате) и гасится, вместо действия — всплывает, почему она сейчас не действует. Наведение и подсказка остаются */
+  if (!lasDeps._b) { lasDeps._b = 1;
+    const stop = (e) => { const x = e.target && e.target.closest && e.target.closest(".cgrp .ldim"); if (!x) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (e.type === "click") say("⛔ «" + ((x.dataset.lab || x.textContent || "").trim() || "кнопка") + "» сейчас не действует: " + (x.dataset.why || "не в этом режиме") + "."); };
+    ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "keydown"].forEach(t => document.addEventListener(t, stop, { capture: true, passive: false }));
+  }
   if (!lasDeps._h) { lasDeps._h = 1;   // наведение: кнопка ↔ её строка алгоритма
     const clr = () => document.querySelectorAll(".cgrp .lhl, #lasAlgo > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
     document.addEventListener("pointerover", (e) => {
@@ -8381,6 +8390,36 @@ function cgrpInit(){
     if (ch && !document.body.classList.contains("cgdrag")) { clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
   };
   setInterval(() => { if (!document.hidden && !ZZ_BG) linkSync(); }, 300);
+  /* v0.758, «как-то так объедини» (снимок: «Алгоритм» сверху во всю ширину, под ним столбцами Лазер · Солнце · За чертой · Строка 1 · Щели): один раз (Z.lasPack)
+     группы лазера, ещё стоящие в общем ряду, собираются в такой блок поверх холста — под остальными группами; столбцы — самой узкой ширины, «Алгоритм» —
+     во всю ширину столбцов, сцепки: Лазер под «Алгоритмом», каждый следующий столбец справа от предыдущего. Если хоть одна группа лазера уже стоит
+     поверх холста, спрятана или на левой панели — раскладку пользователя не трогает */
+  setTimeout(() => {
+    if (Z.lasPack || ZZ_BG) return;
+    const F = ["алгоритм", "лазер", "солнце", "за чертой", "строка 1", "щели"].map(gByKey); if (F.some(x => !x)) return;
+    Z.lasPack = 1;
+    if (F.some(x => x.parentElement !== tl || x.classList.contains("cfloat") || Z.cgrpOff[x.dataset.g] || x.classList.contains("cmin") || !x.getClientRects().length)) { save(); return; }
+    const t = TZC_H / (2 * Math.sqrt(3)), tr0 = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), A = br.width - 2;
+    const cols = F.slice(1); cols.forEach(x => { if (!Z.cgrpSize[x.dataset.g]) Z.cgrpSize[x.dataset.g] = { w: 1, h: 24 }; sizeApply(x); });
+    /* столбцы не влезают в ширину окна — переносятся следующим рядом (под самым высоким столбцом ряда выше), блок — целиком в окне */
+    const ws = cols.map(x => x.offsetWidth), hs = cols.map(x => x.offsetHeight), rows = [[]]; let cur = 0;
+    cols.forEach((x, i) => { const r = rows[rows.length - 1], add = r.length ? ws[i] - t : ws[i]; if (r.length && cur + add > A) { rows.push([i]); cur = ws[i]; } else { r.push(i); cur += add; } });
+    const off = {}; rows.forEach(r => { let o = 0; r.forEach((i, j) => { off[i] = o; o += ws[i] - t; }); });
+    const Wa = Math.max(...rows.map(r => r.reduce((q, i, j) => q + ws[i] - (j ? t : 0), 0)));
+    if (!Z.cgrpSize["алгоритм"]) Z.cgrpSize["алгоритм"] = { w: Math.round(Wa), h: 24 }; sizeApply(F[0]);
+    const x0 = Math.max(br.left - tr0.left, Math.min(F[0].getBoundingClientRect().left - tr0.left, br.right - tr0.left - F[0].offsetWidth));
+    Z.cgrpPos["алгоритм"] = { x: x0, y: 0 };
+    rows.forEach((r, k) => r.forEach((i, j) => {
+      const key = cols[i].dataset.g;
+      if (j) Z.cgrpLink[key] = { to: cols[r[j - 1]].dataset.g, dy: 0 };
+      else if (!k) Z.cgrpLink[key] = { to: "алгоритм", v: 1, dx: 0 };
+      else { const up = rows[k - 1].reduce((m, q) => hs[q] > hs[m] ? q : m, rows[k - 1][0]); Z.cgrpLink[key] = { to: cols[up].dataset.g, v: 1, dx: Math.round(-off[up]) }; }
+    }));
+    place(F[0]); linkSync();
+    const tr = tl.getBoundingClientRect(); let y0 = 0;
+    groups.forEach(o => { if (!F.includes(o) && o.parentElement === tl && !o.classList.contains("cfloat") && o.getClientRects().length) y0 = Math.max(y0, o.getBoundingClientRect().bottom - tr.top); });
+    Z.cgrpPos["алгоритм"] = { x: x0, y: y0 }; place(F[0]); linkSync(); save();
+  }, 700);
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
     const m = meshSnap(g, x, y, w, h); g._mesh = m;   // v0.502: зубцы в зубцы — сильнее прочего магнита
     if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
@@ -8535,11 +8574,26 @@ function cgrpInit(){
          встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
       const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left, dy = y0 - r.top; let moved = false, lx = x0, ly = y0;
       g.style.zIndex = ++zTop;
+      /* v0.758, по снимку шести групп лазера, составленных вместе, — «как-то так объедини, не размагничивай их»: группа лазера (.cg-lx), что стоит поверх холста,
+         тянется вместе со всеми группами лазера, которые с ней соприкасаются (и с их соседями — по цепочке): блок едет целиком, сцепки внутри него не рвутся,
+         к чужим группам блок не цепляется и на левую панель / поле строк не встаёт. Одиночная группа лазера — как прочие */
+      let mates = [];
+      if (g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
+        const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
+        const T = TZC_H / Math.sqrt(3) + 3, near = (a, b) => { const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); return A.left <= B.right + T && B.left <= A.right + T && A.top <= B.bottom + 3 && B.top <= A.bottom + 3; };
+        const seen = new Set([g]), q = [g];
+        while (q.length) { const a = q.shift(); for (const o of fl) if (!seen.has(o) && near(a, o)) { seen.add(o); q.push(o); } }
+        mates = [...seen].filter(o => o !== g).map(o => { const b = o.getBoundingClientRect(); return { o, dx: b.left - r.left, dy: b.top - r.top, w: b.width }; });
+        mates.forEach(m => { m.o.style.zIndex = ++zTop; });
+      }
       const mv = (ev) => {
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
-        if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag"); delete Z.cgrpLink[g.dataset.g]; }   // v0.502: потянул правую — отцепилась
+        if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag");
+          const L = Z.cgrpLink[g.dataset.g]; if (!(L && mates.some(m => m.o.dataset.g === L.to))) delete Z.cgrpLink[g.dataset.g];   // v0.502: потянул правую — отцепилась; v0.758: но не внутри блока лазера
+          mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); }); }
         lx = ev.clientX; ly = ev.clientY;
-        { const [sx, sy] = snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px"; }   // v0.366: магнит
+        { const [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px";   // v0.366: магнит (у блока лазера — нет)
+          mates.forEach(m => { m.o.style.left = (sx + m.dx).toFixed(2) + "px"; m.o.style.top = (Math.round(sy) + m.dy).toFixed(2) + "px"; }); }
         linkSync();   // v0.502: прицепленные справа — следом
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
         const F = $("field"); if (F) F.classList.toggle("cgover", !paneHit(lx, ly) && fldFits(g, g.getBoundingClientRect()));   // v0.348: целиком над полем
@@ -8549,6 +8603,14 @@ function cgrpInit(){
         if (!moved) return;
         const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
+        if (mates.length) {   // v0.758: блок лазера — встаёт там, куда отпустили, весь разом (сдвиг по сетке — общий)
+          const tr = tl.getBoundingClientRect(), all = [g, ...mates.map(m => m.o)], at = all.map(x => { x.classList.remove("cdrag"); sizeApply(x); return x.getBoundingClientRect(); });
+          g._mesh = null; delete Z.cgrpFld[g.dataset.g];
+          Z.cgrpPos[g.dataset.g] = { x: at[0].left - tr.left, y: at[0].top - tr.top }; place(g);
+          const g2 = g.getBoundingClientRect(), ddx = g2.left - at[0].left, ddy = g2.top - at[0].top;
+          mates.forEach((m, i) => { const b = at[i + 1]; delete Z.cgrpFld[m.o.dataset.g]; Z.cgrpPos[m.o.dataset.g] = { x: b.left + ddx - tr.left, y: b.top + ddy - tr.top }; place(m.o); });
+          linkSync(); save(); return;
+        }
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
         if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); grpFix(g); save(); return; }   // v0.348: целиком на поле строк; v0.558: не поверх другой
