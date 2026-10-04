@@ -1692,6 +1692,9 @@ let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1, coneRDown = 
    новая строка руками) сжимало весь конус. Теперь делитель (coneDen) держится, пока колец стало на одно больше или меньше; новое кольцо выходит наружу, дальше —
    колесом. Пересчёт по месту — когда строк сменилось сразу много (загрузка, вставка), сменились режимы (до 256, 3D) или сброс вида (Alt + двойной щелчок, ⌂) */
 let coneDen = 0, coneDenN = -1, coneDenWant = 0;
+/* v0.737, «масштаб меньше не делается, чем кольца первое почему-то»: отдалять можно было только до 0,3 окна — при многих кольцах (масштаб держится, v0.715)
+   внешние оставались за краем. Теперь — до 0,02 */
+const CONE_ZMIN = 0.02;
 let coneZoom = 1, conePan = [0, 0];   // v0.049: масштаб вокруг курсора и сдвиг (в пикселях холста)
 function coneCss(v, dflt){ try { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || dflt; } catch (e) { return dflt; } }
 function coneInfo(){
@@ -5750,7 +5753,7 @@ function setupCone(){
   const c3Do = (k) => {
     if (k === "yaw-" || k === "yaw+") Z.cone3Yaw = (Z.cone3Yaw ?? 30) + (k === "yaw+" ? 15 : -15);
     else if (k === "el+" || k === "el-") Z.cone3El = Math.max(0, Math.min(90, (Z.cone3El ?? 50) + (k === "el+" ? 10 : -10)));
-    else if (k === "z+" || k === "z-") { const z1 = Math.max(0.3, Math.min(60, coneZoom * (k === "z+" ? 1.25 : 0.8))), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; }
+    else if (k === "z+" || k === "z-") { const z1 = Math.max(CONE_ZMIN, Math.min(60, coneZoom * (k === "z+" ? 1.25 : 0.8))), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; }
     else if (k === "home") { Z.cone3Yaw = 30; Z.cone3El = 50; coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
     renderCone();
   };
@@ -5829,7 +5832,7 @@ function setupCone(){
     e.preventDefault();
     const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
     const mx = (e.clientX - r.left) * dpr - cv.width / 2, my = (e.clientY - r.top) * dpr - cv.height / 2;
-    const z1 = Math.max(0.3, Math.min(60, coneZoom * Math.exp(-e.deltaY * 0.0015)));
+    const z1 = Math.max(CONE_ZMIN, Math.min(60, coneZoom * Math.exp(-e.deltaY * 0.0015)));
     const k = z1 / coneZoom;
     conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
     coneZoom = z1; renderCone();
@@ -12056,7 +12059,7 @@ function init(){
       const d = 40 * (window.devicePixelRatio || 1) * (e.shiftKey ? 4 : 1), mvK = { ArrowLeft: [d, 0], ArrowRight: [-d, 0], ArrowUp: [0, d], ArrowDown: [0, -d] }[e.key];
       if (mvK) { e.preventDefault(); conePan = [conePan[0] + mvK[0], conePan[1] + mvK[1]]; renderCone(); return; }
       const zk = { "+": 1.2, "=": 1.2, "-": 1 / 1.2, "_": 1 / 1.2 }[e.key];
-      if (zk) { e.preventDefault(); const z1 = Math.max(0.3, Math.min(60, coneZoom * zk)), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; renderCone(); return; }
+      if (zk) { e.preventDefault(); const z1 = Math.max(CONE_ZMIN, Math.min(60, coneZoom * zk)), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; renderCone(); return; }
     }
     /* v0.099, «Esc — снять выделение со строк всех»: Esc работает и тогда, когда фокус на галке, выборе или кнопке (после щелчка
        в окнах клавиша прежде пропускалась); из поля ввода Esc сперва уводит фокус. */
