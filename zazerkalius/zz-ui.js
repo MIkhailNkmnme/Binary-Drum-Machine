@@ -3768,6 +3768,9 @@ function cone3DDraw(g, o){
      строки n — тор: трубка d, средняя линия радиуса (n − ½)·d (диаметры 3d, 5d, 7d…). В «вырезах T−1» / «2n» тор делится на 2n − 1 (2n) частей, биты —
      куски трубки, вырез — пусто, концы трубки у выреза — полусферы. Трубка в ортогональной проекции — линия средней линии толщиной d (сумма шаров) */
   const tor = !!Z.coneTor, cutT = tor && coneSlitMode() === "cut";
+  /* v0.777, «да» на «кнопка „шар = часть“: шар радиусом 0,84d со щелью»: шар d (в дырке тора строки 2) по объёму — 16/(3π) ≈ 1,70 части тора (π²d³/4);
+     «● = часть» (Z.coneTorBall) — шар ровно одна часть: 4/3·πr³ = π²d³/4 → r = (3π/16)^(1/3)·d ≈ 0,838d, между шаром и тором — щель ≈ 0,16d */
+  const torBallR = tor && Z.coneTorBall ? Math.cbrt(3 * Math.PI / 16) : 1;
   const octa = !!Z.coneOcta && !tor;   // v0.100: ⧗ зеркало вниз — октаэдр
   const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1];
@@ -3861,8 +3864,8 @@ function cone3DDraw(g, o){
   let nMin = Infinity, nMax = -Infinity; if (Z.coneGlow) for (const it of items) { nMin = Math.min(nMin, it.near); nMax = Math.max(nMax, it.near); }
   for (const it of items) {
     if (Z.coneArcs === false) break;   // v0.375: «◠ дуги» выключены — в 3D дуг битов нет (и у зеркала)
-    if (it.ball) {   // v0.776: шар строки 1 — радиус d, светотень
-      const R = sc, x = it.pc[0], y = it.pc[1], gr = g.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.08, x, y, R);
+    if (it.ball) {   // v0.776: шар строки 1 — радиус d, светотень (v0.777: ● = часть — 0,838d)
+      const R = sc * torBallR, x = it.pc[0], y = it.pc[1], gr = g.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.08, x, y, R);
       gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.3, it.col); gr.addColorStop(1, "#05070b");
       g.globalAlpha = 1; g.fillStyle = gr; g.beginPath(); g.arc(x, y, R, 0, 2 * Math.PI); g.fill();
       if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.9; g.lineWidth = Math.max(1, dpr * 1.2); g.stroke(); }
@@ -4745,7 +4748,7 @@ function setupCone(){
          режим и скорость кручения, замки, оси, Аниматрица); как конус показан и что включено у лазера — не трогает */
       const keys = ["coneSpinMode", "coneAutoSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
-      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "coneTor"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
+      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "coneTor", "coneTorBall"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; coneRaysUi(); $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
@@ -6198,6 +6201,10 @@ function setupCone(){
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
+  if ($("coneTorBall")) { $("coneTorBall").checked = !!Z.coneTorBall;   // v0.777: ● = часть — шар объёмом в одну часть тора (включает ◎ торы)
+    $("coneTorBall").onchange = (e) => { Z.coneTorBall = e.target.checked; if (Z.coneTorBall && !Z.coneTor) { Z.coneTor = true; if ($("coneTor")) $("coneTor").checked = true; }
+      if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
+      say(Z.coneTorBall ? "● = часть: шар радиусом ≈ 0,84d — его объём ровно одна часть тора (π²d³/4); между шаром и тором щель ≈ 0,16d." : "● Шар радиусом d — вплотную к тору, объём ≈ 1,70 части."); }; }
   $("cone3Dig").checked = !!Z.cone3Dig;   // v0.251: цифры бит сбоку / сверху — вкл / выкл, по умолчанию выкл
   $("cone3Dig").onchange = (e) => { Z.cone3Dig = e.target.checked; save(); renderCone();
     say(Z.cone3Dig ? "01 В 3D при наклоне ровно 0° (сбоку) или 90° (сверху) на битах — их цифры." : "01 Цифры бит в 3D — выкл."); };
