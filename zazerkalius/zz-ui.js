@@ -3003,6 +3003,10 @@ function coneVoidHits(){
   if (!Z.voidHits || Z.voidHits.sig !== sig || typeof Z.voidHits.h !== "object") { if (Z.voidHits && Z.voidHits.ex) coneExArchive(true); Z.voidHits = { sig, h: {}, lph: Z.coneSpinPh || 0 }; }   // v0.193: вылеты — в статистику
   return Z.voidHits.h;
 }
+/* v0.739, по снимку группы «Лазер» — «как запустить в режиме лазера T−1, чтобы между битами лазер переходил наружу»: «⌖ меж битами» (Z.cutGaps) — в вырезах
+   T−1 луч проходит кольцо не только через вырез, но и через щель между соседними битами (границы мест внутри блока бит; ширина — ползунок «щель», как в
+   «все щели»). Так у колец строк, у кольца за чертой и у пустых «до 256». coneCutGap(x, n, st) — x (в частях) у границы между битами */
+function coneCutGap(x, n, st){ if (!Z.cutGaps) return false; const r = Math.round(x); return r >= 1 && r <= n - 1 && Math.abs(x - r) * st <= coneSlitHalf(n); }
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
@@ -3017,6 +3021,7 @@ function coneClockTrace(){
       const st = TAU / n, u = (a + Math.PI / 2) / st + coneRotOf(b);
       if (coneSlitMode() === "cut") {   // v0.667: кольцо — 2E − 1 частей: первые E — биты (стена), остальные E − 1 — вырез
         const P = 2 * n - 1, x = ((((a + Math.PI / 2) / (TAU / P) + coneRotOf(b) - coneCutGeo(b, n).off) % P) + P) % P;   // v0.673: сдвиг — по чётности строки
+        if (coneCutGap(x, n, TAU / P)) { g.push(b, Math.round(x) - 1); continue; }   // v0.739: щель между битами — дальше
         if (x < n) { wall = [b, Math.floor(x)]; break; }
         g.push(b, n - 1); continue;
       }
@@ -3032,11 +3037,13 @@ function coneClockTrace(){
     if (pass) for (let j = N; j < T; j++) {
       if (j === N && FC) {   // v0.675: кольцо для заполнения в вырезах — ячейка ловит, вырез пропускает
         const x = coneFillPart((((a + Math.PI / 2) % TAU) + TAU) % TAU);
+        if (coneCutGap(x, FC.n, FC.step)) { g.push(j, Math.round(x) - 1); continue; }   // v0.739
         if (x < FC.n) { const c = Math.floor(x); cells.push([j, c]); cell = c; vstop = j; break; }
         g.push(j, FC.n - 1); continue;
       }
       { const V = j > N ? coneVoidCut(j, N) : null;   // v0.684: пустое кольцо в вырезах — место ловит, вырез пропускает
         if (V) { const x = (((((((a + Math.PI / 2) % TAU) + TAU) % TAU) / V.step + V.rot) % V.P) + V.P) % V.P;
+          if (coneCutGap(x, V.n, V.step)) { g.push(j, Math.round(x) - 1); continue; }   // v0.739
           if (x < V.n) { cells.push([j, Math.floor(x)]); vstop = j; break; }
           g.push(j, V.n - 1); continue; } }
       const n = coneVoidLen(j, N), st = TAU / n, q = ((((a + Math.PI / 2) % TAU) + TAU) % TAU) / st + coneVoidRot(j, n);
@@ -4420,6 +4427,11 @@ function setupCone(){
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
   const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitMode(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
   slitsUi();
+  if ($("bCutGaps")) {   // v0.739: ⌖ меж битами — в вырезах луч проходит и щели между битами
+    $("bCutGaps").classList.toggle("on", !!Z.cutGaps);
+    $("bCutGaps").onclick = () => { Z.cutGaps = !Z.cutGaps; $("bCutGaps").classList.toggle("on", Z.cutGaps); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
+      say(Z.cutGaps ? "⌖ Меж битами: в вырезах T−1 лазер проходит кольцо и через вырез, и через щель между соседними битами (ширина — ползунок «щель»)." : "⌖ Меж битами выключено: в вырезах лазер проходит только через вырез."); };
+  }
   if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
     $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : "c"; ui(); coneWallWas = undefined; coneClockWas = null; save(); renderRows(); renderCone();
