@@ -4143,6 +4143,7 @@ function cone3DDraw(g, o){
   /* v0.778, «расписать бы всё там это и соотношение диаметров»: при ◎ торах (и «Σ расчёт», по умолчанию вкл.) — расчёт на холсте поверх, ничего не двигает:
      шар (диаметр, объём, сколько это частей тора), часть тора (π²d³/4), по каждой строке — частей, диаметры трубки / средней линии / внешний / внутренний,
      объём тора и одной его части, отношение диаметров к шару. Мера — d, толщина трубки */
+  if (!(tor && Z.coneTorInfo !== false)) coneTorInfoShow(null);
   if (tor && Z.coneTorInfo !== false) {
     const f2 = (x) => (Math.round(x * 100) / 100).toFixed(2).replace(".", ","), fd = (x) => Math.abs(x - Math.round(x)) < 1e-9 ? String(Math.round(x)) : f2(x);
     const part = Math.PI * Math.PI / 4, rb = torBallR, Vb = 4 / 3 * Math.PI * rb ** 3;
@@ -4158,13 +4159,42 @@ function cone3DDraw(g, o){
     if (N > rows) L.push(`… ещё ${N - rows} строк — по тем же формулам: ⌀ средн. (2m − 1)d, V тора π²d³(2m − 1)/4`);
     L.push(cutT ? (coneCutP(2) === 3 ? "T−1: частей 2n − 1 = 2m − 1 — V части у всех торов одинаков, π²d³/4" : "2n: частей 2n — V части = π²d³(2m − 1)/(8n), растёт к π²d³/4")
       : "без вырезов: частей n (по битам) — V части у торов разный");
-    const fs = Math.round(11 * dpr), lh = Math.round(fs * 1.35), x0 = x3 * dpr, y0 = 26 * dpr;
-    g.save(); g.font = `${fs}px ${coneCss("--ff", "monospace")}`; g.textBaseline = "top"; g.textAlign = "left";
-    const wMax = Math.max(...L.map(s => g.measureText(s).width));
-    g.globalAlpha = 0.82; g.fillStyle = "#05070b"; g.fillRect(x0 - 6 * dpr, y0 - 4 * dpr, wMax + 12 * dpr, L.length * lh + 8 * dpr);
-    g.globalAlpha = 1; L.forEach((s, k) => { g.fillStyle = k === 0 ? cg : k === 2 ? cT : k === L.length - 1 ? cg : "#e8edf7"; g.fillText(s, x0, y0 + k * lh); });
-    g.restore();
+    /* v0.786, по снимку — «текст этот под меню, и не вытащить его»: таблица рисовалась на холсте у верхнего края, под вкладками групп, а плавающие группы
+       и вкладки лежат поверх холста — ни увидеть, ни взяться. Теперь это своя плашка поверх окна конуса (#coneTorInfo): тянется мышью или пальцем за любое
+       место, место помнится (Z.coneTorInfoXY), двойной щелчок — на место по умолчанию, за край окна не уходит */
+    coneTorInfoShow(L, cg, cT);
   }
+}
+/* v0.786: плашка «Σ расчёт» торов — L: строки (первая и последняя — золотом, шапка таблицы — цветом текста) или null — спрятать */
+function coneTorInfoShow(L, cg, cT){
+  let el = document.getElementById("coneTorInfo");
+  if (!L) { if (el && !el.hidden) el.hidden = true; return; }
+  const cm = document.getElementById("coneMain"), host = cm && cm.parentElement; if (!host) return;   // на уровне тела окна, рядом с группами — иначе они его перекрывают
+  if (!el || el.parentElement !== host) {
+    if (el) el.remove();
+    el = document.createElement("pre"); el.id = "coneTorInfo"; el.title = "Σ Расчёт торов — тяни, чтобы переставить; двойной щелчок — на место по умолчанию";
+    host.appendChild(el);
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId);
+      const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+      const mv = (ev) => { Z.coneTorInfoXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; coneTorInfoPlace(el); };
+      const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); save(); };
+      el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    });
+    el.addEventListener("dblclick", (e) => { e.stopPropagation(); delete Z.coneTorInfoXY; coneTorInfoPlace(el); save(); });
+  }
+  const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const html = L.map((t, k) => `<span style="color:${k === 0 || k === L.length - 1 ? cg : k === 2 ? cT : "#e8edf7"}">${esc(t)}</span>`).join("\n");
+  if (el._h !== html) { el.innerHTML = html; el._h = html; }
+  if (el.hidden) el.hidden = false;
+  coneTorInfoPlace(el);
+}
+function coneTorInfoPlace(el){
+  const host = el.parentElement; if (!host) return;
+  const XY = Array.isArray(Z.coneTorInfoXY) ? Z.coneTorInfoXY : [8, 72];
+  const x = Math.max(0, Math.min(host.clientWidth - 60, XY[0])), y = Math.max(0, Math.min(host.clientHeight - 24, XY[1]));
+  if (Array.isArray(Z.coneTorInfoXY)) Z.coneTorInfoXY = [x, y];   // помнится то место, где плашка и стоит
+  el.style.left = x + "px"; el.style.top = y + "px";
 }
 function coneRing(e){
   if (!coneGeom || Z.cone3d) return -1;   // v0.780: в 3D с торами coneGeom есть (для расчёта), но мышь кольца не берёт — вращает вид
