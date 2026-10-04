@@ -8425,6 +8425,21 @@ function cgrpInit(){
     groups.forEach(o => { if (!F.includes(o) && o.parentElement === tl && !o.classList.contains("cfloat") && o.getClientRects().length) y0 = Math.max(y0, o.getBoundingClientRect().bottom - tr.top); });
     Z.cgrpPos["алгоритм"] = { x: x0, y: y0 }; place(F[0]); linkSync(); save();
   }, 700);
+  /* v0.761, по снимку «За чертой · Солнце · Строка 1» — «как-то неровно между этими»: одна пара была сцеплена зубцами (остриё в выемку), другая — просто
+     приставлена край к краю, со щелью. Группы лазера, что стоят бок о бок (правая — в пределах двух шагов t от зубцов левой, ряды перекрываются), сами
+     сцепляются: правая прицепляется к левой ряд в ряд (dy — целыми рядами по 24 px), linkSync ставит её остриём в выемку. Уже прицепленную к чему-то не
+     трогает. Пересчёт — после отпускания группы лазера и один раз при загрузке */
+  const lasMesh = () => {
+    const t = TZC_H / (2 * Math.sqrt(3)), F = groups.filter(o => o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && !o.classList.contains("cdrag") && o.getClientRects().length);
+    let ch = false;
+    for (const b of F) { if (Z.cgrpLink[b.dataset.g]) continue; const B = b.getBoundingClientRect(); let best = null;
+      for (const a of F) { if (a === b || linkCycle(b.dataset.g, a.dataset.g)) continue; const A = a.getBoundingClientRect(), d = B.left - (A.right - t);
+        if (d < -3 || d > 2 * t + 4 || B.top >= A.bottom - 4 || B.bottom <= A.top + 4) continue;
+        if (!best || Math.abs(d) < best.d) best = { a, A, d: Math.abs(d) }; }
+      if (best) { Z.cgrpLink[b.dataset.g] = { to: best.a.dataset.g, dy: Math.round((B.top - best.A.top) / TZC_H) * TZC_H }; ch = true; } }
+    if (ch) { linkSync(); save(); }
+  };
+  setTimeout(() => { if (!ZZ_BG) lasMesh(); }, 1100);
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
     const m = meshSnap(g, x, y, w, h); g._mesh = m;   // v0.502: зубцы в зубцы — сильнее прочего магнита
     if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
@@ -8627,7 +8642,7 @@ function cgrpInit(){
           const wr = wb.getBoundingClientRect(), wt = wbTop();
           const sx = R - L > wr.width ? wr.left - L : Math.max(wr.left - L, Math.min(0, wr.right - R)), sy = B - T > wr.bottom - wt ? wt - T : Math.max(wt - T, Math.min(0, wr.bottom - B));
           all.forEach((x, i) => { delete Z.cgrpFld[x.dataset.g]; Z.cgrpPos[x.dataset.g] = { x: at[i].left + sx - tr.left, y: at[i].top + sy - tr.top }; place(x); });
-          linkSync(); save(); return;
+          linkSync(); lasMesh(); save(); return;
         }
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
@@ -8642,6 +8657,7 @@ function cgrpInit(){
             say(`🧲 «${kid.dataset.g}» прицеплена ${m.side === "r" || m.side === "l" ? "справа" : "снизу"} к «${par.dataset.g}» — едет за ней; потянешь — отцепится.`); }
           linkSync(); }
         if (!Z.cgrpLink[g.dataset.g]) grpFix(g);   // v0.558: отпустил поверх другой — на ближайшее место рядом
+        if (g.classList.contains("cg-lx")) lasMesh();   // v0.761: группы лазера бок о бок — зубцами
         save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
