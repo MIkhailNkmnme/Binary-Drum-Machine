@@ -1750,6 +1750,8 @@ const LAS_SEG = [
     t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
   { id: "bCutPrev", v: ["off", "blk", "alt"], l: ["◇ нет", "◇ блоком", "◇ через 1"], get: () => Z.cutPrev === "blk" || Z.cutPrev === "alt" ? Z.cutPrev : "off", pre: (v) => { Z.cutPrev = { off: "alt", blk: "off", alt: "blk" }[v]; },   // v0.781
     t: ["◇ Вырез пустой, как было", "◇ Блоком: свои n бит подряд, вырез из n − 1 частей заполнен битами предыдущей строки по порядку (пока только вид — свет считает вырез, как раньше)", "◇ Через 1: как ряд треугольника ▲▼▲▼▲ — свой бит, бит предыдущей строки, свой бит… (пока только вид — свет считает вырез, как раньше)"] },
+  { id: "coneBipySel", sel: 1, v: ["off", "alt", "blk"], l: ["◇ нет", "◇ через 1", "◇ блоком"], get: () => Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off",   // v0.782: группа «3D»
+    t: ["◇ Бипирамида выключена", "◇ Бипирамида: кольцо строки n — свои n бит и n − 1 бит строки выше через одну, как ряд треугольника ▲▼▲; снизу — зеркало с инверсией; включает 3D", "◇ Бипирамида: свои n бит подряд, следом n − 1 бит строки выше; снизу — зеркало с инверсией; включает 3D"] },
   { id: "coneSunCut", v: ["gaps", "zero"], l: ["щели", "Без щелей"], get: () => coneSunCut(), pre: (v) => { Z.coneSunCut = v === "zero" ? "gaps" : "zero"; },
     t: ["Пропуск света при ☀ — щели между битами (ширина — ползунок «щель»)", "Без щелей: «0» пропускает свет во всю ширину, «1» — стена"] },
   { id: "coneOctaSel", sel: 1, v: ["off", "cur", "all"], l: ["⧗ нет", "⧗ выдел.", "⧗ все"], get: () => Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off",   // v0.766: группа «3D»
@@ -2730,6 +2732,17 @@ function cutPrevSeq(i, n){   // символы по частям кольца: �
   for (let j = 0; j < n; j++) q[cutPrevPos(i, j)] = s[j];
   for (const [p, k] of cutPrevCells(i, n)) q[p] = ps[k] || "";
   return q;
+}
+/* v0.782, «делай любой пока, потом посмотрю» (к бипирамиде): «◇ бипирамида» (Z.coneBipy, группа «3D», без ◎ торов) — конус в объёме, кольцо строки n
+   (n ≥ 2) — 2n − 1 ячеек: свои n бит и n − 1 бит строки выше, по умолчанию через одну (▲▼▲, как ряд треугольника), при «◇ блоком» — блоком; под
+   основанием — зеркало с инверсией (⧗) всегда, как в «Гранидусе». Кручение — целыми своими битами (через одну — 2 ячейки за бит) */
+function bipyMode(){ return Z.coneBipy && Z.cone3d && !Z.coneTor ? (Z.coneBipyM === "blk" ? "blk" : "alt") : ""; }
+function bipyCells(i, s){   // → { P — ячеек, c: [{ p — ячейка, ch, j — свой бит | pv — бит строки выше }], rot — в ячейках } или null
+  const n = s.length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
+  const ps = Z.rows[i - 1] || "", c = [];
+  for (let j = 0; j < n; j++) c.push({ p: m === "alt" ? 2 * j : j, ch: s[j], j });
+  for (let k = 0; k < n - 1; k++) if (ps[k] !== undefined) c.push({ p: m === "alt" ? 2 * k + 1 : n + k, ch: ps[k], pv: true });
+  return { P: 2 * n - 1, c, rot: coneRotOf(i) * (m === "alt" ? 2 : 1) };
 }
 function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / coneCutP(n), off: coneCutOff(i, n) } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
 /* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
@@ -3839,7 +3852,7 @@ function cone3DDraw(g, o){
   /* v0.777, «да» на «кнопка „шар = часть“: шар радиусом 0,84d со щелью»: шар d (в дырке тора строки 2) по объёму — 16/(3π) ≈ 1,70 части тора (π²d³/4);
      «● = часть» (Z.coneTorBall) — шар ровно одна часть: 4/3·πr³ = π²d³/4 → r = (3π/16)^(1/3)·d ≈ 0,838d, между шаром и тором — щель ≈ 0,16d */
   const torBallR = tor && Z.coneTorBall ? Math.cbrt(3 * Math.PI / 16) : 1;
-  const octa = !!Z.coneOcta && !tor;   // v0.100: ⧗ зеркало вниз — октаэдр
+  const bipy = !!bipyMode(), octa = (!!Z.coneOcta || bipy) && !tor;   // v0.782: ◇ бипирамида — зеркало всегда; v0.100: ⧗ зеркало вниз — октаэдр
   const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = o.sc || (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;   // v0.780: o.sc — масштаб плоского вида (☀ / ⌖ на торах)
   const cx = o.cx ?? W / 2 + conePan[0], cy = o.cy ?? H / 2 + conePan[1];
   const P = (x, y, z) => { const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw; return [cx + x1 * sc, cy - (z * ce + y1 * se) * sc, z * se - y1 * ce]; };
@@ -3890,42 +3903,50 @@ function cone3DDraw(g, o){
   }
   for (let i = 0; i < (tor ? 0 : N); i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
-    const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), MI = mirMap.get(i);
+    const B = bipyCells(i, s), cells = B ? B.c : [...s].map((ch, j) => ({ p: j, ch, j }));   // v0.782: ◇ бипирамида — 2n − 1 ячеек
+    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : coneRotOf(i), r = ringR(i), MI = mirMap.get(i);
     const K = Math.max(2, Math.ceil(step / 0.12));
-    for (let j = 0; j < n; j++) {
-      const a = -Math.PI / 2 + (j - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
-      let col = fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
-      if (MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
-      const strong = s[j] === "1" || fix || !!(MI && MI.odd), pts = [];
-      const gap = Math.min(step, Math.PI) * 0.06, tiny = Z.conePoly && n <= 2;   // v0.573: и у 1 бита — щель (как у 2)   // v0.110: 1 бит — точка, 2 — крест
+    for (const C of cells) {
+      const j = C.j, a = -Math.PI / 2 + (C.p - rot) * step, fix = C.pv ? false : MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
+      let col = C.pv ? (C.ch === "1" ? c1 : c0) : fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
+      if (!C.pv && MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
+      const strong = C.ch === "1" || fix || !!(!C.pv && MI && MI.odd), pts = [];
+      const gap = Math.min(step, Math.PI) * 0.06, tiny = Z.conePoly && n <= 2 && !B;   // v0.573: и у 1 бита — щель (как у 2)   // v0.110: 1 бит — точка, 2 — крест
       if (tiny && n === 1) pts.push(at(i, a, 0));
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
-      items.push({ pts, col, dot: tiny && n === 1, a: 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
-        ch: s[j], pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false, first: j === 0 });   // v0.243: цифра бита; v0.318: first — бит 0
+      items.push({ pts, col, dot: tiny && n === 1, a: C.pv ? 0.6 : 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
+        ch: C.ch, pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false, first: j === 0 && !C.pv });   // v0.243: цифра бита; v0.318: first — бит 0
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
   const ticks = [];
   for (let i = 0; i < N; i++) {
     const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;
+    const B = bipyCells(i, s);
+    if (B) {   // v0.782: ◇ бипирамида — границы между всеми ячейками подряд
+      const q = new Array(B.P).fill(""), st = 2 * Math.PI / B.P, r = ringR(i); for (const C of B.c) q[C.p] = C.ch;
+      for (let p = 0; p < B.P; p++) { const pv = q[(p - 1 + B.P) % B.P]; if (!pv || !q[p] || pv === q[p]) continue; const a = -Math.PI / 2 + (p - B.rot) * st; ticks.push({ p: at(i, a, r - 0.38), q: at(i, a, r + 0.38), col: pv === "0" ? "#d946ef" : "#14b8a6" }); }
+      continue;
+    }
     const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i);
     for (let j = 0; j < n; j++) { const pv = s[(j - 1 + n) % n]; if (pv === s[j]) continue; const a = -Math.PI / 2 + (j - rot) * step, cr = Z.conePoly && n === 2; ticks.push({ p: at(i, a, cr ? r * 0.6 : r - 0.38), q: at(i, a, cr ? r : r + 0.38), col: pv === "0" ? "#d946ef" : "#14b8a6" }); }
   }
   /* v0.100, «3» — на «зеркало под основанием, как в знаке»: под последним кольцом (общим основанием) — та же пирамида вниз:
      кольцо i отражено через основание (высота −(N−1−i)), биты инвертированы (0 ↔ 1), как в «Октаэдре». Неподвижные при
      развороте у инверсии те же — красятся так же. */
-  const octaSet = octa && Z.coneOctaSel === "cur" ? new Set(coneFocus()) : null;   // v0.359: ⧗ выдел. — только кольца в фокусе
+  const octaSet = octa && !bipy && Z.coneOctaSel === "cur" ? new Set(coneFocus()) : null;   // v0.782: у бипирамиды — все   // v0.359: ⧗ выдел. — только кольца в фокусе
   if (octa) for (let i = 0; i < N - 1; i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i) || (octaSet && !octaSet.has(i))) continue;
-    const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = Math.min(step, Math.PI) * 0.06;
-    const atM = (a, rr = r) => { const q = rr * coneRho(i, a); return P(q * Math.cos(a), -q * Math.sin(a), zm); }, tiny = Z.conePoly && n <= 2;
-    for (let j = 0; j < n; j++) {
-      const a = -Math.PI / 2 + (j - rot) * step, inv = s[j] === "1" ? "0" : "1", fix = Z.showFix && fixAt(s, j);
+    const B = bipyCells(i, s), cells = B ? B.c : [...s].map((ch, j) => ({ p: j, ch, j }));   // v0.782: ◇ бипирамида — те же 2n − 1 ячеек
+    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = Math.min(step, Math.PI) * 0.06;
+    const atM = (a, rr = r) => { const q = rr * coneRho(i, a); return P(q * Math.cos(a), -q * Math.sin(a), zm); }, tiny = Z.conePoly && n <= 2 && !B;
+    for (const C of cells) {
+      const j = C.j, a = -Math.PI / 2 + (C.p - rot) * step, inv = C.ch === "1" ? "0" : "1", fix = !C.pv && Z.showFix && fixAt(s, j);
       const col = fix ? (Z.showFix === "ir" ? green : cR) : inv === "1" ? c1 : c0, pts = [];
       if (tiny && n === 1) pts.push(atM(a, 0)); else if (tiny) pts.push(atM(a + step / 4), atM(a, 0), atM(a + step * 3 / 4));
       else for (let q = 0; q <= K; q++) pts.push(atM(a + gap + (step - 2 * gap) * q / K));
-      items.push({ pts, col, dot: tiny && n === 1, a: (inv === "1" || fix) ? 0.9 : 0.4, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false,
+      items.push({ pts, col, dot: tiny && n === 1, a: ((inv === "1" || fix) ? 0.9 : 0.4) * (C.pv ? 0.65 : 1), near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false,
         ch: inv, pc: tiny ? pts[0] : atM(a + step / 2), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, zm)[2], m: true });   // v0.243: цифра бита
     }
   }
@@ -4848,6 +4869,7 @@ function setupCone(){
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; coneRaysUi(); $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
+      { const bs = $("coneBipySel"); if (bs) bs.value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off"; }   // v0.782
       coneDirUi(); $("cone3H").value = Z.cone3H ?? 1; $("cone3Bw").value = Z.cone3Bw ?? 1; $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass;
       $("coneSlit").value = +Z.coneSlit || 2; $("coneSlitV").textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°";
       $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);
@@ -6302,6 +6324,11 @@ function setupCone(){
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
+  if ($("coneBipySel")) { $("coneBipySel").value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off";   // v0.782: ◇ бипирамида — включает 3D, снимает ◎ торы
+    $("coneBipySel").onchange = (e) => { const v = e.target.value; Z.coneBipy = v !== "off"; if (Z.coneBipy) Z.coneBipyM = v;
+      if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
+      save(); renderCone();
+      say(Z.coneBipy ? "◇ Бипирамида: кольцо строки n — 2n − 1 ячеек, свои биты и биты строки выше " + (Z.coneBipyM === "blk" ? "блоком" : "через одну (▲▼▲)") + "; снизу — зеркало с инверсией." : "◇ Бипирамида выключена."); }; }
   if ($("coneTorInfo")) { $("coneTorInfo").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
     $("coneTorInfo").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
   if ($("coneTorBall")) { $("coneTorBall").checked = !!Z.coneTorBall;   // v0.777: ● = часть — шар объёмом в одну часть тора (включает ◎ торы)
