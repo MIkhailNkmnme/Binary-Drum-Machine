@@ -765,9 +765,18 @@ const fillStack = [];
 function coneFreeOn(){ return !!Z.cutFree && coneCutOn() && !!coneFillCut(); }
 function fillFreeDraft(){ const F = coneFillCut(), P = F ? F.P : 0; return typeof Z.fillFree === "string" && Z.fillFree.length === P ? Z.fillFree : ".".repeat(P); }
 function coneFreeCan(f, u, n){ const P = f.length, c = (f.match(/[01]/g) || []).length; return f[u] === "." && c < n && (c === 0 || f[(u + 1) % P] !== "." || f[(u - 1 + P) % P] !== "."); }
+/* v0.724, «солнце проходит через 0 свободно! надо так»: в вырезах T−1 бит «0» свет не держит — проходит его, как вырез (и солнце, и луна): у колец
+   строк — нули строки, у кольца за чертой — поставленные нули. coneZeroOpen: к проходу open добавить ячейки-нули кольца b (геометрия C) */
+function coneZeroOpen(b, N, C, open){
+  const s = b < N ? (Z.rows[b] || "") : b === N ? (coneFreeOn() ? fillFreeDraft() : fillDraft()) : "", K = b === N && coneFreeOn() ? C.P : C.n;
+  if (!s.includes("0")) return open;
+  const add = open.slice(); for (let q = 0; q < K; q++) if (s[q] === "0") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, add);
+  return ivUnion(add);
+}
 function coneFreeRing(L, C, set, b, Lh = L){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (светом Lh) части, что могут стать битом, — в set
   const f = fillFreeDraft(), op = [];
-  for (let u = 0; u < C.P; u++) { if (f[u] !== ".") continue;
+  for (let u = 0; u < C.P; u++) { if (f[u] === "0") { ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); continue; }   // v0.724: ноль — насквозь
+    if (f[u] !== ".") continue;
     if (coneFreeCan(f, u, C.n) && coneCellCovered(u, C.st, C.rot, Lh)) { set.add(b + ":" + u); continue; }
     ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); }
   return ivUnion(op);
@@ -2525,7 +2534,7 @@ function ivNorm(lo, hi, out){   // [lo, hi] → в [0, 2π), с разрезом
   const a = ((lo % TAU2) + TAU2) % TAU2, b = a + w;
   if (b <= TAU2) out.push([a, b]); else { out.push([a, TAU2]); out.push([0, b - TAU2]); }
 }
-function ivUnion(L){ L.sort((x, y) => x[0] - y[0]); const o = []; for (const [a, b] of L) { const t = o[o.length - 1]; if (t && a <= t[1]) t[1] = Math.max(t[1], b); else o.push([a, b]); } return o; }
+function ivUnion(L){ L.sort((x, y) => x[0] - y[0]); const o = []; for (const [a, b] of L) { const t = o[o.length - 1]; if (t && a <= t[1] + 1e-9) t[1] = Math.max(t[1], b); else o.push([a, b]); } return o; }   // v0.724: стык с погрешностью счёта — тоже один кусок
 function ivAnd(A, B){ const o = []; let i = 0, j = 0; while (i < A.length && j < B.length) { const lo = Math.max(A[i][0], B[j][0]), hi = Math.min(A[i][1], B[j][1]); if (hi > lo) o.push([lo, hi]); if (A[i][1] < B[j][1]) i++; else j++; } return o; }
 function ivMinus(A, B){
   const o = []; let j = 0;
@@ -2601,6 +2610,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
+    if (C) open = coneZeroOpen(b, N, C, open);   // v0.724: через «0» — свободно
     if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
     if (C && b === N) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
     for (const [lo, hi] of ivMinus(lit, open)) {
@@ -2645,7 +2655,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       const C = coneSunCutR(k, N); if (!C) break;
       zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
       if (k === N && coneFreeOn()) { A = ivAnd(A, coneFreeRing(A, C, zhits, k, ivAnd(A, zOk))).filter(([x, y]) => y - x > 1e-9); aout = A; break; }   // v0.722
-      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole);
+      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = coneZeroOpen(k, N, C, k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole));   // v0.724: и луна — сквозь «0»
       for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
         for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, ivAnd(A, zOk))) zhits.add(k + ":" + q); } }
       A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9);
