@@ -5633,6 +5633,7 @@ function setupCone(){
       const done = n0 - Math.max(0, n);   // v0.544: сколько шагов (проходов / строк) ушло в этот кадр — на экране только последний
       animPerFr = animPerFr ? animPerFr * 0.85 + done * 0.15 : done;
       animSig = animKey(); renderRows(); animUi();
+      if (typeof renderRmb === "function") renderRmb();   // v0.797, «включил Аниматрицу в Ромбоиде, а играет в строках»: кадр волны — и в «◇ Ромбоидах» (прежде только поле)
     }
     animRaf = requestAnimationFrame(animTick);
   };
