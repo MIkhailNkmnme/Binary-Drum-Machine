@@ -10124,7 +10124,10 @@ function soloApply(){
     /* v0.616, «при клике на заголовок Zazerkalius — переход из соло-режима»: «Zazerkalius» — ссылка на всю страницу (тот же адрес без ?solo=…) */
     const lg = h.querySelector("svg.zzlogo");   // v0.642: название — надпись из треугольников
     h.textContent = ""; const a = document.createElement("a"); a.href = location.pathname; a.className = "h1home"; if (lg) a.append(lg); else a.textContent = "Zazerkalius";
-    a.title = "Открыть всю страницу Zazerkalius — с полем строк, окнами и панелями (настройки у неё свои)"; h.append(a, "\u00a0" + t); }
+    a.title = "Открыть всю страницу Zazerkalius — с полем строк, окнами и панелями (настройки у неё свои)"; h.append(a, "\u00a0");
+    if (el.id === "w-cone") { const sp = document.createElement("span"); sp.innerHTML = winLab(el, t); h.append(sp);   // v0.742: значок конуса — и значком вкладки браузера
+      const ic = document.createElement("link"); ic.rel = "icon"; ic.href = "data:image/svg+xml," + encodeURIComponent(CONE_ICO.replace('class="zico"', 'xmlns="http://www.w3.org/2000/svg"')); document.head.append(ic); }
+    else h.append(t); }
   document.title = "Zazerkalius " + t + " — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
   $("desk").scrollTop = 0;
 }
@@ -10145,10 +10148,14 @@ function layoutAll(reset){
   $("bHelp").classList.toggle("on", Z.helpOn);
   packWins();   // v0.015
 }
+/* v0.742, по снимку солнца с луной — «значок для вкладки Конус стилизуй», «без чисел»: у «◯ Конуса» вместо кружка — свой значок: солнце, золотой сектор
+   света с двумя лучами и напротив — голубой лунный, пунктирное кольцо (в шапке, в заголовке окна, на отдельной странице и значком вкладки браузера) */
+const CONE_ICO = '<svg class="zico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8L11.5 14.06A7 7 0 0 1 1.03 8.61Z" fill="#ffcf6a" opacity=".35"/><path d="M8 8L4.5 1.94A7 7 0 0 1 14.97 7.39Z" fill="#9cc3ff" opacity=".35"/><circle cx="8" cy="8" r="5.4" fill="none" stroke="#9aa3b5" stroke-width=".7" stroke-dasharray="1.2 1"/><path d="M8 8L1.03 8.61M8 8L11.5 14.06" stroke="#ffcf6a" stroke-width="1"/><path d="M8 8L4.5 1.94M8 8L14.97 7.39" stroke="#9cc3ff" stroke-width=".8"/><circle cx="8" cy="8" r="3.1" fill="#ffd166"/></svg>';
+function winLab(el, t){ return el && el.id === "w-cone" ? CONE_ICO + esc(String(t).replace(/^◯\s*/, "")) : esc(t); }
 function setupWin(el){
   const head = document.createElement("div");
   head.className = "whead";
-  head.innerHTML = '<span class="wt">' + esc(el.dataset.title || el.id) + "</span>" +
+  head.innerHTML = '<span class="wt">' + winLab(el, el.dataset.title || el.id) + "</span>" +
     (el.querySelector(".whint") ? '<button class="bh" title="Подсказка: что это и почему">?</button>' : "") +
     '<button class="bm" title="⛶ На всю правую половину: окно встаёт наверх во всю ширину и высоту места справа от поля строк, остальные — под ним. Ещё раз — вернуть, как было">⛶</button>' +   // v0.060
     (el.id === "w-cone" && !ZZ_SOLO ? '<button class="bsolo" title="↗ Конус отдельно — в новой вкладке (эта же страница с ?solo=cone: одно окно конуса и поле строк, своя память)">↗</button>' : "") +   // v0.303
@@ -11209,7 +11216,7 @@ function init(){
     PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
       if (el.classList.contains("popped")) return;
       const t = ({ "w-pyr": "▲ Паскаль", "w-okt": "◆ Бирамида" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
-      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные пять — свернуть")}">${esc(t)}</button>`;
+      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные пять — свернуть")}">${winLab(el, t)}</button>`;
     });
     if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
     $("pinBar").innerHTML = h;
