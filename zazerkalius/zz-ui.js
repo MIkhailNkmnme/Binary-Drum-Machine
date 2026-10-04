@@ -13325,7 +13325,12 @@ function init(){
         const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
         /* v0.617, «стрелки только две — вверху и внизу»: и список окон (#paneWins листается сам) — через эти же две, своих ▲ ▼ у него больше нет */
         const PW = $("paneWins"), pwV = PW && PW.getClientRects().length && PW.scrollHeight > PW.clientHeight + 2;
-        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - 72 || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2)), zh = zb ? 72 : 0;
+        /* v0.817, по снимку цепочки — «в один ряд их и на верхнее меню после назад-повтор»: на широком экране ◎ дзена и кнопки записи — одним рядом
+           ромбов 28 × 28 в шапке, сразу правее ↩ ↪ (#undoBox), острие к острию; класс body.recTop. Низ левой панели больше не занят. В дзене и на телефоне —
+           как было (дзен — левый нижний угол экрана, телефон — низ открытой панели) */
+        const UB = $("bRedo"), top = !matchMedia("(max-width: 760px)").matches && !document.body.classList.contains("zen") && UB && UB.getClientRects().length > 0;
+        if (document.body.classList.contains("recTop") !== !!top) document.body.classList.toggle("recTop", !!top);
+        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), zh = zb && !top ? 72 : 0, b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - zh || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2));
         /* v0.609, «по вертикали выровняй» (◎ дзена и ● mp4 🎞 ↻1 ▣ записи): ромб дзена — на одной высоте с полосой записи на холсте конуса, если она у низа
            (не дальше 80 px от низа панели); иначе — как было, у низа панели */
         /* v0.637, «поставь под меню, где стоит Дзен»: ◎ дзена и кнопки записи (● mp4 🎞 ↻1 ⏸ ▣) — одной цепочкой ромбов внизу левой панели: ромбы
@@ -13335,10 +13340,12 @@ function init(){
            выше низа панели (не ниже низа окна), левый — на 8 px от её левого края */
         const M8 = 8, pb = Math.min(r.bottom, innerHeight), pl = Math.max(0, r.left);
         const zen = document.body.classList.contains("zen"), x0 = zen ? M8 : Math.round(document.body.classList.contains("pane-icons") ? pl + (r.width - 40) / 2 : pl + M8), yb = Math.round((zen ? innerHeight : pb) - M8 - 40);
-        const chain = [...(zb && vis ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
-        if (zb) zb.style.display = vis ? "" : "none";
-        if (rb) rb.style.display = vis || zen ? "" : "none";
-        chain.forEach((x, i) => { x.style.left = (x0 + 20 * i) + "px"; x.style.top = (yb - (i % 2 ? 20 : 0)) + "px"; });
+        const chain = [...(zb && (vis || top) ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
+        if (zb) zb.style.display = vis || top ? "" : "none";
+        if (rb) rb.style.display = vis || zen || top ? "" : "none";
+        if (top) { const u = UB.getBoundingClientRect(), hx = Math.round(u.right + 4), hy = Math.round((u.top + u.bottom) / 2 - 14);
+          chain.forEach((x, i) => { x.style.left = (hx + 28 * i) + "px"; x.style.top = hy + "px"; }); }
+        else chain.forEach((x, i) => { x.style.left = (x0 + 20 * i) + "px"; x.style.top = (yb - (i % 2 ? 20 : 0)) + "px"; });
         [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
       };
       P.addEventListener("scroll", upd, { passive: true }); addEventListener("resize", upd);
