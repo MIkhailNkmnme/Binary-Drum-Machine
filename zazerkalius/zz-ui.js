@@ -1748,7 +1748,7 @@ function renderCone(){
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
   const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = coneSunHalf() && fillOn ? 0 : rMax * 0.05, dr = (rMax - r0) / den;   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
+  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = (coneSunHalf() || coneQuadOn()) && fillOn ? 0 : rMax * 0.05, dr = (rMax - r0) / den;   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
@@ -2296,6 +2296,13 @@ function renderCone(){
           g.stroke(); g.restore();
         }
       }
+    } else if (coneQuadOn()) {   // v0.743: ✚ 4 части — строка 1 кругом от центра: чёрная, белая, чёрная, белая (от верха по часовой)
+      const rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 + coneRotOf(0) * Math.PI / 2;
+      g.save(); g.globalAlpha = 1;
+      for (let q = 0; q < 4; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * Math.PI / 2, q0 + (q + 1) * Math.PI / 2); g.closePath(); g.fill(); }
+      g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
+      for (let q = 0; q < 4; q++) { const e = q0 + q * Math.PI / 2; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
+      g.moveTo(cx + rD, cy); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
     } else if (coneSlitMode() !== "cut") {   // v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
       const ri = r0 - dpr, ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.max(hs, 1.5 * dpr / Math.max(1, ri));   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
@@ -3014,6 +3021,11 @@ function coneVoidHits(){
    T−1 луч проходит кольцо не только через вырез, но и через щель между соседними битами (границы мест внутри блока бит; ширина — ползунок «щель», как в
    «все щели»). Так у колец строк, у кольца за чертой и у пустых «до 256». coneCutGap(x, n, st) — x (в частях) у границы между битами */
 function coneCutGap(x, n, st){ if (!Z.cutGaps) return false; const r = Math.round(x); return r >= 1 && r <= n - 1 && Math.abs(x - r) * st <= coneSlitHalf(n); }
+/* v0.743, «нужен вариант лазер-луча, который из центра проходит через щель первого бита T−1, и где T−1 бит состоит из 4 частей — круг, поделённый на 4 части:
+   чёрн-бел-чёрн-бел»: «✚ 4 части» (Z.laserQuad, лазер в вырезах T−1) — строка 1 — круг от центра на 4 четверти: от верха по часовой чёрная, белая, чёрная,
+   белая. Чёрная — щель: луч из центра проходит; белая — бит: стена, луч встаёт. Круг крутится, как кольцо строки 1, — на четверть за шаг */
+function coneQuadOn(){ return !!Z.laserQuad && !!Z.coneClock && coneCutOn() && !coneSunOn(); }
+function coneQuadOpen(a){ const x = ((((a + Math.PI / 2) / (Math.PI / 2) - coneRotOf(0)) % 4) + 4) % 4; return Math.floor(x) % 2 === 0; }   // a — угол холста
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
@@ -3021,7 +3033,7 @@ function coneClockTrace(){
   const rays = coneFanOn() ? coneFanAlive().map(k => [k, coneFanAngle(k)]) : [[undefined, coneLaserAngle()]];   // v0.201: ✺ — все живые лучи
   const cut = coneCutAngle(), cutH = coneSlitHalf();
   for (const [k, a] of rays) {   // v0.139: лазер неподвижный, вверх; выход — вырез строки 1
-    if (coneSlitMode() !== "cut" && Math.abs(coneAngDiff(cut, a)) > cutH) { out.push({ a, k, stop: 0, pass: false, cell: -1, cells: [], vstop: T, wall: null, g: [] }); continue; }   // вырез в стороне — выход закрыт
+    if ((coneSlitMode() !== "cut" && Math.abs(coneAngDiff(cut, a)) > cutH) || (coneQuadOn() && !coneQuadOpen(a))) { out.push({ a, k, stop: 0, pass: false, cell: -1, cells: [], vstop: T, wall: null, g: [] }); continue; }   // вырез в стороне — выход закрыт; v0.743: ✚ — луч на белой четверти
     let b = 1, wall = null; const g = [];   // v0.134: g — щели, сквозь которые прошёл: кольцо, граница (перед ячейкой), подряд
     for (; b < N; b++) {
       const n = Z.rows[b].length; if (!n) break;
@@ -4439,6 +4451,11 @@ function setupCone(){
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
   const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitMode(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
   slitsUi();
+  if ($("bLaserQuad")) {   // v0.743: ✚ 4 части — строка 1 кругом из четвертей, луч из центра через чёрную
+    $("bLaserQuad").classList.toggle("on", !!Z.laserQuad);
+    $("bLaserQuad").onclick = () => { Z.laserQuad = !Z.laserQuad; $("bLaserQuad").classList.toggle("on", Z.laserQuad); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
+      say(Z.laserQuad ? "✚ 4 части: строка 1 — круг из четвертей (чёрная, белая, чёрная, белая); лазер из центра выходит только через чёрную, на белой встаёт. Круг крутится на четверть за шаг." : "✚ 4 части выключено: строка 1 — как было."); };
+  }
   if ($("bCutGaps")) {   // v0.739: ⌖ меж битами — в вырезах луч проходит и щели между битами
     $("bCutGaps").classList.toggle("on", !!Z.cutGaps);
     $("bCutGaps").onclick = () => { Z.cutGaps = !Z.cutGaps; $("bCutGaps").classList.toggle("on", Z.cutGaps); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
