@@ -1789,7 +1789,7 @@ const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
   r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
-  fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
+  fill: ["bCutFree", "bSunXor", "bSunAnti", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne"],
   run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
 };
@@ -1808,7 +1808,7 @@ function lasDeps(){
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
-  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["coneSunCut", "bSunXor", "bSunAnti", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
   need(["bCutPrev"], cut && coneSlitRaw() !== "cut", "только в «вырезах T−1»: в «2n» вырез из n частей, а у предыдущей строки n − 1 бит");   // v0.781
   need(["bCutAlign", "bCutPrev", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
@@ -3634,6 +3634,15 @@ function coneSunPaint(){
     }
     if (Z.sunXor) { for (const k of fresh) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length) { f = f.slice(0, c) + (f[c] === "1" ? "0" : "1") + f.slice(c + 1); fc = true; } } }
     else for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
+    /* v0.808, «ещё режим: когда солнце ставит где-то 1, то в противолуче, в первом свободном кольце, на данном секторе ставить 0»: «☀↔0 противолуч»
+       (Z.sunAnti) — ячейка строки за чертой (первое свободное кольцо), получившая от солнца «1» на этом шаге, ставит «0» в пустые ячейки той же строки,
+       которые сектор напротив неё (через центр, +180°) накрывает хотя бы наполовину */
+    if (Z.sunAnti) { const f0 = fillDraft(), C = coneSunCutR(N, N);
+      if (C) { const cut = coneCutOn() && !!coneFillCut(), TT = 2 * Math.PI, pp = (q) => cut ? cutPos(q) : q;
+        for (let q = 0; q < f.length; q++) if (f[q] === "1" && f0[q] !== "1") {
+          const sM = (pp(q) - C.rot) * C.st + Math.PI;
+          for (let k = 0; k < f.length; k++) { if (k === q || f[k] !== ".") continue; let d = ((pp(k) - C.rot) * C.st - sM) % TT; if (d > Math.PI) d -= TT; if (d < -Math.PI) d += TT;
+            if (Math.abs(d) <= C.st / 2 + 1e-9) { f = f.slice(0, k) + "0" + f.slice(k + 1); fc = true; } } } } }
     const cutZ = coneCutOn();   // v0.701: в вырезах — нули только от света сквозь «1» (не «остальные — нулями»)
     if (cutZ) for (const k of S.zhits || []) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] === ".") { f = f.slice(0, c) + "0" + f.slice(c + 1); fc = true; } }
     if (fc) { Z.fillCells = cutZ ? f : f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
@@ -5405,6 +5414,11 @@ function setupCone(){
       if (Z.sunGate && !Z.sunHalf && $("bSunHalf")) { Z.sunHalf = true; $("bSunHalf").classList.add("on"); }   // v0.729: полукольцо считается тоже — включается вместе
       save(); renderCone();
       say(Z.sunGate ? "☀ Накрыты: солнце светит, только когда бит строки 1 (полукольцо) целиком накрыт единицами строки 2 (◐ включено вместе)." : "☀ Накрыты выключено: солнце светит сквозь вырезы и нули, как обычно."); };
+  }
+  if ($("bSunAnti")) {   // v0.808: ☀↔0 противолуч
+    $("bSunAnti").classList.toggle("on", !!Z.sunAnti);
+    $("bSunAnti").onclick = () => { Z.sunAnti = !Z.sunAnti; $("bSunAnti").classList.toggle("on", Z.sunAnti); save(); renderCone();
+      say(Z.sunAnti ? "☀↔0 Противолуч: солнце ставит «1» в ячейку строки за чертой — напротив неё через центр, в той же строке, пустые ячейки, накрытые этим сектором хотя бы наполовину, получают «0»." : "☀↔0 противолуч выключен."); };
   }
   if ($("bSunXor")) {   // v0.740: ⊕ xor — свет заново на ячейке: 1 ↔ 0
     $("bSunXor").classList.toggle("on", !!Z.sunXor);
