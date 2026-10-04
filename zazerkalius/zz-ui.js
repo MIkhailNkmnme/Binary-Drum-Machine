@@ -2506,7 +2506,18 @@ function renderCone(){
           const rS = rL + fs * 1.8; g.font = `700 ${fs}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = cg; g.globalAlpha = 0.95;
           g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${full ? 0 : lit.length * 2}`, cx, cy - rS);
           g.restore();
-        } }
+        }
+        /* v0.802, по снимку сводки «☀ 1 · ☾ 0 · ◌ между 1…» — «тут надо подсчитывать общий баланс всех открытых строк, 0 и 1; если равны — подсветить числа
+           баланса; баланс сверху»: над сводкой — Σ единиц и нулей во всех строках на конусе (над чертой) и разница; поровну — зелёным в рамке */
+        { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
+          const fsB = Math.round(Math.max(10 * dpr, Math.min(14 * dpr, dr * 0.4))), yB = cy - (roE + Math.max(10 * dpr, dr * 0.35) + fsB * 1.8) - (Z.sunParts !== false ? fsB * 1.7 : 0);
+          const eq = o1 === o0 && o1 > 0, d = o1 - o0, tx = `Σ 1: ${o1} · 0: ${o0} · ` + (eq ? "поровну" : `Δ ${d > 0 ? "+" : ""}${d}`);
+          g.save(); g.font = `700 ${fsB}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
+          if (eq) { const w = g.measureText(tx).width + 14 * dpr, h = fsB + 9 * dpr; g.fillStyle = "rgba(124, 252, 154, 0.16)"; g.fillRect(cx - w / 2, yB - h / 2, w, h);
+            g.strokeStyle = "#7cfc9a"; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.strokeRect(cx - w / 2, yB - h / 2, w, h); g.fillStyle = "#7cfc9a"; g.shadowColor = "#7cfc9a"; g.shadowBlur = 8 * dpr; }
+          else { g.fillStyle = cT; g.globalAlpha = 0.85; }
+          g.fillText(tx, cx, yB); g.restore(); }
+      }
       if (false && Z.lasPeek) {   // v0.763: «◌ след.» удалена по слову пользователя («это удали») — пунктир не рисуется; v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
         const S1 = coneSunPeek();
         if (S1) {
