@@ -3763,11 +3763,16 @@ function cone3DDraw(g, o){
   const { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS } = o;
   const yaw = ((Z.cone3Yaw ?? 30) - (Z.coneSpin || 0)) * Math.PI / 180, el = (Z.cone3El ?? 50) * Math.PI / 180, hk = Z.cone3H ?? 1;
   const cyw = Math.cos(yaw), syw = Math.sin(yaw), ce = Math.cos(el), se = Math.sin(el);
-  const octa = !!Z.coneOcta;   // v0.100: ⧗ зеркало вниз — октаэдр
-  const Rw = N + 1, span = Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;
+  /* v0.776, «да» на «нарисую в 3D на конусе: шар и торы этих размеров вместо плоских колец» (разбор: строка 1 — шар, кольца — торы с круглой трубкой
+     толщиной d, вплотную друг к другу): «◎ торы» (Z.coneTor) — всё в одной плоскости (высота конуса не действует): строка 1 — шар радиуса d, кольцо
+     строки n — тор: трубка d, средняя линия радиуса (n − ½)·d (диаметры 3d, 5d, 7d…). В «вырезах T−1» / «2n» тор делится на 2n − 1 (2n) частей, биты —
+     куски трубки, вырез — пусто, концы трубки у выреза — полусферы. Трубка в ортогональной проекции — линия средней линии толщиной d (сумма шаров) */
+  const tor = !!Z.coneTor, cutT = tor && coneSlitMode() === "cut";
+  const octa = !!Z.coneOcta && !tor;   // v0.100: ⧗ зеркало вниз — октаэдр
+  const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1];
   const P = (x, y, z) => { const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw; return [cx + x1 * sc, cy - (z * ce + y1 * se) * sc, z * se - y1 * ce]; };
-  const ringZ = (i) => (octa ? (N - 1 - i) : (N / 2 - i)) * hk, ringR = (i) => i + 0.6;   // при октаэдре основание — на середине
+  const ringZ = (i) => tor ? 0 : (octa ? (N - 1 - i) : (N / 2 - i)) * hk, ringR = (i) => tor ? (i ? i + 0.5 : 0) : i + 0.6;   // v0.776: ◎ — плоско, средние линии торов   // при октаэдре основание — на середине
   const at = (i, a, r) => { r *= coneRho(i, a); return P(r * Math.cos(a), -r * Math.sin(a), ringZ(i)); };   // как в плоском: угол −π/2 — верх; v0.109: многоугольник
   const green = coneCss("--green", "#6ee7a0");
   // сектора к центру своего кольца
@@ -3789,7 +3794,27 @@ function cone3DDraw(g, o){
   // биты — дугами на своей высоте, по глубине
   const items = [];
   const lw = Math.max(1.2 * dpr, Math.min(sc * 0.6, 26 * dpr) * (Z.cone3Bw ?? 1));   // v0.197, «регулировать высоту 3D битов»: ▬ — множитель толщины
-  for (let i = 0; i < N; i++) {
+  if (tor) {   // v0.776: ◎ — шар и куски торов; кусок трубки — до 0,25 рад, чтобы порядок по глубине был верным
+    const green = coneCss("--green", "#6ee7a0");
+    for (let i = 0; i < N; i++) {
+      const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
+      const cur = i === Z.cur && !document.body.classList.contains("nocur"), sel = rowSel.has(i);
+      if (!i) { const c = P(0, 0, 0), b = s[0]; items.push({ ball: true, pts: [c], pc: c, col: b === "1" ? c1 : c0, a: 1, near: c[2], cur, sel, ch: b, w: 2 * sc, cd: c[2], m: false }); continue; }
+      const PP = cutT ? coneCutP(n) : n, step = 2 * Math.PI / PP, rot = coneRotOf(i) - (cutT ? coneCutOff(i, n) : 0), r = ringR(i), MI = mirMap.get(i);
+      for (let j = 0; j < n; j++) {
+        const a0 = -Math.PI / 2 + (j - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
+        let col = fix ? (MI ? (MI.c180 ? green : cR) : Z.showFix === "ir" ? green : cR) : s[j] === "1" ? c1 : c0;
+        if (MI && MI.odd) col = MI.cls[j] === 2 ? green : MI.cls[j] === 1 ? cg : cR;
+        const pcs = Math.max(1, Math.ceil(step / 0.25));
+        for (let q = 0; q < pcs; q++) {
+          const b0 = a0 + step * q / pcs, b1 = a0 + step * (q + 1) / pcs, pts = []; for (let t = 0; t <= 4; t++) pts.push(at(i, b0 + (b1 - b0) * t / 4, r));
+          items.push({ tor: true, pts, col, a: 1, near: at(i, (b0 + b1) / 2, r)[2], cur, sel, ch: s[j], pc: at(i, a0 + step / 2, r), w: 0, cd: P(0, 0, 0)[2], m: false,
+            cap0: cutT && j === 0 && q === 0, cap1: cutT && j === n - 1 && q === pcs - 1, edge: q === 0 && !(cutT && j === 0) });
+        }
+      }
+    }
+  }
+  for (let i = 0; i < (tor ? 0 : N); i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), MI = mirMap.get(i);
     const K = Math.max(2, Math.ceil(step / 0.12));
@@ -3836,6 +3861,26 @@ function cone3DDraw(g, o){
   let nMin = Infinity, nMax = -Infinity; if (Z.coneGlow) for (const it of items) { nMin = Math.min(nMin, it.near); nMax = Math.max(nMax, it.near); }
   for (const it of items) {
     if (Z.coneArcs === false) break;   // v0.375: «◠ дуги» выключены — в 3D дуг битов нет (и у зеркала)
+    if (it.ball) {   // v0.776: шар строки 1 — радиус d, светотень
+      const R = sc, x = it.pc[0], y = it.pc[1], gr = g.createRadialGradient(x - R * 0.35, y - R * 0.4, R * 0.08, x, y, R);
+      gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.3, it.col); gr.addColorStop(1, "#05070b");
+      g.globalAlpha = 1; g.fillStyle = gr; g.beginPath(); g.arc(x, y, R, 0, 2 * Math.PI); g.fill();
+      if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.9; g.lineWidth = Math.max(1, dpr * 1.2); g.stroke(); }
+      continue;
+    }
+    if (it.tor) {   // v0.776: кусок трубки — средняя линия толщиной d, блик сверху; у выреза — полусфера
+      const tw = sc * 0.98, pp = it.pts, path = (dy) => { g.beginPath(); g.moveTo(pp[0][0], pp[0][1] + dy); for (let q = 1; q < pp.length; q++) g.lineTo(pp[q][0], pp[q][1] + dy); };
+      g.lineCap = "butt"; g.globalAlpha = 1; g.strokeStyle = it.col; g.lineWidth = tw; path(0); g.stroke();
+      g.fillStyle = it.col; for (const [k, on] of [[0, it.cap0], [pp.length - 1, it.cap1]]) if (on) { g.beginPath(); g.arc(pp[k][0], pp[k][1], tw / 2, 0, 2 * Math.PI); g.fill(); }
+      g.strokeStyle = "#05070b"; g.globalAlpha = 0.35; g.lineWidth = tw * 0.22; path(tw * 0.34); g.stroke();
+      g.strokeStyle = "#ffffff"; g.globalAlpha = 0.3; g.lineWidth = tw * 0.22; path(-tw * 0.22); g.stroke();
+      if (it.edge) {   // граница бита — тёмная черта поперёк трубки
+        const p0 = pp[0], p1 = pp[1], dx = p1[0] - p0[0], dy = p1[1] - p0[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L * tw / 2, ny = dx / L * tw / 2;
+        g.strokeStyle = "#05070b"; g.globalAlpha = 0.8; g.lineWidth = Math.max(1, dpr * 1.2); g.beginPath(); g.moveTo(p0[0] - nx, p0[1] - ny); g.lineTo(p0[0] + nx, p0[1] + ny); g.stroke();
+      }
+      if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.5; g.lineWidth = Math.max(1, dpr); path(0); g.stroke(); }
+      continue;
+    }
     g.beginPath();
     if (it.dot) g.arc(it.pts[0][0], it.pts[0][1], lw * 0.9, 0, 2 * Math.PI);   // v0.110: точка
     else { g.moveTo(it.pts[0][0], it.pts[0][1]); for (let q = 1; q < it.pts.length; q++) g.lineTo(it.pts[q][0], it.pts[q][1]); }
@@ -4700,7 +4745,7 @@ function setupCone(){
          режим и скорость кручения, замки, оси, Аниматрица); как конус показан и что включено у лазера — не трогает */
       const keys = ["coneSpinMode", "coneAutoSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
-      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
+      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "coneTor"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; coneRaysUi(); $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
@@ -6150,6 +6195,9 @@ function setupCone(){
   $("cone3d").onchange = (e) => { Z.cone3d = e.target.checked; save(); renderCone(); };
   $("coneBit1").checked = !!Z.coneBit1;   // v0.318: ① 1-й бит каждой строки
   $("coneBit1").onchange = (e) => { Z.coneBit1 = e.target.checked; save(); renderCone(); say(Z.coneBit1 ? "① Первый бит каждой строки — в золотой обводке." : "① Первый бит больше не подсвечен."); };
+  if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
+    $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
+      say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
   $("cone3Dig").checked = !!Z.cone3Dig;   // v0.251: цифры бит сбоку / сверху — вкл / выкл, по умолчанию выкл
   $("cone3Dig").onchange = (e) => { Z.cone3Dig = e.target.checked; save(); renderCone();
     say(Z.cone3Dig ? "01 В 3D при наклоне ровно 0° (сбоку) или 90° (сверху) на битах — их цифры." : "01 Цифры бит в 3D — выкл."); };
