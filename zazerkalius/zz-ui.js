@@ -7271,7 +7271,9 @@ function setupCone(){
       const cv = $("coneCv"), hr = host.getBoundingClientRect(), cr = cv ? cv.getBoundingClientRect() : hr, G = coneGeom;
       const cyp = G && G.dpr ? G.cy / G.dpr : cr.height / 2, h = P.offsetHeight || 160, w = P.offsetWidth || 120;
       const y = Math.max(0, Math.min(host.clientHeight - h, cr.top - hr.top + cyp - h / 2)) + host.scrollTop;
-      const left = Z.padSide === "l", x = left ? cr.left - hr.left + 8 : cr.right - hr.left - w - 8;
+      /* v0.820, по снимку пульта — «на передний план и по горизонтали любое место»: место по горизонтали — доля Z.padFx (0 — у левого края холста,
+         1 — у правого, по умолчанию из прежней стороны Z.padSide), по вертикали — по-прежнему на горизонтали через центр */
+      const fx = typeof Z.padFx === "number" ? Math.max(0, Math.min(1, Z.padFx)) : Z.padSide === "l" ? 0 : 1, x = cr.left - hr.left + 8 + fx * Math.max(0, cr.width - w - 16);
       const l = Math.round(Math.max(0, x)) + "px", t = Math.round(y) + "px"; if (P.style.left !== l) P.style.left = l; if (P.style.top !== t) P.style.top = t;
     };
     window.c3PadPlace = place;
@@ -7280,13 +7282,14 @@ function setupCone(){
       e.preventDefault(); e.stopPropagation(); try { P.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
       const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
       const mv = (ev) => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; P._drag = true;
-        P.style.left = Math.round(p0.x + ev.clientX - x0) + "px"; P.style.top = Math.round(p0.y + ev.clientY - y0) + "px"; };
+        P.style.left = Math.round(p0.x + ev.clientX - x0) + "px"; };   // v0.820: тянется только вбок — высота остаётся на оси
       const up = (ev) => { P.removeEventListener("pointermove", mv); P.removeEventListener("pointerup", up); P.removeEventListener("pointercancel", up); P._drag = false;
-        if (moved) { const cv = $("coneCv"), cr = cv ? cv.getBoundingClientRect() : hr; Z.padSide = ev.clientX < cr.left + cr.width / 2 ? "l" : "r"; save(); }
+        if (moved) { const cv = $("coneCv"), cr = cv ? cv.getBoundingClientRect() : hr, pr = P.getBoundingClientRect(), span = Math.max(1, cr.width - pr.width - 16);
+          Z.padFx = Math.max(0, Math.min(1, (pr.left - cr.left - 8) / span)); Z.padSide = Z.padFx < 0.5 ? "l" : "r"; save(); }
         place(); };
       P.addEventListener("pointermove", mv); P.addEventListener("pointerup", up); P.addEventListener("pointercancel", up);
     });
-    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padSide = Z.padSide === "l" ? "r" : "l"; place(); save(); });
+    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padSide = Z.padSide === "l" ? "r" : "l"; Z.padFx = Z.padSide === "l" ? 0 : 1; place(); save(); });   // v0.820: к краю
     place();
     if (window.ResizeObserver) new ResizeObserver(place).observe(host);
   }
