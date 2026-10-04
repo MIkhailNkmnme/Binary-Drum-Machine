@@ -4178,8 +4178,10 @@ function setupCone(){
     else {
       let dph = coneBitMode(m) ? sp / 10 * dt : sp * dt;   // бит в секунду = скорость / 10
       if (Z.coneBitStep && coneBitMode(m)) {   /* v0.605: ▦ побитно — копим долю, а поворачиваем целыми битами (фаза — на целом) */
-        bitAcc += dph; const n = bitAcc >= 0 ? Math.floor(bitAcc) : Math.ceil(bitAcc); bitAcc -= n;
-        const ph0r = Math.round(Z.coneSpinPh || 0); if (Math.abs((Z.coneSpinPh || 0) - ph0r) > 1e-9) Z.coneSpinPh = ph0r;
+        /* v0.768, «крутить ½ бита — также кнопку сюда»: шаг — бит или полбита (Z.coneBitStep === 0.5) */
+        const q = Z.coneBitStep === 0.5 ? 0.5 : 1;
+        bitAcc += dph; const n = (bitAcc >= 0 ? Math.floor(bitAcc / q) : Math.ceil(bitAcc / q)) * q; bitAcc -= n;
+        const ph0r = Math.round((Z.coneSpinPh || 0) / q) * q; if (Math.abs((Z.coneSpinPh || 0) - ph0r) > 1e-9) Z.coneSpinPh = ph0r;
         if (!n) return true; dph = n; }
       if (coneFanOn()) dph = coneFanClampDph(dph, m);   // v0.201: ✺ — не быстрее, чем успеваем считать
       const ph0 = Z.coneSpinPh || 0;
@@ -4208,14 +4210,21 @@ function setupCone(){
     return true;
   };
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
-  const bitStepUi = () => { const b = $("bConeBitStep"); if (b) b.classList.toggle("on", !!Z.coneBitStep); };
+  const bitStepUi = () => { const b = $("bConeBitStep"), h = $("bConeHalfStep"); if (b) b.classList.toggle("on", !!Z.coneBitStep && Z.coneBitStep !== 0.5); if (h) h.classList.toggle("on", Z.coneBitStep === 0.5); };
   bitStepUi();
   if ($("bConeBitStep")) $("bConeBitStep").onclick = () => {
-    Z.coneBitStep = !Z.coneBitStep; bitAcc = 0;
+    Z.coneBitStep = Z.coneBitStep && Z.coneBitStep !== 0.5 ? false : true; bitAcc = 0;   // v0.768: из «½ бита» — сразу в побитно
     if (Z.coneBitStep && !coneBitMode(Z.coneSpinMode || "all")) { const sel = $("coneSpinMode"); sel.value = "bit"; sel.onchange({ target: sel }); }
     if (Z.coneBitStep) Z.coneSpinPh = Math.round(Z.coneSpinPh || 0);
     bitStepUi(); save(); renderCone();
     say(Z.coneBitStep ? "▦ Побитно: ▶ крутить — скачками, каждое кольцо за шаг на один бит." : "▦ Кручение снова плавное.");
+  };
+  if ($("bConeHalfStep")) $("bConeHalfStep").onclick = () => {   // v0.768: ½ бита — как «▦ побитно», только скачками по полбита
+    Z.coneBitStep = Z.coneBitStep === 0.5 ? false : 0.5; bitAcc = 0;
+    if (Z.coneBitStep && !coneBitMode(Z.coneSpinMode || "all")) { const sel = $("coneSpinMode"); sel.value = "bit"; sel.onchange({ target: sel }); }
+    if (Z.coneBitStep) Z.coneSpinPh = Math.round((Z.coneSpinPh || 0) * 2) / 2;
+    bitStepUi(); save(); renderCone();
+    say(Z.coneBitStep ? "½ бита: ▶ крутить — скачками, каждое кольцо за шаг на полбита." : "½ бита выключено — кручение снова плавное.");
   };
   const autoSet = (on) => {
     if (on && !autoRaf && Z.coneClock && (Z.coneSpinMode || "all") !== "all") {   // v0.189: все кольца строк стоят — крутить нечего, сказать
