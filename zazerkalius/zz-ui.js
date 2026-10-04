@@ -8359,7 +8359,9 @@ function cgrpInit(){
     if (!Z.cgrpZen || typeof Z.cgrpZen !== "object") Z.cgrpZen = {};
     if (!Z.zenGrpInit) { Z.cgrpZen["дзен"] = true; Z.zenGrpInit = 1; }   // v0.281: группа «Дзен» — видна в дзене с первого раза (дальше — как отметишь 🧘)
     const zb = document.createElement("span"); zb.className = "gzen"; lab.appendChild(zb);
-    { const tb = document.createElement("span"); tb.className = "gtri"; tb.textContent = "△"; lab.appendChild(tb);   // v0.452: конструктор группы в «△ Сетке»
+    /* v0.752, по снимку заголовка группы — «убери редактирование кнопок»: значка △ (конструктор группы, v0.452) в заголовках больше нет; уже сделанные
+       рисунки групп остаются как есть */
+    if (false) { const tb = document.createElement("span"); tb.className = "gtri"; tb.textContent = "△"; lab.appendChild(tb);   // v0.452: конструктор группы в «△ Сетке»
       tb.title = "△ Конструктор: группа — в окне «△ Сетка» треугольниками; крась и стирай — кнопки встают по рисунку";
       tb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; tzcOpen(g); });
       tb.addEventListener("dblclick", (e) => e.stopPropagation()); }
