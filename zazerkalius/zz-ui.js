@@ -1744,6 +1744,8 @@ const LAS_SEG = [
     t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
   { id: "coneSunCut", v: ["gaps", "zero"], l: ["щели", "Без щелей"], get: () => coneSunCut(), pre: (v) => { Z.coneSunCut = v === "zero" ? "gaps" : "zero"; },
     t: ["Пропуск света при ☀ — щели между битами (ширина — ползунок «щель»)", "Без щелей: «0» пропускает свет во всю ширину, «1» — стена"] },
+  { id: "coneOctaSel", sel: 1, v: ["off", "cur", "all"], l: ["⧗ нет", "⧗ выдел.", "⧗ все"], get: () => Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off",   // v0.766: группа «3D»
+    t: ["⧗ Зеркало вниз (октаэдр) — выключено", "⧗ Зеркало вниз — только кольца выделенных строк (нет выделения — текущей); включает 3D", "⧗ Зеркало вниз — все кольца: под основанием та же пирамида вниз, отражённая и инвертированная (0 ↔ 1); включает 3D"] },
   { id: "coneLaserStepK", sel: 1, v: ["45", "T", "S"], l: ["45°", "1/T", "1/(1+…+T)"], get: () => Z.coneLaserStepK || "45",
     t: ["Шаг ↻ — 45°", "Шаг ↻ — 1/T круга (T — бит в самой длинной строке)", "Шаг ↻ — 1/(1+2+…+T) круга"] }
 ];
@@ -1774,7 +1776,7 @@ function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
   const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
-    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK].join("|");
+    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
@@ -8827,6 +8829,13 @@ function cgrpInit(){
       for (const [k, m] of Object.entries(M)) { if (!m || m[f] !== "лазер") continue; const el = cgrpMoveEl(cgrpRefEl(k)); if (!el || !NEW.has(el.dataset.home)) continue;
         if (!bak) bak = JSON.parse(JSON.stringify(M)); delete M[k]; }
       if (bak) Z[st + "_pered_razborom"] = bak; } }
+  /* v0.766: 3D-кнопки вынесены из «Вида» в свою группу «3D» — так же один раз снимаются записи «переставлена внутри Вида» у тех, что уехали в «3D»
+     (копия — Z.cgrpMove_pered_3d, Z.btnMove_pered_3d) */
+  if (!Z.split3d) { Z.split3d = 1;
+    for (const [st, f] of [["cgrpMove", "g"], ["btnMove", "p"]]) { const M = Z[st]; if (!M || typeof M !== "object") continue; let bak = null;
+      for (const [k, m] of Object.entries(M)) { if (!m || m[f] !== "вид") continue; const el = cgrpMoveEl(cgrpRefEl(k)); if (!el || el.dataset.home !== "3d") continue;
+        if (!bak) bak = JSON.parse(JSON.stringify(M)); delete M[k]; }
+      if (bak) Z[st + "_pered_3d"] = bak; } }
   // v0.281: и исходный сосед справа (ссылкой, "" — последней): перенос в конец своей же группы теперь запоминается (прежде забывался)
   groups.forEach(g => { const b = g.querySelector(":scope > .cgb"); if (b) [...b.children].forEach(el => { const n = el.nextElementSibling, c = n && (n.tagName === "LABEL" ? n.querySelector("input") : n); el.dataset.home0 = c ? btnKey(c) : ""; }); });
   if (Z.cgrpMove && typeof Z.cgrpMove === "object") for (const [k, m] of Object.entries(Z.cgrpMove)) {
@@ -8853,7 +8862,7 @@ function cgrpInit(){
      месте, а группы можно скрывать в них»: над группами конуса — полоса вкладок #cgTabs (Лазер · Кручение · Вид · Звук · Кольца · Аниматрица, дальше —
      прочие), каждая — шеврон цветом своей группы. Щелчок: группа видна — спрятать (Z.cgrpOff), спрятана или свёрнута — показать развёрнутой.
      Видна — вкладка погашена (бледнее), спрятана — горит своим цветом. Вкладки всегда на месте, сами не двигаются */
-  const CG_TAB_ORD = ["лазер", "солнце", "строка 1", "щели", "за чертой", "алгоритм", "кручение", "вид", "звук", "кольца", "аниматрица"];   // v0.589, «отсюда удали» (вкладка «Дзен»): пульта дзена во вкладках нет — он виден только в дзене
+  const CG_TAB_ORD = ["лазер", "солнце", "строка 1", "щели", "за чертой", "алгоритм", "кручение", "вид", "3d", "звук", "кольца", "аниматрица"];   // v0.589, «отсюда удали» (вкладка «Дзен»): пульта дзена во вкладках нет — он виден только в дзене
   const cgOpen = (g) => !Z.cgrpOff[g.dataset.g] && !g.classList.contains("cmin");
   const cgTabs = document.createElement("div"); cgTabs.id = "cgTabs";
   groups.filter(g => g.dataset.g !== "гамма" && !g.classList.contains("cg-zen")).sort((a, b) => { const ia = CG_TAB_ORD.indexOf(a.dataset.g), ib = CG_TAB_ORD.indexOf(b.dataset.g); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); }).forEach(g => {
