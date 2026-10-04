@@ -2793,15 +2793,26 @@ function triViewSync(){
     T.addEventListener("click", (e) => { const r = e.target.closest(".tvr"); if (!r) return; Z.cur = +r.dataset.r; renderAll(); save(); }); }
   if (T.hidden) T.hidden = false; L.style.display = "none";
   const R = Z.rows, M = Math.min(R.length, 400), out = [];
+  /* v0.789, «мне бы ещё спецочки для обнаружения изменённых треуглов — цветом выделить фоном, кнопку, а то всё очень интересно и очень запутанно»:
+     «👓» (Z.triGlass, по кругу): «изм.» — клетки, чьё значение другое, чем до последней правки (↩-снимок: после «◇ сдвиг», «◇ строить», правки
+     строки); «пары» — ▲, не равная ▼ слева от неё (где ломается правило сдвига). Подсвеченные — золотом (1 — светлым, 0 — тёмным) */
+  const gm = Z.triGlass === "chg" || Z.triGlass === "pair" ? Z.triGlass : "", U = gm === "chg" && undoStack.length ? undoStack[undoStack.length - 1].rows || null : null;
+  const cell = (cls, v, hit) => `<s class="${cls} v${v || "x"}${hit ? " g" : ""}">${v}</s>`;
   for (let i = 0; i < M; i++) {
     const s = R[i] || "", ps = i ? R[i - 1] || "" : "", cells = [];
+    const os = U ? U[i] : null, ops = U && i ? U[i - 1] : null;
     for (let j = 0; j < s.length; j++) {
-      cells.push(`<s class="u v${s[j]}">${s[j]}</s>`);
-      if (j < s.length - 1) { const v = ps[j] === undefined ? "" : cpInv(ps[j]); cells.push(`<s class="d v${v || "x"}">${v}</s>`); }
+      const dl = j && ps[j - 1] !== undefined ? cpInv(ps[j - 1]) : "";
+      const hu = gm === "chg" ? !!U && (os == null || os[j] !== s[j]) : gm === "pair" ? !!dl && j > 0 && dl !== s[j] : false;
+      cells.push(cell("u", s[j], hu));
+      if (j < s.length - 1) { const v = ps[j] === undefined ? "" : cpInv(ps[j]);
+        const ov = ops == null || ops[j] === undefined ? null : cpInv(ops[j]), hd = gm === "chg" && !!U && !!v && ov !== v;
+        cells.push(cell("d", v, hd)); }
     }
     out.push(`<div class="tvr${i === Z.cur ? " cur" : ""}" data-r="${i}"><span class="tvn">${i + 1}</span>${cells.join("")}</div>`);
   }
   if (R.length > M) out.push(`<div class="tvmore">… ещё ${R.length - M} строк</div>`);
+  { const b = $("bTriGlass"); if (b) { b.textContent = gm === "chg" ? "👓 изм." : gm === "pair" ? "👓 пары" : "👓"; b.classList.toggle("on", !!gm); } }
   const h = out.join("");
   if (T._h !== h) { T.innerHTML = h; T._h = h; }
 }
@@ -6461,6 +6472,11 @@ function setupCone(){
   if ($("bBipyBuild")) $("bBipyBuild").onclick = bipyBuild;   // v0.787
   if ($("bBipyShift")) $("bBipyShift").onclick = bipyShift;   // v0.788
   if ($("bTriView")) $("bTriView").onclick = () => { Z.triView = !Z.triView; save(); renderRows(); };   // v0.788
+  if ($("bTriGlass")) $("bTriGlass").onclick = () => {   // v0.789: 👓 — нет → изм. → пары → нет; включает «▲▼»
+    Z.triGlass = Z.triGlass === "chg" ? "pair" : Z.triGlass === "pair" ? "" : "chg"; if (Z.triGlass) Z.triView = true; save(); renderRows();
+    say(Z.triGlass === "chg" ? (undoStack.length ? "👓 Изм.: золотом — клетки, которые поменялись последней правкой (◇ сдвиг, ◇ строить, правка строки)." : "👓 Изм.: правок ещё не было — подсвечивать нечего.")
+      : Z.triGlass === "pair" ? "👓 Пары: золотом — ▲, которая не равна ▼ слева от неё: тут ломается правило сдвига." : "👓 Очки сняты.");
+  };
   if ($("coneBipySel")) { $("coneBipySel").value = Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off";   // v0.782: ◇ бипирамида — включает 3D, снимает ◎ торы
     $("coneBipySel").onchange = (e) => { const v = e.target.value; Z.coneBipy = v !== "off"; if (Z.coneBipy) Z.coneBipyM = v;
       if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
