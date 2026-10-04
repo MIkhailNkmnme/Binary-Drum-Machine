@@ -874,7 +874,7 @@ function fillRowHtml(N){
 let voidRowsSig = "";
 function voidRowsFill(force){
   const box = document.getElementById("voidRows"); if (!box) return;
-  const N = Math.min(Z.rows.length, CONE_MAX), on = coneVoidOn() && !Z.cone3d && Z.rows.length <= CONE_MAX, T = on ? coneRingsTotal(N) : 0, h = on ? coneVoidHits() : {};
+  const N = Math.min(Z.rows.length, CONE_MAX), on = coneVoidOn() && coneFlat() && Z.rows.length <= CONE_MAX, T = on ? coneRingsTotal(N) : 0, h = on ? coneVoidHits() : {};
   let sig = on ? N + "|" + T + "|" + (Z.rows[N - 1] || "").length : "off";
   if (on) { const ks = Object.keys(h).filter(k => +k.split(":")[0] > N).sort(); sig += "|" + ks.join(","); }
   if (!force && sig === voidRowsSig) return; voidRowsSig = sig;
@@ -1718,14 +1718,14 @@ function lasUi3d(){
   document.querySelectorAll(".cgrp.cg-lx").forEach(lasUi3dG);   // v0.757: «Лазер» разобран на шесть групп — в 3D неактивны все
 }
 function lasUi3dG(G){
-  const on = !!Z.cone3d;
+  const on = !!Z.cone3d && !coneSol3d();   // v0.780: с ◎ торами лазер и солнце работают и в 3D
   G.querySelectorAll("button, input, select").forEach(el => {
     if (on) { if (!el.dataset.d3) el.dataset.d3 = el.disabled ? "was" : "1"; if (!el.disabled) el.disabled = true; }   // и если что-то включило его заново
     else if (el.dataset.d3) { if (el.dataset.d3 === "1") el.disabled = false; delete el.dataset.d3; }
   });
   G.querySelectorAll("label").forEach(l => l.classList.toggle("dis3", on));
   const GL = G.querySelector(":scope > .glab") || G;   // v0.760: подсказка группы — на заголовке
-  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { GL.dataset.tip0 = GL.title; GL.title = "⌖ Лазер в 3D пока не работает — кнопки неактивны. Выйди из 3D (🧊), чтобы включить лазер"; } else if (GL.dataset.tip0 !== undefined) { GL.title = GL.dataset.tip0; delete GL.dataset.tip0; } }
+  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { GL.dataset.tip0 = GL.title; GL.title = "⌖ В 3D лазер и солнце работают только с ◎ торами (группа «3D»): там все кольца в одной плоскости. Включи ◎ торы или выйди из 3D (🧊)"; } else if (GL.dataset.tip0 !== undefined) { GL.title = GL.dataset.tip0; delete GL.dataset.tip0; } }
 }
 /* v0.757, «надо разобрать группу кнопок Лазера на подвиды… разграничить лазер от солнца, и разные режимы построения строк и симметрии, все кнопки сразу
    показывать и на что они влияют, затемнять кнопки, которые неактивны при нажатых уже других, и внизу подсказку писать, что в итоге получается за алгоритм»:
@@ -1774,7 +1774,7 @@ const LAS_KEY = {
 let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
-  const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
+  const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
   const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
@@ -1812,7 +1812,7 @@ function lasDeps(){
   lasSegSync();
   /* что в итоге получается */
   const dg = (x) => String(Math.round(x * 10) / 10).replace(".", ",") + "°", L = [], slit = dg(+Z.coneSlit || 2), who = sun ? "свет" : "луч";
-  if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D не считаются — выйди из 3D (🧊), чтобы они заработали."]);
+  if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D считаются только с ◎ торами (все кольца в одной плоскости) — включи ◎ торы в группе «3D» или выйди из 3D (🧊)."]);
   else if (!clk) L.push(["src", "<b>Выключено</b>: ни луча, ни солнца. ⌖ луч-часы — луч из центра, ☀ солнце — свет во все стороны, ✺ все лучи — лучи по кругу сразу."]);
   else {
     if (sun) L.push(["src", "<b>Источник</b>: ☀ солнце в центре светит во все стороны; ▶ крутить — свет красит то, на что упал."]);
@@ -1880,7 +1880,7 @@ function renderCone(){
   const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
   const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
-  const g = cv.getContext("2d");
+  const g = cv.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0);   // v0.780: слой света в 3D рисуется под преобразованием — кадр всегда с чистого
   coneVeil = "";   // v0.213: цвет вуали — фон холста, берётся раз за кадр
   const cBg = coneCss("--bg", "#0b0d12"), c1 = coneCss("--b1", "#22d3ee"), c0 = coneCss("--b0", "#7d8699"), cR = coneCss("--red", "#ff6b6b"),
         cg = coneCss("--gold", "#ffd166"), cA = coneCss("--acc", "#b98cf0"), cL = coneCss("--line", "#262d3d"), ff = coneCss("--ff", "monospace"), cT = coneCss("--txt", "#d8dde8"), cIn = "#38bdf8", cOut = "#fb923c", cUp = "#d946ef", cDn = "#14b8a6";   // v0.090: границы 0→1 / 1→0   // v0.087: края колец — внутренний / внешний
@@ -1897,7 +1897,7 @@ function renderCone(){
   const N = Math.min(Z.rows.length, CONE_MAX);
   while (coneRot.length < Z.rows.length) coneRot.push(0);
   coneRot.length = Z.rows.length;
-  const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX;   // v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
+  const sol3 = coneSol3d(), fillOn = coneFlat() && Z.rows.length <= CONE_MAX;   // v0.780: с ◎ торами — и в 3D; v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
@@ -1966,8 +1966,12 @@ function renderCone(){
   const mirMode = Z.coneMir || "off", mirMap = new Map();
   if (mirMode !== "off") for (const i of coneFocus()) if (i < N && Z.rows[i]) { const mi = coneMirInfo(Z.rows[i], mirMode, i); if (mi) mirMap.set(i, mi); }
   const coneDots = [];   // v0.111: точки (строки из 1 бита) — поверх колец
-  if (Z.cone3d) { coneGeom = null; cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS }); } else {   // v0.082: объём
-  for (let i = 0; i < N; i++) {
+  if (Z.cone3d && !sol3) { coneGeom = null; cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS }); } else {   // v0.082: объём
+  if (sol3) {   // v0.780: торы в масштабе плоского вида (d = dr), поверх — плоский слой света на их плоскости; сами кольца строк — торами, плоско не рисуются
+    cone3DDraw(g, { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS, sc: dr, cx, cy });
+    g.save(); g.setTransform(...cone3Aff(cx, cy));
+  }
+  for (let i = 0; i < (sol3 ? 0 : N); i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, rot = coneRotOf(i) - CG.off;   // v0.667: в режиме вырезов — части 2E − 1
     if (rout < 0 || rin > Math.hypot(W, H) + Math.hypot(cx - W / 2, cy - H / 2)) continue;
@@ -2190,7 +2194,7 @@ function renderCone(){
       }
     }
   }
-  if (window.zzMusRay && !Z.cone3d) {   // v0.441: 🎵 головка музыкального лазера — луч из центра, на конце точка; v0.442 — головок несколько, у каждой свой цвет
+  if (window.zzMusRay && coneFlat()) {   // v0.441: 🎵 головка музыкального лазера — луч из центра, на конце точка; v0.442 — головок несколько, у каждой свой цвет
     /* v0.443: у головки за шаг — отрезки пути [угол, кольцо, что]: «on» / «in» — стоит на кольце (до его середины, точка светлая), «wall» —
        упёрлась в «1» и отразилась (до внутреннего края кольца, точка красная, дальше — бледный отрезок обратно сквозь центр), «fill» —
        в кольце для заполнения, «out» — за краем. Кольцо, которое головка занимает, обведено её цветом */
@@ -2553,6 +2557,7 @@ function renderCone(){
     g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
     coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });
   }
+  if (sol3) g.restore();
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
   // текст
@@ -2668,7 +2673,7 @@ function coneHalfOpen(a){ const t = (((a + Math.PI / 2) % TAU2) + TAU2) % TAU2; 
    в режиме вырезов кольцо строки из E бит делится на 2E − 1 равных частей: E — биты подряд (стена), E − 1 — вырез одной дырой (на рисунке пусто,
    края золотые). Изначально биты — по центру сверху, вырез — по центру снизу. Шаг кольца — часть; накрутка «на бит» — на часть. Строка 1 — без
    выреза, луч идёт мимо. coneCutGeo — шаг и сдвиг для рисунка, мыши и расчёта луча */
-function coneCutOn(){ return !!Z.coneClock && !Z.cone3d && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut"; }   // v0.677: и при солнце
+function coneCutOn(){ return !!Z.coneClock && coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut"; }   // v0.677: и при солнце
 /* v0.673, по снимку — «не располагает: луч лазера — вертикаль вверх, по нему 1; 2 строка — так, чтобы между битами вертикаль; у 3 строки получается
    вертикаль между 2 частями пустоты, и так далее»: начальная расстановка по вертикали чередуется — у чётных строк (2, 4, …) по центру сверху
    биты (вертикаль — между средними битами), у нечётных (3, 5, …) — дыра (вертикаль — между средними частями пустоты). Сдвиг off в частях:
@@ -2686,6 +2691,12 @@ function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true,
 /* v0.779, по снимку торов — «2 подряд строки вверх битами, почему-то»: ⟲ в 3D не расставлял кольца симметрично (coneCutHome работал только при
    coneCutOn — в плоском виде), и кольца вставали в повороты из ⭐, а coneRotKeep в 3D округлял их до целых бит. coneTorCut — ◎ торы с вырезами: для них
    и расстановка ⟲, и половины частей — как в плоских вырезах */
+/* v0.780, «переходим в 3д Соляриус»: торы (◎) лежат в одной плоскости, поэтому солнце и лазер в 3D считаются ровно как в плоском виде
+   (те же углы, те же кольца, строки за чертой строятся так же), а весь плоский слой света (лучи, освещённые сектора, кольцо за чертой, пустые кольца)
+   рисуется на плоскость торов аффинным преобразованием проекции (cone3Aff): кольцо строки i плоского вида [i·d, (i + 1)·d] = тор строки i + 1.
+   Без ◎ (кольца на разных высотах) — как было: в 3D лазер и солнце не считаются. coneFlat() — «считать как в плоском» */
+function coneSol3d(){ return !!Z.cone3d && !!Z.coneTor && Z.rows.length <= CONE_MAX; }
+function coneFlat(){ return !Z.cone3d || coneSol3d(); }
 function coneTorCut(){ return !!Z.cone3d && !!Z.coneTor && coneSlitMode() === "cut" && Z.rows.length <= CONE_MAX; }
 function coneRotKeep(x, i){ x = x || 0; return coneCutGeo(i, (Z.rows[i] || "").length).cut || (i >= 1 && coneTorCut()) ? Math.round(x * 2) / 2 : Math.round(x); }
 /* v0.674, «когда лазер T−1 — нужно расставить симметрично вертикали: чётные — между центральными битами, нечётные — по средней части выреза»:
@@ -2738,7 +2749,7 @@ function coneLaserDeg(k){ return Math.round(coneLaserDegRaw(k) * 1000) / 1000; }
    конуса угол лазера минус поворот конуса. «↻» поворачивает лазер (и все лучи ✺) на шаг, правый щелчок — назад; шаг — 45°, 1/T круга
    (T — бит в самой длинной строке) или 1/(1+2+…+T) круга (Z.coneLaserStepK: "45" | "T" | "S"). */
 function coneLaserFixed(){ return Z.coneLaserFix !== false; }
-function coneLaserSpinOff(){ return coneLaserFixed() && !Z.cone3d ? (Z.coneSpin || 0) * Math.PI / 180 : 0; }
+function coneLaserSpinOff(){ return coneLaserFixed() && coneFlat() ? (Z.coneSpin || 0) * Math.PI / 180 : 0; }
 function coneMaxLen(){ const N = Math.min(Z.rows.length, CONE_MAX); let m = 1; for (let i = 0; i < N; i++) m = Math.max(m, (Z.rows[i] || "").length); return m; }
 function coneLaserStepDeg(){ const k = Z.coneLaserStepK || "45", T = coneMaxLen(); return k === "T" ? 360 / T : k === "S" ? 720 / (T * (T + 1)) : 45; }
 function coneLaserAngle(k){ return -Math.PI / 2 + coneLaserDegRaw(k) * Math.PI / 180 - coneLaserSpinOff(); }
@@ -3056,7 +3067,7 @@ function coneCutOpen(){ return Math.abs(coneAngDiff(coneCutAngle(), coneLaserAng
 function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n — ячеек, rot — поворот в ячейках } или null — колец больше нет
   const N = Math.min(Z.rows.length, CONE_MAX);
   if (b < N) { const n = Z.rows[b].length; return n ? { n, rot: coneRotOf(b) } : null; }
-  if (Z.cone3d || Z.rows.length > CONE_MAX || b >= coneRingsTotal(N)) return null;
+  if (!coneFlat() || Z.rows.length > CONE_MAX || b >= coneRingsTotal(N)) return null;
   const n = coneVoidLen(b, N); return { n, rot: coneVoidRot(b, n) };
 }
 /* v0.198, «скорость надо больше возможностей»: ползунок кручения — по логарифму, 1…3600 (было 5…120 ровным шагом), рядом — число. */
@@ -3763,6 +3774,11 @@ function coneMirInfo(s, mode, i){
    (90° — вид сверху, как плоский конус; 0° — сбоку). Рисуется по глубине (дальнее раньше): сектора, биты, потом нити — ось
    конуса, оси зеркал колец, хорды, лучи. Мышь: тянешь — вращать, с Ctrl — сдвиг, колесо — масштаб, двойной щелчок — вид по
    умолчанию. Биты — те же цвета и та же логика неподвижных, что в плоском конусе. */
+function cone3Aff(cx, cy){   // v0.780: плоскость торов (z = 0) в проекции 3D: точка плоского вида (X, Y) → экран; масштаб — как у плоского (sc = dr)
+  const yaw = ((Z.cone3Yaw ?? 30) - (Z.coneSpin || 0)) * Math.PI / 180, se = Math.sin((Z.cone3El ?? 50) * Math.PI / 180), cyw = Math.cos(yaw), syw = Math.sin(yaw);
+  const a = cyw, b = -se * syw, c = syw, d = se * cyw;
+  return [a, b, c, d, cx - a * cx - c * cy, cy - b * cx - d * cy];
+}
 function cone3DDraw(g, o){
   const { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS } = o;
   const yaw = ((Z.cone3Yaw ?? 30) - (Z.coneSpin || 0)) * Math.PI / 180, el = (Z.cone3El ?? 50) * Math.PI / 180, hk = Z.cone3H ?? 1;
@@ -3776,8 +3792,8 @@ function cone3DDraw(g, o){
      «● = часть» (Z.coneTorBall) — шар ровно одна часть: 4/3·πr³ = π²d³/4 → r = (3π/16)^(1/3)·d ≈ 0,838d, между шаром и тором — щель ≈ 0,16d */
   const torBallR = tor && Z.coneTorBall ? Math.cbrt(3 * Math.PI / 16) : 1;
   const octa = !!Z.coneOcta && !tor;   // v0.100: ⧗ зеркало вниз — октаэдр
-  const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;
-  const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1];
+  const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = o.sc || (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;   // v0.780: o.sc — масштаб плоского вида (☀ / ⌖ на торах)
+  const cx = o.cx ?? W / 2 + conePan[0], cy = o.cy ?? H / 2 + conePan[1];
   const P = (x, y, z) => { const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw; return [cx + x1 * sc, cy - (z * ce + y1 * se) * sc, z * se - y1 * ce]; };
   const ringZ = (i) => tor ? 0 : (octa ? (N - 1 - i) : (N / 2 - i)) * hk, ringR = (i) => tor ? (i ? i + 0.5 : 0) : i + 0.6;   // v0.776: ◎ — плоско, средние линии торов   // при октаэдре основание — на середине
   const at = (i, a, r) => { r *= coneRho(i, a); return P(r * Math.cos(a), -r * Math.sin(a), ringZ(i)); };   // как в плоском: угол −π/2 — верх; v0.109: многоугольник
@@ -4040,7 +4056,7 @@ function cone3DDraw(g, o){
   }
 }
 function coneRing(e){
-  if (!coneGeom) return -1;
+  if (!coneGeom || Z.cone3d) return -1;   // v0.780: в 3D с торами coneGeom есть (для расчёта), но мышь кольца не берёт — вращает вид
   const cv = $("coneCv"), r = cv.getBoundingClientRect(), G = coneGeom;
   const x = (e.clientX - r.left) * G.dpr - G.cx, y = (e.clientY - r.top) * G.dpr - G.cy, rr = Math.hypot(x, y);
   let i = Math.floor((rr - G.r0) / G.dr);
@@ -4316,7 +4332,7 @@ function setupCone(){
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (m === "all") {
       const s0 = Z.coneSpin || 0, ds = sp * dt;
-      if (Z.coneClock && coneLaserFixed() && !Z.cone3d && ds) {   // v0.202: 📌 — конус едет под стоящим лазером: попадания между кадрами, мелкими шагами
+      if (Z.coneClock && coneLaserFixed() && coneFlat() && ds) {   // v0.202: 📌 — конус едет под стоящим лазером: попадания между кадрами, мелкими шагами
         const N = Math.min(Z.rows.length, CONE_MAX); let tolDeg = coneSlitHalf() * 180 / Math.PI;
         for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
         const K = Math.max(1, Math.min(Math.ceil(Math.abs(ds) / tolDeg * 2), 2000)), t = performance.now(); let rec = 0;
@@ -4456,7 +4472,7 @@ function setupCone(){
      оно сменилось. Ползунок #coneTape внизу посередине холста — по ленте: тянешь назад — всё как было в тот миг (кручение встаёт), вперёд — обратно до конца
      записанного. Крутить дальше с отмотанного места — лента впереди стирается и пишется заново (как на магнитофоне). Только в памяти страницы; ⌖✕ — с нуля */
   const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
-  const tapeOn = () => coneSunOn() && coneCutOn() && !Z.cone3d;
+  const tapeOn = () => coneSunOn() && coneCutOn() && coneFlat();
   const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
   function tapeUi(){
     const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
@@ -5565,7 +5581,7 @@ function setupCone(){
        входа (L.j0) и числа шагов, не пересчётом угла: так дробные сдвиги не сбивают счёт. Полный круг относительно кольца — выход. */
     const N = Math.min(Z.rows.length, CONE_MAX), H = musN(), sc = sndSc(), write = musWrite(), T = coneMaxLen(), da = 360 / T;
     if (musL.length !== H) musInit();
-    const fillOn = !Z.cone3d && Z.rows.length <= CONE_MAX, P = [], rays = [], hz = new Map(), busy = new Set();
+    const fillOn = coneFlat() && Z.rows.length <= CONE_MAX, P = [], rays = [], hz = new Map(), busy = new Set();
     let ch = false, fch = false;
     const oct = (r) => Math.min(2, Math.floor(r * 3 / (N + 1)));
     const put = (s, j, v) => s.slice(0, j) + v + s.slice(j + 1);
