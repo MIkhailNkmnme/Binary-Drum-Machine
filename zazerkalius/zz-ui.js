@@ -1686,7 +1686,7 @@ const CONE_MAX = 256;   // v0.200: было 160 — заготовки Аним�
    (--b1 / --b0, неподвижные красным, если в поле включено «неподв.»), а когда дуга крупная — рисуется и сам символ 0 / 1
    шрифтом поля. Поворот кольца теперь поворачивает САМУ строку: пока тянешь — строка в поле крутится вместе (на
    каждом целом бите), отпустил — записано (↩ вернёт весь поворот разом). Поле строк меняется — конус перерисован. */
-let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1;
+let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1, coneRDown = null;   // coneRDown — где нажата правая кнопка (v0.735)
 /* v0.715, «когда кольцо добавляет — пусть масштаб не меняет»: шаг колец dr делился на число колец, и каждое новое кольцо (строка ушла в поле, |◀, ↶,
    новая строка руками) сжимало весь конус. Теперь делитель (coneDen) держится, пока колец стало на одно больше или меньше; новое кольцо выходит наружу, дальше —
    колесом. Пересчёт по месту — когда строк сменилось сразу много (загрузка, вставка), сменились режимы (до 256, 3D) или сброс вида (Alt + двойной щелчок, ⌂) */
@@ -3674,11 +3674,15 @@ function setupCone(){
     const n = rowSel.size; rowSel.clear(); rowSelAnchor = -1; document.body.classList.add("nocur"); renderRows(); renderCone();
     say(n ? `◯ Выделение снято (${n}).` : "◯ Выделение снято.");
   };
+  /* v0.735, «сделай перемещение не по Ctrl, а по правой кнопке»: всё, что тянулось с Ctrl, тянется и правой кнопкой мыши — кольца крутятся (строки 1,
+     за чертой, любое), в объёме — сдвиг вида. Правый щелчок без движения ничего не выбирает (по кольцу за чертой — как прежде, стереть его); меню браузера
+     над конусом не всплывает. Ctrl + щелчок — выделить кольцо, как было */
   cv.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 && e.button !== 2) return;
+    const rb = e.button === 2; if (rb) coneRDown = [e.clientX, e.clientY];
     if (Z.cone3d) {   // v0.082: в объёме — тянешь: вращать (с Ctrl — сдвиг)
-      e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = e.ctrlKey ? "move" : "grabbing";
-      const x0 = e.clientX, y0 = e.clientY, yw0 = Z.cone3Yaw ?? 30, el0 = Z.cone3El ?? 50, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1, ctrl = e.ctrlKey;
+      e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = e.ctrlKey || rb ? "move" : "grabbing";
+      const x0 = e.clientX, y0 = e.clientY, yw0 = Z.cone3Yaw ?? 30, el0 = Z.cone3El ?? 50, p0 = conePan.slice(), dpr = window.devicePixelRatio || 1, ctrl = e.ctrlKey || rb;
       let moved3 = false;   // v0.309
       const mv = (ev) => {
         if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) moved3 = true;
@@ -3694,7 +3698,7 @@ function setupCone(){
     /* v0.248, «в конусах курсором двигать круги — только через Ctrl», «в поле конуса»: кольцо на холсте конуса крутится, только если
        тянуть его с Ctrl; без Ctrl тянешь — сдвигается весь вид (как мимо колец), щелчок — выбрать строку. Ctrl + щелчок без движения —
        выделить / снять, как прежде. */
-    const ctrlK = e.ctrlKey || e.metaKey;
+    const ctrlK = e.ctrlKey || e.metaKey || rb;   // v0.735: правая кнопка — как Ctrl
     // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
     const hFill = h !== -1 && h.fill !== undefined;
     if (hFill && ctrlK && !e.shiftKey && Z.coneClock) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
@@ -3704,6 +3708,7 @@ function setupCone(){
       let last = ang(e), turn = 0;
       const mv = (ev) => { const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a; Z.coneFillTurn = t0 - turn / stp; renderCone(); };
       const up = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
+        if (rb && Math.abs(turn) < 0.02) { Z.coneFillTurn = t0; renderCone(); return; }   // v0.735: правый щелчок без движения — не поворот (стирание — в contextmenu)
         const P = F ? F.P : fillLen(), v = F ? Math.round(Z.coneFillTurn * 2) / 2 : Math.round(Z.coneFillTurn); Z.coneFillTurn = ((v % P) + P) % P;
         save(); renderRows(); renderCone(); say(`◯ Кольцо за чертой повёрнуто на ${String(Z.coneFillTurn).replace(".", ",")} из ${P} ${F ? "частей" : "ячеек"}. Ушла строка в поле — поворот остаётся у её кольца.`); };
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
@@ -3723,7 +3728,7 @@ function setupCone(){
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab";
         if (moved) { coneAimSettle(); return; }
-        if (Z.coneNoPick) return;   // v0.281: 🚫 выбор колец
+        if (rb || Z.coneNoPick) return;   // v0.281: 🚫 выбор колец; v0.735: правый щелчок — не выбор
         if (rowSel.has(0)) rowSel.delete(0); else rowSel.add(0);   // v0.248: Ctrl + щелчок — выделить / снять, как у остальных колец
         renderRows(); renderCone(); say(`◯ Выделено колец: ${rowSel.size}. Кольцо строки 1 при луч-часах крутится с Ctrl — вместе с вырезом, защёлкивается лучом в щели кольца 2.`);
       };
@@ -3741,6 +3746,7 @@ function setupCone(){
       const ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey, bit = shift && !ctrl ? coneBitAt(e) : null;
       const upP = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", upP); cv.removeEventListener("pointercancel", upP); cv.style.cursor = "grab";
+        if (rb && !movedP) { conePan = p0; return; }   // v0.735: правый щелчок мимо колец — ничего
         if (!movedP && bit) { conePan = p0; coneBitFlip(bit); return; }   // v0.231: Shift + щелчок по сектору — сменить бит (v0.173 — Ctrl)
         if (!movedP && !ctrl && !shift) { conePan = p0; coneUnsel(); return; }   // v0.309: щелчок без сдвига — снять выделение
         if (!movedP && (h === -1 || hFill)) { if (!ctrl && !shift) { conePan = p0; coneUnsel(); } return; }   // v0.697: кольцо за чертой — как мимо
@@ -3758,13 +3764,13 @@ function setupCone(){
     }
     e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
     const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).cut;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
-    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD, cut: cutD, v0: coneRot[h.i] || 0 };
+    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD, cut: cutD, v0: coneRot[h.i] || 0, rb };
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick ? -1 : h.i;   // v0.281: 🚫 выбор — и без обводки при наведении
       const b = coneBitAt(e) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
-      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · Ctrl + тянуть — крутить кольцо` : ""; }
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · правой кнопкой (или Ctrl) тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
@@ -3788,7 +3794,7 @@ function setupCone(){
     const D = coneDrag; coneDrag = null; cv.style.cursor = "grab";
     const n = D.base.length, k = ((D.applied % n) + n) % n;
     if (Math.abs(D.turn) < 0.02) {   // v0.248: кольцо берётся только с Ctrl — не повернул, значит Ctrl + щелчок: выделить / снять
-      if (Z.coneNoPick) { coneRot[D.i] = D.v0; renderCone(); return; }   // v0.281: 🚫 выбор
+      if (Z.coneNoPick || D.rb) { coneRot[D.i] = D.v0; renderCone(); return; }   // v0.281: 🚫 выбор; v0.735: правый щелчок — не выбор
       coneRot[D.i] = D.v0; if (rowSel.has(D.i)) rowSel.delete(D.i); else rowSel.add(D.i); renderRows(); renderCone();
       say(`◯ Выделено колец: ${rowSel.size}` + (Z.coneOnlySel ? " — видны только они и текущее." : ". Галка «только выделенные» скроет остальные.")); return;
     }
@@ -5808,7 +5814,8 @@ function setupCone(){
   // v0.259, «не должно быть разницы, по какому — общий сразу все открывает и снимает, стирая различие»: общий замок запирает / отпирает
   // все кольца разом — свои замки колец стираются (прежде кольцо со своим замком общий не слушал и было в золотой рамке)
   $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; Z.coneLocks = {}; save(); renderRows(); renderCone(); say(Z.coneLock ? "🔒 Все кольца заперты: крутятся только на вид, строки не сдвигаются." : "🔓 Все кольца открыты: тянешь кольцо (с Ctrl) — крутится и сама строка в поле."); };
-  cv.addEventListener("contextmenu", (e) => { const h = coneRing(e); if (h !== -1 && h.fill !== undefined) { e.preventDefault(); fillReset(); } });   // v0.118: правый щелчок по кольцу для заполнения — заново
+  cv.addEventListener("contextmenu", (e) => { e.preventDefault(); const D = coneRDown; coneRDown = null; if (D && Math.abs(e.clientX - D[0]) + Math.abs(e.clientY - D[1]) > 4) return;   // v0.735: тянули правой — не стирать, меню не нужно
+    const h = coneRing(e); if (h !== -1 && h.fill !== undefined) fillReset(); });   // v0.118: правый щелчок по кольцу для заполнения — заново
   $("coneRays").value = Z.coneRays || "off";
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; coneRaysUi(); save(); renderCone(); };
   coneRaysUi();   // v0.576: кнопки ✳ нет / выдел. / все
