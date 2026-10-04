@@ -1804,7 +1804,7 @@ function lasDeps(){
   const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
-  if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
+  if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
@@ -1878,8 +1878,14 @@ function lasDeps(){
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
     L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
   }
-  let box = GA.querySelector(":scope > #lasAlgo");
-  if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; GA.appendChild(box); }
+  /* v0.816, по снимку «Алгоритма» — «это отдельно от нижнего текста: сам текст без фона и рамки помести на поле вправо вниз, и при клике по кнопкам или
+     при наведении на кнопки показывай, потом при любом клике вне групп кнопок скрой»: строки алгоритма — не в группе, а на холсте конуса, в правом
+     нижнем углу, без фона и рамки (#lasAlgo в теле окна конуса, место — lasAlgoPlace); видны с наведения или щелчка по кнопке групп конуса (.on),
+     прячутся щелчком мимо групп (по самому тексту — нет) */
+  let box = document.getElementById("lasAlgo");
+  const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
+  if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; }
+  if (box.parentElement !== host) host.appendChild(box);
   const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
   if (box.innerHTML !== h) box.innerHTML = h;
   /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
@@ -1892,8 +1898,12 @@ function lasDeps(){
   }
   if (!lasDeps._h) { lasDeps._h = 1;   // наведение: кнопка ↔ её строка алгоритма
     const clr = () => document.querySelectorAll(".cgrp .lhl, #lasAlgo > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
+    const tool = (t) => t && t.closest && t.closest("#w-cone .cgrp :is(button, label, select, input, .lseg)");   // v0.816: кнопка групп конуса
+    const show = (on) => { const b = document.getElementById("lasAlgo"); if (!b || b.classList.contains("on") === on) return; b.classList.toggle("on", on); if (on) lasAlgoPlace(); };
+    document.addEventListener("pointerover", (e) => { if (tool(e.target)) show(true); }, { passive: true });
+    document.addEventListener("pointerdown", (e) => { const t = e.target; if (tool(t)) show(true); else if (!(t.closest && t.closest(".cgrp, #lasAlgo"))) show(false); }, { capture: true, passive: true });
     document.addEventListener("pointerover", (e) => {
-      const x = e.target.closest && e.target.closest(".cgrp [data-la]"); clr(); if (!x) return;
+      const x = e.target.closest && e.target.closest(":is(.cgrp, #lasAlgo) [data-la]"); clr(); if (!x) return;
       const key = x.dataset.la;
       if (x.parentElement && x.parentElement.id === "lasAlgo") { x.classList.add("hl"); document.querySelectorAll('.cgrp :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
       else { const r = document.querySelector('#lasAlgo > div[data-la="' + key + '"]'); if (r) r.classList.add("hl"); }
@@ -1932,6 +1942,7 @@ function renderCone(){
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
+  lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
   if (window.c3PadPlace) window.c3PadPlace();   // v0.813: пульт — на горизонтали через центр
   if (!coneSunOn()) coneBalShow(null); else coneBalPlace();   // v0.812: баланс — при солнце
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
@@ -4913,6 +4924,13 @@ function coneBalPlace(){
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); return tb && tb.getClientRects().length && !document.body.classList.contains("zen") ? tb.getBoundingClientRect().bottom : -Infinity; }
+function lasAlgoPlace(){   // v0.816: строки алгоритма — в правом нижнем углу холста конуса
+  const el = document.getElementById("lasAlgo"), cv = document.getElementById("coneCv"); if (!el || !el.classList.contains("on") || !cv) return;
+  const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  const mw = Math.max(200, Math.min(460, cr.width / 2 - 56)) + "px"; if (el.style.maxWidth !== mw) el.style.maxWidth = mw;
+  const l = (cr.right - hr.left - 8 - el.offsetWidth + host.scrollLeft).toFixed(1) + "px", t = (cr.bottom - hr.top - 8 - el.offsetHeight + host.scrollTop).toFixed(1) + "px";
+  if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
+}
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;

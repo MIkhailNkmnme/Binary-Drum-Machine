@@ -1,10 +1,10 @@
-<!-- Zazerkalius — v0.815. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
+<!-- Zazerkalius — v0.816. Окно на ту сторону зеркала: строка, её отражения, указатели симметрии и инструменты. -->
 <!DOCTYPE html>
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zazerkalius — v0.815</title>
+<title>Zazerkalius — v0.816</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -860,7 +860,11 @@ body.solo #cgTabs{padding-left:4px}
 :is(#w-cone, #paneGrp) .cgrp .ldim *{cursor:not-allowed !important}   /* v0.758: затемнённые не жмутся */
 :is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).lhl,:is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).lhl.tz.tz.tz{filter:brightness(1.45);color:var(--gold) !important}   /* контур срезала бы обрезка .tz — светлее и золотом */
 :is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).ldim.lhl,:is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).ldim.lhl.tz.tz.tz{filter:brightness(.9) saturate(.6)}
-#lasAlgo{flex:1 0 100%;order:99;box-sizing:border-box;padding:3px calc(24px / 1.7320508 + 4px) 5px;font-size:11px;line-height:1.4;color:var(--dim);white-space:normal;overflow-wrap:anywhere;max-width:100%}
+/* v0.816: строки алгоритма — на холсте конуса в правом нижнем углу, без фона и рамки; видны после наведения / щелчка по кнопке групп (lasDeps, lasAlgoPlace) */
+#lasAlgo{position:absolute;z-index:590;display:none;box-sizing:border-box;width:max-content;padding:0;font-size:11px;line-height:1.4;color:#c9d1dc;white-space:normal;overflow-wrap:anywhere;
+  background:none;border:0;text-shadow:0 0 2px #000,0 0 4px #000,0 1px 2px #000}
+#lasAlgo.on{display:block}
+body.bgmode #lasAlgo{display:none !important}
 #lasAlgo > div{padding:1px 4px;border-radius:3px}
 #lasAlgo > div > b{color:var(--txt);font-weight:600}
 #lasAlgo > div.hl{background:color-mix(in srgb, var(--gold) 22%, transparent);color:var(--txt)}
