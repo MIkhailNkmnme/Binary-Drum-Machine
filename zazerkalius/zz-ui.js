@@ -11542,7 +11542,7 @@ function tzcPreview(){
 function tzSliders(){
   document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz, #rowInputBar label.tz").forEach(L => {   // v0.543: и размер цифр над полем
     const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
-    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = TZC_H / (2 * Math.sqrt(3)), tw = 5 * t;   // v0.473: бегунок — шестигранник 4t; v0.489 — «стрелка вправо» 5t
+    const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = 12 / 2.5, tw = 24;   // v0.822: бегунок — ромб 24 × 24 (половина — 2,5t при t = 4,8)   // v0.473: бегунок — шестигранник 4t; v0.489 — «стрелка вправо» 5t
     const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;
     const x = ir.left - lr.left + tw / 2 + f * (ir.width - tw), rv = L.querySelector(".rv");
     const k = x.toFixed(1) + (rv ? "|" + rv.textContent : "");
@@ -11555,9 +11555,11 @@ function tzSliders(){
       rv.style.fontSize = ""; const w = rv.scrollWidth, right = ir.right - lr.left - (x + 2.5 * t) - 3, left = x - 2.5 * t - 3;
       /* v0.560, по снимку «36» — «при перемещении, когда слева направо прыгает, надпись сбивается»: у самой границы число скакало туда-сюда на каждый пиксель
          бегунка; теперь с запасом — перешло налево, обратно направо только когда справа места с лихвой (+10 px) */
-      const wasL = L.classList.contains("rvl");
+      /* v0.822, «тормозит при перемещении, когда число слева направо переходит»: сторона числа — не классом подписи (.rvl): класс видят
+         наблюдатели полос кнопок, и на каждом перескоке полоса пересобиралась целиком (~200 мс). Теперь — data-side у самого числа */
+      const wasL = rv.dataset.side === "l";
       const lft = wasL ? w + 10 > right && (w + 6 <= left || left > right) : w > right && (w + 6 <= left || left > right), room = lft ? left - 6 : right;
-      L.classList.toggle("rvl", lft);
+      if (wasL !== lft) { if (lft) rv.dataset.side = "l"; else delete rv.dataset.side; }
       if (w > room && room > 0) { const fs = parseFloat(getComputedStyle(rv).fontSize) || 10; rv.style.fontSize = Math.max(7, Math.floor(fs * room / w * 10) / 10) + "px"; }
     }
   });
