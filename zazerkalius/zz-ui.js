@@ -4909,9 +4909,10 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 48;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.top - hr.top + 8 + host.scrollTop;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop;   // v0.815: «чуть ниже — на кнопки залезли» — под полосой вкладок
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
 }
+function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); return tb && tb.getClientRects().length && !document.body.classList.contains("zen") ? tb.getBoundingClientRect().bottom : -Infinity; }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
@@ -13312,7 +13313,10 @@ function init(){
         /* v0.637, «поставь под меню, где стоит Дзен»: ◎ дзена и кнопки записи (● mp4 🎞 ↻1 ⏸ ▣) — одной цепочкой ромбов внизу левой панели: ромбы
            касаются сторонами — каждый следующий на полромба правее и попеременно на полромба выше (как ряды из треугольников). В дзене панели нет —
            цепочка записи стоит в левом нижнем углу экрана */
-        const zen = document.body.classList.contains("zen"), x0 = zen ? 8 : Math.round(document.body.classList.contains("pane-icons") ? r.left + (r.width - 40) / 2 : r.left + 8), yb = Math.round(zen ? innerHeight - 48 : r.bottom - 44);
+        /* v0.815, по снимку — «эти кнопки на первый план и выровни отступами снизу и сбоку»: цепочка поверх всего (z-index в CSS), нижний ромб — на 8 px
+           выше низа панели (не ниже низа окна), левый — на 8 px от её левого края */
+        const M8 = 8, pb = Math.min(r.bottom, innerHeight), pl = Math.max(0, r.left);
+        const zen = document.body.classList.contains("zen"), x0 = zen ? M8 : Math.round(document.body.classList.contains("pane-icons") ? pl + (r.width - 40) / 2 : pl + M8), yb = Math.round((zen ? innerHeight : pb) - M8 - 40);
         const chain = [...(zb && vis ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
         if (zb) zb.style.display = vis ? "" : "none";
         if (rb) rb.style.display = vis || zen ? "" : "none";
