@@ -4009,6 +4009,31 @@ function cone3DDraw(g, o){
     if (cvx && wt && wt.getClientRects().length) { const rg = document.createRange(); rg.selectNodeContents(wt); x3 = Math.max(8, rg.getBoundingClientRect().right - cvx.getBoundingClientRect().left + 14); } }
   if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, x3 * dpr, 16 * dpr);
   g.globalAlpha = 1;
+  /* v0.778, «расписать бы всё там это и соотношение диаметров»: при ◎ торах (и «Σ расчёт», по умолчанию вкл.) — расчёт на холсте поверх, ничего не двигает:
+     шар (диаметр, объём, сколько это частей тора), часть тора (π²d³/4), по каждой строке — частей, диаметры трубки / средней линии / внешний / внутренний,
+     объём тора и одной его части, отношение диаметров к шару. Мера — d, толщина трубки */
+  if (tor && Z.coneTorInfo !== false) {
+    const f2 = (x) => (Math.round(x * 100) / 100).toFixed(2).replace(".", ","), fd = (x) => Math.abs(x - Math.round(x)) < 1e-9 ? String(Math.round(x)) : f2(x);
+    const part = Math.PI * Math.PI / 4, rb = torBallR, Vb = 4 / 3 * Math.PI * rb ** 3;
+    const L = [`◎ торы · мера d — толщина трубки · часть тора в T−1 = π²d³/4 ≈ ${f2(part)} d³`,
+      `шар (строка 1): ⌀ ${fd(2 * rb)}d · V = 4/3·π·r³ ≈ ${f2(Vb)} d³ = ${f2(Vb / part)} части` + (rb < 1 ? ` · щель до тора ${f2(1 - rb)}d` : " · вплотную к тору"),
+      "строка  частей  ⌀трубки  ⌀средн.  ⌀внеш.  ⌀внутр.  V тора   V части  ⌀внеш./⌀шара"];
+    const rows = Math.min(N, 11);
+    for (let i = 1; i < rows; i++) {
+      const n = (Z.rows[i] || "").length; if (!n) continue;
+      const m = i + 1, PP = cutT ? coneCutP(n) : n, V = part * (2 * m - 1);
+      L.push(`${String(m).padStart(4)}    ${String(PP).padStart(4)}     1d     ${(fd(2 * m - 1) + "d").padStart(6)}   ${(fd(2 * m) + "d").padStart(6)}   ${(fd(2 * m - 2) + "d").padStart(6)}  ${f2(V).padStart(7)}  ${f2(V / PP).padStart(7)}   ${f2(2 * m / (2 * rb)).padStart(6)}`);
+    }
+    if (N > rows) L.push(`… ещё ${N - rows} строк — по тем же формулам: ⌀ средн. (2m − 1)d, V тора π²d³(2m − 1)/4`);
+    L.push(cutT ? (coneCutP(2) === 3 ? "T−1: частей 2n − 1 = 2m − 1 — V части у всех торов одинаков, π²d³/4" : "2n: частей 2n — V части = π²d³(2m − 1)/(8n), растёт к π²d³/4")
+      : "без вырезов: частей n (по битам) — V части у торов разный");
+    const fs = Math.round(11 * dpr), lh = Math.round(fs * 1.35), x0 = x3 * dpr, y0 = 26 * dpr;
+    g.save(); g.font = `${fs}px ${coneCss("--ff", "monospace")}`; g.textBaseline = "top"; g.textAlign = "left";
+    const wMax = Math.max(...L.map(s => g.measureText(s).width));
+    g.globalAlpha = 0.82; g.fillStyle = "#05070b"; g.fillRect(x0 - 6 * dpr, y0 - 4 * dpr, wMax + 12 * dpr, L.length * lh + 8 * dpr);
+    g.globalAlpha = 1; L.forEach((s, k) => { g.fillStyle = k === 0 ? cg : k === 2 ? cT : k === L.length - 1 ? cg : "#e8edf7"; g.fillText(s, x0, y0 + k * lh); });
+    g.restore();
+  }
 }
 function coneRing(e){
   if (!coneGeom) return -1;
@@ -6201,6 +6226,8 @@ function setupCone(){
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
+  if ($("coneTorInfo")) { $("coneTorInfo").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
+    $("coneTorInfo").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
   if ($("coneTorBall")) { $("coneTorBall").checked = !!Z.coneTorBall;   // v0.777: ● = часть — шар объёмом в одну часть тора (включает ◎ торы)
     $("coneTorBall").onchange = (e) => { Z.coneTorBall = e.target.checked; if (Z.coneTorBall && !Z.coneTor) { Z.coneTor = true; if ($("coneTor")) $("coneTor").checked = true; }
       if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
