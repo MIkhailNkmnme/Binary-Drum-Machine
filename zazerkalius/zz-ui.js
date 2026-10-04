@@ -2317,7 +2317,7 @@ function renderCone(){
       const h = Math.max(hs, 1.5 * dpr / Math.max(1, r1));   // совсем узкую щель клин не тоньше 3 пикселей на конце — иначе не видно
       if (holes && holes.length) {
         g.save(); g.beginPath(); g.arc(cx, cy, r1 + 40 * dpr, 0, 2 * Math.PI);
-        for (const [ri, ro] of holes) { g.moveTo(cx + ro, cy); g.arc(cx, cy, ro, 0, 2 * Math.PI); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, 2 * Math.PI); }
+        for (let [ri, ro] of holes) { ri = Math.max(0, ri); ro = Math.max(0, ro); g.moveTo(cx + ro, cy); g.arc(cx, cy, ro, 0, 2 * Math.PI); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, 2 * Math.PI); }   // v0.805: у строки 1 (r0 = 0 с v0.774) внутренний край дыры уходил ниже нуля — arc падал
         g.clip("evenodd");
       }
       g.globalAlpha = alpha * (bold ? 0.75 : 0.55); g.fillStyle = cg; g.shadowColor = cg; g.shadowBlur = lite ? 0 : bold ? 16 * dpr : 10 * dpr;
@@ -2609,6 +2609,7 @@ function renderCone(){
     g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
     coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });
   }
+  if (Z.r1Ray && N >= 1) r1RayDo(g, { cx, cy, r0, dr, N, dpr, fillOn: !!fillOn && !!coneGeom && !!coneGeom.fill }); else r1RayBox(false);   // v0.805: ⟋ нить
   if (sol3) g.restore();
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
@@ -4709,6 +4710,69 @@ function cone3DDraw(g, o){
   }
 }
 /* v0.786: плашка «Σ расчёт» торов — L: строки (первая и последняя — золотом, шапка таблицы — цветом текста) или null — спрятать */
+/* v0.805, по снимку группы «Строка 1» — «нужен режим, где из центра через любую точку на первом кольце простая прямая толщины ноль, которая вместе с
+   битом 1 строки по кругу с ним двигается, и когда попадает в свободные ячейки верхней строки, пройдя полностью длину бита там от и до, — запишет в нём 1;
+   также надо где-то крупно показывать счётчик текущего вращения и кнопку ручного перехода на новую строку, чтобы её биты собирать».
+   «⟋ нить» (Z.r1Ray): прямая из центра через точку кольца строки 1 (Z.r1RayX — место в битах строки 1, по умолчанию середина первого; щелчок по кольцу
+   строки 1 — поставить туда), крутится вместе с ним. Ячейку строки за чертой (кольцо для заполнения) нить метит «1», только пройдя её целиком: вошла через
+   одну границу и вышла через другую, не повернув назад (в вырезах T−1 — по частям, вырез не метится). Слежение — в координате кольца за чертой (ячейки),
+   без разрыва: сколько бы ячеек нить ни прошла за кадр, каждая пройденная насквозь — помечена. Плашка на холсте: ⟳ — сколько оборотов нить сделала
+   относительно строки за чертой с её начала, сколько ячеек уже «1»; «⤓ новая строка» — строку за чертой в поле (пустые — нулями), за чертой — следующая */
+let r1W = null;
+function r1RayX(){ const n0 = (Z.rows[0] || "").length || 1, x = Number.isFinite(+Z.r1RayX) ? +Z.r1RayX : 0.5; return ((x % n0) + n0) % n0; }
+function r1RayAngle(){ const n0 = (Z.rows[0] || "").length || 1, CG = coneCutGeo(0, n0); return -Math.PI / 2 + (r1RayX() - coneRotOf(0) + CG.off) * CG.step; }   // в своём (повёрнутом с конусом) виде
+function r1RayTrack(t){
+  const n = fillLen(), F = coneFillCut(), step = F ? F.step : 2 * Math.PI / n, Pw = F ? F.P : n, off = F ? F.off : 0;
+  const sig = Z.rows.length + ":" + n + ":" + (F ? 1 : 0);
+  let w = (t + Math.PI / 2) / step + coneFillRot() - off;
+  if (!r1W || r1W.sig !== sig) { r1W = { sig, w, w0: w, lb: null, ld: 0 }; return; }
+  let d = w - r1W.w; d -= Math.round(d / Pw) * Pw; if (Math.abs(d) < 1e-12) return; w = r1W.w + d;
+  const arr = fillDraft().split(""); let ch = 0;
+  const mark = (c) => { const cell = ((c % Pw) + Pw) % Pw; if (cell < n && arr[cell] !== "1") { arr[cell] = "1"; ch++; } };
+  if (d > 0) for (let b = Math.floor(r1W.w) + 1; b <= Math.floor(w); b++) { if (r1W.lb === b - 1 && r1W.ld === 1) mark(b - 1); r1W.lb = b; r1W.ld = 1; }
+  else for (let b = Math.ceil(r1W.w) - 1; b >= Math.ceil(w); b--) { if (r1W.lb === b + 1 && r1W.ld === -1) mark(b); r1W.lb = b; r1W.ld = -1; }
+  r1W.w = w;
+  if (ch) { Z.fillCells = arr.join(""); clearTimeout(r1W.rt); r1W.rt = setTimeout(() => { renderRows(); save(); }, 60); }
+}
+function r1RayDo(g, o){   // нарисовать нить и проследить её (холст — в своём виде конуса)
+  const t = r1RayAngle(), { cx, cy, r0, dr, N, dpr } = o, rL = Math.hypot(g.canvas.width, g.canvas.height);   // прямая — до края холста
+  if (o.fillOn) r1RayTrack(t);
+  g.save(); g.strokeStyle = "#f8fafc"; g.globalAlpha = 0.95; g.lineWidth = Math.max(1, dpr); g.shadowColor = "#a3e635"; g.shadowBlur = 4 * dpr;
+  g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + rL * Math.cos(t), cy + rL * Math.sin(t)); g.stroke();
+  const rp = r0 + 0.5 * dr; g.fillStyle = "#a3e635"; g.beginPath(); g.arc(cx + rp * Math.cos(t), cy + rp * Math.sin(t), Math.max(3, 3 * dpr), 0, 2 * Math.PI); g.fill(); g.restore();
+  r1RayBox(true);
+}
+function r1RayBox(on){
+  let el = document.getElementById("r1RayBox");
+  if (!on) { if (el && !el.hidden) el.hidden = true; return; }
+  const cm = document.getElementById("coneMain"), host = cm && cm.parentElement; if (!host) return;
+  if (!el || el.parentElement !== host) {
+    if (el) el.remove();
+    el = document.createElement("div"); el.id = "r1RayBox"; el.title = "⟋ Нить: обороты относительно строки за чертой и сколько её ячеек уже «1». Тяни — переставить, двойной щелчок — на место";
+    el.innerHTML = '<div class="r1b"></div><div class="r1s"></div><button type="button" class="r1n" title="⤓ Строку за чертой — в поле (пустые ячейки — нулями); за чертой — следующая, на бит длиннее, счёт оборотов — заново. ↩ вернёт">⤓ новая строка</button>';
+    host.appendChild(el);
+    el.querySelector(".r1n").addEventListener("click", (e) => { e.stopPropagation(); fillCommit(); r1W = null; renderCone(); });
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId);
+      const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+      const mv = (ev) => { Z.r1RayXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; r1RayPlace(el); };
+      const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); save(); };
+      el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    });
+    el.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.r1RayXY; r1RayPlace(el); save(); });
+  }
+  const n = fillLen(), f = fillDraft(), ones = (f.match(/1/g) || []).length, F = coneFillCut(), Pw = F ? F.P : n;
+  const turns = r1W ? (r1W.w - r1W.w0) / Pw : 0, tb = "⟳ " + (turns < 0 ? "−" : "") + Math.abs(turns).toFixed(2).replace(".", ","), ts = `строка ${Z.rows.length + 1}: «1» ${ones} из ${n}`;
+  const b = el.querySelector(".r1b"), sm = el.querySelector(".r1s"); if (b.textContent !== tb) b.textContent = tb; if (sm.textContent !== ts) sm.textContent = ts;
+  if (el.hidden) el.hidden = false; r1RayPlace(el);
+}
+function r1RayPlace(el){
+  const host = el.parentElement; if (!host) return;
+  const XY = Array.isArray(Z.r1RayXY) ? Z.r1RayXY : [8, 96];
+  const x = Math.max(0, Math.min(host.clientWidth - 80, XY[0])), y = Math.max(0, Math.min(host.clientHeight - 40, XY[1]));
+  if (Array.isArray(Z.r1RayXY)) Z.r1RayXY = [x, y];
+  el.style.left = x + "px"; el.style.top = y + "px";
+}
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
   if (!L) { if (el && !el.hidden) el.hidden = true; return; }
@@ -4821,6 +4885,11 @@ function setupCone(){
        выделить / снять, как прежде. */
     const ctrlK = e.ctrlKey || e.metaKey || rb;   // v0.735: правая кнопка — как Ctrl
     const magOn = !!Z.coneMag && h !== -1 && h.fill === undefined && !e.shiftKey && !rb;   // v0.803: 🧲 — кольцо тянется и без Ctrl
+    if (Z.r1Ray && h !== -1 && h.i === 0 && h.fill === undefined && !ctrlK && !e.shiftKey && !magOn) {   // v0.805: ⟋ нить — щелчок по кольцу строки 1 ставит её точку
+      e.preventDefault(); const n0 = (Z.rows[0] || "").length || 1, CG = coneCutGeo(0, n0), t = h.a - (Z.coneSpin || 0) * Math.PI / 180;
+      Z.r1RayX = Math.round(((((t + Math.PI / 2) / CG.step + coneRotOf(0) - CG.off) % n0) + n0) % n0 * 1000) / 1000; r1W = null; save(); renderCone();
+      say(`⟋ Нить — через точку ${String(Z.r1RayX).replace(".", ",")} бита строки 1. Крутится вместе с ней; ячейку строки за чертой, пройденную целиком, метит «1».`); return;
+    }
     // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
     const hFill = h !== -1 && h.fill !== undefined;
     if (hFill && ctrlK && !e.shiftKey && Z.coneClock) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
@@ -6875,7 +6944,12 @@ function setupCone(){
   }
   if ($("bConeScan")) {   // v0.676: ⌖ сканер симметрии
     $("bConeScan").classList.toggle("on", !!Z.coneScan);
-    if ($("bConeMag")) {   // v0.803: 🧲 магнит и виды целей
+    if ($("bR1Ray")) {   // v0.805: ⟋ нить
+    $("bR1Ray").classList.toggle("on", !!Z.r1Ray);
+    $("bR1Ray").onclick = () => { Z.r1Ray = !Z.r1Ray; r1W = null; $("bR1Ray").classList.toggle("on", Z.r1Ray); save(); renderCone();
+      say(Z.r1Ray ? "⟋ Нить: прямая из центра через точку строки 1 (щелчок по её кольцу — другая точка) крутится вместе с ней; ячейку строки за чертой, пройденную целиком, метит «1». Счёт оборотов и «⤓ новая строка» — на плашке у холста." : "⟋ Нить выключена."); };
+  }
+  if ($("bConeMag")) {   // v0.803: 🧲 магнит и виды целей
     const ui = () => { const K = coneMagK(); $("bConeMag").classList.toggle("on", !!Z.coneMag);
       document.querySelectorAll("[data-magk]").forEach(b => { b.hidden = !Z.coneMag; b.classList.toggle("on", !!K[b.dataset.magk]); }); };
     ui();
