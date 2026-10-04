@@ -1767,7 +1767,7 @@ const LAS_KEY = {
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "coneSunCut"],
   fill: ["bCutFree", "bSunXor", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonOne"],
-  run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasPeek", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
+  run: ["bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
 };
 let lasDepsK = "";
 function lasDeps(){
@@ -1780,11 +1780,11 @@ function lasDeps(){
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
-    "bSunHalf", "bSunGate", "bMoonEcl", "bMoonOne", "bSunXor", "bSunSweep", "bCutFree", "bLasPeek"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
+    "bSunHalf", "bSunGate", "bMoonEcl", "bMoonOne", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
-  need(["coneSunCut", "bLasPeek", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonOne", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["coneSunCut", "bSunXor", "bSunSweep", "bMoonEcl", "bMoonOne", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
   need(["bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonOne", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
@@ -1839,7 +1839,7 @@ function lasDeps(){
     if (sun && cut) L.push(["moon", "<b>Луна</b>: " + (Z.moonEcl ? "☾ только при затмении (ничего не вылетело) — зеркало света, упавшего на последнее кольцо" : "зеркало вылетевшего света через центр") +
       (Z.moonOne !== false ? "; идёт из центра сквозь «1», считая их, — 0 в ячейку, целиком накрытую светом с одинаковым числом «1»" : "; начинается у кольца за чертой — 0 там, где накрыла ячейку целиком") + "."]);
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
-    L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + (sun && Z.lasPeek ? "; ◌ пунктиром — куда посветит после шага" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
+    L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
   }
   let box = GA.querySelector(":scope > #lasAlgo");
   if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; GA.appendChild(box); }
@@ -2445,7 +2445,7 @@ function renderCone(){
           g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${full ? 0 : lit.length * 2}`, cx, cy - rS);
           g.restore();
         } }
-      if (Z.lasPeek) {   // v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
+      if (false && Z.lasPeek) {   // v0.763: «◌ след.» удалена по слову пользователя («это удали») — пунктир не рисуется; v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
         const S1 = coneSunPeek();
         if (S1) {
           for (const [b, lit] of S1.bands) { if (b > N) continue; const ri = b === 1 ? rDisk : rIn(b), ro = r0 + b * dr + Math.max(1, dr * band);
