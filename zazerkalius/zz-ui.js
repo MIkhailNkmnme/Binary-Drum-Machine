@@ -1724,7 +1724,8 @@ function lasUi3dG(G){
     else if (el.dataset.d3) { if (el.dataset.d3 === "1") el.disabled = false; delete el.dataset.d3; }
   });
   G.querySelectorAll("label").forEach(l => l.classList.toggle("dis3", on));
-  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { G.dataset.tip0 = G.title; G.title = "⌖ Лазер в 3D пока не работает — кнопки неактивны. Выйди из 3D (🧊), чтобы включить лазер"; } else if (G.dataset.tip0 !== undefined) { G.title = G.dataset.tip0; delete G.dataset.tip0; } }
+  const GL = G.querySelector(":scope > .glab") || G;   // v0.760: подсказка группы — на заголовке
+  if (G.classList.contains("las3d") !== on) { G.classList.toggle("las3d", on); if (on) { GL.dataset.tip0 = GL.title; GL.title = "⌖ Лазер в 3D пока не работает — кнопки неактивны. Выйди из 3D (🧊), чтобы включить лазер"; } else if (GL.dataset.tip0 !== undefined) { GL.title = GL.dataset.tip0; delete GL.dataset.tip0; } }
 }
 /* v0.757, «надо разобрать группу кнопок Лазера на подвиды… разграничить лазер от солнца, и разные режимы построения строк и симметрии, все кнопки сразу
    показывать и на что они влияют, затемнять кнопки, которые неактивны при нажатых уже других, и внизу подсказку писать, что в итоге получается за алгоритм»:
@@ -8322,6 +8323,10 @@ function cgrpInit(){
     [...g.childNodes].forEach((c) => { if (!(c.nodeType === 1 && c.classList.contains("glab"))) b.appendChild(c); });
     g.appendChild(b);
   });
+  /* v0.760, «подсказки не на всех кнопках — они там просто одинаковые для всей группы Лазер… и другие»: подсказка группы висела на всей группе и всплывала
+     везде, где мышь не над кнопкой, — в просветах и на срезанных краях шестигранников (там мышь уже «в группе»). Теперь она — только на заголовке группы:
+     над кнопкой — подсказка кнопки, над заголовком — что это за группа, в просветах — ничего */
+  groups.forEach((g) => { const lab = g.querySelector(":scope > .glab"); if (!g.title) return; if (lab) lab.title = g.title + (lab.title ? "\n\n" + lab.title : ""); g.removeAttribute("title"); });
   // v0.320: значок ползунка (текст перед ним в метке: ↕ ▬ ♩ 🔊 щель) — в свой span.sli, чтобы встать столбцом одной ширины
   groups.forEach((g) => g.querySelectorAll("label").forEach((l) => {
     if (!l.querySelector("input[type=range]")) return;
@@ -8538,7 +8543,7 @@ function cgrpInit(){
     zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
       say(Z.cgrpZen[k] ? `🧘 Группа «${k}» — видна и в дзене.` : `🧘 Группа «${k}» в дзене не видна.`); });
     zb.addEventListener("dblclick", (e) => e.stopPropagation());
-    lab.title = "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу";
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу" + (g.classList.contains("cg-lx") ? ". Группы лазера: верхняя тянет весь блок, прицепленная — отрывается; с Alt — тянется одна" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни — размер группы; двойной щелчок — прежний размер"; g.appendChild(sz);
@@ -8578,7 +8583,10 @@ function cgrpInit(){
          тянется вместе со всеми группами лазера, которые с ней соприкасаются (и с их соседями — по цепочке): блок едет целиком, сцепки внутри него не рвутся,
          к чужим группам блок не цепляется и на левую панель / поле строк не встаёт. Одиночная группа лазера — как прочие */
       let mates = [];
-      if (g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
+      /* v0.760, «прилипли друг к другу, не оторвать»: блоком едет, только если тянуть верхнюю группу блока (ту, что сама ни к какой группе лазера не
+         прицеплена); прицепленную тянешь — отрывается, как прежде (её прицепленные — следом); с Alt любая группа тянется одна */
+      const upL = Z.cgrpLink[g.dataset.g], upG = upL && gByKey(upL.to);
+      if (!e.altKey && !(upG && upG.classList.contains("cg-lx")) && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
         const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
         /* v0.759: соседи — сцепленные (Z.cgrpLink) или почти касаются: по вертикали — до полуряда (группы стоят по сетке рядов 24 px, и под сцепленной сверху
            бывает зазор в несколько px — с допуском 3 px блок рвался: «Алгоритм» уезжал один, остальные догоняли сцепками и упирались в край окна) */
@@ -8593,7 +8601,8 @@ function cgrpInit(){
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
         if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag");
           const L = Z.cgrpLink[g.dataset.g]; if (!(L && mates.some(m => m.o.dataset.g === L.to))) delete Z.cgrpLink[g.dataset.g];   // v0.502: потянул правую — отцепилась; v0.758: но не внутри блока лазера
-          mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); }); }
+          mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); });
+          if (e.altKey && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
         lx = ev.clientX; ly = ev.clientY;
         { const [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px";   // v0.366: магнит (у блока лазера — нет)
           mates.forEach(m => { m.o.style.left = (sx + m.dx).toFixed(2) + "px"; m.o.style.top = (Math.round(sy) + m.dy).toFixed(2) + "px"; }); }
