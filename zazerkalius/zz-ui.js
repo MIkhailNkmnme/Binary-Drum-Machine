@@ -2330,6 +2330,11 @@ function renderCone(){
     }
     g.globalAlpha = 1;
   }
+  if (Z.coneAxes) {   // v0.734, «нужна кнопка: ось из центра — вертикаль и горизонталь»: «✛ оси» — две черты через центр конуса во весь холст;
+                      // v0.818, по снимку — «оси за кнопки и текст»: рисуются раньше лучей, света и подписей долей (☀ 1/2 …) — те ложатся поверх осей
+    g.save(); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
+    g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore();
+  }
   // v0.055: лучи к центру от границ бит — текущего кольца или всех
   const rays = Z.coneRays || "off";
   if (rays !== "off") {
@@ -2634,10 +2639,6 @@ function renderCone(){
     for (const F of coneClockFlash)   // прошёл между кадрами — вспышка, гаснет за 0,9 с
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
-  }
-  if (Z.coneAxes) {   // v0.734, «нужна кнопка: ось из центра — вертикаль и горизонталь»: «✛ оси» — две черты через центр конуса во весь холст
-    g.save(); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
-    g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore();
   }
   if (coneMagLine !== null && coneDrag) {   // v0.803: 🧲 — линия привязки через центр
     g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
