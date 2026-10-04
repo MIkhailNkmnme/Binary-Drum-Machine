@@ -8456,14 +8456,15 @@ function cgrpInit(){
     place(F[0]); linkSync();
     const tr = tl.getBoundingClientRect(); let y0 = 0;
     groups.forEach(o => { if (!F.includes(o) && o.parentElement === tl && !o.classList.contains("cfloat") && o.getClientRects().length) y0 = Math.max(y0, o.getBoundingClientRect().bottom - tr.top); });
-    Z.cgrpPos["алгоритм"] = { x: x0, y: y0 }; place(F[0]); linkSync(); save();
+    Z.cgrpPos["алгоритм"] = { x: x0, y: y0 }; place(F[0]); linkSync();
+    delete Z.cgrpLink["лазер"]; save();   // v0.764: «Алгоритм» — отдельно: «Лазер» стоит под ним, но не прицеплен
   }, 700);
   /* v0.761, по снимку «За чертой · Солнце · Строка 1» — «как-то неровно между этими»: одна пара была сцеплена зубцами (остриё в выемку), другая — просто
      приставлена край к краю, со щелью. Группы лазера, что стоят бок о бок (правая — в пределах двух шагов t от зубцов левой, ряды перекрываются), сами
      сцепляются: правая прицепляется к левой ряд в ряд (dy — целыми рядами по 24 px), linkSync ставит её остриём в выемку. Уже прицепленную к чему-то не
      трогает. Пересчёт — после отпускания группы лазера и один раз при загрузке */
   const lasMesh = () => {
-    const t = TZC_H / (2 * Math.sqrt(3)), F = groups.filter(o => o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && !o.classList.contains("cdrag") && o.getClientRects().length);
+    const t = TZC_H / (2 * Math.sqrt(3)), F = groups.filter(o => o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && !o.classList.contains("cdrag") && o.getClientRects().length);
     let ch = false;
     for (const b of F) { if (Z.cgrpLink[b.dataset.g]) continue; const B = b.getBoundingClientRect(); let best = null;
       for (const a of F) { if (a === b || linkCycle(b.dataset.g, a.dataset.g)) continue; const A = a.getBoundingClientRect(), d = B.left - (A.right - t);
@@ -8591,7 +8592,7 @@ function cgrpInit(){
     zb.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); if (e.button !== 0) return; const k = g.dataset.g; if (Z.cgrpZen[k]) delete Z.cgrpZen[k]; else Z.cgrpZen[k] = true; zUi(); save();
       say(Z.cgrpZen[k] ? `🧘 Группа «${k}» — видна и в дзене.` : `🧘 Группа «${k}» в дзене не видна.`); });
     zb.addEventListener("dblclick", (e) => e.stopPropagation());
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу" + (g.classList.contains("cg-lx") ? ". Группы лазера: верхняя тянет весь блок, прицепленная — отрывается; с Alt — тянется одна" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни (за подпись или любое пустое место группы) — перенести группу куда угодно (поверх холста); двойной щелчок по группе — свернуть до заголовка и обратно; правый щелчок по заголовку — обратно на полосу" + (g.classList.contains("cg-lx") ? ". Группы лазера: верхняя тянет весь блок, прицепленная — отрывается; с Alt — тянется одна; «Алгоритм» — всегда один, в блок не входит" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни — размер группы; двойной щелчок — прежний размер"; g.appendChild(sz);
@@ -8634,8 +8635,10 @@ function cgrpInit(){
       /* v0.760, «прилипли друг к другу, не оторвать»: блоком едет, только если тянуть верхнюю группу блока (ту, что сама ни к какой группе лазера не
          прицеплена); прицепленную тянешь — отрывается, как прежде (её прицепленные — следом); с Alt любая группа тянется одна */
       const upL = Z.cgrpLink[g.dataset.g], upG = upL && gByKey(upL.to);
-      if (!e.altKey && !(upG && upG.classList.contains("cg-lx")) && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
-        const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
+      /* v0.764, «алгоритм не могу отцепить»: «Алгоритм» — табло, в блок не входит: тянешь его — едет один (прицепленные к нему остаются), блок без него */
+      const solo = e.altKey || g.dataset.g === "алгоритм";
+      if (!solo && !(upG && upG.classList.contains("cg-lx")) && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
+        const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
         /* v0.759: соседи — сцепленные (Z.cgrpLink) или почти касаются: по вертикали — до полуряда (группы стоят по сетке рядов 24 px, и под сцепленной сверху
            бывает зазор в несколько px — с допуском 3 px блок рвался: «Алгоритм» уезжал один, остальные догоняли сцепками и упирались в край окна) */
         const T = TZC_H / Math.sqrt(3) + 3, V = TZC_H / 2 + 1, lk = (a, b) => { const L = Z.cgrpLink[a.dataset.g]; return !!L && L.to === b.dataset.g; };
@@ -8650,7 +8653,7 @@ function cgrpInit(){
         if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag");
           const L = Z.cgrpLink[g.dataset.g]; if (!(L && mates.some(m => m.o.dataset.g === L.to))) delete Z.cgrpLink[g.dataset.g];   // v0.502: потянул правую — отцепилась; v0.758: но не внутри блока лазера
           mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); });
-          if (e.altKey && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
+          if (solo && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
         lx = ev.clientX; ly = ev.clientY;
         { const [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px";   // v0.366: магнит (у блока лазера — нет)
           mates.forEach(m => { m.o.style.left = (sx + m.dx).toFixed(2) + "px"; m.o.style.top = (Math.round(sy) + m.dy).toFixed(2) + "px"; }); }
