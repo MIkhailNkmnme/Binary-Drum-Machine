@@ -2453,7 +2453,12 @@ function coneCutOn(){ return !!Z.coneClock && !Z.cone3d && Z.rows.length <= CONE
    вертикаль между 2 частями пустоты, и так далее»: начальная расстановка по вертикали чередуется — у чётных строк (2, 4, …) по центру сверху
    биты (вертикаль — между средними битами), у нечётных (3, 5, …) — дыра (вертикаль — между средними частями пустоты). Сдвиг off в частях:
    биты по центру — −n/2, дыра по центру — (n − 1)/2 */
-function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / (2 * n - 1), off: i % 2 ? -n / 2 : (n - 1) / 2 } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
+/* v0.738, «T−1 — сделай кнопку расположения нулевого (начала вырезов): первое — как сейчас, по центру симметрии, второе — по левому, и по правому третье
+   краю»: «▥ центр / ◧ лево / ◨ право» (Z.cutAlign) — где у колец в вырезах начало: по центру — как было (симметрично вертикали, чётные — дыра по центру,
+   нечётные — биты); по левому — левый край выреза на вертикали (вырез идёт от неё по часовой, биты кончаются на ней); по правому — правый край выреза на
+   вертикали (биты начинаются на ней). off — в частях */
+function coneCutOff(i, n){ const m = Z.cutAlign || "c"; return m === "l" ? -n : m === "r" ? 0 : i % 2 ? -n / 2 : (n - 1) / 2; }
+function coneCutGeo(i, n){ return i >= 1 && n >= 1 && coneCutOn() ? { cut: true, step: 2 * Math.PI / (2 * n - 1), off: coneCutOff(i, n) } : { cut: false, step: 2 * Math.PI / Math.max(1, n), off: 0 }; }
 /* v0.672, по снимку колец 2 и 3 в вырезах — «не могу выстроить симметрично, кольцо само докручивается; его бы привязывать к осям симметрии, и
    расположить относительно вертикали симметрично». У кольца в вырезах одна ось симметрии — через середину бит и середину дыры. Вертикальна она
    при накрутке 0 (биты по центру сверху) и n − ½ (дыра по центру сверху) — второе целыми частями не достать. Теперь кольцо в вырезах встаёт на
@@ -2738,6 +2743,7 @@ function coneSunUi(){
 let coneSunWas;   // ячейки, освещённые на прошлом шаге; undefined — ещё не смотрели (тогда красим только нетронутые)
 function coneSunPaint(){
   const S = coneSunTrace(), now = new Set(S.hits), first = coneSunWas === undefined, h = coneVoidHits(); let ch = false;
+  { const N0 = Math.min(Z.rows.length, CONE_MAX); if ((S.hits.some(k => +k.split(":")[0] >= N0) || (S.zhits || []).length) && hidAutoBack()) return true; }   // v0.738: дошло до спрятанных — черта вниз
   for (const k of now) if (first ? !h[k] : !coneSunWas.has(k)) { h[k] = (h[k] | 0) + 1; ch = true; }
   coneSunWas = now;
   /* v0.681, по снимку солнца с одной строкой — «в какой момент он будет красить?»: попадания в кольцо за чертой шли только в счёт и нигде не были видны.
@@ -3250,7 +3256,21 @@ function conePredRender(){
        " · строка для заполнения: " + (P.fill.length ? "«1» в ячейках " + P.fill.map(c => c + 1).join(", ") : "ничего не поймала") + "</div>";
   box.innerHTML = h;
 }
+/* v0.738, «в режиме 256 сделай, чтобы можно было за горизонт тянуть вверх, скрывая строки — временно; но если они затронуты окажутся автоматикой, то надо
+   автоматом и расширить горизонт вниз»: при «до 256» спрятанные за чертой строки (черта вверх) лежат на месте кольца за чертой и колец за ним. Как только
+   свет солнца или луч лазера попадает туда (кольцо за чертой и дальше) — черта сама опускается, спрятанные строки возвращаются на свои места (↩ поднимет
+   снова), а краска этого мига не ставится — её поставит следующий кадр уже по настоящим строкам */
+let coneAutoDepth = 0;   // > 0 — идёт шаг (lasRec)
+function hidAutoBack(){
+  if (!(coneSpinning || coneAutoDepth > 0) || !coneVoidOn() || !hidRows(Z.lane).length) return false;   // только автоматика (кручение, шаги), не простая отрисовка
+  const pre = undoState(), n = hidRows(Z.lane).length; cutAt(Z.rows.length + n, false); undoPush(pre);
+  coneSunWas = undefined; coneWallWas = undefined;
+  setTimeout(() => { renderAll(); save(); }, 0);
+  say(`⎯ Свет дошёл до спрятанных строк — черта опущена, ${n} стр. снова на месте. ↩ поднимет обратно.`);
+  return true;
+}
 function coneClockMark(hits){
+  if (hits.length && hidAutoBack()) return;   // v0.738
   let f = fillDraft(); const ch = [];
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
   if (!ch.length) return;
@@ -4016,7 +4036,7 @@ function setupCone(){
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
     ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
-  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); fn(); if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
+  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
      при этом откатывая шаги назад — не то что шаги, а как будто перемотку назад кручения». Лента: пока солнце в вырезах крутится (▶ крутить, шаги), каждый
      кадр пишется — фаза и поворот конуса (лёгкое) и ссылка на состояние (строки, краска, строка за чертой, лог…) — само состояние пишется заново, только когда
@@ -4400,6 +4420,11 @@ function setupCone(){
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
   const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitMode(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
   slitsUi();
+  if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
+    const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
+    $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : "c"; ui(); coneWallWas = undefined; coneClockWas = null; save(); renderRows(); renderCone();
+      say({ c: "▥ Вырезы по центру: кольца симметрично вертикали, как было.", l: "◧ Вырезы по левому краю: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой.", r: "◨ Вырезы по правому краю: правый край выреза — на вертикали, биты начинаются от неё." }[Z.cutAlign]); };
+  }
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
     const m = coneSlitMode(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null;
     const kc = coneCutHome(); save(); renderRows(); renderCone(); coneSunUi();   // v0.674: вход в T−1 — кольца симметрично вертикали; v0.692: и доступность «до 256»
