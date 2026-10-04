@@ -2659,6 +2659,9 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, open); open = ivUnion(open); } else open = coneSunOpen(b, N, R);
     if (C) open = coneZeroOpen(b, N, C, open);   // v0.724: через «0» — свободно
+    /* v0.741, «если 0, то не становится 1 по Xor, а должно»: ноль свет проходит (v0.724), и попаданием он не считался — xor его не видел. Теперь при ⊕ xor
+       ноль строки за чертой, накрытый светом целиком, — тоже попадание (свет идёт сквозь него дальше, а ячейка переключится в 1) */
+    if (C && b === N && Z.sunXor && !coneFreeOn()) { const f = fillDraft(); for (let q = 0; q < C.n; q++) if (f[q] === "0" && coneCellCovered(q, C.st, C.rot, lit)) hits.add(b + ":" + q); }
     if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
     if (C && b === N) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
     for (const [lo, hi] of ivMinus(lit, open)) {
