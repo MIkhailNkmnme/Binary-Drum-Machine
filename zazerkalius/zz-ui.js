@@ -773,6 +773,11 @@ function coneZeroOpen(b, N, C, open){
   const add = open.slice(); for (let q = 0; q < K; q++) if (s[q] === "0") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, add);
   return ivUnion(add);
 }
+function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» кольца b (у кольца за чертой — поставленные; fr — «▦ любые», части 2n − 1)
+  const s = b < N ? (Z.rows[b] || "") : fr ? fillFreeDraft() : fillDraft(), K = fr ? C.P : C.n, o = [];
+  for (let q = 0; q < K; q++) if (s[q] === "1") ivNorm((q - C.rot) * C.st, (q + 1 - C.rot) * C.st, o);
+  return ivUnion(o);
+}
 function coneFreeRing(L, C, set, b, Lh = L){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (светом Lh) части, что могут стать битом, — в set
   const f = fillFreeDraft(), op = [];
   for (let u = 0; u < C.P; u++) { if (f[u] === "0") { ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); continue; }   // v0.724: ноль — насквозь
@@ -2579,7 +2584,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -2650,16 +2655,28 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     const bandOf = (k) => { const e = bands.find(([j]) => j === k); return e ? e[1] : []; }, zm = [];
     for (const [lo, hi] of N >= 2 ? ivMinus(bandOf(N - 1), bandOf(N)) : []) if (hi - lo > 1e-9) ivNorm(lo + Math.PI, hi + Math.PI, zm);
     const zOk = ivUnion(zm);
+    /* v0.725, «сделай кнопку и включи, что луна может проходить только через одну 1»: «☾ сквозь 1» (Z.moonOne, по умолчанию включено) — луна идёт, как
+       солнце, из центра наружу, кольцо за кольцом: сквозь вырез и «0» — свободно, одну «1» на своём пути может пройти насквозь, на второй — встаёт. Свет
+       ведётся двумя частями: A — ещё не проходил «1», A1 — уже прошёл одну. Выключено — как было: луна начинается у кольца за чертой */
+    const one = Z.moonOne !== false, U = (X, Y) => ivUnion([...X, ...Y].map(x => x.slice())).filter(([x, y]) => y - x > 1e-9);
+    if (one && A.length) akb = 1;
+    let A1 = [];
     if (akb > N) aout = A;
-    for (let k = akb; k <= N && k < T && A.length; k++) {
+    for (let k = akb; k <= N && k < T && (A.length || A1.length); k++) {
       const C = coneSunCutR(k, N); if (!C) break;
-      zbands.push([k, A]);   // антисвет перед кольцом k (для рисунка)
-      if (k === N && coneFreeOn()) { A = ivAnd(A, coneFreeRing(A, C, zhits, k, ivAnd(A, zOk))).filter(([x, y]) => y - x > 1e-9); aout = A; break; }   // v0.722
-      const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); const open = coneZeroOpen(k, N, C, k === N ? coneFillPass(ivUnion(hole), A, C) : ivUnion(hole));   // v0.724: и луна — сквозь «0»
-      for (const [lo, hi] of ivMinus(A, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
-        for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, ivAnd(A, zOk))) zhits.add(k + ":" + q); } }
-      A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9);
-      if (k === N) { aout = A; break; }
+      const AA = U(A, A1), fr = k === N && coneFreeOn();
+      zbands.push([k, AA]);   // антисвет перед кольцом k (для рисунка)
+      let open;
+      if (fr) open = coneFreeRing(AA, C, zhits, k, ivAnd(AA, zOk));   // v0.722
+      else {
+        const hole = []; if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, hole); open = coneZeroOpen(k, N, C, k === N ? coneFillPass(ivUnion(hole), AA, C) : ivUnion(hole));   // v0.724: и луна — сквозь «0»
+        if (k === N) for (const [lo, hi] of ivMinus(AA, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
+          for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P; if (q < C.n && coneCellCovered(q, C.st, C.rot, ivAnd(AA, zOk))) zhits.add(k + ":" + q); } }
+      }
+      const ones = one ? coneOnesArcs(k, N, C, fr) : [];
+      const nA1 = U(ivAnd(A1, open), ivAnd(A, ones));
+      A = ivAnd(A, open).filter(([x, y]) => y - x > 1e-9); A1 = nA1;
+      if (k === N) { aout = U(A, A1); break; }
     }
   }
   return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, a0, akb, out: lit, end: b };
@@ -4033,6 +4050,11 @@ function setupCone(){
     $("bMoonEcl").classList.toggle("on", !!Z.moonEcl);
     $("bMoonEcl").onclick = () => { Z.moonEcl = !Z.moonEcl; $("bMoonEcl").classList.toggle("on", Z.moonEcl); save(); renderCone();
       say(Z.moonEcl ? "☾ Затмение: луна светит, только когда всё солнце скрыто за битами — зеркало света, упавшего на них, через центр." : "☾ Затмение выключено: луна — зеркало вылетевшего света."); };
+  }
+  if ($("bMoonOne")) {   // v0.725: ☾ сквозь 1 — луна из центра, одну «1» проходит насквозь (по умолчанию включено)
+    const ui = () => $("bMoonOne").classList.toggle("on", Z.moonOne !== false); ui();
+    $("bMoonOne").onclick = () => { Z.moonOne = Z.moonOne === false; ui(); save(); renderCone();
+      say(Z.moonOne !== false ? "☾ Сквозь 1: луна идёт из центра, как солнце, — сквозь вырез и «0» свободно, одну «1» проходит насквозь, на второй встаёт." : "☾ Сквозь 1 выключено: луна начинается у кольца за чертой."); };
   }
   if ($("bCutFree")) {   // v0.722: ▦ любые — у кольца за чертой место бита — любая часть, первые n вплотную
     $("bCutFree").classList.toggle("on", !!Z.cutFree);
