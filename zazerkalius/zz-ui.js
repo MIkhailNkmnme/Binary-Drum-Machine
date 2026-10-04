@@ -1733,6 +1733,34 @@ function lasUi3dG(G){
    действует: не действует — затемнена (.ldim; с v0.758 не жмётся), причина — первой строкой её подсказки. Внизу «Алгоритма» (#lasAlgo) — что в
    итоге делает лазер или солнце, по строкам: источник, строка 1, кольца, за чертой, луна, ход. У каждой кнопки — data-la, ключ её строки: наведи на кнопку —
    строка светится, наведи на строку — светятся её кнопки. Пересчёт — из renderCone, только когда что-то из режимов сменилось */
+/* v0.762, по снимку «вырезы T−1» — «все кнопки-списки — вынеси на показ»: кнопки, что щелчком перебирают значения по кругу (1 щель / вырезы T−1 / все щели,
+   центр / лево / право, щели / Без щелей), и список шага ↻ (45° / 1/T / 1/(1+…+T)) — рядом все значения отдельными кнопками (.lseg), горит выбранное. Прежняя
+   кнопка спрятана, но работает: щелчок по значению ставит перед ней предыдущее по кругу и жмёт её — её обработчик делает всё, что делал (сообщение, пересчёт,
+   у «вырезы T−1» — кольца на места); у списка — значение и событие change */
+const LAS_SEG = [
+  { id: "bConeSlits", v: ["one", "cut", "all"], l: ["1 щель", "вырезы T−1", "все щели"], get: () => coneSlitMode(), pre: (v) => { Z.coneSlits = { one: "all", cut: "one", all: "cut" }[v]; },
+    t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Все щели: выход на любой границе бит, как было раньше"] },
+  { id: "bCutAlign", v: ["c", "l", "r"], l: ["▥ центр", "◧ лево", "◨ право"], get: () => Z.cutAlign || "c", pre: (v) => { Z.cutAlign = { c: "r", l: "c", r: "l" }[v]; },
+    t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
+  { id: "coneSunCut", v: ["gaps", "zero"], l: ["щели", "Без щелей"], get: () => coneSunCut(), pre: (v) => { Z.coneSunCut = v === "zero" ? "gaps" : "zero"; },
+    t: ["Пропуск света при ☀ — щели между битами (ширина — ползунок «щель»)", "Без щелей: «0» пропускает свет во всю ширину, «1» — стена"] },
+  { id: "coneLaserStepK", sel: 1, v: ["45", "T", "S"], l: ["45°", "1/T", "1/(1+…+T)"], get: () => Z.coneLaserStepK || "45",
+    t: ["Шаг ↻ — 45°", "Шаг ↻ — 1/T круга (T — бит в самой длинной строке)", "Шаг ↻ — 1/(1+2+…+T) круга"] }
+];
+function lasSegInit(){
+  if (lasSegInit._ok) return; lasSegInit._ok = 1;
+  for (const d of LAS_SEG) {
+    const el = document.getElementById(d.id); if (!el) continue;
+    const sp = document.createElement("span"); sp.className = "cunit lseg"; sp.dataset.seg = d.id;
+    d.v.forEach((v, i) => { const b = document.createElement("button"); b.type = "button"; b.dataset.v = v; b.textContent = d.l[i]; b.title = b.dataset.t0 = d.t[i];
+      b.onclick = () => { if (d.get() === v) return;
+        if (d.sel) { el.value = v; el.dispatchEvent(new Event("change")); } else { d.pre(v); el.click(); }
+        lasSegSync(); renderCone(); };
+      sp.appendChild(b); });
+    el.after(sp); el.style.display = "none"; el.dataset.lsegHid = "1";
+  }
+}
+function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.querySelectorAll('.lseg[data-seg="' + d.id + '"] > button').forEach(b => { const on = b.dataset.v === v; if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }); } }
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
   r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bConeAimL", "bConeAimR"],
@@ -1746,7 +1774,8 @@ function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d, clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
   const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.cutAlign, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
-    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length].join("|");
+    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK].join("|");
+  lasSegInit();   // v0.762
   if (k === lasDepsK && GA.querySelector(":scope > #lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
@@ -1771,7 +1800,11 @@ function lasDeps(){
     if (box.classList.contains("ldim") !== !!w) box.classList.toggle("ldim", !!w);
     if (w) box.dataset.why = w; else delete box.dataset.why;
     const t = w ? "⛔ Сейчас не действует: " + w + ".\n\n" + box.dataset.t0 : box.dataset.t0; if (box.title !== t) box.title = t;
+    document.querySelectorAll('.lseg[data-seg="' + id + '"] > button').forEach(b => {   // v0.762: развёрнутый список — как сама кнопка
+      b.dataset.la = key; if (b.classList.contains("ldim") !== !!w) b.classList.toggle("ldim", !!w); if (w) b.dataset.why = w; else delete b.dataset.why;
+      const bt = w ? "⛔ Сейчас не действует: " + w + ".\n\n" + b.dataset.t0 : b.dataset.t0; if (b.title !== bt) b.title = bt; });
   }
+  lasSegSync();
   /* что в итоге получается */
   const dg = (x) => String(Math.round(x * 10) / 10).replace(".", ",") + "°", L = [], slit = dg(+Z.coneSlit || 2), who = sun ? "свет" : "луч";
   if (d3) L.push(["src", "<b>3D</b>: лазер и солнце в 3D не считаются — выйди из 3D (🧊), чтобы они заработали."]);
