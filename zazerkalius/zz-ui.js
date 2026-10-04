@@ -2723,7 +2723,7 @@ function coneFanStep(tr){   // вылетевшие за край — гасну
 }
 function coneFanClampDph(dph, m){   // у ✺ за кадр — не больше шагов, чем успеем просчитать (иначе луч проскочит щели): крутится медленнее
   const N = Math.min(Z.rows.length, CONE_MAX); if (!N || !dph) return dph;
-  let maxDeg = 0; for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, coneBitMode(m) ? Math.abs(dph) * 360 / (Z.rows[i].length || 1) : Math.abs(dph));
+  let maxDeg = 0; for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, coneBitMode(m) ? Math.abs(dph) * coneDegPh(i) : Math.abs(dph));
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const need = maxDeg / tolDeg, cap = coneFanStepsCap(N);
   return need > cap ? dph * cap / need : dph;
@@ -2801,7 +2801,7 @@ function coneSunPeek(){
   const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
-  const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
+  const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
   const p0 = Z.coneSpinPh || 0, k0 = coneSunTrace().hits.join("|"); let S = null;
   try { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (T.hits.join("|") !== k0) { S = T; break; } } }
   finally { Z.coneSpinPh = p0; }
@@ -3074,14 +3074,22 @@ function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) +
    все; «навстречу» — по своей чётности. Ручной накрутки у них нет. */
 function coneVoidRot(j, n){
   const m = Z.coneSpinMode || "all", ph = coneRingPh(j);   // v0.138
-  if (m === "bit") return -ph;
-  if (m === "obit") return -(j % 2 ? -1 : 1) * ph;   // v0.161
+  if (m === "bit") return -ph * coneBitF(j, n);   // v0.769
+  if (m === "obit") return -(j % 2 ? -1 : 1) * ph * coneBitF(j, n);   // v0.161
   if (m === "opp") return -(j % 2 ? -1 : 1) * ph / 360 * n;
   return 0;
 }
 /* v0.161, «Встреч Бит — так же, как Каждое, но через строку в одну сторону»: режим obit — каждое кольцо на бит за шаг, как «bit», но
    нечётные (строки 2, 4, …) — в обратную сторону. Всё, что зависит от шага «по биту» (скорость, шаги ◀ ▶, лазер, цикл), — как у «bit». */
 function coneBitMode(m){ return m === "bit" || m === "obit"; }
+/* v0.769, «крутить … частями кольца предыдущего» (выбрано: «на клетку соседа внутри»): «◫ части пред.» (Z.coneBitStep === "prev", в «Каждое» и «Встреч Бит») — за шаг
+   кольцо поворачивается не на свой бит, а на угол одной клетки кольца внутри него: кольцо из n бит за шаг — на n / n₋₁ своих бит (из 4 бит — на 1/3 круга, из 5 —
+   на 1/4); строка 1 — на свой бит. coneBitF — во сколько своих бит кольцо j поворачивается за шаг фазы; coneDegPh — сколько это градусов */
+function conePrevStep(){ return Z.coneBitStep === "prev" && coneBitMode(Z.coneSpinMode || "all"); }
+function coneRingLenJ(j){ const N = Math.min(Z.rows.length, CONE_MAX); return j < N ? ((Z.rows[j] || "").length || 1) : coneVoidLen(j, N); }
+function coneBitF(j, n){ if (!conePrevStep() || j <= 0) return 1; const p = coneRingLenJ(j - 1); return p > 0 ? n / p : 1; }
+function coneDegPh(i){ const n = coneRingLenJ(i); return 360 * coneBitF(i, n) / n; }
+function coneDegPhMax(N){ let m = 0; for (let i = 0; i < N; i++) m = Math.max(m, coneDegPh(i)); return m || 360; }
 /* v0.138, «в тот момент, когда первая ячейка строки покрасится битом, этот диск (кольцо) останавливай — то есть все внутренние не
    будут крутиться»: лазер впервые закрасил ячейку кольца b (стена, строка для заполнения или пустое) — кольцо b и все внутри него
    (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. (v0.139: правило другое — см. coneFreezeRing.) Фазы остановленных —
@@ -3465,7 +3473,7 @@ function conePredict(){
   const bitm = coneBitMode(m), dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const maxLen = Math.max(...Z.rows.slice(0, N).map(s => s.length || 1));
-  const perUnit = bitm ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;
+  const perUnit = bitm ? coneDegPhMax(N) : 1;
   const d = dir * tolDeg / perUnit / 2, span = bitm ? maxLen : 360, steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
   const ph0 = Z.coneSpinPh || 0, rows = [], fill = [];
   let end = "", endPh = null;
@@ -3535,7 +3543,7 @@ function coneClockSweep(ph0, dph, m){
   if (!dph || !coneGeom || !coneGeom.fill) return null;   // нет кольца для заполнения (3D, слишком много строк) — не метим
   const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return null;
   let maxDeg = 0;   // быстрее всех поворачивается за кадр — отсюда число шагов (относительная скорость двух колец — до двух таких)
-  for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, coneBitMode(m) ? Math.abs(dph) * 360 / (Z.rows[i].length || 1) : Math.abs(dph));
+  for (let i = 0; i < N; i++) maxDeg = Math.max(maxDeg, coneBitMode(m) ? Math.abs(dph) * coneDegPh(i) : Math.abs(dph));
   let tolDeg = coneSlitHalf() * 180 / Math.PI; const n0 = Z.rows[0].length || 1;
   for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);   // самая узкая щель — шаг не шире её
   const K = Math.max(1, Math.min(Math.ceil(maxDeg / tolDeg), coneFanOn() ? coneFanStepsCap(N) : Math.floor(200000 / (N * n0)), 2000));   // v0.201: ✺ — свой предел
@@ -3575,8 +3583,10 @@ function coneCycleBits(){
   const N = Math.min(Z.rows.length, CONE_MAX), g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
   let L = 1n;
   const add = (n) => { if (n > 0) { const b = BigInt(n); L = L / g(L, b) * b; } };
-  for (let i = 0; i < N; i++) add(rotPer(Z.rows[i]));
-  if (coneGeom && coneGeom.fill) add(fillLen());
+  /* v0.769: ◫ части пред. — кольцо (период p, n бит, сосед внутри — q бит) за шаг на n / q своих бит: на месте через p·q / НОД(n, p·q) шагов */
+  const pr = conePrevStep(), per = (p, n, q) => pr && q > 0 ? p * q / g(n, p * q) : p;
+  for (let i = 0; i < N; i++) add(per(rotPer(Z.rows[i]), Z.rows[i].length || 1, i ? (Z.rows[i - 1].length || 1) : 0));
+  if (coneGeom && coneGeom.fill) add(per(fillLen(), fillLen(), N ? (Z.rows[N - 1].length || 1) : 0));
   return L;
 }
 function coneBigFmt(b){ const s = b.toString(); return s.length <= 15 ? Number(b).toLocaleString("ru-RU") : `${s[0]},${s.slice(1, 3)}·10^${s.length - 1}`; }
@@ -3923,8 +3933,8 @@ function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classLis
 function coneRotOf(i){
   let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = coneRingPh(i);   // v0.138: остановленное кольцо — на своей фазе
   if (i === 0 && Z.coneAimRot) base -= Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1);   // v0.120: строка 1 довёрнута вручную (градусы, по часовой)
-  if (m === "bit") return base - ph;
-  if (m === "obit") return base - (i % 2 ? -1 : 1) * ph;   // v0.161
+  if (m === "bit") return base - ph * coneBitF(i, (Z.rows[i] || "").length || 1);   // v0.769: ◫ части пред. — на клетку соседа внутри
+  if (m === "obit") return base - (i % 2 ? -1 : 1) * ph * coneBitF(i, (Z.rows[i] || "").length || 1);   // v0.161
   if (m === "opp") { const n = (Z.rows[i] || "").length || 1; return base - (i % 2 ? -1 : 1) * ph / 360 * n; }
   return base;
 }
@@ -4210,14 +4220,21 @@ function setupCone(){
     return true;
   };
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
-  const bitStepUi = () => { const b = $("bConeBitStep"), h = $("bConeHalfStep"); if (b) b.classList.toggle("on", !!Z.coneBitStep && Z.coneBitStep !== 0.5); if (h) h.classList.toggle("on", Z.coneBitStep === 0.5); };
+  const bitStepUi = () => { const b = $("bConeBitStep"), h = $("bConeHalfStep"), q = $("bConePrevStep"); if (b) b.classList.toggle("on", Z.coneBitStep === true); if (h) h.classList.toggle("on", Z.coneBitStep === 0.5); if (q) q.classList.toggle("on", Z.coneBitStep === "prev"); };
   bitStepUi();
   if ($("bConeBitStep")) $("bConeBitStep").onclick = () => {
-    Z.coneBitStep = Z.coneBitStep && Z.coneBitStep !== 0.5 ? false : true; bitAcc = 0;   // v0.768: из «½ бита» — сразу в побитно
+    Z.coneBitStep = Z.coneBitStep === true ? false : true; bitAcc = 0;   // v0.768: из «½ бита» (и «◫ части пред.») — сразу в побитно
     if (Z.coneBitStep && !coneBitMode(Z.coneSpinMode || "all")) { const sel = $("coneSpinMode"); sel.value = "bit"; sel.onchange({ target: sel }); }
     if (Z.coneBitStep) Z.coneSpinPh = Math.round(Z.coneSpinPh || 0);
     bitStepUi(); save(); renderCone();
     say(Z.coneBitStep ? "▦ Побитно: ▶ крутить — скачками, каждое кольцо за шаг на один бит." : "▦ Кручение снова плавное.");
+  };
+  if ($("bConePrevStep")) $("bConePrevStep").onclick = () => {   // v0.769: ◫ части пред. — за шаг на клетку соседа внутри
+    Z.coneBitStep = Z.coneBitStep === "prev" ? false : "prev"; bitAcc = 0;
+    if (Z.coneBitStep && !coneBitMode(Z.coneSpinMode || "all")) { const sel = $("coneSpinMode"); sel.value = "bit"; sel.onchange({ target: sel }); }
+    if (Z.coneBitStep) Z.coneSpinPh = Math.round(Z.coneSpinPh || 0);
+    bitStepUi(); save(); renderCone();
+    say(Z.coneBitStep ? "◫ Части предыдущего: ▶ крутить — скачками, каждое кольцо за шаг на одну клетку кольца внутри него (строка 1 — на свой бит)." : "◫ выключено — кручение снова плавное.");
   };
   if ($("bConeHalfStep")) $("bConeHalfStep").onclick = () => {   // v0.768: ½ бита — как «▦ побитно», только скачками по полбита
     Z.coneBitStep = Z.coneBitStep === 0.5 ? false : 0.5; bitAcc = 0;
@@ -4253,7 +4270,7 @@ function setupCone(){
     if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
     const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return;
     let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
-    const perUnit = coneBitMode(m) ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;   // градусов за единицу фазы у самого быстрого кольца
+    const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1;   // градусов за единицу фазы у самого быстрого кольца
     const d = dir * (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2, key = (R) => !R ? "" : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop;   // v0.136: вперёд — в выбранном направлении
     if (coneSunOn()) {   // v0.206: ☀ — до мига, когда свет упал иначе
       const k0 = coneSunTrace().hits.join("|"), p0 = Z.coneSpinPh || 0; let p = p0, s = 0;
@@ -4515,7 +4532,7 @@ function setupCone(){
     if (passed(coneClockTrace()[0])) { say(`🎯 Луч уже проходит строку ${t + 1}. Заново — ⟲ всё на места или ✕ у строки для заполнения.`); return; }
     const bitm = coneBitMode(m), dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
     let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
-    const perUnit = bitm ? 360 / Math.max(1, Math.min(...Z.rows.slice(0, N).map(s => s.length || 1))) : 1;
+    const perUnit = bitm ? coneDegPhMax(N) : 1;
     const d = dir * tolDeg / perUnit / 2, span = bitm ? Math.max(...Z.rows.slice(0, N).map(s => s.length || 1)) : 360;
     const steps = Math.min(200000, Math.ceil(span / Math.abs(d)) + 2);
     const bak = { ph: Z.coneSpinPh, vh: JSON.stringify(Z.voidHits || null), log: JSON.stringify(Z.coneLog || null), n: Z.coneClockN, wall: coneWallWas, xl: JSON.stringify(Z.coneExLog || null), xr: Z.coneExRun };
