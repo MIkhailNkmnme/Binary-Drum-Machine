@@ -6049,7 +6049,14 @@ function setupCone(){
   $("bC3Auto").onclick = () => $("bConeAuto").click();   // v0.279: пульт жмёт те же кнопки «Кручения»
   $("bC3Auto").oncontextmenu = (e) => $("bConeAuto").oncontextmenu(e);
   $("bC3Dir").onclick = () => $("bConeDir").click();
-  $("coneSpinMode").onchange = (e) => { Z.coneSpinMode = e.target.value; spinSpUi(); coneSpinModeUi(); Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); coneWallWas = undefined; save(); renderCone(); coneLogRender();
+  /* v0.853, по снимку ряда «Всё | Каждое | Встреч Стр | Встреч Бит» — «почему-то сбрасывает кнопки при Всё на места, так не должно быть»: смена режима
+     обнуляла фазу кручения и отпускала кольца, а повороты, накрученные в «Каждое» / «Встреч», живут только в фазе — кольца прыгали на места.
+     Теперь перед сменой каждое кольцо запоминает, где стоит (coneRotOf старого режима, без ручного довора строки 1 — он прибавляется сверху),
+     и этот поворот становится его собственным (coneRot): после смены всё стоит, как стояло, и крутится дальше уже по новому режиму */
+  $("coneSpinMode").onchange = (e) => { const N0 = Z.rows.length, keep = [];
+    for (let i = 0; i < N0; i++) keep.push(coneRotOf(i) + (i === 0 && Z.coneAimRot ? Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1) : 0));
+    Z.coneSpinMode = e.target.value; spinSpUi(); coneSpinModeUi(); Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll();
+    keep.forEach((x, i) => { coneRot[i] = x; }); Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); coneWallWas = undefined; save(); renderCone(); coneLogRender();
     say({ all: "▶ Всё целиком: весь конус одним поворотом.", bit: "▶ Каждое по биту: маленькие кольца вертятся быстрее — рисунок закручивается спиралью.", obit: "▶ Навстречу по биту: каждое кольцо на бит за шаг, через строку — в обратную сторону.", opp: "▶ Навстречу по строкам: чётные кольца по часовой, нечётные против, с одной скоростью." }[Z.coneSpinMode] + " Правый щелчок по ▶ — всё на места."); };
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
