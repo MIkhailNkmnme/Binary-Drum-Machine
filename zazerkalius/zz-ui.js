@@ -7272,7 +7272,10 @@ function setupCone(){
      конуса (⌂ — ровно на ней, едет за центром, когда конус сдвигают), прижат к правому краю холста; тянешь за ⠿ или фон между кнопками и отпускаешь
      левее середины холста — встаёт слева, правее — справа (Z.padSide "r" / "l"); двойной щелчок по ⠿ — на другую сторону. Прежнее свободное место
      (Z.padPos) сохранено один раз копией Z.padPos_pered_os и больше не действует */
-  { const P = $("cone3Pad"), host = P.parentElement;
+  /* v0.837, «при наведении не меняет курсор на руку»: пульт лежал внутри холста конуса (#coneMain, z-index 0) — его z-index 650 действовал только там,
+     и полоса групп (выше всего холста) накрывала ромбы: мышь попадала в группу, а не в кнопку. Пульт — в тело окна, рядом с ⌖✕ и ▶ (v0.811 / v0.828) */
+  { const P = $("cone3Pad"), cm0 = $("coneMain"); if (cm0 && cm0.parentElement && P.parentElement !== cm0.parentElement) cm0.parentElement.appendChild(P);
+    const host = P.parentElement;
     if (Z.padPos && !Z.padPos_pered_os) Z.padPos_pered_os = Z.padPos; delete Z.padPos;
     const place = () => {
       if (P._drag) return; P.classList.add("moved");
