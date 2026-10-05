@@ -4964,11 +4964,73 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   if (ms && ms.parentElement === host) put(ms, x2 + 2, y + w / 2 - 12);
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
+  { const s = posStarP(); if (s) return !posEq(posCur(), s); }   // v0.842: есть начальное ★ — сравнивать с ним
   const nz = v => Math.abs(+v || 0) > 1e-6;
   if (nz(Z.coneSpin) || nz(Z.coneSpinPh) || nz(Z.coneAimRot) || nz(Z.coneFillTurn)) return true;
   if (coneRot.some(nz)) return true;
   const o = Z.voidHits && Z.voidHits.off; return !!(o && typeof o === "object" && Object.values(o).some(nz));
 }
+/* v0.842, «объясни, как задать начальное положение вручную и запомнить его — список положений нужно где-то выбирать и удалять» и «да» на список
+   «📍 Положения»: Z.conePos — запомненные положения колец { id, n — имя, rot — накрутка колец, spin — поворот всего конуса, ph — фаза кручения, aim —
+   довод строки 1, ft — кольцо за чертой, off — сдвиги остановленных колец, free — повёрнутые магнитом, mode — режим кручения }. Биты строк и настройки
+   не входят. Щелчок по имени — кольца встают так; ★ — начальное (Z.conePosStar = id): ⟲ «на места» и ⌖✕ сброс ведут к нему; ✕ — удалить */
+function posCopy(o){ return JSON.parse(JSON.stringify(o || {})); }
+function posCur(){
+  const V = Z.voidHits, off = {}; if (V && V.off && typeof V.off === "object") for (const [k, v] of Object.entries(V.off)) if (Math.abs(+v || 0) > 1e-9) off[k] = v;
+  return { rot: coneRot.slice(0, Z.rows.length).map(x => x || 0), spin: Z.coneSpin || 0, ph: Z.coneSpinPh || 0, aim: Z.coneAimRot || 0, ft: Z.coneFillTurn || 0,
+           off, free: posCopy(Z.coneFree), mode: Z.coneSpinMode || "all" };
+}
+function posEq(a, b){
+  const ne = (x, y) => Math.abs((+x || 0) - (+y || 0)) > 1e-6, n = a.rot.length;   // a — нынешнее: только кольца, что есть сейчас
+  for (let i = 0; i < n; i++) if (ne(a.rot[i], (b.rot || [])[i])) return false;
+  if (ne(a.spin, b.spin) || ne(a.ph, b.ph) || ne(a.aim, b.aim) || ne(a.ft, b.ft)) return false;
+  for (const k of new Set([...Object.keys(a.off || {}), ...Object.keys(b.off || {})])) if (ne((a.off || {})[k], (b.off || {})[k])) return false;
+  return true;
+}
+function posStarP(){ const L = Z.conePos; return Array.isArray(L) && Z.conePosStar != null ? L.find(p => p.id === Z.conePosStar) || null : null; }
+function posApply(p){
+  if (window.zzAutoStop) window.zzAutoStop();
+  coneRot.length = 0; (p.rot || []).forEach(x => coneRot.push(x || 0)); while (coneRot.length < Z.rows.length) coneRot.push(0); Z.coneRot = coneRot.slice();
+  if (p.free && Object.keys(p.free).length) Z.coneFree = posCopy(p.free); else delete Z.coneFree;
+  Z.coneSpin = p.spin || 0; Z.coneSpinPh = p.ph || 0; Z.coneAimRot = p.aim || 0; Z.coneFillTurn = p.ft || 0;
+  if (p.mode && p.mode !== (Z.coneSpinMode || "all")) { Z.coneSpinMode = p.mode; const s = $("coneSpinMode"); if (s) s.value = p.mode; spinSpUi(); coneSpinModeUi(); }
+  Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll(); if (Z.voidHits && p.off && Object.keys(p.off).length) Z.voidHits.off = posCopy(p.off);
+  coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
+}
+function posPopOpen(anchor){
+  let pp = $("conePosPop");
+  if (pp && !pp.hidden && pp._a === anchor) { pp.hidden = true; return; }
+  if (!pp) { pp = document.createElement("div"); pp.id = "conePosPop"; document.body.appendChild(pp);
+    pp.addEventListener("click", (e) => { const b = e.target.closest("[data-pa]"); if (!b) return; const L = Z.conePos || (Z.conePos = []), it = b.closest("[data-id]"), p = it && L.find(q => String(q.id) === it.dataset.id);
+      const a = b.dataset.pa;
+      if (a === "add") { const inp = $("conePosName"), c = posCur(); let id = Date.now(); while (L.some(q => q.id === id)) id++;
+        const n = (inp && inp.value.trim()) || ("Положение " + (L.length + 1)); L.push(Object.assign({ id, n }, c)); if (inp) inp.value = "";
+        save(); say(`📍 Запомнено «${n}» — колец ${c.rot.length}.`); }
+      else if (a === "go" && p) { posApply(p); save(); renderRows(); renderCone(); say(`📍 Кольца — как в «${p.n}».`); }
+      else if (a === "star" && p) { Z.conePosStar = Z.conePosStar === p.id ? null : p.id; if (Z.conePosStar == null) delete Z.conePosStar; save(); renderCone();
+        say(Z.conePosStar != null ? `★ «${p.n}» — начальное: ⟲ «на места» и ⌖✕ сброс ставят кольца так.` : "★ Начального положения нет: ⟲ «на места» — снова нули (или ⭐ Умолчание)."); }
+      else if (a === "del" && p) { if (!confirm(`Удалить положение «${p.n}»?`)) return; L.splice(L.indexOf(p), 1); if (Z.conePosStar === p.id) delete Z.conePosStar; save(); renderCone(); say(`📍 «${p.n}» удалено.`); }
+      posPopRender(); });
+    pp.addEventListener("dblclick", (e) => { const b = e.target.closest('[data-pa="go"]'), it = b && b.closest("[data-id]"), p = it && (Z.conePos || []).find(q => String(q.id) === it.dataset.id); if (!p) return;
+      const n = prompt("Имя положения", p.n); if (n && n.trim()) { p.n = n.trim(); save(); posPopRender(); } });
+    pp.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "conePosName") { e.preventDefault(); const b = pp.querySelector('[data-pa="add"]'); if (b) b.click(); } if (e.key === "Escape") pp.hidden = true; e.stopPropagation(); });
+    document.addEventListener("pointerdown", (e) => { const q = $("conePosPop"); if (q && !q.hidden && !q.contains(e.target) && !(q._a && q._a.contains(e.target))) q.hidden = true; }, { capture: true, passive: true });
+  }
+  pp._a = anchor; pp.hidden = false; posPopRender();
+  const r = anchor.getBoundingClientRect(), w = pp.offsetWidth, h = pp.offsetHeight;
+  let x = Math.min(innerWidth - w - 6, Math.max(6, r.left)), y = r.bottom + 4; if (y + h > innerHeight - 6) y = Math.max(6, r.top - h - 4);
+  pp.style.left = x + "px"; pp.style.top = y + "px";
+}
+function posPopRender(){
+  const pp = $("conePosPop"); if (!pp || pp.hidden) return;
+  const L = Array.isArray(Z.conePos) ? Z.conePos : [], c = posCur(), esc = (t) => String(t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[m]);
+  const old = $("conePosName"), keep = old ? old.value : "";
+  pp.innerHTML = `<div class="pph">📍 Положения колец</div>
+    <div class="ppadd"><input id="conePosName" placeholder="Положение ${L.length + 1}" title="Имя для нового положения (пусто — по номеру); Enter — запомнить"><button data-pa="add" title="Запомнить, как стоят кольца сейчас: накрутка каждого кольца, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой. Биты строк и настройки не запоминаются">＋ запомнить</button></div>
+    <div class="ppl">${L.map(p => `<div class="ppi${p.id === Z.conePosStar ? " star" : ""}${posEq(c, p) ? " cur" : ""}" data-id="${p.id}"><button data-pa="star" title="${p.id === Z.conePosStar ? "★ Начальное — щелчок: снять" : "Сделать начальным: ⟲ «на места» и ⌖✕ сброс будут ставить кольца так"}">${p.id === Z.conePosStar ? "★" : "☆"}</button><button data-pa="go" class="ppn" title="Поставить кольца так. Двойной щелчок — переименовать">${esc(p.n)}</button><button data-pa="del" title="Удалить">✕</button></div>`).join("")}</div>`;
+  const ni = $("conePosName"); if (ni) ni.value = keep;
+}
+
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
   if (!L) { if (el && !el.hidden) el.hidden = true; return; }
@@ -5793,6 +5855,11 @@ function setupCone(){
     save(); renderRows(); renderCone();
     say(`⟲ Всё на местах: накрутка снята${k ? ` (у колец: ${k})` : ""}, кручение и счёт — с нуля, строка 1 без довода. Биты строк не менялись.`);
   };
+  window.zzAutoStop = () => autoSet(false);   // v0.842: для posApply (autoSet — внутри этой функции)
+  { const f0 = $("bConeAllHome").onclick;   // v0.842: есть начальное ★ из «📍 Положений» — после обычного ⟲ кольца встают по нему
+    $("bConeAllHome").onclick = (e) => { f0(e); const s = posStarP(); if (!s) return; posApply(s); save(); renderRows(); renderCone(); posPopRender();
+      say(`⟲ Всё на местах — начальное положение «${s.n}» (★ в 📍 Положениях). Биты строк не менялись.`); }; }
+  if ($("bConePos")) $("bConePos").onclick = (e) => posPopOpen(e.currentTarget);   // v0.842
   /* v0.663, на «как сбрасывается всё накрученное лазером?» — «да» на одну кнопку: «⌖✕ сброс» в «Лазере» — оба шага разом: ✕ строки для
      заполнения (золото и счёт попаданий, её единицы, метки пустых колец, остановленные кольца, лазер — снова первый) и ⟲ всё на места
      (кольца, кручение, довод строки 1). Строки поля и лог не трогает */
@@ -5807,7 +5874,8 @@ function setupCone(){
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
       const s = document.createElement("div"); s.id = "c3Modes";
       document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = o.textContent; c.title = o.title; s.appendChild(c); });
-      s.onclick = (e) => { const c = e.target.closest("button[data-sm]"); const o = c && document.querySelector('#coneSpinModeB > button[data-sm="' + c.dataset.sm + '"]'); if (o) o.click(); };
+      { const pb = document.createElement("button"); pb.id = "c3PosB"; pb.textContent = "📍"; pb.title = "📍 Положения колец: запомнить, выбрать, удалить, ★ — начальное"; s.appendChild(pb); }   // v0.842
+      s.onclick = (e) => { if (e.target.closest("#c3PosB")) { posPopOpen($("c3PosB")); return; } const c = e.target.closest("button[data-sm]"); const o = c && document.querySelector('#coneSpinModeB > button[data-sm="' + c.dataset.sm + '"]'); if (o) o.click(); };
       host.appendChild(s); let tm = 0;
       const on = () => { clearTimeout(tm); s.classList.add("show"); }, off = () => { clearTimeout(tm); tm = setTimeout(() => s.classList.remove("show"), 450); };
       for (const el of [$("bC3Spin"), $("bC3Home"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
@@ -10145,6 +10213,15 @@ function cgrpInit(){
     cgTabs.appendChild(t);
   });
   wb.insertBefore(cgTabs, tl);
+  /* v0.842, по снимку шапки окна — «кнопка «Лазер» — подвинь правее, наложилась на что-то, заголовок похоже»: шапка окна конуса лежит поверх тела
+     (position: absolute), а полоса вкладок — над ней по слою и закрывала «◯ Solarius». Первой в полосе — пустая вставка шириной до конца заголовка */
+  { const sp = document.createElement("span"); sp.className = "cgtsp"; cgTabs.insertBefore(sp, cgTabs.firstChild);
+    const hd = $("w-cone").querySelector(".whead");
+    const fit = () => { const wt = hd && hd.querySelector(".wt"); let w = 0;
+      if (wt && hd.getClientRects().length && hd.offsetWidth && getComputedStyle(hd).position === "absolute") {
+        const r = document.createRange(); r.selectNodeContents(wt); const tr = r.getBoundingClientRect(); if (tr.width) w = Math.max(0, Math.ceil(tr.right - cgTabs.getBoundingClientRect().left + 10)); }
+      const ws = w + "px"; if (sp.style.width !== ws) sp.style.width = ws; };
+    fit(); if (window.ResizeObserver && hd) new ResizeObserver(fit).observe(hd); addEventListener("resize", fit); setTimeout(fit, 600); }
   { const hU = () => wb.style.setProperty("--cgTabsH", cgTabs.offsetHeight + "px"); hU(); if (window.ResizeObserver) new ResizeObserver(hU).observe(cgTabs); }   // v0.608: высота полосы вкладок — для «◯ Конуса» (там полоса групп absolute сверху)
   /* v0.587, по снимку «📝 Текст» в шапке — «эту в конус-кнопки перемести»: кнопка текста конуса и лога лазера — последней вкладкой в полосе групп
      (тот же элемент, обработчики при нём; горит, пока открыта полоса текста) */
@@ -12293,7 +12370,7 @@ function saveSession(){
    с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
    экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
    сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
-const ZZ_HOME_SKIP = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "cgrpMove", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
+const ZZ_HOME_SKIP = ["home", "conePos", "conePosStar", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "cgrpMove", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
 function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
 function homeSave(){
   save(); Z.home = homeOf(Z); save(); homeBtn();
