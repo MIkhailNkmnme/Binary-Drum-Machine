@@ -4935,9 +4935,11 @@ function lasAlgoPlace(){   // v0.816: строки алгоритма — в п�
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 80;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 60;   // v0.828: ромб 60 (было 80)
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 + host.scrollTop;
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
+  const sp = document.getElementById("bC3Spin"); if (sp && sp.parentElement === host) {   // v0.828: ▶ крутить — сверху справа, сторона к стороне
+    const ls = (x + w / 2).toFixed(1) + "px", ts = (y - w / 2).toFixed(1) + "px"; if (sp.style.left !== ls) sp.style.left = ls; if (sp.style.top !== ts) sp.style.top = ts; }
 }
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
@@ -5340,7 +5342,8 @@ function setupCone(){
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; save(); }
     if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
-    const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }   // v0.279: копия в пульте; v0.655 — в ромбе одним значком
+    const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
+    const s3 = $("bC3Spin"); if (s3) { s3.classList.toggle("on", on); s3.innerHTML = on ? "⏸<small>стоп</small>" : "▶<small>крутить</small>"; }   // v0.828: ромб у сброса   // v0.279: копия в пульте; v0.655 — в ромбе одним значком
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
   /* v0.135, «сделай паузу при клике на поле, а плей — только по кнопке»: щелчок по конусу или по полю строк, пока кольца крутятся, —
@@ -5768,7 +5771,10 @@ function setupCone(){
   /* v0.719, по снимку «⌖✕ сброс» — «пусть возвращает всё до начала, когда есть только солнце и 2 строка»: строки, ушедшие в поле после второй (по шагу или
      кручению), тоже снимаются — остаются строка 1 (солнце) и строка 2, за чертой — пустая третья. ↩ вернёт (снимок перед сбросом) */
   if ($("bC3Reset")) { $("bC3Reset").onclick = () => { const b = $("bLaserReset"); if (b) b.click(); };
-    const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset")); c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
+    const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset"));
+    if (host && !$("bC3Spin")) { const b = document.createElement("button"); b.id = "bC3Spin"; b.title = "▶ Крутить / ⏸ стоп — то же, что «▶ крутить» в «Кручении»"; b.innerHTML = "▶<small>крутить</small>";   // v0.828
+      b.onclick = () => { const a = $("bConeAuto"); if (a) a.click(); }; host.appendChild(b); }
+    c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     let cut = 0;
     if (Z.rows.length > 2) {
