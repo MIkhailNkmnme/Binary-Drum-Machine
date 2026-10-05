@@ -10843,10 +10843,13 @@ function fieldZig(dy, ln){
   ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = fr.height + "px"; ov.style.width = w.toFixed(2) + "px";
   /* v0.825: поле справа — острия влево, на полряда ниже сетки меню: встают в выемки правого края групп, стоящих рядами (группы — острия на середине ряда) */
   ov.style.backgroundPosition = "0 " + ((((dy + (R ? H / 2 : 0) + fr.top - (document.getElementById("rowsPane") || f).getBoundingClientRect().top) % H) + H) % H).toFixed(1) + "px";
-  const k = ln + "|" + fc + "|" + R; if (ov._k === k) return; ov._k = k;
+  const k = ln + "|" + fc + "|" + R + "|" + getComputedStyle(document.documentElement).getPropertyValue("--acc").trim(); if (ov._k === k) return; ov._k = k;   // v0.834: и цвет акцента (подсветка)
   const z = R ? `${w.toFixed(2)},0 ${(w - t).toFixed(2)},${H / 2} ${w.toFixed(2)},${H}` : `0,0 ${t.toFixed(2)},${H / 2} 0,${H}`;
-  const sv = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${z}" fill="${fc}"/><polyline points="${z}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
-  ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(sv)}")`; ov.style.backgroundSize = w.toFixed(2) + "px " + H + "px";
+  /* v0.834, «вертикальную линию можно убрать?» (при наведении на зубцы): подсветка v0.832 (filter: brightness) осветляла и заливку зубцов цветом поля —
+     светлая заливка встык с тёмным полем давала прямую черту. Теперь при наведении меняется только ломаная — цветом акцента и толще (--fzh), заливка та же */
+  const ac = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
+  const svg = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${z}" fill="${fc}"/><polyline points="${z}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
+  ov.style.setProperty("--fz", svg(ln, 1)); ov.style.setProperty("--fzh", svg(ac, 2)); ov.style.backgroundSize = w.toFixed(2) + "px " + H + "px";
 }
 /* v0.634, по снимку края левой панели — «сделай ромбовидной вертикальную границу левого меню»: вместо прямой черты справа — зубцы из тех же треугольников
    (ряд 24 px, острие вправо посередине ряда, выемка на стыке рядов, глубина t), как правый край групп. Рисунок — фоном панели у правого края: стоит на
