@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.084. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.085. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.084</title>
+    <title>Zerkalius Control Hub — v0.085</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -217,6 +217,9 @@
         .menu-btn.main-engine.rmbOn.fmOn { border: none; border-radius: 0; display: flex; align-items: center; height: var(--bh); padding: 0 var(--px); clip-path: var(--cp); }
         .menu-btn.main-engine.rmbOn.fmOn::before { content: ''; position: absolute; inset: 0; background: currentColor; pointer-events: none;
             -webkit-mask: var(--fm) 0 0 / 100% 100% no-repeat; mask: var(--fm) 0 0 / 100% 100% no-repeat; }
+        /* v0.085, по снимку кнопки v0.084 — «да, обеим кнопкам такую, только это просто обводка нужна; оставь внутреннюю, а сами треугольники не нужны»:
+           обе кнопки — одна трапеция узким краем вверх; рамки из треугольников нет, осталась её внутренняя граница — тонкая обводка цветом кнопки.
+           Кнопка обрезана по этой границе (--cp), обводка — маска --fm (контур, 2 px внутрь); места по сетке те же */
         .menu-btn.main-engine .rmbTxt { display: block; width: 100%; background: currentColor;
             -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
 
@@ -270,6 +273,11 @@
            Сама кнопка прозрачна (форма — clip-path по контуру дырки, ставит скрипт), всё видимое рисует холст #hubFly: цветные биты, их сток через вершину
            вниз, в общий треугольник, серая дырка с мигающей границей, пока ноты звучат (пауза — граница не мигает); второе нажатие — биты стекают обратно.
            Семь отдельных нот при этом спрятаны (body.allMode); лёжа на телефоне — прежняя стрелка нот. Меню — на прежнем месте */
+        /* v0.085, на v0.083 — «сейчас они как и раньше с вершины начинают движение; надо, чтобы отсюда прямо эти же ромбы уходили, по одному за одно нажатие,
+           по 1 ноте, по кругу: 7 нажатий — семь нот вылетело, потом следующие»: нажатие выпускает один бит дырки — по кругу До, Ре … Си (из каждой строки —
+           ближний к середине), потом второй круг из оставшихся, и так все 28. Первый бит ноты включает её звук; бит идёт к вершине дырки и оттуда летит прямо
+           в свою бегущую головку в треугольнике и сливается с ней. Ушедший бит оставляет серое место; граница дырки мигает, пока что-то звучит. Дырка пуста —
+           нажатие выключает все ноты, биты возвращаются на места */
         #hubAll, #hubFly { display: none; }
         #hubAll { position: fixed; z-index: 5; padding: 0; border: none; background: transparent; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         #hubFly { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
@@ -467,7 +475,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.084</div>
+        <div class="ver">v0.085</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -533,29 +541,18 @@
                         d += 'M' + q(x0, y0 + K) + 'L' + q(x0 + 0.5, y0) + 'L' + q(x0 + 1.5, y0) + 'L' + q(x0 + 1, y0 + K) + 'Z'; } });
                 return { W, H, url: 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(W)} ${f(H)}"><path d="${d}"/></svg>`) + '")' };
             };
-            /* v0.084: трапеция главной кнопки (up — узким краем вверх). Сетка равносторонних треугольников со стороной s, ряды высотой rh = s·√3/2, 4 ряда;
-               углы трапеции — узлы сетки, бока идут по её линиям, поэтому каждый треугольник целиком внутри или снаружи. Рамка — все треугольники верхнего и
-               нижнего рядов и по два крайних с каждой стороны в средних рядах */
+            /* v0.084: трапеция главной кнопки по сетке равносторонних треугольников со стороной s (ряд rh = s·√3/2, 4 ряда, скос 2s).
+               v0.085: от рамки осталась её внутренняя граница — трапеция между рядами 1 и 3: сверху от 2,5s до w − 2,5s, снизу от 1,5s до w − 1,5s */
             const SQ3 = Math.sqrt(3);
-            const mainFrame = (a, up) => {
+            const mainFrame = (a) => {
                 const set = () => {
                     const w = a.offsetWidth; if (!w) return;
-                    const m = Math.max(6, Math.round(w / (68 / (2 * SQ3)))), s = w / m, rh = s * SQ3 / 2, h = 4 * rh, o = 2 * s;
-                    const L = (y) => up ? o * (1 - y / h) : o * y / h, Rr = (y) => w - L(y), tris = [];
-                    for (let k = 0; k < 4; k++) {
-                        const yt = k * rh, yb = yt + rh, row = [], a0 = L(yt) - Math.ceil(L(yt) / s + 1) * s;
-                        for (let x = a0; x < w + s; x += s) row.push([[x, yt], [x + s, yt], [x + s / 2, yb]], [[x - s / 2, yb], [x + s / 2, yb], [x, yt]]);
-                        const cxy = (t) => [(t[0][0] + t[1][0] + t[2][0]) / 3, (t[0][1] + t[1][1] + t[2][1]) / 3];
-                        const ins = row.filter(t => { const [cx, cy] = cxy(t); return cx > L(cy) + 0.5 && cx < Rr(cy) - 0.5; }).sort((p, q) => cxy(p)[0] - cxy(q)[0]);
-                        tris.push(...(k === 0 || k === 3 ? ins : ins.slice(0, 2).concat(ins.slice(-2))));
-                    }
-                    let d = '';
-                    tris.forEach(t => { const mx = (t[0][0] + t[1][0] + t[2][0]) / 3, my = (t[0][1] + t[1][1] + t[2][1]) / 3, q = ([x, y]) => f(mx + (x - mx) * 0.86) + ' ' + f(my + (y - my) * 0.86);
-                        d += 'M' + q(t[0]) + 'L' + q(t[1]) + 'L' + q(t[2]) + 'Z'; });
-                    const svgF = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(w)} ${f(h)}" preserveAspectRatio="none"><path fill="#fff" d="${d}"/></svg>`;
+                    const m = Math.max(6, Math.round(w / (68 / (2 * SQ3)))), s = w / m, rh = s * SQ3 / 2, h = 4 * rh;
+                    const P = [[2.5 * s, rh], [w - 2.5 * s, rh], [w - 1.5 * s, 3 * rh], [1.5 * s, 3 * rh]], pts = P.map(([x, y]) => f(x) + ',' + f(y)).join(' ');
+                    const svgF = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(w)} ${f(h)}" preserveAspectRatio="none"><polygon points="${pts}" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="miter"/></svg>`;
                     a.style.setProperty('--fm', 'url("data:image/svg+xml,' + encodeURIComponent(svgF) + '")');
-                    a.style.setProperty('--bh', f(h) + 'px'); a.style.setProperty('--px', f(2.6 * s) + 'px');
-                    a.style.setProperty('--cp', up ? `polygon(${f(o)}px 0, ${f(w - o)}px 0, ${f(w)}px ${f(h)}px, 0 ${f(h)}px)` : `polygon(0 0, ${f(w)}px 0, ${f(w - o)}px ${f(h)}px, ${f(o)}px ${f(h)}px)`);
+                    a.style.setProperty('--bh', f(h) + 'px'); a.style.setProperty('--px', f(3 * s) + 'px');
+                    a.style.setProperty('--cp', 'polygon(' + P.map(([x, y]) => f(x) + 'px ' + f(y) + 'px').join(', ') + ')');
                     a.classList.add('fmOn');
                 };
                 set(); if (window.ResizeObserver) new ResizeObserver(set).observe(a); else addEventListener('resize', set);
@@ -565,7 +562,7 @@
                 const m = svg(ROWS[k]), sp = document.createElement('span');
                 sp.className = 'rmbTxt'; sp.style.setProperty('--m', m.url); sp.style.aspectRatio = f(m.W) + ' / ' + f(m.H);
                 a.setAttribute('aria-label', a.textContent.trim()); a.textContent = ''; a.appendChild(sp); a.classList.add('rmbOn');
-                mainFrame(a, k === 'tri');
+                mainFrame(a);
             });
         })();
         // v0.009: своя случайная фаза перелива у каждой кнопки — чтобы не мигали хором.
@@ -744,66 +741,72 @@
             const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
             /* v0.083: кнопка «все 7 нот» — первая перевёрнутая дырка треугольника (см. стили #hubAll). При N строках дырка — строки R0 = N/8 … R0 + S − 1,
                S = N/8 − 1 (при 64 — 8…14, семь строк); в строке R0 + t бит j = 1 + t + c, c < S − t; нота бита — t (До сверху, Си — вершина). Бит в решётке —
-               (r, x), x = j − r/2: на холсте (cx + x·dw, y0 + r·dh/2). Сток: каждый бит идёт вниз по решётке (за строку — на полклетки вбок) к вершине
-               дырки и дальше ещё EXIT строк в общий треугольник, гаснет; первыми уходят ближние к вершине. tt — время стока (0 — все в дырке, ALL.T — ушли),
-               назад — тот же путь задом наперёд */
+               (r, x), x = j − r/2: на холсте (cx + x·dw, y0 + r·dh/2).
+               v0.085: бит выпускается по одному (ALL.queue — по кругу строк, в строке — от середины); путь: по решётке к вершине (за строку — на полклетки вбок),
+               потом прямо к своей головке звука (ALL.heads — [строка, бит, нота] из фона, та же решётка), следя за ней, и гаснет в ней. st бита: in — на месте,
+               fly — летит, out — ушёл, back — возвращается */
             const sndBox = document.getElementById('hubSndBox'), allBtn = document.getElementById('hubAll'), fly = document.getElementById('hubFly'), fg = fly && fly.getContext('2d');
             const mainRow = document.querySelector('.hub .mainrow');
-            const ALL = { cells: [], poly: [], on: 0, tt: 0, T: 1, raf: 0, last: 0, W: 0, H: 0, dpr: 1, cx: 0, y0: 0, dw: 0, dh: 0, paused: false };
-            const ALL_STEP = 0.075, ALL_GAP = 0.055, ALL_EXIT = 9;
+            const IDS = ['r', 'c', 'mi', 'fa', 'sol', 'la', 'si'];   // головки фона по нотам: До … Си
+            const ALL = { cells: [], queue: [], poly: [], live: false, paused: false, heads: null, raf: 0, W: 0, H: 0, dpr: 1, cx: 0, y0: 0, dw: 0, dh: 0, vr: 0, X: null, Y: null };
+            const A_STEP = 0.06, A_FLY = 0.75, A_BACK = 0.35, A_GAP = 0.035;
             const allOff = () => { document.body.classList.remove('allMode'); if (mainRow) mainRow.style.gap = ''; };
             const allPt = (r, x) => [ALL.cx + x * ALL.dw, ALL.y0 + r * ALL.dh / 2];
-            const allPaths = () => {   // путь каждого бита: к вершине дырки, потом вниз в треугольник; задержка — по очереди от вершины
-                const N = PR.length, R0 = N / 8, S = N / 8 - 1, vr = R0 + S - 1, vx = 0;
-                const order = ALL.cells.slice().sort((a, b) => (b.r - a.r) || (Math.abs(a.x) - Math.abs(b.x)));
-                order.forEach((c, i) => {
-                    const path = [[c.r, c.x]]; let r = c.r, x = c.x, alt = Math.random() < 0.5 ? 1 : -1;
-                    while (r < vr) { const d = x > vx ? -0.5 : x < vx ? 0.5 : (alt = -alt) * 0.5; r++; x += d; path.push([r, x]); }
-                    c.vi = path.length - 1;
-                    for (let k = 0; k < ALL_EXIT; k++) { r++; x += Math.random() < 0.5 ? -0.5 : 0.5; path.push([r, x]); }
-                    c.path = path; c.delay = i * ALL_GAP;
-                });
-                ALL.T = Math.max(...ALL.cells.map(c => c.delay + (c.path.length - 1) * ALL_STEP)) + 0.05;
-            };
             const allDia = (x, y, k) => { const a = ALL.dw * k / 2, b = ALL.dh * k / 2; fg.beginPath(); fg.moveTo(x, y - b); fg.lineTo(x + a, y); fg.lineTo(x, y + b); fg.lineTo(x - a, y); fg.closePath(); fg.fill(); };
+            const allPost = (m) => { try { bg.contentWindow.postMessage(m, '*'); } catch (e) {} };
+            const allRelease = (c, now) => {
+                const path = [[c.r, c.x]]; let r = c.r, x = c.x, alt = Math.random() < 0.5 ? 1 : -1;
+                while (r < ALL.vr) { const d = x > 0 ? -0.5 : x < 0 ? 0.5 : (alt = -alt) * 0.5; r++; x += d; path.push([r, x]); }
+                Object.assign(c, { st: 'fly', path, t0: now });
+            };
+            const allRefill = (now) => { let i = 0; ALL.queue.slice().reverse().forEach(c => { if (c.st !== 'in') Object.assign(c, { st: 'back', t0: now + (i++) * A_GAP * 1000 }); }); };
+            const allHead = (t) => { const h = (ALL.heads || []).find(q => (q[2] | 0) === t); return h && ALL.X ? [ALL.X(h[0], h[1]), ALL.Y(h[0])] : null; };
             const allDraw = (now) => {
-                if (!fg) return; const { W, H, dpr, tt } = ALL;
+                if (!fg) return false; const { W, H, dpr } = ALL; let busy = ALL.live;
                 fg.setTransform(dpr, 0, 0, dpr, 0, 0); fg.clearRect(0, 0, W, H);
-                if (ALL.on || tt > 0) {   // дырка, откуда ушли биты: серая, граница мигает, пока ноты звучат
+                fg.fillStyle = 'rgba(58, 63, 68, .92)';
+                for (const c of ALL.cells) if (c.st !== 'in') { const [x, y] = allPt(c.r, c.x); allDia(x, y, 0.94); }   // ушедшие — серые места
+                if (ALL.live) {   // что-то звучит — граница дырки мигает (на паузе — ровная)
                     const P = ALL.poly; fg.beginPath(); P.forEach(([x, y], i) => i ? fg.lineTo(x, y) : fg.moveTo(x, y)); fg.closePath();
-                    fg.fillStyle = 'rgba(58, 63, 68, .92)'; fg.fill();
-                    const bl = ALL.on && !ALL.paused ? 0.5 + 0.5 * Math.sin((now || 0) / 1100 * 2 * Math.PI) : 0.6;
+                    const bl = ALL.paused ? 0.6 : 0.5 + 0.5 * Math.sin(now / 1100 * 2 * Math.PI);
                     fg.lineWidth = Math.max(1.5, ALL.dw * 0.12); fg.strokeStyle = `rgba(230, 236, 240, ${(0.25 + 0.75 * bl).toFixed(3)})`; fg.stroke();
                 }
                 for (const c of ALL.cells) {
-                    const s = Math.max(0, Math.min(c.path.length - 1, (tt - c.delay) / ALL_STEP)), i = Math.floor(s), f = s - i, a = c.path[i], b = c.path[Math.min(i + 1, c.path.length - 1)];
-                    const [x, y] = allPt(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f), out = Math.max(0, s - c.vi) / ALL_EXIT;
-                    if (out >= 1) continue;
-                    fg.globalAlpha = 1 - out; fg.fillStyle = noteCol[c.t] || '#9fffc8';
-                    if (s > 0 && s < c.path.length - 1) { fg.shadowColor = fg.fillStyle; fg.shadowBlur = ALL.dw * 0.5; }
-                    allDia(x, y, 0.86); fg.shadowBlur = 0;
+                    const col = noteCol[c.t] || '#9fffc8';
+                    if (c.st === 'in') { fg.fillStyle = col; const [x, y] = allPt(c.r, c.x); allDia(x, y, 0.86); continue; }
+                    if (c.st === 'back') {
+                        const u = (now - c.t0) / 1000 / A_BACK; busy = true; if (u <= 0) continue;
+                        if (u >= 1) { c.st = 'in'; } fg.fillStyle = col; const [x, y] = allPt(c.r, c.x); allDia(x, y, 0.86 * Math.min(1, u)); continue;
+                    }
+                    if (c.st !== 'fly') continue;
+                    busy = true;
+                    const tau = (now - c.t0) / 1000, tA = (c.path.length - 1) * A_STEP;
+                    let px, py, al = 1;
+                    if (tau < tA) { const sI = tau / A_STEP, i = Math.floor(sI), f = sI - i, a = c.path[i], b = c.path[Math.min(i + 1, c.path.length - 1)];
+                        [px, py] = allPt(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f); }
+                    else {
+                        const u = Math.min(1, (tau - tA) / A_FLY), e = u * u * (3 - 2 * u), v = c.path[c.path.length - 1], [vx, vy] = allPt(v[0], v[1]);
+                        const tg = allHead(c.t) || allPt(v[0] + 6, v[1]);
+                        px = vx + (tg[0] - vx) * e; py = vy + (tg[1] - vy) * e; al = u < 0.8 ? 1 : (1 - u) / 0.2;
+                        if (u >= 1) { c.st = 'out'; continue; }
+                    }
+                    fg.globalAlpha = al; fg.fillStyle = col; fg.shadowColor = col; fg.shadowBlur = ALL.dw * 0.7; allDia(px, py, 0.9); fg.shadowBlur = 0; fg.globalAlpha = 1;
                 }
-                fg.globalAlpha = 1;
+                return busy;
             };
-            const allStep = (now) => {
-                const dt = ALL.last ? Math.min(0.05, (now - ALL.last) / 1000) : 0; ALL.last = now;
-                ALL.tt = ALL.on ? Math.min(ALL.T, ALL.tt + dt) : Math.max(0, ALL.tt - dt * 1.4);
-                allDraw(now);
-                if (ALL.on || ALL.tt > 0) ALL.raf = requestAnimationFrame(allStep); else { ALL.raf = 0; ALL.last = 0; allBtn.classList.remove('on'); }
-            };
-            const allSet = (on) => {
-                on = on ? 1 : 0; if (on === ALL.on) return;
-                if (on && ALL.tt === 0) allPaths();
-                ALL.on = on; allBtn.classList.toggle('on', !!on || ALL.tt > 0);
-                if (!ALL.raf) { ALL.last = 0; ALL.raf = requestAnimationFrame(allStep); }
-            };
+            const allLoop = (now) => { ALL.raf = allDraw(now) ? requestAnimationFrame(allLoop) : 0; };
+            const allKick = () => { if (!ALL.raf) ALL.raf = requestAnimationFrame(allLoop); };
             const allPlace = (X, Y, dw, dh, W, H, dpr, desk) => {
                 const N = PR.length, R0 = N / 8, S = N / 8 - 1;
                 if (!allBtn || !fg || S < 1 || S * dw < 36) { allOff(); return false; }
                 document.body.classList.add('allMode');
-                Object.assign(ALL, { W, H, dpr, cx: X(0, 0), y0: Y(0), dw, dh });
+                Object.assign(ALL, { W, H, dpr, cx: X(0, 0), y0: Y(0), dw, dh, vr: R0 + S - 1, X, Y });
+                const old = new Map(ALL.cells.map(c => [c.r + ':' + c.x, c]));
                 ALL.cells = [];
-                for (let t = 0; t < S; t++) for (let c = 0; c < S - t; c++) { const r = R0 + t, j = 1 + t + c; ALL.cells.push({ r, x: j - r / 2, t: Math.min(6, t) }); }
+                for (let t = 0; t < S; t++) for (let c = 0; c < S - t; c++) { const r = R0 + t, x = 1 + t + c - r / 2;
+                    ALL.cells.push(old.get(r + ':' + x) || { r, x, t: Math.min(6, t), st: 'in' }); }
+                const rows = []; ALL.cells.forEach(c => (rows[c.t] = rows[c.t] || []).push(c)); rows.forEach(R => R.sort((a, b) => Math.abs(a.x) - Math.abs(b.x)));
+                ALL.queue = []; for (let k = 0; ; k++) { let any = false; rows.forEach(R => { if (R && R[k]) { ALL.queue.push(R[k]); any = true; } }); if (!any) break; }
                 const xl = X(R0, 1) - dw / 2, xr = X(R0, S) + dw / 2, yt = Y(R0) - dh / 2, yb = Y(R0 + S - 1) + dh / 2;
                 ALL.poly = [];   // контур дырки: зубцы верхнего ряда и нижняя вершина
                 for (let c = 0; c < S; c++) { ALL.poly.push([X(R0, 1 + c) - dw / 2, Y(R0)], [X(R0, 1 + c), Y(R0) - dh / 2]); }
@@ -815,17 +818,29 @@
                     const m = mainRow.getBoundingClientRect(); mainRow.style.gap = desk && m.height && yb > m.top - 4 && yt < m.bottom + 4 ? (w + 28).toFixed(0) + 'px' : '';
                 }
                 if (fly.width !== Math.round(W * dpr) || fly.height !== Math.round(H * dpr)) { fly.width = Math.round(W * dpr); fly.height = Math.round(H * dpr); }
-                allPaths(); if (ALL.on) ALL.tt = ALL.T;
                 if (!ALL.raf) allDraw(performance.now()); return true;
             };
-            if (allBtn) allBtn.onclick = () => { const on = !ALL.on; try { bg.contentWindow.postMessage({ zerkSnd: on }, '*'); } catch (e) {} allSet(on); };
-            window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
-                ALL.paused = !!e.data.zerkSndPaused; allSet(!!e.data.zerkSndOn); } });
+            if (allBtn) allBtn.onclick = () => {
+                const now = performance.now(), c = ALL.queue.find(q => q.st === 'in');
+                if (c) { const first = !ALL.cells.some(q => q.t === c.t && q.st !== 'in'); allRelease(c, now); if (first) allPost({ zerkSndHead: IDS[c.t], on: true }); }
+                else { allPost({ zerkSnd: false }); allRefill(now); }   // все вышли — тишина, биты возвращаются
+                allKick();
+            };
+            window.addEventListener('message', e => {
+                if (!bg || e.source !== bg.contentWindow || !e.data || e.data.zerkSndOn === undefined) return;
+                const d = e.data, now = performance.now(), ids = Array.isArray(d.zerkSndHeads) ? d.zerkSndHeads : [];
+                ALL.live = !!d.zerkSndOn; ALL.paused = !!d.zerkSndPaused;
+                if (!ALL.live) { if (ALL.cells.some(c => c.st === 'out' || c.st === 'fly')) allRefill(now); }
+                else IDS.forEach((id, t) => {   // нота включилась не кнопкой (правый щелчок — сброс) — её бит тоже выходит
+                    if (ids.includes(id) && !ALL.cells.some(c => c.t === t && c.st !== 'in')) { const c = ALL.queue.find(q => q.t === t && q.st === 'in'); if (c) allRelease(c, now); } });
+                allKick();
+            });
             const sierDraw = () => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
                 let hd = null; try { hd = bg && bg.contentWindow && bg.contentWindow.zzSndHeads; } catch (e) {}
                 if (!hd) hd = hubHeads;   /* v0.074: открыт файлом — фон прочитать нельзя, звучащие биты он шлёт сам (zerkHeads) */
+                ALL.heads = hd;   // v0.085: куда лететь выпущенному биту
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — теперь только когда сменились размер или звучащие биты */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
