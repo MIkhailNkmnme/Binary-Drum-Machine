@@ -3792,7 +3792,8 @@ function coneDirUi(){   // v0.136: ползунок — величина ско�
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
   $("coneAutoSp").value = spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
   const d3 = $("bC3Dir"); if (d3) d3.textContent = sp < 0 ? "↺" : "↻";   // v0.279: направление и в пульте
-  { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.511: горит стрелка направления
+  { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }
+  { const b = $("bC3StepB"), f = $("bC3StepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.856: и ромбы шага у ▶   // v0.511: горит стрелка направления
   coneSpinModeUi();
 }
 function coneRaysUi(){   // v0.576: лучи к центру — кнопками, горит выбранная (список coneRays — скрытый, держит значение)
@@ -4987,12 +4988,14 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 60;   // v0.828: ромб 60 (было 80)
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 + host.scrollTop;
+  const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 - (st ? w / 2 : 0) + host.scrollTop;
   /* v0.840, по снимку ромбов у оси — «поменяй местами, и сброс сделай меньше на 1/8, но расположи в том же центре ромба, как с обычным размером»: на оси
      внизу — ▶ крутить (60), сверху справа — ⌖✕ сброс 52,5 (7/8), его центр — в центре клетки ромба 60 */
   const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   if (sp && sp.parentElement === host) { put(sp, x, y); put(b, x + w / 2 + d, y - w / 2 + d); } else put(b, x, y);
+  if (st) { put(stB, x - w / 2 + d, y + w / 2 + d); if (stF && stF.parentElement === host) put(stF, x + w / 2 + d, y + w / 2 + d); }   // v0.856: 7/8, в клетках ромба 60
   /* v0.841, «полоска режимов появлялась при наведении на «крутить», справа от него, и кнопка ⟲ сразу после «крутить» справа — при изменённых положениях,
      не 0»: зелёная ⟲ (#bC3Home) — ромб остриём к острию справа от ▶, видна, только когда что-то сдвинуто; полоска #c3Modes — за ними, по центру ромба */
   const hm = document.getElementById("bC3Home"), ms = document.getElementById("c3Modes");
@@ -5911,6 +5914,12 @@ function setupCone(){
     const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset"));
     if (host && !$("bC3Spin")) { const b = document.createElement("button"); b.id = "bC3Spin"; b.title = "▶ Крутить / ⏸ стоп — то же, что «▶ крутить» в «Кручении»"; b.innerHTML = "▶<small>крутить</small>";   // v0.828
       b.onclick = () => { const a = $("bConeAuto"); if (a) a.click(); }; host.appendChild(b); }
+    /* v0.856, по снимку «▶ крутить» — «внизу от крутить справа, слева — стрелки шаги»: ромбы ◀ шаг / ▶ шаг под ▶, сторона к стороне (решётка ромбов),
+       жмут ◀ ▶ шага в «Кручении»; горит стрелка направления, как там. Место — c3RstPlace */
+    for (const [id, src, t, tip] of [["bC3StepB", "bConeStepB", "◀", "◀ Шаг назад — то же, что ◀ в «Кручении»"], ["bC3StepF", "bConeStepF", "▶", "▶ Шаг вперёд — то же, что ▶ в «Кручении»"]])
+      if (host && !$(id)) { const b = document.createElement("button"); b.id = id; b.className = "c3step"; b.title = tip; b.innerHTML = t + "<small>шаг</small>";
+        b.onclick = () => { const a = $(src); if (a) a.click(); }; host.appendChild(b); }
+    coneDirUi();
     if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
       b.classList.toggle("on", !!Z.coneAxes); b.onclick = () => { const a = $("bConeAxes"); if (a) a.click(); }; host.appendChild(b); }
     if (host && !$("bC3Home")) { const b = document.createElement("button"); b.id = "bC3Home"; b.hidden = true; b.title = "⟲ Всё на места — то же, что зелёная ⟲ в «Кручении»: снять накрутку колец, остановить и сбросить кручение, снять довод строки 1. Биты строк не меняются"; b.innerHTML = "⟲<small>на места</small>";   // v0.841
@@ -5932,7 +5941,7 @@ function setupCone(){
       for (const el of [$("bC3Spin"), $("bC3Home"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
       s.appendChild($("c3Speed")); coneSpinModeUi(); spinSpUi(); s.classList.toggle("spin", !!($("bC3Spin") && $("bC3Spin").classList.contains("on"))); }
     /* v0.847: притухание соседних ромбов при наведении — классом .c3hov у тела окна (было :has() на всём теле окна — тормозило загрузку) */
-    if (host && !host._c3hov) { host._c3hov = 1; const SEL = "#cone3Pad > button, #cone3Pad .c3top > button, #cone3Pad .c3bot > button, #cone3Pad > .c3grip, #bC3Reset, #bC3Spin, #bC3Home";
+    if (host && !host._c3hov) { host._c3hov = 1; const SEL = "#cone3Pad > button, #cone3Pad .c3top > button, #cone3Pad .c3bot > button, #cone3Pad > .c3grip, #bC3Reset, #bC3Spin, #bC3Home, #bC3StepB, #bC3StepF";
       const upd = (t) => { const on = !!(t && t.closest && t.closest(SEL)); if (host.classList.contains("c3hov") !== on) host.classList.toggle("c3hov", on); };
       host.addEventListener("pointerover", (e) => upd(e.target), { passive: true }); host.addEventListener("pointerleave", () => upd(null), { passive: true }); }
     c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
