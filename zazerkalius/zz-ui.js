@@ -5945,7 +5945,17 @@ function setupCone(){
       cut = Z.rows.length - 1; Z.rows.splice(1); Z.lanes[Z.lane] = Z.rows; Z.cur = 0; for (const k of [...rowSel]) if (k >= 1) rowSel.delete(k);
       coneRot.length = 1; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); fillStack.length = 0; coneDen = 0;
     }
+    /* v0.855, по снимку «⌖✕ сброс» и ряда «Всё | Каждое | Встреч Стр | Встреч Бит | ⟲ | 📍» — «не должен сбрасывать настройки кнопок, например этих»:
+       ⟲ внутри сброса возвращал из ⭐ умолчания (и ★ положения) ещё и режим кручения, скорость с направлением, Аниматрицу, замки и оси. Сброс их теперь
+       не трогает: до ⟲ запоминает, после — возвращает; режим — через смену режима (v0.853), чтобы кольца остались, где поставил ⟲ */
+    const KEEP = ["coneSpinMode", "coneAutoSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"], kept = {};
+    for (const k of KEEP) kept[k] = k in Z ? JSON.stringify(Z[k]) : undefined;
     fillReset(); $("bConeAllHome").click(); if (cut) renderAll(); tapeClear();   // v0.720: лента — с нуля
+    { const m0 = kept.coneSpinMode !== undefined ? JSON.parse(kept.coneSpinMode) : "all";
+      for (const k of KEEP) { if (k === "coneSpinMode") continue; if (kept[k] === undefined) delete Z[k]; else Z[k] = JSON.parse(kept[k]); }
+      coneDirUi(); spinSpUi(); $("animOp").value = Z.animOp || "xor"; $("animSp").value = Z.animSp ?? 40; $("animByPass").checked = !!Z.animByPass; $("coneLock").checked = Z.coneLock !== false;
+      if ((Z.coneSpinMode || "all") !== m0) { const sel = $("coneSpinMode"); sel.value = m0; sel.onchange({ target: sel }); }
+      save(); renderCone(); }
     say(`⌖✕ Сброс: ${cut ? `строки 2–${cut + 1} сняты — осталось солнце, строка 2 — под чертой; ` : ""}золото и строка за чертой стёрты, кольца на своих местах, кручение с нуля.${cut ? " ↩ вернёт." : ""}`);
   };
   /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
