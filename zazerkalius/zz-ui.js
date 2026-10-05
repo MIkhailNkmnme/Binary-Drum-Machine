@@ -4937,9 +4937,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 60;   // v0.828: ромб 60 (было 80)
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 + host.scrollTop;
-  const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
-  const sp = document.getElementById("bC3Spin"); if (sp && sp.parentElement === host) {   // v0.828: ▶ крутить — сверху справа, сторона к стороне
-    const ls = (x + w / 2).toFixed(1) + "px", ts = (y - w / 2).toFixed(1) + "px"; if (sp.style.left !== ls) sp.style.left = ls; if (sp.style.top !== ts) sp.style.top = ts; }
+  /* v0.840, по снимку ромбов у оси — «поменяй местами, и сброс сделай меньше на 1/8, но расположи в том же центре ромба, как с обычным размером»: на оси
+     внизу — ▶ крутить (60), сверху справа — ⌖✕ сброс 52,5 (7/8), его центр — в центре клетки ромба 60 */
+  const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2;
+  const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
+  if (sp && sp.parentElement === host) { put(sp, x, y); put(b, x + w / 2 + d, y - w / 2 + d); } else put(b, x, y);
 }
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
