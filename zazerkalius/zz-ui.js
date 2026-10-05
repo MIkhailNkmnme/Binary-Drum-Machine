@@ -5781,9 +5781,12 @@ function setupCone(){
       try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
       cut = Z.rows.length - 2; Z.rows.splice(2); Z.lanes[Z.lane] = Z.rows; Z.cur = Math.min(Z.cur | 0, 1); for (const k of [...rowSel]) if (k >= 2) rowSel.delete(k);
       coneRot.length = 2; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); fillStack.length = 0; coneDen = 0;
+    } else if (Z.rows.length < 2) {   // v0.829, по снимку поля после сброса («1», под чертой пустая) — «нужно: строка 1 и строка 2, под чертой»: строки 2 нет — сброс её ставит («11», ↩ вернёт)
+      try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
+      if (!Z.rows.length) Z.rows.push("1"); Z.rows.push("11"); Z.lanes[Z.lane] = Z.rows; fillStack.length = 0; coneDen = 0; cut = -1;
     }
     fillReset(); $("bConeAllHome").click(); if (cut) renderAll(); tapeClear();   // v0.720: лента — с нуля
-    say(`⌖✕ Сброс: ${cut ? `строки 3–${cut + 2} сняты — остались солнце и строка 2; ` : ""}золото и строка за чертой стёрты, кольца на своих местах, кручение с нуля.${cut ? " ↩ вернёт." : ""}`);
+    say(`⌖✕ Сброс: ${cut < 0 ? "строки 2 не было — поставлена «11»; " : cut ? `строки 3–${cut + 2} сняты — остались солнце и строка 2; ` : ""}золото и строка за чертой стёрты, кольца на своих местах, кручение с нуля.${cut ? " ↩ вернёт." : ""}`);
   };
   /* v0.105, «режим дзен»: только конус на весь экран (и во весь экран браузера, если можно); всё остальное спрятано.
      Выход — Esc (или выход из полноэкранного). Подсказка внизу гаснет через три секунды. */
