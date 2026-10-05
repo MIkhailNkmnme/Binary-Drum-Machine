@@ -4223,6 +4223,7 @@ function coneLogRender(){
   coneOutSync();   // v0.195
   const box = $("coneLogBox"); if (!box) return;
   box.style.display = Z.coneClock ? "flex" : "none";
+  { const cb = $("coneBot"); if (cb && cb.classList.contains("lasOn") !== !!Z.coneClock) cb.classList.toggle("lasOn", !!Z.coneClock); }   // v0.847: вместо :has() — столбцы лазера
   const list = Z.coneLog && Array.isArray(Z.coneLog.list) ? Z.coneLog.list : [];
   $("coneLogN").textContent = list.length ? `(${list.length}${list.length >= 1000 ? ", последние" : ""})` : "— пока пусто: тяни строку 1, ⌖◁ ⌖▷, ◀ ▶ или ▶ крутить";
   let h = ""; for (let i = list.length - 1, m = 0; i >= 0 && m < 300; i--, m++) h += '<div title="' + esc(list[i].f || list[i].t) + '">' + esc(list[i].t) + "</div>";
@@ -5893,6 +5894,10 @@ function setupCone(){
       const on = () => { clearTimeout(tm); s.classList.add("show"); }, off = () => { clearTimeout(tm); tm = setTimeout(() => s.classList.remove("show"), 450); };
       for (const el of [$("bC3Spin"), $("bC3Home"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
       s.appendChild($("c3Speed")); coneSpinModeUi(); spinSpUi(); s.classList.toggle("spin", !!($("bC3Spin") && $("bC3Spin").classList.contains("on"))); }
+    /* v0.847: притухание соседних ромбов при наведении — классом .c3hov у тела окна (было :has() на всём теле окна — тормозило загрузку) */
+    if (host && !host._c3hov) { host._c3hov = 1; const SEL = "#cone3Pad > button, #cone3Pad .c3top > button, #cone3Pad .c3bot > button, #cone3Pad > .c3grip, #bC3Reset, #bC3Spin, #bC3Home";
+      const upd = (t) => { const on = !!(t && t.closest && t.closest(SEL)); if (host.classList.contains("c3hov") !== on) host.classList.toggle("c3hov", on); };
+      host.addEventListener("pointerover", (e) => upd(e.target), { passive: true }); host.addEventListener("pointerleave", () => upd(null), { passive: true }); }
     c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     /* v0.830, «строка 2 должна быть под горизонтом»: сброс оставляет над чертой только строку 1 (солнце); строка 2 — та, что заполняется, под чертой
@@ -13992,7 +13997,7 @@ function init(){
   window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { packWins(); save(); }, 200); });
 }
 function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
-  document.body.classList.add("zen", "zen-quiet", "bgmode", "nocur");
+  document.body.classList.add("zen", "zen-quiet", "bgmode", "nocur"); document.documentElement.classList.add("bgmode");   // v0.847: html.bgmode вместо html:has(body.bgmode)
   if (ZZ_PRESET) {   // v0.185: пресет — как сохранён, только крутится
     rowSel.clear(); renderAll();
     if (!document.getElementById("bConeAuto").classList.contains("on")) $("bConeAuto").click();
