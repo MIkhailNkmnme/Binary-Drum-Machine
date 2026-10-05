@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.083. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.084. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.083</title>
+    <title>Zerkalius Control Hub — v0.084</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -210,6 +210,13 @@
            (SVG собирает скрипт в конце страницы), заливка — цвет кнопки (currentColor): перелив hue-main и чёрный при наведении работают как прежде.
            Сбойные полосы этих двух кнопок не трогают — полоса рисует текст буквами */
         .menu-btn.main-engine.rmbOn { padding: 14px 18px; font-size: 0; letter-spacing: 0; }
+        /* v0.084, по снимку «△ Сетки» Zazerkalius с двумя фигурами — «сделай такие границы, форму для кнопок», «это две кнопки, вытянутые 4 грани, трапеции»:
+           главные кнопки — трапеции с боками под 60°, рамка — один ряд треугольников по краю (каждый чуть сжат к центру — швы). «Треугольник» — узким краем
+           вверх (как ▲), «Зазеркалиус» — зеркально, узким вниз (как ▼). Размеры по сетке: сторона треугольника s = ширина / m (целое m), высота — 4 ряда
+           (2√3·s), скос — 2s; всё считает скрипт (mainFrame) и кладёт в --bh, --px, --cp (форма), --fm (маска рамки). Рамка — цветом кнопки (currentColor) */
+        .menu-btn.main-engine.rmbOn.fmOn { border: none; border-radius: 0; display: flex; align-items: center; height: var(--bh); padding: 0 var(--px); clip-path: var(--cp); }
+        .menu-btn.main-engine.rmbOn.fmOn::before { content: ''; position: absolute; inset: 0; background: currentColor; pointer-events: none;
+            -webkit-mask: var(--fm) 0 0 / 100% 100% no-repeat; mask: var(--fm) 0 0 / 100% 100% no-repeat; }
         .menu-btn.main-engine .rmbTxt { display: block; width: 100%; background: currentColor;
             -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
 
@@ -460,7 +467,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.083</div>
+        <div class="ver">v0.084</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -526,11 +533,39 @@
                         d += 'M' + q(x0, y0 + K) + 'L' + q(x0 + 0.5, y0) + 'L' + q(x0 + 1.5, y0) + 'L' + q(x0 + 1, y0 + K) + 'Z'; } });
                 return { W, H, url: 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(W)} ${f(H)}"><path d="${d}"/></svg>`) + '")' };
             };
+            /* v0.084: трапеция главной кнопки (up — узким краем вверх). Сетка равносторонних треугольников со стороной s, ряды высотой rh = s·√3/2, 4 ряда;
+               углы трапеции — узлы сетки, бока идут по её линиям, поэтому каждый треугольник целиком внутри или снаружи. Рамка — все треугольники верхнего и
+               нижнего рядов и по два крайних с каждой стороны в средних рядах */
+            const SQ3 = Math.sqrt(3);
+            const mainFrame = (a, up) => {
+                const set = () => {
+                    const w = a.offsetWidth; if (!w) return;
+                    const m = Math.max(6, Math.round(w / (68 / (2 * SQ3)))), s = w / m, rh = s * SQ3 / 2, h = 4 * rh, o = 2 * s;
+                    const L = (y) => up ? o * (1 - y / h) : o * y / h, Rr = (y) => w - L(y), tris = [];
+                    for (let k = 0; k < 4; k++) {
+                        const yt = k * rh, yb = yt + rh, row = [], a0 = L(yt) - Math.ceil(L(yt) / s + 1) * s;
+                        for (let x = a0; x < w + s; x += s) row.push([[x, yt], [x + s, yt], [x + s / 2, yb]], [[x - s / 2, yb], [x + s / 2, yb], [x, yt]]);
+                        const cxy = (t) => [(t[0][0] + t[1][0] + t[2][0]) / 3, (t[0][1] + t[1][1] + t[2][1]) / 3];
+                        const ins = row.filter(t => { const [cx, cy] = cxy(t); return cx > L(cy) + 0.5 && cx < Rr(cy) - 0.5; }).sort((p, q) => cxy(p)[0] - cxy(q)[0]);
+                        tris.push(...(k === 0 || k === 3 ? ins : ins.slice(0, 2).concat(ins.slice(-2))));
+                    }
+                    let d = '';
+                    tris.forEach(t => { const mx = (t[0][0] + t[1][0] + t[2][0]) / 3, my = (t[0][1] + t[1][1] + t[2][1]) / 3, q = ([x, y]) => f(mx + (x - mx) * 0.86) + ' ' + f(my + (y - my) * 0.86);
+                        d += 'M' + q(t[0]) + 'L' + q(t[1]) + 'L' + q(t[2]) + 'Z'; });
+                    const svgF = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(w)} ${f(h)}" preserveAspectRatio="none"><path fill="#fff" d="${d}"/></svg>`;
+                    a.style.setProperty('--fm', 'url("data:image/svg+xml,' + encodeURIComponent(svgF) + '")');
+                    a.style.setProperty('--bh', f(h) + 'px'); a.style.setProperty('--px', f(2.6 * s) + 'px');
+                    a.style.setProperty('--cp', up ? `polygon(${f(o)}px 0, ${f(w - o)}px 0, ${f(w)}px ${f(h)}px, 0 ${f(h)}px)` : `polygon(0 0, ${f(w)}px 0, ${f(w - o)}px ${f(h)}px, ${f(o)}px ${f(h)}px)`);
+                    a.classList.add('fmOn');
+                };
+                set(); if (window.ResizeObserver) new ResizeObserver(set).observe(a); else addEventListener('resize', set);
+            };
             [['Zerkalius-treugolnik.html', 'tri'], ['zazerkalius/Zerkalius-zazerkalius.html', 'zaz']].forEach(([href, k]) => {
                 const a = document.querySelector(`.menu-btn.main-engine[href="${href}"]`); if (!a) return;
                 const m = svg(ROWS[k]), sp = document.createElement('span');
                 sp.className = 'rmbTxt'; sp.style.setProperty('--m', m.url); sp.style.aspectRatio = f(m.W) + ' / ' + f(m.H);
                 a.setAttribute('aria-label', a.textContent.trim()); a.textContent = ''; a.appendChild(sp); a.classList.add('rmbOn');
+                mainFrame(a, k === 'tri');
             });
         })();
         // v0.009: своя случайная фаза перелива у каждой кнопки — чтобы не мигали хором.
