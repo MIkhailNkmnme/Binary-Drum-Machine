@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.080. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.081. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.080</title>
+    <title>Zerkalius Control Hub — v0.081</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -257,13 +257,33 @@
             #hubSndBox { font-size: clamp(20px, 6.4vw, 30px); max-width: calc(100vw - 16px); }
         }
         .hubSnd.on { color: var(--c); background: var(--c); animation: hub-snd-blink 1.1s ease-in-out infinite; }
-        /* v0.080, по снимку нот над треугольником и вырезке дырки в нём — «эти ноты-кнопки надо встроить в треугольника ромбы, найди там место для 7 кнопок»:
-           ноты — в дырке Серпинского (#hubSier), по его сетке: каждая нота — ромб из k × k бит-ромбов, вся стрелка 1-2-3-1 — только на нулях треугольника.
-           Место и k ищет скрипт (notePlace): самое крупное, что помещается между надписью и панелями меню; стрелка заходит в ряд главных кнопок — они
-           расступаются (gap у .mainrow). Ничего не нашлось (телефон: ромб уже 28 px) — ноты стоят, как прежде (класс .inSier снят) */
-        #hubSndBox.inSier { left: 0; top: 0; transform: none; width: 0; height: 0; max-width: none; }
-        #hubSndBox.inSier .nrow { display: contents; }
-        #hubSndBox.inSier .hubSnd { position: absolute; margin: 0; }
+        /* v0.081, на v0.080 (ноты в дырке треугольника) — «одну кнопку сделать из цветных ромбов в треугольнике; при нажатии они все начинают сыпаться в разные
+           стороны, а тут остаётся серое — мигать граница кнопки»; по выбору — «включает все 7 нот», «центральная дырка», «второе нажатие — ромбы слетаются назад».
+           Кнопка #hubAll — ромб k × k бит в большой центральной дырке Серпинского (k = 16 при 64 строках), сама прозрачная: её цветные бит-ромбы (полосы цветов семи
+           нот, сверху вниз До…Си) рисует холст #hubFly поверх неё. Нажал — звучат все семь нот, ромбы разлетаются и осыпаются, под ними — серая кнопка с мигающей
+           границей (.on; пауза — граница не мигает). Ещё нажатие — ноты молчат, ромбы слетаются назад тем же путём. Семь нот при этом спрятаны (body.allMode); лёжа на
+           телефоне — прежняя стрелка нот. Меню на компьютере (body.allDesk) — по бокам кнопки: слева «Треугольник» и «Знак и записи», справа «Зазеркалиус» и «Черновики» */
+        #hubAll, #hubFly { display: none; }
+        #hubAll { position: fixed; z-index: 5; padding: 0; border: none; background: transparent; cursor: pointer; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+                  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        #hubFly { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
+        body.allMode #hubAll, body.allMode #hubFly { display: block; }
+        body.allMode #hubSndBox { display: none; }
+        @media (hover: hover) { #hubAll:not(.on):hover + #hubFly { filter: brightness(1.3); } }
+        #hubAll.on { background: #8a9096; animation: hub-all-edge 1.1s ease-in-out infinite; }
+        #hubAll.on::before { content: ''; position: absolute; inset: 4px; background: #2b3035; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+        #hubAll.on.paused { animation: none; }
+        @keyframes hub-all-edge { 50% { background: #eef2f5; } }
+        body.allDesk .hub { display: grid; grid-template-columns: 1fr var(--allW, 320px) 1fr; align-content: end; justify-items: center; column-gap: 24px; row-gap: 22px; }
+        body.allDesk .hub .mainrow { display: contents; }
+        body.allDesk .hub .mainrow > a:first-of-type { grid-column: 1; grid-row: 1; }
+        body.allDesk .hub .mainrow > a:last-of-type { grid-column: 3; grid-row: 1; }
+        body.allDesk .menu-btn.main-engine { max-width: 100%; }
+        body.allDesk #pnSign { grid-column: 1; grid-row: 2; align-self: end; }
+        body.allDesk #pnDraft { grid-column: 3; grid-row: 2; align-self: end; }
+        body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { display: grid; grid-template-columns: repeat(2, 170px); }
+        @media (min-width: 1500px) { body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { grid-template-columns: repeat(3, 170px); } }
+        @media (max-width: 1100px) { body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { grid-template-columns: 170px; } }
         /* v0.061: ⏺ видеозапись хаба — правый верхний угол; идёт запись — красная, мигает */
         #hubRec { position: fixed; right: 10px; top: 6px; z-index: 6; font: 22px/1 system-ui, sans-serif; padding: 4px 8px; cursor: pointer; color: #7d8388;
                   background: none; border: none; text-shadow: 0 0 6px #000; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -401,6 +421,7 @@
             html, body { height: auto; }
             body { overflow-x: hidden; overflow-y: auto; }
             #hubSier { display: block; position: absolute; left: 0; top: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; opacity: 1; }
+            #hubAll { position: absolute; } #hubFly { position: absolute; height: 100svh; }   /* v0.081: там же, где треугольник */
             #hubSndBox { position: absolute; top: 55svh; }
             .hub { height: auto; margin-top: 100svh; justify-content: flex-start; overflow: visible; padding: 28px 12px 64px; }
             .mainrow { flex-direction: column; align-items: center; gap: 14px; }
@@ -428,6 +449,8 @@
     <!-- v0.054: семь нот — До…Си; у каждой своя головка звука фона и свой цвет (--c) -->
     <!-- v0.063: телефон — Серпинский первого экрана и стрелки вниз к меню -->
     <canvas id="hubSier" aria-hidden="true"></canvas>
+    <!-- v0.081: одна кнопка «все 7 нот» — ромб в центральной дырке треугольника; её цветные ромбы — на холсте #hubFly (идёт сразу за кнопкой: наведение подсвечивает его) -->
+    <button id="hubAll" type="button" aria-label="Все семь нот" title="Все семь нот: щелчок — звучат все (ромбы разлетаются), ещё щелчок — тишина (ромбы слетаются назад)"></button><canvas id="hubFly" aria-hidden="true"></canvas>
     <button id="hubDown" type="button" title="Вниз — к кнопкам">⌄<br>⌄</button>
     <!-- v0.061: ⏺ видеозапись хаба -->
     <button id="hubRec" type="button" title="⏺ Видео хаба: ролик в формате устройства (телефон — 1080×1920, компьютер — 1920×1080) — ноты, как горят, и их звук; конус — если он виден. Ещё щелчок — стоп, файл скачивается">⏺</button>
@@ -452,7 +475,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.080</div>
+        <div class="ver">v0.081</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -464,7 +487,7 @@
         </div>
 
         <!-- Знак и записи (папка oktaedr\), заведено 2026-09-20; обои — 2026-09-21 -->
-        <div class="panel">
+        <div class="panel" id="pnSign">
             <div class="panel-title" data-en="◇ Sign &amp; Records" data-ru="◇ Знак и записи">◇ Знак и записи</div>
             <div class="row">
                 <a href="Zerkalius-dnevnik.html" class="menu-btn draft-btn" data-en="Logbook" data-ru="Борт-журнал">Борт-журнал</a>
@@ -482,7 +505,7 @@
 
         <!-- v0.049, «перемести Черновики вниз, но не ниже номера версии»: Черновики — последними -->
         <!-- Черновики (до v0.018 — «Лаборатория (Черновики)») — с v0.012 в порядке создания (по первому появлению в git) -->
-        <div class="panel">
+        <div class="panel" id="pnDraft">
             <div class="panel-title" data-en="🔬 Drafts" data-ru="🔬 Черновики">🔬 Черновики</div>
             <div class="grid">
                 <!-- v0.033: Code — первым в Черновиках (до этого флагман хаба, v0.008–0.032); остальные — по порядку создания -->
@@ -699,56 +722,55 @@
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && 'zerkHeads' in e.data) hubHeads = e.data.zerkHeads; });
             const PR = ['1']; while (PR.length < 64) { const q = PR[PR.length - 1]; let nx = '1'; for (let i = 1; i < q.length; i++) nx += q[i - 1] !== q[i] ? '1' : '0'; PR.push(nx + '1'); }
             const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
-            /* v0.080: ноты в дырке треугольника. NOTE_QP — место ноты в стрелке (ряд q, номер p — та же решётка, что у бит: ряд ниже — на полромба),
-               по порядку кнопок: До; Ре Ми; Фа Соль Ля; Си — под Соль, касается её вершиной. Нота размера k — биты (R + q·k + a + b, J + p·k + b),
-               a, b < k: ромб той же формы, что бит, в k раз больше. notePlaces — все (R, J), где у всех семи нот только нули */
-            const NOTE_QP = [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2], [4, 2]];
-            const sndBox = document.getElementById('hubSndBox'), sndBtns = Array.from(sndBox.querySelectorAll('.hubSnd')), mainRow = document.querySelector('.hub .mainrow');
-            let notePl = null;
-            const notePlaces = () => {
-                if (notePl) return notePl; notePl = {}; const N = PR.length;
-                for (let k = 2; k <= 8; k++) { const L = [];
-                    for (let R = 0; R < N; R++) for (let J = 0; J <= R; J++) {
-                        let ok = true;
-                        for (const [q, p] of NOTE_QP) { for (let a = 0; a < k && ok; a++) for (let b = 0; b < k && ok; b++) { const r = R + q * k + a + b, j = J + p * k + b; if (r >= N || j > r || PR[r][j] !== '0') ok = false; } if (!ok) break; }
-                        if (ok) L.push([R, J]); }
-                    notePl[k] = L; }
-                return notePl;
-            };
-            const noteFree = () => {
-                if (!sndBox.classList.contains('inSier')) return;
-                sndBox.classList.remove('inSier'); sndBtns.forEach(b => { b.style.left = b.style.top = b.style.width = b.style.height = b.style.fontSize = ''; }); if (mainRow) mainRow.style.gap = '';
-            };
-            const pageBox = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return r.height ? { t: r.top + window.scrollY, b: r.bottom + window.scrollY, w: r.width } : null; };
-            /* X(r, j), Y(r) — центр бит-ромба на холсте; lo, hi — между чем стрелке стоять (низ надписи, верх панелей меню) */
-            const notePlace = (X, Y, dw, dh, cx, W, lo, hi, mr) => {
-                const P = notePlaces();
-                for (let k = 8; k >= 2; k--) {
-                    if (k * dw < 28) break;   // ромб ноты уже 28 px — подпись не влезет и пальцу мало
-                    let best = null;
-                    for (const [R, J] of P[k]) {
-                        const top = Y(R) - dh / 2, bot = Y(R + 4 * k) - dh / 2 + k * dh;
-                        if (top < lo || bot > hi) continue;
-                        const xs = NOTE_QP.map(([q, p]) => X(R + q * k, J + p * k)), x0 = Math.min(...xs) - k * dw / 2, x1 = Math.max(...xs) + k * dw / 2, off = Math.abs((x0 + x1) / 2 - cx);
-                        if (x0 < 4 || x1 > W - 4) continue;
-                        let gap = 0;
-                        if (mr && bot > mr.t && top < mr.b) {   // стрелка заходит в ряд главных кнопок — только по середине, кнопки расступаются
-                            if (off > 1) continue;
-                            gap = x1 - x0 + 28; if (2 * mr.btn + gap > W - 48) continue;
-                        }
-                        if (!best || off < best.off - 0.5 || (Math.abs(off - best.off) <= 0.5 && top < best.top)) best = { R, J, off, top, gap };
-                    }
-                    if (best) {
-                        sndBox.classList.add('inSier');
-                        NOTE_QP.forEach(([q, p], i) => { const b = sndBtns[i]; if (!b) return; const r = best.R + q * k, j = best.J + p * k, w = k * dw, h = k * dh;
-                            b.style.left = (X(r, j) - w / 2).toFixed(1) + 'px'; b.style.top = (Y(r) - dh / 2).toFixed(1) + 'px';
-                            b.style.width = w.toFixed(1) + 'px'; b.style.height = h.toFixed(1) + 'px'; b.style.fontSize = Math.max(9, Math.min(22, w * 0.24)).toFixed(1) + 'px'; });
-                        if (mainRow) mainRow.style.gap = best.gap ? best.gap.toFixed(0) + 'px' : '';
-                        return true;
-                    }
+            /* v0.081: одна кнопка «все 7 нот» в центральной дырке (см. стили #hubAll). Бит кнопки (R + a + b, J + b), a, b < k: ромб той же формы, что бит,
+               в k раз больше; при 64 строках k = 16, R = 32, J = 16 — дырка вмещает его целиком. Полёт: у каждого бит-ромба своя скорость от центра кнопки,
+               вверх и вбок, падение вниз, вращение; ph — доля пути (0 — на месте, 1 — улетели и погасли), обратно — тот же путь задом наперёд */
+            const sndBox = document.getElementById('hubSndBox'), allBtn = document.getElementById('hubAll'), fly = document.getElementById('hubFly'), fg = fly && fly.getContext('2d');
+            const ALL = { cells: [], tg: 0, ph: 0, raf: 0, last: 0, W: 0, H: 0, dpr: 1, cx: 0, cy: 0, dw: 0, dh: 0, sc: 1 }, ALL_T = 1.5;
+            const allOff = () => document.body.classList.remove('allMode', 'allDesk');
+            const allSeed = () => { const sc = ALL.sc;
+                ALL.cells.forEach(c => { const dx = c.x - ALL.cx, dy = c.y - ALL.cy; let an = Math.hypot(dx, dy) < 1 ? Math.random() * 6.283 : Math.atan2(dy, dx);
+                    an += (Math.random() - 0.5) * 0.9; const sp = (220 + Math.random() * 620) * sc;
+                    c.vx = Math.cos(an) * sp; c.vy = Math.sin(an) * sp - 160 * sc; c.w = (Math.random() - 0.5) * 10; }); };
+            const allDraw = () => {
+                if (!fg) return; const { W, H, dpr, dw, dh, ph } = ALL;
+                fg.setTransform(dpr, 0, 0, dpr, 0, 0); fg.clearRect(0, 0, W, H); if (ph >= 1) return;
+                const t = ph * ALL_T, G = 1100 * ALL.sc, a = dw * 0.45, b = dh * 0.45;
+                fg.globalAlpha = 1 - Math.pow(ph, 1.6);
+                for (const c of ALL.cells) {
+                    fg.fillStyle = noteCol[c.s] || '#9fffc8'; fg.save(); fg.translate(c.x + c.vx * t, c.y + c.vy * t + G * t * t / 2); if (t) fg.rotate(c.w * t);
+                    fg.beginPath(); fg.moveTo(0, -b); fg.lineTo(a, 0); fg.lineTo(0, b); fg.lineTo(-a, 0); fg.closePath(); fg.fill(); fg.restore();
                 }
-                noteFree(); return false;
+                fg.globalAlpha = 1;
             };
+            const allStep = (now) => {
+                const dt = ALL.last ? Math.min(0.05, (now - ALL.last) / 1000) : 0; ALL.last = now;
+                ALL.ph = ALL.tg ? Math.min(1, ALL.ph + dt / ALL_T) : Math.max(0, ALL.ph - dt / 0.9);
+                allDraw();
+                if (ALL.ph !== ALL.tg) ALL.raf = requestAnimationFrame(allStep); else { ALL.raf = 0; ALL.last = 0; if (!ALL.tg) allBtn.classList.remove('on'); }
+            };
+            const allSet = (on) => {
+                on = on ? 1 : 0; if (on === ALL.tg) return;
+                if (on && ALL.ph === 0) allSeed();
+                ALL.tg = on; if (on) allBtn.classList.add('on');
+                if (!ALL.raf) { ALL.last = 0; ALL.raf = requestAnimationFrame(allStep); }
+            };
+            const allPlace = (X, Y, dw, dh, W, H, dpr, desk) => {
+                const N = PR.length, k = N / 4, R = N / 2, J = N / 4;
+                if (!allBtn || !fg || k * dw < 40) { allOff(); return false; }
+                document.body.classList.add('allMode'); document.body.classList.toggle('allDesk', desk);
+                const w = k * dw, h = k * dh, y = Y(R) - dh / 2;
+                Object.assign(allBtn.style, { left: (X(R, J) - w / 2).toFixed(1) + 'px', top: y.toFixed(1) + 'px', width: w.toFixed(1) + 'px', height: h.toFixed(1) + 'px' });
+                document.documentElement.style.setProperty('--allW', (w + 40).toFixed(0) + 'px');
+                ALL.cells = [];
+                for (let a = 0; a < k; a++) for (let b = 0; b < k; b++) ALL.cells.push({ x: X(R + a + b, J + b), y: Y(R + a + b), s: Math.min(6, Math.floor((a + b) * 7 / (2 * k - 1))) });
+                Object.assign(ALL, { W, H, dpr, cx: X(R, J), cy: y + h / 2, dw, dh, sc: dw / 18 });
+                if (fly.width !== Math.round(W * dpr) || fly.height !== Math.round(H * dpr)) { fly.width = Math.round(W * dpr); fly.height = Math.round(H * dpr); }
+                allSeed(); allDraw(); return true;
+            };
+            if (allBtn) allBtn.onclick = () => { const on = !ALL.tg; try { bg.contentWindow.postMessage({ zerkSnd: on }, '*'); } catch (e) {} allSet(on); };
+            window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
+                allSet(!!e.data.zerkSndOn); if (allBtn) allBtn.classList.toggle('paused', !!e.data.zerkSndPaused); } });
             const sierDraw = () => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
@@ -756,14 +778,13 @@
                 if (!hd) hd = hubHeads;   /* v0.074: открыт файлом — фон прочитать нельзя, звучащие биты он шлёт сам (zerkHeads) */
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — теперь только когда сменились размер или звучащие биты */
-                const lg = pageBox(document.getElementById('hubLogoCv')), pn = pageBox(document.querySelector('.hub .panel')), mr0 = pageBox(mainRow);   // v0.080: где надпись и меню
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null) + '|' + [lg && lg.b, pn && pn.t, mr0 && mr0.t, mr0 && mr0.b].map(v => v == null ? '' : Math.round(v)).join(',');
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null);
                 if (key === sierDraw.k) return true; sierDraw.k = key;
                 if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
                 const desk = !matchMedia('(pointer: coarse) and (max-width: 960px)').matches;   // v0.072: компьютер — один по центру, во всю высоту
-                const N = PR.length, land = W > H && !desk; if (land) noteFree();   // v0.080: лёжа — ноты, как прежде, между двумя треугольниками
+                const N = PR.length, land = W > H && !desk; if (land) allOff();   // v0.081: лёжа — ноты, как прежде, между двумя треугольниками
                 const bw = sndBox.getBoundingClientRect().width;
                 /* v0.065, «треугольник должен быть выполнен из бит-ромбов, а не квадратов»: бит — ромб шириной dw и высотой dh с центром в spots(r, j).
                    Стоя — ромбы 60°/120° (dh = √3·dw) ребро к ребру: ряд заходит в ряд наполовину (шаг рядов dh/2), как ноты, — треугольник
@@ -772,9 +793,7 @@
                 if (!land) { const top = desk ? H * 0.03 : H * 0.07, hMax = desk ? H * 0.94 : H * 0.42; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
                     const cx = W / 2, y0 = top + (hMax - (N + 1) * dh / 2) / 2 + dh / 2;
                     spots = [(r, j) => [cx - r * dw / 2 + j * dw, y0 + r * dh / 2]];
-                    { const btn = mainRow && mainRow.firstElementChild ? mainRow.firstElementChild.getBoundingClientRect().width : 340;
-                      notePlace((r, j) => cx - r * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, cx, W, (lg ? lg.b : 0) + 6,
-                        Math.min(pn ? pn.t - 8 : H, H - (desk ? 6 : 70)), mr0 && desk ? { t: mr0.t - 4, b: mr0.b + 4, btn } : null); } }
+                    allPlace((r, j) => cx - r * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr, desk); }
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же
                             равносторонний из ромбов, но на боку — вершина у своего края экрана (◀ слева, ▶ справа), основание к нотам; ромбы повёрнуты с ним */
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
@@ -806,15 +825,22 @@
                 }
                 const n = Array.from(box.querySelectorAll('.hubSnd')).map(b => b.getBoundingClientRect()).reduce((u, r) => !u ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
                   : { left: Math.min(u.left, r.left), top: Math.min(u.top, r.top), right: Math.max(u.right, r.right), bottom: Math.max(u.bottom, r.bottom) }, null);   // v0.080: ноты в треугольнике — коробка нулевая, берём сами ноты
-                if (!n || n.right <= n.left) return; n.width = n.right - n.left; n.height = n.bottom - n.top;
-                let k = Math.min(W * 0.8 / n.width, H * 0.6 / n.height), ox = W / 2 - (n.left + n.width / 2) * k, oy = H / 2 - (n.top + n.height / 2) * k;
-                if (sier && getComputedStyle(sier).display !== 'none' && sier.width) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
+                const sierOn = sier && getComputedStyle(sier).display !== 'none' && sier.width;
+                if ((!n || n.right <= n.left) && !sierOn) return;   // v0.081: ноты спрятаны (одна кнопка) — кадр по треугольнику
+                let k = 1, ox = 0, oy = 0;
+                if (n && n.right > n.left) { n.width = n.right - n.left; n.height = n.bottom - n.top; k = Math.min(W * 0.8 / n.width, H * 0.6 / n.height); ox = W / 2 - (n.left + n.width / 2) * k; oy = H / 2 - (n.top + n.height / 2) * k; }
+                if (sierOn) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
                   const sw = sier.clientWidth, sh = sier.clientHeight, sy = window.scrollY; k = Math.min(W / sw, H / sh); ox = (W - sw * k) / 2; oy = (H - sh * k) / 2 + sy * k;
                   g.drawImage(sier, ox, oy - sy * k, sw * k, sh * k);
+                  const ab = document.getElementById('hubAll');   // v0.081: кнопка «все 7 нот» — серая с границей, когда ромбы улетели, и сами ромбы
+                  if (ab && getComputedStyle(ab).display !== 'none') { const r = ab.getBoundingClientRect(), x = r.left * k + ox, y = r.top * k + oy, w = r.width * k, h = r.height * k;
+                    if (ab.classList.contains('on')) { g.fillStyle = getComputedStyle(ab).backgroundColor; g.beginPath(); g.moveTo(x + w / 2, y); g.lineTo(x + w, y + h / 2); g.lineTo(x + w / 2, y + h); g.lineTo(x, y + h / 2); g.closePath(); g.fill();
+                      const d = 4 * k; g.fillStyle = '#2b3035'; g.beginPath(); g.moveTo(x + w / 2, y + d * h / w * 1.4); g.lineTo(x + w - d * 1.4, y + h / 2); g.lineTo(x + w / 2, y + h - d * h / w * 1.4); g.lineTo(x + d * 1.4, y + h / 2); g.closePath(); g.fill(); }
+                    const fl = document.getElementById('hubFly'); if (fl && fl.width) g.drawImage(fl, ox, oy - sy * k, sw * k, sh * k); }
                 }
                 g.textAlign = 'center'; g.textBaseline = 'middle';
                 box.querySelectorAll('.hubSnd').forEach(b => {
-                  const r = b.getBoundingClientRect(), cs = getComputedStyle(b), on = b.classList.contains('on');
+                  const r = b.getBoundingClientRect(), cs = getComputedStyle(b), on = b.classList.contains('on'); if (!r.width) return;
                   g.globalAlpha = +cs.opacity || 1;
                   { const x = r.left * k + ox, y = r.top * k + oy, w = r.width * k, h = r.height * k;   // v0.063: ромб ноты
                     g.shadowBlur = 0; g.strokeStyle = cs.backgroundColor; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(x + w / 2, y); g.lineTo(x + w, y + h / 2); g.lineTo(x + w / 2, y + h); g.lineTo(x, y + h / 2); g.closePath(); g.stroke(); }
