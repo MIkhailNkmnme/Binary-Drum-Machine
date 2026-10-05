@@ -6387,6 +6387,10 @@ function setupCone(){
     la: { kd: 5, semi: 0 }, si: { kd: 6, semi: 2 } };
   const sndSemi = (id) => ZZ_BG && SND_HEADS[id].semi ? Math.pow(2, SND_HEADS[id].semi / 12) : 1;
   let sndHeadsOn = new Set(["r", "c"]);
+  /* v0.852, хаб v0.086 — «чтобы головка стартовала прямо из вершины дырки» (дырка-кнопка «все 7 нот» в треугольнике хаба): у каждой головки свой
+     сдвиг шага sndKOff[id] (0 — как было). Хаб, включая ноту, шлёт { zerkSndHead, on, from: [строка, бит] } — на ближайшем шаге подбирается
+     сдвиг, при котором головка стоит на этом бите (у диагоналей, которые туда не попадают, — на ближайшем к нему) */
+  let sndKOff = {}, sndFrom = {};
   const sndAuto = (r) => {
     if (!(r >= 0)) return null;
     for (let i = Math.min(r, Z.rows.length - 2); i >= 0; i--) {
@@ -6428,10 +6432,7 @@ function setupCone(){
       const lens = L.map(r => (Z.rows[r] || "").length), tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
       const k = sndStep % tot; sndStep = k + 1, H = sndHeadsOn, n = L.length;
       const rpos = (x) => { let g = 0; while (x >= lens[g]) { x -= lens[g]; g++; } return [g, x]; };   // v0.389: место x-го бита при чтении строк подряд
-      const [gi, kk] = rpos(k);
-      const on = [], r1 = L[gi], s1 = Z.rows[r1];
-      if (H.has("r")) sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz * sndSemi("r"), gi % 4]); });
-      if (kk === 0 && H.has("r")) sndShow([r1]);
+      const on = [];
       const key = L.length + ":" + tot + ":" + L[0] + ":" + L[L.length - 1];
       if (!sndRC || sndRC.key !== key) {   // сколько строк доходит до каждого столбца — один раз на поле
         const W = Math.max(...lens), cnt = new Array(W).fill(0); lens.forEach(x => { for (let c = 0; c < x; c++) cnt[c]++; });
@@ -6450,13 +6451,29 @@ function setupCone(){
         P.push([p[0], p[1], SND_HEADS[id].kd]);
         const hz = sndBitHz(s, p[1]); if (hz) on.push([hz * f * sndSemi(id), v]);
       };
-      if (H.has("c")) bit(cpos(k), "c", 0.5, 8);
+      const hp = (id, x) => {   // v0.852: где головка id на шаге x (те же правила, что ниже)
+        x = ((x % tot) + tot) % tot;
+        if (id === "r") { const [g, b] = rpos(x); return [L[g], b]; }
+        if (id === "c") return cpos(x);
+        if (id === "mi") { const [g, b] = rpos(tot - 1 - x); return [L[g], b]; }
+        if (id === "fa") return cpos(x, () => true);
+        if (id === "sol") return lens[x % n] ? [L[x % n], x % lens[x % n]] : null;
+        if (id === "la") return lens[n - 1 - x % n] ? [L[n - 1 - x % n], x % lens[n - 1 - x % n]] : null;
+        const [g, b] = rpos((Math.imul(x + 1, 2654435761) >>> 0) % tot); return [L[g], b];
+      };
+      for (const id of Object.keys(sndFrom)) {   // v0.852: хаб попросил старт с бита — подобрать сдвиг
+        const [tr, tb] = sndFrom[id]; let best = 0, bd = Infinity;
+        for (let x = 0; x < tot && bd > 0; x++) { const q = hp(id, x); if (!q) continue;
+          const d = Math.abs(q[0] - tr) + Math.abs((q[1] - q[0] / 2) - (tb - tr / 2)); if (d < bd) { bd = d; best = x; } }
+        sndKOff[id] = best - k; delete sndFrom[id];
+      }
+      const kx = (id) => (((k + (sndKOff[id] || 0)) % tot) + tot) % tot;
+      { const [gi, kk] = rpos(kx("r")), r1 = L[gi], s1 = Z.rows[r1];   // строчная — как была, со своим сдвигом
+        if (H.has("r")) sndOffs(s1.length, r1).forEach((o) => { const j = (kk + o) % s1.length; P.push([r1, j]); const hz = sndBitHz(s1, j); if (hz) on.push([hz * sndSemi("r"), gi % 4]); });
+        if (kk === 0 && H.has("r")) sndShow([r1]); }
+      if (H.has("c")) bit(cpos(kx("c")), "c", 0.5, 8);
       const at = (g, x) => [L[g], x];
-      if (H.has("mi")) bit(at(...rpos(tot - 1 - k)), "mi", 1, 3);
-      if (H.has("fa")) bit(cpos(k, () => true), "fa", 1, 0);
-      if (H.has("sol") && lens[k % n]) bit([L[k % n], k % lens[k % n]], "sol", 1, 3);
-      if (H.has("la") && lens[n - 1 - k % n]) bit([L[n - 1 - k % n], k % lens[n - 1 - k % n]], "la", 1, 0);
-      if (H.has("si")) bit(at(...rpos((Math.imul(k + 1, 2654435761) >>> 0) % tot)), "si", 1, 3);
+      for (const id of ["mi", "fa", "sol", "la", "si"]) if (H.has(id)) bit(hp(id, kx(id)), id, 1, id === "fa" || id === "la" ? 0 : 3);   // v0.852: через hp, со сдвигом
       on.forEach(([hz, v]) => sndNote(hz, t, len, 0.32 / Math.sqrt(on.length), v));
     } else if (m === "seq" || m === "pair") {   // v0.257: чтение — строки одна за другой (по 2 — парами разом), выделенные или всё поле
       const L = sndList(true), G = m === "pair" ? 2 : 1, groups = [];
@@ -6556,6 +6573,10 @@ function setupCone(){
        хаба (zerkSndToggle) — пауза: звук встаёт на месте (sndPause), конус перестаёт крутиться; ещё щелчок — дальше с того же шага, те же ноты,
        конус крутится дальше. Сброс — правый щелчок (zerkSndReset): все семь нот, звук с начала, конус — в начальное положение и крутится */
     const coneGo = (on) => { if ($("bConeAuto").classList.contains("on") !== on) $("bConeAuto").click(); };
+    if (d.zerkSndReset || d.zerkSnd !== undefined) { sndKOff = {}; sndFrom = {}; }   // v0.852: все разом — маршруты как были
+    if (d.zerkSndHead && SND_HEADS[d.zerkSndHead]) {   // v0.852: нота включается с бита from (хаб) / выключается — её сдвиг забыт
+      if (d.on && Array.isArray(d.from)) sndFrom[d.zerkSndHead] = d.from; else if (!d.on) { delete sndKOff[d.zerkSndHead]; delete sndFrom[d.zerkSndHead]; }
+    }
     if (d.zerkSndReset) {
       clearTimeout(sndT); sndT = 0; sndPaused = false; sndGen++;
       sndHeadsOn = new Set(Object.keys(SND_HEADS)); sndSet(true);
