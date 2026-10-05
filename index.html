@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.082. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.083. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.082</title>
+    <title>Zerkalius Control Hub — v0.083</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -257,33 +257,18 @@
             #hubSndBox { font-size: clamp(20px, 6.4vw, 30px); max-width: calc(100vw - 16px); }
         }
         .hubSnd.on { color: var(--c); background: var(--c); animation: hub-snd-blink 1.1s ease-in-out infinite; }
-        /* v0.081, на v0.080 (ноты в дырке треугольника) — «одну кнопку сделать из цветных ромбов в треугольнике; при нажатии они все начинают сыпаться в разные
-           стороны, а тут остаётся серое — мигать граница кнопки»; по выбору — «включает все 7 нот», «центральная дырка», «второе нажатие — ромбы слетаются назад».
-           Кнопка #hubAll — ромб k × k бит в большой центральной дырке Серпинского (k = 16 при 64 строках), сама прозрачная: её цветные бит-ромбы (полосы цветов семи
-           нот, сверху вниз До…Си) рисует холст #hubFly поверх неё. Нажал — звучат все семь нот, ромбы разлетаются и осыпаются, под ними — серая кнопка с мигающей
-           границей (.on; пауза — граница не мигает). Ещё нажатие — ноты молчат, ромбы слетаются назад тем же путём. Семь нот при этом спрятаны (body.allMode); лёжа на
-           телефоне — прежняя стрелка нот. Меню на компьютере (body.allDesk) — по бокам кнопки: слева «Треугольник» и «Знак и записи», справа «Зазеркалиус» и «Черновики» */
+        /* v0.083, на v0.081–v0.082 — «лучше в этот треугольник», «7 строк — как раз 0-треугольник, первый из 7 строк нулей, перевёрнутый, как раз 7 нот; пусть
+           прям биты-ноты стекают вниз через узкое место — вершину треугольника — и только отсюда выходят в общий треугольник»; «треугольник ниже» (под надпись).
+           Кнопка «все 7 нот» #hubAll — первая перевёрнутая дырка Серпинского (строки 8–14 при 64): по строке на ноту, сверху До (7 бит) … внизу Си (1 бит).
+           Сама кнопка прозрачна (форма — clip-path по контуру дырки, ставит скрипт), всё видимое рисует холст #hubFly: цветные биты, их сток через вершину
+           вниз, в общий треугольник, серая дырка с мигающей границей, пока ноты звучат (пауза — граница не мигает); второе нажатие — биты стекают обратно.
+           Семь отдельных нот при этом спрятаны (body.allMode); лёжа на телефоне — прежняя стрелка нот. Меню — на прежнем месте */
         #hubAll, #hubFly { display: none; }
-        #hubAll { position: fixed; z-index: 5; padding: 0; border: none; background: transparent; cursor: pointer; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-                  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        #hubAll { position: fixed; z-index: 5; padding: 0; border: none; background: transparent; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         #hubFly { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
         body.allMode #hubAll, body.allMode #hubFly { display: block; }
         body.allMode #hubSndBox { display: none; }
-        @media (hover: hover) { #hubAll:not(.on):hover + #hubFly { filter: brightness(1.3); } }
-        #hubAll.on { background: #8a9096; animation: hub-all-edge 1.1s ease-in-out infinite; }
-        #hubAll.on::before { content: ''; position: absolute; inset: 4px; background: #2b3035; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-        #hubAll.on.paused { animation: none; }
-        @keyframes hub-all-edge { 50% { background: #eef2f5; } }
-        body.allDesk .hub { display: grid; grid-template-columns: 1fr var(--allW, 320px) 1fr; align-content: end; justify-items: center; column-gap: 24px; row-gap: 22px; }
-        body.allDesk .hub .mainrow { display: contents; }
-        body.allDesk .hub .mainrow > a:first-of-type { grid-column: 1; grid-row: 1; }
-        body.allDesk .hub .mainrow > a:last-of-type { grid-column: 3; grid-row: 1; }
-        body.allDesk .menu-btn.main-engine { max-width: 100%; }
-        body.allDesk #pnSign { grid-column: 1; grid-row: 2; align-self: end; }
-        body.allDesk #pnDraft { grid-column: 3; grid-row: 2; align-self: end; }
-        body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { display: grid; grid-template-columns: repeat(2, 170px); }
-        @media (min-width: 1500px) { body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { grid-template-columns: repeat(3, 170px); } }
-        @media (max-width: 1100px) { body.allDesk #pnSign .row, body.allDesk #pnDraft .grid { grid-template-columns: 170px; } }
+        @media (hover: hover) { #hubAll:not(.on):hover + #hubFly { filter: brightness(1.35); } }
         /* v0.061: ⏺ видеозапись хаба — правый верхний угол; идёт запись — красная, мигает */
         #hubRec { position: fixed; right: 10px; top: 6px; z-index: 6; font: 22px/1 system-ui, sans-serif; padding: 4px 8px; cursor: pointer; color: #7d8388;
                   background: none; border: none; text-shadow: 0 0 6px #000; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -475,7 +460,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.082</div>
+        <div class="ver">v0.083</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -722,55 +707,85 @@
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && 'zerkHeads' in e.data) hubHeads = e.data.zerkHeads; });
             const PR = ['1']; while (PR.length < 64) { const q = PR[PR.length - 1]; let nx = '1'; for (let i = 1; i < q.length; i++) nx += q[i - 1] !== q[i] ? '1' : '0'; PR.push(nx + '1'); }
             const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
-            /* v0.081: одна кнопка «все 7 нот» в центральной дырке (см. стили #hubAll). Бит кнопки (R + a + b, J + b), a, b < k: ромб той же формы, что бит,
-               в k раз больше; при 64 строках k = 16, R = 32, J = 16 — дырка вмещает его целиком. Полёт: у каждого бит-ромба своя скорость от центра кнопки,
-               вверх и вбок, падение вниз, вращение; ph — доля пути (0 — на месте, 1 — улетели и погасли), обратно — тот же путь задом наперёд */
+            /* v0.083: кнопка «все 7 нот» — первая перевёрнутая дырка треугольника (см. стили #hubAll). При N строках дырка — строки R0 = N/8 … R0 + S − 1,
+               S = N/8 − 1 (при 64 — 8…14, семь строк); в строке R0 + t бит j = 1 + t + c, c < S − t; нота бита — t (До сверху, Си — вершина). Бит в решётке —
+               (r, x), x = j − r/2: на холсте (cx + x·dw, y0 + r·dh/2). Сток: каждый бит идёт вниз по решётке (за строку — на полклетки вбок) к вершине
+               дырки и дальше ещё EXIT строк в общий треугольник, гаснет; первыми уходят ближние к вершине. tt — время стока (0 — все в дырке, ALL.T — ушли),
+               назад — тот же путь задом наперёд */
             const sndBox = document.getElementById('hubSndBox'), allBtn = document.getElementById('hubAll'), fly = document.getElementById('hubFly'), fg = fly && fly.getContext('2d');
-            const ALL = { cells: [], tg: 0, ph: 0, raf: 0, last: 0, W: 0, H: 0, dpr: 1, cx: 0, cy: 0, dw: 0, dh: 0, sc: 1 }, ALL_T = 1.5;
-            const allOff = () => document.body.classList.remove('allMode', 'allDesk');
-            const allSeed = () => { const sc = ALL.sc;
-                ALL.cells.forEach(c => { const dx = c.x - ALL.cx, dy = c.y - ALL.cy; let an = Math.hypot(dx, dy) < 1 ? Math.random() * 6.283 : Math.atan2(dy, dx);
-                    an += (Math.random() - 0.5) * 0.9; const sp = (220 + Math.random() * 620) * sc;
-                    c.vx = Math.cos(an) * sp; c.vy = Math.sin(an) * sp - 160 * sc; c.w = (Math.random() - 0.5) * 10; }); };
-            const allDraw = () => {
-                if (!fg) return; const { W, H, dpr, dw, dh, ph } = ALL;
-                fg.setTransform(dpr, 0, 0, dpr, 0, 0); fg.clearRect(0, 0, W, H); if (ph >= 1) return;
-                const t = ph * ALL_T, G = 1100 * ALL.sc, a = dw * 0.45, b = dh * 0.45;
-                fg.globalAlpha = 1 - Math.pow(ph, 1.6);
+            const mainRow = document.querySelector('.hub .mainrow');
+            const ALL = { cells: [], poly: [], on: 0, tt: 0, T: 1, raf: 0, last: 0, W: 0, H: 0, dpr: 1, cx: 0, y0: 0, dw: 0, dh: 0, paused: false };
+            const ALL_STEP = 0.075, ALL_GAP = 0.055, ALL_EXIT = 9;
+            const allOff = () => { document.body.classList.remove('allMode'); if (mainRow) mainRow.style.gap = ''; };
+            const allPt = (r, x) => [ALL.cx + x * ALL.dw, ALL.y0 + r * ALL.dh / 2];
+            const allPaths = () => {   // путь каждого бита: к вершине дырки, потом вниз в треугольник; задержка — по очереди от вершины
+                const N = PR.length, R0 = N / 8, S = N / 8 - 1, vr = R0 + S - 1, vx = 0;
+                const order = ALL.cells.slice().sort((a, b) => (b.r - a.r) || (Math.abs(a.x) - Math.abs(b.x)));
+                order.forEach((c, i) => {
+                    const path = [[c.r, c.x]]; let r = c.r, x = c.x, alt = Math.random() < 0.5 ? 1 : -1;
+                    while (r < vr) { const d = x > vx ? -0.5 : x < vx ? 0.5 : (alt = -alt) * 0.5; r++; x += d; path.push([r, x]); }
+                    c.vi = path.length - 1;
+                    for (let k = 0; k < ALL_EXIT; k++) { r++; x += Math.random() < 0.5 ? -0.5 : 0.5; path.push([r, x]); }
+                    c.path = path; c.delay = i * ALL_GAP;
+                });
+                ALL.T = Math.max(...ALL.cells.map(c => c.delay + (c.path.length - 1) * ALL_STEP)) + 0.05;
+            };
+            const allDia = (x, y, k) => { const a = ALL.dw * k / 2, b = ALL.dh * k / 2; fg.beginPath(); fg.moveTo(x, y - b); fg.lineTo(x + a, y); fg.lineTo(x, y + b); fg.lineTo(x - a, y); fg.closePath(); fg.fill(); };
+            const allDraw = (now) => {
+                if (!fg) return; const { W, H, dpr, tt } = ALL;
+                fg.setTransform(dpr, 0, 0, dpr, 0, 0); fg.clearRect(0, 0, W, H);
+                if (ALL.on || tt > 0) {   // дырка, откуда ушли биты: серая, граница мигает, пока ноты звучат
+                    const P = ALL.poly; fg.beginPath(); P.forEach(([x, y], i) => i ? fg.lineTo(x, y) : fg.moveTo(x, y)); fg.closePath();
+                    fg.fillStyle = 'rgba(58, 63, 68, .92)'; fg.fill();
+                    const bl = ALL.on && !ALL.paused ? 0.5 + 0.5 * Math.sin((now || 0) / 1100 * 2 * Math.PI) : 0.6;
+                    fg.lineWidth = Math.max(1.5, ALL.dw * 0.12); fg.strokeStyle = `rgba(230, 236, 240, ${(0.25 + 0.75 * bl).toFixed(3)})`; fg.stroke();
+                }
                 for (const c of ALL.cells) {
-                    fg.fillStyle = noteCol[c.s] || '#9fffc8'; fg.save(); fg.translate(c.x + c.vx * t, c.y + c.vy * t + G * t * t / 2); if (t) fg.rotate(c.w * t);
-                    fg.beginPath(); fg.moveTo(0, -b); fg.lineTo(a, 0); fg.lineTo(0, b); fg.lineTo(-a, 0); fg.closePath(); fg.fill(); fg.restore();
+                    const s = Math.max(0, Math.min(c.path.length - 1, (tt - c.delay) / ALL_STEP)), i = Math.floor(s), f = s - i, a = c.path[i], b = c.path[Math.min(i + 1, c.path.length - 1)];
+                    const [x, y] = allPt(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f), out = Math.max(0, s - c.vi) / ALL_EXIT;
+                    if (out >= 1) continue;
+                    fg.globalAlpha = 1 - out; fg.fillStyle = noteCol[c.t] || '#9fffc8';
+                    if (s > 0 && s < c.path.length - 1) { fg.shadowColor = fg.fillStyle; fg.shadowBlur = ALL.dw * 0.5; }
+                    allDia(x, y, 0.86); fg.shadowBlur = 0;
                 }
                 fg.globalAlpha = 1;
             };
             const allStep = (now) => {
                 const dt = ALL.last ? Math.min(0.05, (now - ALL.last) / 1000) : 0; ALL.last = now;
-                ALL.ph = ALL.tg ? Math.min(1, ALL.ph + dt / ALL_T) : Math.max(0, ALL.ph - dt / 0.9);
-                allDraw();
-                if (ALL.ph !== ALL.tg) ALL.raf = requestAnimationFrame(allStep); else { ALL.raf = 0; ALL.last = 0; if (!ALL.tg) allBtn.classList.remove('on'); }
+                ALL.tt = ALL.on ? Math.min(ALL.T, ALL.tt + dt) : Math.max(0, ALL.tt - dt * 1.4);
+                allDraw(now);
+                if (ALL.on || ALL.tt > 0) ALL.raf = requestAnimationFrame(allStep); else { ALL.raf = 0; ALL.last = 0; allBtn.classList.remove('on'); }
             };
             const allSet = (on) => {
-                on = on ? 1 : 0; if (on === ALL.tg) return;
-                if (on && ALL.ph === 0) allSeed();
-                ALL.tg = on; if (on) allBtn.classList.add('on');
+                on = on ? 1 : 0; if (on === ALL.on) return;
+                if (on && ALL.tt === 0) allPaths();
+                ALL.on = on; allBtn.classList.toggle('on', !!on || ALL.tt > 0);
                 if (!ALL.raf) { ALL.last = 0; ALL.raf = requestAnimationFrame(allStep); }
             };
             const allPlace = (X, Y, dw, dh, W, H, dpr, desk) => {
-                const N = PR.length, k = N / 4, R = N / 2, J = N / 4;
-                if (!allBtn || !fg || k * dw < 40) { allOff(); return false; }
-                document.body.classList.add('allMode'); document.body.classList.toggle('allDesk', desk);
-                const w = k * dw, h = k * dh, y = Y(R) - dh / 2;
-                Object.assign(allBtn.style, { left: (X(R, J) - w / 2).toFixed(1) + 'px', top: y.toFixed(1) + 'px', width: w.toFixed(1) + 'px', height: h.toFixed(1) + 'px' });
-                document.documentElement.style.setProperty('--allW', (w + 40).toFixed(0) + 'px');
+                const N = PR.length, R0 = N / 8, S = N / 8 - 1;
+                if (!allBtn || !fg || S < 1 || S * dw < 36) { allOff(); return false; }
+                document.body.classList.add('allMode');
+                Object.assign(ALL, { W, H, dpr, cx: X(0, 0), y0: Y(0), dw, dh });
                 ALL.cells = [];
-                for (let a = 0; a < k; a++) for (let b = 0; b < k; b++) ALL.cells.push({ x: X(R + a + b, J + b), y: Y(R + a + b), s: Math.min(6, Math.floor((a + b) * 7 / (2 * k - 1))) });
-                Object.assign(ALL, { W, H, dpr, cx: X(R, J), cy: y + h / 2, dw, dh, sc: dw / 18 });
+                for (let t = 0; t < S; t++) for (let c = 0; c < S - t; c++) { const r = R0 + t, j = 1 + t + c; ALL.cells.push({ r, x: j - r / 2, t: Math.min(6, t) }); }
+                const xl = X(R0, 1) - dw / 2, xr = X(R0, S) + dw / 2, yt = Y(R0) - dh / 2, yb = Y(R0 + S - 1) + dh / 2;
+                ALL.poly = [];   // контур дырки: зубцы верхнего ряда и нижняя вершина
+                for (let c = 0; c < S; c++) { ALL.poly.push([X(R0, 1 + c) - dw / 2, Y(R0)], [X(R0, 1 + c), Y(R0) - dh / 2]); }
+                ALL.poly.push([xr, Y(R0)], [X(R0 + S - 1, S), yb]);
+                const w = xr - xl, h = yb - yt;
+                Object.assign(allBtn.style, { left: xl.toFixed(1) + 'px', top: yt.toFixed(1) + 'px', width: w.toFixed(1) + 'px', height: h.toFixed(1) + 'px',
+                    clipPath: 'polygon(' + ALL.poly.map(([x, y]) => ((x - xl) / w * 100).toFixed(2) + '% ' + ((y - yt) / h * 100).toFixed(2) + '%').join(', ') + ')' });
+                if (mainRow) {   // ряд главных кнопок заходит на дырку — кнопки расступаются, пропуская её посередине
+                    const m = mainRow.getBoundingClientRect(); mainRow.style.gap = desk && m.height && yb > m.top - 4 && yt < m.bottom + 4 ? (w + 28).toFixed(0) + 'px' : '';
+                }
                 if (fly.width !== Math.round(W * dpr) || fly.height !== Math.round(H * dpr)) { fly.width = Math.round(W * dpr); fly.height = Math.round(H * dpr); }
-                allSeed(); allDraw(); return true;
+                allPaths(); if (ALL.on) ALL.tt = ALL.T;
+                if (!ALL.raf) allDraw(performance.now()); return true;
             };
-            if (allBtn) allBtn.onclick = () => { const on = !ALL.tg; try { bg.contentWindow.postMessage({ zerkSnd: on }, '*'); } catch (e) {} allSet(on); };
+            if (allBtn) allBtn.onclick = () => { const on = !ALL.on; try { bg.contentWindow.postMessage({ zerkSnd: on }, '*'); } catch (e) {} allSet(on); };
             window.addEventListener('message', e => { if (bg && e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
-                allSet(!!e.data.zerkSndOn); if (allBtn) allBtn.classList.toggle('paused', !!e.data.zerkSndPaused); } });
+                ALL.paused = !!e.data.zerkSndPaused; allSet(!!e.data.zerkSndOn); } });
             const sierDraw = () => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
@@ -778,7 +793,8 @@
                 if (!hd) hd = hubHeads;   /* v0.074: открыт файлом — фон прочитать нельзя, звучащие биты он шлёт сам (zerkHeads) */
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — теперь только когда сменились размер или звучащие биты */
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null);
+                const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null) + '|' + lgB + '|' + mrT;
                 if (key === sierDraw.k) return true; sierDraw.k = key;
                 if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
@@ -790,11 +806,11 @@
                    Стоя — ромбы 60°/120° (dh = √3·dw) ребро к ребру: ряд заходит в ряд наполовину (шаг рядов dh/2), как ноты, — треугольник
                    равносторонний. Лёжа строки не сдвигаются (прямоугольные треугольники) — ромб в своей клетке, соседи касаются вершинами */
                 let dw, dh, spots, side = false;
-                if (!land) { const top = desk ? H * 0.03 : H * 0.07, hMax = desk ? H * 0.94 : H * 0.42; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
+                /* v0.083, «треугольник ниже»: верх — под надписью «Зеркалиус», низ — на прежнем месте (компьютер — 97 % высоты, телефон — 49 %) */
+                if (!land) { const top = Math.max(desk ? H * 0.03 : H * 0.07, lgB + 8), hMax = (desk ? H * 0.97 : H * 0.49) - top; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
                     const cx = W / 2, y0 = top + (hMax - (N + 1) * dh / 2) / 2 + dh / 2;
                     spots = [(r, j) => [cx - r * dw / 2 + j * dw, y0 + r * dh / 2]];
-                    /* v0.082, «верни расположение кнопок»: меню и стрелка нот — как до v0.081; кнопка «все 7 нот» ждёт своего места (allPlace не зовётся) */
-                    allOff(); }
+                    allPlace((r, j) => cx - r * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr, desk); }
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же
                             равносторонний из ромбов, но на боку — вершина у своего края экрана (◀ слева, ▶ справа), основание к нотам; ромбы повёрнуты с ним */
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
@@ -833,11 +849,8 @@
                 if (sierOn) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
                   const sw = sier.clientWidth, sh = sier.clientHeight, sy = window.scrollY; k = Math.min(W / sw, H / sh); ox = (W - sw * k) / 2; oy = (H - sh * k) / 2 + sy * k;
                   g.drawImage(sier, ox, oy - sy * k, sw * k, sh * k);
-                  const ab = document.getElementById('hubAll');   // v0.081: кнопка «все 7 нот» — серая с границей, когда ромбы улетели, и сами ромбы
-                  if (ab && getComputedStyle(ab).display !== 'none') { const r = ab.getBoundingClientRect(), x = r.left * k + ox, y = r.top * k + oy, w = r.width * k, h = r.height * k;
-                    if (ab.classList.contains('on')) { g.fillStyle = getComputedStyle(ab).backgroundColor; g.beginPath(); g.moveTo(x + w / 2, y); g.lineTo(x + w, y + h / 2); g.lineTo(x + w / 2, y + h); g.lineTo(x, y + h / 2); g.closePath(); g.fill();
-                      const d = 4 * k; g.fillStyle = '#2b3035'; g.beginPath(); g.moveTo(x + w / 2, y + d * h / w * 1.4); g.lineTo(x + w - d * 1.4, y + h / 2); g.lineTo(x + w / 2, y + h - d * h / w * 1.4); g.lineTo(x + d * 1.4, y + h / 2); g.closePath(); g.fill(); }
-                    const fl = document.getElementById('hubFly'); if (fl && fl.width) g.drawImage(fl, ox, oy - sy * k, sw * k, sh * k); }
+                  const fl = document.getElementById('hubFly');   // v0.083: кнопка «все 7 нот» и сток бит — всё на холсте #hubFly
+                  if (fl && fl.width && getComputedStyle(fl).display !== 'none') g.drawImage(fl, ox, oy - sy * k, sw * k, sh * k);
                 }
                 g.textAlign = 'center'; g.textBaseline = 'middle';
                 box.querySelectorAll('.hubSnd').forEach(b => {
