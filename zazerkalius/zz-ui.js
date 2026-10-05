@@ -10112,7 +10112,11 @@ function cgrpInit(){
   }
   cgrpCols();
   cgbIcons();   // v0.317: подписи кнопок меняются (▶ / ⏸, «только значки») — пересчёт, кто значок
-  { let t = 0; const mo = new MutationObserver(() => { if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
+  /* v0.827, «подтормаживает на каждом обороте кручения»: во время кручения внутри групп каждый кадр меняется только текст-показ — число у ползунка (.rv, .sli)
+     и строка «вариантов цикла… сейчас N» (#coneVarN). Наблюдатель на каждую такую смену пересобирал все группы (cgbSnap + triTag, 100–200 мс) — кадр вставал.
+     Такие правки раскладку кнопок не меняют — их наблюдатель теперь пропускает */
+  const cgbTextOnly = (ms) => ms.every(m => { const x = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !!(x && x.closest && x.closest(".rv, .sli, #coneVarN, #lasAlgo")); });
+  { let t = 0; const mo = new MutationObserver((ms) => { if (cgbTextOnly(ms)) return; if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
     groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
   cgbSnap();
 }
