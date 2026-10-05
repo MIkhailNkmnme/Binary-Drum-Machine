@@ -3742,13 +3742,15 @@ function coneSunPaint(){
     else for (const k of now) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] !== "1") { f = f.slice(0, c) + "1" + f.slice(c + 1); fc = true; } }
     /* v0.808, «ещё режим: когда солнце ставит где-то 1, то в противолуче, в первом свободном кольце, на данном секторе ставить 0»: «☀↔0 противолуч»
        (Z.sunAnti) — ячейка строки за чертой (первое свободное кольцо), получившая от солнца «1» на этом шаге, ставит «0» в пустые ячейки той же строки,
-       которые сектор напротив неё (через центр, +180°) накрывает хотя бы наполовину */
+       которые сектор напротив неё (через центр, +180°) накрывает хотя бы наполовину.
+       v0.854, по снимку «☀↔0» — «тут неверно: не на хотя бы половину, а так же — полностью только»: «0» — только в ячейку, которую сектор напротив накрывает
+       целиком. Ячейки одного кольца равны, поэтому это ячейка ровно напротив: она есть, когда 180° — целое число ячеек (чётное кольцо), у нечётного — нет */
     if (Z.sunAnti) { const f0 = fillDraft(), C = coneSunCutR(N, N);
       if (C) { const cut = coneCutOn() && !!coneFillCut(), TT = 2 * Math.PI, pp = (q) => cut ? cutPos(q) : q;
         for (let q = 0; q < f.length; q++) if (f[q] === "1" && f0[q] !== "1") {
           const sM = (pp(q) - C.rot) * C.st + Math.PI;
           for (let k = 0; k < f.length; k++) { if (k === q || f[k] !== ".") continue; let d = ((pp(k) - C.rot) * C.st - sM) % TT; if (d > Math.PI) d -= TT; if (d < -Math.PI) d += TT;
-            if (Math.abs(d) <= C.st / 2 + 1e-9) { f = f.slice(0, k) + "0" + f.slice(k + 1); fc = true; } } } } }
+            if (Math.abs(d) <= 1e-6) { f = f.slice(0, k) + "0" + f.slice(k + 1); fc = true; } } } } }   // v0.854: только накрытая целиком
     const cutZ = coneCutOn();   // v0.701: в вырезах — нули только от света сквозь «1» (не «остальные — нулями»)
     if (cutZ) for (const k of S.zhits || []) { const [b, c] = k.split(":").map(Number); if (b === N && c < f.length && f[c] === ".") { f = f.slice(0, c) + "0" + f.slice(c + 1); fc = true; } }
     if (fc) { Z.fillCells = cutZ ? f : f.replace(/\./g, "0"); ch = true; if (typeof renderRows === "function") setTimeout(renderRows, 0); } }
@@ -5660,7 +5662,7 @@ function setupCone(){
   if ($("bSunAnti")) {   // v0.808: ☀↔0 противолуч
     $("bSunAnti").classList.toggle("on", !!Z.sunAnti);
     $("bSunAnti").onclick = () => { Z.sunAnti = !Z.sunAnti; $("bSunAnti").classList.toggle("on", Z.sunAnti); save(); renderCone();
-      say(Z.sunAnti ? "☀↔0 Противолуч: солнце ставит «1» в ячейку строки за чертой — напротив неё через центр, в той же строке, пустые ячейки, накрытые этим сектором хотя бы наполовину, получают «0»." : "☀↔0 противолуч выключен."); };
+      say(Z.sunAnti ? "☀↔0 Противолуч: солнце ставит «1» в ячейку строки за чертой — напротив неё через центр, в той же строке, пустая ячейка, которую этот сектор накрывает целиком (ровно напротив), получает «0»." : "☀↔0 противолуч выключен."); };
   }
   if ($("bSunXor")) {   // v0.740: ⊕ xor — свет заново на ячейке: 1 ↔ 0
     $("bSunXor").classList.toggle("on", !!Z.sunXor);
