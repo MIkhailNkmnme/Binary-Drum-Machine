@@ -12286,8 +12286,12 @@ function paneFoldInit(){
   paneFoldApply();
   $("rowsPane").addEventListener("click", (e) => {
     const h = e.target.closest("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)"); if (!h) return;
-    const k = h.textContent.trim(); Z.paneFold[k] = !Z.paneFold[k]; if (!Z.paneFold[k]) delete Z.paneFold[k];
-    paneFoldApply(); save(); if (typeof packWins === "function") packWins();
+    const fold = () => { const k = h.textContent.trim(); Z.paneFold[k] = !Z.paneFold[k]; if (!Z.paneFold[k]) delete Z.paneFold[k];
+      paneFoldApply(); save(); if (typeof packWins === "function") packWins(); };
+    /* v0.849: у «Другое» двойной щелчок — все окна списка (window.paneWinsAll); одиночный сворачивает список через 260 мс — иначе список сворачивался
+       сразу, панель съезжала, и второй щелчок попадал мимо заголовка */
+    if (h.id === "paneWinsHead") { clearTimeout(paneFoldInit._t); if (e.detail >= 2) { if (window.paneWinsAll) window.paneWinsAll(); return; } paneFoldInit._t = setTimeout(fold, 260); return; }
+    fold();
   });
 }
 /* v0.783: на телефоне окна стоят стопкой в общей прокрутке страницы, и scrollIntoView текущей строки при каждой перерисовке строк уводил всю
@@ -13593,6 +13597,15 @@ function init(){
   document.querySelectorAll("#paneWinsBox .pwArr").forEach(a => a.addEventListener("click", () => {
     const P = $("paneWins"); P.scrollBy({ top: (a.classList.contains("up") ? -1 : 1) * Math.max(40, P.clientHeight * 0.75), behavior: "smooth" });
   }));
+  /* v0.849, по снимку заголовка «Другое» — «тут пусть двойной клик включит-отключит все окна из списка»: двойной щелчок по заголовку — открыто хоть одно
+     окно списка — свернуть все в список, все свёрнуты — развернуть все (одиночный щелчок, как прежде, сворачивает сам список; второй щелчок двойного ловит обработчик
+     сворачивания в paneFoldInit и зовёт paneWinsAll) */
+  window.paneWinsAll = () => {
+    const PW = $("paneWins"), ids = [...PW.querySelectorAll("button[data-w]:not([hidden])")].map(b => b.dataset.w).filter(id => $(id));
+    if (!ids.length) return; const anyOn = ids.some(id => !$(id).dataset.parked); let n = 0;
+    for (const id of ids) { if (!!$(id).dataset.parked === anyOn) continue; const b = $("paneWins").querySelector('button[data-w="' + id + '"]'); if (b) { b.click(); n++; } }
+    say(anyOn ? `▣ Свёрнуто в список окон: ${n}.` : `▣ Развёрнуто окон: ${n}.`);
+  };
   $("paneWins").onclick = (e) => {
     const b = e.target.closest("button[data-w]"); if (!b) return;
     const el = $(b.dataset.w), w = Z.win[b.dataset.w]; if (!el || !w) return;
