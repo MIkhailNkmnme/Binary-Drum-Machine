@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.077. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.078. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.077</title>
+    <title>Zerkalius Control Hub — v0.078</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -437,7 +437,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.077</div>
+        <div class="ver">v0.078</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -768,42 +768,47 @@
   const cv = document.getElementById("hubLogoCv"); if (!cv) return;
   const box = cv.parentElement, R = ROWS.length, C = ROWS[0].length, K = Math.sqrt(3) / 2;
   const W0 = C + (R - 1) / 2 + 0.5, H0 = R * K;   // ширина и высота в сторонах треугольника
-  const CALM = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   const HUES = [[255, 95, 109], [255, 195, 113], [110, 231, 160], [34, 211, 238], [185, 140, 240], [255, 95, 109]];
   const hue = (f) => { f = (f % 1 + 1) % 1 * (HUES.length - 1); const i = Math.floor(f), t = f - i, a = HUES[i], b = HUES[i + 1]; return a.map((v, j) => v + (b[j] - v) * t); };
   const mix = (a, b, t) => a.map((v, j) => v + (b[j] - v) * t), css = (c) => "rgb(" + c.map(Math.round).join(",") + ")";
-  const ONE = [232, 235, 241], ZERO = [74, 81, 96], ZERO_HI = [112, 120, 138], LINE = "rgba(18, 21, 28, .9)";
   let s = 10, ox = 0, oy = 0, dpr = 1;
   function fit(){
     const r = box.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1);
     s = Math.min(r.width / W0, r.height / H0); const w = W0 * s, hh = H0 * s;
     cv.style.width = w + "px"; cv.style.height = hh + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(hh * dpr); ox = 0; oy = 0;
   }
-  function draw(p){   // p — где полоса волны (0…1 по ширине, вне — волны нет)
+  /* v0.078, по снимку прежней надписи — «убери фон у надписи, и цветной сделай, как было тут», «и волну я не вижу»: без подложки нулей и без граней —
+     только треугольники единиц, каждый чуть сжат к своему центру (швы, как у надписи v0.076), цветом переливающейся радуги (полный круг за 14 с, как
+     прежде). Волна — полоса, в которой треугольники светлеют почти до белого и дорастают до целых; идёт всегда (прежде её глушила настройка системы
+     «меньше движения» — у пользователя её не было видно) */
+  const SH = 0.84;   // доля размера треугольника вне волны
+  function tri(g, ax, ay, bx, by, cx, cy, k){ const mx = (ax + bx + cx) / 3, my = (ay + by + cy) / 3, q = (u, m) => m + (u - m) * k;
+    g.beginPath(); g.moveTo(q(ax, mx), q(ay, my)); g.lineTo(q(bx, mx), q(by, my)); g.lineTo(q(cx, mx), q(cy, my)); g.closePath(); g.fill(); }
+  function draw(p, ph){   // p — где полоса волны (0…1 по ширине, вне — волны нет), ph — сдвиг радуги (0…1)
     const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-    const h = s * K, band = 0.16;
-    g.lineWidth = Math.max(0.6, s * 0.07); g.strokeStyle = LINE; g.lineJoin = "round";
+    const h = s * K, band = 0.13, WH = [255, 255, 255];
     for (let i = 0; i < R; i++) {
       const y0 = oy + i * h, sh = (R - 1 - i) * s / 2;   // нижний ряд левее верхнего на полклетки за ряд
       for (let j = 0; j < C; j++) {
-        const x0 = ox + sh + j * s, on = ROWS[i][j] === "1", f = (x0 + s * 0.75) / (W0 * s);
+        if (ROWS[i][j] !== "1") continue;
+        const x0 = ox + sh + j * s, f = (x0 + s * 0.75) / (W0 * s);
         const k = Math.max(0, 1 - Math.abs(f - p) / band), kk = k * k * (3 - 2 * k);
-        const col = on ? css(mix(ONE, hue(f * 0.8 + p * 0.3), kk * 0.85)) : css(mix(ZERO, ZERO_HI, kk * 0.6));
-        g.fillStyle = col;
-        g.beginPath(); g.moveTo(x0, y0 + h); g.lineTo(x0 + s / 2, y0); g.lineTo(x0 + s, y0 + h); g.closePath(); g.fill(); g.stroke();   // ▲
-        g.beginPath(); g.moveTo(x0 + s / 2, y0); g.lineTo(x0 + 1.5 * s, y0); g.lineTo(x0 + s, y0 + h); g.closePath(); g.fill(); g.stroke();   // ▼
+        g.fillStyle = css(mix(hue(f - ph), WH, kk * 0.65));
+        const z = SH + (1 - SH) * kk;
+        tri(g, x0, y0 + h, x0 + s / 2, y0, x0 + s, y0 + h, z);   // ▲
+        tri(g, x0 + s / 2, y0, x0 + 1.5 * s, y0, x0 + s, y0 + h, z);   // ▼
       }
     }
   }
-  fit(); draw(-1);
-  if (window.ResizeObserver) new ResizeObserver(() => { fit(); draw(-1); }).observe(box); else addEventListener("resize", () => { fit(); draw(-1); });
-  if (CALM) return;
-  const GO = 3600, REST = 2400; let last = 0, t0 = performance.now();
+  fit(); draw(-1, 0);
+  let ph0 = 0;
+  if (window.ResizeObserver) new ResizeObserver(() => { fit(); draw(-1, ph0); }).observe(box); else addEventListener("resize", () => { fit(); draw(-1, ph0); });
+  const GO = 2600, REST = 1400; let last = 0, t0 = performance.now();
   function tick(now){
     requestAnimationFrame(tick);
     if (document.hidden || now - last < 33) return; last = now;   // ~30 кадров в секунду; вкладка спрятана — не рисуем
-    const t = (now - t0) % (GO + REST);
-    draw(t < GO ? -0.2 + 1.4 * t / GO : -1);
+    const t = (now - t0) % (GO + REST); ph0 = ((now - t0) / 14000) % 1;
+    draw(t < GO ? -0.15 + 1.3 * t / GO : -1, ph0);
   }
   requestAnimationFrame(tick);
 })();
