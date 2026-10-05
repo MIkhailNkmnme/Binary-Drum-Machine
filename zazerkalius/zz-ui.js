@@ -10883,15 +10883,21 @@ function paneZig(){
      и группы окна у края начинаются за ней — выемки их левого края с остриями не сходились, между ними оставались ромбики фона. Теперь край панели прямой, а
      зубцы (цветом панели, с чертой) выступают наружу на глубину выемки, поверх окон (#paneZigOv, сквозь него щелчки проходят): острие — в выемку вкладки
      или ряда группы, что стоит у края. Сетка та же — остриё на середине полосы вкладок */
-  { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov); }
+  { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov);
+      /* v0.835, «у левого меню также» (как у поля, v0.832 / v0.834): хват ширины левой панели — на зубцах, нажатие и двойной щелчок — прежнему хвату #paneEdge;
+         при наведении — только ломаная цветом акцента (--pzh) */
+      ov.title = "Тяни — ширина левой панели; двойной щелчок — ширина по умолчанию";
+      for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const pe = document.getElementById("paneEdge"); if (!pe || !pe.getClientRects().length) return; e.preventDefault(); e.stopPropagation();
+        pe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); }); }
     const pr = pane.getBoundingClientRect(), on = innerWidth > 760 && pr.width > 4 && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
     if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = pr.height + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
-      if (ov._k !== kq) { ov._k = kq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
-        const sq = `<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
-        ov.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(sq)}")`; ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
+      const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
+      if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
+        const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
+        ov.style.setProperty("--pz", sq(ln, 1)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
