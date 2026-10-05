@@ -5034,7 +5034,11 @@ function posPopRender(){
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
   if (!L) { if (el && !el.hidden) el.hidden = true; return; }
-  const cm = document.getElementById("coneMain"), host = cm && cm.parentElement; if (!host) return;   // на уровне тела окна, рядом с группами — иначе они его перекрывают
+  /* v0.843, по снимку плашки «◎ торы…» — «это убери в текст»: таблица торов — первым блоком в окне «📝 Текст конуса и лог лазера» (над текстом конуса),
+     без рамки и перетаскивания; окна текста нет — как прежде, плашкой на конусе */
+  const tb = document.querySelector("#coneTxtWin .ctwBody");
+  if (tb) { if (!el || el.parentElement !== tb) { if (el) el.remove(); el = document.createElement("pre"); el.id = "coneTorInfo"; el.className = "inTxt"; tb.insertBefore(el, tb.firstChild); } }
+  const cm = document.getElementById("coneMain"), host = tb || (cm && cm.parentElement); if (!host) return;   // на уровне тела окна, рядом с группами — иначе они его перекрывают
   if (!el || el.parentElement !== host) {
     if (el) el.remove();
     el = document.createElement("pre"); el.id = "coneTorInfo"; el.title = "Σ Расчёт торов — тяни, чтобы переставить; двойной щелчок — на место по умолчанию";
@@ -5052,7 +5056,7 @@ function coneTorInfoShow(L, cg, cT){
   const html = L.map((t, k) => `<span style="color:${k === 0 || k === L.length - 1 ? cg : k === 2 ? cT : "#e8edf7"}">${esc(t)}</span>`).join("\n");
   if (el._h !== html) { el.innerHTML = html; el._h = html; }
   if (el.hidden) el.hidden = false;
-  coneTorInfoPlace(el);
+  if (!tb) coneTorInfoPlace(el);
 }
 function coneTorInfoPlace(el){
   const host = el.parentElement; if (!host) return;
@@ -10889,6 +10893,7 @@ function lpTag(){
         else { const rg = document.createRange(); rg.selectNodeContents(e); tw = rg.getBoundingClientRect().width; }
         e._tzn0 = Math.max([...e.textContent.trim()].length <= 2 ? 3 : 6, Math.ceil((tw + 10) / sd));
         e._gcol = col; e._tzar = ""; e._tzfix = false; e._tzL = TZ_NOTCH; e._tzR = TZ_TIP; e._tzn = e._tzn0; e._tzx = 0;
+        if (e.dataset.lpfr) e._tzNoEq = true;   // v0.843: кнопка долей ряда (data-lpfr="3" — треть) — без деления поровну
       });
       const cs = getComputedStyle(bl), padL = parseFloat(cs.paddingLeft) || 0, W = bl.clientWidth - padL - (parseFloat(cs.paddingRight) || 0) - 0.5;
       /* v0.515, по рисункам из «Сетки» — «боковое меню: для заголовков — шестигранник во всю ширину, для двух кнопок в ряд — острия по краям ряда,
@@ -10920,13 +10925,15 @@ function lpTag(){
       rows.forEach(r => {
         const its2 = r.filter(q => q.it).map(q => q.el);
         r.forEach((q, i) => { if (!q.it) return; q.el._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; q.el._tzR = i === r.length - 1 ? TZ_TIP : TZ_NOTCH; q.el._tzm = 0; q.el._tzx = 0; q.el._tzn = q.el._tzn0; });
+        its2.forEach(e => { if (!e.dataset.lpfr) return; e._tzx = Math.max(0, (W / +e.dataset.lpfr - (e._tzL[1] + e._tzR[1]) * t) / sd - e._tzn0); });   // v0.843: своя доля ряда
         /* v0.520, по снимку «Заготовок» — «выровняй все кнопки под стандарт ширин»: кнопки ряда — одной ширины (две в ряд — ровно пополам, во всех
            разделах одинаково), если каждой хватает своей доли; иначе — как прежде, лишнее по стороне по кругу */
         if (its2.length > 1 && !its2.some(e => e._tzNoEq)) { const nonIt = r.reduce((a, q) => a + (q.it ? 0 : q.w), 0), wEq = (W - nonIt) / its2.length, nOf = (e) => (wEq - (e._tzL[1] + e._tzR[1]) * t) / sd;   // одна ширина, края у кнопок разные
           if (its2.every(e => e._tzn0 <= nOf(e) + 1e-6)) { its2.forEach(e => { e._tzn = nOf(e); e._tzx = e._tzn - e._tzn0; tzGeo(e); }); return; } }
-        const sum = r.reduce((a, q) => a + (q.it ? wOf(q.el, q.el._tzL, q.el._tzR) : q.w), 0);
+        const nOw = (e) => e._tzn0 + (e.dataset.lpfr ? e._tzx : 0);   // v0.843: у кнопки доли — её ширина
+        const sum = r.reduce((a, q) => a + (q.it ? (q.el._tzL[1] + q.el._tzR[1] + 2 * nOw(q.el)) * t : q.w), 0);
         let k = Math.floor((W - sum) / sd + 0.001);
-        let c = its2.slice(); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
+        let c = its2.filter(e => !e.dataset.lpfr); if (!c.length) c = its2.slice(); if (c.some(e => e._tzn0 > 3)) c = c.filter(e => e._tzn0 > 3);
         c.reverse();
         for (let i = 0; k > 0 && c.length && i < k; i++) c[i % c.length]._tzx++;
         /* «выровняй кнопки по ширине с заголовком»: остаток меньше стороны — дробной долей первой растяжимой кнопке, ряд кончается ровно у края */
@@ -13591,6 +13598,7 @@ function init(){
   $("bSaveTxt").onclick = saveRowsTxt;
   $("bSaveAll").onclick = saveSession;   // v0.115
   if ($("bLink")) { $("bLink").onclick = () => zzLinkMake(); $("bLink").oncontextmenu = (e) => { e.preventDefault(); zzLinkMake(true); }; }   // v0.650; v0.654 — правый щелчок: в файл
+  if ($("bHomeRings")) $("bHomeRings").onclick = () => { const b = $("bConeAllHome"); if (b) b.click(); };   // v0.843: ⟲ на места — рядом с ⭐
   $("bHome").onclick = homeSave; $("bHome").oncontextmenu = (e) => { e.preventDefault(); homeForget(); }; homeBtn();   // v0.125
   $("bLoadAll").onclick = () => $("fileAll").click();
   $("fileAll").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
