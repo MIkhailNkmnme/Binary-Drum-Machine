@@ -1900,7 +1900,14 @@ function lasDeps(){
     const clr = () => document.querySelectorAll(".cgrp .lhl, #lasAlgo > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
     const tool = (t) => t && t.closest && t.closest("#w-cone .cgrp :is(button, label, select, input, .lseg)");   // v0.816: кнопка групп конуса
     const show = (on) => { const b = document.getElementById("lasAlgo"); if (!b || b.classList.contains("on") === on) return; b.classList.toggle("on", on); if (on) lasAlgoPlace(); };
-    document.addEventListener("pointerover", (e) => { if (tool(e.target)) show(true); }, { passive: true });
+    /* v0.841, по снимку текста алгоритма — «тут подсказка для каждой кнопки при наведении, а когда увести наведение, то этот текст как раньше; сделай
+       ширину и высоту постоянной, чтобы не дёргалось, текст наверх прижимай, когда его мало»: наведение на кнопку групп конуса — в том же месте и того же
+       размера её подсказка (#lasTip, текст title), увёл — снова строки алгоритма (lasAlgoPlace) */
+    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.classList.contains("cgrp") && x.closest(".cgrp") && el.closest(".cgrp") ? el.title : ""; };
+    const tip = (txt) => { const a = document.getElementById("lasAlgo"); if (!a) return; let t = document.getElementById("lasTip");
+      if (!t) { t = document.createElement("div"); t.id = "lasTip"; } if (t.parentElement !== a.parentElement) a.parentElement.appendChild(t);
+      if (txt) { if (t.textContent !== txt) t.textContent = txt; } a.classList.toggle("tip", !!txt); lasAlgoPlace(); };
+    document.addEventListener("pointerover", (e) => { const x = tool(e.target); if (x) show(true); tip(x ? tipOf(x) : ""); }, { passive: true });
     document.addEventListener("pointerdown", (e) => { const t = e.target; if (tool(t)) show(true); else if (!(t.closest && t.closest(".cgrp, #lasAlgo"))) show(false); }, { capture: true, passive: true });
     document.addEventListener("pointerover", (e) => {
       const x = e.target.closest && e.target.closest(":is(.cgrp, #lasAlgo) [data-la]"); clr(); if (!x) return;
@@ -3766,7 +3773,7 @@ function coneRaysUi(){   // v0.576: лучи к центру — кнопкам�
   const t = m === "cur" ? "✳ выдел." : m === "all" ? "✳ все" : "✳ лучи"; if (b.textContent !== t) b.textContent = t; b.classList.toggle("on", m !== "off");
 }
 function coneSpinModeUi(){   // v0.279, «это вынеси в кнопки»: режим кручения — кнопками, горит выбранный (список coneSpinMode — скрытый, держит значение)
-  const m = Z.coneSpinMode || "all"; document.querySelectorAll("#coneSpinModeB > button").forEach(b => b.classList.toggle("on", b.dataset.sm === m));
+  const m = Z.coneSpinMode || "all"; document.querySelectorAll("#coneSpinModeB > button, #c3Modes > button").forEach(b => b.classList.toggle("on", b.dataset.sm === m));   // v0.841: и полоска у ▶
 }
 function coneAimDeep(a){
   const gapAt = (R, x) => {   // щель кольца, ближайшая к углу x: [от, до]
@@ -4928,9 +4935,16 @@ function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); return tb
 function lasAlgoPlace(){   // v0.816: строки алгоритма — в правом нижнем углу холста конуса
   const el = document.getElementById("lasAlgo"), cv = document.getElementById("coneCv"); if (!el || !el.classList.contains("on") || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const mw = Math.max(200, Math.min(460, cr.width / 2 - 56)) + "px"; if (el.style.maxWidth !== mw) el.style.maxWidth = mw;
-  const l = (cr.right - hr.left - 8 - el.offsetWidth + host.scrollLeft).toFixed(1) + "px", t = (cr.bottom - hr.top - 8 - el.offsetHeight + host.scrollTop).toFixed(1) + "px";
+  /* v0.841: ширина и высота постоянные — ширина от холста, высота — самая большая, какую набирали строки при этой ширине (не меньше 8 строк);
+     текст прижат к верху. Подсказка кнопки (#lasTip) — в той же коробке */
+  const W = Math.round(Math.max(200, Math.min(460, cr.width / 2 - 56))), ws = W + "px"; if (el.style.width !== ws) el.style.width = ws;
+  const key = W + "|" + el.innerHTML.length;
+  if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; } el.style.height = ""; el._mh = Math.max(el._mh || 0, el.scrollHeight, 128); }
+  const hs = el._mh + "px"; if (el.style.height !== hs) el.style.height = hs;
+  const l = (cr.right - hr.left - 8 - W + host.scrollLeft).toFixed(1) + "px", t = (cr.bottom - hr.top - 8 - el._mh + host.scrollTop).toFixed(1) + "px";
   if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
+  const tp = document.getElementById("lasTip"); if (tp) { tp.classList.toggle("on", el.classList.contains("tip"));
+    for (const [k, v] of [["left", l], ["top", t], ["width", ws], ["height", hs]]) if (tp.style[k] !== v) tp.style[k] = v; }
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
@@ -4942,6 +4956,18 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   if (sp && sp.parentElement === host) { put(sp, x, y); put(b, x + w / 2 + d, y - w / 2 + d); } else put(b, x, y);
+  /* v0.841, «полоска режимов появлялась при наведении на «крутить», справа от него, и кнопка ⟲ сразу после «крутить» справа — при изменённых положениях,
+     не 0»: зелёная ⟲ (#bC3Home) — ромб остриём к острию справа от ▶, видна, только когда что-то сдвинуто; полоска #c3Modes — за ними, по центру ромба */
+  const hm = document.getElementById("bC3Home"), ms = document.getElementById("c3Modes");
+  let x2 = x + w;
+  if (hm && hm.parentElement === host) { const sh = c3Moved(); if (hm.hidden === sh) hm.hidden = !sh; if (sh) { put(hm, x + w, y); x2 = x + 2 * w; } }
+  if (ms && ms.parentElement === host) put(ms, x2 + 2, y + w / 2 - 12);
+}
+function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
+  const nz = v => Math.abs(+v || 0) > 1e-6;
+  if (nz(Z.coneSpin) || nz(Z.coneSpinPh) || nz(Z.coneAimRot) || nz(Z.coneFillTurn)) return true;
+  if (coneRot.some(nz)) return true;
+  const o = Z.voidHits && Z.voidHits.off; return !!(o && typeof o === "object" && Object.values(o).some(nz));
 }
 function coneTorInfoShow(L, cg, cT){
   let el = document.getElementById("coneTorInfo");
@@ -5776,6 +5802,16 @@ function setupCone(){
     const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset"));
     if (host && !$("bC3Spin")) { const b = document.createElement("button"); b.id = "bC3Spin"; b.title = "▶ Крутить / ⏸ стоп — то же, что «▶ крутить» в «Кручении»"; b.innerHTML = "▶<small>крутить</small>";   // v0.828
       b.onclick = () => { const a = $("bConeAuto"); if (a) a.click(); }; host.appendChild(b); }
+    if (host && !$("bC3Home")) { const b = document.createElement("button"); b.id = "bC3Home"; b.hidden = true; b.title = "⟲ Всё на места — то же, что зелёная ⟲ в «Кручении»: снять накрутку колец, остановить и сбросить кручение, снять довод строки 1. Биты строк не меняются"; b.innerHTML = "⟲<small>на места</small>";   // v0.841
+      b.onclick = () => { const a = $("bConeAllHome"); if (a) a.click(); }; host.appendChild(b); }
+    if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
+      const s = document.createElement("div"); s.id = "c3Modes";
+      document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = o.textContent; c.title = o.title; s.appendChild(c); });
+      s.onclick = (e) => { const c = e.target.closest("button[data-sm]"); const o = c && document.querySelector('#coneSpinModeB > button[data-sm="' + c.dataset.sm + '"]'); if (o) o.click(); };
+      host.appendChild(s); let tm = 0;
+      const on = () => { clearTimeout(tm); s.classList.add("show"); }, off = () => { clearTimeout(tm); tm = setTimeout(() => s.classList.remove("show"), 450); };
+      for (const el of [$("bC3Spin"), $("bC3Home"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
+      coneSpinModeUi(); }
     c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     /* v0.830, «строка 2 должна быть под горизонтом»: сброс оставляет над чертой только строку 1 (солнце); строка 2 — та, что заполняется, под чертой
