@@ -1951,7 +1951,8 @@ function renderCone(){
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
   if (window.c3PadPlace) window.c3PadPlace();   // v0.813: пульт — на горизонтали через центр
-  if (!coneSunOn()) coneBalShow(null); else coneBalPlace();   // v0.812: баланс — при солнце
+  if (!coneSunOn()) coneBalShow(null); else coneBalPlace();
+  c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом   // v0.812: баланс — при солнце
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays) {
@@ -4953,8 +4954,17 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 48;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop;   // v0.815: «чуть ниже — на кнопки залезли» — под полосой вкладок
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop + (document.getElementById("bC3Axes") ? 24 : 0);   // v0.850: над парой — ромб ✛ осей, пара ниже на полромба   // v0.815: «чуть ниже — на кнопки залезли» — под полосой вкладок
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
+}
+/* v0.850, по снимку ромбов баланса — «оси перенеси сюда ромбом, между, сверху»: «✛ оси» — ромб 48 на вертикали через центр конуса, у верха холста под вкладками;
+   пара ромбов баланса (при солнце) — на полромба ниже, и ромб осей ложится в выемку между ними. Жмёт прежнюю кнопку «✛ оси» (в «Виде» она спрятана) */
+function c3AxesPlace(){
+  const b = document.getElementById("bC3Axes"), cv = document.getElementById("coneCv"); if (!b || !cv) return;
+  const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 48;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop;
+  const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); return tb && tb.getClientRects().length && !document.body.classList.contains("zen") ? tb.getBoundingClientRect().bottom : -Infinity; }
 function lasAlgoPlace(){   // v0.816: строки алгоритма — в правом нижнем углу холста конуса
@@ -5899,6 +5909,8 @@ function setupCone(){
     const host = $("coneMain") && $("coneMain").parentElement; if (host && $("bC3Reset").parentElement !== host) host.appendChild($("bC3Reset"));
     if (host && !$("bC3Spin")) { const b = document.createElement("button"); b.id = "bC3Spin"; b.title = "▶ Крутить / ⏸ стоп — то же, что «▶ крутить» в «Кручении»"; b.innerHTML = "▶<small>крутить</small>";   // v0.828
       b.onclick = () => { const a = $("bConeAuto"); if (a) a.click(); }; host.appendChild(b); }
+    if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
+      b.classList.toggle("on", !!Z.coneAxes); b.onclick = () => { const a = $("bConeAxes"); if (a) a.click(); }; host.appendChild(b); }
     if (host && !$("bC3Home")) { const b = document.createElement("button"); b.id = "bC3Home"; b.hidden = true; b.title = "⟲ Всё на места — то же, что зелёная ⟲ в «Кручении»: снять накрутку колец, остановить и сбросить кручение, снять довод строки 1. Биты строк не меняются"; b.innerHTML = "⟲<small>на места</small>";   // v0.841
       b.onclick = () => { const a = $("bConeAllHome"); if (a) a.click(); }; host.appendChild(b); }
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
@@ -7278,7 +7290,7 @@ function setupCone(){
   };
   if ($("bConeAxes")) {   // v0.734: ✛ оси — вертикаль и горизонталь через центр
     $("bConeAxes").classList.toggle("on", !!Z.coneAxes);
-    $("bConeAxes").onclick = () => { Z.coneAxes = !Z.coneAxes; $("bConeAxes").classList.toggle("on", Z.coneAxes); save(); renderCone(); };
+    $("bConeAxes").onclick = () => { Z.coneAxes = !Z.coneAxes; $("bConeAxes").classList.toggle("on", Z.coneAxes); { const a3 = $("bC3Axes"); if (a3) a3.classList.toggle("on", Z.coneAxes); } save(); renderCone(); };
   }
   if ($("bConeScan")) {   // v0.676: ⌖ сканер симметрии
     $("bConeScan").classList.toggle("on", !!Z.coneScan);
