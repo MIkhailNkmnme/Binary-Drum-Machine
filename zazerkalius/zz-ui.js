@@ -3760,6 +3760,7 @@ function spinSpUi(){
   const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
   const f = (x) => x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
   el.textContent = coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
@@ -5437,6 +5438,7 @@ function setupCone(){
     if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ крутить";
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
+    { const cm = $("c3Modes"); if (cm) cm.classList.toggle("spin", on); }   // v0.846: крутится — в полоске у ▶ ползунок скорости
     const s3 = $("bC3Spin"); if (s3) { s3.classList.toggle("on", on); s3.innerHTML = on ? "⏸<small>стоп</small>" : "▶<small>крутить</small>"; }   // v0.828: ромб у сброса   // v0.279: копия в пульте; v0.655 — в ромбе одним значком
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
@@ -5878,12 +5880,19 @@ function setupCone(){
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
       const s = document.createElement("div"); s.id = "c3Modes";
       document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = o.textContent; c.title = o.title; s.appendChild(c); });
+      /* v0.846, по снимку полоски — «скорость тоже ползунок, когда включено кручение, вместо этих вот»: пока конус крутится (класс .spin от autoSet), в полоске
+         вместо режимов и 📍 — ползунок скорости, тот же, что «Скорость кручения» в «Кручении» (двигает его) */
+      { const lb = document.createElement("label"); lb.id = "c3Speed"; lb.title = "Скорость кручения — то же, что ползунок в «Кручении» (только величина; направление — ◀ ▶ там)";
+        const r = document.createElement("input"); r.type = "range"; r.id = "c3SpR"; r.min = "0"; r.max = "100"; r.step = "1";
+        const v = document.createElement("span"); v.id = "c3SpV"; lb.append(r, v); s.appendChild(lb);
+        r.oninput = () => { const m = $("coneAutoSp"); if (!m) return; m.value = r.value; if (m.oninput) m.oninput({ target: m }); };
+        r.onchange = () => { const m = $("coneAutoSp"); if (m && m.onchange) m.onchange({ target: m }); }; }
       { const pb = document.createElement("button"); pb.id = "c3PosB"; pb.textContent = "📍"; pb.title = "📍 Положения колец: запомнить, выбрать, удалить, ★ — начальное"; s.appendChild(pb); }   // v0.842
       s.onclick = (e) => { if (e.target.closest("#c3PosB")) { posPopOpen($("c3PosB")); return; } const c = e.target.closest("button[data-sm]"); const o = c && document.querySelector('#coneSpinModeB > button[data-sm="' + c.dataset.sm + '"]'); if (o) o.click(); };
       host.appendChild(s); let tm = 0;
       const on = () => { clearTimeout(tm); s.classList.add("show"); }, off = () => { clearTimeout(tm); tm = setTimeout(() => s.classList.remove("show"), 450); };
       for (const el of [$("bC3Spin"), $("bC3Home"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
-      coneSpinModeUi(); }
+      s.appendChild($("c3Speed")); coneSpinModeUi(); spinSpUi(); s.classList.toggle("spin", !!($("bC3Spin") && $("bC3Spin").classList.contains("on"))); }
     c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     /* v0.830, «строка 2 должна быть под горизонтом»: сброс оставляет над чертой только строку 1 (солнце); строка 2 — та, что заполняется, под чертой
