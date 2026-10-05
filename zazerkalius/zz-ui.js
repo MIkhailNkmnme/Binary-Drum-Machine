@@ -10831,6 +10831,11 @@ function paneZigZ(){ for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = 
 function fieldZig(dy, ln){
   const f = document.getElementById("field"); if (!f) return;
   let ov = document.getElementById("fieldZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "fieldZigOv"; document.body.appendChild(ov);
+    /* v0.832, по снимку края поля — «границу для захвата (изменение ширины полей) можно ли на зубцах расположить»: хват — сами зубцы: нажатие и двойной
+       щелчок по ним передаются прежнему хвату #fieldEdge (тянуть — ширина, двойной щелчок — по умолчанию); полоса внутри поля, пока зубцы видны, выключена */
+    ov.title = "Потяни — шире или уже поле строк; двойной щелчок — ширина по умолчанию";
+    for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const fe = document.getElementById("fieldEdge"); if (!fe) return; e.preventDefault(); e.stopPropagation();
+      fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
   const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
