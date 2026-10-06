@@ -1851,14 +1851,14 @@ const LAS_KEY = {
   r1: ["bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
   fill: ["bCutFree", "bSunXor", "bSunAnti", "bSunSweep", "coneVoid", "bConeOut"],
-  moon: ["bMoonEcl", "bMoonBlk", "bMoonOne"],
+  moon: ["bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross"],
   run: ["bConeLast2", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
 };
 let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.sunPass0, Z.sunPass1, Z.sunPassE, Z.moonPass0, Z.moonPass1, Z.moonPassE, Z.moonSweep, Z.sunAnti, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonCross, Z.sunPass0, Z.sunPass1, Z.sunPassE, Z.moonPass0, Z.moonPass1, Z.moonPassE, Z.moonSweep, Z.sunAnti, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLast2, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
@@ -1870,9 +1870,9 @@ function lasDeps(){
   need(["bConeLast2"], (Z.coneSpinMode || "all") === "all", "во «Всё» весь конус крутится одним поворотом — держать нечего; режим — в «Каждое», «Встреч Стр», «Встреч Бит»");   // v0.870
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
-  need(["coneSunCut", "bSunXor", "bSunAnti", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
+  need(["coneSunCut", "bSunXor", "bSunAnti", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
   need(["bCutPrev"], cut && coneSlitRaw() !== "cut", "только в «вырезах T−1»: в «2n» вырез из n частей, а у предыдущей строки n − 1 бит");   // v0.781
-  need(["bCutAlign", "bCutPrev", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
+  need(["bCutAlign", "bCutPrev", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross", "bSunParts", "bCutLen", "bCutFree"], !cut, "только в «вырезы T−1» (кнопка в «Щелях»)");
   need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, "✚ 4 части главнее — строка 1 уже круг из четвертей");
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
@@ -1932,7 +1932,7 @@ function lasDeps(){
     if (coneVoidOn()) t += `; дальше — пустые кольца до 256, ${who} метит каждую пройденную ячейку (1, 11, 111…)`;
     if (Z.coneOutOn) t += `; ✎ попадания пишутся в поле ${coneOutLane() + 1}`;
     L.push(["fill", "<b>За чертой</b>: " + t + "."]);
-    if (sun && cut) L.push(["moon", "<b>Луна</b>: " + (Z.moonBlk ? "☾ за 1 — зеркало света, который остановили «1» (на любом кольце), через центр" : Z.moonEcl ? "☾ только при затмении (ничего не вылетело) — зеркало света, упавшего на последнее кольцо" : "зеркало вылетевшего света через центр") +
+    if (sun && cut) L.push(["moon", "<b>Луна</b>: " + (Z.moonBlk ? "☾ за 1 — зеркало света, который остановили «1» (на любом кольце), через центр" : Z.moonEcl ? "☾ только при затмении (ничего не вылетело) — зеркало света, упавшего на последнее кольцо" : "зеркало вылетевшего света через центр") + (Z.moonCross ? " — крестом: повёрнуто на 90°, не на 180°" : "") +
       "; идёт из центра сквозь вырезы" + (sunPass("moon", "1") ? ", «1» проходит, считая их, — 0 в ячейку, целиком накрытую светом с одинаковым числом «1»" : ", «1» — стена") + (sunPass("moon", "0") ? ", «0» проходит" : ", «0» — стена") + "."]);   // v0.867
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
     L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + (Z.coneLast2 && sm !== "Всё" ? "; крутятся только 2 последних кольца — последней строки и за чертой" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
@@ -1995,6 +1995,7 @@ const SUNTBL = [
   { t: "по длине дуги", tip: "📏 Свет переходит на следующее кольцо той же длиной дуги, а не тем же углом: с кольца строки m на m + 1 сужается в m / (m + 1).", s: { b: "bCutLen" } },
   { g: "Луна светит" },
   { t: "только при затмении", tip: "☾ Луна светит, только когда всё солнце скрыто за битами (ничего не вылетело): зеркало света, упавшего на последнее кольцо, через центр. Либо-либо со строкой ниже.", m: { b: "bMoonEcl" } },
+  { t: "крестом — на 90°, не через центр", tip: "☾ крестом: луна — свет солнца, повёрнутый на 90° (симметрия креста), а не отражённый через центр. При ✚ 4 частях солнце светит из двух чёрных четвертей напротив друг друга, и луна через центр ложилась на те же четверти; крестом — на белые.", m: { b: "bMoonCross" } },
   { t: "когда солнце упёрлось в «1»", tip: "☾ Луна светит, когда хоть часть солнца встала на «1» (на любом кольце): зеркало остановленного света через центр. Либо-либо со строкой выше.", m: { b: "bMoonBlk" } }
 ];
 function sunTblOpen(){ if (Z.sunTbl !== undefined) return !!Z.sunTbl; return window.innerWidth > 760; }
@@ -3820,7 +3821,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneLast2 ? JSON.stringify(Z.coneHold || {}) : "", Z.coneSlits, Z.cutLen ? 1 : 0, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, ["0", "1", "E"].map(q => (sunPass("sun", q) ? 1 : 0) + "" + (sunPass("moon", q) ? 1 : 0)).join(""), Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneLast2 ? JSON.stringify(Z.coneHold || {}) : "", Z.coneSlits, Z.cutLen ? 1 : 0, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, Z.moonCross ? 1 : 0, ["0", "1", "E"].map(q => (sunPass("sun", q) ? 1 : 0) + "" + (sunPass("moon", q) ? 1 : 0)).join(""), Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -3897,14 +3898,18 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
        ими свет, вылетел ли при этом остальной или нет. С «☾ затм.» — либо-либо. Дальше — как обычно: от кольца за чертой, нули, на кольцо наружу */
     const blkU = ivUnion(blk.map(x => x.slice())).filter(([x, y]) => y - x > 1e-9);
     const base = Z.moonBlk ? (blkU.length && !full(blkU) ? blkU : []) : Z.moonEcl ? (!passN && lastIn && lastIn[1].length && !full(lastIn[1]) ? lastIn[1] : []) : pastN.length && !full(pastN) ? pastN : [], nf = base.length ? [N] : null;
-    const mir = []; for (const [lo, hi] of base) ivNorm(lo + Math.PI, hi + Math.PI, mir);
+    /* v0.872, по кнопке «✚ 4 части» — «сделай там настройку: когда 2 части — это солнце, а крест-симметричные — луна»: при ✚ солнце выходит из двух
+       чёрных четвертей напротив друг друга, и зеркало через центр (+180°) ложилось на те же самые четверти — луна светила там же, где солнце. «☾ крестом»
+       (Z.moonCross) — луна — тот же свет, повёрнутый на 90° (симметрия креста): при ✚ — белые четверти. Без ✚ — тоже поворот на 90° вместо 180° */
+    const mSh = Z.moonCross ? Math.PI / 2 : Math.PI;
+    const mir = []; for (const [lo, hi] of base) ivNorm(lo + mSh, hi + mSh, mir);
     let A = ivUnion(mir).filter(([x, y]) => y - x > 1e-9); a0 = A; akb = nf ? nf[0] : N + 1;
     const sm = coneSunMoon() || coneSunTurnOn(); if (sm) { A = coneSunTurnOn() ? (coneMoonTurn() ? [[0, TAU2]] : []) : coneMoonStart(); a0 = A; akb = 1; }   // v0.807: ☀☾ — луна из своей половины строки 1
     /* v0.723, «когда ставит 0, то нельзя ставить их через кольцо от того кольца, где солнце упёрлось в единицы, — только прилегающему (следующему от того
        кольца, где солнце упёрлось)»: ноль на кольце за чертой (N) — только там, где напротив (через центр) солнце упёрлось в биты кольца N − 1: свет дошёл до
        него, но в N не прошёл. zOk — зеркало такого света; ячейка — 0, только если её целиком накрыла луна внутри zOk */
     const bandOf = (k) => { const e = bands.find(([j]) => j === k); return e ? e[1] : []; }, zm = [];
-    for (const [lo, hi] of N >= 2 ? ivMinus(bandOf(N - 1), bandOf(N)) : []) if (hi - lo > 1e-9) ivNorm(lo + Math.PI, hi + Math.PI, zm);
+    for (const [lo, hi] of N >= 2 ? ivMinus(bandOf(N - 1), bandOf(N)) : []) if (hi - lo > 1e-9) ivNorm(lo + mSh, hi + mSh, zm);   // v0.872: и здесь — тем же поворотом
     const zOk = sm ? [[0, TAU2]] : ivUnion(zm);   // v0.807: ☀☾ — ноль где угодно, луна своя
     /* v0.725, «сделай кнопку и включи, что луна может проходить только через одну 1»: «☾ сквозь 1» (Z.moonOne, по умолчанию включено) — луна идёт, как
        солнце, из центра наружу, кольцо за кольцом: сквозь вырез и «0» — свободно, одну «1» на своём пути может пройти насквозь, на второй — встаёт. Свет
@@ -6345,6 +6350,11 @@ function setupCone(){
     $("bRow1Slit").classList.toggle("on", !!Z.cutRow1Slit);
     $("bRow1Slit").onclick = () => { Z.cutRow1Slit = !Z.cutRow1Slit; $("bRow1Slit").classList.toggle("on", Z.cutRow1Slit); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
       say(Z.cutRow1Slit ? "▮ Щель 1: в вырезах T−1 у строки 1 есть щель — лазер выходит из неё, только когда щель на луче; солнце — внутри, светит только из щели (крутится с кольцом строки 1, ширина — «щель»)." : "▮ Щель 1 выключено: в вырезах строка 1 прозрачна, лазер идёт мимо."); };
+  }
+  if ($("bMoonCross")) {   // v0.872: ☾ крестом — луна поворотом на 90°
+    $("bMoonCross").classList.toggle("on", !!Z.moonCross);
+    $("bMoonCross").onclick = () => { Z.moonCross = !Z.moonCross; $("bMoonCross").classList.toggle("on", Z.moonCross); coneSunWas = undefined; conePeekC = { k: "", S: null }; save(); renderCone();
+      say(Z.moonCross ? "☾ Крестом: луна — свет солнца, повёрнутый на 90°. При ✚ 4 частях солнце — две чёрные четверти, луна — две белые." : "☾ Луна снова — отражение через центр (180°)."); };
   }
   if ($("bLaserQuad")) {   // v0.743: ✚ 4 части — строка 1 кругом из четвертей, луч из центра через чёрную
     $("bLaserQuad").classList.toggle("on", !!Z.laserQuad);
