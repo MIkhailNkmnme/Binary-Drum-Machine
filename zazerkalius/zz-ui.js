@@ -967,7 +967,9 @@ function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><s
    меряется; влезают — межстрочный обычный (1.25), нет — сжимается ровно настолько, чтобы влезли, но не ниже 0.7 (дальше — прокрутка).
    Ужатое поле (.rlsq) держит и колонку номеров в высоту строки, иначе замок 🔒 не дал бы строке стать ниже. */
 const RL_MAX = 1.25, RL_MIN = 0.7;
+function rgStep(){ const fs = Z.fs || 16, k = Math.max(-1, Math.min(2, Math.round(Math.log2(fs / 16)))); return TZC_H * Math.pow(2, k); }   // v0.885: ряд «◇ сетки» — 12 / 24 / 48 / 96 по шрифту
 function rowsFit(){
+  if (Z.bitView === "rg") { const L = $("rowList"); if (L) { L.classList.remove("rlsq"); L.style.removeProperty("--rlh"); } rowsFit.key = ""; return; }   // v0.885: в «◇ сетке» ряд — ровно шаг сетки
   // v0.265: пока тянут черту — шаг строк прежний, даже размер поля не меряем (каждый замер — полная раскладка); подгонка — когда отпустят
   if ((document.body.classList.contains("cutdrag") || document.body.classList.contains("wdrag")) && $("rowList") && $("rowList").style.getPropertyValue("--rlh")) return;   // v0.269: и пока тянут ширину поля
   const L = $("rowList"); if (!L || !L.clientHeight) return;
@@ -1112,8 +1114,13 @@ function renderRows(){
   laneCountUi();   // v0.276
   if (typeof renderCone === "function") { clearTimeout(renderRows._cone); renderRows._cone = setTimeout(renderCone, 0); }   // v0.076: выделение в поле — и в конусе
   if (ovControls()) { renderRowsOver(); return; }   // v0.018
-  const L = $("rowList"), N = Z.laneCount || 1, qv = Z.bitView === "sq" || Z.bitView === "rh";
-  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv ? " vq" : "") + (Z.bitView === "sq" ? " vsq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
+  /* v0.885, по снимку поля строк и зубцов его края — «строки! текущую версию строк заархивировать; сюда делаем сетку ромбоидную: каждый бит в ромбе, ромб —
+     от ромбов границы, и при масштабировании — в 2 раза, всё только шагом, когда шрифт меняем»: вид «◇ сетка» (Z.bitView = "rg"). Бит — высокий ромб
+     из двух равносторонних треугольников, как зубец края поля (#fieldZigOv): высота — ряд H, ширина — H / √3; ромбы в ряду вплотную, вершина к
+     вершине, ряд — ровно H, без ужатия (rowsFit его не трогает). H — от размера шрифта поля, но только шагами вдвое: 12, 24 (как зубцы), 48, 96
+     (rgStep). Прежние виды — «01 цифры», «квадраты», «ромбы» — остались как были, в том же списке */
+  const rg = Z.bitView === "rg", L = $("rowList"), N = Z.laneCount || 1, qv = Z.bitView === "sq" || Z.bitView === "rh" || rg;
+  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv && !rg ? " vq" : "") + (rg ? " vrg" : "") + (Z.bitView === "sq" ? " vsq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
   const qrh = (i) => {   // v0.456: ромбы — строке, чья длина отличается от соседней на нечётное (ряды сдвинуты на полсимвола)
     if (Z.bitView !== "rh" || (Z.rowsAlign || "center") !== "center" || Z.rows[i] === undefined) return false;
     const n = Z.rows[i].length, odd = (j) => Z.rows[j] !== undefined && Math.abs(Z.rows[j].length - n) % 2 === 1;
@@ -1164,7 +1171,8 @@ function renderRows(){
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
   rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
-  if (qv) {   // v0.456: размеры фигур — символ и шаг рядов, как их поставил rowsFit
+  if (rg) { const H = rgStep(); L.style.setProperty("--rgh", H + "px"); L.style.setProperty("--rgw", (H / Math.sqrt(3)).toFixed(3) + "px"); }   // v0.885
+  if (qv && !rg) {   // v0.456: размеры фигур — символ и шаг рядов, как их поставил rowsFit
     const q = L.querySelector(".rw[data-r] i.q"), rw = L.querySelectorAll(".rl-inner > .rw[data-r] > .bits");
     if (q) L.style.setProperty("--qw", q.getBoundingClientRect().width.toFixed(2) + "px");
     if (q && Z.bitView === "sq") L.style.setProperty("--qsq", q.getBoundingClientRect().width.toFixed(2) + "px");   // v0.458: шаг рядов = ширина символа — ячейка квадратная
@@ -13599,6 +13607,7 @@ function init(){
   $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); if (Z.rmb && Z.rmb.cell === "rmb") renderRmb(); };   // v0.794: «◇ бит» в Ромбоидах стоит, как поле
   if ($("bitView")) { $("bitView").value = Z.bitView || "txt";   // v0.456: вид бит — цифры, квадраты, ромбы
     $("bitView").onchange = (e) => { Z.bitView = e.target.value; renderRows(); save();
+      if (Z.bitView === "rg") say("◇ Сетка: каждый бит — ромб, как зубец края поля; ряд — 24 px, при смене шрифта — вдвое: 12 / 24 / 48 / 96.");
       if (Z.bitView === "rh") say((Z.rowsAlign || "center") !== "center" ? "◆ Ромбы — при выравнивании по центру; сейчас — квадраты." : "◆ Ромбы — у строк, чья длина отличается от соседней на нечётное (ромбы входят друг в друга); у остальных — квадраты."); }; }
   // 🧊 Вид (v0.024): кнопки, перетаскивание мышью, перерисовка при смене размера окна
   // v0.056: ① ② ③ — сохранённые виды, ⟋ — хорда концов
