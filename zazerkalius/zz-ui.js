@@ -2731,9 +2731,10 @@ function renderCone(){
          казался оборванным, даже где проходит насквозь; у кольца строки 2 его не было вовсе. «☀ сплошной свет» (Z.lightSolid, по умолчанию вкл, кнопка в
          «Виде») — один градиент от солнца до края строки за чертой на все кольца: где свет идёт дальше (вырез, «0» / «1» по галкам), луч сплошной */
       const lSolid = Z.lightSolid !== false, rDk = r0 + Math.max(1, dr * band);
-      const grAll = lSolid ? g.createRadialGradient(cx, cy, rDk, cx, cy, Math.max(rDk + 1, roF)) : null;
+      const r1C = !Z.sunRow1;   // v0.893: свет из центра (солнце — точка в центре) — и градиент от центра; при «☀ = 1 бит» — от края строки 1, как было
+      const grAll = lSolid ? g.createRadialGradient(cx, cy, r1C ? 0 : rDk, cx, cy, Math.max(rDk + 1, roF)) : null;
       if (grAll) { grAll.addColorStop(0, "rgba(255, 205, 100, 0.32)"); grAll.addColorStop(1, "rgba(255, 205, 100, 0.10)"); }
-      const blueAll = lSolid ? g.createRadialGradient(cx, cy, rDk, cx, cy, Math.max(rDk + 1, roF)) : null;   // v0.880: свет-луна (≥ 180°)
+      const blueAll = lSolid ? g.createRadialGradient(cx, cy, r1C ? 0 : rDk, cx, cy, Math.max(rDk + 1, roF)) : null;   // v0.880: свет-луна (≥ 180°)
       if (blueAll) { blueAll.addColorStop(0, "rgba(140, 185, 255, 0.30)"); blueAll.addColorStop(1, "rgba(140, 185, 255, 0.10)"); }
       for (const [b, lit] of S.bands) {
         if (b > N || (b === 1 && !lSolid)) continue;
@@ -2755,6 +2756,21 @@ function renderCone(){
         }
         for (const [lo, hi] of L) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
       }
+      /* v0.893, по снимку ◐ (строка 1 — полукруг, солнце — точка в центре, свет снаружи начинается с кольца строки 2) — «показывай свечение, если оно из центра, —
+         из центра, а не со 2 строки»: внутри круга строки 1 — тот же свет от самой точки солнца, ровно в те стороны, куда он выходит из строки 1 (полоса 1 трассы:
+         при ◐ — открытая половина, при ✚ — чёрные четверти, у бита-щели — щель); выходит во все стороны — светится весь круг. При «☀ = 1 бит» строка 1 сама
+         солнце — там не нужно. Куски шире 180° при «свет ≥ 180° — луна» — синим */
+      const r1Glow = (L0, gold, blue) => {
+        const L = (L0 || []).filter(([lo, hi]) => hi - lo > 1e-6); if (!L.length || rDk <= 1) return;
+        const full = L.some(([lo, hi]) => hi - lo > 2 * Math.PI - 1e-6), mk = (c0, c1) => { const q = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rDk + 1, roF)); q.addColorStop(0, c0); q.addColorStop(1, c1); return q; };
+        const W = blue === null ? [] : sunWideMoonOn() ? lightWide(L) : [], Nw = W.length ? ivMinus(ivUnion(L.map(x => x.slice())), W) : L;
+        const put = (arr, gr) => { if (!arr.length) return; g.fillStyle = gr; g.globalAlpha = 1;
+          if (full && arr === L) { g.beginPath(); g.arc(cx, cy, rDk, 0, 2 * Math.PI); g.fill(); return; }
+          for (const [lo, hi] of arr) sect(0, rDk, lo, hi); };
+        put(Nw, gold || mk("rgba(255, 205, 100, 0.34)", "rgba(255, 205, 100, 0.10)"));
+        if (W.length) put(W, blue || mk("rgba(140, 185, 255, 0.30)", "rgba(140, 185, 255, 0.10)"));
+      };
+      if (r1C) { const B1 = S.bands.find(([b]) => b === 1); if (B1) r1Glow(B1[1], grAll, blueAll); }
       /* v0.690, по снимку — «у нижнего бита границ не видно совсем под солнцем; и покажи за солнцем — из через центр проходящих его лучей — в обратную сторону
          от выреза также подсвет, лунный, синевой, и всё продолжи даже немного дальше крайнего кольца». (1) Поверх свечения — черты между ячейками колец, на
          которые падает свет (цветом фона), края вырезов — золотом. (2) Луна: края каждого сектора продолжены через центр в обратную сторону, сектор напротив —
@@ -2774,8 +2790,9 @@ function renderCone(){
       /* v0.707 / v0.708: синим — антисолнце (лучи солнца, продолженные через центр), тот самый свет, что ставит нули: перед каждым кольцом — от края
          прежнего (у первого — от диска) до внешнего края этого, синеватый градиент и голубые края; прошёл крайнее кольцо — ещё на кольцо наружу. Где синее
          накрыло ячейку целиком — там 0 */
-      const moonAll = lSolid ? g.createRadialGradient(cx, cy, rDisk, cx, cy, Math.max(rDisk + 1, roF)) : null;
+      const moonAll = lSolid ? g.createRadialGradient(cx, cy, r1C ? 0 : rDisk, cx, cy, Math.max(rDisk + 1, roF)) : null;
       if (moonAll) { moonAll.addColorStop(0, "rgba(140, 185, 255, 0.30)"); moonAll.addColorStop(1, "rgba(140, 185, 255, 0.10)"); }
+      { const Z1 = (S.zbands || []).find(([k]) => k === 1); if (r1C && Z1) r1Glow(Z1[1], moonAll || (() => { const q = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rDisk + 1, roF)); q.addColorStop(0, "rgba(140, 185, 255, 0.30)"); q.addColorStop(1, "rgba(140, 185, 255, 0.10)"); return q; })(), null); }   // v0.893: и луна — из центра
       for (const [k, zl] of S.zbands || []) {
         if (k > N) continue;
         const ri = k === 1 ? rDisk : rIn(k), ro = r0 + k * dr + Math.max(1, dr * band); if (ro <= ri) continue;
@@ -2794,7 +2811,7 @@ function renderCone(){
           /* v0.712, по снимку — «свет от луны правильно покажи»: луна — те же солнечные лучи, продолженные через центр, поэтому она, как солнце, выходит из
              диска: от диска до кольца, где начинает действовать, — слабое синее свечение между лучами и сплошные голубые края (было — один пунктир) */
           let gm0 = moonAll; if (!gm0) { gm0 = g.createRadialGradient(cx, cy, rDisk, cx, cy, rK); gm0.addColorStop(0, "rgba(140, 185, 255, 0.22)"); gm0.addColorStop(1, "rgba(140, 185, 255, 0.06)"); }   // v0.878
-          g.fillStyle = gm0; g.globalAlpha = 1; for (const [lo, hi] of a0) sect(rDisk, rK, lo, hi);
+          g.fillStyle = gm0; g.globalAlpha = 1; for (const [lo, hi] of a0) sect(r1C ? 0 : rDisk, rK, lo, hi);   // v0.893: из центра
           g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.setLineDash([]); g.beginPath();
           const seamA = a0.some(([x]) => x < 1e-6) && a0.some(([, y]) => y > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
           for (const [lo, hi] of a0) for (const e of [lo, hi]) { if (seamA && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + rDisk * Math.cos(tt), cy + rDisk * Math.sin(tt)); g.lineTo(cx + rK * Math.cos(tt), cy + rK * Math.sin(tt)); }
