@@ -2048,7 +2048,7 @@ function sunTblPlace(el){
 function sunTblBuild(host){
   const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), el = document.createElement("div"); el.id = "sunMoonTbl";
   let x = '<div class="smh" title="☀ Солнце · ☾ Луна — тяни: переставить (липнет к группам и краям, как группы), двойной щелчок — на место"><span>☀ · ☾</span><span class="pbtn"><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="smx" title="Закрыть (кнопка «☀☾» в группе «Солнце» — открыть снова)">✕</button></span></div>' +
-    '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><thead><tr><th></th><th class="ths" title="Солнце">☀</th><th class="thm" title="Луна">☾</th></tr></thead><tbody>';
+    '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
   let gi = -1;   // v0.892: номер подгруппы — свой фон (класс sgN)
   SUNTBL.forEach((r, i) => {
     if (r.g) { gi++; x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
