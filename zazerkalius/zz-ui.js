@@ -2925,7 +2925,7 @@ function renderCone(){
     g.restore();
   }
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
-  if (coneMagLine !== null && (coneDrag || coneFillDrag)) {   // v0.803: 🧲 — линия привязки через центр; v0.875: и прилипание рукой
+  if (coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag)) {   // v0.803: 🧲 — линия привязки через центр; v0.875: и прилипание рукой
     g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
     g.beginPath(); g.moveTo(cx - L * Math.cos(coneMagLine), cy - L * Math.sin(coneMagLine)); g.lineTo(cx + L * Math.cos(coneMagLine), cy + L * Math.sin(coneMagLine)); g.stroke(); g.restore();
   }
@@ -4368,6 +4368,20 @@ function coneHandSnap(i){   // → { dx, t, what } — на сколько до�
   }
   return best;
 }
+/* v0.881, «1 кольцо магнитить к осям, остальные к осям не магнитить»: строка 1, которую крутят рукой (довод Z.coneAimRot), прилипает к осям — её граница
+   или середина бита (у ✚ — четвертей, у ◐ — половин) ближе ~7 px к вертикали или горизонтали встаёт на неё; линия привязки — как у 🧲. Остальные кольца
+   к осям не тянутся ни рукой, ни 🧲 (у 🧲 — только к кольцам). → поправка довода в градусах или null */
+function coneR1AxisSnap(){
+  const R = coneRingFeat(0), G = coneGeom; if (!R || !G) return null;
+  const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
+  let best = null;
+  for (const x of coneFeatEdges(R).concat(coneFeatMids(R))) {
+    const a = -Math.PI / 2 + (x - R.x0) * R.step;
+    for (let q = 0; q < 4; q++) { const t = -Math.PI / 2 + q * Math.PI / 2, d = coneAngDiff(t, a);
+      if (Math.abs(d) < tol && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, t }; }
+  }
+  return best ? { deg: best.d / k, t: best.t } : null;
+}
 function coneHandRays(g, o){   // лучи в центр от границ (сплошные) и середин бит (пунктир) кольца, которое тянут
   const hr = coneDrag && !coneDrag.mag ? coneDrag.i : coneFillDrag ? "f" : coneR1Drag ? 0 : null; if (hr === null) return;
   const R = coneRingFeat(hr); if (!R || R.P > 720) return;
@@ -4394,7 +4408,7 @@ function coneMagSnap(i, rot){   // → { rot, line, what } — поворот к
     for (const c of sym) { let d = ((c - x) % R.P + R.P) % R.P; if (d > R.P / 2) d -= R.P; fam.push([x + d, "ось симметрии"]); }
     for (const [xf, own] of fam) { const dx = xf - x, da = Math.abs(dx) * R.step; if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own + " → " + what }; }
   };
-  if (K.ax) for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");
+  if (K.ax && i === 0) for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");   // v0.881: «1 кольцо магнитить к осям, остальные к осям не магнитить»
   if (K.bnd || K.mid || K.sym) for (let k = 0; k < Math.min(G.N, Z.rows.length); k++) {
     if (k === i) continue; const Q = coneMagRing(k); if (!Q || Q.P > 720) continue;
     const A = (x) => -Math.PI / 2 + (x - Q.x0) * Q.step;
@@ -5656,11 +5670,13 @@ function setupCone(){
         /* v0.874: строка 1 идёт за мышью: у ✚ шаг — четверть круга, у ◐ — половина (а не весь круг, как у бита), поэтому довод множится; щель лазера
            там ни при чём — без защёлки */
         const n0 = (Z.rows[0] || "").length || 1, k1 = coneQuadOn() ? 4 / n0 : coneSunHalf() || coneCut2n() ? 2 / n0 : 1;
-        Z.coneAimRot = r0v + turn * 180 / Math.PI * k1; if (k1 === 1) coneAimSnap(); turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
+        Z.coneAimRot = r0v + turn * 180 / Math.PI * k1;
+        if (!(k1 === 1 && coneAimSnap())) { const AX = coneFlat() ? coneR1AxisSnap() : null; if (AX) Z.coneAimRot += AX.deg; coneMagLine = AX ? AX.t : null; } else coneMagLine = null;   // v0.881: к осям
+        turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
       };
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
-        if (coneR1Drag) { coneR1Drag = false; renderCone(); }   // v0.877
+        coneMagLine = null; if (coneR1Drag) { coneR1Drag = false; renderCone(); }   // v0.877
         if (moved) { turnsAdd(0, turn / (2 * Math.PI)); if (Z.coneTurnsShow) renderRows(); coneAimSettle(); return; }   // v0.867: и в счёт оборотов кольца строки 1
         if (rb || Z.coneNoPick) return;   // v0.281: 🚫 выбор колец; v0.735: правый щелчок — не выбор
         if (rowSel.has(0)) rowSel.delete(0); else rowSel.add(0);   // v0.248: Ctrl + щелчок — выделить / снять, как у остальных колец
