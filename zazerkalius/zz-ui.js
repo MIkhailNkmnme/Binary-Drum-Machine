@@ -2686,11 +2686,18 @@ function renderCone(){
       const roF = r0 + (fillOn ? N : N - 1) * dr + Math.max(1, dr * band);   // внешний край строки за чертой (или нижней строки)
       /* v0.686, по снимку солнца — «между 2 лучами солнца как-то градиентом сектор золотой, несильно, только светить»: сектор между краями — мягкий
          золотой свет от места выхода (сильнее) к кольцу, куда он упал (слабее), поверх колец */
+      /* v0.878, по снимку — «сделай режим по умолчанию в Виде, чтобы лучи солнца и луны не прерывались там, где они проходят; если луна сквозь 1 идёт —
+         лучи также»: градиент был свой у каждого кольца (ярко у внутреннего края, бледно у внешнего), и на каждой границе колец свет начинался заново —
+         казался оборванным, даже где проходит насквозь; у кольца строки 2 его не было вовсе. «☀ сплошной свет» (Z.lightSolid, по умолчанию вкл, кнопка в
+         «Виде») — один градиент от солнца до края строки за чертой на все кольца: где свет идёт дальше (вырез, «0» / «1» по галкам), луч сплошной */
+      const lSolid = Z.lightSolid !== false, rDk = r0 + Math.max(1, dr * band);
+      const grAll = lSolid ? g.createRadialGradient(cx, cy, rDk, cx, cy, Math.max(rDk + 1, roF)) : null;
+      if (grAll) { grAll.addColorStop(0, "rgba(255, 205, 100, 0.32)"); grAll.addColorStop(1, "rgba(255, 205, 100, 0.10)"); }
       for (const [b, lit] of S.bands) {
-        if (b > N || b === 1) continue;
-        const ri = rIn(b), ro = r0 + b * dr + Math.max(1, dr * band); if (ro <= ri) continue;
-        const gr = g.createRadialGradient(cx, cy, ri, cx, cy, ro);
-        gr.addColorStop(0, "rgba(255, 205, 100, 0.30)"); gr.addColorStop(1, "rgba(255, 205, 100, 0.06)");
+        if (b > N || (b === 1 && !lSolid)) continue;
+        const ri = b === 1 ? rDk : rIn(b), ro = r0 + b * dr + Math.max(1, dr * band); if (ro <= ri) continue;
+        let gr = grAll;
+        if (!gr) { gr = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gr.addColorStop(0, "rgba(255, 205, 100, 0.30)"); gr.addColorStop(1, "rgba(255, 205, 100, 0.06)"); }
         g.fillStyle = gr; g.globalAlpha = 1;
         for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
       }
@@ -2713,10 +2720,13 @@ function renderCone(){
       /* v0.707 / v0.708: синим — антисолнце (лучи солнца, продолженные через центр), тот самый свет, что ставит нули: перед каждым кольцом — от края
          прежнего (у первого — от диска) до внешнего края этого, синеватый градиент и голубые края; прошёл крайнее кольцо — ещё на кольцо наружу. Где синее
          накрыло ячейку целиком — там 0 */
+      const moonAll = lSolid ? g.createRadialGradient(cx, cy, rDisk, cx, cy, Math.max(rDisk + 1, roF)) : null;
+      if (moonAll) { moonAll.addColorStop(0, "rgba(140, 185, 255, 0.30)"); moonAll.addColorStop(1, "rgba(140, 185, 255, 0.10)"); }
       for (const [k, zl] of S.zbands || []) {
         if (k > N) continue;
         const ri = k === 1 ? rDisk : rIn(k), ro = r0 + k * dr + Math.max(1, dr * band); if (ro <= ri) continue;
-        const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.08)");
+        let gm = moonAll;   // v0.878: «сплошной свет» — один градиент луны на все кольца
+        if (!gm) { gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.08)"); }
         g.fillStyle = gm; g.globalAlpha = 1; for (const [lo, hi] of zl) if (hi - lo < 2 * Math.PI - 1e-6) sect(ri, ro, lo, hi);
         const seamZ = zl.some(([x]) => x < 1e-6) && zl.some(([, y]) => y > 2 * Math.PI - 1e-6);
         g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.setLineDash([]); g.beginPath();
@@ -2727,7 +2737,7 @@ function renderCone(){
         if (a0.length && rK > rDisk) {   // v0.710: от диска до уровня пучка — голубые лучи-края (сквозь кольца, как продолжение солнечных через центр)
           /* v0.712, по снимку — «свет от луны правильно покажи»: луна — те же солнечные лучи, продолженные через центр, поэтому она, как солнце, выходит из
              диска: от диска до кольца, где начинает действовать, — слабое синее свечение между лучами и сплошные голубые края (было — один пунктир) */
-          const gm0 = g.createRadialGradient(cx, cy, rDisk, cx, cy, rK); gm0.addColorStop(0, "rgba(140, 185, 255, 0.22)"); gm0.addColorStop(1, "rgba(140, 185, 255, 0.06)");
+          let gm0 = moonAll; if (!gm0) { gm0 = g.createRadialGradient(cx, cy, rDisk, cx, cy, rK); gm0.addColorStop(0, "rgba(140, 185, 255, 0.22)"); gm0.addColorStop(1, "rgba(140, 185, 255, 0.06)"); }   // v0.878
           g.fillStyle = gm0; g.globalAlpha = 1; for (const [lo, hi] of a0) sect(rDisk, rK, lo, hi);
           g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.setLineDash([]); g.beginPath();
           const seamA = a0.some(([x]) => x < 1e-6) && a0.some(([, y]) => y > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
@@ -7827,6 +7837,10 @@ function setupCone(){
   /* v0.862, по снимку золотой рамки на бите — «наверное надо отключить выделение границ внутренних битов золотой границей жирной —
      вообще от чего она неясно»: рамка — это попадание (v0.666): в этот бит упёрся свет, «×2» — сколько раз. «✦ попадания»
      (Z.coneHits, по умолчанию вкл) — показывать или нет; сам счёт (Z.voidHits) не меняется. */
+  { const b = $("bLightSolid");   // v0.878: ☀ сплошной свет
+    if (b) { const ui = () => b.classList.toggle("on", Z.lightSolid !== false); ui();
+      b.onclick = () => { Z.lightSolid = Z.lightSolid === false; ui(); save(); renderCone();
+        say(Z.lightSolid !== false ? "☀ Сплошной свет: лучи солнца и луны — одним градиентом от центра, где свет проходит, луч не прерывается." : "☀ Свет по кольцам: у каждого кольца свой градиент, как было."); }; } }
   { const b = $("bConeHits"), ui = () => b.classList.toggle("on", Z.coneHits !== false);
     if (b) { ui(); b.onclick = () => { Z.coneHits = Z.coneHits === false; ui(); save(); renderCone(); say(Z.coneHits !== false ? "✦ Попадания видны: бит, в который упёрся свет, — золотой рамкой, «×2» — сколько раз." : "✦ Попадания скрыты: золотых рамок и счёта на конусе нет; считаться они не перестали."); }; } }
   { const b = $("bConeArcs"), ui = () => b.classList.toggle("on", Z.coneArcs !== false);   // v0.375: ◠ дуги битов — показать / скрыть, по умолчанию показаны
