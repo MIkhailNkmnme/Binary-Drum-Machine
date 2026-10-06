@@ -894,6 +894,7 @@ function fillAutoCommit(){
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
+  if (Z.coneFillFree) { if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[N] = true; Z.coneFillFree = false; }   // v0.875: прилипшее рукой — дробным
   while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N] = Z.coneFillTurn || 0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;   // v0.704: поворот кольца за чертой — кольцу строки
   if (Z.coneFillTurns) { turnsAdd(N, Z.coneFillTurns); Z.coneFillTurns = 0; }   // v0.867: и его обороты
   coneHoldSync();   // v0.870: «2 посл.» — прежнее последнее кольцо встаёт сразу, а не к следующему кадру
@@ -910,7 +911,8 @@ function fillCommit(){
   /* v0.865 / v0.867: поворот кольца за чертой и его обороты остаются у него — теперь кольца строки (как у fillAutoCommit, v0.704); новое кольцо за
      чертой — без накрутки (прежде «＋» оставлял прежний поворот новому кольцу другой длины, а строке — 0). Накрученное рукой — до ячейки (в вырезах —
      до полчасти) и по модулю круга, как при отпускании */
-  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);
+  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = Z.coneFillFree ? (Z.coneFillTurn || 0) : F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);   // v0.875: прилипшее — как есть
+  if (Z.coneFillFree) { if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[N0] = true; Z.coneFillFree = false; }
   Z.rows.push(row); Z.cur = Z.rows.length - 1; Z.fillCells = null;
   while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N0] = ((fq % P0) + P0) % P0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;
   if (Z.coneFillTurns) { turnsAdd(N0, Z.coneFillTurns); Z.coneFillTurns = 0; }
@@ -2885,7 +2887,8 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneMagLine !== null && coneDrag) {   // v0.803: 🧲 — линия привязки через центр
+  if (coneFlat() && (coneDrag || coneFillDrag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
+  if (coneMagLine !== null && (coneDrag || coneFillDrag)) {   // v0.803: 🧲 — линия привязки через центр; v0.875: и прилипание рукой
     g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
     g.beginPath(); g.moveTo(cx - L * Math.cos(coneMagLine), cy - L * Math.sin(coneMagLine)); g.lineTo(cx + L * Math.cos(coneMagLine), cy + L * Math.sin(coneMagLine)); g.stroke(); g.restore();
   }
@@ -4269,6 +4272,55 @@ function coneMagRing(i){   // { step, P, x0 } — угол бита x: −π/2 +
   const n = (Z.rows[i] || "").length; if (!n) return null; const CG = coneCutGeo(i, n);
   return { n, cut: CG.cut, step: CG.step, P: CG.cut ? coneCutP(n) : n, x0: coneRotOf(i) - CG.off };
 }
+/* v0.875, «когда кручу руками кольцо, надо от всех его границ и частей 1/2 каждого бита лучи в центр показать и магнитить к внутренним границам
+   любого уровня»: пока кольцо тянут рукой (Ctrl + тянуть; и кольцо за чертой) — от каждой его границы луч в центр (сплошной) и от середины каждого
+   бита (пунктир). Своя граница или середина бита ближе ~7 px к границе любого кольца ВНУТРИ (все уровни, до строки 1) — кольцо прилипает, линия
+   привязки — как у 🧲; отпустил прилипшим — поворот остаётся дробным (Z.coneFree, как у 🧲), строка повёрнута на целые биты, что прошли. Не прилипло —
+   как было. coneRingFeat — геометрия кольца (i — номер строки или "f"), coneFeatEdges / coneFeatMids — места границ и середин бит в его частях */
+let coneFillDrag = false;
+function coneRingFeat(i){
+  let n, cut, step, P, x0;
+  if (i === "f") { n = fillLen(); if (!n) return null; const F = coneFillCut(); cut = !!F; step = F ? F.step : 2 * Math.PI / n; P = F ? F.P : n; x0 = coneFillRot() - (F ? F.off : 0); }
+  else { const R = coneMagRing(i); if (!R) return null; n = R.n; cut = R.cut; step = R.step; P = R.P; x0 = R.x0; }
+  return { n, cut, step, P, x0, sp: cut && coneCutSpread() };
+}
+function coneFeatEdges(R){
+  const o = [];
+  if (R.sp) { const s = new Set(); for (let q = 0; q < R.n; q++) { const p = cutPos(q, R.n); s.add(Math.round((p % R.P) * 1e6) / 1e6); s.add(Math.round(((p + 1) % R.P) * 1e6) / 1e6); } return [...s]; }
+  for (let j = 0; j < (R.cut ? R.P : R.n); j++) o.push(j);
+  return o;
+}
+function coneFeatMids(R){ const o = []; for (let q = 0; q < R.n; q++) o.push((R.cut ? cutPos(q, R.n) : q) + 0.5); return o; }
+function coneHandSnap(i){   // → { dx, t, what } — на сколько довернуть кольцо i (в его частях), чтобы своя граница или середина бита легла на границу кольца внутри
+  const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return null;
+  const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i, rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm;
+  const own = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"]).concat(coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"])).sort((a, b) => a[0] - b[0]);
+  if (!own.length) return null;
+  let best = null;
+  for (let k = 0; k < ii && k < N; k++) {
+    const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
+    for (const e of coneFeatEdges(Q)) {
+      const t = -Math.PI / 2 + (e - Q.x0) * Q.step, x = ((((t + Math.PI / 2) / R.step + R.x0) % R.P) + R.P) % R.P;
+      let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m][0] < x) lo = m + 1; else hi = m; }
+      for (const c of [lo - 1, lo]) { const w = (c + own.length) % own.length, xf = own[w][0] + (c < 0 ? -R.P : c >= own.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
+        if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own[w][1] + " → граница кольца " + (k + 1) }; }
+    }
+  }
+  return best;
+}
+function coneHandRays(g, o){   // лучи в центр от границ (сплошные) и середин бит (пунктир) кольца, которое тянут
+  const hr = coneDrag && !coneDrag.mag ? coneDrag.i : coneFillDrag ? "f" : null; if (hr === null) return;
+  const R = coneRingFeat(hr); if (!R || R.P > 720) return;
+  const { cx, cy, r0, dr, band, dpr, N, col } = o, ii = hr === "f" ? N : hr, rOut = r0 + ii * dr + Math.max(1, dr * band);
+  const A = (x) => -Math.PI / 2 + (x - R.x0) * R.step;
+  g.save(); g.strokeStyle = col; g.lineCap = "butt";
+  g.globalAlpha = 0.6; g.lineWidth = Math.max(1, dpr); g.setLineDash([]); g.beginPath();
+  for (const x of coneFeatEdges(R)) { const a = A(x); g.moveTo(cx, cy); g.lineTo(cx + rOut * Math.cos(a), cy + rOut * Math.sin(a)); }
+  g.stroke();
+  g.globalAlpha = 0.45; g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+  for (const x of coneFeatMids(R)) { const a = A(x); g.moveTo(cx, cy); g.lineTo(cx + rOut * Math.cos(a), cy + rOut * Math.sin(a)); }
+  g.stroke(); g.restore();
+}
 function coneMagSnap(i, rot){   // → { rot, line, what } — поворот кольца i (coneRot[i]) с привязкой
   const K = coneMagK(), G = coneGeom; coneRot[i] = rot; const R = coneMagRing(i); if (!R || !G) return { rot, line: null };
   const rm = Math.max(20 * (G.dpr || 1), G.r0 + (i + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm, TAU = 2 * Math.PI;
@@ -5505,11 +5557,13 @@ function setupCone(){
       /* v0.865 / v0.867, «вот есть место [＋]: пусть когда последнее кольцо крутить вручную, когда 2 оборота, то открывается следующее кольцо»: пока кольцо
          за чертой тянут, его счёт оборотов (Z.coneFillTurns, чистый — назад вычитается) дошёл до порога → то же, что «＋» у его номера (fillCommit: строка
          в поле, пустые — нулями, ↩ вернёт); рука не отпущена — тянется уже новое кольцо за чертой. Порог — Z.coneOpenTurns (не задан — 2; 0 — не открывать) */
-      let F = coneFillCut(), stp = F ? F.step : 2 * Math.PI / fillLen(), t0 = Z.coneFillTurn || 0, tb = Z.coneFillTurns || 0, blocked = false;
+      let F = coneFillCut(), stp = F ? F.step : 2 * Math.PI / fillLen(), t0 = Z.coneFillTurn || 0, tb = Z.coneFillTurns || 0, blocked = false, fhs = null;
+      coneFillDrag = true;   // v0.875: лучи от его границ
       const openT = Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0;
       const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
       let last = ang(e), turn = 0;
       const mv = (ev) => { const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a; Z.coneFillTurn = t0 - turn / stp; Z.coneFillTurns = tb + turn / (2 * Math.PI);
+        { const SN = coneFlat() ? coneHandSnap("f") : null; if (SN) Z.coneFillTurn += SN.dx; fhs = SN; coneMagLine = SN ? SN.t : null; }   // v0.875: прилипнуть к границе кольца внутри
         if (openT > 0 && !blocked && Math.abs(Z.coneFillTurns) >= openT - 1e-9) {
           const n0 = Z.rows.length;
           if (n0 >= CONE_MAX) { blocked = true; say(`⟳ ${openT} оборота, но строк уже ${CONE_MAX} — следующее кольцо не открыть.`); }
@@ -5520,7 +5574,11 @@ function setupCone(){
         }
         turnsChip(ev, `За чертой: ${turnsFmt(Z.coneFillTurns)}` + (openT > 0 ? ` из ${openT}` : "")); turnsMark(); renderCone(); };
       const up = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
-        if (rb && Math.abs(turn) < 0.02) { Z.coneFillTurn = t0; Z.coneFillTurns = tb; turnsMark(); renderCone(); return; }   // v0.735: правый щелчок без движения — не поворот (стирание — в contextmenu)
+        coneFillDrag = false; coneMagLine = null;
+        if (rb && Math.abs(turn) < 0.02) { Z.coneFillTurn = t0; Z.coneFillTurns = tb; turnsMark(); renderCone(); return; }
+        if (fhs) { const P = F ? F.P : fillLen(); Z.coneFillTurn = (((Z.coneFillTurn % P) + P) % P); Z.coneFillFree = true;   // v0.875: прилипло — без округления
+          save(); renderRows(); renderCone(); say(`🧲 Кольцо за чертой: ${fhs.what}.`); return; }
+        Z.coneFillFree = false;   // v0.735: правый щелчок без движения — не поворот (стирание — в contextmenu)
         const P = F ? F.P : fillLen(), v = F ? Math.round(Z.coneFillTurn * 2) / 2 : Math.round(Z.coneFillTurn); Z.coneFillTurn = ((v % P) + P) % P;
         save(); renderRows(); renderCone(); say(`◯ Кольцо за чертой повёрнуто на ${String(Z.coneFillTurn).replace(".", ",")} из ${P} ${F ? "частей" : "ячеек"}. Ушла строка в поле — поворот остаётся у её кольца.`); };
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
@@ -5593,7 +5651,10 @@ function setupCone(){
     const a = Math.atan2((e.clientY - cvr.top) * G.dpr - G.cy, (e.clientX - cvr.left) * G.dpr - G.cx);
     let da = a - D.last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
     D.turn += da; D.last = a; turnsChip(e, "Кольцо " + (D.i + 1) + ": " + turnsFmt(turnsOf(D.i))); turnsMark();   // v0.867: обороты — у мыши и в столбике
-    const n = D.base.length, rot = -D.turn / (D.cut ? 2 * Math.PI / coneCutP(n) : 2 * Math.PI / n), k = Math.round(rot);   // v0.671: в вырезах — шаг части
+    const n = D.base.length; let rot = -D.turn / (D.cut ? 2 * Math.PI / coneCutP(n) : 2 * Math.PI / n);   // v0.671: в вырезах — шаг части
+    if (!D.mag) { const kp = coneRot[D.i]; coneRot[D.i] = D.v0 + rot; const SN = coneFlat() ? coneHandSnap(D.i) : null; coneRot[D.i] = kp;   // v0.875: прилипнуть к границе кольца внутри
+      if (SN) rot += SN.dx; D.hs = SN; coneMagLine = SN ? SN.t : null; }
+    const k = Math.round(rot);
     if (D.mag) { const S = coneMagSnap(D.i, D.v0 + rot); coneMagLine = S.line; D.what = S.what || ""; renderCone(); return; }   // v0.803: 🧲 — свободно, с привязкой
     if (D.view) { coneRot[D.i] = D.v0 + rot; renderCone(); return; }   // запертое — только вид
     if (k !== D.applied) {   // целый бит — крутим саму строку, поле видит сразу
@@ -5619,6 +5680,11 @@ function setupCone(){
       coneMagLine = null; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true;
       Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i;
       renderAll(); save(); say(`🧲 Кольцо ${D.i + 1}: поворот ${(Math.round(coneRot[D.i] * 1000) / 1000).toString().replace(".", ",")} бита${D.what ? " — привязка: " + D.what : " — без привязки"}. Только на вид, строка та же.`); return;
+    }
+    coneMagLine = null;
+    if (D.hs) {   // v0.875: прилипло к границе кольца внутри — поворот остаётся дробным (как у 🧲), строка повёрнута на прошедшие целые биты
+      if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i;
+      renderAll(); save(); say(`🧲 Кольцо ${D.i + 1}: ${D.hs.what}` + (D.view ? " — только на вид." : k ? ` — строка повёрнута на ${k}, остаток — на вид.` : " — на вид.")); return;
     }
     if (D.view && Z.coneFree) delete Z.coneFree[D.i];   // обычный поворот — снова целыми битами
     if (D.view) {   // запертое кольцо: поворот вида — целым битом, запомнить у кольца
