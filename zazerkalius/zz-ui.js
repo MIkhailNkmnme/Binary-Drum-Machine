@@ -2627,7 +2627,10 @@ function renderCone(){
           g.stroke(); g.restore(); } }
       /* v0.714, по снимку «☾ 1/3» — «луну, как и солнце, показывай в следующем кольце»: зарево вылетевшего солнца (S.out) — на кольцо наружу; луна — его
          зеркало (весь сектор a0, а не только что прошло вырезы кольца за чертой) там же, на тех же радиусах, синим */
-      { const ao = (S.a0 || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), ri = S.out.some(([lo, hi]) => hi - lo > 1e-6) ? rIn(S.end) : r0 + N * dr + Math.max(1, dr * band), ro = ri + dr;
+      /* v0.868, по снимку — «луна за 1 не заходит, но почему лучи во внешнем кольце её»: здесь рисовался весь сектор луны (S.a0), дошла она или нет.
+         Пока «1» луну пропускала по умолчанию, это сходилось; с проходами v0.867 луна встаёт на «1», а свечение за кольцом оставалось. Теперь — только
+         свет луны, который прошёл кольцо за чертой (S.aout), как у солнца (S.out) */
+      { const ao = (S.aout || []).filter(([lo, hi]) => hi - lo > 1e-6 && hi - lo < 2 * Math.PI - 1e-6), ri = S.out.some(([lo, hi]) => hi - lo > 1e-6) ? rIn(S.end) : r0 + N * dr + Math.max(1, dr * band), ro = ri + dr;
         if (ao.length) { const gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.03)"); g.fillStyle = gm; g.globalAlpha = 1;
           for (const [lo, hi] of ao) sect(ri, ro, lo, hi);
           g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
