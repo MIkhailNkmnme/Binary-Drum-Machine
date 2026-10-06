@@ -2010,6 +2010,23 @@ const SUNTBL = [
   { t: "крестом — на 90°, не через центр", tip: "☾ крестом: луна — свет солнца, повёрнутый на 90° (симметрия креста), а не отражённый через центр. При ✚ 4 частях солнце светит из двух чёрных четвертей напротив друг друга, и луна через центр ложилась на те же четверти; крестом — на белые.", m: { b: "bMoonCross" } },
   { t: "когда солнце упёрлось в «1»", tip: "☾ Луна светит, когда хоть часть солнца встала на «1» (на любом кольце): зеркало остановленного света через центр. Либо-либо со строкой выше.", m: { b: "bMoonBlk" } }
 ];
+/* v0.886, по снимку шапки «☀ Солнце · ☾ Луна» — «новые панели также зубцами границы, как у всех групп кнопок, и кнопки для закрепа в дзен режиме»:
+   плашки #sunMoonTbl и #ringTbl — бока зубцами, как tzgFrame у групп (левый — выемкой, правый — остриём, шаг 24 px, рамка — маской цветом плашки), высота
+   — целым числом рядов; 🧘 в шапке — видна и в дзене (Z.sunTblZen, Z.ringTblZen; класс zenon, как у групп) */
+function plateZig(el, col){
+  if (!el || el.hidden || !el.getClientRects().length) return;
+  if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => plateZig(el, col)); el._pzRO.observe(el); }
+  const P = TZC_H, t = P / (2 * Math.sqrt(3));
+  const mh = el.style.minHeight; el.style.minHeight = ""; const H0 = el.offsetHeight, H = Math.max(P, Math.ceil(H0 / P - 1e-6) * P); const want = H !== H0 ? H + "px" : "";
+  if (el.style.minHeight !== want) el.style.minHeight = want; if (mh !== want) el._pzk = "";
+  const W = el.offsetWidth; if (!W) return; const key = W + "x" + H + "|" + col; if (el._pzk === key && el.classList.contains("pzg")) return; el._pzk = key;
+  const zig = (y) => t * Math.abs(((y % P) + P) % P - P / 2) / (P / 2), ys = []; for (let y = 0; y < H; y += P / 2) ys.push(y); ys.push(H);
+  const pts = [...ys.map(y => [t - zig(y), y]), ...ys.slice().reverse().map(y => [W - zig(y), y])], yIn = (y) => Math.min(Math.max(y, 0.5), H - 0.5);
+  el.classList.add("pzg");
+  el.style.setProperty("--gclip", `polygon(${pts.map(([x, y]) => x.toFixed(2) + "px " + y.toFixed(2) + "px").join(",")})`);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + yIn(y).toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;
+  el.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); el.style.setProperty("--gfc", col);
+}
 function sunTblOpen(){ if (Z.sunTbl !== undefined) return !!Z.sunTbl; return window.innerWidth > 760; }
 function sunTblGet(c){ if (c.get) return c.get(); if (c.f) return c.on ? Z[c.f] !== false : !!Z[c.f]; const b = document.getElementById(c.b); return !!(b && b.classList.contains("on")); }
 function sunTblPlace(el){
@@ -2021,7 +2038,7 @@ function sunTblPlace(el){
 }
 function sunTblBuild(host){
   const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), el = document.createElement("div"); el.id = "sunMoonTbl";
-  let x = '<div class="smh" title="Тяни — переставить, двойной щелчок — на место"><span>☀ Солнце · ☾ Луна</span><button type="button" class="smx" title="Закрыть (кнопка «☀☾» в группе «Солнце» — открыть снова)">✕</button></div>' +
+  let x = '<div class="smh" title="Тяни — переставить, двойной щелчок — на место"><span>☀ Солнце · ☾ Луна</span><span class="pbtn"><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="smx" title="Закрыть (кнопка «☀☾» в группе «Солнце» — открыть снова)">✕</button></span></div>' +
     '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><thead><tr><th></th><th class="ths" title="Солнце">☀</th><th class="thm" title="Луна">☾</th></tr></thead><tbody>';
   SUNTBL.forEach((r, i) => {
     if (r.g) { x += '<tr class="smg"><th colspan="3">' + r.g + "</th></tr>"; return; }
@@ -2032,6 +2049,7 @@ function sunTblBuild(host){
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
     if (e.target.closest(".smx")) { e.stopPropagation(); Z.sunTbl = false; save(); sunTblSync(); return; }
+    if (e.target.closest(".pzen")) { e.stopPropagation(); Z.sunTblZen = !Z.sunTblZen; save(); sunTblSync(); say(Z.sunTblZen ? "🧘 Таблица ☀☾ — видна и в дзене." : "🧘 Таблица ☀☾ в дзене не видна."); return; }   // v0.886
     const k = e.target.closest(".smk[data-r]"); if (!k) return; e.stopPropagation();
     const r = SUNTBL[+k.dataset.r], c = r[k.dataset.w], v = !sunTblGet(c);
     if (c.f) {
@@ -2064,7 +2082,8 @@ function sunTblSync(){
   const act = coneCutOn(); if (el.classList.contains("off") !== !act) el.classList.toggle("off", !act);
   const tt = act ? "" : "Сейчас не действует: проходы считаются только в вырезах (кнопка в «Щелях»). Галки можно ставить заранее.";
   if (el.title !== tt) el.title = tt;
-  if (el.hidden) el.hidden = false; sunTblPlace(el);
+  if (el.classList.contains("zenon") !== !!Z.sunTblZen) el.classList.toggle("zenon", !!Z.sunTblZen);   // v0.886
+  if (el.hidden) el.hidden = false; sunTblPlace(el); if (!el._pzk) plateZig(el, "#ffe14d");   // дальше — по ResizeObserver, не на каждом кадре
 }
 /* v0.871, «это виды колец — сделай таблицу Кольца»: плашка #ringTbl в теле окна конуса — все виды колец строкой: картинка кольца строки 2 и 3,
    вид, сколько частей и вырезов; ромб справа — выбрать (то же, что переключатель щелей в группе «Щели»). Тянется за шапку (Z.ringTblXY, двойной
@@ -2105,7 +2124,7 @@ function ringTblPlace(el){
 }
 function ringTblBuild(host){
   const el = document.createElement("div"); el.id = "ringTbl";
-  let x = '<div class="rth" title="Тяни — переставить, двойной щелчок — на место"><span>◯ Кольца</span><button type="button" class="rtx" title="Закрыть («◯ Кольца» в группе «Щели» — открыть снова)">✕</button></div>' +
+  let x = '<div class="rth" title="Тяни — переставить, двойной щелчок — на место"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="rtx" title="Закрыть («◯ Кольца» в группе «Щели» — открыть снова)">✕</button></span></div>' +
     '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th><th title="Частей в кольце строки из T бит">частей</th><th>вырезы</th><th></th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
@@ -2115,6 +2134,7 @@ function ringTblBuild(host){
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
     if (e.target.closest(".rtx")) { e.stopPropagation(); Z.ringTbl = false; save(); ringTblSync(); return; }
+    if (e.target.closest(".pzen")) { e.stopPropagation(); Z.ringTblZen = !Z.ringTblZen; save(); ringTblSync(); say(Z.ringTblZen ? "🧘 Таблица «Кольца» — видна и в дзене." : "🧘 Таблица «Кольца» в дзене не видна."); return; }   // v0.886
     const tr = e.target.closest("tr[data-v]"); if (!tr) return; e.stopPropagation();
     if (coneSlitRaw() === tr.dataset.v) return;
     const LS = LAS_SEG.find(s => s.id === "bConeSlits"), b = document.getElementById("bConeSlits");
@@ -2142,7 +2162,8 @@ function ringTblSync(){
   const act = !!Z.coneClock && coneFlat(); if (el.classList.contains("off") !== !act) el.classList.toggle("off", !act);
   const tt = act ? "" : "Сейчас не действует: виды колец — у луча-часов и солнца в плоском виде. Выбрать можно заранее.";
   if (el.title !== tt) el.title = tt;
-  if (el.hidden) el.hidden = false; ringTblPlace(el);
+  if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
+  if (el.hidden) el.hidden = false; ringTblPlace(el); if (!el._pzk) plateZig(el, "#22d3ee");
 }
 function renderCone(){
   lasUi3d();   // v0.373
@@ -4416,7 +4437,7 @@ function coneR1AxisSnap(){
   const R = coneRingFeat(0), G = coneGeom; if (!R || !G) return null;
   const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
   let best = null;
-  const T = []; for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);
+  const T = []; if (magSymOf() !== "out") for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);   // v0.886: «при наружном магните 1 кольцо не должно магнититься с осями» — тогда только к строке 2
   for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);   // v0.884: и оси симметрии строки 2 (по «🧲 сим.»)
   for (const x of coneFeatEdges(R).concat(coneFeatMids(R))) {
     const a = -Math.PI / 2 + (x - R.x0) * R.step;
