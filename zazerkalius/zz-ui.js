@@ -2681,7 +2681,8 @@ function renderCone(){
         g.stroke(); g.restore();
         for (const q of [1, 3]) coneGlyph(g, cx, cy, q0 + (q + 0.5) * Math.PI / 2, rD * 0.66, rD * 0.4, (Z.rows[0] || "1")[0], cBg, ff);   // v0.750: цифра на белых четвертях
         coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
-        g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
+        /* v0.901, по снимку ✚ — «тут не надо окружность солнца — просто сразу лучи из центра и луны»: круга солнца (rS) больше нет — свет солнца и луны
+           идёт прямо из точки центра (r1Glow ниже) */
       } else if (coneSunSlit()) {   // v0.746: ▮ — солнце внутри кольца-бита строки 1, свет — из его щели
         const rD = r0 + Math.max(1, dr * band), rS = rD * 0.3, ri = 0, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Half(), 1.5 * dpr / Math.max(1, rD))), bit = (Z.rows[0] || "1")[0];   // v0.751: угол ▮
         g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
