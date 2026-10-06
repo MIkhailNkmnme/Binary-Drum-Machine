@@ -8100,7 +8100,14 @@ function setupCone(){
         place(); };
       P.addEventListener("pointermove", mv); P.addEventListener("pointerup", up); P.addEventListener("pointercancel", up);
     });
-    P.querySelector(".c3grip").addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padSide = Z.padSide === "l" ? "r" : "l"; Z.padFx = Z.padSide === "l" ? 0 : 1; place(); save(); });   // v0.820: к краю
+    /* v0.889, по снимку ромба ⠿ — «двойной клик всю эту группу сворачивает в эту одну кнопку, привязанную к оси»: двойной щелчок по ⠿ сворачивает пульт —
+       остальные ромбы прячутся, ⠿ встаёт на место ⌂, ровно на горизонталь через центр конуса, и по-прежнему тянется вдоль неё; ещё двойной щелчок —
+       пульт целиком обратно (Z.padFold). Прежний двойной щелчок «на другую сторону» снят — сторону задаёт перетаскивание */
+    const G = P.querySelector(".c3grip"), gT = G.getAttribute("title") || "";
+    const foldUi = () => { const f = !!Z.padFold; P.classList.toggle("fold", f);
+      G.title = f ? "⠿ Пульт свёрнут: двойной щелчок — развернуть все его ромбы; тяни — вдоль горизонтали через центр конуса" : gT; };
+    G.addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padFold = !Z.padFold; foldUi(); place(); save(); say(Z.padFold ? "⠿ Пульт свёрнут в один ромб на оси — двойной щелчок по нему разворачивает." : "⠿ Пульт развёрнут."); });
+    foldUi();
     place();
     if (window.ResizeObserver) new ResizeObserver(place).observe(host);
   }
