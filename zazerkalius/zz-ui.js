@@ -8096,17 +8096,20 @@ function setupCone(){
       const fx = typeof Z.padFx === "number" ? Math.max(0, Math.min(1, Z.padFx)) : Z.padSide === "l" ? 0 : 1, x = cr.left - hr.left + 8 + fx * Math.max(0, cr.width - w - 16);
       const l = Math.round(Math.max(0, x)) + "px", t = Math.round(y) + "px"; if (P.style.left !== l) P.style.left = l; if (P.style.top !== t) P.style.top = t;
     };
-    window.c3PadPlace = place;
+    window.c3PadPlace = place; let padFoldTg = () => {};   // v0.891: свернуть / развернуть — задаётся ниже
     P.addEventListener("pointerdown", (e) => {
       if (e.button !== 0 || e.target.closest("button")) return;
       e.preventDefault(); e.stopPropagation(); try { P.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
-      const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY; let moved = false;
+      const r = P.getBoundingClientRect(), hr = host.getBoundingClientRect(), p0 = { x: r.left - hr.left, y: r.top - hr.top }, x0 = e.clientX, y0 = e.clientY, onGrip = !!e.target.closest(".c3grip"); let moved = false;
       const mv = (ev) => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; P._drag = true;
         P.style.left = Math.round(p0.x + ev.clientX - x0) + "px"; };   // v0.820: тянется только вбок — высота остаётся на оси
       const up = (ev) => { P.removeEventListener("pointermove", mv); P.removeEventListener("pointerup", up); P.removeEventListener("pointercancel", up); P._drag = false;
         if (moved) { const cv = $("coneCv"), cr = cv ? cv.getBoundingClientRect() : hr, pr = P.getBoundingClientRect(), span = Math.max(1, cr.width - pr.width - 16);
           Z.padFx = Math.max(0, Math.min(1, (pr.left - cr.left - 8) / span)); Z.padSide = Z.padFx < 0.5 ? "l" : "r"; save(); }
-        place(); };
+        place();
+        /* v0.891, по снимку ⠿ — «ничего не происходит»: при нажатии пульт берёт указатель себе (setPointerCapture — чтобы тянуть), и двойной щелчок браузер
+           отдаёт уже пульту, а не ⠿ — обработчик на ⠿ не срабатывал никогда (с v0.813). Двойной щелчок — два нажатия на ⠿ без сдвига за 450 мс */
+        if (!moved && onGrip) { const now = performance.now(); if (P._gT && now - P._gT < 450) { P._gT = 0; padFoldTg(); } else P._gT = now; } else P._gT = 0; };
       P.addEventListener("pointermove", mv); P.addEventListener("pointerup", up); P.addEventListener("pointercancel", up);
     });
     /* v0.889, по снимку ромба ⠿ — «двойной клик всю эту группу сворачивает в эту одну кнопку, привязанную к оси»: двойной щелчок по ⠿ сворачивает пульт —
@@ -8115,7 +8118,7 @@ function setupCone(){
     const G = P.querySelector(".c3grip"), gT = G.getAttribute("title") || "";
     const foldUi = () => { const f = !!Z.padFold; P.classList.toggle("fold", f);
       G.title = f ? "⠿ Пульт свёрнут: двойной щелчок — развернуть все его ромбы; тяни — вдоль горизонтали через центр конуса" : gT; };
-    G.addEventListener("dblclick", (e) => { e.stopPropagation(); Z.padFold = !Z.padFold; foldUi(); place(); save(); say(Z.padFold ? "⠿ Пульт свёрнут в один ромб на оси — двойной щелчок по нему разворачивает." : "⠿ Пульт развёрнут."); });
+    padFoldTg = () => { Z.padFold = !Z.padFold; foldUi(); place(); save(); say(Z.padFold ? "⠿ Пульт свёрнут в один ромб на оси — двойной щелчок по нему разворачивает." : "⠿ Пульт развёрнут."); };
     foldUi();
     place();
     if (window.ResizeObserver) new ResizeObserver(place).observe(host);
