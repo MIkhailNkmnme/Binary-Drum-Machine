@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.086. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.087. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.086</title>
+    <title>Zerkalius Control Hub — v0.087</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -475,7 +475,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.086</div>
+        <div class="ver">v0.087</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -798,7 +798,7 @@
             const allKick = () => { if (!ALL.raf) ALL.raf = requestAnimationFrame(allLoop); };
             const allPlace = (X, Y, dw, dh, W, H, dpr, desk) => {
                 const N = PR.length, R0 = N / 8, S = N / 8 - 1;
-                if (!allBtn || !fg || S < 1 || S * dw < 36) { allOff(); return false; }
+                if (!allBtn || !fg || S < 1 || S * dw < (desk ? 36 : 30)) { allOff(); return false; }   // v0.087: на телефоне — от 30 px (iPhone 390 — 40)
                 document.body.classList.add('allMode');
                 Object.assign(ALL, { W, H, dpr, cx: X(0, 0), y0: Y(0), dw, dh, vr: R0 + S - 1, X, Y });
                 const old = new Map(ALL.cells.map(c => [c.r + ':' + c.x, c]));
@@ -860,7 +860,10 @@
                    равносторонний. Лёжа строки не сдвигаются (прямоугольные треугольники) — ромб в своей клетке, соседи касаются вершинами */
                 let dw, dh, spots, side = false;
                 /* v0.083, «треугольник ниже»: верх — под надписью «Зеркалиус», низ — на прежнем месте (компьютер — 97 % высоты, телефон — 49 %) */
-                if (!land) { const top = Math.max(desk ? H * 0.03 : H * 0.07, lgB + 8), hMax = (desk ? H * 0.97 : H * 0.49) - top; dw = Math.min(W * 0.94 / N, hMax / ((N + 1) * 0.866)); dh = dw * 1.732;
+                /* v0.087, «проверь на телефон версию»: телефон стоя держал треугольник в 49 % высоты (под ним — ноты), и дырка выходила меньше порога —
+                   на iPhone кнопки не было вовсе (ноты по-старому), на Pixel — 39 px. В режиме одной кнопки нот нет — треугольник до 90 % высоты */
+                if (!land) { const top = Math.max(desk ? H * 0.03 : H * 0.07, lgB + 8), fit = b => Math.min(W * 0.94 / N, (b - top) / ((N + 1) * 0.866));
+                    const big = !desk && allBtn && fg && (N / 8 - 1) * fit(H * 0.9) >= 30, hMax = (desk ? H * 0.97 : big ? H * 0.9 : H * 0.49) - top; dw = fit(hMax + top); dh = dw * 1.732;
                     const cx = W / 2, y0 = top + (hMax - (N + 1) * dh / 2) / 2 + dh / 2;
                     spots = [(r, j) => [cx - r * dw / 2 + j * dw, y0 + r * dh / 2]];
                     allPlace((r, j) => cx - r * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr, desk); }

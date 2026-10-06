@@ -4957,7 +4957,7 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 48;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop + (document.getElementById("bC3Axes") ? 24 : 0);   // v0.850: над парой — ромб ✛ осей, пара ниже на полромба   // v0.815: «чуть ниже — на кнопки залезли» — под полосой вкладок
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop + (document.getElementById("bC3Axes") ? (document.getElementById("bC3Axes").offsetHeight || 48) / 2 : 0);   // v0.850: над парой — ромб ✛ осей, пара ниже на полромба   // v0.815: «чуть ниже — на кнопки залезли» — под полосой вкладок
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
 }
 /* v0.850, по снимку ромбов баланса — «оси перенеси сюда ромбом, между, сверху»: «✛ оси» — ромб 48 на вертикали через центр конуса, у верха холста под вкладками;
@@ -4965,11 +4965,15 @@ function coneBalPlace(){
 function c3AxesPlace(){
   const b = document.getElementById("bC3Axes"), cv = document.getElementById("coneCv"); if (!b || !cv) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 48;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = b.offsetWidth || 48;   // v0.858: на телефоне ромб меньше
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = Math.max(cr.top, cgTabsBottom()) - hr.top + 8 + host.scrollTop;
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
 }
-function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); return tb && tb.getClientRects().length && !document.body.classList.contains("zen") ? tb.getBoundingClientRect().bottom : -Infinity; }
+function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
+  /* v0.858, «проверь на телефон версию»: на телефоне полоса вкладок стоит ПОД холстом, и ромбы «у верха холста» (✛ оси, баланс) уезжали под неё, на
+     кнопки «Вида». Вкладки учитываются, только если накрывают верх холста */
+  const r = tb.getBoundingClientRect(), cv = document.getElementById("coneCv"), c = cv && cv.getBoundingClientRect();
+  return c && c.height && r.top > c.top + c.height / 2 ? -Infinity : r.bottom; }
 function lasAlgoPlace(){   // v0.816: строки алгоритма — в правом нижнем углу холста конуса
   const el = document.getElementById("lasAlgo"), cv = document.getElementById("coneCv"); if (!el || !el.classList.contains("on") || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
@@ -4987,7 +4991,7 @@ function lasAlgoPlace(){   // v0.816: строки алгоритма — в п�
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = 60;   // v0.828: ромб 60 (было 80)
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
   const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - 8 - (st ? w / 2 : 0) + host.scrollTop;
   /* v0.840, по снимку ромбов у оси — «поменяй местами, и сброс сделай меньше на 1/8, но расположи в том же центре ромба, как с обычным размером»: на оси
