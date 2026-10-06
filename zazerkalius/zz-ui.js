@@ -4437,7 +4437,7 @@ function coneR1AxisSnap(){
   const R = coneRingFeat(0), G = coneGeom; if (!R || !G) return null;
   const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
   let best = null;
-  const T = []; if (magSymOf() !== "out") for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);   // v0.886: «при наружном магните 1 кольцо не должно магнититься с осями» — тогда только к строке 2
+  const T = []; if (magSymOf() === "both" || magSymOf() === "in") for (let q = 0; q < 4; q++)   /* v0.887: «а когда отключен магнит тоже не надо» — к осям только при «оба» и «внутр.» */ T.push(-Math.PI / 2 + q * Math.PI / 2);   // v0.886: «при наружном магните 1 кольцо не должно магнититься с осями» — тогда только к строке 2
   for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);   // v0.884: и оси симметрии строки 2 (по «🧲 сим.»)
   for (const x of coneFeatEdges(R).concat(coneFeatMids(R))) {
     const a = -Math.PI / 2 + (x - R.x0) * R.step;
