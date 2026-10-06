@@ -2193,7 +2193,7 @@ function renderCone(){
   const HUES = [200, 30, 120, 290, 0, 60, 170, 330, 90, 250];
   const gcol = new Map(); let gi = 0;
   for (const [key, ids] of groups) if (ids.length > 1) gcol.set(key, `hsl(${HUES[gi++ % HUES.length]} 80% 60%)`);
-  const same = $("coneSame") ? $("coneSame").checked : true;
+  const same = $("coneSame") ? $("coneSame").checked : !!Z.coneSame;   // v0.882
   const band = Z.coneClean ? 1 : 0.72;   // доля кольца под биты; остальное — зазор до следующего (v0.222: у чистых колец зазора нет — кольца сомкнуты)
   // v0.076, «галку — скрыть все, кроме выделенных; выделение нескольких — по Ctrl»: видны выделенные (rowSel — то же
   // выделение, что в поле строк) и текущее; выделенные обведены голубым.
@@ -5790,7 +5790,10 @@ function setupCone(){
     snapshot(); Z.rows = out; syncLane(); renderAll(); save();
     say(`◯ Строки повёрнуты к наименьшему виду: ${k}. Одинаковые кольца теперь и в поле одинаковые. ↩ вернёт.`);
   };
-  $("coneSame").onchange = () => renderCone();
+  /* v0.882, «отключаю это — через Восстановить всё равно всплывает, отключи её по умолчанию»: галка «🎨 одинак.» не сохранялась вовсе — её состояние жило
+     только в разметке (checked), и любая перезагрузка (в том числе «↺ Восстановить») включала её снова. Теперь — Z.coneSame, по умолчанию выключено */
+  $("coneSame").checked = !!Z.coneSame;
+  $("coneSame").onchange = () => { Z.coneSame = $("coneSame").checked; save(); renderCone(); };
   coneRot = Array.isArray(Z.coneRot) ? Z.coneRot.slice() : [];
   $("coneList").addEventListener("click", (e) => {   // v0.088: таблица строк конуса
     const lk = e.target.closest(".clk");
