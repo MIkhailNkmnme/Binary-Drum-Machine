@@ -6685,7 +6685,7 @@ function setupCone(){
   }
   if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : m === "m" ? "💾 память" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
-    $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : m === "r" ? "m" : "c"; ui();   // v0.895: и «💾 память» coneR1Align(Z.cutAlign); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined; save(); renderRows(); renderCone();   // v0.883: и строка 1
+    $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : m === "r" ? "m" : "c"; ui(); coneR1Align(Z.cutAlign); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined; save(); renderRows(); renderCone();   // v0.883: и строка 1; v0.895: и «💾 память»
       say({ c: "▥ Вырезы по центру: кольца симметрично вертикали, как было.", l: "◧ Вырезы по левому краю: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой.", r: "◨ Вырезы по правому краю: правый край выреза — на вертикали, биты начинаются от неё.",
         m: Z.cutMem && Z.cutMem[Z.coneSlits] ? "💾 Начало колец — из памяти. Ещё щелчок по «💾 память» — запомнить, как стоят сейчас." : "💾 Памяти для этого вида вырезов ещё нет — кольца по центру. Ещё щелчок по «💾 память» — запомнить, как стоят сейчас." }[Z.cutAlign]); };
   }
