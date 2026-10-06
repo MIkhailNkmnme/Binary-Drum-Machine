@@ -1831,7 +1831,7 @@ const LAS_SEG = [
     t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы между: те же 2E − 1 частей, но вырез не одной дырой, а по части между каждыми двумя соседними битами: бит, вырез, бит, вырез… бит — всего E бит и E − 1 вырезов; последний и первый бит стоят вплотную (шов). Строка 1 из одного бита — без выреза, как и в T−1", "По симметрии: те же 2E − 1 частей, но биты на равных расстояниях по кругу — между каждыми двумя соседними (и между последним и первым) вырез в (E − 1)/E части, всего E вырезов, шва нет. Строка 2 — два бита ровно напротив друг друга и два выреза", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] }   /* v0.861: подсказок было 4 на 5 вариантов — они съехали: «вырезы между» показывали текст от «вырезы 2n», «2n» — от «все щели», а у «всех щелей» подсказки не было вовсе */,
   { id: "bCutAlign", v: ["c", "l", "r", "m"], l: ["▥ центр", "◧ лево", "◨ право", "💾 память"], get: () => Z.cutAlign || "c", pre: (v) => { Z.cutAlign = { c: "m", l: "c", r: "l", m: "r" }[v]; },
     again: (v) => { if (v === "m") cutMemSave(); },   // v0.895: щелчок по уже выбранной «💾 память» — запомнить, как кольца стоят сейчас
-    t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё", "💾 Из памяти: кольца в вырезах начинаются там, где их запомнили. Щелчок по этой кнопке, когда она уже горит, — запомнить, как кольца стоят сейчас (своя память у каждого вида вырезов)"] },
+    t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё", "💾 Память: кольцо, повёрнутое рукой, запоминается там, где его отпустили, — ⟲ «на места» и сброс возвращают кольца в последнее положение, поставленное рукой. Ещё щелчок по горящей — запомнить все кольца разом. Своя память у каждого вида вырезов"] },
   { id: "bCutPrev", v: ["off", "blk", "alt"], l: ["◇ нет", "◇ блоком", "◇ через 1"], get: () => Z.cutPrev === "blk" || Z.cutPrev === "alt" ? Z.cutPrev : "off", pre: (v) => { Z.cutPrev = { off: "alt", blk: "off", alt: "blk" }[v]; },   // v0.781
     t: ["◇ Вырез пустой, как было", "◇ Блоком: свои n бит подряд, вырез из n − 1 частей заполнен битами предыдущей строки по порядку (пока только вид — свет считает вырез, как раньше)", "◇ Через 1: как ряд треугольника ▲▼▲▼▲ — свой бит, бит предыдущей строки, свой бит… (пока только вид — свет считает вырез, как раньше)"] },
   { id: "coneBipySel", sel: 1, v: ["off", "alt", "blk"], l: ["◇ нет", "◇ через 1", "◇ блоком"], get: () => Z.coneBipy ? (Z.coneBipyM === "blk" ? "blk" : "alt") : "off",   // v0.782: группа «3D»
@@ -3782,6 +3782,19 @@ function coneRotKeep(x, i){ x = x || 0; if (Z.coneFree && Z.coneFree[i]) return 
 /* v0.674, «когда лазер T−1 — нужно расставить симметрично вертикали: чётные — между центральными битами, нечётные — по средней части выреза»:
    расстановка v0.673 (накрутка 0) держалась только без своей накрутки — вход в режим оставлял прежнюю, а ⟲ / ⌖✕ при умолчании ⭐ возвращали
    накрутку из ⭐. Теперь кольца с вырезом (строки 2, 3, …) встают на 0 при входе в T−1 и при каждом сбросе в этом режиме; → сколько сдвинуто */
+/* v0.900, по снимку «💾 память» — «непонятно, как работает; пусть, если включена, запоминает постоянно последнее положение после ручного редактирования»:
+   при «💾 память» кольцо, повёрнутое рукой (Ctrl / правой кнопкой, 🧲, прилипание), сразу запоминается там, где его отпустили: его поворот рукой уходит в
+   память (сдвиг), сам поворот — в ноль, кольцо не двигается. ⟲ «на места» и сброс возвращают кольца в последнее положение, поставленное рукой; фаза кручения
+   при этом своя, как была. Кольцо за чертой — так же (его поворот рукой Z.coneFillTurn). Щелчок по горящей «💾 память» по-прежнему запоминает все кольца разом */
+function cutMemAbsorb(i){
+  if ((Z.cutAlign || "c") !== "m" || !coneCutOn()) return false;
+  const N = Math.min(Z.rows.length, CONE_MAX), md = (x, P) => ((x % P) + P) % P;
+  if (!Z.cutMem || typeof Z.cutMem !== "object") Z.cutMem = {}; const M = Z.cutMem[Z.coneSlits] || (Z.cutMem[Z.coneSlits] = {});
+  if (i === "f") { const F = coneFillCut(); if (!F) return false; M[N] = [F.n, md(F.off - (Z.coneFillTurn || 0), F.P)]; Z.coneFillTurn = 0; Z.coneFillFree = false; return true; }
+  const n = (Z.rows[i] || "").length; if (!n || i < 1 || i >= N) return false;
+  M[i] = [n, md(coneCutOff(i, n) - (coneRot[i] || 0), coneCutP(n))]; coneRot[i] = 0; Z.coneRot = coneRot.map((x, k) => coneRotKeep(x, k)); if (Z.coneFree) delete Z.coneFree[i];
+  return true;
+}
 function cutMemSave(){
   if (!coneCutOn()) { say("💾 Память начала — только в вырезах (кнопка в «Щелях»)."); return; }
   const N = Math.min(Z.rows.length, CONE_MAX), mem = {}, md = (x, P) => ((x % P) + P) % P;
@@ -5810,9 +5823,10 @@ function setupCone(){
         coneFillDrag = false; coneMagLine = null;
         if (rb && Math.abs(turn) < 0.02) { Z.coneFillTurn = t0; Z.coneFillTurns = tb; turnsMark(); renderCone(); return; }
         if (fhs) { const P = F ? F.P : fillLen(); Z.coneFillTurn = (((Z.coneFillTurn % P) + P) % P); Z.coneFillFree = true;   // v0.875: прилипло — без округления
-          save(); renderRows(); renderCone(); say(`🧲 Кольцо за чертой: ${fhs.what}.`); return; }
+          cutMemAbsorb("f"); save(); renderRows(); renderCone(); say(`🧲 Кольцо за чертой: ${fhs.what}.`); return; }   // v0.900: 💾
         Z.coneFillFree = false;   // v0.735: правый щелчок без движения — не поворот (стирание — в contextmenu)
         const P = F ? F.P : fillLen(), v = F ? Math.round(Z.coneFillTurn * 2) / 2 : Math.round(Z.coneFillTurn); Z.coneFillTurn = ((v % P) + P) % P;
+        if (cutMemAbsorb("f")) { save(); renderRows(); renderCone(); say("💾 Кольцо за чертой запомнено в этом положении — ⟲ «на места» вернёт его сюда."); return; }   // v0.900
         save(); renderRows(); renderCone(); say(`◯ Кольцо за чертой повёрнуто на ${String(Z.coneFillTurn).replace(".", ",")} из ${P} ${F ? "частей" : "ячеек"}. Ушла строка в поле — поворот остаётся у её кольца.`); };
       cv.addEventListener("pointermove", mv); cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
       return;
@@ -5916,12 +5930,12 @@ function setupCone(){
     }
     if (D.mag) {   // v0.803: 🧲 — поворот остаётся дробным, как защёлкнулся
       coneMagLine = null; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true;
-      Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i;
+      Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i; cutMemAbsorb(D.i);   // v0.900: 💾 — запомнить
       renderAll(); save(); say(`🧲 Кольцо ${D.i + 1}: поворот ${(Math.round(coneRot[D.i] * 1000) / 1000).toString().replace(".", ",")} бита${D.what ? " — привязка: " + D.what : " — без привязки"}. Только на вид, строка та же.`); return;
     }
     coneMagLine = null;
     if (D.hs) {   // v0.875: прилипло к границе кольца внутри — поворот остаётся дробным (как у 🧲), строка повёрнута на прошедшие целые биты
-      if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i;
+      if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[D.i] = true; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); if (Z.cur !== D.i) Z.cur = D.i; cutMemAbsorb(D.i);   // v0.900
       renderAll(); save(); say(`🧲 Кольцо ${D.i + 1}: ${D.hs.what}` + (D.view ? " — только на вид." : k ? ` — строка повёрнута на ${k}, остаток — на вид.` : " — на вид.")); return;
     }
     if (D.view && Z.coneFree) delete Z.coneFree[D.i];   // обычный поворот — снова целыми битами
@@ -5929,7 +5943,8 @@ function setupCone(){
       const P = D.cut ? coneCutP(n) : n;   // v0.671: в вырезах полный круг — 2E − 1 частей
       coneRot[D.i] = ((coneRotKeep(coneRot[D.i], D.i) % P) + P) % P; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
       if (Z.cur !== D.i) Z.cur = D.i;
-      renderAll(); save(); say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${String(coneRot[D.i]).replace(".", ",")} из ${P} частей (вырезы T−1)${(() => { const o = coneCutGeo(D.i, n).off, q = (v) => (((v - coneRot[D.i]) % P) + P) % P < 1e-6 || (((coneRot[D.i] - v) % P) + P) % P < 1e-6;
+      const memo = cutMemAbsorb(D.i);   // v0.900: 💾 — запомнить (поворот рукой — в память, сам — в ноль)
+      renderAll(); save(); if (memo) { say(`💾 Кольцо ${D.i + 1} запомнено в этом положении — ⟲ «на места» вернёт его сюда.`); return; } say(D.cut ? `◯ Кольцо ${D.i + 1} повёрнуто на ${String(coneRot[D.i]).replace(".", ",")} из ${P} частей (вырезы T−1)${(() => { const o = coneCutGeo(D.i, n).off, q = (v) => (((v - coneRot[D.i]) % P) + P) % P < 1e-6 || (((coneRot[D.i] - v) % P) + P) % P < 1e-6;
       return q(o + n / 2) ? " — биты по центру сверху, симметрично" : q(o + n / 2 + n - 0.5) ? " — дыра по центру сверху, симметрично" : ""; })()}. Только на вид, строка та же.` : `◯ Кольцо ${D.i + 1} заперто — повёрнуто только на вид (${coneRot[D.i]}), строка та же. Положение запомнено.`); return;
     }
     coneRot[D.i] = D.v0;
@@ -6702,7 +6717,7 @@ function setupCone(){
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : m === "m" ? "💾 память" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
     $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : m === "r" ? "m" : "c"; ui(); coneR1Align(Z.cutAlign); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined; save(); renderRows(); renderCone();   // v0.883: и строка 1; v0.895: и «💾 память»
       say({ c: "▥ Вырезы по центру: кольца симметрично вертикали, как было.", l: "◧ Вырезы по левому краю: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой.", r: "◨ Вырезы по правому краю: правый край выреза — на вертикали, биты начинаются от неё.",
-        m: Z.cutMem && Z.cutMem[Z.coneSlits] ? "💾 Начало колец — из памяти. Ещё щелчок по «💾 память» — запомнить, как стоят сейчас." : "💾 Памяти для этого вида вырезов ещё нет — кольца по центру. Ещё щелчок по «💾 память» — запомнить, как стоят сейчас." }[Z.cutAlign]); };
+        m: "💾 Память: поверни кольцо рукой — оно запомнится там, где отпустишь; ⟲ «на места» вернёт сюда. Ещё щелчок по «💾 память» — запомнить все кольца разом." }[Z.cutAlign]); };
   }
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
     const m = coneSlitRaw(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "cutA" : m === "cutA" ? "cutS" : m === "cutS" ? "cut2" : m === "cut2" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined;   // v0.772: по кругу и «вырезы 2n»; v0.871: и «по симметрии» (v0.883: комментарий стоял посреди строки и съедал сброс)
