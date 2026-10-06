@@ -805,7 +805,7 @@ function coneFreeCan(f, u, n){ const P = f.length, c = (f.match(/[01]/g) || []).
 function coneZeroOpen(b, N, C, open){
   const s = b < N ? (Z.rows[b] || "") : b === N ? (coneFreeOn() ? fillFreeDraft() : fillDraft()) : "", K = b === N && coneFreeOn() ? C.P : C.n;
   if (!s.includes("0")) return open;
-  const fr = b === N && coneFreeOn(), add = open.slice(); for (let q = 0; q < K; q++) if (s[q] === "0") { const pq = fr ? q : cutPos(q); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, add); }
+  const fr = b === N && coneFreeOn(), add = open.slice(); for (let q = 0; q < K; q++) if (s[q] === "0") { const pq = fr ? q : cutPos(q, C.n); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, add); }
   return ivUnion(add);
 }
 /* v0.864 / v0.867, «пусть луна как и солнце светит только через вырезы, ни через 0 ни через 1 ни солнце ни луна не проходят; сделай такую настройку
@@ -851,7 +851,7 @@ function coneSunGateOk(b, N){
 }
 function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» кольца b (у кольца за чертой — поставленные; fr — «▦ любые», части 2n − 1)
   const s = b < N ? (Z.rows[b] || "") : fr ? fillFreeDraft() : fillDraft(), K = fr ? C.P : C.n, o = [];
-  for (let q = 0; q < K; q++) if (s[q] === "1") { const pq = fr ? q : cutPos(q); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, o); }
+  for (let q = 0; q < K; q++) if (s[q] === "1") { const pq = fr ? q : cutPos(q, C.n); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, o); }
   return ivUnion(o);
 }
 function coneFreeRing(L, C, set, b, Lh = [L], p0 = true){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (одним из светов Lh) части, что могут стать битом, — в set; p0 — «0» пропускает (v0.867)
@@ -1817,8 +1817,8 @@ function lasUi3dG(G){
    кнопка спрятана, но работает: щелчок по значению ставит перед ней предыдущее по кругу и жмёт её — её обработчик делает всё, что делал (сообщение, пересчёт,
    у «вырезы T−1» — кольца на места); у списка — значение и событие change */
 const LAS_SEG = [
-  { id: "bConeSlits", v: ["one", "cut", "cutA", "cut2", "all"], l: ["1 щель", "вырезы T−1", "вырезы между", "вырезы 2n", "все щели"], get: () => coneSlitRaw(), pre: (v) => { Z.coneSlits = { one: "all", cut: "one", cutA: "cut", cut2: "cutA", all: "cut2" }[v]; },
-    t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы между: те же 2E − 1 частей, но вырез не одной дырой, а по части между каждыми двумя соседними битами: бит, вырез, бит, вырез… бит — всего E бит и E − 1 вырезов; последний и первый бит стоят вплотную (шов). Строка 1 из одного бита — без выреза, как и в T−1", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] }   /* v0.861: подсказок было 4 на 5 вариантов — они съехали: «вырезы между» показывали текст от «вырезы 2n», «2n» — от «все щели», а у «всех щелей» подсказки не было вовсе */,
+  { id: "bConeSlits", v: ["one", "cut", "cutA", "cutS", "cut2", "all"], l: ["1 щель", "вырезы T−1", "вырезы между", "по симметрии", "вырезы 2n", "все щели"], get: () => coneSlitRaw(), pre: (v) => { Z.coneSlits = { one: "all", cut: "one", cutA: "cut", cutS: "cutA", cut2: "cutS", all: "cut2" }[v]; },
+    t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы между: те же 2E − 1 частей, но вырез не одной дырой, а по части между каждыми двумя соседними битами: бит, вырез, бит, вырез… бит — всего E бит и E − 1 вырезов; последний и первый бит стоят вплотную (шов). Строка 1 из одного бита — без выреза, как и в T−1", "По симметрии: те же 2E − 1 частей, но биты на равных расстояниях по кругу — между каждыми двумя соседними (и между последним и первым) вырез в (E − 1)/E части, всего E вырезов, шва нет. Строка 2 — два бита ровно напротив друг друга и два выреза", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] }   /* v0.861: подсказок было 4 на 5 вариантов — они съехали: «вырезы между» показывали текст от «вырезы 2n», «2n» — от «все щели», а у «всех щелей» подсказки не было вовсе */,
   { id: "bCutAlign", v: ["c", "l", "r"], l: ["▥ центр", "◧ лево", "◨ право"], get: () => Z.cutAlign || "c", pre: (v) => { Z.cutAlign = { c: "r", l: "c", r: "l" }[v]; },
     t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
   { id: "bCutPrev", v: ["off", "blk", "alt"], l: ["◇ нет", "◇ блоком", "◇ через 1"], get: () => Z.cutPrev === "blk" || Z.cutPrev === "alt" ? Z.cutPrev : "off", pre: (v) => { Z.cutPrev = { off: "alt", blk: "off", alt: "blk" }[v]; },   // v0.781
@@ -1919,7 +1919,7 @@ function lasDeps(){
     L.push(["r1", "<b>Строка 1</b>: " + t + "."]);
     const stop = sun ? "свет проходит, на битах останавливается и красит их" : "проходит — кольцо встаёт, бит под лучом — стена (золотая рамка)";
     if (zero) t = "Без щелей — «0» пропускает свет во всю ширину, «1» — стена";
-    else if (cut) t = (coneCut2n() ? "вырезы 2n — у кольца из E бит E бит подряд (стена) и вырез из E частей, " : "вырезы T−1 — у кольца из E бит E бит подряд (стена) и вырез из E − 1 частей, ") + ({ l: "вырез начинается от вертикали по часовой", r: "биты начинаются от вертикали" }[Z.cutAlign] || "кольца симметричны вертикали") +
+    else if (cut) t = (coneCutSym() ? "по симметрии — у кольца из E бит 2E − 1 частей, биты на равных расстояниях, между соседними вырез в (E − 1)/E части (E вырезов), " : coneCutAlt() ? "вырезы между — у кольца из E бит 2E − 1 частей: бит, вырез, бит… (E − 1 вырезов, шов), " : coneCut2n() ? "вырезы 2n — у кольца из E бит E бит подряд (стена) и вырез из E частей, " : "вырезы T−1 — у кольца из E бит E бит подряд (стена) и вырез из E − 1 частей, ") + ({ l: "вырез начинается от вертикали по часовой", r: "биты начинаются от вертикали" }[Z.cutAlign] || "кольца симметричны вертикали") +
       (Z.cutGaps && !sun ? `; ⌖ ещё и щели ${slit} между битами` : "") + "; в вырез " + stop;
     else if (mode === "one") t = `у каждого одна щель ${slit} — граница последнего и первого бита; в щель ${stop}`;
     else t = `щель ${slit} на любой границе бит; в щель ${stop}`;
@@ -2053,10 +2053,89 @@ function sunTblSync(){
   if (el.title !== tt) el.title = tt;
   if (el.hidden) el.hidden = false; sunTblPlace(el);
 }
+/* v0.871, «это виды колец — сделай таблицу Кольца»: плашка #ringTbl в теле окна конуса — все виды колец строкой: картинка кольца строки 2 и 3,
+   вид, сколько частей и вырезов; ромб справа — выбрать (то же, что переключатель щелей в группе «Щели»). Тянется за шапку (Z.ringTblXY, двойной
+   щелчок — на место), ✕ или «◯ Кольца» в «Щелях» — закрыть / открыть (Z.ringTbl; не задано — открыта, на узком экране — закрыта). Новый вид
+   колец — строкой в RINGTBL и вариантом в LAS_SEG */
+const RINGTBL = [
+  { v: "all", t: "T · все щели", p: "T", c: "щель на каждой границе" },
+  { v: "one", t: "T · 1 щель", p: "T", c: "1 щель — шов" },
+  { v: "cut", t: "2T−1 · вырез куском", p: "2T−1", c: "1 вырез, T−1 частей" },
+  { v: "cut2", t: "2T · вырез куском", p: "2T", c: "1 вырез, T частей" },
+  { v: "cutA", t: "разреженные через вырезы", p: "2T−1", c: "T−1 вырезов по части, шов" },
+  { v: "cutS", t: "разреженные по симметрии", p: "2T−1", c: "T вырезов по (T−1)/T части" }
+];
+function ringTblArcs(v, n){   // [[от, до]] в долях круга — места бит кольца из n бит; бит 0 серединой сверху
+  const P = v === "cut2" ? 2 * n : v === "all" || v === "one" ? n : 2 * n - 1, per = (2 * n - 1) / n, o = [];
+  for (let j = 0; j < n; j++) { const s = v === "cutA" ? 2 * j : v === "cutS" ? j * per : j; o.push([(s - 0.5) / P, (s + 0.5) / P]); }
+  if (v === "cut" || v === "cut2") { const sh = (n - 1) / 2 / P; o.forEach(a => { a[0] -= sh; a[1] -= sh; }); }   // подряд — середина бит сверху
+  if (v === "cutA") { const sh = (n - 1) / P; o.forEach(a => { a[0] -= sh; a[1] -= sh; }); }   // середина узора сверху, шов снизу
+  return o;
+}
+function ringTblSvg(v, n){
+  const R = 11, w = 3.2, slit = v === "all" || (v === "one") ? 0.035 : 0, pt = (f, r) => [16 + r * Math.sin(f * 2 * Math.PI), 16 - r * Math.cos(f * 2 * Math.PI)];
+  let d = "";
+  ringTblArcs(v, n).forEach(([a, b], j) => {
+    const g0 = v === "all" || (v === "one" && j === 0) ? slit : 0, g1 = v === "all" || (v === "one" && j === n - 1) ? slit : 0, x0 = a + g0, x1 = b - g1;
+    if (x1 - x0 >= 1 - 1e-9) { d += `M${16 - R} 16a${R} ${R} 0 1 0 ${2 * R} 0a${R} ${R} 0 1 0 ${-2 * R} 0`; return; }
+    const [sx, sy] = pt(x0, R), [ex, ey] = pt(x1, R); d += `M${sx.toFixed(2)} ${sy.toFixed(2)}A${R} ${R} 0 ${x1 - x0 > 0.5 ? 1 : 0} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+  });
+  return `<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><circle cx="16" cy="16" r="${R}" fill="none" stroke="currentColor" stroke-opacity=".18" stroke-width="${w}"/><path d="${d}" fill="none" stroke="#ffd166" stroke-width="${w}" stroke-linecap="butt"/><circle cx="16" cy="16" r="1.6" fill="#ffd166"/></svg>`;
+}
+function ringTblOpen(){ if (Z.ringTbl !== undefined) return !!Z.ringTbl; return window.innerWidth > 760; }
+function ringTblPlace(el){
+  const host = el.parentElement, cv = document.getElementById("coneCv"); if (!host || !cv) return;
+  const hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(), w = el.offsetWidth || 360; if (!hr.width) return;
+  const XY = Array.isArray(Z.ringTblXY) ? Z.ringTblXY : [cr.left - hr.left + host.scrollLeft + 8, Math.max(cr.top, cgTabsBottom()) - hr.top + host.scrollTop + 8];
+  const x = Math.max(0, Math.min(host.scrollWidth - w, XY[0])), y = Math.max(0, Math.min(Math.max(0, host.scrollHeight - 30), XY[1]));
+  const l = Math.round(x) + "px", t = Math.round(y) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
+}
+function ringTblBuild(host){
+  const el = document.createElement("div"); el.id = "ringTbl";
+  let x = '<div class="rth" title="Тяни — переставить, двойной щелчок — на место"><span>◯ Кольца</span><button type="button" class="rtx" title="Закрыть («◯ Кольца» в группе «Щели» — открыть снова)">✕</button></div>' +
+    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th><th title="Частей в кольце строки из T бит">частей</th><th>вырезы</th><th></th></tr></thead><tbody>';
+  RINGTBL.forEach((r, i) => {
+    const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
+    const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    x += `<tr data-v="${r.v}" title="${tt}"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td><td class="rtc">${r.p}</td><td class="rtc rtd">${r.c}</td><td class="rtk"><button type="button" class="rtr" data-v="${r.v}" aria-pressed="false"></button></td></tr>`;
+  });
+  el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
+  el.addEventListener("click", (e) => {
+    if (e.target.closest(".rtx")) { e.stopPropagation(); Z.ringTbl = false; save(); ringTblSync(); return; }
+    const tr = e.target.closest("tr[data-v]"); if (!tr) return; e.stopPropagation();
+    if (coneSlitRaw() === tr.dataset.v) return;
+    const LS = LAS_SEG.find(s => s.id === "bConeSlits"), b = document.getElementById("bConeSlits");
+    if (LS && b && b.onclick) { LS.pre(tr.dataset.v); b.onclick(); }   // тот же путь, что ряд кнопок «Щели»: всё, что делает смена вида, — там
+    ringTblSync();
+  });
+  const hd = el.querySelector(".rth");
+  hd.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+    const mv = (ev) => { Z.ringTblXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; ringTblPlace(el); };
+    const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); save(); };
+    hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
+  });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.ringTblXY; ringTblPlace(el); save(); });
+  return el;
+}
+function ringTblSync(){
+  const m = document.getElementById("coneMain"), host = m && m.parentElement; if (!host) return;
+  const open = ringTblOpen(), bt = document.getElementById("bRingTbl"); if (bt && bt.classList.contains("on") !== open) bt.classList.toggle("on", open);
+  let el = document.getElementById("ringTbl");
+  if (!open) { if (el && !el.hidden) el.hidden = true; return; }
+  if (!el || el.parentElement !== host) { if (el) el.remove(); el = ringTblBuild(host); }
+  const cur = coneSlitRaw(); el.querySelectorAll("tr[data-v]").forEach(tr => { const on = tr.dataset.v === cur; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); const k = tr.querySelector(".rtr"), a = on ? "true" : "false"; if (k && k.getAttribute("aria-pressed") !== a) k.setAttribute("aria-pressed", a); });
+  const act = !!Z.coneClock && coneFlat(); if (el.classList.contains("off") !== !act) el.classList.toggle("off", !act);
+  const tt = act ? "" : "Сейчас не действует: виды колец — у луча-часов и солнца в плоском виде. Выбрать можно заранее.";
+  if (el.title !== tt) el.title = tt;
+  if (el.hidden) el.hidden = false; ringTblPlace(el);
+}
 function renderCone(){
   lasUi3d();   // v0.373
   lasDeps();   // v0.757
   sunTblSync();   // v0.867: таблица «☀ Солнце · ☾ Луна»
+  ringTblSync();   // v0.871: таблица «◯ Кольца»
   coneHoldSync();   // v0.870: «2 посл.» — стоящие кольца по числу строк
   if (!winOpen("w-cone")) return;
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
@@ -2217,7 +2296,7 @@ function renderCone(){
     } else {
     const CP = CG.cut ? cutPrevMode() : "";   // v0.781: ◇ пред.
     for (let j = 0; j < n; j++) {
-      const a = -Math.PI / 2 + ((CP || (CG.cut && coneCutAlt()) ? cutPrevPos(i, j) : j) - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);   // v0.806: и «вырезы между»
+      const a = -Math.PI / 2 + ((CP || (CG.cut && coneCutSpread()) ? cutPrevPos(i, j) : j) - rot) * step, fix = MI ? MI.fix[j] : Z.showFix && fixAt(s, j);   // v0.806: и «вырезы между»
       let col = fix ? (MI ? (MI.c180 ? coneCss("--green", "#6ee7a0") : cR) : Z.showFix === "ir" ? coneCss("--green", "#6ee7a0") : cR) : s[j] === "1" ? c1 : c0;
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
       if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
@@ -2264,15 +2343,15 @@ function renderCone(){
     /* v0.090, «граница — цветом, сами построятся», «где надо»: граница красится по тому, что разделяет. Биты разные — яркая:
        0→1 (по часовой) — сиреневая, 1→0 — бирюзовая; одинаковые — тонкая бледная. Края серий видны сразу, узор проступает. */
     if (n >= 1 && step * rin > 3 * dpr && !shut) {   /* v0.573: у 1 бита — одна черта границы; v0.660: у затвора строки 1 — ни одной */
-      for (let j = 0; j < (CG.cut && coneCutAlt() ? 1 : n); j++) {   // v0.806: в «вырезах между» соседних бит нет — только шов (последний | первый)
+      for (let j = 0; j < (CG.cut && coneCutSym() ? 0 : CG.cut && coneCutAlt() ? 1 : n); j++) {   /* v0.871: «по симметрии» — соседних бит нет вовсе */   // v0.806: в «вырезах между» соседних бит нет — только шов (последний | первый)
         const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = !blank && pv !== nx;
         g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff && !clockRays ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);   // v0.124: при луч-часах черта тонкая — щель видна пустой
         g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
       }
       g.globalAlpha = 1;
     }
-    if (clockRays && i >= 1 && n >= 2 && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rot, step, n, cg, dpr);   // v0.806: вырезы между битами — края каждого
-    if (clockRays && i >= 1 && n >= 2 && coneCutOn() && CP !== "alt" && !coneCutAlt()) {   // v0.781: «через 1» — единого выреза нет; v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
+    if (clockRays && i >= 1 && n >= 2 && coneCutSpread()) cutAltEdges(g, cx, cy, rin, rout, rot, step, n, cg, dpr);   // v0.806: вырезы между битами — края каждого
+    if (clockRays && i >= 1 && n >= 2 && coneCutOn() && CP !== "alt" && !coneCutSpread()) {   // v0.781: «через 1» — единого выреза нет; v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
       const e0 = -Math.PI / 2 - rot * step + n * step, e1 = e0 + (coneCutP(n) - n) * step;   // v0.772: вырез — частей − n
       g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e1]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
@@ -2361,7 +2440,7 @@ function renderCone(){
     g.lineWidth = cutRing ? Math.max(1.5 * dpr, Math.min(dr * 0.05, 3 * dpr)) : dpr;
     g.setLineDash(cutRing ? [] : [3 * dpr, 3 * dpr]);
     for (let k = 0; k < nD; k++) {
-      const a = -Math.PI / 2 + ((FC && !FR ? cutPos(k) : k) - rotF) * step;   // v0.806: в «вырезах между» ячейка k — на части 2k
+      const a = -Math.PI / 2 + ((FC && !FR ? cutPos(k, n) : k) - rotF) * step;   // v0.806: в «вырезах между» ячейка k — на части 2k
       g.beginPath();
       if (nD > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
       else { g.arc(cx, cy, rout, 0, 2 * Math.PI); g.moveTo(cx + rin, cy); g.arc(cx, cy, rin, 0, 2 * Math.PI, true); }
@@ -2378,7 +2457,7 @@ function renderCone(){
        v0.862, «грани битов внешнего кольца другого цвета — сливаются с солнцем»: у кольца за чертой они не золотые, а голубые (cIn):
        свет солнца и его лучи — золотые, и на этом кольце они сходятся. У колец строк края остались золотыми. */
     const cCut = cIn;
-    if (cutRing && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cCut, dpr);   // v0.806
+    if (cutRing && coneCutSpread()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cCut, dpr);   // v0.806
     else if (cutRing) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
       const e0 = -Math.PI / 2 + (n - rotF) * step;
       g.save(); g.strokeStyle = cCut; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
@@ -2397,11 +2476,11 @@ function renderCone(){
     for (let j = N + 1; j < T; j++) {
       const d = j - N - 1, r1 = r0 + j * dr, r2 = r1 + dr * band, V = clockRays ? coneVoidCut(j, N) : null, n = coneVoidLen(j, N), st = V ? V.step : 2 * Math.PI / n, rt = V ? V.rot : coneVoidRot(j, n);
       g.globalAlpha = Math.max(0.12, 0.75 * Math.pow(0.88, d)); g.lineWidth = d < 6 ? Math.max(1, dpr) : Math.max(0.6, dpr * 0.6);
-      if (V && coneCutAlt()) {   // v0.806: вырезы между — дуга над каждым местом бита, края — золотом
+      if (V && coneCutSpread()) {   // v0.806: вырезы между — дуга над каждым местом бита, края — золотом; v0.871: и «по симметрии»
         const a0 = -Math.PI / 2 - rt * st; g.beginPath();
-        for (let k = 0; k < n; k++) { const x0 = a0 + 2 * k * st, x1 = x0 + st; g.moveTo(cx + r1 * Math.cos(x0), cy + r1 * Math.sin(x0)); g.arc(cx, cy, r1, x0, x1); if (d < 6) { g.moveTo(cx + r2 * Math.cos(x0), cy + r2 * Math.sin(x0)); g.arc(cx, cy, r2, x0, x1); } }
+        for (let k = 0; k < n; k++) { const x0 = a0 + cutPos(k, n) * st, x1 = x0 + st; g.moveTo(cx + r1 * Math.cos(x0), cy + r1 * Math.sin(x0)); g.arc(cx, cy, r1, x0, x1); if (d < 6) { g.moveTo(cx + r2 * Math.cos(x0), cy + r2 * Math.sin(x0)); g.arc(cx, cy, r2, x0, x1); } }
         g.stroke(); g.save(); g.strokeStyle = cg; g.beginPath();
-        for (let p = 1; p <= 2 * n - 2; p++) { const a = a0 + p * st; g.moveTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a)); g.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)); }
+        for (const p of cutEdges(n)) { const a = a0 + p * st; g.moveTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a)); g.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a)); }
         g.stroke(); g.restore(); continue;
       }
       if (V) {   // v0.684: в вырезах — дуги только над местами бит (вырез пустой), черты мест, края выреза — золотом
@@ -2423,7 +2502,7 @@ function renderCone(){
       const V = clockRays ? coneVoidCut(j, N) : null, rin = r0 + j * dr, rout = rin + Math.max(1, dr * band), n = coneVoidLen(j, N), st = V ? V.step : 2 * Math.PI / n, rt = V ? V.rot : coneVoidRot(j, n);   // v0.684
       const fsz = Math.min(dr * band * 0.8, st * (rin + rout) / 2 * 0.85);
       for (const [k, cnt] of list) {
-        const a = -Math.PI / 2 + ((V ? cutPos(k) : k) - rt) * st;
+        const a = -Math.PI / 2 + ((V ? cutPos(k, n) : k) - rt) * st;
         g.beginPath(); g.arc(cx, cy, rout, a, a + st); g.arc(cx, cy, rin, a + st, a, true); g.closePath();
         g.fillStyle = c1; g.globalAlpha = Math.min(0.95, 0.45 + 0.2 * cnt); g.fill(); g.globalAlpha = 1;
         if (fsz >= 7 * dpr) {
@@ -2611,7 +2690,7 @@ function renderCone(){
         if (b > N || !lit.some(([lo, hi]) => hi - lo > 1e-6)) continue;
         const C0 = coneSunCutR(b, N), C = C0 && b === N && coneFreeOn() ? { n: C0.P, P: C0.P, st: C0.st, rot: C0.rot } : C0, R = C ? { n: C.n, st: C.st, rot: C.rot } : (() => { const q = coneRingNR(b); return q ? { n: q.n, st: 2 * Math.PI / q.n, rot: q.rot } : null; })(); if (!R || R.n < 2) continue;
         const ri = r0 + b * dr, ro = ri + Math.max(1, dr * band), kk = C && C.P > C.n ? R.n : R.n - 1;
-        if (C && C0 === C && coneCutAlt()) { cutAltEdges(g, cx, cy, ri, ro, R.rot, R.st, R.n, cg, dpr); continue; }   // v0.806: вырезы между — края всех вырезов
+        if (C && C0 === C && coneCutSpread()) { cutAltEdges(g, cx, cy, ri, ro, R.rot, R.st, R.n, cg, dpr); continue; }   // v0.806: вырезы между — края всех вырезов
         g.save(); g.strokeStyle = cBg; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.setLineDash([]); g.beginPath();
         for (let k = C && C.P > C.n ? 1 : 0; k <= kk - (C && C.P > C.n ? 1 : 0); k++) { const a = -Math.PI / 2 + (k - R.rot) * R.st; g.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); g.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); }
         g.stroke();
@@ -2913,28 +2992,53 @@ function coneOneSlit(){ return coneSlitMode() === "one"; }
    дуга шириной (длина строки k − 1) бит СЛЕДУЮЩЕЙ строки, изначально — ровно под её битами 2 … k (по центру, против верха; стена — её первый и
    последний бит, у верха). Вырез крутится вместе со своим кольцом. «у 1 строки нет выреза — пусть мимо идёт»: строка 1 прозрачна, затвора нет.
    У нижней строки следующая — строка для заполнения (на бит длиннее). Вырез шире круга — кольцо открыто всё */
-function coneSlitMode(){ return Z.coneSlits === "all" ? "all" : Z.coneSlits === "cut" || Z.coneSlits === "cut2" || Z.coneSlits === "cutA" ? "cut" : "one"; }   // v0.772: «вырезы 2n» — тоже вырезы
+function coneSlitMode(){ return Z.coneSlits === "all" ? "all" : Z.coneSlits === "cut" || Z.coneSlits === "cut2" || Z.coneSlits === "cutA" || Z.coneSlits === "cutS" ? "cut" : "one"; }   // v0.871: и «по симметрии»   // v0.772: «вырезы 2n» — тоже вырезы
 /* v0.772, на объяснение «почему у строки 1 в T−1 нет выреза» (2n − 1 частей: у 1 бита — одна часть, вырез 0) — «да» на «сделаю правило 2n отдельным режимом
    рядом с «вырезы T−1» сразу для всех колец»: «вырезы 2n» (Z.coneSlits = "cut2") — кольцо из n бит — 2n равных частей: n бит подряд и вырез из n частей
    одним куском. У строки 1 (1 бит) — полкольца бита и полкольца выреза: солнце светит только через открытую половину (как ◐, но само), луч выходит только
    через неё. Всё остальное — как в T−1 (coneSlitMode() === "cut"); разница — число частей coneCutP(n) и вырез coneCutP(n) − n */
-function coneSlitRaw(){ return Z.coneSlits === "cut2" ? "cut2" : Z.coneSlits === "cutA" ? "cutA" : coneSlitMode(); }
+function coneSlitRaw(){ return Z.coneSlits === "cut2" ? "cut2" : Z.coneSlits === "cutA" ? "cutA" : Z.coneSlits === "cutS" ? "cutS" : coneSlitMode(); }
 /* v0.806, по кнопке «вырезы T−1» — «* когда между битами каждый вырез» и «добавь»: «вырезы между» (Z.coneSlits = "cutA") — те же 2n − 1 частей, но
    вырез не одним куском, а по части между каждыми двумя соседними битами: бит, вырез, бит, вырез… бит; последний и первый бит стоят вплотную (шов).
    Везде, где вырезы T−1 считали «части 0…n − 1 — биты, дальше — вырез», теперь — cutPos (часть бита q), cutBit (бит части p или −1) и cutHoles (дуги
    вырезов): рисунок колец, кольца за чертой и пустых, луч лазера, солнце и луна, xor, проход «целиком», щелчок по кольцу. Расстановка по умолчанию —
    середина узора сверху, шов снизу (симметрично вертикали) */
 function coneCutAlt(){ return Z.coneSlits === "cutA" && coneCutOn(); }
-function cutPos(q){ return coneCutAlt() ? 2 * q : q; }
-function cutBit(p, n){ p = Math.floor(p); return coneCutAlt() ? (p % 2 === 0 && p / 2 < n ? p / 2 : -1) : (p < n ? p : -1); }
+/* v0.871, «сделай таблицу Кольца: могут быть T, 2T−1, 2T, разреженные через вырезы и ещё новое: разреженные по симметрии, то есть 1 и 1 в кольце
+   из 3х друг напротив друга, образуя 2 выреза»: «по симметрии» (Z.coneSlits = "cutS") — те же 2T − 1 частей, что в «вырезах между», но биты стоят
+   на равных расстояниях: бит j — с части j·(2T − 1)/T, шириной в часть; между каждыми двумя соседними (и между последним и первым) — вырез
+   (T − 1)/T части, всего T вырезов; шва нет, узор симметричен поворотом на 1/T круга. Строка 2 — два бита ровно напротив друг друга и два выреза
+   по полчасти. Начало бита — дробное, поэтому cutPos берёт и длину строки n; cutBit — по дробной координате; попадания света — по ячейкам бит
+   (cutSymHits), а не по целым частям. coneCutSpread — биты не подряд («между» или «по симметрии») */
+function coneCutSym(){ return Z.coneSlits === "cutS" && coneCutOn(); }
+function coneCutSpread(){ return coneCutAlt() || coneCutSym(); }
+function cutPer(n){ return (2 * n - 1) / Math.max(1, n); }   // v0.871: шаг бит по кругу в частях
+function cutPos(q, n){ return coneCutAlt() ? 2 * q : coneCutSym() ? q * cutPer(n) : q; }
+function cutBit(p, n){
+  if (coneCutSym()) { const per = cutPer(n), j = Math.floor(p / per + 1e-9); return j >= 0 && j < n && p - j * per < 1 - 1e-9 ? j : -1; }   // v0.871
+  p = Math.floor(p); return coneCutAlt() ? (p % 2 === 0 && p / 2 < n ? p / 2 : -1) : (p < n ? p : -1);
+}
 function cutHoles(C, out){
-  if (coneCutAlt()) { for (let k = 0; k + 1 < C.n; k++) ivNorm((2 * k + 1 - C.rot) * C.st, (2 * k + 2 - C.rot) * C.st, out); }
+  if (coneCutSym()) { if (C.n >= 2) for (let j = 0; j < C.n; j++) ivNorm((j * cutPer(C.n) + 1 - C.rot) * C.st, ((j + 1) * cutPer(C.n) - C.rot) * C.st, out); }   // v0.871: T вырезов
+  else if (coneCutAlt()) { for (let k = 0; k + 1 < C.n; k++) ivNorm((2 * k + 1 - C.rot) * C.st, (2 * k + 2 - C.rot) * C.st, out); }
   else if (C.P > C.n) ivNorm((C.n - C.rot) * C.st, (C.P - C.rot) * C.st, out);
   return out;
 }
-function cutAltEdges(g, cx, cy, rin, rout, rot, step, n, col, dpr){   // золотые края всех вырезов «между» (части 1 … 2n − 2), шов — нет
+function cutEdges(n){   // v0.871: края вырезов в частях — «между»: 1 … 2n − 2 (шов не край); «по симметрии»: начало и конец каждого бита
+  const o = []; if (n < 2) return o;
+  if (coneCutSym()) { for (let j = 0; j < n; j++) o.push(j * cutPer(n), j * cutPer(n) + 1); return o; }
+  for (let p = 1; p <= 2 * n - 2; p++) o.push(p); return o;
+}
+function cutSymHits(b, C, rest, lit, set, Ls){   // v0.871: «по симметрии» — бит кольца b задет светом за вычетом прохода (rest) и накрыт целиком (lit или одним из Ls) → в set
+  for (let q = 0; q < C.n; q++) {
+    const pq = cutPos(q, C.n), c = []; ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, c);
+    if (!ivAnd(ivUnion(c), rest).some(([x, y]) => y - x > 1e-9)) continue;
+    if (Ls ? Ls.some(L => coneCellCovered(pq, C.st, C.rot, L)) : coneCellCovered(pq, C.st, C.rot, lit)) set.add(b + ":" + q);
+  }
+}
+function cutAltEdges(g, cx, cy, rin, rout, rot, step, n, col, dpr){   // золотые края всех вырезов «между» (части 1 … 2n − 2), шов — нет; v0.871: и «по симметрии»
   g.save(); g.strokeStyle = col; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5 * dpr, Math.min(dpr * 3, (rout - rin) * 0.05)); g.beginPath();
-  for (let p = 1; p <= 2 * n - 2; p++) { const e = -Math.PI / 2 + (p - rot) * step; g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
+  for (const p of cutEdges(n)) { const e = -Math.PI / 2 + (p - rot) * step; g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
   g.stroke(); g.restore();
 }
 function coneCut2n(){ return Z.coneSlits === "cut2" && coneCutOn(); }
@@ -2966,14 +3070,15 @@ function coneCutOn(){ return !!Z.coneClock && coneFlat() && Z.rows.length <= CON
    краю»: «▥ центр / ◧ лево / ◨ право» (Z.cutAlign) — где у колец в вырезах начало: по центру — как было (симметрично вертикали, чётные — дыра по центру,
    нечётные — биты); по левому — левый край выреза на вертикали (вырез идёт от неё по часовой, биты кончаются на ней); по правому — правый край выреза на
    вертикали (биты начинаются на ней). off — в частях */
-function coneCutOff(i, n){ const m = Z.cutAlign || "c"; if (Z.coneSlits === "cutA" && m === "c") return -(n - 0.5);   // v0.806: «вырезы между» — середина узора сверху, шов снизу
+function coneCutOff(i, n){ const m = Z.cutAlign || "c"; if (Z.coneSlits === "cutA" && m === "c") return -(n - 0.5);
+  if (Z.coneSlits === "cutS") return m === "l" ? -1 : m === "r" ? 0 : -0.5;   // v0.871: «по симметрии» — бит 0 серединой на вертикали (у строки 2 второй — ровно внизу)   // v0.806: «вырезы между» — середина узора сверху, шов снизу
   return m === "l" ? -n : m === "r" ? 0 : i % 2 ? -n / 2 : (coneCutP(n) - n) / 2; }   // v0.772: дыра по центру — (частей − n) / 2
 /* v0.781, «вообще надо к бипирамиде прийти: в каждой строке T−1 ячеек — это их предыдущей строки биты» (сперва в 2D, «два варианта надо смотреть»):
    «◇ пред.» (Z.cutPrev, «Щели», только «вырезы T−1») — кольцо строки n из 2n − 1 частей: n своих бит и n − 1 бит строки выше (предыдущей). «блоком» —
    свои подряд, как были, а вырез заполнен битами предыдущей строки по порядку; «через 1» — как ряд треугольника ▲▼▲▼▲: часть 2j — свой бит j, часть
    2k + 1 — бит k предыдущей строки. Пока это вид: лазер и солнце считают вырез, как раньше. Предыдущая строка короче n − 1 — недостающие ячейки пустые */
 function cutPrevMode(){ const m = bipyMode() || Z.cutPrev; return (m === "blk" || m === "alt") && (coneCutOn() || coneTorCut()) && coneSlitRaw() === "cut" ? m : ""; }
-function cutPrevPos(i, j){ return i >= 1 && (cutPrevMode() === "alt" || coneCutAlt()) ? 2 * j : j; }   // часть своего бита j
+function cutPrevPos(i, j){ if (i >= 1 && coneCutSym()) return cutPos(j, (Z.rows[i] || "").length || 1); return i >= 1 && (cutPrevMode() === "alt" || coneCutAlt()) ? 2 * j : j; }   // v0.871: и «по симметрии»   // часть своего бита j
 function cutPrevCells(i, n){   // [[часть, k]] — бит k предыдущей строки в кольце строки i
   const m = cutPrevMode(), o = []; if (!m || i < 1 || n < 2) return o;
   for (let k = 0; k < n - 1; k++) o.push([m === "alt" ? 2 * k + 1 : n + k, k]);
@@ -3732,7 +3837,7 @@ function coneCellCovered(q, st, rot, L){ const c = []; ivNorm((q - rot) * st, (q
    (1 от солнца, 0 от луны), закрашенная — стена. coneFillPass: к проходу open добавить такие ячейки (свет L, геометрия C) */
 function coneFillPass(open, L, C){
   const f = fillDraft(), add = open.slice();
-  for (let q = 0; q < C.n; q++) { const pq = cutPos(q); if (f[q] === "." && !coneCellCovered(pq, C.st, C.rot, L)) ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, add); }
+  for (let q = 0; q < C.n; q++) { const pq = cutPos(q, C.n); if (f[q] === "." && !coneCellCovered(pq, C.st, C.rot, L)) ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, add); }
   return ivUnion(add);
 }
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
@@ -3752,11 +3857,12 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     if (C && p0) open = coneZeroOpen(b, N, C, open);   // v0.724: через «0» — свободно; v0.867: только с галкой «проход через 0»
     /* v0.741, «если 0, то не становится 1 по Xor, а должно»: ноль свет проходит (v0.724), и попаданием он не считался — xor его не видел. Теперь при ⊕ xor
        ноль строки за чертой, накрытый светом целиком, — тоже попадание (свет идёт сквозь него дальше, а ячейка переключится в 1) */
-    if (C && b === N && Z.sunXor && !coneFreeOn()) { const f = fillDraft(); for (let q = 0; q < C.n; q++) if (f[q] === "0" && coneCellCovered(cutPos(q), C.st, C.rot, lit)) hits.add(b + ":" + q); }
+    if (C && b === N && Z.sunXor && !coneFreeOn()) { const f = fillDraft(); for (let q = 0; q < C.n; q++) if (f[q] === "0" && coneCellCovered(cutPos(q, C.n), C.st, C.rot, lit)) hits.add(b + ":" + q); }
     if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b, undefined, p0); if (sunPass("sun", "1")) open = ivUnion(open.concat(coneOnesArcs(b, N, C, true)));   // v0.867: «1» — с галкой насквозь
       if (Z.moonBlk) blk.push(...ivMinus(ivMinus(lit, open), z0)); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
     if (C && b === N && sunPass("sun", "E")) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь (v0.867: галка, по умолчанию стоит)
-    for (const [lo, hi] of ivMinus(lit, open)) {
+    if (C && coneCutSym()) cutSymHits(b, C, ivMinus(lit, open), lit, hits);   // v0.871: «по симметрии» — по ячейкам бит (начала дробные)
+    else for (const [lo, hi] of ivMinus(lit, open)) {
       if (hi - lo < 1e-9) continue;
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
       for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P, bq = C ? cutBit(q, nb) : q < nb ? q : -1; if (bq >= 0 && (!C || coneCellCovered(q, st, rot, lit))) hits.add(b + ":" + bq); }   // v0.705: в вырезах — только покрытая целиком
@@ -3823,7 +3929,8 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       else {
         const hole = ivUnion(cutHoles(C, [])), h0 = k === N && sunPass("moon", "E") ? coneFillPass(hole, AA, C) : hole;   // v0.867: пустая ячейка — по галке луны
         open = sunPass("moon", "0") ? coneZeroOpen(k, N, C, h0) : h0;   // v0.724: и луна — сквозь «0»; v0.867: только с галкой
-        if (k === N) for (const [lo, hi] of ivMinus(AA, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
+        if (k === N && coneCutSym()) cutSymHits(k, C, ivMinus(AA, open), null, zhits, Ls);   // v0.871
+        else if (k === N) for (const [lo, hi] of ivMinus(AA, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
           for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P, bq = cutBit(q, C.n); if (bq >= 0 && Ls.some(L => coneCellCovered(q, C.st, C.rot, L))) zhits.add(k + ":" + bq); } }
       }
       const ones = one ? coneOnesArcs(k, N, C, fr) : [], M2 = new Map();
@@ -3869,7 +3976,7 @@ function coneSweepStep(S, N){   // → { s: ["N:q" — прошёл весь с�
        непрерывный проход — освещённый кусок ячейки, что тянется за светом без перерыва; свет ушёл с ячейки — счёт заново; кусок, оторванный от света
        (освещён раньше, а сейчас между ним и светом темно), — тоже отпадает. Дотянулся от края до края — ячейка прошла */
     for (let q = 0; q < C.n; q++) {
-      const add = L.length ? ivUnion(coneSweepGet(L, C, cutPos(q))) : [];
+      const add = L.length ? ivUnion(coneSweepGet(L, C, cutPos(q, C.n))) : [];
       if (!add.length) { delete coneSweepAcc[kind][q]; continue; }
       const all = ivUnion((coneSweepAcc[kind][q] || []).map(x => x.slice()).concat(add.map(x => x.slice())));
       const acc = all.filter(([x, y]) => add.some(([u, v]) => v >= x - 1e-9 && u <= y + 1e-9));   // только куски, где свет сейчас
@@ -3909,7 +4016,7 @@ function coneSunPaint(){
        v0.854, по снимку «☀↔0» — «тут неверно: не на хотя бы половину, а так же — полностью только»: «0» — только в ячейку, которую сектор напротив накрывает
        целиком. Ячейки одного кольца равны, поэтому это ячейка ровно напротив: она есть, когда 180° — целое число ячеек (чётное кольцо), у нечётного — нет */
     if (Z.sunAnti) { const f0 = fillDraft(), C = coneSunCutR(N, N);
-      if (C) { const cut = coneCutOn() && !!coneFillCut(), TT = 2 * Math.PI, pp = (q) => cut ? cutPos(q) : q;
+      if (C) { const cut = coneCutOn() && !!coneFillCut(), TT = 2 * Math.PI, pp = (q) => cut ? cutPos(q, C.n) : q;
         for (let q = 0; q < f.length; q++) if (f[q] === "1" && f0[q] !== "1") {
           const sM = (pp(q) - C.rot) * C.st + Math.PI;
           for (let k = 0; k < f.length; k++) { if (k === q || f[k] !== ".") continue; let d = ((pp(k) - C.rot) * C.st - sM) % TT; if (d > Math.PI) d -= TT; if (d < -Math.PI) d += TT;
@@ -4239,7 +4346,7 @@ function coneVoidHits(){
 /* v0.739, по снимку группы «Лазер» — «как запустить в режиме лазера T−1, чтобы между битами лазер переходил наружу»: «⌖ меж битами» (Z.cutGaps) — в вырезах
    T−1 луч проходит кольцо не только через вырез, но и через щель между соседними битами (границы мест внутри блока бит; ширина — ползунок «щель», как в
    «все щели»). Так у колец строк, у кольца за чертой и у пустых «до 256». coneCutGap(x, n, st) — x (в частях) у границы между битами */
-function coneCutGap(x, n, st){ if (!Z.cutGaps || coneCutAlt()) return false; const r = Math.round(x); return r >= 1 && r <= n - 1 && Math.abs(x - r) * st <= coneSlitHalf(n); }
+function coneCutGap(x, n, st){ if (!Z.cutGaps || coneCutSpread()) return false; const r = Math.round(x); return r >= 1 && r <= n - 1 && Math.abs(x - r) * st <= coneSlitHalf(n); }
 /* v0.743, «нужен вариант лазер-луча, который из центра проходит через щель первого бита T−1, и где T−1 бит состоит из 4 частей — круг, поделённый на 4 части:
    чёрн-бел-чёрн-бел»: «✚ 4 части» (Z.laserQuad, лазер в вырезах T−1) — строка 1 — круг от центра на 4 четверти: от верха по часовой чёрная, белая, чёрная,
    белая. Чёрная — щель: луч из центра проходит; белая — бит: стена, луч встаёт. Круг крутится, как кольцо строки 1, — на четверть за шаг */
@@ -5831,6 +5938,7 @@ function setupCone(){
     $("bSunParts").onclick = () => { Z.sunParts = Z.sunParts === false; ui(); save(); renderCone();
       say(Z.sunParts !== false ? "☀ Доли: у каждой части круга — её доля, сверху — сводка." : "☀ Доли выключены: подписи и сводка не считаются и не рисуются."); };
   }
+  if ($("bRingTbl")) $("bRingTbl").onclick = () => { Z.ringTbl = !ringTblOpen(); save(); ringTblSync(); };   // v0.871: ◯ Кольца — таблица видов колец
   if ($("bSunTbl")) $("bSunTbl").onclick = () => { Z.sunTbl = !sunTblOpen(); save(); sunTblSync(); if (Z.sunTbl && !coneSunOn()) say("☀☾ Таблица видна, когда включено ☀ солнце."); };   // v0.867
   if ($("bConeLast2")) {   // v0.870: крутятся только 2 последних кольца
     $("bConeLast2").classList.toggle("on", !!Z.coneLast2);
@@ -6226,7 +6334,7 @@ function setupCone(){
     $(id).oncontextmenu = (e) => { e.preventDefault(); Z.coneAimRot = 0; coneClockWas = coneClockTrace().some(R => R.pass); save(); renderCone(); say("⌖ Довод строки 1 снят — она снова на своём месте."); };
   }
   $("bConeClockStop").classList.toggle("on", !!Z.coneClockStop);   // v0.119
-  const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitRaw(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : m === "cutA" ? "вырезы между" : m === "cut2" ? "вырезы 2n" : "все щели"; b.classList.toggle("on", m !== "all"); } };   // v0.664; v0.665 — три режима
+  const slitsUi = () => { const b = $("bConeSlits"); if (b) { const m = coneSlitRaw(); b.textContent = m === "one" ? "1 щель" : m === "cut" ? "вырезы T−1" : m === "cutA" ? "вырезы между" : m === "cutS" ? "по симметрии" : m === "cut2" ? "вырезы 2n" : "все щели"; b.classList.toggle("on", m !== "all"); ringTblSync(); } };   // v0.871: и таблица «Кольца»   // v0.664; v0.665 — три режима
   slitsUi();
   if ($("row1Slit")) {   // v0.751: ∠ угол щели строки 1 — до 360°
     const el = $("row1Slit"); el.value = Math.round(+Z.row1SlitDeg || +Z.coneSlit || 2);
@@ -6264,11 +6372,12 @@ function setupCone(){
       say({ c: "▥ Вырезы по центру: кольца симметрично вертикали, как было.", l: "◧ Вырезы по левому краю: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой.", r: "◨ Вырезы по правому краю: правый край выреза — на вертикали, биты начинаются от неё." }[Z.cutAlign]); };
   }
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
-    const m = coneSlitRaw(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "cutA" : m === "cutA" ? "cut2" : m === "cut2" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined;   // v0.772: по кругу и «вырезы 2n»
+    const m = coneSlitRaw(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "cutA" : m === "cutA" ? "cutS" : m === "cutS" ? "cut2" : m === "cut2" ? "all" : "one"; slitsUi();   // v0.871: и «по симметрии» coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined;   // v0.772: по кругу и «вырезы 2n»
     const kc = coneCutHome(); save(); renderRows(); renderCone(); coneSunUi();   // v0.674: вход в T−1 — кольца симметрично вертикали; v0.692: и доступность «до 256»
     say({ one: "1 щель: выход из кольца — только граница между последним и первым битом строки.",
           cut: "Вырезы T−1: кольца симметрично вертикали — у чётных строк сверху середина бит, у нечётных — середина выреза; строка 1 без затвора, луч идёт мимо." + (kc ? ` Накрутка снята у колец: ${kc}.` : ""),
           cutA: "Вырезы между: кольцо из E бит — те же 2E − 1 частей, но вырез — по части между каждыми двумя соседними битами (бит, вырез, бит…); последний и первый — вплотную, шов внизу.",
+          cutS: "По симметрии: кольцо из E бит — 2E − 1 частей, биты на равных расстояниях, между соседними — вырез в (E − 1)/E части, всего E вырезов; строка 2 — два бита напротив друг друга.",
           cut2: "Вырезы 2n: кольцо из E бит — E бит и вырез из E частей; строка 1 — полукольцо, свет и луч выходят только через открытую половину.",
           all: "Все щели: луч проходит кольцо на любой границе бит (как было)." }[coneSlitRaw()]);
   };
