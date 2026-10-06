@@ -1761,7 +1761,7 @@ function lasUi3dG(G){
    у «вырезы T−1» — кольца на места); у списка — значение и событие change */
 const LAS_SEG = [
   { id: "bConeSlits", v: ["one", "cut", "cutA", "cut2", "all"], l: ["1 щель", "вырезы T−1", "вырезы между", "вырезы 2n", "все щели"], get: () => coneSlitRaw(), pre: (v) => { Z.coneSlits = { one: "all", cut: "one", cutA: "cut", cut2: "cutA", all: "cut2" }[v]; },
-    t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] },
+    t: ["1 щель: выход из кольца — только граница между последним и первым битом строки (одна прорезь); остальное — стена", "Вырезы T−1: кольцо строки из E бит — E бит подряд (стена) и вырез из E − 1 частей; строка 1 без выреза — луч идёт мимо (затвор — в «Строке 1»)", "Вырезы между: те же 2E − 1 частей, но вырез не одной дырой, а по части между каждыми двумя соседними битами: бит, вырез, бит, вырез… бит — всего E бит и E − 1 вырезов; последний и первый бит стоят вплотную (шов). Строка 1 из одного бита — без выреза, как и в T−1", "Вырезы 2n: кольцо строки из E бит — 2E частей: E бит подряд (стена) и вырез из E частей; строка 1 — полкольца бита и полкольца выреза", "Все щели: выход на любой границе бит, как было раньше"] }   /* v0.861: подсказок было 4 на 5 вариантов — они съехали: «вырезы между» показывали текст от «вырезы 2n», «2n» — от «все щели», а у «всех щелей» подсказки не было вовсе */,
   { id: "bCutAlign", v: ["c", "l", "r"], l: ["▥ центр", "◧ лево", "◨ право"], get: () => Z.cutAlign || "c", pre: (v) => { Z.cutAlign = { c: "r", l: "c", r: "l" }[v]; },
     t: ["▥ Центр: кольца в вырезах симметрично вертикали", "◧ Лево: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой", "◨ Право: правый край выреза — на вертикали, биты начинаются от неё"] },
   { id: "bCutPrev", v: ["off", "blk", "alt"], l: ["◇ нет", "◇ блоком", "◇ через 1"], get: () => Z.cutPrev === "blk" || Z.cutPrev === "alt" ? Z.cutPrev : "off", pre: (v) => { Z.cutPrev = { off: "alt", blk: "off", alt: "blk" }[v]; },   // v0.781
@@ -1780,7 +1780,7 @@ function lasSegInit(){
   for (const d of LAS_SEG) {
     const el = document.getElementById(d.id); if (!el) continue;
     const sp = document.createElement("span"); sp.className = "cunit lseg"; sp.dataset.seg = d.id;
-    d.v.forEach((v, i) => { const b = document.createElement("button"); b.type = "button"; b.dataset.v = v; b.textContent = d.l[i]; b.title = b.dataset.t0 = d.t[i];
+    d.v.forEach((v, i) => { const b = document.createElement("button"); b.type = "button"; b.dataset.v = v; b.textContent = d.l[i]; b.title = b.dataset.t0 = d.t[i] || d.l[i];   // v0.861: подсказки не хватило — хотя бы название, не «undefined»
       b.onclick = () => { if (d.get() === v) return;
         if (d.sel) { el.value = v; el.dispatchEvent(new Event("change")); } else { d.pre(v); el.click(); }
         lasSegSync(); renderCone(); };
@@ -2209,23 +2209,20 @@ function renderCone(){
     const f = fillDraft(), n = f.length, FC = clockRays && f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
     const gp = n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
     const FR = FC && coneFreeOn(), fD = FR ? fillFreeDraft() : f, nD = FR ? FC.P : n;   // v0.722: «▦ любые» — все 2n − 1 частей — места, выреза ещё нет
-    if (FC && !FR && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cg, dpr);   // v0.806
-    else if (FC && !FR) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
-      const e0 = -Math.PI / 2 + (n - rotF) * step;
-      g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
-      for (const e of [e0, e0 + (coneCutP(n) - n) * step]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
-      g.stroke(); g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
-      for (let k = 1; k < coneCutP(n) - n; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
-      g.stroke(); g.restore();
-    }
-    g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
+    /* v0.861, «сделай почётче разницу между дугами вырезов и битов у внешнего кольца» (по «вырезам между»): у кольца за чертой
+       всё было одним тонким пунктиром, и место бита от выреза не отличалось. Теперь в вырезах: место бита — СПЛОШНОЙ контур
+       акцентом, толще и ярче; вырез — пусто, и его края золотые рисуются ПОВЕРХ мест (прежде шли под ними и терялись).
+       Пунктир остался без вырезов и в «▦ любые» (там выреза ещё нет — все части равны). */
+    const cutRing = FC && !FR;
+    g.lineWidth = cutRing ? Math.max(1.5 * dpr, Math.min(dr * 0.05, 3 * dpr)) : dpr;
+    g.setLineDash(cutRing ? [] : [3 * dpr, 3 * dpr]);
     for (let k = 0; k < nD; k++) {
       const a = -Math.PI / 2 + ((FC && !FR ? cutPos(k) : k) - rotF) * step;   // v0.806: в «вырезах между» ячейка k — на части 2k
       g.beginPath();
       if (nD > 1) { g.arc(cx, cy, rout, a + gp, a + step - gp); g.arc(cx, cy, rin, a + step - gp, a + gp, true); g.closePath(); }
       else { g.arc(cx, cy, rout, 0, 2 * Math.PI); g.moveTo(cx + rin, cy); g.arc(cx, cy, rin, 0, 2 * Math.PI, true); }
       if (fD[k] !== ".") { g.fillStyle = fD[k] === "1" ? c1 : c0; g.globalAlpha = fD[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
-      g.strokeStyle = cA; g.globalAlpha = 0.75; g.stroke(); g.globalAlpha = 1;
+      g.strokeStyle = cA; g.globalAlpha = cutRing ? 0.95 : 0.75; g.stroke(); g.globalAlpha = 1;   // v0.861: место бита в вырезах — ярче
       if (fD[k] !== "." && fsz >= 8 * dpr) {
         const am = a + step / 2, rm = (rin + rout) / 2, hc = fD[k] === "1" ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : fD[k];   // v0.127: прошёл 2+ раз — 11, 111…
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
@@ -2233,6 +2230,16 @@ function renderCone(){
       }
     }
     g.setLineDash([]);
+    /* v0.861: края вырезов — золотом поверх мест бит (прежде рисовались до них) */
+    if (cutRing && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cg, dpr);   // v0.806
+    else if (cutRing) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
+      const e0 = -Math.PI / 2 + (n - rotF) * step;
+      g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
+      for (const e of [e0, e0 + (coneCutP(n) - n) * step]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
+      g.stroke(); g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+      for (let k = 1; k < coneCutP(n) - n; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
+      g.stroke(); g.restore();
+    }
     /* v0.127: пустые кольца до строки 256 — еле заметные: контур кольца и черты ячеек (где черта шире 3 пикселей); ячейки, через
        которые прошёл луч, — закрашены (чем больше проходов, тем плотнее), с «1», «11», «111»… если влезает. */
     const T = coneRingsTotal(N), VH = coneVoidHits(), marks = new Map();
