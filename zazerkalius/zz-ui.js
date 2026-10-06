@@ -425,7 +425,7 @@ function renderRowsOver(){
     for (const [p, list] of ovRowMap(j, A, OV_SHOW, true)) t += '<span class="ob" style="left:' + (p / 2) + 'ch">' + (list.length === 1 ? list[0].b : ovCombine(list)) + "</span>";
     h += hidRowHtml(H + j, '<span class="trk" style="width:' + W + '">' + lines + t + "</span>").replace('class="rw hid"', 'class="rw ovr hid"');
   }
-  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true);   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
+  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.869   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr();
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
@@ -484,27 +484,31 @@ function tri90Apply(){
    у замков, в таблицах, в текстах окон и сообщениях (строка треугольника номер k — k бит). Внутри всё по-прежнему с нуля. */
 /* v0.382, «покажи другими значками, просто полоской»: вместо 🔒 / 🔓 — полоска из CSS: заперто — сплошная, открыто — пустая золотая. */
 function rowSkK(i){ const k = rowOrigRot(i), n = (Z.rows[i] || "").length; return k > 0 ? (k <= n / 2 ? k : k - n) : 0; }   // v0.562: сдвиг от исходной, со знаком — короче
-function rowSk(i){ const k = rowSkK(i); return k ? ' data-rs="' + k + '" title="Строка сдвинута по кругу на ' + Math.abs(k) + " бит " + (k > 0 ? "влево" : "вправо") + ' от исходной (⟲ ⟳ при открытом кольце)"' : ""; }
-function rowSkTxt(i){ const k = rowSkK(i); return k ? (k > 0 ? "⟳" : "⟲") + Math.abs(k) : ""; }
+function rowSk(i){ const k = rowSkK(i); return k ? ' data-rs="' + k + '" title="Строка сдвинута по кругу на ' + Math.abs(k) + " бит " + (k > 0 ? "влево — против часовой" : "вправо — по часовой") + ' от исходной (⟲ ⟳ при открытом кольце)"' : ""; }
+/* v0.869, «кручение число оборотов сделай крупнее, и − знак, если в обратную сторону, против часовой, и цветом красным»: у столбика кручения
+   (сдвиг строки по кругу rowSkK, накрутка кольца на вид coneRot, обороты .rtn) по часовой — «↻k», против часовой — «↺−k» красным (класс .ccw).
+   Направление — как на холсте: сдвиг строки влево (k > 0) и положительный coneRot ведут бит 0 против часовой */
+function rotTxt(v, ccw){ return v ? (ccw ? "↺−" : "↻") + v : ""; }
+function rowSkTxt(i){ const k = rowSkK(i); return rotTxt(Math.abs(k), k > 0); }
 function rowLockBadge(i){
   if (typeof coneLocked !== "function") return "";
   const lk = coneLocked(i), own = Z.coneLocks && Z.coneLocks[i] !== undefined, rr = Math.round((typeof coneRot !== "undefined" && coneRot[i]) || 0);
   return '<span class="rlk' + (lk ? " on" : "") + (own ? " own" : "") + '" data-lk="' + i + '" title="Кольцо ' + (i + 1) + ' в конусе: ' + (lk ? "заперто — крутится только на вид" : "открыто — крутит саму строку") +
-    ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ' (общий замок над столбиком — все разом)"></span>' +'<span class="rrot"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + rr + ' — щелчок: снять накрутку"' : rowSk(i)) + '>' + (rr ? "↻" + rr : rowSkTxt(i)) + "</span>";   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
+    ' · щелчок — ' + (lk ? "отпереть" : "запереть") + ' (общий замок над столбиком — все разом)"></span>' +'<span class="rrot' + ((rr ? rr > 0 : rowSkK(i) > 0) ? " ccw" : "") + '"' + (rr ? ' data-rr="' + i + '" title="Кольцо повёрнуто на вид на ' + Math.abs(rr) + (rr > 0 ? " против часовой" : " по часовой") + ' — щелчок: снять накрутку"' : rowSk(i)) + '>' + (rr ? rotTxt(Math.abs(rr), rr > 0) : rowSkTxt(i)) + "</span>";   // v0.869: против часовой — «↺−k» красным   // v0.101: щелчок — снять   // v0.093: столбик поворота есть всегда — столбики ровные
 }
 /* v0.865 / v0.867, «при кручении любого кольца надо показывать число оборотов каждого; кнопку, которая выводит таблицу номер кольца и число
    оборотов, — это надо в строках сделать». Счёт — чистые обороты, на которые кольцо провернули рукой (Ctrl + тянуть на холсте), по часовой —
    плюс: Z.coneTurns[i] — кольцо строки i, Z.coneFillTurns — кольцо за чертой. Автокручение и шаги оборотов не дают. В строках — столбик .rtn
    последним, после счётчиков (есть, только пока нажата «⟳» в «Кручении», — иначе поле не сдвигается); пока кольцо тянут — число у мыши
    (#turnsChip, поверх, ничего не сдвигает). Обнуляют ⟲ «всё на места», щелчок по «↻k» у кольца, правый щелчок по «⟳» */
-function turnsFmt(t){ const a = Math.round(Math.abs(t) * 100) / 100; return a ? (t < 0 ? "⟲" : "⟳") + String(a).replace(".", ",") : "0"; }
+function turnsFmt(t){ const a = Math.round(Math.abs(t) * 100) / 100; return a ? rotTxt(String(a).replace(".", ","), t < 0) : "0"; }   // v0.869: против часовой — «↺−»
 function turnsOf(i){   // i — номер кольца строки или "f" — кольцо за чертой
   const live = i !== "f" && typeof coneDrag !== "undefined" && coneDrag && coneDrag.i === i ? coneDrag.turn / (2 * Math.PI) : 0;
   return (i === "f" ? (Z.coneFillTurns || 0) : ((Array.isArray(Z.coneTurns) && Z.coneTurns[i]) || 0)) + live;
 }
 function rowTurnsBadge(i){
   if (!Z.coneTurnsShow) return "";
-  return '<span class="rtn" data-ti="' + i + '" title="' + (i === "f" ? "Кольцо за чертой" : "Кольцо " + (i + 1)) + ': оборотов рукой (Ctrl + тянуть кольцо): ⟳ по часовой, ⟲ против' + (i === "f" ? "; " + (Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0) + " — открывается следующее кольцо, как «＋»" : "") + '">' + turnsFmt(turnsOf(i)) + "</span>";
+  return '<span class="rtn' + (Math.round(turnsOf(i) * 100) < 0 ? " ccw" : "") + '" data-ti="' + i + '" title="' + (i === "f" ? "Кольцо за чертой" : "Кольцо " + (i + 1)) + ': оборотов рукой (Ctrl + тянуть кольцо): ↻ по часовой, ↺− против (красным)' + (i === "f" ? "; " + (Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0) + " — открывается следующее кольцо, как «＋»" : "") + '">' + turnsFmt(turnsOf(i)) + "</span>";
 }
 function turnsAdd(i, t){
   if (!t) return;
@@ -513,12 +517,12 @@ function turnsAdd(i, t){
   while (Z.coneTurns.length <= i) Z.coneTurns.push(0);
   Z.coneTurns[i] = (Z.coneTurns[i] || 0) + t;
 }
-function turnsMark(){ if (!Z.coneTurnsShow) return; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, t = turnsFmt(turnsOf(k === "f" ? "f" : +k)); if (el.textContent !== t) el.textContent = t; }); }
+function turnsMark(){ if (!Z.coneTurnsShow) return; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, v = turnsOf(k === "f" ? "f" : +k), t = turnsFmt(v); if (el.textContent !== t) el.textContent = t; const c = Math.round(v * 100) < 0; if (el.classList.contains("ccw") !== c) el.classList.toggle("ccw", c); }); }
 function turnsChip(ev, txt){
   let el = document.getElementById("turnsChip");
   if (txt === null) { if (el && !el.hidden) el.hidden = true; return; }
   if (!el) { el = document.createElement("div"); el.id = "turnsChip"; document.body.appendChild(el); }
-  if (el.textContent !== txt) el.textContent = txt; el.style.left = (ev.clientX + 16) + "px"; el.style.top = (ev.clientY + 14) + "px"; if (el.hidden) el.hidden = false;
+  if (el.textContent !== txt) el.textContent = txt; el.classList.toggle("ccw", txt.includes("↺−")); el.style.left = (ev.clientX + 16) + "px"; el.style.top = (ev.clientY + 14) + "px"; if (el.hidden) el.hidden = false;
 }
 /* v0.112, «под нижней строкой последней поставь линию-границу; если за неё вверх — пусть скрывает строки ниже неё, делая их
    бесцветными, и этих строк как будто нет». Строки за границей лежат отдельно — хвост Z.lanesHid[l] у поля l, а в Z.rows / Z.lanes
@@ -921,7 +925,7 @@ function fillReset(){
 function fillRowHtml(N){
   const f = fillDraft(); let c = "";
   for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
-  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn"><b>' + (Z.rows.length + 1) + '</b><span class="fctl"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span></span><span></span><span></span>' + (Z.coneTurnsShow ? '<span></span>'.repeat((Z.showFM ? 1 : 0) + (Z.show01 ? 1 : 0)) + rowTurnsBadge("f") : "") + '</span>';   // v0.867: обороты — под столбиком оборотов   // v0.224: ＋ ✕ — мелко под номером
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn"><b>' + (Z.rows.length + 1) + '</b><span class="fctl"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span></span><span></span>' + (Z.coneTurnsShow ? '<span></span>'.repeat((Z.showFM ? 1 : 0) + (Z.show01 ? 1 : 0)) + rowTurnsBadge("f") : "") + '</span>';   // v0.867: обороты — под столбиком оборотов   // v0.224: ＋ ✕ — мелко под номером
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
@@ -944,7 +948,14 @@ function voidRowsFill(force){
     o += '<div class="rw hid vrw"><span class="no" title="пустое кольцо ' + (j + 1) + ' (до 256) — ' + n + ' бит: 1 — куда попал луч или свет"><span class="rn">' + (j + 1) + '</span><span></span><span></span></span>' +
          '<span class="bits la"><span class="bxh">' + b + "</span>" + (n > ROW_SHOW ? '<span class="more"> … ещё ' + (n - ROW_SHOW) + " бит</span>" : "") + "</span></div>";
   }
-  box.innerHTML = o;
+  box.innerHTML = o; rowNumDigits();   // v0.869: пустые кольца — тоже номера
+}
+/* v0.869, «подвинь номера строк левее, ближе к границе — много свободного места пустует»: столбик номеров был 30 px при любом числе цифр. Теперь
+   ширина — по числу цифр самого большого номера в поле (строки, за чертой, пустые кольца до 256): --rnd у #rowList */
+function rowNumDigits(){
+  const L = document.getElementById("rowList"); if (!L) return;
+  let mx = 1; L.querySelectorAll(".rw > .no > .rn").forEach(el => { const v = parseInt(el.textContent, 10); if (v > mx) mx = v; });
+  const d = String(String(mx).length); if (L.style.getPropertyValue("--rnd") !== d) L.style.setProperty("--rnd", d);
 }
 function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span class="rn">' + (i + 1) + "</span><span></span><span></span></span>" + cells + "</div>"; }
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: после отрисовки поле
@@ -1141,7 +1152,7 @@ function renderRows(){
     }
     h += hidRowHtml(H + j, t);
   }
-  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true);   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
+  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.869   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
