@@ -2699,7 +2699,12 @@ function renderCone(){
         let gr = grAll;
         if (!gr) { gr = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gr.addColorStop(0, "rgba(255, 205, 100, 0.30)"); gr.addColorStop(1, "rgba(255, 205, 100, 0.06)"); }
         g.fillStyle = gr; g.globalAlpha = 1;
-        for (const [lo, hi] of lit) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
+        /* v0.879, по снимку «☀ = 1 бит» и строки 2 «11» по симметрии — «всё равно не светит в проходах»: к кольцу строки 2 свет солнца пришёл весь круг,
+           а весь круг не рисуется (иначе золотым было бы всё кольцо) — в вырезах было темно. При «сплошном свете» пришёл весь круг — на кольце рисуется
+           свет, прошедший сквозь него (по проходам), то есть свет перед следующим кольцом, а за последним — вылетевший */
+        let L = lit;
+        if (lSolid && L.some(([lo, hi]) => hi - lo > 2 * Math.PI - 1e-6)) { const nx = S.bands.find(([k]) => k === b + 1); L = nx ? nx[1] : S.out; }
+        for (const [lo, hi] of L) { if (hi - lo > 2 * Math.PI - 1e-6) continue; sect(ri, ro, lo, hi); }
       }
       /* v0.690, по снимку — «у нижнего бита границ не видно совсем под солнцем; и покажи за солнцем — из через центр проходящих его лучей — в обратную сторону
          от выреза также подсвет, лунный, синевой, и всё продолжи даже немного дальше крайнего кольца». (1) Поверх свечения — черты между ячейками колец, на
@@ -2727,7 +2732,9 @@ function renderCone(){
         const ri = k === 1 ? rDisk : rIn(k), ro = r0 + k * dr + Math.max(1, dr * band); if (ro <= ri) continue;
         let gm = moonAll;   // v0.878: «сплошной свет» — один градиент луны на все кольца
         if (!gm) { gm = g.createRadialGradient(cx, cy, ri, cx, cy, ro); gm.addColorStop(0, "rgba(140, 185, 255, 0.30)"); gm.addColorStop(1, "rgba(140, 185, 255, 0.08)"); }
-        g.fillStyle = gm; g.globalAlpha = 1; for (const [lo, hi] of zl) if (hi - lo < 2 * Math.PI - 1e-6) sect(ri, ro, lo, hi);
+        let ZL = zl;   // v0.879: у луны так же — пришёл весь круг, на кольце — прошедший сквозь него
+        if (lSolid && ZL.some(([lo, hi]) => hi - lo > 2 * Math.PI - 1e-6)) { const nx = (S.zbands || []).find(([j]) => j === k + 1); ZL = nx ? nx[1] : (S.aout || []); }
+        g.fillStyle = gm; g.globalAlpha = 1; for (const [lo, hi] of ZL) if (hi - lo < 2 * Math.PI - 1e-6) sect(ri, ro, lo, hi);
         const seamZ = zl.some(([x]) => x < 1e-6) && zl.some(([, y]) => y > 2 * Math.PI - 1e-6);
         g.save(); g.strokeStyle = "#9cc3ff"; g.globalAlpha = 0.85; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.setLineDash([]); g.beginPath();
         for (const [lo, hi] of zl) { if (hi - lo > 2 * Math.PI - 1e-6) continue; for (const e of [lo, hi]) { if (seamZ && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue; const tt = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(tt), cy + ri * Math.sin(tt)); g.lineTo(cx + ro * Math.cos(tt), cy + ro * Math.sin(tt)); } }
