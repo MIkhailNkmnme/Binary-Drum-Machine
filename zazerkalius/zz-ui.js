@@ -4353,21 +4353,52 @@ function coneFeatEdges(R){
   return o;
 }
 function coneFeatMids(R){ const o = []; for (let q = 0; q < R.n; q++) o.push((R.cut ? cutPos(q, R.n) : q) + 0.5); return o; }
-function coneHandSnap(i){   // → { dx, t, what } — на сколько довернуть кольцо i (в его частях), чтобы своя граница или середина бита легла на границу кольца внутри
+/* v0.884, «1 строку также магнитить и к 2 строке симметрии, вообще нужен переключатель магнит по симметрии: магнитить в оба кольца — внутр. и наружн. и каждое
+   по отдельности»: «🧲 сим.» (Z.magSym: "both" — по умолчанию, "in", "out", "off"; кнопка #bMagSym в «Кручении») — при кручении рукой кольцо прилипает ещё
+   и к осям симметрии соседнего кольца: внутреннего (строка выше), наружного (строка ниже) или обоих. Строка 1 — к осям строки 2. coneRingSymAxes(k) — оси
+   зеркала кольца k как его рисунка (биты, вырезы, ✚ / ◐ у строки 1), в его частях; ось — линия через центр (обе её половины — цели) */
+const coneRingSymC = new Map();
+function coneRingSymAxes(k){
+  const N = Math.min(Z.rows.length, CONE_MAX); if (k < 0 || k >= N) return [];
+  const s = Z.rows[k] || "", n = s.length, R = coneRingFeat(k); if (!n || !R) return [];
+  const quad = k === 0 && coneQuadOn(), half = k === 0 && !quad && (coneSunHalf() || coneCut2n()) && !coneRow1Slit();
+  const key = [k, s, Z.coneSlits, R.P, R.n, R.cut ? 1 : 0, quad ? 1 : 0, half ? 1 : 0].join("|"); if (coneRingSymC.has(key)) return coneRingSymC.get(key);
+  let arr, U = 1;
+  if (quad) arr = ["b", "w", "b", "w"];
+  else if (half) arr = ["_", s[0]];   // как coneRingFeat(0): части 0 — открытая половина, 1 — с битом
+  else if (!R.cut) arr = s.split("");
+  else if (coneCutSym()) { U = n; arr = new Array(R.P * n).fill("_"); for (let q = 0; q < n; q++) { const a = Math.round(cutPos(q, n) * n); for (let j = 0; j < n; j++) arr[(a + j) % arr.length] = s[q]; } }
+  else { arr = new Array(R.P).fill("_"); for (let q = 0; q < n; q++) arr[((cutPos(q, n) % R.P) + R.P) % R.P] = s[q]; }
+  const M = arr.length, out = [];
+  if (M <= 1500) for (let c2 = 0; c2 < 2 * M; c2++) { let ok = true; for (let p = 0; p < M && ok; p++) if (arr[p] !== arr[(((c2 - 1 - p) % M) + M) % M]) ok = false; if (ok) out.push(c2 / 2 / U); }
+  if (coneRingSymC.size > 400) coneRingSymC.clear(); coneRingSymC.set(key, out);
+  return out;
+}
+function magSymOf(){ const v = Z.magSym; return v === "in" || v === "out" || v === "off" ? v : "both"; }
+function coneSymTargets(ii, N){   // [[угол, что]] — оси симметрии соседних колец кольца ii по переключателю «🧲 сим.»
+  const m = magSymOf(), o = []; if (m === "off") return o;
+  const add = (k) => { const Q = coneRingFeat(k); if (!Q) return; for (const c of coneRingSymAxes(k)) { const t = -Math.PI / 2 + (c - Q.x0) * Q.step; o.push([t, "ось симметрии кольца " + (k + 1)], [t + Math.PI, "ось симметрии кольца " + (k + 1)]); } };
+  if ((m === "both" || m === "in") && ii - 1 >= 0) add(ii - 1);
+  if ((m === "both" || m === "out") && ii + 1 < N) add(ii + 1);
+  return o;
+}
+function coneHandSnap(i){   // → { dx, t, what } — на сколько довернуть кольцо i (в его частях), чтобы своя граница или середина бита легла на границу кольца внутри или ось симметрии соседа
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return null;
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i, rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm;
   const own = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"]).concat(coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"])).sort((a, b) => a[0] - b[0]);
   if (!own.length) return null;
   let best = null;
+  const tryT = (t, what) => {
+    const x = ((((t + Math.PI / 2) / R.step + R.x0) % R.P) + R.P) % R.P;
+    let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m][0] < x) lo = m + 1; else hi = m; }
+    for (const c of [lo - 1, lo]) { const w = (c + own.length) % own.length, xf = own[w][0] + (c < 0 ? -R.P : c >= own.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
+      if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own[w][1] + " → " + what }; }
+  };
   for (let k = 0; k < ii && k < N; k++) {
     const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
-    for (const e of coneFeatEdges(Q)) {
-      const t = -Math.PI / 2 + (e - Q.x0) * Q.step, x = ((((t + Math.PI / 2) / R.step + R.x0) % R.P) + R.P) % R.P;
-      let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m][0] < x) lo = m + 1; else hi = m; }
-      for (const c of [lo - 1, lo]) { const w = (c + own.length) % own.length, xf = own[w][0] + (c < 0 ? -R.P : c >= own.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
-        if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own[w][1] + " → граница кольца " + (k + 1) }; }
-    }
+    for (const e of coneFeatEdges(Q)) tryT(-Math.PI / 2 + (e - Q.x0) * Q.step, "граница кольца " + (k + 1));
   }
+  for (const [t, what] of coneSymTargets(ii, N)) tryT(t, what);   // v0.884
   return best;
 }
 /* v0.881, «1 кольцо магнитить к осям, остальные к осям не магнитить»: строка 1, которую крутят рукой (довод Z.coneAimRot), прилипает к осям — её граница
@@ -4377,9 +4408,11 @@ function coneR1AxisSnap(){
   const R = coneRingFeat(0), G = coneGeom; if (!R || !G) return null;
   const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
   let best = null;
+  const T = []; for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);
+  for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);   // v0.884: и оси симметрии строки 2 (по «🧲 сим.»)
   for (const x of coneFeatEdges(R).concat(coneFeatMids(R))) {
     const a = -Math.PI / 2 + (x - R.x0) * R.step;
-    for (let q = 0; q < 4; q++) { const t = -Math.PI / 2 + q * Math.PI / 2, d = coneAngDiff(t, a);
+    for (const t of T) { const d = coneAngDiff(t, a);
       if (Math.abs(d) < tol && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, t }; }
   }
   return best ? { deg: best.d / k, t: best.t } : null;
@@ -6127,6 +6160,11 @@ function setupCone(){
   }
   if ($("bRingTbl")) $("bRingTbl").onclick = () => { Z.ringTbl = !ringTblOpen(); save(); ringTblSync(); };   // v0.871: ◯ Кольца — таблица видов колец
   if ($("bSunTbl")) $("bSunTbl").onclick = () => { Z.sunTbl = !sunTblOpen(); save(); sunTblSync(); if (Z.sunTbl && !coneSunOn()) say("☀☾ Таблица видна, когда включено ☀ солнце."); };   // v0.867
+  if ($("bMagSym")) {   // v0.884: 🧲 сим. — к осям симметрии соседних колец: оба → внутр. → наруж. → нет
+    const L = { both: "🧲 сим.: оба", in: "🧲 сим.: внутр.", out: "🧲 сим.: наруж.", off: "🧲 сим.: нет" }, ui = () => { const m = magSymOf(), b = $("bMagSym"); if (b.textContent !== L[m]) b.textContent = L[m]; b.classList.toggle("on", m !== "off"); };
+    ui(); $("bMagSym").onclick = () => { const m = magSymOf(); Z.magSym = m === "both" ? "in" : m === "in" ? "out" : m === "out" ? "off" : "both"; ui(); save();
+      say({ both: "🧲 Симметрия: кольцо прилипает к осям симметрии и внутреннего, и наружного соседа (строка 1 — к строке 2).", in: "🧲 Симметрия: только к осям внутреннего соседа (строки выше).", out: "🧲 Симметрия: только к осям наружного соседа (строки ниже; строка 1 — к строке 2).", off: "🧲 Симметрия: к осям соседей не прилипает." }[magSymOf()]); };
+  }
   if ($("bConeLast2")) {   // v0.870: крутятся только 2 последних кольца
     $("bConeLast2").classList.toggle("on", !!Z.coneLast2);
     $("bConeLast2").onclick = () => { Z.coneLast2 = !Z.coneLast2; $("bConeLast2").classList.toggle("on", Z.coneLast2); coneHoldSync(); coneSunWas = undefined; conePeekC = { k: "", S: null }; save(); renderCone(); renderRows();
@@ -6152,12 +6190,12 @@ function setupCone(){
   }
   if ($("bSunTurn")) {   // v0.807: ☀/☾ оборот
     $("bSunTurn").classList.toggle("on", !!Z.sunMoonTurn);
-    $("bSunTurn").onclick = () => { Z.sunMoonTurn = !Z.sunMoonTurn; if (Z.sunMoonTurn) Z.sunMoon = false; $("bSunTurn").classList.toggle("on", Z.sunMoonTurn); if ($("bSunMoon")) $("bSunMoon").classList.toggle("on", !!Z.sunMoon);   // v0.812: либо-либо с ☀☾ coneSunWas = undefined; save(); renderCone();
+    $("bSunTurn").onclick = () => { Z.sunMoonTurn = !Z.sunMoonTurn; if (Z.sunMoonTurn) Z.sunMoon = false; $("bSunTurn").classList.toggle("on", Z.sunMoonTurn); if ($("bSunMoon")) $("bSunMoon").classList.toggle("on", !!Z.sunMoon); coneSunWas = undefined; save(); renderCone();   // v0.812: либо-либо с ☀☾ (v0.884: комментарий стоял посреди строки и съедал сохранение и перерисовку)
       say(Z.sunMoonTurn ? "☀/☾ По оборотам: оборот строки 1 — солнце во весь круг, следующий — луна во весь круг, и так по очереди. Кайма у строки 1 — кто светит сейчас (золотая / голубая)." : "☀/☾ по оборотам выключено."); };
   }
   if ($("bSunMoon")) {   // v0.807: ☀☾ — половины (четверти) строки 1: солнце и луна
     $("bSunMoon").classList.toggle("on", !!Z.sunMoon);
-    $("bSunMoon").onclick = () => { Z.sunMoon = !Z.sunMoon; if (Z.sunMoon) Z.sunMoonTurn = false; $("bSunMoon").classList.toggle("on", Z.sunMoon); if ($("bSunTurn")) $("bSunTurn").classList.toggle("on", !!Z.sunMoonTurn);   // v0.812: либо-либо с ☀/☾ оборот coneSunWas = undefined; save(); renderCone();
+    $("bSunMoon").onclick = () => { Z.sunMoon = !Z.sunMoon; if (Z.sunMoon) Z.sunMoonTurn = false; $("bSunMoon").classList.toggle("on", Z.sunMoon); if ($("bSunTurn")) $("bSunTurn").classList.toggle("on", !!Z.sunMoonTurn); coneSunWas = undefined; save(); renderCone();   // v0.812: либо-либо с ☀/☾ оборот (v0.884: комментарий стоял посреди строки и съедал сохранение и перерисовку)
       say(Z.sunMoon ? "☀☾ Строка 1 — солнце и луна: открытая половина (чёрные четверти) светит солнцем, половина с битом (белые четверти) — луной, обе сразу, на свои 180° (90°). Луна ставит «0», где накрыла ячейку за чертой целиком." : "☀☾ выключено — луна снова зеркало солнца."); };
   }
   if ($("bSunHalf")) {   // v0.727: ◐ полукольцо — строка 1 полукольцом, солнце внутри
