@@ -776,6 +776,13 @@ function coneZeroOpen(b, N, C, open){
   const fr = b === N && coneFreeOn(), add = open.slice(); for (let q = 0; q < K; q++) if (s[q] === "0") { const pq = fr ? q : cutPos(q); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, add); }
   return ivUnion(add);
 }
+/* v0.864, «пусть луна как и солнце светит только через вырезы, ни через 0 ни через 1 ни солнце ни луна не проходят — сделай
+   таблицу два столбца солнце и луна, потом галки на каждой строке; первая — проход через 0, проход через 1; по умолчанию
+   галок нет». В вырезах T−1 каждый свет (солнца и луны) движется по кольцам из центра наружу и сквозь биты
+   проходит только если стоит галка: Z.sunPass0 / Z.moonPass0 — «0» пропускает (иначе стена), Z.sunPass1 / Z.moonPass1 — «1» пропускает
+   (у луны — считая их, бывшее «☾ сквозь 1»; Z.moonOne больше не читается), Z.sunPassE / Z.moonPassE — пустая ячейка кольца за
+   чертой, светом не целиком накрытая, — насквозь (v0.716; по умолчанию ВКЛ, как и было). Ключ k: "0" | "1" | "E" */
+function sunPass(who, k){ const v = Z[(who === "moon" ? "moonPass" : "sunPass") + k]; return k === "E" ? v !== false : !!v; }
 /* v0.727, «ещё кнопку, которая для солнца и T−1 режима делает 1 строку (1) не цельной, как сейчас, а половинкой кольца, а солнце внутри него»: «◐ полукольцо»
    (Z.sunHalf) — строка 1 — полукольцо: бит на половине круга (у «0» — проход, v0.724), другая половина открыта; солнце — внутри. Свет выходит только через
    открытую половину; полукольцо крутится, как кольцо строки 1 (полоборота на шаг). coneSunHalfArc — открытая дуга (углы от верха, по часовой) */
@@ -815,9 +822,9 @@ function coneOnesArcs(b, N, C, fr){   // v0.725: дуги ячеек «1» ко�
   for (let q = 0; q < K; q++) if (s[q] === "1") { const pq = fr ? q : cutPos(q); ivNorm((pq - C.rot) * C.st, (pq + 1 - C.rot) * C.st, o); }
   return ivUnion(o);
 }
-function coneFreeRing(L, C, set, b, Lh = [L]){   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (одним из светов Lh) части, что могут стать битом, — в set
+function coneFreeRing(L, C, set, b, Lh = [L], p0 = true){   // v0.864: p0 — «проход через 0» (своя галка у солнца и у луны)   // проход сквозь кольцо за чертой в «▦ любые»; накрытые целиком (одним из светов Lh) части, что могут стать битом, — в set
   const f = fillFreeDraft(), op = [];
-  for (let u = 0; u < C.P; u++) { if (f[u] === "0") { ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); continue; }   // v0.724: ноль — насквозь
+  for (let u = 0; u < C.P; u++) { if (f[u] === "0") { if (p0) ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); continue; }   // v0.724: ноль — насквозь; v0.864: только с галкой
     if (f[u] !== ".") continue;
     if (coneFreeCan(f, u, C.n) && Lh.some(Q => coneCellCovered(u, C.st, C.rot, Q))) { set.add(b + ":" + u); continue; }
     ivNorm((u - C.rot) * C.st, (u + 1 - C.rot) * C.st, op); }
@@ -1801,7 +1808,7 @@ let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonOne, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.sunPass0, Z.sunPass1, Z.moonPass0, Z.moonPass1, Z.sunPassE, Z.moonPassE, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
@@ -1865,6 +1872,7 @@ function lasDeps(){
       (Z.cutGaps && !sun ? `; ⌖ ещё и щели ${slit} между битами` : "") + "; в вырез " + stop;
     else if (mode === "one") t = `у каждого одна щель ${slit} — граница последнего и первого бита; в щель ${stop}`;
     else t = `щель ${slit} на любой границе бит; в щель ${stop}`;
+    if (cut && sun) t += "; проход солнца: «0» " + (sunPass("sun", "0") ? "пропускает" : "стена") + ", «1» " + (sunPass("sun", "1") ? "пропускает (бит всё равно красится)" : "стена");   // v0.864
     if (cut && sun && Z.cutLen) t += "; 📏 по длине — свет переходит на следующее кольцо той же длиной дуги: с кольца строки m на m + 1 сужается в m / (m + 1)";
     L.push(["ring", "<b>Кольца</b>: " + t + "."]);
     t = sun ? (Z.sunSweep ? "ячейка, которую свет прошёл всю за один проход (слева направо или справа налево), → 1" : "ячейка, которую свет накрыл целиком, → 1") + (Z.sunXor ? "; ⊕ свет упал заново — 1 ↔ 0" : "")
@@ -1874,7 +1882,7 @@ function lasDeps(){
     if (Z.coneOutOn) t += `; ✎ попадания пишутся в поле ${coneOutLane() + 1}`;
     L.push(["fill", "<b>За чертой</b>: " + t + "."]);
     if (sun && cut) L.push(["moon", "<b>Луна</b>: " + (Z.moonBlk ? "☾ за 1 — зеркало света, который остановили «1» (на любом кольце), через центр" : Z.moonEcl ? "☾ только при затмении (ничего не вылетело) — зеркало света, упавшего на последнее кольцо" : "зеркало вылетевшего света через центр") +
-      (Z.moonOne !== false ? "; идёт из центра сквозь «1», считая их, — 0 в ячейку, целиком накрытую светом с одинаковым числом «1»" : "; начинается у кольца за чертой — 0 там, где накрыла ячейку целиком") + "."]);
+      (sunPass("moon", "1") ? "; идёт из центра, «1» проходит насквозь и считает их — 0 в ячейку, целиком накрытую светом с одинаковым числом «1»" : "; идёт из центра, как солнце, только через вырезы — «1» её останавливает") + (sunPass("moon", "0") ? "; «0» пропускает" : "; «0» тоже стена") + "."]);
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
     L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
   }
@@ -1917,9 +1925,88 @@ function lasDeps(){
     }, { passive: true });
   }
 }
+/* v0.864, «пусть луна как и солнце светит только через вырезы… сделай такую настройку таблицу два столбца солнце и луна, потом можно ставить галки на каждой
+   строке; первая строка проход через 0, проход через 1; по умолчанию галки не стоят на этих 2х строках, и дальше ещё строки посмотри какие настройки там подходят»:
+   плашка #sunMoonTbl в теле окна конуса (как ⟋ нить и Σ расчёт: тянется за рамку, место — Z.sunTblXY, двойной щелчок — на место). Строка — одна настройка света;
+   колонки — ☀ Солнце и ☾ Луна; настройка только одной — в другой «—»; общая — одна галка на обе. Свои галки (Z.sunPass0 / sunPass1 / sunPassE, moonPass0 / …) —
+   проходы; остальные строки — прежние кнопки (Z.sunSweep, sunXor, sunAnti, sunGate, cutLen, moonEcl, moonBlk): их кнопки спрятаны (hidden в разметке, живые),
+   галка вызывает их же обработчик — состояние берётся с их .on. Открыть / закрыть — «☀☾ таблица» в «Солнце» или ✕ (Z.sunTbl; нет — открыта, на узком экране закрыта) */
+const SUNTBL = [
+  { t: "проход через 0", tip: "Свет проходит сквозь «0» бита кольца, как сквозь вырез. Нет галки (по умолчанию) — «0» стена: свет встаёт. Только в вырезах T−1.",
+    s: { f: "sunPass0" }, m: { f: "moonPass0" } },
+  { t: "проход через 1", tip: "Свет проходит сквозь «1» бита кольца: бит всё равно красится (попадание), а свет идёт дальше. Нет галки (по умолчанию) — «1» стена. У луны — насквозь, считая «1» на пути каждого луча: 0 встанет только в ячейку, целиком накрытую светом с одним и тем же счётом.",
+    s: { f: "sunPass1" }, m: { f: "moonPass1" } },
+  { t: "проход через пустую ячейку", tip: "Ячейка кольца за чертой, где бита ещё нет и которую свет накрыл не целиком, пропускает свет насквозь, как вырез (накрыл целиком — красится). Стоит по умолчанию, как и было до таблицы.",
+    s: { f: "sunPassE", on: 1 }, m: { f: "moonPassE", on: 1 } },
+  { t: "⟿ красить, когда прошёл всю ячейку", tip: "Ячейка за чертой красится не когда свет накрыл её разом, а когда за кручение прошёл её всю, от края до края, одним непрерывным ходом (солнце — 1, луна — 0).",
+    both: { b: "bSunSweep" } },
+  { t: "⊕ xor: свет заново — 1 ↔ 0", tip: "Ячейка за чертой, на которую солнце упало заново, меняется: 1 → 0, 0 → 1, пустая → 1. Без галки — солнце ставит 1.",
+    s: { b: "bSunXor" } },
+  { t: "☀↔0 противолуч", tip: "Где солнце поставило 1 в строке за чертой, в ячейку ровно напротив (через центр) ставится 0 — если она пустая и сектор накрывает её целиком (такая есть у чётного кольца).",
+    s: { b: "bSunAnti" } },
+  { t: "☀ накрыты (строка 1)", tip: "Солнце светит дальше строки 1, только когда её бит целиком накрыт единицами следующего кольца (включает ◐ полукольцо).",
+    s: { b: "bSunGate" } },
+  { t: "📏 по длине дуги", tip: "Свет переходит на следующее кольцо той же длиной дуги, а не тем же углом: с кольца строки m на m + 1 кусок сужается в m / (m + 1).",
+    s: { b: "bCutLen" } },
+  { t: "☾ только при затмении", tip: "Луна светит, только когда всё солнце скрыто за битами: зеркало света, упавшего на последнее кольцо, через центр. Либо-либо с «зеркало остановленного 1».",
+    m: { b: "bMoonEcl" } },
+  { t: "☾ зеркало остановленного «1»", tip: "Луна светит всегда, когда хоть часть солнца упёрлась в «1» (на любом кольце): зеркалится остановленный ими свет, через центр. Либо-либо с «только при затмении».",
+    m: { b: "bMoonBlk" } }
+];
+function sunTblOpen(){ if (Z.sunTbl !== undefined) return !!Z.sunTbl; const m = document.getElementById("coneMain"), p = m && m.parentElement; return !p || p.clientWidth >= 900; }
+function sunTblGet(c){ if (c.f) return c.on ? Z[c.f] !== false : !!Z[c.f]; const b = document.getElementById(c.b); return !!(b && b.classList.contains("on")); }
+function sunTblPlace(el){
+  const host = el.parentElement; if (!host) return;
+  const w = el.offsetWidth || 340, XY = Array.isArray(Z.sunTblXY) ? Z.sunTblXY : [host.clientWidth - w - 12, 150];
+  const x = Math.max(0, Math.min(host.clientWidth - w, XY[0])), y = Math.max(0, Math.min(host.clientHeight - 30, XY[1]));
+  const sx = x + "px", sy = y + "px"; if (el.style.left !== sx) el.style.left = sx; if (el.style.top !== sy) el.style.top = sy;
+}
+function sunTblBuild(host){
+  const q = (s) => String(s).replace(/"/g, "&quot;"), el = document.createElement("div"); el.id = "sunMoonTbl";
+  let h = '<div class="smh"><span>☀ Солнце · ☾ Луна</span><button type="button" class="smx" title="Закрыть таблицу («☀☾ таблица» в группе «Солнце» — снова открыть)">✕</button></div><table><thead><tr><th></th><th class="ths">☀ Солнце</th><th class="thm">☾ Луна</th></tr></thead><tbody>';
+  SUNTBL.forEach((r, i) => {
+    h += `<tr><td class="smt" title="${q(r.tip)}">${r.t}</td>`;
+    if (r.both) h += `<td class="smc smb" colspan="2"><input type="checkbox" data-r="${i}" data-w="b" title="${q(r.tip)}"></td>`;
+    else for (const w of ["s", "m"]) h += r[w] ? `<td class="smc ${w === "m" ? "smm" : "sms"}"><input type="checkbox" data-r="${i}" data-w="${w}" title="${q(r.tip)}"></td>` : '<td class="sm-">—</td>';
+    h += "</tr>";
+  });
+  el.innerHTML = h + "</tbody></table>"; host.appendChild(el);
+  el.addEventListener("change", (e) => {
+    const inp = e.target.closest && e.target.closest("input[data-r]"); if (!inp) return;
+    const r = SUNTBL[+inp.dataset.r], c = r[inp.dataset.w === "b" ? "both" : inp.dataset.w], v = inp.checked;
+    if (c.f) { Z[c.f] = v; coneSunWas = undefined; conePeekC = { k: "", S: null }; save(); renderCone();
+      say(`${inp.dataset.w === "m" ? "☾" : "☀"} ${r.t}: ${v ? "да" : "нет"}.`); }
+    else { const b = document.getElementById(c.b); if (b && b.onclick) b.onclick(); }   // прежняя кнопка: её обработчик сам сохраняет, рисует и говорит
+    sunTblSync();
+  });
+  el.querySelector(".smx").addEventListener("click", (e) => { e.stopPropagation(); Z.sunTbl = false; save(); sunTblSync(); });
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || e.target.closest("button, input")) return; e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+    const mv = (ev) => { Z.sunTblXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; sunTblPlace(el); };
+    const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); save(); };
+    el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  });
+  el.addEventListener("dblclick", (e) => { if (e.target.closest("button, input")) return; e.stopPropagation(); delete Z.sunTblXY; sunTblPlace(el); save(); });
+  return el;
+}
+function sunTblSync(){
+  const m = document.getElementById("coneMain"), host = m && m.parentElement; if (!host) return;
+  if (!document.querySelector(".cgrp.cg-alg > .cgb")) return;   // группы ещё не собраны (как у lasDeps)
+  const open = sunTblOpen(), bt = document.getElementById("bSunTbl"); if (bt && bt.classList.contains("on") !== open) bt.classList.toggle("on", open);
+  let el = document.getElementById("sunMoonTbl");
+  if (!open) { if (el && !el.hidden) el.hidden = true; return; }
+  if (!el || el.parentElement !== host) { if (el) el.remove(); el = sunTblBuild(host); }
+  el.querySelectorAll("input[data-r]").forEach(inp => { const r = SUNTBL[+inp.dataset.r], v = sunTblGet(r[inp.dataset.w === "b" ? "both" : inp.dataset.w]); if (inp.checked !== v) inp.checked = v; });
+  const act = coneSunOn() && coneCutOn(); el.classList.toggle("off", !act);
+  const tt = act ? "Проходы света: без галок свет идёт только через вырезы. Тяни за рамку — переставить, двойной щелчок — на место." : "Сейчас не действует: только при ☀ солнце в «вырезы T−1» (кнопка в «Щелях»). Галки можно ставить заранее.";
+  if (el.title !== tt) el.title = tt;
+  if (el.hidden) el.hidden = false; sunTblPlace(el);
+}
 function renderCone(){
   lasUi3d();   // v0.373
   lasDeps();   // v0.757
+  sunTblSync();   // v0.864: таблица «☀ Солнце | ☾ Луна»
   if (!winOpen("w-cone")) return;
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
@@ -3574,7 +3661,7 @@ function coneSunCutR(b, N){
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
-  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.cutLen ? 1 : 0, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, Z.moonOne === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
+  const k = [Z.coneSpinPh || 0, Z.coneAutoSp, m, Z.rows.join(","), coneRot.join(","), Z.coneSlits, Z.cutLen ? 1 : 0, Z.coneSunCut, Z.coneVoid, Z.coneFillTurn || 0, Z.moonEcl ? 1 : 0, Z.moonBlk ? 1 : 0, Z.sunPass0 ? 1 : 0, Z.sunPass1 ? 1 : 0, Z.moonPass0 ? 1 : 0, Z.moonPass1 ? 1 : 0, Z.sunPassE === false ? 0 : 1, Z.moonPassE === false ? 0 : 1, Z.sunHalf ? 1 : 0, Z.sunGate ? 1 : 0, Z.cutFree ? 1 : 0, Z.fillFree || "", JSON.stringify((Z.voidHits && Z.voidHits.fz) || {})].join("|");
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
@@ -3607,17 +3694,19 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     bands.push([b, lit]); litAt[b] = lit;
     const C = coneSunCutR(b, N), st = C ? C.st : TAU2 / R.n, rot = C ? C.rot : R.rot, P = C ? C.P : R.n, nb = C ? C.n : R.n;   // v0.677: в вырезах T−1 — части 2n − 1
     let open; if (C) { open = ivUnion(cutHoles(C, [])); } else open = coneSunOpen(b, N, R);
-    if (C) open = coneZeroOpen(b, N, C, open);   // v0.724: через «0» — свободно
+    if (C && sunPass("sun", "0")) open = coneZeroOpen(b, N, C, open);   // v0.864: только с галкой   // v0.724: через «0» — свободно
     /* v0.741, «если 0, то не становится 1 по Xor, а должно»: ноль свет проходит (v0.724), и попаданием он не считался — xor его не видел. Теперь при ⊕ xor
        ноль строки за чертой, накрытый светом целиком, — тоже попадание (свет идёт сквозь него дальше, а ячейка переключится в 1) */
     if (C && b === N && Z.sunXor && !coneFreeOn()) { const f = fillDraft(); for (let q = 0; q < C.n; q++) if (f[q] === "0" && coneCellCovered(cutPos(q), C.st, C.rot, lit)) hits.add(b + ":" + q); }
-    if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b); if (Z.moonBlk) blk.push(...ivMinus(lit, open)); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
-    if (C && b === N) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
+    if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b, undefined, sunPass("sun", "0")); if (sunPass("sun", "1")) open = ivUnion(open.concat(coneOnesArcs(b, N, C, true)).map(x => x.slice())); if (Z.moonBlk) blk.push(...ivMinus(lit, open)); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
+    if (C && b === N && sunPass("sun", "E")) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь
+    const fz0 = C && b === N && !Z.sunXor ? fillDraft() : "";   // v0.864: ноль — стена, но краской солнца поверх него не ложится (кроме ⊕ xor)
     for (const [lo, hi] of ivMinus(lit, open)) {
       if (hi - lo < 1e-9) continue;
       const u0 = Math.floor(lo / st + rot + 1e-7), u1 = Math.ceil(hi / st + rot - 1e-7);   // v0.208: касание границы — не соседняя ячейка
-      for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P, bq = C ? cutBit(q, nb) : q < nb ? q : -1; if (bq >= 0 && (!C || coneCellCovered(q, st, rot, lit))) hits.add(b + ":" + bq); }   // v0.705: в вырезах — только покрытая целиком
+      for (let u = u0; u < u1 && u - u0 < P; u++) { const q = ((u % P) + P) % P, bq = C ? cutBit(q, nb) : q < nb ? q : -1; if (bq >= 0 && (!C || coneCellCovered(q, st, rot, lit)) && !(fz0 && fz0[bq] === "0")) hits.add(b + ":" + bq); }   // v0.705: в вырезах — только покрытая целиком
     }
+    if (C && b <= N && sunPass("sun", "1")) open = ivUnion(open.concat(coneOnesArcs(b, N, C, false)).map(x => x.slice()));   // v0.864: проход через 1 — попадание считалось, свет идёт дальше
     if (Z.moonBlk && b <= N) blk.push(...ivMinus(lit, open));   // v0.770: ☾ за 1
     lit = ivAnd(lit, open);
     if (b === N) pastN = lit;
@@ -3662,8 +3751,8 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     /* v0.726, «пусть не так, а условие другое: свет должен пройти по всей длине через одинаковое количество единиц» → «каждая ячейка отдельно»: «☾ сквозь 1»
        — луна идёт из центра и проходит «1» насквозь, не останавливаясь, считая их на пути каждого луча (свет — по частям: сколько «1» прошёл). Ноль на
        кольце за чертой — только в ячейку, которую целиком накрыл свет с одним и тем же счётом; накрыта лучами с разным счётом — свет есть, нуля нет */
-    const one = Z.moonOne !== false, U = (X, Y) => ivUnion([...X, ...Y].map(x => x.slice())).filter(([x, y]) => y - x > 1e-9);
-    if ((one || sm) && A.length) akb = 1;
+    const one = sunPass("moon", "1"), U = (X, Y) => ivUnion([...X, ...Y].map(x => x.slice())).filter(([x, y]) => y - x > 1e-9);
+    if (A.length) akb = 1;   // v0.864: луна всегда идёт из центра, как солнце (бывало — только с «☾ сквозь 1»): её останавливает «1», если не стоит проход через 1
     let M = new Map([[0, A]]);   // счёт «1» → свет
     const all = () => { let o = []; for (const L of M.values()) o = U(o, L); return o; };
     if (akb > N) aout = A;
@@ -3673,9 +3762,9 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       zbands.push([k, AA]);   // антисвет перед кольцом k (для рисунка)
       if (k === N) zN = Ls;
       let open;
-      if (fr) open = coneFreeRing(AA, C, zhits, k, Ls);   // v0.722
+      if (fr) open = coneFreeRing(AA, C, zhits, k, Ls, sunPass("moon", "0"));   // v0.722
       else {
-        const hole = cutHoles(C, []); open = coneZeroOpen(k, N, C, k === N ? coneFillPass(ivUnion(hole), AA, C) : ivUnion(hole));   // v0.724: и луна — сквозь «0»
+        const hole = cutHoles(C, []), h0 = k === N && sunPass("moon", "E") ? coneFillPass(ivUnion(hole), AA, C) : ivUnion(hole); open = sunPass("moon", "0") ? coneZeroOpen(k, N, C, h0) : h0;   // v0.864: ноль и пустая ячейка — по галкам луны   // v0.724: и луна — сквозь «0»
         if (k === N) for (const [lo, hi] of ivMinus(AA, open)) { if (hi - lo < 1e-9) continue; const v0 = Math.floor(lo / C.st + C.rot + 1e-7), v1 = Math.ceil(hi / C.st + C.rot - 1e-7);
           for (let u = v0; u < v1 && u - v0 < C.P; u++) { const q = ((u % C.P) + C.P) % C.P, bq = cutBit(q, C.n); if (bq >= 0 && Ls.some(L => coneCellCovered(q, C.st, C.rot, L))) zhits.add(k + ":" + bq); } }
       }
@@ -5650,7 +5739,8 @@ function setupCone(){
     $("bSunParts").onclick = () => { Z.sunParts = Z.sunParts === false; ui(); save(); renderCone();
       say(Z.sunParts !== false ? "☀ Доли: у каждой части круга — её доля, сверху — сводка." : "☀ Доли выключены: подписи и сводка не считаются и не рисуются."); };
   }
-  if ($("bMoonOne")) {   // v0.725: ☾ сквозь 1 — луна из центра, одну «1» проходит насквозь (по умолчанию включено)
+  if ($("bSunTbl")) { $("bSunTbl").onclick = () => { Z.sunTbl = !sunTblOpen(); save(); sunTblSync(); }; }   // v0.864: ☀☾ таблица — открыть / закрыть
+  if ($("bMoonOne")) {   // v0.725 (v0.864: кнопка спрятана, заменена строкой «проход через 1» у луны; Z.moonOne больше не читается): ☾ сквозь 1 — луна из центра, одну «1» проходит насквозь (по умолчанию включено)
     const ui = () => $("bMoonOne").classList.toggle("on", Z.moonOne !== false); ui();
     $("bMoonOne").onclick = () => { Z.moonOne = Z.moonOne === false; ui(); save(); renderCone();
       say(Z.moonOne !== false ? "☾ Сквозь 1: луна идёт из центра и проходит «1» насквозь, считая их; ноль — только в ячейку, целиком накрытую светом с одинаковым числом пройденных «1»." : "☾ Сквозь 1 выключено: луна начинается у кольца за чертой."); };
