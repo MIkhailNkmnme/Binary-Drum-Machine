@@ -1072,7 +1072,7 @@ function coneBitAt(e){
    за чертой битом не считалось. При ⌖ сканере его ячейка — тоже «бит под мышью» ({ i: N, j, fill }): золотая рамка и ось сканера; Shift + щелчок её не трогает */
 function coneFillHoverAt(e){
   if (!Z.coneScan || Z.cone3d || !coneGeom) return null;
-  const h = coneRing(e); return h !== -1 && h.fill !== undefined ? { i: Math.min(Z.rows.length, CONE_MAX), j: h.fill, fill: true } : null;
+  const h = coneRing(e); return h !== -1 && h.fill !== undefined && h.fill >= 0 ? { i: Math.min(Z.rows.length, CONE_MAX), j: h.fill, fill: true } : null;   // v0.894: вырез — не ячейка
 }
 function rowBitMark(){
   if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
@@ -2731,7 +2731,10 @@ function renderCone(){
          казался оборванным, даже где проходит насквозь; у кольца строки 2 его не было вовсе. «☀ сплошной свет» (Z.lightSolid, по умолчанию вкл, кнопка в
          «Виде») — один градиент от солнца до края строки за чертой на все кольца: где свет идёт дальше (вырез, «0» / «1» по галкам), луч сплошной */
       const lSolid = Z.lightSolid !== false, rDk = r0 + Math.max(1, dr * band);
-      const r1C = !Z.sunRow1;   // v0.893: свет из центра (солнце — точка в центре) — и градиент от центра; при «☀ = 1 бит» — от края строки 1, как было
+      /* v0.893: свет из центра (солнце — точка в центре) — и градиент от центра; при «☀ = 1 бит» — от края строки 1, как было. v0.894, по снимку ◐ без
+         света — «также нет света из центра» (у пользователя «☀ = 1 бит» включено вместе с ◐): строка 1 рисуется веткой ✚ / ▮ / ◐ раньше ветки «☀ = 1 бит»,
+         а свечение выключалось по одному флагу. Теперь — только когда строка 1 и правда нарисована золотым кругом-солнцем */
+      const r1C = !(Z.sunRow1 && !coneQuadOn() && !coneSunSlit() && !coneSunHalf());
       const grAll = lSolid ? g.createRadialGradient(cx, cy, r1C ? 0 : rDk, cx, cy, Math.max(rDk + 1, roF)) : null;
       if (grAll) { grAll.addColorStop(0, "rgba(255, 205, 100, 0.32)"); grAll.addColorStop(1, "rgba(255, 205, 100, 0.10)"); }
       const blueAll = lSolid ? g.createRadialGradient(cx, cy, r1C ? 0 : rDk, cx, cy, Math.max(rDk + 1, roF)) : null;   // v0.880: свет-луна (≥ 180°)
@@ -5668,7 +5671,10 @@ function coneRing(e){
   }
   if (G.fill && Math.floor((rr - G.r0) / G.dr) === G.N && (i === -1 || i >= G.N)) {   // v0.114: кольцо для заполнения — какая ячейка
     const n = fillLen(), t = Math.atan2(y, x) - (Z.coneSpin || 0) * Math.PI / 180, u = (((t + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    if (coneFillCut()) { const c = cutBit(coneFillPart(u), n); return c >= 0 ? { i: G.N, a: Math.atan2(y, x), fill: c } : { i: G.N, a: Math.atan2(y, x) }; }   // v0.675: в вырезе ячейки нет
+    /* v0.675: в вырезе ячейки нет. v0.894, по консоли пользователя («Cannot read properties of undefined (reading 'length')» в pointermove / up): вырез
+       кольца за чертой возвращался без fill — как обычное кольцо с номером N, и кручение брало несуществующую строку Z.rows[N] на каждом движении мыши.
+       Теперь fill: -1 — это кольцо за чертой, ячейки нет */
+    if (coneFillCut()) { const c = cutBit(coneFillPart(u), n); return { i: G.N, a: Math.atan2(y, x), fill: c >= 0 ? c : -1 }; }
     return { i: G.N, a: Math.atan2(y, x), fill: ((Math.floor(u / (2 * Math.PI / n) + coneFillRot()) % n) + n) % n };   // v0.117: кольцо повёрнуто кручением
   }
   return i >= 0 && i < G.N ? { i, a: Math.atan2(y, x) } : -1;
