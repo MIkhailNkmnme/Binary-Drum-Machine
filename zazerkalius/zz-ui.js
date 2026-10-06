@@ -2346,11 +2346,20 @@ function renderCone(){
     } else
     /* v0.090, «граница — цветом, сами построятся», «где надо»: граница красится по тому, что разделяет. Биты разные — яркая:
        0→1 (по часовой) — сиреневая, 1→0 — бирюзовая; одинаковые — тонкая бледная. Края серий видны сразу, узор проступает. */
-    if (n >= 1 && step * rin > 3 * dpr && !shut) {   /* v0.573: у 1 бита — одна черта границы; v0.660: у затвора строки 1 — ни одной */
+    /* v0.877, «у 1 бита не видно внутренней границы — линии разделения из центра наружу и симметричные половины»: черта шла, только если ячейка у
+       ВНУТРЕННЕГО края шире 3 px, а у кольца строки 1 внутренний край — сам центр (радиус 0): черты не было никогда. Теперь у такого кольца меряется
+       внешний край; у кольца из одного бита — черта границы ярче и ещё черта по середине бита (пунктиром): вместе — линия через центр, симметричные половины */
+    if (n >= 1 && step * (rin > 0 ? rin : rout) > 3 * dpr && !shut) {   /* v0.573: у 1 бита — одна черта границы; v0.660: у затвора строки 1 — ни одной */
       for (let j = 0; j < (CG.cut && coneCutSym() ? 0 : CG.cut && coneCutAlt() ? 1 : n); j++) {   /* v0.871: «по симметрии» — соседних бит нет вовсе */   // v0.806: в «вырезах между» соседних бит нет — только шов (последний | первый)
         const a = -Math.PI / 2 + (j - rot) * step, pv = s[(j - 1 + n) % n], nx = s[j], diff = !blank && pv !== nx;
         g.strokeStyle = diff ? (pv === "0" ? cUp : cDn) : cT; g.globalAlpha = diff ? 0.95 : 0.3; g.lineWidth = diff && !clockRays ? Math.max(1.5 * dpr, Math.min(dr * 0.1, 4 * dpr)) : Math.max(1, dpr * 0.8);   // v0.124: при луч-часах черта тонкая — щель видна пустой
+        if (n === 1) { g.globalAlpha = 0.75; g.lineWidth = Math.max(1.5, 1.5 * dpr); }   // v0.877
         g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke();
+      }
+      if (n === 1 && !CG.cut) {   // v0.877: середина бита — вторая половина линии через центр
+        const a = -Math.PI / 2 + (0.5 - rot) * step;
+        g.save(); g.strokeStyle = cT; g.globalAlpha = 0.6; g.lineWidth = Math.max(1, dpr); g.setLineDash([4 * dpr, 3 * dpr]);
+        g.beginPath(); g.moveTo(cx + rin * Math.cos(a), cy + rin * Math.sin(a)); g.lineTo(cx + rout * Math.cos(a), cy + rout * Math.sin(a)); g.stroke(); g.restore();
       }
       g.globalAlpha = 1;
     }
@@ -2888,7 +2897,7 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneFlat() && (coneDrag || coneFillDrag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
+  if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   if (coneMagLine !== null && (coneDrag || coneFillDrag)) {   // v0.803: 🧲 — линия привязки через центр; v0.875: и прилипание рукой
     g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
     g.beginPath(); g.moveTo(cx - L * Math.cos(coneMagLine), cy - L * Math.sin(coneMagLine)); g.lineTo(cx + L * Math.cos(coneMagLine), cy + L * Math.sin(coneMagLine)); g.stroke(); g.restore();
@@ -4283,10 +4292,12 @@ function coneMagRing(i){   // { step, P, x0 } — угол бита x: −π/2 +
    бита (пунктир). Своя граница или середина бита ближе ~7 px к границе любого кольца ВНУТРИ (все уровни, до строки 1) — кольцо прилипает, линия
    привязки — как у 🧲; отпустил прилипшим — поворот остаётся дробным (Z.coneFree, как у 🧲), строка повёрнута на целые биты, что прошли. Не прилипло —
    как было. coneRingFeat — геометрия кольца (i — номер строки или "f"), coneFeatEdges / coneFeatMids — места границ и середин бит в его частях */
-let coneFillDrag = false;
+let coneFillDrag = false, coneR1Drag = false;   // v0.877: и строка 1 рукой
 function coneRingFeat(i){
   let n, cut, step, P, x0;
   if (i === "f") { n = fillLen(); if (!n) return null; const F = coneFillCut(); cut = !!F; step = F ? F.step : 2 * Math.PI / n; P = F ? F.P : n; x0 = coneFillRot() - (F ? F.off : 0); }
+  else if (i === 0 && coneQuadOn()) { n = 4; cut = false; step = Math.PI / 2; P = 4; x0 = coneRotOf(0); }   // v0.877: ✚ — четверти (как q0 в рисунке)
+  else if (i === 0 && (coneSunHalf() || coneCut2n()) && !coneRow1Slit()) { n = 2; cut = false; step = Math.PI; P = 2; x0 = coneRotOf(0) - 0.5; }   // ◐ — половины (как coneSunHalfArc)
   else { const R = coneMagRing(i); if (!R) return null; n = R.n; cut = R.cut; step = R.step; P = R.P; x0 = R.x0; }
   return { n, cut, step, P, x0, sp: cut && coneCutSpread() };
 }
@@ -4315,7 +4326,7 @@ function coneHandSnap(i){   // → { dx, t, what } — на сколько до�
   return best;
 }
 function coneHandRays(g, o){   // лучи в центр от границ (сплошные) и середин бит (пунктир) кольца, которое тянут
-  const hr = coneDrag && !coneDrag.mag ? coneDrag.i : coneFillDrag ? "f" : null; if (hr === null) return;
+  const hr = coneDrag && !coneDrag.mag ? coneDrag.i : coneFillDrag ? "f" : coneR1Drag ? 0 : null; if (hr === null) return;
   const R = coneRingFeat(hr); if (!R || R.P > 720) return;
   const { cx, cy, r0, dr, band, dpr, N, col } = o, ii = hr === "f" ? N : hr, rOut = r0 + ii * dr + Math.max(1, dr * band);
   const A = (x) => -Math.PI / 2 + (x - R.x0) * R.step;
@@ -5598,7 +5609,7 @@ function setupCone(){
       const mv = (ev) => {
         if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) moved = true;
         if (!moved) return;
-        const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a;
+        const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a; coneR1Drag = true;   // v0.877: лучи строки 1
         /* v0.874: строка 1 идёт за мышью: у ✚ шаг — четверть круга, у ◐ — половина (а не весь круг, как у бита), поэтому довод множится; щель лазера
            там ни при чём — без защёлки */
         const n0 = (Z.rows[0] || "").length || 1, k1 = coneQuadOn() ? 4 / n0 : coneSunHalf() || coneCut2n() ? 2 / n0 : 1;
@@ -5606,6 +5617,7 @@ function setupCone(){
       };
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
+        if (coneR1Drag) { coneR1Drag = false; renderCone(); }   // v0.877
         if (moved) { turnsAdd(0, turn / (2 * Math.PI)); if (Z.coneTurnsShow) renderRows(); coneAimSettle(); return; }   // v0.867: и в счёт оборотов кольца строки 1
         if (rb || Z.coneNoPick) return;   // v0.281: 🚫 выбор колец; v0.735: правый щелчок — не выбор
         if (rowSel.has(0)) rowSel.delete(0); else rowSel.add(0);   // v0.248: Ctrl + щелчок — выделить / снять, как у остальных колец
