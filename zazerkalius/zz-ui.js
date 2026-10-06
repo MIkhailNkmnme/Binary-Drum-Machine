@@ -2176,7 +2176,7 @@ function renderCone(){
       g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath(); g.stroke();
     }
   }
-  if (clockRays) {   // v0.131: биты строк, в которые упирался луч, — закрашены золотом, с «1», «11», «111»…
+  if (clockRays && Z.coneHits !== false) {   // v0.862: «✦ попадания» выкл — рамок нет   // v0.131: биты строк, в которые упирался луч, — закрашены золотом, с «1», «11», «111»…
     const VH = coneVoidHits();
     for (const k in VH) {
       const [i, j] = k.split(":").map(Number); if (i >= N || !shown(i)) continue;
@@ -2224,25 +2224,28 @@ function renderCone(){
       if (fD[k] !== ".") { g.fillStyle = fD[k] === "1" ? c1 : c0; g.globalAlpha = fD[k] === "1" ? 0.95 : 0.55; g.fill("evenodd"); }
       g.strokeStyle = cA; g.globalAlpha = cutRing ? 0.95 : 0.75; g.stroke(); g.globalAlpha = 1;   // v0.861: место бита в вырезах — ярче
       if (fD[k] !== "." && fsz >= 8 * dpr) {
-        const am = a + step / 2, rm = (rin + rout) / 2, hc = fD[k] === "1" ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : fD[k];   // v0.127: прошёл 2+ раз — 11, 111…
+        const am = a + step / 2, rm = (rin + rout) / 2, hc = fD[k] === "1" && Z.coneHits !== false ? (coneVoidHits()[N + ":" + k] | 0) : 0, tx = hc > 1 ? "1".repeat(hc) : fD[k];   // v0.862: попадания скрыты — просто «1»   // v0.127: прошёл 2+ раз — 11, 111…
         g.save(); g.translate(cx + rm * Math.cos(am), cy + rm * Math.sin(am)); g.rotate(am + Math.PI / 2);
         g.fillStyle = cBg; g.font = `${Math.round(tx.length > 1 ? fsz / Math.min(3, tx.length) * 1.4 : fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(tx, 0, 0); g.restore();
       }
     }
     g.setLineDash([]);
-    /* v0.861: края вырезов — золотом поверх мест бит (прежде рисовались до них) */
-    if (cutRing && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cg, dpr);   // v0.806
+    /* v0.861: края вырезов — поверх мест бит (прежде рисовались до них).
+       v0.862, «грани битов внешнего кольца другого цвета — сливаются с солнцем»: у кольца за чертой они не золотые, а голубые (cIn):
+       свет солнца и его лучи — золотые, и на этом кольце они сходятся. У колец строк края остались золотыми. */
+    const cCut = cIn;
+    if (cutRing && coneCutAlt()) cutAltEdges(g, cx, cy, rin, rout, rotF, step, n, cCut, dpr);   // v0.806
     else if (cutRing) {   // v0.675: вырез — пусто, края золотые, внутри — его n − 1 частей золотым пунктиром (как у колец строк)
       const e0 = -Math.PI / 2 + (n - rotF) * step;
-      g.save(); g.strokeStyle = cg; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
+      g.save(); g.strokeStyle = cCut; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e0 + (coneCutP(n) - n) * step]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
-      g.stroke(); g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+      g.stroke(); g.globalAlpha = 0.55; g.lineWidth = Math.max(1, dpr); g.setLineDash([3 * dpr, 3 * dpr]); g.strokeStyle = cCut; g.beginPath();
       for (let k = 1; k < coneCutP(n) - n; k++) { const e = e0 + k * step; g.moveTo(cx + rin * Math.cos(e), cy + rin * Math.sin(e)); g.lineTo(cx + rout * Math.cos(e), cy + rout * Math.sin(e)); }
       g.stroke(); g.restore();
     }
     /* v0.127: пустые кольца до строки 256 — еле заметные: контур кольца и черты ячеек (где черта шире 3 пикселей); ячейки, через
        которые прошёл луч, — закрашены (чем больше проходов, тем плотнее), с «1», «11», «111»… если влезает. */
-    const T = coneRingsTotal(N), VH = coneVoidHits(), marks = new Map();
+    const T = coneRingsTotal(N), VH = Z.coneHits !== false ? coneVoidHits() : {}, marks = new Map();   // v0.862: попадания скрыты — и на пустых кольцах тоже
     for (const k in VH) { const [j, c] = k.split(":").map(Number); if (j > N && j < T) { if (!marks.has(j)) marks.set(j, []); marks.get(j).push([c, VH[k]]); } }
     // v0.129, «совсем не видно граней у пустых — сделай хотя бы у ближайших более заметными»: ближнее пустое кольцо — ярко, дальше
     // гаснет (×0,88 на кольцо, не бледнее 0,12); у ближних — и внешний край, и черта толще.
@@ -7407,6 +7410,11 @@ function setupCone(){
   };
   $("coneGlow").checked = !!Z.coneGlow;   // v0.103
   $("coneGlow").onchange = (e) => { Z.coneGlow = e.target.checked; save(); renderCone(); if (Z.coneGlow) say("✨ Лампа горит. На тёмном фоне («☾ Тёмный» в шапке) — ярче всего."); };
+  /* v0.862, по снимку золотой рамки на бите — «наверное надо отключить выделение границ внутренних битов золотой границей жирной —
+     вообще от чего она неясно»: рамка — это попадание (v0.666): в этот бит упёрся свет, «×2» — сколько раз. «✦ попадания»
+     (Z.coneHits, по умолчанию вкл) — показывать или нет; сам счёт (Z.voidHits) не меняется. */
+  { const b = $("bConeHits"), ui = () => b.classList.toggle("on", Z.coneHits !== false);
+    if (b) { ui(); b.onclick = () => { Z.coneHits = Z.coneHits === false; ui(); save(); renderCone(); say(Z.coneHits !== false ? "✦ Попадания видны: бит, в который упёрся свет, — золотой рамкой, «×2» — сколько раз." : "✦ Попадания скрыты: золотых рамок и счёта на конусе нет; считаться они не перестали."); }; } }
   { const b = $("bConeArcs"), ui = () => b.classList.toggle("on", Z.coneArcs !== false);   // v0.375: ◠ дуги битов — показать / скрыть, по умолчанию показаны
     if (b) { ui(); b.onclick = () => { Z.coneArcs = Z.coneArcs === false; ui(); save(); renderCone(); say(Z.coneArcs !== false ? "◠ Дуги битов на конусе — видны." : "◠ Дуги битов скрыты: остались границы между битами, кольца, лучи и лазер."); }; } }
   $("coneOcta").checked = !!Z.coneOcta;   // v0.100
