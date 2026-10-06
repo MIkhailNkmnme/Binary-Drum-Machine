@@ -12482,22 +12482,61 @@ function saveSession(){
   say(`💾 Страница целиком сохранена в ${a.download}: строк ${nb}, поля, окна и настройки. На другом компьютере — «📂 Из файла» или перетащи файл на страницу.`);   // v0.302: кнопки — «💾 В файл» / «📂 Из файла»
 }
 /* v0.125, «сделай кнопку сохранения настроек и битов всех полей, чтобы при сбросе и Начальные — это применял, и когда файл загружен
-   с другого компа — то тоже он становится умолчанием». ⭐ Умолчание — снимок Z в Z.home (без раскладки окон: она своя у каждого
-   экрана). «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
-   сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения. */
-const ZZ_HOME_SKIP = ["home", "conePos", "conePosStar", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "coneBtns", "cgrpDock", "cgrpMove", "paneW", "paneWUser"];   // v0.252: и группы на левой панели   // v0.203: и кнопки на холсте — это раскладка
+   с другого компа — то тоже он становится умолчанием». ⭐ Запомнить (до v0.859 — «⭐ Умолчание») — снимок Z в Z.home. «↺ Начальные» берёт из него биты всех полей, «⟲ всё на места» — положения колец и настройки конуса. Открытый файл
+   сессии сам становится умолчанием. Правый щелчок по ⭐ — забыть: снова встроенный столбик 1, 11, 101… и нулевые положения.
+   v0.859, по снимку ряда «⭐ Умолчание · ⟲» — «пусть будут кнопки Запомнить и Восстановить и Сброс; Сброс — вообще всё
+   ставит кнопки и положение окон и начальные биты как в первый раз»: в снимок ⭐ теперь идёт И раскладка (окна, группы,
+   ширины панели и поля, кнопки на холсте), «↺ Восстановить» делает страницу снимком целиком, «✖ Сброс» — встроенным
+   начальным состоянием (запомненное при этом остаётся). Оба пишут память страницы и перезагружают её, прежнюю память
+   откладывают копией («_pered_vosstanovleniem», «_pered_sbrosom»). */
+const ZZ_HOME_SKIP = ["home"];   /* v0.859: в снимок идёт всё, кроме самого снимка — и раскладка окон и кнопок тоже (прежде её пропускали: win, dockOrder, z, layoutVer, rowsH, rowsW, coneBtns, cgrpDock, cgrpMove, paneW, paneWUser, conePos) */
 function homeOf(o){ const h = {}; for (const k of Object.keys(o)) if (!ZZ_HOME_SKIP.includes(k)) h[k] = o[k]; return JSON.parse(JSON.stringify(h)); }
 function homeSave(){
   save(); Z.home = homeOf(Z); save(); homeBtn();
   const L = Array.isArray(Z.home.lanes) ? Z.home.lanes.slice(0, Z.home.laneCount || 1) : [Z.home.rows];
-  say(`⭐ Умолчание запомнено: полей ${L.length}, строк ${L.reduce((s, l) => s + l.length, 0)}, положения колец и настройки. «↺ Начальные» и «⟲ всё на места» теперь возвращают это. Правый щелчок по ⭐ — забыть.`);
+  say(`⭐ Запомнено: полей ${L.length}, строк ${L.reduce((s, l) => s + l.length, 0)}, настройки, положения колец, окна и группы кнопок. «↺ Восстановить» вернёт всё это, «↺ Начало» — биты, «⟲ всё на места» — кольца. Правый щелчок по ⭐ — забыть.`);
 }
 function homeForget(){
   if (!Z.home) { say("⭐ Своего умолчания нет — и так встроенное."); return; }
   delete Z.home; save(); homeBtn();
-  say("⭐ Умолчание забыто: «↺ Начальные» — снова 1, 11, 101…, «⟲ всё на места» — нулевые положения.");
+  say("⭐ Запомненное забыто: «↺ Начало» — снова 1, 11, 101…, «⟲ всё на места» — нулевые положения, «↺ Восстановить» — нечего.");
 }
 function homeBtn(){ const b = $("bHome"); if (b) b.classList.toggle("on", !!Z.home); }
+/* v0.859: страница целиком становится состоянием u — тем же путём, что и файл сессии: прежняя память — копией в ZZ_KEY + bak,
+   новая — в ZZ_KEY, и перезагрузка (так встают и окна, и группы, и все кнопки разом). Сообщение говорится уже после неё. */
+function zzStateGo(u, bak, msg){
+  if (ZZ_BG) return;
+  try {
+    const old = localStorage.getItem(ZZ_KEY);
+    if (old) localStorage.setItem(ZZ_KEY + bak, old);
+    localStorage.setItem(ZZ_KEY, JSON.stringify(u));
+    try { sessionStorage.setItem("zz_say_after", msg); } catch (e) {}
+  } catch (e) { say(`Не удалось записать в хранилище браузера (${e.message}) — в приватном окне так бывает.`); return; }
+  sessLoading = true;
+  if (ZZ_PRESET_FULL) {   // с пресета — на адрес без ?preset, как в loadSession
+    const q = new URLSearchParams(location.search); q.delete("preset");
+    location.replace(location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+  } else location.reload();
+}
+/* ↺ Восстановить — страница становится снимком ⭐ целиком; сам снимок остаётся на месте — восстанавливать можно сколько угодно раз. */
+function homeRestore(){
+  if (!Z.home) { say("↺ Восстанавливать нечего — сначала «⭐ Запомнить»."); return; }
+  save();
+  const u = JSON.parse(JSON.stringify(Z.home));
+  u.home = JSON.parse(JSON.stringify(Z.home));
+  zzStateGo(u, "_pered_vosstanovleniem", "↺ Восстановлено запомненное ⭐: строки, настройки, окна и кнопки — как при «Запомнить». Прежнее отложено копией в памяти браузера.");
+}
+/* ✖ Сброс — встроенное начальное состояние: столбик ZZ_ROWS0 (1, 11, 101…), всё остальное — как в объявлении Z
+   (раскладка окон считается заново: layoutVer снова 0). fieldRight — как при первом запуске в load(). Запомненное ⭐ переезжает в новую
+   память: сброс не отнимает того, что пользователь сохранил сам. */
+function factoryReset(){
+  if (!confirm("Сброс всего\n\nСтроки, настройки всех кнопок и расстановка окон станут такими, как при самом первом открытии страницы." +
+      (Z.home ? " Запомненное ⭐ останется — «↺ Восстановить» вернёт его." : "") + "\n\nСбросить?")) { say("✖ Не сброшено — всё как было."); return; }
+  const u = { rows: ZZ_ROWS0.slice() };
+  if (!ZZ_SOLO) u.fieldRight = true;   // v0.551: первый запуск — строки справа, окна свёрнуты в список
+  if (Z.home) u.home = JSON.parse(JSON.stringify(Z.home));
+  zzStateGo(u, "_pered_sbrosom", "✖ Сброшено: строки, кнопки и окна — как при первом открытии." + (Z.home ? " Запомненное ⭐ на месте — «↺ Восстановить» вернёт его." : "") + " Прежнее отложено копией в памяти браузера.");
+}
 /* Возвращает false, если текст — не файл сессии (тогда readFile читает его как строки). */
 function loadSession(text, name){
   const t = String(text).trim();
@@ -13715,8 +13754,9 @@ function init(){
   $("bSaveTxt").onclick = saveRowsTxt;
   $("bSaveAll").onclick = saveSession;   // v0.115
   if ($("bLink")) { $("bLink").onclick = () => zzLinkMake(); $("bLink").oncontextmenu = (e) => { e.preventDefault(); zzLinkMake(true); }; }   // v0.650; v0.654 — правый щелчок: в файл
-  if ($("bHomeRings")) $("bHomeRings").onclick = () => { const b = $("bConeAllHome"); if (b) b.click(); };   // v0.843: ⟲ на места — рядом с ⭐
   $("bHome").onclick = homeSave; $("bHome").oncontextmenu = (e) => { e.preventDefault(); homeForget(); }; homeBtn();   // v0.125
+  if ($("bHomeBack")) $("bHomeBack").onclick = homeRestore;   // v0.859: ↺ Восстановить (на месте прежней ⟲ — она осталась в «Кручении»)
+  if ($("bFactory")) $("bFactory").onclick = factoryReset;   // v0.859: ✖ Сброс
   $("bLoadAll").onclick = () => $("fileAll").click();
   $("fileAll").onchange = (e) => { readFile(e.target.files[0]); e.target.value = ""; };
   document.addEventListener("dragover", (e) => { if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files")) { e.preventDefault(); document.body.classList.add("dragover"); } });
@@ -14094,7 +14134,9 @@ function init(){
       document.title = "Zazerkalius — " + t;
       say(`👁 Пресет «${t}»: крути и запускай — правки не запоминаются, по ссылке он всегда такой. Забрать себе — «💾 В файл», потом «📂 Из файла» на своей странице.`);
     }
-    if (sn) { sessionStorage.removeItem("zz_sess_loaded"); say(`📂 Открыто «${sn}»: строки, поля и настройки — из файла; они же теперь умолчание (⭐).`); }
+    if (sn) { sessionStorage.removeItem("zz_sess_loaded"); say(`📂 Открыто «${sn}»: строки, поля и настройки — из файла; они же теперь запомнены (⭐).`); }
+    const sm = sessionStorage.getItem("zz_say_after");   // v0.859: ↺ Восстановить / ✖ Сброс — сказать уже после перезагрузки
+    if (sm) { sessionStorage.removeItem("zz_say_after"); say(sm); }
   } catch (e) {}
   let rsz = 0;
   window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { packWins(); save(); }, 200); });
