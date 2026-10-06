@@ -2757,7 +2757,9 @@ function renderCone(){
         /* v0.879, по снимку «☀ = 1 бит» и строки 2 «11» по симметрии — «всё равно не светит в проходах»: к кольцу строки 2 свет солнца пришёл весь круг,
            а весь круг не рисуется (иначе золотым было бы всё кольцо) — в вырезах было темно. При «сплошном свете» пришёл весь круг — на кольце рисуется
            свет, прошедший сквозь него (по проходам), то есть свет перед следующим кольцом, а за последним — вылетевший */
-        let L = lit;
+        /* v0.902, по снимку — «когда солнце упирается в 1 уже окрашенную бит, то не надо на неё свет пускать, остановиться на границе её»: на кольце рисуется
+           только свет, прошедший его (S.pass) — упёршийся в «1» (стену) обрывается на внутренней границе этого кольца, сама клетка не светится */
+        let L = S.pass && S.pass[b] ? S.pass[b] : lit;
         if (lSolid && L.some(([lo, hi]) => hi - lo > 2 * Math.PI - 1e-6)) { const nx = S.bands.find(([k]) => k === b + 1); L = nx ? nx[1] : S.out; }
         sunDrawn.set(b, L);   // v0.898: где на этом кольце нарисовано солнце — луна туда не ложится
         if (sunWideMoonOn()) {   // v0.880: куски шире 180° — луна, синим; уже — солнце
@@ -3998,7 +4000,7 @@ function lightPieces(L){
 function lightWide(L){ return ivUnion(lightPieces(L).filter(p => p.w >= Math.PI - 1e-6).flatMap(p => p.iv.map(x => x.slice()))); }
 function sunWideMoonOn(){ return !!Z.sunWideMoon && !Z.moonOff && coneSunOn() && coneCutOn(); }   // v0.898: и не при «луны нет»
 function coneSunTrace(){   // → { bands: [[кольцо, свет перед ним]], hits: ["кольцо:ячейка"], out: свет за последним кольцом, end }
-  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {}, zbands = [], blk = [];   // blk — свет, остановленный «1» (☾ за 1, v0.770)
+  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), bands = [], hits = new Set(), zhits = new Set(), litAt = {}, zbands = [], blk = [], pass = {};   // blk — свет, остановленный «1» (☾ за 1, v0.770); pass — свет, прошедший кольцо (v0.902)
   let lit = coneSunTurnOn() ? (coneMoonTurn() ? [] : [[0, TAU2]]) : coneQuadOn() ? coneQuadArcs(true) : coneSunSlit() ? coneSunSlitArc() : coneSunHalf() ? coneSunHalfArc() : [[0, TAU2]], b = 1, pastN = [];   // v0.746: ▮ — из щели   // v0.744: ✚ — свет из чёрных четвертей   // v0.727: ◐ — свет только из открытой половины   // pastN — свет, прошедший и кольцо за чертой (v0.713)
   /* v0.701, «теперь так: пусть свет от лучей проходит, когда через единицы, — то он закрашивает следующую нулями; и когда все биты строки закрасятся либо 1,
      либо 0 — строка готова»: в вырезах T−1 свет, упавший на бит «1» кольца строки, проходит его и красит ячейки СЛЕДУЮЩЕГО кольца нулями (zhits, по тем же
@@ -4016,7 +4018,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
        ноль строки за чертой, накрытый светом целиком, — тоже попадание (свет идёт сквозь него дальше, а ячейка переключится в 1) */
     if (C && b === N && Z.sunXor && !coneFreeOn()) { const f = fillDraft(); for (let q = 0; q < C.n; q++) if (f[q] === "0" && coneCellCovered(cutPos(q, C.n), C.st, C.rot, lit)) hits.add(b + ":" + q); }
     if (C && b === N && coneFreeOn()) { open = coneFreeRing(lit, C, hits, b, undefined, p0); if (sunPass("sun", "1")) open = ivUnion(open.concat(coneOnesArcs(b, N, C, true)));   // v0.867: «1» — с галкой насквозь
-      if (Z.moonBlk) blk.push(...ivMinus(ivMinus(lit, open), z0)); lit = ivAnd(lit, open); pastN = lit; continue; }   // v0.722
+      if (Z.moonBlk) blk.push(...ivMinus(ivMinus(lit, open), z0)); lit = ivAnd(lit, open); pastN = lit; pass[b] = lit; continue; }   // v0.722; v0.902: pass
     if (C && b === N && sunPass("sun", "E")) open = coneFillPass(open, lit, C);   // v0.716: пустая ячейка, накрытая не целиком, — насквозь (v0.867: галка, по умолчанию стоит)
     if (C && coneCutSym()) cutSymHits(b, C, ivMinus(lit, open), lit, hits);   // v0.871: «по симметрии» — по ячейкам бит (начала дробные)
     else for (const [lo, hi] of ivMinus(lit, open)) {
@@ -4030,7 +4032,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
     }
     if (C && b <= N && sunPass("sun", "1")) open = ivUnion(open.concat(coneOnesArcs(b, N, C, false)));   // v0.867: проход через 1 — попадание засчитано, свет идёт дальше
     if (Z.moonBlk && b <= N) blk.push(...ivMinus(ivMinus(lit, open), z0));   // v0.770: ☾ за 1 (v0.867: свет, вставший на «0»-стене, — не в счёт)
-    lit = ivAnd(lit, open);
+    lit = ivAnd(lit, open); pass[b] = lit;   // v0.902: свет, прошедший кольцо b
     if (b === N) pastN = lit;
   }
   /* v0.708, «нет, свет лучей — это антисолнце-лучами, как было: они так же, как солнце, светят, но синим, и только когда полностью бит осветят — тогда красить
@@ -4115,7 +4117,7 @@ function coneSunTrace(){   // → { bands: [[кольцо, свет перед �
       if (k === N) { aout = all(); break; }
     }
   }
-  return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, a0, akb, zN, out: lit, end: b };
+  return { bands, hits: [...hits], zhits: [...zhits], zbands, aout, a0, akb, zN, out: lit, end: b, pass };
 }
 /* v0.208, «в этом режиме сделай неактивными те кнопки, которые не влияют» (по снимку «щель» и «⌖→ след.»): при ☀ гаснут всё лазерное —
    довод строки 1, ⏸ на проходе, 🔮, 🎯 с номером, число лазеров и «от …°», ⌖→ след., 📌 лазер, ↻ с шагом; при «0 — проход» ещё «щель» и
