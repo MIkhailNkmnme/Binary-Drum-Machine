@@ -2619,7 +2619,7 @@ function renderCone(){
       const S = coneSunTrace(), rIn = (b) => r0 + (b - 1) * dr + Math.max(1, dr * band), rAt = (b) => r0 + b * dr;
       const sect = (ri, ro, lo, hi) => { g.beginPath(); g.arc(cx, cy, ro, lo - Math.PI / 2, hi - Math.PI / 2); g.arc(cx, cy, Math.max(0, ri), hi - Math.PI / 2, lo - Math.PI / 2, true); g.closePath(); g.fill(); };
       if (coneQuadOn()) {   // v0.744: ✚ — круг из четвертей, солнце — маленьким кругом внутри
-        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.32, q0 = -Math.PI / 2 + coneRotOf(0) * Math.PI / 2;
+        const rD = r0 + Math.max(1, dr * band), rS = rD * 0.32, q0 = -Math.PI / 2 - coneRotOf(0) * Math.PI / 2;   // v0.874: знак как у всех колец (было «+» — ✚ крутился в другую сторону)
         g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
         const smQ = coneSunMoon();   // v0.807: ☀☾ — чёрные четверти солнцем, белые — луной
         for (let q = 0; q < 4; q++) { g.fillStyle = smQ ? (q % 2 ? "#9cc3ff" : cg) : q % 2 ? c1 : "#05070b"; g.globalAlpha = smQ ? (q % 2 ? 0.85 : 0.5) : 1; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * Math.PI / 2, q0 + (q + 1) * Math.PI / 2); g.closePath(); g.fill(); }
@@ -2827,7 +2827,7 @@ function renderCone(){
         }
       }
     } else if (coneQuadOn()) {   // v0.743: ✚ 4 части — строка 1 кругом от центра: чёрная, белая, чёрная, белая (от верха по часовой)
-      const rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 + coneRotOf(0) * Math.PI / 2;
+      const rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 - coneRotOf(0) * Math.PI / 2;   // v0.874: знак как у всех колец (было «+» — ✚ крутился в другую сторону)
       g.save(); g.globalAlpha = 1;
       for (let q = 0; q < 4; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * Math.PI / 2, q0 + (q + 1) * Math.PI / 2); g.closePath(); g.fill(); }
       g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
@@ -4103,7 +4103,9 @@ function coneAimSnap(){   // v0.139: тянешь строку 1 — вырез 
   return true;
 }
 function coneAimSettle(){
-  Z.coneAimRot = (((Z.coneAimRot || 0) % 360) + 540) % 360 - 180;
+  /* v0.874: приводить к кругу по 720°, не по 360°: при ✚ (четверть на бит) и ◐ (половина на бит) 360° довода — не полный круг рисунка, и отпущенная
+     строка 1 прыгала на соседнюю четверть / половину; у «☀/☾ оборот» менялась чётность оборота. 720° — без сдвига для любого вида */
+  Z.coneAimRot = (((Z.coneAimRot || 0) % 720) + 1080) % 720 - 360;
   save(); renderCone();   // v0.127: довёл до щели вручную — это проход, его засчитает renderCone
   const R = coneClockTrace()[0], deg = Math.round(Z.coneAimRot * 10) / 10, N = Math.min(Z.rows.length, CONE_MAX);
   say(`⌖ Строка 1 довёрнута на ${deg}°` + (!R ? "." : !R.stop && !R.pass ? " — вырез в стороне, выход закрыт: лазер упирается в строку 1." : R.pass ? (R.vstop < coneRingsTotal(N) ? ` — вырез на лазере, луч проходит все строки, ловит кольцо ${R.vstop + 1}.` : " — вырез на лазере, луч проходит все кольца.") : ` — вырез на лазере, луч держит стена кольца ${R.stop + 1}.`));
@@ -4377,8 +4379,10 @@ function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || 
 /* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
    круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
    четверти углами от верха по часовой */
-function coneQuadArcs(open){ const r = coneRotOf(0), o = []; for (let q = open ? 0 : 1; q < 4; q += 2) ivNorm((q + r) * Math.PI / 2, (q + 1 + r) * Math.PI / 2, o); return ivUnion(o); }
-function coneQuadOpen(a){ const x = ((((a + Math.PI / 2) / (Math.PI / 2) - coneRotOf(0)) % 4) + 4) % 4; return Math.floor(x) % 2 === 0; }   // a — угол холста
+/* v0.874, «почему-то первое кольцо крутится вручную в другую сторону»: четверти ✚ поворачивались на +coneRotOf(0), а все кольца (и ◐, и значок бита
+   строки 1) — на −: рукой по часовой ✚ шёл против часовой, и при ▶ — навстречу остальным. Знак общий; рисунок, свет и проверка луча — вместе */
+function coneQuadArcs(open){ const r = coneRotOf(0), o = []; for (let q = open ? 0 : 1; q < 4; q += 2) ivNorm((q - r) * Math.PI / 2, (q + 1 - r) * Math.PI / 2, o); return ivUnion(o); }
+function coneQuadOpen(a){ const x = ((((a + Math.PI / 2) / (Math.PI / 2) + coneRotOf(0)) % 4) + 4) % 4;   /* v0.874: как coneQuadArcs */ return Math.floor(x) % 2 === 0; }   // a — угол холста
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
@@ -5531,7 +5535,10 @@ function setupCone(){
         if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 3) moved = true;
         if (!moved) return;
         const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a;
-        Z.coneAimRot = r0v + turn * 180 / Math.PI; coneAimSnap(); turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
+        /* v0.874: строка 1 идёт за мышью: у ✚ шаг — четверть круга, у ◐ — половина (а не весь круг, как у бита), поэтому довод множится; щель лазера
+           там ни при чём — без защёлки */
+        const n0 = (Z.rows[0] || "").length || 1, k1 = coneQuadOn() ? 4 / n0 : coneSunHalf() || coneCut2n() ? 2 / n0 : 1;
+        Z.coneAimRot = r0v + turn * 180 / Math.PI * k1; if (k1 === 1) coneAimSnap(); turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
       };
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
