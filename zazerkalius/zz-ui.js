@@ -2669,6 +2669,7 @@ function renderCone(){
         const rD = r0 + Math.max(1, dr * band), bit = (Z.rows[0] || "1")[0];
         g.fillStyle = cg; g.globalAlpha = bit === "1" ? 0.9 : 0.5; g.shadowColor = cg; g.shadowBlur = 18 * dpr; g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
         coneGlyph(g, cx, cy, -Math.PI / 2 - coneRotOf(0) * 2 * Math.PI, rD * 0.6, rD * 0.4, bit, cBg, ff);
+        coneR1Cut(g, cx, cy, rD, dpr, cBg);   // v0.883
       } else {   /* v0.774: строка 1 — круг от центра, солнце — точка в его середине (было — золотой диск во всю строку 1). Свет её проходит, как и прежде,
          поэтому круг полупрозрачный, цветом своего бита, с цифрой */
         const rD = r0 + Math.max(1, dr * band), rS = Math.max(3 * dpr, dr * 0.08), bit = (Z.rows[0] || "1")[0];
@@ -2676,6 +2677,7 @@ function renderCone(){
         g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.35 : 0.2; g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.fill();
         g.save(); g.strokeStyle = cg; g.globalAlpha = 0.8; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath(); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
         coneGlyph(g, cx, cy, -Math.PI / 2 - coneRotOf(0) * 2 * Math.PI, rD * 0.6, rD * 0.4, bit, bit === "1" ? c1 : c0, ff);
+        coneR1Cut(g, cx, cy, rD, dpr, cg);   // v0.883: граница бита и середина — разрез через центр
         coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.807: кто светит этот оборот
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
       }
@@ -4382,6 +4384,30 @@ function coneR1AxisSnap(){
   }
   return best ? { deg: best.d / k, t: best.t } : null;
 }
+/* v0.883, по снимку строки 1 при солнце (серый круг с точкой) — «у 1 бита также не видно разреза»: при солнце строка 1 рисуется своей веткой (круг от
+   центра), и черта v0.877 туда не попадала. coneR1Cut — черта каждой границы бит строки 1 от центра до края, у одного бита — и пунктир по его середине:
+   вместе — разрез через центр, симметричные половины */
+function coneR1Cut(g, cx, cy, rD, dpr, col){
+  const n0 = (Z.rows[0] || "1").length || 1, st = 2 * Math.PI / n0, r = coneRotOf(0);
+  g.save(); g.strokeStyle = col; g.lineCap = "butt"; g.globalAlpha = 0.9; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.beginPath();
+  for (let j = 0; j < n0; j++) { const a = -Math.PI / 2 + (j - r) * st; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(a), cy + rD * Math.sin(a)); }
+  g.stroke();
+  if (n0 === 1) { const a = -Math.PI / 2 + (0.5 - r) * st; g.globalAlpha = 0.65; g.lineWidth = Math.max(1, dpr); g.setLineDash([4 * dpr, 3 * dpr]); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(a), cy + rD * Math.sin(a)); g.stroke(); }
+  g.restore();
+}
+/* v0.883, по кнопкам «▥ центр · ◧ лево · ◨ право» — «тут первый бит тоже надо крутить, выравнивать»: выравнивание касалось только колец строк 2…, строка 1
+   оставалась как была. Теперь кнопка доворачивает и строку 1 (довод Z.coneAimRot), по её виду: бит (биты) — центр: середина узора на вертикали; лево / право:
+   граница на вертикали; ◐ — центр: половина с битом сверху, лево: открытая половина справа от вертикали (вырез идёт по часовой), право: слева; ✚ — центр:
+   чёрная четверть серединой на вертикали, лево: начинается на ней, право: кончается на ней. ▮ щель — не трогается. → true, если довернула */
+function coneR1Align(m){
+  if (coneRow1Slit && coneRow1Slit()) return false;
+  const n0 = (Z.rows[0] || "1").length || 1, quad = coneQuadOn(), half = !quad && (coneSunHalf() || coneCut2n());
+  const t = quad ? { c: 0.5, l: 0, r: 1 }[m] : half ? { c: 0, l: 0.5, r: -0.5 }[m] : { c: n0 / 2, l: 0, r: 0 }[m];
+  if (t === undefined) return false;
+  const a0 = Z.coneAimRot || 0, free = coneRotOf(0) + a0 / 360 * n0;   // поворот строки 1 без довода
+  Z.coneAimRot = ((((free - t) * 360 / n0 % 720) + 1080) % 720) - 360;   // к кругу по 720°, как coneAimSettle
+  return true;
+}
 function coneHandRays(g, o){   // лучи в центр от границ (сплошные) и середин бит (пунктир) кольца, которое тянут
   const hr = coneDrag && !coneDrag.mag ? coneDrag.i : coneFillDrag ? "f" : coneR1Drag ? 0 : null; if (hr === null) return;
   const R = coneRingFeat(hr); if (!R || R.P > 720) return;
@@ -5464,7 +5490,7 @@ function posApply(p){
   if (window.zzAutoStop) window.zzAutoStop();
   coneRot.length = 0; (p.rot || []).forEach(x => coneRot.push(x || 0)); while (coneRot.length < Z.rows.length) coneRot.push(0); Z.coneRot = coneRot.slice();
   if (p.free && Object.keys(p.free).length) Z.coneFree = posCopy(p.free); else delete Z.coneFree;
-  coneHoldClear(); Z.coneSpin = p.spin || 0; Z.coneSpinPh = p.ph || 0;   // v0.870: положение — с фазы положения Z.coneAimRot = p.aim || 0; Z.coneFillTurn = p.ft || 0;
+  coneHoldClear(); Z.coneSpin = p.spin || 0; Z.coneSpinPh = p.ph || 0; Z.coneAimRot = p.aim || 0; Z.coneFillTurn = p.ft || 0;   // v0.870: положение — с фазы положения (v0.883: комментарий стоял посреди строки и съедал довод и кольцо за чертой)
   if (p.mode && p.mode !== (Z.coneSpinMode || "all")) { Z.coneSpinMode = p.mode; const s = $("coneSpinMode"); if (s) s.value = p.mode; spinSpUi(); coneSpinModeUi(); }
   Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll(); if (Z.voidHits && p.off && Object.keys(p.off).length) Z.voidHits.off = posCopy(p.off);
   coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
@@ -6534,11 +6560,11 @@ function setupCone(){
   }
   if ($("bCutAlign")) {   // v0.738: начало вырезов — по центру / по левому / по правому краю
     const ui = () => { const m = Z.cutAlign || "c", b = $("bCutAlign"); b.textContent = m === "l" ? "◧ лево" : m === "r" ? "◨ право" : "▥ центр"; b.classList.toggle("on", m !== "c"); }; ui();
-    $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : "c"; ui(); coneWallWas = undefined; coneClockWas = null; save(); renderRows(); renderCone();
+    $("bCutAlign").onclick = () => { const m = Z.cutAlign || "c"; Z.cutAlign = m === "c" ? "l" : m === "l" ? "r" : "c"; ui(); coneR1Align(Z.cutAlign); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined; save(); renderRows(); renderCone();   // v0.883: и строка 1
       say({ c: "▥ Вырезы по центру: кольца симметрично вертикали, как было.", l: "◧ Вырезы по левому краю: левый край выреза каждого кольца — на вертикали, вырез идёт от неё по часовой.", r: "◨ Вырезы по правому краю: правый край выреза — на вертикали, биты начинаются от неё." }[Z.cutAlign]); };
   }
   if ($("bConeSlits")) $("bConeSlits").onclick = () => {
-    const m = coneSlitRaw(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "cutA" : m === "cutA" ? "cutS" : m === "cutS" ? "cut2" : m === "cut2" ? "all" : "one"; slitsUi();   // v0.871: и «по симметрии» coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined;   // v0.772: по кругу и «вырезы 2n»
+    const m = coneSlitRaw(); Z.coneSlits = m === "one" ? "cut" : m === "cut" ? "cutA" : m === "cutA" ? "cutS" : m === "cutS" ? "cut2" : m === "cut2" ? "all" : "one"; slitsUi(); coneWallWas = undefined; coneClockWas = null; coneSunWas = undefined;   // v0.772: по кругу и «вырезы 2n»; v0.871: и «по симметрии» (v0.883: комментарий стоял посреди строки и съедал сброс)
     const kc = coneCutHome(); save(); renderRows(); renderCone(); coneSunUi();   // v0.674: вход в T−1 — кольца симметрично вертикали; v0.692: и доступность «до 256»
     say({ one: "1 щель: выход из кольца — только граница между последним и первым битом строки.",
           cut: "Вырезы T−1: кольца симметрично вертикали — у чётных строк сверху середина бит, у нечётных — середина выреза; строка 1 без затвора, луч идёт мимо." + (kc ? ` Накрутка снята у колец: ${kc}.` : ""),
