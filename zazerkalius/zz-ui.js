@@ -1995,20 +1995,20 @@ const SUNTBL = [
   { g: "Проход сквозь" },
   { t: "«0»", tip: "Свет проходит сквозь «0» бита, как сквозь вырез. Нет галки (по умолчанию) — «0» стена, свет на нём встаёт.", s: { f: "sunPass0" }, m: { f: "moonPass0" } },
   { t: "«1»", tip: "Свет проходит сквозь «1», как сквозь вырез. У солнца бит всё равно засчитан попаданием. У луны — просто насквозь, сколько бы «1» ни было на пути: 0 встаёт в любую ячейку за чертой, которую её свет накрыл целиком (то же, что «☾ сквозь 1»). Нет галки (по умолчанию) — «1» стена.", s: { f: "sunPass1" }, m: { f: "moonPass1" } },
-  { t: "пустую ячейку за чертой", tip: "Ячейка строки за чертой, ещё пустая и накрытая светом не целиком, пропускает его дальше (накрыл целиком — красится). Стоит по умолчанию, как было.", s: { f: "sunPassE", on: 1 }, m: { f: "moonPassE", on: 1 } },
-  { g: "Красить за чертой" },
-  { t: "пройденную целиком", tip: "⟿ Ячейка за чертой красится и тогда, когда свет за кручение прошёл её всю, от края до края, одним ходом (солнце — 1, луна — 0).", s: { f: "sunSweep" }, m: { f: "moonSweep", get: () => coneMoonSweep() } },
-  { t: "xor: заново — 1 ↔ 0", tip: "⊕ Ячейка за чертой, на которую солнце упало заново, меняется: 1 → 0, 0 → 1, пустая → 1. Нет галки — солнце ставит 1.", s: { b: "bSunXor" } },
-  { t: "0 напротив новой 1", tip: "☀↔0 Где солнце поставило 1 в строке за чертой, в пустую ячейку ровно напротив (через центр) ставится 0 — она есть у кольца с чётным числом ячеек.", s: { b: "bSunAnti" } },
-  { g: "Свет солнца" },
-  { t: "только при накрытой строке 1", tip: "☀ накрыты: солнце светит дальше строки 1, только когда её бит целиком накрыт единицами следующего кольца (включает ◐ полукольцо).", s: { b: "bSunGate" } },
+  { t: "пустая за чертой", tip: "Ячейка строки за чертой, ещё пустая и накрытая светом не целиком, пропускает его дальше (накрыл целиком — красится). Стоит по умолчанию, как было.", s: { f: "sunPassE", on: 1 }, m: { f: "moonPassE", on: 1 } },
+  { g: "Красит за чертой" },
+  { t: "пройдена вся", tip: "⟿ Ячейка за чертой красится и тогда, когда свет за кручение прошёл её всю, от края до края, одним ходом (солнце — 1, луна — 0).", s: { f: "sunSweep" }, m: { f: "moonSweep", get: () => coneMoonSweep() } },
+  { t: "⊕ заново", tip: "⊕ Ячейка за чертой, на которую солнце упало заново, меняется: 1 → 0, 0 → 1, пустая → 1. Нет галки — солнце ставит 1.", s: { b: "bSunXor" } },
+  { t: "0 напротив 1", tip: "☀↔0 Где солнце поставило 1 в строке за чертой, в пустую ячейку ровно напротив (через центр) ставится 0 — она есть у кольца с чётным числом ячеек.", s: { b: "bSunAnti" } },
+  { g: "Солнце" },
+  { t: "строка 1 накрыта", tip: "☀ накрыты: солнце светит дальше строки 1, только когда её бит целиком накрыт единицами следующего кольца (включает ◐ полукольцо).", s: { b: "bSunGate" } },
   { t: "по длине дуги", tip: "📏 Свет переходит на следующее кольцо той же длиной дуги, а не тем же углом: с кольца строки m на m + 1 сужается в m / (m + 1).", s: { b: "bCutLen" } },
   { g: "Луна светит" },
-  { t: "всегда — свой свет из центра", tip: "☾ всегда: луна — не зеркало солнца, а свой свет из центра во все стороны, всегда. Идёт по своим проходам из таблицы (вырезы, «0», «1», пустая ячейка) и ставит 0 в ячейку за чертой, которую её свет накрыл целиком. Ячейку, накрытую в тот же шаг и солнцем, получает солнце. Главнее строк ниже; при ☀☾ и «☀/☾ оборот» у луны своё.", m: { f: "moonAlways" } },
-  { t: "свет в 180° и шире — луна", tip: "☀ < 180° · ☾ ≥ 180°: свет делится на куски; кусок уже 180° — солнце (ставит 1), в 180° и шире — луна (ставит 0 в ячейку за чертой, которую накрыл целиком, и рисуется синим). Свет из ◐ — ровно половина, значит луна; сузился в вырезах — солнце.", m: { f: "sunWideMoon" } },
-  { t: "только при затмении", tip: "☾ Луна светит, только когда всё солнце скрыто за битами (ничего не вылетело): зеркало света, упавшего на последнее кольцо, через центр. Либо-либо со строкой ниже.", m: { b: "bMoonEcl" } },
-  { t: "крестом — на 90°, не через центр", tip: "☾ крестом: луна — свет солнца, повёрнутый на 90° (симметрия креста), а не отражённый через центр. При ✚ 4 частях солнце светит из двух чёрных четвертей напротив друг друга, и луна через центр ложилась на те же четверти; крестом — на белые.", m: { b: "bMoonCross" } },
-  { t: "когда солнце упёрлось в «1»", tip: "☾ Луна светит, когда хоть часть солнца встала на «1» (на любом кольце): зеркало остановленного света через центр. Либо-либо со строкой выше.", m: { b: "bMoonBlk" } }
+  { t: "всегда", tip: "☾ всегда: луна — не зеркало солнца, а свой свет из центра во все стороны, всегда. Идёт по своим проходам из таблицы (вырезы, «0», «1», пустая ячейка) и ставит 0 в ячейку за чертой, которую её свет накрыл целиком. Ячейку, накрытую в тот же шаг и солнцем, получает солнце. Главнее строк ниже; при ☀☾ и «☀/☾ оборот» у луны своё.", m: { f: "moonAlways" } },
+  { t: "свет ≥ 180°", tip: "☀ < 180° · ☾ ≥ 180°: свет делится на куски; кусок уже 180° — солнце (ставит 1), в 180° и шире — луна (ставит 0 в ячейку за чертой, которую накрыл целиком, и рисуется синим). Свет из ◐ — ровно половина, значит луна; сузился в вырезах — солнце.", m: { f: "sunWideMoon" } },
+  { t: "при затмении", tip: "☾ Луна светит, только когда всё солнце скрыто за битами (ничего не вылетело): зеркало света, упавшего на последнее кольцо, через центр. Либо-либо со строкой ниже.", m: { b: "bMoonEcl" } },
+  { t: "крестом, 90°", tip: "☾ крестом: луна — свет солнца, повёрнутый на 90° (симметрия креста), а не отражённый через центр. При ✚ 4 частях солнце светит из двух чёрных четвертей напротив друг друга, и луна через центр ложилась на те же четверти; крестом — на белые.", m: { b: "bMoonCross" } },
+  { t: "солнце в «1»", tip: "☾ Луна светит, когда хоть часть солнца встала на «1» (на любом кольце): зеркало остановленного света через центр. Либо-либо со строкой выше.", m: { b: "bMoonBlk" } }
 ];
 /* v0.886, по снимку шапки «☀ Солнце · ☾ Луна» — «новые панели также зубцами границы, как у всех групп кнопок, и кнопки для закрепа в дзен режиме»:
    плашки #sunMoonTbl и #ringTbl — бока зубцами, как tzgFrame у групп (левый — выемкой, правый — остриём, шаг 24 px, рамка — маской цветом плашки), высота
@@ -2027,6 +2027,13 @@ function plateZig(el, col){
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><polygon points="${pts.map(([x, y]) => x.toFixed(2) + "," + yIn(y).toFixed(2)).join(" ")}" fill="none" stroke="#000" stroke-width="2"/></svg>`;
   el.style.setProperty("--gmask", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`); el.style.setProperty("--gfc", col);
 }
+/* v0.892, по снимку шапки «☀ Солнце · ☾ Луна» — «магнитить так же, как все»: плашку тянешь — она прилипает тем же магнитом, что группы конуса
+   (snapXY: зубцы в зубцы к соседке сбоку, рамка на рамку сверху / снизу, края окна, поля строк и групп; к чему прилипла — светится). Прицепки к
+   группе нет — только место. plateSnap → экранные [x, y] левого верхнего угла плашки, сдвинутой на dx, dy от r0 */
+function plateSnap(el, r0, dx, dy){
+  const x = r0.left + dx, y = r0.top + dy;
+  return typeof window.zzPlateSnap === "function" ? window.zzPlateSnap(el, x, y, r0.width, r0.height) : [x, y];
+}
 function sunTblOpen(){ if (Z.sunTbl !== undefined) return !!Z.sunTbl; return window.innerWidth > 760; }
 function sunTblGet(c){ if (c.get) return c.get(); if (c.f) return c.on ? Z[c.f] !== false : !!Z[c.f]; const b = document.getElementById(c.b); return !!(b && b.classList.contains("on")); }
 function sunTblPlace(el){
@@ -2038,11 +2045,12 @@ function sunTblPlace(el){
 }
 function sunTblBuild(host){
   const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), el = document.createElement("div"); el.id = "sunMoonTbl";
-  let x = '<div class="smh" title="Тяни — переставить, двойной щелчок — на место"><span>☀ Солнце · ☾ Луна</span><span class="pbtn"><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="smx" title="Закрыть (кнопка «☀☾» в группе «Солнце» — открыть снова)">✕</button></span></div>' +
+  let x = '<div class="smh" title="☀ Солнце · ☾ Луна — тяни: переставить (липнет к группам и краям, как группы), двойной щелчок — на место"><span>☀ · ☾</span><span class="pbtn"><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="smx" title="Закрыть (кнопка «☀☾» в группе «Солнце» — открыть снова)">✕</button></span></div>' +
     '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><thead><tr><th></th><th class="ths" title="Солнце">☀</th><th class="thm" title="Луна">☾</th></tr></thead><tbody>';
+  let gi = -1;   // v0.892: номер подгруппы — свой фон (класс sgN)
   SUNTBL.forEach((r, i) => {
-    if (r.g) { x += '<tr class="smg"><th colspan="3">' + r.g + "</th></tr>"; return; }
-    x += '<tr title="' + q(r.tip) + '"><td class="sml">' + r.t + "</td>";
+    if (r.g) { gi++; x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
+    x += '<tr class="sg' + gi + '" title="' + q(r.tip) + '"><td class="sml">' + r.t + "</td>";
     for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ' + w + '" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
     x += "</tr>";
   });
@@ -2064,9 +2072,9 @@ function sunTblBuild(host){
   const hd = el.querySelector(".smh");
   hd.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
-    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
-    const mv = (ev) => { Z.sunTblXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; sunTblPlace(el); };
-    const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); save(); };
+    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop, r0 = el.getBoundingClientRect();
+    const mv = (ev) => { const [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); Z.sunTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; sunTblPlace(el); };   // v0.892: липнет, как группы
+    const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); zSnapGlow([]); save(); };
     hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
   });
   hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.sunTblXY; sunTblPlace(el); save(); });
@@ -2144,9 +2152,9 @@ function ringTblBuild(host){
   const hd = el.querySelector(".rth");
   hd.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
-    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
-    const mv = (ev) => { Z.ringTblXY = [Math.round(ox + ev.clientX - sx), Math.round(oy + ev.clientY - sy)]; ringTblPlace(el); };
-    const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); save(); };
+    const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop, r0 = el.getBoundingClientRect();
+    const mv = (ev) => { const [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); Z.ringTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; ringTblPlace(el); };   // v0.892
+    const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); zSnapGlow([]); save(); };
     hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
   });
   hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.ringTblXY; ringTblPlace(el); save(); });
@@ -10539,6 +10547,7 @@ function cgrpInit(){
     add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
+  window.zzPlateSnap = (el, x, y, w, h) => { const r = snapXY(el, x, y, w, h); el._mesh = null; return r; };   // v0.892: тот же магнит — плашкам-таблицам
   const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); let t = h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top;
     const tb = document.getElementById("cgTabs"); if (tb && tb.getClientRects().length && !document.body.classList.contains("zen")) t = Math.max(t, tb.getBoundingClientRect().bottom);   // v0.608: «не дай группам наезжать на кнопки меню» — верх для групп ниже полосы вкладок
     return t; };
@@ -14293,6 +14302,10 @@ function init(){
            выше низа панели (не ниже низа окна), левый — на 8 px от её левого края */
         const M8 = 8, pb = Math.min(r.bottom, innerHeight), pl = Math.max(0, r.left);
         const zen = document.body.classList.contains("zen"), x0 = zen ? M8 : Math.round(document.body.classList.contains("pane-icons") ? pl + (r.width - 40) / 2 : pl + M8), yb = Math.round((zen ? innerHeight : pb) - M8 - 40);
+        /* v0.892, по снимку ● mp4 ↻1 ▣ в дзене под группой «Щели» — «пусть панели перекрывают в дзене эти кнопки»: в дзене окно конуса — свой слой на весь
+           экран (z-index 1000), и кнопки записи из body (1001) были над всем в нём, группы их перекрыть не могли. В дзене цепочка записи переезжает в тело окна
+           конуса — над холстом, но под группами и плашками (z-index 4, у полосы групп 5); вне дзена — обратно в body, как было */
+        if (rb) { const wbz = zen && document.querySelector("#w-cone > .wbody"), par = wbz || document.body; if (rb.parentElement !== par) par.appendChild(rb); }
         const chain = [...(zb && (vis || top) ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
         if (zb) zb.style.display = vis || top ? "" : "none";
         if (rb) rb.style.display = vis || zen || top ? "" : "none";
