@@ -4187,10 +4187,17 @@ function coneAimDeep(a){
   }
   return (lo + hi) / 2;
 }
+/* v0.890, по снимку «🧲 сим.: наруж.» — «не работает, у 1 к 2 строке не магнитит»: при лазере / солнце строка 1 рукой сперва защёлкивалась на лазере, и
+   только если не защёлкнулась — к осям (coneR1AxisSnap). Допуск лазера — 10 px по радиусу кольца 1, а с пустыми кольцами до 256 кольцо 1 в пару пикселей:
+   допуск выходил больше полкруга, защёлка брала любой угол, до строки 2 дело не доходило. Теперь допуск не шире, чем у осей (радиус не меньше 20 px),
+   а coneAimSnapD только меряет — что ближе, лазер или ось, решает тот, кто тянет */
+function coneAimSnapD(){   // → на сколько (рад) вырез строки 1 мимо лазера, если в допуске; иначе null
+  if (!coneGeom) return null;
+  const G = coneGeom, d = coneAngDiff(coneCutAngle(), coneLaserAngle()), tol = 10 * G.dpr / Math.max(20 * (G.dpr || 1), G.r0 + G.dr);
+  return Math.abs(d) > tol ? null : d;
+}
 function coneAimSnap(){   // v0.139: тянешь строку 1 — вырез защёлкивается на лазере (ближе ~10 пикселей)
-  if (!coneGeom) return false;
-  const d = coneAngDiff(coneCutAngle(), coneLaserAngle()), tol = 10 * coneGeom.dpr / Math.max(1, coneGeom.r0 + coneGeom.dr);
-  if (Math.abs(d) > tol) return false;
+  const d = coneAimSnapD(); if (d === null) return false;
   Z.coneAimRot = (Z.coneAimRot || 0) - d * 180 / Math.PI;
   return true;
 }
@@ -5759,7 +5766,9 @@ function setupCone(){
            там ни при чём — без защёлки */
         const n0 = (Z.rows[0] || "").length || 1, k1 = coneQuadOn() ? 4 / n0 : coneSunHalf() || coneCut2n() ? 2 / n0 : 1;
         Z.coneAimRot = r0v + turn * 180 / Math.PI * k1;
-        if (!(k1 === 1 && coneAimSnap())) { const AX = coneFlat() ? coneR1AxisSnap() : null; if (AX) Z.coneAimRot += AX.deg; coneMagLine = AX ? AX.t : null; } else coneMagLine = null;   // v0.881: к осям
+        { const AX = coneFlat() ? coneR1AxisSnap() : null, dL = k1 === 1 ? coneAimSnapD() : null;   // v0.881: к осям; v0.890: и к лазеру — что ближе
+          if (dL !== null && (!AX || Math.abs(dL) <= Math.abs(AX.deg) * Math.PI / 180)) { Z.coneAimRot -= dL * 180 / Math.PI; coneMagLine = null; }
+          else { if (AX) Z.coneAimRot += AX.deg; coneMagLine = AX ? AX.t : null; } }
         turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
       };
       const up = () => {
