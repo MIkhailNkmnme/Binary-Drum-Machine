@@ -544,13 +544,33 @@ function turnsChip(ev, txt){
    только строки над чертой; поэтому окна, конус, кнопки, счёт и шаблоны их просто не видят — как будто их нет. Граница одна на
    все поля и стоит под нижней строкой; тянешь её вверх — у каждого поля над ней остаётся не больше k строк (хотя бы одна), вниз —
    строки возвращаются на свои места. Двойной щелчок по черте — вернуть все. Перенос черты — правка: ↩ вернёт. */
-const CUT_PANEL = document.getElementById("cutPanel");   // v0.225: кнопки достройки и шаблоны — живут под чертой, переносятся при каждой отрисовке поля
+const CUT_PANEL = document.getElementById("cutPanel"), CUT_A = document.getElementById("cutA"), CUT_B = document.getElementById("cutB");   // v0.225: кнопки достройки и шаблоны — живут под чертой, переносятся при каждой отрисовке поля
 const FIELD_INFO = document.getElementById("fieldInfo");   // v0.237, «эту надпись вниз, под последнюю строку»: сведения поля — строкой под последней строкой
 function cutPanelMount(){
   const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
+  cutPartsPlace();   // v0.955
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
   const b = document.getElementById("bCutClr"); if (b) b.classList.toggle("on", !!Z.cutDel);   // v0.563: 🗑 — переключатель
   cutHidUi();   // v0.288
+}
+/* v0.955, по снимку панели под чертой — «это всё в строку, где строка за горизонтом, перед и после неё, если она посередине, или все кнопки пусть уедут
+   за экран вправо-влево, смотря где панель, и не мешают»: достройка (#cutA: 🗑 90 30 м ⌖ ⤒) и заготовка (#cutB: 📋 стр сид, свои шаблоны) — в строке за
+   чертой, по бокам её ячеек (.cutSide внутри .fcs; CSS держит их вне сетки и обрезает за краем колонки). Строки по центру — достройка слева, заготовка
+   справа; строки слева — обе справа; справа — обе слева (достройка ближе к ячейкам). Строки за чертой нет — обе снова под чертой, в #cutPanel */
+function cutPartsPlace(){
+  if (!CUT_PANEL || !CUT_A || !CUT_B) return;
+  const L = document.getElementById("rowList"), fc = L && L.querySelector(".rw.fillrw > .bits.la > .fcs");
+  if (!fc) { if (CUT_A.parentNode !== CUT_PANEL || CUT_B.parentNode !== CUT_PANEL) CUT_PANEL.prepend(CUT_A, CUT_B); CUT_PANEL.style.display = ""; return; }
+  const al = L.classList.contains("al-right") ? "r" : L.classList.contains("al-left") ? "l" : "c";
+  const side = (cls, kids) => {
+    let p = fc.querySelector(":scope > ." + cls);
+    if (!kids.length) { if (p) p.remove(); return; }
+    if (!p) { p = document.createElement("span"); p.className = "cutSide " + cls; p.title = ""; if (cls === "cutL") fc.prepend(p); else fc.append(p); }
+    p.append(...kids);
+  };
+  side("cutL", al === "r" ? [CUT_B, CUT_A] : al === "c" ? [CUT_A] : []);
+  side("cutR", al === "l" ? [CUT_A, CUT_B] : al === "c" ? [CUT_B] : []);
+  CUT_PANEL.style.display = "none";
 }
 /* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
    полос прокрутки. Место пересчитывается при каждой отрисовке поля и при смене размеров поля (ResizeObserver). */
@@ -14043,7 +14063,7 @@ function init(){
   });
   $("rowList").addEventListener("mouseleave", () => { $("rowList").classList.remove("rnhov"); });
   $("rowList").addEventListener("pointerdown", (e) => {
-    if (e.target.closest("#cutPanel")) return;
+    if (e.target.closest("#cutPanel, .cutSide")) return;
     rowNocurWas = document.body.classList.contains("nocur");
     if (e.target.closest(".rw[data-r] > .bits")) return;   // v0.254: по битам подсветку здесь не трогаем — щелчок по биту выделяет строку сам (v0.266)
     if (e.target.closest(".rlk, .rrot")) return;   // v0.261, «нажимаю на 6 замок, а выделяется строка 21»: замок и ↻ — не выбор строки, подсветку текущей не зажигают
@@ -14094,7 +14114,7 @@ function init(){
   $("rowList").addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || rowEditing >= 0 || e.pointerType === "touch") return;
     const t = e.target;
-    if (t.closest(".bx, .bxo, .ob, .no, .cutln, #cutPanel, #infoSlot, .fillrw, .lh, .axh, .axrow, button, input, select, textarea, label, a")) return;
+    if (t.closest(".bx, .bxo, .ob, .no, .cutln, #cutPanel, .cutSide, #infoSlot, .fillrw, .lh, .axh, .axrow, button, input, select, textarea, label, a")) return;
     const L = $("rowList"), x0 = e.clientX, y0 = e.clientY, sl = L.scrollLeft, st = L.scrollTop; let moved = false;
     e.preventDefault();   // без выделения символов
     const mv = (ev) => {
@@ -14115,7 +14135,7 @@ function init(){
   /* v0.670, по снимку поля строк — «дай возможность менять строки прямо там по правому клику на строке»: правый щелчок по строке (её битам или
      номеру) — правка на месте, как F2 / Enter. Замок 🔒, ↻, строка для заполнения и строки под чертой — со своими правыми щелчками, их не трогаем */
   $("rowList").addEventListener("contextmenu", (e) => {
-    if (e.defaultPrevented || e.target.closest(".rlk, .rrot, .fillrw, #cutPanel, input")) return;
+    if (e.defaultPrevented || e.target.closest(".rlk, .rrot, .fillrw, #cutPanel, .cutSide, input")) return;
     const rw = e.target.closest(".rw[data-r]"); if (!rw || rw.classList.contains("ovr")) return;
     const i = +rw.dataset.r; if (!(i >= 0 && i < Z.rows.length) || rowEditing >= 0) return;
     if (Z.laneCount > 1 && Z.laneView === "over") return;
@@ -14191,7 +14211,7 @@ function init(){
     /* v0.291, «двойной клик по полю строк — должен убирать все выделения»: где угодно в поле (кроме черты и панели под ней) — снято всё:
        выделенные строки, подсветка текущей (как Esc), выделенный текст и выделение оси. До v0.290 двойной щелчок только убирал слово,
        выделенное им самим на битах (v0.266). v0.292: по строке — выделить её, снимает всё только двойной щелчок мимо строк. */
-    if (e.target.closest("#cutPanel, button, input, select, textarea, label, a")) return;
+    if (e.target.closest("#cutPanel, .cutSide, button, input, select, textarea, label, a")) return;
     e.preventDefault();
     /* v0.292, «2 щелчка по строке — выделение, а по битам одинарный, как сейчас»: двойной щелчок по строке рабочего поля (номер, биты,
        пустое место в строке) — выделить её; снять всё — двойной щелчок мимо строк. Заголовки полей, ручки осей, строка для заполнения —
