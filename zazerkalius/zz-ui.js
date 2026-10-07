@@ -11389,7 +11389,8 @@ function cgrpInit(){
     fold.onclick = e => { e.stopPropagation(); if (e.detail < 2) foldToggle(); };
     fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); }); foldUi();   // v0.952: двойной — как одиночный, первый щелчок уже переключил
     g.addEventListener("click", e => {
-      if (!e.target.closest(".glab") || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
+      // v0.958: группа при нажатии забирает указатель (setPointerCapture) — щелчок приходит на саму группу; где нажали, помнит g._downLab
+      if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); g._wasMin = !!Z.cgrpMin[g.dataset.g]; if (g._wasMin) foldToggle(false);
     });
     lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть; двойной — свернуть только её (свёрнутую — открыть). «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
@@ -11416,6 +11417,7 @@ function cgrpInit(){
        своё значение, Ctrl + колесо — масштаб страницы */
     g.addEventListener("wheel", e => { if (g.parentElement === tl) solPanelWheel(g, e); }, { passive: false });
     g.addEventListener("pointerdown", (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
+      g._downLab = !!e.target.closest(".glab");   // v0.958: нажали на заголовок — щелчок и двойной щелчок о нём (после захвата указателя их цель — группа)
       if (e.button !== 0 || e.target.closest(NOGRAB)) return;
       e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
       /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
@@ -11497,10 +11499,12 @@ function cgrpInit(){
     });
     /* v0.941: заголовок открывает панель. v0.951, «двойной клик по группам сворачивает все остальные — так не надо, только одну»:
        двойной щелчок по заголовку или пустому месту сворачивает только эту группу, остальные не трогает.
-       v0.952, «2-щелчок перестал открывать группы»: свёрнутую открыл первый щелчок (g._wasMin) — двойной её так и оставляет открытой. */
+       v0.952, «2-щелчок перестал открывать группы»: свёрнутую открыл первый щелчок (g._wasMin) — двойной её так и оставляет открытой.
+       v0.958, «2-клик должен каждую раскрывать — сейчас не реагирует»: цель щелчков после захвата указателя — сама группа, и проверка «по заголовку»
+       не проходила: первый щелчок не открывал, двойной «сворачивал» свёрнутую. Заголовок узнаём по нажатию (g._downLab) */
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); if (!(g._wasMin && e.target.closest(".glab"))) foldToggle(true); g._wasMin = false;
+      e.preventDefault(); e.stopPropagation(); if (!(g._wasMin && (g._downLab || e.target.closest(".glab")))) foldToggle(true); g._wasMin = false;
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
