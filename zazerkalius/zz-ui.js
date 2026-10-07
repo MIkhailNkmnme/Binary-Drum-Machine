@@ -2049,11 +2049,29 @@ const SUNTBL = [
 /* v0.920: группы и таблицы Соляриса используют один граф сцепок. Справа едет за левой,
    снизу — за верхней; потянул ведомую — отцепил. Циклы запрещены. */
 const SOL_PLATES = {
-  sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", name: "Солнце · Луна", col: "#ffe14d" },
-  ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", name: "Кольца", col: "#22d3ee" },
-  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", name: "Шарики", col: "#79e7e1", corner: "bottom-right" },
-  lasAlgo: { xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", name: "Алгоритм · подсказки", col: "#ffd166", corner: "bottom-right" }
+  sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", fld: "sunTblFld", name: "Солнце · Луна", col: "#ffe14d" },
+  ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", fld: "ringTblFld", name: "Кольца", col: "#22d3ee" },
+  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", fld: "coneBallLabFld", name: "Шарики", col: "#79e7e1", corner: "bottom-right" },
+  lasAlgo: { xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", fld: "lasAlgoFld", name: "Алгоритм · подсказки", col: "#ffd166", corner: "bottom-right" }
 };
+/* v0.954, «сделай все группы, чтоб перемещать можно было и на поле строк, и на левое меню, и также магнитить с границами их»: площадки — поле строк
+   (#field, "fld") и левая панель (#rowsPane, "pane"). Группа или плашка, отпущенная целиком над площадкой, встаёт поверх неё (.cfld, fixed) и ездит с ней;
+   место — { x, y, z } от угла площадки (Z.cgrpFld у групп, Z[…Fld] у плашек; z: "pane" — левая панель, без z — поле). Внутрь левой панели группы
+   не встраиваются (снято в v0.571) — только поверх. Магнит ловит края обеих площадок */
+function solZoneRect(z){
+  const B = document.body.classList; if (B.contains("zen") || B.contains("solo") || z !== "pane" && B.contains("field-hidden")) return null;
+  const el = document.getElementById(z === "pane" ? "rowsPane" : "field"); if (!el || !el.getClientRects().length) return null;
+  const r = el.getBoundingClientRect(); return r.width > 20 && r.height > 20 ? r : null;
+}
+function solZoneOf(r, p){   // площадка, над которой прямоугольник целиком; шире площадки — по указателю p = [x, y]
+  for (const z of ["pane", "fld"]) { const q = solZoneRect(z); if (!q) continue;
+    const inY = r.top >= q.top - 1 && r.bottom <= q.bottom + 1;
+    if (inY && r.left >= q.left - 1 && r.right <= q.right + 1) return z;
+    if (inY && p && r.width > q.width && p[0] >= q.left && p[0] <= q.right) return z; }
+  return null;
+}
+function solZoneRec(z, r, q){ const o = { x: Math.round(r.left - q.left), y: Math.round(r.top - q.top) }; if (z === "pane") o.z = "pane"; return o; }
+function solZoneGlow(z){ for (const [id, k] of [["field", "fld"], ["rowsPane", "pane"]]) { const A = document.getElementById(id); if (A && A.classList.contains("cgover") !== (z === k)) A.classList.toggle("cgover", z === k); } }
 function solPanelName(el){ return SOL_PLATES[el.id] ? SOL_PLATES[el.id].name : el.dataset.g; }
 function solPanelFolded(el){ return el.classList.contains("cmin") || el.classList.contains("pmin"); }
 function solPanelRowStep(el, height = el.offsetHeight){ return Math.max(TZC_H, Math.ceil(height / TZC_H) * TZC_H); }
@@ -2081,7 +2099,7 @@ function solLinkAttach(links, a, b, side, ar, br){
   return kid;
 }
 function solFoldButton(bt, min, name){
-  const text = min ? "+" : "−", tip = (min ? "Развернуть" : "Свернуть до заголовка") + " «" + name + "»; один щелчок по заголовку — открыть, двойной — открыть и свернуть остальные панели", label = (min ? "Развернуть " : "Свернуть ") + name, expanded = String(!min);
+  const text = min ? "+" : "−", tip = (min ? "Развернуть" : "Свернуть до заголовка") + " «" + name + "»; один щелчок по заголовку — открыть, двойной — свернуть только её (свёрнутую — открыть)", label = (min ? "Развернуть " : "Свернуть ") + name, expanded = String(!min);
   if (bt.textContent !== text) bt.textContent = text; if (bt.title !== tip) bt.title = tip;
   if (bt.getAttribute("aria-label") !== label) bt.setAttribute("aria-label", label);
   if (bt.getAttribute("aria-expanded") !== expanded) bt.setAttribute("aria-expanded", expanded);
@@ -2107,7 +2125,11 @@ function plateFoldToggle(el, min = !Z[SOL_PLATES[el.id].min]){
 function platePlace(el){
   if (document.body.classList.contains("sol-mobile")) return;
   if (el.classList.contains("pdrag")) return;
-  const c = SOL_PLATES[el.id]; if (platePinPlace(el, Z[c.pin])) return;
+  const c = SOL_PLATES[el.id], f = Z[c.fld], fr = f && solZoneRect(f.z);   // v0.954: на поле строк или левой панели — поверх неё
+  if (el.classList.contains("cfld") !== !!fr) el.classList.toggle("cfld", !!fr);
+  if (fr) { const x = Math.max(0, Math.min(f.x, fr.width - el.offsetWidth)), y = Math.max(0, Math.min(f.y, fr.height - el.offsetHeight));
+    const l = Math.round(fr.left + x) + "px", t = Math.round(fr.top + y) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t; return; }
+  if (platePinPlace(el, Z[c.pin])) return;
   const host = el.parentElement, cv = document.getElementById("coneCv"); if (!host || !cv) return;
   const hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!hr.width) return;
   const w = el.offsetWidth, h = el.offsetHeight, head = host.closest(".win")?.querySelector(":scope > .whead"), hd = head && head.getClientRects().length ? head.getBoundingClientRect().bottom : hr.top;
@@ -2124,7 +2146,7 @@ function platePlace(el){
 function plateInit(el){
   el.classList.add("sol-plate");
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
-  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть; двойной — открыть и свернуть остальные панели; правый — на исходное место и без сцепки. Колесо — масштаб конуса.";
+  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть; двойной — свернуть только её (свёрнутую — открыть); правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
   /* v0.952: двойной щелчок — только эта панель, остальные не трогает: свёрнутую открывает (её открыл первый щелчок, _wasMin),
@@ -2132,7 +2154,7 @@ function plateInit(el){
   fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); });
   hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); el._wasMin = !!Z[c.min]; if (Z[c.min]) plateFoldToggle(el, false); });
   hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); if (!el._wasMin) plateFoldToggle(el, true); el._wasMin = false; });
-  hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
+  hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; delete Z[c.fld]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation();
@@ -2145,13 +2167,16 @@ function plateInit(el){
       let [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); [px, py] = plateAxis(el, px, py);
       el.classList.toggle("axpin", typeof el._pin === "number"); el.style.left = px.toFixed(2) + "px"; el.style.top = Math.round(py) + "px";
       if (window.zzPanelLinkSync) window.zzPanelLinkSync();
+      solZoneGlow(solZoneOf(el.getBoundingClientRect(), el._lp = [ev.clientX, ev.clientY]));   // v0.954: площадка, на которую встанет
     };
     const up = () => {
       hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up);
       if (!moved) return;
       el._solDragUntil = performance.now() + 400;
-      const r = el.getBoundingClientRect(), host = el.parentElement, hr = host.getBoundingClientRect();
-      Z[c.xy] = [r.left - hr.left + host.scrollLeft, r.top - hr.top + host.scrollTop];
+      const r = el.getBoundingClientRect(), host = el.parentElement, hr = host.getBoundingClientRect(), zone = solZoneOf(r, el._lp); solZoneGlow(null);
+      // v0.954: целиком над полем строк или левой панелью — встаёт поверх неё; место на холсте помнится
+      if (zone) { Z[c.fld] = solZoneRec(zone, r, solZoneRect(zone)); el._mesh = null; el._pin = null; }
+      else { delete Z[c.fld]; Z[c.xy] = [r.left - hr.left + host.scrollLeft, r.top - hr.top + host.scrollTop]; }
       if (typeof el._pin === "number") Z[c.pin] = el._pin; else delete Z[c.pin];
       el._pin = null; el.classList.remove("pdrag"); document.body.classList.remove("cgdrag"); el.style.width = width0;
       platePlace(el); if (window.zzPanelDragEnd) window.zzPanelDragEnd(el); zSnapGlow([]); save();
@@ -5977,7 +6002,8 @@ function lasAlgoPlace(){
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   if (el.classList.contains("pdrag")) return;
   const mobile = document.body.classList.contains("sol-mobile");
-  const W = Math.round(mobile ? Math.max(200, host.clientWidth - 16) : Math.max(200, Math.min(460, cr.width / 2 - 56)));
+  const W0 = Math.round(mobile ? Math.max(200, host.clientWidth - 16) : Math.max(200, Math.min(460, cr.width / 2 - 56)));
+  const zf = !mobile && Z.lasAlgoFld && solZoneRect(Z.lasAlgoFld.z), W = zf ? Math.max(160, Math.min(W0, Math.floor(zf.width))) : W0;   // v0.954: на площадке — не шире неё
   const ws = W + "px"; if (el.style.width !== ws) el.style.width = ws;
   plateFoldSync(el);
   if (!solPanelFolded(el)) {
@@ -10897,7 +10923,7 @@ function solPanelOrganizeInit(C){
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
@@ -10998,9 +11024,7 @@ function cgrpInit(){
      прижатая к окну конуса. Назад — вытащить с поля или правый щелчок по заголовку. Кольца и Кручение на поле не встают. Поле спрятано,
      дзен или страница одного конуса — группа на полосе конуса, место на поле помнится */
   if (!Z.cgrpFld || typeof Z.cgrpFld !== "object") Z.cgrpFld = {};
-  const FLD_NO = { "кольца": 1, "кручение": 1 };
-  const fldRect = () => { const F = $("field"), B = document.body.classList; if (!F || B.contains("field-hidden") || B.contains("zen") || B.contains("solo")) return null; const r = F.getBoundingClientRect(); return r.width > 20 && r.height > 20 ? r : null; };
-  const fldFits = (g, gr) => { if (FLD_NO[g.dataset.g]) return false; const fr = fldRect(); return !!fr && gr.left >= fr.left - 1 && gr.top >= fr.top - 1 && gr.right <= fr.right + 1 && gr.bottom <= fr.bottom + 1; };
+  // v0.954: на поле строк встают все группы, и «Кольца» с «Кручением»; площадки — solZoneRect / solZoneOf (и левая панель)
   // v0.315: размер группы — уголком; у свёрнутой (cmin) — свой, до заголовка
   /* v0.332, по снимку группы «Вид», сжатой уголком до одной подписи, — «кнопки, если не помещаются в группе, — не давать размера»: группа
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
@@ -11026,14 +11050,16 @@ function cgrpInit(){
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   const panels = () => [...groups, ...Object.keys(SOL_PLATES).map(id => document.getElementById(id)).filter(Boolean)];
   const onCanvas = g => SOL_PLATES[g.id] ? g.parentElement === wb : g.parentElement === tl;
+  const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
   window.zzAxisPanels = () => panels().filter(onCanvas);
   const nodePin = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].pin] : Z.cgrpPin && Z.cgrpPin[g.dataset.g];
   const nodeUnpin = g => { if (Z.cgrpEdge) delete Z.cgrpEdge[g.dataset.g]; if (SOL_PLATES[g.id]) delete Z[SOL_PLATES[g.id].pin]; else if (Z.cgrpPin) delete Z.cgrpPin[g.dataset.g]; };
   const nodePlace = g => { if (SOL_PLATES[g.id]) platePlace(g); else place(g); };
   const nodeSetPos = (g, x, y) => {
     const c = SOL_PLATES[g.id];
+    const f = zrec(g), fr = f && solZoneRect(f.z); if (fr) { f.x = x - fr.left; f.y = y - fr.top; return; }   // v0.954: на площадке — от её угла
     if (c) { const hr = wb.getBoundingClientRect(); Z[c.xy] = [x - hr.left + wb.scrollLeft, y - hr.top + wb.scrollTop]; }
-    else { const f = Z.cgrpFld[g.dataset.g], fr = f && fldRect(), tr = tl.getBoundingClientRect(); if (fr) { f.x = x - fr.left; f.y = y - fr.top; } else Z.cgrpPos[g.dataset.g] = { x: x - tr.left, y: y - tr.top }; }
+    else { const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: x - tr.left, y: y - tr.top }; }
   };
   /* v0.238, по снимку групп «Аниматрица», «Лазер», «Кручение» — «все кнопки разъехались — компактными, и размер стандартизируй»: кнопки
      группы — в своём блоке .cgb рядом с подписью (подпись — хват во всю высоту, как было), блок переносится компактно; размеры — в CSS. */
@@ -11122,7 +11148,7 @@ function cgrpInit(){
         const g = gByKey(k), o = L && gByKey(L.to);
         if (!g || !o) { if ([k, L && L.to].some(key => key && key[0] === "@" && SOL_PLATES[key.slice(1)])) continue; delete Z.cgrpLink[k]; continue; }
         if (solLinkCycle(Z.cgrpLink, k, L.to)) { delete Z.cgrpLink[k]; ch = true; continue; }
-        if (!onCanvas(g) || !onCanvas(o) || g.classList.contains("cdrag") || g.classList.contains("pdrag") || Z.cgrpFld[k] || Z.cgrpFld[L.to] || typeof nodePin(g) === "number" || !o.getClientRects().length || !g.getClientRects().length) continue;
+        if (!onCanvas(g) || !onCanvas(o) || g.classList.contains("cdrag") || g.classList.contains("pdrag") || zrec(g) || zrec(o) || typeof nodePin(g) === "number" || !o.getClientRects().length || !g.getClientRects().length) continue;
         const q = o.getBoundingClientRect(), x = L.v ? q.left + (L.dx || 0) : q.right - t;
         const grid = L.grid || (solPanelFolded(g) && solPanelFolded(o));
         const y = L.v ? (grid ? q.top + solPanelRowStep(o) : q.bottom - 1) + (L.gap || 0) : q.top + (L.dy || 0), r = g.getBoundingClientRect();
@@ -11184,7 +11210,7 @@ function cgrpInit(){
     if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
     const T = [], add = (el, ov) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q, ov || 0]); };
     /* v0.478, «магнитить только там, но без щелей — обводка на обводку ложить»: группа к группе встык заходит на 1 px — их рамки ложатся одна на другую */
-    add(wb); add($("field")); panels().forEach(o => { if (o !== g) add(o, 1); });
+    add(wb); add($("field")); add($("rowsPane")); panels().forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   window.zzGroupPinSync = () => linkSync();   // v0.929: единая верёвка для групп и таблиц
@@ -11209,7 +11235,7 @@ function cgrpInit(){
     return t; };
   const place = (g) => {
     if (document.body.classList.contains("sol-mobile")) return;
-    const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
+    const f = g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && solZoneRect(f.z);   // v0.348: на поле строк; v0.954: и на левой панели
     g.classList.toggle("cfld", !!fr);
     if (fr) {
       g.classList.add("cfloat"); const gw = g.offsetWidth, gh = g.offsetHeight;
@@ -11270,8 +11296,8 @@ function cgrpInit(){
           let m = g, q = o;   // кого двигать
           if (!only) { if (!mov(g) || (mov(o) && zOf(o) > zOf(g))) { m = o; q = g; } }
           if (!mov(m)) continue;
-          const A = m.getBoundingClientRect(), B = q.getBoundingClientRect(), k = m.dataset.g, F = Z.cgrpFld[k];
-          const fr = F ? fldRect() : null, br = wb.getBoundingClientRect();
+          const A = m.getBoundingClientRect(), B = q.getBoundingClientRect(), k = m.dataset.g, F = zrec(m);
+          const fr = F ? solZoneRect(F.z) : null, br = wb.getBoundingClientRect();
           const box = fr ? { l: fr.left, t: fr.top, r: fr.left + fr.width, b: fr.top + fr.height } : { l: br.left, t: wbTop(), r: br.right, b: br.bottom };
           const cand = [[B.right - 1 - A.left, 0], [B.left + 1 - A.right, 0], [0, B.bottom - 1 - A.top], [0, B.top + 1 - A.bottom]]
             .map(([dx, dy]) => ({ dx, dy, d: Math.abs(dx) + Math.abs(dy), ok: A.left + dx >= box.l - 0.5 && A.right + dx <= box.r + 0.5 && A.top + dy >= box.t - 0.5 && A.bottom + dy <= box.b + 0.5 }))
@@ -11346,7 +11372,7 @@ function cgrpInit(){
       if (!e.target.closest(".glab") || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); g._wasMin = !!Z.cgrpMin[g.dataset.g]; if (g._wasMin) foldToggle(false);
     });
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть; двойной — открыть и свернуть остальные панели. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + (FLD_NO[g.dataset.g] ? ". Эта группа остаётся на конусе" : "; над полем строк — прокрутка строк; группа целиком над полем — остаётся на нём") + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть; двойной — свернуть только её (свёрнутую — открыть). «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
@@ -11411,14 +11437,13 @@ function cgrpInit(){
           g.style.left = sx.toFixed(2) + "px"; g.style.top = sy.toFixed(2) + "px";
           mates.forEach(m => { m.o.style.left = (sx + m.dx).toFixed(2) + "px"; m.o.style.top = (Math.round(sy) + m.dy).toFixed(2) + "px"; }); }
         linkSync();   // v0.502: прицепленные справа — следом
-        const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
-        const F = $("field"); if (F) F.classList.toggle("cgover", !paneHit(lx, ly) && fldFits(g, g.getBoundingClientRect()));   // v0.348: целиком над полем
+        solZoneGlow(mates.length ? null : solZoneOf(g.getBoundingClientRect()));   // v0.348: целиком над полем строк; v0.954: или над левой панелью
       };
       const up = () => {
         g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up);
         if (!moved) return;
         g._solDragUntil = performance.now() + 400;
-        const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
+        const gr = g.getBoundingClientRect(), zone = mates.length ? null : solZoneOf(gr); solZoneGlow(null);   // v0.348
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
         if (Z.cgrpPin) { delete Z.cgrpPin[g.dataset.g]; mates.forEach(m => delete Z.cgrpPin[m.o.dataset.g]); }   // v0.911: перенесли — прищепка снята (ниже ставится заново, если отпустили на оси)
         if (mates.length) {   // v0.758: блок лазера — встаёт там, куда отпустили, весь разом
@@ -11437,7 +11462,7 @@ function cgrpInit(){
         }
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
-        if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); grpFix(g); save(); return; }   // v0.348: целиком на поле строк; v0.558: не поверх другой
+        if (zone) { Z.cgrpFld[g.dataset.g] = solZoneRec(zone, gr, solZoneRect(zone)); delete Z.cgrpPos[g.dataset.g]; place(g); grpFix(g); save(); return; }   // v0.348: целиком на поле строк; v0.558: не поверх другой
         delete Z.cgrpFld[g.dataset.g];
         const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top };
         if (typeof g._pin === "number") { if (!Z.cgrpPin || typeof Z.cgrpPin !== "object") Z.cgrpPin = {}; Z.cgrpPin[g.dataset.g] = g._pin; g._mesh = null; delete Z.cgrpLink[g.dataset.g];   // v0.911: отпустили на оси — прищеплена
@@ -11600,8 +11625,8 @@ function cgrpInit(){
   { const mo = new MutationObserver(() => cgTabsUi()); groups.forEach(g => mo.observe(g, { attributes: true, attributeFilter: ["class"] })); }
   cgTabsUi();
   { // v0.348: поле строк меняет место и размер (ширина поля, панель, спрятать, дзен) — группы на нём едут следом
-    const F = $("field"), re = () => groups.forEach(g => { if (Z.cgrpFld[g.dataset.g] && !g.classList.contains("cdrag")) place(g); });   // тащимую — не трогать
-    if (F && window.ResizeObserver) new ResizeObserver(re).observe(F);
+    const re = () => panels().forEach(g => { if (zrec(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag")) nodePlace(g); });   // тащимую — не трогать; v0.954: и плашки, и левая панель
+    if (window.ResizeObserver) { const ro = new ResizeObserver(re); for (const id of ["field", "rowsPane"]) { const A = $(id); if (A) ro.observe(A); } }
     new MutationObserver(re).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   cgrpCols();

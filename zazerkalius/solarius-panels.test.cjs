@@ -43,15 +43,15 @@ function context() {
   }
   const wb = node('body', null, 100, 40, 800, 600), tl = node('tools', wb, 0, 48, 800, 48), head = node('head', wb, 0, 0, 800, 24), cv = node('coneCv', wb, 0, 48, 800, 552);
   head.querySelector = () => null; wb.win = { querySelector: () => head }; cv.width = 800; cv.height = 552;
-  const ctx = vm.createContext({ Z, groups, tl, wb, FLD_NO: { 'кольца': 1, 'кручение': 1 }, SNAP: 10, TZC_H: 24, coneZoom: 1, conePan: [0, 0], coneGeom: {}, zTop: 400, zSnapOn: [], linkSaveT: 0,
-    document: { body, hidden: false, activeElement: null, getElementById: id => nodes.get(id) || null }, window: {}, performance: { now: () => 0 }, screen: {}, cgTabsBottom: () => 88, fldRect: () => null,
+  const ctx = vm.createContext({ Z, groups, tl, wb, SNAP: 10, TZC_H: 24, coneZoom: 1, conePan: [0, 0], coneGeom: {}, zTop: 400, zSnapOn: [], linkSaveT: 0,
+    document: { body, hidden: false, activeElement: null, getElementById: id => nodes.get(id) || null }, window: {}, performance: { now: () => 0 }, screen: {}, cgTabsBottom: () => 88,
     setTimeout: () => 0, clearTimeout() {}, save() { ctx.saved++; }, saved: 0, say() {}, cgbSnap() {}, cgrpCols() {}, sizeApply(g) { g.style.width = ''; }
   });
   ctx.$ = id => nodes.get(id) || null;
   const load = (marker, at = 0) => vm.runInContext(declaration(marker, at), ctx);
   load('const SOL_PLATES =');
-  for (const name of ['solPanelName', 'solPanelFolded', 'solPanelRowStep', 'solEdgePosition', 'solLinkCycle', 'solLinkAttach', 'solFoldButton', 'coneAxisScr', 'solAxisPack', 'solAxisPanelX', 'platePinPlace', 'platePlace', 'plateFoldSync', 'plateFoldToggle', 'plateZig', 'plateSnap', 'plateAxis', 'plateInit', 'zSnapGlow', 'zSnapTo']) load('function ' + name + '(');
-  for (const name of ['panels', 'onCanvas', 'nodePin', 'nodeUnpin', 'nodePlace', 'nodeSetPos', 'gByKey', 'linkCycle', 'meshSnap', 'linkSync', 'snapXY', 'attachMesh', 'wbTop', 'place', 'grpFix']) load('const ' + name + ' =', groupStart);
+  for (const name of ['solPanelName', 'solPanelFolded', 'solPanelRowStep', 'solEdgePosition', 'solLinkCycle', 'solLinkAttach', 'solFoldButton', 'coneAxisScr', 'solAxisPack', 'solAxisPanelX', 'platePinPlace', 'platePlace', 'plateFoldSync', 'plateFoldToggle', 'plateZig', 'plateSnap', 'plateAxis', 'plateInit', 'zSnapGlow', 'zSnapTo', 'solZoneRect', 'solZoneOf', 'solZoneRec', 'solZoneGlow']) load('function ' + name + '(');
+  for (const name of ['panels', 'onCanvas', 'zrec', 'nodePin', 'nodeUnpin', 'nodePlace', 'nodeSetPos', 'gByKey', 'linkCycle', 'meshSnap', 'linkSync', 'snapXY', 'attachMesh', 'wbTop', 'place', 'grpFix']) load('const ' + name + ' =', groupStart);
   load('window.zzAxisPanels =', groupStart);
   for (const name of ['zzPlateSnap', 'zzPanelLinkSync', 'zzPanelDragStart', 'zzPanelDragEnd']) load('window.' + name + ' =', groupStart);
   const run = expression => vm.runInContext(expression, ctx);
@@ -154,4 +154,18 @@ test('the algorithm panel follows tooth attachments and preserves its saved fold
   assert.equal(Z.cgrpLink['@lasAlgo'].to, '@ringTbl');
   ctx.plateFoldToggle(panel, false);
   assert.equal(panel.bt.getAttribute('aria-expanded'), 'true');
+});
+test('panels land on the rows field or the left panel only when they fit, wide plates by the pointer', () => {
+  const { ctx, nodes, body } = context(), area = (left, width) => ({ getClientRects: () => [1], getBoundingClientRect: () => ({ left, top: 0, width, height: 600, right: left + width, bottom: 600 }) });
+  nodes.set('rowsPane', area(0, 200)); nodes.set('field', area(900, 300));
+  const rect = (left, width, top = 40, height = 100) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  assert.equal(ctx.solZoneOf(rect(10, 150)), 'pane');
+  assert.equal(ctx.solZoneOf(rect(950, 200)), 'fld');
+  assert.equal(ctx.solZoneOf(rect(150, 150)), null);
+  assert.equal(ctx.solZoneOf(rect(20, 400), [100, 60]), 'pane');
+  assert.equal(ctx.solZoneOf(rect(20, 400), [500, 60]), null);
+  assert.deepEqual(json(ctx.solZoneRec('pane', rect(10, 150), ctx.solZoneRect('pane'))), { x: 10, y: 40, z: 'pane' });
+  assert.deepEqual(json(ctx.solZoneRec('fld', rect(950, 200), ctx.solZoneRect('fld'))), { x: 50, y: 40 });
+  body.classList.add('zen');
+  assert.equal(ctx.solZoneOf(rect(10, 150)), null);
 });

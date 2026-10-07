@@ -11,6 +11,8 @@
   let balls = [], batchBusy = false;
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр" };
+  // v0.954, «текст — убери из окна»: пояснения, T₀ и состояние — в подсказках (заголовок, ▶ запуск, скорость), не строками в окне.
+  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет только по прямым краям битов и поворачивается вместе со своим кольцом. На стыке колец и в центре он переходит на совпавшую грань, иначе разворачивается по своей. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
   const allStarts = () => Z.coneBallBatch !== false;
   // Keep coincident endpoints separate: each belongs to its own bit edge.
   function boundaryPoints(S) {
@@ -311,7 +313,7 @@
     const T = F && !F.ready ? F.period : S ? period(S) : null, mult = F && !F.ready ? F.mult : fraction(Z.coneBallMult || "1");
     const elapsed = balls.length ? Math.max(...balls.map(b => b.elapsed)) : F ? F.elapsed : 0;
     const text = T && Number.isFinite(mult) ? "T₀ " + T.toFixed(3) + " с · " + (allStarts() ? "диаметр" : "путь") + " за " + (T / mult).toFixed(3) + " с" + (F && !F.ready ? " · прошло " + elapsed.toFixed(3) + " с" : "") : "Нужны два вращающихся кольца и положительная дробь";
-    if ($("ballLabTime").textContent !== text) $("ballLabTime").textContent = text;
+    if ($("ballLabTime").textContent !== text) { $("ballLabTime").textContent = text; $("ballLabRun").title = $("ballLabSpeed").title = text; }
     $("ballLabRun").textContent = F && !F.ready ? "↻ новый запуск" : "▶ запуск";
     labControls();
   }
@@ -347,14 +349,13 @@
     const host = $("w-cone").querySelector(":scope > .wbody");
     lab = document.createElement("div"); lab.id = "solBallLab";
     if (Z.coneBallLabMin === undefined) Z.coneBallLabMin = Z.coneBallLabOpen === false;
-    lab.innerHTML = `<div class="rth"><span>● Шарики</span><span class="pbtn"><button type="button" class="pminbtn">−</button></span></div><div class="ball-lab-body">
+    lab.innerHTML = `<div class="rth"><span class="ball-lab-name">● Шарики</span><span class="pbtn"><button type="button" class="pminbtn">−</button></span></div><div class="ball-lab-body">
       <div class="ball-lab-row"><button id="ballLabEnable" type="button">● вкл.</button><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><span>Кольцо 1</span><button type="button" data-ball-ring="0" data-step="-.5">−½</button><button type="button" data-ball-ring="0" data-step=".5">+½</button><span>Кольцо 2</span><button type="button" data-ball-ring="1" data-step="-.5">−½</button><button type="button" data-ball-ring="1" data-step=".5">+½</button></div>
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" data-ball-speed="1/4">¼</button><button type="button" data-ball-speed="1/3">⅓</button><button type="button" data-ball-speed="1/2">½</button><button type="button" data-ball-speed="2/3">⅔</button><button type="button" data-ball-speed="1">1</button><button type="button" data-ball-speed="3/2">³⁄₂</button><button type="button" data-ball-speed="2">2</button><button type="button" data-ball-speed="4">4</button><button type="button" data-ball-speed="8">8</button><button type="button" data-ball-speed="16">16</button><button type="button" data-ball-speed="32">32</button></span></div>
-      <small>Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.</small>
-      <div id="ballLabTime"></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
-      <small>1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет только по прямым краям битов и поворачивается вместе со своим кольцом. На стыке колец и в центре он переходит на совпавшую грань, иначе разворачивается по своей. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.</small><div id="ballLabStatus" role="status" aria-live="polite"></div></div>`;
+      <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
+      <div id="ballLabStatus" role="status" aria-live="polite" hidden></div></div>`;
     host.appendChild(lab); $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
     $("ballLabEnable").onclick = () => $("bConeBall").click();
     $("ballLabRun").onclick = () => launch();
@@ -380,7 +381,7 @@
     new MutationObserver(() => {
       Z.coneBallLabOpen = !lab.classList.contains("pmin"); renderCone();
     }).observe(lab, { attributes: true, attributeFilter: ["class"] });
-    const source = $("coneBallStatus"), syncStatus = () => { $("ballLabStatus").textContent = source.textContent; };
+    const source = $("coneBallStatus"), syncStatus = () => { $("ballLabStatus").textContent = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
     $("coneCv").addEventListener("pointerdown", e => {
       if (!enabled || !drawn || e.button && e.button !== 0) return;
