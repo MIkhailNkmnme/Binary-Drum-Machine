@@ -1779,6 +1779,9 @@ const CONE_MAX = 256;   // v0.200: было 160 — заготовки Аним�
    (--b1 / --b0, неподвижные красным, если в поле включено «неподв.»), а когда дуга крупная — рисуется и сам символ 0 / 1
    шрифтом поля. Поворот кольца теперь поворачивает САМУ строку: пока тянешь — строка в поле крутится вместе (на
    каждом целом бите), отпустил — записано (↩ вернёт весь поворот разом). Поле строк меняется — конус перерисован. */
+/* v0.906, «оси симметрии сделай не жёлтого цвета — с солнцем сливаются»: линия привязки через центр (🧲, прилипание рукой к оси, к оси симметрии соседа)
+   и ось ⌖ Сканера — розовым, а не золотом солнца */
+const CONE_AXIS_COL = "#f472b6";
 let coneRot = [], coneGeom = null, coneDrag = null, coneHover = -1, coneRDown = null;   // coneRDown — где нажата правая кнопка (v0.735)
 /* v0.715, «когда кольцо добавляет — пусть масштаб не меняет»: шаг колец dr делился на число колец, и каждое новое кольцо (строка ушла в поле, |◀, ↶,
    новая строка руками) сжимало весь конус. Теперь делитель (coneDen) держится, пока колец стало на одно больше или меньше; новое кольцо выходит наружу, дальше —
@@ -3006,7 +3009,7 @@ function renderCone(){
   }
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   if (coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag)) {   // v0.803: 🧲 — линия привязки через центр; v0.875: и прилипание рукой
-    g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = cg; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);
+    g.save(); g.strokeStyle = CONE_AXIS_COL; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.shadowColor = CONE_AXIS_COL; g.shadowBlur = 6 * dpr; const L = Math.hypot(W, H);   // v0.906: не золотом — сливалось с солнцем
     g.beginPath(); g.moveTo(cx - L * Math.cos(coneMagLine), cy - L * Math.sin(coneMagLine)); g.lineTo(cx + L * Math.cos(coneMagLine), cy + L * Math.sin(coneMagLine)); g.stroke(); g.restore();
   }
   // метка «начала» строк — сверху: сюда встаёт бит 0
@@ -4643,7 +4646,7 @@ function coneScanDraw(g, o){
         g.moveTo(cx + rout * Math.cos(e0), cy + rout * Math.sin(e0)); g.arc(cx, cy, rout, e0, e1); g.arc(cx, cy, rin, e1, e0, true); g.closePath(); }
     }
     g.fillStyle = o.cBg; g.globalAlpha = 0.65; g.fill("evenodd"); g.globalAlpha = 1; }
-  g.strokeStyle = o.cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr);   // ось
+  g.strokeStyle = CONE_AXIS_COL; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr);   // ось; v0.906: розовая, не золотом
   g.beginPath(); g.moveTo(cx + rLim * Math.cos(t2), cy + rLim * Math.sin(t2)); g.lineTo(cx + rLim * Math.cos(t1), cy + rLim * Math.sin(t1)); g.stroke();
   g.globalAlpha = 1;
   const fsz = Math.round(Math.max(10 * dpr, Math.min(dr * band * 0.32, 15 * dpr)));
