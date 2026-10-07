@@ -5956,17 +5956,25 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - Math.max(rh, st ? w / 2 : 0) + host.scrollTop;
   // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
-  const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2;
+  const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2, sideGap = w / 5;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   if (sp && sp.parentElement === host) put(sp, x, y);
   put(b, x + (w - rw) / 2, cr.bottom - hr.top - rh + host.scrollTop);
-  if (st) { put(stB, x - w / 2 + d, y + w / 2 + d); if (stF && stF.parentElement === host) put(stF, x + w / 2 + d, y + w / 2 + d); }   // v0.856: 7/8, в клетках ромба 60
+  if (st) { put(stB, x - w / 2 + d - sideGap, y + w / 2 + d); if (stF && stF.parentElement === host) put(stF, x + w / 2 + d + sideGap, y + w / 2 + d); }   // v0.946: больше места между шагами и сбросом
   // v0.931: режимы справа от кручения; копия «На места» убрана из нижнего блока.
   const ms = document.getElementById("c3Modes");
-  if (ms && ms.parentElement === host) put(ms, x + w + 2, y + w / 2 - 12);
+  const right = Math.max(x + w, st ? x + w / 2 + d + sideGap + ws : x + w);
+  if (ms && ms.parentElement === host) {
+    let X = right + 10, Y = y + w / 2 - 12;
+    if (ms.classList.contains("spin")) {
+      const width = 292, left = cr.left - hr.left + host.scrollLeft, edge = cr.right - hr.left + host.scrollLeft;
+      // A narrow canvas gets the complete speed control above the diamonds.
+      if (X + width > edge - 4) { X = Math.max(left + 4, Math.min(edge - width - 4, x + w / 2 - width / 2)); Y = y - 30; }
+    }
+    put(ms, X, Y);
+  }
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const right = Math.max(x + w, st && stF && stF.parentElement === host ? x + w / 2 + d + ws : x + w, x + w / 2 + d + ws);
     const X = right + 8, available = Math.max(0, cr.right - hr.left + host.scrollLeft - X - 8);
     caption.style.maxWidth = available.toFixed(1) + "px";
     put(caption, X, cr.bottom - hr.top + host.scrollTop - caption.offsetHeight - 4);

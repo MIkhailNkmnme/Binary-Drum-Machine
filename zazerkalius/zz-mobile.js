@@ -8,7 +8,7 @@
     Object.assign(Z, { rows: ["1", "11"], cur: 0, cone3d: false, conePoly: false,
       coneClock: true, coneSun: true, coneSlits: "cutS", cutPrev: "", cutFree: false,
       coneClean: true, sunHalf: true, row1Parts: 2, laserQuad: false, cutRow1Slit: false,
-      coneBallOn: true, coneBallRoute: "eight", coneBallStart: "center", coneBallMult: "1", coneBitStep: false, coneSpinMode: "obit", coneAutoSp: 4.7,
+      coneBallOn: true, coneBallBatch: true, coneBallRoute: "cross", coneBallStart: "center", coneBallMult: "1", coneBitStep: false, coneSpinMode: "obit", coneAutoSp: 4.7,
       coneOnlySel: false, coneNoPick: true, coneVoid: false, coneLast2: false,
       fillStill: false, coneRot: [0, 0], coneSpin: 0, coneSpinPh: 0, coneAimRot: 0 });
     delete Z.coneFree; delete Z.fillFree; delete Z.coneHold; delete Z.coneHoldOff;
