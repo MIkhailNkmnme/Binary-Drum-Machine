@@ -2468,10 +2468,11 @@ function renderCone(){
     /* v0.863 / v0.867, «когда навожу на кольца, надо толщать внутрь кольца границы, а не как сейчас наружу»: обводка наведённого кольца шла по
        rin − 0,06 dr и rout + 0,06 dr — снаружи полосы, и налезала на соседние кольца. Обе черты лежат ВНУТРИ кольца: середина черты — на
        полтолщины от края внутрь; кольцо тоньше двух черт — обе сходятся к середине. Обводка текущего кольца — как была */
-    if (i === coneHover) { const hw = Math.max(2 * dpr, dr * 0.14), hm = (rin + rout) / 2;
-      g.strokeStyle = cA; g.lineWidth = hw; g.globalAlpha = 0.85;
-      g.beginPath(); coneArc(g, cx, cy, i, Math.min(hm, rin + hw / 2), 0, 2 * Math.PI); g.stroke();
-      g.beginPath(); coneArc(g, cx, cy, i, Math.max(hm, rout - hw / 2), 0, 2 * Math.PI); g.stroke(); g.globalAlpha = 1; }
+    /* v0.912, по снимку наведённого кольца — «при наведении на кольцо не утолщай границы, подсвети всё кольцо светом, фоном, но не меняй фигуру»: черт
+       по краям больше нет — всё кольцо (полоса от rin до rout) мягко заливается светлым поверх, края и рисунок те же */
+    if (i === coneHover) {
+      g.save(); g.fillStyle = "#ffffff"; g.globalAlpha = 0.16; g.beginPath(); coneArc(g, cx, cy, i, rout, 0, 2 * Math.PI); g.closePath();
+      if (rin > 0.5) { coneArc(g, cx, cy, i, rin, 2 * Math.PI, 0, true); g.closePath(); } g.fill("evenodd"); g.restore(); }
     if (Z.coneBit1 && !(Z.conePoly && n <= 2)) {   // v0.318, «подсветить 1 бит каждой строки»: бит 0 — золотой обводкой
       const a = -Math.PI / 2 - rot * step;
       g.strokeStyle = cg; g.globalAlpha = 1; g.lineJoin = "round"; g.lineWidth = Math.max(1.5 * dpr, Math.min(dr * 0.12, 4 * dpr));
