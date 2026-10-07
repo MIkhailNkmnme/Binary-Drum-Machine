@@ -64,7 +64,7 @@
     let was = false;
     const layout = () => {
       const on = mobile(); document.body.classList.toggle("sol-mobile", on);
-      const ballLab = $("solBallLab"); if (on && !was && ballLab) ballLab.open = true;
+      const ballLab = $("solBallLab"); if (on && !was && ballLab) plateFoldToggle(ballLab, false);
       if (on && !was) { document.body.classList.remove("sol-mobile-menus"); menu.textContent = "☰ Настройки"; menu.setAttribute("aria-expanded", "false"); coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
       was = on; sync(); requestAnimationFrame(() => { cgrpCols(); tzcAll(); renderCone(); });
     };

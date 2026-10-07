@@ -501,14 +501,29 @@ function rowLockBadge(i){
    плюс: Z.coneTurns[i] — кольцо строки i, Z.coneFillTurns — кольцо за чертой. Автокручение и шаги оборотов не дают. В строках — столбик .rtn
    последним, после счётчиков (есть, только пока нажата «⟳» в «Кручении», — иначе поле не сдвигается); пока кольцо тянут — число у мыши
    (#turnsChip, поверх, ничего не сдвигает). Обнуляют ⟲ «всё на места», щелчок по «↻k» у кольца, правый щелчок по «⟳» */
-function turnsFmt(t){ const a = Math.round(Math.abs(t) * 100) / 100; return a ? rotTxt(String(a).replace(".", ","), t < 0) : "0"; }   // v0.869: против часовой — «↺−»
+function turnsParts(i){
+  const R = coneRingFeat(i);
+  const B = i !== "f" && i > 0 && R && !R.cut ? bipyGeo(i) : null;
+  return Math.max(1, Math.round(B ? B.P : R ? R.P : 1));
+}
+function turnsFmt(t, i){
+  const a = Math.abs(t); if (!Number.isFinite(a)) return "0";
+  // Count in this ring's geometric parts; keep its denominator unreduced.
+  // Only the display is rounded. The stored rotation remains continuous.
+  const q = turnsParts(i), p = Math.round(a * q);
+  if (!p) return "0";
+  const whole = Math.floor(p / q), rest = p % q;
+  const text = rest ? (whole ? whole + " " : "") + rest + "/" + q : String(whole);
+  return rotTxt(text, t < 0);
+}
 function turnsOf(i){   // i — номер кольца строки или "f" — кольцо за чертой
   const live = i !== "f" && typeof coneDrag !== "undefined" && coneDrag && coneDrag.i === i ? coneDrag.turn / (2 * Math.PI) : 0;
   return (i === "f" ? (Z.coneFillTurns || 0) : ((Array.isArray(Z.coneTurns) && Z.coneTurns[i]) || 0)) + live;
 }
 function rowTurnsBadge(i){
   if (!Z.coneTurnsShow) return "";
-  return '<span class="rtn' + (Math.round(turnsOf(i) * 100) < 0 ? " ccw" : "") + '" data-ti="' + i + '" title="' + (i === "f" ? "Кольцо за чертой" : "Кольцо " + (i + 1)) + ': оборотов рукой (Ctrl + тянуть кольцо): ↻ по часовой, ↺− против (красным)' + (i === "f" ? "; " + (Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0) + " — открывается следующее кольцо, как «＋»" : "") + '">' + turnsFmt(turnsOf(i)) + "</span>";
+  const v = turnsOf(i), text = turnsFmt(v, i);
+  return '<span class="rtn' + (v < 0 && text !== "0" ? " ccw" : "") + '" data-ti="' + i + '" title="' + (i === "f" ? "Кольцо за чертой" : "Кольцо " + (i + 1)) + ': оборотов рукой (Ctrl + тянуть кольцо): ↻ по часовой, ↺− против (красным); дробь — в частях этого кольца, округлено до ближайшей части' + (i === "f" ? "; " + (Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0) + " — открывается следующее кольцо, как «＋»" : "") + '">' + text + "</span>";
 }
 function turnsAdd(i, t){
   if (!t) return;
@@ -517,7 +532,7 @@ function turnsAdd(i, t){
   while (Z.coneTurns.length <= i) Z.coneTurns.push(0);
   Z.coneTurns[i] = (Z.coneTurns[i] || 0) + t;
 }
-function turnsMark(){ if (!Z.coneTurnsShow) return; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, v = turnsOf(k === "f" ? "f" : +k), t = turnsFmt(v); if (el.textContent !== t) el.textContent = t; const c = Math.round(v * 100) < 0; if (el.classList.contains("ccw") !== c) el.classList.toggle("ccw", c); }); }
+function turnsMark(){ if (!Z.coneTurnsShow) return; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, i = k === "f" ? "f" : +k, v = turnsOf(i), t = turnsFmt(v, i); if (el.textContent !== t) el.textContent = t; const c = v < 0 && t !== "0"; if (el.classList.contains("ccw") !== c) el.classList.toggle("ccw", c); }); }
 function turnsChip(ev, txt){
   let el = document.getElementById("turnsChip");
   if (txt === null) { if (el && !el.hidden) el.hidden = true; return; }
@@ -1866,7 +1881,7 @@ function lasSegInit(){
 function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.querySelectorAll('.lseg[data-seg="' + d.id + '"] > button').forEach(b => { const on = b.dataset.v === v; if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }); } }
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
-  r1: ["bRow1Parts2", "bRow1Parts3", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
+  r1: ["bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
   fill: ["bCutFree", "bSunXor", "bSunAnti", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross"],
@@ -1882,7 +1897,7 @@ function lasDeps(){
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
-  need(["bRow1Parts2", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
+  need(["bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
     "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
@@ -2032,7 +2047,8 @@ const SUNTBL = [
    снизу — за верхней; потянул ведомую — отцепил. Циклы запрещены. */
 const SOL_PLATES = {
   sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", name: "Солнце · Луна", col: "#ffe14d" },
-  ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", name: "Кольца", col: "#22d3ee" }
+  ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", name: "Кольца", col: "#22d3ee" },
+  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", name: "Шарики", col: "#79e7e1", corner: "bottom-right" }
 };
 function solPanelName(el){ return SOL_PLATES[el.id] ? SOL_PLATES[el.id].name : el.dataset.g; }
 function solPanelFolded(el){ return el.classList.contains("cmin") || el.classList.contains("pmin"); }
@@ -2094,7 +2110,7 @@ function platePlace(el){
   const top = Math.max(hr.top, hd, cgTabsBottom()), sl = host.scrollLeft, st = host.scrollTop;
   const edge = solEdgePosition(el, Z.cgrpEdge && Z.cgrpEdge[el.dataset.g], top, hr.top + host.clientHeight - h);
   if (edge) { el.style.left = (edge.x - hr.left + sl).toFixed(2) + "px"; el.style.top = (edge.y - hr.top + st).toFixed(2) + "px"; return; }
-  const XY = Array.isArray(Z[c.xy]) ? Z[c.xy] : [el.id === "sunMoonTbl" ? cr.right - hr.left + sl - w - 8 : cr.left - hr.left + sl + 8, Math.max(cr.top, top) - hr.top + st + 8];
+  const XY = Array.isArray(Z[c.xy]) ? Z[c.xy] : c.corner === "bottom-right" ? [sl + host.clientWidth - w - 8, st + host.clientHeight - h - 8] : [el.id === "sunMoonTbl" ? cr.right - hr.left + sl - w - 8 : cr.left - hr.left + sl + 8, Math.max(cr.top, top) - hr.top + st + 8];
   const lo = top - hr.top + st, hi = Math.max(lo, st + host.clientHeight - h);
   const x = Math.max(sl, Math.min(Math.max(sl, sl + host.clientWidth - w), XY[0]));
   let y = Math.max(lo, Math.min(hi, XY[1]));
@@ -2102,6 +2118,7 @@ function platePlace(el){
   const l = Math.round(x) + "px", t = Math.round(y) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
 }
 function plateInit(el){
+  el.classList.add("sol-plate");
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
   hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть; двойной — открыть и свернуть остальные панели; правый — на исходное место и без сцепки. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
@@ -2139,8 +2156,8 @@ function plateInit(el){
   plateFoldSync(el);
 }
 function plateZig(el, col){
-  if (document.body.classList.contains("sol-mobile")) return;
   if (!el || el.hidden || !el.getClientRects().length) return;
+  if (document.body.classList.contains("sol-mobile") && el.id !== "solBallLab") return;
   if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => plateZig(el, col)); el._pzRO.observe(el); }
   const P = TZC_H, t = P / (2 * Math.sqrt(3));
   const mh = el.style.minHeight; el.style.minHeight = ""; const H0 = el.offsetHeight, H = Math.max(P, Math.ceil(H0 / P - 1e-6) * P); const want = H !== H0 ? H + "px" : "";
@@ -2346,10 +2363,12 @@ function ringTblSync(){
 }
 function renderCone(){
   coneRow1PartsUi();
+  turnsMark();
   lasUi3d();   // v0.373
   lasDeps();   // v0.757
   sunTblSync();   // v0.867: таблица «☀ Солнце · ☾ Луна»
   ringTblSync();   // v0.871: таблица «◯ Кольца»
+  if (window.zzBallLabSync) window.zzBallLabSync();
   if (window.zzGroupPinSync) window.zzGroupPinSync();   // v0.911: прищеплённые к оси группы — за центром и масштабом
   coneHoldSync();   // v0.870: «2 посл.» — стоящие кольца по числу строк
   if (window.c3PadPlace) window.c3PadPlace();   // v0.935: свободный слой, включая верхнюю полосу
@@ -2845,7 +2864,7 @@ function renderCone(){
       const S = coneSunTrace(), rIn = (b) => r0 + (b - 1) * dr + Math.max(1, dr * band), rAt = (b) => r0 + b * dr;
       const sect = (ri, ro, lo, hi) => { g.beginPath(); g.arc(cx, cy, ro, lo - Math.PI / 2, hi - Math.PI / 2); g.arc(cx, cy, Math.max(0, ri), hi - Math.PI / 2, lo - Math.PI / 2, true); g.closePath(); g.fill(); };
       if (coneQuadOn()) {   // v0.744: ✚ — круг из четвертей, солнце — маленьким кругом внутри
-        const parts = conePartCount(), partStep = TAU2 / parts, rD = r0 + Math.max(1, dr * band), rS = rD * 0.32, q0 = -Math.PI / 2 - coneRotOf(0) * partStep;
+        const parts = conePartCount(), partStep = TAU2 / parts, rD = r0 + Math.max(1, dr * band), rS = rD * 0.32, q0 = -Math.PI / 2 - coneRotOf(0) * partStep + coneRow1PartPhase();
         g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
         const smQ = coneSunMoon();   // v0.807: ☀☾ — чёрные четверти солнцем, белые — луной
         for (let q = 0; q < parts; q++) { g.fillStyle = smQ ? (q % 2 ? "#9cc3ff" : cg) : q % 2 ? c1 : "#05070b"; g.globalAlpha = smQ ? (q % 2 ? 0.85 : 0.5) : 1; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * partStep, q0 + (q + 1) * partStep); g.closePath(); g.fill(); }
@@ -2855,7 +2874,7 @@ function renderCone(){
         g.stroke(); g.restore();
         /* v0.907, по снимку ✚ — «это 1 бит, 4 части, но это 1 бит — тут надо 1 текст, а не два раза по 1; пусть из центра 1 торчит и так же крутится»: цифра бита
            строки 1 — одна, в самом центре, повёрнута вместе с четвертями (как прежде цифра белой четверти); золотом с тёмной тенью — ложится на стык четвертей */
-        g.save(); g.shadowColor = cBg; g.shadowBlur = 5 * dpr; coneGlyph(g, cx, cy, q0 + 1.5 * partStep, 0, rD * 0.75, (Z.rows[0] || "1")[0], cg, ff); g.restore();
+        g.save(); g.shadowColor = cBg; g.shadowBlur = 5 * dpr; coneGlyph(g, cx, cy, q0 + 1.5 * partStep, 0, dr * band * 0.95, (Z.rows[0] || "1")[0], cT, ff, 0.35); g.restore();
         coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
         /* v0.901, по снимку ✚ — «тут не надо окружность солнца — просто сразу лучи из центра и луны»: круга солнца (rS) больше нет — свет солнца и луны
            идёт прямо из точки центра (r1Glow ниже) */
@@ -2877,7 +2896,7 @@ function renderCone(){
         g.save(); g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.beginPath();
         for (const e of [b0, b0 + Math.PI]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
         g.stroke(); g.restore();
-        coneGlyph(g, cx, cy, b0 + Math.PI / 2, rD * 0.62, rD * 0.45, bit, bit === "1" ? cBg : c1, ff);   // v0.750: цифра посередине полукруга
+        coneGlyph(g, cx, cy, b0 + Math.PI / 2, 0, dr * band * 0.95, bit, cT, ff, 0.35);   // v0.750: цифра посередине полукруга
         coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
         g.fillStyle = cg; g.globalAlpha = 1; g.shadowColor = cg; g.shadowBlur = 14 * dpr; g.beginPath(); g.arc(cx, cy, rS, 0, 2 * Math.PI); g.fill(); g.shadowBlur = 0;
       } else if (Z.sunRow1) {   /* v0.775, «кнопку для понятия надо, что 1 бит — солнце»: «☀ = 1 бит» (Z.sunRow1) — строка 1 сама и есть солнце: золотой светящийся
@@ -3125,13 +3144,13 @@ function renderCone(){
         }
       }
     } else if (coneQuadOn()) {   // v0.743: ✚ 4 части — строка 1 кругом от центра: чёрная, белая, чёрная, белая (от верха по часовой)
-      const parts = conePartCount(), partStep = TAU2 / parts, rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 - coneRotOf(0) * partStep;
+      const parts = conePartCount(), partStep = TAU2 / parts, rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 - coneRotOf(0) * partStep + coneRow1PartPhase();
       g.save(); g.globalAlpha = 1;
       for (let q = 0; q < parts; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * partStep, q0 + (q + 1) * partStep); g.closePath(); g.fill(); }
       g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
       for (let q = 0; q < parts; q++) { const e = q0 + q * partStep; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
       g.moveTo(cx + rD, cy); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
-      for (let q = 1; q < parts; q += 2) coneGlyph(g, cx, cy, q0 + (q + 0.5) * partStep, rD * 0.62, rD * 0.4, (Z.rows[0] || "1")[0], cBg, ff);
+      coneGlyph(g, cx, cy, q0 + 1.5 * partStep, 0, dr * band * 0.95, (Z.rows[0] || "1")[0], cT, ff, 0.35);
       coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
     } else if (coneHalfOn()) {
       const rD = r0 + Math.max(1, dr * band), b0 = (-0.5 - coneRotOf(0)) * Math.PI - Math.PI / 2, bit = (Z.rows[0] || "1")[0];
@@ -3140,7 +3159,7 @@ function renderCone(){
       g.strokeStyle = cg; g.globalAlpha = 0.95; g.lineWidth = Math.max(1.5, 1.5 * dpr); g.beginPath();
       for (const e of [b0, b0 + Math.PI]) { g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
       g.stroke(); g.restore();
-      coneGlyph(g, cx, cy, b0 + Math.PI / 2, rD * 0.62, rD * 0.45, bit, bit === "1" ? cBg : c1, ff);
+      coneGlyph(g, cx, cy, b0 + Math.PI / 2, 0, dr * band * 0.95, bit, cT, ff, 0.35);
       coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
     } else if (coneSlitMode() !== "cut" || coneRow1Slit()) {   // v0.745: ▮ щель 1 — и в вырезах; v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
       const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Slit() ? coneRow1Half() : hs, 1.5 * dpr / Math.max(1, ro)));   // v0.774: внутренний край — точка, ширина — по внешнему   // v0.751: ▮ — свой угол   // v0.139: вырез — отдельно от лазера
@@ -4732,7 +4751,7 @@ let coneFillDrag = false, coneR1Drag = false;   // v0.877: и строка 1 р�
 function coneRingFeat(i){
   let n, cut, step, P, x0;
   if (i === "f") { n = fillLen(); if (!n) return null; const F = coneFillCut(); cut = !!F; step = F ? F.step : 2 * Math.PI / n; P = F ? F.P : n; x0 = coneFillRot() - (F ? F.off : 0); }
-  else if (i === 0 && coneQuadOn()) { n = conePartCount(); cut = false; step = TAU2 / n; P = n; x0 = coneRotOf(0); }
+  else if (i === 0 && coneQuadOn()) { n = conePartCount(); cut = false; step = TAU2 / n; P = n; x0 = coneRotOf(0) - coneRow1PartPhase() / step; }
   else if (i === 0 && coneHalfOn()) { n = 2; cut = false; step = Math.PI; P = 2; x0 = coneRotOf(0) - 0.5; }
   else { const R = coneMagRing(i); if (!R) return null; n = R.n; cut = R.cut; step = R.step; P = R.P; x0 = R.x0; }
   return { n, cut, step, P, x0, sp: cut && coneCutSpread() };
@@ -4996,7 +5015,7 @@ function coneRow1Slit(){ return !!Z.cutRow1Slit && coneCutOn() && !coneQuadOn();
    свет выходит только через щель (сектор шириной в щель, где она сейчас), дальше — как всегда. coneSunSlitArc — щель углами от верха */
 /* v0.750, по снимку «▮ щель 1» с солнцем — «толщина 1 бита всегда равна всем остальным, и там 1 тоже покажи цифру»: бит строки 1 (◐, ✚, ▮) — во всю
    толщину кольца от самого центра (у ▮ было — тоньше, от 0,42), и на нём — его цифра, как у битов прочих колец. coneGlyph — цифра на бите (угол холста am) */
-function coneGlyph(g, cx, cy, am, rr, fsz, ch, col, ff){ g.save(); g.translate(cx + rr * Math.cos(am), cy + rr * Math.sin(am)); g.rotate(am + Math.PI / 2); g.fillStyle = col; g.globalAlpha = 1; g.font = `${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 0, 0); g.restore(); }
+function coneGlyph(g, cx, cy, am, rr, fsz, ch, col, ff, alpha = 1){ g.save(); g.translate(cx + rr * Math.cos(am), cy + rr * Math.sin(am)); g.rotate(am + Math.PI / 2); g.fillStyle = col; g.globalAlpha = alpha; g.font = `${Math.round(fsz)}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 0, 0); g.restore(); }
 /* v0.751, по снимку «▮ щель 1» с солнцем — «дай задать угол щели вплоть до 360° — это будет как режим солнца»: у щели строки 1 (▮) свой угол — ползунок
    «∠» рядом с кнопкой, 1…360° (Z.row1SlitDeg; не задан — как общая «щель»). 360° — щель во весь круг: солнце светит всё, как без ▮; лазер выходит всегда.
    Общая «щель» колец (до 10°) не меняется. coneRow1Half — половина угла щели строки 1, радианы */
@@ -5004,29 +5023,38 @@ function coneRow1Half(){ return Math.max(0.1, Math.min(360, +Z.row1SlitDeg || +Z
 function coneSunSlit(){ return !!Z.cutRow1Slit && coneSunOn() && coneCutOn() && !coneQuadOn(); }
 function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; const t = coneCutAngle() + Math.PI / 2, h = coneRow1Half(), o = []; if (h >= Math.PI - 1e-9) return [[0, TAU2]]; ivNorm(t - h, t + h, o); return ivUnion(o); }
 function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || coneSunOn()); }   // v0.744: и у солнца
-function conePartCount(){ return Z.row1Parts === 3 ? 3 : 4; }
+function conePartCount(){ return Z.row1Parts === "last" ? 2 * Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length) : Z.row1Parts === 3 ? 3 : 4; }
+function coneRow1PartPhase(){
+  if (Z.row1Parts !== "sym2" && Z.row1Parts !== "last") return 0;
+  const k = Z.row1Parts === "last" ? Z.rows.length - 1 : Math.min(1, Z.rows.length - 1);
+  const n = Math.max(1, (Z.rows[k] || "1").length), C = coneCutGeo(k, n), step = TAU2 / conePartCount();
+  const center = -Math.PI / 2 + ((C.cut ? cutPos(0, n) : 0) + C.off + 0.5) * C.step;
+  return center + Math.PI / n - (-Math.PI / 2 + 1.5 * step);
+}
 function coneRow1PartsUi(){
-  const selected = Z.laserQuad ? conePartCount() : Z.cutRow1Slit ? 0 : Z.sunHalf || coneCut2n() ? 2 : 0;
-  for (const [id, n] of [["bRow1Parts2", 2], ["bRow1Parts3", 3], ["bLaserQuad", 4]]) {
+  const selected = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.cutRow1Slit ? 0 : Z.sunHalf || coneCut2n() ? 2 : 0;
+  for (const [id, n] of [["bRow1Parts2", 2], ["bRow1PartsSym", "sym2"], ["bRow1PartsLast", "last"], ["bRow1Parts3", 3], ["bLaserQuad", 4]]) {
     const b = document.getElementById(id); if (b) { b.classList.toggle("on", selected === n); b.setAttribute("aria-pressed", String(selected === n)); }
   }
+  const last = document.getElementById("bRow1PartsLast");
+  if (last) { const text = "◈ по последней · " + Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length); if (last.textContent !== text) last.textContent = text; }
 }
 function coneRow1PartsSet(n){
-  const was = Z.laserQuad ? conePartCount() : Z.sunHalf ? 2 : 0, on = was !== n;
+  const was = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.sunHalf ? 2 : 0, on = was !== n;
   Z.row1Parts = n; Z.laserQuad = on && n !== 2; Z.sunHalf = on && n === 2;
   if (on) { Z.cutRow1Slit = false; const b = document.getElementById("bRow1Slit"); if (b) b.classList.remove("on"); }
   const half = document.getElementById("bSunHalf"); if (half) half.classList.toggle("on", !!Z.sunHalf);
   coneWallWas = undefined; coneSunWas = undefined; coneClockWas = null; conePeekC = { k: "", S: null }; lasDepsK = "";
   coneRow1PartsUi(); save(); renderCone();
-  say(on ? `${n} части: ${n === 2 ? "полукольцо, одна половина с битом, другая открыта" : n === 3 ? "три сектора по 120°: открытый, с битом, открытый" : "четыре сектора по 90°: открытый, с битом, открытый, с битом"}.` : "Деление строки 1 на части выключено.");
+  say(on ? n === "last" ? "Первое кольцо: части по симметрии последней строки перед горизонтом, со сдвигом фазы на половину шага. Число частей меняется вместе с последней строкой." : n === "sym2" ? "2 по симметрии: один бит в двух противоположных частях по 90°, между ними открытые части; фаза отличается от второй строки." : `${n} части: ${n === 2 ? "полукольцо, одна половина с битом, другая открыта" : n === 3 ? "три сектора по 120°: открытый, с битом, открытый" : "четыре сектора по 90°: открытый, с битом, открытый, с битом"}.` : "Деление строки 1 на части выключено.");
 }
 /* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
    круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
    четверти углами от верха по часовой */
 /* v0.874, «почему-то первое кольцо крутится вручную в другую сторону»: четверти ✚ поворачивались на +coneRotOf(0), а все кольца (и ◐, и значок бита
    строки 1) — на −: рукой по часовой ✚ шёл против часовой, и при ▶ — навстречу остальным. Знак общий; рисунок, свет и проверка луча — вместе */
-function coneQuadArcs(open){ const r = coneRotOf(0), n = conePartCount(), step = TAU2 / n, o = []; for (let q = open ? 0 : 1; q < n; q += 2) ivNorm((q - r) * step, (q + 1 - r) * step, o); return ivUnion(o); }
-function coneQuadOpen(a){ const n = conePartCount(), x = ((((a + Math.PI / 2) / (TAU2 / n) + coneRotOf(0)) % n) + n) % n; return Math.floor(x) % 2 === 0; }
+function coneQuadArcs(open){ const r = coneRotOf(0), n = conePartCount(), step = TAU2 / n, phase = coneRow1PartPhase(), o = []; for (let q = open ? 0 : 1; q < n; q += 2) ivNorm((q - r) * step + phase, (q + 1 - r) * step + phase, o); return ivUnion(o); }
+function coneQuadOpen(a){ const n = conePartCount(), x = ((((a + Math.PI / 2 - coneRow1PartPhase()) / (TAU2 / n) + coneRotOf(0)) % n) + n) % n; return Math.floor(x) % 2 === 0; }
 function coneClockTrace(){
   const N = Math.min(Z.rows.length, CONE_MAX), s0 = Z.rows[0]; if (!N || !s0) return [];
   const TAU = 2 * Math.PI, T = coneRingsTotal(N), out = [];
@@ -6194,7 +6222,7 @@ function setupCone(){
               say(`⟳ ${openT} оборота — кольцо ${n0 + 1} в строках (пустые ячейки — нулями), за чертой — следующее, ${fillLen()} ячеек. ↩ вернёт.`); }
             else blocked = true; }   // строки заперты — не пробовать на каждом движении
         }
-        turnsChip(ev, `За чертой: ${turnsFmt(Z.coneFillTurns)}` + (openT > 0 ? ` из ${openT}` : "")); turnsMark(); renderCone(); };
+        turnsChip(ev, `За чертой: ${turnsFmt(Z.coneFillTurns, "f")}` + (openT > 0 ? ` из ${openT}` : "")); turnsMark(); renderCone(); };
       const up = () => { cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
         coneFillDrag = false; coneMagLine = null;
         if (rb && Math.abs(turn) < 0.02) { Z.coneFillTurn = t0; Z.coneFillTurns = tb; turnsMark(); renderCone(); return; }
@@ -6223,7 +6251,7 @@ function setupCone(){
         { const AX = coneFlat() ? coneR1AxisSnap() : null, dL = k1 === 1 ? coneAimSnapD() : null;   // v0.881: к осям; v0.890: и к лазеру — что ближе
           if (dL !== null && (!AX || Math.abs(dL) <= Math.abs(AX.deg) * Math.PI / 180)) { Z.coneAimRot -= dL * 180 / Math.PI; coneMagLine = null; }
           else { if (AX) Z.coneAimRot += AX.deg; coneMagLine = AX ? AX.t : null; } }
-        turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI))); renderCone();
+        turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI), 0)); renderCone();
       };
       const up = () => {
         cv.removeEventListener("pointermove", mv); cv.removeEventListener("pointerup", up); cv.removeEventListener("pointercancel", up); cv.style.cursor = "grab"; turnsChip(null, null);
@@ -6278,7 +6306,7 @@ function setupCone(){
     const cvr = cv.getBoundingClientRect(), G = coneGeom, D = coneDrag;
     const a = Math.atan2((e.clientY - cvr.top) * G.dpr - G.cy, (e.clientX - cvr.left) * G.dpr - G.cx);
     let da = a - D.last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
-    D.turn += da; D.last = a; turnsChip(e, "Кольцо " + (D.i + 1) + ": " + turnsFmt(turnsOf(D.i))); turnsMark();   // v0.867: обороты — у мыши и в столбике
+    D.turn += da; D.last = a; turnsChip(e, "Кольцо " + (D.i + 1) + ": " + turnsFmt(turnsOf(D.i), D.i)); turnsMark();   // v0.867: обороты — у мыши и в столбике
     const n = D.base.length; let rot = -D.turn / (D.cut ? 2 * Math.PI / coneCutP(n) : 2 * Math.PI / n);   // v0.671: в вырезах — шаг части
     if (!D.mag) { const kp = coneRot[D.i]; coneRot[D.i] = D.v0 + rot; const SN = coneFlat() ? coneHandSnap(D.i) : null; coneRot[D.i] = kp;   // v0.875: прилипнуть к границе кольца внутри
       if (SN) rot += SN.dx; D.hs = SN; coneMagLine = SN ? SN.t : null; }
@@ -7090,6 +7118,8 @@ function setupCone(){
   if ($("bLaserQuad")) {   // v0.743: ✚ 4 части — строка 1 кругом из четвертей, луч из центра через чёрную
     $("bLaserQuad").onclick = () => coneRow1PartsSet(4);
     if ($("bRow1Parts2")) $("bRow1Parts2").onclick = () => coneRow1PartsSet(2);
+    if ($("bRow1PartsSym")) $("bRow1PartsSym").onclick = () => coneRow1PartsSet("sym2");
+    if ($("bRow1PartsLast")) $("bRow1PartsLast").onclick = () => coneRow1PartsSet("last");
     if ($("bRow1Parts3")) $("bRow1Parts3").onclick = () => coneRow1PartsSet(3);
     coneRow1PartsUi();
   }
@@ -10847,13 +10877,13 @@ function solPanelOrganizeInit(C){
   const { tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi } = C;
   const sections = [
     { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "@sunMoonTbl", "строка 1", "щели", "за чертой", "алгоритм"] },
-    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца"] },
+    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "@solBallLab"] },
     { name: "Вид", color: "#6cb4ff", keys: ["вид", "3d"] },
     { name: "Звук и цикл", color: "#b98cff", keys: ["аниматрица", "звук"] },
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
@@ -12278,13 +12308,60 @@ function paneZigZ(){ for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = 
 /* v0.823, по снимку края поля строк — «строки: границу зубцами, так же как левое меню»: вместо прямой черты у края поля (#fieldEdge::after) — те же
    зубцы, что у левого меню: слой #fieldZigOv поверх окон (щелчки сквозь него), острия — в сторону стола, цветом фона поля с чертой, сетка та же (сдвиг dy
    от полосы вкладок). Хват ширины (#fieldEdge) остался на месте */
+function fieldDrawerSync(){
+  const field = document.getElementById("field"); if (!field) return;
+  const on = !!Z.fieldPeek && !!Z.fieldRight && !Z.fieldOnly && innerWidth > 760 && !document.body.classList.contains("sol-mobile");
+  document.body.classList.toggle("field-peek", on);
+  field.style.setProperty("--field-drawer-width", Math.max(100, Z.fieldDrawerWidth || Z.rowsW || 263) + "px");
+  const pull = document.getElementById("fieldPull"); if (pull) pull.setAttribute("aria-expanded", String(!on));
+}
+function fieldDrawerInit(){
+  const field = document.getElementById("field"); if (!field || document.getElementById("fieldPull")) return;
+  const pull = document.createElement("button"); pull.id = "fieldPull"; pull.type = "button"; pull.textContent = "◀ Строки";
+  pull.title = "Потяни влево или нажми — вернуть поле строк"; pull.setAttribute("aria-label", "Вернуть поле строк"); pull.setAttribute("aria-controls", "fieldHead rowList"); field.appendChild(pull);
+  const settle = peek => {
+    Z.fieldPeek = peek; field.style.transform = ""; document.body.classList.remove("field-sliding"); fieldDrawerSync();
+    save(); requestAnimationFrame(() => { packWins(); rowsFit(); fieldInfoFit(); renderAll(); paneZig(); });
+  };
+  pull.onclick = () => { if (performance.now() >= (pull._dragUntil || 0)) settle(false); };
+  field.addEventListener("pointerdown", e => {
+    if (e.button !== 0 || !Z.fieldRight || Z.fieldOnly || innerWidth <= 760 || document.body.classList.contains("sol-mobile")) return;
+    if (e.target !== pull && e.target.closest("button,input,select,textarea,a,label,.rw,.win,.cgrp,#fieldHead,#rowInputBar,#fieldEdge")) return;
+    const was = document.body.classList.contains("field-peek"), width = field.getBoundingClientRect().width;
+    const x0 = e.clientX, y0 = e.clientY, initial = was ? width - 24 : 0; let moved = false, dx = 0;
+    const cleanup = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", cancel); };
+    const up = ev => {
+      if (ev.pointerId !== e.pointerId) return; cleanup(); if (!moved) return;
+      pull._dragUntil = performance.now() + 400;
+      settle(was ? dx > -40 : dx > 40);
+    };
+    const cancel = ev => { if (ev.pointerId !== e.pointerId) return; cleanup(); if (moved) settle(was); };
+    const move = ev => {
+      if (ev.pointerId !== e.pointerId) return;
+      if (!ev.buttons) { up(ev); return; }
+      dx = ev.clientX - x0;
+      if (!moved) {
+        const dy = ev.clientY - y0;
+        if (Math.abs(dx) < 8) return;
+        if (Math.abs(dy) > Math.abs(dx)) { cleanup(); return; }
+        if (!was && dx < 0) { cleanup(); return; }
+        moved = true; Z.fieldDrawerWidth = width; document.body.classList.add("field-sliding");
+        try { field.setPointerCapture(e.pointerId); } catch (err) { /* released pointer */ }
+      }
+      ev.preventDefault(); field.style.transform = `translateX(${Math.max(0, Math.min(width - 24, initial + dx))}px)`; paneZig();
+    };
+    window.addEventListener("pointermove", move, { passive: false }); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", cancel);
+  });
+  window.addEventListener("resize", fieldDrawerSync); fieldDrawerSync();
+}
 function fieldZig(dy, ln){
   const f = document.getElementById("field"); if (!f) return;
   let ov = document.getElementById("fieldZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "fieldZigOv"; document.body.appendChild(ov);
     /* v0.832, по снимку края поля — «границу для захвата (изменение ширины полей) можно ли на зубцах расположить»: хват — сами зубцы: нажатие и двойной
        щелчок по ним передаются прежнему хвату #fieldEdge (тянуть — ширина, двойной щелчок — по умолчанию); полоса внутри поля, пока зубцы видны, выключена */
     ov.title = "Потяни — шире или уже поле строк; двойной щелчок — ширина по умолчанию";
-    for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const fe = document.getElementById("fieldEdge"); if (!fe) return; e.preventDefault(); e.stopPropagation();
+    for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const peek = document.body.classList.contains("field-peek"), fe = document.getElementById(peek ? "fieldPull" : "fieldEdge"); if (!fe) return; e.preventDefault(); e.stopPropagation();
+      if (peek && t === "dblclick") { fe.click(); return; }
       fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
   const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
@@ -14771,6 +14848,7 @@ function init(){
   // Разделитель поля и окон: ширина поля в пикселях, двойной щелчок — по умолчанию.
   const applyRowsW = () => { if (Z.rowsW > 0) $("main").style.setProperty("--rowsW", Z.rowsW + "px"); else $("main").style.removeProperty("--rowsW"); };
   applyRowsW();
+  fieldDrawerInit();
   /* v0.218, по снимку подсказки разделителя «Потяни — шире или уже…» — «границу для перетаскивания убери, функцию будет выполнять столбик
      номеров, подсвечивать немного при наведении»: разделителя нет; ширину поля строк меняет столбик номеров — тянешь его по горизонтали
      (дальше 6 px и больше вбок, чем вверх-вниз), короткий щелчок по номеру, замку, кручению — как был. */
@@ -14938,11 +15016,11 @@ function init(){
     el.scrollIntoView({ block: "nearest" });
   };
   const sideUi = () => { const only = !!Z.fieldOnly && !Z.fieldHidden; document.body.classList.toggle("field-right", !!Z.fieldRight); document.body.classList.toggle("field-only", only); $("bFieldL").classList.toggle("on", !Z.fieldRight && !Z.fieldHidden && !only); $("bFieldR").classList.toggle("on", !!Z.fieldRight && !Z.fieldHidden && !only); if ($("bFieldOnly")) $("bFieldOnly").classList.toggle("on", only); };   // v0.792: «только строки» — горит она одна (и «строки»)   // v0.595: поле спрятано — гаснут все три   // v0.591: (слева(строки)справа) — горит одна   // v0.412, «строки — слева»: подпись — куда переставит щелчок
-  sideUi(); requestAnimationFrame(() => { parkSync(); packWins(); });
-  const sideRe = () => { sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); }); };
+  sideUi(); fieldDrawerSync(); requestAnimationFrame(() => { parkSync(); packWins(); });
+  const sideRe = () => { sideUi(); fieldDrawerSync(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); }); };
   const sideSet = (right) => { if (Z.fieldOnly) { Z.fieldOnly = false; if (!!Z.fieldRight === right) { sideRe(); say("Окна снова на месте."); return; } }   /* v0.792: из «только строки» — «слева» / «справа» возвращают окна */
     if (Z.fieldHidden) { $("bFieldHide").click(); if (!!Z.fieldRight === right) return; }   /* v0.595: поле спрятано — «слева» / «справа» сперва его показывает */
-    if (!!Z.fieldRight === right) return; Z.fieldRight = right; sideUi(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
+    if (!!Z.fieldRight === right) return; Z.fieldRight = right; Z.fieldPeek = false; sideUi(); fieldDrawerSync(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); renderPointers(); });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };
   $("bFieldL").onclick = () => sideSet(false); $("bFieldR").onclick = () => sideSet(true);
   /* v0.792, «нужен ещё режим — только строки»: окна прячутся, поле строк — на всю ширину; места окон не меняются. Поле было спрятано — показывается */

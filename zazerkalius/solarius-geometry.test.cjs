@@ -72,7 +72,8 @@ function uiMath(){
   const ctx = vm.createContext({});
   vm.runInContext(readFileSync(__dirname + '/zz-core.js', 'utf8'), ctx);
   const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
-  for (const name of ['cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
+  for (const name of ['coneHalfOn', 'coneRow1Slit', 'conePartCount', 'coneRow1PartPhase', 'coneQuadOpen', 'coneRingFeat', 'coneMagRing', 'coneFeatEdges', 'coneFeatMids', 'cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
+  for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt']) needed.add(name);
   for (const match of source.matchAll(/^function \w+\(/gm)) {
     if (!needed.has(match[0].slice(9, -1))) continue;
     let end = source.indexOf('\n', match.index), script;
@@ -85,6 +86,88 @@ function uiMath(){
   vm.runInContext(`var TAU2=2*Math.PI,CONE_MAX=256,CONE_VOID_TO=256,coneRot=[0],coneSunWas,coneSweepAcc=null,Z={rows:['1'],coneClock:true,coneSun:true,coneSlits:'cut2',coneSunCut:'zero',coneSpinMode:'bit',coneSpinPh:0,coneAimRot:0,coneFillTurn:0,cutAlign:'c',cutLen:'ctr',coneVoid:false,moonOff:true,sunPassE:false};function hidAutoBack(){return false;}function coneLogDirty(){}function coneExArchive(){}`, ctx);
   return ctx;
 }
+test('turn fractions keep the denominator of each ring instead of reducing it', () => {
+  const ctx = uiMath(); ctx.Z.coneClock = false;
+  ctx.Z.rows = ['1', '11111111', '111111111111'];
+  assert.equal(ctx.turnsFmt(1.25, 1), '↻1 2/8');
+  assert.equal(ctx.turnsFmt(1.25, 2), '↻1 3/12');
+  assert.equal(ctx.turnsFmt(-0.5, 1), '↺−4/8');
+  assert.equal(ctx.turnsFmt(2, 1), '↻2');
+  assert.equal(ctx.turnsFmt(-0.01, 1), '0');
+});
+
+test('turn fractions follow the cut geometry, including the ring beyond the horizon', () => {
+  const ctx = uiMath(); ctx.Z.rows = ['1', '111'];
+  for (const mode of ['cut', 'cutA', 'cutS', 'cut2']) {
+    ctx.Z.coneSlits = mode;
+    const q = mode === 'cut2' ? 6 : 5, fillQ = mode === 'cut2' ? 8 : 7;
+    assert.equal(ctx.turnsFmt(1 + 1 / q, 1), `↻1 1/${q}`);
+    assert.equal(ctx.turnsFmt(-1 / fillQ, 'f'), `↺−1/${fillQ}`);
+  }
+  ctx.Z.coneClock = false;
+  assert.equal(ctx.turnsFmt(0.5, 'f'), '↻2/4');
+});
+
+test('first-ring turn fractions follow its selected division and growth of the last row', () => {
+  const ctx = uiMath(); ctx.Z.rows = ['1', '11'];
+  ctx.Z.sunHalf = true;
+  assert.equal(ctx.turnsFmt(0.5, 0), '↻1/2');
+  ctx.Z.laserQuad = true;
+  for (const [mode, q] of [[3, 3], [4, 4], ['sym2', 4], ['last', 4]]) {
+    ctx.Z.row1Parts = mode;
+    assert.equal(ctx.turnsFmt(1 / q, 0), `↻1/${q}`);
+  }
+  ctx.Z.rows.push('111');
+  assert.equal(ctx.turnsFmt(0.5, 0), '↻3/6');
+  ctx.Z.rows.push('11111');
+  assert.equal(ctx.turnsFmt(0.5, 0), '↻5/10');
+});
+
+test('formatting continuous rotation rounds only the display to the nearest own part', () => {
+  const ctx = uiMath(); ctx.Z.coneClock = false; ctx.Z.rows = ['1', '11111111'];
+  ctx.Z.coneTurns = [1.08, -1.188765];
+  const before = JSON.stringify(ctx.Z);
+  assert.equal(ctx.turnsFmt(ctx.Z.coneTurns[1], 1), '↺−1 2/8');
+  assert.equal(ctx.turnsFmt(1.99, 1), '↻2');
+  assert.equal(ctx.turnsFmt(0.12499999999999997, 1), '↻1/8');
+  assert.equal(JSON.stringify(ctx.Z), before);
+});
+
+test('turn fractions count the additional cells of the bipyramid ring', () => {
+  const ctx = uiMath(); ctx.Z.rows = ['1', '111'];
+  ctx.Z.coneClock = false; ctx.Z.cone3d = true; ctx.Z.coneBipy = true;
+  assert.equal(ctx.turnsFmt(0.2, 1), '↻1/5');
+});
+
+test('the symmetric two-part first ring is half a symmetry step out of phase with row two', () => {
+  const ctx = uiMath(); ctx.Z.rows = ['1', '11']; ctx.Z.row1Parts = 'sym2'; ctx.Z.laserQuad = true;
+  const C = ctx.coneCutGeo(1, 2), R = ctx.coneRingFeat(0);
+  const lastCenter = -Math.PI / 2 + (ctx.cutPos(0, 2) + C.off + 0.5) * C.step;
+  const firstCenter = -Math.PI / 2 + (1.5 - R.x0) * R.step;
+  assert.ok(Math.abs(firstCenter - lastCenter - Math.PI / 2) < 1e-9);
+  assert.equal(ctx.coneQuadOpen(firstCenter), false);
+  assert.equal(ctx.coneQuadOpen(firstCenter + Math.PI / 2), true);
+});
+
+test('first-ring symmetric parts grow with the last row before the horizon', () => {
+  const ctx = uiMath(); ctx.Z.row1Parts = 'last'; ctx.Z.laserQuad = true;
+  for (const n of [2, 3, 4, 5, 8]) {
+    ctx.Z.rows = ['1', '11', '1'.repeat(n)];
+    const C = ctx.coneCutGeo(2, n), R = ctx.coneRingFeat(0);
+    assert.equal(ctx.conePartCount(), 2 * n);
+    const lastCenter = -Math.PI / 2 + (ctx.cutPos(0, n) + C.off + 0.5) * C.step;
+    const firstCenter = -Math.PI / 2 + (1.5 - R.x0) * R.step;
+    assert.ok(Math.abs(firstCenter - lastCenter - Math.PI / n) < 1e-9);
+    for (let j = 0; j < n; j++) {
+      const a = firstCenter + j * 2 * Math.PI / n;
+      assert.equal(ctx.coneQuadOpen(a), false);
+      assert.equal(ctx.coneQuadOpen(a + Math.PI / n), true);
+    }
+    const solid = ctx.coneQuadArcs(false).reduce((sum, [a, b]) => sum + b - a, 0);
+    assert.ok(Math.abs(solid - Math.PI) < 1e-9);
+  }
+});
+
 test('actual center trace hits both edge bits with one diameter and no moonlight', () => {
   const ctx = uiMath(), result = ctx.coneSunTrace();
   assert.equal(result.ctrLines.length, 1);

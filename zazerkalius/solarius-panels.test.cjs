@@ -24,7 +24,7 @@ function classes(...initial) {
 function style() { return { left: '', top: '', width: '', minHeight: '', setProperty(k, v) { this[k] = v; } }; }
 function button() {
   const attrs = new Map(); let writes = 0, text = '';
-  return { title: '', get textContent() { return text; }, set textContent(v) { writes++; text = v; }, get writes() { return writes; }, getAttribute: k => attrs.get(k) ?? null, setAttribute: (k, v) => attrs.set(k, v) };
+  return { title: '', addEventListener() {}, get textContent() { return text; }, set textContent(v) { writes++; text = v; }, get writes() { return writes; }, getAttribute: k => attrs.get(k) ?? null, setAttribute: (k, v) => attrs.set(k, v) };
 }
 function context() {
   const nodes = new Map(), body = { classList: classes() }, groups = [], Z = { rows: ['1', '10'], cgrpPos: {}, cgrpFld: {}, cgrpLink: {}, cgrpMin: {}, cgrpSize: {} };
@@ -44,7 +44,7 @@ function context() {
   const wb = node('body', null, 100, 40, 800, 600), tl = node('tools', wb, 0, 48, 800, 48), head = node('head', wb, 0, 0, 800, 24), cv = node('coneCv', wb, 0, 48, 800, 552);
   head.querySelector = () => null; wb.win = { querySelector: () => head }; cv.width = 800; cv.height = 552;
   const ctx = vm.createContext({ Z, groups, tl, wb, FLD_NO: { 'кольца': 1, 'кручение': 1 }, SNAP: 10, TZC_H: 24, coneZoom: 1, conePan: [0, 0], coneGeom: {}, zTop: 400, zSnapOn: [], linkSaveT: 0,
-    document: { body, hidden: false, activeElement: null, getElementById: id => nodes.get(id) || null }, window: {}, screen: {}, cgTabsBottom: () => 88, fldRect: () => null,
+    document: { body, hidden: false, activeElement: null, getElementById: id => nodes.get(id) || null }, window: {}, performance: { now: () => 0 }, screen: {}, cgTabsBottom: () => 88, fldRect: () => null,
     setTimeout: () => 0, clearTimeout() {}, save() { ctx.saved++; }, saved: 0, say() {}, cgbSnap() {}, cgrpCols() {}, sizeApply(g) { g.style.width = ''; }
   });
   ctx.$ = id => nodes.get(id) || null;
