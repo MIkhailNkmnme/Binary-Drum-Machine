@@ -2044,7 +2044,23 @@ function plateSnap(el, r0, dx, dy){
 }
 function sunTblOpen(){ if (Z.sunTbl !== undefined) return !!Z.sunTbl; return window.innerWidth > 760; }
 function sunTblGet(c){ if (c.get) return c.get(); if (c.f) return c.on ? Z[c.f] !== false : !!Z[c.f]; const b = document.getElementById(c.b); return !!(b && b.classList.contains("on")); }
+/* v0.910, по снимку таблицы «☀ · ☾» под горизонтальной осью конуса — «сделай привязку-магнит, типа прищепки на ось горизонта, как на верёвку бельё, но чтобы
+   при масштабировании просто уезжали влево-вправо меню за экран»: плашку (☀ · ☾, ◯ Кольца) тянешь верхним краем к горизонтали через центр конуса (ближе 12 px) —
+   она прищепляется: верх — ровно на оси, место — сдвиг от центра конуса по оси (Z.sunTblPin / Z.ringTblPin, в px при масштабе 1). Конус масштабируют — сдвиг
+   растёт с масштабом, плашка уезжает влево-вправо, хоть за край; конус сдвигают — едет за ним; вверх-вниз — с осью. Оторвал от оси — снова свободная.
+   Прищеплена — розовая прищепка сверху (класс axpin) */
+function coneAxisScr(){   // центр конуса на экране — прямо из размера холста и сдвига вида (не из прошлой отрисовки: иначе прищепка отстаёт на кадр)
+  const cv = document.getElementById("coneCv"); if (!cv || Z.cone3d || !coneGeom) return null; const r = cv.getBoundingClientRect(); if (!r.width || !cv.width) return null;
+  const dpr = cv.width / r.width; return { x: r.left + (cv.width / 2 + conePan[0]) / dpr, y: r.top + (cv.height / 2 + conePan[1]) / dpr };
+}
+function plateAxis(el, px, py){ const A = coneAxisScr(); el._pin = null; if (!A || Math.abs(py - A.y) > 12) return [px, py]; el._pin = (px - A.x) / (coneZoom || 1); return [px, A.y]; }
+function platePinPlace(el, pin){   // → true, если плашка поставлена по прищепке
+  const A = coneAxisScr(), host = el.parentElement, on = typeof pin === "number" && !!A && !!host; if (el.classList.contains("axpin") !== on) el.classList.toggle("axpin", on); if (!on) return false;
+  const hr = host.getBoundingClientRect(), l = Math.round(A.x + pin * (coneZoom || 1) - hr.left + host.scrollLeft) + "px", t = Math.round(A.y - hr.top + host.scrollTop) + "px";
+  if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t; return true;
+}
 function sunTblPlace(el){
+  if (platePinPlace(el, Z.sunTblPin)) return;   // v0.910: прищеплена к оси
   const host = el.parentElement, cv = document.getElementById("coneCv"); if (!host || !cv) return;
   const hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(), w = el.offsetWidth || 300; if (!hr.width) return;
   const XY = Array.isArray(Z.sunTblXY) ? Z.sunTblXY : [cr.right - hr.left + host.scrollLeft - w - 8, Math.max(cr.top, cgTabsBottom()) - hr.top + host.scrollTop + 8];
@@ -2081,11 +2097,12 @@ function sunTblBuild(host){
   hd.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
     const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop, r0 = el.getBoundingClientRect();
-    const mv = (ev) => { const [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); Z.sunTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; sunTblPlace(el); };   // v0.892: липнет, как группы
+    const mv = (ev) => { let [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); [px, py] = plateAxis(el, px, py); if (el._pin === null) delete Z.sunTblPin; else Z.sunTblPin = el._pin;   // v0.910: прищепка к оси
+      Z.sunTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; sunTblPlace(el); };   // v0.892: липнет, как группы
     const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); zSnapGlow([]); save(); };
     hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
   });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.sunTblXY; sunTblPlace(el); save(); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.sunTblXY; delete Z.sunTblPin; sunTblPlace(el); save(); });   // v0.910: и прищепку
   return el;
 }
 function sunTblSync(){
@@ -2132,6 +2149,7 @@ function ringTblSvg(v, n){
 }
 function ringTblOpen(){ if (Z.ringTbl !== undefined) return !!Z.ringTbl; return window.innerWidth > 760; }
 function ringTblPlace(el){
+  if (platePinPlace(el, Z.ringTblPin)) return;   // v0.910: прищеплена к оси
   const host = el.parentElement, cv = document.getElementById("coneCv"); if (!host || !cv) return;
   const hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(), w = el.offsetWidth || 360; if (!hr.width) return;
   const XY = Array.isArray(Z.ringTblXY) ? Z.ringTblXY : [cr.left - hr.left + host.scrollLeft + 8, Math.max(cr.top, cgTabsBottom()) - hr.top + host.scrollTop + 8];
@@ -2161,11 +2179,12 @@ function ringTblBuild(host){
   hd.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
     const sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop, r0 = el.getBoundingClientRect();
-    const mv = (ev) => { const [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); Z.ringTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; ringTblPlace(el); };   // v0.892
+    const mv = (ev) => { let [px, py] = plateSnap(el, r0, ev.clientX - sx, ev.clientY - sy); [px, py] = plateAxis(el, px, py); if (el._pin === null) delete Z.ringTblPin; else Z.ringTblPin = el._pin;   // v0.910: прищепка к оси
+      Z.ringTblXY = [Math.round(ox + px - r0.left), Math.round(oy + py - r0.top)]; ringTblPlace(el); };   // v0.892
     const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up); zSnapGlow([]); save(); };
     hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
   });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.ringTblXY; ringTblPlace(el); save(); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button")) return; e.stopPropagation(); delete Z.ringTblXY; delete Z.ringTblPin; ringTblPlace(el); save(); });   // v0.910: и прищепку
   return el;
 }
 function ringTblSync(){
