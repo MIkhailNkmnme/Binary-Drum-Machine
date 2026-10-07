@@ -2874,7 +2874,7 @@ function renderCone(){
       g.globalAlpha = dash ? 0.4 : 0.9; g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.lineCap = "round"; g.setLineDash(dash ? [4 * dpr, 4 * dpr] : []); g.beginPath();
       for (const [b, lit] of S.bands) {
         if (b > N) continue;
-        const riS = b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ri0 = dash ? r0 + b * dr + Math.max(1, dr * band) : riS, ro = dash ? roE : r0 + b * dr + Math.max(1, dr * band);   // v0.690: пунктир — чуть дальше крайнего кольца
+        const riS = b === 1 ? (Z.cutLen === "ctr" && coneLenOn() ? 0 : r0 + Math.max(1, dr * band)) : rIn(b), ri0 = dash ? r0 + b * dr + Math.max(1, dr * band) : riS, ro = dash ? roE : r0 + b * dr + Math.max(1, dr * band);   // v0.690: пунктир — чуть дальше крайнего кольца; v0.908: «через центр» — края просвета прямо через центр (нижние лучи переходят в верхние)
         if (ro <= ri0 && !dash) continue;
         const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
         for (const [lo, hi] of lit) {
