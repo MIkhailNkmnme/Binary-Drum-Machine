@@ -5914,18 +5914,19 @@ function coneBalShow(o1, o0){   // v0.812: баланс ромбами на ве
 function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 48;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 120;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.top - hr.top + host.scrollTop;   // v0.936: основания на верхней линии холста, выше полосы вкладок
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
+  c3AxesPlace();
 }
-/* v0.931: полупрозрачный треугольник осей основанием на нижнем краю холста, между кнопками шага.
-   Жмёт прежнюю кнопку «✛ оси» (в «Виде» она спрятана). */
+/* v0.945: полупрозрачный ромб осей сверху, в зазоре между балансом 1 и 0. */
 function c3AxesPlace(){
   const b = document.getElementById("bC3Axes"), cv = document.getElementById("coneCv"); if (!b || !cv) return;
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = b.offsetWidth || 60;   // v0.931: треугольник 60 × 30, на телефоне 40 × 20
-  const h = b.offsetHeight || w;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - h + host.scrollTop;
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = b.offsetWidth || 24;
+  const bal = document.getElementById("coneBal"), br = bal && !bal.hidden && bal.getClientRects().length ? bal.getBoundingClientRect() : null;
+  const center = br ? br.left + br.width / 2 : cr.left + cxp;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) + host.scrollLeft, y = cr.top - hr.top + host.scrollTop;
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
@@ -5952,13 +5953,13 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
   const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
-  const axes = document.getElementById("bC3Axes"), inset = axes && axes.parentElement === host && axes.getClientRects().length ? 0 : 8;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - inset - (st ? w / 2 : 0) + host.scrollTop;
-  /* v0.840, по снимку ромбов у оси — «поменяй местами, и сброс сделай меньше на 1/8, но расположи в том же центре ромба, как с обычным размером»: на оси
-     внизу — ▶ крутить (60), сверху справа — ⌖✕ сброс 52,5 (7/8), его центр — в центре клетки ромба 60 */
+  const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w - Math.max(rh, st ? w / 2 : 0) + host.scrollTop;
+  // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
   const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
-  if (sp && sp.parentElement === host) { put(sp, x, y); put(b, x + w / 2 + d, y - w / 2 + d); } else put(b, x, y);
+  if (sp && sp.parentElement === host) put(sp, x, y);
+  put(b, x + (w - rw) / 2, cr.bottom - hr.top - rh + host.scrollTop);
   if (st) { put(stB, x - w / 2 + d, y + w / 2 + d); if (stF && stF.parentElement === host) put(stF, x + w / 2 + d, y + w / 2 + d); }   // v0.856: 7/8, в клетках ромба 60
   // v0.931: режимы справа от кручения; копия «На места» убрана из нижнего блока.
   const ms = document.getElementById("c3Modes");

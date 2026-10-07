@@ -1,4 +1,4 @@
-/* Solaris v0.944: manual starts, symmetry points, three routes and fractional
+/* Solaris v0.945: manual starts, symmetry points, three routes and fractional
    constant speed along the track. The rotation clock owns the experiment. */
 (() => {
   "use strict";
@@ -89,6 +89,24 @@
     if ($("ballLabEnable")) { $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл."; $("ballLabEnable").setAttribute("aria-pressed", String(enabled)); }
   }
   function angle(S, k, raw) { return raw + S.rings[k].phase + S.spin; }
+  function edgeOnLine(S, k, a) {
+    const u = a - S.rings[k].phase - S.spin;
+    for (const b of S.rings[k].blocks) for (const edge of [b.lo, b.hi]) {
+      if (Math.abs(norm(u - edge)) < 1e-6) return edge + TAU * Math.round((u - edge) / TAU);
+    }
+    return null;
+  }
+  function guideAt(S, q) {
+    const r = Math.abs(q);
+    if (r < S.rings[0].ro) return 0;
+    if (r > S.rings[1].ri && r < S.rings[1].ro + EPS) return 1;
+    return null;
+  }
+  function nextContact(S, q, target) {
+    const sign = target > q ? 1 : -1;
+    const contacts = [...new Set(S.rings.flatMap(r => [r.ri, r.ro, -r.ri, -r.ro]))];
+    return contacts.filter(v => (v - q) * sign > EPS && (target - v) * sign >= 0).reduce((best, v) => Math.abs(v - q) < Math.abs(best - q) ? v : best, target);
+  }
   function begin(S, clear = false, launch = false) {
     if (clear) cycles = passes = 0;
     const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, b = S.rings[0].blocks[0], aim = dir > 0 ? 0 : Math.PI;
@@ -99,6 +117,10 @@
     const length = route === "eight" ? R * (4 + 2 * span) : route === "out" ? R - p.r : R + p.r;
     F = { shape: S.shape, dir, R, route, start: { k, raw, q: p.r }, length, stage: route === "cross" ? "cross" : "out", ready: !launch,
       q: p.r, k, raw, a: angle(S, k, raw), clean: true, waits: 0, wait: null, elapsed: 0, travel: 0, period: T, mult, speed: T && Number.isFinite(mult) ? length * mult / T : 0 };
+    if (p.r > S.rings[0].ro + EPS && p.r >= S.rings[1].ri) {
+      const edge = edgeOnLine(S, 1, F.a);
+      if (edge !== null) { F.k = 1; F.raw = edge; F.start.k = 1; F.start.raw = edge; }
+    }
     if (route === "eight" && Math.abs(p.r - R) < EPS) {
       const u = positive(F.a - S.rings[1].phase - S.spin);
       const sector = S.rings[1].blocks.find(v => positive(u - v.lo) <= v.hi - v.lo + EPS);
@@ -155,8 +177,8 @@
     return hit;
   }
   function waitAt(hit) {
-    F.clean = false; F.waits++; F.wait = { k: hit.k, bit: hit.bit, a: F.a };
-    status(`2 кольца · ждёт: кольцо ${hit.k + 1}, бит ${hit.bit} · НЕ проход · ожиданий ${F.waits}`);
+    F.clean = false; F.waits++; F.wait = { k: hit.k, bit: hit.bit, a: F.a, join: hit.join };
+    status(hit.join !== undefined ? `Ждёт совпадения граней у кольца ${hit.k + 1} · НЕ проход · ожиданий ${F.waits}` : `2 кольца · ждёт: кольцо ${hit.k + 1}, бит ${hit.bit} · НЕ проход · ожиданий ${F.waits}`);
   }
   // Waiting freezes the world position. Resume at an open gate when the guiding
   // bit edge is back on that same line, avoiding a sideways jump through a wall.
@@ -179,9 +201,12 @@
     for (const t of candidates.sort((a, b) => a - b)) {
       if (t < from - EPS || t >= 1 - 1e-10) continue;
       const S = C.at(t), a = angle(S, F.k, F.raw); if (Math.abs(norm(a - W.a)) > 5 * EPS) continue;
+      const raw = W.join === undefined ? F.raw : edgeOnLine(S, W.join, a);
+      if (raw === null) continue;
       const sign = F.stage === "out" ? 1 : -1, h = Math.min(1 - t, 1e-4 / Math.max(C.distance, 1e-12));
-      if (radialHit(S, F.q, F.q + sign * C.distance * h, a, C.delta[F.k] * h, C.delta.map(d => d * h))) continue;
-      return Math.max(from, t);
+      const k = W.join === undefined ? F.k : W.join;
+      if (radialHit(S, F.q, F.q + sign * C.distance * h, a, C.delta[k] * h, C.delta.map(d => d * h))) continue;
+      return { t: Math.max(from, t), k, raw };
     }
     return null;
   }
@@ -208,10 +233,10 @@
       if (F.stage === "done") break;
       if (F.wait) {
         const release = waitRelease(C, t); if (release === null) { F.elapsed += dt * (1 - t); return; }
-        F.elapsed += dt * (release - t); t = release; F.wait = null; F.a = angle(C.at(t), F.k, F.raw);
+        F.elapsed += dt * (release.t - t); t = release.t; F.wait = null; F.k = release.k; F.raw = release.raw; F.a = angle(C.at(t), F.k, F.raw);
         status("Путь открылся · НЕ проход (было ожидание)");
       }
-      const S = C.at(t), a0 = angle(S, F.k, F.raw); F.a = a0;
+      const S = C.at(t); let a0 = angle(S, F.k, F.raw); F.a = a0;
       if (F.stage === "arc1" || F.stage === "arc2") {
         const amount = Math.min(C.distance * (1 - t), F.arcLeft * F.R, F.length - F.travel), h = amount / C.distance;
         F.raw += F.arcDir * amount / F.R; F.arcLeft -= amount / F.R; F.elapsed += dt * h; F.travel += amount; t += h; F.a = angle(C.at(t), F.k, F.raw);
@@ -220,7 +245,14 @@
         continue;
       }
       const target = F.stage === "out" ? F.R : F.stage === "cross" ? -F.R : 0, sign = target > F.q ? 1 : -1;
-      const amount = Math.min(C.distance * (1 - t), Math.abs(target - F.q), F.length - F.travel), h = amount / C.distance, q1 = F.q + sign * amount;
+      const guide = guideAt(S, F.q + sign * 1e-5);
+      if (guide !== null && guide !== F.k) {
+        const edge = edgeOnLine(S, guide, a0);
+        if (edge === null) { waitAt({ k: guide, bit: 1, join: guide }); F.elapsed += dt * (1 - t); metrics(B); return; }
+        F.k = guide; F.raw = edge; a0 = angle(S, F.k, F.raw); F.a = a0;
+      }
+      const contact = nextContact(S, F.q, target);
+      const amount = Math.min(C.distance * (1 - t), Math.abs(contact - F.q), F.length - F.travel), h = amount / C.distance, q1 = F.q + sign * amount;
       const hit = radialHit(S, F.q, q1, a0, C.delta[F.k] * h, C.delta.map(d => d * h)), fraction = hit ? hit.t : 1;
       F.q += sign * amount * fraction; F.elapsed += dt * h * fraction; F.travel += amount * fraction; t += h * fraction; F.a = angle(C.at(t), F.k, F.raw);
       if (hit) { waitAt(hit); F.elapsed += dt * (1 - t); metrics(B); return; }
