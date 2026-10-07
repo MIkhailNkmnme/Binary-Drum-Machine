@@ -233,7 +233,7 @@
   window.zzBallSpinState = on => {
     paused = !on; if (!enabled) return;
     if (on && snapshot() && typeof coneReleaseRings === "function") coneReleaseRings();
-    const S = snapshot(); if (on && S && (!F || F.ready)) prepare(S, true, true);
+    const S = snapshot(); if (on && S && (!F || F.ready)) { rememberStart(); prepare(S, true, true); }
     if (balls.length) { batchStatus(); if (S) metrics(S); return; }
     if (on && F && F.stage !== "done") status(F.clean ? routes[F.route] + " · по граням битов" : "Продолжает · НЕ проход (был разворот)");
     else if (!on && F && !F.ready && F.stage !== "done") status("Пауза вместе с вращением · ▶ — продолжить");
@@ -282,22 +282,21 @@
       positions.push({ x, y }); g.restore();
     }
   };
-  function reset(home = false) {
+  function reset(toStart = false) {
     F = null; balls = []; cycles = passes = 0;
-    if (home) homeRotation();
+    if (toStart) restoreStart();
     const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();
   }
-  function homeRotation() {
+  // The start pose is the user's last manual ring turn before a launch: a
+  // launch from the starts remembers it, ↩ and a new launch return to it.
+  const fresh = () => !(balls.length ? balls : F ? [F] : []).some(b => !b.ready);
+  function rememberStart() { Z.coneBallPose = { pos: posCur(), fillFree: !!Z.coneFillFree }; save(); }
+  function restoreStart() {
     pauseRotation();
-    const speed = Z.coneAutoSp, mode = Z.coneSpinMode;
-    $("bConeAllHome").click();
-    // The home pose can store its own spin settings. Keep this experiment's.
-    Z.coneAutoSp = speed; Z.coneSpinMode = mode;
-    if ($("coneSpinMode")) $("coneSpinMode").value = mode || "all";
-    if (typeof coneDirUi === "function") coneDirUi();
-    if (typeof coneSpinModeUi === "function") coneSpinModeUi();
-    if (typeof spinSpUi === "function") spinSpUi();
-    save();
+    const P = Z.coneBallPose; if (!P || !P.pos) return;
+    posApply({ ...P.pos, mode: Z.coneSpinMode || "all" });   // keep this experiment's spin mode
+    Z.coneFillFree = !!P.fillFree; Z.coneTurns = []; Z.coneFillTurns = 0;
+    save(); if (typeof renderRows === "function") renderRows();
   }
   function metrics(S) {
     if (batchBusy || !$("ballLabTime")) return;
@@ -324,7 +323,7 @@
     if (config.mult !== undefined) Z.coneBallMult = String(config.mult);
     else if ($("ballLabSpeed")) Z.coneBallMult = $("ballLabSpeed").value.trim();
     if (!Number.isFinite(fraction(Z.coneBallMult || "1"))) { status("Скорость: введи положительную дробь, например 1/3, 3/4 или 1,5"); return false; }
-    pauseRotation(); F = null; balls = []; homeRotation();
+    pauseRotation(); if (fresh()) rememberStart(); else restoreStart(); F = null; balls = [];
     enabled = true; Z.coneBallOn = true; ui();
     if (typeof coneReleaseRings === "function") coneReleaseRings();
     const S = snapshot(); if (!S) { status(hint()); return false; }
@@ -355,7 +354,7 @@
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" data-ball-speed="1/4">¼</button><button type="button" data-ball-speed="1/3">⅓</button><button type="button" data-ball-speed="1/2">½</button><button type="button" data-ball-speed="2/3">⅔</button><button type="button" data-ball-speed="1">1</button><button type="button" data-ball-speed="3/2">³⁄₂</button><button type="button" data-ball-speed="2">2</button><button type="button" data-ball-speed="4">4</button><button type="button" data-ball-speed="8">8</button><button type="button" data-ball-speed="16">16</button><button type="button" data-ball-speed="32">32</button></span></div>
       <small>Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.</small>
       <div id="ballLabTime"></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
-      <small>1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет только по прямым краям битов и поворачивается вместе со своим кольцом. На стыке колец и в центре он переходит на совпавшую грань, иначе разворачивается по своей. Красный — был разворот, зелёный — выход без разворота. Новый запуск возвращает кольца и шарики на места. Нажми точку для одиночного старта.</small><div id="ballLabStatus" role="status" aria-live="polite"></div></div>`;
+      <small>1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет только по прямым краям битов и поворачивается вместе со своим кольцом. На стыке колец и в центре он переходит на совпавшую грань, иначе разворачивается по своей. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.</small><div id="ballLabStatus" role="status" aria-live="polite"></div></div>`;
     host.appendChild(lab); $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
     $("ballLabEnable").onclick = () => $("bConeBall").click();
     $("ballLabRun").onclick = () => launch();

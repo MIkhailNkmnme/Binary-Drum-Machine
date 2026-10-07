@@ -2163,7 +2163,8 @@ function plateInit(el){
 function plateZig(el, col){
   if (!el || el.hidden || !el.getClientRects().length) return;
   if (document.body.classList.contains("sol-mobile") && !["solBallLab", "lasAlgo"].includes(el.id)) return;
-  if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => plateZig(el, col)); el._pzRO.observe(el); }
+  // v0.953: зубцы — следующим кадром: правка размеров прямо в наблюдателе давала «ResizeObserver loop completed with undelivered notifications»
+  if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => { if (!el._pzRaf) el._pzRaf = requestAnimationFrame(() => { el._pzRaf = 0; plateZig(el, col); }); }); el._pzRO.observe(el); }
   const P = TZC_H, t = P / (2 * Math.sqrt(3));
   const mh = el.style.minHeight; el.style.minHeight = ""; const H0 = el.offsetHeight, H = Math.max(P, Math.ceil(H0 / P - 1e-6) * P); const want = H !== H0 ? H + "px" : "";
   if (el.style.minHeight !== want) el.style.minHeight = want; if (mh !== want) el._pzk = "";
@@ -13728,7 +13729,9 @@ function renderAll(){
   }
 }
 // v0.034: любая ошибка страницы — внизу сообщением, с местом в коде.
-window.addEventListener("error", (e) => { if (String(e.message).includes("ZZ_LOCK")) { e.preventDefault(); return; } try { say(`⚠ Ошибка: ${e.message} · ${String(e.filename || "").split("/").pop()}:${e.lineno} — пришли этот текст.`); } catch (err) {} });
+window.addEventListener("error", (e) => { if (String(e.message).includes("ZZ_LOCK")) { e.preventDefault(); return; }
+  if (/^ResizeObserver loop/.test(String(e.message))) { e.preventDefault(); return; }   // v0.953: предупреждение браузера, не ошибка — отложенные размеры придут следующим кадром
+  try { say(`⚠ Ошибка: ${e.message} · ${String(e.filename || "").split("/").pop()}:${e.lineno} — пришли этот текст.`); } catch (err) {} });
 
 /* ─── Подключение ────────────────────────────────────────────────────────────────────────── */
 function fillSelect(id, entries, val){
