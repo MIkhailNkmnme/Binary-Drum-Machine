@@ -4923,6 +4923,8 @@ function coneRingSymAxes(k){
   return out;
 }
 function magSymOf(){ const v = Z.magSym; return v === "in" || v === "out" || v === "off" ? v : "both"; }
+/* v0.971: у ручного вращения два набора целей. По умолчанию — прежний полный; «границы» — только границы частей соседей по направлению 🧲 сим. */
+function magPartsOnly(){ return !!Z.magSnapParts && magSymOf() !== "off"; }
 function coneSymTargets(ii, N){   // [[угол, что]] — оси симметрии соседних колец кольца ii по переключателю «🧲 сим.»
   const m = magSymOf(), o = []; if (m === "off") return o;
   const add = (k) => { const Q = coneRingFeat(k); if (!Q) return; for (const c of coneRingSymAxes(k)) { const t = -Math.PI / 2 + (c - Q.x0) * Q.step; o.push([t, "ось симметрии кольца " + (k + 1)], [t + Math.PI, "ось симметрии кольца " + (k + 1)]); } };
@@ -4933,7 +4935,9 @@ function coneSymTargets(ii, N){   // [[угол, что]] — оси симме�
 function coneHandSnap(i){   // → { dx, t, what } — на сколько довернуть кольцо i (в его частях), чтобы своя граница или середина бита легла на границу кольца внутри или ось симметрии соседа
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return null;
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i, rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm;
-  const own = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"]).concat(coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"])).sort((a, b) => a[0] - b[0]);
+  const parts = magPartsOnly(), one = ii === 0 && R.n === 1;
+  const own = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"])
+    .concat(!parts || one ? coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"]) : []).sort((a, b) => a[0] - b[0]);
   if (!own.length) return null;
   let best = null;
   const tryT = (t, what) => {
@@ -4942,11 +4946,25 @@ function coneHandSnap(i){   // → { dx, t, what } — на сколько до�
     for (const c of [lo - 1, lo]) { const w = (c + own.length) % own.length, xf = own[w][0] + (c < 0 ? -R.P : c >= own.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
       if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own[w][1] + " → " + what }; }
   };
-  for (let k = 0; k < ii && k < N; k++) {
-    const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
-    for (const e of coneFeatEdges(Q)) tryT(-Math.PI / 2 + (e - Q.x0) * Q.step, "граница кольца " + (k + 1));
+  if (parts) {
+    const m = magSymOf(), neighbors = [];
+    if ((m === "both" || m === "in") && ii > 0) neighbors.push(ii - 1);
+    if ((m === "both" || m === "out") && ii + 1 < N) neighbors.push(ii + 1);
+    for (const k of neighbors) {
+      const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
+      for (const e of coneFeatEdges(Q)) tryT(-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца " + (k + 1));
+    }
+    if (one) {
+      if (m === "both" || m === "in") for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");
+      for (const [t, what] of coneSymTargets(0, N)) tryT(t, what);
+    }
+  } else {
+    for (let k = 0; k < ii && k < N; k++) {
+      const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
+      for (const e of coneFeatEdges(Q)) tryT(-Math.PI / 2 + (e - Q.x0) * Q.step, "граница кольца " + (k + 1));
+    }
+    for (const [t, what] of coneSymTargets(ii, N)) tryT(t, what);   // v0.884
   }
-  for (const [t, what] of coneSymTargets(ii, N)) tryT(t, what);   // v0.884
   return best;
 }
 /* v0.881, «1 кольцо магнитить к осям, остальные к осям не магнитить»: строка 1, которую крутят рукой (довод Z.coneAimRot), прилипает к осям — её граница
@@ -4956,9 +4974,15 @@ function coneR1AxisSnap(){
   const R = coneRingFeat(0), G = coneGeom; if (!R || !G) return null;
   const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
   let best = null;
-  const T = []; if (magSymOf() === "both" || magSymOf() === "in") for (let q = 0; q < 4; q++)   /* v0.887: «а когда отключен магнит тоже не надо» — к осям только при «оба» и «внутр.» */ T.push(-Math.PI / 2 + q * Math.PI / 2);   // v0.886: «при наружном магните 1 кольцо не должно магнититься с осями» — тогда только к строке 2
-  for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);   // v0.884: и оси симметрии строки 2 (по «🧲 сим.»)
-  for (const x of coneFeatEdges(R).concat(coneFeatMids(R))) {
+  const T = [], m = magSymOf(), parts = magPartsOnly();
+  if (!parts || n0 === 1) {
+    if (m === "both" || m === "in") for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);
+    for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);
+  }
+  if (parts && Z.rows.length > 1 && (m === "both" || m === "out")) {
+    const Q = coneRingFeat(1); if (Q) for (const e of coneFeatEdges(Q)) T.push(-Math.PI / 2 + (e - Q.x0) * Q.step);
+  }
+  for (const x of coneFeatEdges(R).concat(!parts || n0 === 1 ? coneFeatMids(R) : [])) {
     const a = -Math.PI / 2 + (x - R.x0) * R.step;
     for (const t of T) { const d = coneAngDiff(t, a);
       if (Math.abs(d) < tol && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, t }; }
@@ -4999,7 +5023,7 @@ function coneHandRays(g, o){   // лучи в центр от границ (сп
   for (const x of coneFeatEdges(R)) { const a = A(x); g.moveTo(cx, cy); g.lineTo(cx + rOut * Math.cos(a), cy + rOut * Math.sin(a)); }
   g.stroke();
   g.globalAlpha = 0.45; g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
-  for (const x of coneFeatMids(R)) { const a = A(x); g.moveTo(cx, cy); g.lineTo(cx + rOut * Math.cos(a), cy + rOut * Math.sin(a)); }
+  if (!magPartsOnly() || (ii === 0 && R.n === 1)) for (const x of coneFeatMids(R)) { const a = A(x); g.moveTo(cx, cy); g.lineTo(cx + rOut * Math.cos(a), cy + rOut * Math.sin(a)); }
   g.stroke(); g.restore();
 }
 function coneMagSnap(i, rot){   // → { rot, line, what } — поворот кольца i (coneRot[i]) с привязкой
@@ -6784,10 +6808,15 @@ function setupCone(){
       say(Z.sunParts !== false ? "☀ Доли: у каждой части круга — её доля, сверху — сводка." : "☀ Доли выключены: подписи и сводка не считаются и не рисуются."); };
   }
   if ($("bRingTbl")) $("bRingTbl").onclick = () => { Z.ringTbl = !ringTblOpen(); save(); ringTblSync(); };   // v0.871: ◯ Кольца — таблица видов колец
-  if ($("bMagSym")) {   // v0.884: 🧲 сим. — к осям симметрии соседних колец: оба → внутр. → наруж. → нет
+  if ($("bMagSym")) {   // 🧲 сим. — направление к соседям: оба → внутр. → наруж. → нет
     const L = { both: "🧲 сим.: оба", in: "🧲 сим.: внутр.", out: "🧲 сим.: наруж.", off: "🧲 сим.: нет" }, ui = () => { const m = magSymOf(), b = $("bMagSym"); if (b.textContent !== L[m]) b.textContent = L[m]; b.classList.toggle("on", m !== "off"); };
     ui(); $("bMagSym").onclick = () => { const m = magSymOf(); Z.magSym = m === "both" ? "in" : m === "in" ? "out" : m === "out" ? "off" : "both"; ui(); save();
-      say({ both: "🧲 Симметрия: кольцо прилипает к осям симметрии и внутреннего, и наружного соседа (строка 1 — к строке 2).", in: "🧲 Симметрия: только к осям внутреннего соседа (строки выше).", out: "🧲 Симметрия: только к осям наружного соседа (строки ниже; строка 1 — к строке 2).", off: "🧲 Симметрия: к осям соседей не прилипает." }[magSymOf()]); };
+      say(magSymOf() === "off" ? "🧲 Соседи: выключены; остаётся прежняя привязка к границам внутренних колец." : `🧲 ${Z.magSnapParts ? "Границы частей" : "Оси симметрии"}: ${ { both: "оба соседа", in: "внутренний сосед", out: "наружный сосед" }[magSymOf()] }. Кольцо 1 из одного бита также тянется к осям, как раньше.`); };
+  }
+  if ($("bMagSnapParts")) {
+    const ui = () => { const b = $("bMagSnapParts"); b.textContent = Z.magSnapParts ? "🧲 границы" : "🧲 всё"; b.classList.toggle("on", !!Z.magSnapParts); b.setAttribute("aria-pressed", String(!!Z.magSnapParts)); };
+    ui(); $("bMagSnapParts").onclick = () => { Z.magSnapParts = !Z.magSnapParts; ui(); save();
+      say(Z.magSnapParts ? "🧲 Границы: при кручении рукой границы частей кольца прилипают только к границам частей соседей по направлению «🧲 сим.». Кольцо 1 из одного бита также прилипает к осям." : "🧲 Всё: при кручении рукой действуют границы, середины битов и оси симметрии, как прежде."); };
   }
   if ($("bFillStill")) {   // v0.913: ⏸ за чертой — кольцо за чертой не крутится
     $("bFillStill").classList.toggle("on", !!Z.fillStill);
