@@ -2861,16 +2861,22 @@ function renderCone(){
           }
           g.restore();
         } }
+      /* v0.905, по снимку края луча через белую «1» — «этот край луча пунктиром также, где не светит уже после 1-цы»: край сектора шёл сплошным через всё кольцо,
+         куда свет пришёл, даже если там он упёрся в «1». Теперь: свет вдоль края проходит кольцо (край лежит в S.pass[b]) — край сплошной через кольцо, как было;
+         упёрся — сплошного на этом кольце нет, пунктир начинается с его внутренней границы */
+      const edgePass = (b, e) => { const P = S.pass && S.pass[b]; if (!P) return true; const E = 1e-6, a = ((e % TAU2) + TAU2) % TAU2; return P.some(([x, y]) => (a >= x - E && a <= y + E) || (a + TAU2 >= x - E && a + TAU2 <= y + E)); };
       for (const dash of [true, false]) {   // пунктир — продолжение края за кольцо, где свет пойман, до строки за чертой; сплошная — где свет идёт
       g.globalAlpha = dash ? 0.4 : 0.9; g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.lineCap = "round"; g.setLineDash(dash ? [4 * dpr, 4 * dpr] : []); g.beginPath();
       for (const [b, lit] of S.bands) {
         if (b > N) continue;
-        const ri = dash ? r0 + b * dr + Math.max(1, dr * band) : b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ro = dash ? roE : r0 + b * dr + Math.max(1, dr * band);   // v0.690: пунктир — чуть дальше крайнего кольца
-        if (ro <= ri) continue;
+        const riS = b === 1 ? r0 + Math.max(1, dr * band) : rIn(b), ri0 = dash ? r0 + b * dr + Math.max(1, dr * band) : riS, ro = dash ? roE : r0 + b * dr + Math.max(1, dr * band);   // v0.690: пунктир — чуть дальше крайнего кольца
+        if (ro <= ri0 && !dash) continue;
         const seam = lit.some(([a]) => a < 1e-6) && lit.some(([, z]) => z > 2 * Math.PI - 1e-6);   // сектор через 0 разрезан на два — стык не край
         for (const [lo, hi] of lit) {
           if (hi - lo > 2 * Math.PI - 1e-6) continue;   // весь круг — краёв нет
           for (const e of [lo, hi]) { if (seam && (e < 1e-6 || e > 2 * Math.PI - 1e-6)) continue;
+            const ok = edgePass(b, e); if (!dash && !ok) continue;   // v0.905: упёрся в стену — сплошного на этом кольце нет
+            const ri = dash && !ok ? riS : ri0; if (ro <= ri) continue;   // v0.905: пунктир — от внутренней границы кольца, где свет встал
             const t = e - Math.PI / 2; g.moveTo(cx + ri * Math.cos(t), cy + ri * Math.sin(t)); g.lineTo(cx + ro * Math.cos(t), cy + ro * Math.sin(t)); }
         }
       }
