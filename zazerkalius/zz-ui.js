@@ -895,7 +895,7 @@ function fillAutoCommit(){
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
   Z.rows.push(f); Z.cur = Z.rows.length - 1;
   if (Z.coneFillFree) { if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[N] = true; Z.coneFillFree = false; }   // v0.875: прилипшее рукой — дробным
-  while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N] = Z.coneFillTurn || 0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;   // v0.704: поворот кольца за чертой — кольцу строки
+  while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N] = Z.coneFillTurn || 0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0; fillStillCommit(N);   // v0.704: поворот кольца за чертой — кольцу строки
   if (Z.coneFillTurns) { turnsAdd(N, Z.coneFillTurns); Z.coneFillTurns = 0; }   // v0.867: и его обороты
   coneHoldSync();   // v0.870: «2 посл.» — прежнее последнее кольцо встаёт сразу, а не к следующему кадру
   let nf = ""; for (let c = 0; c <= f.length; c++) nf += (carry[(N + 1) + ":" + c] | 0) > 0 ? "1" : ".";
@@ -911,10 +911,10 @@ function fillCommit(){
   /* v0.865 / v0.867: поворот кольца за чертой и его обороты остаются у него — теперь кольца строки (как у fillAutoCommit, v0.704); новое кольцо за
      чертой — без накрутки (прежде «＋» оставлял прежний поворот новому кольцу другой длины, а строке — 0). Накрученное рукой — до ячейки (в вырезах —
      до полчасти) и по модулю круга, как при отпускании */
-  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = Z.coneFillFree ? (Z.coneFillTurn || 0) : F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);   // v0.875: прилипшее — как есть
+  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = Z.coneFillFree || fillStillOn() ? (Z.coneFillTurn || 0) : F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);   // v0.875: прилипшее — как есть
   if (Z.coneFillFree) { if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[N0] = true; Z.coneFillFree = false; }
   Z.rows.push(row); Z.cur = Z.rows.length - 1; Z.fillCells = null;
-  while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N0] = ((fq % P0) + P0) % P0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0;
+  while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N0] = ((fq % P0) + P0) % P0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0; fillStillCommit(N0);   // v0.913: ⏸ за чертой — кольцо новой строки крутится с места, где стояло
   if (Z.coneFillTurns) { turnsAdd(N0, Z.coneFillTurns); Z.coneFillTurns = 0; }
   coneHoldSync();   // v0.870
   renderAll(); save();
@@ -1869,14 +1869,14 @@ const LAS_KEY = {
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
   fill: ["bCutFree", "bSunXor", "bSunAnti", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross"],
-  run: ["bConeLast2", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
+  run: ["bConeLast2", "bFillStill", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bLasUndo", "bLasStep", "bLasHalf", "bLaserReset"]
 };
 let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
   const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonCross, Z.moonAlways, Z.moonOff, Z.sunWideMoon, Z.sunPass0, Z.sunPass1, Z.sunPassE, Z.moonPass0, Z.moonPass1, Z.moonPassE, Z.moonSweep, Z.sunAnti, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
-    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLast2, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
+    Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneLast2, Z.fillStill, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
@@ -1884,6 +1884,7 @@ function lasDeps(){
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
     "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
+  need(["bFillStill"], (Z.coneSpinMode || "all") === "all", "во «Всё» весь конус крутится одним поворотом — кольцо за чертой не остановить отдельно");   // v0.913
   need(["bConeLast2"], (Z.coneSpinMode || "all") === "all", "во «Всё» весь конус крутится одним поворотом — держать нечего; режим — в «Каждое», «Встреч Стр», «Встреч Бит»");   // v0.870
   need(["coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeClockStop", "bConeGo", "coneGoN", "bConePred", "bConeAimL", "bConeAimR", "bCutGaps"], sun, "это для луча, а горит ☀ солнце");
   need(["coneLasersN", "bLaserChain"], fan, "при ✺ все лучи их столько, сколько бит в самой длинной строке, и светят все сразу");
@@ -4382,10 +4383,18 @@ function coneDegPhMax(N){ let m = 0; for (let i = 0; i < N; i++) m = Math.max(m,
    (2…b) встают на фазе этого мига и больше не крутятся; внешние крутятся дальше. (v0.139: правило другое — см. coneFreezeRing.) Фазы остановленных —
    Z.voidHits.fz { кольцо: фаза }; стираются вместе с краской (✕ у строки для заполнения, смена строк) и «⟲ всё на места». */
 function coneFrozen(){ const V = Z.voidHits; if (!V) return null; if (!V.fz || typeof V.fz !== "object") V.fz = {}; return V.fz; }
+/* v0.913, «а как выключить кручение кольца за горизонтом?» — выключателя не было. «⏸ за чертой» (Z.fillStill, кнопка #bFillStill в «Кручении»): кольцо за
+   чертой и пустые за ним не крутятся (фаза 0), кольца строк — как были. Включили — его нынешний поворот кручением уходит в его ручной поворот
+   (Z.coneFillTurn), выключили — обратно: кольцо не прыгает. Строка за чертой ушла в поле — её кольцо крутится дальше с того места, где стояло (сдвиг фазы
+   Z.ringPhOff[N], fillStillCommit; сбрасывается в coneHoldClear вместе с фазой). Во «Всё» весь конус — один поворот, кнопка не действует */
+function fillStillOn(){ return !!Z.fillStill && (Z.coneSpinMode || "all") !== "all"; }
+function coneFillSpin(){ const N = Math.min(Z.rows.length, CONE_MAX), s = Z.fillStill; Z.fillStill = false; const v = coneVoidRot(N, fillLen()); Z.fillStill = s; return v; }   // поворот кольца за чертой кручением, будто оно не стоит
+function fillStillCommit(N){ if (!fillStillOn()) return; if (!Z.ringPhOff || typeof Z.ringPhOff !== "object") Z.ringPhOff = {}; Z.ringPhOff[N] = (Z.ringPhOff[N] || 0) - coneRingPh(N); }   // свой сдвиг: Z.voidHits пересоздаётся при смене числа строк
 function coneRingPh(i){   // v0.191: отпущенное кольцо крутится дальше со своего места — со сдвигом Z.voidHits.off[i]
+  if (fillStillOn() && i >= Math.min(Z.rows.length, CONE_MAX)) return 0;   // v0.913: ⏸ за чертой — кольцо за чертой и пустые стоят
   const V = Z.voidHits, fz = V && V.fz; if (fz && fz[i] !== undefined) return fz[i];
   const H = Z.coneHold; if (H && H[i] !== undefined) return H[i];   // v0.870: «крутятся 2 последних» — кольцо стоит на фазе, где встало
-  return (Z.coneSpinPh || 0) + ((V && V.off && V.off[i]) || 0) + ((Z.coneHoldOff && Z.coneHoldOff[i]) || 0);
+  return (Z.coneSpinPh || 0) + ((V && V.off && V.off[i]) || 0) + ((Z.coneHoldOff && Z.coneHoldOff[i]) || 0) + ((Z.ringPhOff && Z.ringPhOff[i]) || 0);   // v0.913: + сдвиг кольца, ушедшего из-за черты при «⏸ за чертой»
 }
 /* v0.870, «нужен режим, когда при переходе на внешнее кольцо — остановка предыдущих, когда крутятся только 2 последних кольца»: «2 посл.»
    (Z.coneLast2, кнопка #bConeLast2 в «Кручении») — крутятся только кольцо последней строки и кольцо за чертой (и пустые за ним); кольца
@@ -4405,7 +4414,7 @@ function coneHoldSync(){
   const HH = H || (Z.coneHold = {});
   for (let i = 0; i < N - 1; i++) if (HH[i] === undefined) HH[i] = live(i);
 }
-function coneHoldClear(){ delete Z.coneHold; delete Z.coneHoldOff; }   // ⟲ на места, сброс кручения — фазы с нуля
+function coneHoldClear(){ delete Z.coneHold; delete Z.coneHoldOff; delete Z.ringPhOff; }   // ⟲ на места, сброс кручения — фазы с нуля
 function coneRingFrozen(i){ const fz = Z.voidHits && Z.voidHits.fz; return !!fz && fz[i] !== undefined; }
 function coneReleaseRings(){   // v0.191: остановленные кольца — отпустить, не сдвигая: их нынешняя фаза становится сдвигом; → сколько отпущено
   const V = Z.voidHits; if (!V || !V.fz) return 0;
@@ -6335,6 +6344,13 @@ function setupCone(){
     const L = { both: "🧲 сим.: оба", in: "🧲 сим.: внутр.", out: "🧲 сим.: наруж.", off: "🧲 сим.: нет" }, ui = () => { const m = magSymOf(), b = $("bMagSym"); if (b.textContent !== L[m]) b.textContent = L[m]; b.classList.toggle("on", m !== "off"); };
     ui(); $("bMagSym").onclick = () => { const m = magSymOf(); Z.magSym = m === "both" ? "in" : m === "in" ? "out" : m === "out" ? "off" : "both"; ui(); save();
       say({ both: "🧲 Симметрия: кольцо прилипает к осям симметрии и внутреннего, и наружного соседа (строка 1 — к строке 2).", in: "🧲 Симметрия: только к осям внутреннего соседа (строки выше).", out: "🧲 Симметрия: только к осям наружного соседа (строки ниже; строка 1 — к строке 2).", off: "🧲 Симметрия: к осям соседей не прилипает." }[magSymOf()]); };
+  }
+  if ($("bFillStill")) {   // v0.913: ⏸ за чертой — кольцо за чертой не крутится
+    $("bFillStill").classList.toggle("on", !!Z.fillStill);
+    $("bFillStill").onclick = () => { const on = !Z.fillStill;
+      if (on) { Z.coneFillTurn = (Z.coneFillTurn || 0) + coneFillSpin(); Z.fillStill = true; } else { Z.fillStill = false; Z.coneFillTurn = (Z.coneFillTurn || 0) - coneFillSpin(); }
+      $("bFillStill").classList.toggle("on", on); coneSweepAcc = null; coneSunWas = undefined; conePeekC = { k: "", S: null }; save(); renderCone();
+      say(on ? "⏸ Кольцо за чертой стоит — крутятся только кольца строк. Ушла строка в поле — её кольцо крутится дальше с того места, где стояло." : "⏸ Кольцо за чертой снова крутится вместе со всеми — с того места, где стояло."); };
   }
   if ($("bConeLast2")) {   // v0.870: крутятся только 2 последних кольца
     $("bConeLast2").classList.toggle("on", !!Z.coneLast2);
