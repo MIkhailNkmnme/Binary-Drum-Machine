@@ -494,15 +494,17 @@
             bar.append(txt, save, drop);
         };
         draw();
+        styles();
         document.body.appendChild(bar);
     }
 
-    function build() {
-        // На страницах со своей кнопкой записи (у них она вписана в панель) вторую
-        // плавающую не добавляем — хранилище и полоса восстановления общие, а
-        // управление остаётся тамошнее.
-        if (BEZ_KNOPKI || document.getElementById('zerkRecBtn') || document.getElementById('recBtn')) return;
-        const css = document.createElement('style');
+    // Стили нужны и полосе «незавершённая запись». На страницах без плавающей ⏺
+    // (data-bez-knopki, своя кнопка записи) build() выходит раньше, и полоса
+    // оставалась без стилей: обычным блоком в конце страницы, под её панелями —
+    // кнопки «сохранить / удалить» не нажимались (Zazerkalius v0.955).
+    function styles() {
+        if (document.getElementById('zerkRecCss')) return;
+        const css = document.createElement('style'); css.id = 'zerkRecCss';
         css.textContent = `
             #zerkRecBtn { position: fixed; right: 10px; bottom: 10px; z-index: 99999;
                 width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
@@ -534,6 +536,14 @@
             #zerkRecMode label { display: flex; gap: 6px; align-items: center; cursor: pointer; margin: 3px 0; white-space: nowrap; }
             #zerkRecMode .hint { color: #889; font-size: 11px; margin-top: 5px; max-width: 280px; }`;
         document.head.appendChild(css);
+    }
+
+    function build() {
+        // На страницах со своей кнопкой записи (у них она вписана в панель) вторую
+        // плавающую не добавляем — хранилище и полоса восстановления общие, а
+        // управление остаётся тамошнее.
+        if (BEZ_KNOPKI || document.getElementById('zerkRecBtn') || document.getElementById('recBtn')) return;
+        styles();
 
         const timer = document.createElement('div');
         timer.id = 'zerkRecTimer';
