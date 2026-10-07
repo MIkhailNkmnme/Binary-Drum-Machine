@@ -570,6 +570,10 @@ function cutPartsPlace(){
   };
   side("cutL", al === "r" ? [CUT_B, CUT_A] : al === "c" ? [CUT_A] : []);
   side("cutR", al === "l" ? [CUT_A, CUT_B] : al === "c" ? [CUT_B] : []);
+  // v0.959: колонка строк — по самой длинной строке, и слева от ячеек часто места нет (там номера): не влезло — всё справа, достройка ближе к ячейкам
+  const lp = fc.querySelector(":scope > .cutL");
+  if (lp) { const cell = fc.parentElement, room = fc.getBoundingClientRect().left - cell.getBoundingClientRect().left - (parseFloat(getComputedStyle(cell).paddingLeft) || 0);
+    if (lp.offsetWidth + 14 > room) { side("cutL", []); side("cutR", [CUT_A, CUT_B]); } }
   CUT_PANEL.style.display = "none";
 }
 /* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
