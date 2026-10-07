@@ -1073,3 +1073,113 @@ function zzRowsStats(rows){
   for (const s of rows) { h += zzRowEntropy(s); m += zzRowMirror(s); for (let i = 0; i < s.length; i++) if (s[i] === "1") ones++; bits += s.length; }
   const n = rows.length || 1; return { h: h / n, m: m / n, d: bits ? ones / bits : 0 };
 }
+
+/* v0.914: совпавшие границы колец. edges — отсортированные углы [0, 2π), rate — радиан на единицу фазы.
+   Последнее кольцо — за чертой. Проверяются все внутренние кольца, а не только сосед.
+   Поиск события аналитический: совпадение не теряется между кадрами даже при быстром вращении. */
+function zzEdgeNorm(a){ const t = 2 * Math.PI; return ((a % t) + t) % t; }
+function zzEdgeHas(edges, a, tol = 1e-6){
+  a = zzEdgeNorm(a); let lo = 0, hi = edges.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (edges[m] < a) lo = m + 1; else hi = m; }
+  for (const k of [lo - 1, lo]) { const e = edges[(k + edges.length) % edges.length]; if (e !== undefined && Math.abs(Math.atan2(Math.sin(e - a), Math.cos(e - a))) <= tol) return true; }
+  return false;
+}
+function zzAlignedEdges(rings, ph = 0){
+  if (rings.length < 2 || rings.some(r => !r.edges.length)) return [];
+  const outer = rings[rings.length - 1];
+  return outer.edges.map(a => zzEdgeNorm(a + outer.rate * ph)).filter(a => rings.slice(0, -1).every(r => zzEdgeHas(r.edges, a - r.rate * ph)));
+}
+function zzEdgeMeet(rings, dph){
+  if (!dph || rings.length < 2 || rings.some(r => !r.edges.length)) return null;
+  const outer = rings[rings.length - 1], inner = rings.slice(0, -1);
+  const ref = inner.reduce((a, b) => Math.abs(b.rate - outer.rate) > Math.abs(a.rate - outer.rate) ? b : a);
+  const v = (outer.rate - ref.rate) * dph, tau = 2 * Math.PI;
+  if (Math.abs(v) < 1e-12) return null;   // общим поворотом новые совпадения не образуются
+  const candidates = [];
+  for (const a of outer.edges) for (const b of ref.edges) {
+    const diff = a - b, lo = Math.min(diff, diff + v), hi = Math.max(diff, diff + v);
+    for (let k = Math.ceil((lo - 1e-9) / tau); k <= Math.floor((hi + 1e-9) / tau); k++) {
+      const u = (k * tau - diff) / v;
+      if (u > 1e-8 && u <= 1 + 1e-9) candidates.push(Math.min(1, u));   // ▶ после паузы пропускает прежнее совпадение
+    }
+  }
+  candidates.sort((a, b) => a - b); let prev = -1;
+  for (const u of candidates) {
+    if (Math.abs(u - prev) < 1e-10) continue; prev = u;
+    const ph = dph * u, angles = zzAlignedEdges(rings, ph);
+    if (angles.length) return { ph, angles };
+  }
+  return null;
+}
+
+/* v0.918: моменты встреч любых граней на одной прямой (включая противоположные).
+   Пересекаем только перекрывающиеся траектории, чтобы найти касание и между кадрами. */
+function zzEdgeEvents(rings, dph){
+  const period = Math.PI, eps = 1e-9, paths = [], events = [];
+  for (const ring of rings) {
+    const seen = new Set(), v = ring.rate * dph;
+    for (const edge of ring.edges) {
+      const a = zzEdgeNorm(edge) % period, key = Math.round(a / eps); if (seen.has(key)) continue; seen.add(key);
+      const lo = Math.min(a, a + v), hi = Math.max(a, a + v);
+      for (let k = Math.ceil((-hi - eps) / period); k <= Math.floor((period - lo + eps) / period); k++) {
+        paths.push({ a: a + k * period, v, lo: Math.max(0, lo + k * period), hi: Math.min(period, hi + k * period) });
+      }
+    }
+  }
+  paths.sort((a, b) => a.lo - b.lo); let active = [];
+  for (const p of paths) {
+    active = active.filter(q => q.hi >= p.lo - eps);
+    for (const q of active) {
+      const speed = p.v - q.v; if (Math.abs(speed) < 1e-12) continue;
+      const u = (q.a - p.a) / speed, x = p.a + p.v * u;
+      if (u > 1e-8 && u <= 1 + eps && x >= -eps && x <= period + eps) events.push(Math.min(1, u));
+    }
+    active.push(p);
+  }
+  return events.sort((a, b) => a - b).filter((u, i, all) => !i || u - all[i - 1] > 1e-10).map(u => u * dph);
+}
+
+/* v0.916: замкнутые угловые просветы — касание краёв сохраняется точкой [a, a].
+   Это отдельный расчёт для одиночных прямых: точки не превращаются в освещённые сектора. */
+function zzArcClosedUnion(arcs, eps = 1e-9){
+  const out = [];
+  for (const [lo, hi] of arcs.map(a => a.slice()).sort((a, b) => a[0] - b[0])) {
+    const last = out[out.length - 1];
+    if (last && lo <= last[1] + eps) last[1] = Math.max(last[1], hi);
+    else out.push([lo, hi]);
+  }
+  return out;
+}
+function zzArcClosedAnd(A, B, eps = 1e-9){
+  const out = [], tau = 2 * Math.PI; let i = 0, j = 0;
+  while (i < A.length && j < B.length) {
+    const lo = Math.max(A[i][0], B[j][0]), hi = Math.min(A[i][1], B[j][1]);
+    if (hi > lo + eps) out.push([lo, hi]);
+    else if (hi >= lo - eps) out.push([(lo + hi) / 2, (lo + hi) / 2]);
+    if (A[i][1] < B[j][1]) i++; else j++;
+  }
+  const at0 = L => L.some(([a]) => a <= eps), atEnd = L => L.some(([, b]) => b >= tau - eps);
+  if ((at0(A) && atEnd(B)) || (atEnd(A) && at0(B))) out.push([0, 0]);
+  return zzArcClosedUnion(out, eps);
+}
+function zzArcClosedShift(A, angle){
+  const out = [], tau = 2 * Math.PI;
+  for (const [lo, hi] of A) {
+    const w = hi - lo, a = zzEdgeNorm(lo + angle), b = a + w;
+    if (w >= tau) out.push([0, tau]);
+    else if (b <= tau) out.push([a, b]);
+    else out.push([a, tau], [0, b - tau]);
+  }
+  return zzArcClosedUnion(out);
+}
+function zzCtrIsolated(source, exit){
+  const gap = zzArcClosedAnd(exit, zzArcClosedShift(exit, Math.PI));
+  const lit = zzArcClosedAnd(source, gap), out = [];
+  for (const [a, b] of lit) if (b - a <= 1e-9) {
+    // 0 и 2π — одна граница: край существующего сектора не считается отдельной прямой.
+    if (lit.some(([lo, hi]) => hi - lo > 1e-9 && [a, a - 2 * Math.PI, a + 2 * Math.PI].some(t => t >= lo - 1e-9 && t <= hi + 1e-9))) continue;
+    const t = ((a % Math.PI) + Math.PI) % Math.PI;
+    if (!out.some(x => Math.abs(Math.atan2(Math.sin(2 * (t - x)), Math.cos(2 * (t - x)))) < 2e-9)) out.push(t);
+  }
+  return out.sort((a, b) => a - b);
+}
