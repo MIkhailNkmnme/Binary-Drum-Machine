@@ -2125,11 +2125,11 @@ function plateInit(el){
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
   hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть; двойной — открыть и свернуть остальные панели; правый — на исходное место и без сцепки. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
-  const focus = () => { if (window.zzPanelFocus) window.zzPanelFocus(el); plateFoldToggle(el, false); };
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
-  fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); focus(); });
+  // v0.951: двойной щелчок сворачивает только эту панель, остальные не трогает.
+  fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); plateFoldToggle(el, true); });
   hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); if (Z[c.min]) plateFoldToggle(el, false); });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); focus(); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); plateFoldToggle(el, true); });
   hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
@@ -10970,10 +10970,6 @@ function solPanelOrganizeInit(C){
     say("↶ Прежняя раскладка панелей восстановлена.");
   };
   window.zzPanelOrganizeSync = controlsSync;
-  window.zzPanelFocus = g => {
-    panels().forEach(other => { if (other !== g && !other.hidden && !other.classList.contains("coff")) fold(other, true); });
-    cgbSnap(); cgrpCols();
-  };
   controlsSync();
   // Однократная компактная укладка после загрузки; следующие изменения пользователя сохраняются.
   if ((Z.solPanelArrangeV | 0) < 2 && window.innerWidth > 760) {
@@ -11336,9 +11332,8 @@ function cgrpInit(){
         if (Z.cgrpMinPos && Z.cgrpMinPos[key]) { const m = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key]; if (m.fld) { Z.cgrpFld[key] = m.fld; delete Z.cgrpPos[key]; } else if (m.pos) Z.cgrpPos[key] = m.pos; else delete Z.cgrpPos[key]; } }
       g.classList.toggle("cmin", on); g.style.minHeight = ""; cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); foldUi(); save();
     };
-    const focus = () => { if (window.zzPanelFocus) window.zzPanelFocus(g); foldToggle(false); };
     fold.onclick = e => { e.stopPropagation(); if (e.detail < 2) foldToggle(); };
-    fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); focus(); }); foldUi();
+    fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); foldToggle(true); }); foldUi();
     g.addEventListener("click", e => {
       if (!e.target.closest(".glab") || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); if (Z.cgrpMin[g.dataset.g]) foldToggle(false);
@@ -11447,11 +11442,11 @@ function cgrpInit(){
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
-    /* v0.941: заголовок открывает панель; двойной щелчок открывает её и сворачивает остальные.
-       Двойной щелчок по пустому месту сохраняет переключение свёрнутости самой группы. */
+    /* v0.941: заголовок открывает панель. v0.951, «двойной клик по группам сворачивает все остальные — так не надо, только одну»:
+       двойной щелчок по заголовку или пустому месту сворачивает только эту группу, остальные не трогает. */
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); if (e.target.closest(".glab")) focus(); else foldToggle();
+      e.preventDefault(); e.stopPropagation(); foldToggle(true);
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
