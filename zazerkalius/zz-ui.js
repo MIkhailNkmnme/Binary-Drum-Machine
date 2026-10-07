@@ -2085,6 +2085,7 @@ function plateFoldToggle(el, min = !Z[SOL_PLATES[el.id].min]){
   if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
 }
 function platePlace(el){
+  if (document.body.classList.contains("sol-mobile")) return;
   if (el.classList.contains("pdrag")) return;
   const c = SOL_PLATES[el.id]; if (platePinPlace(el, Z[c.pin])) return;
   const host = el.parentElement, cv = document.getElementById("coneCv"); if (!host || !cv) return;
@@ -2138,6 +2139,7 @@ function plateInit(el){
   plateFoldSync(el);
 }
 function plateZig(el, col){
+  if (document.body.classList.contains("sol-mobile")) return;
   if (!el || el.hidden || !el.getClientRects().length) return;
   if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => plateZig(el, col)); el._pzRO.observe(el); }
   const P = TZC_H, t = P / (2 * Math.sqrt(3));
@@ -10955,6 +10957,7 @@ function cgrpInit(){
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
      показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
   const sizeApply = (g) => {
+    if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
     { const s0 = Z.cgrpSize[g.dataset.g]; if (s0 && s0.w > Math.max(screen.availWidth || 0, window.innerWidth, 800)) { delete Z.cgrpSize[g.dataset.g]; save(); } }   // v0.505: шире экрана — сбой (см. ручку), размер снят
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
     if (!s) { g.style.width = g.style.height = ""; if (typeof tzcApply === "function") tzcApply(g); return; }
@@ -11062,6 +11065,7 @@ function cgrpInit(){
   };
   let linkSaveT = 0;
   const linkSync = () => {
+    if (document.body.classList.contains("sol-mobile")) return;
     const t = TZC_H / (2 * Math.sqrt(3)); let ch = false;
     for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
     for (let pass = 0; pass < panels().length; pass++) { let any = false;
@@ -11155,6 +11159,7 @@ function cgrpInit(){
     const tb = document.getElementById("cgTabs"); if (tb && tb.getClientRects().length && !document.body.classList.contains("zen")) t = Math.max(t, tb.getBoundingClientRect().bottom);   // v0.608: «не дай группам наезжать на кнопки меню» — верх для групп ниже полосы вкладок
     return t; };
   const place = (g) => {
+    if (document.body.classList.contains("sol-mobile")) return;
     const f = !FLD_NO[g.dataset.g] && g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && fldRect();   // v0.348: на поле строк
     g.classList.toggle("cfld", !!fr);
     if (fr) {
@@ -11198,6 +11203,7 @@ function cgrpInit(){
      куда короче и что в пределах окна). Когда отпустили группу — двигается она; само (раз в 0,3 с: группа выросла, окно сузилось) — верхняя из двух.
      Прицепленные 🧲 сами не двигаются — двигают другую */
   const grpFix = (only) => {
+    if (document.body.classList.contains("sol-mobile")) return;
     if (document.body.classList.contains("cgdrag")) return;
     const vis = panels().filter(g => onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && g.offsetWidth > 4);
     const mov = g => (SOL_PLATES[g.id] || g.classList.contains("cfloat")) && !Z.cgrpLink[g.dataset.g] && !(Z.cgrpEdge && Z.cgrpEdge[g.dataset.g]) && typeof nodePin(g) !== "number" && !!(SOL_PLATES[g.id] || Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
@@ -12690,6 +12696,7 @@ function tzcOff(g){
   const ov = cgb.querySelector(":scope > .tzco"); if (ov) ov.remove();
 }
 function tzcApply(g){
+  if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
   const d = Z.cgrpTri && Z.cgrpTri[g.dataset.g], cgb = g.querySelector(".cgb");
   if (!cgb || !d || !d.on || !g.closest("#w-cone")) { if (cgb && cgb.classList.contains("tzc")) tzcOff(g); return; }
   const hh = TZC_H / 2, t = TZC_H / (2 * Math.sqrt(3)), s = 2 * t, px = (v) => v.toFixed(2) + "px";
@@ -13057,6 +13064,7 @@ function tzSliders(){
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
 setInterval(() => { if (!document.hidden && !ZZ_BG) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
 function tzgFrame(g){
+  if (document.body.classList.contains("sol-mobile") && g.closest("#w-cone")) return;
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
   /* v0.801, по снимку «Алгоритма» — «лишний полуромб внизу»: под кнопками строка текста (#lasAlgo, #coneVarN) любой высоты, а зубцы рамки идут
@@ -13818,6 +13826,7 @@ function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random
 var zzLoaded = false;   // v0.659 (var — triState зовут и выше по файлу): load() отработал — память прочитана
 function init(){
   load(); zzLoaded = true;
+  if (window.zzSolMobileDefaults) window.zzSolMobileDefaults();
   /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
      теперь помнится (Z.noCur) — следим за классом и пишем, когда он меняется */
   if (Z.noCur) document.body.classList.add("nocur");
