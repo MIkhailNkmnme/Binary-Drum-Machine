@@ -136,3 +136,22 @@ test('unchanged fold state does not repeatedly rewrite header text', () => {
   const { ctx } = context(), b = button(); ctx.solFoldButton(b, false, 'Вид'); const count = b.writes;
   for (let i = 0; i < 10; i++) ctx.solFoldButton(b, false, 'Вид'); assert.equal(b.writes, count);
 });
+
+test('the algorithm panel follows tooth attachments and preserves its saved fold state', () => {
+  const { ctx, Z, plate, run } = context(), parent = plate('ringTbl'), panel = plate('lasAlgo');
+  Z.ringTblXY = [50, 96];
+  Z.cgrpLink['@lasAlgo'] = { to: '@ringTbl', dy: 24 };
+  ctx.platePlace(parent); run('linkSync()');
+  const before = panel.getBoundingClientRect();
+  Z.ringTblXY[0] += 40; ctx.platePlace(parent); run('linkSync()');
+  assert.equal(panel.getBoundingClientRect().left - before.left, 40);
+  assert.equal(panel.getBoundingClientRect().top - parent.getBoundingClientRect().top, 24);
+  ctx.plateFoldToggle(panel, true);
+  ctx.platePlace(panel); run('linkSync()');
+  assert.equal(Z.lasAlgoMin, true);
+  assert.equal(panel.offsetHeight, 24);
+  assert.equal(panel.bt.getAttribute('aria-expanded'), 'false');
+  assert.equal(Z.cgrpLink['@lasAlgo'].to, '@ringTbl');
+  ctx.plateFoldToggle(panel, false);
+  assert.equal(panel.bt.getAttribute('aria-expanded'), 'true');
+});

@@ -1973,16 +1973,18 @@ function lasDeps(){
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
     L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + (Z.coneLast2 && sm !== "Всё" ? "; крутятся только 2 последних кольца — последней строки и за чертой" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
   }
-  /* v0.816, по снимку «Алгоритма» — «это отдельно от нижнего текста: сам текст без фона и рамки помести на поле вправо вниз, и при клике по кнопкам или
-     при наведении на кнопки показывай, потом при любом клике вне групп кнопок скрой»: строки алгоритма — не в группе, а на холсте конуса, в правом
-     нижнем углу, без фона и рамки (#lasAlgo в теле окна конуса, место — lasAlgoPlace); видны с наведения или щелчка по кнопке групп конуса (.on),
-     прячутся щелчком мимо групп (по самому тексту — нет) */
+  /* v0.949: прозрачная зубчатая панель алгоритма и подсказок; общий хват,
+     сцепка и сворачивание сохраняют доступный заголовок. */
   let box = document.getElementById("lasAlgo");
   const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
-  if (!box) { box = document.createElement("div"); box.id = "lasAlgo"; }
+  if (!box) {
+    box = document.createElement("div"); box.id = "lasAlgo"; box.classList.add("on");
+    box.innerHTML = '<div class="rth"><span>Алгоритм · подсказки</span><button type="button" class="pminbtn"></button></div><div class="las-algo-body"><div id="lasRules"></div><div id="lasTip"></div></div>';
+    host.appendChild(box); plateInit(box);
+  }
   if (box.parentElement !== host) host.appendChild(box);
   const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
-  if (box.innerHTML !== h) box.innerHTML = h;
+  const rules = box.querySelector("#lasRules"); if (rules.innerHTML !== h) rules.innerHTML = h;
   /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
      раньше всех (в захвате) и гасится, вместо действия — всплывает, почему она сейчас не действует. Наведение и подсказка остаются */
   if (!lasDeps._b) { lasDeps._b = 1;
@@ -1992,23 +1994,23 @@ function lasDeps(){
     ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "keydown"].forEach(t => document.addEventListener(t, stop, { capture: true, passive: false }));
   }
   if (!lasDeps._h) { lasDeps._h = 1;   // наведение: кнопка ↔ её строка алгоритма
-    const clr = () => document.querySelectorAll(".cgrp .lhl, #lasAlgo > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
-    const tool = (t) => t && t.closest && t.closest("#w-cone .cgrp :is(button, label, select, input, .lseg)");   // v0.816: кнопка групп конуса
-    const show = (on) => { const b = document.getElementById("lasAlgo"); if (!b || b.classList.contains("on") === on) return; b.classList.toggle("on", on); if (on) lasAlgoPlace(); };
+    const clr = () => document.querySelectorAll(".cgrp .lhl, .sol-plate .lhl, #lasRules > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
+    const tool = (t) => t && t.closest && t.closest("#w-cone :is(.cgrp, .sol-plate:not(#lasAlgo)) :is(button, label, select, input, .lseg)");
     /* v0.841, по снимку текста алгоритма — «тут подсказка для каждой кнопки при наведении, а когда увести наведение, то этот текст как раньше; сделай
        ширину и высоту постоянной, чтобы не дёргалось, текст наверх прижимай, когда его мало»: наведение на кнопку групп конуса — в том же месте и того же
        размера её подсказка (#lasTip, текст title), увёл — снова строки алгоритма (lasAlgoPlace) */
-    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.classList.contains("cgrp") && x.closest(".cgrp") && el.closest(".cgrp") ? el.title : ""; };
-    const tip = (txt) => { const a = document.getElementById("lasAlgo"); if (!a) return; let t = document.getElementById("lasTip");
-      if (!t) { t = document.createElement("div"); t.id = "lasTip"; } if (t.parentElement !== a.parentElement) a.parentElement.appendChild(t);
+    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.matches(".cgrp, .sol-plate") && el.closest(".cgrp, .sol-plate:not(#lasAlgo)") ? el.title : ""; };
+    const tip = (txt) => { const a = document.getElementById("lasAlgo"), t = document.getElementById("lasTip"); if (!a || !t) return;
       if (txt) { if (t.textContent !== txt) t.textContent = txt; } a.classList.toggle("tip", !!txt); lasAlgoPlace(); };
-    document.addEventListener("pointerover", (e) => { const x = tool(e.target); if (x) show(true); tip(x ? tipOf(x) : ""); }, { passive: true });
-    document.addEventListener("pointerdown", (e) => { const t = e.target; if (tool(t)) show(true); else if (!(t.closest && t.closest(".cgrp, #lasAlgo"))) show(false); }, { capture: true, passive: true });
+    document.addEventListener("pointerover", (e) => { const x = tool(e.target); tip(x ? tipOf(x) : ""); }, { passive: true });
+    document.addEventListener("pointerdown", (e) => { const t = e.target, a = document.getElementById("lasAlgo");
+      if (a && !solPanelFolded(a) && !(t.closest && t.closest(".cgrp, .sol-plate"))) plateFoldToggle(a, true);
+    }, { capture: true, passive: true });
     document.addEventListener("pointerover", (e) => {
-      const x = e.target.closest && e.target.closest(":is(.cgrp, #lasAlgo) [data-la]"); clr(); if (!x) return;
+      const x = e.target.closest && e.target.closest(":is(.cgrp, .sol-plate) [data-la]"); clr(); if (!x) return;
       const key = x.dataset.la;
-      if (x.parentElement && x.parentElement.id === "lasAlgo") { x.classList.add("hl"); document.querySelectorAll('.cgrp :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
-      else { const r = document.querySelector('#lasAlgo > div[data-la="' + key + '"]'); if (r) r.classList.add("hl"); }
+      if (x.parentElement && x.parentElement.id === "lasRules") { x.classList.add("hl"); document.querySelectorAll(':is(.cgrp, .sol-plate:not(#lasAlgo)) :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
+      else { const r = document.querySelector('#lasRules > div[data-la="' + key + '"]'); if (r) r.classList.add("hl"); }
     }, { passive: true });
   }
 }
@@ -2048,7 +2050,8 @@ const SUNTBL = [
 const SOL_PLATES = {
   sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", name: "Солнце · Луна", col: "#ffe14d" },
   ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", name: "Кольца", col: "#22d3ee" },
-  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", name: "Шарики", col: "#79e7e1", corner: "bottom-right" }
+  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", name: "Шарики", col: "#79e7e1", corner: "bottom-right" },
+  lasAlgo: { xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", name: "Алгоритм · подсказки", col: "#ffd166", corner: "bottom-right" }
 };
 function solPanelName(el){ return SOL_PLATES[el.id] ? SOL_PLATES[el.id].name : el.dataset.g; }
 function solPanelFolded(el){ return el.classList.contains("cmin") || el.classList.contains("pmin"); }
@@ -2157,7 +2160,7 @@ function plateInit(el){
 }
 function plateZig(el, col){
   if (!el || el.hidden || !el.getClientRects().length) return;
-  if (document.body.classList.contains("sol-mobile") && el.id !== "solBallLab") return;
+  if (document.body.classList.contains("sol-mobile") && !["solBallLab", "lasAlgo"].includes(el.id)) return;
   if (!el._pzRO && window.ResizeObserver) { el._pzRO = new ResizeObserver(() => plateZig(el, col)); el._pzRO.observe(el); }
   const P = TZC_H, t = P / (2 * Math.sqrt(3));
   const mh = el.style.minHeight; el.style.minHeight = ""; const H0 = el.offsetHeight, H = Math.max(P, Math.ceil(H0 / P - 1e-6) * P); const want = H !== H0 ? H + "px" : "";
@@ -5962,19 +5965,22 @@ function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb |
      кнопки «Вида». Вкладки учитываются, только если накрывают верх холста */
   const r = tb.getBoundingClientRect(), cv = document.getElementById("coneCv"), c = cv && cv.getBoundingClientRect();
   return c && c.height && r.top > c.top + c.height / 2 ? -Infinity : r.bottom; }
-function lasAlgoPlace(){   // v0.816: строки алгоритма — в правом нижнем углу холста конуса
+function lasAlgoPlace(){
   const el = document.getElementById("lasAlgo"), cv = document.getElementById("coneCv"); if (!el || !el.classList.contains("on") || !cv) return;
   const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  /* v0.841: ширина и высота постоянные — ширина от холста, высота — самая большая, какую набирали строки при этой ширине (не меньше 8 строк);
-     текст прижат к верху. Подсказка кнопки (#lasTip) — в той же коробке */
-  const W = Math.round(Math.max(200, Math.min(460, cr.width / 2 - 56))), ws = W + "px"; if (el.style.width !== ws) el.style.width = ws;
-  const key = W + "|" + el.innerHTML.length;
-  if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; } el.style.height = ""; el._mh = Math.max(el._mh || 0, el.scrollHeight, 128); }
-  const hs = el._mh + "px"; if (el.style.height !== hs) el.style.height = hs;
-  const l = (cr.right - hr.left - 8 - W + host.scrollLeft).toFixed(1) + "px", t = (cr.bottom - hr.top - 8 - el._mh + host.scrollTop).toFixed(1) + "px";
-  if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
-  const tp = document.getElementById("lasTip"); if (tp) { tp.classList.toggle("on", el.classList.contains("tip"));
-    for (const [k, v] of [["left", l], ["top", t], ["width", ws], ["height", hs]]) if (tp.style[k] !== v) tp.style[k] = v; }
+  if (el.classList.contains("pdrag")) return;
+  const mobile = document.body.classList.contains("sol-mobile");
+  const W = Math.round(mobile ? Math.max(200, host.clientWidth - 16) : Math.max(200, Math.min(460, cr.width / 2 - 56)));
+  const ws = W + "px"; if (el.style.width !== ws) el.style.width = ws;
+  plateFoldSync(el);
+  if (!solPanelFolded(el)) {
+    const rules = el.querySelector("#lasRules"), body = el.querySelector(".las-algo-body"), key = W + "|" + rules.innerHTML;
+    if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; body.style.height = ""; } el._mh = Math.max(el._mh || 0, rules.scrollHeight, 128); }
+    const hs = Math.min(el._mh, Math.max(128, Math.min(480, host.clientHeight - 72))) + "px";
+    if (body.style.height !== hs) body.style.height = hs;
+  }
+  plateZig(el, SOL_PLATES.lasAlgo.col); platePlace(el);
+  if (window.zzPanelLinkSync) window.zzPanelLinkSync();
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
@@ -10876,14 +10882,14 @@ function cgrpRefEl(k){ try { return k ? (k[0] === "#" ? document.getElementById(
 function solPanelOrganizeInit(C){
   const { tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi } = C;
   const sections = [
-    { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "@sunMoonTbl", "строка 1", "щели", "за чертой", "алгоритм"] },
+    { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "@sunMoonTbl", "строка 1", "щели", "за чертой", "алгоритм", "@lasAlgo"] },
     { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "@solBallLab"] },
     { name: "Вид", color: "#6cb4ff", keys: ["вид", "3d"] },
     { name: "Звук и цикл", color: "#b98cff", keys: ["аниматрица", "звук"] },
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
