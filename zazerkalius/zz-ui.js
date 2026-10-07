@@ -1881,7 +1881,7 @@ function lasSegInit(){
 function lasSegSync(){ for (const d of LAS_SEG) { const v = d.get(); document.querySelectorAll('.lseg[data-seg="' + d.id + '"] > button').forEach(b => { const on = b.dataset.v === v; if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }); } }
 const LAS_KEY = {
   src: ["coneClock", "bConeFan", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK", "bLaserFix", "bLaserChain", "bConeSun"],
-  r1: ["bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
+  r1: ["bRow1Parts1", "bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunMoon", "bSunTurn", "bSunGate", "bSunRow1", "bConeAimL", "bConeAimR"],
   ring: ["bConeSlits", "coneSlit", "bCutAlign", "bCutGaps", "bCutLen", "coneSunCut", "bCutPrev"],
   fill: ["bCutFree", "bSunXor", "bSunAnti", "bSunSweep", "coneVoid", "bConeOut"],
   moon: ["bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross"],
@@ -1897,7 +1897,8 @@ function lasDeps(){
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
-  need(["bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
+  need(["bRow1Parts1", "bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
+  need(["bRow1Parts1"], coneCut2n(), "в «вырезах 2n» строка 1 всегда полукольцо — целым битом её не сделать");   // v0.952
   need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
     "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
@@ -2126,10 +2127,11 @@ function plateInit(el){
   hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть; двойной — открыть и свернуть остальные панели; правый — на исходное место и без сцепки. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
-  // v0.951: двойной щелчок сворачивает только эту панель, остальные не трогает.
-  fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); plateFoldToggle(el, true); });
-  hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); if (Z[c.min]) plateFoldToggle(el, false); });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); plateFoldToggle(el, true); });
+  /* v0.952: двойной щелчок — только эта панель, остальные не трогает: свёрнутую открывает (её открыл первый щелчок, _wasMin),
+     открытую сворачивает. По кнопке «−» двойной — как одиночный: первый щелчок уже переключил. */
+  fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); });
+  hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); el._wasMin = !!Z[c.min]; if (Z[c.min]) plateFoldToggle(el, false); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); if (!el._wasMin) plateFoldToggle(el, true); el._wasMin = false; });
   hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
@@ -5039,17 +5041,21 @@ function coneRow1PartsUi(){
   for (const [id, n] of [["bRow1Parts2", 2], ["bRow1PartsSym", "sym2"], ["bRow1PartsLast", "last"], ["bRow1Parts3", 3], ["bLaserQuad", 4]]) {
     const b = document.getElementById(id); if (b) { b.classList.toggle("on", selected === n); b.setAttribute("aria-pressed", String(selected === n)); }
   }
+  // v0.952: ○ 1 часть — ни частей, ни щели: строка 1 одним целым битом (в вырезах 2n её нет — там всегда полукольцо)
+  const one = document.getElementById("bRow1Parts1"), whole = !Z.laserQuad && !Z.sunHalf && !Z.cutRow1Slit && !coneCut2n();
+  if (one) { one.classList.toggle("on", whole); one.setAttribute("aria-pressed", String(whole)); }
   const last = document.getElementById("bRow1PartsLast");
   if (last) { const text = "◈ по последней · " + Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length); if (last.textContent !== text) last.textContent = text; }
 }
 function coneRow1PartsSet(n){
-  const was = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.sunHalf ? 2 : 0, on = was !== n;
-  Z.row1Parts = n; Z.laserQuad = on && n !== 2; Z.sunHalf = on && n === 2;
-  if (on) { Z.cutRow1Slit = false; const b = document.getElementById("bRow1Slit"); if (b) b.classList.remove("on"); }
+  const was = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.sunHalf ? 2 : 0, on = n !== 1 && was !== n;
+  if (n !== 1) Z.row1Parts = n;   // v0.952: «1 часть» помнит прежний выбор частей
+  Z.laserQuad = on && n !== 2; Z.sunHalf = on && n === 2;
+  if (on || n === 1) { Z.cutRow1Slit = false; const b = document.getElementById("bRow1Slit"); if (b) b.classList.remove("on"); }
   const half = document.getElementById("bSunHalf"); if (half) half.classList.toggle("on", !!Z.sunHalf);
   coneWallWas = undefined; coneSunWas = undefined; coneClockWas = null; conePeekC = { k: "", S: null }; lasDepsK = "";
   coneRow1PartsUi(); save(); renderCone();
-  say(on ? n === "last" ? "Первое кольцо: части по симметрии последней строки перед горизонтом, со сдвигом фазы на половину шага. Число частей меняется вместе с последней строкой." : n === "sym2" ? "2 по симметрии: один бит в двух противоположных частях по 90°, между ними открытые части; фаза отличается от второй строки." : `${n} части: ${n === 2 ? "полукольцо, одна половина с битом, другая открыта" : n === 3 ? "три сектора по 120°: открытый, с битом, открытый" : "четыре сектора по 90°: открытый, с битом, открытый, с битом"}.` : "Деление строки 1 на части выключено.");
+  say(on ? n === "last" ? "Первое кольцо: части по симметрии последней строки перед горизонтом, со сдвигом фазы на половину шага. Число частей меняется вместе с последней строкой." : n === "sym2" ? "2 по симметрии: один бит в двух противоположных частях по 90°, между ними открытые части; фаза отличается от второй строки." : `${n} части: ${n === 2 ? "полукольцо, одна половина с битом, другая открыта" : n === 3 ? "три сектора по 120°: открытый, с битом, открытый" : "четыре сектора по 90°: открытый, с битом, открытый, с битом"}.` : n === 1 ? "1 часть: строка 1 — один целый бит на весь круг, без частей и щели." : "Деление строки 1 на части выключено.");
 }
 /* v0.744, «солнце тоже должно тут работать в 4 частях — просто маленьким кругом внутри его сделай, и так же лучи»: при ✚ солнце — маленький круг в центре
    круга из четвертей; свет выходит только через чёрные четверти — два сектора по 90°, дальше — как всегда. coneQuadArcs(open) — чёрные (true) или белые
@@ -7123,6 +7129,7 @@ function setupCone(){
   }
   if ($("bLaserQuad")) {   // v0.743: ✚ 4 части — строка 1 кругом из четвертей, луч из центра через чёрную
     $("bLaserQuad").onclick = () => coneRow1PartsSet(4);
+    if ($("bRow1Parts1")) $("bRow1Parts1").onclick = () => coneRow1PartsSet(1);
     if ($("bRow1Parts2")) $("bRow1Parts2").onclick = () => coneRow1PartsSet(2);
     if ($("bRow1PartsSym")) $("bRow1PartsSym").onclick = () => coneRow1PartsSet("sym2");
     if ($("bRow1PartsLast")) $("bRow1PartsLast").onclick = () => coneRow1PartsSet("last");
@@ -11333,10 +11340,10 @@ function cgrpInit(){
       g.classList.toggle("cmin", on); g.style.minHeight = ""; cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); foldUi(); save();
     };
     fold.onclick = e => { e.stopPropagation(); if (e.detail < 2) foldToggle(); };
-    fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); foldToggle(true); }); foldUi();
+    fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); }); foldUi();   // v0.952: двойной — как одиночный, первый щелчок уже переключил
     g.addEventListener("click", e => {
       if (!e.target.closest(".glab") || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
-      e.stopPropagation(); if (Z.cgrpMin[g.dataset.g]) foldToggle(false);
+      e.stopPropagation(); g._wasMin = !!Z.cgrpMin[g.dataset.g]; if (g._wasMin) foldToggle(false);
     });
     lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть; двойной — открыть и свернуть остальные панели. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + (FLD_NO[g.dataset.g] ? ". Эта группа остаётся на конусе" : "; над полем строк — прокрутка строк; группа целиком над полем — остаётся на нём") + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
@@ -11443,10 +11450,11 @@ function cgrpInit(){
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
     /* v0.941: заголовок открывает панель. v0.951, «двойной клик по группам сворачивает все остальные — так не надо, только одну»:
-       двойной щелчок по заголовку или пустому месту сворачивает только эту группу, остальные не трогает. */
+       двойной щелчок по заголовку или пустому месту сворачивает только эту группу, остальные не трогает.
+       v0.952, «2-щелчок перестал открывать группы»: свёрнутую открыл первый щелчок (g._wasMin) — двойной её так и оставляет открытой. */
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); foldToggle(true);
+      e.preventDefault(); e.stopPropagation(); if (!(g._wasMin && e.target.closest(".glab"))) foldToggle(true); g._wasMin = false;
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
