@@ -2109,15 +2109,21 @@ function solPanelFolded(el){ return el.classList.contains("cmin") || el.classLis
 function solMenuClick(el, toggle){
   clearTimeout(el._solClickTimer); el._solClickTimer = setTimeout(() => { el._solClickTimer = 0; toggle(); }, 260);
 }
-function solPanelsToggleAll(selected){
+function solPanelExclusive(selected){
   const host = selected.closest(".win"); if (!host) return;
   const panels = Array.from(host.querySelectorAll(".cgrp, .sol-plate"));
-  const fold = panels.every(el => !solPanelFolded(el));
+  const foldSelected = !solPanelFolded(selected);
   panels.forEach(el => { clearTimeout(el._solClickTimer); el._solClickTimer = 0; });
-  panels.forEach(el => {
-    if (el._solFold) el._solFold(fold);
-    else if (SOL_PLATES[el.id]) plateFoldToggle(el, fold);
+  const changed = panels.filter(el => solPanelFolded(el) !== (el === selected ? foldSelected : !foldSelected));
+  // Сначала меняем все состояния, затем один раз пересчитываем размеры и сцепки.
+  changed.forEach(el => {
+    const fold = el === selected ? foldSelected : !foldSelected;
+    if (el._solFold) el._solFold(fold, true);
+    else if (SOL_PLATES[el.id]) plateFoldToggle(el, fold, true);
   });
+  if (host._solFoldLayout) host._solFoldLayout(changed);
+  changed.filter(el => SOL_PLATES[el.id]).forEach(el => { const c = SOL_PLATES[el.id]; el._pzk = ""; plateZig(el, c.col); platePlace(el); });
+  if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
 }
 function solPanelRowStep(el, height = el.offsetHeight){ return Math.max(TZC_H, Math.ceil(height / TZC_H) * TZC_H); }
 function solEdgePosition(el, anchor, top, bottom){
@@ -2144,7 +2150,7 @@ function solLinkAttach(links, a, b, side, ar, br){
   return kid;
 }
 function solFoldButton(bt, min, name){
-  const text = min ? "+" : "−", tip = (min ? "Развернуть" : "Свернуть до заголовка") + " «" + name + "»; один щелчок по заголовку — открыть, двойной — свернуть только её (свёрнутую — открыть)", label = (min ? "Развернуть " : "Свернуть ") + name, expanded = String(!min);
+  const text = min ? "+" : "−", tip = (min ? "Развернуть" : "Свернуть до заголовка") + " «" + name + "»; один щелчок по заголовку — открыть, двойной — раскрыть её и свернуть остальные / свернуть её и раскрыть остальные", label = (min ? "Развернуть " : "Свернуть ") + name, expanded = String(!min);
   if (bt.textContent !== text) bt.textContent = text; if (bt.title !== tip) bt.title = tip;
   if (bt.getAttribute("aria-label") !== label) bt.setAttribute("aria-label", label);
   if (bt.getAttribute("aria-expanded") !== expanded) bt.setAttribute("aria-expanded", expanded);
@@ -2161,9 +2167,10 @@ function plateFoldSync(el){
   const c = SOL_PLATES[el.id], min = !!Z[c.min]; el.classList.toggle("pmin", min);
   const bt = el.querySelector(".pminbtn"); if (bt) solFoldButton(bt, min, c.name);
 }
-function plateFoldToggle(el, min = !Z[SOL_PLATES[el.id].min]){
+function plateFoldToggle(el, min = !Z[SOL_PLATES[el.id].min], defer = false){
   const c = SOL_PLATES[el.id]; Z[c.min] = min;
   plateFoldSync(el);
+  if (defer) return;
   el._pzk = ""; plateZig(el, c.col); platePlace(el);
   if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
 }
@@ -2192,13 +2199,13 @@ function platePlace(el){
 function plateInit(el){
   el.classList.add("sol-plate");
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
-  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть / свернуть; двойной — открыть все группы / закрыть все группы; правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
+  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть / свернуть; двойной — раскрыть эту и свернуть остальные / свернуть эту и раскрыть остальные; правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
-  // По кнопке «−» двойной — как одиночный; по заголовку — открыть / закрыть все группы.
+  // По кнопке «−» двойной — как одиночный; по заголовку — переключить эту и остальные наоборот.
   fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); });
   hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); solMenuClick(el, () => plateFoldToggle(el)); });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(el); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPanelExclusive(el); });
   hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; delete Z[c.fld]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
@@ -11082,6 +11089,10 @@ function cgrpInit(){
   const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
   const wb = tl.parentElement; let zTop = 500;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
+  wb.closest(".win")._solFoldLayout = changed => {
+    const local = changed.filter(g => groups.includes(g)); if (!local.length) return;
+    cgbSnap(false); local.forEach(sizeApply); cgrpCols(); local.forEach(place);
+  };
   const panels = () => [...groups, ...Object.keys(SOL_PLATES).map(id => document.getElementById(id)).filter(Boolean)];
   const onCanvas = g => SOL_PLATES[g.id] ? g.parentElement === wb : g.parentElement === tl;
   const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
@@ -11395,11 +11406,13 @@ function cgrpInit(){
     zb.addEventListener("dblclick", (e) => e.stopPropagation());
     const fold = document.createElement("button"); fold.type = "button"; fold.className = "gfold"; lab.appendChild(fold);
     const foldUi = () => solFoldButton(fold, !!Z.cgrpMin[g.dataset.g], solPanelName(g));
-    const foldToggle = (on = !Z.cgrpMin[g.dataset.g]) => {
+    const foldToggle = (on = !Z.cgrpMin[g.dataset.g], defer = false) => {
       const key = g.dataset.g;
       if (on) Z.cgrpMin[key] = true; else { delete Z.cgrpMin[key];
         if (Z.cgrpMinPos && Z.cgrpMinPos[key]) { const m = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key]; if (m.fld) { Z.cgrpFld[key] = m.fld; delete Z.cgrpPos[key]; } else if (m.pos) Z.cgrpPos[key] = m.pos; else delete Z.cgrpPos[key]; } }
-      g.classList.toggle("cmin", on); g.style.minHeight = ""; cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); foldUi(); save();
+      g.classList.toggle("cmin", on); g.style.minHeight = ""; foldUi();
+      if (defer) return;
+      cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); save();
     };
     g._solFold = foldToggle;
     fold.onclick = e => { e.stopPropagation(); if (e.detail < 2) foldToggle(); };
@@ -11409,7 +11422,7 @@ function cgrpInit(){
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); solMenuClick(g, () => foldToggle());
     });
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть / свернуть; двойной — открыть все группы / закрыть все группы. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть / свернуть; двойной — раскрыть эту и свернуть остальные / свернуть эту и раскрыть остальные. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
@@ -11517,10 +11530,10 @@ function cgrpInit(){
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
-    // v0.969: двойной щелчок открывает все группы, следующий закрывает все.
+    // v0.970: раскрытие выбранной сворачивает остальные, сворачивание раскрывает остальные.
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(g);
+      e.preventDefault(); e.stopPropagation(); solPanelExclusive(g);
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
@@ -11677,7 +11690,7 @@ function cgrpInit(){
   /* v0.827, «подтормаживает на каждом обороте кручения»: во время кручения внутри групп каждый кадр меняется только текст-показ — число у ползунка (.rv, .sli)
      и строка «вариантов цикла… сейчас N» (#coneVarN). Наблюдатель на каждую такую смену пересобирал все группы (cgbSnap + triTag, 100–200 мс) — кадр вставал.
      Такие правки раскладку кнопок не меняют — их наблюдатель теперь пропускает */
-  const cgbTextOnly = (ms) => ms.every(m => { const x = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !!(x && x.closest && x.closest(".rv, .sli, #coneVarN, #lasAlgo")); });
+  const cgbTextOnly = (ms) => ms.every(m => { const x = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !!(x && x.closest && x.closest(".rv, .sli, #coneVarN, #lasAlgo, .gfold")); });
   { let t = 0; const mo = new MutationObserver((ms) => { if (cgbTextOnly(ms)) return; if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
     groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
   cgbSnap();
@@ -11701,10 +11714,10 @@ function cgrpInit(){
           if (!slot) {
             slot = document.createElement("span"); slot.className = "sol-header-slot"; slots.set(key, slot); dock.appendChild(slot);
             const button = document.createElement("button"); button.type = "button"; button.textContent = solPanelName(g) + " −"; slot.appendChild(button);
-            button.title = solPanelName(g) + ": щелчок — свернуть, двойной — открыть все группы / закрыть все группы";
+            button.title = solPanelName(g) + ": щелчок — свернуть, двойной — раскрыть эту и свернуть остальные / свернуть эту и раскрыть остальные";
             button.style.color = getComputedStyle(g.querySelector(".glab, .smh, .rth") || g).color;
             button.onclick = e => { e.stopPropagation(); if (e.detail < 2) solMenuClick(g, () => g._solFold ? g._solFold() : plateFoldToggle(g)); };
-            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(g); };
+            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); solPanelExclusive(g); };
           }
           const button = slot.firstElementChild, folded = solPanelFolded(g);
           if (button.hidden !== folded) button.hidden = folded;
@@ -11751,7 +11764,7 @@ const CG_FREE = ".cgrp > .glab, .cgrp > .cgb > .glab2, .cgrp > .cgb > span:not(.
    мало одной ширины, — в 2 кнопки (или в 4), а не обрезаны (классы .w2 / .w4). Замер — разом для всех (одна перекладка страницы, а не на
    каждый элемент: при ▶ волне счёт меняется каждый кадр) */
 const CG_BTN = ".cgrp > .cgb button:not(.zerk-arrow), .cgrp > .cgb label:has(> input[type=checkbox]), .cgrp > .cgb select";
-function cgbSnap(){
+function cgbSnap(decorate = true){
   const bu0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, ct = document.querySelector("#w-cone .tools");
   const buC = (ct && parseFloat(getComputedStyle(ct).getPropertyValue("--bu"))) || bu0;   // v0.447: в конусе своя --bu (6s) и без зазоров
   const W = (k, el) => { const c = el.closest("#w-cone .tools, #paneGrp"), bu = c ? buC : bu0, gp = c ? 0 : 3; return k * bu + (k - 1) * gp; };   // v0.463: и левая панель
@@ -11771,7 +11784,7 @@ function cgbSnap(){
   btn.forEach(el => { el.classList.remove("wm"); if (el._tzw) el.style.setProperty("width", el._tzw, "important"); if (el._tzf) el.style.setProperty("flex", el._tzf, "important"); });
   free.forEach((el, i) => { el.style.width = W(kOf(wf[i], el), el) + "px"; });
   btn.forEach((el, i) => { const k = kOf(wb[i], el); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
-  if (typeof triTag === "function") triTag();
+  if (decorate && typeof triTag === "function") triTag();
 }
 function cgbIcons(){
   document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
