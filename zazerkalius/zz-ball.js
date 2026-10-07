@@ -100,9 +100,12 @@
     b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = "● шарики";
     if ($("ballLabEnable")) {
       $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл.";
-      $("ballLabEnable").title = enabled ? "Шарики включены. Нажми, чтобы выключить движение." : "Движение выключено. Нажми, чтобы включить шарики.";
+      $("ballLabEnable").title = enabled ? "Шарики включены. Нажми, чтобы выключить их совсем: на конусе их не будет, панель спрячется; включить снова — «● шарики» в «Кручении»." : "Шарики выключены. Нажми, чтобы включить.";
       $("ballLabEnable").setAttribute("aria-pressed", String(enabled));
     }
+    // v0.960, «а как совсем их отключить?»: выключены — на конусе ничего (ни шариков, ни точек стартов, ни пунктира) и панель спрятана;
+    // включает их снова «● шарики» в «Кручении»
+    if (lab) { const d = enabled ? "" : "none"; if (lab.style.display !== d) { lab.style.display = d; if (enabled) { lab._pzk = ""; window.zzBallLabSync(); } } }
     labControls();
   }
   function labControls() {
@@ -242,6 +245,7 @@
   };
   window.zzBallRemember = () => {}; // Balls ride their bit edges; nothing to remember.
   window.zzBallDraw = (g, o) => {
+    if (!enabled) { markers = []; drawn = null; return; }   // v0.960: выключены — на конусе ничего
     const { cx, cy, dr, dpr } = o, S = snapshot();
     if (S) {
       if (!F || F.shape !== S.shape) prepare(S, true);
