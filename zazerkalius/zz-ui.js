@@ -2205,6 +2205,7 @@ function renderCone(){
   lasDeps();   // v0.757
   sunTblSync();   // v0.867: таблица «☀ Солнце · ☾ Луна»
   ringTblSync();   // v0.871: таблица «◯ Кольца»
+  if (window.zzGroupPinSync) window.zzGroupPinSync();   // v0.911: прищеплённые к оси группы — за центром и масштабом
   coneHoldSync();   // v0.870: «2 посл.» — стоящие кольца по числу строк
   if (!winOpen("w-cone")) return;
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
@@ -10671,6 +10672,7 @@ function cgrpInit(){
     add(wb); add($("field")); groups.forEach(o => { if (o !== g) add(o, 1); });
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
+  window.zzGroupPinSync = () => { const P = Z.cgrpPin; if (!P) return; let any = false; for (const k in P) { const g = gByKey(k); if (g && !g.classList.contains("cdrag")) { place(g); any = true; } } if (any) linkSync(); };   // v0.911
   window.zzPlateSnap = (el, x, y, w, h) => { const r = snapXY(el, x, y, w, h); el._mesh = null; return r; };   // v0.892: тот же магнит — плашкам-таблицам
   const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); let t = h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top;
     const tb = document.getElementById("cgTabs"); if (tb && tb.getClientRects().length && !document.body.classList.contains("zen")) t = Math.max(t, tb.getBoundingClientRect().bottom);   // v0.608: «не дай группам наезжать на кнопки меню» — верх для групп ниже полосы вкладок
@@ -10683,6 +10685,12 @@ function cgrpInit(){
       const x = Math.max(0, Math.min(f.x, fr.width - gw)), y = Math.max(0, Math.min(f.y, fr.height - gh));
       g.style.left = Math.round(fr.left + x) + "px"; g.style.top = Math.round(fr.top + y) + "px"; return;
     }
+    /* v0.911, «да, всё так сделай» (прищепка v0.910 — и группам кнопок): группа, прищеплённая к горизонтали через центр конуса (Z.cgrpPin[имя] — сдвиг от
+       центра при масштабе 1), стоит верхним краем на оси, по горизонтали — центр + сдвиг × масштаб; в окно не загоняется — может уехать за край */
+    { const pin = Z.cgrpPin && Z.cgrpPin[g.dataset.g], A = typeof pin === "number" && g.parentElement === tl ? coneAxisScr() : null;
+      if (g.classList.contains("axpin") !== !!A) g.classList.toggle("axpin", !!A);
+      if (A) { const tr0 = tl.getBoundingClientRect(), px = A.x + pin * (coneZoom || 1) - tr0.left, py = A.y - tr0.top; Z.cgrpPos[g.dataset.g] = { x: px, y: py };
+        g.classList.add("cfloat"); const l = Math.round(px) + "px", t = Math.round(py) + "px"; if (g.style.left !== l) g.style.left = l; if (g.style.top !== t) g.style.top = t; return; } }
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
     if (!p) { g.style.left = g.style.top = ""; return; }
     const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
@@ -10707,7 +10715,7 @@ function cgrpInit(){
   const grpFix = (only) => {
     if (document.body.classList.contains("cgdrag")) return;
     const vis = groups.filter(g => g.parentElement === tl && !g.classList.contains("cdrag") && g.getClientRects().length && g.offsetWidth > 4);
-    const mov = (g) => g.classList.contains("cfloat") && !Z.cgrpLink[g.dataset.g] && !!(Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
+    const mov = (g) => g.classList.contains("cfloat") && !Z.cgrpLink[g.dataset.g] && !(Z.cgrpPin && typeof Z.cgrpPin[g.dataset.g] === "number") && !!(Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);   // v0.911: прищеплённую к оси — не двигать
     const zOf = (g) => +g.style.zIndex || 0, TOL = 9;
     let ch = false;
     for (let pass = 0; pass < 12; pass++) {
@@ -10846,7 +10854,9 @@ function cgrpInit(){
           mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); });
           if (solo && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
         lx = ev.clientX; ly = ev.clientY;
-        { const [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px";   // v0.366: магнит (у блока лазера — нет)
+        { let [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g._pin = null;   // v0.366: магнит (у блока лазера — нет)
+          if (!mates.length) { const A = coneAxisScr(); if (A && Math.abs(sy - A.y) <= 12) { sy = A.y; g._pin = (sx - A.x) / (coneZoom || 1); } }   // v0.911: прищепка к оси
+          g.style.left = sx.toFixed(2) + "px"; g.style.top = Math.round(sy) + "px";
           mates.forEach(m => { m.o.style.left = (sx + m.dx).toFixed(2) + "px"; m.o.style.top = (Math.round(sy) + m.dy).toFixed(2) + "px"; }); }
         linkSync();   // v0.502: прицепленные справа — следом
         const P = $("rowsPane"); if (P) P.classList.toggle("cgover", paneHit(lx, ly));   // (в дзене панели нет — paneHit ложь)
@@ -10857,6 +10867,7 @@ function cgrpInit(){
         if (!moved) return;
         const gr = g.getBoundingClientRect(), onF = !paneHit(lx, ly) && fldFits(g, gr), F = $("field"); if (F) F.classList.remove("cgover");   // v0.348
         g.classList.remove("cdrag"); document.body.classList.remove("cgdrag"); sizeApply(g); const P = $("rowsPane"); if (P) P.classList.remove("cgover"); zSnapGlow([]);   // v0.400
+        if (Z.cgrpPin) { delete Z.cgrpPin[g.dataset.g]; mates.forEach(m => delete Z.cgrpPin[m.o.dataset.g]); }   // v0.911: перенесли — прищепка снята (ниже ставится заново, если отпустили на оси)
         if (mates.length) {   // v0.758: блок лазера — встаёт там, куда отпустили, весь разом
           /* v0.759, «у меня строки справа, прилипают к правому краю, не даёт двигать группы»: места замерялись уже после снятия .cdrag — группа из «на весу»
              (fixed, от края экрана) становилась absolute с теми же left / top, но от края окна, и прыгала вбок на отступ окна; каждое перетаскивание уносило
@@ -10875,7 +10886,10 @@ function cgrpInit(){
         if (g.parentElement !== tl) undock(g);
         if (onF) { const fr = fldRect(); Z.cgrpFld[g.dataset.g] = { x: Math.round(gr.left - fr.left), y: Math.round(gr.top - fr.top) }; delete Z.cgrpPos[g.dataset.g]; place(g); grpFix(g); save(); return; }   // v0.348: целиком на поле строк; v0.558: не поверх другой
         delete Z.cgrpFld[g.dataset.g];
-        const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top }; place(g);
+        const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top };
+        if (typeof g._pin === "number") { if (!Z.cgrpPin || typeof Z.cgrpPin !== "object") Z.cgrpPin = {}; Z.cgrpPin[g.dataset.g] = g._pin; g._mesh = null; delete Z.cgrpLink[g.dataset.g];   // v0.911: отпустили на оси — прищеплена
+          say(`📌 «${g.dataset.g}» прищеплена к оси — при масштабе уезжает влево-вправо, за конусом едет; оторви от оси — снова свободная.`); }
+        g._pin = null; place(g);
         { const m = g._mesh; g._mesh = null;   // v0.502: отпустил зубцами в соседку — прицепить правую к левой
           if (m && m.o.parentElement === tl) { const q = m.o.getBoundingClientRect(), g2 = g.getBoundingClientRect();
             const mine = m.side === "r" || m.side === "b", kid = mine ? g : m.o, par = mine ? m.o : g, kr = mine ? g2 : q, pr = mine ? q : g2;
