@@ -1,4 +1,4 @@
-/* Solaris v0.943: phone solo view, controls below the canvas. */
+/* Solaris v0.944: phone solo view, controls below the canvas. */
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
@@ -8,7 +8,7 @@
     Object.assign(Z, { rows: ["1", "11"], cur: 0, cone3d: false, conePoly: false,
       coneClock: true, coneSun: true, coneSlits: "cutS", cutPrev: "", cutFree: false,
       coneClean: true, sunHalf: true, row1Parts: 2, laserQuad: false, cutRow1Slit: false,
-      coneBallOn: true, coneBitStep: false, coneSpinMode: "obit", coneAutoSp: 4.7,
+      coneBallOn: true, coneBallRoute: "eight", coneBallStart: "center", coneBallMult: "1", coneBitStep: false, coneSpinMode: "obit", coneAutoSp: 4.7,
       coneOnlySel: false, coneNoPick: true, coneVoid: false, coneLast2: false,
       fillStill: false, coneRot: [0, 0], coneSpin: 0, coneSpinPh: 0, coneAimRot: 0 });
     delete Z.coneFree; delete Z.fillFree; delete Z.coneHold; delete Z.coneHoldOff;
@@ -33,7 +33,7 @@
     const button = (label, title, action) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.title = title; b.onclick = action; bar.appendChild(b); return b; };
     const play = button("▶ крутить", "Шарик и кольца запускаются и останавливаются вместе", () => $("bConeAuto").click());
     const dir = button("↻ вправо", "Изменить направление вращения и сторону старта шарика", () => $("bConeDir").click());
-    button("● ↩", "Вернуть шарик в центр", () => $("bConeBallReset").click());
+    button("● ↩", "Вернуть шарик в выбранную стартовую точку", () => $("bConeBallReset").click());
     button("2 кольца", "Настроить восьмёрку: полукольцо и два противоположных бита. Заменяет строки на 1 и 11.", () => {
       if (rowsLocked()) return;
       if (coneSpinning) $("bConeAuto").click();
@@ -64,6 +64,7 @@
     let was = false;
     const layout = () => {
       const on = mobile(); document.body.classList.toggle("sol-mobile", on);
+      const ballLab = $("solBallLab"); if (on && !was && ballLab) ballLab.open = true;
       if (on && !was) { document.body.classList.remove("sol-mobile-menus"); menu.textContent = "☰ Настройки"; menu.setAttribute("aria-expanded", "false"); coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
       was = on; sync(); requestAnimationFrame(() => { cgrpCols(); tzcAll(); renderCone(); });
     };
