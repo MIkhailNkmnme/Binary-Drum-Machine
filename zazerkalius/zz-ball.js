@@ -1,4 +1,4 @@
-/* Solaris v0.946: simultaneous boundary starts, symmetry points and fractional
+/* Solaris v0.947: visible start previews and highlighted experiment controls;
    constant speed along the track. The rotation clock owns the experiment. */
 (() => {
   "use strict";
@@ -44,7 +44,8 @@
     return S.rings.map((r, k) => B.rings[k].phase - r.phase + (m === "all" ? sp * Math.PI / 180 : 0));
   }
   function period(S) {
-    const w = rate(S), periods = w.map((v, k) => Math.abs(v) < 1e-12 ? 0 : (k === 0 ? TAU : Math.PI) / Math.abs(v)).filter(Boolean);
+    const B = S.rings[1].blocks, opposite = Math.abs(Math.abs(norm(B[1].lo - B[0].lo)) - Math.PI) < EPS && Math.abs((B[0].hi - B[0].lo) - (B[1].hi - B[1].lo)) < EPS;
+    const w = rate(S), periods = w.map((v, k) => Math.abs(v) < 1e-12 ? 0 : (k === 1 && opposite ? Math.PI : TAU) / Math.abs(v)).filter(Boolean);
     if (!periods.length) return null;
     const base = Math.max(...periods);
     for (let n = 1; n <= 4096; n++) {
@@ -89,22 +90,47 @@
       if (i === 0) blocks.push({ lo: Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 });
       else {
         const bits = i === N ? fillDraft() : Z.rows[i];
-        for (let j = 0; j < R.n; j++) if (bits[j] === "0" || bits[j] === "1") {
+        // Unfilled draft cells still have the same physical perimeter/edges.
+        // Their paint value must not hide the launch points on that perimeter.
+        for (let j = 0; j < R.n; j++) if (bits[j] === "0" || bits[j] === "1" || i === N && bits[j] === ".") {
           const p = R.cut ? cutPos(j, R.n) : j;
           blocks.push({ lo: -Math.PI / 2 + p * R.step, hi: -Math.PI / 2 + (p + 1) * R.step, bit: j });
         }
       }
-      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, shape: [R.n, R.P, R.cut, band].join(":") });
+      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
     }
     const B = rings[1].blocks;
-    if (B.length !== 2 || Math.abs(Math.abs(norm(B[1].lo - B[0].lo)) - Math.PI) > EPS || Math.abs((B[0].hi - B[0].lo) - (B[1].hi - B[1].lo)) > EPS) return null;
+    if (B.length !== 2) return null;
     return { rings, spin: (Z.coneSpin || 0) * Math.PI / 180, shape: rings.map(r => r.shape).join("|") };
   }
-  function hint() { return "Шарик: нужны 2 части у строки 1 и два противоположных бита второго кольца («по симметрии»), плоский вид и плавное кручение"; }
+  function hint() { return "Для 11 шариков: 2 части у строки 1, 2 бита второго кольца (пустые тоже подходят), плоский вид и плавное кручение"; }
   function ui() {
     const b = $("bConeBall"); if (!b) return;
     b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = "● шарики";
-    if ($("ballLabEnable")) { $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл."; $("ballLabEnable").setAttribute("aria-pressed", String(enabled)); }
+    if ($("ballLabEnable")) {
+      $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл.";
+      $("ballLabEnable").title = enabled ? "Шарики включены. Нажми, чтобы выключить движение." : "Движение выключено. Нажми, чтобы включить шарики.";
+      $("ballLabEnable").setAttribute("aria-pressed", String(enabled));
+    }
+    labControls();
+  }
+  function labControls() {
+    if (!$("ballLabTime")) return;
+    $("ballLabEnable").setAttribute("aria-pressed", String(enabled));
+    $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints !== false));
+    const mult = fraction(Z.coneBallMult || "1");
+    lab.querySelectorAll("[data-ball-speed]").forEach(b => b.setAttribute("aria-pressed", String(Math.abs(fraction(b.dataset.ballSpeed) - mult) < 1e-10)));
+    $("ballLabSpeed").dataset.active = String(Number.isFinite(mult));
+    $("ballLabRoute").disabled = allStarts();
+    $("ballLabRoute").value = allStarts() ? "cross" : Z.coneBallRoute || "eight";
+    $("ballLabRoute").dataset.active = "true";
+    $("ballLabStart").dataset.active = String(!!$("ballLabStart").value);
+    const started = enabled && (balls.length ? balls : F ? [F] : []).some(b => !b.ready && b.stage !== "done");
+    $("ballLabRun").setAttribute("aria-pressed", String(started && !paused));
+    $("ballLabPause").setAttribute("aria-pressed", String(started && paused));
+    $("ballLabPause").textContent = paused ? "▶ продолжить" : "⏸ пауза";
+    $("ballLabDir").textContent = (Z.coneAutoSp ?? 30) < 0 ? "↺ против" : "↻ по часовой";
+    $("ballLabDir").dataset.active = "true";
   }
   function angle(S, k, raw) { return raw + S.rings[k].phase + S.spin; }
   function edgeOnLine(S, k, a) {
@@ -151,7 +177,7 @@
       }
     }
     if (launch && !(F.speed > 0)) { F.ready = true; status(length <= EPS ? "Шарик уже на внешнем краю · выбери точку внутри или маршрут через центр" : "Для запуска нужны вращение и положительная дробная скорость"); metrics(S); return; }
-    status(launch ? routes[route] + " · старт: " + p.label + " · скорость " + String(Z.coneBallMult || "1") + "×" : readyText(S));
+    status(!enabled ? "Шарик выключен · серая точка — старт · ● вкл. — включить" : launch ? routes[route] + " · старт: " + p.label + " · скорость " + String(Z.coneBallMult || "1") + "×" : readyText(S));
     metrics(S);
   }
   function prepare(S, clear = false, launch = false) {
@@ -170,6 +196,7 @@
   }
   function batchStatus() {
     if (!balls.length) return;
+    if (!enabled) { status("Шарики выключены · 11 серых точек — старты · нажми ● вкл. или ▶ запуск"); return; }
     if (balls.every(b => b.ready) && !(balls[0].speed > 0)) { status("11 шариков на местах · для запуска нужны вращение и положительная дробная скорость"); return; }
     if (balls.every(b => b.ready)) { status("11 шариков на местах: 4 внешних + 4 внутренних угла К2 + 2 края К1 + центр · ▶ запуск вместе с вращением"); return; }
     const done = balls.filter(b => b.stage === "done"), waiting = balls.filter(b => b.wait && b.stage !== "done");
@@ -337,9 +364,9 @@
   };
   window.zzBallRemember = () => {}; // The line follows a real bit edge.
   window.zzBallDraw = (g, o) => {
-    if (!enabled) return;
     const { cx, cy, dr, dpr } = o, S = snapshot();
     if (S) {
+      if (!F || F.shape !== S.shape) prepare(S, true);
       const R = S.rings[1].ro * dr;
       g.save(); g.lineWidth = dpr; g.strokeStyle = "#79e7e1"; g.globalAlpha = 0.26; g.setLineDash([3 * dpr, 4 * dpr]);
       for (const b of S.rings[1].blocks) { const lo = angle(S, 1, b.lo), hi = angle(S, 1, b.hi); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + R * Math.cos(lo), cy + R * Math.sin(lo)); g.arc(cx, cy, R, lo, hi); g.lineTo(cx, cy); g.stroke(); }
@@ -360,11 +387,12 @@
       for (const ball of balls.length ? balls : F ? [F] : []) if (ball.ready) { ball.q = ball.start.q; ball.a = angle(S, ball.start.k, ball.start.raw); }
       metrics(S);
     }
+    if (!S) { markers = []; drawn = null; F = null; balls = []; metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); }
     const positions = [];
     for (const ball of balls.length ? balls : F ? [F] : []) {
       const q = ball.q * dr, a = ball.wait ? ball.wait.a : ball.a;
       const x = cx + q * Math.cos(a), y = cy + q * Math.sin(a);
-      const color = ball.wait || ball.stage === "done" && !ball.clean ? "#ff5f6d" : ball.stage === "done" ? "#7ee787" : "#79e7e1";
+      const color = !enabled ? "#a8b3c5" : ball.wait || ball.stage === "done" && !ball.clean ? "#ff5f6d" : ball.stage === "done" ? "#7ee787" : "#79e7e1";
       g.save(); g.fillStyle = color; g.shadowColor = color; g.shadowBlur = 9 * dpr; g.beginPath(); g.arc(x, y, 4 * dpr, 0, TAU); g.fill(); g.shadowBlur = 0;
       if (ball.number) {
         // Offset only the labels when starts coincide; retain exact positions.
@@ -379,7 +407,7 @@
   function reset(home = false) {
     F = null; balls = []; cycles = passes = 0;
     if (home) homeRotation();
-    const S = snapshot(); if (!enabled) status("Шарик выключен"); else if (S) prepare(S, true); else status(hint()); renderCone();
+    const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();
   }
   function homeRotation() {
     pauseRotation();
@@ -395,22 +423,20 @@
   }
   function metrics(S) {
     if (batchBusy || !$("ballLabTime")) return;
-    const P = singlePoints(S), key = P.map(p => p.id).join("|");
+    const P = S ? singlePoints(S) : [{ id: "center", label: "Центр" }], key = P.map(p => p.id).join("|");
     if (key !== lastPoints) {
       const select = $("ballLabStart"); select.replaceChildren();
       const all = document.createElement("option"); all.value = "all"; all.textContent = "Все 11: углы К2, края К1 и центр"; select.appendChild(all);
       for (const p of P) { const opt = document.createElement("option"); opt.value = p.id; opt.textContent = p.label; select.appendChild(opt); }
       lastPoints = key;
     }
-    $("ballLabStart").value = allStarts() ? "all" : startPoint(S).id;
-    $("ballLabRoute").disabled = allStarts();
-    $("ballLabRoute").value = allStarts() ? "cross" : Z.coneBallRoute || "eight";
-    const T = F && !F.ready ? F.period : period(S), mult = F && !F.ready ? F.mult : fraction(Z.coneBallMult || "1");
+    $("ballLabStart").value = allStarts() ? "all" : S ? startPoint(S).id : "center";
+    const T = F && !F.ready ? F.period : S ? period(S) : null, mult = F && !F.ready ? F.mult : fraction(Z.coneBallMult || "1");
     const elapsed = balls.length ? Math.max(...balls.map(b => b.elapsed)) : F ? F.elapsed : 0;
     const text = T && Number.isFinite(mult) ? "T₀ " + T.toFixed(3) + " с · " + (allStarts() ? "диаметр" : "путь") + " за " + (T / mult).toFixed(3) + " с" + (F && !F.ready ? " · прошло " + elapsed.toFixed(3) + " с" : "") : "Нужны два вращающихся кольца и положительная дробь";
     if ($("ballLabTime").textContent !== text) $("ballLabTime").textContent = text;
     $("ballLabRun").textContent = F && !F.ready ? "↻ новый запуск" : "▶ запуск";
-    $("ballLabPause").textContent = paused ? "▶ продолжить" : "⏸ пауза";
+    labControls();
   }
   function choose(id) { pauseRotation(); Z.coneBallBatch = id === "all"; if (id !== "all") Z.coneBallStart = id; save(); reset(); }
   function launch(config = {}) {
@@ -439,7 +465,7 @@
     lab = document.createElement("details"); lab.id = "solBallLab"; lab.open = Z.coneBallLabOpen !== false;
     lab.innerHTML = `<summary>● Шарики — ручной опыт</summary><div class="ball-lab-body">
       <div class="ball-lab-row"><button id="ballLabEnable" type="button">● вкл.</button><label>Путь <select id="ballLabRoute"><option value="eight">восьмёрка</option><option value="out">на вылет</option><option value="cross">через центр</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
-      <label>Старт <select id="ballLabStart"></select></label>
+      <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><span>Кольцо 1</span><button type="button" data-ball-ring="0" data-step="-.5">−½</button><button type="button" data-ball-ring="0" data-step=".5">+½</button><span>Кольцо 2</span><button type="button" data-ball-ring="1" data-step="-.5">−½</button><button type="button" data-ball-ring="1" data-step=".5">+½</button></div>
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" data-ball-speed="1/4">¼</button><button type="button" data-ball-speed="1/3">⅓</button><button type="button" data-ball-speed="1/2">½</button><button type="button" data-ball-speed="2/3">⅔</button><button type="button" data-ball-speed="1">1</button><button type="button" data-ball-speed="3/2">³⁄₂</button><button type="button" data-ball-speed="2">2</button><button type="button" data-ball-speed="4">4</button><button type="button" data-ball-speed="8">8</button><button type="button" data-ball-speed="16">16</button><button type="button" data-ball-speed="32">32</button></span></div>
       <small>Все 11: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.</small>
@@ -447,7 +473,8 @@
       <small>1–4: внешние углы К2 · 5–8: внутренние · 9–10: края К1 · 11: центр. Красный — ожидание, зелёный — выход без ожидания. Новый запуск возвращает кольца и шарики на места. Нажми точку для одиночного старта.</small><div id="ballLabStatus" role="status" aria-live="polite"></div></div>`;
     host.appendChild(lab); $("ballLabRoute").value = Z.coneBallRoute || "eight"; $("ballLabSpeed").value = Z.coneBallMult || "1";
     $("ballLabEnable").onclick = () => $("bConeBall").click();
-    $("ballLabRun").onclick = () => launch(); $("ballLabPause").onclick = () => $("bConeAuto").click();
+    $("ballLabRun").onclick = () => launch();
+    $("ballLabPause").onclick = () => { if (paused && (!enabled || !F || F.ready)) launch(); else $("bConeAuto").click(); };
     $("ballLabReset").onclick = () => reset(true);
     $("ballLabDir").onclick = () => { pauseRotation(); $("bConeDir").click(); reset(); };
     $("ballLabStart").onchange = () => choose($("ballLabStart").value);
@@ -480,7 +507,10 @@
   function init() {
     if (!$("bConeBall")) return;
     enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset();
-    $("bConeBall").onclick = () => { enabled = !enabled; Z.coneBallOn = enabled; F = null; balls = []; ui(); save(); if (enabled) reset(); else { status("Шарики выключены"); renderCone(); } };
+    $("bConeBall").onclick = () => {
+      enabled = !enabled; Z.coneBallOn = enabled; ui(); save(); reset();
+      if (enabled && coneSpinning) { window.zzBallSpinState(true); renderCone(); }
+    };
     $("bConeBallReset").onclick = () => reset(true);
     initLab(); reset();
   }
