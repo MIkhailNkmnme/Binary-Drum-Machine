@@ -2685,7 +2685,9 @@ function renderCone(){
         g.save(); g.strokeStyle = cg; g.lineWidth = Math.max(1.2, 1.2 * dpr); g.beginPath();
         for (let q = 0; q < 4; q++) { const e = q0 + q * Math.PI / 2; g.moveTo(cx, cy); g.lineTo(cx + rD * Math.cos(e), cy + rD * Math.sin(e)); }
         g.stroke(); g.restore();
-        for (const q of [1, 3]) coneGlyph(g, cx, cy, q0 + (q + 0.5) * Math.PI / 2, rD * 0.66, rD * 0.4, (Z.rows[0] || "1")[0], cBg, ff);   // v0.750: цифра на белых четвертях
+        /* v0.907, по снимку ✚ — «это 1 бит, 4 части, но это 1 бит — тут надо 1 текст, а не два раза по 1; пусть из центра 1 торчит и так же крутится»: цифра бита
+           строки 1 — одна, в самом центре, повёрнута вместе с четвертями (как прежде цифра белой четверти); золотом с тёмной тенью — ложится на стык четвертей */
+        g.save(); g.shadowColor = cBg; g.shadowBlur = 5 * dpr; coneGlyph(g, cx, cy, q0 + 1.5 * Math.PI / 2, 0, rD * 0.75, (Z.rows[0] || "1")[0], cg, ff); g.restore();
         coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
         /* v0.901, по снимку ✚ — «тут не надо окружность солнца — просто сразу лучи из центра и луны»: круга солнца (rS) больше нет — свет солнца и луны
            идёт прямо из точки центра (r1Glow ниже) */
