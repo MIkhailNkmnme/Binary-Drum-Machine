@@ -8703,21 +8703,7 @@ function setupCone(){
   }
   $("bC3d").onclick = () => $("cone3d").click();   // v0.270: 🧊 3D и ⧗ зеркало над пультом жмут те же галки «Вида»
   $("bC3Octa").onclick = () => $("coneOcta").click();
-  /* v0.682, по снимку ромбового пульта — «сделай подсказки при наведении этим»: полная подсказка уходит в уведомление внизу по центру (v0.294) — от пульта
-     в углу далеко, её не видно. Теперь у самой кнопки — короткое название (до « — », «: », « (») плашкой слева от пульта; полный текст — по-прежнему внизу */
-  { const P = $("cone3Pad"); let tip = null;
-    const hide = () => { if (tip) tip.hidden = true; };
-    P.addEventListener("pointerover", (e) => {
-      const b = e.target.closest && e.target.closest("button"); if (!b || !P.contains(b)) { hide(); return; }
-      const full = b.dataset.zzTip || b.getAttribute("title") || ""; if (!full.trim()) { hide(); return; }
-      let t = full; for (const sep of [" — ", ": ", " (", ". "]) { const k = t.indexOf(sep); if (k > 0) t = t.slice(0, k); }
-      if (!tip) { tip = document.createElement("div"); tip.id = "c3tip"; document.body.appendChild(tip); }
-      tip.textContent = t; tip.hidden = false;
-      const r = b.getBoundingClientRect(), pr = P.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-      tip.style.left = Math.max(4, pr.left - w - 6) + "px"; tip.style.top = Math.max(4, Math.min(innerHeight - h - 4, r.top + r.height / 2 - h / 2)) + "px";
-    });
-    P.addEventListener("pointerleave", hide); P.addEventListener("pointerdown", hide);
-  }
+  // v0.962: подсказки ромбового пульта используют общую область #msg справа вверху (v0.294).
   $("cone3Pad").addEventListener("pointerdown", (e) => {
     const b = e.target.closest("button[data-c3]"); if (!b) return;
     e.preventDefault(); const k = b.dataset.c3;
