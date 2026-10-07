@@ -2109,12 +2109,14 @@ function solPanelFolded(el){ return el.classList.contains("cmin") || el.classLis
 function solMenuClick(el, toggle){
   clearTimeout(el._solClickTimer); el._solClickTimer = setTimeout(() => { el._solClickTimer = 0; toggle(); }, 260);
 }
-function solPanelExclusive(selected){
+function solPanelsToggleAll(selected){
   const host = selected.closest(".win"); if (!host) return;
-  host.querySelectorAll(".cgrp, .sol-plate").forEach(el => {
-    clearTimeout(el._solClickTimer); el._solClickTimer = 0;
-    if (el._solFold) el._solFold(el !== selected);
-    else if (SOL_PLATES[el.id]) plateFoldToggle(el, el !== selected);
+  const panels = Array.from(host.querySelectorAll(".cgrp, .sol-plate"));
+  const fold = panels.every(el => !solPanelFolded(el));
+  panels.forEach(el => { clearTimeout(el._solClickTimer); el._solClickTimer = 0; });
+  panels.forEach(el => {
+    if (el._solFold) el._solFold(fold);
+    else if (SOL_PLATES[el.id]) plateFoldToggle(el, fold);
   });
 }
 function solPanelRowStep(el, height = el.offsetHeight){ return Math.max(TZC_H, Math.ceil(height / TZC_H) * TZC_H); }
@@ -2190,13 +2192,13 @@ function platePlace(el){
 function plateInit(el){
   el.classList.add("sol-plate");
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
-  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть / свернуть; двойной — открыть эту и свернуть остальные; правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
+  hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть / свернуть; двойной — открыть все группы / закрыть все группы; правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
-  // По кнопке «−» двойной — как одиночный; по заголовку — открыть эту и свернуть остальные.
+  // По кнопке «−» двойной — как одиночный; по заголовку — открыть / закрыть все группы.
   fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); });
   hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); solMenuClick(el, () => plateFoldToggle(el)); });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPanelExclusive(el); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(el); });
   hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; delete Z[c.fld]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
@@ -11407,7 +11409,7 @@ function cgrpInit(){
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); solMenuClick(g, () => foldToggle());
     });
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть / свернуть; двойной — открыть эту и свернуть остальные. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — открыть / свернуть; двойной — открыть все группы / закрыть все группы. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
@@ -11515,10 +11517,10 @@ function cgrpInit(){
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     });
-    // v0.963: двойной щелчок открывает выбранную группу и сворачивает остальные.
+    // v0.969: двойной щелчок открывает все группы, следующий закрывает все.
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); solPanelExclusive(g);
+      e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(g);
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
@@ -11699,10 +11701,10 @@ function cgrpInit(){
           if (!slot) {
             slot = document.createElement("span"); slot.className = "sol-header-slot"; slots.set(key, slot); dock.appendChild(slot);
             const button = document.createElement("button"); button.type = "button"; button.textContent = solPanelName(g) + " −"; slot.appendChild(button);
-            button.title = solPanelName(g) + ": щелчок — свернуть, двойной — открыть и свернуть остальные";
+            button.title = solPanelName(g) + ": щелчок — свернуть, двойной — открыть все группы / закрыть все группы";
             button.style.color = getComputedStyle(g.querySelector(".glab, .smh, .rth") || g).color;
             button.onclick = e => { e.stopPropagation(); if (e.detail < 2) solMenuClick(g, () => g._solFold ? g._solFold() : plateFoldToggle(g)); };
-            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); solPanelExclusive(g); };
+            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); solPanelsToggleAll(g); };
           }
           const button = slot.firstElementChild, folded = solPanelFolded(g);
           if (button.hidden !== folded) button.hidden = folded;
