@@ -4857,6 +4857,7 @@ function coneFillCut(){
    кольца); цели — ✛ вертикаль и горизонталь, границы, середины и оси симметрии ДРУГИХ колец, ⌖ ось Сканера и черты его частей. Ближайшая пара в
    пределах 7 px на радиусе кольца — защёлка, линия привязки видна золотом, пока тянешь. Отпустил — поворот остаётся как есть, дробный
    (Z.coneFree[i] — у такого кольца поворот не округляется до бита; обычный поворот без магнита снимает метку). Виды целей — кнопками рядом */
+const CONE_MAG_ENABLED = false;   // v0.976: отдельная кнопка 🧲 магнит временно отключена
 let coneMagLine = null, coneScanTargets = [], coneMagCount = null, coneMagCountStamp = null;
 function coneMagFingerprint(){ return [Z.rows.join("/"), coneRot.join("/"), Z.coneSpin, Z.coneSpinPh, Z.coneAimRot, Z.coneFillTurn, Z.coneSlits, Z.cutAlign, Z.magSym, Z.magSnapParts].join("|"); }
 document.addEventListener("pointerdown", () => { if (coneMagCount !== null) { coneMagCount = null; coneMagCountStamp = null; renderCone(); } }, true);
@@ -4993,12 +4994,15 @@ function conePartTargets(ii, N, R){   // цели режима «🧲 грани
 function conePartMatchRays(i, betweenRingsOnly = false){   // видимые лучи; для счётчика — только совпавшие границы двух колец
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return [];
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i;
-  const own = coneFeatEdges(R).concat(!betweenRingsOnly && ii === 0 && R.n === 1 ? coneFeatMids(R) : [])
-    .map(x => ((-Math.PI / 2 + (x - R.x0) * R.step) % TAU2 + TAU2) % TAU2).sort((a, b) => a - b);
+  const angle = x => ((-Math.PI / 2 + (x - R.x0) * R.step) % TAU2 + TAU2) % TAU2;
+  const edges = coneFeatEdges(R).map(angle).sort((a, b) => a - b);
+  const axes = edges.concat(ii === 0 && R.n === 1 ? coneFeatMids(R).map(angle) : []).sort((a, b) => a - b);
   const rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), eps = 0.5 * (G.dpr || 1) / rm;
   const rays = [];
   for (const [raw, what] of conePartTargets(ii, N, R)) {
-    if (betweenRingsOnly && !what.startsWith("граница части кольца ")) continue;
+    const ringEdge = what.startsWith("граница части кольца ");
+    if (betweenRingsOnly && !ringEdge) continue;
+    const own = ringEdge ? edges : axes;
     const t = ((raw % TAU2) + TAU2) % TAU2;
     let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m] < t) lo = m + 1; else hi = m; }
     const near = [own[(lo - 1 + own.length) % own.length], own[lo % own.length]];
@@ -5011,15 +5015,16 @@ function coneHandSnap(i){   // → { dx, t, what } — на сколько до�
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return null;
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i, rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm;
   const parts = magPartsOnly(), one = ii === 0 && R.n === 1;
-  const own = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"])
-    .concat(!parts || one ? coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"]) : []).sort((a, b) => a[0] - b[0]);
+  const edges = coneFeatEdges(R).map(x => [((x % R.P) + R.P) % R.P, "граница"]).sort((a, b) => a[0] - b[0]);
+  const own = edges.concat(!parts || one ? coneFeatMids(R).map(x => [((x % R.P) + R.P) % R.P, "середина бита"]) : []).sort((a, b) => a[0] - b[0]);
   if (!own.length) return null;
   let best = null;
   const tryT = (t, what) => {
+    const candidates = parts && what.startsWith("граница части кольца ") ? edges : own;
     const x = ((((t + Math.PI / 2) / R.step + R.x0) % R.P) + R.P) % R.P;
-    let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m][0] < x) lo = m + 1; else hi = m; }
-    for (const c of [lo - 1, lo]) { const w = (c + own.length) % own.length, xf = own[w][0] + (c < 0 ? -R.P : c >= own.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
-      if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own[w][1] + " → " + what }; }
+    let lo = 0, hi = candidates.length; while (lo < hi) { const m = (lo + hi) >> 1; if (candidates[m][0] < x) lo = m + 1; else hi = m; }
+    for (const c of [lo - 1, lo]) { const w = (c + candidates.length) % candidates.length, xf = candidates[w][0] + (c < 0 ? -R.P : c >= candidates.length ? R.P : 0), dx = xf - x, da = Math.abs(dx) * R.step;
+      if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: candidates[w][1] + " → " + what }; }
   };
   if (parts) {
     for (const [t, what] of conePartTargets(ii, N, R)) tryT(t, what);
@@ -5040,16 +5045,17 @@ function coneR1AxisSnap(){
   const n0 = (Z.rows[0] || "").length || 1, k = n0 / 360 * R.step, rm = Math.max(20 * (G.dpr || 1), G.r0 + 0.5 * G.dr), tol = 7 * (G.dpr || 1) / rm;   // k — радиан угла на градус довода
   let best = null;
   const T = [], m = magSymOf(), parts = magPartsOnly();
-  if (!parts || n0 === 1) {
-    if (m === "both" || m === "in") for (let q = 0; q < 4; q++) T.push(-Math.PI / 2 + q * Math.PI / 2);
-    for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push(t);
-  }
   if (parts && Z.rows.length > 1 && (m === "both" || m === "out")) {
-    const Q = coneRingFeat(1); if (Q) for (const e of coneFeatEdges(Q)) T.push(-Math.PI / 2 + (e - Q.x0) * Q.step);
+    const Q = coneRingFeat(1); if (Q) for (const e of coneFeatEdges(Q)) T.push([-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца 2"]);
   }
-  for (const x of coneFeatEdges(R).concat(!parts || n0 === 1 ? coneFeatMids(R) : [])) {
-    const a = -Math.PI / 2 + (x - R.x0) * R.step;
-    for (const t of T) { const d = coneAngDiff(t, a);
+  if (!parts || n0 === 1) {
+    if (m === "both" || m === "in") for (let q = 0; q < 4; q++) T.push([-Math.PI / 2 + q * Math.PI / 2, "ось"]);
+    for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push([t, "ось"]);
+  }
+  const edges = coneFeatEdges(R), axes = edges.concat(!parts || n0 === 1 ? coneFeatMids(R) : []);
+  for (const [t, what] of T) {
+    const own = parts && what !== "ось" ? edges : axes;
+    for (const x of own) { const d = coneAngDiff(t, -Math.PI / 2 + (x - R.x0) * R.step);
       if (Math.abs(d) < tol && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, t }; }
   }
   return best ? { deg: best.d / k, t: best.t } : null;
@@ -6377,7 +6383,7 @@ function setupCone(){
        тянуть его с Ctrl; без Ctrl тянешь — сдвигается весь вид (как мимо колец), щелчок — выбрать строку. Ctrl + щелчок без движения —
        выделить / снять, как прежде. */
     const ctrlK = e.ctrlKey || e.metaKey || rb;   // v0.735: правая кнопка — как Ctrl
-    const magOn = !!Z.coneMag && h !== -1 && h.fill === undefined && !e.shiftKey && !rb;   // v0.803: 🧲 — кольцо тянется и без Ctrl
+    const magOn = CONE_MAG_ENABLED && !!Z.coneMag && h !== -1 && h.fill === undefined && !e.shiftKey && !rb;   // v0.976: отдельный магнит временно выключен
     if (Z.r1Ray && h !== -1 && h.i === 0 && h.fill === undefined && !ctrlK && !e.shiftKey && !magOn) {   // v0.805: ⟋ нить — щелчок по кольцу строки 1 ставит её точку
       e.preventDefault(); const n0 = (Z.rows[0] || "").length || 1, CG = coneCutGeo(0, n0), t = h.a - (Z.coneSpin || 0) * Math.PI / 180;
       Z.r1RayX = Math.round(((((t + Math.PI / 2) / CG.step + coneRotOf(0) - CG.off) % n0) + n0) % n0 * 1000) / 1000; r1W = null; save(); renderCone();
@@ -6431,7 +6437,7 @@ function setupCone(){
            там ни при чём — без защёлки */
         const n0 = (Z.rows[0] || "").length || 1, k1 = coneQuadOn() ? conePartCount() / n0 : coneHalfOn() ? 2 / n0 : 1;
         Z.coneAimRot = r0v + turn * 180 / Math.PI * k1;
-        { const AX = coneFlat() ? coneR1AxisSnap() : null, dL = k1 === 1 ? coneAimSnapD() : null;   // v0.881: к осям; v0.890: и к лазеру — что ближе
+        { const AX = coneFlat() ? coneR1AxisSnap() : null, dL = k1 === 1 && !magPartsOnly() ? coneAimSnapD() : null;   // v0.976: в «границах» лазер не перехватывает кольцо 2
           if (dL !== null && (!AX || Math.abs(dL) <= Math.abs(AX.deg) * Math.PI / 180)) { Z.coneAimRot -= dL * 180 / Math.PI; coneMagLine = null; }
           else { if (AX) Z.coneAimRot += AX.deg; coneMagLine = AX ? AX.t : null; } }
         turnsChip(ev, "Кольцо 1: " + turnsFmt(turnsOf(0) + turn / (2 * Math.PI), 0)); renderCone();
@@ -8634,13 +8640,9 @@ function setupCone(){
     $("bR1Ray").onclick = () => { Z.r1Ray = !Z.r1Ray; r1W = null; $("bR1Ray").classList.toggle("on", Z.r1Ray); save(); renderCone();
       say(Z.r1Ray ? "⟋ Нить: прямая из центра через точку строки 1 (щелчок по её кольцу — другая точка) крутится вместе с ней; ячейку строки за чертой, пройденную целиком, метит «1». Счёт оборотов и «⤓ новая строка» — на плашке у холста." : "⟋ Нить выключена."); };
   }
-  if ($("bConeMag")) {   // v0.803: 🧲 магнит и виды целей
-    const ui = () => { const K = coneMagK(); $("bConeMag").classList.toggle("on", !!Z.coneMag);
-      document.querySelectorAll("[data-magk]").forEach(b => { b.hidden = !Z.coneMag; b.classList.toggle("on", !!K[b.dataset.magk]); }); };
-    ui();
-    $("bConeMag").onclick = () => { Z.coneMag = !Z.coneMag; ui(); save();
-      say(Z.coneMag ? "🧲 Магнит: тяни кольцо мышью (без Ctrl) — крутится свободно, у осей, границ, середин и осей симметрии защёлкивается (золотая линия). Строки не меняются — только вид." : "🧲 Магнит выключен: кольца снова крутятся с Ctrl, целыми битами."); };
-    document.querySelectorAll("[data-magk]").forEach(b => { b.onclick = () => { const K = coneMagK(); K[b.dataset.magk] = !K[b.dataset.magk]; ui(); save(); }; });
+  if ($("bConeMag")) {   // v0.976: отдельный магнит выключен, в том числе для сохранённого состояния
+    Z.coneMag = false; $("bConeMag").disabled = true; $("bConeMag").classList.remove("on");
+    document.querySelectorAll("[data-magk]").forEach(b => { b.hidden = true; b.disabled = true; });
   }
   $("bConeScan").onclick = () => { Z.coneScan = !Z.coneScan; $("bConeScan").classList.toggle("on", Z.coneScan); save(); renderCone();
       say(Z.coneScan ? "⌖ Сканер: наведи на бит кольца — ось через его середину и центр; биты и части вырезов, которые она режет, поделены на равные части." : "⌖ Сканер выключен."); };
