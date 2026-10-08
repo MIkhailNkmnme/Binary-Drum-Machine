@@ -3324,7 +3324,8 @@ function renderCone(){
     g.strokeStyle = CONE_AXIS_COL; g.globalAlpha = 0.95; g.lineWidth = Math.max(2, 2 * dpr); g.lineCap = "butt"; g.shadowColor = CONE_AXIS_COL; g.shadowBlur = 6 * dpr;
     if (partRays) {   // v0.974: каждая совпавшая грань — сплошной луч; за центром без совпадения — пунктир
       const rays = partRays.length ? partRays : [coneMagLine], eps = 0.5 * dpr / Math.max(ro, 1);
-      coneMagCount = rays.length; coneMagCountStamp = null;
+      const ring = coneFillDrag ? "f" : coneR1Drag ? 0 : coneDrag.i;
+      coneMagCount = conePartMatchRays(ring, true).length || null; coneMagCountStamp = null;
       g.globalAlpha = 0.48; g.shadowBlur = 0; g.setLineDash([5 * dpr, 4 * dpr]);
       for (const t of rays) if (!rays.some(u => Math.abs(coneAngDiff(u, t + Math.PI)) < eps)) {
         g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx - ro * Math.cos(t), cy - ro * Math.sin(t)); g.stroke();
@@ -3351,7 +3352,7 @@ function renderCone(){
     coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });
   }
   if (Z.r1Ray && N >= 1) r1RayDo(g, { cx, cy, r0, dr, N, dpr, fillOn: !!fillOn && !!coneGeom && !!coneGeom.fill }); else r1RayBox(false);   // v0.805: ⟋ нить
-  if (coneMagCount !== null && coneFlat() && N) {   // v0.974: число совпавших направлений остаётся на первом кольце до следующего действия
+  if (coneMagCount !== null && coneFlat() && N) {   // v0.975: число совпавших границ двух колец остаётся на первом кольце до следующего действия
     const label = String(coneMagCount), fs = Math.max(12 * dpr, Math.min(19 * dpr, dr * 0.48)), rad = Math.max(11 * dpr, fs * 0.73);
     g.save(); g.setLineDash([]); g.shadowBlur = 0; g.globalAlpha = 1; g.fillStyle = cBg; g.strokeStyle = CONE_AXIS_COL; g.lineWidth = Math.max(1, dpr);
     g.beginPath(); g.arc(cx, cy, rad, 0, TAU2); g.fill(); g.stroke();
@@ -4989,14 +4990,15 @@ function conePartTargets(ii, N, R){   // цели режима «🧲 грани
   }
   return out;
 }
-function conePartMatchRays(i){   // направления всех границ, действительно совпавших после защёлкивания
+function conePartMatchRays(i, betweenRingsOnly = false){   // видимые лучи; для счётчика — только совпавшие границы двух колец
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return [];
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i;
-  const own = coneFeatEdges(R).concat(ii === 0 && R.n === 1 ? coneFeatMids(R) : [])
+  const own = coneFeatEdges(R).concat(!betweenRingsOnly && ii === 0 && R.n === 1 ? coneFeatMids(R) : [])
     .map(x => ((-Math.PI / 2 + (x - R.x0) * R.step) % TAU2 + TAU2) % TAU2).sort((a, b) => a - b);
   const rm = Math.max(20 * (G.dpr || 1), G.r0 + (ii + 0.5) * G.dr), eps = 0.5 * (G.dpr || 1) / rm;
   const rays = [];
-  for (const [raw] of conePartTargets(ii, N, R)) {
+  for (const [raw, what] of conePartTargets(ii, N, R)) {
+    if (betweenRingsOnly && !what.startsWith("граница части кольца ")) continue;
     const t = ((raw % TAU2) + TAU2) % TAU2;
     let lo = 0, hi = own.length; while (lo < hi) { const m = (lo + hi) >> 1; if (own[m] < t) lo = m + 1; else hi = m; }
     const near = [own[(lo - 1 + own.length) % own.length], own[lo % own.length]];
