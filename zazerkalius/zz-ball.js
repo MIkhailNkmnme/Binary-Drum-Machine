@@ -175,7 +175,7 @@
   function readyText(S) {
     const p = startPoint(S); return "Старт: " + p.label + " · " + (routes[Z.coneBallRoute] || routes.cross) + " · ▶ запуск";
   }
-  function status(s) { if (batchBusy) return; const el = $("coneBallStatus"); if (el && el.textContent !== s) el.textContent = s; }
+  function status(s) { if (batchBusy) return; const el = $("coneBallStatus"); if (el && el.textContent !== s) el.textContent = s; if (el) el.title = s; }
   function snapshot() {
     if (!coneGeom || !coneCutOn() || !(coneHalfOn() || coneQuadOn() && conePartCount() % 2 === 0) || !(Z.coneClock || coneSunOn()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
     const N = Math.min(Z.rows.length, CONE_MAX);
@@ -667,7 +667,7 @@
     new MutationObserver(() => {
       Z.coneBallLabOpen = !lab.classList.contains("pmin"); renderCone();
     }).observe(lab, { attributes: true, attributeFilter: ["class"] });
-    const source = $("coneBallStatus"), syncStatus = () => { $("ballLabStatus").textContent = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
+    const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; $("ballLabStatus").textContent = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
     $("coneCv").addEventListener("pointerdown", e => {
       if (!enabled || !drawn || e.button && e.button !== 0) return;
