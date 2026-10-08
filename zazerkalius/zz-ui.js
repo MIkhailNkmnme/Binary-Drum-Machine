@@ -77,7 +77,8 @@ const Z = {
   manMode: "enc",   // v0.007: режим кнопки манчестерского кода — "enc" или "dec"
   ptrMin: 4, ptrPal: true, ptrAnti: true,
   win: {},          // id → { x, y, w, h, collapsed, hint }
-  helpOn: true,
+  helpOn: true,                         // совместимость: окно «Подсказки» теперь обычное окно из списка
+  tipsOn: true,                         // v0.1009: ? в верхнем меню включает / отключает всплывающие подсказки
   z: 10,
 };
 const ZZ_ROWS0 = Z.rows.slice();   // v0.123: начальный столбик — до того, как load() положит сохранённый
@@ -130,11 +131,27 @@ function tipOff(keepMsg){
   $("msg").classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br");
   if (tipShown && !keepMsg) { tipShown = false; $("msg").classList.remove("show"); }
 }
+/* v0.1009: верхняя ? управляет всеми всплывающими подсказками. При выключении title хранится в data-zz-tip,
+   поэтому браузер тоже не показывает своё окошко; при включении исходные тексты возвращаются. */
+function tipsApply(){
+  tipOff();
+  const on = Z.tipsOn !== false;
+  document.querySelectorAll(on ? "[data-zz-tip]" : "[title]").forEach(el => {
+    if (on) { if (!el.hasAttribute("title") && el.dataset.zzTip != null) el.setAttribute("title", el.dataset.zzTip); delete el.dataset.zzTip; }
+    else { const t = el.getAttribute("title"); if (t != null) { el.dataset.zzTip = t; el.removeAttribute("title"); } }
+  });
+  const b = $("bHelp"); if (b) {
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+    const t = on ? "Подсказки включены — щелчок: отключить" : "Подсказки выключены — щелчок: включить";
+    if (on) { b.title = t; delete b.dataset.zzTip; } else { b.dataset.zzTip = t; b.removeAttribute("title"); }
+  }
+}
 document.addEventListener("mouseover", (e) => {
   const el = e.target && e.target.closest ? e.target.closest("[title], [data-zz-tip]") : null;
   if (el === tipEl) return;
   tipOff();
   if (!el) return;
+  if (Z.tipsOn === false) { if (el.hasAttribute("title")) { el.dataset.zzTip = el.getAttribute("title"); el.removeAttribute("title"); } return; }
   const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
   tipTimer = setTimeout(() => {
@@ -12944,14 +12961,15 @@ function paneZig(){
     const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
           edgeBottom = Math.min(pr.bottom, dockTop), on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
-    if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
+    if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", edgeLn = getComputedStyle(document.documentElement).getPropertyValue("--txt").trim() || "#d8dde8",
+          tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = edgeLn + "|" + pc;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = (edgeBottom - pr.top) + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
       const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
       if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
-        /* v0.1006: фон зубцов сохранён; весь слой левого края ниже переднего окна, чтобы его кнопки перекрывали заливку и линию. */
+        /* v0.1009: постоянный контур снова светлый, как на прежнем зубчатом крае; фон зубцов сохранён, слой остаётся ниже переднего окна. */
         const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
-        ov.style.setProperty("--pz", sq(ln, 1)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
+        ov.style.setProperty("--pz", sq(edgeLn, 1.5)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
@@ -13870,8 +13888,8 @@ function layoutAll(reset){
     }
     applyWin(el);
   });
-  $("w-help").style.display = Z.helpOn ? "" : "none";
-  $("bHelp").classList.toggle("on", Z.helpOn);
+  $("w-help").style.display = "";
+  $("bHelp").classList.toggle("on", Z.tipsOn !== false);
   packWins();   // v0.015
 }
 /* v0.742, по снимку солнца с луной — «значок для вкладки Конус стилизуй», «без чисел»: у «◯ Конуса» вместо кружка — свой значок: солнце, золотой сектор
@@ -15054,7 +15072,6 @@ function init(){
   };
   const winShow = (id) => {
     const el = $(id); if (!el) return;
-    if (id === "w-help" && !Z.helpOn) { $("bHelp").click(); }
     { const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); }   // v0.410: и из списка окон слева
     if (el.classList.contains("collapsed")) el.querySelector(".bc").click();
     Z.z++; el.style.zIndex = Z.z;
@@ -15477,7 +15494,7 @@ function init(){
   window.parkSync = () => {
     const on = !!Z.fieldRight, list = [];
     document.querySelectorAll(".win").forEach(el => {
-      if ((el.id === "w-help" && !Z.helpOn) || el.classList.contains("popped") || el.classList.contains("docked")) return;   // v0.552: Подсказки (когда включены) — тоже в список
+      if (el.classList.contains("popped") || el.classList.contains("docked")) return;
       const parked = on && el.classList.contains("collapsed");
       if (parked) { el.style.display = "none"; el.dataset.parked = "1"; }
       else if (el.dataset.parked) { el.style.display = ""; delete el.dataset.parked; }
@@ -15937,7 +15954,7 @@ function init(){
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; if (Z.paneIcons) Z.paneIconOpen = {}; applyPaneIcons(); save(); packWins(); };
   new MutationObserver(() => { if (Z.paneIcons) iconizePane(); }).observe($("rowsPane"), { childList: true, subtree: true, characterData: true });
-  $("bHelp").onclick = () => { Z.helpOn = !Z.helpOn; layoutAll(false); if (window.parkSync) parkSync(); save(); };   // v0.552: свёрнутые Подсказки — сразу в список
+  $("bHelp").onclick = () => { Z.tipsOn = !(Z.tipsOn !== false); tipsApply(); save(); say(Z.tipsOn ? "? Подсказки включены." : "? Подсказки отключены."); };
 
   // Клавиши: ↑/↓ — по строкам, Ctrl+Z — отмена (не в полях ввода).
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
@@ -16036,6 +16053,7 @@ if (ZZ_BG) bgApply();
     hook(sel, upd); sel.addEventListener("change", upd); upd();
   });
 })();
+tipsApply();   // v0.1009: после создания динамических кнопок применить сохранённое состояние подсказок ко всей странице
 /* v0.653, «почему при F5 сначала показывает старый дизайн?»: ромбы, цепочки, зубцы и раскладку групп ставит этот скрипт — после того как страница
    уже нарисовала обычные прямоугольные кнопки HTML. Пока он не закончил (шрифты загружены + два кадра на пересчёт), страница прозрачна (html.zzload,
    ставит шапка); запасной выход — 4 с в самой шапке */

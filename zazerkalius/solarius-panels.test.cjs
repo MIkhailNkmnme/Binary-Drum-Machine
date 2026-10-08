@@ -131,3 +131,17 @@ test('fold button avoids rewriting unchanged accessible text', () => {
   assert.equal(writes, count);
   assert.equal(button.getAttribute('aria-expanded'), 'true');
 });
+
+test('left pane zigzag keeps a permanently visible light outline', () => {
+  const paneZig = declaration(ui, 'function paneZig(');
+  assert.match(paneZig, /getPropertyValue\("--txt"\)/);
+  assert.match(paneZig, /sq\(edgeLn, 1\.5\)/);
+});
+
+test('the top question button toggles all hover tips instead of the help window', () => {
+  const tips = declaration(ui, 'function tipsApply(');
+  assert.match(tips, /Z\.tipsOn !== false/);
+  assert.match(tips, /"\[data-zz-tip\]" : "\[title\]"/);
+  assert.match(ui, /\$\("bHelp"\)\.onclick = \(\) => \{ Z\.tipsOn/);
+  assert.doesNotMatch(ui, /\$\("bHelp"\)\.onclick = \(\) => \{ Z\.helpOn/);
+});
