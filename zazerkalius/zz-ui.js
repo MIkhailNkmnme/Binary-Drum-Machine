@@ -12783,16 +12783,30 @@ function fieldDrawerInit(){
   });
   window.addEventListener("resize", fieldDrawerSync); fieldDrawerSync();
 }
+function zigClickFold(ov, action){
+  if (!ov || ov._zigClickFold) return;
+  ov._zigClickFold = true;
+  let press = null;
+  ov.addEventListener("pointerdown", e => { if (e.button === 0) press = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false }; }, true);
+  window.addEventListener("pointermove", e => { if (press && press.id === e.pointerId && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4) press.moved = true; }, true);
+  window.addEventListener("pointerup", e => {
+    if (!press || press.id !== e.pointerId) return;
+    const click = !press.moved; press = null;
+    if (click) setTimeout(action, 0);
+  }, true);
+  window.addEventListener("pointercancel", e => { if (press && press.id === e.pointerId) press = null; }, true);
+}
 function fieldZig(dy, ln){
   const f = document.getElementById("field"); if (!f) return;
   let ov = document.getElementById("fieldZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "fieldZigOv"; document.body.appendChild(ov);
     /* v0.832, по снимку края поля — «границу для захвата (изменение ширины полей) можно ли на зубцах расположить»: хват — сами зубцы: нажатие и двойной
        щелчок по ним передаются прежнему хвату #fieldEdge (тянуть — ширина, двойной щелчок — по умолчанию); полоса внутри поля, пока зубцы видны, выключена */
-    ov.title = "Потяни — шире или уже поле строк; двойной щелчок — ширина по умолчанию";
+    ov.title = "Щелчок — свернуть поле строк; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
     for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const peek = document.body.classList.contains("field-peek"), fe = document.getElementById(peek ? "fieldPull" : "fieldEdge"); if (!fe) return; e.preventDefault(); e.stopPropagation();
       if (peek && t === "dblclick") { fe.click(); return; }
       fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
+  zigClickFold(ov, () => { const b = document.getElementById("bFieldHide"); if (b) b.click(); });
   const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
   const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
@@ -12842,28 +12856,14 @@ function paneZig(){
   { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov);
       /* v0.835, «у левого меню также» (как у поля, v0.832 / v0.834): хват ширины левой панели — на зубцах, нажатие и двойной щелчок — прежнему хвату #paneEdge;
          при наведении — только ломаная цветом акцента (--pzh) */
-      ov.title = "Тяни — ширина левой панели; двойной щелчок — ширина по умолчанию";
+      ov.title = "Щелчок — свернуть меню; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
       for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const pe = document.getElementById("paneEdge"); if (!pe || !pe.getClientRects().length) return; e.preventDefault(); e.stopPropagation();
         pe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); }); }
+    zigClickFold(ov, () => { const b = document.getElementById("bPaneIcons"); if (b) b.click(); });
     const pr = pane.getBoundingClientRect(), on = innerWidth > 760 && pr.width > 4 && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
     if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = pr.height + "px"; ov.style.width = wq.toFixed(2) + "px";
-      ov.style.setProperty("--pzigy", dy.toFixed(1) + "px");
-      let toggle = ov.querySelector(".paneZigToggle");
-      if (!toggle) { toggle = document.createElement("button"); toggle.type = "button"; toggle.className = "paneZigToggle"; toggle.setAttribute("aria-label", "Свернуть панель");
-        toggle.addEventListener("pointerdown", e => {
-          if (e.button !== 0) return;
-          const press = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, activated: false }; toggle._edgePress = press;
-          const move = ev => { if (ev.pointerId === press.id && Math.hypot(ev.clientX - press.x, ev.clientY - press.y) > 4) press.moved = true; };
-          const end = ev => { if (ev.pointerId !== press.id) return; removeEventListener("pointermove", move); removeEventListener("pointerup", end); removeEventListener("pointercancel", end);
-            if (ev.type === "pointerup" && !press.moved) { press.activated = true; const b = document.getElementById("bPaneIcons"); if (b) b.click(); }
-            setTimeout(() => { if (toggle._edgePress === press) toggle._edgePress = null; }, 0); };
-          addEventListener("pointermove", move); addEventListener("pointerup", end); addEventListener("pointercancel", end);
-        });
-        toggle.addEventListener("click", e => { if (e.detail === 0) { const b = document.getElementById("bPaneIcons"); if (b) b.click(); } }); ov.appendChild(toggle); }
-      const srcToggle = document.getElementById("bPaneIcons");
-      if (srcToggle) { toggle.textContent = srcToggle.textContent; toggle.title = srcToggle.title; toggle.setAttribute("aria-label", srcToggle.title); }
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
       const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
       if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
@@ -14147,8 +14147,6 @@ function applyPaneIcons(){
   paneMobInit();   // v0.783
   const t = $("bPaneIcons");
   if (t) { t.textContent = Z.paneIcons ? "▸" : "◂"; t.title = Z.paneIcons ? "Развернуть панель — кнопки с подписями" : "Свернуть панель в столбик значков (подписи — во всплывающих подсказках)"; }
-  const edgeToggle = document.querySelector("#paneZigOv .paneZigToggle");
-  if (edgeToggle && t) { edgeToggle.textContent = t.textContent; edgeToggle.title = t.title; edgeToggle.setAttribute("aria-label", t.title); }
   if (Z.paneIcons) { iconizePane(); return; }
   document.querySelectorAll("#rowsPane button[data-full]").forEach(b => {
     if (b.textContent === b.dataset.icon) b.textContent = b.dataset.full;
