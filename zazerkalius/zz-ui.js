@@ -2024,7 +2024,7 @@ function lasDeps(){
   }
   /* v0.1007: правила — содержимое обычной кнопочной группы #lasAlgo. */
   const box = document.getElementById("lasAlgo"), host = box && box.querySelector(":scope > .cgb"); if (!host) return;
-  if (!host.querySelector(".las-algo-body")) host.insertAdjacentHTML("beforeend", '<div class="las-algo-body"><div id="lasRules"></div><div id="lasTip"></div></div>');
+  if (!host.querySelector(".las-algo-body")) host.insertAdjacentHTML("beforeend", '<div class="las-algo-body cgrp-fill"><div id="lasRules"></div><div id="lasTip"></div></div>');
   const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
   const rules = box.querySelector("#lasRules"); if (rules.innerHTML !== h) rules.innerHTML = h;
   /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
@@ -2395,7 +2395,7 @@ function sunPanelMergeLayout(force = false){
 }
 function sunTblBuild(el){
   const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), host = el.querySelector(":scope > .cgb"); if (!host) return el;
-  let x = '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
+  let x = '<table class="cgrp-fill"><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
   let gi = -1;   // v0.892: номер подгруппы — свой фон (класс sgN)
   SUNTBL.forEach((r, i) => {
     if (r.g) { gi = ["Проход сквозь", "Красит за чертой", "Солнце", "Луна светит", "Источник"].indexOf(r.g); x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
@@ -2466,7 +2466,7 @@ function ringTblSvg(v, n){
 }
 function ringTblOpen(){ return true; }
 function ringTblBuild(host){
-  const el = document.createElement("div"); el.id = "ringTbl"; el.className = "ring-mode-list";
+  const el = document.createElement("div"); el.id = "ringTbl"; el.className = "ring-mode-list cgrp-fill";
   let x = '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th>вид</th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
@@ -13093,7 +13093,9 @@ window.addEventListener("resize", lpKick);
 function tzJustify(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb || !g.closest("#w-cone .tools, #paneGrp") || !g.classList.contains("tzg")) return;
   if (cgb.classList.contains("tzc") || g.classList.contains("cmin")) { tzHandle(g); return; }
-  const t = TZC_H / (2 * Math.sqrt(3)), its = [...g.querySelectorAll(".tz")].filter(e => !e.classList.contains("tzk") && e.getClientRects().length && e.closest(".cgrp") === g);
+  /* v0.1008: растянутые на всю группу внутренние панели не участвуют в расчёте её собственной ширины — иначе их 100% возвращались в
+     tzMinW/tzJustify и при каждом цикле понемногу раздвигали ☀/☾, Кольца, Алг. · подск. и Шарики вправо. */
+  const t = TZC_H / (2 * Math.sqrt(3)), its = [...g.querySelectorAll(".tz")].filter(e => !e.classList.contains("tzk") && !e.closest(".cgrp-fill") && e.getClientRects().length && e.closest(".cgrp") === g);
   const sz = g.classList.contains("csz") && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
   g.style.width = sz ? Math.max(tzSzW(g, sz.w), tzMinW(g)) + "px" : ""; g.style.flexShrink = "";
   its.forEach(e => { if (e._tzx) { e._tzx = 0; e._tzn = e._tzn0; tzGeo(e); } });
@@ -13730,7 +13732,7 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.id === "coneBallStatus" || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота; v0.974 — ширина строки состояния шариков 100% не задаёт минимум всей группы
+  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.id === "coneBallStatus" || el.classList.contains("cgrp-fill") || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота; v0.974 — полноширинные панели .cgrp-fill не задают минимум и не раздувают группу при каждом пересчёте
   return Math.ceil(m) + 1 + (parseFloat(getComputedStyle(g).paddingLeft) || 0);   // v0.545: и отступ слева (под циферблат Аниматрицы)
 }
 function tzcIcons(){

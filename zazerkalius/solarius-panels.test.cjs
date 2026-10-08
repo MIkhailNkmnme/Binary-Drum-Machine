@@ -50,6 +50,20 @@ test('their content uses the group body and never initializes a special plate', 
   assert.doesNotMatch(lab, /createElement\("div"\)|plateInit|class="rth"|pminbtn/);
 });
 
+test('full-width panel bodies cannot feed their own width back into group sizing', () => {
+  const sun = declaration(ui, 'function sunTblBuild(');
+  const rings = declaration(ui, 'function ringTblBuild(');
+  const algoAt = ui.indexOf('v0.1007: правила');
+  const algo = ui.slice(algoAt, ui.indexOf('if (!lasDeps._b)', algoAt));
+  const lab = declaration(ball, 'function initLab()');
+  for (const source of [sun, rings, algo, lab]) assert.match(source, /cgrp-fill/);
+
+  const justify = declaration(ui, 'function tzJustify(');
+  const minWidth = declaration(ui, 'function tzMinW(');
+  assert.match(justify, /!e\.closest\("\.cgrp-fill"\)/);
+  assert.match(minWidth, /el\.classList\.contains\("cgrp-fill"\)/);
+});
+
 test('legacy plate layout migrates to the three group keys', () => {
   const migration = declaration(ui, 'function sunPanelMergeLayout(');
   for (const pair of [
