@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.087. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.088. Точка входа: ссылки на все страницы проекта.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +103,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.087</title>
+    <title>Zerkalius Control Hub — v0.088</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -111,6 +111,8 @@
 
         html, body { height: 100%; }
         body {
+            position: relative;
+            display: flow-root;   /* отступ меню на телефоне остаётся внутри фона, не сдвигает весь body */
             background: #050505;
             color: #00ff66;
             font-family: 'Consolas', 'Roboto Mono', monospace;
@@ -124,6 +126,8 @@
             border: 0; z-index: 0; pointer-events: none;
             visibility: hidden;   /* v0.059, «крутящийся конус пока отключи»: не виден, но работает — звук нот играет в нём */
         }
+        /* v0.088: весь фон — та же ромбосетка, треугольник выделяется её светлыми битами. */
+        #hubGrid { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-repeat: repeat; }
 
         /* Всё содержимое — поверх фона. Надпись Zerkalius рисуют сами обои, сверху */
         /* v0.048: две главные кнопки — в одну строку (узко — переносятся) */
@@ -441,6 +445,7 @@
     </style>
 </head>
 <body>
+    <div id="hubGrid" aria-hidden="true"></div>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
     <!-- v0.038: живой фон — конус Zazerkalius (3D, зеркало вниз, свет, крутится); прежние обои — кнопка «Обои» -->
     <iframe id="bg" src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true" allow="autoplay"></iframe>
@@ -475,7 +480,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.087</div>
+        <div class="ver">v0.088</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -733,6 +738,21 @@
                Стоя — один треугольник по центру (строки по середине — равнобедренный), в верхней половине; лёжа — два прямоугольных у своих
                краёв, гипотенузой к нотам (как пирамиды у конуса, Zazerkalius v0.395). Рисуется, только пока холст виден (телефон) */
             const sier = document.getElementById('hubSier'), sg = sier && sier.getContext('2d');
+            const grid = document.getElementById('hubGrid'), gridTile = { image: new Image(), key: '', x: 0, y: 0, w: 1, h: 1 };
+            const placeGrid = (x, y, dw, dh, side, desk) => {
+                const key = String(desk);
+                if (gridTile.key !== key) {
+                    // Углы плитки и её центр — соседние ромбы одной решётки, без шва на повторе.
+                    const diamond = (x, y) => `<polygon points="${x},${y - 45} ${x + 45},${y} ${x},${y + 45} ${x - 45},${y}"/>`;
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g fill="#9fffc8" fill-opacity="${desk ? 0.07 : 0.14}">${[[0, 0], [100, 0], [50, 50], [0, 100], [100, 100]].map(([x, y]) => diamond(x, y)).join('')}</g></svg>`;
+                    gridTile.image.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+                    grid.style.backgroundImage = `url("${gridTile.image.src}")`;
+                    gridTile.key = key;
+                }
+                Object.assign(gridTile, { x, y, w: side ? dh : dw, h: side ? dw : dh });
+                grid.style.backgroundSize = `${gridTile.w}px ${gridTile.h}px`;
+                grid.style.backgroundPosition = `${x}px ${y}px`;
+            };
             /* v0.074, «не видно бегающего бита по треугольнику»: хаб, открытый файлом, не может читать фон (другой «адрес») — фон присылает
                звучащие биты сообщением { zerkHeads } */
             let hubHeads = null;
@@ -870,14 +890,15 @@
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же
                             равносторонний из ромбов, но на боку — вершина у своего края экрана (◀ слева, ▶ справа), основание к нотам; ромбы повёрнуты с ним */
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
-                    const m = 6, cy = H / 2, xl = m + dh / 2, xr = W - m - dh / 2;
+                    const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - r * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - r * dw / 2 + j * dw]]; }
+                const [gx, gy] = spots[0](0, 0); placeGrid(gx, gy, dw, dh, side, desk);
                 const rhomb = (x, y, k) => { const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); };
                 for (let r = 0; r < N; r++) { const row = PR[r];
-                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', k = hc || on ? 0.9 : 0.36;
-                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : (on ? 0.78 : 0.14) * (desk ? 0.5 : 1);
+                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1'; if (!hc && !on) continue;
+                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8; }
-                        for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, k); }
+                        for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9); }
                         if (hc) sg.shadowBlur = 0; } }
                 sg.globalAlpha = 1; return true;
             };
@@ -904,6 +925,11 @@
                 if (n && n.right > n.left) { n.width = n.right - n.left; n.height = n.bottom - n.top; k = Math.min(W * 0.8 / n.width, H * 0.6 / n.height); ox = W / 2 - (n.left + n.width / 2) * k; oy = H / 2 - (n.top + n.height / 2) * k; }
                 if (sierOn) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
                   const sw = sier.clientWidth, sh = sier.clientHeight, sy = window.scrollY; k = Math.min(W / sw, H / sh); ox = (W - sw * k) / 2; oy = (H - sh * k) / 2 + sy * k;
+                  if (gridTile.image.complete && gridTile.image.naturalWidth) {
+                    const pattern = g.createPattern(gridTile.image, 'repeat');
+                    pattern.setTransform(new DOMMatrix([gridTile.w * k / 100, 0, 0, gridTile.h * k / 100, ox + gridTile.x * k, oy - sy * k + gridTile.y * k]));
+                    g.fillStyle = pattern; g.fillRect(0, 0, W, H);
+                  }
                   g.drawImage(sier, ox, oy - sy * k, sw * k, sh * k);
                   const fl = document.getElementById('hubFly');   // v0.083: кнопка «все 7 нот» и сток бит — всё на холсте #hubFly
                   if (fl && fl.width && getComputedStyle(fl).display !== 'none') g.drawImage(fl, ox, oy - sy * k, sw * k, sh * k);
