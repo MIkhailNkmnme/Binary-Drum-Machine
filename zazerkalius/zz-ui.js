@@ -4990,7 +4990,6 @@ function conePartTargets(ii, N, R){   // цели режима «🧲 грани
   }
   if (ii === 0 && (Z.rows[0] || "").length === 1) {
     if (m === "both" || m === "in") for (let q = 0; q < 4; q++) out.push([-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль"]);
-    out.push(...coneSymTargets(0, N));
   }
   return out;
 }
@@ -5053,7 +5052,7 @@ function coneR1AxisSnap(){
   }
   if (!parts || n0 === 1) {
     if (m === "both" || m === "in") for (let q = 0; q < 4; q++) T.push([-Math.PI / 2 + q * Math.PI / 2, "ось"]);
-    for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push([t, "ось"]);
+    if (!parts) for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push([t, "ось"]);
   }
   const edges = coneFeatEdges(R), axes = edges.concat(!parts || n0 === 1 ? coneFeatMids(R) : []);
   for (const [t, what] of T) {
@@ -6885,12 +6884,12 @@ function setupCone(){
   if ($("bMagSym")) {   // 🧲 сим. — направление к соседям: оба → внутр. → наруж. → нет
     const L = { both: "🧲 оба", in: "🧲 внутр.", out: "🧲 наруж.", off: "🧲 нет" }, ui = () => { const m = magSymOf(), b = $("bMagSym"); if (b.textContent !== L[m]) b.textContent = L[m]; b.classList.toggle("on", m !== "off"); };
     ui(); $("bMagSym").onclick = () => { const m = magSymOf(); Z.magSym = m === "both" ? "in" : m === "in" ? "out" : m === "out" ? "off" : "both"; ui(); save();
-      say(magSymOf() === "off" ? "🧲 Соседи: выключены; остаётся прежняя привязка к границам внутренних колец." : `🧲 ${Z.magSnapParts ? "Границы частей" : "Оси симметрии"}: ${ { both: "оба соседа", in: "внутренний сосед", out: "наружный сосед" }[magSymOf()] }. Кольцо 1 из одного бита также тянется к осям, как раньше.`); };
+      say(magSymOf() === "off" ? "🧲 Соседи: выключены; остаётся прежняя привязка к границам внутренних колец." : `🧲 ${Z.magSnapParts ? "Границы частей" : "Оси симметрии"}: ${ { both: "оба соседа", in: "внутренний сосед", out: "наружный сосед" }[magSymOf()] }. Кольцо 1: в «границах» оси только холста, во «всём» — и оси соседа.`); };
   }
   if ($("bMagSnapParts")) {
     const ui = () => { const b = $("bMagSnapParts"); b.textContent = Z.magSnapParts ? "🧲 гран." : "🧲 всё"; b.classList.toggle("on", !!Z.magSnapParts); b.setAttribute("aria-pressed", String(!!Z.magSnapParts)); };
     ui(); $("bMagSnapParts").onclick = () => { Z.magSnapParts = !Z.magSnapParts; ui(); save();
-      say(Z.magSnapParts ? "🧲 Границы: при кручении рукой границы частей кольца прилипают только к границам частей соседей по направлению «🧲 сим.». Кольцо 1 из одного бита также прилипает к осям." : "🧲 Всё: при кручении рукой действуют границы, середины битов и оси симметрии, как прежде."); };
+      say(Z.magSnapParts ? "🧲 Границы: при кручении рукой границы частей кольца прилипают только к границам частей соседей по направлению «🧲 сим.». Кольцо 1 из одного бита также прилипает к вертикали и горизонтали холста." : "🧲 Всё: при кручении рукой действуют границы, середины битов и оси симметрии соседей, как прежде."); };
   }
   if ($("bFillStill")) {   // v0.913: ⏸ за чертой — кольцо за чертой не крутится
     $("bFillStill").classList.toggle("on", !!Z.fillStill);
