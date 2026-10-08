@@ -212,20 +212,16 @@
   function hint() { return "Для шариков: 2 части или 2 по симметрии у строки 1, 2 бита второго кольца (пустые тоже подходят), плоский вид и плавное кручение"; }
   function ui() {
     const b = $("bConeBall"); if (!b) return;
-    b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = "●"; b.setAttribute("aria-label", "Шарики");
-    if ($("ballLabEnable")) {
-      $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл.";
-      $("ballLabEnable").title = enabled ? "Шарики включены. Нажми, чтобы выключить их совсем: на конусе их не будет, панель спрячется; включить снова — «● шарики» в группе «Шарики»." : "Шарики выключены. Нажми, чтобы включить.";
-      $("ballLabEnable").setAttribute("aria-pressed", String(enabled));
-    }
-    // v0.960, «а как совсем их отключить?»: выключены — на конусе ничего (ни шариков, ни точек стартов, ни пунктира) и панель спрятана;
-    // включает их снова «● шарики» в «Кручении»
-    if (lab) { const d = enabled ? "" : "none"; if (lab.style.display !== d) { lab.style.display = d; if (enabled) { lab._pzk = ""; window.zzBallLabSync(); } } }
+    b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = enabled ? "●" : "○";
+    b.setAttribute("aria-label", enabled ? "Выключить шарики" : "Включить шарики");
+    b.title = enabled ? "Шарики включены. Нажми, чтобы выключить движение и точки." : "Шарики выключены. Нажми, чтобы включить их снова.";
+    // v0.1003: переключатель остаётся в заголовке единого меню; выключение прячет только его содержимое.
+    if (lab) { lab.classList.toggle("ball-off", !enabled); lab._pzk = ""; window.zzBallLabSync(); }
     labControls();
   }
   function labControls() {
     if (!$("ballLabTime")) return;
-    $("ballLabEnable").setAttribute("aria-pressed", String(enabled));
+    $("bConeBall").setAttribute("aria-pressed", String(enabled));
     $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints !== false));
     const mult = fraction(Z.coneBallMult || "1");
     lab.querySelectorAll("[data-ball-speed]").forEach(b => b.setAttribute("aria-pressed", String(Math.abs(fraction(b.dataset.ballSpeed) - mult) < 1e-10)));
@@ -628,8 +624,8 @@
     const host = $("w-cone").querySelector(":scope > .wbody");
     lab = document.createElement("div"); lab.id = "solBallLab";
     if (Z.coneBallLabMin === undefined) Z.coneBallLabMin = Z.coneBallLabOpen === false;
-    lab.innerHTML = `<div class="rth"><span class="ball-lab-name">● Шарики</span><span class="pbtn"><button type="button" class="pminbtn">−</button></span></div><div class="ball-lab-body">
-      <div class="ball-lab-row"><button id="ballLabEnable" type="button">● вкл.</button><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
+    lab.innerHTML = `<div class="rth"><span class="ball-lab-name">● Шарики</span><span class="ball-lab-head-actions"></span><span class="pbtn"><button type="button" class="pminbtn">−</button></span></div><div class="ball-lab-body">
+      <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><span>Кольцо 1</span><button type="button" data-ball-ring="0" data-step="-.5">−½</button><button type="button" data-ball-ring="0" data-step=".5">+½</button><span>Кольцо 2</span><button type="button" data-ball-ring="1" data-step="-.5">−½</button><button type="button" data-ball-ring="1" data-step=".5">+½</button></div>
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" data-ball-speed="1/4">¼</button><button type="button" data-ball-speed="1/3">⅓</button><button type="button" data-ball-speed="1/2">½</button><button type="button" data-ball-speed="2/3">⅔</button><button type="button" data-ball-speed="1">1</button><button type="button" data-ball-speed="3/2">³⁄₂</button><button type="button" data-ball-speed="2">2</button><button type="button" data-ball-speed="4">4</button><button type="button" data-ball-speed="8">8</button><button type="button" data-ball-speed="16">16</button><button type="button" data-ball-speed="32">32</button></span></div>
@@ -638,9 +634,21 @@
       <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его постоянная скорость по прямым ×. На дугах скорость подбирается отдельно. Дробные кнопки выше возвращают обычный запуск одного шарика."></small>
       <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
       <div id="ballLabTurns" title="Фактический поворот каждого кольца с момента запуска шарика, в оборотах по 360°. Дроби сокращены; ≈ — округление до 1/1000 оборота. ↻ по часовой, ↺ − против. На паузе счёт стоит; ✓ — чистый выход, × — выход с разворотами; результат зафиксирован. Новый запуск и ↩ обнуляют счёт. В режиме ∞ считается весь путь, включая дуги."></div>
-      <div id="ballLabStatus" role="status" aria-live="polite" hidden></div></div>`;
+      <div class="ball-lab-status-placeholder"></div></div>`;
+    const oldGroup = document.querySelector(".cgrp.cg-ball"), controls = lab.querySelector(".ball-lab-head-actions");
+    const enable = $("bConeBall"), resetBall = $("bConeBallReset"), statusLine = $("coneBallStatus");
+    if (enable) controls.appendChild(enable);
+    if (resetBall) controls.appendChild(resetBall);
+    if (statusLine) { statusLine.className = "ball-lab-status"; lab.querySelector(".ball-lab-status-placeholder").replaceWith(statusLine); }
+    if (oldGroup && !(typeof ZZ_BG !== "undefined" && ZZ_BG)) {
+      const key = oldGroup.dataset.g; oldGroup.remove();
+      for (const k of ["cgrpPos", "cgrpFld", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpOff", "cgrpSize"]) if (Z[k]) delete Z[k][key];
+      Z.cgrpDock = (Z.cgrpDock || []).filter(k => k !== key);
+      for (const [k, link] of Object.entries(Z.cgrpLink || {})) if (k === key || link?.to === key) delete Z.cgrpLink[k];
+      for (const field of ["btnMove", "cgrpMove"]) for (const id of ["#bConeBall", "#bConeBallReset", "#coneBallStatus"]) if (Z[field]) delete Z[field][id];
+      save();
+    }
     host.appendChild(lab); $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
-    $("ballLabEnable").onclick = () => $("bConeBall").click();
     $("ballLabRun").onclick = () => launch();
     $("ballLabThrough").onclick = () => launchThrough(1);
     lab.querySelectorAll("[data-ball-through]").forEach(b => b.onclick = () => launchThrough(+b.dataset.ballThrough));
@@ -667,7 +675,7 @@
     new MutationObserver(() => {
       Z.coneBallLabOpen = !lab.classList.contains("pmin"); renderCone();
     }).observe(lab, { attributes: true, attributeFilter: ["class"] });
-    const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; $("ballLabStatus").textContent = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
+    const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
     $("coneCv").addEventListener("pointerdown", e => {
       if (!enabled || !drawn || e.button && e.button !== 0) return;

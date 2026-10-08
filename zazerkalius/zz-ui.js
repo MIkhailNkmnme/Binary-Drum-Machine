@@ -11252,7 +11252,7 @@ function solPanelOrganizeInit(C){
   const { tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi } = C;
   const sections = [
     { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "@sunMoonTbl", "строка 1", "щели", "за чертой", "алгоритм", "@lasAlgo"] },
-    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "шарики", "@solBallLab"] },
+    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "@solBallLab"] },
     { name: "Вид", color: "#6cb4ff", keys: ["вид", "3d"] },
     { name: "Звук и цикл", color: "#b98cff", keys: ["аниматрица", "звук"] },
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
