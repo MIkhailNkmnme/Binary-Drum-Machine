@@ -2022,16 +2022,9 @@ function lasDeps(){
     const sm = { all: "Всё", bit: "Каждое", opp: "Встреч Стр", obit: "Встреч Бит" }[Z.coneSpinMode || "all"] || "Всё";
     L.push(["run", `<b>Ход</b>: ▶ и шаг ↷ — кручение «${sm}»` + (!sun && Z.coneClockStop ? "; ⏸ встаёт, когда луч прошёл все кольца" : "") + (Z.coneLast2 && sm !== "Всё" ? "; крутятся только 2 последних кольца — последней строки и за чертой" : "") + "; ↶ откат возвращает шаг со всей закраской."]);
   }
-  /* v0.949: прозрачная зубчатая панель алгоритма и подсказок; общий хват,
-     сцепка и сворачивание сохраняют доступный заголовок. */
-  let box = document.getElementById("lasAlgo");
-  const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
-  if (!box) {
-    box = document.createElement("div"); box.id = "lasAlgo"; box.classList.add("on");
-    box.innerHTML = '<div class="rth"><span>Алгоритм · подсказки</span><button type="button" class="pminbtn"></button></div><div class="las-algo-body"><div id="lasRules"></div><div id="lasTip"></div></div>';
-    host.appendChild(box); plateInit(box);
-  }
-  if (box.parentElement !== host) host.appendChild(box);
+  /* v0.1007: правила — содержимое обычной кнопочной группы #lasAlgo. */
+  const box = document.getElementById("lasAlgo"), host = box && box.querySelector(":scope > .cgb"); if (!host) return;
+  if (!host.querySelector(".las-algo-body")) host.insertAdjacentHTML("beforeend", '<div class="las-algo-body"><div id="lasRules"></div><div id="lasTip"></div></div>');
   const h = L.map(([key, x]) => `<div data-la="${key}">${x}</div>`).join("");
   const rules = box.querySelector("#lasRules"); if (rules.innerHTML !== h) rules.innerHTML = h;
   /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
@@ -2043,22 +2036,22 @@ function lasDeps(){
     ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "keydown"].forEach(t => document.addEventListener(t, stop, { capture: true, passive: false }));
   }
   if (!lasDeps._h) { lasDeps._h = 1;   // наведение: кнопка ↔ её строка алгоритма
-    const clr = () => document.querySelectorAll(".cgrp .lhl, .sol-plate .lhl, #lasRules > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
-    const tool = (t) => t && t.closest && t.closest("#w-cone :is(.cgrp, .sol-plate:not(#lasAlgo)) :is(button, label, select, input, .lseg)");
+    const clr = () => document.querySelectorAll(".cgrp .lhl, #lasRules > div.hl").forEach(e => e.classList.remove("lhl", "hl"));
+    const tool = (t) => t && t.closest && t.closest("#w-cone .cgrp:not(#lasAlgo) :is(button, label, select, input, .lseg)");
     /* v0.841, по снимку текста алгоритма — «тут подсказка для каждой кнопки при наведении, а когда увести наведение, то этот текст как раньше; сделай
        ширину и высоту постоянной, чтобы не дёргалось, текст наверх прижимай, когда его мало»: наведение на кнопку групп конуса — в том же месте и того же
        размера её подсказка (#lasTip, текст title), увёл — снова строки алгоритма (lasAlgoPlace) */
-    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.matches(".cgrp, .sol-plate") && el.closest(".cgrp, .sol-plate:not(#lasAlgo)") ? el.title : ""; };
+    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.matches(".cgrp") && el.closest(".cgrp:not(#lasAlgo)") ? el.title : ""; };
     const tip = (txt) => { const a = document.getElementById("lasAlgo"), t = document.getElementById("lasTip"); if (!a || !t) return;
       if (txt) { if (t.textContent !== txt) t.textContent = txt; } a.classList.toggle("tip", !!txt); lasAlgoPlace(); };
     document.addEventListener("pointerover", (e) => { const x = tool(e.target); tip(x ? tipOf(x) : ""); }, { passive: true });
     document.addEventListener("pointerdown", (e) => { const t = e.target, a = document.getElementById("lasAlgo");
-      if (a && !solPanelFolded(a) && !(t.closest && t.closest(".cgrp, .sol-plate"))) plateFoldToggle(a, true);
+      if (a && !solPanelFolded(a) && !(t.closest && t.closest(".cgrp")) && a._solFold) a._solFold(true);
     }, { capture: true, passive: true });
     document.addEventListener("pointerover", (e) => {
-      const x = e.target.closest && e.target.closest(":is(.cgrp, .sol-plate) [data-la]"); clr(); if (!x) return;
+      const x = e.target.closest && e.target.closest(".cgrp [data-la]"); clr(); if (!x) return;
       const key = x.dataset.la;
-      if (x.parentElement && x.parentElement.id === "lasRules") { x.classList.add("hl"); document.querySelectorAll(':is(.cgrp, .sol-plate:not(#lasAlgo)) :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
+      if (x.parentElement && x.parentElement.id === "lasRules") { x.classList.add("hl"); document.querySelectorAll('.cgrp:not(#lasAlgo) :is(button, label, select, input)[data-la="' + key + '"]').forEach(b => b.classList.add("lhl")); }
       else { const r = document.querySelector('#lasRules > div[data-la="' + key + '"]'); if (r) r.classList.add("hl"); }
     }, { passive: true });
   }
@@ -2095,11 +2088,10 @@ const SUNTBL = [
    — целым числом рядов; 🧘 в шапке — видна и в дзене (Z.sunTblZen, Z.ringTblZen; класс zenon, как у групп) */
 /* v0.920: группы и таблицы Соляриса используют один граф сцепок. Справа едет за левой,
    снизу — за верхней; потянул ведомую — отцепил. Циклы запрещены. */
-const SOL_PLATES = {
-  sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", fld: "sunTblFld", name: "Солнце · Луна", col: "#ffe14d" },
-  solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", fld: "coneBallLabFld", name: "Шарики", col: "#79e7e1", corner: "bottom-right" },
-  lasAlgo: { xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", fld: "lasAlgoFld", name: "Алгоритм · подсказки", col: "#ffd166", corner: "bottom-right" }
-};
+/* v0.1007: отдельные sol-plate больше не используются — ☀/☾, Шарики и
+   Алг. · подск. теперь входят в общий набор .cgrp. Обвязка оставлена пустой
+   для совместимости с общими функциями графа панелей. */
+const SOL_PLATES = {};
 /* v0.954, «сделай все группы, чтоб перемещать можно было и на поле строк, и на левое меню, и также магнитить с границами их»: площадки — поле строк
    (#field, "fld") и левая панель (#rowsPane, "pane"). Группа или плашка, отпущенная целиком над площадкой, встаёт поверх неё (.cfld, fixed) и ездит с ней;
    место — { x, y, z } от угла площадки (Z.cgrpFld у групп, Z[…Fld] у плашек; z: "pane" — левая панель, без z — поле). Внутрь левой панели группы
@@ -2357,41 +2349,53 @@ function platePinPlace(el, pin){   // → true, если плашка поста
   const hr = host.getBoundingClientRect(), l = (solAxisPanelX(el, pin, A) - hr.left + host.scrollLeft).toFixed(2) + "px", t = Math.round(A.y - hr.top + host.scrollTop) + "px";
   if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t; return true;
 }
-function sunTblPlace(el){ platePlace(el); }
+function sunTblPlace(el){ /* положение задаёт общий обработчик .cgrp */ }
 function sunPanelMergeLayout(force = false){
-  if (Z.sunPanelMerged && !force) return;
-  const key = "@sunMoonTbl", links = Z.cgrpLink || {}, old = links["солнце"];
-  if (links[key] && links[key].to === "солнце") {
-    if (old && old.to !== key) links[key] = { ...old }; else delete links[key];
-  } else if (!links[key] && old && old.to !== key) links[key] = { ...old };
-  delete links["солнце"];
-  for (const [kid, link] of Object.entries(links)) if (link.to === "солнце") {
-    link.to = key; if (solLinkCycle(links, kid, key)) delete links[kid];
+  if (Z.solPlateGroupsV && !force) return;
+  for (const f of ["cgrpPos", "cgrpFld", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpZen"]) if (!Z[f] || typeof Z[f] !== "object") Z[f] = {};
+  if (!Z.cgrpLink || typeof Z.cgrpLink !== "object") Z.cgrpLink = {};
+  const tl = document.querySelector("#w-cone .wbody > .tools"), host = tl && tl.parentElement;
+  const defs = [
+    { id: "sunMoonTbl", key: "☀ · ☾", xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", fld: "sunTblFld", zen: "sunTblZen", aliases: ["@sunMoonTbl", "солнце"] },
+    { id: "solBallLab", key: "шарики", xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", fld: "coneBallLabFld", aliases: ["@solBallLab"] },
+    { id: "lasAlgo", key: "алг. · подск.", xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", fld: "lasAlgoFld", aliases: ["@lasAlgo"] }
+  ];
+  for (const d of defs) {
+    const oldKey = d.aliases.find(a => a[0] !== "@");
+    const xy = Z[d.xy];
+    if (!Z.cgrpPos[d.key] && Array.isArray(xy) && tl && host) {
+      const tr = tl.getBoundingClientRect(), hr = host.getBoundingClientRect();
+      Z.cgrpPos[d.key] = { x: hr.left + xy[0] - host.scrollLeft - tr.left, y: hr.top + xy[1] - host.scrollTop - tr.top };
+    }
+    if (oldKey) for (const f of ["cgrpPos", "cgrpFld", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpOff", "cgrpSize", "cgrpZen"]) {
+      if (Z[f] && Z[f][d.key] === undefined && Z[f][oldKey] !== undefined) Z[f][d.key] = typeof Z[f][oldKey] === "object" ? { ...Z[f][oldKey] } : Z[f][oldKey];
+    }
+    if (!Z.cgrpFld[d.key] && Z[d.fld]) Z.cgrpFld[d.key] = { ...Z[d.fld] };
+    if (typeof Z.cgrpPin[d.key] !== "number" && typeof Z[d.pin] === "number") Z.cgrpPin[d.key] = Z[d.pin];
+    if (Z[d.min] !== undefined && Z.cgrpMin[d.key] === undefined) Z.cgrpMin[d.key] = !!Z[d.min];
+    if (d.zen && Z[d.zen]) Z.cgrpZen[d.key] = true;
+    for (const a of d.aliases) {
+      if (Z.cgrpLink[a] && !Z.cgrpLink[d.key]) Z.cgrpLink[d.key] = { ...Z.cgrpLink[a] };
+      delete Z.cgrpLink[a];
+      if (Z.cgrpEdge[a] && !Z.cgrpEdge[d.key]) Z.cgrpEdge[d.key] = { ...Z.cgrpEdge[a] };
+      delete Z.cgrpEdge[a];
+      for (const link of Object.values(Z.cgrpLink)) if (link && link.to === a) link.to = d.key;
+    }
+    delete Z[d.xy]; delete Z[d.pin]; delete Z[d.min]; delete Z[d.fld]; if (d.zen) delete Z[d.zen];
   }
-  if (Z.sunTblMin === undefined) Z.sunTblMin = !!(Z.cgrpMin && Z.cgrpMin["солнце"]) || Z.sunTbl === false || window.innerWidth <= 760;
-  if (Z.cgrpPin && typeof Z.cgrpPin["солнце"] === "number" && typeof Z.sunTblPin !== "number") Z.sunTblPin = Z.cgrpPin["солнце"];
-  if (Z.cgrpEdge && Z.cgrpEdge["солнце"] && !Z.cgrpEdge[key]) Z.cgrpEdge[key] = { ...Z.cgrpEdge["солнце"] };
-  const pos = Z.cgrpPos && Z.cgrpPos["солнце"], tl = document.querySelector("#w-cone .wbody > .tools");
-  if (!Array.isArray(Z.sunTblXY) && pos && tl) {
-    const tr = tl.getBoundingClientRect(), host = tl.parentElement, hr = host.getBoundingClientRect();
-    Z.sunTblXY = [tr.left + pos.x - hr.left + host.scrollLeft, tr.top + pos.y - hr.top + host.scrollTop];
-  }
-  if (Z.cgrpZen && Z.cgrpZen["солнце"]) Z.sunTblZen = true;
-  if (Array.isArray(Z.cgrpDock)) Z.cgrpDock = Z.cgrpDock.filter(k => k !== "солнце");
+  if (Array.isArray(Z.cgrpDock)) Z.cgrpDock = Z.cgrpDock.map(k => defs.find(d => d.aliases.includes(k))?.key || k);
   // Старые переносы кнопок не должны снова вынести управление из общей таблицы.
   const store = document.getElementById("sunControlStore");
   for (const field of ["cgrpMove", "btnMove"]) for (const k of Object.keys(Z[field] || {})) {
     const el = cgrpRefEl(k); if (store && el && store.contains(el)) delete Z[field][k];
   }
-  for (const field of ["cgrpPos", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpOff", "cgrpSize"]) if (Z[field]) delete Z[field]["солнце"];
-  const seen = new Set();
-  for (const section of Z.solPanelClusters || []) section.keys = section.keys.map(k => k === "солнце" ? key : k).filter(k => { if (seen.has(k)) return false; seen.add(k); return true; });
-  Z.sunPanelMerged = 1; save();
+  for (const field of ["cgrpPos", "cgrpFld", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpOff", "cgrpSize", "cgrpZen"]) if (Z[field]) delete Z[field]["солнце"];
+  for (const section of Z.solPanelClusters || []) section.keys = section.keys.map(k => defs.find(d => d.aliases.includes(k))?.key || k);
+  Z.sunPanelMerged = 1; Z.solPlateGroupsV = 1; save();
 }
-function sunTblBuild(host){
-  const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), el = document.createElement("div"); el.id = "sunMoonTbl";
-  let x = '<div class="smh"><span>☀ · ☾</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button></span></div>' +
-    '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
+function sunTblBuild(el){
+  const q = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"), host = el.querySelector(":scope > .cgb"); if (!host) return el;
+  let x = '<table><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
   let gi = -1;   // v0.892: номер подгруппы — свой фон (класс sgN)
   SUNTBL.forEach((r, i) => {
     if (r.g) { gi = ["Проход сквозь", "Красит за чертой", "Солнце", "Луна светит", "Источник"].indexOf(r.g); x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
@@ -2399,9 +2403,8 @@ function sunTblBuild(host){
     for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ' + w + '" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
     x += "</tr>";
   });
-  el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
+  host.innerHTML = x + "</tbody></table>";
   el.addEventListener("click", (e) => {
-    if (e.target.closest(".pzen")) { e.stopPropagation(); Z.sunTblZen = !Z.sunTblZen; save(); sunTblSync(); say(Z.sunTblZen ? "🧘 Таблица ☀☾ — видна и в дзене." : "🧘 Таблица ☀☾ в дзене не видна."); return; }   // v0.886
     const k = e.target.closest(".smk[data-r]"); if (!k) return; e.stopPropagation();
     const r = SUNTBL[+k.dataset.r], c = r[k.dataset.w], v = !sunTblGet(c);
     if (c.f) {
@@ -2413,15 +2416,13 @@ function sunTblBuild(host){
     } else { const b = document.getElementById(c.b); if (b && b.onclick && !(c.select && sunTblGet(c))) b.onclick(); }   // общая таблица вызывает прежний обработчик
     sunTblSync();
   });
-  plateInit(el);
   return el;
 }
 function sunTblSync(){
-  const m = document.getElementById("coneMain"), host = m && m.parentElement; if (!host) return;
+  const el = document.getElementById("sunMoonTbl"); if (!el || !el.querySelector(":scope > .cgb")) return;
   sunPanelMergeLayout();
   const sun = coneSunOn();
-  let el = document.getElementById("sunMoonTbl");
-  if (!el || el.parentElement !== host) { if (el) el.remove(); el = sunTblBuild(host); }
+  if (!el.querySelector("table")) sunTblBuild(el);
   el.querySelectorAll(".smk[data-r]").forEach(k => { const r = SUNTBL[+k.dataset.r], v = sunTblGet(r[k.dataset.w]), a = v ? "true" : "false", name = (k.dataset.w === "s" ? "Солнце" : "Луна") + ": " + r.t;
     if (k.getAttribute("aria-pressed") !== a) k.setAttribute("aria-pressed", a);
     const c = r[k.dataset.w], state = c.cycle ? (Z.cutLen === "ctr" ? "через центр" : Z.cutLen === "mid" ? "по середине" : Z.cutLen ? "по краю" : "нет") : v ? "включено" : "выключено";
@@ -2430,8 +2431,7 @@ function sunTblSync(){
     const tip = name + " — " + state + ". Щелчок — " + (c.cycle ? "следующий режим" : c.select ? "выбрать" : "переключить") + ".\n\n" + r.tip + (inactive ? "\nСолнце выключено; настройка сохранится для его включения." : ""); if (k.title !== tip) k.title = tip; if (k.getAttribute("aria-label") !== name) k.setAttribute("aria-label", name); });
   el.classList.remove("off");
   el.title = "Все настройки солнца и луны. Значки переключают настройки; щели и без щелей выбираются по одному. Настройки можно менять заранее.";
-  if (el.classList.contains("zenon") !== !!Z.sunTblZen) el.classList.toggle("zenon", !!Z.sunTblZen);   // v0.886
-  if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#ffe14d"); sunTblPlace(el);   // дальше — по ResizeObserver, не на каждом кадре
+  if (el.hidden) el.hidden = false; sunTblPlace(el);
 }
 /* v0.1001, таблица «Кольца» стала отдельной панелью: выбор вида теперь только в таблице, кнопки выбора и открытия из «Щелей» убраны; свернуть / развернуть можно в заголовке.
    v0.995, по снимку таблицы «Кольца» — подписи сокращены, столбец вырезов убран; выбор вида доступен даже без света солнца или лазера.
@@ -6254,22 +6254,12 @@ function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb |
   const r = tb.getBoundingClientRect(), cv = document.getElementById("coneCv"), c = cv && cv.getBoundingClientRect();
   return c && c.height && r.top > c.top + c.height / 2 ? -Infinity : r.bottom; }
 function lasAlgoPlace(){
-  const el = document.getElementById("lasAlgo"), cv = document.getElementById("coneCv"); if (!el || !el.classList.contains("on") || !cv) return;
-  const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
-  if (el.classList.contains("pdrag")) return;
-  const mobile = document.body.classList.contains("sol-mobile");
-  const W0 = Math.round(mobile ? Math.max(200, host.clientWidth - 16) : Math.max(200, Math.min(460, cr.width / 2 - 56)));
-  const zf = !mobile && Z.lasAlgoFld && solZoneRect(Z.lasAlgoFld.z), W = zf ? Math.max(160, Math.min(W0, Math.floor(zf.width))) : W0;   // v0.954: на площадке — не шире неё
-  const ws = W + "px"; if (el.style.width !== ws) el.style.width = ws;
-  plateFoldSync(el);
-  if (!solPanelFolded(el)) {
-    const rules = el.querySelector("#lasRules"), body = el.querySelector(".las-algo-body"), key = W + "|" + rules.innerHTML;
-    if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; body.style.height = ""; } el._mh = Math.max(el._mh || 0, rules.scrollHeight, 128); }
-    const hs = Math.min(el._mh, Math.max(128, Math.min(480, host.clientHeight - 72))) + "px";
-    if (body.style.height !== hs) body.style.height = hs;
-  }
-  plateZig(el, SOL_PLATES.lasAlgo.col); platePlace(el);
-  if (window.zzPanelLinkSync) window.zzPanelLinkSync();
+  const el = document.getElementById("lasAlgo"), rules = el && el.querySelector("#lasRules"), body = el && el.querySelector(".las-algo-body");
+  if (!el || !rules || !body || solPanelFolded(el)) return;
+  const W = Math.round(el.getBoundingClientRect().width || 320), key = W + "|" + rules.innerHTML;
+  if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; body.style.height = ""; } el._mh = Math.max(el._mh || 0, rules.scrollHeight, 128); }
+  const host = el.closest(".wbody") || el.parentElement, hs = Math.min(el._mh, Math.max(128, Math.min(480, (host.clientHeight || innerHeight) - 72))) + "px";
+  if (body.style.height !== hs) body.style.height = hs;
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
@@ -11269,8 +11259,8 @@ function cgrpRefEl(k){ try { return k ? (k[0] === "#" ? document.getElementById(
 function solPanelOrganizeInit(C){
   const { tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi } = C;
   const sections = [
-    { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "@sunMoonTbl", "строка 1", "щели", "за чертой", "алгоритм", "@lasAlgo"] },
-    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "@solBallLab"] },
+    { name: "Свет и вырезы", color: "#ffe14d", keys: ["лазер", "☀ · ☾", "строка 1", "щели", "за чертой", "алгоритм", "алг. · подск."] },
+    { name: "Движение", color: "#ffd166", keys: ["кручение", "кольца", "шарики"] },
     { name: "Вид", color: "#6cb4ff", keys: ["вид", "3d"] },
     { name: "Звук и цикл", color: "#b98cff", keys: ["аниматрица", "звук"] },
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },

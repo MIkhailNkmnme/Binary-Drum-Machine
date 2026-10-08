@@ -23,8 +23,8 @@
     Z.solMobileDefaults = 1;
     if (Z.rows.length === 1 && Z.rows[0] === "1") caseState();
     Z.cgrpMin = { ...(Z.cgrpMin || {}) };
-    for (const name of ["вид", "кольца", "кручение", "лазер", "строка 1", "щели", "за чертой", "алгоритм", "звук", "аниматрица", "3d", "дзен"]) Z.cgrpMin[name] = true;
-    Z.sunTblMin = true; Z.ringTblMin = true;
+    for (const name of ["вид", "кольца", "кручение", "лазер", "строка 1", "щели", "за чертой", "алгоритм", "☀ · ☾", "шарики", "алг. · подск.", "звук", "аниматрица", "3d", "дзен"]) Z.cgrpMin[name] = true;
+    Z.ringTblMin = true;
   };
   function init() {
     if (ZZ_SOLO !== "w-cone" || ZZ_BG) return;
@@ -64,7 +64,7 @@
     let was = false;
     const layout = () => {
       const on = mobile(); document.body.classList.toggle("sol-mobile", on);
-      const ballLab = $("solBallLab"); if (on && !was && ballLab) plateFoldToggle(ballLab, false);
+      const ballLab = $("solBallLab"); if (on && !was && ballLab && ballLab._solFold) ballLab._solFold(false);
       if (on && !was) { document.body.classList.remove("sol-mobile-menus"); menu.textContent = "☰ Настройки"; menu.setAttribute("aria-expanded", "false"); coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
       was = on; sync(); requestAnimationFrame(() => { cgrpCols(); tzcAll(); renderCone(); });
     };

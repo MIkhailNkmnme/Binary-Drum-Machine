@@ -615,16 +615,12 @@
   window.zzBallInfo = () => F && { ...ballInfo(F), batch: allStarts(), balls: balls.map(ballInfo) };
   window.zzBallLabSync = () => {
     if (!lab) return;
-    plateFoldSync(lab);
-    if (!lab._pzk) plateZig(lab, SOL_PLATES.solBallLab.col);
-    platePlace(lab);
+    Z.coneBallLabOpen = !lab.classList.contains("cmin");
   };
   function initLab() {
     if (typeof ZZ_BG !== "undefined" && ZZ_BG) return;
-    const host = $("w-cone").querySelector(":scope > .wbody");
-    lab = document.createElement("div"); lab.id = "solBallLab";
-    if (Z.coneBallLabMin === undefined) Z.coneBallLabMin = Z.coneBallLabOpen === false;
-    lab.innerHTML = `<div class="rth"><span class="ball-lab-name">● Шарики</span><span class="ball-lab-head-actions"></span><span class="pbtn"><button type="button" class="pminbtn">−</button></span></div><div class="ball-lab-body">
+    lab = $("solBallLab"); const host = lab && lab.querySelector(":scope > .cgb"); if (!host) return;
+    if (!host.querySelector(".ball-lab-body")) host.insertAdjacentHTML("beforeend", `<div class="ball-lab-body">
       <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><span>Кольцо 1</span><button type="button" data-ball-ring="0" data-step="-.5">−½</button><button type="button" data-ball-ring="0" data-step=".5">+½</button><span>Кольцо 2</span><button type="button" data-ball-ring="1" data-step="-.5">−½</button><button type="button" data-ball-ring="1" data-step=".5">+½</button></div>
@@ -634,21 +630,10 @@
       <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его постоянная скорость по прямым ×. На дугах скорость подбирается отдельно. Дробные кнопки выше возвращают обычный запуск одного шарика."></small>
       <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
       <div id="ballLabTurns" title="Фактический поворот каждого кольца с момента запуска шарика, в оборотах по 360°. Дроби сокращены; ≈ — округление до 1/1000 оборота. ↻ по часовой, ↺ − против. На паузе счёт стоит; ✓ — чистый выход, × — выход с разворотами; результат зафиксирован. Новый запуск и ↩ обнуляют счёт. В режиме ∞ считается весь путь, включая дуги."></div>
-      <div class="ball-lab-status-placeholder"></div></div>`;
-    const oldGroup = document.querySelector(".cgrp.cg-ball"), controls = lab.querySelector(".ball-lab-head-actions");
-    const enable = $("bConeBall"), resetBall = $("bConeBallReset"), statusLine = $("coneBallStatus");
-    if (enable) controls.appendChild(enable);
-    if (resetBall) controls.appendChild(resetBall);
+      <div class="ball-lab-status-placeholder"></div></div>`);
+    const statusLine = $("coneBallStatus");
     if (statusLine) { statusLine.className = "ball-lab-status"; lab.querySelector(".ball-lab-status-placeholder").replaceWith(statusLine); }
-    if (oldGroup && !(typeof ZZ_BG !== "undefined" && ZZ_BG)) {
-      const key = oldGroup.dataset.g; oldGroup.remove();
-      for (const k of ["cgrpPos", "cgrpFld", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpOff", "cgrpSize"]) if (Z[k]) delete Z[k][key];
-      Z.cgrpDock = (Z.cgrpDock || []).filter(k => k !== key);
-      for (const [k, link] of Object.entries(Z.cgrpLink || {})) if (k === key || link?.to === key) delete Z.cgrpLink[k];
-      for (const field of ["btnMove", "cgrpMove"]) for (const id of ["#bConeBall", "#bConeBallReset", "#coneBallStatus"]) if (Z[field]) delete Z[field][id];
-      save();
-    }
-    host.appendChild(lab); $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
+    $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
     $("ballLabRun").onclick = () => launch();
     $("ballLabThrough").onclick = () => launchThrough(1);
     lab.querySelectorAll("[data-ball-through]").forEach(b => b.onclick = () => launchThrough(+b.dataset.ballThrough));
@@ -671,11 +656,10 @@
       else { coneRot[i] = (coneRot[i] || 0) + +b.dataset.step; Z.coneFree ||= {}; Z.coneFree[i] = true; }
       Z.coneRot = coneRot.slice(); save(); reset();
     });
-    plateInit(lab);
     new MutationObserver(() => {
-      Z.coneBallLabOpen = !lab.classList.contains("pmin"); renderCone();
+      Z.coneBallLabOpen = !lab.classList.contains("cmin"); renderCone();
     }).observe(lab, { attributes: true, attributeFilter: ["class"] });
-    const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; lab.querySelector(".ball-lab-name").title = source.textContent + "\n\n" + LAB_HELP; };
+    const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; const name = lab.querySelector(":scope > .glab"); if (name) name.title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
     $("coneCv").addEventListener("pointerdown", e => {
       if (!enabled || !drawn || e.button && e.button !== 0) return;
