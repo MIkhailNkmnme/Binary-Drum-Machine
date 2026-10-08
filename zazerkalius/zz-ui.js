@@ -2405,18 +2405,19 @@ function sunTblSync(){
   if (el.classList.contains("zenon") !== !!Z.sunTblZen) el.classList.toggle("zenon", !!Z.sunTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#ffe14d"); sunTblPlace(el);   // дальше — по ResizeObserver, не на каждом кадре
 }
-/* v0.995, по снимку таблицы «Кольца» — подписи сокращены, столбец вырезов убран; выбор вида доступен даже без света солнца или лазера.
+/* v0.1001, таблица «Кольца» стала отдельной панелью: выбор вида теперь только в таблице, кнопки выбора и открытия из «Щелей» убраны; свернуть / развернуть можно в заголовке.
+   v0.995, по снимку таблицы «Кольца» — подписи сокращены, столбец вырезов убран; выбор вида доступен даже без света солнца или лазера.
    v0.871: плашка #ringTbl в теле окна конуса — все виды колец строкой: картинка кольца строки 2 и 3, вид и число частей;
-   ромб справа — выбрать (то же, что переключатель щелей в группе «Щели»). Тянется за шапку (Z.ringTblXY, двойной
-   щелчок — на место), ✕ или «◯ Кольца» в «Щелях» — закрыть / открыть (Z.ringTbl; не задано — открыта, на узком экране — закрыта). Новый вид
+   выбор — подсветка строки. Тянется за шапку (Z.ringTblXY, двойной
+   щелчок — на место). Новый вид
    колец — строкой в RINGTBL и вариантом в LAS_SEG */
 const RINGTBL = [
-  { v: "all", t: "T · все", p: "T" },
-  { v: "one", t: "T · щель", p: "T" },
-  { v: "cut", t: "2T−1 · кусок", p: "2T−1" },
-  { v: "cut2", t: "2T · кусок", p: "2T" },
-  { v: "cutA", t: "между битами", p: "2T−1" },
-  { v: "cutS", t: "симметрия", p: "2T−1" }
+  { v: "all", t: "T · все" },
+  { v: "one", t: "T · щель" },
+  { v: "cut", t: "2T−1 · кусок" },
+  { v: "cut2", t: "2T · кусок" },
+  { v: "cutA", t: "между битами" },
+  { v: "cutS", t: "симметрия" }
 ];
 function ringTblArcs(v, n){   // [[от, до]] в долях круга — места бит кольца из n бит; бит 0 серединой сверху
   const P = v === "cut2" ? 2 * n : v === "all" || v === "one" ? n : 2 * n - 1, per = (2 * n - 1) / n, o = [];
@@ -2435,37 +2436,37 @@ function ringTblSvg(v, n){
   });
   return `<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><circle cx="16" cy="16" r="${R}" fill="none" stroke="currentColor" stroke-opacity=".18" stroke-width="${w}"/><path d="${d}" fill="none" stroke="#ffd166" stroke-width="${w}" stroke-linecap="butt"/><circle cx="16" cy="16" r="1.6" fill="#ffd166"/></svg>`;
 }
-function ringTblOpen(){ if (Z.ringTbl !== undefined) return !!Z.ringTbl; return window.innerWidth > 760; }
+function ringTblOpen(){ return true; }
 function ringTblPlace(el){ platePlace(el); }
 function ringTblBuild(host){
   const el = document.createElement("div"); el.id = "ringTbl";
-  let x = '<div class="rth"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="rtx" title="Закрыть («◯ Кольца» в группе «Щели» — открыть снова)">✕</button></span></div>' +
-    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th><th title="Частей в кольце строки из T бит">частей</th><th></th></tr></thead><tbody>';
+  let x = '<div class="rth"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button></span></div>' +
+    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    x += `<tr data-v="${r.v}" title="${tt}"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td><td class="rtc">${r.p}</td><td class="rtk"><button type="button" class="rtr" data-v="${r.v}" aria-pressed="false" aria-label="Выбрать: ${esc(r.t)}" title="Выбрать: ${tt}"></button></td></tr>`;
+    x += `<tr data-v="${r.v}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td></tr>`;
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
-    if (e.target.closest(".rtx")) { e.stopPropagation(); Z.ringTbl = false; save(); ringTblSync(); return; }
     if (e.target.closest(".pzen")) { e.stopPropagation(); Z.ringTblZen = !Z.ringTblZen; save(); ringTblSync(); say(Z.ringTblZen ? "🧘 Таблица «Кольца» — видна и в дзене." : "🧘 Таблица «Кольца» в дзене не видна."); return; }   // v0.886
     const tr = e.target.closest("tr[data-v]"); if (!tr) return; e.stopPropagation();
     if (coneSlitRaw() === tr.dataset.v) return;
     const LS = LAS_SEG.find(s => s.id === "bConeSlits"), b = document.getElementById("bConeSlits");
-    if (LS && b && b.onclick) { LS.pre(tr.dataset.v); b.onclick(); }   // тот же путь, что ряд кнопок «Щели»: всё, что делает смена вида, — там
+    if (LS && b && b.onclick) { LS.pre(tr.dataset.v); b.onclick(); }   // внутренняя команда сохраняет общую смену режима и пересчёт света
     ringTblSync();
   });
+  el.addEventListener("keydown", e => { const tr = e.target.closest("tr[data-v]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tr.click(); } });
   plateInit(el);
   return el;
 }
 function ringTblSync(){
   const m = document.getElementById("coneMain"), host = m && m.parentElement; if (!host) return;
-  const open = ringTblOpen(), bt = document.getElementById("bRingTbl"); if (bt && bt.classList.contains("on") !== open) bt.classList.toggle("on", open);
+  const open = ringTblOpen();
   let el = document.getElementById("ringTbl");
   if (!open) { if (el && !el.hidden) el.hidden = true; return; }
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = ringTblBuild(host); }
-  const cur = coneSlitRaw(); el.querySelectorAll("tr[data-v]").forEach(tr => { const on = tr.dataset.v === cur; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); const k = tr.querySelector(".rtr"), a = on ? "true" : "false"; if (k && k.getAttribute("aria-pressed") !== a) k.setAttribute("aria-pressed", a); });
+  const cur = coneSlitRaw(); el.querySelectorAll("tr[data-v]").forEach(tr => { const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
   el.classList.remove("off"); el.title = "Выбор вида колец действует независимо от включения солнца и лазера.";
   if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#22d3ee"); ringTblPlace(el);
@@ -2486,6 +2487,17 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   g.globalCompositeOperation = "destination-in"; g.beginPath(); g.arc(cx, cy, rMax + 3 * dpr, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = "source-over";
   if (Z.coneAxes) { g.save(); g.strokeStyle = axisCol; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore(); }
 }
+function coneArtBlocksButton(e){
+  const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
+  if (!button || !layer || layer.hidden) return;
+  const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
+  const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
+  try { if (layer.getContext("2d", { willReadFrequently: true }).getImageData(x, y, 1, 1).data[3] < 24) return; }
+  catch (err) { return; }
+  e.preventDefault(); e.stopImmediatePropagation();
+}
+document.addEventListener("pointerdown", coneArtBlocksButton, true);
+document.addEventListener("click", coneArtBlocksButton, true);
 function renderCone(){
   if (coneMagStep && coneMagStep.stamp !== coneMagFingerprint()) coneMagStep = null;
   if (coneMagCount !== null) {
@@ -6966,7 +6978,6 @@ function setupCone(){
     $("bSunParts").onclick = () => { Z.sunParts = Z.sunParts === false; ui(); save(); renderCone();
       say(Z.sunParts !== false ? "☀ Доли: у каждой части круга — её доля, сверху — сводка." : "☀ Доли выключены: подписи и сводка не считаются и не рисуются."); };
   }
-  if ($("bRingTbl")) $("bRingTbl").onclick = () => { Z.ringTbl = !ringTblOpen(); save(); ringTblSync(); };   // v0.871: ◯ Кольца — таблица видов колец
   if ($("bMagSym")) {   // 🧲 сим. — направление к соседям: оба → внутр. → наруж. → нет
     const L = { both: "🧲 оба", in: "🧲 внутр.", out: "🧲 наруж.", off: "🧲 нет" }, ui = () => { const m = magSymOf(), b = $("bMagSym"); if (b.textContent !== L[m]) b.textContent = L[m]; b.classList.toggle("on", m !== "off"); };
     ui(); $("bMagSym").onclick = () => { const m = magSymOf(); Z.magSym = m === "both" ? "in" : m === "in" ? "out" : m === "out" ? "off" : "both"; ui(); save();
