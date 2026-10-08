@@ -2108,7 +2108,7 @@ const SOL_PLATES = {
 function solZoneRect(z){
   if (z === "head") {
     if (document.body.classList.contains("zen") || document.body.classList.contains("sol-mobile")) return null;
-    const el = document.querySelector("#w-cone > .whead.sol-header");
+    const el = document.getElementById("solHeaderDock");
     return el && el.getClientRects().length ? el.getBoundingClientRect() : null;
   }
   const B = document.body.classList; if (B.contains("zen") || B.contains("solo") || z !== "pane" && B.contains("field-hidden")) return null;
@@ -2126,7 +2126,7 @@ function solZoneOf(r, p){   // площадка, над которой прям�
   return null;
 }
 function solZoneRec(z, r, q){ const o = { x: Math.round(r.left - q.left), y: Math.round(r.top - q.top) }; if (z === "pane" || z === "head") o.z = z; return o; }
-function solZoneGlow(z){ for (const [id, k] of [["field", "fld"], ["rowsPane", "pane"]]) { const A = document.getElementById(id); if (A && A.classList.contains("cgover") !== (z === k)) A.classList.toggle("cgover", z === k); } const H = document.querySelector("#w-cone > .whead.sol-header"); if (H && H.classList.contains("cgover") !== (z === "head")) H.classList.toggle("cgover", z === "head"); }
+function solZoneGlow(z){ for (const [id, k] of [["field", "fld"], ["rowsPane", "pane"], ["solHeaderDock", "head"]]) { const A = document.getElementById(id); if (A && A.classList.contains("cgover") !== (z === k)) A.classList.toggle("cgover", z === k); } }
 function solPanelName(el){ return SOL_PLATES[el.id] ? SOL_PLATES[el.id].name : el.dataset.g; }
 function solPanelFolded(el){ return el.classList.contains("cmin") || el.classList.contains("pmin"); }
 // v0.963: одиночное действие ждёт второй щелчок, чтобы заголовок не уехал до двойного.
@@ -2441,11 +2441,11 @@ function ringTblPlace(el){ platePlace(el); }
 function ringTblBuild(host){
   const el = document.createElement("div"); el.id = "ringTbl";
   let x = '<div class="rth"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button></span></div>' +
-    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th></tr></thead><tbody>';
+    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th>вид</th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    x += `<tr data-v="${r.v}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td></tr>`;
+    x += `<tr data-v="${r.v}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtn2">${r.t}</td></tr>`;
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
@@ -12034,8 +12034,8 @@ function cgrpInit(){
   solPanelOrganizeInit({ tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi });
   // v0.963: родные заголовки групп в шапке, в отдельной области после названия и кнопок.
   if (solHead) {
-    const dock = document.createElement("div"); dock.id = "solHeaderDock"; solHead.appendChild(dock);
-    dock.setAttribute("aria-label", "Группы в шапке");
+    const dock = document.createElement("div"); dock.id = "solHeaderDock"; document.body.appendChild(dock);
+    dock.setAttribute("aria-label", "Группы в нижней полосе");
     const slots = new Map(); let busy = false, raf = 0;
     const sync = () => {
       if (busy) return; busy = true;
@@ -12052,7 +12052,7 @@ function cgrpInit(){
           if (!slot) {
             slot = document.createElement("span"); slot.className = "sol-header-slot"; slot.dataset.g = key; slots.set(key, slot); dock.appendChild(slot);
             const button = document.createElement("button"); button.type = "button"; button.textContent = solPanelName(g) + " −"; slot.appendChild(button);
-            button.title = solPanelName(g) + ": щелчок — свернуть / развернуть; двойной щелчок — свернуть группу в полосе";
+            button.title = solPanelName(g) + ": щелчок — свернуть / развернуть; двойной щелчок — свернуть группу в нижней полосе";
             button.style.color = getComputedStyle(g.querySelector(".glab, .smh, .rth") || g).color;
             button.onclick = e => { e.stopPropagation(); if (e.detail < 2) solMenuClick(g, () => g._solFold ? g._solFold() : plateFoldToggle(g)); };
             button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0; if (!solPanelFolded(g)) g._solFold(true); };
@@ -12069,7 +12069,7 @@ function cgrpInit(){
       sync(); const slot = slots.get(g.dataset.g), fr = solZoneRect("head"); if (!slot || !fr) return;
       const r = slot.getBoundingClientRect(), folded = solPanelFolded(g);
       const x = folded ? r.left : Math.max(fr.left, Math.min(r.left, innerWidth - g.offsetWidth - 4));
-      g.style.left = Math.round(x) + "px"; g.style.top = Math.round(folded ? r.top : fr.bottom) + "px";
+      g.style.left = Math.round(x) + "px"; g.style.top = Math.round(folded ? r.top : Math.max(4, fr.top - g.offsetHeight)) + "px";
       g.style.zIndex = "650";
     };
     const kick = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; sync(); panels().filter(g => zrec(g)?.z === "head" && !g.classList.contains("cdrag") && !g.classList.contains("pdrag")).forEach(nodePlace); }); };
@@ -13312,7 +13312,7 @@ function tzcApply(g){
   let avail = Infinity;
   const sz = Z.cgrpSize && Z.cgrpSize[g.dataset.g];
   if (sz && g.classList.contains("csz")) { const gr = g.getBoundingClientRect(), cr = cgb.getBoundingClientRect(), gs = getComputedStyle(g);
-    avail = Math.max(tzSzW(g, sz.w), g._tzMinW || 0) - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }   // v0.507: не уже самого широкого блока
+    avail = tzSzW(g, sz.w) - (cr.left - gr.left) - (parseFloat(gs.paddingRight) || 0) - (parseFloat(gs.borderRightWidth) || 0); }   // v0.1002: при сужении берём желаемую ширину до пересчёта минимума — иначе старый минимум не давал перенести кнопки
   /* v0.468, по снимку «Роза нажата, а жирная обводка есть и у других» — обводка ⬚ вокруг ОДНОЙ кнопки — знак «нажата»: видна, только пока кнопка нажата
      (горит или галка включена); обводки нескольких кнопок (блоки) — всегда */
   /* v0.470: обводка ⬚ видна всегда, тонкая; v0.476, «убери вообще жирность обводки» — и у нажатой тонкая (жирной больше нет нигде) */
@@ -13397,7 +13397,11 @@ function tzcApply(g){
   // перенос: ряд рисунка (пара рядов треугольников) — строка; кнопки строки слева направо, не влезла — на новую строку
   /* v0.455, «кнопки под одной обводкой — не переносятся на другие строки»: кнопки под общей границей (tzcHulls) — один блок, переносится целиком */
   const oAll = {}; its.forEach(it => it.cells.forEach(([r, c]) => { oAll[r + "_" + c] = it.w; }));
-  const uOf = tzcUnits(oAll, new Set(its.map(x => x.w)), d.rings), units = {};
+  /* v0.1002: обычная ширина сохраняет составные контуры и сцепки; когда вручную сужают группу меньше их прежней ширины,
+     разрешаем переносить отдельные кнопки. Иначе минимум считался по старой целой строке и не давал сложить её в один столбец. */
+  const forceStack = isFinite(avail) && g._tzMinW > 0 && avail + 1 < g._tzMinW;
+  const liveItems = new Set(its.map(x => x.w));
+  const uOf = forceStack ? Object.fromEntries(its.map(it => [it.w, it.w])) : tzcUnits(oAll, liveItems, d.rings), units = {};
   { /* v0.480, «группа не может быть короче, чем самая длинная группа кнопок; тут Своя + 3 цвета — это совмещённая кнопка»: кнопки одного блока-обёртки
        (span внутри группы, как «Своя + 1 0 а») — одна единица переноса */
     const byWrap = new Map();
