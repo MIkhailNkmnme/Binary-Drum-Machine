@@ -2469,6 +2469,18 @@ function ringTblSync(){
   if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#22d3ee"); ringTblPlace(el);
 }
+function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol){
+  const win = document.getElementById("w-cone"); if (!win) return;
+  let layer = document.getElementById("coneTopArt");
+  if (!layer) { layer = document.createElement("canvas"); layer.id = "coneTopArt"; win.appendChild(layer); }
+  layer.hidden = false;
+  const wr = win.getBoundingClientRect(), left = Math.round(R.left - wr.left + win.scrollLeft - win.clientLeft), top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop);
+  layer.style.left = left + "px"; layer.style.top = top + "px"; layer.style.width = R.width + "px"; layer.style.height = R.height + "px";
+  if (layer.width !== W) layer.width = W; if (layer.height !== H) layer.height = H;
+  const g = layer.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.drawImage(cv, 0, 0, W, H);
+  g.globalCompositeOperation = "destination-in"; g.beginPath(); g.arc(cx, cy, rMax + 3 * dpr, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = "source-over";
+  if (Z.coneAxes) { g.save(); g.strokeStyle = axisCol; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore(); }
+}
 function renderCone(){
   if (coneMagStep && coneMagStep.stamp !== coneMagFingerprint()) coneMagStep = null;
   if (coneMagCount !== null) {
@@ -2486,11 +2498,11 @@ function renderCone(){
   if (window.zzGroupPinSync) window.zzGroupPinSync();   // v0.911: прищеплённые к оси группы — за центром и масштабом
   coneHoldSync();   // v0.870: «2 посл.» — стоящие кольца по числу строк
   if (window.c3PadPlace) window.c3PadPlace();   // v0.935: свободный слой, включая верхнюю полосу
-  if (!winOpen("w-cone")) return;
+  if (!winOpen("w-cone")) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; return; }
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
-  const cv = $("coneCv"); if (!cv) return;
-  const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) return;
+  const cv = $("coneCv"); if (!cv) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; return; }
+  const R = cv.getBoundingClientRect(); if (R.width < 20 || R.height < 20) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; return; }
   const dpr = window.devicePixelRatio || 1, W = Math.round(R.width * dpr), H = Math.round(R.height * dpr);
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
   const g = cv.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0);   // v0.780: слой света в 3D рисуется под преобразованием — кадр всегда с чистого
@@ -3399,6 +3411,7 @@ function renderCone(){
     `Разных колец <b>${groups.size}</b> на ${Z.rows.length} строк` + (multi.length ? `; совпадающих групп ${multi.length}: ` + multi.slice(0, 8).map(v => v.slice(0, 6).map(j => j + 1).join("=") + (v.length > 6 ? "…" : "")).join(" · ") : "") +
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
+  coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA);
   // v0.092: таблица строк у конуса убрана — замки у номеров строк в поле
 }
 /* v0.088, «справа сделай таблицу с номерами строк — замков, строк, как в поле строк; теперь его свернём, а это — на первое
@@ -11710,7 +11723,28 @@ function cgrpInit(){
        строки. Стол с окнами при этом не едет. Группы на левой панели — как прежде (листают панель), число или список в фокусе — меняют
        своё значение, Ctrl + колесо — масштаб страницы */
     g.addEventListener("wheel", e => { if (g.parentElement === tl) solPanelWheel(g, e); }, { passive: false });
-    g.addEventListener("pointerdown", (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
+    const edgeControl = (button, x, y) => {
+      if (!button || button.disabled || button.matches(".gfold, .gzen, .gon, .gx") || button.closest(".gzen, .gon, .gx")) return false;
+      const r = button.getBoundingClientRect(), edge = 4;
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom &&
+        Math.min(x - r.left, r.right - x, y - r.top, r.bottom - y) <= edge;
+    };
+    const clearEdgeCursor = () => { if (g._cgEdgeButton) g._cgEdgeButton.classList.remove("cg-move-edge"); g._cgEdgeButton = null; };
+    g.addEventListener("pointermove", e => {
+      if (e.buttons) return;
+      const b = e.target.closest && e.target.closest("button"), next = edgeControl(b, e.clientX, e.clientY) ? b : null;
+      if (next === g._cgEdgeButton) return;
+      clearEdgeCursor(); if (next) { next.classList.add("cg-move-edge"); g._cgEdgeButton = next; }
+    }, true);
+    g.addEventListener("pointerleave", clearEdgeCursor);
+    // On a control's narrow outer edge, start the existing group drag; its center remains a normal control click.
+    g.addEventListener("pointerdown", e => {
+      const b = e.target.closest && e.target.closest("button");
+      if (e.button !== 0 || !edgeControl(b, e.clientX, e.clientY)) return;
+      e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
+      startGroupDrag({ target: g, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
+    }, true);
+    const startGroupDrag = (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
       g._downLab = !!e.target.closest(".glab");   // v0.958: нажали на заголовок — щелчок и двойной щелчок о нём (после захвата указателя их цель — группа)
       if (e.button !== 0 || e.target.closest(NOGRAB)) return;
       e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
@@ -11780,8 +11814,13 @@ function cgrpInit(){
         if (g.parentElement !== tl) undock(g);
         if (zone) {
           Z.cgrpFld[g.dataset.g] = solZoneRec(zone, gr, solZoneRect(zone)); delete Z.cgrpPos[g.dataset.g];
-          if (zone === "head") { delete Z.cgrpLink[g.dataset.g]; Z.cgrpMin[g.dataset.g] = true; g.classList.add("cmin"); sizeApply(g); }
-          place(g); grpFix(g); save(); return;
+          if (zone === "head") {
+            delete Z.cgrpLink[g.dataset.g]; Z.cgrpMin[g.dataset.g] = true; g.classList.add("cmin"); sizeApply(g);
+            const dock = $("solHeaderDock"), room = dock ? dock.clientWidth - [...dock.children].filter(s => s.dataset.g !== g.dataset.g).reduce((sum, s) => sum + (s.offsetWidth || 0), 0) : 0;
+            Z.solHeaderOrder ||= []; Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== g.dataset.g);
+            if (room < 128) Z.solHeaderOrder.unshift(g.dataset.g); else Z.solHeaderOrder.push(g.dataset.g);
+          }
+          place(g); if (zone === "head" && window.zzHeaderPlace) window.zzHeaderPlace(g); grpFix(g); save(); return;
         }
         delete Z.cgrpFld[g.dataset.g];
         const tr = tl.getBoundingClientRect(); Z.cgrpPos[g.dataset.g] = { x: gr.left - tr.left, y: gr.top - tr.top };
@@ -11794,7 +11833,8 @@ function cgrpInit(){
         save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
-    });
+    };
+    g.addEventListener("pointerdown", startGroupDrag);
     // v0.989: двойной щелчок на любой группе сворачивает её и переносит в полосу шапки; если места мало — первой слева.
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
@@ -11990,7 +12030,7 @@ function cgrpInit(){
         members.forEach(g => {
           const key = g.dataset.g; let slot = slots.get(key);
           if (!slot) {
-            slot = document.createElement("span"); slot.className = "sol-header-slot"; slots.set(key, slot); dock.appendChild(slot);
+            slot = document.createElement("span"); slot.className = "sol-header-slot"; slot.dataset.g = key; slots.set(key, slot); dock.appendChild(slot);
             const button = document.createElement("button"); button.type = "button"; button.textContent = solPanelName(g) + " −"; slot.appendChild(button);
             button.title = solPanelName(g) + ": щелчок — свернуть / развернуть; двойной щелчок — свернуть группу в полосе";
             button.style.color = getComputedStyle(g.querySelector(".glab, .smh, .rth") || g).color;
@@ -12534,7 +12574,7 @@ const tzFits = (r, l) => r[1] - r[0] <= l[0] - l[1] && r[1] - r[2] <= l[2] - l[1
 function triOff(b){ b.classList.remove("tz", "tzar"); ["width", "flex", "margin-left", "--lat"].forEach(k => b.style.removeProperty(k)); b._tzk = ""; b._tzL = null; b._tzm = 0; }
 function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn (сторон по средней черте), b._tzm (на сколько t зайти на соседа слева)
   const h = parseFloat(getComputedStyle(b).height) || 24, L = b._tzL || TZ_TIP, R = b._tzR, n = b._tzn, m = b._tzm || 0;
-  const key = [L, R, n, h, m, b._tzar || "", b._gcol || ""].join("|");
+  const key = [L, R, n, h, m, b._tzar || "", b._gcol || "", Z.noLn ? 1 : 0].join("|");
   if (b._tzk === key && b.classList.contains("tz")) return;
   b._tzk = key;
   const t = Math.min(h, TZC_H) / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);   // v0.478: шаг — по ряду 24 px, даже если кнопка на 1 px выше (заходит на ряд ниже)
@@ -12904,6 +12944,7 @@ function lpTop(col, vis){
   const shape = () => runs.forEach(r => r.forEach((b, i) => {
     b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
+    const selectedWindow = !!(b.closest("#pinBar") && b.classList.contains("on"));
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
     /* v0.529, по снимку «📌 ✦ Развёртка» — «дальше кнопки вогнутые (внутрь) и прижми кнопки, и так везде, чтоб не было пустот»: цепочка — остриё
        в выемку: у каждой кнопки справа остриё, у следующей слева выемка, и она заходит на соседку на t (прежде — выемка к выемке, ромбик фона между) */
@@ -12912,9 +12953,12 @@ function lpTop(col, vis){
        такая кнопка стоит отдельно от соседних: ↩ — стрелка влево (остриё слева, выемка справа), ↪ — вправо */
     if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
+    // Выбранная вкладка получает глубокую выемку слева и сильнее перекрывает предыдущую.
+    if (selectedWindow && i) { b._tzL = [0, 2, 0]; b._tzm = 2; b.style.zIndex = "5"; }
+    else b.style.removeProperty("z-index");
     /* v0.530, «↩ ↪ — обе шире и одинаковой ширины, между ними пропуск-ромб, стрелка влево и вправо»: заходит на соседку, только если у той справа
        остриё (выемка к выемке — стоят встык уголками, между ними ромб фона) */
-    if (i && (b._tzL !== TZ_NOTCH || r[i - 1]._tzR !== TZ_TIP) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // v0.591: data-tzin — остриё входит в выемку соседки
+    if (i && ((b._tzL !== TZ_NOTCH && !selectedWindow) || r[i - 1]._tzR !== TZ_TIP) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // v0.591: data-tzin — остриё входит в выемку соседки
     b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
     tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));
@@ -13981,7 +14025,7 @@ function themeIsLight(){
 function applyTheme(){
   document.documentElement.setAttribute("data-theme", Z.theme === "light" ? "light" : "dark");   // v0.614: не выбрано — тёмная
   const b = $("bTheme");
-  if (b) b.textContent = themeIsLight() ? "🌙 Тёмный" : "☀ Светлый";
+  if (b) { b.textContent = themeIsLight() ? "🌙" : "☀"; b.title = themeIsLight() ? "Светлый фон включён; щелчок — тёмный" : "Тёмный фон включён; щелчок — светлый"; b.setAttribute("aria-label", b.title); }
   palApply();   // v0.182: у гаммы свои цвета для светлой и тёмной темы
 }
 /* v0.182, «кнопка пресетов цветовой гаммы»: 🎨 в шапке — готовые гаммы по кругу (правый щелчок — назад). Гамма задаёт цвет единиц
@@ -15822,7 +15866,7 @@ function init(){
      конструктора) другие или как были. Z.noLn, по умолчанию — включено. v0.497, «сделай её в цвет фона холста»: не прозрачные, а цветом фона (tzLnBg) */
   if (Z.noLn === undefined) Z.noLn = true;
   const lnUi = () => { document.documentElement.classList.toggle("noln", !!Z.noLn); $("bLn").classList.toggle("on", !Z.noLn);
-    $("bLn").title = Z.noLn ? "▱ Обводки кнопок — толще, цветом фона холста, общей рамки у групп нет; щелчок — цветом группы и с рамкой" : "▱ Обводки кнопок — цветом группы; щелчок — цветом фона холста"; };
+    $("bLn").title = Z.noLn ? "Обводки кнопок — цветом фона холста, общей рамки у групп нет; щелчок — цветом группы и с рамкой" : "Обводки кнопок — цветом группы; щелчок — цветом фона холста"; $("bLn").setAttribute("aria-label", $("bLn").title); };
   lnUi();
   $("bLn").onclick = () => { Z.noLn = !Z.noLn; lnUi(); save(); if (typeof triTag === "function") triTag(); if (typeof tzcAll === "function") tzcAll(); say(Z.noLn ? "▱ Обводки — цветом фона холста." : "▱ Обводки — цветом группы."); };
   // v0.367: «🎨» в шапке — вызов группы «Гамма» (закрыта / свёрнута / не видна — открыть, открыта — закрыть); правый щелчок — следующая гамма
