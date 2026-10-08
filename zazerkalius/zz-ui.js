@@ -3314,7 +3314,6 @@ function renderCone(){
   }
   if (coneFlat()) coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N });   // v0.914: цепочка от кольца за чертой до центра
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
-  else if (coneFlat() && coneMagMotionRings.length) for (const ring of coneMagMotionRings) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, ring);
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
   const magVisuals = magDrag ? [{ ring: coneFillDrag ? "f" : coneR1Drag ? 0 : coneDrag.i, line: coneMagLine }] : coneMagStep ? coneMagStep.visuals : [];
@@ -4869,7 +4868,7 @@ function coneFillCut(){
    пределах 7 px на радиусе кольца — защёлка, линия привязки видна золотом, пока тянешь. Отпустил — поворот остаётся как есть, дробный
    (Z.coneFree[i] — у такого кольца поворот не округляется до бита; обычный поворот без магнита снимает метку). Виды целей — кнопками рядом */
 const CONE_MAG_ENABLED = false;   // v0.976: отдельная кнопка 🧲 магнит временно отключена
-let coneMagLine = null, coneScanTargets = [], coneMagCount = null, coneMagCountStamp = null, coneMagStep = null, coneMagMotionRings = [];
+let coneMagLine = null, coneScanTargets = [], coneMagCount = null, coneMagCountStamp = null, coneMagStep = null;
 function coneMagFingerprint(){ return [Z.rows.join("/"), coneRot.join("/"), Z.coneSpin, Z.coneSpinPh, Z.coneAimRot, Z.coneFillTurn, Z.coneSlits, Z.cutAlign, Z.magSym, Z.magSnapParts].join("|"); }
 document.addEventListener("pointerdown", () => { if (coneMagCount !== null || coneMagStep) { coneMagCount = null; coneMagCountStamp = null; coneMagStep = null; renderCone(); } }, true);
 const coneSymCache = new Map();
@@ -6671,7 +6670,7 @@ function setupCone(){
   /* v0.102, «как запустить кручение — пока что обычное, всех сразу» и «и видеозапись». ▶ крутить — весь конус крутится сам
      (Z.coneSpin растёт со скоростью ползунка, град/с; минус — в другую сторону), ещё раз — стоп. ⏺ видео — запись холста
      конуса (MediaRecorder, 30 кадров/с, .webm): только сам конус, без кнопок; ещё раз — стоп, файл скачивается. */
-  let autoRaf = 0, autoT0 = 0, magAutoPlan = null, magAutoPause = 0;
+  let autoRaf = 0, autoT0 = 0, magAutoWait = 0;
   let offDrive = false;   // v0.284: 🎞 покадровая запись сама двигает кручение — кадр анимации ничего не крутит
   const autoTick = (ts) => {
     if (!autoRaf) return;
@@ -6781,7 +6780,7 @@ function setupCone(){
     }
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; if (window.zzBallSpinState) window.zzBallSpinState(true); autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; if (window.zzBallSpinState) window.zzBallSpinState(false); save(); }
-    if (!on && (magAutoPlan || magAutoPause)) { magAutoPlan = null; magAutoPause = 0; coneMagMotionRings = []; renderCone(); }
+    if (!on) magAutoWait = 0;
     if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ пуск";
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
@@ -6957,7 +6956,6 @@ function setupCone(){
       say(Z.magSnapParts ? "🧲 Границы: при кручении рукой границы частей кольца прилипают только к границам частей соседей по направлению «🧲 сим.». Кольцо 1 из одного бита также прилипает к вертикали и горизонтали холста." : "🧲 Всё: при кручении рукой действуют границы, середины битов и оси симметрии соседей, как прежде."); };
   }
   const coneMagTargets = () => (rowSel.size ? [...rowSel] : [Z.cur]).filter(i => i >= 0 && i < Math.min(Z.rows.length, CONE_MAX)).sort((a, b) => a - b);
-  const coneMagPlanKey = () => [Z.rows.join("/"), coneMagTargets().join(","), Z.magSym, Z.magSnapParts, Z.coneClock, Z.coneSlits, Z.coneSpinMode, Z.coneSpinPh, Z.coneSpin, Z.coneFillTurn].join("|");
   const coneMagMakePlan = (dir) => {
     if (!coneFlat()) return null;
     const savedRot = coneRot.slice(), savedAim = Z.coneAimRot, moves = [];
@@ -6973,23 +6971,22 @@ function setupCone(){
     } finally {
       coneRot.length = savedRot.length; savedRot.forEach((v, i) => { coneRot[i] = v; }); Z.coneAimRot = savedAim;
     }
-    return moves.length ? { moves, maxDeg: Math.max(...moves.map(m => m.hit.d * 180 / Math.PI)), doneDeg: 0, dir, key: coneMagPlanKey() } : null;
+    return moves.length ? { moves, maxDeg: Math.max(...moves.map(m => m.hit.d * 180 / Math.PI)), dir } : null;
   };
-  const coneMagApplyPlan = (plan, fraction) => {
+  const coneMagApplyPlan = (plan) => {
     for (const m of plan.moves) {
-      if (m.first) Z.coneAimRot = m.base + m.delta * fraction;
-      else { coneRot[m.i] = m.base + m.delta * fraction; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[m.i] = true; }
+      if (m.first) Z.coneAimRot = m.base + m.delta;
+      else { coneRot[m.i] = m.base + m.delta; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[m.i] = true; }
     }
     Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
   };
   const coneMagFinishPlan = (plan, announce) => {
-    coneMagApplyPlan(plan, 1);
+    coneMagApplyPlan(plan);
     for (const m of plan.moves) {
       if (m.first) Z.coneAimRot = ((((Z.coneAimRot || 0) % 720) + 1080) % 720) - 360;
       else { const R = coneRingFeat(m.i); coneRot[m.i] = ((coneRot[m.i] % R.P) + R.P) % R.P; cutMemAbsorb(m.i); }
     }
     Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
-    coneMagMotionRings = [];
     coneMagCount = magPartsOnly() && plan.moves.length === 1 ? conePartMatchRays(plan.moves[0].i, true).length || null : null;
     coneMagCountStamp = null;
     coneMagStep = { visuals: plan.moves.map(m => ({ ring: m.i, line: m.hit.t })), stamp: coneMagFingerprint() };
@@ -7003,25 +7000,20 @@ function setupCone(){
     coneMagFinishPlan(plan, true);
   };
   const coneMagAutoStep = (dt) => {
-    if (magAutoPause > 0) { magAutoPause = Math.max(0, magAutoPause - dt); return true; }
+    magAutoWait = Math.max(0, magAutoWait - dt);
+    if (magAutoWait > 0) return true;
     const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
-    if (magAutoPlan && (magAutoPlan.dir !== dir || magAutoPlan.key !== coneMagPlanKey())) magAutoPlan = null;
-    if (!magAutoPlan) {
-      magAutoPlan = coneMagMakePlan(dir);
-      if (!magAutoPlan) { coneMagMotionRings = []; return false; }
-      coneMagMotionRings = magAutoPlan.moves.map(m => m.i); coneMagStep = null; coneMagCount = null; coneMagCountStamp = null;
-    }
-    magAutoPlan.doneDeg = Math.min(magAutoPlan.maxDeg, magAutoPlan.doneDeg + Math.abs(Z.coneAutoSp || 30) * dt);
-    const fraction = magAutoPlan.doneDeg / magAutoPlan.maxDeg;
-    coneMagApplyPlan(magAutoPlan, fraction);
-    if (fraction >= 1 - 1e-9) { coneMagFinishPlan(magAutoPlan, false); magAutoPlan = null; magAutoPause = 0.16; }
+    const plan = coneMagMakePlan(dir);
+    if (!plan) return false;
+    coneMagFinishPlan(plan, false);
+    magAutoWait = Math.max(0.16, plan.maxDeg / Math.abs(Z.coneAutoSp || 30));   // v0.982: скачок как ▶|, скорость задаёт паузу до следующей цели
     return true;
   };
   if ($("bConeNextMag")) {
     const ui = () => { const b = $("bConeNextMag"); b.classList.toggle("on", !!Z.coneSpinMag); b.setAttribute("aria-pressed", String(!!Z.coneSpinMag)); };
     ui(); $("bConeNextMag").onclick = () => {
       autoSet(false); Z.coneSpinMag = !Z.coneSpinMag; ui(); spinSpUi(); save(); renderCone();
-      say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — плавно между совпадениями. Цели — «🧲 гран. / всё» и направление соседей." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
+      say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — такими же скачками между совпадениями. Цели — «🧲 гран. / всё» и направление соседей." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
     };
     $("bConeNextMag").oncontextmenu = (e) => e.preventDefault();
   }
