@@ -12942,7 +12942,7 @@ function paneZig(){
   fieldZig(dy, ln);   // v0.823: и край поля строк
   /* v0.755, по снимку края левого меню — «вкладывай в зубья левого меню все кнопки группы и верхнее меню полоску»: зубцы были вырезаны внутри панели, а вкладки
      и группы окна у края начинаются за ней — выемки их левого края с остриями не сходились, между ними оставались ромбики фона. Теперь край панели прямой, а
-     зубцы (цветом панели, с чертой) выступают наружу на глубину выемки, поверх окон (#paneZigOv, сквозь него щелчки проходят): острие — в выемку вкладки
+     зубчатая линия выступает наружу на глубину выемки поверх окон (#paneZigOv, сквозь неё щелчки проходят): острие — в выемку вкладки
      или ряда группы, что стоит у края. Сетка та же — остриё на середине полосы вкладок */
   { let ov = document.getElementById("paneZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "paneZigOv"; document.body.appendChild(ov);
       /* v0.835, «у левого меню также» (как у поля, v0.832 / v0.834): хват ширины левой панели — на зубцах, нажатие и двойной щелчок — прежнему хвату #paneEdge;
@@ -12954,12 +12954,13 @@ function paneZig(){
     const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
           edgeBottom = Math.min(pr.bottom, dockTop), on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
-    if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
+    if (on) { const tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = (edgeBottom - pr.top) + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
       const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
       if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
-        const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
+        /* v0.1005: край — только линия; заливка зубчатой полосы фоном соседа давала прямую вертикальную полосу у кнопок. */
+        const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
         ov.style.setProperty("--pz", sq(ln, 1)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
