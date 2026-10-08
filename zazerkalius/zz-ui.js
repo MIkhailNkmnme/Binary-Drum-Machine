@@ -2097,7 +2097,6 @@ const SUNTBL = [
    снизу — за верхней; потянул ведомую — отцепил. Циклы запрещены. */
 const SOL_PLATES = {
   sunMoonTbl: { xy: "sunTblXY", pin: "sunTblPin", min: "sunTblMin", fld: "sunTblFld", name: "Солнце · Луна", col: "#ffe14d" },
-  ringTbl: { xy: "ringTblXY", pin: "ringTblPin", min: "ringTblMin", fld: "ringTblFld", name: "Кольца", col: "#22d3ee" },
   solBallLab: { xy: "coneBallLabXY", pin: "coneBallLabPin", min: "coneBallLabMin", fld: "coneBallLabFld", name: "Шарики", col: "#79e7e1", corner: "bottom-right" },
   lasAlgo: { xy: "lasAlgoXY", pin: "lasAlgoPin", min: "lasAlgoMin", fld: "lasAlgoFld", name: "Алгоритм · подсказки", col: "#ffd166", corner: "bottom-right" }
 };
@@ -2147,6 +2146,35 @@ function solPanelExclusive(selected){
   });
   if (host._solFoldLayout) host._solFoldLayout(changed);
   changed.filter(el => SOL_PLATES[el.id]).forEach(el => { const c = SOL_PLATES[el.id]; el._pzk = ""; plateZig(el, c.col); platePlace(el); });
+  if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
+}
+function solPlateDockToggle(el){
+  const c = SOL_PLATES[el.id]; if (!c) return;
+  const key = el.dataset.g, current = Z[c.fld];
+  if (current && current.z === "head" && solPanelFolded(el)) {
+    const old = Z.cgrpMinPos && Z.cgrpMinPos[key];
+    if (old) {
+      if (old.pos) Z[c.xy] = { ...old.pos }; else delete Z[c.xy];
+      if (old.fld) Z[c.fld] = { ...old.fld }; else delete Z[c.fld];
+      delete Z.cgrpMinPos[key];
+    } else { delete Z[c.xy]; delete Z[c.fld]; }
+    plateFoldToggle(el, false, true); el._pzk = ""; plateZig(el, c.col); platePlace(el);
+  } else {
+    Z.cgrpMinPos ||= {};
+    Z.cgrpMinPos[key] = { pos: Array.isArray(Z[c.xy]) ? [...Z[c.xy]] : null, fld: current ? { ...current } : null };
+    delete Z[c.xy]; delete Z[c.pin]; delete Z.cgrpEdge?.[key];
+    if (Z.cgrpLink) {
+      delete Z.cgrpLink[key];
+      for (const [other, link] of Object.entries(Z.cgrpLink)) if (link && link.to === key) delete Z.cgrpLink[other];
+    }
+    Z[c.fld] = { z: "head", x: 0, y: 0 };
+    plateFoldToggle(el, true, true); el._pzk = ""; plateZig(el, c.col); platePlace(el);
+    const room = solHeaderRoom(key); Z.solHeaderOrder ||= [];
+    Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== key);
+    Z.solHeaderLeft = room < 128;
+    if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(key); else Z.solHeaderOrder.push(key);
+    if (window.zzHeaderPlace) window.zzHeaderPlace(el);
+  }
   if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
 }
 function solPanelRowStep(el, height = el.offsetHeight){ return Math.max(TZC_H, Math.ceil(height / TZC_H) * TZC_H); }
@@ -2229,7 +2257,7 @@ function plateInit(el){
   // По кнопке «−» двойной — как одиночный; по заголовку — переключить эту и остальные наоборот.
   fold.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); });
   hd.addEventListener("click", (e) => { if (e.target.closest("button") || e.detail > 1 || performance.now() < (el._solDragUntil || 0)) return; e.stopPropagation(); solMenuClick(el, () => plateFoldToggle(el)); });
-  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPanelExclusive(el); });
+  hd.addEventListener("dblclick", (e) => { if (e.target.closest("button") || performance.now() < (el._solDragUntil || 0)) return; e.preventDefault(); e.stopPropagation(); solPlateDockToggle(el); });
   hd.addEventListener("contextmenu", (e) => { if (e.target.closest("button")) return; e.preventDefault(); e.stopPropagation(); delete Z[c.xy]; delete Z[c.pin]; delete Z[c.fld]; if (Z.cgrpEdge) delete Z.cgrpEdge[el.dataset.g]; if (Z.cgrpLink) delete Z.cgrpLink[el.dataset.g]; platePlace(el); if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save(); });
   el.addEventListener("wheel", (e) => solPanelWheel(el, e), { passive: false });
   hd.addEventListener("pointerdown", (e) => {
@@ -2413,11 +2441,11 @@ function sunTblSync(){
    колец — строкой в RINGTBL и вариантом в LAS_SEG */
 const RINGTBL = [
   { v: "all", t: "T · все" },
-  { v: "one", t: "T · щель" },
-  { v: "cut", t: "2T−1 · кусок" },
-  { v: "cut2", t: "2T · кусок" },
-  { v: "cutA", t: "между битами" },
-  { v: "cutS", t: "симметрия" }
+  { v: "one", t: "N щель" },
+  { v: "cut", t: "2T−1" },
+  { v: "cut2", t: "2T" },
+  { v: "cutA", t: "между" },
+  { v: "cutS", t: "симм" }
 ];
 function ringTblArcs(v, n){   // [[от, до]] в долях круга — места бит кольца из n бит; бит 0 серединой сверху
   const P = v === "cut2" ? 2 * n : v === "all" || v === "one" ? n : 2 * n - 1, per = (2 * n - 1) / n, o = [];
@@ -2437,11 +2465,9 @@ function ringTblSvg(v, n){
   return `<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><circle cx="16" cy="16" r="${R}" fill="none" stroke="currentColor" stroke-opacity=".18" stroke-width="${w}"/><path d="${d}" fill="none" stroke="#ffd166" stroke-width="${w}" stroke-linecap="butt"/><circle cx="16" cy="16" r="1.6" fill="#ffd166"/></svg>`;
 }
 function ringTblOpen(){ return true; }
-function ringTblPlace(el){ platePlace(el); }
 function ringTblBuild(host){
-  const el = document.createElement("div"); el.id = "ringTbl";
-  let x = '<div class="rth"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button></span></div>' +
-    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th>вид</th></tr></thead><tbody>';
+  const el = document.createElement("div"); el.id = "ringTbl"; el.className = "ring-mode-list";
+  let x = '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th>вид</th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -2449,7 +2475,6 @@ function ringTblBuild(host){
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
-    if (e.target.closest(".pzen")) { e.stopPropagation(); Z.ringTblZen = !Z.ringTblZen; save(); ringTblSync(); say(Z.ringTblZen ? "🧘 Таблица «Кольца» — видна и в дзене." : "🧘 Таблица «Кольца» в дзене не видна."); return; }   // v0.886
     const tr = e.target.closest("tr[data-v]"); if (!tr) return; e.stopPropagation();
     if (coneSlitRaw() === tr.dataset.v) return;
     const LS = LAS_SEG.find(s => s.id === "bConeSlits"), b = document.getElementById("bConeSlits");
@@ -2457,19 +2482,17 @@ function ringTblBuild(host){
     ringTblSync();
   });
   el.addEventListener("keydown", e => { const tr = e.target.closest("tr[data-v]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tr.click(); } });
-  plateInit(el);
   return el;
 }
 function ringTblSync(){
-  const m = document.getElementById("coneMain"), host = m && m.parentElement; if (!host) return;
+  const host = document.querySelector("#w-cone .tools > .cgrp.cg-ring > .cgb"); if (!host) return;
   const open = ringTblOpen();
   let el = document.getElementById("ringTbl");
   if (!open) { if (el && !el.hidden) el.hidden = true; return; }
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = ringTblBuild(host); }
   const cur = coneSlitRaw(); el.querySelectorAll("tr[data-v]").forEach(tr => { const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
-  el.classList.remove("off"); el.title = "Выбор вида колец действует независимо от включения солнца и лазера.";
-  if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
-  if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#22d3ee"); ringTblPlace(el);
+  el.classList.remove("off"); el.title = "Выбор режима колец действует независимо от включения солнца и лазера.";
+  if (el.hidden) el.hidden = false;
 }
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
@@ -2545,8 +2568,9 @@ function renderCone(){
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
-  if (!coneSunOn()) coneBalShow(null); else coneBalPlace();
-  c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом   // v0.812: баланс — при солнце
+  { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
+    coneBalShow(o1, o0); }   // v0.1004: баланс считается независимо от включения солнца
+  c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом
   { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays && !(window.zzBallActive && window.zzBallActive())) {
@@ -3266,12 +3290,6 @@ function renderCone(){
           g.fillText(`☀ ${cnt.s + cnt.sm} · ☾ ${cnt.m + cnt.sm}${cnt.sm ? ` (вместе ${cnt.sm})` : ""} · ◌ между ${cnt.o} · лучей ${(full ? 0 : lit.length * 2) + S.ctrLines.length}`, cx, cy - rS);
           g.restore();
         }
-        /* v0.802 → v0.812, по снимку «Σ 1: 1 · 0: 0 · Δ +1» — «тут квадратные ромбы с фоном цвета, как у бит, и в них число без указок 1 и 0; если
-           равно — знак равенства и подсветить», «всё это также по вертикали и наверх»: баланс единиц и нулей всех строк конуса (над чертой) — два ромба
-           столбиком на вертикали через центр конуса, у верхнего края холста, поверх всего: сверху — единицы (фон цвета «1»), ниже — нули (цвета «0»),
-           между ними «=» с подсветкой, когда поровну, иначе тусклое «≠» (coneBalShow) */
-        { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
-          coneBalShow(o1, o0); }
       }
       if (false && Z.lasPeek) {   // v0.763: «◌ след.» удалена по слову пользователя («это удали») — пунктир не рисуется; v0.695: ◌ след. — куда солнце будет светить после следующего шага: белый пунктир краёв и слабая белая заливка
         const S1 = coneSunPeek();
@@ -12059,7 +12077,7 @@ function cgrpInit(){
           }
           const button = slot.firstElementChild, folded = solPanelFolded(g);
           if (button.hidden !== folded) button.hidden = folded;
-          const width = solPanelFolded(g) ? Math.max(128, g.offsetWidth) : SOL_PLATES[g.id] ? 160 : 128;
+          const width = Math.max(128, g.offsetWidth);
           if (slot.style.width !== width + "px") slot.style.width = width + "px";
           if (dock.children[members.indexOf(g)] !== slot) dock.insertBefore(slot, dock.children[members.indexOf(g)] || null);
         });
@@ -12878,10 +12896,11 @@ function fieldZig(dy, ln){
       fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
   zigClickFold(ov, fieldRowsFold); ov.title = Z.rowsFolded ? "Щелчок — развернуть поле строк; тяни — изменить ширину; двойной щелчок — ширина по умолчанию" : "Щелчок — свернуть поле до столбца кручений; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
-  const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
+  const B = document.body.classList, fr = f.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
+        edgeBottom = Math.min(fr.bottom, dockTop), on = innerWidth > 760 && fr.width > 4 && edgeBottom > fr.top && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
   const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
-  ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = fr.height + "px"; ov.style.width = w.toFixed(2) + "px";
+  ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = (edgeBottom - fr.top) + "px"; ov.style.width = w.toFixed(2) + "px";
   /* v0.825: поле справа — острия влево, на полряда ниже сетки меню: встают в выемки правого края групп, стоящих рядами (группы — острия на середине ряда) */
   ov.style.backgroundPosition = "0 " + ((((dy + (R ? H / 2 : 0) + (document.getElementById("rowsPane") || f).getBoundingClientRect().top - fr.top) % H) + H) % H).toFixed(1) + "px";
   const k = ln + "|" + fc + "|" + R + "|" + getComputedStyle(document.documentElement).getPropertyValue("--acc").trim(); if (ov._k === k) return; ov._k = k;   // v0.834: и цвет акцента (подсветка)
@@ -12910,8 +12929,9 @@ function paneZig(){
   /* v0.675, по снимку края левого меню — «убери лишний фон у всех окон, когда раскрыты, сейчас это Конус, чтобы не было прямой вертикальной линии»: цвет
      брался в 12 px от края и вверх по родителям — попадал в холст или группу внутри окна (выемки синие, а у самого края — чёрный фон, отсюда прямая
      черта). Теперь — вплотную к краю (там, где лягут зубцы), по стопке слоёв (что видно глазом), в девяти точках по высоте; большинство */
-  { const pr = pane.getBoundingClientRect(), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
-    for (let k = 1; k <= 9; k++) { const y = pr.top + pr.height * k / 10;
+  { const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
+        edgeBottom = Math.min(pr.bottom, dockTop), edgeHeight = Math.max(0, edgeBottom - pr.top), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
+    for (let k = 1; k <= 9 && edgeHeight > 0; k++) { const y = pr.top + edgeHeight * k / 10;
       for (const e of document.elementsFromPoint(pr.right + 2, y)) { if (e === pane || pane.contains(e)) continue;
         /* v0.678, «так и осталась вертикальная полоса из-за фона»: холст (конус) сам заливается цветом темы --bg, а его CSS-фон другой (синий) — у холста берём --bg */
         const c = e.tagName === "CANVAS" ? (getComputedStyle(e).getPropertyValue("--bg").trim() || getComputedStyle(e).backgroundColor) : getComputedStyle(e).backgroundColor; if (op(c)) { seen[c] = (seen[c] || 0) + 1; break; } } }
@@ -12931,10 +12951,11 @@ function paneZig(){
       for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const pe = document.getElementById("paneEdge"); if (!pe || !pe.getClientRects().length) return; e.preventDefault(); e.stopPropagation();
         pe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); }); }
     zigClickFold(ov, () => { const b = document.getElementById("bPaneIcons"); if (b) b.click(); });
-    const pr = pane.getBoundingClientRect(), on = innerWidth > 760 && pr.width > 4 && pane.offsetParent !== null;
+    const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
+          edgeBottom = Math.min(pr.bottom, dockTop), on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
     if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
-      ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = pr.height + "px"; ov.style.width = wq.toFixed(2) + "px";
+      ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = (edgeBottom - pr.top) + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
       const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
       if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
@@ -14480,6 +14501,7 @@ function init(){
   if (ZZ_SOLO) soloApply();   // v0.141
   ctwInit();   // v0.158
   cgrpInit();   // v0.177
+  ringTblSync();   // v0.1004: список режимов — внутри уже собранной группы «Кольца»
   coneBtnsInit();   // v0.203
   try { panelEditInit(); } catch (err) { console.error(err); }   // v0.281: сбой правки панелей не должен останавливать остальной запуск
   leftBarsInit();   // v0.270
