@@ -3314,6 +3314,7 @@ function renderCone(){
   }
   if (coneFlat()) coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N });   // v0.914: цепочка от кольца за чертой до центра
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
+  else if (coneFlat() && coneMagMotionRings.length) for (const ring of coneMagMotionRings) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, ring);
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
   const magVisuals = magDrag ? [{ ring: coneFillDrag ? "f" : coneR1Drag ? 0 : coneDrag.i, line: coneMagLine }] : coneMagStep ? coneMagStep.visuals : [];
@@ -4659,7 +4660,7 @@ function spinPosOf(sp){ return Math.max(0, Math.min(100, Math.round(100 * Math.l
 function spinSpUi(){
   const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
   const f = (x) => x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  el.textContent = !Z.coneSpinMag && coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
@@ -4868,7 +4869,7 @@ function coneFillCut(){
    пределах 7 px на радиусе кольца — защёлка, линия привязки видна золотом, пока тянешь. Отпустил — поворот остаётся как есть, дробный
    (Z.coneFree[i] — у такого кольца поворот не округляется до бита; обычный поворот без магнита снимает метку). Виды целей — кнопками рядом */
 const CONE_MAG_ENABLED = false;   // v0.976: отдельная кнопка 🧲 магнит временно отключена
-let coneMagLine = null, coneScanTargets = [], coneMagCount = null, coneMagCountStamp = null, coneMagStep = null;
+let coneMagLine = null, coneScanTargets = [], coneMagCount = null, coneMagCountStamp = null, coneMagStep = null, coneMagMotionRings = [];
 function coneMagFingerprint(){ return [Z.rows.join("/"), coneRot.join("/"), Z.coneSpin, Z.coneSpinPh, Z.coneAimRot, Z.coneFillTurn, Z.coneSlits, Z.cutAlign, Z.magSym, Z.magSnapParts].join("|"); }
 document.addEventListener("pointerdown", () => { if (coneMagCount !== null || coneMagStep) { coneMagCount = null; coneMagCountStamp = null; coneMagStep = null; renderCone(); } }, true);
 const coneSymCache = new Map();
@@ -6670,7 +6671,7 @@ function setupCone(){
   /* v0.102, «как запустить кручение — пока что обычное, всех сразу» и «и видеозапись». ▶ крутить — весь конус крутится сам
      (Z.coneSpin растёт со скоростью ползунка, град/с; минус — в другую сторону), ещё раз — стоп. ⏺ видео — запись холста
      конуса (MediaRecorder, 30 кадров/с, .webm): только сам конус, без кнопок; ещё раз — стоп, файл скачивается. */
-  let autoRaf = 0, autoT0 = 0;
+  let autoRaf = 0, autoT0 = 0, magAutoPlan = null, magAutoPause = 0;
   let offDrive = false;   // v0.284: 🎞 покадровая запись сама двигает кручение — кадр анимации ничего не крутит
   const autoTick = (ts) => {
     if (!autoRaf) return;
@@ -6687,6 +6688,10 @@ function setupCone(){
     const ballBefore = window.zzBallBeforeSpin ? window.zzBallBeforeSpin() : null;
     try {
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
+    if (Z.coneSpinMag) {
+      if (!coneMagAutoStep(dt)) { autoSet(false); say("🧲 Для текущего кольца нет следующего магнита при выбранных настройках."); return false; }
+      tapeRec(); return true;
+    }
     // v0.942: the two-ring ball trial has its own passage result. Rotation keeps
     // going at a blocked ball; laser painting and automatic new rows wait.
     if (window.zzBallActive && window.zzBallActive()) {
@@ -6769,13 +6774,14 @@ function setupCone(){
     say(Z.coneBitStep ? "½ бита: ▶ крутить — скачками, каждое кольцо за шаг на полбита." : "½ бита выключено — кручение снова плавное.");
   };
   const autoSet = (on) => {
-    if (on && !autoRaf && Z.coneClock && (Z.coneSpinMode || "all") !== "all" && !(window.zzBallActive && window.zzBallActive())) {   // v0.189: все кольца строк стоят — крутить нечего, сказать
+    if (on && !autoRaf && !Z.coneSpinMag && Z.coneClock && (Z.coneSpinMode || "all") !== "all" && !(window.zzBallActive && window.zzBallActive())) {   // v0.189: все кольца строк стоят — крутить нечего, сказать
       const fz = Z.voidHits && Z.voidHits.fz, N = Math.min(Z.rows.length, CONE_MAX);
       if (coneFanOn() && !coneFanAlive().length) { say(`⏹ Все ${coneFanN()} лучей уже вылетели. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); on = false; }   // v0.201
       else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNextIf())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
     }
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; if (window.zzBallSpinState) window.zzBallSpinState(true); autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; if (window.zzBallSpinState) window.zzBallSpinState(false); save(); }
+    if (!on && (magAutoPlan || magAutoPause)) { magAutoPlan = null; magAutoPause = 0; coneMagMotionRings = []; renderCone(); }
     if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
     $("bConeAuto").classList.toggle("on", on); $("bConeAuto").textContent = on ? "⏸ стоп" : "▶ пуск";
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
@@ -6824,7 +6830,14 @@ function setupCone(){
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
-  const stepDir = (neg) => lasRec(() => { if (neg ? fillUncommit() : fillAutoCommit()) return; /* v0.709: |◀ — сперва строка обратно за черту */ const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); });   // v0.698: готовая строка — в строки только по шагу; v0.702: и тогда без кручения; v0.706: в историю отката
+  const stepDir = (neg) => {
+    if (Z.coneSpinMag) {
+      const a = Math.abs(Z.coneAutoSp || 30);
+      if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); }
+      coneMagTurn(neg ? -1 : 1); return;
+    }
+    lasRec(() => { if (neg ? fillUncommit() : fillAutoCommit()) return; /* v0.709: |◀ — сперва строка обратно за черту */ const a = Math.abs(Z.coneAutoSp || 30); if ((Z.coneAutoSp < 0) !== neg) { Z.coneAutoSp = neg ? -a : a; coneDirUi(); save(); } coneStep(1); });
+  };   // v0.980: в режиме магнита шаги идут между магнитами, без события лазера
   $("bConeStepB").onclick = () => stepDir(true);
   $("bConeStepF").onclick = () => stepDir(false);
   /* v0.687, «для лазера надо сделать отдельные кнопки кручения, которые как шаги можно откатывать назад, всё стирая закрашенное на место»: «шаг ↷» в
@@ -6943,35 +6956,74 @@ function setupCone(){
     ui(); $("bMagSnapParts").onclick = () => { Z.magSnapParts = !Z.magSnapParts; ui(); save();
       say(Z.magSnapParts ? "🧲 Границы: при кручении рукой границы частей кольца прилипают только к границам частей соседей по направлению «🧲 сим.». Кольцо 1 из одного бита также прилипает к вертикали и горизонтали холста." : "🧲 Всё: при кручении рукой действуют границы, середины битов и оси симметрии соседей, как прежде."); };
   }
-  if ($("bConeNextMag")) {
-    const go = (dir) => {
-      if (!coneFlat()) { say("🧲 Шаг к магниту доступен на плоских кольцах."); return; }
-      const T = (rowSel.size ? [...rowSel] : [Z.cur]).filter(i => i >= 0 && i < Math.min(Z.rows.length, CONE_MAX)).sort((a, b) => a - b);
-      const done = [], visuals = [];
-      for (const i of T) {
+  const coneMagTargets = () => (rowSel.size ? [...rowSel] : [Z.cur]).filter(i => i >= 0 && i < Math.min(Z.rows.length, CONE_MAX)).sort((a, b) => a - b);
+  const coneMagPlanKey = () => [Z.rows.join("/"), coneMagTargets().join(","), Z.magSym, Z.magSnapParts, Z.coneClock, Z.coneSlits, Z.coneSpinMode, Z.coneSpinPh, Z.coneSpin, Z.coneFillTurn].join("|");
+  const coneMagMakePlan = (dir) => {
+    if (!coneFlat()) return null;
+    const savedRot = coneRot.slice(), savedAim = Z.coneAimRot, moves = [];
+    try {
+      for (const i of coneMagTargets()) {
         const hit = coneNextHandSnap(i, dir); if (!hit) continue;
-        if (i === 0 && Z.coneClock) {
-          const R = coneRingFeat(0), n = (Z.rows[0] || "").length || 1;
-          Z.coneAimRot = (((((Z.coneAimRot || 0) + hit.angle / R.step * 360 / n) % 720) + 1080) % 720) - 360;
-        } else {
-          const R = coneRingFeat(i), v = -hit.angle / R.step;
-          coneRot[i] = ((coneRot[i] || 0) + v) % R.P;
-          if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[i] = true;
-          cutMemAbsorb(i);
-        }
-        done.push(`${i + 1}: ${hit.what}`);
-        visuals.push({ ring: i, line: hit.t });
+        const R = coneRingFeat(i), first = i === 0 && Z.coneClock;
+        const base = first ? Z.coneAimRot || 0 : coneRot[i] || 0;
+        const delta = first ? hit.angle / R.step * 360 / ((Z.rows[0] || "").length || 1) : -hit.angle / R.step;
+        moves.push({ i, base, delta, hit, first });
+        if (first) Z.coneAimRot = base + delta; else coneRot[i] = base + delta;
       }
-      if (!done.length) { say("🧲 Для текущего кольца нет следующей цели при выбранных настройках."); return; }
-      Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
-      coneMagCount = magPartsOnly() && T.length === 1 ? conePartMatchRays(T[0], true).length || null : null;
-      coneMagCountStamp = null;
-      coneMagStep = { visuals, stamp: coneMagFingerprint() };
-      save(); renderAll();
-      say(`🧲 ${dir > 0 ? "↷" : "↶"} следующий магнит — ${done.join("; ")}.`);
+    } finally {
+      coneRot.length = savedRot.length; savedRot.forEach((v, i) => { coneRot[i] = v; }); Z.coneAimRot = savedAim;
+    }
+    return moves.length ? { moves, maxDeg: Math.max(...moves.map(m => m.hit.d * 180 / Math.PI)), doneDeg: 0, dir, key: coneMagPlanKey() } : null;
+  };
+  const coneMagApplyPlan = (plan, fraction) => {
+    for (const m of plan.moves) {
+      if (m.first) Z.coneAimRot = m.base + m.delta * fraction;
+      else { coneRot[m.i] = m.base + m.delta * fraction; if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[m.i] = true; }
+    }
+    Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
+  };
+  const coneMagFinishPlan = (plan, announce) => {
+    coneMagApplyPlan(plan, 1);
+    for (const m of plan.moves) {
+      if (m.first) Z.coneAimRot = ((((Z.coneAimRot || 0) % 720) + 1080) % 720) - 360;
+      else { const R = coneRingFeat(m.i); coneRot[m.i] = ((coneRot[m.i] % R.P) + R.P) % R.P; cutMemAbsorb(m.i); }
+    }
+    Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i));
+    coneMagMotionRings = [];
+    coneMagCount = magPartsOnly() && plan.moves.length === 1 ? conePartMatchRays(plan.moves[0].i, true).length || null : null;
+    coneMagCountStamp = null;
+    coneMagStep = { visuals: plan.moves.map(m => ({ ring: m.i, line: m.hit.t })), stamp: coneMagFingerprint() };
+    save(); renderAll();
+    if (announce) say(`🧲 ${plan.dir > 0 ? "▶" : "◀"} до следующего магнита — ${plan.moves.map(m => `${m.i + 1}: ${m.hit.what}`).join("; ")}.`);
+  };
+  const coneMagTurn = (dir) => {
+    autoSet(false);
+    const plan = coneMagMakePlan(dir);
+    if (!plan) { save(); say("🧲 Для текущего кольца нет следующего магнита при выбранных настройках."); return; }
+    coneMagFinishPlan(plan, true);
+  };
+  const coneMagAutoStep = (dt) => {
+    if (magAutoPause > 0) { magAutoPause = Math.max(0, magAutoPause - dt); return true; }
+    const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
+    if (magAutoPlan && (magAutoPlan.dir !== dir || magAutoPlan.key !== coneMagPlanKey())) magAutoPlan = null;
+    if (!magAutoPlan) {
+      magAutoPlan = coneMagMakePlan(dir);
+      if (!magAutoPlan) { coneMagMotionRings = []; return false; }
+      coneMagMotionRings = magAutoPlan.moves.map(m => m.i); coneMagStep = null; coneMagCount = null; coneMagCountStamp = null;
+    }
+    magAutoPlan.doneDeg = Math.min(magAutoPlan.maxDeg, magAutoPlan.doneDeg + Math.abs(Z.coneAutoSp || 30) * dt);
+    const fraction = magAutoPlan.doneDeg / magAutoPlan.maxDeg;
+    coneMagApplyPlan(magAutoPlan, fraction);
+    if (fraction >= 1 - 1e-9) { coneMagFinishPlan(magAutoPlan, false); magAutoPlan = null; magAutoPause = 0.16; }
+    return true;
+  };
+  if ($("bConeNextMag")) {
+    const ui = () => { const b = $("bConeNextMag"); b.classList.toggle("on", !!Z.coneSpinMag); b.setAttribute("aria-pressed", String(!!Z.coneSpinMag)); };
+    ui(); $("bConeNextMag").onclick = () => {
+      autoSet(false); Z.coneSpinMag = !Z.coneSpinMag; ui(); spinSpUi(); save(); renderCone();
+      say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — плавно между совпадениями. Цели — «🧲 гран. / всё» и направление соседей." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
     };
-    $("bConeNextMag").onclick = () => go(1);
-    $("bConeNextMag").oncontextmenu = (e) => { e.preventDefault(); go(-1); };
+    $("bConeNextMag").oncontextmenu = (e) => e.preventDefault();
   }
   if ($("bFillStill")) {   // v0.913: ⏸ за чертой — кольцо за чертой не крутится
     $("bFillStill").classList.toggle("on", !!Z.fillStill);
