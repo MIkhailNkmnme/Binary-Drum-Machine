@@ -12945,6 +12945,7 @@ function lpTop(col, vis){
     b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     const selectedWindow = !!(b.closest("#pinBar") && b.classList.contains("on"));
+    const prevSelected = !!(i && r[i - 1].closest("#pinBar") && r[i - 1].classList.contains("on"));
     b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true; b._tzm = 0;
     /* v0.529, по снимку «📌 ✦ Развёртка» — «дальше кнопки вогнутые (внутрь) и прижми кнопки, и так везде, чтоб не было пустот»: цепочка — остриё
        в выемку: у каждой кнопки справа остриё, у следующей слева выемка, и она заходит на соседку на t (прежде — выемка к выемке, ромбик фона между) */
@@ -12953,12 +12954,13 @@ function lpTop(col, vis){
        такая кнопка стоит отдельно от соседних: ↩ — стрелка влево (остриё слева, выемка справа), ↪ — вправо */
     if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
-    // Выбранная вкладка получает глубокую выемку слева и сильнее перекрывает предыдущую.
-    if (selectedWindow && i) { b._tzL = [0, 2, 0]; b._tzm = 2; b.style.zIndex = "5"; }
+    // Выбранная вкладка углубляет стыки с обеих сторон; соседняя справа входит остриём в её выемку.
+    if (selectedWindow) { if (i) b._tzL = [0, 2, 0]; b._tzR = [0, 2, 0]; b._tzm = i ? 2 : 0; b.style.zIndex = "5"; }
+    else if (prevSelected) { b._tzL = TZ_TIP; b._tzm = 2; b.style.removeProperty("z-index"); }
     else b.style.removeProperty("z-index");
     /* v0.530, «↩ ↪ — обе шире и одинаковой ширины, между ними пропуск-ромб, стрелка влево и вправо»: заходит на соседку, только если у той справа
        остриё (выемка к выемке — стоят встык уголками, между ними ромб фона) */
-    if (i && ((b._tzL !== TZ_NOTCH && !selectedWindow) || r[i - 1]._tzR !== TZ_TIP) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // v0.591: data-tzin — остриё входит в выемку соседки
+    if (i && ((b._tzL !== TZ_NOTCH && !selectedWindow && !prevSelected) || (r[i - 1]._tzR !== TZ_TIP && !prevSelected)) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // соседка справа входит остриём в глубокую выемку выбранной вкладки
     b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
     tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));
