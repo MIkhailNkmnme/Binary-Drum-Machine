@@ -12852,8 +12852,16 @@ function paneZig(){
       ov.style.setProperty("--pzigy", dy.toFixed(1) + "px");
       let toggle = ov.querySelector(".paneZigToggle");
       if (!toggle) { toggle = document.createElement("button"); toggle.type = "button"; toggle.className = "paneZigToggle"; toggle.setAttribute("aria-label", "Свернуть панель");
-        toggle.addEventListener("pointerdown", e => e.stopPropagation()); toggle.addEventListener("dblclick", e => e.stopPropagation());
-        toggle.addEventListener("click", () => { const b = document.getElementById("bPaneIcons"); if (b) b.click(); }); ov.appendChild(toggle); }
+        toggle.addEventListener("pointerdown", e => {
+          if (e.button !== 0) return;
+          const press = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, activated: false }; toggle._edgePress = press;
+          const move = ev => { if (ev.pointerId === press.id && Math.hypot(ev.clientX - press.x, ev.clientY - press.y) > 4) press.moved = true; };
+          const end = ev => { if (ev.pointerId !== press.id) return; removeEventListener("pointermove", move); removeEventListener("pointerup", end); removeEventListener("pointercancel", end);
+            if (ev.type === "pointerup" && !press.moved) { press.activated = true; const b = document.getElementById("bPaneIcons"); if (b) b.click(); }
+            setTimeout(() => { if (toggle._edgePress === press) toggle._edgePress = null; }, 0); };
+          addEventListener("pointermove", move); addEventListener("pointerup", end); addEventListener("pointercancel", end);
+        });
+        toggle.addEventListener("click", e => { if (e.detail === 0) { const b = document.getElementById("bPaneIcons"); if (b) b.click(); } }); ov.appendChild(toggle); }
       const srcToggle = document.getElementById("bPaneIcons");
       if (srcToggle) { toggle.textContent = srcToggle.textContent; toggle.title = srcToggle.title; toggle.setAttribute("aria-label", srcToggle.title); }
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
