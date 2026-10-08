@@ -12810,7 +12810,7 @@ function lpTag(){
 }
 /* v0.756, «при перетаскивании групп кнопок пропадают зубцы у левого меню»: слой зубцов стоял на постоянном z-index 45, а окно поднимается каждым щелчком
    по нему (Z.z растёт и хранится) — щёлкнул по группе в окне у края, и окно легло поверх зубцов. Теперь слой всегда на ступень выше самого верхнего окна */
-function paneZigZ(){ for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = Math.max(45, (+Z.z || 0) + 1); } }
+function paneZigZ(){ const z = +Z.z || 0; for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = id === "paneZigOv" ? (z > 45 ? z - 1 : 44) : Math.max(45, z + 1); } }
 function fieldRowsFold(){
   const field = document.getElementById("field"), main = document.getElementById("main"), list = document.getElementById("rowList"); if (!field || !main) return;
   if (Z.rowsFolded) { Z.rowsFolded = false; Z.rowsW = Math.max(0, +Z.rowsWRestore || 0); Z.rowsWRestore = 0; }
@@ -12954,13 +12954,13 @@ function paneZig(){
     const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
           edgeBottom = Math.min(pr.bottom, dockTop), on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
-    if (on) { const tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln;
+    if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = ln + "|" + pc;
       ov.style.left = Math.round(pr.right * 100) / 100 + "px"; ov.style.top = pr.top + "px"; ov.style.height = (edgeBottom - pr.top) + "px"; ov.style.width = wq.toFixed(2) + "px";
       ov.style.backgroundPosition = "0 " + dy.toFixed(1) + "px";
       const acq = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#8b949e";
       if (ov._k !== kq + "|" + acq) { ov._k = kq + "|" + acq; const zq = `0,0 ${tq.toFixed(2)},${H / 2} 0,${H}`;
-        /* v0.1005: край — только линия; заливка зубчатой полосы фоном соседа давала прямую вертикальную полосу у кнопок. */
-        const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
+        /* v0.1006: фон зубцов сохранён; весь слой левого края ниже переднего окна, чтобы его кнопки перекрывали заливку и линию. */
+        const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
         ov.style.setProperty("--pz", sq(ln, 1)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
