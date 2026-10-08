@@ -2108,13 +2108,14 @@ const SOL_PLATES = {
 function solZoneRect(z){
   if (z === "head") {
     if (document.body.classList.contains("zen") || document.body.classList.contains("sol-mobile")) return null;
-    const el = document.getElementById("solHeaderDock");
+    const el = document.querySelector("#w-cone > .whead.sol-header");
     return el && el.getClientRects().length ? el.getBoundingClientRect() : null;
   }
   const B = document.body.classList; if (B.contains("zen") || B.contains("solo") || z !== "pane" && B.contains("field-hidden")) return null;
   const el = document.getElementById(z === "pane" ? "rowsPane" : "field"); if (!el || !el.getClientRects().length) return null;
   const r = el.getBoundingClientRect(); return r.width > 20 && r.height > 20 ? r : null;
 }
+function solHeaderRoom(except){ const dock = document.getElementById("solHeaderDock"); if (!dock) return 0; const left = dock.classList.contains("leftdock"); if (left) dock.classList.remove("leftdock"); const room = dock.clientWidth - [...dock.children].filter(s => s.dataset.g !== except).reduce((sum, s) => sum + (s.offsetWidth || 0), 0); if (left) dock.classList.add("leftdock"); return room; }
 function solZoneOf(r, p){   // площадка, над которой прямоугольник целиком; шире площадки — по указателю p = [x, y]
   const head = solZoneRect("head");
   if (head && (p ? p[0] >= head.left && p[0] <= head.right && p[1] >= head.top && p[1] <= head.bottom : r.top >= head.top - 1 && r.top < head.bottom && r.left >= head.left - 1 && r.left < head.right)) return "head";
@@ -2125,7 +2126,7 @@ function solZoneOf(r, p){   // площадка, над которой прям�
   return null;
 }
 function solZoneRec(z, r, q){ const o = { x: Math.round(r.left - q.left), y: Math.round(r.top - q.top) }; if (z === "pane" || z === "head") o.z = z; return o; }
-function solZoneGlow(z){ for (const [id, k] of [["field", "fld"], ["rowsPane", "pane"], ["solHeaderDock", "head"]]) { const A = document.getElementById(id); if (A && A.classList.contains("cgover") !== (z === k)) A.classList.toggle("cgover", z === k); } }
+function solZoneGlow(z){ for (const [id, k] of [["field", "fld"], ["rowsPane", "pane"]]) { const A = document.getElementById(id); if (A && A.classList.contains("cgover") !== (z === k)) A.classList.toggle("cgover", z === k); } const H = document.querySelector("#w-cone > .whead.sol-header"); if (H && H.classList.contains("cgover") !== (z === "head")) H.classList.toggle("cgover", z === "head"); }
 function solPanelName(el){ return SOL_PLATES[el.id] ? SOL_PLATES[el.id].name : el.dataset.g; }
 function solPanelFolded(el){ return el.classList.contains("cmin") || el.classList.contains("pmin"); }
 // v0.963: одиночное действие ждёт второй щелчок, чтобы заголовок не уехал до двойного.
@@ -2469,7 +2470,7 @@ function ringTblSync(){
   if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#22d3ee"); ringTblPlace(el);
 }
-function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol){
+function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
   let layer = document.getElementById("coneTopArt");
   if (!layer) { layer = document.createElement("canvas"); layer.id = "coneTopArt"; win.appendChild(layer); }
@@ -2477,7 +2478,11 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol){
   const wr = win.getBoundingClientRect(), left = Math.round(R.left - wr.left + win.scrollLeft - win.clientLeft), top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop);
   layer.style.left = left + "px"; layer.style.top = top + "px"; layer.style.width = R.width + "px"; layer.style.height = R.height + "px";
   if (layer.width !== W) layer.width = W; if (layer.height !== H) layer.height = H;
-  const g = layer.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.drawImage(cv, 0, 0, W, H);
+  const g = layer.getContext("2d", { willReadFrequently: true }); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.drawImage(cv, 0, 0, W, H);
+  const probe = coneTopArtSync._probe || (coneTopArtSync._probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }));
+  probe.fillStyle = bgCol; probe.fillRect(0, 0, 1, 1); const bg = probe.getImageData(0, 0, 1, 1).data, image = g.getImageData(0, 0, W, H), px = image.data;
+  for (let p = 0; p < px.length; p += 4) { const delta = Math.max(Math.abs(px[p] - bg[0]), Math.abs(px[p + 1] - bg[1]), Math.abs(px[p + 2] - bg[2])); if (delta < 20) px[p + 3] = Math.round(px[p + 3] * delta / 20); }
+  g.putImageData(image, 0, 0);
   g.globalCompositeOperation = "destination-in"; g.beginPath(); g.arc(cx, cy, rMax + 3 * dpr, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = "source-over";
   if (Z.coneAxes) { g.save(); g.strokeStyle = axisCol; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore(); }
 }
@@ -3411,7 +3416,7 @@ function renderCone(){
     `Разных колец <b>${groups.size}</b> на ${Z.rows.length} строк` + (multi.length ? `; совпадающих групп ${multi.length}: ` + multi.slice(0, 8).map(v => v.slice(0, 6).map(j => j + 1).join("=") + (v.length > 6 ? "…" : "")).join(" · ") : "") +
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
-  coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA);
+  coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA, cBg);
   // v0.092: таблица строк у конуса убрана — замки у номеров строк в поле
 }
 /* v0.088, «справа сделай таблицу с номерами строк — замков, строк, как в поле строк; теперь его свернём, а это — на первое
@@ -11816,9 +11821,11 @@ function cgrpInit(){
           Z.cgrpFld[g.dataset.g] = solZoneRec(zone, gr, solZoneRect(zone)); delete Z.cgrpPos[g.dataset.g];
           if (zone === "head") {
             delete Z.cgrpLink[g.dataset.g]; Z.cgrpMin[g.dataset.g] = true; g.classList.add("cmin"); sizeApply(g);
-            const dock = $("solHeaderDock"), room = dock ? dock.clientWidth - [...dock.children].filter(s => s.dataset.g !== g.dataset.g).reduce((sum, s) => sum + (s.offsetWidth || 0), 0) : 0;
+            const room = solHeaderRoom(g.dataset.g);
             Z.solHeaderOrder ||= []; Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== g.dataset.g);
-            if (room < 128) Z.solHeaderOrder.unshift(g.dataset.g); else Z.solHeaderOrder.push(g.dataset.g);
+            const head = solZoneRect("head"), leftEdge = head && lx <= head.left + Math.min(160, head.width * 0.25);
+            Z.solHeaderLeft = !!leftEdge || room < 128;
+            if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(g.dataset.g); else Z.solHeaderOrder.push(g.dataset.g);
           }
           place(g); if (zone === "head" && window.zzHeaderPlace) window.zzHeaderPlace(g); grpFix(g); save(); return;
         }
@@ -11839,8 +11846,8 @@ function cgrpInit(){
     g.addEventListener("dblclick", (e) => {
       if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
       e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0;
-      const key = g.dataset.g, current = Z.cgrpFld[key], dock = $("solHeaderDock");
-      const room = dock ? dock.clientWidth - [...dock.children].reduce((sum, slot) => sum + (slot.offsetWidth || 0), 0) : 0;
+      const key = g.dataset.g, current = Z.cgrpFld[key];
+      const room = solHeaderRoom(key);
       if (current && current.z === "head" && solPanelFolded(g)) { g._solFold(false); return; }
       if (!Z.cgrpMinPos || typeof Z.cgrpMinPos !== "object") Z.cgrpMinPos = {};
       if (!Z.cgrpMinPos[key]) Z.cgrpMinPos[key] = { pos: Z.cgrpPos[key] ? { ...Z.cgrpPos[key] } : null, fld: current ? { ...current } : null };
@@ -11850,7 +11857,8 @@ function cgrpInit(){
       g.classList.add("cmin"); sizeApply(g); cgrpCols(); place(g); linkSync();
       Z.solHeaderOrder ||= [];
       Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== key);
-      if (room < 128) Z.solHeaderOrder.unshift(key); else Z.solHeaderOrder.push(key);
+      Z.solHeaderLeft = room < 128;
+      if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(key); else Z.solHeaderOrder.push(key);
       if (window.zzHeaderPlace) window.zzHeaderPlace(g); save();
     });
     lab.addEventListener("contextmenu", (e) => {
@@ -12022,6 +12030,7 @@ function cgrpInit(){
       if (busy) return; busy = true;
       try {
         const members = panels().filter(g => zrec(g)?.z === "head" && !g.hidden && !g.classList.contains("coff"));
+        dock.classList.toggle("leftdock", !!Z.solHeaderLeft && members.length > 0);
         const keys = new Set(members.map(g => g.dataset.g));
         for (const [key, slot] of slots) if (!keys.has(key)) { slot.remove(); slots.delete(key); }
         Z.solHeaderOrder ||= [];
@@ -12955,7 +12964,7 @@ function lpTop(col, vis){
     if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
     // Выбранная вкладка углубляет стыки с обеих сторон; соседняя справа входит остриём в её выемку.
-    if (selectedWindow) { if (i) b._tzL = [0, 2, 0]; b._tzR = [0, 2, 0]; b._tzm = i ? 2 : 0; b.style.zIndex = "5"; }
+    if (selectedWindow) { b._tzL = [0, 2, 0]; b._tzR = [0, 2, 0]; b._tzm = i ? 2 : 0; b.style.zIndex = "5"; }
     else if (prevSelected) { b._tzL = TZ_TIP; b._tzm = 2; b.style.removeProperty("z-index"); }
     else b.style.removeProperty("z-index");
     /* v0.530, «↩ ↪ — обе шире и одинаковой ширины, между ними пропуск-ромб, стрелка влево и вправо»: заходит на соседку, только если у той справа

@@ -212,7 +212,7 @@
   function hint() { return "Для шариков: 2 части или 2 по симметрии у строки 1, 2 бита второго кольца (пустые тоже подходят), плоский вид и плавное кручение"; }
   function ui() {
     const b = $("bConeBall"); if (!b) return;
-    b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = "● шарики";
+    b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = "●"; b.setAttribute("aria-label", "Шарики");
     if ($("ballLabEnable")) {
       $("ballLabEnable").textContent = enabled ? "● вкл." : "○ выкл.";
       $("ballLabEnable").title = enabled ? "Шарики включены. Нажми, чтобы выключить их совсем: на конусе их не будет, панель спрячется; включить снова — «● шарики» в группе «Шарики»." : "Шарики выключены. Нажми, чтобы включить.";
