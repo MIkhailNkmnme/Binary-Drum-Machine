@@ -24,7 +24,7 @@ const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.s
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
 if (window.ZZ_LINK_DECODE && !ZZ_PRESET) zzLinkOpen(window.ZZ_LINK_DECODE);   // v0.650: ссылка #z=… — раскрыть и открыть заново (zzLinkOpen)
 window.addEventListener("hashchange", () => { if (location.hash.indexOf("#z=") === 0) location.reload(); });   // ссылку вставили в адрес этой же вкладки — браузер страницу не грузит, грузим сами
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "padFreePos", "padViewportPos", "tpl", "tplRef", "pins", "coneBtns"];   // конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "rowsFolded", "rowsWRestore", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "padFreePos", "padViewportPos", "tpl", "tplRef", "pins", "coneBtns"];   // v0.995: свёрнутая ширина поля — часть раскладки; конусу одному (?solo=cone) — ни к чему
 /* v0.564, «индекс тоже — тормозит он на мобиле»: фон хаба — этот конус в невидимом iframe (visibility: hidden — звук нот играет в нём). Пока его не видно,
    конус не рисуется (кручение и звук идут), окна, которых нет на странице, не считаются, служебные таймеры групп не крутятся */
 const zzBgHidden = () => { if (!ZZ_BG) return false; try { const f = window.frameElement; return !!f && getComputedStyle(f).visibility === "hidden"; } catch (e) { return false; } };
@@ -71,7 +71,7 @@ const Z = {
   rowsH: 0,                              // v0.026: высота поля строк, когда под ним окна (0 — половина колонки)
   tplRef: null,   // v0.037: номер своего шаблона-эталона (⚑) — с ним сравниваются строки; null — ещё не выбран
   showFM: false, show01: false, showFix: false,   // v0.036: числа у номеров; красные неподвижные биты
-  rowsAlign: "center", rowsW: 0, tpl: [], layoutVer: 0,   // v0.010: поле строк, ширина поля (0 — по умолчанию), свои шаблоны
+  rowsAlign: "center", rowsW: 0, rowsFolded: false, rowsWRestore: 0, tpl: [], layoutVer: 0,   // v0.995: щелчок по зубцам сужает поле до столбца кручений; ширина восстанавливается повторным щелчком
   maskStr: "10", maskN: 16, maskMode: "pascal",   // v0.011: треугольник по маске (v0.012: и от строки)
   sigMsg: "1101", sigBase: "10", sigDev: "inv", sigShape: "tri", sigLen: 8, sigNoise: 0,   // v0.013: сигнал по базе
   manMode: "enc",   // v0.007: режим кнопки манчестерского кода — "enc" или "dec"
@@ -2404,17 +2404,18 @@ function sunTblSync(){
   if (el.classList.contains("zenon") !== !!Z.sunTblZen) el.classList.toggle("zenon", !!Z.sunTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#ffe14d"); sunTblPlace(el);   // дальше — по ResizeObserver, не на каждом кадре
 }
-/* v0.871, «это виды колец — сделай таблицу Кольца»: плашка #ringTbl в теле окна конуса — все виды колец строкой: картинка кольца строки 2 и 3,
-   вид, сколько частей и вырезов; ромб справа — выбрать (то же, что переключатель щелей в группе «Щели»). Тянется за шапку (Z.ringTblXY, двойной
+/* v0.995, по снимку таблицы «Кольца» — подписи сокращены, столбец вырезов убран; выбор вида доступен даже без света солнца или лазера.
+   v0.871: плашка #ringTbl в теле окна конуса — все виды колец строкой: картинка кольца строки 2 и 3, вид и число частей;
+   ромб справа — выбрать (то же, что переключатель щелей в группе «Щели»). Тянется за шапку (Z.ringTblXY, двойной
    щелчок — на место), ✕ или «◯ Кольца» в «Щелях» — закрыть / открыть (Z.ringTbl; не задано — открыта, на узком экране — закрыта). Новый вид
    колец — строкой в RINGTBL и вариантом в LAS_SEG */
 const RINGTBL = [
-  { v: "all", t: "T · все щели", p: "T", c: "щель на каждой границе" },
-  { v: "one", t: "T · 1 щель", p: "T", c: "1 щель — шов" },
-  { v: "cut", t: "2T−1 · вырез куском", p: "2T−1", c: "1 вырез, T−1 частей" },
-  { v: "cut2", t: "2T · вырез куском", p: "2T", c: "1 вырез, T частей" },
-  { v: "cutA", t: "разреженные через вырезы", p: "2T−1", c: "T−1 вырезов по части, шов" },
-  { v: "cutS", t: "разреженные по симметрии", p: "2T−1", c: "T вырезов по (T−1)/T части" }
+  { v: "all", t: "T · все", p: "T" },
+  { v: "one", t: "T · щель", p: "T" },
+  { v: "cut", t: "2T−1 · кусок", p: "2T−1" },
+  { v: "cut2", t: "2T · кусок", p: "2T" },
+  { v: "cutA", t: "между битами", p: "2T−1" },
+  { v: "cutS", t: "симметрия", p: "2T−1" }
 ];
 function ringTblArcs(v, n){   // [[от, до]] в долях круга — места бит кольца из n бит; бит 0 серединой сверху
   const P = v === "cut2" ? 2 * n : v === "all" || v === "one" ? n : 2 * n - 1, per = (2 * n - 1) / n, o = [];
@@ -2438,11 +2439,11 @@ function ringTblPlace(el){ platePlace(el); }
 function ringTblBuild(host){
   const el = document.createElement("div"); el.id = "ringTbl";
   let x = '<div class="rth"><span>◯ Кольца</span><span class="pbtn"><button type="button" class="pminbtn">−</button><button type="button" class="pzen" title="🧘 Показывать эту таблицу и в дзене">🧘</button><button type="button" class="rtx" title="Закрыть («◯ Кольца» в группе «Щели» — открыть снова)">✕</button></span></div>' +
-    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th><th title="Частей в кольце строки из T бит">частей</th><th>вырезы</th><th></th></tr></thead><tbody>';
+    '<table><thead><tr><th title="Кольцо строки 2">T=2</th><th title="Кольцо строки 3">T=3</th><th>вид</th><th title="Частей в кольце строки из T бит">частей</th><th></th></tr></thead><tbody>';
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    x += `<tr data-v="${r.v}" title="${tt}"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td><td class="rtc">${r.p}</td><td class="rtc rtd">${r.c}</td><td class="rtk"><button type="button" class="rtr" data-v="${r.v}" aria-pressed="false" aria-label="Выбрать: ${esc(r.t)}" title="Выбрать: ${tt}"></button></td></tr>`;
+    x += `<tr data-v="${r.v}" title="${tt}"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtp">${ringTblSvg(r.v, 3)}</td><td class="rtn2">${r.t}</td><td class="rtc">${r.p}</td><td class="rtk"><button type="button" class="rtr" data-v="${r.v}" aria-pressed="false" aria-label="Выбрать: ${esc(r.t)}" title="Выбрать: ${tt}"></button></td></tr>`;
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
@@ -2464,9 +2465,7 @@ function ringTblSync(){
   if (!open) { if (el && !el.hidden) el.hidden = true; return; }
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = ringTblBuild(host); }
   const cur = coneSlitRaw(); el.querySelectorAll("tr[data-v]").forEach(tr => { const on = tr.dataset.v === cur; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); const k = tr.querySelector(".rtr"), a = on ? "true" : "false"; if (k && k.getAttribute("aria-pressed") !== a) k.setAttribute("aria-pressed", a); });
-  const act = !!Z.coneClock && coneFlat(); if (el.classList.contains("off") !== !act) el.classList.toggle("off", !act);
-  const tt = act ? "" : "Сейчас не действует: виды колец — у луча-часов и солнца в плоском виде. Выбрать можно заранее.";
-  if (el.title !== tt) el.title = tt;
+  el.classList.remove("off"); el.title = "Выбор вида колец действует независимо от включения солнца и лазера.";
   if (el.classList.contains("zenon") !== !!Z.ringTblZen) el.classList.toggle("zenon", !!Z.ringTblZen);   // v0.886
   if (el.hidden) el.hidden = false; plateFoldSync(el); if (!el._pzk) plateZig(el, "#22d3ee"); ringTblPlace(el);
 }
@@ -12734,6 +12733,18 @@ function lpTag(){
 /* v0.756, «при перетаскивании групп кнопок пропадают зубцы у левого меню»: слой зубцов стоял на постоянном z-index 45, а окно поднимается каждым щелчком
    по нему (Z.z растёт и хранится) — щёлкнул по группе в окне у края, и окно легло поверх зубцов. Теперь слой всегда на ступень выше самого верхнего окна */
 function paneZigZ(){ for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = Math.max(45, (+Z.z || 0) + 1); } }
+function fieldRowsFold(){
+  const field = document.getElementById("field"), main = document.getElementById("main"), list = document.getElementById("rowList"); if (!field || !main) return;
+  if (Z.rowsFolded) { Z.rowsFolded = false; Z.rowsW = Math.max(0, +Z.rowsWRestore || 0); Z.rowsWRestore = 0; }
+  else {
+    const fr = field.getBoundingClientRect(), no = list && list.querySelector(".rw:not(.hid):not(.fillrw) > .no");
+    const rot = no && [...no.querySelectorAll(".rrot,.rtn")].filter(el => el.getClientRects().length).pop();
+    Z.rowsWRestore = Math.round(fr.width); Z.rowsW = Math.max(60, Math.ceil(((rot || no)?.getBoundingClientRect().right || fr.left + 100) - fr.left + 8)); Z.rowsFolded = true;
+  }
+  if (Z.rowsW > 0) main.style.setProperty("--rowsW", Z.rowsW + "px"); else main.style.removeProperty("--rowsW");
+  document.body.classList.toggle("rows-folded", !!Z.rowsFolded); save();
+  requestAnimationFrame(() => { packWins(); renderPointers(); rowsFit(); fieldInfoFit(); paneZig(); });
+}
 /* v0.823, по снимку края поля строк — «строки: границу зубцами, так же как левое меню»: вместо прямой черты у края поля (#fieldEdge::after) — те же
    зубцы, что у левого меню: слой #fieldZigOv поверх окон (щелчки сквозь него), острия — в сторону стола, цветом фона поля с чертой, сетка та же (сдвиг dy
    от полосы вкладок). Хват ширины (#fieldEdge) остался на месте */
@@ -12801,12 +12812,12 @@ function fieldZig(dy, ln){
   let ov = document.getElementById("fieldZigOv"); if (!ov) { ov = document.createElement("div"); ov.id = "fieldZigOv"; document.body.appendChild(ov);
     /* v0.832, по снимку края поля — «границу для захвата (изменение ширины полей) можно ли на зубцах расположить»: хват — сами зубцы: нажатие и двойной
        щелчок по ним передаются прежнему хвату #fieldEdge (тянуть — ширина, двойной щелчок — по умолчанию); полоса внутри поля, пока зубцы видны, выключена */
-    ov.title = "Щелчок — свернуть поле строк; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
+    ov.title = "Щелчок — свернуть поле до столбца кручений; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
     for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const peek = document.body.classList.contains("field-peek"), fe = document.getElementById(peek ? "fieldPull" : "fieldEdge"); if (!fe) return; e.preventDefault(); e.stopPropagation();
       if (peek && t === "dblclick") { fe.click(); return; }
       fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
-  zigClickFold(ov, () => { const b = document.getElementById("bFieldHide"); if (b) b.click(); });
+  zigClickFold(ov, fieldRowsFold); ov.title = Z.rowsFolded ? "Щелчок — развернуть поле строк; тяни — изменить ширину; двойной щелчок — ширина по умолчанию" : "Щелчок — свернуть поле до столбца кручений; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
   const B = document.body.classList, fr = f.getBoundingClientRect(), on = innerWidth > 760 && fr.width > 4 && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
   const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
