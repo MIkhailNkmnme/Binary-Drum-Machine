@@ -532,7 +532,7 @@ function turnsAdd(i, t){
   while (Z.coneTurns.length <= i) Z.coneTurns.push(0);
   Z.coneTurns[i] = (Z.coneTurns[i] || 0) + t;
 }
-function turnsMark(){ if (!Z.coneTurnsShow) return; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, i = k === "f" ? "f" : +k, v = turnsOf(i), t = turnsFmt(v, i); if (el.textContent !== t) el.textContent = t; const c = v < 0 && t !== "0"; if (el.classList.contains("ccw") !== c) el.classList.toggle("ccw", c); }); }
+function turnsMark(){ if (!Z.coneTurnsShow) return; let changed = false; document.querySelectorAll("#rowList .rtn[data-ti]").forEach(el => { const k = el.dataset.ti, i = k === "f" ? "f" : +k, v = turnsOf(i), t = turnsFmt(v, i); if (el.textContent !== t) { el.textContent = t; changed = true; } const c = v < 0 && t !== "0"; if (el.classList.contains("ccw") !== c) el.classList.toggle("ccw", c); }); if (changed) rowCounterWidths(); }
 function turnsChip(ev, txt){
   let el = document.getElementById("turnsChip");
   if (txt === null) { if (el && !el.hidden) el.hidden = true; return; }
@@ -1001,6 +1001,23 @@ function rowNumDigits(){
   const L = document.getElementById("rowList"); if (!L) return;
   let mx = 1; L.querySelectorAll(".rw > .no > .rn").forEach(el => { const v = parseInt(el.textContent, 10); if (v > mx) mx = v; });
   const d = String(String(mx).length); if (L.style.getPropertyValue("--rnd") !== d) L.style.setProperty("--rnd", d);
+  const cols = [...(Z.showFM ? ["60px"] : []), ...(Z.show01 ? ["60px"] : []), ...(Z.coneTurnsShow ? ["var(--rtn-w, 20px)"] : [])].join(" ");
+  if (L.style.getPropertyValue("--rc-cols") !== cols) L.style.setProperty("--rc-cols", cols || " ");
+  rowCounterWidths();
+}
+/* v0.973: одинаковая ширина числовых колонок во всех строках, без запаса 42/60 px для пустоты и нуля. */
+function rowCounterWidths(){
+  const L = document.getElementById("rowList"); if (!L) return;
+  const ctx = rowCounterWidths.ctx || (rowCounterWidths.ctx = document.createElement("canvas").getContext("2d")); if (!ctx) return;
+  for (const [cls, prop, min] of [["rrot", "--rrot-w", 25], ["rtn", "--rtn-w", 20]]) {
+    const cells = L.querySelectorAll(".rw > .no > ." + cls); let w = min;
+    if (cells.length) {
+      const s = getComputedStyle(cells[0]); ctx.font = s.fontWeight + " " + s.fontSize + " " + s.fontFamily;
+      const pad = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
+      for (const el of cells) w = Math.max(w, Math.ceil(ctx.measureText(el.textContent).width + pad));
+    }
+    const value = w + "px"; if (L.style.getPropertyValue(prop) !== value) L.style.setProperty(prop, value);
+  }
 }
 function hidRowHtml(i, cells){ return '<div class="rw hid" data-h="' + i + '"><span class="no" title="за границей — строки как будто нет"><span class="rn">' + (i + 1) + "</span><span></span><span></span></span>" + cells + "</div>"; }
 /* v0.153, «в строках уменьши межстрочный отступ до 0.7 минимум, когда не все строки помещаются по высоте»: после отрисовки поле
