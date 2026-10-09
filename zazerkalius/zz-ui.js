@@ -4855,7 +4855,9 @@ function coneSunPaint(){
   return ch;
 }
 function coneFanStepsCap(N){ return 2000; }   // шагов за кадр — как у одного лазера; сколько успеем, решает время (coneClockSweep, ~12 мс)
-function coneCutAngle(){ return coneAimAngle() + Math.PI; }
+/* v0.1042, на вопрос «щель и разрез — разве разные понятия?» — вариант «2»: щель строки 1 (выход лазера, вырез-затвор, ▮) стоит на её разрезе — начале бита 0,
+   как у прочих колец щель = граница битов. Прежде (v0.139) — напротив разреза, +180°: лазер вверх, выход в начале внизу */
+function coneCutAngle(){ return coneAimAngle(); }
 function coneAngDiff(x, y){ let d = (x - y) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; }
 function coneCutOpen(){ return Math.abs(coneAngDiff(coneCutAngle(), coneLaserAngle())) <= coneSlitHalf(); }
 /* v0.120, «дай возможность ось соединять вручную со следующим кольцом в щели, при этом крутя внутреннее кольцо, а не внешнее».
