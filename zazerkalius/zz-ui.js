@@ -2712,11 +2712,19 @@ function coneRunStatsSync(cv, R, dpr, cx){
   const moving = data.rings.reduce((n, r) => n + r.moving, 0), waiting = data.rings.reduce((n, r) => n + r.waiting, 0), lost = data.rings.reduce((n, r) => n + r.lost, 0);
   const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(data.simultaneous ? 6 : 2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
     "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.removed ? " · снято при смене колец " + data.removed : "") + (data.closedCount ? " · закрыто К1–К" + data.closedCount : ""),
-    ["", Z.coneBallRoute === "in" ? "1 · база в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
+    ["", Z.coneBallRoute === "in" ? "1 · авто в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
   data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k < data.closedCount ? " закрыто" : k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
     "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · +0: " + (r.zeros || 0) + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
+  { const P = Z.coneBallRoute === "in" && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null; if (P) lines.splice(3, 0, coneInwardForecastText(P)); }   // v0.1060: прогноз рядом с фактом
   if (data.simultaneous) lines.splice(1, 0, "Одновременно: " + data.simultaneous.events.map(e => "шарик " + e.number + " → " + e.ring).join("; ") + ". ▶ — продолжить");
   const text = lines.join("\n"), textEl = el.querySelector(".cone-run-text"); if (textEl.textContent !== text) textEl.textContent = text;
+}
+/* v0.1060: прогноз «● в центр» строкой — сколько войдёт в каждое кольцо, где ударятся, сколько дойдёт до центра */
+function coneInwardForecastText(P){
+  if (!P) return "";
+  const parts = []; for (let k = P.outer - 1; k >= 0; k--) if (P.entered[k] !== undefined || P.hits[k] !== undefined) parts.push("К" + (k + 1) + " войдут " + (P.entered[k] || 0));
+  const hits = Object.keys(P.hits).sort((a, b) => b - a).map(k => "К" + (+k + 1) + " " + P.hits[k]);
+  return "Прогноз: из " + P.total + " · " + (parts.join(" · ") || "внутрь не войдёт никто") + " · до центра " + P.center + (hits.length ? " · " + (P.bounce ? "ударятся (отскок)" : "застрянут") + ": " + hits.join(", ") : "");
 }
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
@@ -7601,6 +7609,8 @@ function setupCone(){
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:!!Z.coneBallLoss,mark:false,chain:false});
     { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
+      const P = ok && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null;
+      if (P) setTimeout(() => say("● " + coneInwardForecastText(P) + "."), A ? 4200 : 1600);   // v0.1060: прогноз до хода опыта
       if (A) setTimeout(() => say(A.fixed ? `● Авто: кольца ${A.ring + 2} и ${A.ring + 1} крутятся одинаково — от скорости не зависит; в К${A.ring + 1} зайдут ${A.count} из ${A.total}.`
         : A.count ? `● Авто: скорость ×${(Math.round(A.mult * 100) / 100).toString().replace(".", ",")} от базовой — в К${A.ring + 1} зайдут ${A.count} из ${A.total} (больше при одной скорости не бывает).`
         : `● Авто: ни при какой скорости группа не попадает в щели К${A.ring + 1} — едут с базовой.`), 1600); }

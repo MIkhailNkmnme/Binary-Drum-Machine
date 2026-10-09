@@ -90,8 +90,32 @@
      проходят те, у кого в этот миг щель внутреннего кольца (с допуском её ширины) или открытый вырез (lossPass). Картина на стыке зависит только от
      относительного поворота двух колец, поэтому перебирается один его период: моменты точных совпадений + частая сетка, не быстрее 4× базовой.
      Наибольшее число; при равенстве — ближе к базовой. Кольца крутятся одинаково — от скорости не зависит, остаётся базовая. */
-  let inwardAuto = null;
+  let inwardAuto = null, inwardFc = null;
   window.zzBallInwardAuto = () => inwardAuto;
+  /* v0.1060, «мы заранее знаем, сколько шариков из внешнего в смежное внутреннее войдёт при одновременном старте?» — «да», и прогноз до запуска (выбрано «1»):
+     вся группа одной скоростью идёт кольцо за кольцом одновременно; на каждом стыке — то же правило, что у движка (lossPass: щель с допуском или открытый
+     вырез), закрытые кольца — центр, кольца закрываются после шага (как пакетом у одновременных событий). Удар — застрял (при отскоке — отмечен, дальше не
+     прослеживается). Кольца крутятся равномерно, так что прогноз точный */
+  window.zzBallInwardForecast = () => inwardFc;
+  function inwardForecast(S, v) {
+    const starts = outerStarts(S), w = rate(S), K = S.rings.length - 1;
+    if (!starts.length || !(v > 0)) return null;
+    let c = centerCount(), k = K, t = 0, center = 0, alive = starts.map(p => p.raw);
+    const entered = {}, hits = {}, times = {};
+    while (alive.length && k >= 0) {
+      const ring = S.rings[k]; t += (ring.ro - ring.ri) / v;
+      const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
+      let close = c; const next = [];
+      for (const raw of alive) {
+        if (k === 0) { center++; close = Math.max(close, 1); continue; }
+        if (k - 1 < c) { center++; if (k === c) close = Math.max(close, k + 1); continue; }
+        const e = lossPass(St, k - 1, angle(St, k, raw));
+        if (e === null) hits[k - 1] = (hits[k - 1] || 0) + 1; else { entered[k - 1] = (entered[k - 1] || 0) + 1; next.push(e); }
+      }
+      times[k] = t; c = close; alive = next; k--;
+    }
+    return { total: starts.length, outer: K, entered, hits, center, closedAfter: c, bounce: bounceOn(), seconds: t };
+  }
   function inwardAutoSpeed(S, base) {
     inwardAuto = null;
     const k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
@@ -404,6 +428,7 @@
       batchBusy = true;
       try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",period:T,speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
       finally { batchBusy = false; F = balls[0] || null; }
+      inwardFc = launch && balls.length ? inwardForecast(S, balls[0].speed) : null;   // v0.1060: прогноз по фактической скорости группы
       batchStatus(); metrics(S); return;
     }
     if (!allStarts() && throughCount() > 1) {
