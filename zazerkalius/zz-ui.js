@@ -2679,11 +2679,11 @@ function coneBallModeSummary(cfg = Z){
   const inward = cfg.coneBallRoute === "in";
   const parts = ["«● вылет» запускает шарик из центра через щель первого кольца наружу, кольцо за кольцом.",
     cfg.coneNotchSlit ? "Дальше он переходит только через щели и края открытых вырезов; разрезы между соседними битами внутри сплошной дуги не считаются щелью." : "Дальше используются любые прямые грани битов; при включённой «✕ дуге» учитывается также ширина щели и свободный вырез."];
-  if (inward) { parts.length = 0; parts.push("«● в центр» одновременно пускает шарики из всех щелей внешнего видимого кольца внутрь. Дошедшие до центра останавливаются; остальные застревают в дуге или отскакивают по выбранному режиму удара.", "На стыках используются щели и открытые вырезы. Число дошедших до центра, ударов и отскоков показано в статистике каждого запуска."); }
+  if (inward) { parts.length = 0; parts.push("«● в центр» одновременно пускает шарики из всех щелей внешнего видимого кольца внутрь. Первый достигший центра закрывает щель К1: его текущие биты 0/1 сохраняются, внешний край обводится бирюзовой дугой. Затем попадание через К2 в дугу закрытого К1 считается центром и закрывает разрез К2; так центр растёт кольцо за кольцом.", "До закрытия центра промах в дугу вызывает застревание или отскок по выбранному режиму. Закрытый центр принимает шарик при любом угле, вместо отскока. Одновременные события останавливают вращение; в статистике видны номера шариков и кольца. ▶ продолжает опыт. На открытых кольцах используются щели и вырезы. Следующий «В центр» продолжает закрытие; сброс снова открывает все кольца."); }
   parts.push(speed === 2 ? "Скорость постоянная: от центра до края кольца 1 за один его полный оборот." : speed === 3 ? "Скорость постоянная: от центра до края кольца 1 за половину его оборота — вдвое быстрее режима 2." : inward ? "В режиме 1 скорость постоянная: от внешнего края до центра за один относительный оборот первых двух колец. Время прихода к щелям не подстраивается: опыт показывает реальные прохождения и удары." : cfg.coneBallLoss ? "Авто подбирает скорость первого перехода из К1 в К2. Затем эта найденная скорость постоянна для остальных отрезков и всей цепочки." : "Авто подбирает постоянную скорость для каждого прямого отрезка отдельно, чтобы прийти к стыку при совпадении граней.");
-  parts.push(inward ? "Все внешние щели запускаются одной группой. Новый запуск — снова вся группа с нулевой статистикой." : cfg.coneBallChain ? "Цепочка включена: когда предыдущий шарик вышел из кольца 1, из центра стартует следующий. Завершённые вылеты освобождают места для новых." : "Цепочка выключена: запускается один шарик.");
-  parts.push(inward || cfg.coneBallLoss ? cfg.coneBallImpact === "bounce" ? "Удар: отскок. Попав в сплошную дугу, шарик разворачивается и едет назад по своей грани. Щель или открытый вырез пропускают дальше." : "Удар: застрять. Попадание в сплошную дугу останавливает шарик: он остаётся видимым внутри нужного бита и вращается с кольцом. Щель или открытый вырез пропускают дальше." : "«✕ дуга» выключена: на несовпавшем стыке шарик ждёт прямую или разворачивается по своей грани.");
-  parts.push(inward ? "При движении в центр считаются прохождения и удары; запись единиц за чертой относится к вылетам наружу." : cfg.coneBallMark ? "«1 за чертой» включена: удар в дугу кольца за чертой записывает 1 в тот бит, куда попал шарик, при застревании и при отскоке. Проход через щель или вырез ничего не записывает. Заполненная единицами строка уходит в поле; застрявшие шарики и общий счёт сохраняются, вылеты продолжаются." : "«1 за чертой» выключена: вылеты не записывают биты.");
+  parts.push(inward ? "Все внешние щели запускаются одной группой. Новый запуск обнуляет статистику шариков и сохраняет уже закрытые кольца. Когда закрыты все видимые кольца, новых стартов нет — нужен сброс." : cfg.coneBallChain ? "Цепочка включена: когда предыдущий шарик вышел из кольца 1, из центра стартует следующий. Завершённые вылеты освобождают места для новых." : "Цепочка выключена: запускается один шарик.");
+  parts.push(inward || cfg.coneBallLoss ? cfg.coneBallImpact === "bounce" ? "Удар: отскок. Попав в сплошную дугу, шарик разворачивается и едет назад по своей грани. Щель или открытый вырез пропускают дальше." : "Удар: застрять. Попадание в сплошную дугу останавливает шарик: он остаётся видимым в месте удара по дуге нужного бита и вращается с кольцом. Щель или открытый вырез пропускают дальше." : "«✕ дуга» выключена: на несовпавшем стыке шарик ждёт прямую или разворачивается по своей грани.");
+  parts.push(inward ? "В начале нового опыта К1 пустой: все его биты 0. Удар в дугу снаружи записывает 1 в место попадания, в том числе на закрытом кольце. Щель и вырез ничего не записывают. " + (cfg.coneBallZeroBounce ? "«0 при отскоке» включено: после отскока удар в дугу внешнего кольца изнутри записывает 0 в место попадания." : "«0 при отскоке» выключено: удар изнутри биты не меняет.") + "" : cfg.coneBallMark ? "«1 за чертой» включена: удар в дугу кольца за чертой записывает 1 в тот бит, куда попал шарик, при застревании и при отскоке. Проход через щель или вырез ничего не записывает. Заполненная единицами строка уходит в поле; застрявшие шарики и общий счёт сохраняются, вылеты продолжаются." : "«1 за чертой» выключена: вылеты не записывают биты.");
   parts.push(cfg.coneNotch ? "«⟂ грани» включены: совпадения прямых оставляют засечки за чертой; для засечек нужны хотя бы два кольца строк над чертой." : "«⟂ грани» выключены: засечки не добавляются; «● вылет» работает отдельно.");
   parts.push("Статистика этого запуска — слева от верхнего конца вертикальной оси; таблица оборотов шариков — справа, на той же высоте. Новый запуск обнуляет счёт; сброс стирает статистику и застрявшие шарики.");
   return parts.join("\n\n");
@@ -2710,11 +2710,12 @@ function coneRunStatsSync(cv, R, dpr, cx){
     turns.style.maxHeight = Math.max(100, Math.min(240, R.height - 65)) + "px";
   }
   const moving = data.rings.reduce((n, r) => n + r.moving, 0), waiting = data.rings.reduce((n, r) => n + r.waiting, 0), lost = data.rings.reduce((n, r) => n + r.lost, 0);
-  const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
-    "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.removed ? " · снято при смене колец " + data.removed : ""),
+  const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(data.simultaneous ? 6 : 2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
+    "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.removed ? " · снято при смене колец " + data.removed : "") + (data.closedCount ? " · закрыто К1–К" + data.closedCount : ""),
     ["", Z.coneBallRoute === "in" ? "1 · база в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
-  data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
-    "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
+  data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k < data.closedCount ? " закрыто" : k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
+    "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · +0: " + (r.zeros || 0) + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
+  if (data.simultaneous) lines.splice(1, 0, "Одновременно: " + data.simultaneous.events.map(e => "шарик " + e.number + " → " + e.ring).join("; ") + ". ▶ — продолжить");
   const text = lines.join("\n"), textEl = el.querySelector(".cone-run-text"); if (textEl.textContent !== text) textEl.textContent = text;
 }
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
@@ -2752,6 +2753,7 @@ function coneArtBlocksButton(e){
 document.addEventListener("pointerdown", coneArtBlocksButton, true);
 document.addEventListener("click", coneArtBlocksButton, true);
 function renderCone(){
+  const ballClosedCount = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
   coneBallModeTip();
   if (coneMagStep && coneMagStep.stamp !== coneMagFingerprint()) coneMagStep = null;
   if (coneMagCount !== null) {
@@ -2887,7 +2889,7 @@ function renderCone(){
     /* v0.660, «почему у 1 бита 2 щели?» → «1» (убрать собственную): кольцо строки 1 при луч-часах — затвор, выход только через вырез (золотые
        края); своей щели между битами и черт границ у него нет — через них луч всё равно не шёл. При ☀ солнце выреза нет — там как было */
     const shut = !!clockRays && i === 0 && !coneSunOn();
-    const gap = Z.coneClean || shut ? 0 : clockRays && n >= 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   /* v0.573: и у строки из 1 бита — одна щель (граница бита с самим собой) */   // v0.222: «чистые кольца» — без прорезей   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
+    const gap = i < ballClosedCount || Z.coneClean || shut ? 0 : clockRays && n >= 1 ? (coneNoGap() ? 0 : coneSlitHalf(n))   /* v0.573: и у строки из 1 бита — одна щель (граница бита с самим собой) */   // v0.222: «чистые кольца» — без прорезей   // v0.208: ☀ «0 — проход» — без прорезей; v0.124: при луч-часах щель между битами — та, что в расчёте (ползунок «щель»)
       : n >= 1 && step * rin > 3 * dpr ? Math.min(step * 0.12, 1.5 * dpr / Math.max(1, rin)) : 0;
     const arcLen = step * (rin + rout) / 2, fsz = Math.min(dr * band * 0.95, arcLen * 0.85);
     const glyph = fsz >= 5 * dpr;   // v0.162, «вид сверху на все — пиши 1 и 0 на секторах»: символ — почти во всю ширину кольца и с 5 px (прежде 0.8 ширины и с 8 px — у узких колец цифр не было)
@@ -3074,7 +3076,7 @@ function renderCone(){
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
     const f = fillDraft(), n = f.length, FC = f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
-    const gp = n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
+    const gp = N >= ballClosedCount && n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
     const FR = FC && coneFreeOn(), fD = FR ? fillFreeDraft() : f, nD = FR ? FC.P : n;   // v0.722: «▦ любые» — все 2n − 1 частей — места, выреза ещё нет
     /* v0.861, «сделай почётче разницу между дугами вырезов и битов у внешнего кольца» (по «вырезам между»): у кольца за чертой
        всё было одним тонким пунктиром, и место бита от выреза не отличалось. Теперь в вырезах: место бита — СПЛОШНОЙ контур
@@ -3535,7 +3537,7 @@ function renderCone(){
           g.stroke(); g.restore();
         }
       }
-    } else if (coneQuadOn()) {   // v0.743: ✚ 4 части — строка 1 кругом от центра: чёрная, белая, чёрная, белая (от верха по часовой)
+    } else if (!ballClosedCount && coneQuadOn()) {   // v0.743: ✚ 4 части — строка 1 кругом от центра: чёрная, белая, чёрная, белая (от верха по часовой)
       const parts = conePartCount(), partStep = TAU2 / parts, rD = r0 + Math.max(1, dr * band), q0 = -Math.PI / 2 - coneRotOf(0) * partStep + coneRow1PartPhase();
       g.save(); g.globalAlpha = 1;
       for (let q = 0; q < parts; q++) { g.fillStyle = q % 2 ? c1 : "#05070b"; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, q0 + q * partStep, q0 + (q + 1) * partStep); g.closePath(); g.fill(); }
@@ -3544,7 +3546,7 @@ function renderCone(){
       g.moveTo(cx + rD, cy); g.arc(cx, cy, rD, 0, 2 * Math.PI); g.stroke(); g.restore();
       coneGlyph(g, cx, cy, q0 + 1.5 * partStep, 0, dr * band * 0.95, (Z.rows[0] || "1")[0], cT, ff, 0.35);
       coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
-    } else if (coneHalfOn()) {
+    } else if (!ballClosedCount && coneHalfOn()) {
       const rD = r0 + Math.max(1, dr * band), b0 = (-0.5 - coneRotOf(0)) * Math.PI - Math.PI / 2, bit = (Z.rows[0] || "1")[0];
       g.save(); g.globalAlpha = 1; g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, rD + dpr, 0, 2 * Math.PI); g.fill();
       g.fillStyle = bit === "1" ? c1 : c0; g.globalAlpha = bit === "1" ? 0.95 : 0.55; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, rD, b0, b0 + Math.PI); g.closePath(); g.fill();
@@ -3553,7 +3555,7 @@ function renderCone(){
       g.stroke(); g.restore();
       coneGlyph(g, cx, cy, b0 + Math.PI / 2, 0, dr * band * 0.95, bit, cT, ff, 0.35);
       coneTurnRim(g, cx, cy, rD, dpr, cg);   // v0.812
-    } else if (coneSlitMode() !== "cut" || coneRow1Slit()) {   // v0.745: ▮ щель 1 — и в вырезах; v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
+    } else if (!ballClosedCount && (coneSlitMode() !== "cut" || coneRow1Slit())) {   // v0.745: ▮ щель 1 — и в вырезах; v0.665: в режиме вырезов у строки 1 затвора нет; v0.119 / v0.121: вырез в кольце строки 1 — прорезь цветом фона шириной в щель (v0.124), края золотые
       const ri = Math.max(0, r0 - dpr), ro = r0 + Math.max(1, dr * band) + dpr, a = coneCutAngle(), h = Math.min(Math.PI, Math.max(coneRow1Slit() ? coneRow1Half() : hs, 1.5 * dpr / Math.max(1, ro)));   // v0.774: внутренний край — точка, ширина — по внешнему   // v0.751: ▮ — свой угол   // v0.139: вырез — отдельно от лазера
       g.fillStyle = cBg; g.beginPath(); g.arc(cx, cy, ro, a - h, a + h); g.arc(cx, cy, Math.max(0, ri), a + h, a - h, true); g.closePath(); g.fill();
       g.strokeStyle = cg; g.lineWidth = Math.max(1.5 * dpr, dpr); g.lineCap = "butt"; g.beginPath();
@@ -3655,6 +3657,15 @@ function renderCone(){
   if (sol3) g.restore();
   }   // v0.082: конец плоского вида
   if (spin2d) g.restore();
+  if (!Z.cone3d && ballClosedCount) {
+    g.save(); g.globalAlpha = 1; g.shadowBlur = 0; g.setLineDash([]);
+    g.strokeStyle = "#79e7e1"; g.lineWidth = 2 * dpr;
+    for (let k = 0; k < ballClosedCount; k++) {
+      const ro = r0 + k * dr + Math.max(1, dr * band);
+      g.beginPath(); g.arc(cx, cy, ro, 0, TAU2); g.stroke();
+    }
+    g.restore();
+  }
   if (window.zzBallDraw && !Z.cone3d) window.zzBallDraw(g, { cx, cy, dr, dpr });
   // текст
   const i = Z.cur, s = cur(), k = nk[i], key = s.length + ":" + k.canon, mates = (groups.get(key) || []).filter(j => j !== i);
@@ -5277,13 +5288,14 @@ const CONE_SLIT1_COL = "#22e07a";
 function coneOneSlitDraw(g, o){
   if (!coneOneSlit()) return;
   const { cx, cy, r0, dr, band, dpr, N } = o;
+  const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
   g.save(); g.fillStyle = CONE_SLIT1_COL; g.strokeStyle = CONE_SLIT1_COL; g.shadowColor = CONE_SLIT1_COL; g.shadowBlur = 8 * dpr; g.globalAlpha = 0.95;
   const w = Math.max(3 * dpr, Math.min(8 * dpr, dr * 0.08));   // одна ширина на все кольца
   /* v0.1040, «почему у 1 строки нет щели в режиме N щель?»: у строки 1 своя щель — вырез-затвор, через который выходит лазер (coneCutAngle: поворот строки 1
      и прицел); та же зелёная полоса от центра до края кольца 1 */
-  if (N >= 1) { const a = coneCutAngle(), c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2, rout = r0 + Math.max(1, dr * band);
+  if (N >= 1 && !closed) { const a = coneCutAngle(), c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2, rout = r0 + Math.max(1, dr * band);
     g.beginPath(); g.moveTo(cx + r0 * c + px, cy + r0 * sn + py); g.lineTo(cx + rout * c + px, cy + rout * sn + py); g.lineTo(cx + rout * c - px, cy + rout * sn - py); g.lineTo(cx + r0 * c - px, cy + r0 * sn - py); g.closePath(); g.fill(); }
-  for (let i = 1; i < N; i++) {
+  for (let i = Math.max(1, closed); i < N; i++) {
     const R = coneRingFeat(i); if (!R || !R.one) continue;
     // v0.1039, «щель одинаковой ширины у всех»: полоса с параллельными краями одной ширины w на всех кольцах (не клин по углу)
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step, c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2;
@@ -7117,7 +7129,7 @@ function setupCone(){
     if (offDrive) { autoT0 = 0; autoRaf = requestAnimationFrame(autoTick); return; }
     if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
     const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
-    if (!autoStep(dt)) return;
+    if (!autoStep(dt) || !coneSpinning) return;
     if (!zzBgHidden()) renderCone();   // v0.564: фон хаба, которого не видно, — не рисуется
     autoRaf = requestAnimationFrame(autoTick);
   };
@@ -7508,13 +7520,21 @@ function setupCone(){
   }
   if ($("bConeBallImpact")) {
     const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
-    sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun(); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); save(); renderCone(); };
+    sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); save(); renderCone(); };
+  }
+  if ($("bConeBallZeroBounce")) {
+    const sync = () => { const b = $("bConeBallZeroBounce"); b.classList.toggle("on", !!Z.coneBallZeroBounce); b.setAttribute("aria-pressed", String(!!Z.coneBallZeroBounce)); };
+    sync(); $("bConeBallZeroBounce").onclick = () => {
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+      Z.coneBallZeroBounce = !Z.coneBallZeroBounce; sync(); save(); renderCone();
+      say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 при отскоке выключена; удары снаружи по-прежнему ставят 1.");
+    };
   }
   if ($("bConeBallSpeed")) {
     const labels = ["1 · авто", "2 · оборот К1", "3 · ½ оборота К1"], sync = () => { const n = [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1; $("bConeBallSpeed").textContent = labels[n - 1]; $("bConeBallSpeed").dataset.mode = n; };
     sync(); $("bConeBallSpeed").onclick = () => {
       const n = [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1;
-      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun();
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
       Z.coneBallSpeedMode = n % 3 + 1; sync(); save(); renderCone();
       say(labels[Z.coneBallSpeedMode - 1] + ": выбран режим для следующего «● вылета».");
     };
@@ -7524,7 +7544,8 @@ function setupCone(){
     if (!window.zzBallLaunch) return;
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:!!Z.coneBallLoss,mark:false,chain:false});
-    say(ok ? "● В центр: одновременно из всех щелей внешнего видимого кольца. Дошедшие останавливаются в центре; удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : "Не удалось запустить — подсказка в группе «Шарики».");
+    const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
+    say(ok ? "● В центр: вся внешняя группа. Первый дошедший закрывает К1; попадание в закрытый центр закрывает следующее кольцо. До закрытия удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
   };
   if ($("bConeBallMark")) {   // v0.1053: «1 за чертой» — вылетевший в кольцо за чертой шарик ставит «1» в ячейку
     const ui = () => { const b = $("bConeBallMark"); b.classList.toggle("on", !!Z.coneBallMark); b.setAttribute("aria-pressed", String(!!Z.coneBallMark)); };
@@ -7532,6 +7553,22 @@ function setupCone(){
       say(Z.coneBallMark ? "1 за чертой: попадание шарика в дугу бита ставит «1» в этот бит, шарик застревает или отскакивает. Щель и открытый вырез — проход без записи. Все ячейки «1» — строка уходит в поле, вылеты идут дальше." : "1 за чертой выключено: шарики ячейки не трогают."); };
   }
   /* v0.1053: отметки шариков в строке за чертой — «1» в ячейки (как у лазера: строка из одних «1» сама уходит в поле) */
+  window.zzBallCenterInit = () => {
+    if (Z.rows[0]) Z.rows[0] = "0".repeat(Z.rows[0].length);
+    save(); renderRows();
+  };
+  window.zzBallBitWrite = (hits) => {
+    const changes = [];
+    for (const h of hits) {
+      const s = h.k === Z.rows.length ? fillDraft() : Z.rows[h.k];
+      if (!s || h.bit < 0 || h.bit >= s.length || s[h.bit] === h.value) continue;
+      const next = s.slice(0, h.bit) + h.value + s.slice(h.bit + 1);
+      if (h.k === Z.rows.length) Z.fillCells = next; else Z.rows[h.k] = next;
+      changes.push(h);
+    }
+    if (changes.length) { save(); renderRows(); renderCone(); }
+    return changes;
+  };
   window.zzBallFillMark = (cells) => {
     const f0 = fillDraft(); let f = f0, written = 0;
     for (const j of cells) if (j >= 0 && j < f.length && f[j] !== "1") { f = f.slice(0, j) + "1" + f.slice(j + 1); written++; }
