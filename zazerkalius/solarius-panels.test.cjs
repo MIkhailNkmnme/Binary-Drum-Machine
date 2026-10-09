@@ -236,6 +236,32 @@ test('a group snaps under the top menu beside the window controls and stays ther
   assert.equal(position.y, 34);
 });
 
+test('a group on the left teeth stays immediately below the Solarius menu without overlapping it', () => {
+  const visible = rect => ({ getClientRects: () => [rect], getBoundingClientRect: () => rect });
+  const title = visible({ left: 792, right: 920, width: 128, top: 34, bottom: 58 });
+  const head = { ...visible({ top: 34, bottom: 58 }), children: [title] };
+  const body = { ...visible({ left: 784, right: 1280, top: 58, bottom: 800 }),
+    closest: () => ({ ...visible({ left: 784, right: 1280, top: 34, bottom: 800 }), querySelector: () => head }) };
+  const edge = { ...visible({ left: 784, right: 792, top: 34, bottom: 800 }), style: { backgroundPosition: '0px 0px' } };
+  const context = vm.createContext({ TZC_H: 24, document: {
+    body: { classList: { contains: () => false } },
+    getElementById: id => ({ cgTabs: null, fieldZigOv: edge })[id]
+  } });
+  vm.runInContext(declaration(ui, 'function solPanelTop(') + declaration(ui, 'function solEdgePosition('), context);
+  assert.equal(context.solPanelTop(body, 784, 300), 58);
+  const position = context.solEdgePosition({ offsetWidth: 300 }, { id: 'fieldZigOv', row: 0 },
+    (x, width) => context.solPanelTop(body, x, width), 656);
+  assert.equal(position.x, 784);
+  assert.equal(position.y, 58);
+  assert.equal(context.solPanelTop(body, 784, 300) - position.y, 0);
+  // Рамка окна и фаза зубцов расходятся на 2 px: панель всё равно прижата к меню, а не к следующему ряду.
+  head.getBoundingClientRect = () => ({ top: 35, bottom: 59 });
+  edge.style.backgroundPosition = '0px 23px';
+  const framed = context.solEdgePosition({ offsetWidth: 300 }, { id: 'fieldZigOv', row: 0 },
+    (x, width) => context.solPanelTop(body, x, width), 656);
+  assert.equal(framed.y, 59);
+});
+
 test('double click docks and restores a group while single click unfolds in the bottom dock', () => {
   const key = 'за чертой', folded = new Set();
   const state = { cgrpPos: { [key]: { x: 1200, y: -56 } }, cgrpFld: {}, cgrpMin: {},

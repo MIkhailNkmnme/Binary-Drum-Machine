@@ -2196,9 +2196,10 @@ function solEdgePosition(el, anchor, top, bottom){
   const origin = q.top + off - (left ? TZC_H / 2 : 0);
   const x = left ? q.right - el.offsetWidth : q.left;
   if (typeof top === "function") top = top(x, el.offsetWidth);
-  const lo = Math.ceil((top - origin - 0.01) / TZC_H), hi = Math.max(lo, Math.floor((bottom - origin + 0.01) / TZC_H));
+  // v0.1017: у шапки и зубчатой полосы разные рамки (до 4 px); ближайший ряд прижимаем к шапке без перекрытия.
+  const lo = Math.ceil((top - origin - 4.01) / TZC_H), hi = Math.max(lo, Math.floor((bottom - origin + 0.01) / TZC_H));
   const row = Math.max(lo, Math.min(hi, anchor.row));
-  return { x, y: origin + row * TZC_H };
+  return { x, y: Math.max(top, origin + row * TZC_H) };
 }
 // v0.1014: под свободной частью верхней полосы группа может стоять выше заголовка Solarius.
 function solPanelTop(body, x, width){
