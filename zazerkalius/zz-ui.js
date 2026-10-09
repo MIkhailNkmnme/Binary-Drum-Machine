@@ -6573,7 +6573,8 @@ function c3AxesPlace(){
     const L = br ? br.left : center - w / 2 - gap - zw, R = br ? br.right : center + w / 2 + gap;
     const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
       if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== t) el.style.top = t; };
-    place(zo, L - zw); place(zi, R); }
+    // v0.1048, «острые вверх»: треугольник остриём вверх заходит на баланс на полширины — наклонные стороны совпадают, как в сетке треугольников
+    if (br) { place(zo, L - zw / 2); place(zi, R - zw / 2); } else { place(zo, L - zw); place(zi, R); } }
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
   /* v0.858, «проверь на телефон версию»: на телефоне полоса вкладок стоит ПОД холстом, и ромбы «у верха холста» (✛ оси, баланс) уезжали под неё, на
