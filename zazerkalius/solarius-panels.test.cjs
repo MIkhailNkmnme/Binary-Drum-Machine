@@ -145,3 +145,124 @@ test('the top question button toggles all hover tips instead of the help window'
   assert.match(ui, /\$\("bHelp"\)\.onclick = \(\) => \{ Z\.tipsOn/);
   assert.doesNotMatch(ui, /\$\("bHelp"\)\.onclick = \(\) => \{ Z\.helpOn/);
 });
+
+test('both jagged edges remain above the active window after raising it', () => {
+  const nodes = { paneZigOv: { style: {} }, fieldZigOv: { style: {} } };
+  const state = { z: 607 };
+  const context = vm.createContext({ Z: state, document: { getElementById: id => nodes[id] } });
+  vm.runInContext(declaration(ui, 'function paneZigZ('), context);
+  for (const z of [10, 607, 900]) {
+    state.z = z; context.paneZigZ();
+    for (const node of Object.values(nodes)) assert.ok(Number(node.style.zIndex) > z);
+  }
+});
+
+test('axes use the positioned ancestor and stay flush with the first menu strip', () => {
+  const host = { clientLeft: 1, clientTop: 1, scrollLeft: 9, scrollTop: 11,
+    getBoundingClientRect: () => ({ left: 221, top: 34, width: 844 }) };
+  const attrs = {};
+  const button = { style: {}, offsetWidth: 24, offsetParent: host,
+    parentElement: { getBoundingClientRect() { throw new Error('static body is not the containing block'); } },
+    setAttribute: (key, value) => { attrs[key] = value; } };
+  const canvas = { getBoundingClientRect: () => ({ left: 221, right: 1065, top: 34, width: 844 }) };
+  const context = vm.createContext({ Z: { coneAxes: true }, coneGeom: { dpr: 2, cx: 800 },
+    cgTabsBottom: () => 62, document: { getElementById: id => ({ bC3Axes: button, coneCv: canvas })[id] } });
+  vm.runInContext(declaration(ui, 'function c3AxesPlace('), context);
+  context.c3AxesPlace();
+  assert.equal(button.style.left, '396.0px');
+  assert.equal(button.style.top, '10.0px');
+  assert.equal(attrs['aria-pressed'], 'true');
+  context.Z.coneAxes = false; context.c3AxesPlace();
+  assert.equal(attrs['aria-pressed'], 'false');
+});
+
+test('canvas artwork cannot swallow the top axes button', () => {
+  const context = vm.createContext({ document: { getElementById: () => ({
+    hidden: false, getBoundingClientRect() { throw new Error('axes must bypass artwork hit testing'); }
+  }) } });
+  vm.runInContext(declaration(ui, 'function coneArtBlocksButton('), context);
+  context.coneArtBlocksButton({ target: { closest: () => ({ id: 'bC3Axes' }) } });
+});
+
+test('window tabs keep their widths and positions when the selected tab changes', () => {
+  const style = () => { const values = {}; return { values,
+    setProperty: (key, value) => { values[key] = value; }, removeProperty: key => { delete values[key]; } }; };
+  const buttons = ['Solarius', 'Бирамида', 'Развёртка', 'Сетка'].map(text => {
+    const classes = new Set();
+    return { tagName: 'BUTTON', textContent: text, dataset: {}, offsetTop: 0, style: style(),
+      closest: selector => selector === '#pinBar' ? {} : null,
+      classList: { contains: key => classes.has(key), add: key => classes.add(key), remove: key => classes.delete(key),
+        toggle: (key, on) => on ? classes.add(key) : classes.delete(key) } };
+  });
+  const top = { children: [{ id: 'pinBar', children: buttons }], style: style(),
+    classList: { add() {} }, scrollWidth: 800, clientWidth: 1200 };
+  let measured;
+  const context = vm.createContext({ TZC_H: 24, TZ_TIP: [1, 0, 1], TZ_NOTCH: [0, 1, 0], Z: {},
+    window: {}, lpTag: {}, lpWin() {}, tzLnBg: () => '', getComputedStyle: () => ({ height: '24px', borderTopColor: '#888' }),
+    document: { getElementById: id => id === 'top' ? top : null, createRange: () => ({ selectNodeContents: b => { measured = b; },
+      getBoundingClientRect: () => ({ width: measured.textContent.length * 7 }) }) } });
+  vm.runInContext(declaration(ui, 'function tzGeo(') + declaration(ui, 'function lpTop('), context);
+  let baseline;
+  for (const selected of [-1, 0, 1, 2, 3, 0]) {
+    buttons.forEach((b, i) => b.classList.toggle('on', i === selected));
+    context.lpTop('#888', () => true);
+    let x = 0;
+    const positions = buttons.map(b => { x += parseFloat(b.style.values['margin-left']) || 0;
+      const width = parseFloat(b.style.values.width), result = { x, width }; x += width; return result; });
+    if (!baseline) baseline = positions;
+    else assert.deepEqual(positions, baseline);
+  }
+});
+
+test('a group snaps under the top menu beside the window controls and stays there on the right teeth', () => {
+  const visible = rect => ({ getClientRects: () => [rect], getBoundingClientRect: () => rect });
+  const control = visible({ left: 48, right: 370, width: 322, top: 36, bottom: 61 });
+  const head = { ...visible({ top: 34, bottom: 62 }), children: [control] };
+  const body = { ...visible({ left: 44, right: 1768, top: 62, bottom: 863 }),
+    closest: () => ({ ...visible({ left: 44, right: 1768, top: 34, bottom: 863 }), querySelector: () => head }) };
+  const tabs = visible({ left: 118, right: 226, width: 108, top: 36, bottom: 55 });
+  const edge = { ...visible({ left: 1760, right: 1768, top: 34, bottom: 863 }), style: { backgroundPosition: '0px 12px' } };
+  const context = vm.createContext({ TZC_H: 24, document: {
+    body: { classList: { contains: name => name === 'field-right' } },
+    getElementById: id => ({ cgTabs: tabs, fieldZigOv: edge })[id]
+  } });
+  vm.runInContext(declaration(ui, 'function solPanelTop(') + declaration(ui, 'function solEdgePosition('), context);
+  assert.equal(context.solPanelTop(body, 1468, 300), 34);
+  assert.equal(context.solPanelTop(body, 200, 300), 62);
+  assert.equal(context.solPanelTop(body), 62);
+  const position = context.solEdgePosition({ offsetWidth: 300 }, { id: 'fieldZigOv', row: 0 },
+    (x, width) => context.solPanelTop(body, x, width), 791);
+  assert.equal(position.x, 1468);
+  assert.equal(position.y, 34);
+});
+
+test('double click docks and restores a group while single click unfolds in the bottom dock', () => {
+  const key = 'за чертой', folded = new Set();
+  const state = { cgrpPos: { [key]: { x: 1200, y: -56 } }, cgrpFld: {}, cgrpMin: {},
+    cgrpEdge: { [key]: { id: 'fieldZigOv', row: 0 } }, cgrpPin: {},
+    cgrpLink: { child: { to: key, v: 1, dx: 0 } } };
+  const g = { dataset: { g: key }, style: {}, classList: { toggle: (name, on) => on ? folded.add(name) : folded.delete(name) } };
+  const context = vm.createContext({ Z: state, g, foldUi() {}, cgbSnap() {}, sizeApply() {}, cgrpCols() {},
+    place() {}, linkSync() {}, save() {}, solHeaderRoom: () => 600,
+    nodeUnpin: () => { delete state.cgrpEdge[key]; delete state.cgrpPin[key]; } });
+  vm.runInContext(declaration(ui, 'function solLinkCycle(') + declaration(ui, 'const foldToggle = (') +
+    declaration(ui, 'const dockToggle = () => {') + '; runDock = dockToggle; runFold = foldToggle;', context);
+  context.runDock();
+  assert.equal(state.cgrpFld[key].z, 'head');
+  assert.equal(folded.has('cmin'), true);
+  assert.equal(state.cgrpEdge[key], undefined);
+  assert.equal(state.cgrpLink.child.to, key);
+  context.runFold(false);
+  assert.equal(folded.has('cmin'), false);
+  assert.equal(state.cgrpFld[key].z, 'head');
+  assert.ok(state.cgrpMinPos[key]);
+  context.runFold(true);
+  assert.equal(state.cgrpFld[key].z, 'head');
+  context.runDock();
+  assert.equal(folded.has('cmin'), false);
+  assert.equal(state.cgrpFld[key], undefined);
+  assert.equal(state.cgrpPos[key].x, 1200);
+  assert.equal(state.cgrpPos[key].y, -56);
+  assert.equal(state.cgrpEdge[key].row, 0);
+  assert.equal(state.cgrpMinPos[key], undefined);
+});

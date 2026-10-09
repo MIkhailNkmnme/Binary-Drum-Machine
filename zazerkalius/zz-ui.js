@@ -1964,7 +1964,7 @@ function lasDeps(){
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
   need(["bRow1Parts1", "bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
   need(["bRow1Parts1"], coneCut2n(), "в «вырезах 2n» строка 1 всегда полукольцо — целым битом её не сделать");   // v0.952
-  need(["coneVoid", "coneSlit", "bConeSlits", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
+  need(["coneVoid", "coneSlit", "bCutAlign", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
     "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["bConeEdgeStop"], d3 || Z.rows.length > CONE_MAX, "нужно плоское кольцо за чертой (или 3D Solarius), до 256 строк");
@@ -2194,9 +2194,25 @@ function solEdgePosition(el, anchor, top, bottom){
   const q = ov.getBoundingClientRect(), left = anchor.id === "fieldZigOv" && document.body.classList.contains("field-right");
   const off = parseFloat(String(ov.style.backgroundPosition || "0 0").split(" ")[1]) || 0;
   const origin = q.top + off - (left ? TZC_H / 2 : 0);
+  const x = left ? q.right - el.offsetWidth : q.left;
+  if (typeof top === "function") top = top(x, el.offsetWidth);
   const lo = Math.ceil((top - origin - 0.01) / TZC_H), hi = Math.max(lo, Math.floor((bottom - origin + 0.01) / TZC_H));
   const row = Math.max(lo, Math.min(hi, anchor.row));
-  return { x: left ? q.right - el.offsetWidth : q.left, y: origin + row * TZC_H };
+  return { x, y: origin + row * TZC_H };
+}
+// v0.1014: под свободной частью верхней полосы группа может стоять выше заголовка Solarius.
+function solPanelTop(body, x, width){
+  const win = body.closest(".win"), r = (win || body).getBoundingClientRect(), head = win?.querySelector(":scope > .whead");
+  let top = r.top;
+  const crosses = el => {
+    if (!el || !el.getClientRects().length) return false;
+    const q = el.getBoundingClientRect();
+    return !Number.isFinite(x) || !Number.isFinite(width) || (q.width > 0 && q.right > x && q.left < x + width);
+  };
+  if (head && head.getClientRects().length && (!Number.isFinite(x) || [...head.children].some(crosses))) top = Math.max(top, head.getBoundingClientRect().bottom);
+  const tabs = document.getElementById("cgTabs");
+  if (!document.body.classList.contains("zen") && crosses(tabs)) top = Math.max(top, tabs.getBoundingClientRect().bottom);
+  return top;
 }
 function solLinkCycle(links, kid, par){
   const seen = new Set([kid]);
@@ -2417,7 +2433,7 @@ function sunTblBuild(el){
   SUNTBL.forEach((r, i) => {
     if (r.g) { gi = ["Проход сквозь", "Красит за чертой", "Солнце", "Луна светит", "Источник"].indexOf(r.g); x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
     x += '<tr class="sg' + gi + '" title="' + q(r.tip) + '"><td class="sml">' + r.t + "</td>";
-    for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ' + w + '" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
+    for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ib ' + w + '" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
     x += "</tr>";
   });
   host.innerHTML = x + "</tbody></table>";
@@ -2529,7 +2545,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || !layer || layer.hidden) return;
+  if (!button || button.id === "bC3Axes" || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d", { willReadFrequently: true }).getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -2721,7 +2737,7 @@ function renderCone(){
       if (MI && MI.odd) col = MI.cls[j] === 2 ? coneCss("--green", "#6ee7a0") : MI.cls[j] === 1 ? cg : cR;   // v0.081: против пары — сколько совпало
       if (blank) col = cE;   // v0.131: при луч-часах ячейка пустая — чёрная, без 0/1
       if (Z.coneArcs === false) continue;   // v0.375: «◠ дуги» выключены — дуг битов нет (границы, кольца, лучи — как были)
-      const sm1 = !!clockRays && (coneCutOn() || !coneSunOn()) ? coneSlitMode() : "all", ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gap, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gap;   // v0.665: вырезы — без прорезей   // v0.664: одна щель — прорезь только перед первым битом
+      const sm1 = coneSlitMode(), ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gap, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gap;   // v0.665: вырезы — без прорезей   // v0.664: одна щель — прорезь только перед первым битом
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();   // v0.109: у многоугольника — сторона
       /* v0.078, «чётче границы внутри кольца и цвета ярче — сливаются»: заливка плотнее (у единиц и неподвижных — почти
          сплошная, у нулей — заметная), символ поверх единицы — цветом фона (контраст на плотной заливке), у нуля — своим
@@ -2779,8 +2795,8 @@ function renderCone(){
       }
       g.globalAlpha = 1;
     }
-    if (clockRays && i >= 1 && n >= 2 && coneCutSpread()) cutAltEdges(g, cx, cy, rin, rout, rot, step, n, cutEdgeCol, dpr);   // v0.935: золото добавляется только в солнечном свете
-    if (clockRays && i >= 1 && n >= 2 && coneCutOn() && CP !== "alt" && !coneCutSpread()) {   // v0.781: «через 1» — единого выреза нет; v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
+    if (i >= 1 && n >= 2 && coneCutSpread()) cutAltEdges(g, cx, cy, rin, rout, rot, step, n, cutEdgeCol, dpr);   // v0.935: золото добавляется только в солнечном свете
+    if (i >= 1 && n >= 2 && coneCutOn() && CP !== "alt" && !coneCutSpread()) {   // v0.781: «через 1» — единого выреза нет; v0.667: вырез — дыра после последнего бита (там ничего не нарисовано), края — золотые черты
       const e0 = -Math.PI / 2 - rot * step + n * step, e1 = e0 + (coneCutP(n) - n) * step;   // v0.772: вырез — частей − n
       g.save(); g.strokeStyle = cutEdgeCol; g.lineCap = "butt"; g.globalAlpha = 0.95; g.lineWidth = Math.max(2 * dpr, Math.min(dr * 0.06, 4 * dpr)); g.beginPath();
       for (const e of [e0, e1]) { g.moveTo(cx + (rin - dpr) * Math.cos(e), cy + (rin - dpr) * Math.sin(e)); g.lineTo(cx + (rout + dpr) * Math.cos(e), cy + (rout + dpr) * Math.sin(e)); }
@@ -2836,7 +2852,7 @@ function renderCone(){
       const n = Z.rows[i].length, cnt = VH[k] | 0; if (!n || j >= n || !cnt) continue;
       const CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + ((CG.cut ? cutPrevPos(i, j) : j) - coneRotOf(i) + CG.off) * step;   // v0.667
       const gp = n >= 1 && !coneNoGap() && !Z.coneClean ? coneSlitHalf(n) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216: «Без щелей» — краска сплошная
-      const sm1 = coneCutOn() || !coneSunOn() ? coneSlitMode() : "all", ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gp, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gp;   // v0.664; v0.665
+      const sm1 = coneSlitMode(), ga = sm1 === "cut" || (sm1 === "one" && j !== 0) ? 0 : gp, gb = sm1 === "cut" || (sm1 === "one" && j !== n - 1) ? 0 : gp;   // v0.664; v0.665
       g.beginPath(); coneArc(g, cx, cy, i, rout, a + ga, a + step - gb); coneArc(g, cx, cy, i, rin, a + step - gb, a + ga, true); g.closePath();
       /* v0.666: бит теперь виден — попадание не заливкой поверх, а золотой рамкой ячейки; сколько раз — «×2», «×3»… мелко у внешнего края */
       g.save(); g.strokeStyle = cg; g.lineJoin = "round"; g.lineWidth = Math.max(2 * dpr, Math.min(dr * band * 0.14, 5 * dpr)); g.globalAlpha = Math.min(1, 0.75 + 0.08 * cnt);
@@ -2859,7 +2875,7 @@ function renderCone(){
     g.shadowBlur = 0;
   }
   if (fillOn) {   // v0.114: кольцо для заполнения — ячейки пунктиром, заполненные — цветом бита; бит 0 — сверху, как у всех
-    const f = fillDraft(), n = f.length, FC = clockRays && f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
+    const f = fillDraft(), n = f.length, FC = f.length === fillLen() ? coneFillCut() : null, rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), step = FC ? FC.step : 2 * Math.PI / n, rotF = coneFillRot() - (FC ? FC.off : 0);   // v0.117: крутится со всеми; v0.675: в вырезах — части 2n − 1
     const gp = n > 1 && !coneNoGap() && !Z.coneClean && !FC ? Math.min(step * 0.1, 1.5 * dpr / Math.max(1, rin)) : 0, fsz = Math.min(dr * band * 0.8, step * (rin + rout) / 2 * 0.85);   // v0.216
     const FR = FC && coneFreeOn(), fD = FR ? fillFreeDraft() : f, nD = FR ? FC.P : n;   // v0.722: «▦ любые» — все 2n − 1 частей — места, выреза ещё нет
     /* v0.861, «сделай почётче разницу между дугами вырезов и битов у внешнего кольца» (по «вырезам между»): у кольца за чертой
@@ -3021,13 +3037,13 @@ function renderCone(){
     }
     g.stroke(); g.globalAlpha = 1;
   }
-  if (clockRays) {   // v0.116: луч-часы — золотой луч из центра до стены (красная черта поперёк) или до кольца для заполнения (точка)
+  if (clockRays || coneCutOn()) {   // v0.1016: затвор строки 1 виден и без света; v0.116: луч-часы — золотой луч из центра до стены (красная черта поперёк) или до кольца для заполнения (точка)
     const tNow = performance.now(), rEnd = r0 + coneRingsTotal(N) * dr, hw = Math.max(3 * dpr, dr * 0.18);   // v0.127: прошедший — сквозь пустые кольца до края
     coneClockFlash = coneClockFlash.filter(F => tNow - F.t < 900);
     /* v0.124, «чем задана ширина лазера и междубитья?» → «да» на «сделать ползунок ширины щели»: лазер — клин той же угловой
        ширины, что щель (Z.coneSlit, градусы): у центра узкий, к краю шире — ровно как щели в кольцах, которые тоже по углу. Проходит
        кольцо, если середина луча в щели, то есть луч хотя бы наполовину в ней. Светлая сердцевина — середина, по ней и считается. */
-    const hs = coneSlitHalf(), cCore = "#fff7d6", lite = clockRays.length > 12;   // v0.201: ✺ — лучей много, без свечения (тени дорогие)
+    const hs = coneSlitHalf(), cCore = "#fff7d6", lite = (clockRays?.length || 0) > 12;   // v0.201: ✺ — лучей много, без свечения (тени дорогие)
     /* v0.134, «когда прошёл через щель, то в месте этом убери свечение на толщине кольца, чтобы видно было эту щель»: holes —
        толщины колец [от, до], чьи щели луч прошёл; там клин и свечение не рисуются (вырезаны), остаётся тонкая сердцевина. */
     const beam = (a, r1, alpha, bold, holes) => {
@@ -3346,11 +3362,11 @@ function renderCone(){
       for (const e of [a - h, a + h]) { g.moveTo(cx + ri * Math.cos(e), cy + ri * Math.sin(e)); g.lineTo(cx + ro * Math.cos(e), cy + ro * Math.sin(e)); }
       g.stroke(); g.lineCap = "round";
     }
-    for (let q = 0; q < coneLaserK(); q++) {   // v0.191: прежние лазеры — тонкой бледной чертой
+    for (let q = 0; q < (clockRays ? coneLaserK() : 0); q++) {   // v0.191: прежние лазеры — тонкой бледной чертой
       const a = coneLaserAngle(q); g.globalAlpha = 0.28; g.strokeStyle = cg; g.lineWidth = dpr; g.setLineDash([4 * dpr, 4 * dpr]);
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + rEnd * Math.cos(a), cy + rEnd * Math.sin(a)); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
     }
-    for (const R of clockRays) {
+    for (const R of clockRays || []) {
       const rs = R.pass ? (R.vstop < coneRingsTotal(N) ? r0 + R.vstop * dr + dr * band / 2 : rEnd) : Math.max(R.stop ? 0 : 4 * dpr, (r0 + R.stop * dr) * coneRho(R.stop, R.a)), px = cx + rs * Math.cos(R.a), py = cy + rs * Math.sin(R.a);   /* v0.774: встал в строке 1 — красная дужка у самой точки (r0 = 0) */   // v0.129: пойман пустым кольцом — до его ячейки
       const holes = R.stop > 0 || R.pass ? [[Math.max(0, r0 - dpr), r0 + Math.max(1, dr * band) + dpr]] : [];   // v0.750: при круге от центра (r0 = 0) радиус не в минус   // v0.134: вырез строки 1 (v0.139: если открыт) и щели, пройденные лучом
       for (let q = 0; q < R.g.length; q += 2) { const ri = r0 + R.g[q] * dr; holes.push([ri - dpr, ri + Math.max(1, dr * band) + dpr]); }
@@ -3376,7 +3392,7 @@ function renderCone(){
         }
       }
     }
-    for (const F of coneClockFlash)   // прошёл между кадрами — вспышка, гаснет за 0,9 с
+    for (const F of clockRays ? coneClockFlash : [])   // прошёл между кадрами — вспышка, гаснет за 0,9 с
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
@@ -3422,12 +3438,12 @@ function renderCone(){
     const { i, j } = coneBitHover, n = Z.rows[i].length, CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
     g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
     g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
-    if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });   // v0.676
+    if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });   // v0.676
   } else if (coneBitHover && coneBitHover.fill && coneBitHover.i === N && fillOn && Z.coneScan) {   // v0.692: ячейка кольца за чертой — тоже со сканером
-    const j = coneBitHover.j, n = fillLen(), F = clockRays ? coneFillCut() : null, step = F ? F.step : 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneFillRot() + (F ? F.off : 0)) * step;
+    const j = coneBitHover.j, n = fillLen(), F = coneFillCut(), step = F ? F.step : 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneFillRot() + (F ? F.off : 0)) * step;
     const rin = r0 + N * dr, rout = rin + Math.max(1, dr * band);
     g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
-    coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: !!clockRays && fillOn });
+    coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });
   }
   if (Z.r1Ray && N >= 1) r1RayDo(g, { cx, cy, r0, dr, N, dpr, fillOn: !!fillOn && !!coneGeom && !!coneGeom.fill }); else r1RayBox(false);   // v0.805: ⟋ нить
   if (coneMagCount !== null && coneFlat() && N) {   // v0.975: число совпавших границ двух колец остаётся на первом кольце до следующего действия
@@ -3616,7 +3632,7 @@ function coneHalfOpen(a){ const t = (((a + Math.PI / 2) % TAU2) + TAU2) % TAU2; 
    в режиме вырезов кольцо строки из E бит делится на 2E − 1 равных частей: E — биты подряд (стена), E − 1 — вырез одной дырой (на рисунке пусто,
    края золотые). Изначально биты — по центру сверху, вырез — по центру снизу. Шаг кольца — часть; накрутка «на бит» — на часть. Строка 1 — без
    выреза, луч идёт мимо. coneCutGeo — шаг и сдвиг для рисунка, мыши и расчёта луча */
-function coneCutOn(){ return !!Z.coneClock && coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut"; }   // v0.677: и при солнце
+function coneCutOn(){ return coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() === "cut"; }   // v0.1016: форма колец не зависит от включения света
 /* v0.673, по снимку — «не располагает: луч лазера — вертикаль вверх, по нему 1; 2 строка — так, чтобы между битами вертикаль; у 3 строки получается
    вертикаль между 2 частями пустоты, и так далее»: начальная расстановка по вертикали чередуется — у чётных строк (2, 4, …) по центру сверху
    биты (вертикаль — между средними битами), у нечётных (3, 5, …) — дыра (вертикаль — между средними частями пустоты). Сдвиг off в частях:
@@ -5326,7 +5342,7 @@ function coneGlyph(g, cx, cy, am, rr, fsz, ch, col, ff, alpha = 1){ g.save(); g.
 function coneRow1Half(){ return Math.max(0.1, Math.min(360, +Z.row1SlitDeg || +Z.coneSlit || 2)) * Math.PI / 360; }
 function coneSunSlit(){ return !!Z.cutRow1Slit && coneSunOn() && coneCutOn() && !coneQuadOn(); }
 function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]; const t = coneCutAngle() + Math.PI / 2, h = coneRow1Half(), o = []; if (h >= Math.PI - 1e-9) return [[0, TAU2]]; ivNorm(t - h, t + h, o); return ivUnion(o); }
-function coneQuadOn(){ return !!Z.laserQuad && coneCutOn() && (!!Z.coneClock || coneSunOn()); }   // v0.744: и у солнца
+function coneQuadOn(){ return !!Z.laserQuad && coneCutOn(); }   // v0.1016: деление строки 1 тоже сохраняется без света
 function conePartCount(){ return Z.row1Parts === "last" ? 2 * Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length) : Z.row1Parts === 3 ? 3 : 4; }
 function coneRow1PartPhase(){
   if (Z.row1Parts !== "sym2" && Z.row1Parts !== "last") return 0;
@@ -6249,20 +6265,22 @@ function coneBalShow(o1, o0){   // v0.812: баланс ромбами на ве
 }
 function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
-  const host = el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  const host = el.offsetParent || el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 120;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.top - hr.top + host.scrollTop;   // v0.936: основания на верхней линии холста, выше полосы вкладок
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;   // v0.1011: верх трио вплотную к первой полосе меню, на верхней линии холста
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
   c3AxesPlace();
 }
 /* v0.945: полупрозрачный ромб осей сверху, в зазоре между балансом 1 и 0. */
 function c3AxesPlace(){
   const b = document.getElementById("bC3Axes"), cv = document.getElementById("coneCv"); if (!b || !cv) return;
-  const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  // v0.1010: .wbody бывает static; координаты — относительно настоящего содержащего блока.
+  const host = b.offsetParent || b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = b.offsetWidth || 24;
   const bal = document.getElementById("coneBal"), br = bal && !bal.hidden && bal.getClientRects().length ? bal.getBoundingClientRect() : null;
   const center = br ? br.left + br.width / 2 : cr.left + cxp;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) + host.scrollLeft, y = cr.top - hr.top + host.scrollTop;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;
+  b.setAttribute("aria-pressed", String(!!Z.coneAxes));
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
@@ -6275,21 +6293,23 @@ function lasAlgoPlace(){
   if (!el || !rules || !body || solPanelFolded(el)) return;
   const W = Math.round(el.getBoundingClientRect().width || 320), key = W + "|" + rules.innerHTML;
   if (el._mk !== key) { el._mk = key; if (el._mw !== W) { el._mw = W; el._mh = 0; body.style.height = ""; } el._mh = Math.max(el._mh || 0, rules.scrollHeight, 128); }
-  const host = el.closest(".wbody") || el.parentElement, hs = Math.min(el._mh, Math.max(128, Math.min(480, (host.clientHeight || innerHeight) - 72))) + "px";
+  const host = el.closest(".wbody") || el.parentElement, hs = Math.ceil(Math.min(el._mh, Math.max(128, Math.min(480, (host.clientHeight || innerHeight) - 72))) / TZC_H) * TZC_H + "px";
   if (body.style.height !== hs) body.style.height = hs;
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
-  const host = b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  // v0.1013: абсолютные кнопки привязаны к offsetParent; статическое тело окна давало лишний отступ снизу.
+  const host = b.parentElement, anchor = b.offsetParent || host, hr = anchor.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
+  const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
   const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
   const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + host.scrollLeft, y = cr.bottom - hr.top - w + host.scrollTop;   // v0.984: ромбы кручения опущены до края холста поверх нижнего треугольника сброса
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft, y = cr.bottom - hr.top - w + scrollTop;   // v0.984: ромбы кручения опущены до края холста поверх нижнего треугольника сброса
   // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
   const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2, sideGap = w / 5;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   if (sp && sp.parentElement === host) put(sp, x, y);
-  put(b, x + (w - rw) / 2, cr.bottom - hr.top - rh + host.scrollTop);
+  put(b, x + (w - rw) / 2, cr.bottom - hr.top - rh + scrollTop);
   if (st) { const overlap = ws / 2; put(stB, x - ws + overlap, y); if (stF && stF.parentElement === host) put(stF, x + w - overlap, y); }   // v0.985: сдвинуть шаги внутрь до перекрытия примерно четверти их площади центральным ромбом
   // v0.931: режимы справа от кручения; копия «На места» убрана из нижнего блока.
   const ms = document.getElementById("c3Modes");
@@ -6297,7 +6317,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   if (ms && ms.parentElement === host) {
     let X = right + 10, Y = y + w / 2 - 12;
     if (ms.classList.contains("spin")) {
-      const width = 292, left = cr.left - hr.left + host.scrollLeft, edge = cr.right - hr.left + host.scrollLeft;
+      const width = 292, left = cr.left - hr.left + scrollLeft, edge = cr.right - hr.left + scrollLeft;
       // A narrow canvas gets the complete speed control above the diamonds.
       if (X + width > edge - 4) { X = Math.max(left + 4, Math.min(edge - width - 4, x + w / 2 - width / 2)); Y = y - 30; }
     }
@@ -6305,9 +6325,9 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   }
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const X = cr.left - hr.left + host.scrollLeft + 2, groupLeft = st ? x - ws / 2 : x, available = Math.max(0, groupLeft - X - 4);   // v0.985: подпись цикла прижата к левому краю, поля до ромбов сжаты
+    const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws / 2 : x, available = Math.max(0, groupLeft - X - 4);   // v0.985: подпись цикла прижата к левому краю, поля до ромбов сжаты
     caption.style.maxWidth = available.toFixed(1) + "px";
-    put(caption, X, cr.bottom - hr.top + host.scrollTop - caption.offsetHeight - 4);
+    put(caption, X, cr.bottom - hr.top + scrollTop - caption.offsetHeight - 4);
   }
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
@@ -7389,7 +7409,7 @@ function setupCone(){
       if (host && !$(id)) { const b = document.createElement("button"); b.id = id; b.className = "c3step"; b.title = tip; b.innerHTML = t;   // v0.986: на ромбах шага остаются только стрелки
         b.onclick = () => { const a = $(src); if (a) a.click(); }; host.appendChild(b); }
     coneDirUi();
-    if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
+    if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.setAttribute("aria-label", "Ось: вертикаль и горизонталь"); b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
       b.classList.toggle("on", !!Z.coneAxes); b.onclick = () => { const a = $("bConeAxes"); if (a) a.click(); }; host.appendChild(b); }
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
       const s = document.createElement("div"); s.id = "c3Modes";
@@ -11405,7 +11425,7 @@ function cgrpInit(){
     for (const c of b.children) { if (c.classList.contains("cgnl")) continue; const r = c.getBoundingClientRect(); if (r.width) right = Math.max(right, r.right); }   // v0.825: перенос строки (во всю ширину) — не кнопка: с ним ширина росла сама
     const extra = Math.floor(br.right - right - 1); if (right > br.left && extra > 0) g.style.width = (parseFloat(g.style.width) - extra) + "px";
   };
-  const NOGRAB = "button, input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.315: всё остальное в группе — хват
+  const NOGRAB = "button, [role=button], input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.1016: строки выбора вида колец — кнопки, их щелчок не захватывает перенос группы
   const wb = tl.parentElement; let zTop = 500;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   wb.closest(".win")._solFoldLayout = changed => {
@@ -11575,6 +11595,8 @@ function cgrpInit(){
     const T = [], add = (el, ov) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q, ov || 0]); };
     /* v0.478, «магнитить только там, но без щелей — обводка на обводку ложить»: группа к группе встык заходит на 1 px — их рамки ложатся одна на другую */
     add(wb); add($("field")); add($("rowsPane")); panels().forEach(o => { if (o !== g) add(o, 1); });
+    const bodyTarget = T.find(([el]) => el === wb);
+    if (bodyTarget) { const q = bodyTarget[1], top = solPanelTop(wb, x, w); bodyTarget[1] = { left: q.left, right: q.right, top, bottom: q.bottom }; }
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   window.zzGroupPinSync = () => linkSync();   // v0.929: единая верёвка для групп и таблиц
@@ -11594,12 +11616,17 @@ function cgrpInit(){
   window.zzPanelLinkSync = linkSync;
   window.zzPanelDragStart = (el, solo) => { el.style.zIndex = ++zTop; delete Z.cgrpLink[el.dataset.g]; nodeUnpin(el); if (solo) for (const [key, L] of Object.entries(Z.cgrpLink)) if (L && L.to === el.dataset.g) delete Z.cgrpLink[key]; };
   window.zzPanelDragEnd = el => { const m = el._mesh; el._mesh = null; if (typeof nodePin(el) !== "number") attachMesh(el, m); linkSync(); if (!Z.cgrpLink[el.dataset.g]) grpFix(el); };
-  const wbTop = () => { const w = wb.closest(".win"), h = w && w.querySelector(":scope > .whead"), br = wb.getBoundingClientRect(); let t = h && h.getClientRects().length ? Math.max(br.top, h.getBoundingClientRect().bottom) : br.top;
-    const tb = document.getElementById("cgTabs"); if (tb && tb.getClientRects().length && !document.body.classList.contains("zen")) t = Math.max(t, tb.getBoundingClientRect().bottom);   // v0.608: «не дай группам наезжать на кнопки меню» — верх для групп ниже полосы вкладок
-    return t; };
+  const wbTop = (x, width) => solPanelTop(wb, x, width);
+  const floatPlace = (g, x, y) => {
+    const tr = tl.getBoundingClientRect(), above = y < wb.getBoundingClientRect().top - 0.5;
+    g.classList.toggle("cg-abovebody", above);
+    g.style.left = (above ? x : x - tr.left).toFixed(2) + "px";
+    g.style.top = (above ? y : y - tr.top).toFixed(2) + "px";
+  };
   const place = (g) => {
     if (document.body.classList.contains("sol-mobile")) return;
     const f = g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && solZoneRect(f.z);   // v0.348: на поле строк; v0.954: и на левой панели
+    if (fr) g.classList.remove("cg-abovebody");
     g.classList.toggle("cfld", !!fr);
     if (fr && f.z === "head" && window.zzHeaderPlace) { g.classList.add("cfloat"); window.zzHeaderPlace(g); return; }
     if (fr) {
@@ -11611,18 +11638,18 @@ function cgrpInit(){
        центра при масштабе 1), стоит верхним краем на оси, по горизонтали — центр + сдвиг × масштаб; в окно не загоняется — может уехать за край */
     { const pin = Z.cgrpPin && Z.cgrpPin[g.dataset.g], A = typeof pin === "number" && g.parentElement === tl ? coneAxisScr() : null;
       if (g.classList.contains("axpin") !== !!A) g.classList.toggle("axpin", !!A);
-      if (A) { const tr0 = tl.getBoundingClientRect(), px = solAxisPanelX(g, pin, A) - tr0.left, py = A.y - tr0.top; Z.cgrpPos[g.dataset.g] = { x: px, y: py };
+      if (A) { g.classList.remove("cg-abovebody"); const tr0 = tl.getBoundingClientRect(), px = solAxisPanelX(g, pin, A) - tr0.left, py = A.y - tr0.top; Z.cgrpPos[g.dataset.g] = { x: px, y: py };
         g.classList.add("cfloat"); const l = px.toFixed(2) + "px", t = Math.round(py) + "px"; if (g.style.left !== l) g.style.left = l; if (g.style.top !== t) g.style.top = t; return; } }
     if (g.parentElement === tl && Z.cgrpEdge && Z.cgrpEdge[g.dataset.g]) {
       const tr0 = tl.getBoundingClientRect(), br0 = wb.getBoundingClientRect();
-      const edge = solEdgePosition(g, Z.cgrpEdge[g.dataset.g], wbTop(), br0.bottom - g.offsetHeight);
+      const edge = solEdgePosition(g, Z.cgrpEdge[g.dataset.g], wbTop, br0.bottom - g.offsetHeight);
       if (edge) {
         const p0 = { x: edge.x - tr0.left, y: edge.y - tr0.top }; Z.cgrpPos[g.dataset.g] = p0;
-        g.classList.add("cfloat"); g.style.left = p0.x.toFixed(2) + "px"; g.style.top = p0.y.toFixed(2) + "px"; return;
+        g.classList.add("cfloat"); floatPlace(g, edge.x, edge.y); return;
       }
     }
     const p = Z.cgrpPos[g.dataset.g]; g.classList.toggle("cfloat", !!p);
-    if (!p) { g.style.left = g.style.top = ""; return; }
+    if (!p) { g.classList.remove("cg-abovebody"); g.style.left = g.style.top = ""; return; }
     const tr = tl.getBoundingClientRect(), br = wb.getBoundingClientRect(), gw = g.offsetWidth, gh = g.offsetHeight;
     /* v0.215, «пусть вкладки уезжают за поле строк, но не заголовком»: вправо группа может уйти за край окна (под поле строк), а край держит
        только её заголовок — он всегда виден, за него и вытаскивают обратно. Влево заголовок первым, поэтому там — как было. */
@@ -11630,13 +11657,13 @@ function cgrpInit(){
        группа — всегда целиком внутри окна конуса (v0.215 «уезжают под поле строк» снято); притягивается к краям при перетаскивании (snapXY) */
     /* v0.536, по снимку свёрнутого «Звука», ушедшего под заголовок окна, — «скрылась за заголовком полоской и никак не вытащить»: верхняя граница —
        низ заголовка окна (wb — само окно, его верх — это верх заголовка) */
-    const hb = wbTop();
     const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw));
+    const hb = wbTop(tr.left + x, gw);
     let y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
     /* v0.656, «…чтобы зубцами синхронизировалась группа»: по вертикали группа встаёт на ряды сетки — шагом 24 px от низа полосы вкладок (ряды зубцов
        левой панели выровнены по вкладкам, v0.636); прижатая к меню — ровно под ним */
     if (!Z.cgrpLink[g.dataset.g]) { const k = Math.round((tr.top + y - hb) / TZC_H); let y2 = hb - tr.top + k * TZC_H; if (y2 + gh > br.bottom - tr.top + 0.5) y2 -= TZC_H; if (y2 >= hb - tr.top - 0.5) y = y2; }
-    g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px";
+    floatPlace(g, tr.left + x, tr.top + y);
   };
   /* v0.558, по снимку «Аниматрицы» поверх «Вида» — «не давай на друг друга ложить группы»: плавающая группа (поверх холста или на поле строк), налезшая на
      другую больше чем на зубец (9 px — встык и зубцы в зубцы по-прежнему можно), сдвигается на ближайшее место вплотную к ней (справа, слева, снизу или сверху —
@@ -11727,13 +11754,41 @@ function cgrpInit(){
     const foldUi = () => solFoldButton(fold, !!Z.cgrpMin[g.dataset.g], solPanelName(g));
     const foldToggle = (on = !Z.cgrpMin[g.dataset.g], defer = false) => {
       const key = g.dataset.g;
-      if (on) Z.cgrpMin[key] = true; else { delete Z.cgrpMin[key];
-        if (Z.cgrpMinPos && Z.cgrpMinPos[key]) { const m = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key]; if (m.fld) { Z.cgrpFld[key] = m.fld; delete Z.cgrpPos[key]; } else { delete Z.cgrpFld[key]; if (m.pos) Z.cgrpPos[key] = m.pos; else delete Z.cgrpPos[key]; } } }
+      if (on) Z.cgrpMin[key] = true; else delete Z.cgrpMin[key];
       g.classList.toggle("cmin", on); g.style.minHeight = ""; foldUi();
       if (defer) return;
       cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); save();
     };
     g._solFold = foldToggle;
+    // v0.1015: один щелчок меняет свёрнутость; двойной переносит вниз или возвращает обратно.
+    const dockToggle = () => {
+      const key = g.dataset.g, current = Z.cgrpFld[key];
+      Z.cgrpMinPos ||= {};
+      if (current?.z === "head") {
+        const old = Z.cgrpMinPos[key]; delete Z.cgrpMinPos[key];
+        delete Z.cgrpFld[key]; delete Z.cgrpPos[key]; nodeUnpin(g);
+        if (old?.fld && old.fld.z !== "head") Z.cgrpFld[key] = { ...old.fld };
+        else if (old?.pos) Z.cgrpPos[key] = { ...old.pos };
+        if (old?.edge) { Z.cgrpEdge ||= {}; Z.cgrpEdge[key] = { ...old.edge }; }
+        if (typeof old?.pin === "number") { Z.cgrpPin ||= {}; Z.cgrpPin[key] = old.pin; }
+        if (old?.link && !solLinkCycle(Z.cgrpLink, key, old.link.to)) Z.cgrpLink[key] = { ...old.link };
+        foldToggle(false, true);
+      } else {
+        Z.cgrpMinPos[key] = {
+          pos: Z.cgrpPos[key] ? { ...Z.cgrpPos[key] } : null,
+          fld: current ? { ...current } : null,
+          edge: Z.cgrpEdge?.[key] ? { ...Z.cgrpEdge[key] } : null,
+          pin: Z.cgrpPin?.[key], link: Z.cgrpLink[key] ? { ...Z.cgrpLink[key] } : null
+        };
+        nodeUnpin(g); delete Z.cgrpLink[key]; delete Z.cgrpPos[key];
+        Z.cgrpFld[key] = { z: "head", x: 0, y: 0 }; foldToggle(true, true);
+        const room = solHeaderRoom(key); Z.solHeaderOrder ||= [];
+        Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== key); Z.solHeaderLeft = room < 128;
+        if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(key); else Z.solHeaderOrder.push(key);
+      }
+      cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); save();
+    };
+    g._solDockToggle = dockToggle;
     fold.onclick = e => { e.stopPropagation(); if (e.detail < 2) foldToggle(); };
     fold.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); }); foldUi();   // v0.952: двойной — как одиночный, первый щелчок уже переключил
     g.addEventListener("click", e => {
@@ -11741,7 +11796,7 @@ function cgrpInit(){
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
       e.stopPropagation(); solMenuClick(g, () => foldToggle());
     });
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — свернуть / развернуть на месте; двойной — свернуть и перенести в полосу шапки (если места мало — первым слева). «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — свернуть / развернуть на месте; двойной — свернуть и перенести вниз; если группа уже внизу — вернуть раскрытой на прежнее место. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
@@ -11846,7 +11901,7 @@ function cgrpInit(){
           mates.forEach(m => { m.o.classList.remove("cdrag"); sizeApply(m.o); });
           g._mesh = null;
           const L = Math.min(...at.map(q => q.left)), R = Math.max(...at.map(q => q.right)), T = Math.min(...at.map(q => q.top)), B = Math.max(...at.map(q => q.bottom));
-          const wr = wb.getBoundingClientRect(), wt = wbTop();
+          const wr = wb.getBoundingClientRect(), wt = wbTop(L, R - L);
           const sx = R - L > wr.width ? wr.left - L : Math.max(wr.left - L, Math.min(0, wr.right - R)), sy = B - T > wr.bottom - wt ? wt - T : Math.max(wt - T, Math.min(0, wr.bottom - B));
           all.forEach((x, i) => { delete Z.cgrpFld[x.dataset.g]; Z.cgrpPos[x.dataset.g] = { x: at[i].left + sx - tr.left, y: at[i].top + sy - tr.top }; place(x); });
           linkSync(); lasMesh(); save(); return;
@@ -11878,24 +11933,11 @@ function cgrpInit(){
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
     };
     g.addEventListener("pointerdown", startGroupDrag);
-    // v0.989: двойной щелчок на любой группе сворачивает её и переносит в полосу шапки; если места мало — первой слева.
+    // v0.1015: двойной щелчок заголовка — вниз свёрнутой; снизу — обратно раскрытой.
     g.addEventListener("dblclick", (e) => {
-      if (e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
+      if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
       e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0;
-      const key = g.dataset.g, current = Z.cgrpFld[key];
-      const room = solHeaderRoom(key);
-      if (current && current.z === "head" && solPanelFolded(g)) { g._solFold(false); return; }
-      if (!Z.cgrpMinPos || typeof Z.cgrpMinPos !== "object") Z.cgrpMinPos = {};
-      if (!Z.cgrpMinPos[key]) Z.cgrpMinPos[key] = { pos: Z.cgrpPos[key] ? { ...Z.cgrpPos[key] } : null, fld: current ? { ...current } : null };
-      nodeUnpin(g); delete Z.cgrpLink[key];
-      for (const [other, link] of Object.entries(Z.cgrpLink)) if (link && link.to === key) delete Z.cgrpLink[other];
-      delete Z.cgrpPos[key]; Z.cgrpFld[key] = { z: "head", x: 0, y: 0 }; Z.cgrpMin[key] = true;
-      g.classList.add("cmin"); sizeApply(g); cgrpCols(); place(g); linkSync();
-      Z.solHeaderOrder ||= [];
-      Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== key);
-      Z.solHeaderLeft = room < 128;
-      if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(key); else Z.solHeaderOrder.push(key);
-      if (window.zzHeaderPlace) window.zzHeaderPlace(g); save();
+      dockToggle();
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
@@ -12077,10 +12119,10 @@ function cgrpInit(){
           if (!slot) {
             slot = document.createElement("span"); slot.className = "sol-header-slot"; slot.dataset.g = key; slots.set(key, slot); dock.appendChild(slot);
             const button = document.createElement("button"); button.type = "button"; button.textContent = solPanelName(g) + " −"; slot.appendChild(button);
-            button.title = solPanelName(g) + ": щелчок — свернуть / развернуть; двойной щелчок — свернуть группу в нижней полосе";
+            button.title = solPanelName(g) + ": щелчок — свернуть / развернуть здесь; двойной щелчок — вернуть раскрытой на прежнее место";
             button.style.color = getComputedStyle(g.querySelector(".glab, .smh, .rth") || g).color;
             button.onclick = e => { e.stopPropagation(); if (e.detail < 2) solMenuClick(g, () => g._solFold ? g._solFold() : plateFoldToggle(g)); };
-            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0; if (!solPanelFolded(g)) g._solFold(true); };
+            button.ondblclick = e => { e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0; if (g._solDockToggle) g._solDockToggle(); else solPlateDockToggle(g); };
           }
           const button = slot.firstElementChild, folded = solPanelFolded(g);
           if (button.hidden !== folded) button.hidden = folded;
@@ -12150,7 +12192,7 @@ function cgbSnap(decorate = true){
   if (decorate && typeof triTag === "function") triTag();
 }
 function cgbIcons(){
-  document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
+  document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = !!b.dataset.ballSpeed || b.hasAttribute("data-ball-ring") || b.hasAttribute("data-ball-through") || [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
 }
 /* v0.203, «сделай как в Zerkalius-layers.html, чтобы кнопки можно было на холст в любое место» (там — «кнопки на поле цепочек», v1.594):
    любую кнопку с именем (id) тянешь мышью на холст конуса — там, куда бросил, встаёт её копия с той же подписью (оригинал на месте); та же
@@ -12695,11 +12737,11 @@ function triTag(){
     if (b.dataset.tzadd) b._tzn += +b.dataset.tzadd / 2;   /* v0.613: data-tzadd — шире на столько t (остриё соседа съедает t у кнопки перед ним) */
     b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
-  const lastOf = (el) => { if (el.classList.contains("tz") || el.tagName !== "SPAN" || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
+  const lastOf = (el) => { if (el.classList.contains("tz") || (el.tagName !== "SPAN" && !el.classList.contains("ball-lab-row")) || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
   const prevOf = (b) => { for (let x = b; ; ) { let p = x.previousElementSibling; while (p && !vis(p)) p = p.previousElementSibling; if (p) return lastOf(p);
     x = x.parentElement;
     if (x && x.classList.contains("cgb")) { let q = x.previousElementSibling; while (q && !vis(q)) q = q.previousElementSibling; return q && q.classList.contains("glab") ? q : null; }   // v0.473: первая — к заголовку
-    if (!x || x.tagName !== "SPAN" || x.classList.contains("cjoin")) return null; } };
+    if (!x || (x.tagName !== "SPAN" && !x.classList.contains("ball-lab-row")) || x.classList.contains("cjoin")) return null; } };
   for (let pass = 0; pass < 2; pass++) {   // сцепка — по раскладке (одна строка — один верх); шаг от неё у стрелок меняется, поэтому второй проход
     let ch = false;
     bs.forEach(b => {
@@ -12817,7 +12859,7 @@ function lpTag(){
 }
 /* v0.756, «при перетаскивании групп кнопок пропадают зубцы у левого меню»: слой зубцов стоял на постоянном z-index 45, а окно поднимается каждым щелчком
    по нему (Z.z растёт и хранится) — щёлкнул по группе в окне у края, и окно легло поверх зубцов. Теперь слой всегда на ступень выше самого верхнего окна */
-function paneZigZ(){ const z = +Z.z || 0; for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = id === "paneZigOv" ? (z > 45 ? z - 1 : 44) : Math.max(45, z + 1); } }
+function paneZigZ(){ const z = +Z.z || 0; for (const id of ["paneZigOv", "fieldZigOv"]) { const ov = document.getElementById(id); if (ov) ov.style.zIndex = Math.max(45, z + 1); } }
 function fieldRowsFold(){
   const field = document.getElementById("field"), main = document.getElementById("main"), list = document.getElementById("rowList"); if (!field || !main) return;
   if (Z.rowsFolded) { Z.rowsFolded = false; Z.rowsW = Math.max(0, +Z.rowsWRestore || 0); Z.rowsWRestore = 0; }
@@ -12903,8 +12945,8 @@ function fieldZig(dy, ln){
       fe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); });
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(paneZig)).observe(f); }
   zigClickFold(ov, fieldRowsFold); ov.title = Z.rowsFolded ? "Щелчок — развернуть поле строк; тяни — изменить ширину; двойной щелчок — ширина по умолчанию" : "Щелчок — свернуть поле до столбца кручений; тяни — изменить ширину; двойной щелчок — ширина по умолчанию";
-  const B = document.body.classList, fr = f.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
-        edgeBottom = Math.min(fr.bottom, dockTop), on = innerWidth > 760 && fr.width > 4 && edgeBottom > fr.top && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
+  const B = document.body.classList, fr = f.getBoundingClientRect(), edgeBottom = Math.min(fr.bottom, innerHeight),
+        on = innerWidth > 760 && fr.width > 4 && edgeBottom > fr.top && f.offsetParent !== null && !B.contains("field-only") && !B.contains("field-hidden") && !B.contains("zen");
   B.toggle("fzig", on); ov.style.display = on ? "" : "none"; if (!on) return;
   const H = TZC_H, t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, R = B.contains("field-right"), fc = getComputedStyle(f).backgroundColor || "#0b0d12";
   ov.style.left = (R ? fr.left - w : fr.right).toFixed(2) + "px"; ov.style.top = fr.top + "px"; ov.style.height = (edgeBottom - fr.top) + "px"; ov.style.width = w.toFixed(2) + "px";
@@ -12936,8 +12978,8 @@ function paneZig(){
   /* v0.675, по снимку края левого меню — «убери лишний фон у всех окон, когда раскрыты, сейчас это Конус, чтобы не было прямой вертикальной линии»: цвет
      брался в 12 px от края и вверх по родителям — попадал в холст или группу внутри окна (выемки синие, а у самого края — чёрный фон, отсюда прямая
      черта). Теперь — вплотную к краю (там, где лягут зубцы), по стопке слоёв (что видно глазом), в девяти точках по высоте; большинство */
-  { const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
-        edgeBottom = Math.min(pr.bottom, dockTop), edgeHeight = Math.max(0, edgeBottom - pr.top), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
+  { const pr = pane.getBoundingClientRect(), edgeBottom = Math.min(pr.bottom, innerHeight),
+        edgeHeight = Math.max(0, edgeBottom - pr.top), seen = {}, op = (c) => c && !/rgba\([^)]*,\s*0\)|transparent/.test(c);
     for (let k = 1; k <= 9 && edgeHeight > 0; k++) { const y = pr.top + edgeHeight * k / 10;
       for (const e of document.elementsFromPoint(pr.right + 2, y)) { if (e === pane || pane.contains(e)) continue;
         /* v0.678, «так и осталась вертикальная полоса из-за фона»: холст (конус) сам заливается цветом темы --bg, а его CSS-фон другой (синий) — у холста берём --bg */
@@ -12958,8 +13000,8 @@ function paneZig(){
       for (const t of ["pointerdown", "dblclick"]) ov.addEventListener(t, (e) => { const pe = document.getElementById("paneEdge"); if (!pe || !pe.getClientRects().length) return; e.preventDefault(); e.stopPropagation();
         pe.dispatchEvent(t === "dblclick" ? new MouseEvent(t, e) : new PointerEvent(t, e)); }); }
     zigClickFold(ov, () => { const b = document.getElementById("bPaneIcons"); if (b) b.click(); });
-    const pr = pane.getBoundingClientRect(), dock = document.getElementById("solHeaderDock"), dockTop = dock && dock.getClientRects().length ? dock.getBoundingClientRect().top : innerHeight,
-          edgeBottom = Math.min(pr.bottom, dockTop), on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
+    const pr = pane.getBoundingClientRect(), edgeBottom = Math.min(pr.bottom, innerHeight),
+          on = innerWidth > 760 && pr.width > 4 && edgeBottom > pr.top && pane.offsetParent !== null;
     ov.style.display = on ? "" : "none"; paneZigZ();
     if (on) { const pc = getComputedStyle(pane).backgroundColor || "#1a1f2b", edgeLn = getComputedStyle(document.documentElement).getPropertyValue("--txt").trim() || "#d8dde8",
           tq = TZC_H / (2 * Math.sqrt(3)), wq = tq + 1, kq = edgeLn + "|" + pc;
@@ -13004,6 +13046,7 @@ function lpTop(col, vis){
        такая кнопка стоит отдельно от соседних: ↩ — стрелка влево (остриё слева, выемка справа), ↪ — вправо */
     if (b.dataset.tzl) b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
+    const windowTab = !!b.closest("#pinBar"), normalEdges = b._tzL[1] + b._tzR[1];
     // Выбранная вкладка углубляет стыки с обеих сторон; соседняя справа входит остриём в её выемку.
     if (selectedWindow) { b._tzL = [0, 2, 0]; b._tzR = [0, 2, 0]; b._tzm = i ? 2 : 0; b.style.zIndex = "5"; }
     else if (prevSelected) { b._tzL = TZ_TIP; b._tzm = 2; b.style.removeProperty("z-index"); }
@@ -13012,6 +13055,8 @@ function lpTop(col, vis){
        остриё (выемка к выемке — стоят встык уголками, между ними ромб фона) */
     if (i && ((b._tzL !== TZ_NOTCH && !selectedWindow && !prevSelected) || (r[i - 1]._tzR !== TZ_TIP && !prevSelected)) && !(b.dataset.tzin && b._tzL === TZ_TIP && r[i - 1]._tzR === TZ_NOTCH)) b._tzm = 0;   // соседка справа входит остриём в глубокую выемку выбранной вкладки
     b._tzn = b._tzn0 = Math.max([...b.textContent.trim()].length <= 2 ? 2 : 3, Math.ceil((tw + lpTop.pad) / sd)) + (+b.dataset.tzw || 0);   // v0.524, «либо текст сократи, либо кнопки увеличь — не помещается»: надпись + поля; выемки на стыках (их ширина сверх n) — сверху, они съедают место у надписи
+    // v0.1011: выемки выбранной вкладки меняют контур, но сохраняют ширину и шаг соседей.
+    if (windowTab) { b._tzn += (i ? 1.5 : 2) + (normalEdges - b._tzL[1] - b._tzR[1]) / 2; b._tzn0 = b._tzn; b._tzm = i ? 1 : 0; }
     tzGeo(b);   // v0.526, «стрелки пошире на 1 ромб»: data-tzw — сколько ромбов прибавить к ширине по надписи
   }));
   /* v0.524: кнопки шире — на узком окне шапка может не влезть в строку: тогда шрифт её кнопок мельче (не меньше 10 px), пока не войдёт */
@@ -13022,6 +13067,12 @@ function lpTop(col, vis){
   } else { lpTop.pad = 14; shape(); }
   /* v0.529: перенеслась на новую строку (узкое окно) — начинает её остриём и не заходит на кнопку строкой выше */
   runs.forEach(r => r.forEach((b, i) => { if (i && b._tzm && Math.abs(b.offsetTop - r[i - 1].offsetTop) > 4) { b._tzm = 0; b._tzL = TZ_TIP; tzGeo(b); } }));
+  // v0.1011: более широкие постоянные вкладки не должны заходить под ↩ ↪ в центре шапки.
+  const undoBox = document.getElementById("undoBox"), pins = document.getElementById("pinBar");
+  if (undoBox && pins && vis(undoBox) && !(window.matchMedia && matchMedia("(max-width:760px)").matches)) {
+    const left = Math.max(top.clientWidth / 2, pins.getBoundingClientRect().right - top.getBoundingClientRect().left + undoBox.getBoundingClientRect().width / 2 + 8).toFixed(2) + "px";
+    if (undoBox.style.left !== left) undoBox.style.left = left;
+  }
   lpWin(col, vis);
 }
 /* v0.532, «в процессе понемногу исправляй кнопки все под стандарт треугольников, сам смотри по дизайну»: кнопки в шапках окон (? ⛶ ↗ ⧉ – и
@@ -13161,7 +13212,7 @@ function tzHandle(g){   // ромб-ручка — на правом конце 
   let maxR = -1e9, bot = -1e9; its.forEach(e => { const r = e.getBoundingClientRect(); maxR = Math.max(maxR, r.right); bot = Math.max(bot, r.top); });
   /* v0.634, по снимку «Кручения» — «поправь границы»: под кнопками там ещё строка «вариантов цикла» (#coneVarN, не из треугольников), а ромб-ручка
      вставал над ней — на третьем ряду, поверх рамки. Нижний ряд — и такая строка: ромб — в её правом острие, в углу группы */
-  g.querySelectorAll(":scope > #coneVarN, :scope > #lasAlgo").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(), y = Math.max(r.top, r.bottom - TZC_H); if (y > bot + 1) bot = y; });   // v0.801, «тянуть не в углу»: ромб — в нижнем ряду этой строки (текст алгоритма бывает в несколько рядов), в углу группы   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
+  g.querySelectorAll(":scope > #coneVarN, :scope > #lasAlgo, .cgb > .cgrp-fill").forEach(v => { if (!v.getClientRects().length) return; const r = v.getBoundingClientRect(), y = Math.max(r.top, r.bottom - TZC_H); if (v.classList.contains("cgrp-fill")) maxR = Math.max(maxR, r.right); if (y > bot + 1) bot = y; });   // v0.801, «тянуть не в углу»: ромб — в нижнем ряду этой строки (текст алгоритма бывает в несколько рядов), в углу группы   // v0.636: по горизонтали — по остриям рядов (они теперь у рамки), а не по краю коробки: ромб не торчит за рамку
   const lr = { right: Math.min(maxR, gr.right), top: bot };
   if (!lr) return;
   h.style.setProperty("left", (lr.right - gr.left - 2 * t).toFixed(2) + "px", "important"); h.style.setProperty("top", (lr.top - gr.top).toFixed(2) + "px", "important");
@@ -13187,6 +13238,8 @@ const tzcGroup = (key) => [...document.querySelectorAll(".cgrp")].find(g => g.da
 function tzcItem(el, cgb){   // элемент группы под точкой: кнопка, поле, список, подпись (не блок-обёртка; попал в обёртку — её первая кнопка)
   { const gl = el && el.closest && el.closest(".glab"); if (gl && cgb && gl.parentElement === cgb.parentElement) return gl; }   // v0.486: и заголовок группы
   if (!el || el === cgb || !cgb.contains(el)) return null;
+  // v0.1011: списки лаборатории вложены в строки и подписи, но оформляются как отдельные стандартные элементы.
+  if (el.tagName === "SELECT" && el.closest(".ball-lab-body")) return el;
   let x = el;
   while (x.parentElement && x.parentElement !== cgb) { const p = x.parentElement; if (p.tagName === "SPAN" && !p.closest("button, label, select")) break; x = p; }
   if (x.classList.contains("tzco")) return null;
@@ -13715,6 +13768,14 @@ function tzgFrame(g){
   { const sn = g.querySelector(":scope > #lasAlgo, :scope > #coneVarN");
     if (sn && sn.getClientRects().length) { const old = sn.style.minHeight; sn.style.minHeight = ""; const H0 = g.offsetHeight, ex = H0 % TZC_H, add = ex > 0.5 && TZC_H - ex > 0.5 ? TZC_H - ex : 0;
       const want = add ? (sn.offsetHeight + add).toFixed(2) + "px" : ""; sn.style.minHeight = want; if (want !== old) g._tzgk = ""; } }
+  // v0.1010: прокручиваемое тело шариков завершается целым рядом зубцов.
+  const fill = g.querySelector(".ball-lab-body");
+  if (fill && !g.classList.contains("cmin") && !document.body.classList.contains("sol-mobile")) {
+    fill.style.maxHeight = Math.max(TZC_H, Math.floor(Math.min(480, innerHeight - 200) / TZC_H) * TZC_H) + "px";
+    const base = g.getBoundingClientRect().height - (parseFloat(fill.style.paddingBottom) || 0);
+    const tail = Math.max(0, Math.ceil((base - 0.1) / TZC_H) * TZC_H - base).toFixed(2) + "px";
+    if (Math.abs((parseFloat(fill.style.paddingBottom) || 0) - parseFloat(tail)) > 0.05) fill.style.paddingBottom = tail;
+  }
   const W = g.offsetWidth, H = g.offsetHeight; if (!W || !H) return;
   /* v0.615, «границы группы и кнопки наложить друг на друга»: острия кнопок ряда кончаются на 1–2 px левее края группы (ширина группы целая, кнопки —
      из дробных треугольников), и между ними и рамкой была щель. Правый край рамки — по самому дальнему остриё кнопок (если оно в 3 px от края) */
@@ -13750,7 +13811,16 @@ function tzgFrame(g){
 function tzMinW(g){
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
-  let m = 0; for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.id === "coneBallStatus" || el.classList.contains("cgrp-fill") || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота; v0.974 — полноширинные панели .cgrp-fill не задают минимум и не раздувают группу при каждом пересчёте
+  let m = 0;
+  // v0.1011: подписи ☀/☾ — одной строкой; минимум по тексту и двум значкам, без обратной связи от ширины таблицы.
+  if (g.id === "sunMoonTbl") {
+    for (const label of g.querySelectorAll("td.sml")) {
+      const range = document.createRange(); range.selectNodeContents(label);
+      const style = getComputedStyle(label);
+      m = Math.max(m, range.getBoundingClientRect().width + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) + 98);
+    }
+  }
+  for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.id === "coneBallStatus" || el.classList.contains("cgrp-fill") || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота; v0.974 — полноширинные панели .cgrp-fill не задают минимум и не раздувают группу при каждом пересчёте
   return Math.ceil(m) + 1 + (parseFloat(getComputedStyle(g).paddingLeft) || 0);   // v0.545: и отступ слева (под циферблат Аниматрицы)
 }
 function tzcIcons(){

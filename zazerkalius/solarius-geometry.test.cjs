@@ -86,8 +86,32 @@ function uiMath(){
   vm.runInContext(`var TAU2=2*Math.PI,CONE_MAX=256,CONE_VOID_TO=256,coneRot=[0],coneSunWas,coneSweepAcc=null,Z={rows:['1'],coneClock:true,coneSun:true,coneSlits:'cut2',coneSunCut:'zero',coneSpinMode:'bit',coneSpinPh:0,coneAimRot:0,coneFillTurn:0,cutAlign:'c',cutLen:'ctr',coneVoid:false,moonOff:true,sunPassE:false};function hidAutoBack(){return false;}function coneLogDirty(){}function coneExArchive(){}`, ctx);
   return ctx;
 }
+test('all ring geometries persist when both light sources are off', () => {
+  const ctx = uiMath(); ctx.Z.rows = ['1', '11', '111'];
+  for (const mode of ['all', 'one', 'cut', 'cut2', 'cutA', 'cutS']) {
+    ctx.Z.coneSlits = mode;
+    const geometry = () => JSON.stringify({
+      row: ctx.coneCutGeo(1, 2), outer: ctx.coneFillCut(),
+      feature: ctx.coneRingFeat(1), centre: ctx.coneRingFeat(0),
+      holes: ctx.cutHoles(2), quarter: ctx.coneQuadOn()
+    });
+    ctx.Z.coneClock = true; ctx.Z.coneSun = true;
+    const lit = geometry();
+    for (const [clock, sun] of [[true, false], [false, false]]) {
+      ctx.Z.coneClock = clock; ctx.Z.coneSun = sun;
+      assert.equal(geometry(), lit, mode);
+      assert.equal(ctx.Z.coneClock, clock);
+      assert.equal(ctx.Z.coneSun, sun);
+      assert.equal(ctx.coneSunOn(), false);
+    }
+    const cut = !['all', 'one'].includes(mode);
+    assert.equal(ctx.coneCutGeo(1, 2).cut, cut);
+    assert.equal(ctx.coneCutGeo(1, 2).step, 2 * Math.PI / (mode === 'cut2' ? 4 : cut ? 3 : 2));
+  }
+});
+
 test('turn fractions keep the denominator of each ring instead of reducing it', () => {
-  const ctx = uiMath(); ctx.Z.coneClock = false;
+  const ctx = uiMath(); ctx.Z.coneClock = false; ctx.Z.coneSlits = 'all';
   ctx.Z.rows = ['1', '11111111', '111111111111'];
   assert.equal(ctx.turnsFmt(1.25, 1), '↻1 2/8');
   assert.equal(ctx.turnsFmt(1.25, 2), '↻1 3/12');
@@ -104,8 +128,8 @@ test('turn fractions follow the cut geometry, including the ring beyond the hori
     assert.equal(ctx.turnsFmt(1 + 1 / q, 1), `↻1 1/${q}`);
     assert.equal(ctx.turnsFmt(-1 / fillQ, 'f'), `↺−1/${fillQ}`);
   }
-  ctx.Z.coneClock = false;
-  assert.equal(ctx.turnsFmt(0.5, 'f'), '↻2/4');
+  ctx.Z.coneClock = false; ctx.Z.coneSun = false;
+  assert.equal(ctx.turnsFmt(0.5, 'f'), '↻4/8');
 });
 
 test('first-ring turn fractions follow its selected division and growth of the last row', () => {
@@ -124,7 +148,7 @@ test('first-ring turn fractions follow its selected division and growth of the l
 });
 
 test('formatting continuous rotation rounds only the display to the nearest own part', () => {
-  const ctx = uiMath(); ctx.Z.coneClock = false; ctx.Z.rows = ['1', '11111111'];
+  const ctx = uiMath(); ctx.Z.coneClock = false; ctx.Z.coneSlits = 'all'; ctx.Z.rows = ['1', '11111111'];
   ctx.Z.coneTurns = [1.08, -1.188765];
   const before = JSON.stringify(ctx.Z);
   assert.equal(ctx.turnsFmt(ctx.Z.coneTurns[1], 1), '↺−1 2/8');
@@ -135,7 +159,7 @@ test('formatting continuous rotation rounds only the display to the nearest own 
 
 test('turn fractions count the additional cells of the bipyramid ring', () => {
   const ctx = uiMath(); ctx.Z.rows = ['1', '111'];
-  ctx.Z.coneClock = false; ctx.Z.cone3d = true; ctx.Z.coneBipy = true;
+  ctx.Z.coneClock = false; ctx.Z.coneSlits = 'all'; ctx.Z.cone3d = true; ctx.Z.coneBipy = true;
   assert.equal(ctx.turnsFmt(0.2, 1), '↻1/5');
 });
 
