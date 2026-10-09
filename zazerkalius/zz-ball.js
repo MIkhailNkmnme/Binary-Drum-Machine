@@ -9,6 +9,8 @@
   const $ = id => document.getElementById(id);
   const norm = a => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
   let F = null, enabled = false, paused = true, cycles = 0, passes = 0;
+  // v0.1051, «после вылета шарика из 1 кольца сразу же за ним начинает вылет 2 и так далее»: цепочка вылетов из центра (до CHAIN_MAX шариков)
+  let chain = false; const CHAIN_MAX = 64;
   let balls = [], batchBusy = false;
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр" };
@@ -521,6 +523,16 @@
     try { for (const ball of balls) { F = ball; advance(dt, before, S); } }
     finally { batchBusy = false; F = balls[0]; }
     applyFlips(balls);
+    // v0.1051: цепочка — последний вылетевший вышел из кольца 1 (или уже вылетел совсем): из центра стартует следующий
+    if (chain && balls.length < CHAIN_MAX) {
+      const last = balls[balls.length - 1], c = boundaryPoints(S).find(p => p.id === "center");
+      if (c && last && !last.ready && (last.k >= 1 || last.stage === "done")) {
+        batchBusy = true;
+        try { begin(S, false, true, { point: c, route: "out", period: last.period, speed: last.speed }); Object.assign(F, { number: balls.length + 1, label: "Вылет " + (balls.length + 1) }); balls.push(F); }
+        finally { batchBusy = false; F = balls[0]; }
+        batchStatus();
+      }
+    }
     batchStatus(); metrics(S);
   };
   window.zzBallSpinState = on => {
@@ -578,7 +590,7 @@
     }
   };
   function reset(toStart = false) {
-    F = null; balls = []; cycles = passes = 0;
+    F = null; balls = []; cycles = passes = 0; chain = false;
     if (toStart) restoreStart();
     const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();
   }
@@ -651,7 +663,9 @@
     enabled = true; Z.coneBallOn = true; ui();
     if (typeof coneReleaseRings === "function") coneReleaseRings();
     const S = snapshot(); if (!S) { status(hint()); return false; }
+    chain = !!config.chain;
     prepare(S, true, true); save(); if (!F || F.ready) return false;
+    if (chain && !balls.length) { Object.assign(F, { number: 1, label: "Вылет 1" }); balls = [F]; batchStatus(); }   // v0.1051: первый шарик цепочки
     if (!coneSpinning) $("bConeAuto").click();
     paused = !coneSpinning;
     renderCone(); return true;
