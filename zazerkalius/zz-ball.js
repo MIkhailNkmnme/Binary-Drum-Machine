@@ -126,22 +126,35 @@
     inwardAuto = null;
     const k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
     if (inner < 0 || !starts.length || !(base > 0)) return base;
-    const w = rate(S), width = ring.ro - ring.ri, t0 = width / base, tmin = t0 / 4, dw = (w[k] || 0) - (w[inner] || 0);
+    /* v0.1066, «снять предел ×4» (вариант 1): при одной щели в кольце быстрая полоса — «успеть, пока щели не разошлись после старта» — лежит выше
+       ×4 (в пресете «В центр с 5-го кольца» — от ×7,3), и авто уходило в медленное окно через полный оборот (~95 с). Предела больше нет (до ×1000);
+       годные времена идут отрезками — берётся точка внутри отрезка с запасом 15 % от краёв, ближайшая к базовой по отношению (×8 и ×1/8 одинаково далеки) */
+    const w = rate(S), width = ring.ro - ring.ri, t0 = width / base, tmin = t0 / 1000, dw = (w[k] || 0) - (w[inner] || 0);
     const countAt = (t) => { const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
       return starts.filter(p => lossPass(St, inner, angle(St, k, p.raw)) !== null).length; };
     if (Math.abs(dw) < 1e-12) { inwardAuto = { count: countAt(t0), total: starts.length, ring: inner, fixed: true, mult: 1 }; return base; }
     const Prel = TAU / Math.abs(dw), t1 = Math.max(tmin + Prel, t0 + Prel / 2), cand = [];
     for (let j = 0; j <= 1440; j++) cand.push(tmin + (t1 - tmin) * j / 1440);
-    const innerEdges = S.rings[inner].blocks.flatMap(b => [b.lo, b.hi]);
+    for (let j = 0; j <= 400; j++) cand.push(tmin * Math.pow(t0 / tmin, j / 400));   // быстрые — частой сеткой по логарифму
+    const innerEdges = S.rings[inner].blocks.flatMap(b => [b.lo, b.hi]), half = (S.rings[inner].tol || 0) / Math.abs(dw);
     for (const p of starts) for (const f of innerEdges) {   // точные совпадения: angle(k, raw) + w_k t = angle(inner, f) + w_inner t (mod 2π)
       const d = angle(S, inner, f) - angle(S, k, p.raw);
       for (let m = Math.ceil((dw * (dw > 0 ? tmin : t1) - d) / TAU) - 1; m <= Math.floor((dw * (dw > 0 ? t1 : tmin) - d) / TAU) + 1; m++) {
-        const t = (d + m * TAU) / dw; if (t >= tmin - 1e-12 && t <= t1 + 1e-12) cand.push(t);
+        const t = (d + m * TAU) / dw;
+        for (const x of [t, t - half / 2, t + half / 2, t - half * 0.9, t + half * 0.9]) if (x >= tmin - 1e-12 && x <= t1 + 1e-12) cand.push(x);   // окно совпадения
       }
     }
+    const pts = [...new Set(cand)].sort((a, b) => a - b).map(t => ({ t, c: countAt(t) })), top = Math.max(0, ...pts.map(q => q.c));
     let best = null;
-    for (const t of cand) { const c = countAt(t); if (!best || c > best.c || (c === best.c && Math.abs(t - t0) < Math.abs(best.t - t0))) best = { t, c }; }
-    if (!best || best.c === 0) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
+    if (top > 0) for (let i = 0; i < pts.length; i++) {
+      if (pts[i].c !== top) continue;
+      let j = i; while (j + 1 < pts.length && pts[j + 1].c === top) j++;
+      const a = pts[i].t, b = pts[j].t, mg = (b - a) * 0.15;
+      let t = j > i ? Math.min(Math.max(t0, a + mg), b - mg) : a; if (countAt(t) !== top) t = (a + b) / 2; if (countAt(t) !== top) t = a;
+      if (!best || Math.abs(Math.log(t / t0)) < Math.abs(Math.log(best.t / t0))) best = { t, c: top };   // ближе к базовой — по отношению («во сколько раз»), не по секундам
+      i = j;
+    }
+    if (!best) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
     inwardAuto = { count: best.c, total: starts.length, ring: inner, fixed: false, mult: t0 / best.t };
     return width / best.t;
   }

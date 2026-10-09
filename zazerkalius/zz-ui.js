@@ -7656,7 +7656,7 @@ function setupCone(){
       const P = ok && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null;
       if (P) setTimeout(() => say("● " + coneInwardForecastText(P) + "."), A ? 4200 : 1600);   // v0.1060: прогноз до хода опыта
       if (A) setTimeout(() => say(A.fixed ? `● Авто: кольца ${A.ring + 2} и ${A.ring + 1} крутятся одинаково — от скорости не зависит; в К${A.ring + 1} зайдут ${A.count} из ${A.total}.`
-        : A.count ? `● Авто: скорость ×${(Math.round(A.mult * 100) / 100).toString().replace(".", ",")} от базовой${A.bitSec ? ` (базовая — 1 кольцо, пока К${A.outer + 1} поворачивается на бит, ${A.bitSec.toFixed(2).replace(".", ",")} с)` : ""} — в К${A.ring + 1} зайдут ${A.count} из ${A.total} (больше при одной скорости не бывает).`
+        : A.count ? `● Авто: скорость ×${(Math.round(A.mult * 100) / 100).toString().replace(".", ",")} от базовой${A.bitSec ? ` (базовая — 1 кольцо, пока К${A.outer + 1} поворачивается на бит, ${A.bitSec.toFixed(2).replace(".", ",")} с)` : ""} — в К${A.ring + 1} зайдут ${A.count} из ${A.total} (больше при одной скорости не бывает)${A.mult > 4 ? "; быстрее ×4 — успевают, пока щели не разошлись" : ""}.`
         : `● Авто: ни при какой скорости группа не попадает в щели К${A.ring + 1} — едут с базовой.`), 1600); }
     const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
     say(ok ? "● В центр: вся внешняя группа. Первый дошедший закрывает К1; попадание в закрытый центр закрывает следующее кольцо. До закрытия удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
