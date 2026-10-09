@@ -585,11 +585,13 @@ function cutPartsPlace(){
   const L = document.getElementById("rowList"), fc = L && L.querySelector(".rw.fillrw > .bits.la > .fcs");
   if (!fc) { if (CUT_A.parentNode !== CUT_PANEL || CUT_B.parentNode !== CUT_PANEL) CUT_PANEL.prepend(CUT_A, CUT_B); CUT_PANEL.style.display = ""; return; }
   const al = L.classList.contains("al-right") ? "r" : L.classList.contains("al-left") ? "l" : "c";
+  const placementKey = () => [al, L.clientWidth, fc.offsetLeft, fc.offsetWidth, fc.parentElement.clientWidth, CUT_A.offsetWidth, CUT_B.offsetWidth].join("|");
+  if (fc._cutPlaced === placementKey()) return;
   const side = (cls, kids) => {
     let p = fc.querySelector(":scope > ." + cls);
     if (!kids.length) { if (p) p.remove(); return; }
     if (!p) { p = document.createElement("span"); p.className = "cutSide " + cls; p.title = ""; if (cls === "cutL") fc.prepend(p); else fc.append(p); }
-    p.append(...kids);
+    kids.forEach((kid, i) => { if (p.children[i] !== kid) p.insertBefore(kid, p.children[i] || null); });
   };
   side("cutL", al === "r" ? [CUT_B, CUT_A] : al === "c" ? [CUT_A] : []);
   side("cutR", al === "l" ? [CUT_A, CUT_B] : al === "c" ? [CUT_B] : []);
@@ -598,6 +600,7 @@ function cutPartsPlace(){
   if (lp) { const cell = fc.parentElement, room = fc.getBoundingClientRect().left - cell.getBoundingClientRect().left - (parseFloat(getComputedStyle(cell).paddingLeft) || 0);
     if (lp.offsetWidth + 14 > room) { side("cutL", []); side("cutR", [CUT_A, CUT_B]); } }
   CUT_PANEL.style.display = "none";
+  fc._cutPlaced = placementKey();
 }
 /* v0.290, «вот тут в нижний угол всегда»: 🗑 лежит в #field поверх поля строк — в правом нижнем углу его видимой части, левее и выше
    полос прокрутки. Место пересчитывается при каждой отрисовке поля и при смене размеров поля (ResizeObserver). */
@@ -1025,7 +1028,7 @@ function rowNumDigits(){
   let mx = 1; L.querySelectorAll(".rw > .no > .rn").forEach(el => { const v = parseInt(el.textContent, 10); if (v > mx) mx = v; });
   const d = String(String(mx).length); if (L.style.getPropertyValue("--rnd") !== d) L.style.setProperty("--rnd", d);
   const cols = [...(Z.showFM ? ["60px"] : []), ...(Z.show01 ? ["60px"] : []), ...(Z.coneTurnsShow ? ["var(--rtn-w, 20px)"] : [])].join(" ");
-  if (L.style.getPropertyValue("--rc-cols") !== cols) L.style.setProperty("--rc-cols", cols || " ");
+  if (L.style.getPropertyValue("--rc-cols").trim() !== cols) L.style.setProperty("--rc-cols", cols || " ");
   rowCounterWidths();
 }
 /* v0.973: одинаковая ширина числовых колонок во всех строках, без запаса 42/60 px для пустоты и нуля. */
@@ -1127,7 +1130,7 @@ function fieldInfoFit(){
 }
 function rowsLockAllPlace(){   // v0.169: общий замок — кнопкой в начале полосы ввода; здесь только его значок
   const A = $("coneLockAll"); if (!A) return;
-  const on = Z.coneLock !== false; A.textContent = ""; A.classList.toggle("off", !on);   // v0.382: значок — полоска из CSS, как у строк
+  const on = Z.coneLock !== false; if (A.textContent) A.textContent = ""; A.classList.toggle("off", !on);   // v0.382: значок — полоска из CSS, как у строк
 }
 /* v0.173, на вопрос о правиле «биты на конусе ↔ строки» — «покажи бит, щелчок с Ctrl — смена бита». В плоском конусе бит под мышью
    обведён золотом, и тот же бит подсвечен в его строке в поле (Highlight API — без перерисовки строк); Ctrl + щелчок по сектору
@@ -1187,6 +1190,19 @@ function laneCountUi(){
   }
   s.value = String(n);
 }
+// v0.1018: неизменённые строки сохраняют DOM, выделение и прокрутку.
+function rowsDomPatch(L, head, rows, tail){
+  const root = L.firstElementChild, prev = L._zzRows;
+  if (prev && prev.root === root && root && root.className === "rl-inner" && prev.head === head && prev.tail === tail && prev.rows.length === rows.length) {
+    const nodes = [...root.querySelectorAll(":scope > .rw[data-r]")];
+    if (nodes.length === rows.length) {
+      rows.forEach((html, i) => { if (prev.rows[i] !== html) nodes[i].outerHTML = html; });
+      L._zzRows = { root, head, rows, tail }; return;
+    }
+  }
+  L.innerHTML = head + rows.join("") + tail;
+  L._zzRows = { root: L.firstElementChild, head, rows, tail };
+}
 function renderRows(){
   if (rowEditing >= 0) return;
   if (!renderRows._tv) { renderRows._tv = 1; queueMicrotask(() => { renderRows._tv = 0; triViewSync(); bipyTgUi(); }); }   // v0.788: ▲▼ — после отрисовки поля; v0.791: горят ли ◇ сдвиг / строить
@@ -1200,13 +1216,14 @@ function renderRows(){
      вершине, ряд — ровно H, без ужатия (rowsFit его не трогает). H — от размера шрифта поля, но только шагами вдвое: 12, 24 (как зубцы), 48, 96
      (rgStep). Прежние виды — «01 цифры», «квадраты», «ромбы» — остались как были, в том же списке */
   const rg = Z.bitView === "rg", L = $("rowList"), N = Z.laneCount || 1, qv = Z.bitView === "sq" || Z.bitView === "rh" || rg;
-  L.className = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv && !rg ? " vq" : "") + (rg ? " vrg" : "") + (Z.bitView === "sq" ? " vsq" : "") + ["rlsq", "tri90", "rnhov"].map(c => L.classList.contains(c) ? " " + c : "").join("");
+  const listClass = "al-" + (Z.rowsAlign || "center") + (N > 1 ? " multi" : "") + (qv && !rg ? " vq" : "") + (rg ? " vrg" : "") + (Z.bitView === "sq" ? " vsq" : "") + ["rlsq", "tri90", "rnhov", "dimsel", "dimcur"].map(c => L.classList.contains(c) ? " " + c : "").join("");
+  if (L.className !== listClass) L.className = listClass;
   const qrh = (i) => {   // v0.456: ромбы — строке, чья длина отличается от соседней на нечётное (ряды сдвинуты на полсимвола)
     if (Z.bitView !== "rh" || (Z.rowsAlign || "center") !== "center" || Z.rows[i] === undefined) return false;
     const n = Z.rows[i].length, odd = (j) => Z.rows[j] !== undefined && Math.abs(Z.rows[j].length - n) % 2 === 1;
     return odd(i - 1) || odd(i + 1);
   };   // v0.246: ужатость, 90° и подсветка номеров — не сбрасывать
-  L.style.setProperty("--lanes", N);
+  if (L.style.getPropertyValue("--lanes") !== String(N)) L.style.setProperty("--lanes", N);
   const lanes = []; for (let l = 0; l < N; l++) lanes.push(l === Z.lane ? Z.rows : Z.lanes[l]);
   const H = Math.max(...lanes.map(x => x.length));
   let h = '<div class="rl-inner">';
@@ -1218,6 +1235,7 @@ function renderRows(){
         '<span class="lhx" data-lx="' + l + '" title="✕ Удалить поле ' + (l + 1) + ' со всеми строками (↩ вернёт)">✕</span></span>';   // v0.247
     h += "</div>";
   }
+  const head = h, rowHtml = []; h = "";
   for (let i = 0; i < H; i++) {
     h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
     for (let l = 0; l < N; l++) {
@@ -1229,7 +1247,7 @@ function renderRows(){
            '<span class="' + (act ? "bx" : "bxo") + '">' + (qv ? bitsCells(s) : bitsShow(s)) + "</span>" +
            (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "") + "</span>";
     }
-    h += "</div>";
+    h += "</div>"; rowHtml.push(h); h = "";
   }
   // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
   h += '<div id="infoSlot"></div>' + cutLine() + fillRowHtml(N) + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой
@@ -1244,9 +1262,10 @@ function renderRows(){
     }
     h += hidRowHtml(H + j, t);
   }
-  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.869   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
+  rowsDomPatch(L, head, rowHtml, h + '<div id="voidRows"></div></div>'); cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.1018: обновляем только изменившиеся строки
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  $("fieldInfo").textContent = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
+  const infoText = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
+  if ($("fieldInfo").textContent !== infoText) $("fieldInfo").textContent = infoText;
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
@@ -1396,6 +1415,7 @@ function editRowInPlace(i){
   const L = $("rowList");
   const rw = L.querySelector('.rw[data-r="' + i + '"]');
   if (!rw) return;
+  if (L._zzRows) L._zzRows.rows[i] = null;   // после Enter, Escape или blur убрать редактор даже при прежнем тексте
   Z.cur = i;
   rowEditing = i;
   const bits = rw.querySelector(".bits.la") || rw.querySelector(".bits");
@@ -2528,6 +2548,37 @@ function ringTblSync(){
   el.classList.remove("off"); el.title = "Выбор режима колец действует независимо от включения солнца и лазера.";
   if (el.hidden) el.hidden = false;
 }
+// v0.1018: прежний цветовой ключ на GPU, без чтения всех пикселей в JS каждый кадр.
+function coneArtGpu(cv, W, H, bg){
+  let s = coneArtGpu._state;
+  if (s === false) return null;
+  try {
+    if (!s) {
+      const canvas = document.createElement("canvas"), gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: false, preserveDrawingBuffer: true });
+      if (!gl) { coneArtGpu._state = false; return null; }
+      const shader = (type, source) => { const x = gl.createShader(type); gl.shaderSource(x, source); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error("cone art shader"); return x; };
+      const vs = shader(gl.VERTEX_SHADER, "attribute vec2 p; varying vec2 uv; void main(){uv=(p+1.0)*0.5; gl_Position=vec4(p,0.0,1.0);}");
+      const fs = shader(gl.FRAGMENT_SHADER, "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec2 uv; uniform sampler2D tex; uniform vec3 bg; void main(){vec4 c=texture2D(tex,uv); vec3 bytes=floor(c.rgb*255.0+0.5); vec3 d=abs(bytes-bg*255.0); float delta=max(d.r,max(d.g,d.b)); gl_FragColor=vec4(c.rgb,c.a*min(1.0,delta/20.0));}");
+      const program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
+      gl.deleteShader(vs); gl.deleteShader(fs); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error("cone art program");
+      gl.useProgram(program); const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+      const p = gl.getAttribLocation(program, "p"); gl.enableVertexAttribArray(p); gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
+      const texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.uniform1i(gl.getUniformLocation(program, "tex"), 0);
+      s = coneArtGpu._state = { canvas, gl, program, texture, bg: gl.getUniformLocation(program, "bg") };
+      canvas.addEventListener("webglcontextlost", () => { coneArtGpu._state = false; });
+    }
+    const {canvas, gl} = s; if (gl.isContextLost()) return null;
+    if (canvas.width !== W) canvas.width = W; if (canvas.height !== H) canvas.height = H;
+    gl.viewport(0, 0, W, H); gl.useProgram(s.program); gl.bindTexture(gl.TEXTURE_2D, s.texture);
+    gl.uniform3f(s.bg, bg[0] / 255, bg[1] / 255, bg[2] / 255);
+    if (s.w !== W || s.h !== H) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); s.w = W; s.h = H; }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return canvas;
+  } catch (err) { if (s && s.gl) { s.gl.deleteTexture(s.texture); s.gl.deleteProgram(s.program); } coneArtGpu._state = false; return null; }
+}
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
   let layer = document.getElementById("coneTopArt");
@@ -2536,11 +2587,18 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const wr = win.getBoundingClientRect(), left = Math.round(R.left - wr.left + win.scrollLeft - win.clientLeft), top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop);
   layer.style.left = left + "px"; layer.style.top = top + "px"; layer.style.width = R.width + "px"; layer.style.height = R.height + "px";
   if (layer.width !== W) layer.width = W; if (layer.height !== H) layer.height = H;
-  const g = layer.getContext("2d", { willReadFrequently: true }); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.drawImage(cv, 0, 0, W, H);
+  const g = layer.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
   const probe = coneTopArtSync._probe || (coneTopArtSync._probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }));
-  probe.fillStyle = bgCol; probe.fillRect(0, 0, 1, 1); const bg = probe.getImageData(0, 0, 1, 1).data, image = g.getImageData(0, 0, W, H), px = image.data;
-  for (let p = 0; p < px.length; p += 4) { const delta = Math.max(Math.abs(px[p] - bg[0]), Math.abs(px[p + 1] - bg[1]), Math.abs(px[p + 2] - bg[2])); if (delta < 20) px[p + 3] = Math.round(px[p + 3] * delta / 20); }
-  g.putImageData(image, 0, 0);
+  if (coneTopArtSync._bgCol !== bgCol) { probe.fillStyle = bgCol; probe.fillRect(0, 0, 1, 1); coneTopArtSync._bg = probe.getImageData(0, 0, 1, 1).data; coneTopArtSync._bgCol = bgCol; }
+  // Свечение и полупрозрачная 3D-графика остаются на точном CPU-пути:
+  // преобразование premultiplied alpha при загрузке текстуры иначе меняет слабые пиксели.
+  const bg = coneTopArtSync._bg, gpu = !Z.coneGlow && !Z.cone3d ? coneArtGpu(cv, W, H, bg) : null;
+  if (gpu) g.drawImage(gpu, 0, 0);
+  else { // запасной CPU-путь сохраняет прежний вид и работу перекрытия кнопок
+    g.drawImage(cv, 0, 0, W, H); const image = g.getImageData(0, 0, W, H), px = image.data;
+    for (let p = 0; p < px.length; p += 4) { const delta = Math.max(Math.abs(px[p] - bg[0]), Math.abs(px[p + 1] - bg[1]), Math.abs(px[p + 2] - bg[2])); if (delta < 20) px[p + 3] = Math.round(px[p + 3] * delta / 20); }
+    g.putImageData(image, 0, 0);
+  }
   g.globalCompositeOperation = "destination-in"; g.beginPath(); g.arc(cx, cy, rMax + 3 * dpr, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = "source-over";
   if (Z.coneAxes) { g.save(); g.strokeStyle = axisCol; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore(); }
 }
@@ -2549,7 +2607,7 @@ function coneArtBlocksButton(e){
   if (!button || button.id === "bC3Axes" || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
-  try { if (layer.getContext("2d", { willReadFrequently: true }).getImageData(x, y, 1, 1).data[3] < 24) return; }
+  try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
   catch (err) { return; }
   e.preventDefault(); e.stopImmediatePropagation();
 }
@@ -12095,7 +12153,10 @@ function cgrpInit(){
   /* v0.827, «подтормаживает на каждом обороте кручения»: во время кручения внутри групп каждый кадр меняется только текст-показ — число у ползунка (.rv, .sli)
      и строка «вариантов цикла… сейчас N» (#coneVarN). Наблюдатель на каждую такую смену пересобирал все группы (cgbSnap + triTag, 100–200 мс) — кадр вставал.
      Такие правки раскладку кнопок не меняют — их наблюдатель теперь пропускает */
-  const cgbTextOnly = (ms) => ms.every(m => { const x = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !!(x && x.closest && x.closest(".rv, .sli, #coneVarN, #lasAlgo, .gfold")); });
+  const cgbTextOnly = (ms) => ms.every(m => {
+    if (m.type === "childList" && [...m.addedNodes, ...m.removedNodes].every(n => n.nodeType === 3) && [...m.addedNodes].map(n => n.textContent).join("") === [...m.removedNodes].map(n => n.textContent).join("")) return true;
+    const x = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !!(x && x.closest && x.closest(".rv, .sli, #coneVarN, #lasAlgo, .gfold"));
+  });
   { let t = 0; const mo = new MutationObserver((ms) => { if (cgbTextOnly(ms)) return; if (!t) t = requestAnimationFrame(() => { t = 0; cgbIcons(); cgbSnap(); }); });   // v0.335: и ширины 1 / 2 / 4
     groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
   cgbSnap();
@@ -12170,6 +12231,11 @@ const CG_FREE = ".cgrp > .glab, .cgrp > .cgb > .glab2, .cgrp > .cgb > span:not(.
    мало одной ширины, — в 2 кнопки (или в 4), а не обрезаны (классы .w2 / .w4). Замер — разом для всех (одна перекладка страницы, а не на
    каждый элемент: при ▶ волне счёт меняется каждый кадр) */
 const CG_BTN = ".cgrp > .cgb button:not(.zerk-arrow), .cgrp > .cgb label:has(> input[type=checkbox]), .cgrp > .cgb select";
+function cgbMeasureKey(el, bu0, buC){
+  const s = getComputedStyle(el);
+  return [el.textContent, el.tagName === "SELECT" ? el.innerHTML : "", el.getAttribute("size"), [...el.classList].filter(c => !["wm", "w2", "w4"].includes(c)).sort().join(" "),
+    s.font, s.letterSpacing, s.paddingLeft, s.paddingRight, s.borderLeftWidth, s.borderRightWidth, bu0, buC, cgbSnap.fontEpoch || 0].join("|");
+}
 function cgbSnap(decorate = true){
   const bu0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bu")) || 80, ct = document.querySelector("#w-cone .tools");
   const buC = (ct && parseFloat(getComputedStyle(ct).getPropertyValue("--bu"))) || bu0;   // v0.447: в конусе своя --bu (6s) и без зазоров
@@ -12179,8 +12245,9 @@ function cgbSnap(decorate = true){
   /* v0.535, по замеру из консоли пользователя («Кручение» прыгает при Аниматрице): «весь:» получал здесь ширину кнопки (83 px) поверх своей, triTag
      принимал её за заданную — 6 сторон вместо 3, «⟳» уезжал строкой ниже; следующий пересчёт без cgbSnap — снова 3. Подписи и заголовки групп
      из треугольников меряет только triTag */
-  const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk") && !(el.matches(".glab, .glab2") && el.closest("#w-cone .tools, #paneGrp")));   // v0.452: место и размер кнопок конструктора — свои
-  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk") && !el.dataset.w1);   // v0.490: data-w1 — всегда в одну
+  const changed = el => { const key = cgbMeasureKey(el, bu0, buC); if (el._cgbMeasureKey === key) return false; el._cgbNextKey = key; return true; };
+  const free = [...document.querySelectorAll(CG_FREE)].filter(el => vis(el) && !el.classList.contains("tzk") && !(el.matches(".glab, .glab2") && el.closest("#w-cone .tools, #paneGrp"))).filter(changed);
+  const btn = [...document.querySelectorAll(CG_BTN)].filter(el => vis(el) && !el.classList.contains("ib") && !el.closest(".cunit") && !el.classList.contains("tzk") && !el.dataset.w1).filter(changed);
   document.querySelectorAll(".cgb [data-w1].w2, .cgb [data-w1].w4").forEach(el => el.classList.remove("w2", "w4"));
   free.forEach(el => { el.style.width = "max-content"; el.style.flex = "0 0 auto"; if (!el.style.boxSizing) el.style.boxSizing = "border-box"; });
   btn.forEach(el => { el._tzw = el.classList.contains("tz") ? el.style.getPropertyValue("width") : ""; if (el._tzw) el.style.removeProperty("width");
@@ -12188,10 +12255,11 @@ function cgbSnap(decorate = true){
     el.classList.add("wm"); });   // v0.447: ширина .tz — своя, на замер снять
   const wf = free.map(el => el.getBoundingClientRect().width), wb = btn.map(el => el.getBoundingClientRect().width);
   btn.forEach(el => { el.classList.remove("wm"); if (el._tzw) el.style.setProperty("width", el._tzw, "important"); if (el._tzf) el.style.setProperty("flex", el._tzf, "important"); });
-  free.forEach((el, i) => { el.style.width = W(kOf(wf[i], el), el) + "px"; });
-  btn.forEach((el, i) => { const k = kOf(wb[i], el); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); });
+  free.forEach((el, i) => { el.style.width = W(kOf(wf[i], el), el) + "px"; el._cgbMeasureKey = el._cgbNextKey; });
+  btn.forEach((el, i) => { const k = kOf(wb[i], el); if (el.classList.contains("w2") !== (k === 2)) el.classList.toggle("w2", k === 2); if (el.classList.contains("w4") !== (k === 4)) el.classList.toggle("w4", k === 4); el._cgbMeasureKey = el._cgbNextKey; });
   if (decorate && typeof triTag === "function") triTag();
 }
+if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => { cgbSnap.fontEpoch = (cgbSnap.fontEpoch || 0) + 1; cgbSnap(); });
 function cgbIcons(){
   document.querySelectorAll(".cgrp > .cgb button:not(.zerk-arrow)").forEach((b) => { const on = !!b.dataset.ballSpeed || b.hasAttribute("data-ball-ring") || b.hasAttribute("data-ball-through") || [...b.textContent.trim()].length <= 2; if (b.classList.contains("ib") !== on) b.classList.toggle("ib", on); });
 }
@@ -13089,7 +13157,9 @@ function lpWin(col, vis){
     [...h.children].forEach(el => { if (el.tagName === "BUTTON") { if (vis(el)) run.push(el); } else if (vis(el) && run.length) { runs.push(run); run = []; } });
     if (run.length) runs.push(run);
     runs.forEach(r => r.forEach((b, i) => {
-      b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
+      const colorKey = [...b.classList].filter(c => c !== "tz").join(" ") + "|" + h.parentElement.className + "|" + document.documentElement.className + "|" + document.documentElement.style.cssText + "|" + Z.theme + "|" + Z.noLn;
+      if (b._lpColorKey !== colorKey) { b.classList.remove("tz"); b._lpBorderColor = getComputedStyle(b).borderTopColor; b.classList.add("tz"); b._lpColorKey = colorKey; }
+      const bc = b._lpBorderColor;
       const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
       b._gcol = tzLnBg() || bc || col; b._tzar = ""; b._tzfix = true;
       b._tzL = i === 0 ? TZ_TIP : TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = i === 0 ? 0 : 1;
