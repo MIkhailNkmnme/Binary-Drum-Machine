@@ -3532,7 +3532,7 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneFlat()) coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N });   // v0.914: цепочка от кольца за чертой до центра
+  if (coneFlat()) { coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); }   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
@@ -5184,6 +5184,53 @@ function coneEdgeDraw(g, o){
     for (let i = 0; i <= N; i++) { const r = r0 + (i + 0.5 * band) * dr; g.beginPath(); g.arc(cx + r * c, cy + r * s, 2.5 * dpr, 0, TAU2); g.fill(); }
   }
   g.restore();
+}
+/* v0.1034, «сделай режим ни лазер ни солнце — режим Грани: когда из центра выстраивается линия из кольца 1 через грани всех внутренних к текущему, делать
+   засечку линией на следующем кольце в любом его месте»: «⟂ грани» (Z.coneNotch, в группе «Лазер»; луч-часы и солнце при нём выключены). Прямая из центра
+   по грани кольца 1 и граням всех колец строк (те же грани, что у магнита и «⏸ грани»: coneEdgeRings) — засечка на кольце за чертой в этом месте, в его
+   частях (Z.coneNotches { sig: строк:длина за чертой, x: [места] }); крутится вместе с ним. Совпадение при кручении ищется точно, и между кадрами
+   (zzEdgeMeet); стоит или крутят рукой — по нынешнему положению. Сменилась строка за чертой — засечки начинаются заново; правый щелчок по кнопке — стереть */
+function coneNotchOn(){ return !!Z.coneNotch && !Z.coneClock && coneFlat(); }
+function coneNotchList(){
+  const N = Math.min(Z.rows.length, CONE_MAX), sig = N + ":" + fillLen();
+  if (!Z.coneNotches || Z.coneNotches.sig !== sig || !Array.isArray(Z.coneNotches.x)) Z.coneNotches = { sig, x: [] };
+  return Z.coneNotches.x;
+}
+function coneNotchAdd(a){   // a — угол прямой (как у coneEdgeRings); → true, если засечка новая
+  const F = coneRingFeat("f"); if (!F) return false;
+  let x = ((((a + Math.PI / 2) / F.step + F.x0) % F.P) + F.P) % F.P; if (F.P - x < 1e-9) x = 0;   // на самом стыке — место 0, не P
+  const L = coneNotchList();
+  if (L.some(v => { const d = Math.abs(v - x); return Math.min(d, F.P - d) * F.step < 1e-6; })) return false;
+  L.push(x); return true;
+}
+function coneNotchRings(){ const R = coneEdgeRings(); return R.length >= 3 ? R.slice(0, -1) : []; }   // кольца строк (их хотя бы два), без кольца за чертой
+function coneNotchNow(){ if (!coneNotchOn()) return 0; const inner = coneNotchRings(); let n = 0; if (inner.length) for (const a of zzAlignedEdges(inner)) if (coneNotchAdd(a)) n++; return n; }
+function coneNotchSweep(ph0, dph){   // все совпадения на пути фазы ph0 → ph0 + dph; → сколько новых засечек
+  if (!coneNotchOn() || !dph) return 0;
+  const bak = Z.coneSpinPh; let ph = ph0, rem = dph, n = 0;
+  try {
+    for (let k = 0; k < 256 && Math.abs(rem) > 1e-12; k++) {
+      Z.coneSpinPh = ph; const inner = coneNotchRings(); if (!inner.length) break;
+      Z.coneSpinPh = ph + 1e-4; const after = coneNotchRings(); Z.coneSpinPh = ph;
+      inner.forEach((r, i) => { r.rate = -(after[i].x0 - r.x0) * r.step / 1e-4; });
+      const hit = zzEdgeMeet(inner, rem); if (!hit) break;
+      ph += hit.ph; rem -= hit.ph; Z.coneSpinPh = ph;
+      for (const a of hit.angles) if (coneNotchAdd(a)) n++;
+    }
+  } finally { Z.coneSpinPh = bak; }
+  return n;
+}
+function coneNotchDraw(g, o){
+  const b = $("bConeNotch");
+  if (Z.coneNotch && Z.coneClock) Z.coneNotch = false;   // включили лазер или солнце — режим граней уступает
+  if (b) { const on = coneNotchOn(); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+  if (!coneNotchOn()) return;
+  if (coneNotchNow()) save();
+  const F = coneRingFeat("f"), L = coneNotchList(); if (!F || !L.length) return;
+  const { cx, cy, r0, dr, band, dpr, N } = o, ri = r0 + N * dr, ro = ri + Math.max(1, dr * band);
+  g.save(); g.strokeStyle = "#ffd166"; g.lineWidth = 2.5 * dpr; g.lineCap = "round"; g.shadowColor = "#ffd166"; g.shadowBlur = 6 * dpr; g.beginPath();
+  for (const x of L) { const a = -Math.PI / 2 + (x - F.x0) * F.step, c = Math.cos(a), sn = Math.sin(a); g.moveTo(cx + (ri - 2 * dpr) * c, cy + (ri - 2 * dpr) * sn); g.lineTo(cx + (ro + 2 * dpr) * c, cy + (ro + 2 * dpr) * sn); }
+  g.stroke(); g.restore();
 }
 /* v0.884, «1 строку также магнитить и к 2 строке симметрии, вообще нужен переключатель магнит по симметрии: магнитить в оба кольца — внутр. и наружн. и каждое
    по отдельности»: «🧲 сим.» (Z.magSym: "both" — по умолчанию, "in", "out", "off"; кнопка #bMagSym в «Кручении») — при кручении рукой кольцо прилипает ещё
@@ -6915,7 +6962,7 @@ function setupCone(){
     // going at a blocked ball; laser painting and automatic new rows wait.
     if (window.zzBallActive && window.zzBallActive()) {
       if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
-      else Z.coneSpinPh = (Z.coneSpinPh || 0) + (coneBitMode(m) ? sp / 10 : sp) * dt;
+      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); }   // v0.1034: засечки и при шариках
       tapeRec(); return true;
     }
     if (m === "all") {
@@ -6948,7 +6995,9 @@ function setupCone(){
         say(st.ray ? "⏸ Появился одиночный сквозной луч через центр — пауза. Запись битов — по выбранному правилу. ▶ крутить — дальше." : st.edges ? "⏸ Грани кольца за чертой сошлись с гранями всех внутренних колец до центра — пауза. ▶ крутить — дальше." : `⏸ Лазер прошёл все кольца (проход ${Z.coneClockN | 0}) — пауза. ▶ крутить — дальше.`);
         return false;
       }
-      Z.coneSpinPh = st && st.part ? st.ph : ph0 + dph;   // v0.201: ✺ — кольца только до просчитанного; v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
+      Z.coneSpinPh = st && st.part ? st.ph : ph0 + dph;
+      if (coneNotchSweep(ph0, Z.coneSpinPh - ph0)) save();   // v0.1034: засечки «⟂ грани» — все совпадения за кадр
+      // v0.201: ✺ — кольца только до просчитанного; v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
       coneCycleCheck(ph0, Z.coneSpinPh, m);
       }
       if (coneFanOn()) {   // v0.201: ✺ — вылетевшие гаснут, затор — отпустить; погасли все — пауза
@@ -7262,6 +7311,18 @@ function setupCone(){
       if (on) { Z.coneFillTurn = (Z.coneFillTurn || 0) + coneFillSpin(); Z.fillStill = true; } else { Z.fillStill = false; Z.coneFillTurn = (Z.coneFillTurn || 0) - coneFillSpin(); }
       $("bFillStill").classList.toggle("on", on); coneSweepAcc = null; coneSunWas = undefined; conePeekC = { k: "", S: null }; save(); renderCone();
       say(on ? "⏸ Кольцо за чертой стоит — крутятся только кольца строк. Ушла строка в поле — её кольцо крутится дальше с того места, где стояло." : "⏸ Кольцо за чертой снова крутится вместе со всеми — с того места, где стояло."); };
+  }
+  if ($("bConeNotch")) {   // v0.1034: «⟂ грани» — засечки на кольце за чертой по прямым через грани всех колец строк
+    $("bConeNotch").onclick = () => {
+      const on = !coneNotchOn();
+      if (on) {
+        if (Z.coneSun && $("bConeSun")) $("bConeSun").click();
+        const c = $("coneClock"); if (Z.coneClock && c) { c.checked = false; c.onchange({ target: c }); }
+      }
+      Z.coneNotch = on; save(); renderCone();
+      say(on ? "⟂ Грани: прямая из центра по граням кольца 1 и всех колец строк — засечка на кольце за чертой. ▶ крутить или крути рукой. Правый щелчок — стереть засечки." : "⟂ Грани выключены. Засечки сохранены, пока не сменится строка за чертой.");
+    };
+    $("bConeNotch").oncontextmenu = (e) => { e.preventDefault(); Z.coneNotches = null; save(); renderCone(); say("⟂ Засечки на кольце за чертой стёрты."); };
   }
   if ($("bConeEdgeStop")) {
     const ui = () => { const b = $("bConeEdgeStop"); b.classList.toggle("on", !!Z.coneEdgeStop); b.setAttribute("aria-pressed", String(!!Z.coneEdgeStop)); }; ui();
