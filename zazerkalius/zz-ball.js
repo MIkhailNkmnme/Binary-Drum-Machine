@@ -27,10 +27,14 @@
   const centerCount = () => { const C = Z.coneBallClosed; return C && C.key === centerKey() ? Math.max(0, C.n | 0) : 0; };
   const setClosed = (n) => { Z.coneBallClosed = n > 0 ? { key: centerKey(), n } : null; };
   const clearCenter = () => { setClosed(0); pendingClosed = 0; centerInitKey = ""; };
+  /* v0.1069, «если включён отскок, то „В центр“ при старте не ставить 0 в биты всех строк внутренних — пустыми делать, и К1 тоже»: при «удар: отскок»
+     новый опыт делает все строки пустыми (Z.coneBallEmpty — пометка поверх строк, сами строки остаются из 0/1); биты ставят только удары —
+     снаружи 1, изнутри 0 (если «0 изнутри»). Без отскока — как прежде: пустой (нулевой) только К1. Ключ инициализации — с отскоком: его смена = новый опыт */
   function initCenter() {
-    if (centerInitKey === centerKey()) return;
-    if (window.zzBallCenterInit && !centerCount()) window.zzBallCenterInit();   // v0.1063: заранее закрытые кольца хранят свои биты
-    centerInitKey = centerKey();
+    const key = centerKey() + (bounceOn() ? "|b" : "");
+    if (centerInitKey === key) return;
+    if (window.zzBallCenterInit && !centerCount()) window.zzBallCenterInit(bounceOn(), centerKey());   // v0.1063: заранее закрытые кольца хранят свои биты
+    centerInitKey = key;
   }
   function closeCenterRing(k) {
     if (k !== centerCount()) return;
@@ -881,6 +885,24 @@
     renderCone();
   };
   window.zzBallRemember = () => {}; // Balls ride their bit edges; nothing to remember.
+  // v0.1069: пустая ячейка строки — как пустая за чертой: фон, без цифры, пунктирный контур
+  function drawEmpty(g, S, cx, cy, dr, dpr) {
+    const M = window.zzBallEmptyMask ? window.zzBallEmptyMask() : null; if (!M) return;
+    g.save(); g.fillStyle = typeof coneCss === "function" ? coneCss("--bg", "#0b0d12") : "#0b0d12"; g.strokeStyle = "#79e7e1"; g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]);
+    for (let k = 0; k < M.length && k < S.rings.length; k++) {
+      const m = M[k], ring = S.rings[k]; if (!m || !m.includes("1") || ring.fill) continue;
+      const cells = ring.cells && ring.cells.length ? ring.cells : ring.blocks, ri = ring.ri * dr, ro = ring.ro * dr;
+      for (const c of cells) {
+        if (m[c.bit] !== "1") continue;
+        const lo = angle(S, k, c.lo), hi = angle(S, k, c.hi);
+        g.beginPath();
+        if (hi - lo >= TAU - 1e-9) { g.arc(cx, cy, ro, 0, TAU); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, TAU, true); }
+        else { g.arc(cx, cy, ro, lo, hi); g.arc(cx, cy, ri, hi, lo, true); g.closePath(); }
+        g.globalAlpha = 1; g.fill("evenodd"); g.globalAlpha = 0.6; g.stroke();
+      }
+    }
+    g.restore();
+  }
   window.zzBallDraw = (g, o) => {
     if (!enabled) { markers = []; drawn = null; return; }   // v0.960: выключены — на конусе ничего
     const { cx, cy, dr, dpr } = o, S = snapshot();
@@ -903,6 +925,7 @@
         }
         g.restore();
       } else { markers = []; drawn = null; }
+      drawEmpty(g, S, cx, cy, dr, dpr);   // v0.1069: пустые ячейки строк (отскок «В центр»)
       for (const ball of balls.length ? balls : F ? [F] : []) if (ball.ready) { ball.q = ball.start.q; ball.k = ball.start.k; ball.raw = ball.start.raw; }
       metrics(S);
       g.save();
