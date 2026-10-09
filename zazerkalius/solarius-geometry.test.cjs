@@ -71,7 +71,7 @@ function uiMath(){
   const source = readFileSync(__dirname + '/zz-ui.js', 'utf8');
   const ctx = vm.createContext({});
   vm.runInContext(readFileSync(__dirname + '/zz-core.js', 'utf8'), ctx);
-  const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
+  const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneOneSlit coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
   for (const name of ['coneHalfOn', 'coneRow1Slit', 'conePartCount', 'coneRow1PartPhase', 'coneQuadOpen', 'coneRingFeat', 'coneMagRing', 'coneFeatEdges', 'coneFeatMids', 'cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
   for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt']) needed.add(name);
   for (const name of ['coneAngDiff', 'magSymOf', 'magPartsOnly', 'coneRingSymAxes', 'coneSymTargets', 'conePartTargets', 'coneHandSnap', 'coneR1AxisSnap', 'coneNextHandSnap']) needed.add(name);
@@ -116,7 +116,7 @@ test('full magnetic steps keep neighbor symmetry axes but omit canvas axes', () 
   }
 });
 test('first-ring canvas-axis snap remains available for manual dragging', () => {
-  const ctx = magnetMath(); ctx.Z.magSym = 'in';
+  const ctx = magnetMath(); ctx.Z.magSym = 'in'; ctx.Z.coneAxes = true;
   const snap = ctx.coneR1AxisSnap();
   assert.ok(snap); assert.ok(Math.abs(Math.sin(2 * snap.t)) < 1e-9);
   assert.ok(Math.abs(snap.deg + 2) < 1e-9);
@@ -124,6 +124,11 @@ test('first-ring canvas-axis snap remains available for manual dragging', () => 
   const hand = ctx.coneHandSnap(0);
   assert.ok(hand); assert.match(hand.what, /вертикаль|горизонталь/);
   assert.equal(ctx.coneNextHandSnap(0, 1), null);
+  // v0.1030: hidden ✛ axes are not a target, neither by hand nor for the row-1 snap.
+  ctx.Z.coneAxes = false;
+  assert.equal(ctx.coneR1AxisSnap(), null);
+  const hidden = ctx.coneHandSnap(0);
+  assert.ok(!hidden || !/вертикаль|горизонталь/.test(hidden.what));
 });
 test('all ring geometries persist when both light sources are off', () => {
   const ctx = uiMath(); ctx.Z.rows = ['1', '11', '111'];

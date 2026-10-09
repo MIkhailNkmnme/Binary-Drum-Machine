@@ -35,7 +35,9 @@ const modes = {
   'между': parts(3, [[0, 1], [2, 3]]),
   'симм.': parts(3, [[0, 1], [1.5, 2.5]]),
   '2n': parts(4, [[0, 1], [1, 2]]),
-  '1 щель / все': parts(2, [[0, 1], [1, 2]])
+  'все': parts(2, [[0, 1], [1, 2]]),
+  // «N щель»: the only edge of a row ring is its slit, so one block covers the whole circle.
+  'N щель': [{ lo: 0, hi: 2 * pi }]
 };
 // Without cuts ring 1 is one bit: its slit and the line through the centre opposite it.
 const row1 = { half: [{ lo: pi / 2, hi: 3 * pi / 2 }], quad: parts(4, [[1, 2], [3, 4]]), slit: [{ lo: -pi / 2, hi: pi / 2 }] };
@@ -90,4 +92,4 @@ for (const count of [1, 2, 3]) {
 }
 context.Z.coneBallAuto = false;
 assert.ok(movingGroup(plain, rates.bit, 6, 2).error, 'without tuning T−1 has no opposite pair');
-console.log(`PASS: auto-tuned speeds in T−1, между, симм., 2n, 1 щель/все × half/quad/slit ring 1 × 3 spin modes × 2/3 rings: ${runs} runs, ${retuned} retuned, 0 reversals; ∞ loops; group fallback`);
+console.log(`PASS: auto-tuned speeds in T−1, между, симм., 2n, все, N щель × half/quad/slit ring 1 × 3 spin modes × 2/3 rings: ${runs} runs, ${retuned} retuned, 0 reversals; ∞ loops; group fallback`);

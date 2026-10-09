@@ -201,6 +201,8 @@
         else blocks.push({ lo: Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 });
       }
       else {
+        // v0.1033: «N щель» — у кольца строки одна грань, щель между последним и первым битом: один блок во весь круг.
+        if (R.one) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], shape: [R.n, R.P, "one", band].join(":") }); continue; }
         const bits = i === N ? fillDraft() : Z.rows[i];
         // Unfilled draft cells still have the same physical perimeter/edges.
         // Their paint value must not hide the launch points on that perimeter.

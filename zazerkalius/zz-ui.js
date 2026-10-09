@@ -5121,9 +5121,12 @@ function coneRingFeat(i){
   else if (i === 0 && coneQuadOn()) { n = conePartCount(); cut = false; step = TAU2 / n; P = n; x0 = coneRotOf(0) - coneRow1PartPhase() / step; }
   else if (i === 0 && coneHalfOn()) { n = 2; cut = false; step = Math.PI; P = 2; x0 = coneRotOf(0) - 0.5; }
   else { const R = coneMagRing(i); if (!R) return null; n = R.n; cut = R.cut; step = R.step; P = R.P; x0 = R.x0; }
-  return { n, cut, step, P, x0, sp: cut && coneCutSpread() };
+  /* v0.1033, «N щель»: у кольца строки (кроме строки 1) щель одна — между последним и первым битом; гранью для магнита, «⏸ грани», шагов и шариков
+     считается только она (one). Строка 1 и кольцо за чертой — щели на каждой границе, как у лазера */
+  return { n, cut, step, P, x0, sp: cut && coneCutSpread(), one: typeof i === "number" && i >= 1 && !cut && coneOneSlit() };
 }
 function coneFeatEdges(R){
+  if (R.one) return [0];   // v0.1033: «N щель» — одна грань, сама щель
   const o = [];
   if (R.sp) { const s = new Set(); for (let q = 0; q < R.n; q++) { const p = cutPos(q, R.n); s.add(Math.round((p % R.P) * 1e6) / 1e6); s.add(Math.round(((p + 1) % R.P) * 1e6) / 1e6); } return [...s]; }
   for (let j = 0; j < (R.cut ? R.P : R.n); j++) o.push(j);
@@ -5378,11 +5381,11 @@ function coneMagSnap(i, rot){   // → { rot, line, what } — поворот к
   const K = coneMagK(), G = coneGeom; coneRot[i] = rot; const R = coneMagRing(i); if (!R || !G) return { rot, line: null };
   const rm = Math.max(20 * (G.dpr || 1), G.r0 + (i + 0.5) * G.dr), tol = 7 * (G.dpr || 1) / rm, TAU = 2 * Math.PI;
   const xOf = (t) => (t + Math.PI / 2) / R.step + R.x0;   // место (в битах кольца) под углом t
-  const sym = K.sym && !R.cut ? coneSymAxes(Z.rows[i]) : [];
+  const sym = K.sym && !R.cut ? coneSymAxes(Z.rows[i]) : [], oneI = i >= 1 && !R.cut && coneOneSlit();
   let best = null;
   const tryT = (t, what) => {
     const x = xOf(t), fam = [];
-    if (K.bnd) fam.push([Math.round(x), "граница"]);
+    if (K.bnd) fam.push([oneI ? Math.round(x / R.P) * R.P : Math.round(x), oneI ? "щель" : "граница"]);   // v0.1033: «N щель» — только щель
     if (K.mid) fam.push([Math.round(x - 0.5) + 0.5, "середина"]);
     for (const c of sym) { let d = ((c - x) % R.P + R.P) % R.P; if (d > R.P / 2) d -= R.P; fam.push([x + d, "ось симметрии"]); }
     for (const [xf, own] of fam) { const dx = xf - x, da = Math.abs(dx) * R.step; if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own + " → " + what }; }
@@ -5391,7 +5394,7 @@ function coneMagSnap(i, rot){   // → { rot, line, what } — поворот к
   if (K.bnd || K.mid || K.sym) for (let k = 0; k < Math.min(G.N, Z.rows.length); k++) {
     if (k === i) continue; const Q = coneMagRing(k); if (!Q || Q.P > 720) continue;
     const A = (x) => -Math.PI / 2 + (x - Q.x0) * Q.step;
-    if (K.bnd) for (let j = 0; j < Q.P; j++) tryT(A(j), "граница кольца " + (k + 1));
+    if (K.bnd) for (let j = 0; j < (k >= 1 && !Q.cut && coneOneSlit() ? 1 : Q.P); j++) tryT(A(j), (k >= 1 && !Q.cut && coneOneSlit() ? "щель" : "граница") + " кольца " + (k + 1));   // v0.1033
     if (K.mid) for (let j = 0; j < Q.P; j++) tryT(A(j + 0.5), "середина бита кольца " + (k + 1));
     if (K.sym && !Q.cut) for (const c of coneSymAxes(Z.rows[k])) { tryT(A(c), "ось симметрии кольца " + (k + 1)); tryT(A(c) + Math.PI, "ось симметрии кольца " + (k + 1)); }
   }
