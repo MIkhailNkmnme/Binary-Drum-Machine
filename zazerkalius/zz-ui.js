@@ -5197,13 +5197,17 @@ function coneEdgeDraw(g, o){
    розовой чертой между двумя кольцами; вспышка гаснет за 0,9 с. Пары соседей — по «🧲 сим.» (оба — все пары; внутр. / наруж. — тоже все: при ▶ крутятся
    все кольца, «текущего» нет). Только при «🧲 гран.» и не в кручении по магнитам (там свои лучи) */
 /* v0.1037, по таблице «Кольца» на строке «N щель» — «надо как-то цветом эту щель выделить, чтобы её сразу видеть»: в «N щель» единственная щель каждого
-   кольца строки (кроме строки 1 — у неё свой вырез) — ярко-зелёная полоса во всю толщину кольца, одной ширины у всех колец (v0.1039); крутится с кольцом */
+   кольца строки (у строки 1 — её вырез-затвор, v0.1040) — ярко-зелёная полоса во всю толщину кольца, одной ширины у всех колец (v0.1039); крутится с кольцом */
 const CONE_SLIT1_COL = "#22e07a";
 function coneOneSlitDraw(g, o){
   if (!coneOneSlit()) return;
   const { cx, cy, r0, dr, band, dpr, N } = o;
   g.save(); g.fillStyle = CONE_SLIT1_COL; g.strokeStyle = CONE_SLIT1_COL; g.shadowColor = CONE_SLIT1_COL; g.shadowBlur = 8 * dpr; g.globalAlpha = 0.95;
   const w = Math.max(3 * dpr, Math.min(8 * dpr, dr * 0.08));   // одна ширина на все кольца
+  /* v0.1040, «почему у 1 строки нет щели в режиме N щель?»: у строки 1 своя щель — вырез-затвор, через который выходит лазер (coneCutAngle: поворот строки 1
+     и прицел); та же зелёная полоса от центра до края кольца 1 */
+  if (N >= 1) { const a = coneCutAngle(), c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2, rout = r0 + Math.max(1, dr * band);
+    g.beginPath(); g.moveTo(cx + r0 * c + px, cy + r0 * sn + py); g.lineTo(cx + rout * c + px, cy + rout * sn + py); g.lineTo(cx + rout * c - px, cy + rout * sn - py); g.lineTo(cx + r0 * c - px, cy + r0 * sn - py); g.closePath(); g.fill(); }
   for (let i = 1; i < N; i++) {
     const R = coneRingFeat(i); if (!R || !R.one) continue;
     // v0.1039, «щель одинаковой ширины у всех»: полоса с параллельными краями одной ширины w на всех кольцах (не клин по углу)
