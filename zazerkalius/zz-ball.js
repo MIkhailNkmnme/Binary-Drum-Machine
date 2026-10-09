@@ -13,8 +13,10 @@
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр" };
   // v0.954, «текст — убери из окна»: пояснения, T₀ и состояние — в подсказках (заголовок, ▶ запуск, скорость), не строками в окне.
-  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. В обычном режиме шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Шарики переходят на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю шарик огибает дугу и снова идёт через центр. Скорость на прямых сохраняется. Если впереди нет совпавшей прямой, в ∞ и на внешних кольцах шарик ждёт на своей дуге (жёлтый), вращаясь с ней, и продолжает при первом совпадении. При обычном опыте на К1–К2 несовпадение по-прежнему даёт разворот. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
+  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. В обычном режиме шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Шарики переходят на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю шарик огибает дугу и снова идёт через центр. Скорость на прямых сохраняется. Если впереди нет совпавшей прямой, в ∞ и на внешних кольцах шарик ждёт на своей дуге (жёлтый), вращаясь с ней, и продолжает при первом совпадении. При обычном опыте на К1–К2 несовпадение по-прежнему даёт разворот. ⚙ Автоподстройка (любой режим колец): на каждом прямом отрезке шарик берёт свою постоянную скорость, ближайшую к заданной (не быстрее 4×), чтобы прийти к стыку ровно при совпадении граней; через центр — один отрезок до внешнего стыка К1. Сквозной без общей скорости запускается так же. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
   const allStarts = () => Z.coneBallBatch !== false;
+  // v0.1025: автоподстройка — на каждом прямом отрезке своя постоянная скорость, чтобы прийти к стыку в момент совпадения граней.
+  const autoOn = () => Z.coneBallAuto === true;
   const throughCount = () => [2, 3, 4].includes(+Z.coneBallThroughCount) ? +Z.coneBallThroughCount : 1;
   // Keep coincident endpoints separate: each belongs to its own bit edge.
   function boundaryPoints(S) {
@@ -118,19 +120,20 @@
   }
   function movingGroup(S, w, T, count) {
     const group = solveGroup(S, w, T, count);
-    if (!group.error || !Z.coneBallArc || !T) return group;
+    if (!group.error || !(Z.coneBallArc || autoOn()) || !T) return group;
     // Waiting makes an initially unmatched pose usable too. Keep four physical
     // outer starts, rather than requiring a precomputed uninterrupted crossing.
     const points = boundaryPoints(S).filter(p => p.k === 1 && Math.abs(p.r - S.rings[1].ro) < EPS);
     const unique = points.filter((p, i) => !points.slice(0, i).some(q => Math.abs(norm(p.raw - q.raw)) < ALIGN));
     const mult = fraction(Z.coneBallMult || "1");
-    if (unique.length < count || !Number.isFinite(mult)) return group;
+    // With auto-tuning every outer start works in any ring mode, even without an opposite pair.
+    if (!unique.length || unique.length < count && !autoOn() || !Number.isFinite(mult)) return group;
     const first = unique.find(p => p.id === Z.coneBallStart) || unique[0];
     const opposite = unique.find(p => Math.abs(norm(p.raw - first.raw - Math.PI)) < ALIGN);
-    if (count > 1 && !opposite) return group;
+    if (count > 1 && !opposite && !autoOn()) return group;
     const ordered = [first, ...(opposite ? [opposite] : []), ...unique.filter(p => p !== first && p !== opposite)];
     const speed = 2 * S.rings[1].ro * mult / T;
-    return { runs: ordered.slice(0, count).map(point => ({ point, speed, mult, duration: T / mult })) };
+    return { runs: ordered.slice(0, count).map(point => ({ point, speed, mult, duration: T / mult, auto: autoOn() })) };
   }
   function speedText(value) {
     for (let d = 1; d <= 128; d++) {
@@ -237,6 +240,7 @@
     $("ballLabDir").textContent = (Z.coneAutoSp ?? 30) < 0 ? "↺ против" : "↻ по часовой";
     $("ballLabDir").dataset.active = "true";
     if ($("ballLabArc")) $("ballLabArc").setAttribute("aria-pressed", String(!!Z.coneBallArc));
+    if ($("ballLabAuto")) $("ballLabAuto").setAttribute("aria-pressed", String(autoOn()));
     const through = $("ballLabThrough");
     if (through) {
       const single = !balls.length && F && F.through;
@@ -256,7 +260,7 @@
       speeds.hidden = !group;
       if (group) {
         speeds.textContent = balls.map(x => x.number + ": " + speedText(x.mult) + "×").join(" · ");
-        $("ballLabRun").title = $("ballLabSpeed").title = "Сквозная группа · " + speeds.textContent + ". Скорость на прямых постоянна; в режиме ∞ скорость на дуге подбирается отдельно. Столкновений нет.";
+        $("ballLabRun").title = $("ballLabSpeed").title = "Сквозная группа · " + speeds.textContent + (balls.some(x => x.auto) ? ". ⚙ Подстройка: на каждом прямом отрезке своя постоянная скорость." : ". Скорость на прямых постоянна; в режиме ∞ скорость на дуге подбирается отдельно.") + " Столкновений нет.";
         if (mixed) lab.querySelectorAll("[data-ball-speed]").forEach(b => b.setAttribute("aria-pressed", "false"));
       }
     }
@@ -271,7 +275,7 @@
     const route = routes[requested] ? requested : "cross", mult = fraction(Z.coneBallMult || "1"), T = options.period ?? period(S);
     const move = route === "out" ? 1 : -1, length = route === "out" ? R - p.r : R + p.r;
     F = { shape: S.shape, dir, R, route, start: { k, raw, q: p.r }, length, move, stage: move > 0 ? "out" : "in", ready: !launch,
-      q: p.r, k, raw, a: angle(S, k, raw), reversals: 0, clean: true, elapsed: 0, travel: 0, period: T, mult, speed: options.speed ?? (T && Number.isFinite(mult) ? length * mult / T : 0), loop: !!Z.coneBallArc, crossings: 0, arcs: 0 };
+      q: p.r, k, raw, a: angle(S, k, raw), reversals: 0, clean: true, elapsed: 0, travel: 0, period: T, mult, speed: options.speed ?? (T && Number.isFinite(mult) ? length * mult / T : 0), loop: !!Z.coneBallArc, crossings: 0, arcs: 0, auto: options.auto ?? autoOn(), seg: null, tuned: 0 };
     F.ringTurns = (S.rotation || S.rings).map(() => 0);
     if (launch && !(F.speed > 0)) { F.ready = true; status(length <= EPS ? "Шарик уже на внешнем краю · выбери точку внутри или маршрут через центр" : "Для запуска нужны вращение и положительная дробная скорость"); metrics(S); return; }
     status(!enabled ? "Шарик выключен · серая точка — старт · ● вкл. — включить" : launch ? routes[route] + " · старт: " + p.label + " · скорость " + String(Z.coneBallMult || "1") + "×" : readyText(S));
@@ -332,12 +336,12 @@
     return null;
   }
   function turn(why) {
-    F.move = -F.move; F.stage = F.move > 0 ? "out" : "in"; F.reversals++; F.clean = false;
+    F.move = -F.move; F.stage = F.move > 0 ? "out" : "in"; F.reversals++; F.clean = false; F.seg = null;
     F.length = F.travel + (F.move > 0 ? F.R - F.q : F.q + F.R);
     status(why + " · разворот по своей грани · НЕ проход · разворотов " + F.reversals);
   }
   function waitAt(next, opposite = false) {
-    F.stage = "wait"; F.wait = { next, opposite };
+    F.stage = "wait"; F.wait = { next, opposite }; F.seg = null;
     status("Ждёт прямую впереди · кольцо " + (F.k + 1) + " → " + (next + 1));
   }
   // Find the first alignment inside this frame, including one that has already
@@ -362,6 +366,30 @@
     }
     return best;
   }
+  // Auto-tuning: the straight run to the next joint gets one constant speed,
+  // the one nearest to the nominal speed whose arrival meets an aligned edge
+  // (at most 4x faster). Through the centre the run goes on along the
+  // opposite edge of ring 1 up to its outer joint.
+  function planSegment(S, C, dt) {
+    const ring = S.rings[F.k]; let length, next, raw = F.raw, outward = F.move > 0;
+    if (!F.k && F.move < 0) {
+      const own = ring.blocks.flatMap(b => [b.lo, b.hi]).find(e => Math.abs(norm(e - F.raw - Math.PI)) < ALIGN);
+      if (own === undefined) return null;
+      length = F.q + ring.ro; next = 1; raw = own; outward = true;
+    } else { length = outward ? ring.ro - F.q : F.q - ring.ri; next = F.k + F.move; }
+    if (!(length > EPS) || next < 0 || next >= S.rings.length) return null;
+    const target = S.rings[next];
+    if (Math.abs(outward ? ring.ro - target.ri : ring.ri - target.ro) > EPS) return null;
+    const dw = (C.delta[F.k] - C.delta[next]) / dt, nominal = length / F.speed, a = angle(S, F.k, raw);
+    let best = null;
+    for (const b of target.blocks) for (const f of [b.lo, b.hi]) {
+      const phase = norm(a - angle(S, next, f));
+      const times = Math.abs(dw) < 1e-12 ? (Math.abs(phase) < ALIGN ? [nominal] : []) :
+        Array.from({ length: 7 }, (_, j) => ((Math.round((dw * nominal + phase) / TAU) + j - 3) * TAU - phase) / dw);
+      for (const t of times) if (t >= nominal / 4 - 1e-12 && (best === null || Math.abs(t - nominal) < Math.abs(best - nominal))) best = t;
+    }
+    return best === null ? null : { speed: length / best };
+  }
   function outerArc(S, C, dt) {
     const block = S.rings[F.k].blocks.find(b => [b.lo, b.hi].some(e => Math.abs(norm(e - F.raw)) < ALIGN));
     if (!block) { waitAt(F.k - 1); return; }
@@ -372,7 +400,7 @@
     F.arc = planArc(S, C.delta.map(v => v / dt), F) || {
       from, to, duration: F.q * Math.abs(to - from) / F.speed, elapsed: 0, speed: F.speed
     };
-    F.raw = F.arc.from; F.stage = "arc";
+    F.raw = F.arc.from; F.stage = "arc"; F.seg = null;
   }
   // The ball sits on edge F.raw of ring F.k at distance F.q from the centre,
   // so it turns with that ring. Stops: the outer rim (exit), the joint between
@@ -393,7 +421,7 @@
         if (!found) break;
         F.k = F.wait.next; F.raw = found.edge;
         if (F.wait.opposite) F.move = 1;
-        F.wait = null; F.stage = F.move > 0 ? "out" : "in";
+        F.wait = null; F.seg = null; F.stage = F.move > 0 ? "out" : "in";
         status("Продолжает по прямой · кольцо " + (F.k + 1));
         continue;
       }
@@ -402,12 +430,14 @@
         arc.elapsed += seconds; F.elapsed += seconds; F.travel += arc.speed * seconds; t += seconds / dt;
         F.raw = arc.from + (arc.to - arc.from) * Math.min(1, arc.elapsed / arc.duration);
         if (arc.duration - arc.elapsed > 1e-10) break;
-        F.raw = arc.to; F.arc = null; F.arcs++; F.move = -1; F.stage = "in";
+        F.raw = arc.to; F.arc = null; F.arcs++; F.move = -1; F.stage = "in"; F.seg = null;
         continue;
       }
       const ring = A.rings[F.k];
       const stop = F.move > 0 ? ring.ro : ring.ri;
-      const amount = Math.min(C.distance * (1 - t), Math.max(0, (stop - F.q) * F.move)), h = amount / C.distance;
+      if (F.auto && !F.seg) { F.seg = planSegment(C.at(t), C, dt) || { speed: F.speed }; if (Math.abs(F.seg.speed / F.speed - 1) > 1e-9) F.tuned++; }
+      const step = (F.seg ? F.seg.speed : F.speed) * dt;
+      const amount = Math.min(step * (1 - t), Math.max(0, (stop - F.q) * F.move)), h = amount / step;
       F.q += F.move * amount; F.travel += amount; F.elapsed += dt * h; t += h;
       if (Math.abs(F.q - stop) > EPS) break;
       F.q = stop;
@@ -427,10 +457,10 @@
       const touching = Math.abs(stop - (F.move > 0 ? target.ri : target.ro)) < EPS;
       const e = touching ? edgeAt(S, next, a) : null;
       if (e === null) {
-        if (F.loop || F.k >= 2 || next >= 2) waitAt(next);
+        if (F.loop || F.auto || F.k >= 2 || next >= 2) waitAt(next);
         else turn("Грань кольца " + (next + 1) + " не совпала");
       }
-      else { F.k = next; F.raw = e; }
+      else { F.k = next; F.raw = e; F.seg = null; }
     }
     // Freeze each result at the exact exit, including a partial final frame.
     F.ringTurns = F.ringTurns.map((v, k) => v + (C.turnDelta[k] || 0) * Math.min(t, 1));
@@ -438,7 +468,7 @@
     metrics(B);
   }
   function finish() {
-    F.stage = "done"; cycles++; if (F.clean) passes++;
+    F.stage = "done"; F.seg = null; cycles++; if (F.clean) passes++;
     status(routes[F.route] + " · " + (F.clean ? "ПРОХОД без разворота" : "НЕ проход: был разворот") + " · время " + F.elapsed.toFixed(3) + " с · чистых " + passes + "/" + cycles);
     if (F.loopError) status(F.loopError);
   }
@@ -605,13 +635,13 @@
     F.through = true;
     if (count === 1) { F.speed = result.speed; F.mult = result.mult; }
     if (count > 1) batchStatus();
-    else status("Сквозной проход · " + result.point.label + " · " + speedText(result.mult) + "× · " + result.duration.toFixed(3) + " с");
+    else status(result.auto ? "Сквозной с автоподстройкой · " + result.point.label + " · база " + speedText(result.mult) + "× · скорость на каждом отрезке своя" : "Сквозной проход · " + result.point.label + " · " + speedText(result.mult) + "× · " + result.duration.toFixed(3) + " с");
     labControls(); renderCone(); return true;
   }
   window.zzBallLaunch = launch;
   window.zzBallThrough = launchThrough;
   window.zzBallPoints = () => { const S = snapshot(); return S ? boundaryPoints(S) : []; };
-  function ballInfo(b) { return { id: b.id, number: b.number, label: b.label, route: b.route, stage: b.stage, ready: b.ready, speed: b.speed, period: b.period, multiplier: b.mult, length: b.length, distance: b.travel, elapsed: b.elapsed, ringTurns: b.ringTurns.slice(), clean: b.clean, reversals: b.reversals, ring: b.k, edge: b.raw, q: b.q, angle: b.a, loop: b.loop, crossings: b.crossings, arcs: b.arcs, arcSpeed: b.arc && b.arc.speed, waitingForRing: b.wait ? b.wait.next + 1 : null, loopError: b.loopError }; }
+  function ballInfo(b) { return { auto: b.auto, tuned: b.tuned, segSpeed: b.seg && b.seg.speed, id: b.id, number: b.number, label: b.label, route: b.route, stage: b.stage, ready: b.ready, speed: b.speed, period: b.period, multiplier: b.mult, length: b.length, distance: b.travel, elapsed: b.elapsed, ringTurns: b.ringTurns.slice(), clean: b.clean, reversals: b.reversals, ring: b.k, edge: b.raw, q: b.q, angle: b.a, loop: b.loop, crossings: b.crossings, arcs: b.arcs, arcSpeed: b.arc && b.arc.speed, waitingForRing: b.wait ? b.wait.next + 1 : null, loopError: b.loopError }; }
   window.zzBallInfo = () => F && { ...ballInfo(F), batch: allStarts(), balls: balls.map(ballInfo) };
   window.zzBallLabSync = () => {
     if (!lab) return;
@@ -636,7 +666,7 @@
       <div class="ball-lab-row ball-lab-rings"><div class="ball-lab-ring"><span>Кольцо 1</span><button type="button" class="ib" data-ball-ring="0" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="0" data-step=".5">+½</button></div><div class="ball-lab-ring"><span>Кольцо 2</span><button type="button" class="ib" data-ball-ring="1" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="1" data-step=".5">+½</button></div></div>
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" class="ib" data-ball-speed="1/4">¼</button><button type="button" class="ib" data-ball-speed="1/3">⅓</button><button type="button" class="ib" data-ball-speed="1/2">½</button><button type="button" class="ib" data-ball-speed="2/3">⅔</button><button type="button" class="ib" data-ball-speed="1">1</button><button type="button" class="ib" data-ball-speed="3/2">³⁄₂</button><button type="button" class="ib" data-ball-speed="2">2</button><button type="button" class="ib" data-ball-speed="4">4</button><button type="button" class="ib" data-ball-speed="8">8</button><button type="button" class="ib" data-ball-speed="16">16</button><button type="button" class="ib" data-ball-speed="32">32</button></span></div>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
-      <div class="ball-lab-row"><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
+      <div class="ball-lab-row"><button id="ballLabAuto" type="button" aria-pressed="false" title="⚙ Автоподстройка скоростей — для всех режимов колец (T−1, между, симм., 2n). На каждом прямом отрезке шарик едет со своей постоянной скоростью, ближайшей к заданной (не быстрее 4×), и приходит к стыку ровно при совпадении граней — без разворотов. Если общей постоянной скорости для ↦ сквозного нет, он запускается с подстройкой. Ещё раз — выключить: одна скорость на всём пути, при несовпадении — разворот.">⚙ подстройка</button><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
       <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его постоянная скорость по прямым ×. На дугах скорость подбирается отдельно. Дробные кнопки выше возвращают обычный запуск одного шарика."></small>
       <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
       <div id="ballLabTurns" title="Фактический поворот каждого кольца с момента запуска шарика, в оборотах по 360°. Дроби сокращены; ≈ — округление до 1/1000 оборота. ↻ по часовой, ↺ − против. На паузе счёт стоит; ✓ — чистый выход, × — выход с разворотами; результат зафиксирован. Новый запуск и ↩ обнуляют счёт. В режиме ∞ считается весь путь, включая дуги."></div>
@@ -647,6 +677,7 @@
     $("ballLabRun").onclick = () => launch();
     $("ballLabThrough").onclick = () => launchThrough(1);
     lab.querySelectorAll("[data-ball-through]").forEach(b => b.onclick = () => launchThrough(+b.dataset.ballThrough));
+    $("ballLabAuto").onclick = () => { Z.coneBallAuto = !autoOn(); save(); reset(true); labControls(); };
     $("ballLabArc").onclick = () => { Z.coneBallArc = !Z.coneBallArc; if (Z.coneBallArc) launchThrough(4); else reset(true); save(); labControls(); };
     $("ballLabPause").onclick = () => { if (paused && (!enabled || !F || F.ready)) launch(); else $("bConeAuto").click(); };
     $("ballLabReset").onclick = () => reset(true);
@@ -680,6 +711,7 @@
   }
   function init() {
     if (!$("bConeBall")) return;
+    if (Z.coneBallAuto === undefined) Z.coneBallAuto = true;   // v0.1025: подстройка по умолчанию включена
     enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset();
     $("bConeBall").onclick = () => {
       enabled = !enabled; Z.coneBallOn = enabled; ui(); save(); reset();
