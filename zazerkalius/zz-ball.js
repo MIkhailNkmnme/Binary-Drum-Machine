@@ -617,6 +617,16 @@
     if (!lab) return;
     Z.coneBallLabOpen = !lab.classList.contains("cmin");
   };
+  // v0.1021: оформление группы тоже меняет class; оно не должно запускать новую отрисовку.
+  function observeLabFold(el) {
+    let open = !el.classList.contains("cmin"), raf = 0;
+    new MutationObserver(() => {
+      const next = !el.classList.contains("cmin");
+      if (next === open) return;
+      open = next; Z.coneBallLabOpen = next;
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderCone(); });
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
+  }
   function initLab() {
     if (typeof ZZ_BG !== "undefined" && ZZ_BG) return;
     lab = $("solBallLab"); const host = lab && lab.querySelector(":scope > .cgb"); if (!host) return;
@@ -656,9 +666,7 @@
       else { coneRot[i] = (coneRot[i] || 0) + +b.dataset.step; Z.coneFree ||= {}; Z.coneFree[i] = true; }
       Z.coneRot = coneRot.slice(); save(); reset();
     });
-    new MutationObserver(() => {
-      Z.coneBallLabOpen = !lab.classList.contains("cmin"); renderCone();
-    }).observe(lab, { attributes: true, attributeFilter: ["class"] });
+    observeLabFold(lab);
     const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; const name = lab.querySelector(":scope > .glab"); if (name) name.title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
     $("coneCv").addEventListener("pointerdown", e => {

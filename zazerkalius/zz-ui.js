@@ -85,7 +85,17 @@ const ZZ_ROWS0 = Z.rows.slice();   // v0.123: начальный столбик 
 const undoStack = [];
 let gf2Last = null;
 
+// v0.1019: запуск с ?reset=1 очищает память страницы до чтения настроек.
+function zzResetOnStart(){
+  const url = new URL(location.href);
+  if (url.searchParams.get("reset") !== "1" || ZZ_BG || ZZ_PRESET) return false;
+  try { localStorage.removeItem(ZZ_KEY); } catch (e) { /* недоступное хранилище не мешает чистому запуску */ }
+  url.searchParams.delete("reset");
+  try { history.replaceState(null, "", url.href); } catch (e) { /* страницу можно открыть и без History API */ }
+  return true;
+}
 function load(){
+  if (zzResetOnStart()) { if (!ZZ_SOLO) Z.fieldRight = true; return; }
   if (ZZ_PRESET) {   // v0.185: пресет
     const u = JSON.parse(JSON.stringify(ZZ_PRESET.state));
     if (ZZ_SOLO) for (const k of ZZ_PRESET_LAYOUT) delete u[k];   // v0.196: в пресете теперь и раскладка — для всей страницы
@@ -2452,13 +2462,23 @@ function sunTblBuild(el){
   let x = '<table class="cgrp-fill"><colgroup><col><col class="smcw"><col class="smcw"></colgroup><tbody>';
   let gi = -1;   // v0.892: номер подгруппы — свой фон (класс sgN)
   SUNTBL.forEach((r, i) => {
-    if (r.g) { gi = ["Проход сквозь", "Красит за чертой", "Солнце", "Луна светит", "Источник"].indexOf(r.g); x += '<tr class="smg sg' + gi + '"><th colspan="3">' + r.g + "</th></tr>"; return; }
-    x += '<tr class="sg' + gi + '" title="' + q(r.tip) + '"><td class="sml">' + r.t + "</td>";
-    for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ib ' + w + '" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
+    if (r.g) { gi = ["Проход сквозь", "Красит за чертой", "Солнце", "Луна светит", "Источник"].indexOf(r.g); x += '<tr class="smg sg' + gi + '"><th colspan="3" data-smgroup="' + gi + '" role="button" tabindex="0" aria-expanded="false" title="Щелчок — показать все настройки раздела; повторный — оставить выбранные"><span class="smchev" aria-hidden="true"></span>' + r.g + "</th></tr>"; return; }
+    x += '<tr class="sg' + gi + '" data-smgroup="' + gi + '"' + (r.s && r.s.source ? ' data-source="1"' : '') + ' title="' + q(r.tip) + '"><td class="sml">' + r.t + "</td>";
+    for (const w of ["s", "m"]) x += r[w] ? '<td class="smc"><button type="button" class="smk ib ' + w + '" data-tzadd="-3" data-r="' + i + '" data-w="' + w + '" aria-pressed="false"></button></td>' : '<td class="smc"></td>';
     x += "</tr>";
   });
   host.innerHTML = x + "</tbody></table>";
+  el.addEventListener("keydown", (e) => {
+    const section = e.target.closest("th[data-smgroup]");
+    if (section && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); e.stopPropagation(); section.click(); }
+  });
   el.addEventListener("click", (e) => {
+    const section = e.target.closest("th[data-smgroup]");
+    if (section) {
+      e.stopPropagation(); Z.sunTblOpen ||= {};
+      Z.sunTblOpen[section.dataset.smgroup] = !Z.sunTblOpen[section.dataset.smgroup];
+      sunTblFoldSync(el); save(); tzgFrame(el); return;
+    }
     const k = e.target.closest(".smk[data-r]"); if (!k) return; e.stopPropagation();
     const r = SUNTBL[+k.dataset.r], c = r[k.dataset.w], v = !sunTblGet(c);
     if (c.f) {
@@ -2472,6 +2492,17 @@ function sunTblBuild(el){
   });
   return el;
 }
+// v0.1020: в компактном разделе видны выбранные режимы и основной выключатель солнца.
+function sunTblFoldSync(el){
+  el.querySelectorAll("th[data-smgroup]").forEach(h => {
+    const expanded = !!(Z.sunTblOpen && Z.sunTblOpen[h.dataset.smgroup]);
+    const value = String(expanded); if (h.getAttribute("aria-expanded") !== value) h.setAttribute("aria-expanded", value);
+    el.querySelectorAll('tr[data-smgroup="' + h.dataset.smgroup + '"]').forEach(row => {
+      const hidden = !expanded && !row.dataset.source && !row.querySelector('.smk[aria-pressed="true"]');
+      if (row.hidden !== hidden) row.hidden = hidden;
+    });
+  });
+}
 function sunTblSync(){
   const el = document.getElementById("sunMoonTbl"); if (!el || !el.querySelector(":scope > .cgb")) return;
   sunPanelMergeLayout();
@@ -2483,6 +2514,7 @@ function sunTblSync(){
     const inactive = !sun && !c.source;
     k.closest("tr").classList.toggle("smoff", inactive);
     const tip = name + " — " + state + ". Щелчок — " + (c.cycle ? "следующий режим" : c.select ? "выбрать" : "переключить") + ".\n\n" + r.tip + (inactive ? "\nСолнце выключено; настройка сохранится для его включения." : ""); if (k.title !== tip) k.title = tip; if (k.getAttribute("aria-label") !== name) k.setAttribute("aria-label", name); });
+  sunTblFoldSync(el);
   el.classList.remove("off");
   el.title = "Все настройки солнца и луны. Значки переключают настройки; щели и без щелей выбираются по одному. Настройки можно менять заранее.";
   if (el.hidden) el.hidden = false; sunTblPlace(el);
@@ -13888,7 +13920,9 @@ function tzMinW(g){
     for (const label of g.querySelectorAll("td.sml")) {
       const range = document.createRange(); range.selectNodeContents(label);
       const style = getComputedStyle(label);
-      m = Math.max(m, range.getBoundingClientRect().width + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) + 98);
+      const canvas = tzMinW._sunMeasure || (tzMinW._sunMeasure = document.createElement("canvas").getContext("2d"));
+      canvas.font = style.font;
+      m = Math.max(m, canvas.measureText(label.textContent).width + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) + (document.body.classList.contains("sol-mobile") ? 88 : 56));
     }
   }
   for (const el of [...g.children, ...cgb.children]) { if (el === cgb || el.id === "coneVarN" || el.id === "lasAlgo" || el.id === "coneBallStatus" || el.classList.contains("cgrp-fill") || el.classList.contains("cgsz") || el.classList.contains("cgnl") || !el.getClientRects().length || getComputedStyle(el).position === "absolute") continue; const x = (el._tzx || 0) + [...el.querySelectorAll(".tz")].reduce((q, c) => q + (c._tzx || 0), 0); m = Math.max(m, el.getBoundingClientRect().width - x * TZC_H / Math.sqrt(3)); }   // v0.484: без растяжки до края (иначе минимум рос бы за ней); v0.507 — и растяжки кнопок внутри блока («◀ ползунок ▶|»): иначе группа не сужалась и прыгала высота; v0.974 — полноширинные панели .cgrp-fill не задают минимум и не раздувают группу при каждом пересчёте

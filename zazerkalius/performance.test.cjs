@@ -18,6 +18,43 @@ function listMock(rows) {
   const L = { firstElementChild: root, set innerHTML(v) { writes++; this.html = v; this.firstElementChild = { className: 'rl-inner', nodes: [], querySelectorAll() { return this.nodes; } }; } };
   return { L, root, counts: () => ({ writes, replaced }) };
 }
+
+test('startup reset bypasses saved state and removes only the active page key', () => {
+  const storage = new Map([['zazerkalius_v1', 'invalid saved state'], ['other-page', 'keep']]);
+  let reads = 0, cleanedUrl;
+  const ctx = vm.createContext({ URL, location: {href: 'file:///E:/app.html?reset=1&v=1019#view'},
+    history: {replaceState: (_state, _title, url) => { cleanedUrl = url; }},
+    localStorage: {removeItem: key => storage.delete(key), getItem: () => { reads++; throw new Error('must not read'); }},
+    ZZ_KEY: 'zazerkalius_v1', ZZ_BG: false, ZZ_PRESET: null, ZZ_SOLO: '', Z: {rows: ['1'], cur: 0} });
+  vm.runInContext(declaration('function zzResetOnStart(') + declaration('function load('), ctx);
+  vm.runInContext('load()', ctx);
+  assert.equal(reads, 0); assert.equal(storage.has('zazerkalius_v1'), false);
+  assert.equal(storage.get('other-page'), 'keep'); assert.equal(ctx.Z.fieldRight, true);
+  assert.equal(cleanedUrl, 'file:///E:/app.html?v=1019#view');
+});
+
+test('ordinary startup and preset URLs do not reset saved state', () => {
+  let deletes = 0;
+  const ctx = vm.createContext({URL, location: {href: 'file:///E:/app.html'}, ZZ_KEY: 'zazerkalius_v1',
+    ZZ_BG: false, ZZ_PRESET: null, localStorage: {removeItem: () => { deletes++; }} });
+  vm.runInContext(declaration('function zzResetOnStart('), ctx);
+  assert.equal(vm.runInContext('zzResetOnStart()', ctx), false);
+  ctx.location.href += '?reset=1'; ctx.ZZ_PRESET = {};
+  assert.equal(vm.runInContext('zzResetOnStart()', ctx), false);
+  ctx.ZZ_PRESET = null; ctx.ZZ_BG = true;
+  assert.equal(vm.runInContext('zzResetOnStart()', ctx), false);
+  assert.equal(deletes, 0);
+});
+
+test('startup reset still opens with default data when browser storage is unavailable', () => {
+  const ctx = vm.createContext({URL, location: {href: 'file:///E:/app.html?solo=cone&reset=1'},
+    ZZ_KEY: 'zazerkalius_solo_cone', ZZ_BG: false, ZZ_PRESET: null, ZZ_SOLO: 'w-cone', Z: {rows: ['1'], cur: 0},
+    localStorage: {removeItem: () => { throw new Error('unavailable'); }, getItem: () => { throw new Error('must not inherit main page'); }},
+    history: {replaceState: () => { throw new Error('unavailable'); }} });
+  vm.runInContext(declaration('function zzResetOnStart(') + declaration('function load('), ctx);
+  assert.doesNotThrow(() => vm.runInContext('load()', ctx));
+  assert.equal(ctx.Z.rows[0], '1');
+});
 test('unchanged rows and mounted footer are not rebuilt', () => {
   const {L, root, counts} = listMock(['a','b']); L._zzRows = { root, head: 'head', rows: ['a','b'], tail: 'tail' };
   const ctx = vm.createContext({L}); vm.runInContext(declaration('function rowsDomPatch('), ctx);

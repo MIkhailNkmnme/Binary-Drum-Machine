@@ -10,6 +10,29 @@ const ball = read('zz-ball.js');
 const mobile = read('zz-mobile.js');
 const page = read('Zerkalius-zazerkalius.html');
 
+test('ball panel decoration cannot create a render mutation feedback loop', () => {
+  const classes = new Set(['cmin']);
+  const el = {classList: {contains: name => classes.has(name)}};
+  const frames = []; let observer, renders = 0;
+  const state = {};
+  const context = vm.createContext({Z: state, el,
+    MutationObserver: class {constructor(callback) {observer = callback;} observe() {}},
+    requestAnimationFrame: callback => {frames.push(callback); return frames.length;},
+    renderCone: () => {renders++; classes.add('tzg'); observer();}
+  });
+  vm.runInContext(declaration(ball, 'function observeLabFold('), context);
+  vm.runInContext('observeLabFold(el)', context);
+  for (let i = 0; i < 20; i++) {classes.add('on'); observer();}
+  assert.equal(frames.length, 0); assert.equal(renders, 0);
+  classes.delete('cmin'); observer(); observer();
+  assert.equal(state.coneBallLabOpen, true); assert.equal(frames.length, 1);
+  frames.shift()();
+  assert.equal(renders, 1); assert.equal(frames.length, 0);
+  classes.add('cmin'); observer(); classes.delete('cmin'); observer();
+  assert.equal(frames.length, 1); frames.shift()();
+  assert.equal(state.coneBallLabOpen, true); assert.equal(renders, 2); assert.equal(frames.length, 0);
+});
+
 function declaration(source, marker, start = 0) {
   const at = source.indexOf(marker, start);
   assert.ok(at >= 0, marker);
