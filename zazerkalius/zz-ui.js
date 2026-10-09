@@ -3533,6 +3533,19 @@ function renderCone(){
     g.restore();
   }
   if (coneFlat()) { coneOneSlitDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
+  /* v0.1038, «пусть подсветка граней при ручном перекрывает выделение жёлтым выделенного кольца, а то не видно сцепления»: золотая рамка бита под мышью
+     (при кручении рукой мышь всё время на этом кольце) и сканер — под лучами кольца в руке и розовой подсветкой сцепления, а не поверх */
+  if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
+    const { i, j } = coneBitHover, n = Z.rows[i].length, CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
+    g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
+    g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
+    if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });   // v0.676
+  } else if (coneBitHover && coneBitHover.fill && coneBitHover.i === N && fillOn && Z.coneScan) {   // v0.692: ячейка кольца за чертой — тоже со сканером
+    const j = coneBitHover.j, n = fillLen(), F = coneFillCut(), step = F ? F.step : 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneFillRot() + (F ? F.off : 0)) * step;
+    const rin = r0 + N * dr, rout = rin + Math.max(1, dr * band);
+    g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
+    coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });
+  }
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
@@ -3570,17 +3583,6 @@ function renderCone(){
   }
   // метка «начала» строк — сверху: сюда встаёт бит 0
   g.strokeStyle = cg; g.lineWidth = 1 * dpr; g.beginPath(); g.moveTo(cx, cy - rMax + 2 * dpr); g.lineTo(cx, cy - rMax - 14 * dpr);   /* v0.086: метка начала — короткий штрих снаружи колец, а не черта от центра (её принимали за луч) */ g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1;
-  if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
-    const { i, j } = coneBitHover, n = Z.rows[i].length, CG = coneCutGeo(i, n), rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), step = CG.step, a = -Math.PI / 2 + (j - coneRotOf(i) + CG.off) * step;   // v0.667
-    g.beginPath(); coneArc(g, cx, cy, i, rout, a, a + step); coneArc(g, cx, cy, i, rin, a + step, a, true); g.closePath();
-    g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
-    if (Z.coneScan) coneScanDraw(g, { i, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });   // v0.676
-  } else if (coneBitHover && coneBitHover.fill && coneBitHover.i === N && fillOn && Z.coneScan) {   // v0.692: ячейка кольца за чертой — тоже со сканером
-    const j = coneBitHover.j, n = fillLen(), F = coneFillCut(), step = F ? F.step : 2 * Math.PI / n, a = -Math.PI / 2 + (j - coneFillRot() + (F ? F.off : 0)) * step;
-    const rin = r0 + N * dr, rout = rin + Math.max(1, dr * band);
-    g.beginPath(); g.arc(cx, cy, rout, a, a + step); g.arc(cx, cy, rin, a + step, a, true); g.closePath(); g.strokeStyle = cg; g.lineWidth = 2 * dpr; g.globalAlpha = 1; g.stroke();
-    coneScanDraw(g, { i: N, a, step, N, cx, cy, r0, dr, band, dpr, cg, cA, cBg, ff, fillCut: coneCutOn() && fillOn });
-  }
   if (Z.r1Ray && N >= 1) r1RayDo(g, { cx, cy, r0, dr, N, dpr, fillOn: !!fillOn && !!coneGeom && !!coneGeom.fill }); else r1RayBox(false);   // v0.805: ⟋ нить
   if (coneMagCount !== null && coneFlat() && N) {   // v0.975: число совпавших границ двух колец остаётся на первом кольце до следующего действия
     const label = String(coneMagCount), fs = Math.max(12 * dpr, Math.min(19 * dpr, dr * 0.48)), rad = Math.max(11 * dpr, fs * 0.73);
