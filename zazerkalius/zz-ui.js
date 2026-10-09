@@ -5322,6 +5322,10 @@ function coneOneSlitDraw(g, o){
     const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step, c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2;
     g.beginPath(); g.moveTo(cx + rin * c + px, cy + rin * sn + py); g.lineTo(cx + rout * c + px, cy + rout * sn + py); g.lineTo(cx + rout * c - px, cy + rout * sn - py); g.lineTo(cx + rin * c - px, cy + rin * sn - py); g.closePath(); g.fill();
   }
+  // v0.1064: у «● в центр» и кольцо за чертой с одной щелью (zz-ball.js inwardOne) — её тоже видно
+  if (coneGeom && coneGeom.fill && window.zzBallFillOne && window.zzBallFillOne() && N >= closed) { const R = coneRingFeat("f");
+    if (R) { const rin = r0 + N * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step, c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2;
+      g.beginPath(); g.moveTo(cx + rin * c + px, cy + rin * sn + py); g.lineTo(cx + rout * c + px, cy + rout * sn + py); g.lineTo(cx + rout * c - px, cy + rout * sn - py); g.lineTo(cx + rin * c - px, cy + rin * sn - py); g.closePath(); g.fill(); } }
   g.restore();
 }
 let coneSeamFlash = [], coneSeamT = 0;

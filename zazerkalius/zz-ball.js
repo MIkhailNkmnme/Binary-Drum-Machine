@@ -311,6 +311,8 @@
   }
   function status(s) { if (batchBusy) return; const el = $("coneBallStatus"); if (el && el.textContent !== s) el.textContent = s; if (el) el.title = s; }
   // v0.1026: «1 щель» и «все» — кольца без вырезов: грани — щели и границы битов, как у магнита (coneRingFeat).
+  const inwardOne = (R) => !!R && !R.cut && Z.coneBallRoute === "in" && typeof coneOneSlit === "function" && coneOneSlit();   // v0.1064: одна щель и за чертой
+  window.zzBallFillOne = () => Z.coneBallOn !== false && inwardOne(coneRingFeat("f"));
   const plainRings = () => coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() !== "cut";
   function snapshot() {
     const cut = coneCutOn() && (coneHalfOn() || coneQuadOn() && conePartCount() % 2 === 0);
@@ -337,7 +339,10 @@
       }
       else {
         // v0.1033: «N щель» — у кольца строки одна грань, щель между последним и первым битом: один блок во весь круг.
-        if (R.one) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], cells: Array.from({ length: R.n }, (_, j) => ({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j })), tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, shape: [R.n, R.P, "one", band].join(":") }); continue; }
+        /* v0.1064, «баг? в режиме N щель «В центр» сразу несколько шариков не может идти — там одна щель в каждом кольце»: кольцо за чертой
+           (внешнее у «● в центр») имело щели на каждой границе ячеек (v0.1033, как у лазера), и из него стартовало по шарику на ячейку. Для «В центр»
+           у него теперь тоже одна щель — между последней и первой ячейкой, как у колец строк. Вылеты наружу — по-прежнему */
+        if (R.one || i === N && inwardOne(R)) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], cells: Array.from({ length: R.n }, (_, j) => ({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j })), tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, fill: i === N, shape: [R.n, R.P, "one", band].join(":") }); continue; }
         const bits = i === N ? fillDraft() : Z.rows[i];
         // Unfilled draft cells still have the same physical perimeter/edges.
         // Their paint value must not hide the launch points on that perimeter.
@@ -478,7 +483,7 @@
     const count = balls.length, edges = count - 9;
     if (!enabled) { status("Шарики выключены · " + count + " серых точек — старты · нажми ● вкл. или ▶ запуск"); return; }
     if (balls.every(b => b.ready) && !(balls[0].speed > 0)) { status(count + " шариков на местах · для запуска нужны вращение и положительная дробная скорость"); return; }
-    if (balls.every(b => b.ready)) { status(balls.every(b => b.route === "in") ? count + " шариков во внешних щелях · ● в центр — запуск всей группы" : balls.every(b => b.through) ? count + " сквозных шарика на внешних гранях · ▶ запуск" : count + " шариков на местах: 4 внешних + 4 внутренних угла К2 + " + edges + " края К1 + центр · ▶ запуск вместе с вращением"); return; }
+    if (balls.every(b => b.ready)) { status(balls.every(b => b.route === "in") ? (count === 1 ? "1 шарик во внешней щели · ● в центр — запуск" : count + " " + (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "шарика" : "шариков") + " во внешних щелях · ● в центр — запуск всей группы") : balls.every(b => b.through) ? count + " сквозных шарика на внешних гранях · ▶ запуск" : count + " шариков на местах: 4 внешних + 4 внутренних угла К2 + " + edges + " края К1 + центр · ▶ запуск вместе с вращением"); return; }
     const done = balls.filter(b => b.stage === "done"), clean = done.filter(b => b.clean).length, turned = balls.filter(b => !b.clean).length;
     const waiting = balls.filter(b => b.stage === "wait").length, lost = balls.filter(b => b.stage === "lost").length;   // v0.1052
     if (balls.every(b => b.route === "in")) {
