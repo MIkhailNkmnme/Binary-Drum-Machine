@@ -929,14 +929,14 @@
   // The start pose is the user's last manual ring turn before a launch: a
   // launch from the starts remembers it, ↩ and a new launch return to it.
   const fresh = () => !(balls.length ? balls : F ? [F] : []).some(b => !b.ready);
-  function rememberStart() { Z.coneBallPose = { pos: posCur(), fillFree: !!Z.coneFillFree }; save(); }
+  // v0.1064: старт шариков — общий стартовый снимок всех режимов (Z.coneStartPose, zz-ui.js coneStartMark / coneStartApply)
+  function rememberStart() { coneStartMark(true); save(); }
   function restoreStart() {
     pauseRotation();
-    const P = Z.coneBallPose; if (!P || !P.pos) return;
-    posApply({ ...P.pos, mode: Z.coneSpinMode || "all" });   // keep this experiment's spin mode
-    Z.coneFillFree = !!P.fillFree; Z.coneTurns = []; Z.coneFillTurns = 0;
+    if (!coneStartApply()) return;
     save(); if (typeof renderRows === "function") renderRows();
   }
+  window.zzBallToStart = () => { if (F || balls.length) reset(false, true); };   // «↩ старт» в «Кручении»: шарики — на свои старты, закрытие колец остаётся
   function metrics(S) {
     if (batchBusy || !$("ballLabTime")) return;
     const P = S ? Z.coneBallRoute === "in" ? outerStarts(S) : boundaryPoints(S) : [{ id: "center", label: "Центр" }], key = P.map(p => p.id).join("|");

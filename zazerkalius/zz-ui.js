@@ -6791,6 +6791,23 @@ function c3Moved(){   // v0.841: есть ли что вернуть зелён�
    довод строки 1, ft — кольцо за чертой, off — сдвиги остановленных колец, free — повёрнутые магнитом, mode — режим кручения }. Биты строк и настройки
    не входят. Щелчок по имени — кольца встают так; ★ — начальное (Z.conePosStar = id): ⟲ «на места» и ⌖✕ сброс ведут к нему; ✕ — удалить */
 function posCopy(o){ return JSON.parse(JSON.stringify(o || {})); }
+/* v0.1064, «и запоминать положение колец для старта режимов шариков и вообще всех»: одно стартовое положение на все режимы — Z.coneStartPose
+   { pos — как posCur, fillFree }. Запоминается, когда кручение (▶ пуск, двойной щелчок, ⚡ луч, лазер) или запуск шариков начинается с положения,
+   выставленного рукой: оно отличается от того, где прошлый ход остановился (Z.coneRunStop). Продолжение после паузы старт не меняет.
+   «↩ старт» в «Кручении» и ↩ / новый запуск шариков возвращают кольца сюда; биты строк не трогаются. Хранится в состоянии — переживает
+   перезагрузку и входит в «💾 Всё» / пресет */
+function coneStartMark(force){
+  const c = posCur(), stop = Z.coneRunStop;
+  if (!force && Z.coneStartPose && stop && stop.pos && posEq(c, stop.pos)) return false;
+  Z.coneStartPose = { pos: c, fillFree: !!Z.coneFillFree }; Z.coneRunStop = null; return true;
+}
+function coneStartApply(){
+  const P = Z.coneStartPose || Z.coneBallPose; if (!P || !P.pos) return false;
+  posApply({ ...P.pos, mode: Z.coneSpinMode || "all" });   // режим кручения — нынешний
+  Z.coneFillFree = !!P.fillFree; Z.coneTurns = []; Z.coneFillTurns = 0; Z.coneRunStop = null;
+  return true;
+}
+window.zzStartMark = coneStartMark; window.zzStartApply = coneStartApply;
 function posCur(){
   const V = Z.voidHits, off = {}; if (V && V.off && typeof V.off === "object") for (const [k, v] of Object.entries(V.off)) if (Math.abs(+v || 0) > 1e-9) off[k] = v;
   return { rot: coneRot.slice(0, Z.rows.length).map(x => x || 0), spin: Z.coneSpin || 0, ph: Z.coneSpinPh || 0, aim: Z.coneAimRot || 0, ft: Z.coneFillTurn || 0,
@@ -6973,14 +6990,16 @@ function setupCone(){
     }
     // v0.697, «убери клик по пустому биту, что делает его 1 и 0 по очереди — отмени это, удали»: щелчок по ячейке кольца за чертой больше её не меняет (было v0.114: пусто → 1 → 0); кольцо за чертой — как мимо колец (ни выделить, ни крутить)
     const hFill = h !== -1 && h.fill !== undefined;
-    if (hFill && ctrlK && !e.shiftKey && Z.coneClock) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
+    /* v0.1064, «дай возможность крутить руками внешнее кольцо»: кольцо за чертой крутилось рукой только при ⌖ луч-часах, а шарики и ⚡ луч
+       работают без них — теперь всегда (Ctrl или правая кнопка + тянуть). Пока включены шарики или луч, 2 оборота не открывают новое кольцо */
+    if (hFill && ctrlK && !e.shiftKey) {   // v0.704: Ctrl + тянуть кольцо за чертой — крутить его рукой
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
       /* v0.865 / v0.867, «вот есть место [＋]: пусть когда последнее кольцо крутить вручную, когда 2 оборота, то открывается следующее кольцо»: пока кольцо
          за чертой тянут, его счёт оборотов (Z.coneFillTurns, чистый — назад вычитается) дошёл до порога → то же, что «＋» у его номера (fillCommit: строка
          в поле, пустые — нулями, ↩ вернёт); рука не отпущена — тянется уже новое кольцо за чертой. Порог — Z.coneOpenTurns (не задан — 2; 0 — не открывать) */
       let F = coneFillCut(), stp = F ? F.step : 2 * Math.PI / fillLen(), t0 = Z.coneFillTurn || 0, tb = Z.coneFillTurns || 0, blocked = false, fhs = null;
       coneFillDrag = true;   // v0.875: лучи от его границ
-      const openT = Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0;
+      const openT = Z.coneBallOn || Z.coneRay ? 0 : Z.coneOpenTurns === undefined ? 2 : +Z.coneOpenTurns || 0;   // v0.1064: при шариках и луче — не открывать
       const ang = (ev) => { const cvr = cv.getBoundingClientRect(), G = coneGeom || { dpr: 1, cx: 0, cy: 0 }; return Math.atan2((ev.clientY - cvr.top) * G.dpr - G.cy, (ev.clientX - cvr.left) * G.dpr - G.cx); };
       let last = ang(e), turn = 0;
       const mv = (ev) => { const a = ang(ev); let da = a - last; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; turn += da; last = a; Z.coneFillTurn = t0 - turn / stp; Z.coneFillTurns = tb + turn / (2 * Math.PI);
@@ -7310,7 +7329,9 @@ function setupCone(){
       if (coneFanOn() && !coneFanAlive().length) { say(`⏹ Все ${coneFanN()} лучей уже вылетели. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); on = false; }   // v0.201
       else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNextIf())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
     }
+    if (on && !autoRaf) coneStartMark(false);   // v0.1064: старт с выставленного рукой — запомнить
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; if (window.zzBallSpinState) window.zzBallSpinState(true); autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
+    if (!on && autoRaf) Z.coneRunStop = { pos: posCur() };   // v0.1064: где ход остановился — продолжение отсюда старт не меняет
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; if (window.zzBallSpinState) window.zzBallSpinState(false); save(); }
     if (!on) magAutoWait = 0;
     if (!on) coneStrSnap = false;   // v0.804: следующий ▶ в «побитно» — свой снимок для ↩
@@ -7320,6 +7341,12 @@ function setupCone(){
     const s3 = $("bC3Spin"); if (s3) { s3.classList.toggle("on", on); s3.innerHTML = on ? "⏸<small>стоп</small>" : "▶"; }   // v0.985: убрать подпись «крутить», оставить крупную стрелку
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
+  if ($("bConeStartBack")) $("bConeStartBack").onclick = () => {   // v0.1064: ↩ старт — кольца на запомненный старт, для всех режимов
+    autoSet(false);
+    if (!coneStartApply()) { say("↩ Старт ещё не запомнен: выставь кольца рукой и нажми ▶ пуск или запусти шарики — это положение и станет стартом."); return; }
+    if (window.zzBallToStart) window.zzBallToStart();
+    save(); renderAll(); say("↩ Кольца — на старт (положение перед последним запуском с выставленного рукой). Биты строк не тронуты.");
+  };
   /* v0.135, «сделай паузу при клике на поле, а плей — только по кнопке»: щелчок по конусу или по полю строк, пока кольца крутятся, —
      пауза (до любого другого действия щелчка); дальше — только ▶ крутить. */
   // v0.175, «пауза — не один, а двойной щелчок»: одиночный щелчок по конусу или полю строк кручение больше не останавливает (v0.135 — останавливал)
