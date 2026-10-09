@@ -12793,6 +12793,9 @@ function triTag(){
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
   document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2), #w-cone .tools .cgrp > .glab, #paneGrp .cgrp > .glab").forEach(b => {
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
+    // v0.1022: поля шариков раскладываются внутри подписи; сцепка соседних рядов им не подходит.
+    const ballBody = b.closest(".ball-lab-body");
+    if (ballBody && b.tagName !== "BUTTON") { if (b.classList.contains("tz")) triOff(b); return; }
     const cgb = b.closest(".cgb"); b._gcol = gcol(b);
     /* v0.473, «заголовок группы — это самая первая кнопка, и все следующие размещать на её же строке, если размер позволяет»: подпись группы — шестигранник
        в начале цепочки (у групп конструктора △ — как была: их раскладку задаёт рисунок) */
@@ -12836,6 +12839,12 @@ function triTag(){
     if (b.dataset.tzl) { b._tzL = b.dataset.tzl === "n" ? TZ_NOTCH : TZ_TIP; b._tzfix = true; }   /* v0.604: свои края кнопки (t — остриё, n — выемка), как в шапке: (выдел)лучи(все) */
     if (b.dataset.tzr) b._tzR = b.dataset.tzr === "n" ? TZ_NOTCH : TZ_TIP;
     if (b.dataset.tzadd) b._tzn += +b.dataset.tzadd / 2;   /* v0.613: data-tzadd — шире на столько t (остриё соседа съедает t у кнопки перед ним) */
+    if (ballBody) {
+      const rg = document.createRange(); rg.selectNodeContents(b);
+      const min = document.body.classList.contains("sol-mobile") ? 44 : 0;
+      b._tzn = Math.max(3, Math.ceil((Math.max(min, rg.getBoundingClientRect().width + 24) - TZC_H / (2 * Math.sqrt(3))) / (TZC_H / Math.sqrt(3))));
+      b._tzar = ""; b._tzfix = true; b._tzL = TZ_NOTCH; b._tzR = TZ_TIP; b._tzm = 0;
+    }
     b._tzn0 = b._tzn; b._tzx = 0; tzGeo(b); bs.push(b);
   });
   const lastOf = (el) => { if (el.classList.contains("tz") || (el.tagName !== "SPAN" && !el.classList.contains("ball-lab-row")) || el.classList.contains("cjoin")) return el; const c = [...el.children].reverse().find(vis); return c ? lastOf(c) : el; };
@@ -12851,7 +12860,7 @@ function triTag(){
       let L = b._tzL || TZ_TIP;
       /* v0.485, «все кнопки пусть по умолчанию, если не редактировать, — стрелки вправо»: слева всегда выемка, справа остриё — остриё соседа входит в выемку */
       if (!b._tzfix) L = TZ_NOTCH;
-      const m = lk && tzFits(p._tzR, L) ? p._tzR[1] + L[1] : 0;
+      const m = !b.closest(".ball-lab-body") && lk && tzFits(p._tzR, L) ? p._tzR[1] + L[1] : 0;
       if (L !== b._tzL || m !== (b._tzm || 0)) { b._tzL = L; b._tzm = m; tzGeo(b); ch = true; }
     });
     if (!ch) break;
