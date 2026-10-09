@@ -355,7 +355,7 @@
         /* v0.1064, «баг? в режиме N щель «В центр» сразу несколько шариков не может идти — там одна щель в каждом кольце»: кольцо за чертой
            (внешнее у «● в центр») имело щели на каждой границе ячеек (v0.1033, как у лазера), и из него стартовало по шарику на ячейку. Для «В центр»
            у него теперь тоже одна щель — между последней и первой ячейкой, как у колец строк. Вылеты наружу — по-прежнему */
-        if (R.one || i === N && inwardOne(R)) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], cells: Array.from({ length: R.n }, (_, j) => ({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j })), tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, fill: i === N, shape: [R.n, R.P, "one", band].join(":") }); continue; }
+        if (R.one || i === N && inwardOne(R)) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], cells: Array.from({ length: R.n }, (_, j) => ({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j })), tol: 0, fill: i === N, shape: [R.n, R.P, "one", band].join(":") }); continue; }
         const bits = i === N ? fillDraft() : Z.rows[i];
         // Unfilled draft cells still have the same physical perimeter/edges.
         // Their paint value must not hide the launch points on that perimeter.
@@ -374,7 +374,7 @@
           blocks.length = 0; blocks.push(...M);
         }
       }
-      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, contactBlocks, cells, tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, fill: i === N, oneWay: !i && !cut && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
+      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, contactBlocks, cells, tol: 0, fill: i === N, oneWay: !i && !cut && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
     }
     const B = rings[1].blocks;
     if (!B.length) return null;
@@ -635,9 +635,12 @@
   function enteredRing(k) { if (run) { ringStats(F.k).passed++; ringStats(k).entered++; } }
   // v0.1052: where the ball may enter ring k on world line a: an edge within the slit width (snaps to it), or an open
   // cut-out (no bit block covers a; the ball keeps its place and turns with that ring); null — it hits a bit's arc.
+  /* v0.1067, «шарик и щель — идеальные линия и точка без ширины, поэтому никаких допусков… везде так»: щель (разрез) — линия без ширины, шарик — точка.
+     Проходит только грань, лежащая ровно на его прямой (ALIGN — машинная точность, не ширина); вырез — открытая дуга. Прежде — допуск полуширины
+     щели (coneSlitHalf, как у лазера) */
   function lossPass(S, k, a) {
     const R = S.rings[k], walls = R.contactBlocks || R.blocks; let best = null;
-    for (const b of walls) for (const f of [b.lo, b.hi]) { const d = Math.abs(norm(angle(S, k, f) - a)); if (d <= R.tol + 1e-12 && (best === null || d < best.d)) best = { d, f }; }
+    for (const b of walls) for (const f of [b.lo, b.hi]) { const d = Math.abs(norm(angle(S, k, f) - a)); if (d < ALIGN && (best === null || d < best.d)) best = { d, f }; }
     if (best) return best.f;
     const raw = a - R.phase - S.spin;
     return walls.some(b => { const x = ((raw - b.lo) % TAU + TAU) % TAU; return x > 0 && x < b.hi - b.lo; }) ? null : raw;
