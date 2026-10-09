@@ -787,6 +787,7 @@
     return null;
   }
   window.zzBallActive = () => enabled && !!snapshot();
+  window.zzBallLive = () => (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost").length;   // v0.1072: шарики в пути
   // v0.1053: строка за чертой ушла в поле — кольца другие; вылеты продолжаются с центра, с найденной скоростью (если она есть)
   function restartRun(S) {
     const live = (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost");
@@ -899,9 +900,12 @@
         if (m[c.bit] !== "1") continue;
         const lo = angle(S, k, c.lo), hi = angle(S, k, c.hi);
         g.beginPath();
-        if (hi - lo >= TAU - 1e-9) { g.arc(cx, cy, ro, 0, TAU); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, TAU, true); }
+        const full = hi - lo >= TAU - 1e-9;
+        if (full) { g.arc(cx, cy, ro, 0, TAU); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, TAU, true); }
         else { g.arc(cx, cy, ro, lo, hi); g.arc(cx, cy, ri, hi, lo, true); g.closePath(); }
         g.globalAlpha = 1; g.fill("evenodd"); g.globalAlpha = 0.6; g.stroke();
+        // v0.1072, «у первого кольца не видно грани из центра»: ячейка во весь круг (кольцо из одного бита) — её грань (разрез) отдельной прямой
+        if (full) { g.beginPath(); g.moveTo(cx + ri * Math.cos(lo), cy + ri * Math.sin(lo)); g.lineTo(cx + ro * Math.cos(lo), cy + ro * Math.sin(lo)); g.stroke(); }
       }
     }
     // v0.1070: щель «N щель» — геометрия кольца, а не бит: поверх пустых ячеек снова видна (тонкая линия)

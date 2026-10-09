@@ -2677,7 +2677,7 @@ function coneArtGpu(cv, W, H, bg){
 function coneBallModeSummary(cfg = Z){
   const speed = [2, 3].includes(+cfg.coneBallSpeedMode) ? +cfg.coneBallSpeedMode : 1;
   const inward = cfg.coneBallRoute === "in";
-  const parts = ["«● вылет» запускает шарик из центра через щель первого кольца наружу, кольцо за кольцом.",
+  const parts = ["«● вылет» и «● в центр» — галки: выбирают опыт, запуск — ▶ пуск в «Кручении». «● вылет» — шарик из центра через щель первого кольца наружу, кольцо за кольцом.",
     cfg.coneNotchSlit ? "Дальше он переходит только через щели и края открытых вырезов; разрезы между соседними битами внутри сплошной дуги не считаются щелью." : "Дальше используются любые прямые грани битов; при включённой «✕ дуге» учитывается также ширина щели и свободный вырез."];
   if (inward) { parts.length = 0; parts.push("«● в центр» одновременно пускает шарики из всех щелей внешнего видимого кольца внутрь. Первый достигший центра закрывает щель К1: его текущие биты 0/1 сохраняются, внешний край обводится бирюзовой дугой. Затем попадание через К2 в дугу закрытого К1 считается центром и закрывает разрез К2; так центр растёт кольцо за кольцом.", "До закрытия центра промах в дугу вызывает застревание или отскок по выбранному режиму. Закрытый центр принимает шарик при любом угле, вместо отскока. Одновременные события останавливают вращение; в статистике видны номера шариков и кольца. ▶ продолжает опыт. На открытых кольцах используются щели и вырезы. Следующий «В центр» продолжает закрытие; сброс снова открывает все кольца."); }
   parts.push(speed === 2 ? "Скорость постоянная: от центра до края кольца 1 за один его полный оборот." : speed === 3 ? "Скорость постоянная: от центра до края кольца 1 за половину его оборота — вдвое быстрее режима 2." : inward ? "В режиме 1 скорость постоянная: от внешнего края до центра за один относительный оборот первых двух колец. Время прихода к щелям не подстраивается: опыт показывает реальные прохождения и удары." : cfg.coneBallLoss ? "Авто подбирает скорость первого перехода из К1 в К2. Затем эта найденная скорость постоянна для остальных отрезков и всей цепочки." : "Авто подбирает постоянную скорость для каждого прямого отрезка отдельно, чтобы прийти к стыку при совпадении граней.");
@@ -7372,11 +7372,17 @@ function setupCone(){
     bitStepUi(); save(); renderCone();
     say(Z.coneBitStep ? "½ бита: ▶ крутить — скачками, каждое кольцо за шаг на полбита." : "½ бита выключено — кручение снова плавное.");
   };
+  let autoArmBusy = false;   // v0.1072: запуск выбранного опыта сам включает кручение — без повторного запуска
   const autoSet = (on) => {
     if (on && !autoRaf && !Z.coneSpinMag && Z.coneClock && (Z.coneSpinMode || "all") !== "all" && !(window.zzBallActive && window.zzBallActive())) {   // v0.189: все кольца строк стоят — крутить нечего, сказать
       const fz = Z.voidHits && Z.voidHits.fz, N = Math.min(Z.rows.length, CONE_MAX);
       if (coneFanOn() && !coneFanAlive().length) { say(`⏹ Все ${coneFanN()} лучей уже вылетели. Заново — ✕ у строки для заполнения или ⟲ всё на места.`); on = false; }   // v0.201
       else if (fz && N && Z.rows.slice(0, N).every((_, i) => fz[i] !== undefined) && !(coneFanOn() ? coneReleaseRings() > 0 : coneLaserNextIf())) { say("⏹ Все кольца строк стоят — луч уже прошёл их. Отпустить — 🎯 до строки, ⟲ всё на места или ✕ у строки для заполнения."); on = false; }
+    }
+    if (on && !autoRaf && !autoArmBusy && window.zzBallArmLaunch) {   // v0.1072: выбран опыт с шариками и шариков в пути нет — ▶ запускает его
+      autoArmBusy = true; let ok = false;
+      try { ok = window.zzBallArmLaunch(); } finally { autoArmBusy = false; }
+      if (ok && autoRaf) return;   // кручение уже включил сам запуск; если нет (клик по ▶ внутри его же клика браузер не повторяет) — включаем здесь
     }
     if (on && !autoRaf) coneStartMark(false);   // v0.1064: старт с выставленного рукой — запомнить
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; if (window.zzBallSpinState) window.zzBallSpinState(true); autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
@@ -7663,14 +7669,32 @@ function setupCone(){
     };
     $("bConeNotch").oncontextmenu = (e) => { e.preventDefault(); Z.coneNotches = null; save(); renderCone(); say("⟂ Засечки на кольце за чертой стёрты."); };
   }
-  if ($("bConeNotchBall")) {   // v0.1050: «● вылет» — шарик из центра через щель кольца 1 и дальше по щелям («▮ щель») или по граням
-    $("bConeNotchBall").onclick = () => {
-      if (!window.zzBallLaunch) return;
+  /* v0.1072, «и вылет — пусть это просто кнопки-галки, а запуск также через Кручение» (по снимку «● в центр»): «● вылет» и «● в центр» — галки
+     (Z.coneBallArm = "out" | "in" | ""), выбирают опыт; запуск — ▶ пуск в «Кручении» (и двойной щелчок по конусу), как у «⚡ луча». Шариков
+     в пути нет — ▶ запускает выбранный опыт заново (в «В центр» закрытие продолжается); опыт на паузе — ▶ продолжает. Две галки сразу не горят */
+  function coneBallArmUi(){
+    for (const [id, m] of [["bConeNotchBall", "out"], ["bConeBallIn", "in"]]) { const b = $(id); if (!b) continue; const on = Z.coneBallArm === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+  }
+  function coneBallArmLaunch(){ return Z.coneBallArm === "in" ? coneBallInLaunch() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false; }
+  window.zzBallArmLaunch = () => !!Z.coneBallArm && window.zzBallLive && window.zzBallLive() === 0 && coneBallArmLaunch();
+  function coneBallArm(m){
+    autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+    Z.coneBallArm = Z.coneBallArm === m ? "" : m;
+    { const on = Z.coneBallOn !== false, want = !!Z.coneBallArm, bb = $("bConeBall"); if (bb && on !== want) bb.click(); }   // галка снята — шарики выключены (▶ просто крутит), выбрана — включены
+    if (Z.coneBallArm === "in") { Z.coneBallRoute = "in"; Z.coneBallBatch = true; if (window.zzBallInwardPrime) window.zzBallInwardPrime(); }
+    else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
+    coneBallArmUi(); save(); renderCone();
+    say(Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+  }
+  coneBallArmUi();
+  function coneBallOutLaunch(){
+      if (!window.zzBallLaunch) return false;
       Z.coneBallAuto = true;
       const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain, loss: !!Z.coneBallLoss, mark: !!Z.coneBallMark });
       say(ok ? "● Вылет: шарик из центра через щель кольца 1 и дальше " + (Z.coneNotchSlit ? "только по щелям (края вырезов)." : "по граням (любые разрезы).") + (Z.coneBallChain ? " ⛓ Цепочка: вышел из кольца 1 — стартует следующий." : "") + " Скорость: " + ($("bConeBallSpeed")?.textContent || "авто") + "." : "● Вылет не запустился — подсказка в группе «Шарики».");
-    };
+      return ok;
   }
+  if ($("bConeNotchBall")) $("bConeNotchBall").onclick = () => coneBallArm("out");
   if ($("bConeBallImpact")) {
     const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
     sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); if (window.zzBallInwardPrime) window.zzBallInwardPrime(); save(); renderCone(); };   // v0.1070: стартовое состояние «В центр» — сразу
@@ -7693,8 +7717,9 @@ function setupCone(){
     };
   }
   if ($("solEdgeGrp")) $("solEdgeGrp").addEventListener("click", coneBallModeTip);
-  if ($("bConeBallIn")) $("bConeBallIn").onclick = () => {
-    if (!window.zzBallLaunch) return;
+  if ($("bConeBallIn")) $("bConeBallIn").onclick = () => coneBallArm("in");
+  function coneBallInLaunch(){
+    if (!window.zzBallLaunch) return false;
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:!!Z.coneBallLoss,mark:false,chain:false});
     { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
@@ -7705,7 +7730,8 @@ function setupCone(){
         : `● Авто: ни при какой скорости группа не попадает в щели К${A.ring + 1} — едут с базовой.`), 1600); }
     const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
     say(ok ? "● В центр: вся внешняя группа. Первый дошедший закрывает К1; попадание в закрытый центр закрывает следующее кольцо. До закрытия удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
-  };
+    return ok;
+  }
   if ($("bConeBallClosed")) {   // v0.1063: «как мне начать с 5 строки при закрытых 3 кольцах?» — щелчок +1, правая кнопка −1 (по кругу)
     const step = (d) => {
       if (!window.zzBallSetClosed) return;
