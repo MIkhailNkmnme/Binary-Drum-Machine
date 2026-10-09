@@ -5197,17 +5197,18 @@ function coneEdgeDraw(g, o){
    розовой чертой между двумя кольцами; вспышка гаснет за 0,9 с. Пары соседей — по «🧲 сим.» (оба — все пары; внутр. / наруж. — тоже все: при ▶ крутятся
    все кольца, «текущего» нет). Только при «🧲 гран.» и не в кручении по магнитам (там свои лучи) */
 /* v0.1037, по таблице «Кольца» на строке «N щель» — «надо как-то цветом эту щель выделить, чтобы её сразу видеть»: в «N щель» единственная щель каждого
-   кольца строки (кроме строки 1 — у неё свой вырез) — ярко-зелёный клин во всю толщину кольца, шириной как сама щель (не тоньше 3 px); крутится с кольцом */
+   кольца строки (кроме строки 1 — у неё свой вырез) — ярко-зелёная полоса во всю толщину кольца, одной ширины у всех колец (v0.1039); крутится с кольцом */
 const CONE_SLIT1_COL = "#22e07a";
 function coneOneSlitDraw(g, o){
   if (!coneOneSlit()) return;
   const { cx, cy, r0, dr, band, dpr, N } = o;
   g.save(); g.fillStyle = CONE_SLIT1_COL; g.strokeStyle = CONE_SLIT1_COL; g.shadowColor = CONE_SLIT1_COL; g.shadowBlur = 8 * dpr; g.globalAlpha = 0.95;
+  const w = Math.max(3 * dpr, Math.min(8 * dpr, dr * 0.08));   // одна ширина на все кольца
   for (let i = 1; i < N; i++) {
     const R = coneRingFeat(i); if (!R || !R.one) continue;
-    const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step;
-    const h = Math.max(coneSlitHalf(R.n), 1.5 * dpr / Math.max(1, rin));
-    g.beginPath(); g.arc(cx, cy, rout, a - h, a + h); g.arc(cx, cy, rin, a + h, a - h, true); g.closePath(); g.fill();
+    // v0.1039, «щель одинаковой ширины у всех»: полоса с параллельными краями одной ширины w на всех кольцах (не клин по углу)
+    const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step, c = Math.cos(a), sn = Math.sin(a), px = -sn * w / 2, py = c * w / 2;
+    g.beginPath(); g.moveTo(cx + rin * c + px, cy + rin * sn + py); g.lineTo(cx + rout * c + px, cy + rout * sn + py); g.lineTo(cx + rout * c - px, cy + rout * sn - py); g.lineTo(cx + rin * c - px, cy + rin * sn - py); g.closePath(); g.fill();
   }
   g.restore();
 }
