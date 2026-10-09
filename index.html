@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.088. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.089. Точка входа: ссылки на все страницы проекта.
+     v0.089: мобильные ссылки открываются сразу; скрытый звуковой движок загружается только по нажатию ноты. Фоновая ромбосетка снята.
      Маркер версии стоит ЗДЕСЬ, а не первой строкой: первую занимает маркер патчера.
      v0.004: живой фон — обои oboi/Zerkalius-oboi.html в iframe; кнопки: флагман, сетка лаборатории, строка знака.
      v0.005: с кнопки цельного Fold снят номер версии — он устаревал при каждом бампе файла.
@@ -103,7 +104,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.088</title>
+    <title>Zerkalius Control Hub — v0.089</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -126,8 +127,6 @@
             border: 0; z-index: 0; pointer-events: none;
             visibility: hidden;   /* v0.059, «крутящийся конус пока отключи»: не виден, но работает — звук нот играет в нём */
         }
-        /* v0.088: весь фон — та же ромбосетка, треугольник выделяется её светлыми битами. */
-        #hubGrid { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-repeat: repeat; }
 
         /* Всё содержимое — поверх фона. Надпись Zerkalius рисуют сами обои, сверху */
         /* v0.048: две главные кнопки — в одну строку (узко — переносятся) */
@@ -445,10 +444,9 @@
     </style>
 </head>
 <body>
-    <div id="hubGrid" aria-hidden="true"></div>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
     <!-- v0.038: живой фон — конус Zazerkalius (3D, зеркало вниз, свет, крутится); прежние обои — кнопка «Обои» -->
-    <iframe id="bg" src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true" allow="autoplay"></iframe>
+    <iframe id="bg" data-src="zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;bg=1" title="Конус Zerkalius" tabindex="-1" aria-hidden="true" allow="autoplay"></iframe>
     <!-- v0.043: ♫ Звук живого фона -->
     <!-- v0.050, «2 и более значков, каждый отдельно вкл/выкл»: ♫ — строчная головка (бирюза), ♪ — столбцовая (бас, золото) -->
     <!-- v0.054: семь нот — До…Си; у каждой своя головка звука фона и свой цвет (--c) -->
@@ -480,7 +478,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.088</div>
+        <div class="ver">v0.089</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -664,7 +662,20 @@
                месту (не по нотам, кнопкам и ссылкам) — пауза / дальше: фон сам знает, звучит ли, и отвечает (zerkSndPaused — ноты горят без
                мигания). Правый щелчок по пустому месту — сброс: все семь нот, звук с начала, конус с начального положения. Самый первый
                щелчок, как прежде, включает До и Ре */
-            const post = (m) => { try { bg.contentWindow.postMessage(m, '*'); } catch (e) {} };
+            // v0.089: до первой ноты тяжёлая страница конуса не загружается; команды ждут её готовности.
+            let bgReady = false;
+            const bgQueue = [];
+            window.addEventListener('message', e => {
+                if (!bg || e.source !== bg.contentWindow || !e.data || !e.data.zerkReady) return;
+                bgReady = true;
+                for (const m of bgQueue.splice(0)) bg.contentWindow.postMessage(m, '*');
+            });
+            const post = (m) => {
+                if (!bg) return;
+                if (bgReady) { bg.contentWindow.postMessage(m, '*'); return; }
+                bgQueue.push(m);
+                if (!bg.hasAttribute('src')) bg.src = bg.dataset.src;
+            };
             document.addEventListener('click', e => {
                 const t = e.target, note = t.closest && t.closest('.hubSnd'), link = t.closest && t.closest('a, button');
                 if (!e.isTrusted) return;   // v0.061: щелчки из кода (скачивание файла записи) замок не трогает
@@ -683,6 +694,8 @@
             document.addEventListener('click', e => {
                 const a = e.target.closest && e.target.closest('a.menu-btn'); if (!a || e.defaultPrevented) return;
                 if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || a.target === '_blank') return;
+                // Касание и «меньше движения»: обычный переход без ожидания полёта кнопки.
+                if (matchMedia('(pointer: coarse)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
                 e.preventDefault(); if (a.classList.contains('launch')) return;
                 const r = a.getBoundingClientRect();
                 a.style.setProperty('--lx', (innerWidth / 2 - (r.left + r.width / 2)) + 'px'); a.style.setProperty('--ly', (innerHeight * 0.42 - (r.top + r.height / 2)) + 'px');
@@ -695,7 +708,7 @@
             }, true);
             // v0.050: два значка — ♫ строки и ♪ столбцы; каждый шлёт { zerkSndHead, on }, фон отвечает, какие головки звучат (zerkSndR / zerkSndC)
             { const sbs = Array.from(document.querySelectorAll('.hubSnd'));
-              if (sbs.length && bg) { sbs.forEach(b => { b.onclick = () => { try { bg.contentWindow.postMessage({ zerkSndHead: b.dataset.h, on: !b.classList.contains('on') }, '*'); } catch (e) {} }; });
+              if (sbs.length && bg) { sbs.forEach(b => { b.onclick = () => { const on = !b.classList.contains('on'); b.classList.toggle('on', on); post({ zerkSndHead: b.dataset.h, on }); }; });
                 window.addEventListener('message', e => { if (e.source === bg.contentWindow && e.data && e.data.zerkSndOn !== undefined) {
                   const d = e.data, hs = Array.isArray(d.zerkSndHeads) ? d.zerkSndHeads : (d.zerkSndOn ? ['r', 'c'] : []);   // v0.054: какие из семи звучат
                   sbs.forEach(b => b.classList.toggle('on', hs.includes(b.dataset.h))); hubLive = !!d.zerkSndOn;   /* v0.073: звучит ли что-то (пауза — тоже) */ document.getElementById('hubSndBox').classList.toggle('paused', !!d.zerkSndPaused); wake(); if (sbs.every(b => b.classList.contains('on'))) unlock(); } }); } }   // v0.055: горят все семь — меню живое
@@ -738,21 +751,6 @@
                Стоя — один треугольник по центру (строки по середине — равнобедренный), в верхней половине; лёжа — два прямоугольных у своих
                краёв, гипотенузой к нотам (как пирамиды у конуса, Zazerkalius v0.395). Рисуется, только пока холст виден (телефон) */
             const sier = document.getElementById('hubSier'), sg = sier && sier.getContext('2d');
-            const grid = document.getElementById('hubGrid'), gridTile = { image: new Image(), key: '', x: 0, y: 0, w: 1, h: 1 };
-            const placeGrid = (x, y, dw, dh, side, desk) => {
-                const key = String(desk);
-                if (gridTile.key !== key) {
-                    // Углы плитки и её центр — соседние ромбы одной решётки, без шва на повторе.
-                    const diamond = (x, y) => `<polygon points="${x},${y - 45} ${x + 45},${y} ${x},${y + 45} ${x - 45},${y}"/>`;
-                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g fill="#9fffc8" fill-opacity="${desk ? 0.07 : 0.14}">${[[0, 0], [100, 0], [50, 50], [0, 100], [100, 100]].map(([x, y]) => diamond(x, y)).join('')}</g></svg>`;
-                    gridTile.image.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
-                    grid.style.backgroundImage = `url("${gridTile.image.src}")`;
-                    gridTile.key = key;
-                }
-                Object.assign(gridTile, { x, y, w: side ? dh : dw, h: side ? dw : dh });
-                grid.style.backgroundSize = `${gridTile.w}px ${gridTile.h}px`;
-                grid.style.backgroundPosition = `${x}px ${y}px`;
-            };
             /* v0.074, «не видно бегающего бита по треугольнику»: хаб, открытый файлом, не может читать фон (другой «адрес») — фон присылает
                звучащие биты сообщением { zerkHeads } */
             let hubHeads = null;
@@ -773,7 +771,7 @@
             const allOff = () => { document.body.classList.remove('allMode'); if (mainRow) mainRow.style.gap = ''; };
             const allPt = (r, x) => [ALL.cx + x * ALL.dw, ALL.y0 + r * ALL.dh / 2];
             const allDia = (x, y, k) => { const a = ALL.dw * k / 2, b = ALL.dh * k / 2; fg.beginPath(); fg.moveTo(x, y - b); fg.lineTo(x + a, y); fg.lineTo(x, y + b); fg.lineTo(x - a, y); fg.closePath(); fg.fill(); };
-            const allPost = (m) => { try { bg.contentWindow.postMessage(m, '*'); } catch (e) {} };
+            const allPost = post;
             const allRelease = (c, now) => {
                 const path = [[c.r, c.x]]; let r = c.r, x = c.x, alt = Math.random() < 0.5 ? 1 : -1;
                 while (r < ALL.vr) { const d = x > 0 ? -0.5 : x < 0 ? 0.5 : (alt = -alt) * 0.5; r++; x += d; path.push([r, x]); }
@@ -892,7 +890,6 @@
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - r * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - r * dw / 2 + j * dw]]; }
-                const [gx, gy] = spots[0](0, 0); placeGrid(gx, gy, dw, dh, side, desk);
                 const rhomb = (x, y, k) => { const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); };
                 for (let r = 0; r < N; r++) { const row = PR[r];
                     for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1'; if (!hc && !on) continue;
@@ -925,11 +922,6 @@
                 if (n && n.right > n.left) { n.width = n.right - n.left; n.height = n.bottom - n.top; k = Math.min(W * 0.8 / n.width, H * 0.6 / n.height); ox = W / 2 - (n.left + n.width / 2) * k; oy = H / 2 - (n.top + n.height / 2) * k; }
                 if (sierOn) {   // v0.063: телефон — весь первый экран (Серпинский и ноты) в кадр
                   const sw = sier.clientWidth, sh = sier.clientHeight, sy = window.scrollY; k = Math.min(W / sw, H / sh); ox = (W - sw * k) / 2; oy = (H - sh * k) / 2 + sy * k;
-                  if (gridTile.image.complete && gridTile.image.naturalWidth) {
-                    const pattern = g.createPattern(gridTile.image, 'repeat');
-                    pattern.setTransform(new DOMMatrix([gridTile.w * k / 100, 0, 0, gridTile.h * k / 100, ox + gridTile.x * k, oy - sy * k + gridTile.y * k]));
-                    g.fillStyle = pattern; g.fillRect(0, 0, W, H);
-                  }
                   g.drawImage(sier, ox, oy - sy * k, sw * k, sh * k);
                   const fl = document.getElementById('hubFly');   // v0.083: кнопка «все 7 нот» и сток бит — всё на холсте #hubFly
                   if (fl && fl.width && getComputedStyle(fl).display !== 'none') g.drawImage(fl, ox, oy - sy * k, sw * k, sh * k);
