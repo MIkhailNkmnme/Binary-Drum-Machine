@@ -33,9 +33,12 @@
   function initCenter() {
     const key = centerKey() + (bounceOn() ? "|b" : "");
     if (centerInitKey === key) return;
-    if (window.zzBallCenterInit && !centerCount()) window.zzBallCenterInit(bounceOn(), centerKey());   // v0.1063: заранее закрытые кольца хранят свои биты
+    if (window.zzBallCenterInit) window.zzBallCenterInit(bounceOn(), centerKey(), centerCount());   // v0.1063: заранее закрытые кольца хранят свои биты
     centerInitKey = key;
   }
+  /* v0.1070, по снимку «0 поставил всё равно» (шарик ещё на старте): строки пустели только в миг запуска. Теперь стартовое состояние «В центр»
+     показывается сразу — при смене отскока и по ↩ к старту */
+  window.zzBallInwardPrime = () => { if (Z.coneBallRoute !== "in" || !snapshot()) return; centerInitKey = ""; initCenter(); };
   function closeCenterRing(k) {
     if (k !== centerCount()) return;
     if (centerBatch) pendingClosed = Math.max(pendingClosed, k + 1); else setClosed(k + 1);
@@ -901,6 +904,14 @@
         g.globalAlpha = 1; g.fill("evenodd"); g.globalAlpha = 0.6; g.stroke();
       }
     }
+    // v0.1070: щель «N щель» — геометрия кольца, а не бит: поверх пустых ячеек снова видна (тонкая линия)
+    if (typeof coneOneSlit === "function" && coneOneSlit()) {
+      g.setLineDash([]); g.globalAlpha = 0.95; g.strokeStyle = typeof CONE_SLIT1_COL !== "undefined" ? CONE_SLIT1_COL : "#7ee787"; g.lineWidth = 1.5 * dpr; g.shadowColor = g.strokeStyle; g.shadowBlur = 8 * dpr;
+      for (let k = Math.max(0, centerCount()); k < M.length && k < S.rings.length; k++) {
+        const ring = S.rings[k]; if (!M[k] || !M[k].includes("1") || ring.fill || ring.blocks.length !== 1) continue;
+        const a = angle(S, k, ring.blocks[0].lo); g.beginPath(); g.moveTo(cx + ring.ri * dr * Math.cos(a), cy + ring.ri * dr * Math.sin(a)); g.lineTo(cx + ring.ro * dr * Math.cos(a), cy + ring.ro * dr * Math.sin(a)); g.stroke();
+      }
+    }
     g.restore();
   }
   window.zzBallDraw = (g, o) => {
@@ -966,6 +977,7 @@
   };
   function reset(toStart = false, keepCenter = false) {
     window.zzBallClearRun({keepCenter});   // v0.1063: при загрузке страницы закрытие (из памяти или пресета) остаётся
+    if (toStart && !keepCenter && Z.coneBallRoute === "in") window.zzBallInwardPrime();   // v0.1070: ↩ к старту — сразу стартовое состояние нового опыта
     F = null; balls = []; cycles = passes = 0; chain = false; lossRun = false; lossSpeed = 0; markRun = false; pendingMarks = []; pendingBits = [];
     if (toStart) restoreStart();
     const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();

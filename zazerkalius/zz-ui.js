@@ -7631,7 +7631,7 @@ function setupCone(){
   }
   if ($("bConeBallImpact")) {
     const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
-    sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); save(); renderCone(); };
+    sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); if (window.zzBallInwardPrime) window.zzBallInwardPrime(); save(); renderCone(); };   // v0.1070: стартовое состояние «В центр» — сразу
   }
   if ($("bConeBallZeroBounce")) {
     const sync = () => { const b = $("bConeBallZeroBounce"); b.classList.toggle("on", !!Z.coneBallZeroBounce); b.setAttribute("aria-pressed", String(!!Z.coneBallZeroBounce)); };
@@ -7683,9 +7683,9 @@ function setupCone(){
   }
   /* v0.1053: отметки шариков в строке за чертой — «1» в ячейки (как у лазера: строка из одних «1» сама уходит в поле) */
   // v0.1069: при «удар: отскок» новый опыт «В центр» — все строки пустые (пометка Z.coneBallEmpty поверх нулей), иначе — только К1 нулевой
-  window.zzBallCenterInit = (empty, key) => {
-    if (empty) { Z.rows = Z.rows.map(s => "0".repeat(s.length)); Z.coneBallEmpty = { key, m: Z.rows.map(s => "1".repeat(s.length)) }; }
-    else { if (Z.rows[0]) Z.rows[0] = "0".repeat(Z.rows[0].length); Z.coneBallEmpty = null; }
+  window.zzBallCenterInit = (empty, key, closed = 0) => {   // v0.1070: закрытые кольца (closed) хранят свои биты, пустеют остальные
+    if (empty) { Z.rows = Z.rows.map((s, k) => k < closed ? s : "0".repeat(s.length)); Z.coneBallEmpty = { key, m: Z.rows.map((s, k) => (k < closed ? "0" : "1").repeat(s.length)) }; }
+    else { if (Z.rows[0] && !closed) Z.rows[0] = "0".repeat(Z.rows[0].length); Z.coneBallEmpty = null; }
     save(); renderRows();
   };
   window.zzBallEmptyMask = () => { const E = Z.coneBallEmpty, key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/"); return E && E.key === key && Array.isArray(E.m) ? E.m : null; };
