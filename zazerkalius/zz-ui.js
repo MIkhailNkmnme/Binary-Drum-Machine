@@ -5146,12 +5146,15 @@ function coneFeatEdges(R){
 function coneFeatMids(R){ if (R.r1) return []; const o = []; for (let q = 0; q < R.n; q++) o.push((R.cut ? cutPos(q, R.n) : q) + 0.5); return o; }
 /* v0.914: геометрия подсветки и остановки на гранях — та же, что у ручного магнита.
    У одного бита учитывается и противоположная половина его разреза; у ▮ — края щели. */
-function coneEdgeRings(){
+function coneEdgeRings(slitOnly = false){   // v0.1049: slitOnly — у колец строк с вырезами только края вырезов (щели), без разрезов между соседними битами
   const N = Math.min(Z.rows.length, CONE_MAX), rings = [];
   if (!coneFlat() || !coneGeom || !coneGeom.fill || !N) return rings;
   for (let i = 0; i <= N; i++) {
     const R = coneRingFeat(i === N ? "f" : i); if (!R) return [];
-    let edges = coneFeatEdges(R).map(x => -Math.PI / 2 + (x - R.x0) * R.step);
+    let feat = coneFeatEdges(R);
+    if (slitOnly && i >= 1 && i < N && R.cut) { const n = R.n, P = R.P, open = (p) => cutBit(((p % P) + P) % P, n) < 0;
+      feat = feat.filter(x => open(x - 1e-3) !== open(x + 1e-3)); }   // край выреза: с одной стороны бит, с другой пусто (граница частей внутри выреза — не разрез)
+    let edges = feat.map(x => -Math.PI / 2 + (x - R.x0) * R.step);
     if (i === 0 && coneRow1Slit()) edges = [coneCutAngle() - coneRow1Half(), coneCutAngle() + coneRow1Half()];
     // v0.1043: прямой напротив разреза кольца 1 из одного бита больше нет — это не грань (нужна только шарикам, у них своя геометрия в zz-ball.js)
     rings.push({ edges: [...new Set(edges.map(zzEdgeNorm))].sort((a, b) => a - b), rate: 0, x0: R.x0, step: R.step });
@@ -5272,7 +5275,7 @@ function coneNotchAdd(a){   // a — угол прямой (как у coneEdgeRi
   if (L.some(v => { const d = Math.abs(v - x); return Math.min(d, F.P - d) * F.step < 1e-6; })) return false;
   L.push(x); return true;
 }
-function coneNotchRings(){ const R = coneEdgeRings(); return R.length >= 3 ? R.slice(0, -1) : []; }   // кольца строк (их хотя бы два), без кольца за чертой
+function coneNotchRings(){ const R = coneEdgeRings(!!Z.coneNotchSlit); return R.length >= 3 ? R.slice(0, -1) : []; }   // v0.1049: «▮ щель» — только щели   // кольца строк (их хотя бы два), без кольца за чертой
 function coneNotchNow(){ if (!coneNotchOn()) return 0; const inner = coneNotchRings(); let n = 0; if (inner.length) for (const a of zzAlignedEdges(inner)) if (coneNotchAdd(a)) n++; return n; }
 function coneNotchSweep(ph0, dph){   // все совпадения на пути фазы ph0 → ph0 + dph; → сколько новых засечек
   if (!coneNotchOn() || !dph) return 0;
@@ -5293,6 +5296,7 @@ function coneNotchDraw(g, o){
   const b = $("bConeNotch");
   if (Z.coneNotch && Z.coneClock) Z.coneNotch = false;   // включили лазер или солнце — режим граней уступает
   if (b) { const on = coneNotchOn(); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+  { const sb = $("bConeNotchSlit"); if (sb) { const on = !!Z.coneNotchSlit; sb.classList.toggle("on", on); sb.setAttribute("aria-pressed", String(on)); } }   // v0.1049
   if (!coneNotchOn()) return;
   if (coneNotchNow()) save();
   const F = coneRingFeat("f"), L = coneNotchList(); if (!F || !L.length) return;
@@ -7430,6 +7434,12 @@ function setupCone(){
       say(on ? "⟂ Грани: прямая из центра по граням кольца 1 и всех колец строк — засечка на кольце за чертой. ▶ крутить или крути рукой. Правый щелчок — стереть засечки." : "⟂ Грани выключены. Засечки сохранены, пока не сменится строка за чертой.");
     };
     $("bConeNotch").oncontextmenu = (e) => { e.preventDefault(); Z.coneNotches = null; save(); renderCone(); say("⟂ Засечки на кольце за чертой стёрты."); };
+  }
+  if ($("bConeNotchSlit")) {   // v0.1049: «▮ щель» — засечки только по прямым через щели всех колец строк
+    $("bConeNotchSlit").onclick = () => {
+      Z.coneNotchSlit = !Z.coneNotchSlit; Z.coneNotches = null; save(); renderCone();
+      say(Z.coneNotchSlit ? "▮ Щель: засечка — только когда прямая из центра выходит через щели всех колец строк (в вырезах — по краю выреза; разрезы между соседними битами не в счёт). Засечки начаты заново." : "▮ Щель выключена: засечка — по любым разрезам. Засечки начаты заново.");
+    };
   }
   if ($("bConeEdgeStop")) {
     const ui = () => { const b = $("bConeEdgeStop"); b.classList.toggle("on", !!Z.coneEdgeStop); b.setAttribute("aria-pressed", String(!!Z.coneEdgeStop)); }; ui();
