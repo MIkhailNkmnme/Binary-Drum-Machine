@@ -83,6 +83,15 @@ for (const name of ['T−1', 'между']) {
   const ball = run(L, rates.bit, boundaryPoints(L)[0], true, .037, true, 60);
   assert.notEqual(ball.stage, 'done'); assert.equal(ball.reversals, 0); assert.ok(ball.arcs >= 5, name + ' loop repeats');
 }
+// v0.1044 one path: ring 1 knows only its seam; a ball reaching the centre leaves along the same seam, cleanly.
+for (const [name, k2] of Object.entries(modes)) for (const [mode, w] of Object.entries(rates)) {
+  const S = geometry(k2, [{ lo: -pi / 2, hi: 3 * pi / 2 }], [.21, -.4]); S.rings[0].oneWay = true;
+  for (const point of boundaryPoints(S)) for (const dt of [1 / 60, .073]) {
+    const ball = run(S, w, point, true, dt);
+    assert.equal(ball.stage, 'done', 'one path ' + name + '/' + mode + ' ' + point.id);
+    assert.equal(ball.reversals, 0, 'one path never reverses');
+  }
+}
 // Group launches fall back to auto-tuned runs when no common constant speed exists.
 context.Z.coneBallAuto = true; context.Z.coneBallBatch = false;
 for (const count of [1, 2, 3]) {
