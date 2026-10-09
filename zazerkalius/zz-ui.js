@@ -4922,7 +4922,7 @@ function coneAimDeep(a){
    допуск выходил больше полкруга, защёлка брала любой угол, до строки 2 дело не доходило. Теперь допуск не шире, чем у осей (радиус не меньше 20 px),
    а coneAimSnapD только меряет — что ближе, лазер или ось, решает тот, кто тянет */
 function coneAimSnapD(){   // → на сколько (рад) вырез строки 1 мимо лазера, если в допуске; иначе null
-  if (!coneGeom) return null;
+  if (!coneGeom || !Z.coneClock || coneSunOn()) return null;   // v0.1032: лазера не видно (луч-часы выкл. или солнце) — к нему не прилипать
   const G = coneGeom, d = coneAngDiff(coneCutAngle(), coneLaserAngle()), tol = 10 * G.dpr / Math.max(20 * (G.dpr || 1), G.r0 + G.dr);
   return Math.abs(d) > tol ? null : d;
 }
