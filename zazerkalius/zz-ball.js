@@ -13,7 +13,7 @@
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр" };
   // v0.954, «текст — убери из окна»: пояснения, T₀ и состояние — в подсказках (заголовок, ▶ запуск, скорость), не строками в окне.
-  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. В обычном режиме шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Шарики переходят на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю шарик огибает дугу и снова идёт через центр. Скорость на прямых сохраняется. Если впереди нет совпавшей прямой, в ∞ и на внешних кольцах шарик ждёт на своей дуге (жёлтый), вращаясь с ней, и продолжает при первом совпадении. При обычном опыте на К1–К2 несовпадение по-прежнему даёт разворот. ⚙ Автоподстройка (любой режим колец): на каждом прямом отрезке шарик берёт свою постоянную скорость, ближайшую к заданной (не быстрее 4×), чтобы прийти к стыку ровно при совпадении граней; через центр — один отрезок до внешнего стыка К1. Сквозной без общей скорости запускается так же. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
+  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. В обычном режиме шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Шарики переходят на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю шарик огибает дугу и снова идёт через центр. Скорость на прямых сохраняется. Если впереди нет совпавшей прямой, в ∞ и на внешних кольцах шарик ждёт на своей дуге (жёлтый), вращаясь с ней, и продолжает при первом совпадении. При обычном опыте на К1–К2 несовпадение по-прежнему даёт разворот. В «1 щель» и «все» грани — щели и границы битов, у строки 1 из одного бита — её щель и прямая напротив через центр. ⚙ Автоподстройка (любой режим колец): на каждом прямом отрезке шарик берёт свою постоянную скорость, ближайшую к заданной (не быстрее 4×), чтобы прийти к стыку ровно при совпадении граней; через центр — один отрезок до внешнего стыка К1. Сквозной без общей скорости запускается так же. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
   const allStarts = () => Z.coneBallBatch !== false;
   // v0.1025: автоподстройка — на каждом прямом отрезке своя постоянная скорость, чтобы прийти к стыку в момент совпадения граней.
   const autoOn = () => Z.coneBallAuto === true;
@@ -179,8 +179,11 @@
     const p = startPoint(S); return "Старт: " + p.label + " · " + (routes[Z.coneBallRoute] || routes.cross) + " · ▶ запуск";
   }
   function status(s) { if (batchBusy) return; const el = $("coneBallStatus"); if (el && el.textContent !== s) el.textContent = s; if (el) el.title = s; }
+  // v0.1026: «1 щель» и «все» — кольца без вырезов: грани — щели и границы битов, как у магнита (coneRingFeat).
+  const plainRings = () => coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() !== "cut";
   function snapshot() {
-    if (!coneGeom || !coneCutOn() || !(coneHalfOn() || coneQuadOn() && conePartCount() % 2 === 0) || !(Z.coneClock || coneSunOn()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
+    const cut = coneCutOn() && (coneHalfOn() || coneQuadOn() && conePartCount() % 2 === 0);
+    if (!coneGeom || !(cut || plainRings()) || !(Z.coneClock || coneSunOn()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
     const N = Math.min(Z.rows.length, CONE_MAX);
     if (N + (coneGeom.fill ? 1 : 0) < 2) return null;
     const band = Z.coneClean ? 1 : 0.72, rings = [];
@@ -188,7 +191,12 @@
       const R = coneRingFeat(i === N ? "f" : i); if (!R) return null;
       const blocks = [];
       if (i === 0) {
-        if (coneQuadOn()) for (let q = 1; q < conePartCount(); q += 2) blocks.push({ lo: -Math.PI / 2 + q * R.step, hi: -Math.PI / 2 + (q + 1) * R.step, bit: 0 });
+        if (!cut) {
+          // One bit: the slit and the line through the centre opposite it (the magnet's two edges).
+          if (R.n === 1) blocks.push({ lo: -Math.PI / 2, hi: Math.PI / 2, bit: 0 });
+          else for (let j = 0; j < R.n; j++) blocks.push({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j });
+        }
+        else if (coneQuadOn()) for (let q = 1; q < conePartCount(); q += 2) blocks.push({ lo: -Math.PI / 2 + q * R.step, hi: -Math.PI / 2 + (q + 1) * R.step, bit: 0 });
         else blocks.push({ lo: Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 });
       }
       else {
@@ -203,7 +211,7 @@
       rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
     }
     const B = rings[1].blocks;
-    if (B.length !== 2) return null;
+    if (!B.length) return null;
     // Include all visible rings in the counters, even though the route uses two.
     const rotation = [];
     for (let i = 0; i < N + (coneGeom.fill ? 1 : 0); i++) {
@@ -212,7 +220,7 @@
     }
     return { rings, rotation, spin: (Z.coneSpin || 0) * Math.PI / 180, shape: rings.map(r => r.shape).join("|") };
   }
-  function hint() { return "Для шариков: 2 части или 2 по симметрии у строки 1, 2 бита второго кольца (пустые тоже подходят), плоский вид и плавное кручение"; }
+  function hint() { return "Для шариков: плоский вид, плавное кручение и хотя бы два кольца. В вырезах у строки 1 — 2 части или 2 по симметрии; в «1 щель» и «все» — как есть"; }
   function ui() {
     const b = $("bConeBall"); if (!b) return;
     b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = enabled ? "●" : "○";
@@ -666,7 +674,7 @@
       <div class="ball-lab-row ball-lab-rings"><div class="ball-lab-ring"><span>Кольцо 1</span><button type="button" class="ib" data-ball-ring="0" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="0" data-step=".5">+½</button></div><div class="ball-lab-ring"><span>Кольцо 2</span><button type="button" class="ib" data-ball-ring="1" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="1" data-step=".5">+½</button></div></div>
       <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" class="ib" data-ball-speed="1/4">¼</button><button type="button" class="ib" data-ball-speed="1/3">⅓</button><button type="button" class="ib" data-ball-speed="1/2">½</button><button type="button" class="ib" data-ball-speed="2/3">⅔</button><button type="button" class="ib" data-ball-speed="1">1</button><button type="button" class="ib" data-ball-speed="3/2">³⁄₂</button><button type="button" class="ib" data-ball-speed="2">2</button><button type="button" class="ib" data-ball-speed="4">4</button><button type="button" class="ib" data-ball-speed="8">8</button><button type="button" class="ib" data-ball-speed="16">16</button><button type="button" class="ib" data-ball-speed="32">32</button></span></div>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
-      <div class="ball-lab-row"><button id="ballLabAuto" type="button" aria-pressed="false" title="⚙ Автоподстройка скоростей — для всех режимов колец (T−1, между, симм., 2n). На каждом прямом отрезке шарик едет со своей постоянной скоростью, ближайшей к заданной (не быстрее 4×), и приходит к стыку ровно при совпадении граней — без разворотов. Если общей постоянной скорости для ↦ сквозного нет, он запускается с подстройкой. Ещё раз — выключить: одна скорость на всём пути, при несовпадении — разворот.">⚙ подстройка</button><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
+      <div class="ball-lab-row"><button id="ballLabAuto" type="button" aria-pressed="false" title="⚙ Автоподстройка скоростей — для всех режимов колец (1 щель, T−1, между, симм., 2n, все). На каждом прямом отрезке шарик едет со своей постоянной скоростью, ближайшей к заданной (не быстрее 4×), и приходит к стыку ровно при совпадении граней — без разворотов. Если общей постоянной скорости для ↦ сквозного нет, он запускается с подстройкой. Ещё раз — выключить: одна скорость на всём пути, при несовпадении — разворот.">⚙ подстройка</button><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
       <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его постоянная скорость по прямым ×. На дугах скорость подбирается отдельно. Дробные кнопки выше возвращают обычный запуск одного шарика."></small>
       <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
       <div id="ballLabTurns" title="Фактический поворот каждого кольца с момента запуска шарика, в оборотах по 360°. Дроби сокращены; ≈ — округление до 1/1000 оборота. ↻ по часовой, ↺ − против. На паузе счёт стоит; ✓ — чистый выход, × — выход с разворотами; результат зафиксирован. Новый запуск и ↩ обнуляют счёт. В режиме ∞ считается весь путь, включая дуги."></div>
