@@ -3596,7 +3596,7 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneFlat()) { coneOneSlitDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
+  if (coneFlat()) { coneOneSlitDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); coneRayDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
   /* v0.1038, «пусть подсветка граней при ручном перекрывает выделение жёлтым выделенного кольца, а то не видно сцепления»: золотая рамка бита под мышью
      (при кручении рукой мышь всё время на этом кольце) и сканер — под лучами кольца в руке и розовой подсветкой сцепления, а не поверх */
   if (coneBitHover && coneBitHover.i < N && Z.rows[coneBitHover.i] && shown(coneBitHover.i)) {   // v0.173: бит под мышью — золотой рамкой
@@ -5336,6 +5336,62 @@ function coneSeamDraw(g, o){
   }
   g.restore();
   if (!coneSpinning && !coneSeamT) coneSeamT = setTimeout(() => { coneSeamT = 0; renderCone(); }, 120);   // стоим — догасить
+}
+/* v0.1058, «режим Луч — типа шариков, только мгновенный: как только открывается прямая линия, луч проходит из центра наружу, ставя 1 у бита грани у всех,
+   через которые прошёл, от последнего кольца закрытого (вначале — кольцо 1) и дошёл до внешнего кольца». Уточнено: только сквозная прямая — грани всех
+   колец от первого открытого до кольца за чертой на одной прямой из центра (грани — как у магнита; с «▮ щель» — только щели); «1» — биту, который кольцо
+   своим вращением подвозит под луч сразу после грани (стоит — по часовой); кольцо за чертой — тоже, заполненная строка уходит в поле; прошедший луч
+   закрывает своё стартовое кольцо (общий счёт с «● в центр»), следующий стартует со следующего. Момент — точно, и между кадрами (zzEdgeMeet) */
+let coneRayFlash = [], coneRayT = 0;
+function coneRayOn(){ return !!Z.coneRay && coneFlat(); }
+function coneRayClosed(){ return window.zzBallCenterState ? window.zzBallCenterState().count : 0; }
+function coneRayBit(i, a, w){   // i — номер кольца строки или "f"; a — угол луча; w — скорость кольца по углу (знак — куда едет)
+  const R = coneRingFeat(i); if (!R) return null;
+  const P = R.P, x0 = (((a + Math.PI / 2) / R.step + R.x0) % P + P) % P, x = ((x0 + (w > 1e-12 ? -1e-6 : 1e-6)) % P + P) % P;   // едет по углу вверх — под луч входит бит до грани
+  if (i === 0 && (coneQuadOn() || coneHalfOn())) { const part = Math.floor(x); return (coneQuadOn() ? part % 2 === 1 : part === 1) ? 0 : null; }   // строка 1: ✚ — белые четверти, ◐ — половина с битом
+  if (R.r1 || (i === 0 && R.n === 1)) return 0;
+  const n = R.n, b = R.cut ? cutBit(x, n) : Math.floor(x) % n;
+  return b >= 0 && b < n ? b : null;
+}
+function coneRaySweep(ph0, dph){   // → сколько лучей прошло
+  if (!coneRayOn() || !dph) return 0;
+  const bak = Z.coneSpinPh, now = performance.now(); let ph = ph0, rem = dph, fired = 0, commit = false;
+  try {
+    for (let k = 0; k < 64 && Math.abs(rem) > 1e-12; k++) {
+      Z.coneSpinPh = ph; const all = coneEdgeRings(!!Z.coneNotchSlit), N = Math.min(Z.rows.length, CONE_MAX), start = coneRayClosed();
+      if (all.length < 2 || start >= all.length - 1) break;
+      Z.coneSpinPh = ph + 1e-4; const after = coneEdgeRings(!!Z.coneNotchSlit); Z.coneSpinPh = ph;
+      if (after.length !== all.length) break;
+      all.forEach((r, i) => { r.rate = -(after[i].x0 - r.x0) * r.step / 1e-4; });
+      const sub = all.slice(start), hit = zzEdgeMeet(sub, rem); if (!hit) break;
+      ph += hit.ph; rem -= hit.ph; Z.coneSpinPh = ph;
+      const a = hit.angles[0], sg = Math.sign(dph), rows = [];
+      let fillCell = null;
+      for (let i = start; i < all.length; i++) {
+        const isFill = i === N, b = coneRayBit(isFill ? "f" : i, a, all[i].rate * sg); if (b === null) continue;
+        if (isFill) fillCell = b; else rows.push({ k: i, bit: b, value: "1" });
+      }
+      if (rows.length && window.zzBallBitWrite) window.zzBallBitWrite(rows);
+      coneRayFlash.push({ a, from: start, to: N, t: now }); fired++;
+      if (window.zzBallCloseRing) window.zzBallCloseRing(start);
+      if (fillCell !== null && window.zzBallFillMark) { const before = Z.rows.length; window.zzBallFillMark([fillCell]); if (Z.rows.length !== before) { commit = true; break; } }
+    }
+  } finally { Z.coneSpinPh = bak; }
+  if (fired) save();
+  return fired;
+}
+function coneRayDraw(g, o){
+  { const b = $("bConeRay"); if (b) { const on = !!Z.coneRay; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); } }
+  if (!coneRayFlash.length) return;
+  const now = performance.now(); coneRayFlash = coneRayFlash.filter(f => now - f.t < 900); if (!coneRayFlash.length) return;
+  const { cx, cy, r0, dr, band, dpr } = o;
+  g.save(); g.strokeStyle = "#fff6c2"; g.lineWidth = Math.max(2.5, 3 * dpr); g.lineCap = "round"; g.shadowColor = "#ffd166"; g.shadowBlur = 12 * dpr;
+  for (const f of coneRayFlash) {
+    const from = r0 + f.from * dr, to = r0 + f.to * dr + Math.max(1, dr * band) + 6 * dpr, c = Math.cos(f.a), sn = Math.sin(f.a);
+    g.globalAlpha = 1 - (now - f.t) / 900; g.beginPath(); g.moveTo(cx + from * c, cy + from * sn); g.lineTo(cx + to * c, cy + to * sn); g.stroke();
+  }
+  g.restore();
+  if (!coneSpinning && !coneRayT) coneRayT = setTimeout(() => { coneRayT = 0; renderCone(); }, 120);
 }
 function coneNotchOn(){ return !!Z.coneNotch && !Z.coneClock && coneFlat(); }
 function coneNotchList(){
@@ -7147,7 +7203,7 @@ function setupCone(){
     // going at a blocked ball; laser painting and automatic new rows wait.
     if (window.zzBallActive && window.zzBallActive()) {
       if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
-      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); }   // v0.1034: засечки и при шариках; v0.1036: вспышки граней
+      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); coneRaySweep(p0, Z.coneSpinPh - p0); }   // v0.1034: засечки и при шариках; v0.1036: вспышки граней
       tapeRec(); return true;
     }
     if (m === "all") {
@@ -7182,7 +7238,7 @@ function setupCone(){
       }
       Z.coneSpinPh = st && st.part ? st.ph : ph0 + dph;
       if (coneNotchSweep(ph0, Z.coneSpinPh - ph0)) save();   // v0.1034: засечки «⟂ грани» — все совпадения за кадр
-      coneSeamSweep(ph0, Z.coneSpinPh - ph0);   // v0.1036: вспышки совпавших граней соседних колец (🧲 гран.)
+      coneSeamSweep(ph0, Z.coneSpinPh - ph0); coneRaySweep(ph0, Z.coneSpinPh - ph0);   // v0.1058: ⚡ луч; v0.1036: вспышки совпавших граней соседних колец (🧲 гран.)
       // v0.201: ✺ — кольца только до просчитанного; v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
       coneCycleCheck(ph0, Z.coneSpinPh, m);
       }
@@ -7300,7 +7356,7 @@ function setupCone(){
       }
     }
     if (!best) { say("◀ ▶: кольца крутятся одинаково — новые совпадения граней не появятся. Выбери другой режим кручения."); return; }
-    Z.coneSpinPh = ph0 + sg * best.u; save(); renderCone();
+    Z.coneSpinPh = ph0 + sg * best.u; coneRaySweep(ph0, sg * best.u); save(); renderCone();   // v0.1058: шаг до совпадения — и луч
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + `: грань кольца ${best.k + 2} легла на грань кольца ${best.k + 1}.`);
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
@@ -7586,6 +7642,10 @@ function setupCone(){
     const ui = () => { const b = $("bConeBallChain"); b.classList.toggle("on", !!Z.coneBallChain); b.setAttribute("aria-pressed", String(!!Z.coneBallChain)); };
     ui(); $("bConeBallChain").onclick = () => { Z.coneBallChain = !Z.coneBallChain; ui(); save();
       say(Z.coneBallChain ? "⛓ Цепочка: «● вылет» пускает шарики один за другим — следующий стартует из центра, как только предыдущий вышел из кольца 1 (до 64)." : "⛓ Цепочка выключена: «● вылет» — один шарик."); };
+  }
+  if ($("bConeRay")) {   // v0.1058: «⚡ луч» — мгновенный проход по сквозной прямой граней, «1» под лучом, закрытие стартового кольца
+    $("bConeRay").onclick = () => { Z.coneRay = !Z.coneRay; save(); renderCone();
+      say(Z.coneRay ? "⚡ Луч: как только грани всех колец от первого открытого до кольца за чертой ложатся на одну прямую, луч мгновенно проходит наружу, ставит «1» битам, которые кольца подвозят под него, и закрывает своё стартовое кольцо. " + (Z.coneNotchSlit ? "Грани — только щели (▮ щель)." : "Грани — любые разрезы.") : "⚡ Луч выключен."); };
   }
   if ($("bConeNotchSlit")) {   // v0.1049: «▮ щель» — засечки только по прямым через щели всех колец строк
     $("bConeNotchSlit").onclick = () => {

@@ -35,6 +35,7 @@
     if (centerBatch) pendingClosed = Math.max(pendingClosed, k + 1); else closedCount = k + 1;
   }
   window.zzBallCenterState = () => ({ count: centerCount(), radius: centerCount() });
+  window.zzBallCloseRing = (k) => { closeCenterRing(k); return centerCount(); };   // v0.1058: «⚡ луч» закрывает своё стартовое кольцо тем же счётом, что «● в центр»
   const ringStats = k => run && (run.rings[k] ||= { entered: 0, passed: 0, hits: 0, lost: 0, bounces: 0, marks: 0, zeros: 0, reversals: 0, turns: 0 });
   function newRun() {
     run = { lane: Z.lane | 0, seconds: 0, launched: 0, exited: 0, reachedCenter: 0, removed: 0, mode: [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1, rings: [], results: [] }; stuck = [];
