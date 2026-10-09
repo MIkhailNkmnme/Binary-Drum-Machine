@@ -24,6 +24,21 @@ vm.runInContext(source.replace('  if (document.readyState === "loading")', `
       }
       Z.coneBallArc = false;
       return { ...ballInfo(F), speeds: speeds.size };
+    },
+    // v0.1046 «щель 180°»: after a frame with a centre arrival ring 1 turns half a turn (as applyFlips does), the ball goes on outward.
+    runFlip(S, w, point, dt, limit = 40) {
+      enabled = true; Z.coneBallArc = false; Z.coneBallCenter = 'flip';
+      let flip = 0, before = null, after = null;
+      const pose = t => ({ ...S, rings: S.rings.map((r, k) => ({ ...r, phase: r.phase + w[k] * t + (k ? 0 : flip * Math.PI) })) });
+      begin(S, true, true, { point, route: point.r === 0 ? 'out' : 'cross', period: 6, speed: 1, auto: true });
+      for (let t = 0; t < limit && F.stage !== 'done'; t += dt) {
+        const k0 = F.k, m0 = F.move, a0 = F.a;
+        advance(dt, pose(t), pose(t + dt));
+        if (F.flipReq) { F.flipReq = false; flip++; before = a0; after = null; }
+        else if (flip && after === null && F.k === 0 && F.move > 0) after = F.a;
+      }
+      Z.coneBallCenter = undefined;
+      return { ...ballInfo(F), flipsSeen: flip, before, after };
     }
   };
   if (document.readyState === "loading")`), context);
@@ -90,6 +105,20 @@ for (const [name, k2] of Object.entries(modes)) for (const [mode, w] of Object.e
     const ball = run(S, w, point, true, dt);
     assert.equal(ball.stage, 'done', 'one path ' + name + '/' + mode + ' ' + point.id);
     assert.equal(ball.reversals, 0, 'one path never reverses');
+  }
+}
+// v0.1046 «щель 180°»: the ball reaches the centre, ring 1 turns 180°, the ball keeps its direction through the centre.
+{
+  const norm = x => Math.atan2(Math.sin(x), Math.cos(x));
+  for (const [name, k2] of Object.entries(modes)) for (const [mode, w] of Object.entries(rates)) {
+    const S = geometry(k2, [{ lo: -pi / 2, hi: 3 * pi / 2 }], [.21, -.4]); S.rings[0].oneWay = true;
+    for (const point of boundaryPoints(S).filter(p => p.k === 1 && p.r === 2)) {
+      const ball = context.window.autoTest.runFlip(S, w, point, 1 / 60);
+      assert.equal(ball.stage, 'done', 'flip ' + name + '/' + mode); assert.equal(ball.reversals, 0);
+      assert.ok(ball.flipsSeen >= 1 && ball.flips >= 1, 'ring 1 turned at the centre');
+      // inward along angle a, outward along a + pi plus ring-1 rotation in one frame: the direction of travel is kept
+      assert.ok(Math.abs(norm(ball.after - ball.before - pi)) < Math.abs(w[0]) * 3 / 60 + 1e-6, 'goes on in the same direction');
+    }
   }
 }
 // Group launches fall back to auto-tuned runs when no common constant speed exists.

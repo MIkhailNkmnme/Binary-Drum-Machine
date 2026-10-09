@@ -5131,7 +5131,7 @@ function coneRingFeat(i){
      (coneCutAngle), а гранью считался разрез (место 0) — напротив выреза, если прицел не повёрнут. Теперь грань строки 1 — сама щель (xc), «середина» — прямая
      напротив неё через центр */
   let xc;
-  if (i === 0 && !cut && n === 1 && !coneQuadOn() && !coneHalfOn() && coneSlitMode() !== "cut" && typeof coneCutAngle === "function") xc = ((((coneCutAngle() + Math.PI / 2) / step + x0) % P) + P) % P;
+  if (i === 0 && !cut && n === 1 && !coneQuadOn() && !coneHalfOn() && coneSlitMode() !== "cut" && typeof coneCutAngle === "function") xc = ((((coneCutAngle() + Math.PI / 2) / step + x0) % P) + P) % P; if (Math.abs(xc - Math.round(xc)) < 1e-9) xc = Math.round(xc) % P;   // v0.1046: без дрожи округления — иначе шарики видят «другую форму» и сбрасываются
   const r1 = i === 0 && n === 1 && !cut && !coneQuadOn() && !coneHalfOn();   // v0.1043: кольцо 1 из одного бита — одна грань (разрез), без «середины» = прямой напротив
   return { n, cut, step, P, x0, sp: cut && coneCutSpread(), one: typeof i === "number" && i >= 1 && !cut && coneOneSlit(), xc, r1 };
 }
