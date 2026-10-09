@@ -2719,6 +2719,48 @@ function coneRunStatsSync(cv, R, dpr, cx){
   if (data.simultaneous) lines.splice(1, 0, "Одновременно: " + data.simultaneous.events.map(e => "шарик " + e.number + " → " + e.ring).join("; ") + ". ▶ — продолжить");
   const text = lines.join("\n"), textEl = el.querySelector(".cone-run-text"); if (textEl.textContent !== text) textEl.textContent = text;
 }
+/* v0.1071, по снимку «кольца поверх текста надо»: статистика опыта (#coneRunStats) и обороты (#ballLabTurns) лежали HTML-панелями поверх
+   холста и закрывали кольца. Холст непрозрачный — панель под него не убрать, поэтому их текст рисуется на холсте сразу после фона, до колец:
+   кольца, шарики и щели — поверх. Сами панели остались прозрачным слоем того же места: текст по-прежнему выделяется и копируется, прокрутка
+   и подсказки работают (CSS: color transparent). Статистика — переносом по ширине панели (как pre-wrap), таблица — по местам её ячеек */
+function coneRunPanelsPaint(g, R, dpr, cT){
+  const els = [$("coneRunStats"), $("ballLabTurns")].filter(e => e && !e.hidden && e.getClientRects().length);
+  for (const el of els) {
+    const r = el.getBoundingClientRect(), X = (r.left - R.left) * dpr, Y = (r.top - R.top) * dpr, Wp = r.width * dpr, Hp = r.height * dpr;
+    g.save(); g.beginPath(); g.rect(X, Y, Wp, Hp); g.clip();
+    g.strokeStyle = cT; g.globalAlpha = 0.8; g.lineWidth = dpr; g.setLineDash([3 * dpr, 3 * dpr]); g.beginPath();
+    const bx = el.id === "coneRunStats" ? X + Wp - dpr / 2 : X + dpr / 2; g.moveTo(bx, Y); g.lineTo(bx, Y + Hp); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+    g.textBaseline = "middle"; g.textAlign = "left";
+    if (el.id === "coneRunStats") {
+      const pre = el.querySelector(".cone-run-text"); if (!pre) { g.restore(); continue; }
+      const cs = getComputedStyle(pre), pr = pre.getBoundingClientRect(), fs = parseFloat(cs.fontSize) || 11, lh = (parseFloat(cs.lineHeight) || fs * 1.45) * dpr, maxW = pr.width * dpr;
+      g.font = `${fs * dpr}px ${cs.fontFamily}`; g.fillStyle = cT;
+      let y = (pr.top - R.top) * dpr + lh / 2;
+      for (const para of pre.textContent.split("\n")) {
+        let line = "";
+        for (const word of para.split(/(?<= )/)) {   // перенос по пробелам; слово длиннее строки — по буквам
+          if (g.measureText(line + word).width <= maxW) { line += word; continue; }
+          if (line) { g.fillText(line, (pr.left - R.left) * dpr, y); y += lh; line = ""; }
+          let w = word; while (g.measureText(w).width > maxW && w.length > 1) { let n = w.length; while (n > 1 && g.measureText(w.slice(0, n)).width > maxW) n--; g.fillText(w.slice(0, n), (pr.left - R.left) * dpr, y); y += lh; w = w.slice(n); }
+          line = w;
+        }
+        g.fillText(line, (pr.left - R.left) * dpr, y); y += lh;
+      }
+    } else {
+      for (const c of el.querySelectorAll("caption, th, td")) {
+        const cr = c.getBoundingClientRect(); if (!cr.width) continue;
+        const cs = getComputedStyle(c), fs = parseFloat(cs.fontSize) || 11;
+        g.font = `${cs.fontWeight} ${fs * dpr}px ${cs.fontFamily}`; g.fillStyle = cs.color || cT;   // цвет — свойство color (прозрачна только заливка букв -webkit-text-fill-color)
+        const al = cs.textAlign, pl = (parseFloat(cs.paddingLeft) || 0) * dpr, prr = (parseFloat(cs.paddingRight) || 0) * dpr, x0 = (cr.left - R.left) * dpr;
+        g.textAlign = al === "center" ? "center" : al === "right" || al === "end" ? "right" : "left";
+        const x = g.textAlign === "center" ? x0 + cr.width * dpr / 2 : g.textAlign === "right" ? x0 + cr.width * dpr - prr : x0 + pl;
+        g.fillText(c.textContent, x, (cr.top - R.top) * dpr + cr.height * dpr / 2);
+        if (c.tagName !== "CAPTION") { g.fillStyle = coneCss("--line", "#262d3d"); g.fillRect(x0, (cr.bottom - R.top) * dpr - dpr, cr.width * dpr, dpr); }   // нижняя линия ячейки
+      }
+    }
+    g.restore();
+  }
+}
 /* v0.1063: базовая «В центр» — 1 кольцо, пока внешнее поворачивается на бит; авто — её «×» */
 function coneInwardBaseText(data){
   const A = Z.coneBallRoute === "in" && data.mode === 1 && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;
@@ -2820,6 +2862,7 @@ function renderCone(){
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
   { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
@@ -3712,7 +3755,6 @@ function renderCone(){
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
   coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA, cBg);
-  coneRunStatsSync(cv, R, dpr, cx);
   // v0.092: таблица строк у конуса убрана — замки у номеров строк в поле
 }
 /* v0.088, «справа сделай таблицу с номерами строк — замков, строк, как в поле строк; теперь его свернём, а это — на первое
