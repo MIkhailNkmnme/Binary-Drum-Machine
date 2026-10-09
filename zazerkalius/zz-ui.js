@@ -7438,10 +7438,23 @@ function setupCone(){
   if ($("bConeNotchBall")) {   // v0.1050: «● вылет» — шарик из центра через щель кольца 1 и дальше по щелям («▮ щель») или по граням
     $("bConeNotchBall").onclick = () => {
       if (!window.zzBallLaunch) return;
-      const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain, loss: !!Z.coneBallLoss });
+      const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain, loss: !!Z.coneBallLoss, mark: !!Z.coneBallMark });
       say(ok ? "● Вылет: шарик из центра через щель кольца 1 и дальше " + (Z.coneNotchSlit ? "только по щелям (края вырезов)." : "по граням (любые разрезы).") + (Z.coneBallChain ? " ⛓ Цепочка: вышел из кольца 1 — стартует следующий." : "") + " Скорость подстраивается сама." : "● Вылет не запустился — подсказка в группе «Шарики».");
     };
   }
+  if ($("bConeBallMark")) {   // v0.1053: «1 за чертой» — вылетевший в кольцо за чертой шарик ставит «1» в ячейку
+    const ui = () => { const b = $("bConeBallMark"); b.classList.toggle("on", !!Z.coneBallMark); b.setAttribute("aria-pressed", String(!!Z.coneBallMark)); };
+    ui(); $("bConeBallMark").onclick = () => { Z.coneBallMark = !Z.coneBallMark; ui(); save();
+      say(Z.coneBallMark ? "1 за чертой: шарик, вошедший в кольцо за чертой, ставит «1» в ячейку у своей грани. Все ячейки «1» — строка уходит в поле, вылеты идут дальше." : "1 за чертой выключено: шарики ячейки не трогают."); };
+  }
+  /* v0.1053: отметки шариков в строке за чертой — «1» в ячейки (как у лазера: строка из одних «1» сама уходит в поле) */
+  window.zzBallFillMark = (cells) => {
+    const f0 = fillDraft(); let f = f0;
+    for (const j of cells) if (j >= 0 && j < f.length && f[j] !== "1") f = f.slice(0, j) + "1" + f.slice(j + 1);
+    if (f === f0) return;
+    Z.fillCells = f; save();
+    if (!fillAutoCommit()) { renderRows(); renderCone(); }
+  };
   if ($("bConeBallLoss")) {   // v0.1052: «✕ дуга» — к «● вылету»: упёрся в дугу бита, а не в щель или вырез, — исчез
     const ui = () => { const b = $("bConeBallLoss"); b.classList.toggle("on", !!Z.coneBallLoss); b.setAttribute("aria-pressed", String(!!Z.coneBallLoss)); };
     ui(); $("bConeBallLoss").onclick = () => { Z.coneBallLoss = !Z.coneBallLoss; ui(); save();
