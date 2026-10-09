@@ -20,21 +20,27 @@
   let balls = [], batchBusy = false;
   // Current launch only: totals outlive the 64 moving-ball slots and row promotion.
   let run = null, stuck = [];
-  let closedCount = 0, closedKey = "", centerInitKey = "", centerBatch = false, pendingClosed = 0;
+  /* v0.1063, «как мне начать с 5 строки при закрытых 3 кольцах?»: закрытие хранится в состоянии (Z.coneBallClosed = {key, n}) — переживает
+     перезагрузку и попадает в пресет; «◉ закрыто» задаёт его руками (zzBallSetClosed). Ключ — дорожка и длины строк, как прежде */
+  let centerInitKey = "", centerBatch = false, pendingClosed = 0;
   const centerKey = () => (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
-  const centerCount = () => closedKey === centerKey() ? closedCount : 0;
-  const clearCenter = () => { closedCount = pendingClosed = 0; closedKey = centerInitKey = ""; };
+  const centerCount = () => { const C = Z.coneBallClosed; return C && C.key === centerKey() ? Math.max(0, C.n | 0) : 0; };
+  const setClosed = (n) => { Z.coneBallClosed = n > 0 ? { key: centerKey(), n } : null; };
+  const clearCenter = () => { setClosed(0); pendingClosed = 0; centerInitKey = ""; };
   function initCenter() {
     if (centerInitKey === centerKey()) return;
-    if (window.zzBallCenterInit) window.zzBallCenterInit();
+    if (window.zzBallCenterInit && !centerCount()) window.zzBallCenterInit();   // v0.1063: заранее закрытые кольца хранят свои биты
     centerInitKey = centerKey();
   }
   function closeCenterRing(k) {
     if (k !== centerCount()) return;
-    closedKey = centerKey();
-    if (centerBatch) pendingClosed = Math.max(pendingClosed, k + 1); else closedCount = k + 1;
+    if (centerBatch) pendingClosed = Math.max(pendingClosed, k + 1); else setClosed(k + 1);
   }
   window.zzBallCenterState = () => ({ count: centerCount(), radius: centerCount() });
+  // v0.1063: «◉ закрыто» — сколько колец от центра закрыто до запуска; внешнее видимое кольцо всегда открыто (из него стартуют)
+  window.zzBallSetClosed = (n) => { const S = snapshot(), max = S ? S.rings.length - 1 : Z.rows.length - 1;
+    n = Math.max(0, Math.min(max, n | 0)); centerInitKey = centerKey(); setClosed(n); return n; };
+  window.zzBallClosedMax = () => { const S = snapshot(); return S ? S.rings.length - 1 : Math.max(0, Z.rows.length - 1); };
   window.zzBallCloseRing = (k) => { closeCenterRing(k); return centerCount(); };   // v0.1058: «⚡ луч» закрывает своё стартовое кольцо тем же счётом, что «● в центр»
   const ringStats = k => run && (run.rings[k] ||= { entered: 0, passed: 0, hits: 0, lost: 0, bounces: 0, marks: 0, zeros: 0, reversals: 0, turns: 0 });
   function newRun() {
@@ -138,6 +144,16 @@
     if (!best || best.c === 0) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
     inwardAuto = { count: best.c, total: starts.length, ring: inner, fixed: false, mult: t0 / best.t };
     return width / best.t;
+  }
+  /* v0.1063, «базовая — одно кольцо за время, пока внешнее повернётся на бит — да»: прежде базовая была «радиус за T₀» (T₀ — по К1 и К2), мерка,
+     не связанная с внешними кольцами. Теперь «×» у авто — во сколько раз быстрее, чем «ширина кольца, пока внешнее проходит один бит».
+     Внешнее не крутится — прежняя (радиус за T₀) */
+  function inwardBase(S) {
+    const K = S.rings.length - 1, ring = S.rings[K], w = Math.abs(rate(S)[K] || 0);
+    const cell = (ring.cells && ring.cells.length ? ring.cells : ring.blocks)[0];
+    if (!cell || w < 1e-12) return null;
+    const sec = (cell.hi - cell.lo) / w;
+    return sec > 0 ? { speed: (ring.ro - ring.ri) / sec, sec } : null;
   }
   function outerStarts(S) {
     const k = S.rings.length - 1, ring = S.rings[k], points = [];
@@ -423,8 +439,9 @@
     balls = [];
     if (Z.coneBallRoute === "in") {
       if (clear) cycles = passes = 0;
-      const T = period(S), base = T ? S.rings[S.rings.length - 1].ro / T : 0;
-      const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;   // v0.1059: «1 — авто» — скорость, при которой во внутреннее кольцо зайдёт больше всего шариков
+      const T = period(S), B = inwardBase(S), base = B ? B.speed : T ? S.rings[S.rings.length - 1].ro / T : 0;
+      const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;
+      if (inwardAuto) Object.assign(inwardAuto, { base, bitSec: B ? B.sec : null, outer: S.rings.length - 1 });   // v0.1059: «1 — авто» — скорость, при которой во внутреннее кольцо зайдёт больше всего шариков
       batchBusy = true;
       try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",period:T,speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
       finally { batchBusy = false; F = balls[0] || null; }
@@ -730,7 +747,7 @@
       const before = C.at(elapsed / dt), after = C.at((elapsed + step) / dt);
       centerBatch = true; pendingClosed = centerCount();
       try { for (const b of live) { F = b; advance(step, before, after); } }
-      finally { centerBatch = false; closedCount = pendingClosed; }
+      finally { centerBatch = false; setClosed(pendingClosed); }
       elapsed += step;
       // A newly filled central ring also captures balls already inside it at this exact time.
       for (const b of live) if (b.stage !== "done" && b.stage !== "lost" && b.k < centerCount()) {
@@ -903,8 +920,8 @@
       positions.push({ x, y }); g.restore();
     }
   };
-  function reset(toStart = false) {
-    window.zzBallClearRun();
+  function reset(toStart = false, keepCenter = false) {
+    window.zzBallClearRun({keepCenter});   // v0.1063: при загрузке страницы закрытие (из памяти или пресета) остаётся
     F = null; balls = []; cycles = passes = 0; chain = false; lossRun = false; lossSpeed = 0; markRun = false; pendingMarks = []; pendingBits = [];
     if (toStart) restoreStart();
     const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();
@@ -1084,13 +1101,13 @@
   function init() {
     if (!$("bConeBall")) return;
     Z.coneBallAuto = true; Z.coneBallMult = "1";   // v0.1028: только автоподстройка, ручной скорости нет
-    enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset();
+    enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset(false, true);
     $("bConeBall").onclick = () => {
       enabled = !enabled; Z.coneBallOn = enabled; ui(); save(); reset();
       if (enabled && coneSpinning) { window.zzBallSpinState(true); renderCone(); }
     };
     $("bConeBallReset").onclick = () => reset(true);
-    initLab(); reset();
+    initLab(); reset(false, true);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true }); else init();
 })();
