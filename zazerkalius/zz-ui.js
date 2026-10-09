@@ -17,11 +17,11 @@ const ZZ_SOLO = (() => {
    (его пишет presety/dobavit.py из файла «💾 Всё»; страница подключает файл сама, до этого скрипта). Как фон хаба: только конус и
    кручение, память не читается и не пишется; состояние — из пресета. */
 const ZZ_PRESET = (window.ZZ_PRESET_DATA && window.ZZ_PRESET_DATA.state && Array.isArray(window.ZZ_PRESET_DATA.state.rows)) ? window.ZZ_PRESET_DATA : null;
-const ZZ_BG = (() => { try { return !!ZZ_SOLO && (new URLSearchParams(location.search).get("bg") === "1" || !!ZZ_PRESET); } catch (e) { return false; } })();
+const ZZ_BG = (() => { try { const bg = new URLSearchParams(location.search).get("bg"); return !!ZZ_SOLO && (bg === "1" || !!ZZ_PRESET && bg !== "0"); } catch (e) { return false; } })();
 /* v0.196, «как сохранять, чтобы по ссылке открывали прямо там» → «да» (вся страница, а не только конус): ?preset=<имя> без solo —
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
-const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_SOLO;
+const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_BG;   // v0.1055: Solo + bg=0 — рабочие кнопки и раскладка пресета
 if (window.ZZ_LINK_DECODE && !ZZ_PRESET) zzLinkOpen(window.ZZ_LINK_DECODE);   // v0.650: ссылка #z=… — раскрыть и открыть заново (zzLinkOpen)
 window.addEventListener("hashchange", () => { if (location.hash.indexOf("#z=") === 0) location.reload(); });   // ссылку вставили в адрес этой же вкладки — браузер страницу не грузит, грузим сами
 const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "rowsFolded", "rowsWRestore", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "padFreePos", "padViewportPos", "tpl", "tplRef", "pins", "coneBtns"];   // v0.995: свёрнутая ширина поля — часть раскладки; конусу одному (?solo=cone) — ни к чему
@@ -98,7 +98,7 @@ function load(){
   if (zzResetOnStart()) { if (!ZZ_SOLO) Z.fieldRight = true; return; }
   if (ZZ_PRESET) {   // v0.185: пресет
     const u = JSON.parse(JSON.stringify(ZZ_PRESET.state));
-    if (ZZ_SOLO) for (const k of ZZ_PRESET_LAYOUT) delete u[k];   // v0.196: в пресете теперь и раскладка — для всей страницы
+    if (ZZ_BG) for (const k of ZZ_PRESET_LAYOUT) delete u[k];   // рабочему Solo оставляем настроенные группы и поле строк
     if (u.rows.every(zzIsBits)) Object.assign(Z, u);
     if (ZZ_PRESET_FULL && !Z.home) Z.home = homeOf(Z);   // v0.196: «↺ Начальные» и «⟲ всё на места» — к пресету
     return;
@@ -1051,7 +1051,7 @@ function fillReset(){
 function fillRowHtml(N){
   const f = fillDraft(); let c = "";
   for (let k = 0; k < f.length; k++) c += '<span class="fc' + (f[k] === "." ? " fe" : " b" + f[k]) + '" data-k="' + k + '">' + (f[k] === "." ? "&nbsp;" : f[k]) + "</span>";
-  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn"><b>' + (Z.rows.length + 1) + '</b><span class="fctl"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span></span><span></span>' + (Z.coneTurnsShow ? '<span></span>'.repeat((Z.showFM ? 1 : 0) + (Z.show01 ? 1 : 0)) + rowTurnsBadge("f") : "") + '</span>';   // v0.867: обороты — под столбиком оборотов   // v0.224: ＋ ✕ — мелко под номером
+  let h = '<div class="rw fillrw"><span class="no" title="Строка для заполнения — ' + f.length + ' ячеек, на одну больше нижней строки"><span class="rn"><b>' + (Z.rows.length + 1) + '</b><span class="fctl"><span class="fadd" title="＋ В строки: встанет под нижней строкой (пустые ячейки — нулями), ↩ вернёт">＋</span><span class="fdel" title="✕ Заново: стереть строку для заполнения — снова все ячейки пустые, и метки лазера в пустых кольцах тоже стираются. В конусе — правый щелчок по её кольцу">✕</span></span></span><span></span>' + '<span></span>'.repeat((Z.showFM ? 1 : 0) + (Z.show01 ? 1 : 0)) + rowTurnsBadge("f") + rowBallLostBadge(Z.rows.length) + '</span>';   // v0.867: обороты — под столбиком оборотов   // v0.224: ＋ ✕ — мелко под номером
   for (let l = 0; l < N; l++) h += '<span class="bits' + (l === Z.lane ? " la" : "") + '" data-l="' + l + '">' + (l === Z.lane ? '<span class="fcs" title="Щелчок по ячейке: пусто → 1 → 0 → пусто. ＋ слева — в строки">' + c + "</span>" : "") + "</span>";
   return h + "</div>";
 }
@@ -1078,11 +1078,29 @@ function voidRowsFill(force){
 }
 /* v0.869, «подвинь номера строк левее, ближе к границе — много свободного места пустует»: столбик номеров был 30 px при любом числе цифр. Теперь
    ширина — по числу цифр самого большого номера в поле (строки, за чертой, пустые кольца до 256): --rnd у #rowList */
+function rowBallLostCounts(){   // v0.1055: накопительный счёт текущего запуска, по строкам (включая строку за чертой)
+  const s = Z.coneBallLost;
+  return s && s.lane === (Z.lane | 0) && Array.isArray(s.counts) ? s.counts : null;
+}
+function rowBallLostBadge(i){
+  const counts = rowBallLostCounts(); if (!counts) return "";
+  const n = counts[i] || 0;
+  return '<span class="rbl" data-ball-lost="' + i + '" title="Строка ' + (i + 1) + ': застряли в дуге за этот запуск. Новый «● вылет» обнуляет счёт">✕' + n + '</span>';
+}
+window.zzBallLostTotal = () => (rowBallLostCounts() || []).reduce((n, v) => n + (v || 0), 0);
+window.zzBallLostReset = () => { Z.coneBallLost = { lane: Z.lane | 0, counts: [] }; renderRows(); save(); };
+window.zzBallLostClear = () => { delete Z.coneBallLost; const el = document.getElementById("coneRunStats"), turns = document.getElementById("ballLabTurns"); if (el) { el.hidden = true; el.querySelector(".cone-run-text").textContent = ""; } if (turns) { turns.hidden = true; turns.textContent = ""; } renderRows(); save(); };
+window.zzBallLostRecord = (i) => {
+  if (!rowBallLostCounts()) window.zzBallLostReset();
+  const c = Z.coneBallLost.counts; c[i] = (c[i] || 0) + 1;
+  document.querySelectorAll('#rowList [data-ball-lost="' + i + '"]').forEach(el => { el.textContent = "✕" + c[i]; });
+  save();
+};
 function rowNumDigits(){
   const L = document.getElementById("rowList"); if (!L) return;
   let mx = 1; L.querySelectorAll(".rw > .no > .rn").forEach(el => { const v = parseInt(el.textContent, 10); if (v > mx) mx = v; });
   const d = String(String(mx).length); if (L.style.getPropertyValue("--rnd") !== d) L.style.setProperty("--rnd", d);
-  const cols = [...(Z.showFM ? ["60px"] : []), ...(Z.show01 ? ["60px"] : []), ...(Z.coneTurnsShow ? ["var(--rtn-w, 20px)"] : [])].join(" ");
+  const cols = [...(Z.showFM ? ["60px"] : []), ...(Z.show01 ? ["60px"] : []), ...(Z.coneTurnsShow ? ["var(--rtn-w, 20px)"] : []), ...(rowBallLostCounts() ? ["6ch"] : [])].join(" ");
   if (L.style.getPropertyValue("--rc-cols").trim() !== cols) L.style.setProperty("--rc-cols", cols || " ");
   rowCounterWidths();
 }
@@ -1292,7 +1310,7 @@ function renderRows(){
   }
   const head = h, rowHtml = []; h = "";
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
@@ -2656,6 +2674,49 @@ function coneArtGpu(cv, W, H, bg){
     return canvas;
   } catch (err) { if (s && s.gl) { s.gl.deleteTexture(s.texture); s.gl.deleteProgram(s.program); } coneArtGpu._state = false; return null; }
 }
+function coneBallModeSummary(cfg = Z){
+  const speed = [2, 3].includes(+cfg.coneBallSpeedMode) ? +cfg.coneBallSpeedMode : 1;
+  const inward = cfg.coneBallRoute === "in";
+  const parts = ["«● вылет» запускает шарик из центра через щель первого кольца наружу, кольцо за кольцом.",
+    cfg.coneNotchSlit ? "Дальше он переходит только через щели и края открытых вырезов; разрезы между соседними битами внутри сплошной дуги не считаются щелью." : "Дальше используются любые прямые грани битов; при включённой «✕ дуге» учитывается также ширина щели и свободный вырез."];
+  if (inward) { parts.length = 0; parts.push("«● в центр» одновременно пускает шарики из всех щелей внешнего видимого кольца внутрь. Дошедшие до центра останавливаются; остальные застревают в дуге или отскакивают по выбранному режиму удара.", "На стыках используются щели и открытые вырезы. Число дошедших до центра, ударов и отскоков показано в статистике каждого запуска."); }
+  parts.push(speed === 2 ? "Скорость постоянная: от центра до края кольца 1 за один его полный оборот." : speed === 3 ? "Скорость постоянная: от центра до края кольца 1 за половину его оборота — вдвое быстрее режима 2." : inward ? "В режиме 1 скорость постоянная: от внешнего края до центра за один относительный оборот первых двух колец. Время прихода к щелям не подстраивается: опыт показывает реальные прохождения и удары." : cfg.coneBallLoss ? "Авто подбирает скорость первого перехода из К1 в К2. Затем эта найденная скорость постоянна для остальных отрезков и всей цепочки." : "Авто подбирает постоянную скорость для каждого прямого отрезка отдельно, чтобы прийти к стыку при совпадении граней.");
+  parts.push(inward ? "Все внешние щели запускаются одной группой. Новый запуск — снова вся группа с нулевой статистикой." : cfg.coneBallChain ? "Цепочка включена: когда предыдущий шарик вышел из кольца 1, из центра стартует следующий. Завершённые вылеты освобождают места для новых." : "Цепочка выключена: запускается один шарик.");
+  parts.push(inward || cfg.coneBallLoss ? cfg.coneBallImpact === "bounce" ? "Удар: отскок. Попав в сплошную дугу, шарик разворачивается и едет назад по своей грани. Щель или открытый вырез пропускают дальше." : "Удар: застрять. Попадание в сплошную дугу останавливает шарик: он остаётся видимым внутри нужного бита и вращается с кольцом. Щель или открытый вырез пропускают дальше." : "«✕ дуга» выключена: на несовпавшем стыке шарик ждёт прямую или разворачивается по своей грани.");
+  parts.push(inward ? "При движении в центр считаются прохождения и удары; запись единиц за чертой относится к вылетам наружу." : cfg.coneBallMark ? "«1 за чертой» включена: удар в дугу кольца за чертой записывает 1 в тот бит, куда попал шарик, при застревании и при отскоке. Проход через щель или вырез ничего не записывает. Заполненная единицами строка уходит в поле; застрявшие шарики и общий счёт сохраняются, вылеты продолжаются." : "«1 за чертой» выключена: вылеты не записывают биты.");
+  parts.push(cfg.coneNotch ? "«⟂ грани» включены: совпадения прямых оставляют засечки за чертой; для засечек нужны хотя бы два кольца строк над чертой." : "«⟂ грани» выключены: засечки не добавляются; «● вылет» работает отдельно.");
+  parts.push("Статистика этого запуска — слева от верхнего конца вертикальной оси; таблица оборотов шариков — справа, на той же высоте. Новый запуск обнуляет счёт; сброс стирает статистику и застрявшие шарики.");
+  return parts.join("\n\n");
+}
+function coneBallModeTip(){
+  const lab = $("solEdgeGrp")?.querySelector(":scope > .glab"); if (!lab) return;
+  const text = coneBallModeSummary();
+  if (Z.tipsOn === false || lab.dataset.zzTip !== undefined) { if (lab.dataset.zzTip !== text) lab.dataset.zzTip = text; }
+  else if (lab.title !== text) lab.title = text;
+}
+function coneRunStatsSync(cv, R, dpr, cx){
+  const win = $("w-cone"), data = window.zzBallRunStats && window.zzBallRunStats();
+  let el = $("coneRunStats"); const turns = $("ballLabTurns");
+  if (!data || !win || Z.cone3d) { if (el) el.hidden = true; if (turns) turns.hidden = true; return; }
+  if (!el) { el = document.createElement("div"); el.id = "coneRunStats"; el.setAttribute("aria-label", "Статистика текущего запуска шариков"); const text = document.createElement("pre"); text.className = "cone-run-text"; el.appendChild(text); win.appendChild(el); }
+  if (turns) { turns.classList.add("cone-run-turns"); if (turns.parentElement !== win) win.appendChild(turns); }
+  const wr = win.getBoundingClientRect(), axisX = R.left - wr.left + win.scrollLeft - win.clientLeft + cx / dpr;
+  const width = Math.min(430, Math.max(160, axisX - 18));
+  el.hidden = false; el.style.left = Math.round(axisX - width - 10) + "px"; el.style.width = width + "px"; el.style.top = Math.round(R.top - wr.top + win.scrollTop - win.clientTop + 30) + "px";
+  el.style.maxHeight = Math.max(100, R.height - 65) + "px";
+  if (turns) {
+    turns.hidden = !data.results.length; turns.style.left = Math.round(axisX + 10) + "px"; turns.style.top = el.style.top;
+    turns.style.width = Math.min(430, Math.max(160, R.right - wr.left - axisX - 18)) + "px";
+    turns.style.maxHeight = Math.max(100, Math.min(240, R.height - 65)) + "px";
+  }
+  const moving = data.rings.reduce((n, r) => n + r.moving, 0), waiting = data.rings.reduce((n, r) => n + r.waiting, 0), lost = data.rings.reduce((n, r) => n + r.lost, 0);
+  const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
+    "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.removed ? " · снято при смене колец " + data.removed : ""),
+    ["", Z.coneBallRoute === "in" ? "1 · база в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
+  data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
+    "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
+  const text = lines.join("\n"), textEl = el.querySelector(".cone-run-text"); if (textEl.textContent !== text) textEl.textContent = text;
+}
 function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
   const win = document.getElementById("w-cone"); if (!win) return;
   let layer = document.getElementById("coneTopArt");
@@ -2681,7 +2742,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.id === "bC3Axes" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -2691,6 +2752,7 @@ function coneArtBlocksButton(e){
 document.addEventListener("pointerdown", coneArtBlocksButton, true);
 document.addEventListener("click", coneArtBlocksButton, true);
 function renderCone(){
+  coneBallModeTip();
   if (coneMagStep && coneMagStep.stamp !== coneMagFingerprint()) coneMagStep = null;
   if (coneMagCount !== null) {
     if (coneDrag || coneFillDrag || coneR1Drag) { if (coneMagLine === null) { coneMagCount = null; coneMagCountStamp = null; } }
@@ -2707,7 +2769,7 @@ function renderCone(){
   if (window.zzGroupPinSync) window.zzGroupPinSync();   // v0.911: прищеплённые к оси группы — за центром и масштабом
   coneHoldSync();   // v0.870: «2 посл.» — стоящие кольца по числу строк
   if (window.c3PadPlace) window.c3PadPlace();   // v0.935: свободный слой, включая верхнюю полосу
-  if (!winOpen("w-cone")) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; return; }
+  if (!winOpen("w-cone")) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; const stats = $("coneRunStats"); if (stats) stats.hidden = true; return; }
   { const b3 = $("bC3d"), bo = $("bC3Octa"); if (b3) b3.classList.toggle("on", !!Z.cone3d); if (bo) bo.classList.toggle("on", !!Z.coneOcta); }   // v0.270: кнопки над пультом — как галки
   { const p3 = $("cone3Pad"); if (p3) p3.classList.toggle("flat", !Z.cone3d); }   // v0.157: кнопки 3D — только в 3D; v0.164: в 2D — одна зелёная «всё на места»
   const cv = $("coneCv"); if (!cv) { const layer = $("coneTopArt"); if (layer) layer.hidden = true; return; }
@@ -3618,6 +3680,7 @@ function renderCone(){
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
   coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA, cBg);
+  coneRunStatsSync(cv, R, dpr, cx);
   // v0.092: таблица строк у конуса убрана — замки у номеров строк в поле
 }
 /* v0.088, «справа сделай таблицу с номерами строк — замков, строк, как в поле строк; теперь его свернём, а это — на первое
@@ -7438,22 +7501,44 @@ function setupCone(){
   if ($("bConeNotchBall")) {   // v0.1050: «● вылет» — шарик из центра через щель кольца 1 и дальше по щелям («▮ щель») или по граням
     $("bConeNotchBall").onclick = () => {
       if (!window.zzBallLaunch) return;
+      Z.coneBallAuto = true;
       const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain, loss: !!Z.coneBallLoss, mark: !!Z.coneBallMark });
-      say(ok ? "● Вылет: шарик из центра через щель кольца 1 и дальше " + (Z.coneNotchSlit ? "только по щелям (края вырезов)." : "по граням (любые разрезы).") + (Z.coneBallChain ? " ⛓ Цепочка: вышел из кольца 1 — стартует следующий." : "") + " Скорость подстраивается сама." : "● Вылет не запустился — подсказка в группе «Шарики».");
+      say(ok ? "● Вылет: шарик из центра через щель кольца 1 и дальше " + (Z.coneNotchSlit ? "только по щелям (края вырезов)." : "по граням (любые разрезы).") + (Z.coneBallChain ? " ⛓ Цепочка: вышел из кольца 1 — стартует следующий." : "") + " Скорость: " + ($("bConeBallSpeed")?.textContent || "авто") + "." : "● Вылет не запустился — подсказка в группе «Шарики».");
     };
   }
+  if ($("bConeBallImpact")) {
+    const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
+    sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun(); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); save(); renderCone(); };
+  }
+  if ($("bConeBallSpeed")) {
+    const labels = ["1 · авто", "2 · оборот К1", "3 · ½ оборота К1"], sync = () => { const n = [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1; $("bConeBallSpeed").textContent = labels[n - 1]; $("bConeBallSpeed").dataset.mode = n; };
+    sync(); $("bConeBallSpeed").onclick = () => {
+      const n = [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1;
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun();
+      Z.coneBallSpeedMode = n % 3 + 1; sync(); save(); renderCone();
+      say(labels[Z.coneBallSpeedMode - 1] + ": выбран режим для следующего «● вылета».");
+    };
+  }
+  if ($("solEdgeGrp")) $("solEdgeGrp").addEventListener("click", coneBallModeTip);
+  if ($("bConeBallIn")) $("bConeBallIn").onclick = () => {
+    if (!window.zzBallLaunch) return;
+    Z.coneBallAuto = true; Z.coneBallArc = false;
+    const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:!!Z.coneBallLoss,mark:false,chain:false});
+    say(ok ? "● В центр: одновременно из всех щелей внешнего видимого кольца. Дошедшие останавливаются в центре; удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : "Не удалось запустить — подсказка в группе «Шарики».");
+  };
   if ($("bConeBallMark")) {   // v0.1053: «1 за чертой» — вылетевший в кольцо за чертой шарик ставит «1» в ячейку
     const ui = () => { const b = $("bConeBallMark"); b.classList.toggle("on", !!Z.coneBallMark); b.setAttribute("aria-pressed", String(!!Z.coneBallMark)); };
     ui(); $("bConeBallMark").onclick = () => { Z.coneBallMark = !Z.coneBallMark; ui(); save();
-      say(Z.coneBallMark ? "1 за чертой: шарик, вошедший в кольцо за чертой, ставит «1» в ячейку у своей грани. Все ячейки «1» — строка уходит в поле, вылеты идут дальше." : "1 за чертой выключено: шарики ячейки не трогают."); };
+      say(Z.coneBallMark ? "1 за чертой: попадание шарика в дугу бита ставит «1» в этот бит, шарик застревает или отскакивает. Щель и открытый вырез — проход без записи. Все ячейки «1» — строка уходит в поле, вылеты идут дальше." : "1 за чертой выключено: шарики ячейки не трогают."); };
   }
   /* v0.1053: отметки шариков в строке за чертой — «1» в ячейки (как у лазера: строка из одних «1» сама уходит в поле) */
   window.zzBallFillMark = (cells) => {
-    const f0 = fillDraft(); let f = f0;
-    for (const j of cells) if (j >= 0 && j < f.length && f[j] !== "1") f = f.slice(0, j) + "1" + f.slice(j + 1);
-    if (f === f0) return;
+    const f0 = fillDraft(); let f = f0, written = 0;
+    for (const j of cells) if (j >= 0 && j < f.length && f[j] !== "1") { f = f.slice(0, j) + "1" + f.slice(j + 1); written++; }
+    if (f === f0) return 0;
     Z.fillCells = f; save();
     if (!fillAutoCommit()) { renderRows(); renderCone(); }
+    return written;
   };
   if ($("bConeBallLoss")) {   // v0.1052: «✕ дуга» — к «● вылету»: упёрся в дугу бита, а не в щель или вырез, — исчез
     const ui = () => { const b = $("bConeBallLoss"); b.classList.toggle("on", !!Z.coneBallLoss); b.setAttribute("aria-pressed", String(!!Z.coneBallLoss)); };
@@ -7728,6 +7813,7 @@ function setupCone(){
      и проходов), довод строки 1. Строки не трогает: сдвиг строки открытым кольцом — настоящая правка, её возвращает ↩. */
   $("bConeAllHome").onclick = () => {
     autoSet(false);
+    if (window.zzBallClearRun) window.zzBallClearRun();
     const H = Z.home;
     if (H) {   // v0.125: своё умолчание (⭐) — положения колец и настройки конуса, как запомнены
       coneRot.length = 0; (Array.isArray(H.coneRot) ? H.coneRot : []).forEach((x, i) => coneRot.push(coneRotKeep(x, i))); Z.coneRot = coneRot.slice();
@@ -7862,7 +7948,7 @@ function setupCone(){
   };
   $("bConeZen").onclick = () => zenSet(true);
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
-  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); coneHoldClear(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); save(); renderCone(); coneLogRender(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
+  $("bConeAuto").oncontextmenu = (e) => { e.preventDefault(); if (window.zzBallClearRun) window.zzBallClearRun(); coneHoldClear(); Z.coneSpin = 0; Z.coneSpinPh = 0; Z.coneClockN = 0; coneLaserResetAll(); save(); renderCone(); coneLogRender(); say("◯ Кручение сброшено — всё на своих местах."); };   // v0.104
   $("coneSpinMode").value = Z.coneSpinMode || "all";
   {   // v0.124: ползунок ширины щели — один для расчёта и рисунка
     const sl = $("coneSlit"), sv = $("coneSlitV"), show = () => { sv.textContent = (+Z.coneSlit || 2).toFixed(1).replace(".", ",") + "°"; };
@@ -11682,7 +11768,7 @@ function solPanelOrganizeInit(C){
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpTop", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
@@ -11816,7 +11902,7 @@ function cgrpInit(){
   const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
   window.zzAxisPanels = () => panels().filter(onCanvas);
   const nodePin = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].pin] : Z.cgrpPin && Z.cgrpPin[g.dataset.g];
-  const nodeUnpin = g => { if (Z.cgrpEdge) delete Z.cgrpEdge[g.dataset.g]; if (SOL_PLATES[g.id]) delete Z[SOL_PLATES[g.id].pin]; else if (Z.cgrpPin) delete Z.cgrpPin[g.dataset.g]; };
+  const nodeUnpin = g => { if (Z.cgrpTop) delete Z.cgrpTop[g.dataset.g]; if (Z.cgrpEdge) delete Z.cgrpEdge[g.dataset.g]; if (SOL_PLATES[g.id]) delete Z[SOL_PLATES[g.id].pin]; else if (Z.cgrpPin) delete Z.cgrpPin[g.dataset.g]; };
   const nodePlace = g => { if (SOL_PLATES[g.id]) platePlace(g); else place(g); };
   const nodeSetPos = (g, x, y) => {
     const c = SOL_PLATES[g.id];
@@ -11905,7 +11991,7 @@ function cgrpInit(){
   const linkSync = () => {
     if (document.body.classList.contains("sol-mobile")) return;
     const t = TZC_H / (2 * Math.sqrt(3)); let ch = false;
-    for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
+    for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpTop && Z.cgrpTop[g.dataset.g]) || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
     for (let pass = 0; pass < panels().length; pass++) { let any = false;
       for (const [k, L] of Object.entries(Z.cgrpLink)) {
         const g = gByKey(k), o = L && gByKey(L.to);
@@ -12004,6 +12090,13 @@ function cgrpInit(){
   };
   const place = (g) => {
     if (document.body.classList.contains("sol-mobile")) return;
+    const topPin = Z.cgrpTop && Z.cgrpTop[g.dataset.g];
+    if (topPin && !g.classList.contains("cdrag") && !g.classList.contains("pdrag")) {
+      const wr = $("w-cone").getBoundingClientRect(), top = $("top").getBoundingClientRect();
+      const x = wr.left + Math.max(0, wr.width - g.offsetWidth) * Math.max(0, Math.min(1, topPin.x));
+      g.classList.add("cfloat", "cg-abovebody"); g.classList.remove("cfld");
+      g.style.left = Math.round(x) + "px"; g.style.top = Math.round(top.bottom) + "px"; return;
+    }
     const f = g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && solZoneRect(f.z);   // v0.348: на поле строк; v0.954: и на левой панели
     if (fr) g.classList.remove("cg-abovebody");
     g.classList.toggle("cfld", !!fr);
@@ -12052,7 +12145,7 @@ function cgrpInit(){
     if (document.body.classList.contains("sol-mobile")) return;
     if (document.body.classList.contains("cgdrag")) return;
     const vis = panels().filter(g => onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && g.offsetWidth > 4);
-    const mov = g => zrec(g)?.z !== "head" && (SOL_PLATES[g.id] || g.classList.contains("cfloat")) && !Z.cgrpLink[g.dataset.g] && !(Z.cgrpEdge && Z.cgrpEdge[g.dataset.g]) && typeof nodePin(g) !== "number" && !!(SOL_PLATES[g.id] || Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
+    const mov = g => !(Z.cgrpTop && Z.cgrpTop[g.dataset.g]) && zrec(g)?.z !== "head" && (SOL_PLATES[g.id] || g.classList.contains("cfloat")) && !Z.cgrpLink[g.dataset.g] && !(Z.cgrpEdge && Z.cgrpEdge[g.dataset.g]) && typeof nodePin(g) !== "number" && !!(SOL_PLATES[g.id] || Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
     const zOf = (g) => +g.style.zIndex || 0, TOL = 9;
     let ch = false;
     for (let pass = 0; pass < 12; pass++) {
