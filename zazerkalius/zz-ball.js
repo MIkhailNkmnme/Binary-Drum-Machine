@@ -11,6 +11,12 @@
   let F = null, enabled = false, paused = true, cycles = 0, passes = 0;
   // v0.1051, «после вылета шарика из 1 кольца сразу же за ним начинает вылет 2 и так далее»: цепочка вылетов из центра (до CHAIN_MAX шариков)
   let chain = false; const CHAIN_MAX = 64;
+  /* v0.1073, по снимку «баг: 2-й шарик должен был вылететь во 2-е кольцо» (цепочка, «✕ дуга»): следующий шарик цепочки стартовал в конце кадра,
+     а прежний выходил из кольца 1 посреди кадра — опоздание до 1/60 с (К1 из одного бита при 3 бит/с — до 0,3 рад). Прежде его скрывал допуск
+     щели, без допусков (v0.1067) шарик бился. Теперь момент выхода из К1 запоминается долей кадра (k1Frac, кадр spinFrame), и новый шарик
+     стартует ровно тогда: остаток кадра он проезжает сразу */
+  let spinFrame = 0;
+  const markK1 = (t, next) => { if (F && F.k === 0 && next === 1 && F.k1Frame !== spinFrame) { F.k1Frac = t; F.k1Frame = spinFrame; } };
   /* v0.1052, «режим: шарик вылетает и упирается в дугу, а не в щель или вырез, — исчезает»; скорость — «сначала автоподстройка на первый вылет первого
      шарика, и она постоянная дальше всегда»; внутри кольца — «едет по щели». lossRun — вылет из «Граней» с «✕ дуга»; lossSpeed — найденная скорость */
   let lossRun = false, lossSpeed = 0;
@@ -669,7 +675,7 @@
         const h = found ? Math.min(found.h, 1 - t) : 1 - t;
         F.elapsed += dt * h; t += h;
         if (!found) break;
-        enteredRing(F.wait.next); F.k = F.wait.next; F.raw = found.edge;
+        markK1(t, F.wait.next); enteredRing(F.wait.next); F.k = F.wait.next; F.raw = found.edge;
         if (F.wait.opposite) F.move = 1;
         F.wait = null; F.seg = null; F.stage = F.move > 0 ? "out" : "in";
         status("Продолжает по прямой · кольцо " + (F.k + 1));
@@ -723,12 +729,12 @@
         if (e === null) {
           const j = fillCellAt(target, a - target.phase - S.spin);
           if (j !== null) { pendingMarks.push(j); F.marked = j; }
-          impactAt(next, S, a); if (F.stage === "lost") break; else continue;
+          markK1(t, next); impactAt(next, S, a); if (F.stage === "lost") break; else continue;
         }
       }
       if (F.loss && !F.auto && touching) {   // «✕ дуга» и «в центр»: щель или открытый вырез — дальше; дуга бита — застрять / отскочить.
         e = lossPass(S, next, a);
-        if (e === null) { impactAt(next, S, a); if (F.stage === "lost") break; else continue; }
+        if (e === null) { markK1(t, next); impactAt(next, S, a); if (F.stage === "lost") break; else continue; }
       }
       if (e === null) {
         if (F.loop || F.auto || F.k >= 2 || next >= 2) waitAt(next);
@@ -736,7 +742,7 @@
       }
       else {
         if (F.loss && F.auto) { lossSpeed = F.seg ? F.seg.speed : F.speed; F.auto = false; F.speed = lossSpeed; }   // v0.1052: скорость первого вылета — дальше постоянная
-        enteredRing(next); F.k = next; F.raw = e; F.seg = null;
+        markK1(t, next); enteredRing(next); F.k = next; F.raw = e; F.seg = null;
       }
     }
     // Freeze each result at the exact exit, including a partial final frame.
@@ -832,6 +838,7 @@
   }
   window.zzBallAfterSpin = (dt, before) => {
     if (!enabled) return;
+    spinFrame++;
     const S = snapshot();
     if (run && run.lane !== (Z.lane | 0)) window.zzBallClearRun();
     if (run && !paused && before && S && before.shape === S.shape && F && dt > 0) {
@@ -870,7 +877,14 @@
       const last = balls[balls.length - 1], c = boundaryPoints(S).find(p => p.id === "center");
       if (c && last && !last.ready && (last.k >= 1 || last.stage === "done" || last.stage === "lost")) {
         batchBusy = true;
-        try { begin(S, false, true, { point: c, route: "out", period: last.period, speed: lossRun && lossSpeed ? lossSpeed : last.speed, auto: lossRun && lossSpeed ? false : undefined }); const no = F.runNumber || (last.number || balls.length) + 1; Object.assign(F, { number: no, label: "Вылет " + no }); balls.push(F); }
+        try { begin(S, false, true, { point: c, route: "out", period: last.period, speed: lossRun && lossSpeed ? lossSpeed : last.speed, auto: lossRun && lossSpeed ? false : undefined }); const no = F.runNumber || (last.number || balls.length) + 1; Object.assign(F, { number: no, label: "Вылет " + no }); balls.push(F);
+          // v0.1073: прежний вышел из К1 в этом кадре на доле h — новый стартует тогда же и проезжает остаток кадра
+          const h = last.k1Frame === spinFrame && Number.isFinite(last.k1Frac) ? Math.max(0, Math.min(1, last.k1Frac)) : 1;
+          if (h < 1 - 1e-12 && before && before.shape === S.shape && dt > 0) {
+            const C = frame(before, S, dt), A = C.at(h);
+            if (before.rotation && S.rotation) A.rotation = before.rotation.map((v, k) => v + ((S.rotation[k] ?? v) - v) * h);
+            advance(dt * (1 - h), A, S);
+          } }
         finally { batchBusy = false; F = balls[0]; }
         batchStatus();
       }
