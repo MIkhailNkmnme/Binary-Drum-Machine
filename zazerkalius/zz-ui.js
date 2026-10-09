@@ -4877,15 +4877,20 @@ function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n �
 /* v0.198, «скорость надо больше возможностей»: ползунок кручения — по логарифму, 1…3600 (было 5…120 ровным шагом), рядом — число. */
 function spinSpOf(p){ const v = Math.pow(3600, p / 100); return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
 function spinPosOf(sp){ return Math.max(0, Math.min(100, Math.round(100 * Math.log(Math.max(1, sp)) / Math.log(3600)))); }
+/* v0.1027, «в режиме магнита по граням надо скорость задавать — шаг к грани в секунду»: при 🧲 по магнитам ползунок — своя скорость Z.coneMagSp,
+   0,1…30 шагов к следующей грани в секунду (по логарифму, по умолчанию 2); направление — по-прежнему знак Z.coneAutoSp */
+function magSpOf(p){ const v = 0.1 * Math.pow(300, p / 100); return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
+function magPosOf(v){ return Math.max(0, Math.min(100, Math.round(100 * Math.log(Math.max(0.1, v) / 0.1) / Math.log(300)))); }
+function coneMagSp(){ const v = +Z.coneMagSp; return v > 0 ? v : 2; }
 function spinSpUi(){
   const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
   const f = (x) => x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = !Z.coneSpinMag && coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  el.textContent = Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
-  $("coneAutoSp").value = spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
+  $("coneAutoSp").value = Z.coneSpinMag ? magPosOf(coneMagSp()) : spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
   const d3 = $("bC3Dir"); if (d3) d3.textContent = sp < 0 ? "↺" : "↻";   // v0.279: направление и в пульте
   { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }
   { const b = $("bC3StepB"), f = $("bC3StepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.856: и ромбы шага у ▶   // v0.511: горит стрелка направления
@@ -7217,13 +7222,13 @@ function setupCone(){
     const plan = coneMagMakePlan(dir);
     if (!plan) return false;
     coneMagFinishPlan(plan, false);
-    magAutoWait = Math.max(0.16, plan.maxDeg / Math.abs(Z.coneAutoSp || 30));   // v0.982: скачок как ▶|, скорость задаёт паузу до следующей цели
+    magAutoWait = 1 / coneMagSp();   // v0.1027: скачок как ▶|, скорость — шагов к грани в секунду
     return true;
   };
   if ($("bConeNextMag")) {
     const ui = () => { const b = $("bConeNextMag"); b.classList.toggle("on", !!Z.coneSpinMag); b.setAttribute("aria-pressed", String(!!Z.coneSpinMag)); };
     ui(); $("bConeNextMag").onclick = () => {
-      autoSet(false); Z.coneSpinMag = !Z.coneSpinMag; ui(); spinSpUi(); save(); renderCone();
+      autoSet(false); Z.coneSpinMag = !Z.coneSpinMag; ui(); coneDirUi(); save(); renderCone();
       say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — такими же скачками между совпадениями. Цели — «🧲 гран. / всё» и направление соседей. Оси холста — только при вращении рукой." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
     };
     $("bConeNextMag").oncontextmenu = (e) => e.preventDefault();
@@ -7499,7 +7504,7 @@ function setupCone(){
       /* v0.668, «почему-то кнопки сброса кручения и лазера делают потом 3D-вид»: ⭐ было запомнено в 3D, и ⟲ (а с ним ⌖✕ сброс) возвращал из него и
          настройки вида — 3D, октаэдр, свечение, лучи, зеркало — и переключатели лазера. Теперь сброс возвращает только положения и кручение (кольца,
          режим и скорость кручения, замки, оси, Аниматрица); как конус показан и что включено у лазера — не трогает */
-      const keys = ["coneSpinMode", "coneAutoSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
+      const keys = ["coneSpinMode", "coneAutoSp", "coneMagSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
       for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "coneTor", "coneTorBall"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
@@ -7577,7 +7582,7 @@ function setupCone(){
     /* v0.855, по снимку «⌖✕ сброс» и ряда «Всё | Каждое | Встреч Стр | Встреч Бит | ⟲ | 📍» — «не должен сбрасывать настройки кнопок, например этих»:
        ⟲ внутри сброса возвращал из ⭐ умолчания (и ★ положения) ещё и режим кручения, скорость с направлением, Аниматрицу, замки и оси. Сброс их теперь
        не трогает: до ⟲ запоминает, после — возвращает; режим — через смену режима (v0.853), чтобы кольца остались, где поставил ⟲ */
-    const KEEP = ["coneSpinMode", "coneAutoSp", "coneLast2", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"], kept = {};
+    const KEEP = ["coneSpinMode", "coneAutoSp", "coneMagSp", "coneLast2", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"], kept = {};
     for (const k of KEEP) kept[k] = k in Z ? JSON.stringify(Z[k]) : undefined;
     fillReset(); $("bConeAllHome").click(); if (cut) renderAll(); tapeClear();   // v0.720: лента — с нуля
     { const m0 = kept.coneSpinMode !== undefined ? JSON.parse(kept.coneSpinMode) : "all";
@@ -7713,7 +7718,7 @@ function setupCone(){
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
   coneDirUi();
-  $("coneAutoSp").oninput = (e) => { Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * spinSpOf(+e.target.value); spinSpUi(); };   // v0.198: по логарифму
+  $("coneAutoSp").oninput = (e) => { if (Z.coneSpinMag) Z.coneMagSp = magSpOf(+e.target.value); else Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * spinSpOf(+e.target.value); spinSpUi(); };   // v0.1027: при 🧲 — шаги в секунду   // v0.198: по логарифму
   $("coneAutoSp").onchange = () => save();
   $("bConeDir").onclick = () => { Z.coneAutoSp = -(Z.coneAutoSp || 30); coneDirUi(); save(); say(Z.coneAutoSp < 0 ? "↺ Кручение — против часовой." : "↻ Кручение — по часовой."); };
   /* v0.198, «аниматрицу надо ещё сюда» (из Треугольника) и «скорость — больше возможностей». 🌊 Волна сверху вниз: строка r+1
