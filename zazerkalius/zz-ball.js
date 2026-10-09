@@ -183,7 +183,8 @@
   const plainRings = () => coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() !== "cut";
   function snapshot() {
     const cut = coneCutOn() && (coneHalfOn() || coneQuadOn() && conePartCount() % 2 === 0);
-    if (!coneGeom || !(cut || plainRings()) || !(Z.coneClock || coneSunOn()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
+    // v0.1029: шарикам не нужны ни ⌖ луч-часы, ни ☀ — кручение колец идёт и без них.
+    if (!coneGeom || !(cut || plainRings()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
     const N = Math.min(Z.rows.length, CONE_MAX);
     if (N + (coneGeom.fill ? 1 : 0) < 2) return null;
     const band = Z.coneClean ? 1 : 0.72, rings = [];
@@ -220,7 +221,7 @@
     }
     return { rings, rotation, spin: (Z.coneSpin || 0) * Math.PI / 180, shape: rings.map(r => r.shape).join("|") };
   }
-  function hint() { return "Для шариков: плоский вид, плавное кручение и хотя бы два кольца. В вырезах у строки 1 — 2 части или 2 по симметрии; в «1 щель» и «все» — как есть"; }
+  function hint() { return "Для шариков: плоский вид, плавное кручение и хотя бы два кольца (луч-часы и солнце не нужны). В вырезах у строки 1 — 2 части или 2 по симметрии; в «1 щель» и «все» — как есть"; }
   function ui() {
     const b = $("bConeBall"); if (!b) return;
     b.classList.toggle("on", enabled); b.setAttribute("aria-pressed", String(enabled)); b.textContent = enabled ? "●" : "○";
@@ -624,7 +625,11 @@
   function launchThrough(count = 1) {
     pauseRotation();
     if (!fresh()) { restoreStart(); F = null; balls = []; }
-    if (Z.coneSun && $("bConeSun")) $("bConeSun").click();
+    // v0.1029: солнце гасится, а с ним и луч-часы, которые оно включало само; иначе выключенное солнце оставляло луч лазера.
+    if (Z.coneSun && $("bConeSun")) {
+      $("bConeSun").click();
+      const clock = $("coneClock"); if (Z.coneClock && clock && clock.onchange) { clock.checked = false; clock.onchange({ target: clock }); }
+    }
     if (typeof coneReleaseRings === "function") coneReleaseRings();
     Z.coneBallMult = "1";
     const S = snapshot(), group = S ? movingGroup(S, rate(S), period(S), count) : { error: hint() };
