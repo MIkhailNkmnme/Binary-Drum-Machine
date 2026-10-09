@@ -2681,7 +2681,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.id === "bC3Axes" || !layer || layer.hidden) return;
+  if (!button || button.id === "bC3Axes" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -6567,6 +6567,13 @@ function c3AxesPlace(){
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;
   b.setAttribute("aria-pressed", String(!!Z.coneAxes));
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
+  // v0.1047: «−» вплотную слева от пары балансов, «+» — справа (нет балансов — по бокам ромба осей, через зазор шириной в ромб)
+  const zo = document.getElementById("bC3ZoomOut"), zi = document.getElementById("bC3ZoomIn");
+  if (zo && zi) { const zw = zo.offsetWidth || 48, gap = w;
+    const L = br ? br.left : center - w / 2 - gap - zw, R = br ? br.right : center + w / 2 + gap;
+    const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
+      if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== t) el.style.top = t; };
+    place(zo, L - zw); place(zi, R); }
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
   /* v0.858, «проверь на телефон версию»: на телефоне полоса вкладок стоит ПОД холстом, и ромбы «у верха холста» (✛ оси, баланс) уезжали под неё, на
@@ -7732,6 +7739,16 @@ function setupCone(){
     coneDirUi();
     if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.setAttribute("aria-label", "Ось: вертикаль и горизонталь"); b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
       b.classList.toggle("on", !!Z.coneAxes); b.onclick = () => { const a = $("bConeAxes"); if (a) a.click(); }; host.appendChild(b); }
+    /* v0.1047, «кнопки плюс и минус масштаб, наверху треугольники рядом с балансами, правее и левее, такого же размера»: «−» слева от баланса «1»,
+       «+» справа от баланса «0» — треугольники остриём вниз, как балансы. Масштаб — к центру конуса (как − ＋ пульта 3D); держишь — повторяется */
+    for (const [id, t, f, tip] of [["bC3ZoomOut", "−", 0.8, "− Мельче: масштаб конуса к центру. Держи — повторяется"], ["bC3ZoomIn", "+", 1.25, "+ Крупнее: масштаб конуса к центру. Держи — повторяется"]])
+      if (host && !$(id)) { const b = document.createElement("button"); b.id = id; b.className = "c3zoom"; b.textContent = t; b.title = tip; b.setAttribute("aria-label", tip);
+        const step = () => { const z1 = Math.max(CONE_ZMIN, Math.min(60, coneZoom * f)), q = z1 / coneZoom; conePan = [conePan[0] * q, conePan[1] * q]; coneZoom = z1; renderCone(); };
+        let tm = 0; const stop = () => { clearTimeout(tm); clearInterval(tm); tm = 0; };
+        b.onpointerdown = (e) => { if (e.button) return; e.preventDefault(); step(); stop(); tm = setTimeout(() => { tm = setInterval(step, 90); }, 380); };
+        b.onpointerup = b.onpointerleave = b.onpointercancel = stop;
+        b.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); step(); } };
+        host.appendChild(b); }
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
       const s = document.createElement("div"); s.id = "c3Modes";
       document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = o.textContent; c.title = o.title; s.appendChild(c); });
