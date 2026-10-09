@@ -233,13 +233,15 @@
     const band = 1, rings = [];   // v0.1050: зазор между нарисованными кольцами (без «◯ чистых») — пустое место, шарик пересекает его по той же прямой; прежде ждал у зазора без конца
     for (let i = 0; i < N + (coneGeom.fill ? 1 : 0); i++) {
       const R = coneRingFeat(i === N ? "f" : i); if (!R) return null;
-      const blocks = [], cells = [];
+      const blocks = [], cells = []; let contactBlocks;
       if (i === 0) {
         if (!cut) {
           // One bit: the slit and the line through the centre opposite it (the magnet's two edges).
           if (R.n === 1) { const x = R.xc ?? 0, lo = -Math.PI / 2 + x * R.step;   // v0.1041: щель строки 1 и прямая напротив
             // v0.1044, «⊙ один путь»: у кольца 1 только разрез — один блок во весь круг; из центра шарик выходит по тому же разрезу
-            blocks.push(centerMode() !== "through" ? { lo, hi: lo + 2 * Math.PI, bit: 0 } : { lo, hi: lo + Math.PI, bit: 0 }); }
+            blocks.push(centerMode() !== "through" ? { lo, hi: lo + 2 * Math.PI, bit: 0 } : { lo, hi: lo + Math.PI, bit: 0 });
+            // The opposite radius is a route through the centre, not a second physical slit or an open half-circle.
+            contactBlocks = [{ lo, hi: lo + TAU, bit: 0 }]; cells.push(...contactBlocks); }
           else for (let j = 0; j < R.n; j++) blocks.push({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j });
         }
         else if (coneQuadOn()) for (let q = 1; q < conePartCount(); q += 2) blocks.push({ lo: -Math.PI / 2 + q * R.step, hi: -Math.PI / 2 + (q + 1) * R.step, bit: 0 });
@@ -266,7 +268,7 @@
           blocks.length = 0; blocks.push(...M);
         }
       }
-      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, cells, tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, fill: i === N, oneWay: !i && !cut && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
+      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, contactBlocks, cells, tol: typeof coneSlitHalf === "function" ? coneSlitHalf(R.n) : 0.0175, fill: i === N, oneWay: !i && !cut && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
     }
     const B = rings[1].blocks;
     if (!B.length) return null;
@@ -506,8 +508,8 @@
         let group = stuck.find(p => p.k === k && p.bit === bit);
         if (!group) { group = { k, bit, count: 0, samples: [] }; stuck.push(group); }
         group.count++;
-        // Keep repeated impacts legible inside the bit, instead of painting the same pixel.
-        if (group.samples.length < 64) group.samples.push({ u: Math.max(.06, Math.min(.94, ((raw - cell.lo) % TAU + TAU) % TAU / (cell.hi - cell.lo))), v: .15 + ((group.count - 1) * .61803398875 % 1) * .7 });
+        // Remain at the exact point of contact, attached to the struck ring.
+        if (group.samples.length < 64) group.samples.push({ u: ((raw - cell.lo) % TAU + TAU) % TAU / (cell.hi - cell.lo), v: (F.q - ring.ri) / (ring.ro - ring.ri) });
       }
     }
     if (window.zzBallLostRecord) window.zzBallLostRecord(k);
@@ -517,11 +519,11 @@
   // v0.1052: where the ball may enter ring k on world line a: an edge within the slit width (snaps to it), or an open
   // cut-out (no bit block covers a; the ball keeps its place and turns with that ring); null — it hits a bit's arc.
   function lossPass(S, k, a) {
-    const R = S.rings[k]; let best = null;
-    for (const b of R.blocks) for (const f of [b.lo, b.hi]) { const d = Math.abs(norm(angle(S, k, f) - a)); if (d <= R.tol + 1e-12 && (best === null || d < best.d)) best = { d, f }; }
+    const R = S.rings[k], walls = R.contactBlocks || R.blocks; let best = null;
+    for (const b of walls) for (const f of [b.lo, b.hi]) { const d = Math.abs(norm(angle(S, k, f) - a)); if (d <= R.tol + 1e-12 && (best === null || d < best.d)) best = { d, f }; }
     if (best) return best.f;
     const raw = a - R.phase - S.spin;
-    return R.blocks.some(b => { const x = ((raw - b.lo) % TAU + TAU) % TAU; return x > 0 && x < b.hi - b.lo; }) ? null : raw;
+    return walls.some(b => { const x = ((raw - b.lo) % TAU + TAU) % TAU; return x > 0 && x < b.hi - b.lo; }) ? null : raw;
   }
   // The ball sits on edge F.raw of ring F.k at distance F.q from the centre,
   // so it turns with that ring. Stops: the outer rim (exit), the joint between

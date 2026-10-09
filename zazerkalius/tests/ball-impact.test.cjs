@@ -10,6 +10,10 @@ function experiment() {
   const hits = [], lost = [], context = {
     window: {zzBallFillMark: cells => hits.push(...cells), zzBallLostRecord: row => lost.push(row)},
     Z: {rows:['1','11'],lane:0,coneSpinMode:'bit', coneAutoSp:10, coneBallMult:'1', coneBallBatch:false},
+    coneGeom: {fill:true}, CONE_MAX:256, coneCutOn:()=>false, coneFlat:()=>true,
+    coneSlitMode:()=>'all', coneHalfOn:()=>false, coneQuadOn:()=>false,
+    cutPrevMode:()=>false, coneFreeOn:()=>false, coneSlitHalf:()=>.05, fillDraft:()=>'..',
+    coneRingFeat:i=>({n:i===0?1:2,P:i===0?1:2,step:i===0?2*pi:pi,x0:0,xc:0,cut:false}),
     document: {readyState:'loading', addEventListener(){}, getElementById(){return null;}}
   };
   vm.createContext(context);
@@ -26,6 +30,7 @@ function experiment() {
       stats() { return window.zzBallRunStats(); },
       clear() { window.zzBallClearRun(); },
       starts(S) { return outerStarts(S); },
+      singleBitSnapshot(mode='through') { Z.rows=['1']; Z.coneBallCenter=mode; return snapshot(); },
       promote(S) { restartRun(S); return ballInfo(F); }
     };
     if (document.readyState === "loading")`), context);
@@ -125,6 +130,28 @@ test('all outer slit starts are distinct, including the full-circle seam', () =>
   const starts=e.api.starts(S); assert.equal(starts.length,2);
   assert.ok(starts.every(p=>p.k===2 && p.r===3));
 });
+test('one-bit first ring has one real slit; the opposite route and both half-circles are solid', () => {
+  for (const mode of ['through','back','flip']) for (const a of [-pi/2+.02,pi/2,-pi/4,3*pi/4]) {
+    const e=experiment(), S=e.api.singleBitSnapshot(mode), slit=Math.abs(a+pi/2)<.05;
+    e.api.start(S,{route:'in',mark:false,point:{k:1,raw:a,r:2,label:'outer'}});
+    const b=e.api.step(3,S);
+    assert.equal(b.stage,slit?'done':'lost',mode+' at '+a);
+    assert.equal(e.api.stats().reachedCenter,slit?1:0);
+    if(!slit) {
+      const p=e.api.stuck(S)[0].positions[0];
+      assert.equal(p.q,1,'inward hit stays on the outer rim of K1');
+      assert.ok(Math.abs(Math.atan2(Math.sin(p.a-a),Math.cos(p.a-a)))<1e-10);
+    }
+  }
+});
+test('one-bit first ring reflects an inward miss without teleporting inside it', () => {
+  const e=experiment(), S=e.api.singleBitSnapshot();
+  e.api.start(S,{route:'in',mark:false,bounce:true,point:{k:1,raw:pi/2,r:2,label:'opposite'}});
+  const b=e.api.step(1.1,S);
+  assert.equal(b.stage,'out'); assert.ok(Math.abs(b.q-1.1)<1e-10);
+  assert.equal(e.api.stuck(S).length,0); assert.equal(e.api.stats().reachedCenter,0);
+  assert.equal(e.api.stats().rings[0].bounces,1);
+});
 test('promotion preserves a reflected ball travelling back on an unchanged inner ring', () => {
   const e=experiment(), S=geometry(pi/4); e.api.start(S,{bounce:true,loss:true});
   const before=e.api.step(.6,S), grown={...geometry(pi/4),shape:'grown'};
@@ -133,11 +160,12 @@ test('promotion preserves a reflected ball travelling back on an unchanged inner
   assert.equal(after.stage,'in'); assert.equal(after.ring,before.ring); assert.equal(after.q,before.q);
   assert.equal(e.api.stats().launched,1); assert.equal(e.api.stats().removed,0);
 });
-test('trapped ball stays inside its actual cell and follows that cell after rotation/promotion', () => {
+test('trapped ball stays at its exact contact and follows that cell after rotation/promotion', () => {
   const e=experiment(), S=geometry(pi/4,true); e.api.start(S); e.api.step(2,S);
   const group=e.api.stuck(S)[0], p=group.positions[0];
   assert.equal(group.k,2); assert.equal(group.bit,0); assert.equal(group.count,1);
-  assert.ok(p.q>2 && p.q<3,'position is inside the ring band');
+  assert.equal(p.q,2,'outward hit stays on the inner rim of the target');
+  assert.ok(Math.abs(p.a)<1e-10,'contact angle is not redistributed inside the bit');
   assert.ok(p.a>S.rings[2].cells[0].lo+S.rings[2].phase && p.a<S.rings[2].cells[0].hi+S.rings[2].phase);
   const rotated=geometry(pi/4+pi/3); rotated.rings[2].fill=false;
   assert.ok(Math.abs(e.api.stuck(rotated)[0].positions[0].a-p.a-pi/3)<1e-10);
