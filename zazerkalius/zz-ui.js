@@ -3532,7 +3532,7 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneFlat()) { coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
+  if (coneFlat()) { coneOneSlitDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
@@ -5194,6 +5194,21 @@ function coneEdgeDraw(g, o){
    совпадение границы кольца с границей соседнего (те же грани, что у ручной привязки: coneEdgeRings) ищется точно, и между кадрами, и вспыхивает той же
    розовой чертой между двумя кольцами; вспышка гаснет за 0,9 с. Пары соседей — по «🧲 сим.» (оба — все пары; внутр. / наруж. — тоже все: при ▶ крутятся
    все кольца, «текущего» нет). Только при «🧲 гран.» и не в кручении по магнитам (там свои лучи) */
+/* v0.1037, по таблице «Кольца» на строке «N щель» — «надо как-то цветом эту щель выделить, чтобы её сразу видеть»: в «N щель» единственная щель каждого
+   кольца строки (кроме строки 1 — у неё свой вырез) — ярко-зелёный клин во всю толщину кольца, шириной как сама щель (не тоньше 3 px); крутится с кольцом */
+const CONE_SLIT1_COL = "#22e07a";
+function coneOneSlitDraw(g, o){
+  if (!coneOneSlit()) return;
+  const { cx, cy, r0, dr, band, dpr, N } = o;
+  g.save(); g.fillStyle = CONE_SLIT1_COL; g.strokeStyle = CONE_SLIT1_COL; g.shadowColor = CONE_SLIT1_COL; g.shadowBlur = 8 * dpr; g.globalAlpha = 0.95;
+  for (let i = 1; i < N; i++) {
+    const R = coneRingFeat(i); if (!R || !R.one) continue;
+    const rin = r0 + i * dr, rout = rin + Math.max(1, dr * band), a = -Math.PI / 2 + (0 - R.x0) * R.step;
+    const h = Math.max(coneSlitHalf(R.n), 1.5 * dpr / Math.max(1, rin));
+    g.beginPath(); g.arc(cx, cy, rout, a - h, a + h); g.arc(cx, cy, rin, a + h, a - h, true); g.closePath(); g.fill();
+  }
+  g.restore();
+}
 let coneSeamFlash = [], coneSeamT = 0;
 function coneSeamOn(){ return magPartsOnly() && !Z.coneSpinMag && coneFlat(); }
 function coneSeamSweep(ph0, dph){
