@@ -5125,16 +5125,22 @@ function coneRingFeat(i){
   else { const R = coneMagRing(i); if (!R) return null; n = R.n; cut = R.cut; step = R.step; P = R.P; x0 = R.x0; }
   /* v0.1033, «N щель»: у кольца строки (кроме строки 1) щель одна — между последним и первым битом; гранью для магнита, «⏸ грани», шагов и шариков
      считается только она (one). Строка 1 и кольцо за чертой — щели на каждой границе, как у лазера */
-  return { n, cut, step, P, x0, sp: cut && coneCutSpread(), one: typeof i === "number" && i >= 1 && !cut && coneOneSlit() };
+  /* v0.1041, по снимку «грани не в вырезе зелёном?»: у строки 1 из одного бита без вырезов («N щель», «все») настоящая щель — вырез-затвор лазера
+     (coneCutAngle), а гранью считался разрез (место 0) — напротив выреза, если прицел не повёрнут. Теперь грань строки 1 — сама щель (xc), «середина» — прямая
+     напротив неё через центр */
+  let xc;
+  if (i === 0 && !cut && n === 1 && !coneQuadOn() && !coneHalfOn() && coneSlitMode() !== "cut" && typeof coneCutAngle === "function") xc = ((((coneCutAngle() + Math.PI / 2) / step + x0) % P) + P) % P;
+  return { n, cut, step, P, x0, sp: cut && coneCutSpread(), one: typeof i === "number" && i >= 1 && !cut && coneOneSlit(), xc };
 }
 function coneFeatEdges(R){
   if (R.one) return [0];   // v0.1033: «N щель» — одна грань, сама щель
+  if (R.xc !== undefined) return [R.xc];   // v0.1041: строка 1 без вырезов — её щель
   const o = [];
   if (R.sp) { const s = new Set(); for (let q = 0; q < R.n; q++) { const p = cutPos(q, R.n); s.add(Math.round((p % R.P) * 1e6) / 1e6); s.add(Math.round(((p + 1) % R.P) * 1e6) / 1e6); } return [...s]; }
   for (let j = 0; j < (R.cut ? R.P : R.n); j++) o.push(j);
   return o;
 }
-function coneFeatMids(R){ const o = []; for (let q = 0; q < R.n; q++) o.push((R.cut ? cutPos(q, R.n) : q) + 0.5); return o; }
+function coneFeatMids(R){ if (R.xc !== undefined) return [(R.xc + 0.5) % R.P]; const o = []; for (let q = 0; q < R.n; q++) o.push((R.cut ? cutPos(q, R.n) : q) + 0.5); return o; }
 /* v0.914: геометрия подсветки и остановки на гранях — та же, что у ручного магнита.
    У одного бита учитывается и противоположная половина его разреза; у ▮ — края щели. */
 function coneEdgeRings(){
@@ -5401,7 +5407,7 @@ function coneSnapFeat(k, t){   // что у кольца k лежит на пр�
   const near = (v) => { const d = Math.abs((((v % P) + P) % P) - x); return Math.min(d, P - d) * R.step < 1e-4; };
   const E = coneFeatEdges(R).map(v => ((v % P) + P) % P).sort((a, b) => a - b);
   let j = E.findIndex(near); if (j >= 0) return "грань " + (j + 1);
-  j = coneFeatMids(R).findIndex(near); if (j >= 0) return k === 0 && R.n === 1 && !R.cut ? "прямая напротив разреза" : "середина бита " + (j + 1);
+  j = coneFeatMids(R).findIndex(near); if (j >= 0) return k === 0 && R.n === 1 && !R.cut ? (R.xc !== undefined ? "прямая напротив щели" : "прямая напротив разреза") : "середина бита " + (j + 1);
   return null;
 }
 function coneSnapText(k, t, what){

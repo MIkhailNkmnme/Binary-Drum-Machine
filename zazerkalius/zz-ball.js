@@ -194,7 +194,7 @@
       if (i === 0) {
         if (!cut) {
           // One bit: the slit and the line through the centre opposite it (the magnet's two edges).
-          if (R.n === 1) blocks.push({ lo: -Math.PI / 2, hi: Math.PI / 2, bit: 0 });
+          if (R.n === 1) { const x = R.xc ?? 0; blocks.push({ lo: -Math.PI / 2 + x * R.step, hi: -Math.PI / 2 + x * R.step + Math.PI, bit: 0 }); }   // v0.1041: щель строки 1 и прямая напротив
           else for (let j = 0; j < R.n; j++) blocks.push({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j });
         }
         else if (coneQuadOn()) for (let q = 1; q < conePartCount(); q += 2) blocks.push({ lo: -Math.PI / 2 + q * R.step, hi: -Math.PI / 2 + (q + 1) * R.step, bit: 0 });
