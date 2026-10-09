@@ -137,18 +137,62 @@ function say(t){
    data-zz-tip (иначе браузер покажет и своё окошко) и возвращается при уходе мыши и при нажатии — код, читающий .title, его видит. */
 function tipOff(keepMsg){
   clearTimeout(tipTimer);
-  if (tipEl) { if (!tipEl.hasAttribute("title") && tipEl.dataset.zzTip != null) tipEl.setAttribute("title", tipEl.dataset.zzTip); delete tipEl.dataset.zzTip; tipEl = null; }
+  if (tipEl) { if (Z.tipsOn !== false) { if (!tipEl.hasAttribute("title") && tipEl.dataset.zzTip != null) tipEl.setAttribute("title", tipEl.dataset.zzTip); delete tipEl.dataset.zzTip; } tipEl = null; }
   $("msg").classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br");
   if (tipShown && !keepMsg) { tipShown = false; $("msg").classList.remove("show"); }
 }
 /* v0.1009: верхняя ? управляет всеми всплывающими подсказками. При выключении title хранится в data-zz-tip,
    поэтому браузер тоже не показывает своё окошко; при включении исходные тексты возвращаются. */
+const tipsTitleHooks = new WeakSet(), tipsObservers = new WeakMap();
+function tipsMuteElement(el){
+  if (el.matches("svg title")) {
+    if (el.textContent) { el.dataset.zzSvgTip = el.textContent; el.textContent = ""; }
+    return;
+  }
+  if (!el.hasAttribute("title")) return;
+  // Служебный код продолжает читать и обновлять .title, а браузер не получает атрибут.
+  if (el instanceof el.ownerDocument.defaultView.HTMLElement && !tipsTitleHooks.has(el)) {
+    Object.defineProperty(el, "title", { configurable: true,
+      get(){ return this.getAttribute("title") ?? this.dataset.zzTip ?? ""; },
+      set(value){ if (Z.tipsOn === false) { this.dataset.zzTip = String(value); this.removeAttribute("title"); }
+        else { this.setAttribute("title", String(value)); delete this.dataset.zzTip; } }
+    });
+    tipsTitleHooks.add(el);
+  }
+  el.dataset.zzTip = el.getAttribute("title"); el.removeAttribute("title");
+}
+function tipsMuteTree(root){
+  if (root.nodeType !== 1) return;
+  if (root.matches("[title], svg title")) tipsMuteElement(root);
+  root.querySelectorAll("[title], svg title").forEach(tipsMuteElement);
+}
+function tipsWatch(doc, on){
+  let observer = tipsObservers.get(doc);
+  if (on) { if (observer) observer.disconnect(); return; }
+  if (!observer) {
+    observer = new MutationObserver(records => {
+      if (Z.tipsOn !== false) return;
+      for (const m of records) {
+        const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if (el && (m.type === "attributes" || el.matches("svg title"))) tipsMuteElement(el);
+        if (m.type === "childList") m.addedNodes.forEach(tipsMuteTree);
+      }
+    });
+    tipsObservers.set(doc, observer);
+  }
+  observer.observe(doc.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["title"] });
+}
 function tipsApply(){
   tipOff();
   const on = Z.tipsOn !== false;
-  document.querySelectorAll(on ? "[data-zz-tip]" : "[title]").forEach(el => {
+  const docs = [document, ...[...popups.values()].filter(p => !p.closed).map(p => p.document)];
+  docs.forEach(doc => { tipsWatch(doc, on); doc.querySelectorAll(on ? "[data-zz-tip]" : "[title]").forEach(el => {
     if (on) { if (!el.hasAttribute("title") && el.dataset.zzTip != null) el.setAttribute("title", el.dataset.zzTip); delete el.dataset.zzTip; }
-    else { const t = el.getAttribute("title"); if (t != null) { el.dataset.zzTip = t; el.removeAttribute("title"); } }
+    else tipsMuteElement(el);
+  });
+    if (on) doc.querySelectorAll("svg title[data-zz-svg-tip]").forEach(el => { el.textContent = el.dataset.zzSvgTip; delete el.dataset.zzSvgTip; });
+    else doc.querySelectorAll("svg title").forEach(tipsMuteElement);
+    const algo = doc.getElementById("lasAlgo"); if (!on && algo) algo.classList.remove("tip");
   });
   const b = $("bHelp"); if (b) {
     b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
@@ -161,10 +205,11 @@ document.addEventListener("mouseover", (e) => {
   if (el === tipEl) return;
   tipOff();
   if (!el) return;
-  if (Z.tipsOn === false) { if (el.hasAttribute("title")) { el.dataset.zzTip = el.getAttribute("title"); el.removeAttribute("title"); } return; }
+  if (Z.tipsOn === false) { tipsMuteElement(el); return; }
   const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
   tipTimer = setTimeout(() => {
+    if (Z.tipsOn === false) return;
     const m = $("msg"), r = el.getBoundingClientRect(), right = (r.left + r.right) / 2 >= innerWidth / 2, bottom = (r.top + r.bottom) / 2 >= innerHeight / 2;
     const corner = (bottom ? "t" : "b") + (right ? "l" : "r");
     clearTimeout(msgTimer); m.textContent = t; m.classList.remove("tip-tl", "tip-tr", "tip-bl", "tip-br"); m.classList.add("tip", "tip-" + corner, "show"); tipShown = true;
@@ -2088,7 +2133,7 @@ function lasDeps(){
     /* v0.841, по снимку текста алгоритма — «тут подсказка для каждой кнопки при наведении, а когда увести наведение, то этот текст как раньше; сделай
        ширину и высоту постоянной, чтобы не дёргалось, текст наверх прижимай, когда его мало»: наведение на кнопку групп конуса — в том же месте и того же
        размера её подсказка (#lasTip, текст title), увёл — снова строки алгоритма (lasAlgoPlace) */
-    const tipOf = (x) => { const el = x.title ? x : x.closest("[title]"); return el && !el.matches(".cgrp") && el.closest(".cgrp:not(#lasAlgo)") ? el.title : ""; };
+    const tipOf = (x) => { if (Z.tipsOn === false) return ""; const el = x.title ? x : x.closest("[title], [data-zz-tip]"); return el && !el.matches(".cgrp") && el.closest(".cgrp:not(#lasAlgo)") ? el.title || el.dataset.zzTip : ""; };
     const tip = (txt) => { const a = document.getElementById("lasAlgo"), t = document.getElementById("lasTip"); if (!a || !t) return;
       if (txt) { if (t.textContent !== txt) t.textContent = txt; } a.classList.toggle("tip", !!txt); lasAlgoPlace(); };
     document.addEventListener("pointerover", (e) => { const x = tool(e.target); tip(x ? tipOf(x) : ""); }, { passive: true });
@@ -11239,7 +11284,7 @@ function popOut(el){
   el.classList.remove("docked", "dragging");
   d.body.appendChild(d.adoptNode(el));
   el.classList.add("popped");
-  popups.set(id, w); popHome.set(id, { docked });
+  popups.set(id, w); popHome.set(id, { docked }); tipsApply();
   if (docked) dockSave();
   w.addEventListener("resize", () => { if (id === "w-mirror") renderPointers(); renderAll(); });
   w.addEventListener("pagehide", () => popIn(id));

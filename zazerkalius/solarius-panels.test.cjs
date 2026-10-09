@@ -169,6 +169,42 @@ test('the top question button toggles all hover tips instead of the help window'
   assert.doesNotMatch(ui, /\$\("bHelp"\)\.onclick = \(\) => \{ Z\.helpOn/);
 });
 
+test('disabled tips survive title updates and retain the latest text for restoration', () => {
+  class Element {
+    constructor(svg = false) { this.attrs = new Map(); this.dataset = {}; this.svg = svg; this.textContent = ''; this.ownerDocument = {defaultView: {HTMLElement: Element}}; }
+    matches(selector) { return selector === 'svg title' && this.svg; }
+    hasAttribute(name) { return this.attrs.has(name); }
+    getAttribute(name) { return this.attrs.get(name) ?? null; }
+    setAttribute(name, value) { this.attrs.set(name, String(value)); }
+    removeAttribute(name) { this.attrs.delete(name); }
+    get title() { return this.getAttribute('title') || ''; }
+    set title(value) { this.setAttribute('title', value); }
+  }
+  const Z = {tipsOn: false}, context = vm.createContext({Z, tipsTitleHooks: new WeakSet()});
+  vm.runInContext(declaration(ui, 'function tipsMuteElement('), context);
+  const mute = context.tipsMuteElement, button = new Element();
+  button.title = 'initial'; mute(button);
+  assert.equal(button.getAttribute('title'), null);
+  assert.equal(button.title, 'initial');
+  button.title = 'updated by render';
+  assert.equal(button.getAttribute('title'), null);
+  assert.equal(button.title, 'updated by render');
+  button.setAttribute('title', 'updated by attribute'); mute(button);
+  assert.equal(button.getAttribute('title'), null);
+  assert.equal(button.title, 'updated by attribute');
+  Z.tipsOn = true;
+  button.setAttribute('title', button.dataset.zzTip); delete button.dataset.zzTip;
+  assert.equal(button.getAttribute('title'), 'updated by attribute');
+  button.title = 'enabled update'; assert.equal(button.getAttribute('title'), 'enabled update');
+  Z.tipsOn = false; mute(button);
+  assert.equal(button.getAttribute('title'), null); assert.equal(button.title, 'enabled update');
+  const svgTitle = new Element(true); svgTitle.textContent = 'SVG initial'; mute(svgTitle);
+  assert.equal(svgTitle.textContent, ''); assert.equal(svgTitle.dataset.zzSvgTip, 'SVG initial');
+  mute(svgTitle); assert.equal(svgTitle.dataset.zzSvgTip, 'SVG initial');
+  svgTitle.textContent = 'SVG redrawn'; mute(svgTitle);
+  assert.equal(svgTitle.textContent, ''); assert.equal(svgTitle.dataset.zzSvgTip, 'SVG redrawn');
+});
+
 test('both jagged edges remain above the active window after raising it', () => {
   const nodes = { paneZigOv: { style: {} }, fieldZigOv: { style: {} } };
   const state = { z: 607 };
