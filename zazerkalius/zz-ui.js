@@ -7600,6 +7600,10 @@ function setupCone(){
     if (!window.zzBallLaunch) return;
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:!!Z.coneBallLoss,mark:false,chain:false});
+    { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
+      if (A) setTimeout(() => say(A.fixed ? `● Авто: кольца ${A.ring + 2} и ${A.ring + 1} крутятся одинаково — от скорости не зависит; в К${A.ring + 1} зайдут ${A.count} из ${A.total}.`
+        : A.count ? `● Авто: скорость ×${(Math.round(A.mult * 100) / 100).toString().replace(".", ",")} от базовой — в К${A.ring + 1} зайдут ${A.count} из ${A.total} (больше при одной скорости не бывает).`
+        : `● Авто: ни при какой скорости группа не попадает в щели К${A.ring + 1} — едут с базовой.`), 1600); }
     const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
     say(ok ? "● В центр: вся внешняя группа. Первый дошедший закрывает К1; попадание в закрытый центр закрывает следующее кольцо. До закрытия удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
   };

@@ -85,6 +85,36 @@
     out.push({ id: "center", k: 0, raw: null, r: 0, kind: "center", label: "Центр" });
     return out;
   }
+  /* v0.1059, «режим В центр: авто скорость должна найти для текущего внешнего такую скорость, при которой во внутреннее зайдёт наибольшее количество
+     шариков; или это не зависит от скорости? тогда хотя бы одно». Вся группа едет одной скоростью и приходит к стыку одновременно — через ширину / скорость;
+     проходят те, у кого в этот миг щель внутреннего кольца (с допуском её ширины) или открытый вырез (lossPass). Картина на стыке зависит только от
+     относительного поворота двух колец, поэтому перебирается один его период: моменты точных совпадений + частая сетка, не быстрее 4× базовой.
+     Наибольшее число; при равенстве — ближе к базовой. Кольца крутятся одинаково — от скорости не зависит, остаётся базовая. */
+  let inwardAuto = null;
+  window.zzBallInwardAuto = () => inwardAuto;
+  function inwardAutoSpeed(S, base) {
+    inwardAuto = null;
+    const k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
+    if (inner < 0 || !starts.length || !(base > 0)) return base;
+    const w = rate(S), width = ring.ro - ring.ri, t0 = width / base, tmin = t0 / 4, dw = (w[k] || 0) - (w[inner] || 0);
+    const countAt = (t) => { const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
+      return starts.filter(p => lossPass(St, inner, angle(St, k, p.raw)) !== null).length; };
+    if (Math.abs(dw) < 1e-12) { inwardAuto = { count: countAt(t0), total: starts.length, ring: inner, fixed: true, mult: 1 }; return base; }
+    const Prel = TAU / Math.abs(dw), t1 = Math.max(tmin + Prel, t0 + Prel / 2), cand = [];
+    for (let j = 0; j <= 1440; j++) cand.push(tmin + (t1 - tmin) * j / 1440);
+    const innerEdges = S.rings[inner].blocks.flatMap(b => [b.lo, b.hi]);
+    for (const p of starts) for (const f of innerEdges) {   // точные совпадения: angle(k, raw) + w_k t = angle(inner, f) + w_inner t (mod 2π)
+      const d = angle(S, inner, f) - angle(S, k, p.raw);
+      for (let m = Math.ceil((dw * (dw > 0 ? tmin : t1) - d) / TAU) - 1; m <= Math.floor((dw * (dw > 0 ? t1 : tmin) - d) / TAU) + 1; m++) {
+        const t = (d + m * TAU) / dw; if (t >= tmin - 1e-12 && t <= t1 + 1e-12) cand.push(t);
+      }
+    }
+    let best = null;
+    for (const t of cand) { const c = countAt(t); if (!best || c > best.c || (c === best.c && Math.abs(t - t0) < Math.abs(best.t - t0))) best = { t, c }; }
+    if (!best || best.c === 0) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
+    inwardAuto = { count: best.c, total: starts.length, ring: inner, fixed: false, mult: t0 / best.t };
+    return width / best.t;
+  }
   function outerStarts(S) {
     const k = S.rings.length - 1, ring = S.rings[k], points = [];
     if (k < centerCount()) return points;
@@ -369,7 +399,8 @@
     balls = [];
     if (Z.coneBallRoute === "in") {
       if (clear) cycles = passes = 0;
-      const T = period(S), speed = T ? S.rings[S.rings.length - 1].ro / T : 0;
+      const T = period(S), base = T ? S.rings[S.rings.length - 1].ro / T : 0;
+      const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;   // v0.1059: «1 — авто» — скорость, при которой во внутреннее кольцо зайдёт больше всего шариков
       batchBusy = true;
       try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",period:T,speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
       finally { batchBusy = false; F = balls[0] || null; }
