@@ -191,7 +191,7 @@
     if (!coneGeom || !(cut || plainRings()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
     const N = Math.min(Z.rows.length, CONE_MAX);
     if (N + (coneGeom.fill ? 1 : 0) < 2) return null;
-    const band = Z.coneClean ? 1 : 0.72, rings = [];
+    const band = 1, rings = [];   // v0.1050: зазор между нарисованными кольцами (без «◯ чистых») — пустое место, шарик пересекает его по той же прямой; прежде ждал у зазора без конца
     for (let i = 0; i < N + (coneGeom.fill ? 1 : 0); i++) {
       const R = coneRingFeat(i === N ? "f" : i); if (!R) return null;
       const blocks = [];
@@ -215,6 +215,15 @@
         for (let j = 0; j < R.n; j++) if (bits[j] === "0" || bits[j] === "1" || i === N && bits[j] === ".") {
           const p = R.cut ? cutPos(j, R.n) : j;
           blocks.push({ lo: -Math.PI / 2 + p * R.step, hi: -Math.PI / 2 + (p + 1) * R.step, bit: j });
+        }
+        // v0.1050, «вылет шарика из щели кольца 1 и дальше по щелям» (Грани, «▮ щель»): в вырезах соседние биты без выреза между ними — одна стенка,
+        // её грани — только края вырезов (щели); стык через начало круга тоже сливается
+        if (R.cut && Z.coneBallSlitOnly && blocks.length > 1) {
+          blocks.sort((a, b) => a.lo - b.lo);
+          const M = [{ ...blocks[0] }];
+          for (const b of blocks.slice(1)) { const t = M[M.length - 1]; if (Math.abs(b.lo - t.hi) < 1e-9) t.hi = b.hi; else M.push({ ...b }); }
+          if (M.length > 1 && Math.abs(norm(M[M.length - 1].hi - M[0].lo)) < 1e-9) { const last = M.pop(); M[0] = { ...M[0], lo: last.lo - 2 * Math.PI }; }
+          blocks.length = 0; blocks.push(...M);
         }
       }
       rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, oneWay: !i && !cut && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
@@ -280,7 +289,7 @@
     if (clear) cycles = passes = 0;
     const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, b = S.rings[0].blocks[0], aim = dir > 0 ? 0 : Math.PI;
     const p = options.point || startPoint(S), k = p.k;
-    const raw = p.raw ?? [b.lo, b.hi].reduce((a, c) => Math.abs(norm(angle(S, 0, c) - aim)) < Math.abs(norm(angle(S, 0, a) - aim)) ? c : a);
+    const raw = p.raw ?? ((options.slitStart ?? Z.coneBallSlitStart) ? b.lo : null) ?? [b.lo, b.hi].reduce((a, c) => Math.abs(norm(angle(S, 0, c) - aim)) < Math.abs(norm(angle(S, 0, a) - aim)) ? c : a);
     const R = S.rings[S.rings.length - 1].ro, requested = options.route || Z.coneBallRoute;
     const route = routes[requested] ? requested : "cross", mult = fraction(Z.coneBallMult || "1"), T = options.period ?? period(S);
     const move = route === "out" ? 1 : -1, length = route === "out" ? R - p.r : R + p.r;
@@ -637,6 +646,7 @@
     if (config.route !== undefined && routes[config.route]) Z.coneBallRoute = config.route;
     // v0.1028: ручной скорости нет — базовая всегда 1× (диаметр за T₀), остальное делает подстройка; сквозной передаёт свою.
     Z.coneBallMult = config.mult !== undefined ? String(config.mult) : "1";
+    Z.coneBallSlitOnly = !!config.slit; Z.coneBallSlitStart = !!config.slitStart;   // v0.1050: запуск из «Граней»
     pauseRotation(); if (fresh()) rememberStart(); else restoreStart(); F = null; balls = [];
     enabled = true; Z.coneBallOn = true; ui();
     if (typeof coneReleaseRings === "function") coneReleaseRings();
