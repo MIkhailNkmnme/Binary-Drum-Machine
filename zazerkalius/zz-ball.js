@@ -13,7 +13,7 @@
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр" };
   // v0.954, «текст — убери из окна»: пояснения, T₀ и состояние — в подсказках (заголовок, ▶ запуск, скорость), не строками в окне.
-  const LAB_HELP = "Все старты: одинаковая постоянная скорость — диаметр за T₀ (½× — за 2T₀). T₀ — минимальный период повторения двух колец. Для одиночного старта — выбранный путь за T₀.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. В обычном режиме шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Шарики переходят на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю шарик огибает дугу и снова идёт через центр. Скорость на прямых сохраняется. Если впереди нет совпавшей прямой, в ∞ и на внешних кольцах шарик ждёт на своей дуге (жёлтый), вращаясь с ней, и продолжает при первом совпадении. При обычном опыте на К1–К2 несовпадение по-прежнему даёт разворот. В «1 щель» и «все» грани — щели и границы битов, у строки 1 из одного бита — её щель и прямая напротив через центр. ⚙ Автоподстройка (любой режим колец): на каждом прямом отрезке шарик берёт свою постоянную скорость, ближайшую к заданной (не быстрее 4×), чтобы прийти к стыку ровно при совпадении граней; через центр — один отрезок до внешнего стыка К1. Сквозной без общей скорости запускается так же. Красный — был разворот, зелёный — выход без разворота. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
+  const LAB_HELP = "Скорость подбирается сама. Базовая — диаметр за T₀ (T₀ — минимальный период повторения двух колец). На каждом прямом отрезке до стыка шарик едет со своей постоянной скоростью, ближайшей к базовой (не быстрее 4×), и приходит к стыку ровно при совпадении граней; через центр — один отрезок до внешнего стыка К1. ↦ сквозной сначала ищет одну скорость на весь путь, нет её — едет с подстройкой.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет по прямым краям битов (в «1 щель» и «все» — по щелям и границам битов; у строки 1 из одного бита — её щель и прямая напротив через центр) и поворачивается вместе со своим кольцом. Переходит на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю огибает дугу и снова идёт через центр. Совпадения не будет (кольца крутятся одинаково) — ждёт на месте (жёлтый). Зелёный — выход без разворота, красный — был разворот. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
   const allStarts = () => Z.coneBallBatch !== false;
   // v0.1025: автоподстройка — на каждом прямом отрезке своя постоянная скорость, чтобы прийти к стыку в момент совпадения граней.
   const autoOn = () => Z.coneBallAuto === true;
@@ -234,9 +234,6 @@
     if (!$("ballLabTime")) return;
     $("bConeBall").setAttribute("aria-pressed", String(enabled));
     $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints !== false));
-    const mult = fraction(Z.coneBallMult || "1");
-    lab.querySelectorAll("[data-ball-speed]").forEach(b => b.setAttribute("aria-pressed", String(Math.abs(fraction(b.dataset.ballSpeed) - mult) < 1e-10)));
-    $("ballLabSpeed").dataset.active = String(Number.isFinite(mult));
     $("ballLabRoute").disabled = allStarts() || throughCount() > 1;
     $("ballLabRoute").value = allStarts() ? "cross" : routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross";
     $("ballLabRoute").dataset.active = "true";
@@ -248,7 +245,6 @@
     $("ballLabDir").textContent = (Z.coneAutoSp ?? 30) < 0 ? "↺ против" : "↻ по часовой";
     $("ballLabDir").dataset.active = "true";
     if ($("ballLabArc")) $("ballLabArc").setAttribute("aria-pressed", String(!!Z.coneBallArc));
-    if ($("ballLabAuto")) $("ballLabAuto").setAttribute("aria-pressed", String(autoOn()));
     const through = $("ballLabThrough");
     if (through) {
       const single = !balls.length && F && F.through;
@@ -261,15 +257,11 @@
       });
       const group = balls.length > 1 && balls.every(x => x.through);
       const mixed = group && balls.some(x => Math.abs(x.mult / balls[0].mult - 1) > 1e-9);
-      $("ballLabSpeed").readOnly = mixed;
-      if (mixed) $("ballLabSpeed").value = "разные";
-      else if ($("ballLabSpeed").value === "разные") $("ballLabSpeed").value = Z.coneBallMult || "1";
       const speeds = $("ballLabGroupSpeeds");
       speeds.hidden = !group;
       if (group) {
         speeds.textContent = balls.map(x => x.number + ": " + speedText(x.mult) + "×").join(" · ");
-        $("ballLabRun").title = $("ballLabSpeed").title = "Сквозная группа · " + speeds.textContent + (balls.some(x => x.auto) ? ". ⚙ Подстройка: на каждом прямом отрезке своя постоянная скорость." : ". Скорость на прямых постоянна; в режиме ∞ скорость на дуге подбирается отдельно.") + " Столкновений нет.";
-        if (mixed) lab.querySelectorAll("[data-ball-speed]").forEach(b => b.setAttribute("aria-pressed", "false"));
+        $("ballLabRun").title = "Сквозная группа · " + speeds.textContent + (balls.some(x => x.auto) ? ". ⚙ Подстройка: на каждом прямом отрезке своя постоянная скорость." : ". Скорость на прямых постоянна; в режиме ∞ скорость на дуге подбирается отдельно.") + " Столкновений нет.";
       }
     }
   }
@@ -584,7 +576,7 @@
     const T = F && !F.ready ? F.period : S ? period(S) : null, mult = F && !F.ready ? F.mult : fraction(Z.coneBallMult || "1");
     const elapsed = balls.length ? Math.max(...balls.map(b => b.elapsed)) : F ? F.elapsed : 0;
     const text = T && Number.isFinite(mult) ? "T₀ " + T.toFixed(3) + " с · " + (allStarts() ? "диаметр" : "путь") + " за " + (T / mult).toFixed(3) + " с" + (F && !F.ready ? " · прошло " + elapsed.toFixed(3) + " с" : "") : "Нужны два вращающихся кольца и положительная дробь";
-    if ($("ballLabTime").textContent !== text) { $("ballLabTime").textContent = text; $("ballLabRun").title = $("ballLabSpeed").title = text; }
+    if ($("ballLabTime").textContent !== text) { $("ballLabTime").textContent = text; $("ballLabRun").title = text; }
     $("ballLabRun").textContent = F && !F.ready ? "↻ новый запуск" : "▶ запуск";
     renderTurns();
     labControls();
@@ -618,10 +610,8 @@
     if (config.start !== undefined) { Z.coneBallBatch = config.start === "all"; if (config.start !== "all") Z.coneBallStart = config.start; }
     if (config.batch !== undefined) Z.coneBallBatch = !!config.batch;
     if (config.route !== undefined && routes[config.route]) Z.coneBallRoute = config.route;
-    if (config.mult !== undefined) Z.coneBallMult = String(config.mult);
-    else if ($("ballLabSpeed") && !$("ballLabSpeed").readOnly) Z.coneBallMult = $("ballLabSpeed").value.trim();
-    if (!Number.isFinite(fraction(Z.coneBallMult || "1"))) { status("Скорость: введи положительную дробь, например 1/3, 3/4 или 1,5"); return false; }
-    if ($("ballLabSpeed")) { $("ballLabSpeed").value = Z.coneBallMult || "1"; $("ballLabSpeed").removeAttribute("aria-invalid"); }
+    // v0.1028: ручной скорости нет — базовая всегда 1× (диаметр за T₀), остальное делает подстройка; сквозной передаёт свою.
+    Z.coneBallMult = config.mult !== undefined ? String(config.mult) : "1";
     pauseRotation(); if (fresh()) rememberStart(); else restoreStart(); F = null; balls = [];
     enabled = true; Z.coneBallOn = true; ui();
     if (typeof coneReleaseRings === "function") coneReleaseRings();
@@ -636,6 +626,7 @@
     if (!fresh()) { restoreStart(); F = null; balls = []; }
     if (Z.coneSun && $("bConeSun")) $("bConeSun").click();
     if (typeof coneReleaseRings === "function") coneReleaseRings();
+    Z.coneBallMult = "1";
     const S = snapshot(), group = S ? movingGroup(S, rate(S), period(S), count) : { error: hint() };
     const result = group.error ? group : group.runs[0];
     if (result.error) { status(result.error); say(result.error); renderCone(); return false; }
@@ -672,33 +663,26 @@
       <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row ball-lab-rings"><div class="ball-lab-ring"><span>Кольцо 1</span><button type="button" class="ib" data-ball-ring="0" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="0" data-step=".5">+½</button></div><div class="ball-lab-ring"><span>Кольцо 2</span><button type="button" class="ib" data-ball-ring="1" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="1" data-step=".5">+½</button></div></div>
-      <div class="ball-lab-row"><label>Скорость × <input id="ballLabSpeed" type="text" inputmode="text" value="1" aria-label="Множитель скорости, десятичное число или дробь"></label><span class="ball-lab-fractions"><button type="button" class="ib" data-ball-speed="1/4">¼</button><button type="button" class="ib" data-ball-speed="1/3">⅓</button><button type="button" class="ib" data-ball-speed="1/2">½</button><button type="button" class="ib" data-ball-speed="2/3">⅔</button><button type="button" class="ib" data-ball-speed="1">1</button><button type="button" class="ib" data-ball-speed="3/2">³⁄₂</button><button type="button" class="ib" data-ball-speed="2">2</button><button type="button" class="ib" data-ball-speed="4">4</button><button type="button" class="ib" data-ball-speed="8">8</button><button type="button" class="ib" data-ball-speed="16">16</button><button type="button" class="ib" data-ball-speed="32">32</button></span></div>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
-      <div class="ball-lab-row"><button id="ballLabAuto" type="button" aria-pressed="false" title="⚙ Автоподстройка скоростей — для всех режимов колец (1 щель, T−1, между, симм., 2n, все). На каждом прямом отрезке шарик едет со своей постоянной скоростью, ближайшей к заданной (не быстрее 4×), и приходит к стыку ровно при совпадении граней — без разворотов. Если общей постоянной скорости для ↦ сквозного нет, он запускается с подстройкой. Ещё раз — выключить: одна скорость на всём пути, при несовпадении — разворот.">⚙ подстройка</button><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
-      <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его постоянная скорость по прямым ×. На дугах скорость подбирается отдельно. Дробные кнопки выше возвращают обычный запуск одного шарика."></small>
+      <div class="ball-lab-row"><button id="ballLabArc" type="button" aria-pressed="false" title="∞ По дугам: четыре шарика переходят на К3 и следующие видимые кольца. На самом внешнем краю огибают дугу и идут обратно. При несовпадении прямых ждут на своей дуге и продолжают при их появлении. Ждущий шарик — жёлтый; скорость на прямых постоянна. Ещё раз — выключить и вернуть к старту.">∞ по дугам</button></div>
+      <small id="ballLabGroupSpeeds" hidden title="Номер шарика: его базовая скорость ×; на каждом отрезке она подстраивается под совпадение граней."></small>
       <div id="ballLabTime" hidden></div><div class="ball-lab-row"><button id="ballLabRun" type="button">▶ запуск</button><button id="ballLabPause" type="button">⏸ пауза</button><button id="ballLabReset" type="button">↩ к старту</button><button id="ballLabDir" type="button">↻ / ↺</button></div>
       <div id="ballLabTurns" title="Фактический поворот каждого кольца с момента запуска шарика, в оборотах по 360°. Дроби сокращены; ≈ — округление до 1/1000 оборота. ↻ по часовой, ↺ − против. На паузе счёт стоит; ✓ — чистый выход, × — выход с разворотами; результат зафиксирован. Новый запуск и ↩ обнуляют счёт. В режиме ∞ считается весь путь, включая дуги."></div>
       <div class="ball-lab-status-placeholder"></div></div>`);
     const statusLine = $("coneBallStatus");
     if (statusLine) { statusLine.className = "ball-lab-status"; lab.querySelector(".ball-lab-status-placeholder").replaceWith(statusLine); }
-    $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross"; $("ballLabSpeed").value = Z.coneBallMult || "1";
+    $("ballLabRoute").value = routes[Z.coneBallRoute] ? Z.coneBallRoute : "cross";
     $("ballLabRun").onclick = () => launch();
     $("ballLabThrough").onclick = () => launchThrough(1);
     lab.querySelectorAll("[data-ball-through]").forEach(b => b.onclick = () => launchThrough(+b.dataset.ballThrough));
-    $("ballLabAuto").onclick = () => { Z.coneBallAuto = !autoOn(); save(); reset(true); labControls(); };
     $("ballLabArc").onclick = () => { Z.coneBallArc = !Z.coneBallArc; if (Z.coneBallArc) launchThrough(4); else reset(true); save(); labControls(); };
     $("ballLabPause").onclick = () => { if (paused && (!enabled || !F || F.ready)) launch(); else $("bConeAuto").click(); };
     $("ballLabReset").onclick = () => reset(true);
     $("ballLabDir").onclick = () => { pauseRotation(); $("bConeDir").click(); reset(); };
     $("ballLabStart").onchange = () => choose($("ballLabStart").value);
     $("ballLabRoute").onchange = () => { pauseRotation(); Z.coneBallThroughCount = 1; Z.coneBallRoute = $("ballLabRoute").value; save(); reset(); };
-    $("ballLabSpeed").onchange = () => {
-      if (!Number.isFinite(fraction($("ballLabSpeed").value))) { $("ballLabSpeed").setAttribute("aria-invalid", "true"); status("Введи положительную дробь, например 1/3 или 3/4"); return; }
-      $("ballLabSpeed").removeAttribute("aria-invalid"); pauseRotation(); Z.coneBallThroughCount = 1; Z.coneBallMult = $("ballLabSpeed").value.trim(); save(); reset();
-    };
     $("ballLabPoints").onclick = () => { Z.coneBallPoints = Z.coneBallPoints === false; $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints)); save(); renderCone(); };
     $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints !== false));
-    lab.querySelectorAll("[data-ball-speed]").forEach(b => b.onclick = () => { $("ballLabSpeed").value = b.dataset.ballSpeed; $("ballLabSpeed").onchange(); });
     lab.querySelectorAll("[data-ball-ring]").forEach(b => b.onclick = () => {
       pauseRotation(); const i = +b.dataset.ballRing;
       if (i === 1 && Z.rows.length === 1) { Z.coneFillTurn = (Z.coneFillTurn || 0) + +b.dataset.step; Z.coneFillFree = true; }
@@ -719,7 +703,7 @@
   }
   function init() {
     if (!$("bConeBall")) return;
-    if (Z.coneBallAuto === undefined) Z.coneBallAuto = true;   // v0.1025: подстройка по умолчанию включена
+    Z.coneBallAuto = true; Z.coneBallMult = "1";   // v0.1028: только автоподстройка, ручной скорости нет
     enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset();
     $("bConeBall").onclick = () => {
       enabled = !enabled; Z.coneBallOn = enabled; ui(); save(); reset();
