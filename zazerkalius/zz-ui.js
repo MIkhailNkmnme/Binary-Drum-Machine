@@ -5224,7 +5224,7 @@ function conePartTargets(ii, N, R, canvasAxes = true){   // оси холста 
     const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
     for (const e of coneFeatEdges(Q)) out.push([-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца " + (k === "f" ? N + 1 : k + 1)]);
   }
-  if (canvasAxes && ii === 0 && (Z.rows[0] || "").length === 1) {
+  if (canvasAxes && Z.coneAxes && ii === 0 && (Z.rows[0] || "").length === 1) {   // v0.1030: оси скрыты (✛) — к ним не прилипает
     if (m === "both" || m === "in") for (let q = 0; q < 4; q++) out.push([-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль"]);
   }
   return out;
@@ -5291,7 +5291,7 @@ function coneR1AxisSnap(){
     const Q = coneRingFeat(Z.rows.length > 1 ? 1 : "f"); if (Q) for (const e of coneFeatEdges(Q)) T.push([-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца 2"]);
   }
   if (!parts || n0 === 1) {
-    if (m === "both" || m === "in") for (let q = 0; q < 4; q++) T.push([-Math.PI / 2 + q * Math.PI / 2, "ось"]);
+    if (Z.coneAxes && (m === "both" || m === "in")) for (let q = 0; q < 4; q++) T.push([-Math.PI / 2 + q * Math.PI / 2, "ось"]);   // v0.1030: только при видимых ✛ осях
     if (!parts) for (const [t] of coneSymTargets(0, Math.min(Z.rows.length, CONE_MAX))) T.push([t, "ось"]);
   }
   const edges = coneFeatEdges(R), axes = edges.concat(!parts || n0 === 1 ? coneFeatMids(R) : []);
@@ -5387,7 +5387,7 @@ function coneMagSnap(i, rot){   // → { rot, line, what } — поворот к
     for (const c of sym) { let d = ((c - x) % R.P + R.P) % R.P; if (d > R.P / 2) d -= R.P; fam.push([x + d, "ось симметрии"]); }
     for (const [xf, own] of fam) { const dx = xf - x, da = Math.abs(dx) * R.step; if (da < tol && (!best || da < best.da)) best = { da, dx, t, what: own + " → " + what }; }
   };
-  if (K.ax && i === 0) for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");   // v0.881: «1 кольцо магнитить к осям, остальные к осям не магнитить»
+  if (K.ax && Z.coneAxes && i === 0) for (let q = 0; q < 4; q++) tryT(-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль");   // v0.881: «1 кольцо магнитить к осям, остальные к осям не магнитить»
   if (K.bnd || K.mid || K.sym) for (let k = 0; k < Math.min(G.N, Z.rows.length); k++) {
     if (k === i) continue; const Q = coneMagRing(k); if (!Q || Q.P > 720) continue;
     const A = (x) => -Math.PI / 2 + (x - Q.x0) * Q.step;
@@ -7017,7 +7017,7 @@ function setupCone(){
     autoSet(false);
     const m = Z.coneSpinMode || "all";
     if (m === "all") { say("◀ ▶ шагают кручением «Каждое», «Встреч Стр» или «Встреч Бит» — «всё целиком» не сдвигает кольца друг относительно друга. Выбери режим рядом с ▶."); return; }
-    if (!Z.coneClock) { Z.coneClock = true; $("coneClock").checked = true; }
+    if (!Z.coneClock) { coneEdgeStep(dir * (Z.coneAutoSp < 0 ? -1 : 1), dir); return; }   // v0.1030: луч-часы сами не включаются — шаг до совпадения граней
     const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return;
     let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
     const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1;   // градусов за единицу фазы у самого быстрого кольца
@@ -7044,6 +7044,26 @@ function setupCone(){
     }
     const L = Z.coneLog && Z.coneLog.list, last = L && L[L.length - 1];
     say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + (last ? ": " + last.t : "."));
+  };
+  /* v0.1030, «да убери» (|◀ ▶| сами включали ⌖ луч-часы): без луч-часов шаг идёт до ближайшего мига, когда грань кольца ложится на грань соседнего
+     (кольца строк и за чертой, как у «⏸ грани»: coneEdgeRings). Скорости колец — по фазе кручения, миг — точно, не перебором */
+  const coneEdgeStep = (sg, dir) => {
+    const ph0 = Z.coneSpinPh || 0, rings = coneEdgeRings();
+    if (rings.length < 2) { say("◀ ▶ без луч-часов шагают до совпадения граней соседних колец — нужно хотя бы два кольца в плоском виде."); return; }
+    Z.coneSpinPh = ph0 + 1e-4; const after = coneEdgeRings(); Z.coneSpinPh = ph0;
+    const rate = rings.map((r, i) => -(after[i].x0 - r.x0) * r.step / 1e-4);
+    let best = null;
+    for (let k = 0; k + 1 < rings.length; k++) {
+      const v = (rate[k + 1] - rate[k]) * sg; if (Math.abs(v) < 1e-12) continue;
+      for (const a of rings[k + 1].edges) for (const b of rings[k].edges) {
+        let u = ((((v > 0 ? b - a : a - b) % TAU2) + TAU2) % TAU2) / Math.abs(v);
+        if (u < 1e-9) u = TAU2 / Math.abs(v);
+        if (!best || u < best.u - 1e-12) best = { u, k };
+      }
+    }
+    if (!best) { say("◀ ▶: кольца крутятся одинаково — новые совпадения граней не появятся. Выбери другой режим кручения."); return; }
+    Z.coneSpinPh = ph0 + sg * best.u; save(); renderCone();
+    say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + `: грань кольца ${best.k + 2} легла на грань кольца ${best.k + 1}.`);
   };
   /* v0.511, «последняя нажатая шаг задаёт вращение направление»: ◀ — направление против часовой и шаг в эту сторону, ▶| — по часовой и шаг */
   const stepDir = (neg) => {
