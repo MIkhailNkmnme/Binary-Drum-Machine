@@ -7438,9 +7438,14 @@ function setupCone(){
   if ($("bConeNotchBall")) {   // v0.1050: «● вылет» — шарик из центра через щель кольца 1 и дальше по щелям («▮ щель») или по граням
     $("bConeNotchBall").onclick = () => {
       if (!window.zzBallLaunch) return;
-      const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain });
+      const ok = window.zzBallLaunch({ start: "center", batch: false, route: "out", slit: !!Z.coneNotchSlit, slitStart: true, chain: !!Z.coneBallChain, loss: !!Z.coneBallLoss });
       say(ok ? "● Вылет: шарик из центра через щель кольца 1 и дальше " + (Z.coneNotchSlit ? "только по щелям (края вырезов)." : "по граням (любые разрезы).") + (Z.coneBallChain ? " ⛓ Цепочка: вышел из кольца 1 — стартует следующий." : "") + " Скорость подстраивается сама." : "● Вылет не запустился — подсказка в группе «Шарики».");
     };
+  }
+  if ($("bConeBallLoss")) {   // v0.1052: «✕ дуга» — к «● вылету»: упёрся в дугу бита, а не в щель или вырез, — исчез
+    const ui = () => { const b = $("bConeBallLoss"); b.classList.toggle("on", !!Z.coneBallLoss); b.setAttribute("aria-pressed", String(!!Z.coneBallLoss)); };
+    ui(); $("bConeBallLoss").onclick = () => { Z.coneBallLoss = !Z.coneBallLoss; ui(); save();
+      say(Z.coneBallLoss ? "✕ Дуга: скорость первого вылета подбирается сама и дальше постоянная; на стыке шарик проходит в щель (с допуском её ширины) или в открытый вырез, а упёршись в дугу бита — исчезает." : "✕ Дуга выключена: шарик подстраивает скорость на каждом отрезке и в дугу не упирается."); };
   }
   if ($("bConeBallChain")) {   // v0.1051: «⛓ цепочка» — к «● вылету»: за каждым вышедшим из кольца 1 шариком из центра стартует следующий
     const ui = () => { const b = $("bConeBallChain"); b.classList.toggle("on", !!Z.coneBallChain); b.setAttribute("aria-pressed", String(!!Z.coneBallChain)); };
