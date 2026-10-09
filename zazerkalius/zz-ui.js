@@ -3532,7 +3532,7 @@ function renderCone(){
       beam(F.a, F.j !== undefined && F.j < coneRingsTotal(N) ? r0 + F.j * dr + dr * band / 2 : rEnd, Math.max(0, 1 - (tNow - F.t) / 900), true);
     g.restore();
   }
-  if (coneFlat()) { coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); }   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
+  if (coneFlat()) { coneEdgeDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneNotchDraw(g, { cx, cy, r0, dr, band, dpr, N }); coneSeamDraw(g, { cx, cy, r0, dr, band, dpr }); }   // v0.1036: и вспышки совпадений при ▶   // v0.1034: и засечки «⟂ грани»   // v0.914: цепочка от кольца за чертой до центра
   if (coneFlat() && (coneDrag || coneFillDrag || coneR1Drag)) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA });   // v0.875: лучи от границ и середин бит кольца в руке
   else if (coneFlat() && coneMagStep) for (const v of coneMagStep.visuals) coneHandRays(g, { cx, cy, r0, dr, band, dpr, N, col: cA }, v.ring);
   const magDrag = coneMagLine !== null && (coneDrag || coneFillDrag || coneR1Drag);
@@ -5190,6 +5190,44 @@ function coneEdgeDraw(g, o){
    по грани кольца 1 и граням всех колец строк (те же грани, что у магнита и «⏸ грани»: coneEdgeRings) — засечка на кольце за чертой в этом месте, в его
    частях (Z.coneNotches { sig: строк:длина за чертой, x: [места] }); крутится вместе с ним. Совпадение при кручении ищется точно, и между кадрами
    (zzEdgeMeet); стоит или крутят рукой — по нынешнему положению. Сменилась строка за чертой — засечки начинаются заново; правый щелчок по кнопке — стереть */
+/* v0.1036, «когда включено 🧲 оба · гран., то при автокручении надо подсвечивать грани так же, как при ручном кручении, при совпадении между»: при ▶ каждое
+   совпадение границы кольца с границей соседнего (те же грани, что у ручной привязки: coneEdgeRings) ищется точно, и между кадрами, и вспыхивает той же
+   розовой чертой между двумя кольцами; вспышка гаснет за 0,9 с. Пары соседей — по «🧲 сим.» (оба — все пары; внутр. / наруж. — тоже все: при ▶ крутятся
+   все кольца, «текущего» нет). Только при «🧲 гран.» и не в кручении по магнитам (там свои лучи) */
+let coneSeamFlash = [], coneSeamT = 0;
+function coneSeamOn(){ return magPartsOnly() && !Z.coneSpinMag && coneFlat(); }
+function coneSeamSweep(ph0, dph){
+  if (!coneSeamOn() || !dph) return;
+  const bak = Z.coneSpinPh, now = performance.now();
+  try {
+    Z.coneSpinPh = ph0; const R = coneEdgeRings(); if (R.length < 2) return;
+    Z.coneSpinPh = ph0 + 1e-4; const A = coneEdgeRings(); if (A.length !== R.length) return;
+    const rate = R.map((r, i) => -(A[i].x0 - r.x0) * r.step / 1e-4), lo = Math.min(0, dph), hi = Math.max(0, dph);
+    let n = 0;
+    for (let k = 0; k + 1 < R.length && n < 400; k++) {
+      const v = rate[k + 1] - rate[k]; if (Math.abs(v) < 1e-12) continue;
+      for (const a of R[k + 1].edges) for (const b of R[k].edges) {
+        const d = a - b, m0 = Math.ceil((Math.min(d + v * lo, d + v * hi) - 1e-12) / TAU2), m1 = Math.floor((Math.max(d + v * lo, d + v * hi) + 1e-12) / TAU2);
+        for (let m = m0; m <= m1 && n < 400; m++) {
+          const u = (m * TAU2 - d) / v; if (Math.abs(u) < 1e-9 || u < lo - 1e-12 || u > hi + 1e-12) continue;
+          coneSeamFlash.push({ a: b + rate[k] * u, k, t: now }); n++;
+        }
+      }
+    }
+  } finally { Z.coneSpinPh = bak; }
+}
+function coneSeamDraw(g, o){
+  if (!coneSeamFlash.length) return;
+  const now = performance.now(); coneSeamFlash = coneSeamFlash.filter(f => now - f.t < 900); if (!coneSeamFlash.length) return;
+  const { cx, cy, r0, dr, band, dpr } = o;
+  g.save(); g.strokeStyle = CONE_AXIS_COL; g.lineWidth = Math.max(2, 2 * dpr); g.lineCap = "butt"; g.shadowColor = CONE_AXIS_COL; g.shadowBlur = 6 * dpr;
+  for (const f of coneSeamFlash) {
+    const from = r0 + f.k * dr, to = r0 + (f.k + 1) * dr + Math.max(1, dr * band), c = Math.cos(f.a), s = Math.sin(f.a);
+    g.globalAlpha = 0.95 * (1 - (now - f.t) / 900); g.beginPath(); g.moveTo(cx + from * c, cy + from * s); g.lineTo(cx + to * c, cy + to * s); g.stroke();
+  }
+  g.restore();
+  if (!coneSpinning && !coneSeamT) coneSeamT = setTimeout(() => { coneSeamT = 0; renderCone(); }, 120);   // стоим — догасить
+}
 function coneNotchOn(){ return !!Z.coneNotch && !Z.coneClock && coneFlat(); }
 function coneNotchList(){
   const N = Math.min(Z.rows.length, CONE_MAX), sig = N + ":" + fillLen();
@@ -6991,7 +7029,7 @@ function setupCone(){
     // going at a blocked ball; laser painting and automatic new rows wait.
     if (window.zzBallActive && window.zzBallActive()) {
       if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
-      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); }   // v0.1034: засечки и при шариках
+      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); }   // v0.1034: засечки и при шариках; v0.1036: вспышки граней
       tapeRec(); return true;
     }
     if (m === "all") {
@@ -7026,6 +7064,7 @@ function setupCone(){
       }
       Z.coneSpinPh = st && st.part ? st.ph : ph0 + dph;
       if (coneNotchSweep(ph0, Z.coneSpinPh - ph0)) save();   // v0.1034: засечки «⟂ грани» — все совпадения за кадр
+      coneSeamSweep(ph0, Z.coneSpinPh - ph0);   // v0.1036: вспышки совпавших граней соседних колец (🧲 гран.)
       // v0.201: ✺ — кольца только до просчитанного; v0.119: без обрезки по 100 оборотов — иначе сбивался счёт кругов
       coneCycleCheck(ph0, Z.coneSpinPh, m);
       }
