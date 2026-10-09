@@ -74,6 +74,7 @@ function uiMath(){
   const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
   for (const name of ['coneHalfOn', 'coneRow1Slit', 'conePartCount', 'coneRow1PartPhase', 'coneQuadOpen', 'coneRingFeat', 'coneMagRing', 'coneFeatEdges', 'coneFeatMids', 'cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
   for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt']) needed.add(name);
+  for (const name of ['coneAngDiff', 'magSymOf', 'magPartsOnly', 'coneRingSymAxes', 'coneSymTargets', 'conePartTargets', 'coneHandSnap', 'coneR1AxisSnap', 'coneNextHandSnap']) needed.add(name);
   for (const match of source.matchAll(/^function \w+\(/gm)) {
     if (!needed.has(match[0].slice(9, -1))) continue;
     let end = source.indexOf('\n', match.index), script;
@@ -86,6 +87,44 @@ function uiMath(){
   vm.runInContext(`var TAU2=2*Math.PI,CONE_MAX=256,CONE_VOID_TO=256,coneRot=[0],coneSunWas,coneSweepAcc=null,Z={rows:['1'],coneClock:true,coneSun:true,coneSlits:'cut2',coneSunCut:'zero',coneSpinMode:'bit',coneSpinPh:0,coneAimRot:0,coneFillTurn:0,cutAlign:'c',cutLen:'ctr',coneVoid:false,moonOff:true,sunPassE:false};function hidAutoBack(){return false;}function coneLogDirty(){}function coneExArchive(){}`, ctx);
   return ctx;
 }
+function magnetMath(){
+  const ctx = uiMath();
+  vm.runInContext('var coneRingSymC=new Map(),coneGeom={r0:100,dr:30,dpr:1,fill:false};', ctx);
+  Object.assign(ctx.Z, { rows: ['1', '11'], coneSlits: 'all', coneClock: true, coneSun: false,
+    coneAimRot: 2, coneSpinMode: 'obit', magSym: 'both', magSnapParts: true });
+  ctx.coneRot = [0, -1 / 6]; // Neighbor boundaries at 30° and 210°, away from canvas axes.
+  return ctx;
+}
+test('first-ring magnetic steps use neighbor boundaries, never canvas axes', () => {
+  for (const clock of [true, false]) for (const dir of [1, -1]) {
+    const ctx = magnetMath(); ctx.Z.coneClock = clock;
+    const hit = ctx.coneNextHandSnap(0, dir);
+    assert.ok(hit, `clock=${clock}, dir=${dir}`);
+    assert.equal(hit.what, 'граница части кольца 2');
+    assert.ok(Math.abs(Math.sin(2 * hit.t)) > 0.1, 'neighbor is away from horizontal and vertical');
+    ctx.Z.magSym = 'in';
+    assert.equal(ctx.coneNextHandSnap(0, dir), null, 'no inner neighbor means no automatic target');
+  }
+});
+test('full magnetic steps keep neighbor symmetry axes but omit canvas axes', () => {
+  for (const clock of [true, false]) for (const dir of [1, -1]) {
+    const ctx = magnetMath(); ctx.Z.coneClock = clock; ctx.Z.magSnapParts = false;
+    const hit = ctx.coneNextHandSnap(0, dir);
+    assert.ok(hit); assert.equal(hit.what, 'ось симметрии кольца 2');
+    ctx.Z.magSym = 'in';
+    assert.equal(ctx.coneNextHandSnap(0, dir), null);
+  }
+});
+test('first-ring canvas-axis snap remains available for manual dragging', () => {
+  const ctx = magnetMath(); ctx.Z.magSym = 'in';
+  const snap = ctx.coneR1AxisSnap();
+  assert.ok(snap); assert.ok(Math.abs(Math.sin(2 * snap.t)) < 1e-9);
+  assert.ok(Math.abs(snap.deg + 2) < 1e-9);
+  ctx.Z.coneClock = false;
+  const hand = ctx.coneHandSnap(0);
+  assert.ok(hand); assert.match(hand.what, /вертикаль|горизонталь/);
+  assert.equal(ctx.coneNextHandSnap(0, 1), null);
+});
 test('all ring geometries persist when both light sources are off', () => {
   const ctx = uiMath(); ctx.Z.rows = ['1', '11', '111'];
   for (const mode of ['all', 'one', 'cut', 'cut2', 'cutA', 'cutS']) {

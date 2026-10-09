@@ -5210,7 +5210,7 @@ function coneSymTargets(ii, N){   // [[угол, что]] — оси симме�
   else if ((m === "both" || m === "out") && ii + 1 === N && coneGeom && coneGeom.fill) add("f");
   return o;
 }
-function conePartTargets(ii, N, R){   // цели режима «🧲 границы» — те же для защёлки и для видимых совпадений
+function conePartTargets(ii, N, R, canvasAxes = true){   // оси холста — только для ручной защёлки и видимых совпадений
   const m = magSymOf(), out = [], neighbors = [];
   if ((m === "both" || m === "in") && ii > 0) neighbors.push(ii - 1);
   if ((m === "both" || m === "out") && ii + 1 < N) neighbors.push(ii + 1);
@@ -5219,7 +5219,7 @@ function conePartTargets(ii, N, R){   // цели режима «🧲 грани
     const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
     for (const e of coneFeatEdges(Q)) out.push([-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца " + (k === "f" ? N + 1 : k + 1)]);
   }
-  if (ii === 0 && (Z.rows[0] || "").length === 1) {
+  if (canvasAxes && ii === 0 && (Z.rows[0] || "").length === 1) {
     if (m === "both" || m === "in") for (let q = 0; q < 4; q++) out.push([-Math.PI / 2 + q * Math.PI / 2, q % 2 ? "горизонталь" : "вертикаль"]);
   }
   return out;
@@ -5297,8 +5297,8 @@ function coneR1AxisSnap(){
   }
   return best ? { deg: best.d / k, t: best.t } : null;
 }
-/* Следующий ручной магнит: те же цели и свои границы/середины, что у защёлки,
-   но без допуска в пикселях. Нулевое совпадение пропускаем, чтобы кнопка шла дальше. */
+/* Следующий магнит для кнопок шага и автокручения: цели соседних колец без осей холста,
+   которые нужны только при вращении рукой. Нулевое совпадение пропускаем, чтобы кнопка шла дальше. */
 function coneNextHandSnap(i, dir){
   const R = coneRingFeat(i), G = coneGeom; if (!R || !G || R.P > 720) return null;
   const N = Math.min(Z.rows.length, CONE_MAX), ii = i === "f" ? N : i;
@@ -5311,11 +5311,8 @@ function coneNextHandSnap(i, dir){
       const Q = coneRingFeat(N > 1 ? 1 : "f");
       if (Q) for (const e of coneFeatEdges(Q)) targets.push([-Math.PI / 2 + (e - Q.x0) * Q.step, "граница части кольца 2"]);
     }
-    if (!parts || one) {
-      if (m === "both" || m === "in") for (let q = 0; q < 4; q++) targets.push([-Math.PI / 2 + q * Math.PI / 2, "ось холста"]);
-      if (!parts) targets.push(...coneSymTargets(0, N));
-    }
-  } else if (parts) targets.push(...conePartTargets(ii, N, R));
+    if (!parts) targets.push(...coneSymTargets(0, N));
+  } else if (parts) targets.push(...conePartTargets(ii, N, R, false));
   else {
     for (let k = 0; k < ii && k < N; k++) {
       const Q = coneRingFeat(k); if (!Q || Q.P > 720) continue;
@@ -7227,7 +7224,7 @@ function setupCone(){
     const ui = () => { const b = $("bConeNextMag"); b.classList.toggle("on", !!Z.coneSpinMag); b.setAttribute("aria-pressed", String(!!Z.coneSpinMag)); };
     ui(); $("bConeNextMag").onclick = () => {
       autoSet(false); Z.coneSpinMag = !Z.coneSpinMag; ui(); spinSpUi(); save(); renderCone();
-      say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — такими же скачками между совпадениями. Цели — «🧲 гран. / всё» и направление соседей." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
+      say(Z.coneSpinMag ? "🧲 Кручение по магнитам включено: |◀ и ▶| — по одному совпадению, ▶ пуск — такими же скачками между совпадениями. Цели — «🧲 гран. / всё» и направление соседей. Оси холста — только при вращении рукой." : "🧲 Кручение по магнитам выключено: ▶ и шаги снова работают по обычному режиму.");
     };
     $("bConeNextMag").oncontextmenu = (e) => e.preventDefault();
   }
