@@ -6795,6 +6795,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     put(tempoBox, Math.max(left, Math.min(edge - tw, centre - tw / 2)), Math.max(cr.top - hr.top + scrollTop + 2, y - gap - (tempoBox.offsetHeight || 36)));
     tempoTrackSync();
   }
+  { const cb = $("bSfzClean"); if (cb && cb.parentElement === host) put(cb, edge - cb.offsetWidth, cr.top - hr.top + scrollTop + 4); }   // v0.027: ◐ «только управление» — правый верхний угол холста
   // Режимы — у самого нижнего края справа от пульта; на узком холсте пульт стоит над ними.
   if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, bottom - ms.offsetHeight);
   const caption = document.getElementById("coneVarN");
@@ -8291,6 +8292,12 @@ function setupCone(){
     if (host && !host._c3hov) { host._c3hov = 1; const SEL = "#cone3Pad > button, #cone3Pad .c3top > button, #cone3Pad .c3bot > button, #cone3Pad > .c3grip, #bC3Reset, #bC3Spin, #bC3StepB, #bC3StepF";
       const upd = (t) => { const on = !!(t && t.closest && t.closest(SEL)); if (host.classList.contains("c3hov") !== on) host.classList.toggle("c3hov", on); };
       host.addEventListener("pointerover", (e) => upd(e.target), { passive: true }); host.addEventListener("pointerleave", () => upd(null), { passive: true }); }
+    /* v0.027, «надо скрывать как-то все кнопки, оставлять только управление: плеер, плей, стрелки, масштаб»: ◐ в правом верхнем углу холста — режим
+       «только управление» (Z.sfzClean, класс body.sfz-clean): на холсте остаются старт, ◀ ▶ ▶, сброс, темп и − +, остальное прячется; ещё раз — всё обратно */
+    if (host && !$("bSfzClean")) { const b = document.createElement("button"); b.id = "bSfzClean"; b.type = "button"; b.textContent = "◐";
+      const sync = () => { const on = !!Z.sfzClean; document.body.classList.toggle("sfz-clean", on); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+        b.title = on ? "Показать все кнопки" : "Только управление: оставить старт, ◀ ▶ ▶, сброс, темп и − +, остальные кнопки спрятать. Ещё раз — показать всё"; b.setAttribute("aria-label", b.title); };
+      b.onclick = () => { Z.sfzClean = !Z.sfzClean; sync(); save(); renderCone(); }; host.appendChild(b); sync(); }
     c3RstPlace(); }   // v0.811: на вертикаль через центр, внизу   // v0.800: ⌖✕ сброс — вершиной пульта у холста (прежняя кнопка в «Алгоритме» спрятана)
   if ($("bLaserReset")) $("bLaserReset").onclick = () => {
     /* v0.830, «строка 2 должна быть под горизонтом»: сброс оставляет над чертой только строку 1 (солнце); строка 2 — та, что заполняется, под чертой

@@ -31,14 +31,10 @@
     const wb = $("w-cone").querySelector(":scope > .wbody"), tools = wb.querySelector(":scope > .tools"); if (!tools) return;
     const bar = document.createElement("div"); bar.id = "solMobileBar";
     const button = (label, title, action) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.title = title; b.onclick = action; bar.appendChild(b); return b; };
-    const play = button("▶ крутить", "Шарик и кольца запускаются и останавливаются вместе", () => $("bConeAuto").click());
-    const dir = button("↻ вправо", "Изменить направление вращения и сторону старта шарика", () => $("bConeDir").click());
-    button("● ↩", "Вернуть шарик в выбранную стартовую точку", () => $("bConeBallReset").click());
-    button("2 кольца", "Настроить восьмёрку: полукольцо и два противоположных бита. Заменяет строки на 1 и 11.", () => {
-      if (rowsLocked()) return;
-      if (coneSpinning) $("bConeAuto").click();
-      snapshot(); caseState(); save(); location.reload();
-    });
+    /* Синхрофазотрон v0.027, «в телефоне какие-то кнопки непонятные» → «да, всё делай»: «▶ крутить» снята (то же, что ▶ на холсте), «2 кольца» снята
+       (одним касанием заменяла все строки на 1 и 11 и перезагружала страницу); направление и возврат шариков подписаны словами */
+    const dir = button("↻ направление", "Изменить направление вращения и сторону старта шарика", () => $("bConeDir").click());
+    button("● шарики на старт", "Вернуть шарики в выбранную стартовую точку", () => $("bConeBallReset").click());
     const ballStatus = document.createElement("div"); ballStatus.id = "solMobileStatus";
     ballStatus.setAttribute("role", "status"); ballStatus.setAttribute("aria-live", "polite"); bar.appendChild(ballStatus);
     const statusSource = $("coneBallStatus"), syncStatus = () => { ballStatus.textContent = statusSource.textContent; };
@@ -52,9 +48,7 @@
     };
     wb.insertBefore(bar, tools); wb.insertBefore(menu, tools);
     const sync = () => {
-      const running = coneSpinning, text = running ? "⏸ стоп" : "▶ крутить";
-      if (play.textContent !== text) play.textContent = text;
-      play.setAttribute("aria-pressed", String(running)); dir.textContent = (Z.coneAutoSp ?? 30) < 0 ? "↺ влево" : "↻ вправо";
+      const text = ((Z.coneAutoSp ?? 30) < 0 ? "↺" : "↻") + " направление"; if (dir.textContent !== text) dir.textContent = text;
     };
     for (const id of ["bConeAuto", "bConeDir"]) new MutationObserver(sync).observe($(id), { childList: true, characterData: true, subtree: true });
     wb.addEventListener("pointerdown", e => {
@@ -71,5 +65,37 @@
     small.addEventListener("change", layout); landscape.addEventListener("change", layout); layout();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (mobile()) cgrpCols(); });
   }
+  /* v0.027: подсказка по долгому нажатию пальцем. Наведения на телефоне нет, и значки (⚖ ◇ ⏸ ⟳ ≋ ⊙, ч/н ▥ ◧ ◨, T N 2T…, ◀ ▶ ⌖✕, ВСЁ ПО1 ВС ВБ) было не понять.
+     Держишь кнопку ~0,45 с — над ней всплывает её подсказка (title / data-zz-tip, первый абзац); отпустил — нажатия не будет. Кнопки с повтором при удержании
+     (− + масштаба, стрелки ползунков) не участвуют: у них удержание — действие */
+  function touchTips() {
+    const SKIP = ".c3zoom, .zerk-arrow, .sar", HOLD = 450;
+    let timer = 0, start = null, tipFor = null, suppress = 0, lastTouch = 0, tip = null;
+    const textOf = el => { const t = el.getAttribute("title") || (el.dataset && el.dataset.zzTip) || el.getAttribute("aria-label") || ""; return t.split(/\n\s*\n/)[0].trim(); };
+    const hide = () => { if (tip) tip.hidden = true; tipFor = null; };
+    const show = (el) => {
+      const t = textOf(el); if (!t) return false;
+      if (!tip) { tip = document.createElement("div"); tip.id = "solTouchTip"; tip.setAttribute("role", "tooltip"); document.body.appendChild(tip); }
+      tip.textContent = t; tip.hidden = false;
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, m = 8;
+      const x = Math.max(m, Math.min(innerWidth - w - m, r.left + r.width / 2 - w / 2)), y = r.top - h - m >= m ? r.top - h - m : Math.min(innerHeight - h - m, r.bottom + m);
+      tip.style.left = x + "px"; tip.style.top = y + "px"; tipFor = el; return true;
+    };
+    window.addEventListener("pointerdown", e => {
+      hide(); clearTimeout(timer); start = null;
+      if (e.pointerType !== "touch") return; lastTouch = performance.now();
+      const el = e.target.closest && e.target.closest("#w-cone .wbody button, #w-cone .wbody [role=button]");
+      if (!el || el.closest(SKIP) || !textOf(el)) return;
+      start = { el, x: e.clientX, y: e.clientY, id: e.pointerId };
+      timer = setTimeout(() => { if (start && show(start.el)) { suppress = performance.now() + 1500; if (navigator.vibrate) try { navigator.vibrate(10); } catch (_) {} } }, HOLD);
+    }, true);
+    window.addEventListener("pointermove", e => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) { clearTimeout(timer); start = null; hide(); } }, true);
+    const up = e => { if (start && e.pointerId === start.id) { clearTimeout(timer); start = null; if (tipFor) setTimeout(hide, 2500); } };
+    window.addEventListener("pointerup", up, true); window.addEventListener("pointercancel", up, true);
+    window.addEventListener("click", e => { if (performance.now() < suppress) { suppress = 0; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+    window.addEventListener("contextmenu", e => { if (performance.now() - lastTouch < 1500 && e.target.closest && e.target.closest("#w-cone .wbody button, #w-cone .wbody [role=button]")) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+    window.addEventListener("scroll", hide, true);
+  }
+  touchTips();
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true }); else init();
 })();
