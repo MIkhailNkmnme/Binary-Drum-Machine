@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.072. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Бирамида — v0.073. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.072</title>
+<title>Zerkalius Бирамида — v0.073</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -301,12 +301,12 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.072</div>
+<div id="ver">v0.073</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
   <h2>zerkalius</h2>
-  <p class="sub">Гранидус (прежде «Октаэдр», v0.054) — методичка. Версия страницы стоит в правом верхнем углу.</p>
+  <p class="sub">Бирамида (прежде «Гранидус», v0.054–v0.072, а до того «Октаэдр») — методичка. Версия страницы стоит в правом верхнем углу.</p>
 
   <h3>Что это</h3>
   <p>Знак Zerkalius, показанный телом: пирамида и её зеркало, сложенные основаниями. Общее
@@ -1791,10 +1791,13 @@ function save(){
     }));
   } catch (e) {}
 }
+let firstSeq = false;   // v0.073: первое открытие — начальная последовательность
 function load(){
   let o = null;
   try { o = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
-  if (!o) return;
+  /* v0.073, «да» на «ставить последовательность и при первом открытии, как на других страницах»: в памяти ничего нет — на грани ложится
+     начальная последовательность (../_js/initial-rows.js), в поле «Свои биты» — она же строками, в списке — «★ По умолчанию» */
+  if (!o) { if (typeof ZZ_INITIAL_ROWS !== "undefined" && ZZ_INITIAL_ROWS.length) { myBits = ZZ_INITIAL_ROWS.join(""); sierp = false; firstSeq = true; } return; }
   if (o.NB >= 1 && o.NB <= 6 && (o.NB | 0) !== NB) buildBody(o.NB | 0);   // v0.038: и 1, 2   // v0.034: картина соберётся следом (rollBits после load)
   if (o.ROWS >= 4 && o.ROWS <= 256) ROWS = o.ROWS | 0;   // v0.022: предел 26 -> 64; v0.023: 256 для пробы
   if (o.DIG  >= 2 && o.DIG  <= 22) DIG  = o.DIG  | 0;   // v0.023: минимум 7 -> 2
@@ -2433,7 +2436,7 @@ noteUi();
   rollBits(); if (typeof unpinAll === "function") unpinAll(); syncUI(); save();
   try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
 })();
-myArea.value = myBits; myInfoUpd();
+myArea.value = firstSeq ? ZZ_INITIAL_ROWS.join(String.fromCharCode(10)) : myBits; if (firstSeq) { bitSequence.value = "initial"; save(); } myInfoUpd();   // v0.073
 /* v0.047: ВИДЫ КАРТИНКАМИ (запрос: «октаэдр — все виды разложи так же», «кнопки вида: сверху, снизу…»). Шесть кнопок с картинкой тела с
    этой стороны — та же камера rot(), только со своими yaw / pitch и без перспективы: рёбра верха, низа и экватор, ближние ярче, дальние —
    тусклее. Щелчок — yaw / pitch плавно (≈ 0,35 с) едут к виду, вращение останавливается. Сверху — pitch = +90° (вершина T к зрителю),
