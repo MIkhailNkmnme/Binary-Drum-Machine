@@ -7541,6 +7541,7 @@ function setupCone(){
     if (on && !autoRaf && !autoArmBusy && window.zzBallArmLaunch) {   // v0.1072: выбран опыт с шариками и шариков в пути нет — ▶ запускает его
       autoArmBusy = true; let ok = false;
       try { ok = window.zzBallArmLaunch(); } finally { autoArmBusy = false; }
+      if (ok === "hold") return;   // v0.010: кольцо повёрнуто «посмотреть» — без запуска и кручения
       if (ok && autoRaf) return;   // кручение уже включил сам запуск; если нет (клик по ▶ внутри его же клика браузер не повторяет) — включаем здесь
     }
     if (on && !autoRaf) coneStartMark(false);   // v0.1064: старт с выставленного рукой — запомнить
@@ -7926,24 +7927,28 @@ function setupCone(){
   function coneSeqTurnHalf(rings, sign){
     for (const k of rings) {
       if (k < Z.rows.length) { while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[k] = (coneRot[k] || 0) + sign * 0.5; }
-      else Z.coneFillTurn = (Z.coneFillTurn || 0) + sign * 0.5;
+      else { Z.coneFillTurn = (Z.coneFillTurn || 0) + sign * 0.5; Z.coneFillFree = Z.coneFillTurn % 1 !== 0; }   // дробный поворот: «＋» переносит его в строку как есть (без округления до ячейки)
     }
     Z.coneRot = coneRot.slice(); save(); renderAll();
   }
+  /* v0.010, «пусть сначала повернёт, чтоб посмотреть»: пути нет у всех щелей — внешнее кольцо поворачивается на полбита, и на этом стоп: без запуска и
+     без кручения ("hold" — autoSet не включает кручение); сообщение — что повёрнуто и какая будет скорость. Следующий ▶ — запуск */
   function coneBallInLaunchAuto(){
-    let ok = coneBallInLaunch(), SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;
+    const ok = coneBallInLaunch(), SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;
     if (!SP || SP.covered === SP.total || !SP.suggest) return ok;
     const rings = SP.suggest.rings, names = rings.map(k => "К" + (k + 1)).join(", ");
+    autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
     for (const sign of [-1, 1]) {
-      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
       coneSeqTurnHalf(rings, sign);
-      ok = coneBallInLaunch(); SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;
-      if (SP && SP.covered === SP.total) { setTimeout(() => say(`● Повернул на полбита ${names} — теперь путь до центра у всех ${SP.total} щелей, скорость ×${SP.ratio.text().replace(".", ",")}.`), 5000); return ok; }
-      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+      const C = window.zzBallSeqCheck ? window.zzBallSeqCheck() : null;
+      if (C && C.covered === C.total) {
+        say(`● Повернул внешнее ${names} на полбита (внутренние не тронуты) — теперь путь до центра у всех ${C.total} щелей при скорости ×${C.ratio.text().replace(".", ",")}. Посмотри; ▶ пуск — запуск.`);
+        return "hold";
+      }
       coneSeqTurnHalf(rings, -sign);   // не вышло — вернуть и попробовать в другую сторону
     }
-    say(`● Подсказанный поворот ${names} на полбита не дал пути всем щелям — кольца оставлены как были.`);
-    return coneBallInLaunch();
+    say(`● Поворот внешнего ${names} на полбита не дал пути всем щелям — кольца оставлены как были (внутренние не трогаем).`);
+    return "hold";
   }
   function coneBallInLaunch(keepRun = false){
     if (!window.zzBallLaunch) return false;

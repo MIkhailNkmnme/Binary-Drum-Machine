@@ -254,7 +254,7 @@
      разные щели, и в итоге оказывались в центре и пропадали там, ведя себе счёт»; выбрано: по одному из каждой щели, без закрытия и роста колец,
      авто — общая скорость под все щели. Всё точно, дробями (время — обороты К1): для каждой внешней щели ищутся моменты выпуска, при которых шарик
      с общей скоростью проходит все стыки ровно по щелям (lossPass без допусков) до центра; выпуск — строго по очереди, каждый в свой момент */
-  let seqQueue = [], seqPlan = null;
+  let seqQueue = [], seqPlan = null, seqDeadline = Infinity;   // v0.010: общий предел поиска — страница не замирает дольше ~5 с
   window.zzBallSeqPlan = () => seqPlan;
   const seqMode = () => Z.coneBallRoute === "in";
   function seqReach(S, raw, t, v) {   // точный путь из внешней щели raw при выпуске в t: момент прихода в центр или null
@@ -284,6 +284,7 @@
           const a = dw.mul(lead).sub(d), b2 = dw.mul(lead.add(H)).sub(d);
           const lo = (dw.sign() > 0 ? a : b2).ceil(), hi = (dw.sign() > 0 ? b2 : a).floor();
           for (let m = lo; m <= hi && out.size < 4000; m++) {
+            if (Date.now() > seqDeadline) return firstOnly ? [] : [...out.values()].sort((x, y) => x.cmp(y));
             const t = d.add(m).div(dw).sub(lead);
             if (t.sign() >= 0 && t.cmp(H) < 0 && seqReach(S, raw, t, v)) { out.set(t.text(), t); if (firstOnly) return [t]; }
           }
@@ -300,18 +301,19 @@
      прежний список доходил до ×1/8. Теперь все дроби p/d (p ≤ 8, d ≤ 60) — от ближних к базовой к дальним */
   const SEQ_RATIOS = (() => {
     const out = [], gcd = (a, b) => b ? gcd(b, a % b) : a;
+    // v0.010: сначала ×1, ×1/2 … ×1/60 (решения почти всегда такие: при 5 строках — ×1/30), потом ×2, ×2/3 … и остальные p ≤ 8
     for (let p = 1; p <= 8; p++) for (let d = 1; d <= 60; d++) if (gcd(p, d) === 1) out.push([p, d]);
-    return out.sort((x, y) => Math.abs(Math.log(x[0] / x[1])) - Math.abs(Math.log(y[0] / y[1])));
+    return out;
   })();
   const seqCovered = (S, v, H, starts) => starts.map(s => seqWindows(S, s.rawQ, v, H));
   function seqTurned(S, rings) {   // та же картина, но кольца rings повёрнуты на полбита
     return {...S, rings: S.rings.map((r, k) => { if (!rings.includes(k)) return r; const c = (r.cells && r.cells.length ? r.cells : r.blocks)[0], half = c ? c.hiQ.sub(c.loQ).div(2) : ZERO, phaseQ = r.phaseQ.add(half); return {...r, phaseQ, phase: radians(phaseQ)}; })};
   }
   function seqSuggest(S, base, H, starts) {   // какие кольца повернуть на полбита, чтобы путь был у всех щелей (одно, два, три кольца)
-    const K = S.rings.length, t0 = Date.now(), sets = [];   // v0.008: предел — 4 с
-    for (let a = 0; a < K; a++) sets.push([a]);
-    for (let a = 0; a < K; a++) for (let c = a + 1; c < K; c++) sets.push([a, c]);
-    for (let a = 0; a < K; a++) for (let c = a + 1; c < K; c++) for (let e = c + 1; e < K; e++) sets.push([a, c, e]);
+    /* v0.010, «внутренние кольца не меняем: если уже прошли из 3 в 1-е, то к 2→1 добавили 3→2, так?» — да: путь наращивается снаружи, каждое новое
+       внешнее кольцо добавляет один стык, и его надо поставить в тот же ритм (шаг s). Поворачивается только самое внешнее кольцо; внутренние — никогда
+       (поворот бывшего внешнего, ушедшего в строки, сохраняется). Прежде (v0.008–v0.009) подсказка могла крутить и внутренние */
+    const K = S.rings.length, t0 = Date.now(), sets = [[K - 1]];   // v0.008: предел — 4 с
     for (const rings of sets) {
       if (Date.now() - t0 > 4000) break;
       const St = seqTurned(S, rings);
@@ -319,18 +321,27 @@
     }
     return null;
   }
-  function seqPlanMake(S, base) {
-    const starts = outerStarts(S), H = seqHorizon(S), t0 = Date.now();
+  // v0.010: проверка без запуска — есть ли путь у всех щелей при нынешнем положении колец (для поворота «сначала посмотреть»)
+  window.zzBallSeqCheck = () => { const S = snapshot(); if (!S) return null; const B = inwardBase(S), TQ = periodQ(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
+    if (!(base.sign() > 0)) return null; const P = seqPlanMake(S, base, true); return { ...P, total: P.starts.length }; };
+  function seqPlanMake(S, base, noSuggest = false) {
+    const starts = outerStarts(S), H = seqHorizon(S), t0 = Date.now(); seqDeadline = t0 + (noSuggest ? 3000 : 5000);
+    try { return seqPlanBody(S, base, noSuggest, starts, H, t0); } finally { seqDeadline = Infinity; }
+  }
+  function seqPlanBody(S, base, noSuggest, starts, H, t0) {
     let best = null;
     for (const [p, q] of SEQ_RATIOS) {   // v0.008: перебор — только «есть ли путь» (первый момент); все моменты — для выбранной скорости
-      if (Date.now() - t0 > 2500) break;
+      if (Date.now() - t0 > 3000) break;
       const v = base.mul(p).div(q), covered = starts.filter(s => seqWindows(S, s.rawQ, v, H, true).length).length;
       if (!best || covered > best.covered) best = { v, ratio: Q(p, q), covered };
       if (covered === starts.length) break;
     }
+    seqDeadline = Infinity;   // все моменты для выбранной скорости — без обрезки
     if (best) best.windows = starts.map(s => seqWindows(S, s.rawQ, best.v, H));
     if (!best || best.covered < starts.length) {   // v0.008: всем щелям пути нет — подсказать поворот колец на полбита
-      const suggest = seqSuggest(S, base, H, starts);
+      seqDeadline = Date.now() + 3000;   // подсказка — не дольше 3 с
+      const suggest = noSuggest ? null : seqSuggest(S, base, H, starts);
+      seqDeadline = Infinity;
       if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0, suggest };
       best.suggest = suggest;
     }
@@ -1077,7 +1088,7 @@
     paused = !on; if (!enabled) return;
     if (on && run) run.simultaneous = null;
     if (on && snapshot() && typeof coneReleaseRings === "function") coneReleaseRings();
-    const S = snapshot(); if (on && S && (!F || F.ready)) { rememberStart(); newRun(); prepare(S, true, true); }
+    const S = snapshot(); if (on && S && (!F || F.ready) && !seqMode()) { rememberStart(); newRun(); prepare(S, true, true); }   // v0.010: очередь «В центр» выпускает только ● в центр — без повторного поиска при включении кручения
     if (balls.length) { batchStatus(); if (S) metrics(S); renderCone(); return; }
     if (on && F && F.stage !== "done") status(F.stage === "wait" ? "Ждёт прямую впереди · кольцо " + (F.k + 1) : F.clean ? routes[F.route] + " · по граням битов" : "Продолжает · НЕ проход (был разворот)");
     else if (!on && F && !F.ready && F.stage !== "done") status("Пауза вместе с вращением · ▶ — продолжить");

@@ -1,4 +1,4 @@
-<!-- Синхрофазотрон — v0.009. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
+<!-- Синхрофазотрон — v0.010. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
      Родился 2026-10-10 копией Zazerkalius v0.1091 (слово пользователя: «сделай теперь отдельную страницу чисто для соляриус, но назовём её синхрофазотрон —
      это вообще не в зазеркалиусе будет страница, просто скопируй текущий соляриус», «удали всё лишнее оттуда»). Свой код (копии zz-*.js рядом),
      своя память (sinhrofazotron_*), своя версия v0.NNN; пресеты читает из ../zazerkalius/presety/. -->
@@ -7,7 +7,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Синхрофазотрон — v0.009</title>
+<title>Синхрофазотрон — v0.010</title>
 <!--
   ═══ ZAZERKALIUS (заведён 2026-09-22) ═══════════════════════════════════════════════════════════
   Запрос пользователя: «легче будет по новой создать для истинного Зеркалиуса интерфейс весь»;
@@ -2357,7 +2357,7 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-<h1 aria-label="Синхрофазотрон" class="sfz-title">Синхрофазотрон</h1><span class="ver">v0.009</span>
+<h1 aria-label="Синхрофазотрон" class="sfz-title">Синхрофазотрон</h1><span class="ver">v0.010</span>
   <div id="pinBar"></div>
   <span class="sp"></span>
   <!-- v0.268, «одну кнопку на всё — и потом выбор окна кликом: строки, конус, 3D»: ⏺ в шапке — щелчок, затем щелчок по окну -->
@@ -3532,10 +3532,10 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=9"></script>
-<script src="zz-ui.js?v=9"></script>
-<script src="zz-ball.js?v=9"></script>
-<script src="zz-mobile.js?v=9"></script>
+<script src="zz-core.js?v=10"></script>
+<script src="zz-ui.js?v=10"></script>
+<script src="zz-ball.js?v=10"></script>
+<script src="zz-mobile.js?v=10"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
@@ -3543,6 +3543,6 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
 <script src="../_js/slider-arrows.js"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
-<script src="../_js/recorder.js?v=9" data-bez-knopki></script>
+<script src="../_js/recorder.js?v=10" data-bez-knopki></script>
 </body>
 </html>
