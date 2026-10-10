@@ -142,7 +142,7 @@ let msgTimer = 0, tipEl = null, tipTimer = 0, tipShown = false;
 function say(t){
   const m = $("msg");
   clearTimeout(tipTimer); tipShown = false;   // v0.294: сообщение перекрывает подсказку
-  m.classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br");
+  m.classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br", "tip-near");
   m.textContent = t; m.classList.add("show");
   clearTimeout(msgTimer); msgTimer = setTimeout(() => m.classList.remove("show"), Math.min(12000, 2500 + t.length * 45));
 }
@@ -152,7 +152,7 @@ function say(t){
 function tipOff(keepMsg){
   clearTimeout(tipTimer);
   if (tipEl) { if (Z.tipsOn !== false) { if (!tipEl.hasAttribute("title") && tipEl.dataset.zzTip != null) tipEl.setAttribute("title", tipEl.dataset.zzTip); delete tipEl.dataset.zzTip; } tipEl = null; }
-  $("msg").classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br");
+  $("msg").classList.remove("tip", "tip-tl", "tip-tr", "tip-bl", "tip-br", "tip-near");
   if (tipShown && !keepMsg) { tipShown = false; $("msg").classList.remove("show"); }
 }
 /* v0.1009: верхняя ? управляет всеми всплывающими подсказками. При выключении title хранится в data-zz-tip,
@@ -219,14 +219,23 @@ document.addEventListener("mouseover", (e) => {
   if (el === tipEl) return;
   tipOff();
   if (!el) return;
-  if (Z.tipsOn === false) { tipsMuteElement(el); return; }
+  const near = el.closest("#ringTbl");
+  if (Z.tipsOn === false && !near) { tipsMuteElement(el); return; }
   const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
   tipTimer = setTimeout(() => {
-    if (Z.tipsOn === false) return;
+    if (Z.tipsOn === false && !near) return;
     const m = $("msg"), r = el.getBoundingClientRect(), right = (r.left + r.right) / 2 >= innerWidth / 2, bottom = (r.top + r.bottom) / 2 >= innerHeight / 2;
     const corner = (bottom ? "t" : "b") + (right ? "l" : "r");
-    clearTimeout(msgTimer); m.textContent = t; m.classList.remove("tip-tl", "tip-tr", "tip-bl", "tip-br"); m.classList.add("tip", "tip-" + corner, "show"); tipShown = true;
+    clearTimeout(msgTimer); m.textContent = t; m.classList.remove("tip-tl", "tip-tr", "tip-bl", "tip-br", "tip-near");
+    m.classList.add("tip", "show");
+    if (near) {
+      const x = Math.max(8, Math.min(near.getBoundingClientRect().right + 8, innerWidth - 168));
+      m.style.setProperty("--tip-x", x + "px"); m.style.setProperty("--tip-w", Math.max(80, Math.min(320, innerWidth - x - 8)) + "px");
+      m.classList.add("tip-near");
+      m.style.setProperty("--tip-y", Math.max(8, Math.min(r.top, innerHeight - m.offsetHeight - 8)) + "px");
+    } else m.classList.add("tip-" + corner);
+    tipShown = true;
   }, 250);
 }, true);
 document.addEventListener("mouseout", (e) => { if (tipEl && !(e.relatedTarget && tipEl.contains(e.relatedTarget))) tipOff(); }, true);
@@ -2496,7 +2505,7 @@ function ringTblBuild(host){
   });
   host.appendChild(el);
   el.addEventListener("click", (e) => {
-    const tr = e.target.closest("button[data-v]"); if (!tr) return; e.stopPropagation();
+    const tr = e.target.closest("button[data-v]"); if (!tr || tr.parentElement !== el) return; e.stopPropagation();
     if (el._skipClick) { el._skipClick = false; e.preventDefault(); return; }
     if (coneSlitRaw() === tr.dataset.v) return;
     const LS = LAS_SEG.find(s => s.id === "bConeSlits"), b = document.getElementById("bConeSlits");
@@ -2505,6 +2514,7 @@ function ringTblBuild(host){
   });
   el.addEventListener("pointerdown", e => {
     if (e.button || !e.target.closest("button")) return; e.stopPropagation(); el._skipClick = false;
+    if (e.target.closest(".ring-fill-column")) return;
     const cv = $("coneCv"), cr = cv.getBoundingClientRect(), r = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY;
     const target = e.target.closest("button"), id = e.pointerId; target.setPointerCapture(id); let moved = false;
     const move = ev => { if (ev.pointerId !== id) return; const dx = ev.clientX - sx, dy = ev.clientY - sy;
@@ -2538,7 +2548,15 @@ function ringTblSync(){
   let el = document.getElementById("ringTbl");
   if (!open) { if (el && !el.hidden) el.hidden = true; return; }
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = ringTblBuild(host); }
-  const cur = coneSlitRaw(); el.querySelectorAll("button[data-v]").forEach(tr => { const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
+  // v0.049: заполнение ячеек — второй столбец рядом с видами колец, без дубля.
+  const fill = document.querySelector('.lseg[data-seg="bCutPrev"]');
+  if (fill && fill.parentElement !== el) {
+    fill.classList.add("ring-fill-column"); fill.setAttribute("role", "group"); fill.setAttribute("aria-label", "Заполнение ячеек");
+    for (const button of fill.children) { triOff(button); tzcClean(button); button.classList.remove("w2", "w4", "wm"); button.removeAttribute("data-w1"); }
+    el.appendChild(fill);
+  }
+  const cur = coneSlitRaw(); el.querySelectorAll(":scope > button[data-v]").forEach((tr, i) => { tr.style.gridRow = String(i + 1); const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
+  if (fill) for (const button of fill.children) button.setAttribute("aria-pressed", String(button.classList.contains("on")));
   el.classList.remove("off"); el.title = "Выбор режима колец действует независимо от включения солнца и лазера.";
   if (el.hidden) el.hidden = false; ringTblPlace(el);
 }
