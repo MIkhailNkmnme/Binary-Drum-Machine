@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.070. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.071. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.070</title>
+<title>Zerkalius Гранидус — v0.071</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -299,7 +299,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.070</div>
+<div id="ver">v0.071</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -570,6 +570,7 @@
     <div class="row">
       <button id="bTake" title="Картина, что сейчас на гранях, — в поле: ряд на строку, грани через пустую строку">⇩ Текущие</button>
       <button id="bSame" title="Каждая грань половины начинается с начала строки">◇ Одинаково</button>
+      <button id="bDefault" title="★ По умолчанию: вписать начальную последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — ту же, что на остальных страницах. Ложится на грани сразу, как обычный ввод; короче нужного — пойдёт по кругу" aria-label="По умолчанию — начальная последовательность">★</button>   <!-- v0.071 -->
     </div>
   </div>
   <div class="set">
@@ -701,6 +702,7 @@
   </div>
 </div>
 <div id="panelR" class="dock"></div>
+<script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.071: общая начальная последовательность (из _pzl.txt) — для «★ По умолч.» в «Своих битах» -->
 <script>
 /* ═══ ГЕОМЕТРИЯ ═══════════════════════════════════════════════════════════════════════════════
    Октаэдр — это ровно то, что нарисовано в знаке: пирамида и её зеркало, сложенные основаниями.
@@ -2046,6 +2048,9 @@ bTake.onclick = () => {
   mySame = false; syncUI(); myInfoUpd(); save();
 };
 bSame.onclick = () => { mySame = !mySame; if (myBits) rollBits(); syncUI(); myInfoUpd(); save(); };
+// v0.071, «сюда также по умолчанию»: ★ — начальная последовательность (../_js/initial-rows.js) в поле и сразу на грани, как обычный ввод
+const bDefault = document.getElementById("bDefault");
+if (bDefault) bDefault.onclick = () => { if (typeof ZZ_INITIAL_ROWS === "undefined" || !ZZ_INITIAL_ROWS.length) { myInfoUpd("файл последовательности не загрузился"); return; } myArea.value = ZZ_INITIAL_ROWS.join(String.fromCharCode(10)); myPut(); };
 // v0.025: вписываем на каждый ввод. Пустое поле (всё стёрли, чтобы набрать заново) картину не трогает:
 // иначе на полпути она прыгала бы в случайную и обратно.
 myArea.addEventListener("input", () => { if (myClean(myArea.value)) myPut(); else myInfoUpd(); });
