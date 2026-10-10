@@ -1004,6 +1004,15 @@ function fillUncommit(){
   say(`◀ Строка ${S.rows.length + 1} — обратно за черту (черта вверх). Следующее |◀ — крутить назад. ↩ вернёт.`);
   return true;
 }
+// Preserve the physical phase when a ball's outer ring changes from draft to row.
+function fillBallKeepPhase(before, index){
+  if (!before || !before.rings[index]) return;
+  const R = coneRingFeat(index); if (!R) return;
+  coneRot[index] = (coneRot[index] || 0) + (-R.x0 * R.step - before.rings[index].phase) / R.step;
+  if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[index] = true;
+  Z.coneRot = coneRot.slice();
+  if (window.zzBallAfterGrow) window.zzBallAfterGrow(before);
+}
 function fillAutoCommit(){
   const fm = coneFreeOn(), fr = fm ? coneFreeRow() : null;   // v0.722: «▦ любые» — строка из набранных бит
   const f = fm ? (fr && fr.row) : Z.fillCells, sunCut = coneSunOn() && coneCutOn();   // v0.701: у солнца в вырезах — готова, когда пустых нет (все 1 или 0)
@@ -1011,6 +1020,7 @@ function fillAutoCommit(){
   if (Z.rows.length >= CONE_MAX || coneSunPeek._busy) return false;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return false; throw err; }
   fillStack.push(JSON.stringify({ rows: Z.rows.slice(), cur: Z.cur | 0, fill: f, vh: Z.voidHits || null, rot: coneRot.slice(), ft: Z.coneFillTurn || 0, tn: Z.coneFillTurns || 0, ff: fr ? Z.fillFree : null })); if (fillStack.length > 200) fillStack.shift();   // v0.709: для |◀
+  const ballBeforeGrow = window.zzBallBeforeGrow ? window.zzBallBeforeGrow() : null;
   if (fr) { Z.coneFillTurn = (Z.coneFillTurn || 0) - fr.a; Z.fillFree = null; }   // v0.722: кольцо повёрнуто так, что набранные биты — на местах 0…n − 1
   const N = Z.rows.length, V = Z.voidHits, carry = {};
   if (V && V.h) for (const k in V.h) if (+k.split(":")[0] !== N) carry[k] = V.h[k];
@@ -1022,6 +1032,7 @@ function fillAutoCommit(){
   let nf = ""; for (let c = 0; c <= f.length; c++) nf += (carry[(N + 1) + ":" + c] | 0) > 0 ? "1" : ".";
   Z.fillCells = nf.includes("1") ? (sunCut ? nf : nf.replace(/\./g, "0")) : null;
   if (V) { V.h = carry; V.sig = (N + 1) + ":" + f.length; }
+  fillBallKeepPhase(ballBeforeGrow, N);
   renderAll(); save();
   say(`✔ Строка ${N + 1} готова — ${sunCut ? "все биты закрашены" : "вся «1»"} (${f.length} бит): она в строках, черта — под ней. За чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
   return true;   // v0.698: по шагу — одна строка; следующая готовая уйдёт со следующим шагом
@@ -1032,12 +1043,14 @@ function fillCommit(){
   /* v0.865 / v0.867: поворот кольца за чертой и его обороты остаются у него — теперь кольца строки (как у fillAutoCommit, v0.704); новое кольцо за
      чертой — без накрутки (прежде «＋» оставлял прежний поворот новому кольцу другой длины, а строке — 0). Накрученное рукой — до ячейки (в вырезах —
      до полчасти) и по модулю круга, как при отпускании */
-  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = Z.coneFillFree || fillStillOn() ? (Z.coneFillTurn || 0) : F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);   // v0.875: прилипшее — как есть
+  const ballBeforeGrow = window.zzBallBeforeGrow ? window.zzBallBeforeGrow() : null;
+  const N0 = Z.rows.length, F0 = coneFillCut(), P0 = F0 ? F0.P : fillLen(), fq = ballBeforeGrow || Z.coneFillFree || fillStillOn() ? (Z.coneFillTurn || 0) : F0 ? Math.round((Z.coneFillTurn || 0) * 2) / 2 : Math.round(Z.coneFillTurn || 0);   // v0.875: прилипшее — как есть
   if (Z.coneFillFree) { if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[N0] = true; Z.coneFillFree = false; }
   Z.rows.push(row); Z.cur = Z.rows.length - 1; Z.fillCells = null;
   while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[N0] = ((fq % P0) + P0) % P0; Z.coneRot = coneRot.map((x, i) => coneRotKeep(x, i)); Z.coneFillTurn = 0; fillStillCommit(N0);   // v0.913: ⏸ за чертой — кольцо новой строки крутится с места, где стояло
   if (Z.coneFillTurns) { turnsAdd(N0, Z.coneFillTurns); Z.coneFillTurns = 0; }
   coneHoldSync();   // v0.870
+  fillBallKeepPhase(ballBeforeGrow, N0);
   renderAll(); save();
   say(`＋ Строка ${Z.rows.length} (${row.length} бит) — в поле${empty ? `, пустые ячейки (${empty}) — нулями` : ""}. Под чертой — следующая, ${fillLen()} ячеек. ↩ вернёт.`);
 }

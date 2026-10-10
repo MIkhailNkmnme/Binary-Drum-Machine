@@ -550,8 +550,12 @@
     let ds = B.spin - A.spin;
     if ((Z.coneSpinMode || "all") === "all") { const expected = (Z.coneAutoSp ?? 30) * dt * Math.PI / 180; ds += TAU * Math.round((expected - ds) / TAU); }
     const delta = A.rings.map((r, k) => B.rings[k].phase - r.phase + ds);
-    const at = t => ({ shape: A.shape, spin: A.spin + ds * t, rings: A.rings.map((r, k) => ({ ...r, phase: r.phase + (B.rings[k].phase - r.phase) * t })) });
     const rotations = A.rotation || A.rings.map(r => r.phase), next = B.rotation || B.rings.map(r => r.phase);
+    // Subframes around impacts must retain the same rotation clock as the whole frame.
+    const at = t => ({ shape: A.shape, spin: A.spin + ds * t,
+      clockPh: (A.clockPh || 0) + ((B.clockPh || 0) - (A.clockPh || 0)) * t,
+      rotation: rotations.map((p, k) => p + ((next[k] ?? p) - p) * t),
+      rings: A.rings.map((r, k) => ({ ...r, phase: r.phase + (B.rings[k].phase - r.phase) * t })) });
     const turnDelta = rotations.map((p, k) => ((next[k] ?? p) - p + ds) / TAU);
     return { at, delta, turnDelta, distance: F.speed * dt };
   }
@@ -810,14 +814,18 @@
   window.zzBallActive = () => enabled && !!snapshot();
   window.zzBallLive = () => (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost").length;   // v0.1072: шарики в пути
   // v0.1085: добавление внешнего кольца сохраняет все прежние шарики, включая бывшее кольцо за чертой.
-  function growRun(S) {
+  window.zzBallBeforeGrow = () => enabled && F ? snapshot() : null;
+  window.zzBallAfterGrow = previous => { if (previous) growRun(snapshot(), previous); };
+  function growRun(S, previous = null) {
     const current = balls.length ? balls : F ? [F] : [];
     if (!S || !current.length || !current.every(b => b.ringShapes && S.rings.length > b.ringShapes.length && S.rings[b.k])) return false;
+    const resumed = [];
     for (const b of new Set([...current, ...resting])) {
       if (!S.rings[b.k]) continue;
-      // The draft's start angle can change when it becomes a row; retain the ball's world line.
-      if (b.k === b.fillIndex && Number.isFinite(b.a)) {
-        const raw = b.a - S.rings[b.k].phase - S.spin, shift = raw - b.raw;
+      const oldCount = b.ringShapes.length;
+      // Use geometry at the promotion instant, never an angle cached by the last draw.
+      if (previous && previous.rings[b.k]) {
+        const raw = angle(previous, b.k, b.raw) - S.rings[b.k].phase - S.spin, shift = raw - b.raw;
         b.raw = raw;
         if (b.arc) { b.arc.from += shift; b.arc.to += shift; }
         if (b.ready) b.start.raw = b.raw;
@@ -825,7 +833,17 @@
       b.shape = S.shape; b.R = S.rings[S.rings.length - 1].ro; b.seg = null;
       b.ringShapes = S.rings.map(r => r.shape); b.fillIndex = S.rings.findIndex(r => r.fill);
       while (b.ringTurns.length < S.rings.length) b.ringTurns.push(0);
+      // An outward ball parked at the old rim can now meet the new ring at that same joint.
+      if (S.rings.length > oldCount && b.stage === "done" && !b.atCenter && b.move > 0 && b.k === oldCount - 1 && Math.abs(b.q - S.rings[b.k].ro) < EPS) {
+        b.stage = "out"; b.crossings = Math.max(0, b.crossings - 1);
+        cycles = Math.max(0, cycles - 1); if (b.clean) passes = Math.max(0, passes - 1);
+        resting = resting.filter(x => x !== b);
+        if (!current.includes(b)) resumed.push(b);
+        if (run) { run.exited = Math.max(0, run.exited - 1); ringStats(b.k).passed = Math.max(0, ringStats(b.k).passed - 1); }
+        rememberResult(b);
+      }
     }
+    if (resumed.length) balls = [...new Set([...current, ...resumed])];
     if (Z.coneBallRoute === "in") {
       const key = centerKey(), closed = Z.coneBallClosed, empty = Z.coneBallEmpty;
       if (closed) Z.coneBallClosed = { ...closed, key };
