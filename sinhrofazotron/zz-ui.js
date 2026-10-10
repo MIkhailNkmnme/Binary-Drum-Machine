@@ -8659,9 +8659,17 @@ function setupCone(){
   $("animRowsN").onchange = (e) => { Z.animRowsN = Math.max(2, Math.min(1024, Math.round(+e.target.value) || 128)); e.target.value = Z.animRowsN; save(); };   // v0.542: по умолчанию 128 строк (было 256)
   $("animSeed").value = Z.animSeed || "1";
   $("animSeed").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, ""); Z.animSeed = v || "1"; e.target.value = Z.animSeed; save(); };
+  /* v0.030, «чтобы можно было загрузить, если стёрлись строки — по умолчанию, в список», «строки хранить из последовательности»: первый пункт списка —
+     начальные строки страницы (последовательность из _pzl.txt, _js/initial-rows.js). Заменяет поле строк целиком, ↩ вернёт; способ достройки под чертой не меняет */
+  if (typeof ZZ_INITIAL_ROWS !== "undefined" && !document.querySelector('#animPreset option[value="def"]')) {
+    const o = document.createElement("option"); o.value = "def"; o.textContent = "★ По умолчанию — последовательность (" + ZZ_INITIAL_ROWS.length + " стр.)";
+    o.title = "Вернуть начальные строки страницы — последовательность 1, 1, 11, 111, 1000, 10101… (" + ZZ_INITIAL_ROWS.length + " строк). ↩ вернёт прежние";
+    const first = $("animPreset").querySelector('option[value=""]'); if (first) first.after(o); else $("animPreset").prepend(o);
+  }
   $("animPreset").onchange = (e) => {
     const v = e.target.value, lab = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : v;
     if (!v) return;
+    if (v === "def") { animApply(ZZ_INITIAL_ROWS.slice(), "По умолчанию — последовательность"); e.target.value = ""; return; }
     Z.cutGen = "p:" + v; Z.cutTake = false; if (typeof cutHidUi === "function") cutHidUi();   // v0.537: и способ достройки под чертой — эта заготовка (вместо 90 / 30 / маски)
     const H = Z.animRowsN || 128, seed = Z.animSeed || "1";
     animApply(v === "pascal" ? pascalRowsBar(seed, H) : v.startsWith("r") ? ecaRowsBar(+v.slice(1), seed, H) : zzSeqRows(v.slice(2), H), Z.barOn && v[0] !== "s" ? lab + " + столб " + barLab() : lab);   // v0.241: стенка
