@@ -7837,9 +7837,10 @@ function setupCone(){
      (Z.coneBallArm = "out" | "in" | ""), выбирают опыт; запуск — ▶ пуск в «Кручении» (и двойной щелчок по конусу), как у «⚡ луча». Шариков
      в пути нет — ▶ запускает выбранный опыт заново (в «В центр» закрытие продолжается); опыт на паузе — ▶ продолжает. Две галки сразу не горят */
   function coneBallArmUi(){
-    for (const [id, m] of [["bConeNotchBall", "out"], ["bConeBallIn", "in"]]) { const b = $(id); if (!b) continue; const on = Z.coneBallArm === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+    for (const [id, m] of [["bConeNotchBall", "out"], ["bConeBallIn", "in"], ["bConeBallSlice", "slice"]]) { const b = $(id); if (!b) continue; const on = Z.coneBallArm === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
   }
   function coneBallArmLaunch(){
+    if (Z.coneBallArm === "slice") return window.zzBallSliceLaunch ? window.zzBallSliceLaunch() : false;
     // v0.1077, «не открыл 3 кольцо»: открыто только внешнее (или закрыты все) — ▶ открывает следующее кольцо и запускает из него, а не пробует запуск в закрытые
     if (Z.coneBallArm === "in" && window.zzBallCenterState && window.zzBallClosedMax && coneGeom && coneGeom.fill) { const c = window.zzBallCenterState().count; if (c > 0 && c >= window.zzBallClosedMax()) return window.zzBallInwardNext(); }
     return Z.coneBallArm === "in" ? coneBallInLaunch() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false;
@@ -7851,8 +7852,9 @@ function setupCone(){
     { const on = Z.coneBallOn !== false, want = !!Z.coneBallArm, bb = $("bConeBall"); if (bb && on !== want) bb.click(); }   // галка снята — шарики выключены (▶ просто крутит), выбрана — включены
     if (Z.coneBallArm === "in") { Z.coneBallRoute = "in"; Z.coneBallBatch = true; if (window.zzBallInwardPrime) window.zzBallInwardPrime(); }
     else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
+    else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneBallChain = false; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
     coneBallArmUi(); save(); renderCone();
-    say(Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Целые внешние кольца прорезает шарик; линия вращается с К1. От внешнего края — назад, скорость постоянна." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
   }
   coneBallArmUi();
   function coneBallOutLaunch(){
@@ -7863,6 +7865,7 @@ function setupCone(){
       return ok;
   }
   if ($("bConeNotchBall")) $("bConeNotchBall").onclick = () => coneBallArm("out");
+  if ($("bConeBallSlice")) $("bConeBallSlice").onclick = () => coneBallArm("slice");
   if ($("bConeBallImpact")) {
     const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
     sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); if (window.zzBallInwardPrime) window.zzBallInwardPrime(); save(); renderCone(); };   // v0.1070: стартовое состояние «В центр» — сразу
