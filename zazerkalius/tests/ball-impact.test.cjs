@@ -24,7 +24,8 @@ function experiment() {
   context.window.zzBallBitWrite = list => { writes.push(...list); return bitWrite(list); };
   vm.runInContext(source.replace('  if (document.readyState === "loading")', `
     window.impactTest = {
-      start(S, {mark = true, loss = false, mode = 1, bounce = false, zero = false, route = 'out', omega = Math.PI / 3, point = {k:1,raw:0,r:1.5,label:'impact'}} = {}) {
+      start(S, {mark = true, loss = false, mode = 1, bounce = false, zero = false, absorb = false, route = 'out', omega = Math.PI / 3, point = {k:1,raw:0,r:1.5,label:'impact'}} = {}) {
+        Z.coneBallAbsorb = absorb;
         Z.coneBallZeroBounce = zero;
         Z.coneBallSpeedMode = mode; Z.coneBallImpact = bounce ? 'bounce' : 'stick'; rate = () => [omega, 0, 0];
         enabled = true; newRun(); markRun = mark; lossRun = loss; pendingMarks = [];
@@ -34,19 +35,23 @@ function experiment() {
       next(S) { begin(S, false, true, {point:{k:1,raw:0,r:1.5,label:'repeat'}, route:'out', period:6, speed:1, auto:false}); },
       stuck(S) { return stuck.map(group => ({...group,positions:group.samples.map(sample=>stuckPosition(S,group,sample))})); },
       stats() { return window.zzBallRunStats(); },
+      info() { return window.zzBallInfo(); },
+      absorb(on) { Z.coneBallAbsorb=on; },
       clear() { window.zzBallClearRun(); },
       starts(S) { return outerStarts(S); },
       singleBitSnapshot(mode='through') { Z.rows=['1']; Z.coneBallCenter=mode; return snapshot(); },
       closed() { return window.zzBallCenterState().count; },
+      close(k) { window.zzBallCloseRing(k); },
       initCenter() { initCenter(); return Z.rows[0]; },
       rows() { return Z.rows.slice(); },
       group(S, points, bounce=false) {
+        Z.coneBallRoute='in';
         enabled=true; Z.coneBallSpeedMode=1; Z.coneBallImpact=bounce?'bounce':'stick'; newRun(); balls=[]; markRun=false; lossRun=true;
         for(const point of points) { begin(S,false,true,{point,route:'in',period:6,speed:1,auto:false}); balls.push(F); }
       },
       groupStep(dt, A, B=A) { advanceInwardGroup(dt,A,B); F=balls[0]; flushMarks(); return balls.map(ballInfo); },
       simultaneous(dt,A,B=A) { const event = advanceInwardGroup(dt,A,B,true); flushMarks(); return {event, balls:balls.map(ballInfo)}; },
-      promote(S) { restartRun(S); return ballInfo(F); }
+      promote(S) { while(Z.rows.length<S.rings.length-1) Z.rows.push('0'.repeat(Z.rows.length+1)); restartRun(S); return ballInfo(F); }
     };
     if (document.readyState === "loading")`), context);
   return {api:context.window.impactTest, hits, lost, writes};
@@ -256,6 +261,51 @@ test('promotion preserves a reflected ball travelling back on an unchanged inner
   const after=e.api.promote(grown);
   assert.equal(after.stage,'in'); assert.equal(after.ring,before.ring); assert.equal(after.q,before.q);
   assert.equal(e.api.stats().launched,1); assert.equal(e.api.stats().removed,0);
+});
+
+test('inward bounced ball remains visible at the outer edge through ring promotion', () => {
+  const e=experiment(), S=geometry(0);
+  e.api.start(S,{route:'in',mark:false,bounce:true,point:{k:2,raw:pi/4,r:3,label:'outer'}});
+  const before=e.api.step(3,S);
+  assert.equal(before.stage,'done'); assert.equal(before.q,3); assert.equal(before.clean,false);
+  const grown={...geometry(pi/5),shape:'grown'};
+  grown.rings[2].fill=false; grown.rings.push({...grown.rings[2],ri:3,ro:4,fill:true});
+  const after=e.api.promote(grown), resting=e.api.info().resting;
+  assert.equal(after.stage,'done'); assert.equal(after.q,3); assert.equal(resting.length,1);
+  assert.equal(after.speed,before.speed); assert.equal(after.distance,before.distance);
+  assert.ok(Math.abs(after.edge+grown.rings[2].phase-before.angle)<1e-10);
+  assert.equal(e.api.stats().launched,1); assert.equal(e.api.stats().removed,0);
+});
+
+test('ring promotion preserves the whole inward group including balls on the draft', () => {
+  const e=experiment(), S=geometry(0);
+  e.api.group(S,[{k:1,raw:pi/4,r:1.8,label:'inner'},{k:2,raw:pi/4,r:2.8,label:'draft'}],true);
+  const before=e.api.groupStep(.1,S), grown={...geometry(pi/5),shape:'grown-group'};
+  e.api.close(0);
+  grown.rings[2].fill=false; grown.rings.push({...grown.rings[2],ri:3,ro:4,fill:true});
+  e.api.promote(grown);
+  const kept=e.api.info().balls;
+  assert.equal(kept.length,2); assert.equal(e.api.stats().removed,0); assert.equal(e.api.stats().launched,2); assert.equal(e.api.closed(),1);
+  kept.forEach((b,i)=>{assert.equal(b.q,before[i].q);assert.equal(b.ring,before[i].ring);assert.equal(b.speed,before[i].speed);});
+  const after=e.api.groupStep(.1,grown);
+  after.forEach((b,i)=>assert.ok(Math.abs(b.distance-before[i].distance-b.speed*.1)<1e-10));
+});
+
+test('bit absorption removes only the ball that writes a new 1 or 0, at the contact time', () => {
+  const S=geometry(0);
+  const one=experiment(); one.api.start(S,{route:'in',mark:false,bounce:true,absorb:true,point:{k:1,raw:pi/4,r:1.5}}); one.api.initCenter();
+  const a=one.api.step(2,S);
+  assert.equal(a.absorbed,true); assert.equal(a.q,1); assert.equal(a.elapsed,.5); assert.equal(one.api.stats().absorbed,1);
+  assert.deepEqual(one.writes.map(h=>h.value),['1']); assert.equal(one.lost.length,0); assert.equal(one.api.stuck(S).length,0);
+  const zero=experiment(); zero.api.start(S,{route:'in',mark:false,bounce:true,zero:true,point:{k:1,raw:pi/4,r:1.5}}); zero.api.initCenter();
+  zero.api.step(.6,S); zero.api.absorb(true);
+  const b=zero.api.step(2,S);
+  assert.equal(b.absorbed,true); assert.equal(b.q,2); assert.ok(Math.abs(b.elapsed-1.5)<1e-10);
+  assert.deepEqual(zero.writes.map(h=>h.value),['1','0']);
+  const same=experiment(); same.api.start(S,{route:'in',mark:false,bounce:true,absorb:true,point:{k:1,raw:pi/4,r:1.5}});
+  assert.equal(same.api.step(.6,S).absorbed,false,'an unchanged 1 does not absorb the ball');
+  const out=experiment(), draft=geometry(pi/4); out.api.start(draft,{bounce:true,absorb:true});
+  assert.equal(out.api.step(2,draft).absorbed,true); assert.deepEqual(out.hits,[0]);
 });
 test('trapped ball stays at its exact contact and follows that cell after rotation/promotion', () => {
   const e=experiment(), S=geometry(pi/4,true); e.api.start(S); e.api.step(2,S);

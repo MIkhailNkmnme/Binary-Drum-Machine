@@ -938,7 +938,7 @@ function coneMoonSweep(){ return Z.moonSweep === undefined ? !!Z.sunSweep : !!Z.
 /* v0.727, «ещё кнопку, которая для солнца и T−1 режима делает 1 строку (1) не цельной, как сейчас, а половинкой кольца, а солнце внутри него»: «◐ полукольцо»
    (Z.sunHalf) — строка 1 — полукольцо: бит на половине круга (у «0» — проход, v0.724), другая половина открыта; солнце — внутри. Свет выходит только через
    открытую половину; полукольцо крутится, как кольцо строки 1 (полоборота на шаг). coneSunHalfArc — открытая дуга (углы от верха, по часовой) */
-function coneHalfOn(){ return (!!Z.sunHalf || coneCut2n()) && coneCutOn() && !coneQuadOn() && !coneRow1Slit(); }
+function coneHalfOn(){ return (!!Z.sunHalf || coneCut2n() && !Z.row1Whole) && coneCutOn() && !coneQuadOn() && !coneRow1Slit(); }
 function coneSunHalf(){ return coneHalfOn() && coneSunOn(); }
 /* v0.807, по снимку полукольца строки 1 — «нужен такой режим, когда одна половина — солнце, другая — луна; на 180° обе светят» и «а в 4 частях — также»:
    «☀☾» (Z.sunMoon, при ◐ полукольце или ✚ 4 частях, солнце в вырезах) — открытая половина (чёрные четверти) светит солнцем, половина с битом (белые
@@ -2049,15 +2049,14 @@ let lasDepsK = "";
 function lasDeps(){
   const GA = document.querySelector(".cgrp.cg-alg"); if (!GA || !GA.querySelector(":scope > .cgb")) return;   // группа ещё не собрана (cgrpInit) — строка уехала бы в кнопки
   const d3 = !!Z.cone3d && !coneSol3d(), clk = !!Z.coneClock, sun = coneSunOn(), fan = coneFanOn(), cut = coneCutOn(), quad = coneQuadOn(), r1 = !!Z.cutRow1Slit && cut && !quad, zero = coneNoGap(), mode = coneSlitMode();
-  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonCross, Z.moonAlways, Z.moonOff, Z.sunWideMoon, Z.sunPass0, Z.sunPass1, Z.sunPassE, Z.moonPass0, Z.moonPass1, Z.moonPassE, Z.moonSweep, Z.sunAnti, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
+  const k = [d3, clk, sun, fan, cut, quad, r1, zero, mode, Z.coneSlits, Z.cutLen, Z.sunRow1, Z.cutAlign, Z.cutPrev, Z.cutGaps, Z.cutRow1Slit, Z.sunHalf, Z.row1Whole, Z.sunGate, Z.moonEcl, Z.moonBlk, Z.moonCross, Z.moonAlways, Z.moonOff, Z.sunWideMoon, Z.sunPass0, Z.sunPass1, Z.sunPassE, Z.moonPass0, Z.moonPass1, Z.moonPassE, Z.moonSweep, Z.sunAnti, Z.sunXor, Z.sunSweep, Z.cutFree, Z.coneVoid, Z.coneOutOn, Z.lane,
     Z.coneLaserChain, Z.coneLaserFix, Z.coneClockStop, Z.coneEdgeStop, Z.coneLast2, Z.fillStill, Z.coneLasers, Z.coneLaser0, coneLaserK(), Z.coneSlit, Z.row1SlitDeg, Z.coneSpinMode, Z.coneSunCut, Z.lasPeek, coneFanN(), Z.rows.length, Z.coneLaserStepK, Z.coneOcta, Z.coneOctaSel, Z.row1Parts].join("|");
   lasSegInit();   // v0.762
   if (k === lasDepsK && document.getElementById("lasAlgo")) return; lasDepsK = k;
   /* что когда не действует (первая подошедшая причина — в подсказку) */
   const why = {}, need = (ids, c, t) => { if (c) ids.forEach(id => { if (!why[id]) why[id] = t; }); };
-  need(["bRow1Parts1", "bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !clk || !cut, "нужны луч-часы или солнце и вид колец с вырезами (панель «Щели»)");
-  need(["bRow1Parts1"], coneCut2n(), "в «вырезах 2n» строка 1 всегда полукольцо — целым битом её не сделать");   // v0.952
-  need(["coneVoid", "coneSlit", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
+  need(["bRow1Parts1", "bRow1Parts2", "bRow1PartsSym", "bRow1PartsLast", "bRow1Parts3"], !cut, "нужен вид колец с вырезами (панель «Кольца»)");
+  need(["coneVoid", "coneSlit", "bCutGaps", "coneSunCut", "bLaserChain", "bLaserFix", "coneLasersN", "coneLaser0", "bLaserTurn", "coneLaserStepK",
     "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bCutLen", "bSunXor", "bSunSweep", "bCutFree"], !clk, "ни луча, ни солнца — включи ⌖ луч-часы (или ☀ солнце, ✺ все лучи)");
   need(["bConeFan"], sun, "☀ солнце главнее — при нём лучей нет");
   need(["bConeEdgeStop"], d3 || Z.rows.length > CONE_MAX, "нужно плоское кольцо за чертой (или 3D Solarius), до 256 строк");
@@ -2068,7 +2067,7 @@ function lasDeps(){
   need(["coneSunCut", "bSunXor", "bSunAnti", "bSunSweep", "bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross", "bSunParts", "bCutLen", "bSunHalf", "bSunGate"], !sun, "только при ☀ солнце");
   need(["bCutPrev"], cut && coneSlitRaw() !== "cut", "только в «вырезах T−1»: в «2n» вырез из n частей, а у предыдущей строки n − 1 бит");   // v0.781
   need(["bCutPrev", "bCutGaps", "bLaserQuad", "bRow1Slit", "row1Slit", "bSunHalf", "bSunGate", "bMoonEcl", "bMoonBlk", "bMoonOne", "bMoonCross", "bSunParts", "bCutLen", "bCutFree"], !cut, "нужен вид колец с вырезами: T−1, 2n, между битами или по симметрии (панель «Кольца»)");
-  need(["bRow1Slit", "row1Slit", "bSunHalf"], quad, `${conePartCount()} части главнее — строка 1 уже поделена на сектора`);
+  need(["row1Slit", "bSunHalf"], quad, `${conePartCount()} части главнее — строка 1 уже поделена на сектора`);
   need(["row1Slit"], !Z.cutRow1Slit, "это угол ▮ щели 1 — включи её");
   need(["bSunHalf"], !!Z.cutRow1Slit, "▮ щель 1 главнее — солнце светит из щели");
   need(["bSunHalf"], Z.coneSlits === "cut2", "в «вырезах 2n» строка 1 — полукольцо и так");
@@ -2711,7 +2710,7 @@ function coneRunStatsSync(cv, R, dpr, cx){
   }
   const moving = data.rings.reduce((n, r) => n + r.moving, 0), waiting = data.rings.reduce((n, r) => n + r.waiting, 0), lost = data.rings.reduce((n, r) => n + r.lost, 0);
   const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(data.simultaneous ? 6 : 2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
-    "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.removed ? " · снято при смене колец " + data.removed : "") + (data.closedCount ? " · закрыто К1–К" + data.closedCount : ""),
+    "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.absorbed ? " · поглощено " + data.absorbed : "") + (data.removed ? " · снято при смене колец " + data.removed : "") + (data.closedCount ? " · закрыто К1–К" + data.closedCount : ""),
     ["", Z.coneBallRoute === "in" ? "1 · авто в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + coneInwardBaseText(data) + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
   data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k < data.closedCount ? " закрыто" : k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
     "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · +0: " + (r.zeros || 0) + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
@@ -2769,7 +2768,8 @@ function coneInwardBaseText(data){
 /* v0.1063: «◉ закрыто N» — подпись по текущему закрытию (меняется и самим опытом) */
 function coneBallClosedUi(){
   const b = $("bConeBallClosed"); if (!b) return;
-  const n = window.zzBallCenterState ? window.zzBallCenterState().count : 0, t = n ? "◉ закрыто К1–К" + n : "◉ закрыто 0";
+  const state = window.zzBallCenterState ? window.zzBallCenterState() : { count: 0 }, n = state.count, p = state.progress;
+  const t = (n ? "◉ закрыто К1–К" + n : "◉ закрыто 0") + (p && p.closed ? " · К" + p.ring + " " + p.closed + "/" + p.total : "");
   if (b.textContent !== t) b.textContent = t;
   b.classList.toggle("on", n > 0); b.setAttribute("aria-pressed", String(n > 0));
 }
@@ -5865,12 +5865,12 @@ function coneRow1PartPhase(){
   return center + Math.PI / n - (-Math.PI / 2 + 1.5 * step);
 }
 function coneRow1PartsUi(){
-  const selected = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.cutRow1Slit ? 0 : Z.sunHalf || coneCut2n() ? 2 : 0;
+  const selected = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.cutRow1Slit ? 0 : Z.sunHalf || coneCut2n() && !Z.row1Whole ? 2 : 0;
   for (const [id, n] of [["bRow1Parts2", 2], ["bRow1PartsSym", "sym2"], ["bRow1PartsLast", "last"], ["bRow1Parts3", 3], ["bLaserQuad", 4]]) {
     const b = document.getElementById(id); if (b) { b.classList.toggle("on", selected === n); b.setAttribute("aria-pressed", String(selected === n)); }
   }
-  // v0.952: ○ 1 часть — ни частей, ни щели: строка 1 одним целым битом (в вырезах 2n её нет — там всегда полукольцо)
-  const one = document.getElementById("bRow1Parts1"), whole = !Z.laserQuad && !Z.sunHalf && !Z.cutRow1Slit && !coneCut2n();
+  // v0.1085: explicit «1 часть» overrides the default half-ring in «2n» too.
+  const one = document.getElementById("bRow1Parts1"), whole = !Z.laserQuad && !Z.sunHalf && !Z.cutRow1Slit && (!coneCut2n() || Z.row1Whole);
   if (one) { one.classList.toggle("on", whole); one.setAttribute("aria-pressed", String(whole)); }
   const last = document.getElementById("bRow1PartsLast");
   if (last) { const text = "◈ по последней · " + Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length); if (last.textContent !== text) last.textContent = text; }
@@ -5878,6 +5878,7 @@ function coneRow1PartsUi(){
 function coneRow1PartsSet(n){
   const was = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.sunHalf ? 2 : 0, on = n !== 1 && was !== n;
   if (n !== 1) Z.row1Parts = n;   // v0.952: «1 часть» помнит прежний выбор частей
+  Z.row1Whole = n === 1;
   Z.laserQuad = on && n !== 2; Z.sunHalf = on && n === 2;
   if (on || n === 1) { Z.cutRow1Slit = false; const b = document.getElementById("bRow1Slit"); if (b) b.classList.remove("on"); }
   const half = document.getElementById("bSunHalf"); if (half) half.classList.toggle("on", !!Z.sunHalf);
@@ -7731,6 +7732,11 @@ function setupCone(){
     const sync = () => { $("bConeBallImpact").textContent = Z.coneBallImpact === "bounce" ? "удар: отскок" : "удар: застрять"; };
     sync(); $("bConeBallImpact").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallImpact = Z.coneBallImpact === "bounce" ? "stick" : "bounce"; sync(); if (window.zzBallInwardPrime) window.zzBallInwardPrime(); save(); renderCone(); };   // v0.1070: стартовое состояние «В центр» — сразу
   }
+  if ($("bConeBallAbsorb")) {
+    const sync = () => { const b = $("bConeBallAbsorb"); b.classList.toggle("on", !!Z.coneBallAbsorb); b.setAttribute("aria-pressed", String(!!Z.coneBallAbsorb)); };
+    sync(); $("bConeBallAbsorb").onclick = () => { Z.coneBallAbsorb = !Z.coneBallAbsorb; sync(); save(); renderCone();
+      say(Z.coneBallAbsorb ? "ПоглотБит: шарик, записавший новый 1 или 0 в бит, поглощается. Остальные остаются в опыте." : "ПоглотБит выключено: запись бита не поглощает шарик."); };
+  }
   if ($("bConeBallZeroBounce")) {
     const sync = () => { const b = $("bConeBallZeroBounce"); b.classList.toggle("on", !!Z.coneBallZeroBounce); b.setAttribute("aria-pressed", String(!!Z.coneBallZeroBounce)); };
     sync(); $("bConeBallZeroBounce").onclick = () => {
@@ -7762,17 +7768,17 @@ function setupCone(){
     autoSet(false); fillCommit();
     if (Z.rows.length !== N0 + 1) { say("● В центр: открыто только внешнее кольцо, но кольцо за чертой в строки не ушло — следующий запуск не начат."); return false; }
     const key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
-    Z.coneBallClosed = { key, n: st };
+    Z.coneBallClosed = { ...Z.coneBallClosed, key, n: st };
     if (m0) Z.coneBallEmpty = { key, m: m0.concat([f0.split("").map(c => c === "." ? "1" : "0").join("")]) };
     save();
-    const ok = coneBallInLaunch();
+    const ok = coneBallInLaunch(true);
     say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
     return ok;
   };
-  function coneBallInLaunch(){
+  function coneBallInLaunch(keepRun = false){
     if (!window.zzBallLaunch) return false;
     Z.coneBallAuto = true; Z.coneBallArc = false;
-    const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:true,mark:false,chain:false});
+    const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:true,mark:false,chain:false,keepRun});
     { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
       const P = ok && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null;
       if (P) setTimeout(() => say("● " + coneInwardForecastText(P) + "."), A ? 4200 : 1600);   // v0.1060: прогноз до хода опыта
@@ -7780,7 +7786,7 @@ function setupCone(){
         : A.count ? `● Авто: скорость ×${(Math.round(A.mult * 100) / 100).toString().replace(".", ",")} от базовой${A.bitSec ? ` (базовая — 1 кольцо, пока К${A.outer + 1} поворачивается на бит, ${A.bitSec.toFixed(2).replace(".", ",")} с)` : ""} — в К${A.ring + 1} зайдут ${A.count} из ${A.total} (больше при одной скорости не бывает).`
         : `● Авто: ни при какой скорости группа не попадает в щели К${A.ring + 1} — едут с базовой.`), 1600); }
     const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
-    say(ok ? "● В центр: вся внешняя группа. Первый дошедший закрывает К1; попадание в закрытый центр закрывает следующее кольцо. До закрытия удар — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
+    say(ok ? "● В центр: вся внешняя группа. Каждый дошедший до центра закрывает свою щель. Кольцо закрывается целиком только после всех его щелей; повторное попадание в ту же щель не добавляет закрытие. Удар в дугу — " + (Z.coneBallImpact === "bounce" ? "отскок." : "застревание.") : closed >= Z.rows.length + (coneGeom?.fill ? 1 : 0) ? "Все кольца закрыты — сброс снова откроет щели." : "Не удалось запустить — подсказка в группе «Шарики».");
     return ok;
   }
   if ($("bConeBallClosed")) {   // v0.1063: «как мне начать с 5 строки при закрытых 3 кольцах?» — щелчок +1, правая кнопка −1 (по кругу)
@@ -8267,7 +8273,7 @@ function setupCone(){
   }
   if ($("bRow1Slit")) {   // v0.745: ▮ щель 1 — у строки 1 в вырезах T−1 щель
     $("bRow1Slit").classList.toggle("on", !!Z.cutRow1Slit);
-    $("bRow1Slit").onclick = () => { Z.cutRow1Slit = !Z.cutRow1Slit; $("bRow1Slit").classList.toggle("on", Z.cutRow1Slit); coneWallWas = undefined; coneClockWas = null; save(); renderCone();
+    $("bRow1Slit").onclick = () => { Z.cutRow1Slit = !Z.cutRow1Slit; if (Z.cutRow1Slit) { Z.laserQuad = false; Z.sunHalf = false; } Z.row1Whole = !Z.cutRow1Slit; $("bRow1Slit").classList.toggle("on", Z.cutRow1Slit); coneRow1PartsUi(); coneWallWas = undefined; coneClockWas = null; lasDepsK = ""; save(); renderCone();
       say(Z.cutRow1Slit ? "▮ Щель 1: в вырезах T−1 у строки 1 есть щель — лазер выходит из неё, только когда щель на луче; солнце — внутри, светит только из щели (крутится с кольцом строки 1, ширина — «щель»)." : "▮ Щель 1 выключено: в вырезах строка 1 прозрачна, лазер идёт мимо."); };
   }
   if ($("bMoonCross")) {   // v0.872: ☾ крестом — луна поворотом на 90°
