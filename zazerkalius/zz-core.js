@@ -13,6 +13,48 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Четвёрка зеркал ─────────────────────────────────────────────────────────────────────── */
+// Motion uses reduced fractions with arbitrary-size integer numerators and denominators.
+// Angles and arc motion are fractions of a complete turn, not radian distances.
+const ZZExact = (() => {
+  const gcd = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) [a, b] = [b, a % b]; return a; };
+  class Fraction {
+    constructor(n, d = 1n) {
+      if (!d) throw new RangeError("Zero denominator");
+      if (d < 0n) { n = -n; d = -d; }
+      const g = gcd(n, d); this.n = n / g; this.d = d / g;
+    }
+    add(value) { const b = from(value), g = gcd(this.d, b.d); return new Fraction(this.n * (b.d / g) + b.n * (this.d / g), this.d / g * b.d); }
+    sub(value) { return this.add(from(value).neg()); }
+    mul(value) { const b = from(value), g = gcd(this.n, b.d), h = gcd(b.n, this.d); return new Fraction(this.n / g * (b.n / h), this.d / h * (b.d / g)); }
+    div(value) { const b = from(value); return this.mul(new Fraction(b.d, b.n)); }
+    neg() { return new Fraction(-this.n, this.d); }
+    abs() { return this.n < 0n ? this.neg() : this; }
+    sign() { return this.n < 0n ? -1 : this.n > 0n ? 1 : 0; }
+    cmp(value) { const b = from(value), n = this.n * b.d - b.n * this.d; return n < 0n ? -1 : n > 0n ? 1 : 0; }
+    eq(value) { const b = from(value); return this.n === b.n && this.d === b.d; }
+    floor() { return this.n >= 0n ? this.n / this.d : -((-this.n + this.d - 1n) / this.d); }
+    ceil() { return -this.neg().floor(); }
+    mod(value = 1) { const b = from(value); return this.sub(b.mul(this.div(b).floor())); }
+    number() { return Number(this.n) / Number(this.d); }
+    text() { return this.d === 1n ? String(this.n) : this.n + "/" + this.d; }
+    toJSON() { return this.text(); }
+  }
+  function from(value = 0, denominator) {
+    if (denominator !== undefined) return from(value).div(from(denominator));
+    if (value instanceof Fraction) return value;
+    if (typeof value === "bigint") return new Fraction(value);
+    const text = String(value).trim().replace(",", ".");
+    if (text.includes("/")) { const p = text.split("/"); if (p.length !== 2) throw new TypeError("Invalid fraction"); return from(p[0]).div(from(p[1])); }
+    const m = /^([+-]?)(\d*)(?:\.(\d*))?(?:e([+-]?\d+))?$/i.exec(text);
+    if (!m || !(m[2] || m[3])) throw new TypeError("Invalid exact number: " + text);
+    let n = BigInt((m[2] || "0") + (m[3] || "")), d = 1n;
+    const scale = (m[3] || "").length - Number(m[4] || 0);
+    if (scale > 0) d = 10n ** BigInt(scale); else n *= 10n ** BigInt(-scale);
+    return new Fraction(m[1] === "-" ? -n : n, d);
+  }
+  return {from,gcd,min:(a, b) => from(a).cmp(b) <= 0 ? from(a) : from(b),max:(a, b) => from(a).cmp(b) >= 0 ? from(a) : from(b)};
+})();
+
 function zzInv(s){ let o = ""; for (let i = 0; i < s.length; i++) o += s[i] === "1" ? "0" : "1"; return o; }
 function zzRev(s){ return s.split("").reverse().join(""); }
 function zzInvRev(s){ return zzInv(zzRev(s)); }

@@ -1005,11 +1005,15 @@ function fillUncommit(){
   return true;
 }
 // Preserve the physical phase when a ball's outer ring changes from draft to row.
-function fillBallKeepPhase(before, index){
-  if (!before || !before.rings[index]) return;
-  const R = coneRingFeat(index); if (!R) return;
-  coneRot[index] = (coneRot[index] || 0) + (-R.x0 * R.step - before.rings[index].phase) / R.step;
-  if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[index] = true;
+function fillBallKeepPhase(before,index){
+  if (!before) return;
+  for (let i = 0; i < before.rings.length && i < Z.rows.length; i++) {
+    const R = coneMotionRing(i), old = before.rings[i].phaseQ;
+    if (R.phase.eq(old)) continue;
+    const rotation = coneMotionRead("rotation:" + i,coneRot[i] || 0).add(R.phase.sub(old).mul(R.P));
+    coneRot[i] = coneMotionWrite("rotation:" + i,rotation);
+    if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[i] = true;
+  }
   Z.coneRot = coneRot.slice();
   if (window.zzBallAfterGrow) window.zzBallAfterGrow(before);
 }
@@ -2722,11 +2726,11 @@ function coneRunStatsSync(cv, R, dpr, cx){
     turns.style.maxHeight = Math.max(100, Math.min(240, R.height - 65)) + "px";
   }
   const moving = data.rings.reduce((n, r) => n + r.moving, 0), waiting = data.rings.reduce((n, r) => n + r.waiting, 0), lost = data.rings.reduce((n, r) => n + r.lost, 0);
-  const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.seconds.toFixed(data.simultaneous ? 6 : 2) + " с · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
+  const lines = [(data.paused ? "Пауза" : "Запуск") + " · " + data.elapsedTurns + " оборота К1 · всего " + data.launched + " · едут " + moving + " · ждут " + waiting,
     "В центре " + data.reachedCenter + " · вышло " + data.exited + " · застряло " + lost + (data.absorbed ? " · поглощено " + data.absorbed : "") + (data.removed ? " · снято при смене колец " + data.removed : "") + (data.closedCount ? " · закрыто К1–К" + data.closedCount : ""),
-    ["", Z.coneBallRoute === "in" ? "1 · авто в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speed.toFixed(3) + " колец/с" + coneInwardBaseText(data) + (data.period ? " · T₀ " + data.period.toFixed(3) + " с" : "")];
+    ["", Z.coneBallRoute === "in" ? "1 · авто в центр" : "1 · авто", "2 · оборот К1", "3 · ½ оборота К1"][data.mode] + " · " + data.speedExact + " " + data.speedUnit + coneInwardBaseText(data) + (data.period ? " · T₀ " + data.periodExact + " оборота К1" : "")];
   data.rings.forEach((r, k) => { lines.push("К" + (k + 1) + (k < data.closedCount ? " закрыто" : k === Z.rows.length ? " за чертой" : "") + ": вход " + r.entered + " · проход " + r.passed + " · едут " + r.moving + " · ждут " + r.waiting + " · удары " + r.hits,
-    "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · +0: " + (r.zeros || 0) + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turns) : r.turns.toFixed(3))); });
+    "  застряли " + r.lost + " · отскоки " + r.bounces + " · +1: " + r.marks + " · +0: " + (r.zeros || 0) + " · разв. " + r.reversals + " · " + (window.zzBallTurnsFraction ? window.zzBallTurnsFraction(r.turnsExact) : r.turnsExact)); });
   { const P = Z.coneBallRoute === "in" && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null; if (P) lines.splice(3, 0, coneInwardForecastText(P)); }   // v0.1060: прогноз рядом с фактом
   if (data.simultaneous) lines.splice(1, 0, "Одновременно: " + data.simultaneous.events.map(e => "шарик " + e.number + " → " + e.ring).join("; ") + ". ▶ — продолжить");
   const text = lines.join("\n"), textEl = el.querySelector(".cone-run-text"); if (textEl.textContent !== text) textEl.textContent = text;
@@ -2776,7 +2780,7 @@ function coneRunPanelsPaint(g, R, dpr, cT){
 /* v0.1063: базовая «В центр» — 1 кольцо, пока внешнее поворачивается на бит; авто — её «×» */
 function coneInwardBaseText(data){
   const A = Z.coneBallRoute === "in" && data.mode === 1 && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;
-  return A && A.bitSec ? " · ×" + (Math.round(A.mult * 100) / 100) + " от базовой (1 кольцо за бит К" + (A.outer + 1) + " = " + A.bitSec.toFixed(2) + " с)" : "";
+  return A && A.bitTurnsExact ? " · ×" + A.multExact + " от базовой (1 кольцо за бит К" + (A.outer + 1) + " = " + A.bitTurnsExact + " оборота К1)" : "";
 }
 /* v0.1063: «◉ закрыто N» — подпись по текущему закрытию (меняется и самим опытом) */
 function coneBallClosedUi(){
@@ -3860,7 +3864,7 @@ function coneCutAlt(){ return Z.coneSlits === "cutA" && coneCutOn(); }
 function coneCutSym(){ return Z.coneSlits === "cutS" && coneCutOn(); }
 function coneCutSpread(){ return coneCutAlt() || coneCutSym(); }
 function cutPer(n){ return (2 * n - 1) / Math.max(1, n); }   // v0.871: шаг бит по кругу в частях
-function cutPos(q, n){ return coneCutAlt() ? 2 * q : coneCutSym() ? q * cutPer(n) : q; }
+function cutPos(q, n){ if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionBitPosition(q,n).number(); return coneCutAlt() ? 2 * q : coneCutSym() ? q * cutPer(n) : q; }
 function cutBit(p, n){
   if (coneCutSym()) { const per = cutPer(n), j = Math.floor(p / per + 1e-9); return j >= 0 && j < n && p - j * per < 1 - 1e-9 ? j : -1; }   // v0.871
   p = Math.floor(p); return coneCutAlt() ? (p % 2 === 0 && p / 2 < n ? p / 2 : -1) : (p < n ? p : -1);
@@ -3941,7 +3945,7 @@ function coneCutOn(){ return coneFlat() && Z.rows.length <= CONE_MAX && coneSlit
    или не запомнено — как «▥ центр». cutMemSave — щелчок по горящей «💾 память»: сдвиг = как кольцо стоит сейчас (вместе с поворотом и фазой кручения),
    затем «на места» (coneCutHome) — кольца не двигаются, а ⟲ и сброс дальше возвращают их сюда. Кольцо за чертой — под своим номером N (ушло в поле —
    место сохраняется). Строка 1 (довод) — не трогается */
-function coneCutOff(i, n){ let m = Z.cutAlign || "p";
+function coneCutOff(i, n){ if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionOff(i,n,true).number(); let m = Z.cutAlign || "p";
   if (m === "m") { const e = Z.cutMem && Z.cutMem[Z.coneSlits] && Z.cutMem[Z.coneSlits][i]; if (e && e[0] === n) return e[1]; m = "c"; }
   // v0.1082: четверть оборота у чётных колец; номер кольца — i + 1, независимо от длины строки.
   const turn = m === "p" && i % 2 ? coneCutP(n) / 4 : 0;
@@ -3951,6 +3955,7 @@ function coneCutOff(i, n){ let m = Z.cutAlign || "p";
   return (m === "l" ? -n : m === "r" ? 0 : i % 2 ? -n / 2 : (coneCutP(n) - n) / 2) + turn; }
 // v0.1083: у цельных колец тот же старт, в единицах их собственных битов.
 function coneFullOff(i, n){
+  if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionOff(i,n,false).number();
   const m = Z.cutAlign || "p";
   if (m === "m") { const e = Z.cutMem && Z.cutMem[Z.coneSlits || "one"] && Z.cutMem[Z.coneSlits || "one"][i]; if (e && e[0] === n) return e[1]; }
   return m === "p" && i % 2 ? n / 4 : 0;
@@ -4538,7 +4543,7 @@ function coneSol3d(){ return !!Z.cone3d && (!!Z.coneTor || !!bipyMode()) && Z.ro
    на плоскости основания (z = 0, там лежит кольцо последней строки), кольца бипирамиды — в масштабе плоского вида */
 function coneFlat(){ return !Z.cone3d || coneSol3d(); }
 function coneTorCut(){ return !!Z.cone3d && !!Z.coneTor && coneSlitMode() === "cut" && Z.rows.length <= CONE_MAX; }
-function coneRotKeep(x, i){ x = x || 0; if (Z.coneFree && Z.coneFree[i]) return Math.round(x * 1e6) / 1e6;   // v0.803: повёрнуто магнитом — как есть
+function coneRotKeep(x, i){ x = x || 0; if (window.zzBallClockOn && window.zzBallClockOn()) return x; if (Z.coneFree && Z.coneFree[i]) return Math.round(x * 1e6) / 1e6;   // v0.803: повёрнуто магнитом — как есть
   return coneCutGeo(i, (Z.rows[i] || "").length).cut || (i >= 1 && coneTorCut()) ? Math.round(x * 2) / 2 : Math.round(x); }
 /* v0.674, «когда лазер T−1 — нужно расставить симметрично вертикали: чётные — между центральными битами, нечётные — по средней части выреза»:
    расстановка v0.673 (накрутка 0) держалась только без своей накрутки — вход в режим оставлял прежнюю, а ⟲ / ⌖✕ при умолчании ⭐ возвращали
@@ -5062,8 +5067,9 @@ function magPosOf(v){ return Math.max(0, Math.min(100, Math.round(100 * Math.log
 function coneMagSp(){ const v = +Z.coneMagSp; return v > 0 ? v : 2; }
 function spinSpUi(){
   const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
-  const f = (x) => x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  const f = x => window.zzBallClockOn && window.zzBallClockOn() ? ZZExact.from(x).text() : x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
+  el.textContent = window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
+    Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
@@ -5140,6 +5146,7 @@ function coneVoidLen(j, N){ const s = Z.rows[N - 1]; return (s ? s.length : 0) +
 /* v0.117: кольцо для заполнения (и v0.127: пустые за ним) — как следующие за нижним кольца: «каждое по биту» — на тот же бит, что
    все; «навстречу» — по своей чётности. Ручной накрутки у них нет. */
 function coneVoidRot(j, n){
+  if (window.zzBallClockOn && window.zzBallClockOn()) { const fill = j === Math.min(Z.rows.length,CONE_MAX); return coneMotionRot(j,n,fill).value.sub(fill ? coneMotionRead("fill.rotation",Z.coneFillTurn || 0) : 0).number(); }
   const m = Z.coneSpinMode || "all", ph = coneRingPh(j);   // v0.138
   const base = coneSlitMode() !== "cut" ? -coneFullOff(j, n) : 0;
   if (m === "bit") return base - ph * coneBitF(j, n);   // v0.769
@@ -5169,11 +5176,19 @@ function coneFrozen(){ const V = Z.voidHits; if (!V) return null; if (!V.fz || t
    Z.ringPhOff[N], fillStillCommit; сбрасывается в coneHoldClear вместе с фазой). Во «Всё» весь конус — один поворот, кнопка не действует */
 function fillStillOn(){ return !!Z.fillStill && (Z.coneSpinMode || "all") !== "all"; }
 function coneFillSpin(){ const N = Math.min(Z.rows.length, CONE_MAX), n = fillLen(), s = Z.fillStill; Z.fillStill = false; const v = coneVoidRot(N, n); Z.fillStill = s; return v + (coneSlitMode() !== "cut" ? coneFullOff(N, n) : 0); }   // только кручение, без стартового положения
-function fillStillCommit(N){ if (!fillStillOn()) return; if (!Z.ringPhOff || typeof Z.ringPhOff !== "object") Z.ringPhOff = {}; Z.ringPhOff[N] = (Z.ringPhOff[N] || 0) - coneRingPh(N); }   // свой сдвиг: Z.voidHits пересоздаётся при смене числа строк
-function coneRingPh(i){   // v0.191: отпущенное кольцо крутится дальше со своего места — со сдвигом Z.voidHits.off[i]
+function fillStillCommit(N){
+  if (!fillStillOn()) return;
+  if (!Z.ringPhOff || typeof Z.ringPhOff !== "object") Z.ringPhOff = {};
+  Z.ringPhOff[N] = window.zzBallClockOn && window.zzBallClockOn() ?
+    coneMotionWrite("phase.offset:" + N,coneMotionRead("phase.offset:" + N,Z.ringPhOff[N] || 0).sub(coneMotionPhase(N).value)) :
+    (Z.ringPhOff[N] || 0) - coneRingPh(N);
+}   // свой сдвиг: Z.voidHits пересоздаётся при смене числа строк
+function coneRingPh(i){
+  if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionPhase(i).value.number();   // v0.191: отпущенное кольцо крутится дальше со своего места — со сдвигом Z.voidHits.off[i]
   if (fillStillOn() && i >= Math.min(Z.rows.length, CONE_MAX)) return 0;   // v0.913: ⏸ за чертой — кольцо за чертой и пустые стоят
-  const V = Z.voidHits, fz = V && V.fz; if (fz && fz[i] !== undefined) return fz[i];
-  const H = Z.coneHold; if (H && H[i] !== undefined) return H[i];   // v0.870: «крутятся 2 последних» — кольцо стоит на фазе, где встало
+  const firstClock = i === 0 && window.zzBallClockOn && window.zzBallClockOn();
+  const V = Z.voidHits, fz = V && V.fz; if (!firstClock && fz && fz[i] !== undefined) return fz[i];
+  const H = Z.coneHold; if (!firstClock && H && H[i] !== undefined) return H[i];   // v0.870: «крутятся 2 последних» — кольцо стоит на фазе, где встало
   return (Z.coneSpinPh || 0) + ((V && V.off && V.off[i]) || 0) + ((Z.coneHoldOff && Z.coneHoldOff[i]) || 0) + ((Z.ringPhOff && Z.ringPhOff[i]) || 0);   // v0.913: + сдвиг кольца, ушедшего из-за черты при «⏸ за чертой»
 }
 /* v0.870, «нужен режим, когда при переходе на внешнее кольцо — остановка предыдущих, когда крутятся только 2 последних кольца»: «2 посл.»
@@ -5182,24 +5197,34 @@ function coneRingPh(i){   // v0.191: отпущенное кольцо крут�
    фаза } — стоящие; отпущенное (строку убрали, режим выключен) крутится дальше со своего места — сдвиг в Z.coneHoldOff. Действует в
    «Каждое», «Встреч Стр», «Встреч Бит» и «▦ побитно» (там стоящие строки не сдвигаются); во «Всё» весь конус — один поворот, держать нечего.
    coneHoldSync — привести набор стоящих к нынешнему числу строк: зовётся из renderCone, после ухода строки в поле и возврата, при переключении */
-function coneHeld(i){ return !!Z.coneLast2 && i < Math.min(Z.rows.length, CONE_MAX) - 1; }
+function coneHeld(i){ return !(i === 0 && window.zzBallClockOn && window.zzBallClockOn()) && !!Z.coneLast2 && i < Math.min(Z.rows.length, CONE_MAX) - 1; }
 function coneHoldSync(){
-  const H = Z.coneHold && typeof Z.coneHold === "object" ? Z.coneHold : null, N = Math.min(Z.rows.length, CONE_MAX);
+  const H = Z.coneHold && typeof Z.coneHold === "object" ? Z.coneHold : null, N = Math.min(Z.rows.length,CONE_MAX);
   if (!Z.coneLast2 && !(H && Object.keys(H).length)) return;
-  const live = (i) => { const V = Z.voidHits; return (Z.coneSpinPh || 0) + ((V && V.off && V.off[i]) || 0) + ((Z.coneHoldOff && Z.coneHoldOff[i]) || 0); };
-  if (H) for (const k of Object.keys(H)) { const i = +k; if (coneHeld(i)) continue;   // отпустить — без скачка: дальше со своего места
-    if (i < N) { const O = Z.coneHoldOff && typeof Z.coneHoldOff === "object" ? Z.coneHoldOff : (Z.coneHoldOff = {}); O[i] = (O[i] || 0) + H[i] - live(i); }
-    delete H[k]; }
+  const exact = window.zzBallClockOn && window.zzBallClockOn();
+  const live = i => { const V = Z.voidHits; return (Z.coneSpinPh || 0) + ((V && V.off && V.off[i]) || 0) + ((Z.coneHoldOff && Z.coneHoldOff[i]) || 0); };
+  const liveQ = i => coneMotionClock().phase.add(coneMotionRead("offset:" + i,Z.voidHits?.off?.[i] || 0)).add(coneMotionRead("hold.offset:" + i,Z.coneHoldOff?.[i] || 0));
+  if (H) for (const k of Object.keys(H)) {
+    const i = +k; if (coneHeld(i)) continue;
+    if (i < N) {
+      const O = Z.coneHoldOff && typeof Z.coneHoldOff === "object" ? Z.coneHoldOff : (Z.coneHoldOff = {});
+      O[i] = exact ? coneMotionWrite("hold.offset:" + i,coneMotionRead("hold.offset:" + i,O[i] || 0).add(coneMotionRead("held:" + i,H[i])).sub(liveQ(i))) : (O[i] || 0) + H[i] - live(i);
+    }
+    delete H[k];
+  }
   if (!Z.coneLast2) return;
   const HH = H || (Z.coneHold = {});
-  for (let i = 0; i < N - 1; i++) if (HH[i] === undefined) HH[i] = live(i);
+  for (let i = 0; i < N - 1; i++) if (coneHeld(i) && HH[i] === undefined) HH[i] = exact ? coneMotionWrite("held:" + i,liveQ(i)) : live(i);
 }
 function coneHoldClear(){ delete Z.coneHold; delete Z.coneHoldOff; delete Z.ringPhOff; }   // ⟲ на места, сброс кручения — фазы с нуля
 function coneRingFrozen(i){ const fz = Z.voidHits && Z.voidHits.fz; return !!fz && fz[i] !== undefined; }
-function coneReleaseRings(){   // v0.191: остановленные кольца — отпустить, не сдвигая: их нынешняя фаза становится сдвигом; → сколько отпущено
+function coneReleaseRings(){
   const V = Z.voidHits; if (!V || !V.fz) return 0;
-  const ph = Z.coneSpinPh || 0, off = V.off && typeof V.off === "object" ? V.off : (V.off = {}); let n = 0;
-  for (const k of Object.keys(V.fz)) { off[k] = V.fz[k] - ph; n++; }
+  const ph = Z.coneSpinPh || 0, off = V.off && typeof V.off === "object" ? V.off : (V.off = {}), exact = window.zzBallClockOn && window.zzBallClockOn();
+  let n = 0;
+  for (const k of Object.keys(V.fz)) {
+    off[k] = exact ? coneMotionWrite("offset:" + k,coneMotionRead("frozen:" + k,V.fz[k]).sub(coneMotionClock().phase)) : V.fz[k] - ph; n++;
+  }
   V.fz = {}; return n;
 }
 /* v0.202, «убери то, что по умолчанию сейчас лазер, когда уходит, — до 8 лазеров, потом следующие; это надо вкл/выкл»: переход к следующему
@@ -5249,7 +5274,7 @@ function coneFreezePassed(R){   // кольца, из которых луч вы
 /* v0.704, «в режиме лазера дай крутить последнее кольцо руками»: кольцо за чертой крутится мышью с Ctrl (как прочие кольца, v0.248) — свой поворот
    Z.coneFillTurn (в ячейках, в вырезах — в частях) поверх кручения; отпустил — на целую ячейку (в вырезах — на половину части). Ушла строка в поле — поворот
    переходит к кольцу этой строки (coneRot), у новой строки за чертой — 0; ⟲ и вход в вырезы — тоже 0 */
-function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); return coneVoidRot(N, fillLen()) + (Z.coneFillTurn || 0); }
+function coneFillRot(){ const N = Math.min(Z.rows.length, CONE_MAX); if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionRot(N,fillLen(),true).value.number(); return coneVoidRot(N, fillLen()) + (Z.coneFillTurn || 0); }
 /* v0.675, по снимку строки для заполнения под чертой — «в режиме T−1 рисуй кольцо за чертой также с вырезом, и для битов части покажи их все»: кольцо
    для заполнения (на бит длиннее нижней строки, n) в вырезах — как кольца строк: 2n − 1 частей, n — его ячейки (каждая видна своим контуром), n − 1 —
    вырез; сдвиг — по чётности, как у строк (coneCutGeo). Луч в ячейку — ловится, в вырез — идёт дальше, к пустым кольцам. null — не в вырезах */
@@ -5310,6 +5335,79 @@ function coneRingFeat(i){
   const r1 = i === 0 && n === 1 && !cut && !coneQuadOn() && !coneHalfOn();   // v0.1043: кольцо 1 из одного бита — одна грань (разрез), без «середины» = прямой напротив
   return { n, cut, step, P, x0, sp: cut && coneCutSpread(), one: typeof i === "number" && i >= 1 && !cut && coneOneSlit(), xc, r1 };
 }
+// Exact source of rotation and geometry for balls; Number projections only feed canvas/UI compatibility.
+function coneMotionRead(slot, value, derived){
+  const M = Z.motionExact && typeof Z.motionExact === "object" ? Z.motionExact : (Z.motionExact = {}), old = M[slot];
+  if (old && old.view === value) return ZZExact.from(old.value);
+  const q = derived && derived.number() === value ? derived : ZZExact.from(value || 0);
+  M[slot] = {view:value || 0,value:q.toJSON()}; return q;
+}
+function coneMotionWrite(slot, value, projection){
+  const q = ZZExact.from(value), view = projection === undefined ? q.number() : projection;
+  if (!Z.motionExact || typeof Z.motionExact !== "object") Z.motionExact = {};
+  Z.motionExact[slot] = {view,value:q.toJSON()}; return view;
+}
+function coneMotionClock(){ return {phase:coneMotionRead("clock.phase", Z.coneSpinPh || 0), degrees:coneMotionRead("clock.degrees", Z.coneSpin || 0)}; }
+function coneMotionSetClock(phase, degrees){ Z.coneSpinPh = coneMotionWrite("clock.phase", phase); Z.coneSpin = coneMotionWrite("clock.degrees", degrees, ZZExact.from(degrees).mod(360).number()); }
+function coneMotionAdvance(dt){
+  const c = coneMotionClock(), sp = ZZExact.from(Z.coneAutoSp ?? 30), time = ZZExact.from(dt), mode = Z.coneSpinMode || "all";
+  if (mode === "all") coneMotionSetClock(c.phase, c.degrees.add(sp.mul(time)));
+  else coneMotionSetClock(c.phase.add(sp.mul(time).div(coneBitMode(mode) ? 10 : 1)), c.degrees);
+}
+function coneMotionOff(i, n, cut){
+  const q = ZZExact.from, m0 = Z.cutAlign || "p";
+  let m = m0;
+  if (m === "m") {
+    const e = Z.cutMem && Z.cutMem[Z.coneSlits || "one"] && Z.cutMem[Z.coneSlits || "one"][i];
+    if (e && e[0] === n) return coneMotionRead("memory:" + (Z.coneSlits || "one") + ":" + i, e[1]);
+    m = "c";
+  }
+  if (!cut) return m0 === "p" && i % 2 ? q(n, 4) : q(0);
+  const turn = m === "p" && i % 2 ? q(coneCutP(n), 4) : q(0); if (m === "p") m = "c";
+  if (Z.coneSlits === "cutA" && m === "c") return q(n).sub(q(1, 2)).neg().add(turn);
+  if (Z.coneSlits === "cutS") return q(m === "l" ? -1 : m === "r" ? 0 : "-1/2").add(turn);
+  return (m === "l" ? q(-n) : m === "r" ? q(0) : i % 2 ? q(-n, 2) : q(coneCutP(n) - n, 2)).add(turn);
+}
+function coneMotionPhase(i){
+  const q = ZZExact.from, c = coneMotionClock(), V = Z.voidHits;
+  if (fillStillOn() && i >= Math.min(Z.rows.length, CONE_MAX)) return {value:q(0),moving:false};
+  const off = V && V.off && V.off[i] || 0, holdOff = Z.coneHoldOff && Z.coneHoldOff[i] || 0;
+  const live = c.phase.add(coneMotionRead("offset:" + i, off)).add(coneMotionRead("hold.offset:" + i, holdOff));
+  const firstClock = i === 0 && window.zzBallClockOn && window.zzBallClockOn();
+  if (!firstClock && V && V.fz && V.fz[i] !== undefined) return {value:coneMotionRead("frozen:" + i, V.fz[i], live),moving:false};
+  if (!firstClock && Z.coneHold && Z.coneHold[i] !== undefined) return {value:coneMotionRead("held:" + i, Z.coneHold[i], live),moving:false};
+  return {value:live.add(coneMotionRead("phase.offset:" + i, Z.ringPhOff && Z.ringPhOff[i] || 0)),moving:true};
+}
+function coneMotionRot(i, n, fill){
+  const q = ZZExact.from, mode = Z.coneSpinMode || "all", ph = coneMotionPhase(i);
+  let base = fill ? coneMotionRead("fill.rotation", Z.coneFillTurn || 0) : coneMotionRead("rotation:" + i, coneRot[i] || 0);
+  if (coneSlitMode() !== "cut") base = base.sub(coneMotionOff(i, n, false));
+  if (!fill && i === 0) base = base.sub(coneMotionRead("aim.rotation", Z.coneAimRot || 0).mul(n).div(360));
+  const sign = (mode === "obit" || mode === "opp") && i % 2 ? -1 : 1;
+  let factor = q(0);
+  if (coneBitMode(mode)) factor = conePrevStep() && i > 0 ? q(n, coneRingLenJ(i - 1)) : q(1);
+  else if (mode === "opp") factor = q(n, 360);
+  return {value:base.sub(ph.value.mul(factor).mul(sign)),
+    coefficient:ph.moving ? factor.mul(sign).neg().mul(mode === "opp" ? 360 : 1) : q(0)};
+}
+function coneMotionPartPhase(){
+  const q = ZZExact.from;
+  if (Z.row1Parts !== "sym2" && Z.row1Parts !== "last") return q(0);
+  const k = Z.row1Parts === "last" ? Z.rows.length - 1 : Math.min(1, Z.rows.length - 1), n = Math.max(1, (Z.rows[k] || "1").length);
+  const cut = k >= 1 && coneCutOn(), P = cut ? coneCutP(n) : n;
+  return coneMotionOff(k, n, cut).add(q(1, 2)).div(P).add(q(1, 2 * n)).sub(q(3, 2 * conePartCount()));
+}
+function coneMotionRing(i){
+  const q = ZZExact.from, N = Math.min(Z.rows.length, CONE_MAX), fill = i === N, n0 = fill ? fillLen() : (Z.rows[i] || "").length;
+  let n = n0, cut = fill ? !!coneFillCut() : i >= 1 && coneCutOn(), P = cut ? coneCutP(n) : n;
+  const rot = coneMotionRot(i, n0, fill); let x = rot.value;
+  if (!fill && i === 0 && coneQuadOn()) { n = conePartCount(); P = n; x = x.sub(coneMotionPartPhase().mul(P)); }
+  else if (!fill && i === 0 && coneHalfOn()) { n = 2; P = 2; x = x.sub(q(1, 2)); }
+  else if (cut) x = x.sub(coneMotionOff(i, n, true));
+  const aim = q(-1, 4).sub(coneMotionRot(0, (Z.rows[0] || "1").length, false).value.div((Z.rows[0] || "1").length));
+  return {n,P,cut,phase:x.neg().div(P),coefficient:rot.coefficient.neg().div(P),aim};
+}
+function coneMotionBitPosition(j, n){ return coneCutAlt() ? ZZExact.from(2 * j) : coneCutSym() ? ZZExact.from(j * (2 * n - 1), n) : ZZExact.from(j); }
 function coneFeatEdges(R){
   if (R.one) return [0];   // v0.1033: «N щель» — одна грань, сама щель
   if (R.xc !== undefined) return [R.xc];   // v0.1041: строка 1 без вырезов — её щель
@@ -5871,6 +5969,7 @@ function coneSunSlitArc(){ if ((Z.rows[0] || "1")[0] === "0") return [[0, TAU2]]
 function coneQuadOn(){ return !!Z.laserQuad && coneCutOn(); }   // v0.1016: деление строки 1 тоже сохраняется без света
 function conePartCount(){ return Z.row1Parts === "last" ? 2 * Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length) : Z.row1Parts === 3 ? 3 : 4; }
 function coneRow1PartPhase(){
+  if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionPartPhase().number() * TAU2;
   if (Z.row1Parts !== "sym2" && Z.row1Parts !== "last") return 0;
   const k = Z.row1Parts === "last" ? Z.rows.length - 1 : Math.min(1, Z.rows.length - 1);
   const n = Math.max(1, (Z.rows[k] || "1").length), C = coneCutGeo(k, n), step = TAU2 / conePartCount();
@@ -6899,10 +6998,10 @@ window.zzStartMark = coneStartMark; window.zzStartApply = coneStartApply;
 function posCur(){
   const V = Z.voidHits, off = {}; if (V && V.off && typeof V.off === "object") for (const [k, v] of Object.entries(V.off)) if (Math.abs(+v || 0) > 1e-9) off[k] = v;
   return { rot: coneRot.slice(0, Z.rows.length).map(x => x || 0), spin: Z.coneSpin || 0, ph: Z.coneSpinPh || 0, aim: Z.coneAimRot || 0, ft: Z.coneFillTurn || 0,
-           off, free: posCopy(Z.coneFree), mode: Z.coneSpinMode || "all" };
+           off, exact:posCopy(Z.motionExact), free: posCopy(Z.coneFree), mode: Z.coneSpinMode || "all" };
 }
 function posEq(a, b){
-  const ne = (x, y) => Math.abs((+x || 0) - (+y || 0)) > 1e-6, n = a.rot.length;   // a — нынешнее: только кольца, что есть сейчас
+  const ne = (x, y) => !ZZExact.from(x || 0).eq(y || 0), n = a.rot.length;   // a — нынешнее: только кольца, что есть сейчас
   for (let i = 0; i < n; i++) if (ne(a.rot[i], (b.rot || [])[i])) return false;
   if (ne(a.spin, b.spin) || ne(a.ph, b.ph) || ne(a.aim, b.aim) || ne(a.ft, b.ft)) return false;
   for (const k of new Set([...Object.keys(a.off || {}), ...Object.keys(b.off || {})])) if (ne((a.off || {})[k], (b.off || {})[k])) return false;
@@ -6916,6 +7015,7 @@ function posApply(p){
   coneHoldClear(); Z.coneSpin = p.spin || 0; Z.coneSpinPh = p.ph || 0; Z.coneAimRot = p.aim || 0; Z.coneFillTurn = p.ft || 0;   // v0.870: положение — с фазы положения (v0.883: комментарий стоял посреди строки и съедал довод и кольцо за чертой)
   if (p.mode && p.mode !== (Z.coneSpinMode || "all")) { Z.coneSpinMode = p.mode; const s = $("coneSpinMode"); if (s) s.value = p.mode; spinSpUi(); coneSpinModeUi(); }
   Z.coneClockN = 0; coneClockFlash = []; coneLaserResetAll(); if (Z.voidHits && p.off && Object.keys(p.off).length) Z.voidHits.off = posCopy(p.off);
+  if (p.exact) Z.motionExact = posCopy(p.exact); else delete Z.motionExact;
   coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass);
 }
 function posPopOpen(anchor){
@@ -7020,6 +7120,7 @@ function coneLocked(i){ const L = Z.coneLocks; return L && L[i] !== undefined ? 
 let coneVeil = "";   // v0.213
 function coneFocus(){ return rowSel.size ? [...rowSel] : (document.body.classList.contains("nocur") ? [] : [Z.cur]); }
 function coneRotOf(i){
+  if (window.zzBallClockOn && window.zzBallClockOn()) return coneMotionRot(i,(Z.rows[i] || "1").length,false).value.number();
   let base = coneRot[i] || 0; const m = Z.coneSpinMode || "all", ph = coneRingPh(i);   // v0.138: остановленное кольцо — на своей фазе
   if (coneSlitMode() !== "cut") base -= coneFullOff(i, (Z.rows[i] || "").length || 1);
   if (i === 0 && Z.coneAimRot) base -= Z.coneAimRot / 360 * ((Z.rows[0] || "").length || 1);   // v0.120: строка 1 довёрнута вручную (градусы, по часовой)
@@ -7331,9 +7432,9 @@ function setupCone(){
     // v0.942: the two-ring ball trial has its own passage result. Rotation keeps
     // going at a blocked ball; laser painting and automatic new rows wait.
     if (window.zzBallActive && window.zzBallActive()) {
-      if (m === "all") Z.coneSpin = ((Z.coneSpin || 0) + sp * dt) % 360;
-      else { const p0 = Z.coneSpinPh || 0; Z.coneSpinPh = p0 + (coneBitMode(m) ? sp / 10 : sp) * dt; if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); coneRaySweep(p0, Z.coneSpinPh - p0); }   // v0.1034: засечки и при шариках; v0.1036: вспышки граней
-      tapeRec(); return true;
+      const p0 = Z.coneSpinPh || 0; coneMotionAdvance(dt);
+      if (m !== "all") { if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); coneRaySweep(p0, Z.coneSpinPh - p0); }
+      return true;
     }
     if (m === "all") {
       const s0 = Z.coneSpin || 0, ds = sp * dt;
@@ -7386,7 +7487,7 @@ function setupCone(){
     if (Z.coneClock || coneSunOn()) fillAutoCommit();
     tapeRec();   // v0.720: кадр — на ленту перемотки
     return true;
-    } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt, ballBefore); }
+    } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt,ballBefore); if (ballBefore) tapeRec(); }
   };
   window.zzBallContinueFrame = dt => autoStep(dt);
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
@@ -7523,7 +7624,7 @@ function setupCone(){
      а в историю идут все шаги: «шаг ↷», «½ шаг», |◀ ▶| и нажатие, которое только опускает черту (lasRec). Только в памяти страницы, до 500 шагов */
   const lasHist = [];
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
-    ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
+    exact:posCopy(Z.motionExact),ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
   function lasRec(fn){ tapeRec(); const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
@@ -7547,7 +7648,7 @@ function setupCone(){
     const k = tapeK();
     if (k !== tapeKey || !tapeSt.length) { tapeSt.push(lasSnap()); tapeKey = k; }
     const si = tapeSt.length - 1, ph = Z.coneSpinPh || 0, sp = Z.coneSpin || 0, L = tape[tape.length - 1];
-    if (!L || L.ph !== ph || L.sp !== sp || L.s !== si) { tape.push({ ph, sp, s: si }); if (tape.length > 60000) { tape.splice(0, 20000); } }
+    if (!L || L.ph !== ph || L.sp !== sp || L.s !== si) { tape.push({ph,sp,s:si,phaseExact:coneMotionClock().phase.text(),degreesExact:coneMotionClock().degrees.text()}); if (tape.length > 60000) { tape.splice(0, 20000); } }
     tapeHead = tape.length - 1; tapeAt = si;
     const el = $("coneTape"); if (el && $("coneTapeBox").classList.contains("on")) { el.disabled = tape.length < 2; el.max = tape.length - 1; el.value = tapeHead; } else tapeUi();
   }
@@ -7564,9 +7665,10 @@ function setupCone(){
       if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
       Z.fillCells = S.fill; Z.fillFree = S.ff ?? null; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
       coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm;
+      if (S.exact) Z.motionExact = posCopy(S.exact); else delete Z.motionExact;
       tapeAt = T.s; heavy = true;
     }
-    Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; tapeHead = i; tapeKey = tapeK();
+    if (T.phaseExact !== undefined) coneMotionSetClock(T.phaseExact,T.degreesExact); else { Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; } tapeHead = i; tapeKey = tapeK();
     coneSunWas = new Set(coneSunTrace().hits);   // что светит сейчас — уже учтено: показ ленты ничего не красит
     if (heavy) { renderAll(); coneLogRender(); } else renderCone();
   }
@@ -7957,6 +8059,7 @@ function setupCone(){
     if (S.vh) Z.voidHits = S.vh; else delete Z.voidHits;
     Z.fillCells = S.fill; Z.fillFree = S.ff ?? null; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
     coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm; coneSunWas = S.sun ? new Set(S.sun) : undefined;
+    if (S.exact) Z.motionExact = posCopy(S.exact); else delete Z.motionExact;
     save(); renderAll(); coneLogRender();
     say(`↶ Откат шага${rowsBack ? " (черта поднята обратно)" : ""}: всё как было${lasHist.length ? ` (назад ещё ${lasHist.length})` : ""}.`);
   };

@@ -5,10 +5,25 @@
    The rotation clock owns the experiment. */
 (() => {
   "use strict";
-  const TAU = 2 * Math.PI, EPS = 1e-7, ALIGN = 1e-6;
+  const TAU = 2 * Math.PI;
+  const Q = ZZExact.from, ZERO = Q(0), ONE = Q(1), HALF = Q(1, 2), QUARTER = Q(1, 4);
+  const radians = value => Q(value).number() * TAU;
+  const rawFraction = (ring, raw) => {
+    if (raw && typeof raw.eq === "function") return raw;
+    for (const b of [...ring.blocks, ...(ring.cells || []), ...(ring.contactBlocks || [])]) {
+      if (raw === b.lo) return b.loQ; if (raw === b.hi) return b.hiQ;
+    }
+    throw new TypeError("Угол движения должен быть точной долей оборота");
+  };
+  const angleQ = (S, k, raw) => rawFraction(S.rings[k], raw).add(S.rings[k].phaseQ).add(S.spinQ);
+  const setRaw = (ball, raw) => { ball.rawQ = Q(raw); ball.raw = radians(ball.rawQ); };
+  const projectMotion = ball => {
+    for (const key of ["q", "speed", "elapsed", "travel", "length", "period", "mult"]) if (ball[key + "Q"]) ball[key] = ball[key + "Q"].number();
+    ball.raw = radians(ball.rawQ); ball.ringTurns = ball.ringTurnsQ.map(q => q.number());
+  };
   const $ = id => document.getElementById(id);
-  const norm = a => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
   let F = null, enabled = false, paused = true, cycles = 0, passes = 0;
+  window.zzBallClockOn = () => enabled;
   // v0.1051, «после вылета шарика из 1 кольца сразу же за ним начинает вылет 2 и так далее»: цепочка вылетов из центра (до CHAIN_MAX шариков)
   let chain = false; const CHAIN_MAX = 64;
   /* v0.1073, по снимку «баг: 2-й шарик должен был вылететь во 2-е кольцо» (цепочка, «✕ дуга»): следующий шарик цепочки стартовал в конце кадра,
@@ -16,10 +31,10 @@
      щели, без допусков (v0.1067) шарик бился. Теперь момент выхода из К1 запоминается долей кадра (k1Frac, кадр spinFrame), и новый шарик
      стартует ровно тогда: остаток кадра он проезжает сразу */
   let spinFrame = 0, inwardNextPending = false;
-  const markK1 = (t, next) => { if (F && F.k === 0 && next === 1 && F.k1Frame !== spinFrame) { F.k1Frac = t; F.k1Frame = spinFrame; } };
+  const markK1 = (t, next) => { if (F && F.k === 0 && next === 1 && F.k1Frame !== spinFrame) { F.k1FracQ = Q(t); F.k1Frac = F.k1FracQ.number(); F.k1Frame = spinFrame; } };
   /* v0.1052, «режим: шарик вылетает и упирается в дугу, а не в щель или вырез, — исчезает»; скорость — «сначала автоподстройка на первый вылет первого
-     шарика, и она постоянная дальше всегда»; внутри кольца — «едет по щели». lossRun — вылет из «Граней» с «✕ дуга»; lossSpeed — найденная скорость */
-  let lossRun = false, lossSpeed = 0;
+     шарика, и она постоянная дальше всегда»; внутри кольца — «едет по щели». lossRun — вылет из «Граней» с «✕ дуга»; lossSpeedQ — найденная дробная скорость */
+  let lossRun = false, lossSpeedQ = ZERO;
   /* v0.1055: «1 за чертой» записывает бит только при попадании в его дугу. Щель и открытый вырез пропускают без записи.
      При попадании шарик застревает в бите или отскакивает; все ячейки «1» — строка уходит в поле, вылеты продолжаются, счёт остаётся у строки. */
   let markRun = false, pendingMarks = [], pendingBits = [], markCfg = null;
@@ -52,13 +67,13 @@
   function slitEdges(ring) {
     if (!ring || ring.solid) return [];
     const edges = [];
-    for (const b of ring.contactBlocks || ring.blocks) for (const raw of [b.lo, b.hi]) {
-      if (!edges.some(e => Math.abs(norm(e - raw)) < ALIGN)) edges.push(raw);
+    for (const b of ring.contactBlocks || ring.blocks) for (const raw of [b.loQ, b.hiQ]) {
+      if (!edges.some(e => e.sub(raw).mod().eq(0))) edges.push(raw);
     }
     return edges;
   }
   function coverSlit(slits, k, ring, raw) {
-    const edges = slitEdges(ring), slot = edges.findIndex(e => Math.abs(norm(e - raw)) < ALIGN);
+    const value = rawFraction(ring, raw), edges = slitEdges(ring), slot = edges.findIndex(e => e.sub(value).mod().eq(0));
     if (slot < 0) return false;
     let progress = slits[k];
     if (!progress || progress.shape !== ring.shape || !Array.isArray(progress.closed)) progress = slits[k] = { shape: ring.shape, closed: [] };
@@ -69,11 +84,12 @@
     const progress = slits[k];
     if (!progress || progress.shape !== ring.shape || !Array.isArray(progress.closed)) return false;
     const edges = slitEdges(ring);
-    return progress.closed.some(slot => Number.isFinite(edges[slot]) && Math.abs(norm(edges[slot] - raw)) < ALIGN);
+    const value = rawFraction(ring, raw);
+    return progress.closed.some(slot => edges[slot] && edges[slot].sub(value).mod().eq(0));
   }
   function closeCenterRing(k, S, raw) {
     if (k !== centerCount()) return;
-    if (!S || !S.rings[k] || !Number.isFinite(raw)) return;
+    if (!S || !S.rings[k] || !raw || typeof raw.eq !== "function") return;
     const slits = centerSlits(), complete = coverSlit(slits, k, S.rings[k], raw);
     Z.coneBallClosed = { key: centerKey(), n: centerCount(), slits };
     if (!complete) return;
@@ -90,40 +106,38 @@
   window.zzBallClosedMax = () => { const S = snapshot(); return S ? S.rings.length - 1 : Math.max(0, Z.rows.length - 1); };
   window.zzBallCloseRing = (k, a) => {
     // An explicit call without an angle remains the manual whole-ring override.
-    if (!Number.isFinite(a)) return k === centerCount() ? window.zzBallSetClosed(k + 1) : centerCount();
-    const S = snapshot(); if (S && S.rings[k]) closeCenterRing(k, S, a - S.rings[k].phase - S.spin);
+    if (a === undefined || a === null) return k === centerCount() ? window.zzBallSetClosed(k + 1) : centerCount();
+    const S = snapshot(); if (S && S.rings[k]) closeCenterRing(k,S,Q(a).sub(S.rings[k].phaseQ).sub(S.spinQ));
     return centerCount();
   };
-  const ringStats = k => run && (run.rings[k] ||= { entered: 0, passed: 0, hits: 0, lost: 0, bounces: 0, marks: 0, zeros: 0, reversals: 0, turns: 0 });
+  const ringStats = k => run && (run.rings[k] ||= { entered: 0, passed: 0, hits: 0, lost: 0, bounces: 0, marks: 0, zeros: 0, reversals: 0, turns: 0, turnsQ:ZERO });
   function newRun() {
-    run = { lane: Z.lane | 0, seconds: 0, launched: 0, exited: 0, reachedCenter: 0, removed: 0, mode: [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1, rings: [], results: [] }; stuck = []; resting = [];
+    run = { lane: Z.lane | 0, elapsed:0, elapsedQ:ZERO, launched: 0, exited: 0, reachedCenter: 0, removed: 0, mode: [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1, rings: [], results: [] }; stuck = []; resting = [];
     if (window.zzBallLostReset) window.zzBallLostReset();
   }
   window.zzBallClearRun = (options = {}) => {
     if (!options.keepCenter) clearCenter();
-    run = null; stuck = []; resting = []; F = null; balls = []; pendingMarks = []; pendingBits = []; chain = lossRun = markRun = false; lossSpeed = 0; cycles = passes = 0;
+    inwardAuto = inwardFc = null; run = null; stuck = []; resting = []; F = null; balls = []; pendingMarks = []; pendingBits = []; chain = lossRun = markRun = false; lossSpeedQ = ZERO; cycles = passes = 0;
     if (window.zzBallLostClear) window.zzBallLostClear();
   };
   window.zzBallRunStats = () => {
     if (!run || run.lane !== (Z.lane | 0)) return null;
     const list = (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && b.stage !== "lost" && b.stage !== "done");
-    return { ...run, closedCount: centerCount(), paused, speed: F ? F.speed : 0, period: F ? F.period : null,
-      rings: run.rings.map((r, k) => ({ ...r, moving: list.filter(b => b.k === k && b.stage !== "wait").length, waiting: list.filter(b => b.k === k && b.stage === "wait").length })) };
+    return {...run,reference:"К1",elapsedTurns:run.elapsedQ.text(),closedCount:centerCount(),paused,
+      speed:F ? F.speed : 0,speedExact:F ? F.speedQ.text() : "0",speedUnit:F?.stage === "arc" ? "оборотов/оборот К1" : "колец/оборот К1",
+      period:F ? F.period : null,periodExact:F?.periodQ ? F.periodQ.text() : null,
+      rings:run.rings.map((r,k) => ({...r,turnsExact:r.turnsQ.text(),moving:list.filter(b => b.k === k && b.stage !== "wait").length,waiting:list.filter(b => b.k === k && b.stage === "wait").length}))};
   };
   let markers = [], drawn = null, lab = null, lastPoints = "";
   const routes = { out: "на вылет", cross: "через центр", in: "в центр" };
   // v0.954, «текст — убери из окна»: пояснения, T₀ и состояние — в подсказках (заголовок, ▶ запуск, скорость), не строками в окне.
-  const LAB_HELP = "У каждого шарика одна постоянная скорость на всём пути, включая дуги; у разных шариков скорости могут различаться. Базовая — диаметр за T₀ (минимальный период повторения двух колец). Авто выбирает скорость один раз перед движением по первому отрезку. ↦ сквозной ищет постоянную скорость для всего прохода; если проход не найден, авто выбирает скорость для первого отрезка и сохраняет её дальше. На стыке проходит только точное совпадение щели с прямой шарика или открытый вырез. Иначе — удар: застрять или отскочить, без ожидания.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Переходит на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю огибает дугу с той же скоростью и снова идёт через центр; чистый цикл не гарантирован. Зелёный — выход без разворота, красный — был разворот. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
+  const LAB_HELP = "Один оборот К1 — единица времени. Скорости и углы заданы точными дробями: на прямом участке — колец за оборот К1, на дуге — долей полного круга за оборот К1. Темп К1 задаёт темп всего опыта. У каждого шарика одна постоянная скорость на всём пути, включая дуги; у разных шариков скорости могут различаться. Базовая — диаметр за T₀ (минимальный период повторения двух колец). Авто выбирает скорость один раз перед движением по первому отрезку. ↦ сквозной ищет постоянную скорость для всего прохода; если проход не найден, авто выбирает скорость для первого отрезка и сохраняет её дальше. На стыке проходит только точное совпадение щели с прямой шарика или открытый вырез. Иначе — удар: застрять или отскочить, без ожидания.\n1–4: внешние углы К2 · 5–8: внутренние · далее края К1 и центр. Шарик едет по прямым краям битов и поворачивается вместе со своим кольцом. Переходит на К3 и следующие видимые кольца, включая кольцо за чертой. В ∞ на самом внешнем краю огибает дугу с той же скоростью и снова идёт через центр; чистый цикл не гарантирован. Зелёный — выход без разворота, красный — был разворот. ↩ к старту и новый запуск возвращают кольца к последнему ручному повороту перед стартом, шарики — на старты. Нажми точку для одиночного старта.";
   const allStarts = () => Z.coneBallBatch !== false;
   // v0.1081: авто выбирает скорость только перед первым отрезком и сохраняет её на всём пути.
   const speedMode = () => [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1;
   const autoOn = () => speedMode() === 1 && Z.coneBallAuto === true;
   const bounceOn = () => Z.coneBallImpact === "bounce";
   const absorbOn = () => Z.coneBallAbsorb === true;
-  function fixedSpeed(S) {
-    const w = Math.abs(rate(S)[0] || 0), r = S.rings[0];
-    return w * (r.ro - r.ri) / TAU * (speedMode() === 3 ? 2 : 1);
-  }
   // v0.1046: что делает шарик в центре у кольца 1 из одного бита: "through" — насквозь по прямой напротив, "back" — обратно по тому же разрезу (v0.1044),
   // "flip" — кольцо 1 поворачивается на 180°, его щель встаёт на продолжение пути, и шарик едет дальше в ту же сторону
   const centerMode = () => ["through", "back", "flip"].includes(Z.coneBallCenter) ? Z.coneBallCenter : Z.coneBallOne ? "back" : "through";
@@ -134,12 +148,12 @@
     const out = [];
     for (const [tag, r] of [["outer", S.rings[1].ro], ["inner", S.rings[1].ri]]) {
       S.rings[1].blocks.forEach((b, j) => [b.lo, b.hi].forEach((raw, side) => out.push({
-        id: "edge:1:" + j + ":" + side + ":" + tag, k: 1, raw, r, kind: "edge",
+        id: "edge:1:" + j + ":" + side + ":" + tag, k: 1, raw, rawQ:side ? b.hiQ : b.loQ, r, kind: "edge",
         label: "К2 · " + (tag === "outer" ? "внешний" : "внутренний") + " угол " + (j * 2 + side + 1)
       })));
     }
     if (!S.rings[0].solid) S.rings[0].blocks.forEach((b, j) => [b.lo, b.hi].forEach((raw, side) => out.push({
-      id: "edge:0:" + j + ":" + side, k: 0, raw, r: S.rings[0].ro, kind: "edge", label: "К1 · край " + (j * 2 + side + 1)
+      id: "edge:0:" + j + ":" + side, k: 0, raw, rawQ:side ? b.hiQ : b.loQ, r: S.rings[0].ro, kind: "edge", label: "К1 · край " + (j * 2 + side + 1)
     })));
     out.push({ id: "center", k: 0, raw: null, r: 0, kind: "center", label: "Центр" });
     return out;
@@ -156,188 +170,155 @@
      вырез), закрытые кольца — центр, кольца закрываются после шага (как пакетом у одновременных событий). Удар — застрял (при отскоке — отмечен, дальше не
      прослеживается). Кольца крутятся равномерно, так что прогноз точный */
   window.zzBallInwardForecast = () => inwardFc;
-  function inwardForecast(S, v) {
-    const starts = outerStarts(S), w = rate(S), K = S.rings.length - 1;
-    if (!starts.length || !(v > 0)) return null;
-    let c = centerCount(), k = K, t = 0, center = 0, alive = starts.map(p => p.raw);
-    const entered = {}, hits = {}, times = {}, slits = JSON.parse(JSON.stringify(centerSlits()));
+  const ratesQ = S => {
+    const all = (Z.coneSpinMode || "all") === "all", first = S.rings[0].coefficientQ.add(all ? ONE : ZERO).abs();
+    return S.rings.map((r,i) => (i === 0 ? ONE : r.coefficientQ.add(all ? ONE : ZERO).div(first.sign() ? first : Q(coneBitMode(Z.coneSpinMode || "all") ? 1 : (Z.rows[0] || "1").length,coneMotionRing(0).P))).mul((Z.coneAutoSp ?? 30) < 0 ? -1 : 1));
+  };
+  const atTurns = (S, time) => ({...S,rings:S.rings.map((r, i) => { const phaseQ = r.phaseQ.add(ratesQ(S)[i].mul(time)); return {...r,phaseQ,phase:radians(phaseQ)}; })});
+  function inwardForecast(S, speed) {
+    const starts = outerStarts(S), v = Q(speed), K = S.rings.length - 1;
+    if (!starts.length || v.sign() <= 0) return null;
+    let c = centerCount(), k = K, time = ZERO, center = 0, alive = starts.map(p => p.rawQ);
+    const entered = {}, hits = {}, slits = JSON.parse(JSON.stringify(centerSlits()));
     while (alive.length && k >= 0) {
-      const ring = S.rings[k]; t += (ring.ro - ring.ri) / v;
-      const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
-      let close = c; const next = [];
+      const ring = S.rings[k]; time = time.add(ring.roQ.sub(ring.riQ).div(v));
+      const St = atTurns(S, time); let close = c; const next = [];
       for (const raw of alive) {
         if (k === 0) { center++; if (coverSlit(slits, k, St.rings[k], raw)) close = Math.max(close, 1); continue; }
         if (k - 1 < c) { center++; if (k === c && coverSlit(slits, k, St.rings[k], raw)) close = Math.max(close, k + 1); continue; }
-        const e = lossPass(St, k - 1, angle(St, k, raw), slits);
-        if (e === null) hits[k - 1] = (hits[k - 1] || 0) + 1; else { entered[k - 1] = (entered[k - 1] || 0) + 1; next.push(e); }
+        const edge = lossPass(St, k - 1, angleQ(St, k, raw), slits);
+        if (edge === null) hits[k - 1] = (hits[k - 1] || 0) + 1;
+        else { entered[k - 1] = (entered[k - 1] || 0) + 1; next.push(edge); }
       }
-      times[k] = t; c = close; alive = next; k--;
+      c = close; alive = next; k--;
     }
-    return { total: starts.length, outer: K, entered, hits, center, closedAfter: c, bounce: bounceOn(), seconds: t };
+    return {total:starts.length,outer:K,entered,hits,center,closedAfter:c,bounce:bounceOn(),duration:time.text()};
   }
-  function inwardAutoSpeed(S, base) {
+  function inwardAutoSpeed(S, speed) {
     inwardAuto = null;
-    const k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
-    if (inner < 0 || !starts.length || !(base > 0)) return base;
-    // The x1000 speed bound remains; there is no padding around ideal slit alignments.
-    const w = rate(S), width = ring.ro - ring.ri, t0 = width / base, tmin = t0 / 1000, dw = (w[k] || 0) - (w[inner] || 0);
-    const countAt = (t) => { const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
-      return starts.filter(p => lossPass(St, inner, angle(St, k, p.raw)) !== null).length; };
-    if (Math.abs(dw) < 1e-12) { inwardAuto = { count: countAt(t0), total: starts.length, ring: inner, fixed: true, mult: 1 }; return base; }
-    const Prel = TAU / Math.abs(dw), t1 = t0 + Prel, cand = [tmin, t0, t1];
-    const innerEdges = (S.rings[inner].contactBlocks || S.rings[inner].blocks).flatMap(b => [b.lo, b.hi]);
-    for (const p of starts) for (const f of innerEdges) {   // точные совпадения: angle(k, raw) + w_k t = angle(inner, f) + w_inner t (mod 2π)
-      const d = angle(S, inner, f) - angle(S, k, p.raw);
-      for (let m = Math.ceil((dw * (dw > 0 ? tmin : t1) - d) / TAU) - 1; m <= Math.floor((dw * (dw > 0 ? t1 : tmin) - d) / TAU) + 1; m++) {
-        const t = (d + m * TAU) / dw;
-        if (t >= tmin && t <= t1) cand.push(t);
+    const base = Q(speed), k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
+    if (inner < 0 || !starts.length || base.sign() <= 0) return base;
+    const w = ratesQ(S), width = ring.roQ.sub(ring.riQ), t0 = width.div(base), tmin = t0.div(1000), dw = w[k].sub(w[inner]);
+    const countAt = time => { const St = atTurns(S, time); return starts.filter(p => lossPass(St, inner, angleQ(St, k, p.rawQ)) !== null).length; };
+    const result = (time, count, fixed = false) => {
+      const multQ = t0.div(time); inwardAuto = {count,total:starts.length,ring:inner,fixed,mult:multQ.number(),multExact:multQ.text(),speedQ:width.div(time)};
+      return width.div(time);
+    };
+    if (!dw.sign()) return result(t0, countAt(t0), true);
+    const t1 = t0.add(ONE.div(dw.abs())), candidates = [tmin,t0,t1], edges = slitEdges(S.rings[inner]);
+    for (const p of starts) for (const edge of edges) {
+      const d = angleQ(S, inner, edge).sub(angleQ(S, k, p.rawQ));
+      const lo = dw.mul(dw.sign() > 0 ? tmin : t1).sub(d).ceil() - 1n;
+      const hi = dw.mul(dw.sign() > 0 ? t1 : tmin).sub(d).floor() + 1n;
+      for (let m = lo; m <= hi; m++) {
+        const time = d.add(m).div(dw); if (time.cmp(tmin) >= 0 && time.cmp(t1) <= 0) candidates.push(time);
       }
     }
-    const boundaries = [...new Set(cand)].sort((a, b) => a - b);
-    // Inside each interval no edge is crossed, so one midpoint represents its open cut-outs.
-    for (let i = 1; i < boundaries.length; i++) cand.push((boundaries[i - 1] + boundaries[i]) / 2);
-    const pts = [...new Set(cand)].map(t => ({ t, c: countAt(t) })), top = Math.max(0, ...pts.map(q => q.c));
-    // An already optimal base speed stays exactly at base.
-    if (countAt(t0) === top) {
-      inwardAuto = { count: top, total: starts.length, ring: inner, fixed: false, mult: 1 };
-      return base;
+    const boundaries = [...new Map(candidates.map(t => [t.text(),t])).values()].sort((a, b) => a.cmp(b));
+    for (let i = 1; i < boundaries.length; i++) candidates.push(boundaries[i - 1].add(boundaries[i]).div(2));
+    const points = [...new Map(candidates.map(t => [t.text(),{time:t,count:countAt(t)}])).values()], top = Math.max(...points.map(p => p.count));
+    if (countAt(t0) === top) return result(t0, top);
+    let best = null, closeness = null;
+    for (const p of points) if (p.count === top) {
+      const distance = ZZExact.max(p.time.div(t0), t0.div(p.time));
+      if (!best || distance.cmp(closeness) < 0) { best = p; closeness = distance; }
     }
-    let best = null;
-    if (top > 0) for (const p of pts) {
-      if (p.c === top && (!best || Math.abs(Math.log(p.t / t0)) < Math.abs(Math.log(best.t / t0)))) best = p;
-    }
-    if (!best) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
-    inwardAuto = { count: best.c, total: starts.length, ring: inner, fixed: false, mult: t0 / best.t };
-    return width / best.t;
+    return best ? result(best.time, top) : result(t0, 0);
   }
-  /* v0.1063, «базовая — одно кольцо за время, пока внешнее повернётся на бит — да»: прежде базовая была «радиус за T₀» (T₀ — по К1 и К2), мерка,
-     не связанная с внешними кольцами. Теперь «×» у авто — во сколько раз быстрее, чем «ширина кольца, пока внешнее проходит один бит».
-     Внешнее не крутится — прежняя (радиус за T₀) */
   function inwardBase(S) {
-    const K = S.rings.length - 1, ring = S.rings[K], w = Math.abs(rate(S)[K] || 0);
-    const cell = (ring.cells && ring.cells.length ? ring.cells : ring.blocks)[0];
-    if (!cell || w < 1e-12) return null;
-    const sec = (cell.hi - cell.lo) / w;
-    return sec > 0 ? { speed: (ring.ro - ring.ri) / sec, sec } : null;
+    const K = S.rings.length - 1, ring = S.rings[K], w = ratesQ(S)[K].abs(), cell = (ring.cells.length ? ring.cells : ring.blocks)[0];
+    if (!cell || !w.sign()) return null;
+    const bitTurnsQ = cell.hiQ.sub(cell.loQ).div(w), speedQ = ring.roQ.sub(ring.riQ).div(bitTurnsQ);
+    return {speedQ,bitTurnsQ};
   }
   function outerStarts(S) {
     const k = S.rings.length - 1, ring = S.rings[k], points = [];
     if (k < centerCount()) return points;
-    for (const b of ring.blocks) for (const raw of [b.lo, b.hi]) {
-      if (points.some(p => Math.abs(norm(p.raw - raw)) < ALIGN)) continue;
-      if (closedSlit(centerSlits(), k, ring, raw)) continue;
-      points.push({id:"outer-slit:" + points.length,k,raw,r:ring.ro,kind:"edge",label:"К" + (k + 1) + " · внешняя щель " + (points.length + 1)});
+    for (const b of ring.blocks) for (const rawQ of [b.loQ,b.hiQ]) {
+      if (points.some(p => p.rawQ.sub(rawQ).mod().eq(0)) || closedSlit(centerSlits(), k, ring, rawQ)) continue;
+      points.push({id:"outer-slit:" + points.length,k,rawQ,raw:radians(rawQ),r:ring.ro,kind:"edge",label:"К" + (k + 1) + " · внешняя щель " + (points.length + 1)});
     }
     return points;
   }
-  function fraction(value) {
-    const parts = String(value).trim().replace(",", ".").split("/");
-    if (!parts.every(p => /^\d+(?:\.\d+)?$/.test(p.trim())) || parts.length > 2) return NaN;
-    const n = +parts[0] / (parts.length === 2 ? +parts[1] : 1);
-    return Number.isFinite(n) && n > 0 && n <= 1000 ? n : NaN;
+  function inputFraction(value) {
+    try { const q = Q(value); return q.sign() > 0 && q.cmp(1000) <= 0 ? q : null; } catch { return null; }
   }
-  function rate(S) {
-    const spin = Z.coneSpin, ph = Z.coneSpinPh, m = Z.coneSpinMode || "all", sp = Z.coneAutoSp ?? 30;
-    let B;
-    try {
-      if (m === "all") Z.coneSpin = (spin || 0) + sp;
-      else Z.coneSpinPh = (ph || 0) + (m === "bit" || m === "obit" ? sp / 10 : sp);
-      B = snapshot();
-    } finally { Z.coneSpin = spin; Z.coneSpinPh = ph; }
-    if (!B) return [];
-    return S.rings.map((r, k) => B.rings[k].phase - r.phase + (m === "all" ? sp * Math.PI / 180 : 0));
-  }
-  function period(S) {
-    const w = rate(S).slice(0, 2), periods = w.map((v, k) => {
-      const B = S.rings[k].blocks, pitch = TAU / B.length;
-      const repeated = B.length > 1 && B.every((b, j) => Math.abs(norm(b.lo - B[0].lo - j * pitch)) < EPS && Math.abs((b.hi - b.lo) - (B[0].hi - B[0].lo)) < EPS);
-      return Math.abs(v) < 1e-12 ? 0 : (repeated ? pitch : TAU) / Math.abs(v);
-    }).filter(Boolean);
-    if (!periods.length) return null;
-    const base = Math.max(...periods);
-    for (let n = 1; n <= 4096; n++) {
-      const t = base * n;
-      if (periods.every(p => Math.abs(t / p - Math.round(t / p)) < 1e-7)) return t;
+  function periodQ(S) {
+    const w = ratesQ(S).slice(0,2), periods = [];
+    for (let k = 0; k < w.length; k++) {
+      if (!w[k].sign()) continue;
+      const blocks = S.rings[k].blocks, pitch = Q(1,blocks.length);
+      const repeated = blocks.length > 1 && blocks.every((b, j) => b.loQ.sub(blocks[0].loQ).sub(pitch.mul(j)).mod().eq(0) && b.hiQ.sub(b.loQ).eq(blocks[0].hiQ.sub(blocks[0].loQ)));
+      periods.push((repeated ? pitch : ONE).div(w[k].abs()));
     }
-    return null;
+    if (!periods.length) return null;
+    let n = 1n, d = 0n;
+    for (const p of periods) { n = n / ZZExact.gcd(n,p.n) * p.n; d = ZZExact.gcd(d,p.d); }
+    return Q(n,d);
   }
-  // Solve the two joint crossings, not a frame-by-frame speed sweep. The ball
-  // moves at constant radial speed; each candidate is an exact first alignment.
-  function solveThrough(S, w, T, requestedPoint) {
-    if (!S || w.length < 2 || !T) return { error: "Для расчёта нужны два кольца и ненулевая скорость вращения" };
-    w = w.slice(0, 2);
-    const J = S.rings[1].ri, R = S.rings[1].ro, width = R - J;
-    if (Math.abs(S.rings[0].ro - J) > EPS) return { error: "Для сквозного прохода включи кольца без промежутков" };
-    const edges = S.rings.map(r => [...new Set(r.blocks.flatMap(b => [b.lo, b.hi]))]);
-    const starts = boundaryPoints(S).filter(p => p.k === 1 && Math.abs(p.r - R) < EPS)
-      .sort((a, b) => Math.cos(angle(S, 1, a.raw)) - Math.cos(angle(S, 1, b.raw)));
+  function solveThrough(S,requestedPoint) {
+    const T = S && periodQ(S);
+    if (!S || S.rings.length < 2 || !T) return {error:"Для расчёта нужны два кольца"};
+    const w = ratesQ(S).slice(0,2), J = S.rings[1].riQ, R = S.rings[1].roQ, width = R.sub(J);
+    if (!S.rings[0].roQ.eq(J)) return {error:"Для сквозного прохода включи кольца без промежутков"};
+    const edges = S.rings.map(r => [...new Map(r.blocks.flatMap(b => [b.loQ,b.hiQ]).map(e => [e.mod().text(),e])).values()]);
+    const starts = boundaryPoints(S).filter(p => p.k === 1 && Q(p.r).eq(R)).sort((a,b) => a.rawQ.mod().cmp(b.rawQ.mod()));
     const selected = !allStarts() && starts.find(p => p.id === Z.coneBallStart);
-    const points = requestedPoint ? [requestedPoint] : selected ? [selected] : starts;
-    const dw = w[0] - w[1], equal = Math.abs(dw) < 1e-12;
+    const points = requestedPoint ? [requestedPoint] : selected ? [selected] : starts, dw = w[0].sub(w[1]);
     for (const point of points) {
       const candidates = [];
       for (const e of edges[0]) {
-        // A centre crossing needs a physical edge on the opposite radius.
-        const opposite = edges[0].find(f => Math.abs(norm(f - e - Math.PI)) < ALIGN);
+        const opposite = edges[0].find(f => f.sub(e).sub(HALF).mod().eq(0));
         if (opposite === undefined) continue;
-        const phase = norm(angle(S, 1, point.raw) - angle(S, 0, e));
-        const times = equal ? (Math.abs(phase) < ALIGN ? [width * T / (2 * R)] : []) :
-          Array.from({ length: 129 }, (_, n) => (phase + (n - 64) * TAU) / dw);
+        const phase = angleQ(S,1,point.rawQ).sub(angleQ(S,0,e)).mod(), times = [];
+        if (!dw.sign()) { if (phase.mod().eq(0)) times.push(width.mul(T).div(R.mul(2))); }
+        else for (let n = -64n; n <= 64n; n++) times.push(phase.add(n).div(dw));
         for (const t of times) {
-          if (!(t > EPS)) continue;
-          const speed = width / t, duration = 2 * R / speed, mult = T / duration;
-          if (!(mult > 0 && mult <= 1000)) continue;
-          const t2 = (R + J) / speed, a2 = angle(S, 0, opposite) + w[0] * t2;
-          const exitEdge = edges[1].find(f => Math.abs(norm(angle(S, 1, f) + w[1] * t2 - a2)) < ALIGN);
-          if (exitEdge !== undefined) candidates.push({ point, speed, mult, duration, times: [t, R / speed, t2, duration] });
+          if (t.sign() <= 0) continue;
+          const at = atTurns(S,t), entrance = lossPass(at,0,angleQ(at,1,point.rawQ));
+          if (entrance === null || !entrance.sub(e).mod().eq(0)) continue;
+          const speedQ = width.div(t), durationQ = R.mul(2).div(speedQ), multQ = T.div(durationQ);
+          if (multQ.sign() <= 0 || multQ.cmp(1000) > 0) continue;
+          const t2 = R.add(J).div(speedQ), a2 = angleQ(S,0,opposite).add(w[0].mul(t2));
+          if (edges[1].some(f => angleQ(S,1,f).add(w[1].mul(t2)).sub(a2).mod().eq(0))) {
+            candidates.push({point,speedQ,multQ,durationQ,speed:speedQ.number(),mult:multQ.number(),duration:durationQ.number(),timesQ:[t,R.div(speedQ),t2,durationQ]});
+          }
         }
       }
-      if (candidates.length) return candidates.sort((a, b) => a.duration - b.duration)[0];
+      if (candidates.length) return candidates.sort((a,b) => a.durationQ.cmp(b.durationQ))[0];
     }
-    return { error: "Проход не найден за 64 относительных оборота. Попробуй другой старт или поворот кольца" };
+    return {error:"Проход не найден за 64 относительных оборота. Попробуй другой старт или поворот кольца"};
   }
-  function solveGroup(S, w, T, count) {
-    const first = solveThrough(S, w, T);
-    if (first.error || count === 1) return first.error ? first : { runs: [first] };
-    const starts = boundaryPoints(S).filter(p => p.k === 1 && Math.abs(p.r - S.rings[1].ro) < EPS);
-    const unique = starts.filter((p, i) => !starts.slice(0, i).some(q => Math.abs(norm(p.raw - q.raw)) < ALIGN));
-    const opposite = unique.find(p => Math.abs(norm(p.raw - first.point.raw - Math.PI)) < ALIGN);
-    if (!opposite) return { error: "Для встречной пары нужны противоположные внешние грани" };
-    const second = solveThrough(S, w, T, opposite);
-    if (second.error || Math.abs(second.mult / first.mult - 1) > 1e-9) return { error: "Встречная пара с общей скоростью для этого положения не найдена" };
-    Object.assign(second, { speed: first.speed, mult: first.mult, duration: first.duration, times: first.times.slice() });
-    const runs = [first, second];
+  function solveGroup(S,count) {
+    const first = solveThrough(S);
+    if (first.error || count === 1) return first.error ? first : {runs:[first]};
+    const starts = boundaryPoints(S).filter(p => p.k === 1 && Q(p.r).eq(S.rings[1].roQ));
+    const unique = starts.filter((p,i) => !starts.slice(0,i).some(q => p.rawQ.sub(q.rawQ).mod().eq(0)));
+    const opposite = unique.find(p => p.rawQ.sub(first.point.rawQ).sub(HALF).mod().eq(0));
+    if (!opposite) return {error:"Для встречной пары нужны противоположные внешние грани"};
+    const second = solveThrough(S,opposite);
+    if (second.error || !second.speedQ.eq(first.speedQ)) return {error:"Встречная пара с общей скоростью для этого положения не найдена"};
+    const runs = [first,second];
     for (const p of unique) {
       if (runs.length >= count) break;
       if (runs.some(r => r.point.id === p.id)) continue;
-      const result = solveThrough(S, w, T, p);
-      if (!result.error) runs.push(result);
+      const result = solveThrough(S,p); if (!result.error) runs.push(result);
     }
-    return runs.length === count ? { runs } : { error: "Найдено сквозных стартов: " + runs.length + " из " + count + ". Попробуй другое положение колец" };
+    return runs.length === count ? {runs} : {error:"Найдено сквозных стартов: " + runs.length + " из " + count};
   }
-  function movingGroup(S, w, T, count) {
-    const group = solveGroup(S, w, T, count);
-    if (!group.error || !(Z.coneBallArc || autoOn()) || !T) return group;
-    // An unmatched pose can still launch; each joint decides passage or impact.
-    const points = boundaryPoints(S).filter(p => p.k === 1 && Math.abs(p.r - S.rings[1].ro) < EPS);
-    const unique = points.filter((p, i) => !points.slice(0, i).some(q => Math.abs(norm(p.raw - q.raw)) < ALIGN));
-    const mult = fraction(Z.coneBallMult || "1");
-    // Auto can select a first-segment speed even without an opposite pair.
-    if (!unique.length || unique.length < count && !autoOn() || !Number.isFinite(mult)) return group;
-    const first = unique.find(p => p.id === Z.coneBallStart) || unique[0];
-    const opposite = unique.find(p => Math.abs(norm(p.raw - first.raw - Math.PI)) < ALIGN);
+  function movingGroup(S,count) {
+    const group = solveGroup(S,count), exactPeriod = periodQ(S);
+    if (!group.error || !(Z.coneBallArc || autoOn()) || !exactPeriod) return group;
+    const points = boundaryPoints(S).filter(p => p.k === 1 && Q(p.r).eq(S.rings[1].roQ));
+    const unique = points.filter((p,i) => !points.slice(0,i).some(q => p.rawQ.sub(q.rawQ).mod().eq(0))), multQ = inputFraction(Z.coneBallMult || "1");
+    if (!unique.length || unique.length < count && !autoOn() || !multQ) return group;
+    const first = unique.find(p => p.id === Z.coneBallStart) || unique[0], opposite = unique.find(p => p.rawQ.sub(first.rawQ).sub(HALF).mod().eq(0));
     if (count > 1 && !opposite && !autoOn()) return group;
-    const ordered = [first, ...(opposite ? [opposite] : []), ...unique.filter(p => p !== first && p !== opposite)];
-    const speed = 2 * S.rings[1].ro * mult / T;
-    return { runs: ordered.slice(0, count).map(point => ({ point, speed, mult, duration: T / mult, auto: autoOn() })) };
+    const ordered = [first,...(opposite ? [opposite] : []),...unique.filter(p => p !== first && p !== opposite)];
+    const speedQ = S.rings[1].roQ.mul(2).mul(multQ).div(exactPeriod), durationQ = exactPeriod.div(multQ);
+    return {runs:ordered.slice(0,count).map(point => ({point,speedQ,multQ,durationQ,speed:speedQ.number(),mult:multQ.number(),duration:durationQ.number(),auto:autoOn()}))};
   }
-  function speedText(value) {
-    for (let d = 1; d <= 128; d++) {
-      const n = Math.round(value * d);
-      if (n > 0 && Math.abs(n / d - value) < 1e-12 * value) return d === 1 ? String(n) : n + "/" + d;
-    }
-    return String(value);
-  }
+  function speedText(value) { return Q(value).text(); }
   // Every start lies on a bit edge; bit and gap axes are not tracks.
   function startPoint(S) { const P = boundaryPoints(S); return P.find(p => p.id === Z.coneBallStart) || P[P.length - 1]; }
   function pauseRotation() { if (coneSpinning) $("bConeAuto").click(); }
@@ -351,71 +332,59 @@
   const plainRings = () => coneFlat() && Z.rows.length <= CONE_MAX && coneSlitMode() !== "cut";
   function snapshot() {
     const cut = coneCutOn();
-    // v0.1029: шарикам не нужны ни ⌖ луч-часы, ни ☀ — кручение колец идёт и без них.
     if (!coneGeom || !(cut || plainRings()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
-    const N = Math.min(Z.rows.length, CONE_MAX);
-    if (N + (coneGeom.fill ? 1 : 0) < 2) return null;
-    const band = 1, rings = [];   // v0.1050: зазор между нарисованными кольцами (без «◯ чистых») — пустое место, шарик пересекает его по той же прямой; прежде ждал у зазора без конца
-    for (let i = 0; i < N + (coneGeom.fill ? 1 : 0); i++) {
-      const R = coneRingFeat(i === N ? "f" : i); if (!R) return null;
-      const blocks = [], cells = []; let contactBlocks, solid = false;
+    const N = Math.min(Z.rows.length, CONE_MAX), count = N + (coneGeom.fill ? 1 : 0);
+    if (count < 2) return null;
+    const rings = [], clock = coneMotionClock(), spinQ = clock.degrees.div(360);
+    const block = (lo, hi, bit) => ({loQ:Q(lo),hiQ:Q(hi),lo:radians(lo),hi:radians(hi),bit});
+    for (let i = 0; i < count; i++) {
+      const R = coneMotionRing(i), feat = coneRingFeat(i === N ? "f" : i), blocks = [], cells = [];
+      if (!feat) return null;
+      let contactBlocks, solid = false;
       if (i === 0) {
         if (!cut) {
-          // One bit: the slit and the line through the centre opposite it (the magnet's two edges).
-          if (R.n === 1) { const x = R.xc ?? 0, lo = -Math.PI / 2 + x * R.step;   // v0.1041: щель строки 1 и прямая напротив
-            // v0.1044, «⊙ один путь»: у кольца 1 только разрез — один блок во весь круг; из центра шарик выходит по тому же разрезу
-            blocks.push(centerMode() !== "through" ? { lo, hi: lo + 2 * Math.PI, bit: 0 } : { lo, hi: lo + Math.PI, bit: 0 });
-            // The opposite radius is a route through the centre, not a second physical slit or an open half-circle.
-            contactBlocks = [{ lo, hi: lo + TAU, bit: 0 }]; cells.push(...contactBlocks); }
-          else for (let j = 0; j < R.n; j++) blocks.push({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j });
-        }
-        else if (coneQuadOn()) for (let q = 1; q < conePartCount(); q += 2) blocks.push({ lo: -Math.PI / 2 + q * R.step, hi: -Math.PI / 2 + (q + 1) * R.step, bit: 0 });
-        else if (coneHalfOn()) blocks.push({ lo: Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 });
+          if (R.n === 1) {
+            const lo = R.aim.sub(R.phase);
+            blocks.push(block(lo, lo.add(centerMode() === "through" ? HALF : ONE), 0));
+            contactBlocks = [block(lo, lo.add(ONE), 0)]; cells.push(...contactBlocks);
+          } else for (let j = 0; j < R.n; j++) blocks.push(block(Q(j, R.P).sub(QUARTER), Q(j + 1, R.P).sub(QUARTER), j));
+        } else if (coneQuadOn()) {
+          for (let j = 1; j < conePartCount(); j += 2) blocks.push(block(Q(j, R.P).sub(QUARTER), Q(j + 1, R.P).sub(QUARTER), 0));
+        } else if (coneHalfOn()) blocks.push(block(QUARTER, QUARTER.add(HALF), 0));
         else {
-          // «Щель 1» has one ideal line; «1 часть» has a solid perimeter without an artificial seam.
-          const slit = typeof coneRow1Slit === "function" && coneRow1Slit();
-          // Cancel the ring phase, then remove only floating-point noise so rotation does not change the shape key.
-          const lo = slit ? Math.round((coneCutAngle() + R.x0 * R.step) * 1e12) / 1e12 : -Math.PI / 2;
-          blocks.push({ lo, hi: lo + TAU, bit: 0 });
-          contactBlocks = blocks.map(b => ({ ...b })); cells.push(...contactBlocks);
-          solid = !slit;
+          const slit = typeof coneRow1Slit === "function" && coneRow1Slit(), lo = slit ? R.aim.sub(R.phase) : QUARTER.neg();
+          blocks.push(block(lo, lo.add(ONE), 0)); contactBlocks = blocks.map(b => ({...b})); cells.push(...contactBlocks); solid = !slit;
         }
-      }
-      else {
-        // v0.1033: «N щель» — у кольца строки одна грань, щель между последним и первым битом: один блок во весь круг.
-        /* v0.1064, «баг? в режиме N щель «В центр» сразу несколько шариков не может идти — там одна щель в каждом кольце»: кольцо за чертой
-           (внешнее у «● в центр») имело щели на каждой границе ячеек (v0.1033, как у лазера), и из него стартовало по шарику на ячейку. Для «В центр»
-           у него теперь тоже одна щель — между последней и первой ячейкой, как у колец строк. Вылеты наружу — по-прежнему */
-        if (R.one || i === N && inwardOne(R)) { rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks: [{ lo: -Math.PI / 2, hi: 3 * Math.PI / 2, bit: 0 }], cells: Array.from({ length: R.n }, (_, j) => ({ lo: -Math.PI / 2 + j * R.step, hi: -Math.PI / 2 + (j + 1) * R.step, bit: j })), tol: 0, fill: i === N, shape: [R.n, R.P, "one", band].join(":") }); continue; }
+      } else if (feat.one || i === N && inwardOne(feat)) {
+        blocks.push(block(QUARTER.neg(), Q(3, 4), 0));
+        for (let j = 0; j < R.n; j++) cells.push(block(Q(j, R.n).sub(QUARTER), Q(j + 1, R.n).sub(QUARTER), j));
+      } else {
         const bits = i === N ? fillDraft() : Z.rows[i];
-        // Unfilled draft cells still have the same physical perimeter/edges.
-        // Their paint value must not hide the launch points on that perimeter.
         for (let j = 0; j < R.n; j++) if (bits[j] === "0" || bits[j] === "1" || i === N && bits[j] === ".") {
-          const p = R.cut ? cutPos(j, R.n) : j;
-          blocks.push({ lo: -Math.PI / 2 + p * R.step, hi: -Math.PI / 2 + (p + 1) * R.step, bit: j });
+          const p = R.cut ? coneMotionBitPosition(j, R.n) : Q(j), lo = p.div(R.P).sub(QUARTER);
+          blocks.push(block(lo, lo.add(Q(1, R.P)), j));
         }
-        cells.push(...blocks.map(b => ({ ...b })));   // границы битов сохраняются и при «▮ щель», когда стенка сливается
-        // v0.1050, «вылет шарика из щели кольца 1 и дальше по щелям» (Грани, «▮ щель»): в вырезах соседние биты без выреза между ними — одна стенка,
-        // её грани — только края вырезов (щели); стык через начало круга тоже сливается
+        cells.push(...blocks.map(b => ({...b})));
         if (R.cut && Z.coneBallSlitOnly && blocks.length > 1) {
-          blocks.sort((a, b) => a.lo - b.lo);
-          const M = [{ ...blocks[0] }];
-          for (const b of blocks.slice(1)) { const t = M[M.length - 1]; if (Math.abs(b.lo - t.hi) < 1e-9) { t.hi = b.hi; t.bitHi = b.bitHi ?? b.bit; } else M.push({ ...b }); }
-          if (M.length > 1 && Math.abs(norm(M[M.length - 1].hi - M[0].lo)) < 1e-9) { const last = M.pop(); M[0] = { ...M[0], lo: last.lo - 2 * Math.PI }; }
-          blocks.length = 0; blocks.push(...M);
+          blocks.sort((a, b) => a.loQ.cmp(b.loQ)); const merged = [{...blocks[0]}];
+          for (const b of blocks.slice(1)) {
+            const last = merged[merged.length - 1];
+            if (b.loQ.eq(last.hiQ)) { last.hiQ = b.hiQ; last.hi = b.hi; last.bitHi = b.bitHi ?? b.bit; }
+            else merged.push({...b});
+          }
+          if (merged.length > 1 && merged[merged.length - 1].hiQ.sub(merged[0].loQ).mod().eq(0)) {
+            const last = merged.pop(); merged[0] = {...merged[0],loQ:last.loQ.sub(ONE),lo:radians(last.loQ.sub(ONE))};
+          }
+          blocks.splice(0, blocks.length, ...merged);
         }
       }
-      rings.push({ ri: i, ro: i + band, phase: -R.x0 * R.step, blocks, contactBlocks, cells, solid, tol: 0, fill: i === N, oneWay: !i && !solid && !coneQuadOn() && !coneHalfOn() && R.n === 1 && centerMode() !== "through", shape: [R.n, R.P, R.cut, band, solid, blocks.map(b => b.lo + "," + b.hi).join(";")].join(":") });
+      const shape = [R.n,R.P,R.cut,solid,blocks.map(b => b.loQ.text() + "," + b.hiQ.text()).join(";")].join(":");
+      rings.push({ri:i,ro:i + 1,riQ:Q(i),roQ:Q(i + 1),phaseQ:R.phase,phase:radians(R.phase),coefficientQ:R.coefficient,
+        blocks,cells,contactBlocks,solid,fill:i === N,oneWay:!i && !solid && !coneQuadOn() && !coneHalfOn() && R.n === 1 && centerMode() !== "through",shape});
     }
-    const B = rings[1].blocks;
-    if (!B.length) return null;
-    // Include all visible rings in the counters, even though the route uses two.
-    const rotation = [];
-    for (let i = 0; i < N + (coneGeom.fill ? 1 : 0); i++) {
-      const R = coneRingFeat(i === N ? "f" : i);
-      rotation.push(R ? -R.x0 * R.step : 0);
-    }
-    return { rings, rotation, clockPh: Z.coneSpinPh || 0, spin: (Z.coneSpin || 0) * Math.PI / 180, shape: rings.map(r => r.shape).join("|") };
+    if (!rings[1].blocks.length) return null;
+    const mode = Z.coneSpinMode || "all", clockQ = mode === "all" ? spinQ : coneBitMode(mode) ? clock.phase : clock.phase.div(360);
+    return {rings,rotationQ:rings.map(r => r.phaseQ),rotation:rings.map(r => r.phase),clockQ,clockPhaseQ:clock.phase,clockPh:clock.phase.number(),spinQ,spin:radians(spinQ),shape:rings.map(r => r.shape).join("|")};
   }
   function hint() { return "Для шариков: плоский вид, плавное кручение и хотя бы два кольца (луч-часы и солнце не нужны). У строки 1 доступны все варианты частей и «щель 1»; щель для шарика — линия без ширины"; }
   function ui() {
@@ -454,74 +423,70 @@
         b.textContent = (active && balls.every(x => x.stage === "done") ? (balls.every(x => x.clean) ? "✓ " : "✕ ") : +b.dataset.ballThrough === 2 ? "⇄ " : "↦ ") + b.dataset.ballThrough;
       });
       const group = balls.length > 1 && balls.every(x => x.through);
-      const mixed = group && balls.some(x => Math.abs(x.mult / balls[0].mult - 1) > 1e-9);
+      const mixed = group && balls.some(x => !x.multQ.eq(balls[0].multQ));
       const speeds = $("ballLabGroupSpeeds");
       speeds.hidden = !group;
       if (group) {
-        speeds.textContent = balls.map(x => x.number + ": " + speedText(x.mult) + "×").join(" · ");
+        speeds.textContent = balls.map(x => x.number + ": " + speedText(x.multQ) + "×").join(" · ");
         $("ballLabRun").title = "Сквозная группа · базовые скорости: " + speeds.textContent + ". У каждого шарика одна постоянная скорость на прямых и дугах. Нет точной щели или открытого выреза на стыке — удар: застрять / отскочить. Шарики друг с другом не сталкиваются.";
       }
     }
   }
-  function angle(S, k, raw) { return raw + S.rings[k].phase + S.spin; }
-  function begin(S, clear = false, launch = false, options = {}) {
+  function angle(S, k, raw) { return radians(angleQ(S, k, raw)); }
+  function begin(S,clear = false,launch = false,options = {}) {
     if (clear) cycles = passes = 0;
-    const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, b = S.rings[0].blocks[0], aim = dir > 0 ? 0 : Math.PI;
+    const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1, b = S.rings[0].blocks[0], aim = dir > 0 ? ZERO : HALF;
     const p = options.point || startPoint(S), k = p.k;
-    const raw = p.raw ?? ((options.slitStart ?? Z.coneBallSlitStart) ? b.lo : null) ?? [b.lo, b.hi].reduce((a, c) => Math.abs(norm(angle(S, 0, c) - aim)) < Math.abs(norm(angle(S, 0, a) - aim)) ? c : a);
-    const R = S.rings[S.rings.length - 1].ro, requested = options.route || Z.coneBallRoute;
-    const route = routes[requested] ? requested : "cross", mult = fraction(Z.coneBallMult || "1"), T = options.period ?? period(S);
-    const move = route === "out" ? 1 : -1, length = route === "out" ? R - p.r : route === "in" ? p.r : R + p.r;
-    F = { shape: S.shape, dir, R, route, start: { k, raw, q: p.r }, length, move, stage: move > 0 ? "out" : "in", ready: !launch,
-      q: p.r, k, raw, a: angle(S, k, raw), reversals: 0, clean: true, elapsed: 0, travel: 0, period: T, mult, speed: options.speed ?? (T && Number.isFinite(mult) ? length * mult / T : 0), loop: !!Z.coneBallArc, crossings: 0, arcs: 0, auto: options.auto ?? autoOn(), seg: null, tuned: 0, loss: lossRun };
-    F.ringTurns = (S.rotation || S.rings).map(() => 0);
-    F.ringShapes = S.rings.map(r => r.shape); F.fillIndex = S.rings.findIndex(r => r.fill);
-    // The inward experiment measures actual passages and impacts, without tuning arrivals to slits.
-    if (route === "in") { F.auto = false; F.loss = true; }
-    /* v0.1081, «постоянная для каждого шарика; когда я начал про шарики, я сразу сказал, что скорость константа» и «но возможны шарики с разными
-       константными скоростями»: у каждого шарика скорость постоянная во всех режимах (вылет, цепочка, сквозной, ∞, запуск из панели). Авто
-       подбирает её один раз — перед первым отрезком; дальше она фиксирована, в том числе после разворота в центре. Ожидания у стыка нет: нет щели на прямой
-       (без допусков) и нет открытого выреза — удар в дугу (застрять / отскок). У разных шариков скорости могут быть разными */
-    F.loss = true;
-    if (speedMode() !== 1) { F.speed = fixedSpeed(S); F.auto = false; }
-    if (launch && !(F.speed > 0)) { F.ready = true; status(length <= EPS ? "Шарик уже на внешнем краю · выбери точку внутри или маршрут через центр" : "Для запуска нужны вращение и положительная дробная скорость"); metrics(S); return; }
+    const distance = e => { const d = angleQ(S,0,e).sub(aim).mod(); return ZZExact.min(d,ONE.sub(d)); };
+    const rawQ = p.rawQ || (p.raw !== null ? rawFraction(S.rings[k],p.raw) : (options.slitStart ?? Z.coneBallSlitStart) ? b.loQ : distance(b.hiQ).cmp(distance(b.loQ)) < 0 ? b.hiQ : b.loQ);
+    const RQ = S.rings[S.rings.length - 1].roQ, qQ = Q(p.r), requested = options.route || Z.coneBallRoute;
+    const route = routes[requested] ? requested : "cross", multQ = inputFraction(Z.coneBallMult || "1") || ZERO, TQ = options.periodQ || periodQ(S), move = route === "out" ? 1 : -1;
+    const lengthQ = route === "out" ? RQ.sub(qQ) : route === "in" ? qQ : RQ.add(qQ);
+    const speedQ = speedMode() !== 1 ? ONE.mul(speedMode() === 3 ? 2 : 1) :
+      options.speedQ || (TQ ? lengthQ.mul(multQ).div(TQ) : ZERO);
+    F = {shape:S.shape,dir,RQ,route,start:{k,rawQ,qQ},lengthQ,move,stage:move > 0 ? "out" : "in",ready:!launch,
+      qQ,k,rawQ,aQ:angleQ(S,k,rawQ),a:radians(angleQ(S,k,rawQ)),reversals:0,clean:true,elapsedQ:ZERO,travelQ:ZERO,periodQ:TQ,multQ,speedQ,
+      loop:!!Z.coneBallArc,crossings:0,arcs:0,auto:speedMode() === 1 && route !== "in" && (options.auto ?? autoOn()),seg:null,tuned:0,loss:true,
+      ringTurnsQ:S.rings.map(() => ZERO),ringShapes:S.rings.map(r => r.shape),fillIndex:S.rings.findIndex(r => r.fill)};
+    F.R = RQ.number(); F.start.raw = radians(rawQ); F.start.q = qQ.number(); projectMotion(F);
+    if (launch && speedQ.sign() <= 0) { F.ready = true; status(lengthQ.sign() <= 0 ? "Шарик уже на внешнем краю · выбери точку внутри или маршрут через центр" : "Для запуска нужна положительная дробная скорость"); metrics(S); return; }
     if (launch && run) { F.number = F.runNumber = ++run.launched; ringStats(k).entered++; rememberResult(); }
-    status(!enabled ? "Шарик выключен · серая точка — старт · ● вкл. — включить" : launch ? routes[route] + " · старт: " + p.label + " · скорость " + String(Z.coneBallMult || "1") + "×" : readyText(S));
+    status(!enabled ? "Шарик выключен · серая точка — старт · ● вкл. — включить" : launch ? routes[route] + " · старт: " + p.label + " · скорость " + speedQ.text() + " за оборот К1" : readyText(S));
     metrics(S);
   }
   function prepare(S, clear = false, launch = false) {
     balls = [];
     if (Z.coneBallRoute === "in") {
       if (clear) cycles = passes = 0;
-      const T = period(S), B = inwardBase(S), base = B ? B.speed : T ? S.rings[S.rings.length - 1].ro / T : 0;
+      const TQ = periodQ(S), B = inwardBase(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
       const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;
-      if (inwardAuto) Object.assign(inwardAuto, { base, bitSec: B ? B.sec : null, outer: S.rings.length - 1 });   // v0.1059: «1 — авто» — скорость, при которой во внутреннее кольцо зайдёт больше всего шариков
+      if (inwardAuto) Object.assign(inwardAuto, { baseExact:base.text(),bitTurnsExact:B ? B.bitTurnsQ.text() : null, outer:S.rings.length - 1 });
       batchBusy = true;
-      try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",period:T,speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
+      try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",periodQ:TQ,speedQ:speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
       finally { batchBusy = false; F = balls[0] || null; }
-      inwardFc = launch && balls.length ? inwardForecast(S, balls[0].speed) : null;   // v0.1060: прогноз по фактической скорости группы
+      inwardFc = launch && balls.length ? inwardForecast(S, balls[0].speedQ) : null;
       batchStatus(); metrics(S); return;
     }
     if (!allStarts() && throughCount() > 1) {
-      const T = period(S), group = movingGroup(S, rate(S), T, throughCount());
+      const TQ = periodQ(S), group = movingGroup(S,throughCount());
       if (group.error) { F = null; status(group.error); metrics(S); return; }
       if (clear) cycles = passes = 0;
       batchBusy = true;
       try {
         group.runs.forEach((r, i) => {
-          begin(S, false, launch, { point: r.point, route: "cross", period: T, speed: r.speed, auto: !!r.auto });
-          balls.push(Object.assign(F, { id: r.point.id, number: i + 1, label: r.point.label, mult: r.mult, through: true }));
+          begin(S, false, launch, { point:r.point,route:"cross",periodQ:TQ,speedQ:r.speedQ,auto:!!r.auto });
+          balls.push(Object.assign(F, { id:r.point.id,number:i + 1,label:r.point.label,mult:r.mult,multQ:r.multQ,through:true }));
         });
       } finally { batchBusy = false; F = balls[0] || null; }
       batchStatus(); metrics(S); return;
     }
     if (!allStarts()) { begin(S, clear, launch); return; }
     if (clear) cycles = passes = 0;
-    const T = period(S), mult = fraction(Z.coneBallMult || "1"), speed = T && Number.isFinite(mult) ? 2 * S.rings[S.rings.length - 1].ro * mult / T : 0;
+    const TQ = periodQ(S), speedQ = TQ ? S.rings[S.rings.length - 1].roQ.mul(2).mul(inputFraction(Z.coneBallMult || "1") || ZERO).div(TQ) : ZERO;
     batchBusy = true;
     try {
       boundaryPoints(S).forEach((point, i) => {
-        begin(S, false, launch, { point, route: point.r === 0 ? "out" : "cross", period: T, speed });
+        begin(S, false, launch, { point,route:point.r === 0 ? "out" : "cross",periodQ:TQ,speedQ });
         balls.push(Object.assign(F, { id: point.id, label: point.label, number: i + 1 }));
       });
     } finally { batchBusy = false; F = balls[0] || null; }
@@ -531,7 +496,7 @@
     if (!balls.length) return;
     const count = balls.length, edges = count - 9;
     if (!enabled) { status("Шарики выключены · " + count + " серых точек — старты · нажми ● вкл. или ▶ запуск"); return; }
-    if (balls.every(b => b.ready) && !(balls[0].speed > 0)) { status(count + " шариков на местах · для запуска нужны вращение и положительная дробная скорость"); return; }
+    if (balls.every(b => b.ready) && balls[0].speedQ.sign() <= 0) { status(count + " шариков на местах · для запуска нужны вращение и положительная дробная скорость"); return; }
     if (balls.every(b => b.ready)) { status(balls.every(b => b.route === "in") ? (count === 1 ? "1 шарик во внешней щели · ● в центр — запуск" : count + " " + (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "шарика" : "шариков") + " во внешних щелях · ● в центр — запуск всей группы") : balls.every(b => b.through) ? count + " сквозных шарика на внешних гранях · ▶ запуск" : count + " шариков на местах: 4 внешних + 4 внутренних угла К2 + " + edges + " края К1 + центр · ▶ запуск вместе с вращением"); return; }
     const done = balls.filter(b => b.stage === "done"), clean = done.filter(b => b.clean).length, turned = balls.filter(b => !b.clean).length;
     const waiting = balls.filter(b => b.stage === "wait").length, stopped = balls.filter(b => b.stage === "lost").length;
@@ -546,73 +511,70 @@
     status((paused ? "Пауза · " : "") + "Шарики: " + count + " · движутся " + (count - done.length - waiting - stopped) + " · вышли " + done.length + " · без разворота " + clean + (totalLost ? " · застряли в дуге " + totalLost : "") + absorbed + (turned ? " · красные: был разворот, НЕ проход" : ""));
   }
   function frame(A, B, dt) {
-    let ds = B.spin - A.spin;
-    if ((Z.coneSpinMode || "all") === "all") { const expected = (Z.coneAutoSp ?? 30) * dt * Math.PI / 180; ds += TAU * Math.round((expected - ds) / TAU); }
-    const delta = A.rings.map((r, k) => B.rings[k].phase - r.phase + ds);
-    const rotations = A.rotation || A.rings.map(r => r.phase), next = B.rotation || B.rings.map(r => r.phase);
-    // Subframes around impacts must retain the same rotation clock as the whole frame.
-    const at = t => ({ shape: A.shape, spin: A.spin + ds * t,
-      clockPh: (A.clockPh || 0) + ((B.clockPh || 0) - (A.clockPh || 0)) * t,
-      rotation: rotations.map((p, k) => p + ((next[k] ?? p) - p) * t),
-      rings: A.rings.map((r, k) => ({ ...r, phase: r.phase + (B.rings[k].phase - r.phase) * t })) });
-    const turnDelta = rotations.map((p, k) => ((next[k] ?? p) - p + ds) / TAU);
-    return { at, delta, turnDelta, distance: F.speed * dt };
+    const ds = B.spinQ.sub(A.spinQ);
+    const deltaQ = A.rings.map((r, k) => B.rings[k].phaseQ.sub(r.phaseQ).add(ds));
+    const durationQ = deltaQ[0].abs();
+    const at = fraction => {
+      const t = Q(fraction), spinQ = A.spinQ.add(ds.mul(t)), clockPhaseQ = A.clockPhaseQ.add(B.clockPhaseQ.sub(A.clockPhaseQ).mul(t));
+      const rotationQ = A.rotationQ.map((r, k) => r.add(B.rotationQ[k].sub(r).mul(t)));
+      return {...A,spinQ,spin:radians(spinQ),clockPhaseQ,clockPh:clockPhaseQ.number(),clockQ:A.clockQ.add(B.clockQ.sub(A.clockQ).mul(t)),rotationQ,rotation:rotationQ.map(radians),
+        rings:A.rings.map((r, k) => { const phaseQ = r.phaseQ.add(B.rings[k].phaseQ.sub(r.phaseQ).mul(t)); return {...r,phaseQ,phase:radians(phaseQ)}; })};
+    };
+    return {at,durationQ,deltaQ,delta:deltaQ.map(radians),turnDeltaQ:deltaQ,turnDelta:deltaQ.map(q => q.number()),distance:F ? F.speedQ.mul(durationQ).number() : 0};
   }
-  // The edge of ring k lying on world angle a at this moment, if any.
   function edgeAt(S, k, a) {
     if (S.rings[k].solid) return null;
-    for (const b of S.rings[k].blocks) for (const e of [b.lo, b.hi]) if (Math.abs(norm(angle(S, k, e) - a)) < ALIGN) return e;
+    for (const b of S.rings[k].blocks) for (const raw of [b.loQ,b.hiQ]) if (angleQ(S, k, raw).sub(a).mod().eq(0)) return raw;
     return null;
   }
   function turn(why) {
     F.move = -F.move; F.stage = F.move > 0 ? "out" : "in"; F.reversals++; F.clean = false; F.seg = null;
     if (run) ringStats(F.k).reversals++;
-    F.length = F.travel + (F.move > 0 ? F.R - F.q : F.q + F.R);
+    F.lengthQ = F.travelQ.add(F.move > 0 ? F.RQ.sub(F.qQ) : F.qQ.add(F.RQ)); projectMotion(F);
     status(why + " · разворот по своей грани · НЕ проход · разворотов " + F.reversals);
   }
-  // Auto-tuning: the straight run to the next joint gets one constant speed,
-  // the one nearest to the nominal speed whose arrival meets an aligned edge
-  // (at most 4x faster). Through the centre the run goes on along the
-  // opposite edge of ring 1 up to its outer joint.
   function planSegment(S, C, dt) {
-    const ring = S.rings[F.k]; let length, next, raw = F.raw, outward = F.move > 0;
+    const ring = S.rings[F.k]; let length, next, raw = F.rawQ, outward = F.move > 0;
     if (!F.k && F.move < 0) {
-      const own = ring.blocks.flatMap(b => [b.lo, b.hi]).find(e => Math.abs(norm(e - F.raw - Math.PI)) < ALIGN);
-      if (own === undefined && (!ring.oneWay || centerMode() === "flip")) return null;   // v0.1046: «щель 180°» — отрезок кончается в центре
-      length = F.q + ring.ro; next = 1; raw = own === undefined ? F.raw : own; outward = true;   // v0.1044: «⊙ один путь» — обратно по тому же разрезу
-    } else { length = outward ? ring.ro - F.q : F.q - ring.ri; next = F.k + F.move; }
-    if (!(length > EPS) || next < 0 || next >= S.rings.length) return null;
-    const target = S.rings[next];
-    if (Math.abs(outward ? ring.ro - target.ri : ring.ri - target.ro) > EPS) return null;
-    const dw = (C.delta[F.k] - C.delta[next]) / dt, nominal = length / F.speed, a = angle(S, F.k, raw);
+      const own = ring.blocks.flatMap(b => [b.loQ,b.hiQ]).find(e => e.sub(F.rawQ).sub(HALF).mod().eq(0));
+      if (own === undefined && (!ring.oneWay || centerMode() === "flip")) return null;
+      length = F.qQ.add(ring.roQ); next = 1; raw = own === undefined ? F.rawQ : own; outward = true;
+    } else { length = outward ? ring.roQ.sub(F.qQ) : F.qQ.sub(ring.riQ); next = F.k + F.move; }
+    if (length.sign() <= 0 || next < 0 || next >= S.rings.length) return null;
+    const target = S.rings[next]; if (!(outward ? ring.roQ.eq(target.riQ) : ring.riQ.eq(target.roQ))) return null;
+    const w = ratesQ(S), dw = w[F.k].sub(w[next]), nominal = length.div(F.speedQ), a = angleQ(S,F.k,raw);
     let best = null;
-    for (const b of target.blocks) for (const f of [b.lo, b.hi]) {
-      const phase = norm(a - angle(S, next, f));
-      const times = Math.abs(dw) < 1e-12 ? (Math.abs(phase) < ALIGN ? [nominal] : []) :
-        Array.from({ length: 7 }, (_, j) => ((Math.round((dw * nominal + phase) / TAU) + j - 3) * TAU - phase) / dw);
-      for (const t of times) if (t >= nominal / 4 - 1e-12 && (best === null || Math.abs(t - nominal) < Math.abs(best - nominal))) best = t;
+    for (const b of target.blocks) for (const edge of [b.loQ,b.hiQ]) {
+      const phase = a.sub(angleQ(S,next,edge));
+      if (!dw.sign()) { if (phase.mod().eq(0)) best = nominal; continue; }
+      const m0 = dw.mul(nominal).add(phase).add(HALF).floor();
+      for (let m = m0 - 3n; m <= m0 + 3n; m++) {
+        const time = Q(m).sub(phase).div(dw);
+        if (time.sign() > 0 && time.cmp(nominal.div(4)) >= 0 && (!best || time.sub(nominal).abs().cmp(best.sub(nominal).abs()) < 0)) best = time;
+      }
     }
-    return best === null ? null : { speed: length / best };
+    return best ? {speedQ:length.div(best),speed:length.div(best).number()} : null;
   }
-  function outerArc(S, C, dt) {
-    const block = S.rings[F.k].blocks.find(b => [b.lo, b.hi].some(e => Math.abs(norm(e - F.raw)) < ALIGN));
-    if (!block) { F.move = -1; F.stage = "in"; F.seg = null; return; }   // v0.1081: без ожидания — сразу внутрь по своей грани
-    const fromLo = Math.abs(norm(block.lo - F.raw)) < ALIGN;
-    const from = fromLo ? block.lo : block.hi, to = fromLo ? block.hi : block.lo;
-    // v0.1081: дуга — с той же постоянной скоростью шарика (прежде planArc подбирал свою скорость для синхронной орбиты)
-    F.arc = { from, to, duration: F.q * Math.abs(to - from) / F.speed, elapsed: 0, speed: F.speed };
-    F.raw = F.arc.from; F.stage = "arc"; F.seg = null;
+  function outerArc(S) {
+    const block = S.rings[F.k].blocks.find(b => [b.loQ,b.hiQ].some(e => e.sub(F.rawQ).mod().eq(0)));
+    if (!block) { F.move = -1; F.stage = "in"; F.seg = null; return; }
+    const fromLo = block.loQ.sub(F.rawQ).mod().eq(0), fromQ = fromLo ? block.loQ : block.hiQ, toQ = fromLo ? block.hiQ : block.loQ;
+    // Arc speed is a fraction of the whole turn per reference-clock unit; radius is not a factor.
+    const durationQ = toQ.sub(fromQ).abs().div(F.speedQ);
+    F.arc = {fromQ,toQ,durationQ,elapsedQ:ZERO,speedQ:F.speedQ,from:radians(fromQ),to:radians(toQ),duration:durationQ.number(),elapsed:0,speed:F.speedQ.number()};
+    setRaw(F,fromQ); F.stage = "arc"; F.seg = null;
   }
-  // v0.1055: actual bit interior at the impact angle. Never substitute an adjacent cell at a slit.
   function fillCellAt(ring, e) {
     const cells = ring.cells && ring.cells.length ? ring.cells : ring.blocks;
-    for (const b of cells) { const d = ((e - b.lo) % TAU + TAU) % TAU; if (d >= 0 && d < b.hi - b.lo) return b.bit; }
+    const value = rawFraction(ring, e);
+    for (const b of cells) { const d = value.sub(b.loQ).mod(); if (d.cmp(b.hiQ.sub(b.loQ)) < 0) return b.bit; }
     return null;
   }
-  function stuckPosition(S, group, sample) {
+  function stuckPosition(S,group,sample) {
     const ring = S.rings[group.k]; if (!ring) return null;
-    const cell = (ring.cells && ring.cells.length ? ring.cells : ring.blocks).find(b => b.bit === group.bit); if (!cell) return null;
-    return { a: angle(S, group.k, cell.lo + (cell.hi - cell.lo) * sample.u), q: ring.ri + (ring.ro - ring.ri) * sample.v, width: cell.hi - cell.lo };
+    const cell = (ring.cells.length ? ring.cells : ring.blocks).find(b => b.bit === group.bit); if (!cell) return null;
+    const raw = cell.loQ.add(cell.hiQ.sub(cell.loQ).mul(sample.uQ ?? sample.u));
+    return {a:angle(S,group.k,raw),q:ring.riQ.add(ring.roQ.sub(ring.riQ).mul(sample.vQ ?? sample.v)).number(),width:radians(cell.hiQ.sub(cell.loQ))};
   }
   function absorbAt(k) {
     F.stage = "lost"; F.absorbed = true; F.absorbedAt = k; F.seg = null; F.clean = false; cycles++;
@@ -632,14 +594,14 @@
     F.stage = "lost"; F.lostAt = k; F.seg = null; cycles++;
     if (run) ringStats(k).lost++;
     if (S) {
-      const ring = S.rings[k], raw = a - ring.phase - S.spin, bit = fillCellAt(ring, raw);
+      const ring = S.rings[k], rawQ = Q(a).sub(ring.phaseQ).sub(S.spinQ), bit = fillCellAt(ring, rawQ);
       const cell = (ring.cells && ring.cells.length ? ring.cells : ring.blocks).find(b => b.bit === bit);
       if (cell) {
         let group = stuck.find(p => p.k === k && p.bit === bit);
         if (!group) { group = { k, bit, count: 0, samples: [] }; stuck.push(group); }
         group.count++;
         // Remain at the exact point of contact, attached to the struck ring.
-        if (group.samples.length < 64) group.samples.push({ u: ((raw - cell.lo) % TAU + TAU) % TAU / (cell.hi - cell.lo), v: (F.q - ring.ri) / (ring.ro - ring.ri) });
+        if (group.samples.length < 64) group.samples.push({uQ:rawQ.sub(cell.loQ).mod().div(cell.hiQ.sub(cell.loQ)),vQ:F.qQ.sub(ring.riQ).div(ring.roQ.sub(ring.riQ))});
       }
     }
     if (window.zzBallLostRecord) window.zzBallLostRecord(k);
@@ -649,7 +611,7 @@
     if (F.route !== "in") return false;
     const value = F.move < 0 ? "1" : Z.coneBallZeroBounce && F.bounces > 0 ? "0" : null;
     if (value === null) return false;
-    const ring = S.rings[k], bit = fillCellAt(ring, a - ring.phase - S.spin);
+    const ring = S.rings[k], bit = fillCellAt(ring, Q(a).sub(ring.phaseQ).sub(S.spinQ));
     if (bit === null) return false;
     const text = k === Z.rows.length ? fillDraft() : Z.rows[k], M = window.zzBallEmptyMask ? window.zzBallEmptyMask() : null;
     if (!text || bit < 0 || bit >= text.length) return false;
@@ -670,107 +632,90 @@
   // v0.1067: where the ball may enter ring k on world line a: an exactly aligned edge, or an open
   // cut-out (no bit block covers a; the ball keeps its place and turns with that ring); null — it hits a bit's arc.
   /* v0.1067, «шарик и щель — идеальные линия и точка без ширины, поэтому никаких допусков… везде так»: щель (разрез) — линия без ширины, шарик — точка.
-     Проходит только грань, лежащая ровно на его прямой (ALIGN — машинная точность, не ширина); вырез — открытая дуга. Прежде — допуск полуширины
+     Проходит только грань, лежащая ровно на его прямой (точное равенство дробей, без допуска); вырез — открытая дуга. Прежде — допуск полуширины
      щели (coneSlitHalf, как у лазера) */
   function lossPass(S, k, a, slits = centerBatchSlits || centerSlits()) {
     if (S.rings[k].solid) return null;
-    const R = S.rings[k], walls = R.contactBlocks || R.blocks; let best = null;
-    const raw = a - R.phase - S.spin;
+    const R = S.rings[k], walls = R.contactBlocks || R.blocks, raw = Q(a).sub(R.phaseQ).sub(S.spinQ);
     if (Z.coneBallRoute === "in" && closedSlit(slits, k, R, raw)) return null;
-    for (const b of walls) for (const f of [b.lo, b.hi]) { const d = Math.abs(norm(angle(S, k, f) - a)); if (d < ALIGN && (best === null || d < best.d)) best = { d, f }; }
-    if (best) return best.f;
-    return walls.some(b => { const x = ((raw - b.lo) % TAU + TAU) % TAU; return x > 0 && x < b.hi - b.lo; }) ? null : raw;
+    for (const b of walls) for (const edge of [b.loQ,b.hiQ]) if (edge.sub(raw).mod().eq(0)) return edge;
+    return walls.some(b => { const x = raw.sub(b.loQ).mod(); return x.sign() > 0 && x.cmp(b.hiQ.sub(b.loQ)) < 0; }) ? null : raw;
   }
   // The ball sits on edge F.raw of ring F.k at distance F.q from the centre,
   // so it turns with that ring. Stops: the outer rim (exit), the joint between
   // the rings and the centre. Across the joint and through the centre it goes
   // on only along an edge lying on the same line at that moment.
-  function advance(dt, A, B) {
-    if (!enabled || !F || F.ready || F.stage === "done" || F.stage === "lost" || !(dt > 0)) return;
+  function advance(dt, A, B, boundaryOnly = false) {
+    if (!enabled || !F || F.ready || F.stage === "done" || F.stage === "lost") return;
     if (!A || !B || A.shape !== F.shape || B.shape !== F.shape) { F = null; status(hint()); return; }
     const dir = (Z.coneAutoSp ?? 30) < 0 ? -1 : 1;
-    if (dir !== F.dir) { begin(A, true); status("Направление изменено · ▶ запуск — новый опыт"); return; }
-    const C = frame(A, B, dt); if (!(C.distance > 0)) { status("Нужна положительная дробная скорость и вращение колец"); return; }
-    let t = 0, guard = 0;
-    while (t < 1 - 1e-12 && guard++ < 256) {
+    if (dir !== F.dir) { begin(A,true); status("Направление изменено · ▶ запуск — новый опыт"); return; }
+    const C = frame(A,B,dt), duration = C.durationQ; if (!duration.sign() && !boundaryOnly || F.speedQ.sign() <= 0) return;
+    let elapsed = ZERO, guard = 0;
+    while ((elapsed.cmp(duration) < 0 || boundaryOnly) && guard++ < 256) {
       if (F.stage === "arc") {
-        const arc = F.arc, seconds = Math.min(dt * (1 - t), Math.max(0, arc.duration - arc.elapsed));
-        arc.elapsed += seconds; F.elapsed += seconds; F.travel += arc.speed * seconds; t += seconds / dt;
-        F.raw = arc.from + (arc.to - arc.from) * Math.min(1, arc.elapsed / arc.duration);
-        if (arc.duration - arc.elapsed > 1e-10) break;
-        F.raw = arc.to; F.arc = null; F.arcs++; F.move = -1; F.stage = "in"; F.seg = null;
-        continue;
+        const arc = F.arc, amount = ZZExact.min(duration.sub(elapsed),arc.durationQ.sub(arc.elapsedQ));
+        arc.elapsedQ = arc.elapsedQ.add(amount); F.elapsedQ = F.elapsedQ.add(amount); F.travelQ = F.travelQ.add(arc.speedQ.mul(amount)); elapsed = elapsed.add(amount);
+        setRaw(F,arc.fromQ.add(arc.toQ.sub(arc.fromQ).mul(arc.elapsedQ.div(arc.durationQ)))); arc.elapsed = arc.elapsedQ.number();
+        if (arc.elapsedQ.cmp(arc.durationQ) < 0) break;
+        setRaw(F,arc.toQ); F.arc = null; F.arcs++; F.move = -1; F.stage = "in"; F.seg = null; continue;
       }
-      const ring = A.rings[F.k];
-      const stop = F.move > 0 ? ring.ro : ring.ri;
+      const ring = A.rings[F.k], stop = F.move > 0 ? ring.roQ : ring.riQ;
       if (F.auto) {
-        const speed = (planSegment(C.at(t), C, dt) || { speed: F.speed }).speed;
-        if (Math.abs(speed / F.speed - 1) > 1e-9) F.tuned++;
-        F.speed = speed; F.auto = false; F.seg = null; lossSpeed = speed;
+        const plan = planSegment(C.at(duration.sign() ? elapsed.div(duration) : ZERO),C,dt), speed = plan ? plan.speedQ : F.speedQ;
+        if (!speed.eq(F.speedQ)) F.tuned++;
+        F.speedQ = speed; F.auto = false; F.seg = null; lossSpeedQ = speed;
       }
-      const step = (F.seg ? F.seg.speed : F.speed) * dt;
-      const amount = Math.min(step * (1 - t), Math.max(0, (stop - F.q) * F.move)), h = amount / step;
-      F.q += F.move * amount; F.travel += amount; F.elapsed += dt * h; t += h;
-      if (Math.abs(F.q - stop) > EPS) break;
-      F.q = stop;
-      const S = C.at(t), a = angle(S, F.k, F.raw);
+      const available = F.speedQ.mul(duration.sub(elapsed)), distance = ZZExact.max(ZERO,stop.sub(F.qQ).mul(F.move)), amount = ZZExact.min(available,distance), step = amount.div(F.speedQ);
+      F.qQ = F.qQ.add(amount.mul(F.move)); F.travelQ = F.travelQ.add(amount); F.elapsedQ = F.elapsedQ.add(step); elapsed = elapsed.add(step);
+      if (!F.qQ.eq(stop)) break;
+      const fraction = duration.sign() ? elapsed.div(duration) : ZERO, S = C.at(fraction), a = angleQ(S,F.k,F.rawQ);
       if (F.k === A.rings.length - 1 && F.move > 0) {
-        F.crossings++;
-        if (F.loop) { outerArc(S, C, dt); continue; }
+        F.crossings++; if (F.loop) { outerArc(S); continue; }
         F.growReq = F.route === "in" && !!ring.fill && Z.rows.length < CONE_MAX - 1 && !!window.zzBallGrowOuter;
         finish(); break;
       }
       if (!F.k && F.move < 0) {
-        if (F.route === "in") { F.atCenter = true; closeCenterRing(0, S, F.raw); finish(); break; }
-        const e = edgeAt(S, 0, a + Math.PI);
-        if (e === null && S.rings[0].oneWay && centerMode() === "flip") {
-          // v0.1046: остаток кадра шарик стоит в центре; после кадра кольцо 1 поворачивается на 180° (applyFlips), и его разрез — продолжение пути
-          F.move = 1; F.stage = "out"; F.seg = null; F.flipReq = true; F.flips = (F.flips || 0) + 1;
-          F.elapsed += dt * (1 - t); t = 1; break;
+        if (F.route === "in") { F.atCenter = true; closeCenterRing(0,S,F.rawQ); finish(); break; }
+        const edge = edgeAt(S,0,a.add(HALF));
+        if (edge === null && S.rings[0].oneWay && centerMode() === "flip") {
+          F.move = 1; F.stage = "out"; F.seg = null; F.flipReq = true; F.flips = (F.flips || 0) + 1; break;
         }
-        if (e === null && S.rings[0].oneWay) { F.move = 1; F.stage = "out"; }   // v0.1044: «⊙ один путь» — из центра по тому же разрезу, это не разворот
-        else if (e === null) turn("В центре нет грани напротив");   // v0.1081: без ожидания в центре
-        else { F.raw = e; F.move = 1; F.stage = "out"; }
+        if (edge === null && S.rings[0].oneWay) { F.move = 1; F.stage = "out"; }
+        else if (edge === null) turn("В центре нет грани напротив");
+        else { setRaw(F,edge); F.move = 1; F.stage = "out"; }
         continue;
       }
-      const next = F.k + F.move, target = S.rings[next];
-      const touching = Math.abs(stop - (F.move > 0 ? target.ri : target.ro)) < EPS;
+      const next = F.k + F.move, target = S.rings[next], touching = stop.eq(F.move > 0 ? target.riQ : target.roQ);
       if (F.route === "in" && F.move < 0 && next < centerCount() && touching) {
         if (run) ringStats(next).hits++;
-        const written = writeInwardImpact(next, S, a);
-        F.atCenter = true; closeCenterRing(F.k, S, F.raw);
+        const written = writeInwardImpact(next,S,a); F.atCenter = true; closeCenterRing(F.k,S,F.rawQ);
         if (!written && bounceOn()) { F.atCenter = false; bounceAt(next); continue; }
         if (absorbOn() && written) absorbAt(next); else finish(); break;
       }
-      let e = touching ? edgeAt(S, next, a) : null;
+      let edge = touching ? edgeAt(S,next,a) : null;
       if (markRun && target.fill && F.move > 0 && touching) {
-        e = lossPass(S, next, a);
-        if (e === null) {
-          const j = fillCellAt(target, a - target.phase - S.spin);
-          const marked = markDraft(j); if (j !== null) F.marked = j;
-          markK1(t, next); impactAt(next, S, a, marked); if (F.stage === "lost") break; else continue;
+        edge = lossPass(S,next,a);
+        if (edge === null) {
+          const bit = fillCellAt(target,a.sub(target.phaseQ).sub(S.spinQ)), marked = markDraft(bit); if (bit !== null) F.marked = bit;
+          markK1(fraction,next); impactAt(next,S,a,marked); if (F.stage === "lost") break; else continue;
         }
       }
-      if (F.loss && touching) {   // «✕ дуга» и «в центр»: щель или открытый вырез — дальше; дуга бита — застрять / отскочить. v0.1081: и на первом отрезке авто
-        e = lossPass(S, next, a);
-        if (e === null) { markK1(t, next); impactAt(next, S, a); if (F.stage === "lost") break; else continue; }
+      if (F.loss && touching) {
+        edge = lossPass(S,next,a);
+        if (edge === null) { markK1(fraction,next); impactAt(next,S,a); if (F.stage === "lost") break; else continue; }
       }
-      if (e === null) {
-        turn("Грань кольца " + (next + 1) + " не совпала");
-      }
-      else {
-        markK1(t, next); enteredRing(next); F.k = next; F.raw = e; F.seg = null;
-      }
+      if (edge === null) turn("Грань кольца " + (next + 1) + " не совпала");
+      else { markK1(fraction,next); enteredRing(next); F.k = next; setRaw(F,edge); F.seg = null; }
     }
-    // Freeze each result at the exact exit, including a partial final frame.
-    F.ringTurns = F.ringTurns.map((v, k) => v + (C.turnDelta[k] || 0) * Math.min(t, 1));
-    F.a = angle(C.at(Math.min(t, 1)), F.k, F.raw);
-    rememberResult();
-    metrics(B);
+    const fraction = duration.sign() ? elapsed.div(duration) : ZERO;
+    F.ringTurnsQ = F.ringTurnsQ.map((value,k) => value.add((C.turnDeltaQ[k] || ZERO).mul(fraction)));
+    F.aQ = angleQ(C.at(fraction),F.k,F.rawQ); F.a = radians(F.aQ); F.frameFractionQ = fraction;
+    projectMotion(F); rememberResult(); metrics(B);
   }
   function rememberResult(ball = F) {
     if (!run || !ball || !ball.runNumber) return;
-    const result = { number: ball.runNumber, ringTurns: ball.ringTurns.slice(), stage: ball.stage, clean: ball.clean };
+    const result = { number: ball.runNumber, ringTurns: ball.ringTurnsQ.map(q => q.text()), stage: ball.stage, clean: ball.clean };
     const i = run.results.findIndex(b => b.number === result.number);
     if (i >= 0) run.results[i] = result; else { run.results.push(result); if (run.results.length > 64) run.results.shift(); }
   }
@@ -779,41 +724,49 @@
     // v0.1085: выход за последнее кольцо — видимая остановка на краю, а не удаление из опыта.
     if (!resting.includes(F)) resting.push(F);
     if (run) { if (F.atCenter) run.reachedCenter++; else run.exited++; ringStats(F.k).passed++; }
-    status(routes[F.route] + " · " + (F.clean ? "ПРОХОД без разворота" : "НЕ проход: был разворот") + " · время " + F.elapsed.toFixed(3) + " с · чистых " + passes + "/" + cycles);
+    status(routes[F.route] + " · " + (F.clean ? "ПРОХОД без разворота" : "НЕ проход: был разворот") + " · " + F.elapsedQ.text() + " оборота К1 · чистых " + passes + "/" + cycles);
     if (F.loopError) status(F.loopError);
   }
   // Every inward ball sees closure at the same event time, independent of array order and frame size.
-  function advanceInwardGroup(dt, A, B, stopAtSame = false) {
-    const C = frame(A, B, dt); let elapsed = 0, guard = 0;
-    while (elapsed < dt - 1e-12 && guard++ < 2048) {
-      const live = balls.filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost");
+  function advanceInwardGroup(dt,A,B,stopAtSame = false) {
+    const C = frame(A,B,dt), duration = C.durationQ;
+    if (!duration.sign()) return null;
+    let elapsed = ZERO;
+    while (elapsed.cmp(duration) < 0) {
+      const list = balls.length ? balls : F ? [F] : [], live = list.filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost");
       if (!live.length) break;
-      let step = dt - elapsed;
-      for (const b of live) {
-        const r = A.rings[b.k], stop = b.move > 0 ? r.ro : r.ri;
-        step = Math.min(step, Math.max(1e-10, (stop - b.q) * b.move / b.speed));
+      const before = C.at(elapsed.div(duration));
+      for (const b of live) if (b.auto) {
+        F = b; const plan = planSegment(before,C,dt);
+        if (plan && !plan.speedQ.eq(b.speedQ)) { b.speedQ = plan.speedQ; b.tuned++; }
+        b.auto = false; lossSpeedQ = b.speedQ; projectMotion(b);
       }
-      const same = live.filter(b => {
-        const r = A.rings[b.k], stop = b.move > 0 ? r.ro : r.ri;
-        return Math.abs((stop - b.q) * b.move / b.speed - step) < 1e-9;
-      }).map(b => ({number:b.number || 1, ring:!b.k && b.move < 0 ? "центр" : b.k + b.move >= A.rings.length ? "выход" : "К" + (b.k + b.move + 1)}));
-      const before = C.at(elapsed / dt), after = C.at((elapsed + step) / dt);
+      const stops = live.map(b => {
+        const r = before.rings[b.k], time = b.stage === "arc" ? b.arc.durationQ.sub(b.arc.elapsedQ) :
+          b.speedQ.sign() > 0 ? (b.move > 0 ? r.roQ.sub(b.qQ) : b.qQ.sub(r.riQ)).div(b.speedQ) : duration.sub(elapsed);
+        return {ball:b,time:ZZExact.max(ZERO,time)};
+      });
+      const step = stops.reduce((t,p) => ZZExact.min(t,p.time),duration.sub(elapsed));
+      const same = stops.filter(p => p.time.eq(step)).map(({ball:b}) => ({number:b.number || 1,
+        ring:b.stage === "arc" ? "конец дуги" : !b.k && b.move < 0 ? "центр" : b.k + b.move >= A.rings.length ? "выход" : "К" + (b.k + b.move + 1)}));
+      const after = C.at(elapsed.add(step).div(duration));
+      const identities = live.map(b => [b.k,b.move,b.stage,b.qQ.text(),b.rawQ.text()].join(":")).join("|");
       centerBatch = true; pendingClosed = centerCount(); centerBatchSlits = JSON.parse(JSON.stringify(centerSlits()));
-      try { for (const b of live) { F = b; advance(step, before, after); } }
+      try { for (const b of live) { F = b; advance(step,before,after,!step.sign()); } }
       finally { centerBatch = false; centerBatchSlits = null; setClosed(pendingClosed); }
-      elapsed += step;
-      // A newly filled central ring also captures balls already inside it at this exact time.
-      for (const b of live) if (b.stage !== "done" && b.stage !== "lost" && b.k < centerCount() && !(b.move > 0 && b.bounces > 0)) {
-        F = b; F.atCenter = true; finish(); rememberResult();
-        if (!same.some(e => e.number === b.number)) same.push({number:b.number || 1, ring:"центр К" + centerCount()});
+      elapsed = elapsed.add(step);
+      for (const b of live) if (b.route === "in" && b.stage !== "done" && b.stage !== "lost" && b.k < centerCount() && !(b.move > 0 && b.bounces > 0)) {
+        F = b; b.atCenter = true; finish(); rememberResult();
+        if (!same.some(e => e.number === b.number)) same.push({number:b.number || 1,ring:"центр К" + centerCount()});
       }
-      const pause = stopAtSame && same.length > 1;
-      if (live.some(b => b.growReq)) return {fraction:elapsed / dt, events:same, grow:true, pause};
-      if (pause) return {fraction:elapsed / dt, events:same};
-      // Start the next generation at this event, not at the end of the animation frame.
-      if (centerCount() >= A.rings.length - 1 && A.rings[A.rings.length - 1].fill &&
-          balls.every(b => b.ready || b.stage === "done" || b.stage === "lost")) {
-        return {fraction:elapsed / dt, events:same, complete:true};
+      const pause = stopAtSame && same.length > 1, fractionQ = elapsed.div(duration);
+      const last = list[list.length - 1], chainEvent = chain && last && !last.ready && (last.k >= 1 || last.stage === "done" || last.stage === "lost");
+      const grow = live.some(b => b.growReq), flip = live.some(b => b.flipReq);
+      const complete = Z.coneBallRoute === "in" && centerCount() >= A.rings.length - 1 && A.rings[A.rings.length - 1].fill &&
+        list.every(b => b.ready || b.stage === "done" || b.stage === "lost");
+      if (grow || flip || pause || complete || chainEvent) return {fractionQ,fraction:fractionQ.number(),events:same,grow,flip,pause,complete,chain:chainEvent};
+      if (!step.sign() && identities === live.map(b => [b.k,b.move,b.stage,b.qQ.text(),b.rawQ.text()].join(":")).join("|")) {
+        status("Движение остановлено: событие на стыке не изменило состояние"); pauseRotation(); break;
       }
     }
     return null;
@@ -832,16 +785,16 @@
       const oldCount = b.ringShapes.length;
       // Use geometry at the promotion instant, never an angle cached by the last draw.
       if (previous && previous.rings[b.k]) {
-        const raw = angle(previous, b.k, b.raw) - S.rings[b.k].phase - S.spin, shift = raw - b.raw;
-        b.raw = raw;
-        if (b.arc) { b.arc.from += shift; b.arc.to += shift; }
-        if (b.ready) b.start.raw = b.raw;
+        const raw = angleQ(previous,b.k,b.rawQ).sub(S.rings[b.k].phaseQ).sub(S.spinQ), shift = raw.sub(b.rawQ);
+        setRaw(b,raw);
+        if (b.arc) { b.arc.fromQ = b.arc.fromQ.add(shift); b.arc.toQ = b.arc.toQ.add(shift); b.arc.from = radians(b.arc.fromQ); b.arc.to = radians(b.arc.toQ); }
+        if (b.ready) { b.start.raw = b.raw; b.start.rawQ = b.rawQ; }
       }
-      b.shape = S.shape; b.R = S.rings[S.rings.length - 1].ro; b.seg = null;
+      b.shape = S.shape; b.RQ = S.rings[S.rings.length - 1].roQ; b.R = b.RQ.number(); b.seg = null;
       b.ringShapes = S.rings.map(r => r.shape); b.fillIndex = S.rings.findIndex(r => r.fill);
-      while (b.ringTurns.length < S.rings.length) b.ringTurns.push(0);
+      while (b.ringTurnsQ.length < S.rings.length) b.ringTurnsQ.push(ZERO); projectMotion(b);
       // An outward ball parked at the old rim can now meet the new ring at that same joint.
-      if (S.rings.length > oldCount && b.stage === "done" && !b.atCenter && b.move > 0 && b.k === oldCount - 1 && Math.abs(b.q - S.rings[b.k].ro) < EPS) {
+      if (S.rings.length > oldCount && b.stage === "done" && !b.atCenter && b.move > 0 && b.k === oldCount - 1 && b.qQ.eq(S.rings[b.k].roQ)) {
         b.stage = "out"; b.growReq = false; b.crossings = Math.max(0, b.crossings - 1);
         cycles = Math.max(0, cycles - 1); if (b.clean) passes = Math.max(0, passes - 1);
         resting = resting.filter(x => x !== b);
@@ -867,7 +820,7 @@
     if (run) run.removed += live.length;
     const c = boundaryPoints(S).find(p => p.id === "center"); balls = []; F = null; if (!c) return;
     batchBusy = true;
-    try { begin(S, false, true, { point: c, route: "out", period: period(S), speed: lossRun && lossSpeed ? lossSpeed : undefined, auto: lossRun && lossSpeed ? false : undefined });
+    try { begin(S, false, true, { point: c, route: "out", periodQ:periodQ(S), speedQ: lossRun && lossSpeedQ.sign() > 0 ? lossSpeedQ : undefined, auto: lossRun && lossSpeedQ.sign() > 0 ? false : undefined });
       if (chain) { const no = F.runNumber || 1; Object.assign(F, { number: no, label: "Вылет " + no }); balls = [F]; } }
     finally { batchBusy = false; }
     status("Строка ушла в поле · вылеты дальше: строк " + Z.rows.length);
@@ -880,11 +833,13 @@
   };
   // v0.1046: «⟳ щель 180°» — шарик дошёл до центра: кольцо 1 (один бит) поворачивается на полоборота довода строки 1. Все шарики на нём едут с ним;
   // в счёт оборотов кольца 1 — по ½ на переворот
-  function applyFlips(list){
+  function applyFlips(list) {
     const n = list.filter(b => b.flipReq).length; if (!n) return;
-    list.forEach(b => { b.flipReq = false; if (b.ringTurns) b.ringTurns[0] += 0.5 * n * ((Z.coneAutoSp ?? 30) < 0 ? -1 : 1); });
-    if (run) { ringStats(0).turns += 0.5 * n * ((Z.coneAutoSp ?? 30) < 0 ? -1 : 1); list.forEach(rememberResult); }
-    Z.coneAimRot = ((((Z.coneAimRot || 0) + 180 * n) % 720) + 1080) % 720 - 360;
+    const delta = HALF.mul(n).mul((Z.coneAutoSp ?? 30) < 0 ? -1 : 1);
+    list.forEach(b => { b.flipReq = false; if (!b.ready && b.stage !== "done" && b.stage !== "lost") { b.ringTurnsQ[0] = b.ringTurnsQ[0].add(delta); projectMotion(b); } });
+    if (run) { const r = ringStats(0); r.turnsQ = r.turnsQ.add(delta); r.turns = r.turnsQ.number(); list.forEach(rememberResult); }
+    const aim = coneMotionRead("aim.rotation",Z.coneAimRot || 0).add(Q(180).mul(n)).add(360).mod(720).sub(360);
+    Z.coneAimRot = coneMotionWrite("aim.rotation",aim);
     save(); if (typeof renderCone === "function") renderCone();
   }
   function flushMarks() {
@@ -898,86 +853,71 @@
     const k = Z.rows.length;
     if (window.zzBallFillMark) { const written = window.zzBallFillMark(list); if (run) ringStats(k).marks += written || 0; }
   }
-  window.zzBallAfterSpin = (dt, before) => {
+  window.zzBallAfterSpin = (dt,before) => {
     if (!enabled) return;
     spinFrame++;
-    const S = snapshot();
-    growRun(S);
-    // A ring promoted during this frame extends its geometry; the old rings still supply the start phases.
+    const S = snapshot(); growRun(S);
     if (before && S && S.rings.length > before.rings.length && F && F.shape === S.shape) {
-      before = { ...before, shape: S.shape, rings: S.rings.map((r, k) => ({ ...r, phase: before.rings[k]?.phase ?? r.phase })),
-        rotation: S.rotation?.map((v, k) => before.rotation?.[k] ?? v) };
+      before = {...before,shape:S.shape,rings:S.rings.map((r,k) => ({...r,phaseQ:before.rings[k]?.phaseQ ?? r.phaseQ,phase:before.rings[k]?.phase ?? r.phase})),
+        rotationQ:S.rotationQ.map((v,k) => before.rotationQ[k] ?? v),rotation:S.rotation.map((v,k) => before.rotation[k] ?? v)};
     }
     if (run && run.lane !== (Z.lane | 0)) window.zzBallClearRun();
-    if (run && !paused && before && S && before.shape === S.shape && F && dt > 0) {
-      run.seconds += dt; const C = frame(before, S, dt);
-      C.turnDelta.forEach((v, k) => { ringStats(k).turns += v; });
+    const list = balls.length ? balls : F ? [F] : [];
+    if (paused || !list.length || !before || !S) return;
+    if (list.some(b => b.shape !== S.shape || b.shape !== before.shape)) {
+      if (markRun) restartRun(S); else { balls = []; F = null; status(hint()); } return;
     }
-    if (!balls.length) { advance(dt, before, S); if (F) applyFlips([F]); flushMarks(); if (markRun && F && (F.stage === "done" || F.stage === "lost")) restartRun(snapshot() || S); return; }
-    if (!before || !S || balls.some(b => b.shape !== S.shape || b.shape !== before.shape)) { if (markRun && S) { restartRun(S); return; } balls = []; F = null; status(hint()); return; }
-    if (balls.some(b => b.dir !== ((Z.coneAutoSp ?? 30) < 0 ? -1 : 1))) { prepare(S, true); status("Направление изменено · ▶ — общий запуск"); return; }
+    if (list.some(b => b.dir !== ((Z.coneAutoSp ?? 30) < 0 ? -1 : 1))) { prepare(S,true); status("Направление изменено · ▶ — общий запуск"); return; }
+    const C = frame(before,S,dt); if (!C.durationQ.sign()) return;
+    let event;
     batchBusy = true;
-    let simultaneous = null;
-    // v0.1079, «паузы „Одновременно“ — надо кнопку отключения, по умолчанию откл.»: пауза на одновременных событиях — только с «⏸ одновременно» (Z.coneBallSimPause)
-    try { if (balls.every(b => b.route === "in")) simultaneous = advanceInwardGroup(dt, before, S, !!Z.coneBallSimPause); else for (const ball of balls) { F = ball; advance(dt, before, S); } }
-    finally { batchBusy = false; F = balls[0]; }
-    if (simultaneous) {
-      const f = simultaneous.fraction, C = frame(before, S, dt);
-      Z.coneSpinPh = (before.clockPh || 0) + ((S.clockPh || 0) - (before.clockPh || 0)) * f;
-      Z.coneSpin = ((C.at(f).spin * 180 / Math.PI) % 360 + 360) % 360;
-      if (run) {
-        run.seconds -= dt * (1 - f);
-        C.turnDelta.forEach((v, k) => { ringStats(k).turns -= v * (1 - f); });
-        if (!simultaneous.complete && (!simultaneous.grow || simultaneous.pause)) run.simultaneous = {seconds:run.seconds, events:simultaneous.events};
-      }
-      if (!simultaneous.grow || simultaneous.pause) pauseRotation();
+    try { event = advanceInwardGroup(dt,before,S,!!Z.coneBallSimPause); }
+    finally { batchBusy = false; F = list[0]; }
+    const fractionQ = event ? event.fractionQ : ONE, moved = C.durationQ.mul(fractionQ);
+    if (run) {
+      run.elapsedQ = run.elapsedQ.add(moved); run.elapsed = run.elapsedQ.number();
+      C.turnDeltaQ.forEach((delta,k) => { const r = ringStats(k); r.turnsQ = r.turnsQ.add(delta.mul(fractionQ)); r.turns = r.turnsQ.number(); });
     }
-    applyFlips(balls);
-    flushMarks();
-    if (simultaneous && simultaneous.grow) {
-      const grew = window.zzBallGrowOuter();
-      balls.forEach(b => { b.growReq = false; });
-      const remaining = dt * (1 - simultaneous.fraction);
-      if (grew && !simultaneous.pause && remaining > 1e-12 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+    if (event) {
+      const pose = C.at(fractionQ); coneMotionSetClock(pose.clockPhaseQ,pose.spinQ.mul(360));
+      if (event.pause && run) run.simultaneous = {turns:run.elapsedQ.text(),events:event.events};
+      if (event.pause || event.complete) pauseRotation();
+    }
+    applyFlips(list); flushMarks();
+    const remaining = Q(dt).mul(ONE.sub(fractionQ));
+    if (event && event.grow) {
+      const grew = window.zzBallGrowOuter(); list.forEach(b => { b.growReq = false; });
+      if (grew && !event.pause && remaining.sign() > 0 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
       batchStatus(); metrics(snapshot() || S); return;
     }
     const afterMarks = markRun ? snapshot() : null;
-    if (afterMarks && afterMarks.shape !== S.shape) {
-      if (!F || F.shape !== afterMarks.shape) restartRun(afterMarks);
-      batchStatus(); metrics(afterMarks); return;   // после заполнения строки не добавляем шарик со старой геометрией
+    if (afterMarks && afterMarks.shape !== S.shape && (!F || F.shape !== afterMarks.shape)) {
+      restartRun(afterMarks);
+      if (!paused && remaining.sign() > 0 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+      batchStatus(); metrics(afterMarks); return;
     }
-    // v0.1051: цепочка — последний вылетевший вышел из кольца 1 (или уже вылетел совсем): из центра стартует следующий
-    // v0.1053: цепочка не кончается на CHAIN_MAX — вышедшие и исчезнувшие уходят из списка, номера идут дальше
-    if (chain && balls.length >= CHAIN_MAX) { const live = balls.filter(b => b.stage !== "done" && b.stage !== "lost"); if (live.length < balls.length) balls = live.length ? live : [balls[balls.length - 1]]; }
-    if (chain && balls.length < CHAIN_MAX) {
-      const last = balls[balls.length - 1], c = boundaryPoints(S).find(p => p.id === "center");
-      if (c && last && !last.ready && (last.k >= 1 || last.stage === "done" || last.stage === "lost")) {
+    if (event && event.chain) {
+      if (balls.length >= CHAIN_MAX) balls = balls.filter(b => b.stage !== "done" && b.stage !== "lost");
+      const last = list[list.length - 1], pose = snapshot(), point = boundaryPoints(pose).find(p => p.id === "center");
+      if (point && balls.length < CHAIN_MAX) {
         batchBusy = true;
-        try { begin(S, false, true, { point: c, route: "out", period: last.period, speed: lossRun && lossSpeed ? lossSpeed : last.speed, auto: lossRun && lossSpeed ? false : undefined }); const no = F.runNumber || (last.number || balls.length) + 1; Object.assign(F, { number: no, label: "Вылет " + no }); balls.push(F);
-          // v0.1073: прежний вышел из К1 в этом кадре на доле h — новый стартует тогда же и проезжает остаток кадра
-          const h = last.k1Frame === spinFrame && Number.isFinite(last.k1Frac) ? Math.max(0, Math.min(1, last.k1Frac)) : 1;
-          if (h < 1 - 1e-12 && before && before.shape === S.shape && dt > 0) {
-            const C = frame(before, S, dt), A = C.at(h);
-            if (before.rotation && S.rotation) A.rotation = before.rotation.map((v, k) => v + ((S.rotation[k] ?? v) - v) * h);
-            advance(dt * (1 - h), A, S);
-          } }
-        finally { batchBusy = false; F = balls[0]; }
-        batchStatus();
+        try {
+          begin(pose,false,true,{point,route:"out",periodQ:last.periodQ,speedQ:lossRun && lossSpeedQ.sign() > 0 ? lossSpeedQ : last.speedQ,auto:false});
+          Object.assign(F,{number:F.runNumber || (last.number || 0) + 1,label:"Вылет " + (F.runNumber || (last.number || 0) + 1)}); balls.push(F);
+        } finally { batchBusy = false; F = balls[0]; }
       }
     }
-    batchStatus(); metrics(simultaneous ? snapshot() : S);
-    /* v0.1076, «в центр: когда строка закрылась и осталось только внешнее кольцо — открыть следующее внешнее и пустить с него в центр»:
-       закрыты все кольца, кроме внешнего (за чертой), шариков в пути нет — кольцо за чертой уходит в строки, закрытие сохраняется, и опыт
-       сам запускается из нового внешнего кольца (zzBallInwardNext в zz-ui.js) */
-    if (Z.coneBallRoute === "in" && run && !inwardNextPending && window.zzBallInwardNext) {   // v0.1077: и после паузы «Одновременно» — шариков в пути нет, ждать нечего
+    if (event && (event.flip || event.chain) && !event.pause && remaining.sign() > 0 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+    batchStatus(); metrics(event ? snapshot() : S);
+    if (Z.coneBallRoute === "in" && run && !inwardNextPending && window.zzBallInwardNext) {
       const S2 = snapshot(), c = centerCount();
       if (S2 && S2.rings[S2.rings.length - 1].fill && c > 0 && c >= S2.rings.length - 1 && window.zzBallLive() === 0) {
-        const remaining = simultaneous && simultaneous.complete ? dt * (1 - simultaneous.fraction) : 0;
-        inwardNextPending = true; setTimeout(() => {
+        inwardNextPending = true;
+        setTimeout(() => {
           let started;
           try { started = window.zzBallInwardNext(); } finally { inwardNextPending = false; }
-          if (started && remaining > 1e-12 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
-        }, 0);
+          if (started && !event?.pause && remaining.sign() > 0 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+        },0);
       }
     }
   };
@@ -1002,9 +942,9 @@
       const cells = ring.cells && ring.cells.length ? ring.cells : ring.blocks, ri = ring.ri * dr, ro = ring.ro * dr;
       for (const c of cells) {
         if (m[c.bit] !== "1") continue;
-        const lo = angle(S, k, c.lo), hi = angle(S, k, c.hi);
+        const lo = angle(S,k,c.loQ), hi = angle(S,k,c.hiQ);
         g.beginPath();
-        const full = hi - lo >= TAU - 1e-9;
+        const full = c.hiQ.sub(c.loQ).cmp(ONE) >= 0;
         if (full) { g.arc(cx, cy, ro, 0, TAU); g.moveTo(cx + ri, cy); g.arc(cx, cy, ri, 0, TAU, true); }
         else { g.arc(cx, cy, ro, lo, hi); g.arc(cx, cy, ri, hi, lo, true); g.closePath(); }
         g.globalAlpha = 1; g.fill("evenodd"); g.globalAlpha = 0.6; g.stroke();
@@ -1017,7 +957,7 @@
       g.setLineDash([]); g.globalAlpha = 0.95; g.strokeStyle = typeof CONE_SLIT1_COL !== "undefined" ? CONE_SLIT1_COL : "#7ee787"; g.lineWidth = 1.5 * dpr; g.shadowColor = g.strokeStyle; g.shadowBlur = 8 * dpr;
       for (let k = Math.max(0, centerCount()); k < M.length && k < S.rings.length; k++) {
         const ring = S.rings[k]; if (!M[k] || !M[k].includes("1") || ring.fill || ring.blocks.length !== 1) continue;
-        const a = angle(S, k, ring.blocks[0].lo); g.beginPath(); g.moveTo(cx + ring.ri * dr * Math.cos(a), cy + ring.ri * dr * Math.sin(a)); g.lineTo(cx + ring.ro * dr * Math.cos(a), cy + ring.ro * dr * Math.sin(a)); g.stroke();
+        const a = angle(S,k,ring.blocks[0].loQ); g.beginPath(); g.moveTo(cx + ring.ri * dr * Math.cos(a), cy + ring.ri * dr * Math.sin(a)); g.lineTo(cx + ring.ro * dr * Math.cos(a), cy + ring.ro * dr * Math.sin(a)); g.stroke();
       }
     }
     g.restore();
@@ -1034,7 +974,7 @@
           const k = +key, ring = S.rings[k]; if (!ring || progress.shape !== ring.shape) continue;
           const edges = slitEdges(ring);
           for (const slot of progress.closed) {
-            if (!Number.isFinite(edges[slot])) continue;
+            if (!edges[slot]) continue;
             const a = angle(S, k, edges[slot]), c = Math.cos(a), s = Math.sin(a);
             g.beginPath(); g.moveTo(cx + ring.ri * dr * c, cy + ring.ri * dr * s); g.lineTo(cx + ring.ro * dr * c, cy + ring.ro * dr * s); g.stroke();
           }
@@ -1043,10 +983,10 @@
       }
       const R = S.rings[1].ro * dr;
       g.save(); g.lineWidth = dpr; g.strokeStyle = "#79e7e1"; g.globalAlpha = 0.26; g.setLineDash([3 * dpr, 4 * dpr]);
-      if (!centerCount()) for (const b of S.rings[1].blocks) { const lo = angle(S, 1, b.lo), hi = angle(S, 1, b.hi); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + R * Math.cos(lo), cy + R * Math.sin(lo)); g.arc(cx, cy, R, lo, hi); g.lineTo(cx, cy); g.stroke(); }
+      if (!centerCount()) for (const b of S.rings[1].blocks) { const lo = angle(S,1,b.loQ), hi = angle(S,1,b.hiQ); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + R * Math.cos(lo), cy + R * Math.sin(lo)); g.arc(cx, cy, R, lo, hi); g.lineTo(cx, cy); g.stroke(); }
       g.restore();
       if ($("ballLabPoints") && Z.coneBallPoints !== false && lab && !lab.classList.contains("pmin")) {
-        markers = (Z.coneBallRoute === "in" ? outerStarts(S) : boundaryPoints(S)).map(p => { const a = p.raw === null ? 0 : angle(S, p.k, p.raw); return { ...p, x: cx + p.r * dr * Math.cos(a), y: cy + p.r * dr * Math.sin(a) }; });
+        markers = (Z.coneBallRoute === "in" ? outerStarts(S) : boundaryPoints(S)).map(p => { const a = p.raw === null ? 0 : angle(S,p.k,p.rawQ); return { ...p, x: cx + p.r * dr * Math.cos(a), y: cy + p.r * dr * Math.sin(a) }; });
         drawn = { dpr }; const unique = [];
         g.save(); g.lineWidth = 1.5 * dpr;
         for (const p of markers) {
@@ -1059,7 +999,7 @@
         g.restore();
       } else { markers = []; drawn = null; }
       drawEmpty(g, S, cx, cy, dr, dpr);   // v0.1069: пустые ячейки строк (отскок «В центр»)
-      for (const ball of balls.length ? balls : F ? [F] : []) if (ball.ready) { ball.q = ball.start.q; ball.k = ball.start.k; ball.raw = ball.start.raw; }
+      for (const ball of balls.length ? balls : F ? [F] : []) if (ball.ready) { ball.qQ = ball.start.qQ; ball.k = ball.start.k; setRaw(ball,ball.start.rawQ); projectMotion(ball); }
       metrics(S);
       g.save();
       for (const group of stuck) {
@@ -1083,7 +1023,7 @@
     for (const ball of visible) {
       if (ball.stage === "lost") continue;   // v0.1052: упёрся в дугу — исчез
       // A ball turns with the ring whose edge it rides.
-      if (S && S.rings[ball.k]) ball.a = angle(S, ball.k, ball.raw);
+      if (S && S.rings[ball.k]) ball.a = angle(S, ball.k, ball.rawQ);
       const q = ball.q * dr, a = ball.a;
       const x = cx + q * Math.cos(a), y = cy + q * Math.sin(a);
       const color = !enabled ? "#a8b3c5" : ball.stage === "wait" ? "#ffd166" : !ball.clean ? "#ff5f6d" : ball.stage === "done" ? "#7ee787" : ball.loop && ball.number > 2 ? "#c89aff" : "#79e7e1";
@@ -1101,7 +1041,7 @@
   function reset(toStart = false, keepCenter = false) {
     window.zzBallClearRun({keepCenter});   // v0.1063: при загрузке страницы закрытие (из памяти или пресета) остаётся
     if (toStart && !keepCenter && Z.coneBallRoute === "in") window.zzBallInwardPrime();   // v0.1070: ↩ к старту — сразу стартовое состояние нового опыта
-    F = null; balls = []; cycles = passes = 0; chain = false; lossRun = false; lossSpeed = 0; markRun = false; pendingMarks = []; pendingBits = [];
+    F = null; balls = []; cycles = passes = 0; chain = false; lossRun = false; lossSpeedQ = ZERO; markRun = false; pendingMarks = []; pendingBits = [];
     if (toStart) restoreStart();
     const S = snapshot(); if (S) prepare(S, true); else { metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); } renderCone();
   }
@@ -1131,27 +1071,19 @@
     if (option) { option.hidden = !grouped; option.textContent = "Сквозные: " + throughCount() + (throughCount() === 2 ? " навстречу" : " шарика"); }
     $("ballLabStart").value = Z.coneBallRoute === "in" ? "all" : grouped ? "group" : allStarts() ? "all" : S ? startPoint(S).id : "center";
     $("ballLabStart").disabled = Z.coneBallRoute === "in";
-    const T = F && !F.ready ? F.period : S ? period(S) : null, mult = F && !F.ready ? F.mult : fraction(Z.coneBallMult || "1");
-    const elapsed = balls.length ? Math.max(...balls.map(b => b.elapsed)) : F ? F.elapsed : 0;
-    const text = T && Number.isFinite(mult) ? "T₀ " + T.toFixed(3) + " с · " + (allStarts() ? "диаметр" : "путь") + " за " + (T / mult).toFixed(3) + " с" + (F && !F.ready ? " · прошло " + elapsed.toFixed(3) + " с" : "") : "Нужны два вращающихся кольца и положительная дробь";
+    const T = F && !F.ready ? F.periodQ : S ? periodQ(S) : null, mult = F && !F.ready ? F.multQ : inputFraction(Z.coneBallMult || "1");
+    const elapsed = (balls.length ? balls : F ? [F] : []).reduce((q,b) => ZZExact.max(q,b.elapsedQ),ZERO);
+    const text = T && mult && mult.sign() > 0 ? "К1 = единица времени · T₀ " + T.text() + " оборота К1 · " + (allStarts() ? "диаметр" : "путь") + " за " + T.div(mult).text() + " оборота К1" + (F && !F.ready ? " · прошло " + elapsed.text() : "") : "Нужны два кольца и положительная дробь";
     if ($("ballLabTime").textContent !== text) { $("ballLabTime").textContent = text; $("ballLabRun").title = text; }
     $("ballLabRun").textContent = F && !F.ready ? "↻ новый запуск" : "▶ запуск";
     renderTurns();
     labControls();
   }
   function turnsFraction(value) {
-    const a = Math.abs(value); if (a < 1e-10) return "0";
-    let n, d, exact = false;
-    for (d = 1; d <= 360; d++) {
-      n = Math.round(a * d);
-      if (n > 0 && Math.abs(a - n / d) < 1e-8) { exact = true; break; }
-    }
-    if (!exact) { d = 1000; n = Math.round(a * d); }
-    const gcd = (x, y) => y ? gcd(y, x % y) : x;
-    const divisor = gcd(n, d); n /= divisor; d /= divisor;
-    const whole = Math.floor(n / d), rest = n % d;
-    const text = rest ? (whole ? whole + " " : "") + rest + "/" + d : String(whole);
-    return (exact ? "" : "≈ ") + (value < 0 ? "↺ −" : "↻ ") + text;
+    const q = Q(value); if (!q.sign()) return "0";
+    const a = q.abs(), whole = a.floor(), rest = a.sub(whole);
+    const text = rest.sign() ? (whole ? whole + " " : "") + rest.text() : a.text();
+    return (q.sign() < 0 ? "↺ −" : "↻ ") + text;
   }
   window.zzBallTurnsFraction = turnsFraction;
   function renderTurns() {
@@ -1159,7 +1091,7 @@
     const list = run ? run.results : []; el.hidden = !list.length;
     if (!list.length) { el.textContent = ""; return; }
     const count = Math.max(...list.map(b => b.ringTurns.length));
-    const rows = list.map(b => '<tr><th scope="row">' + b.number + (b.stage === "lost" ? " ✕" : b.stage === "done" ? (b.clean ? " ✓" : " ×") : "") + '</th>' + Array.from({length:count}, (_, k) => { const v = b.ringTurns[k]; return '<td' + (v < -1e-10 ? ' class="ccw"' : '') + '>' + (v === undefined ? "—" : turnsFraction(v)) + '</td>'; }).join('') + '</tr>').join('');
+    const rows = list.map(b => '<tr><th scope="row">' + b.number + (b.stage === "lost" ? " ✕" : b.stage === "done" ? (b.clean ? " ✓" : " ×") : "") + '</th>' + Array.from({length:count}, (_, k) => { const v = b.ringTurns[k]; return '<td' + (v !== undefined && Q(v).sign() < 0 ? ' class="ccw"' : '') + '>' + (v === undefined ? "—" : turnsFraction(v)) + '</td>'; }).join('') + '</tr>').join('');
     const html = '<table><caption>Обороты колец за путь шарика' + (run.launched > 64 ? ' · последние 64 из ' + run.launched : '') + '</caption><thead><tr><th scope="col">Шарик</th>' + Array.from({length:count}, (_, k) => '<th scope="col">К' + (k + 1) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
     if (el.innerHTML !== html) el.innerHTML = html;
   }
@@ -1183,7 +1115,7 @@
     if (Z.coneBallRoute !== "in") clearCenter();
     if (Z.coneBallRoute === "in" && centerCount() >= S.rings.length) { status("Все кольца закрыты · сброс снова откроет щели"); renderCone(); return false; }
     if (!keepRun) newRun();
-    chain = !!config.chain; lossRun = !!config.loss; lossSpeed = 0; markRun = !!config.mark; pendingMarks = []; pendingBits = [];
+    chain = !!config.chain; lossRun = !!config.loss; lossSpeedQ = ZERO; markRun = !!config.mark; pendingMarks = []; pendingBits = [];
     prepare(S, !keepRun, true);
     if (keepRun) { balls.forEach(b => { b.number = b.runNumber; }); balls = previous.concat(balls); F = balls[0] || F; }
     save(); if (!F || F.ready) return false;
@@ -1202,20 +1134,26 @@
     }
     if (typeof coneReleaseRings === "function") coneReleaseRings();
     Z.coneBallMult = "1";
-    const S = snapshot(), group = S ? movingGroup(S, rate(S), period(S), count) : { error: hint() };
+    const S = snapshot(), group = S ? movingGroup(S,count) : { error: hint() };
     const result = group.error ? group : group.runs[0];
     if (result.error) { status(result.error); say(result.error); renderCone(); return false; }
-    if (!launch({ start: result.point.id, batch: false, route: "cross", mult: speedText(result.mult), through: count })) return false;
+    if (!launch({ start: result.point.id, batch: false, route: "cross", mult: speedText(result.multQ), through: count })) return false;
     F.through = true;
-    if (count === 1) { F.speed = result.speed; F.mult = result.mult; F.auto = !!result.auto; }
+    if (count === 1) { F.speedQ = result.speedQ; F.multQ = result.multQ; F.auto = !!result.auto; projectMotion(F); }
     if (count > 1) batchStatus();
-    else status(result.auto ? "Сквозной · " + result.point.label + " · база " + speedText(result.mult) + "× · авто выберет одну постоянную скорость перед первым отрезком" : "Сквозной проход · " + result.point.label + " · " + speedText(result.mult) + "× · " + result.duration.toFixed(3) + " с");
+    else status(result.auto ? "Сквозной · " + result.point.label + " · база " + speedText(result.multQ) + "× · авто выберет одну постоянную скорость перед первым отрезком" : "Сквозной проход · " + result.point.label + " · " + speedText(result.multQ) + "× · " + result.durationQ.text() + " оборота К1");
     labControls(); renderCone(); return true;
   }
   window.zzBallLaunch = launch;
   window.zzBallThrough = launchThrough;
   window.zzBallPoints = () => { const S = snapshot(); return S ? boundaryPoints(S) : []; };
-  function ballInfo(b) { return { marked: b.marked, lostAt: b.lostAt, absorbed: !!b.absorbed, absorbedAt: b.absorbedAt, flips: b.flips || 0, flipReq: !!b.flipReq, auto: b.auto, tuned: b.tuned, segSpeed: b.seg && b.seg.speed, id: b.id, number: b.number, label: b.label, route: b.route, stage: b.stage, ready: b.ready, speed: b.speed, period: b.period, multiplier: b.mult, length: b.length, distance: b.travel, elapsed: b.elapsed, ringTurns: b.ringTurns.slice(), clean: b.clean, reversals: b.reversals, ring: b.k, edge: b.raw, q: b.q, angle: b.a, loop: b.loop, crossings: b.crossings, arcs: b.arcs, arcSpeed: b.arc && b.arc.speed, waitingForRing: b.wait ? b.wait.next + 1 : null, loopError: b.loopError }; }
+  function ballInfo(b) {
+    return {marked:b.marked,lostAt:b.lostAt,absorbed:!!b.absorbed,absorbedAt:b.absorbedAt,flips:b.flips || 0,flipReq:!!b.flipReq,auto:b.auto,tuned:b.tuned,
+      id:b.id,number:b.number,label:b.label,route:b.route,stage:b.stage,ready:b.ready,reference:"К1",
+      speed:b.speedQ.text(),period:b.periodQ?.text(),multiplier:b.multQ.text(),length:b.lengthQ.text(),distance:b.travelQ.text(),elapsed:b.elapsedQ.text(),
+      ringTurns:b.ringTurnsQ.map(q => q.text()),clean:b.clean,reversals:b.reversals,ring:b.k,edge:b.rawQ.text(),q:b.qQ.text(),
+      angle:b.aQ?.text(),loop:b.loop,crossings:b.crossings,arcs:b.arcs,arcSpeed:b.arc?.speedQ.text(),waitingForRing:null,loopError:b.loopError};
+  }
   window.zzBallInfo = () => F && { ...ballInfo(F), batch: allStarts(), balls: balls.map(ballInfo), resting: resting.map(ballInfo) };
   window.zzBallLabSync = () => {
     if (!lab) return;
