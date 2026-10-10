@@ -7879,6 +7879,11 @@ function setupCone(){
       say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 изнутри выключена; удары снаружи по-прежнему ставят 1.");
     };
   }
+  if ($("bConeBallFlow")) {   // v0.012: «⟳ поток по кругу»
+    const sync = () => { const b = $("bConeBallFlow"); b.classList.toggle("on", !!Z.coneBallFlow); b.setAttribute("aria-pressed", String(!!Z.coneBallFlow)); };
+    sync(); $("bConeBallFlow").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallFlow = !Z.coneBallFlow; sync(); save(); renderCone();
+      say(Z.coneBallFlow ? "⟳ Поток по кругу: шарики без конца, внешние щели по кругу, в каждом кольце щели чередуются по кругу. ▶ — запуск." : "⟳ Поток выключен: по одному шарику из каждой внешней щели."); };
+  }
   if ($("bConeOuterHalf")) {   // Синхрофазотрон v0.011, «не понятно, как повернуть на полбита 3-ю строку или только 4-ю? где кнопка»: ½ бита — внешнее кольцо (за чертой)
     const turn = (sign) => {
       autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
@@ -7966,6 +7971,11 @@ function setupCone(){
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:true,mark:false,chain:false,keepRun});
     { const SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;   // Синхрофазотрон v0.006: план выпуска по очереди (v0.008 — и когда выпуска нет: причина и подсказка)
+      if (SP && SP.flow) {   // v0.012: поток по кругу
+        const fr = q => q.text().replace(".", ",");
+        say(SP.failed ? "● Поток по кругу: ни при одной проверенной скорости (×1/60…×8) все сочетания щелей не достижимы — поток не запущен. Попробуй ½ бита внешнего или выключи «⟳ поток»."
+          : `● Поток по кругу: скорость ×${fr(SP.ratio)} от базовой; внешние щели — 1…${SP.total} по кругу, в кольцах щели чередуются по кругу (${SP.sizes.map((n, i) => "К" + (SP.sizes.length - i) + ": " + n).join(", ")}); полный цикл — ${SP.L} шариков.${SP.gap ? ` В каждом кольце — не больше одного (шаг не меньше ${fr(SP.gap)} об.).` : ""} Счёт — «дошли».`);
+        return ok; }
       if (SP) { const fr = q => q.text().replace(".", ","), when = SP.list.map((x, i) => "№" + (i + 1) + " — " + fr(x.atQ) + " об.").join(", ");
         const nb = n => n + " " + (n % 10 === 1 && n % 100 !== 11 ? "шарик" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "шарика" : "шариков");
         const one = SP.gap ? ` В каждом кольце — не больше одного: следующий не раньше чем через ${fr(SP.gap)} об.` : "";

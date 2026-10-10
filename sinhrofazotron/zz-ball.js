@@ -125,7 +125,7 @@
     if (window.zzBallLostReset) window.zzBallLostReset();
   }
   window.zzBallClearRun = (options = {}) => {
-    seqQueue = []; seqPlan = null;
+    seqQueue = []; seqPlan = null; seqFlow = null;
     if (!options.keepCenter) clearCenter();
     inwardAuto = inwardFc = null; run = null; stuck = []; resting = []; F = null; balls = []; pendingMarks = []; pendingBits = []; chain = lossRun = markRun = false; lossSpeedQ = ZERO; cycles = passes = 0;
     if (window.zzBallLostClear) window.zzBallLostClear();
@@ -320,6 +320,71 @@
       for (const [p, q] of SEQ_RATIOS) { if (Date.now() - t0 > 4000) break; const v = base.mul(p).div(q); if (starts.every(st => seqWindows(St, st.rawQ, v, H, true).length)) return { rings, ratio: Q(p, q) }; }
     }
     return null;
+  }
+  /* v0.012, «а у нас в 3-е кольцо попадают все три шарика через 1 проход из 2-х у второго; а если сделать постоянные проходы, то чередовались бы»;
+     выбрано: постоянно, «во всех кольцах по кругу», кольца крутятся. «⟳ поток по кругу» (Z.coneBallFlow): шарики без конца, внешние щели по кругу,
+     шарик № n входит в каждое внутреннее кольцо через щель n по кругу её щелей (К2 — 1, 2, 1…; К3 — 1, 2, 3, 1…). Скорость общая — первая, при которой
+     весь цикл сочетаний (НОК числа внешних щелей и щелей колец) достижим; каждый шарик — в ближайший свой момент (с «1 в кольце» — не раньше
+     предыдущего + время кольца). Всё точно, дробями */
+  let seqFlow = null;
+  const flowOn = () => Z.coneBallFlow === true;
+  const gcdN = (a, b) => b ? gcdN(b, a % b) : a, lcmN = (a, b) => a / gcdN(a, b) * b;
+  function seqTuple(S, raw, t, v) {   // через какие щели (номера) шарик входит в К(K−1) … К1; null — не доходит
+    const K = S.rings.length - 1; let cur = raw, time = t; const tup = [];
+    for (let k = K; k >= 1; k--) {
+      const ring = S.rings[k]; time = time.add(ring.roQ.sub(ring.riQ).div(v));
+      const St = atTurns(S, time), e = lossPass(St, k - 1, angleQ(St, k, cur), {});
+      if (e === null) return null;
+      tup.push(slitEdges(S.rings[k - 1]).findIndex(x => x.sub(e).mod().eq(0))); cur = e;
+    }
+    return tup;
+  }
+  function seqFlowMake(S, base) {
+    const starts = outerStarts(S), H = seqHorizon(S), K = S.rings.length - 1, O = starts.length;
+    const sizes = []; for (let k = K - 1; k >= 0; k--) sizes.push(Math.max(1, slitEdges(S.rings[k]).length));
+    let L = O; for (const n of sizes) L = lcmN(L, n);
+    if (!O) return null;
+    seqDeadline = Date.now() + 5000;
+    try {
+      for (const [p, q] of SEQ_RATIOS) {
+        if (Date.now() > seqDeadline) break;
+        const v = base.mul(p).div(q);
+        if (!starts.every(s => seqWindows(S, s.rawQ, v, H, true).length)) continue;
+        const wins = starts.map(s => seqWindows(S, s.rawQ, v, H).map(t => ({ t, tup: seqTuple(S, s.rawQ, t, v) })));
+        /* v0.012: строгое «шарик n — щель n» в каждом кольце часто невозможно (выбор щели в К3 и К2 связан с внешней щелью), поэтому у каждого
+           кольца и у внешних щелей — свой сдвиг и направление обхода (по кругу 1, 2, 3… или 3, 2, 1…); берётся первое сочетание, при котором
+           весь цикл достижим. Чередование «по кругу через все щели» сохраняется */
+        const plan = seqFlowOrders(sizes, O, L, wins);
+        if (plan) { const gapQ = S.rings.reduce((m, r) => ZZExact.max(m, r.roQ.sub(r.riQ)), ZERO).div(v); return { v, ratio: Q(p, q), H, starts, wins, sizes, L, O, n: 0, last: null, gapQ, ...plan }; }
+      }
+    } finally { seqDeadline = Infinity; }
+    return null;
+  }
+  function seqFlowOrders(sizes, O, L, wins) {   // перебор сдвигов и направлений обхода щелей в каждом кольце (и внешних)
+    const opts = sizes.map(m => { const o = []; for (let c = 0; c < m; c++) for (const d of m > 2 ? [1, -1] : [1]) o.push([c, d]); return o; });
+    const outerDirs = O > 2 ? [1, -1] : [1];
+    const pick = new Array(sizes.length); let found = null, tries = 0;
+    const fits = (od) => { for (let n = 0; n < L; n++) { const o = ((od * n) % O + O) % O, need = sizes.map((m, i) => ((pick[i][0] + pick[i][1] * n) % m + m) % m);
+      if (!wins[o].some(w => w.tup && w.tup.every((x, i) => x === need[i]))) return false; } return true; };
+    const rec = (i, od) => { if (found || ++tries > 20000) return; if (i === sizes.length) { if (fits(od)) found = { orders: pick.map(x => x.slice()), outerDir: od }; return; }
+      for (const x of opts[i]) { pick[i] = x; rec(i + 1, od); if (found) return; } };
+    for (const od of outerDirs) { rec(0, od); if (found) break; }
+    return found;
+  }
+  function seqFlowNext() {
+    const P = seqFlow; if (!P) return null;
+    const n = P.n, oi = ((P.outerDir * n) % P.O + P.O) % P.O, need = P.sizes.map((m, i) => ((P.orders[i][0] + P.orders[i][1] * n) % m + m) % m), list = P.wins[oi].filter(w => w.tup && w.tup.every((x, i) => x === need[i]));
+    if (!list.length) return null;
+    const gap = Z.coneBallOnePerRing ? P.gapQ : null, minT = P.last === null ? ZERO : gap ? P.last.add(gap) : P.last;
+    let best = null;
+    for (const w of list) {
+      let m = minT.sub(w.t).div(P.H).ceil(); if (m < 0n) m = 0n;
+      let t = w.t.add(P.H.mul(Q(m)));
+      if (P.last !== null && !gap && t.cmp(P.last) <= 0) t = t.add(P.H);
+      if (!best || t.cmp(best) < 0) best = t;
+    }
+    P.n++; P.last = best;
+    return { point: P.starts[oi], atQ: P.startQ.add(best), number: n + 1, periodQ: P.periodQ, need };
   }
   // v0.010: проверка без запуска — есть ли путь у всех щелей при нынешнем положении колец (для поворота «сначала посмотреть»)
   window.zzBallSeqCheck = () => { const S = snapshot(); if (!S) return null; const B = inwardBase(S), TQ = periodQ(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
@@ -577,6 +642,15 @@
   }
   function appendInwardGroup(S, launch) {
     const TQ = periodQ(S), B = inwardBase(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
+    if (launch && seqMode() && flowOn() && base.sign() > 0) {   // v0.012: поток по кругу
+      const now = run ? run.elapsedQ : ZERO; seqFlow = seqFlowMake(S, base); inwardAuto = null; inwardFc = null;
+      if (!seqFlow) { seqPlan = { flow: true, failed: true, total: outerStarts(S).length, covered: 0, list: [], ratio: ONE, v: base }; seqQueue = []; return false; }
+      Object.assign(seqFlow, { startQ: now, periodQ: TQ });
+      seqPlan = { flow: true, ratio: seqFlow.ratio, v: seqFlow.v, total: seqFlow.O, covered: seqFlow.O, L: seqFlow.L, sizes: seqFlow.sizes, gap: Z.coneBallOnePerRing ? seqFlow.gapQ : null, list: [], startQ: now };
+      const first = seqFlowNext(); seqQueue = first ? [first] : [];
+      if (run) run.inwardOuter = S.rings.length;
+      return seqQueue.length > 0;
+    }
     if (launch && seqMode() && base.sign() > 0) {   // Синхрофазотрон v0.006: выпуск по очереди
       const plan = seqPlanMake(S, base), now = run ? run.elapsedQ : ZERO;
       seqPlan = { ...plan, baseQ: base, total: plan.starts.length, startQ: now };
@@ -648,7 +722,7 @@
     const waiting = balls.filter(b => b.stage === "wait").length, stopped = balls.filter(b => b.stage === "lost").length;
     const lost = balls.filter(b => b.stage === "lost" && !b.absorbed).length, absorbed = run?.absorbed ? " · поглощено " + run.absorbed : "";
     if (balls.every(b => b.route === "in")) {
-      status((paused ? "Пауза · " : "") + "В центр: " + count + " · движутся " + (count - done.length - waiting - stopped) + " · дошли " + done.filter(b => b.atCenter).length + " · вышли назад " + done.filter(b => !b.atCenter).length + " · застряли " + lost + absorbed + " · отскоки " + balls.reduce((n, b) => n + (b.bounces || 0), 0)); return;
+      status((paused ? "Пауза · " : "") + "В центр: " + count + " · движутся " + (count - done.length - waiting - stopped) + " · дошли " + (seqFlow && run ? run.reachedCenter : done.filter(b => b.atCenter).length) + " · вышли назад " + done.filter(b => !b.atCenter).length + " · застряли " + lost + absorbed + " · отскоки " + balls.reduce((n, b) => n + (b.bounces || 0), 0)); return;
     }
     if (balls.some(b => b.loop)) {
       status((paused ? "Пауза · " : "") + "∞ Шарики: " + count + " · по дуге " + balls.filter(b => b.stage === "arc").length + " · застряли " + lost + absorbed + " · проходов " + balls.reduce((n, b) => n + b.crossings, 0) + " · разворотов " + balls.reduce((n, b) => n + b.reversals, 0) + (done.length ? " · остановились " + done.length : "")); return;
@@ -880,6 +954,10 @@
       try { begin(Sat, false, true, { point: x.point, route: "in", periodQ: x.periodQ, speedQ: seqPlan.v, auto: false });
         Object.assign(F, { id: x.point.id, number: x.number, label: x.point.label }); balls.push(F); }
       finally { batchBusy = busy; }
+      if (seqFlow) {   // v0.012: поток — сразу следующий в очередь; дошедшие уходят из списка (счёт — в run)
+        const nx = seqFlowNext(); if (nx) seqQueue.push(nx);
+        if (balls.length > 120) { balls = balls.filter(b => b.stage !== "done" && b.stage !== "lost"); F = balls[0] || F; }
+      }
     }
   }
   function advanceInwardGroup(dt,A,B,stopAtSame = false) {
@@ -992,7 +1070,7 @@
     if (!enabled) return null;
     const S = snapshot(); if (!S) { status(hint()); return null; }
     growRun(S);
-    if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else prepare(S); } return S;
+    if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else if (!(seqMode() && seqPlan)) prepare(S); } return S;   // v0.012: очередь — без заготовок
   };
   // v0.1046: «⟳ щель 180°» — шарик дошёл до центра: кольцо 1 (один бит) поворачивается на полоборота довода строки 1. Все шарики на нём едут с ним;
   // в счёт оборотов кольца 1 — по ½ на переворот
@@ -1130,7 +1208,7 @@
     const { cx, cy, dr, dpr } = o, S = snapshot();
     if (S) {
       growRun(S);
-      if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else prepare(S, true); }   // v0.1053: строка ушла в поле — вылеты продолжаются
+      if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else if (!(seqMode() && seqPlan)) prepare(S, true); }   /* v0.012: очередь «В центр» — без шариков-заготовок в щелях (ждущие — пустые кружки) */   // v0.1053: строка ушла в поле — вылеты продолжаются
       if (Z.coneBallRoute === "in") {
         g.save(); g.strokeStyle = "#ffd166"; g.lineWidth = 2 * dpr; g.globalAlpha = 0.95; g.setLineDash([]);
         for (const [key, progress] of Object.entries(centerSlits())) {
