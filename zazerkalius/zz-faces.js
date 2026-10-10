@@ -52,14 +52,17 @@
         if(gap.cmp(ONE)<0) add(0,centre.add(gap.div(2)),ONE.sub(gap));
       } else if (!k && coneQuadOn()) {
         for (let j=1;j<R.n;j+=2) add(0,phase.add(Q(j,R.P)),Q(1,R.P),j);
-      } else if (!k && coneHalfOn()) add(0,phase.add(HALF),HALF);
+      } else if (!k && coneHalfOn()) {
+        add(0,phase.add(HALF),HALF);
+        if(cutPrevOwn()) { add(0,phase,HALF,"inverse"); const p=cells[cells.length-1]; p.inverted=true; p.value=cpInv(row[0]); }
+      }
       else for (let j=0;j<row.length;j++) {
         const pos = R.cut ? cutPrevMode() === "alt" && !coneCutSym() ? Q(2*j) : coneMotionBitPosition(j,row.length) : Q(j);
         add(j,phase.add(pos.div(R.P)),Q(1,R.P));
       }
       if(!slice && k>0 && k<N && R.cut && cutPrevMode()) for(const [position,bit] of cutPrevCells(k,row.length)) {
         add(bit,phase.add(Q(position).div(R.P)),Q(1,R.P),"prev:"+position);
-        const p=cells[cells.length-1]; p.writeK=k-1; p.inverted=cpInv("0") === "1"; p.value=cpInv(Z.rows[k-1]?.[bit] ?? ".");
+        const p=cells[cells.length-1]; p.writeK=cutPrevSourceIndex(k); p.inverted=true; p.value=cpInv(cutPrevSource(k)[bit] ?? ".");
       }
       rings.push({k,phase,cells,row,cut:R.cut});
     }
