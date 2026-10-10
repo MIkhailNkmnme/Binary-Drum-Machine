@@ -3019,6 +3019,13 @@ function renderCone(){
         g.fillText(s[j], 0, 0); g.restore();
       }
     }
+    /* v0.1075, по снимку «не видно границы у 1 строки»: у кольца из одного бита соседей нет, а у кольца строки 1 внутренний радиус 0 — зазор
+       между ячейками нулевой, и единственная граница (разрез) не рисовалась. Теперь — тонкой линией цвета фона, от внутреннего края до внешнего */
+    if (n === 1 && !CG.cut && !CP && Z.coneArcs !== false) {
+      const a = -Math.PI / 2 + (0 - rot) * step;
+      g.save(); g.strokeStyle = cBg; g.globalAlpha = 0.9; g.lineWidth = Math.max(1.5 * dpr, 1);
+      g.beginPath(); g.moveTo(cx + rin * coneRho(i, a) * Math.cos(a), cy + rin * coneRho(i, a) * Math.sin(a)); g.lineTo(cx + rout * coneRho(i, a) * Math.cos(a), cy + rout * coneRho(i, a) * Math.sin(a)); g.stroke(); g.restore();
+    }
     if (CP && Z.coneArcs !== false) {   // v0.781: биты предыдущей строки в своих частях — бледнее своих, цифра цветом текста
       const ps = Z.rows[i - 1] || "";
       for (const [p, k] of cutPrevCells(i, n)) {
