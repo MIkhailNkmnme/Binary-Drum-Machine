@@ -5944,14 +5944,14 @@ function coneCycleText(){
    «Встреч Стр» — вращение плавное, картин без счёта, повтор через 360° / НОД периодов */
 function coneVarText(){
   const m = Z.coneSpinMode || "all";
-  if (m === "all") return "вариантов цикла: 1 — конус крутится целиком";
+  if (m === "all") return "цикл: 1 · целиком";
   if (coneBitMode(m)) {
     const L = coneCycleBits(), ph = Math.abs(Z.coneSpinPh || 0), Ln = Number(L);
-    return `вариантов цикла: ${coneBigFmt(L)}` + (Ln <= 1e15 ? ` · сейчас ${Math.floor(ph % Ln).toLocaleString("ru-RU")}` : "");
+    return `цикл: ${coneBigFmt(L)}` + (Ln <= 1e15 ? ` · шаг ${Math.floor(ph % Ln).toLocaleString("ru-RU")}` : "");
   }
   const N = Math.min(Z.rows.length, CONE_MAX), g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
   let d = 0; for (let i = 0; i < N; i++) d = g(d, rotPer(Z.rows[i]));
-  return `вариантов — без счёта (плавно) · повтор через ${+(360 / Math.max(1, d)).toFixed(2)}°`;
+  return `цикл: ∞ · повтор ${+(360 / Math.max(1, d)).toFixed(2)}°`;
 }
 function coneCycleCheck(ph0, ph1, m){
   let L = 0, n0 = (Z.rows[0] || "1").length || 1;
@@ -7168,9 +7168,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, modesBelow ? bottom - ms.offsetHeight : on(ms));
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const X = cr.left - hr.left + scrollLeft + 2, available = Math.max(0, rowLeft - X - 4);
+    // v0.050: короткая подпись у видимого левого края, под горизонтальной осью.
+    const X = left, available = Math.max(0, edge - left);
+    const axisY = axis ? axis.y : cr.top + (coneGeom && coneGeom.dpr ? coneGeom.cy / coneGeom.dpr : cr.height / 2);
     caption.style.maxWidth = available.toFixed(1) + "px";
-    put(caption, X, bottom - lift - caption.offsetHeight - 4);
+    put(caption, X, axisY - hr.top + scrollTop + 4);
   }
 }
 /* Дорожка темпа — ромб-контур с вершиной у бегунка (--tx/--ta). v0.042: число сверху, шаги на краях,
