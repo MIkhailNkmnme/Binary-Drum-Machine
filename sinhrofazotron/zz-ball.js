@@ -125,7 +125,7 @@
     if (window.zzBallLostReset) window.zzBallLostReset();
   }
   window.zzBallClearRun = (options = {}) => {
-    seqQueue = []; seqPlan = null; seqFlow = null;
+    seqQueue = []; seqPlan = null; seqFlow = null; trails = [];
     if (!options.keepCenter) clearCenter();
     inwardAuto = inwardFc = null; run = null; stuck = []; resting = []; F = null; balls = []; pendingMarks = []; pendingBits = []; chain = lossRun = markRun = false; lossSpeedQ = ZERO; cycles = passes = 0;
     if (window.zzBallLostClear) window.zzBallLostClear();
@@ -327,6 +327,25 @@
      весь цикл сочетаний (НОК числа внешних щелей и щелей колец) достижим; каждый шарик — в ближайший свой момент (с «1 в кольце» — не раньше
      предыдущего + время кольца). Всё точно, дробями */
   let seqFlow = null;
+  /* v0.013, «пусть, когда проходит, закрасит пройденный путь своим цветом, каждый шарик разный»: у шарика № n свой цвет (оттенок по золотому углу),
+     след — отрезки щелей, по которым он ехал (кольцо, грань в его системе, от радиуса до радиуса); след прикреплён к кольцу и крутится с ним */
+  let trails = [];
+  const TRAIL_MAX = 3000;
+  const ballHue = n => "hsl(" + Math.round(((n || 1) * 137.508) % 360) + ",85%,62%)";
+  function trailTrack(S) {
+    for (const b of (balls.length ? balls : F ? [F] : [])) {
+      if (b.ready || b.route !== "in") continue;
+      const k = b.k, raw = b.rawQ, q = b.qQ.number(), t = b.trail;
+      if (t && t.k === k && t.raw.eq(raw)) { t.q1 = Math.min(t.q1, q); t.q0 = Math.max(t.q0, q); }
+      else {
+        if (t && S && S.rings[t.k]) { if (k < t.k) t.q1 = S.rings[t.k].ri; }   // ушёл внутрь — след в прежнем кольце до его внутреннего края
+        const start = t && S && S.rings[k] && k < t.k ? S.rings[k].ro : q;
+        b.trail = { k, raw, q0: start, q1: q, color: ballHue(b.number) }; trails.push(b.trail);
+        if (trails.length > TRAIL_MAX) trails.splice(0, trails.length - TRAIL_MAX);
+      }
+      if (b.stage === "done" && b.atCenter && b.trail) b.trail.q1 = 0;
+    }
+  }
   const flowOn = () => Z.coneBallFlow === true;
   const gcdN = (a, b) => b ? gcdN(b, a % b) : a, lcmN = (a, b) => a / gcdN(a, b) * b;
   function seqTuple(S, raw, t, v) {   // через какие щели (номера) шарик входит в К(K−1) … К1; null — не доходит
@@ -1260,6 +1279,13 @@
     }
     if (!S) { markers = []; drawn = null; F = null; balls = []; metrics(null); status(enabled ? hint() : "Шарики выключены · нажми ● вкл. · " + hint()); }
     const positions = [];
+    if (S && Z.coneBallRoute === "in") {   // v0.013: следы — под шариками
+      trailTrack(S);
+      g.save(); g.lineCap = "round"; g.lineWidth = Math.max(2 * dpr, Math.min(5 * dpr, dr * .06)); g.globalAlpha = .85;
+      for (const t of trails) { if (!S.rings[t.k]) continue; const a = angle(S, t.k, t.raw), c = Math.cos(a), s = Math.sin(a);
+        g.strokeStyle = t.color; g.beginPath(); g.moveTo(cx + t.q0 * dr * c, cy + t.q0 * dr * s); g.lineTo(cx + t.q1 * dr * c, cy + t.q1 * dr * s); g.stroke(); }
+      g.restore();
+    }
     const visible = new Set([...(balls.length ? balls : F ? [F] : []), ...resting]);
     for (const ball of visible) {
       if (ball.stage === "lost") continue;   // v0.1052: упёрся в дугу — исчез
@@ -1268,7 +1294,7 @@
       if (S && S.rings[ball.k]) ball.a = angle(S, ball.k, ball.rawQ);
       const q = ball.q * dr, a = ball.a;
       const x = cx + q * Math.cos(a), y = cy + q * Math.sin(a);
-      const color = !enabled ? "#a8b3c5" : ball.stage === "wait" ? "#ffd166" : !ball.clean ? "#ff5f6d" : ball.stage === "done" ? "#7ee787" : ball.loop && ball.number > 2 ? "#c89aff" : "#79e7e1";
+      const color = !enabled ? "#a8b3c5" : Z.coneBallRoute === "in" && !ball.ready ? ballHue(ball.number) : ball.stage === "wait" ? "#ffd166" : !ball.clean ? "#ff5f6d" : ball.stage === "done" ? "#7ee787" : ball.loop && ball.number > 2 ? "#c89aff" : "#79e7e1";   // v0.013: «В центр» — у каждого шарика свой цвет
       g.save(); g.fillStyle = color; g.shadowColor = color; g.shadowBlur = 9 * dpr; g.beginPath(); g.arc(x, y, 4 * dpr, 0, TAU); g.fill(); g.shadowBlur = 0;
       if (ball.number) {
         // Offset only the labels when starts coincide; retain exact positions.
