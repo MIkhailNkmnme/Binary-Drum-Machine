@@ -376,16 +376,16 @@ let brCache = null;
 function brStream(rows){
   const key = rows.join("|"); if (brCache && brCache.key === key) return brCache;
   const depth = rows.map(r => new Int16Array(r.length).fill(-2)), stack = [], chapters = new Set(), list = [];
-  let pairs = 0, cross = 0, maxDepth = 0, badClose = 0;
+  let pairs = 0, cross = 0, maxDepth = 0, badClose = 0, closed = 0;
   for (let r = 0; r < rows.length; r++) {
     const t = rows[r]; let any = false;
     for (let c = 0; c < t.length; c++) {
       const b = t[c]; if (b !== "0" && b !== "1") continue; any = true;
       if (b === "0") { depth[r][c] = stack.length; stack.push([r, c]); maxDepth = Math.max(maxDepth, stack.length); }
-      else if (stack.length) { const a = stack.pop(); depth[r][c] = stack.length; pairs++; if (a[0] !== r) cross++; list.push([a[0], a[1], r, c, stack.length]); }
+      else if (stack.length) { const a = stack.pop(); depth[r][c] = stack.length; pairs++; closed++; if (a[0] !== r) cross++; list.push([a[0], a[1], r, c, stack.length]); }
       else { depth[r][c] = -1; badClose++; }
     }
-    if (any && !stack.length) chapters.add(r);
+    if (any && !stack.length && closed) { chapters.add(r); closed = 0; }   // глава — только если с прошлой главы закрылась хотя бы одна пара (не 1–4)
   }
   stack.forEach(([r, c]) => { depth[r][c] = -1; });
   return (brCache = { key, depth, chapters, list, pairs, cross, maxDepth, badClose, badOpen: stack.length });

@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v18</title>
+<title>Grid Module — v19</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -377,7 +377,7 @@ function bracketStream() {
     if (D.stream && D.stream.open === open) return D.stream;
     const rows = D.rows.map(() => ({ depth: new Map(), partner: new Map(), balanced: false }));
     const stack = [], pairs = [], boundaries = [];
-    let within = 0, cross = 0, maxDepth = 0, unmatchedClose = 0;
+    let within = 0, cross = 0, maxDepth = 0, unmatchedClose = 0, closed = 0;
     for (let r = 0; r < D.R; r++) {
         let any = false;
         for (let c = 0; c < D.rows[r].length; c++) {
@@ -387,10 +387,11 @@ function bracketStream() {
             } else if (stack.length) {
                 const a = stack.pop(), b = [r, c], depth = stack.length;
                 rows[r].depth.set(c, depth); rows[r].partner.set(c, a); rows[a[0]].partner.set(a[1], b);
-                pairs.push({ a, b, depth }); if (a[0] === r) within++; else cross++;
+                pairs.push({ a, b, depth }); if (a[0] === r) within++; else cross++; closed++;
             } else { rows[r].depth.set(c, -1); unmatchedClose++; }
         }
-        if (any && !stack.length) { rows[r].balanced = true; boundaries.push(r + 1); }
+        // v19, «да» на «рубеж — только если перед ним реально закрылась хотя бы одна пара»: пустой стек после строк, где закрывать было нечего (1–4), — не рубеж
+        if (any && !stack.length && closed) { rows[r].balanced = true; boundaries.push(r + 1); closed = 0; }
     }
     stack.forEach(([r, c]) => rows[r].depth.set(c, -1));
     return (D.stream = { open, rows, pairs, boundaries, within, cross, maxDepth, unmatchedClose, unmatchedOpen: stack.length });
