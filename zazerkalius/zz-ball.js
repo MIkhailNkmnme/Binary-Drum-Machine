@@ -28,15 +28,15 @@
   function sliceStatus(){
     if ($("ballLabTime")) labControls();
     const speed = slicing ? slicing.speedQ : Q(Z.coneSliceSpeed || "2/3");
-    status("Нарезка · " + (slicing ? slicing.done ? "в центре" : paused ? "пауза" : slicing.move > 0 ? "наружу" : "обратно" : "▶ пуск") +
+    status("Нарезка · " + (slicing ? slicing.done ? "К2: две щели · стоп" : paused ? "пауза" : slicing.move > 0 ? "наружу" : "обратно" : "▶ пуск") +
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
-      (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0));
+      (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0));
     const box = $("ballLabTurns"); if (!box) return;
     const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
     for (let k = 0; slicing && k < slicing.count; k++) {
       const cuts = slicing.cuts[k] || [], opposite = cuts.length > 0 && cuts.every(a => cuts.some(b => b.sub(a).mod().eq(HALF)));
       summary.push("К" + (k + 1) + ": " + (slicing.returned[k] ? "обратный проход завершён · закрытие не выбрано" : "обратный проход не завершён") +
-        (k ? " · вырезы " + cuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет") : " · исходный вырез"));
+        (k ? " · вырезы " + cuts.length + " · полностью пройдены " + slicing.completedCuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет") : " · исходный вырез"));
     }
     const key = summary.join("\n"); if (box.dataset.sliceSummary === key) return;
     box.dataset.sliceSummary = key; box.replaceChildren();
@@ -49,7 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,rQ:ZERO,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,move:1,done:false,
-      k:0,rawQ:QUARTER.neg(),cuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      k:0,rawQ:QUARTER.neg(),cuts:{},completedCuts:[],returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     sliceStatus(); save(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
@@ -88,6 +88,15 @@
       if (!r1.eq(stop)) break;
       const angle = to.rings[k].phaseQ.add(to.spinQ).add(slicing.rawQ);
       if (move < 0) slicing.returned[k] = true;
+      if (k === 1) {
+        const raw = slicing.rawQ.mod();
+        if (!slicing.completedCuts.some(a => a.eq(raw))) slicing.completedCuts.push(raw);
+        if (slicing.completedCuts.length >= 2) {
+          slicing.done = true;
+          coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
+          pauseRotation(); sliceStatus(); save(); renderCone(); return;
+        }
+      }
       if (move > 0 && r1.eq(slicing.RQ)) {
         if (slicing.count === 1 && Z.rows.length === 1) {
           coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
@@ -100,7 +109,7 @@
         }
         slicing.move = -1; slicing.outerBounces++;
       }
-      else if (move < 0 && r1.eq(0)) { slicing.done = true; }
+      else if (move < 0 && r1.eq(0)) { slicing.move = 1; slicing.centerBounces++; }
       else {
         const next = k + move;
         if (!next && move < 0) {
@@ -1073,7 +1082,7 @@
     }
   };
   window.zzBallSpinState = on => {
-    if (slicingOn()) { paused = !on; sliceStatus(); renderCone(); return; }
+    if (slicingOn()) { if (on && slicing?.done) { pauseRotation(); return; } paused = !on; sliceStatus(); renderCone(); return; }
     paused = !on; if (!enabled) return;
     if (on && run) run.simultaneous = null;
     if (on && snapshot() && typeof coneReleaseRings === "function") coneReleaseRings();
