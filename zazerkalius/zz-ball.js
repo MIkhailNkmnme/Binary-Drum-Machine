@@ -72,10 +72,14 @@
     const raw = slicing.rawQ.mod(), cuts = slicing.cuts[k] || (slicing.cuts[k] = []);
     if (!cuts.some(a => a.eq(raw))) cuts.push(raw);
   }
+  function sliceReflectCenter(){
+    slicing.rQ = ZERO; slicing.k = 0; slicing.move = 1; slicing.centerBounces++;
+  }
   function sliceAdvance(A, B, dt){
     if (!slicing || slicing.done || paused || !A || !B) return;
     if (A.rings.length !== slicing.count || B.rings.length !== slicing.count) { paused = true; status("Нарезка: кольца изменились · запусти заново"); return; }
     const C = frame(A,B), duration = C.durationQ; if (!duration.sign()) return;
+    if (slicing.rQ.eq(ZERO) && slicing.move < 0) sliceReflectCenter();
     let elapsed = ZERO;
     while (elapsed.cmp(duration) < 0 && !slicing.done) {
       const r0 = slicing.rQ, move = slicing.move;
@@ -109,7 +113,13 @@
         }
         slicing.move = -1; slicing.outerBounces++;
       }
-      else if (move < 0 && r1.eq(0)) { slicing.move = 1; slicing.centerBounces++; }
+      else if (move < 0 && r1.eq(ZERO)) {
+        sliceReflectCenter();
+        coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
+        const remaining = Q(dt).mul(ONE.sub(elapsed.div(duration)));
+        if (remaining.sign() && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+        sliceStatus(); return;
+      }
       else {
         const next = k + move;
         if (!next && move < 0) {
@@ -985,7 +995,7 @@
   }
   window.zzBallBeforeSpin = () => {
     if (!enabled) return null;
-    if (slicingOn()) return snapshot();
+    if (slicingOn()) { if (coneSpinning && slicing && !slicing.done) paused = false; return snapshot(); }
     const S = snapshot(); if (!S) { status(hint()); return null; }
     growRun(S);
     if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else prepare(S); } return S;
