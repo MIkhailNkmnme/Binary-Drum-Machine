@@ -272,7 +272,7 @@
     for (const w of ratesQ(S)) { if (!w.sign()) continue; const p = ONE.div(w.abs()); n = n / ZZExact.gcd(n, p.n) * p.n; d = ZZExact.gcd(d, p.d); }
     return d ? Q(n, d) : ONE;
   }
-  function seqWindows(S, raw, v, H) {   // моменты выпуска t ∈ [0, H), при которых шарик дойдёт до центра
+  function seqWindows(S, raw, v, H, firstOnly = false) {   // моменты выпуска t ∈ [0, H), при которых шарик дойдёт до центра (firstOnly — есть ли хоть один)
     const K = S.rings.length - 1, w = ratesQ(S); let cur = raw, lead = ZERO;
     for (let k = K; k >= 1; k--) {
       lead = lead.add(S.rings[k].roQ.sub(S.rings[k].riQ).div(v));
@@ -285,7 +285,7 @@
           const lo = (dw.sign() > 0 ? a : b2).ceil(), hi = (dw.sign() > 0 ? b2 : a).floor();
           for (let m = lo; m <= hi && out.size < 4000; m++) {
             const t = d.add(m).div(dw).sub(lead);
-            if (t.sign() >= 0 && t.cmp(H) < 0 && seqReach(S, raw, t, v)) out.set(t.text(), t);
+            if (t.sign() >= 0 && t.cmp(H) < 0 && seqReach(S, raw, t, v)) { out.set(t.text(), t); if (firstOnly) return [t]; }
           }
         }
         return [...out.values()].sort((x, y) => x.cmp(y));
@@ -296,16 +296,44 @@
     }
     return seqReach(S, raw, ZERO, v) ? [ZERO] : [];
   }
-  const SEQ_RATIOS = [[1,1],[2,1],[1,2],[3,2],[2,3],[3,1],[1,3],[4,3],[3,4],[4,1],[1,4],[5,4],[4,5],[5,3],[3,5],[5,2],[2,5],[5,1],[1,5],[6,1],[1,6],[8,1],[1,8]];
+  /* v0.008, «4 строка — нет вариантов?»: при четырёх строках путь есть только при медленных скоростях (×1/12, ×1/6 — после поворота колец на полбита),
+     прежний список доходил до ×1/8. Теперь все дроби p/d (p ≤ 8, d ≤ 60) — от ближних к базовой к дальним */
+  const SEQ_RATIOS = (() => {
+    const out = [], gcd = (a, b) => b ? gcd(b, a % b) : a;
+    for (let p = 1; p <= 8; p++) for (let d = 1; d <= 60; d++) if (gcd(p, d) === 1) out.push([p, d]);
+    return out.sort((x, y) => Math.abs(Math.log(x[0] / x[1])) - Math.abs(Math.log(y[0] / y[1])));
+  })();
+  const seqCovered = (S, v, H, starts) => starts.map(s => seqWindows(S, s.rawQ, v, H));
+  function seqTurned(S, rings) {   // та же картина, но кольца rings повёрнуты на полбита
+    return {...S, rings: S.rings.map((r, k) => { if (!rings.includes(k)) return r; const c = (r.cells && r.cells.length ? r.cells : r.blocks)[0], half = c ? c.hiQ.sub(c.loQ).div(2) : ZERO, phaseQ = r.phaseQ.add(half); return {...r, phaseQ, phase: radians(phaseQ)}; })};
+  }
+  function seqSuggest(S, base, H, starts) {   // какие кольца повернуть на полбита, чтобы путь был у всех щелей (одно, два, три кольца)
+    const K = S.rings.length, t0 = Date.now(), sets = [];   // v0.008: предел — 4 с
+    for (let a = 0; a < K; a++) sets.push([a]);
+    for (let a = 0; a < K; a++) for (let c = a + 1; c < K; c++) sets.push([a, c]);
+    for (let a = 0; a < K; a++) for (let c = a + 1; c < K; c++) for (let e = c + 1; e < K; e++) sets.push([a, c, e]);
+    for (const rings of sets) {
+      if (Date.now() - t0 > 4000) break;
+      const St = seqTurned(S, rings);
+      for (const [p, q] of SEQ_RATIOS) { if (Date.now() - t0 > 4000) break; const v = base.mul(p).div(q); if (starts.every(st => seqWindows(St, st.rawQ, v, H, true).length)) return { rings, ratio: Q(p, q) }; }
+    }
+    return null;
+  }
   function seqPlanMake(S, base) {
-    const starts = outerStarts(S), H = seqHorizon(S);
+    const starts = outerStarts(S), H = seqHorizon(S), t0 = Date.now();
     let best = null;
-    for (const [p, q] of SEQ_RATIOS) {
-      const v = base.mul(p).div(q), windows = starts.map(s => seqWindows(S, s.rawQ, v, H)), covered = windows.filter(x => x.length).length;
-      if (!best || covered > best.covered) best = { v, ratio: Q(p, q), windows, covered };
+    for (const [p, q] of SEQ_RATIOS) {   // v0.008: перебор — только «есть ли путь» (первый момент); все моменты — для выбранной скорости
+      if (Date.now() - t0 > 2500) break;
+      const v = base.mul(p).div(q), covered = starts.filter(s => seqWindows(S, s.rawQ, v, H, true).length).length;
+      if (!best || covered > best.covered) best = { v, ratio: Q(p, q), covered };
       if (covered === starts.length) break;
     }
-    if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0 };
+    if (best) best.windows = starts.map(s => seqWindows(S, s.rawQ, best.v, H));
+    if (!best || best.covered < starts.length) {   // v0.008: всем щелям пути нет — подсказать поворот колец на полбита
+      const suggest = seqSuggest(S, base, H, starts);
+      if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0, suggest };
+      best.suggest = suggest;
+    }
     // строго по очереди: каждый следующий — в ближайшее своё окно позже предыдущего
     /* v0.007, «и вариант, чтобы в 1 кольцо заходил только 1 шарик и, пока он не дошёл в центр, нельзя заходить в него, и так же для 2…» («1 в кольце»,
        Z.coneBallOnePerRing): скорость у всех одна, расписание у всех одно, сдвинутое на момент выпуска, — два шарика в одном кольце, только если выпущены
@@ -320,7 +348,7 @@
       if (pick < 0) break;
       list.push({ point: left[pick].s, atQ: at, arriveQ: seqReach(S, left[pick].s.rawQ, at, best.v) }); last = at; left.splice(pick, 1);
     }
-    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered, gap };
+    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered, gap, suggest: best.suggest || null };
   }
   function inputFraction(value) {
     try { const q = Q(value); return q.sign() > 0 && q.cmp(1000) <= 0 ? q : null; } catch { return null; }
