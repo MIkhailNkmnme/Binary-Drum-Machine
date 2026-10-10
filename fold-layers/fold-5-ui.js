@@ -6544,6 +6544,9 @@ const SAFE_MODE = /(^|[#?&])safe\b/.test(location.hash + location.search);
 let cacheWiped = false;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
+/* v1.655, «/fold-layers/Zerkalius-layers.html — сюда» (вслед за Треугольником: «при первой загрузке этот код», «добавь кнопку по умолчанию»):
+   начальные строки — общая последовательность из _pzl.txt (../_js/initial-rows.js, 71 строка); нет файла — Серпинский на 128, как прежде */
+function initialRows(){ return (typeof ZZ_INITIAL_ROWS !== "undefined" && ZZ_INITIAL_ROWS.length) ? ZZ_INITIAL_ROWS.slice() : generateSierpinski90(128); }
 /* Генератор фрактала Серпинского 90 (Rule 90 / Pascal mod 2) */
 function generateSierpinski90(n) {
   const rows = [];
@@ -7500,8 +7503,8 @@ function loadCache(){
     if (st.activeTab >= st.tabs.length) st.activeTab = 0;
     loadTabState(st.activeTab, true);
   } else {
-    st.tplRows = generateSierpinski90(128);
-    st.tplPats = generateSierpinski90(128);
+    st.tplRows = initialRows();   // v1.655: и в памяти без вкладок — начальная последовательность
+    st.tplPats = initialRows();
     st.rows = st.tplRows.slice();
     st.used = st.rows.map(() => false);
     st.pats = st.tplPats.map((t, i) => ({ text: t, ord: i, found: false, kind: null, step: null }));
@@ -7593,7 +7596,7 @@ if (!loadCache()){
      заполняли только tplRows/tplPats и сразу звали createDefaultTabState() — st.rows на тот
      момент был пуст (дефолт из объекта st), поэтому у самой первой вкладки rows оказывались
      пустыми и холст оставался чёрным до первого loadTabState()/resetAll() с других действий. */
-  const s90 = generateSierpinski90(128);
+  const s90 = initialRows();   // v1.655: первый запуск — начальная последовательность (нет файла — Серпинский 128, как прежде)
   st.tplRows = s90;
   st.tplPats = s90.slice();
   st.rows = st.tplRows.slice();

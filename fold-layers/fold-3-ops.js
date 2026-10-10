@@ -6198,6 +6198,12 @@ function applyGeneratedRows(gen, title){
     (off ? `, сдвиг ${off}` : "") + `, +${addedBits} бит`);
 }
 
+/* v1.655: «★ По умолчанию» — начальная последовательность (../_js/initial-rows.js) тем же путём, что фигуры: по режиму постройки, ↶ отменит */
+const bGenDefaultEl = document.getElementById("bGenDefault");
+if (bGenDefaultEl) bGenDefaultEl.onclick = () => {
+  if (typeof ZZ_INITIAL_ROWS === "undefined" || !ZZ_INITIAL_ROWS.length) { say("★ Файл начальной последовательности не загрузился."); return; }
+  applyGeneratedRows(ZZ_INITIAL_ROWS.slice(), "По умолчанию — последовательность");
+};
 const bGenSierpinskiEl = document.getElementById("bGenSierpinski");
 const sierpinskiNEl = document.getElementById("sierpinskiN");
 if (bGenSierpinskiEl) {

@@ -5,7 +5,7 @@
 <!-- === МАРКЕР 01: HEAD === -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-<title>Zerkalius Layers — v1.654</title>
+<title>Zerkalius Layers — v1.655</title>
 <!-- === МАРКЕР 02: STYLE === -->
 <style>
   :root{
@@ -5370,7 +5370,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
   <!-- Заголовок стоит вплотную слева от вкладок (v1.046), вся связка центрируется полосой — см. #menuBarTitle в CSS. --><div id="menuBarTitle">
     <!-- Клик по заголовку — перезагрузка страницы (запрос пользователя). Кэш пишется постоянно
          (saveCache при каждом действии), поэтому перезагрузка безопасна и ничего не теряет. -->
-    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.654</span></h3>
+    <h3 id="appTitle" style="margin:0;font-size:13px;cursor:pointer;" title="Клик — обновить страницу">Zerkalius Layers <span style="color:var(--dim);font-weight:normal;">v1.655</span></h3>
   </div>
   <div id="menuTabs">
     <div id="menuTabsGroup">
@@ -5586,6 +5586,7 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
 <div id="topBuildGroup" class="control-group control-group-player">
   <div class="psec"><div class="psec-h">Фигуры</div>
     <div class="pr"><button id="bGenSierpinski" title="Построить фрактал Серпинского (Rule 90 / Pascal mod 2) на N строк — тот же генератор, что и при первом запуске с пустым кэшем">🔺 Серпинский</button><input type="number" id="sierpinskiN" min="2" max="2048" step="1" value="128" title="Сколько строк генерировать"></div>
+    <div class="pr"><button id="bGenDefault" title="★ По умолчанию: начальная последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — та же, что при первом запуске, у Треугольника, Синхрофазотрона и Зазеркалиуса. Ставится, как фигура: по режиму постройки, ↶ отменит">★ По умолчанию</button></div>
     <div class="pr"><button id="bGenNumbers" title="Построить двоичные номера: 0, 1, 10, 11, 100, 101… — строка i это число i в двоичном виде, от 0 до N включительно">🔢 Номера</button><input type="number" id="numbersN" min="2" max="4096" step="1" value="128" title="До какого числа строить"></div>
     <button id="bSierpNext" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) новую; строки ниже сдвигаются, ничего не затирается. Из строки длиной T получается строка длиной T+1 по правилу Серпинского: каждый новый бит — XOR двух соседних бит над ним (за краями строки — нули). На треугольнике Паскаля это ровно его следующая строка, но работает от ЛЮБОЙ последней строки. Клик — одна строка; удобно жать подряд">🔺+1 ниже</button><button id="bSierpPrev" title="ОБРАТНЫЙ шаг Паскаля: над ВЫДЕЛЕННОЙ строкой (ничего не выделено — над последней) встаёт та строка, из которой она получилась бы кнопкой «🔺+1», — на бит КОРОЧЕ. Строки от места вставки съезжают вниз, ничего не затирается. Считается однозначно: первый бит тот же, дальше каждый — XOR с уже полученным соседом слева. Последний бит служит проверкой: если он не сошёлся, родителя у строки нет вовсе — шагом «🔺+1» её не получить (так у половины всех строк). В режиме «⊕» ложится XOR-ом в строку НАД источником">🔻−1 выше</button>
     <button id="bNumNext" title="Вставить под ВЫДЕЛЕННОЙ строкой (ничего не выделено — под последней) следующий номер: строка читается как двоичное число, новая — на единицу больше. Строки ниже сдвигаются, ничего не затирается; выделение переходит на новую, так что жать можно подряд. Ведущие нули сохраняются: 0011 → 0100">🔢+1 ниже</button><button id="bNumPrev" title="Над ВЫДЕЛЕННОЙ строкой встаёт предыдущий номер: строка читается как двоичное число, новая — на единицу меньше. Ширина сохраняется (0100 → 0011); у нуля предшественника нет. В режиме «⊕» ложится XOR-ом в строку НАД источником">🔢−1 выше</button>
@@ -6193,11 +6194,12 @@ html.light-bg img, html.light-bg video{ filter: invert(1) hue-rotate(180deg); }
      (видно новый номер версии в заголовке), а fold-*.js берёт из кеша — то есть новый код
      просто не выполняется, и правка выглядит "не сработавшей". Номер тут поднимается ВМЕСТЕ с
      версией в <title>/<h3>, теми же тремя цифрами. -->
-<script src="fold-1-core.js?v=1654"></script>
-<script src="fold-2-render.js?v=1654"></script>
-<script src="fold-3-ops.js?v=1654"></script>
-<script src="fold-4-tools.js?v=1654"></script>
-<script src="fold-5-ui.js?v=1654"></script>
+<script src="../_js/initial-rows.js?v=2"></script>   <!-- v1.655: общая начальная последовательность (из _pzl.txt) — первый запуск и «★ По умолчанию» -->
+<script src="fold-1-core.js?v=1655"></script>
+<script src="fold-2-render.js?v=1655"></script>
+<script src="fold-3-ops.js?v=1655"></script>
+<script src="fold-4-tools.js?v=1655"></script>
+<script src="fold-5-ui.js?v=1655"></script>
 <div id="fieldInfo"></div>
 <div id="msg"></div>
 <!-- Виртуальный курсор для тач-устройств (см. JS: МАРКЕР TOUCHPAD). Перекрестье + панель действий;
