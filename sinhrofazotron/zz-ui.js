@@ -219,7 +219,7 @@ document.addEventListener("mouseover", (e) => {
   if (el === tipEl) return;
   tipOff();
   if (!el) return;
-  const near = el.closest("#ringTbl");
+  const near = el.closest("#ringTbl,#coneViewTools,.sfz-grape:not(.cmin),#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,body.pane-icons #rowsPane");
   if (Z.tipsOn === false && !near) { tipsMuteElement(el); return; }
   const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
@@ -837,6 +837,8 @@ function sfzSettingsInit(){
   const rings = document.createElement("button"); rings.type = "button"; rings.textContent = "Ромбы колец";
   rings.title = "Показать столбцы видов колец и заполнения";
   rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
+  const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь вида конуса";
+  coneView.onclick = () => { Z.coneViewToolsHidden = false; save(); renderCone(); }; view.appendChild(coneView);
   const close = () => menus.querySelectorAll("details[open]").forEach(d => d.open = false);
   document.addEventListener("pointerdown", e => { if (!menus.contains(e.target)) close(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = document.activeElement.closest("#sfzSettingsMenus details"); close(); if (active) active.querySelector("summary").focus(); } });
@@ -1411,8 +1413,25 @@ function rowsCenterBit0(){   // v0.543: первый бит первой стр�
   L.scrollLeft += (r.left + r.width / 2) - (lr.left + L.clientWidth / 2);
   L.scrollTop += (r.top + r.height / 2) - (lr.top + L.clientHeight / 2);
 }
+function rowsCenterFitting(){
+  const L = $("rowList");
+  if (!L || (Z.rowsAlign || "center") !== "center" || L.scrollWidth <= L.clientWidth + 1 || rowEditing >= 0 || ovControls()) return false;
+  const lr = L.getBoundingClientRect(), number = L.querySelector(".rw > .no"), gutter = number ? number.getBoundingClientRect().width : 0;
+  const room = Math.max(0, L.clientWidth - gutter - 10), boxes = [...L.querySelectorAll('.rw > .bits.la > :is(.bx,.bxh)')];
+  let fallback = null, anchor = null;
+  for (const box of boxes) {
+    const r = box.getBoundingClientRect(); if (!r.width || r.width > room) continue;
+    if (!fallback) fallback = r;
+    if (r.bottom > lr.top && r.top < lr.top + L.clientHeight) { anchor = r; break; }
+  }
+  anchor = anchor || fallback; if (!anchor) return false;
+  const target = lr.left + L.clientLeft + gutter + room / 2;
+  const next = Math.max(0, Math.min(L.scrollWidth - L.clientWidth, L.scrollLeft + anchor.left + anchor.width / 2 - target));
+  if (Math.abs(L.scrollLeft - next) > .5) L.scrollLeft = next;
+  return true;
+}
 function rowsCenterX(){
-  requestAnimationFrame(() => requestAnimationFrame(() => { const L = document.getElementById("rowList"); if (L) L.scrollLeft = Math.max(0, (L.scrollWidth - L.clientWidth) / 2); }));
+  requestAnimationFrame(() => requestAnimationFrame(() => { const L = document.getElementById("rowList"); if (L && !rowsCenterFitting()) L.scrollLeft = Math.max(0, (L.scrollWidth - L.clientWidth) / 2); }));
 }
 /* v0.167, «надпись вправо, над замками — центральный замок (общий)»: над столбиком замков у строк — общий замок колец (галка «запрет
    сдвига строк» в «Кольцах»): щелчок — как по галке. Место по горизонтали — по замку первой строки (столбик номера стоит на месте
@@ -1603,7 +1622,8 @@ function renderRows(){
     const sig = Z.rows.length + ":" + ((Z.rows[0] || "").length) + ":" + mx + ":" + (Z.lane | 0);
     if (renderRows._sig !== sig) { renderRows._sig = sig; requestAnimationFrame(rowsCenterBit0X); } }
 }
-function rowsCenterBit0X(){   // v0.625: как rowsCenterBit0, только по ширине
+function rowsCenterBit0X(){   // v0.053: при переполнении — центр первой целиком вмещающейся строки.
+  if (rowsCenterFitting()) return;
   const L = document.getElementById("rowList"); if (!L) return;
   const bx = L.querySelector(".rw[data-r] .bx"), b = bx && (bx.querySelector(".b0, .b1, i.q") || bx); if (!b) return;
   const r = b.getBoundingClientRect(), lr = L.getBoundingClientRect(); if (!r.width && !r.height) return;
@@ -2744,7 +2764,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.closest("#coneViewTools,#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || button.closest(".sfz-grape,#coneViewTools,#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -2811,8 +2831,7 @@ function renderCone(){
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
-  { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
-    coneBalShow(o1, o0); }   // v0.1004: баланс считается независимо от включения солнца
+  coneBalTotals(coneBalanceData(ballClosedCount), N); // v0.053: общий баланс и четверти считают одни и те же ячейки, включая заполнение вырезов.
   c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом
   coneMagAxisPlace();
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
@@ -6597,9 +6616,9 @@ function coneBalanceData(closed, keepCells = false){
         addCell(inverse, cpInv(s[j]));
       }
     }
-    if (cut && cutPrevOwn()) for (const [p, j] of cutPrevCells(i, n)) {
+    if (cut && cutPrevMode()) for (const [p, j] of cutPrevCells(i, n)) {
       const arcs = zzBalanceArcs(q(p).sub(rot).div(P), q(p + 1).sub(rot).div(P));
-      addCell(arcs, cpInv(s[j]));
+      addCell(arcs, cpInv(cutPrevSource(i)[j]));
     }
     rings.push(ivUnion(spans)); prefix.push(quarters.map(q => q.slice()));
   }
@@ -6832,7 +6851,23 @@ async function coneBalanceAutoEqualize(){
 function coneViewToolsSync(cv){
   const host = $("coneMain") && $("coneMain").parentElement; if (!host) return 0;
   let box = $("coneViewTools");
-  if (!box) { box = document.createElement("div"); box.id = "coneViewTools"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Вид конуса"); host.appendChild(box); }
+  if (!box) {
+    box = document.createElement("div"); box.id = "coneViewTools"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Вид конуса"); host.appendChild(box);
+    const handles = document.createElement("div"); handles.className = "grape-handles";
+    const move = document.createElement("button"), close = document.createElement("button"); move.type = close.type = "button";
+    move.className = "grape-move"; move.textContent = "✥"; move.title = "Переместить гроздь вида конуса";
+    close.textContent = "×"; close.title = "Скрыть гроздь; вернуть: верхнее меню Вид → Гроздь вида конуса";
+    close.onclick = e => { e.stopPropagation(); Z.coneViewToolsHidden = true; box.hidden = true; save(); };
+    move.addEventListener("pointerdown", e => {
+      if (e.button) return; e.preventDefault(); e.stopPropagation(); move.setPointerCapture(e.pointerId);
+      const id = e.pointerId, sx = e.clientX, sy = e.clientY, start = box.getBoundingClientRect(), canvas = cv.getBoundingClientRect();
+      const drag = ev => { if (ev.pointerId !== id) return; Z.coneViewToolsXY = [start.left - canvas.left + ev.clientX - sx, start.top - canvas.top + ev.clientY - sy]; coneViewToolsSync(cv); };
+      const end = ev => { if (ev.pointerId !== id) return; move.removeEventListener("pointermove", drag); move.removeEventListener("pointerup", end); move.removeEventListener("pointercancel", end); if (move.hasPointerCapture(id)) move.releasePointerCapture(id); save(); };
+      move.addEventListener("pointermove", drag); move.addEventListener("pointerup", end); move.addEventListener("pointercancel", end);
+    });
+    handles.append(move, close); box.appendChild(handles);
+  }
+  box.hidden = !!Z.coneViewToolsHidden;
   for (const [id, caption] of [["bConeCanon", "◯ мин"], ["bShowFix", "🔴 ⇄"], ["bShowFixIr", "🟢 ⇄"], ["coneSame", "цвет"], ["coneOnlySel", "выдел"], ["coneNoPick", "🚫"], ["coneSect", "◔"], ["coneClean", "◯"], ["conePoly", "⬡"], ["bConeArcs", "◠"], ["bConeHits", "✦"], ["bLightSolid", "☀"], ["bSunParts", "доли"], ["coneBit1", "①"], ["coneRaysB", null], ["coneGlow", "✨"], ["bConeAxes", "✛"]]) {
     const source = $(id); if (!source) continue;
     const node = source.matches("input") ? source.closest("label") : source;
@@ -6845,11 +6880,13 @@ function coneViewToolsSync(cv){
     node.setAttribute("aria-label", node.title); box.appendChild(node);
   }
   const cr = cv.getBoundingClientRect(), anchor = box.offsetParent || host, hr = anchor.getBoundingClientRect();
-  const size = Math.max(20, Math.min(40, Math.floor((cr.width - 16) / 9) - 2)); box.style.setProperty("--view-size", size + "px");
-  const G = coneGeom, cx = cr.left + (G && G.dpr ? G.cx / G.dpr : cr.width / 2), width = box.offsetWidth;
-  box.style.left = (Math.max(cr.left, Math.min(cr.right - width, cx - width / 2)) - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  box.style.top = (cr.top - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
-  return box.offsetHeight + 4;
+  const layout = sfzGrapeLayout(box, [...box.children].filter(e => e.matches("button,label")), "вид");
+  const G = coneGeom, cx = G && G.dpr ? G.cx / G.dpr : cr.width / 2, tools = $("coneBalanceTools"), tw = tools && tools.offsetWidth || 360;
+  const saved = Z.coneViewToolsXY, px = Array.isArray(saved) ? saved[0] : cx - tw / 2 - layout.width - 8, py = Array.isArray(saved) ? saved[1] : 0;
+  const x = Math.max(0, Math.min(Math.max(0, cr.width - layout.width), px)), y = Math.max(0, Math.min(Math.max(0, cr.height - layout.height - 22), py));
+  box.style.left = (cr.left + x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
+  box.style.top = (cr.top + y - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
+  return 0;
 }
 function coneBalanceToolsSync(cv){
   const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
@@ -6888,8 +6925,10 @@ function coneBalanceToolsSync(cv){
     el.appendChild(quarters);
   }
   quarters.classList.toggle("on", !!Z.coneQuarterRings); quarters.setAttribute("aria-pressed", String(!!Z.coneQuarterRings));
-  const cr = cv.getBoundingClientRect(), anchor = el.offsetParent || host, hr = anchor.getBoundingClientRect(), w = el.offsetWidth;
-  // v0.024, «все эти жёлтые треугольники наверх прижми, а балансы опусти ниже»: ряд — на верхнем крае холста, стык 3-го и 4-го — на оси конуса
+  const cr = cv.getBoundingClientRect(), anchor = el.offsetParent || host, hr = anchor.getBoundingClientRect();
+  el.classList.toggle("compact", cr.width < 372);
+  const w = el.offsetWidth;
+  // v0.053: стандартные ромбы у верхнего края, свободное место по центру — для ромба осей.
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
   const x = Math.max(cr.left, Math.min(cr.right - w, cr.left + cxp - w / 2));
   el.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
@@ -7028,10 +7067,11 @@ function coneBalanceTurnShow(el, Q, o){
 function coneBalanceSync(g, o){
   coneBalanceToolsSync(o.cv);
   coneHistorySync(o.cv);
+  const data = coneBalanceData(o.ballClosedCount); coneBalTotals(data, o.N);
   let el = $("coneQuarterBalances");
   if (!Z.coneAxes || !(Z.coneQuadBalances || Z.coneBalanceHighlight) || Z.cone3d) { if (el) el.hidden = true; return; }
   if (coneSpinning) { if (el) el.hidden = true; return; }   // v0.033: пока крутится — балансов нет
-  const data = coneBalanceData(o.ballClosedCount), Q = data.quarters, names = ["верх справа", "низ справа", "низ слева", "верх слева"];
+  const Q = data.quarters, names = ["верх справа", "низ справа", "низ слева", "верх слева"];
   if (!coneBalanceMagnetic(Q)) { if (el) el.hidden = true; return; }   // v0.033: положение не магнитное — балансов нет
   const allEqual = Q.slice(1).every(q => coneBalanceEqual(q, Q[0])), colors = coneBalanceColors(Q);
   if (!el) { el = document.createElement("div"); el.id = "coneQuarterBalances"; $("coneMain").parentElement.appendChild(el);
@@ -7072,16 +7112,22 @@ function coneBalanceSync(g, o){
   }
   g.restore();
 }
+function coneBalTotals(data, count){
+  const prefix = data.prefix[Math.min(count, data.prefix.length) - 1] || [];
+  const total = prefix.reduce(coneBalanceAdd, [ZZExact.from(0), ZZExact.from(0)]);
+  coneBalShow(total[1], total[0]);
+}
 function coneBalShow(o1, o0){   // v0.812: баланс ромбами на вертикали через центр, сверху
   let el = document.getElementById("coneBal");
   if (o1 === null) { if (el && !el.hidden) el.hidden = true; return; }
   const host = document.getElementById("coneMain") && document.getElementById("coneMain").parentElement; if (!host) return;
   if (!el || el.parentElement !== host) { if (el) el.remove(); el = document.createElement("div"); el.id = "coneBal";
     el.innerHTML = '<div class="bw"><div class="bd b1"></div></div><div class="bs"></div><div class="bw"><div class="bd b0"></div></div>'; host.appendChild(el); }
-  const eq = o1 === o0 && o1 > 0, t1 = String(o1), t0 = String(o0), ts = "";   // v0.814: знака нет — поровну ромбы горят
+  const ones = ZZExact.from(o1), zeros = ZZExact.from(o0), diff = ones.sub(zeros);
+  const eq = ones.eq(zeros) && ones.sign() > 0, t1 = ones.text(), t0 = zeros.text(), ts = "";
   const q1 = el.querySelector(".b1"), q0 = el.querySelector(".b0"), qs = el.querySelector(".bs");
   if (q1.textContent !== t1) q1.textContent = t1; if (q0.textContent !== t0) q0.textContent = t0; if (qs.textContent !== ts) qs.textContent = ts;
-  el.classList.toggle("eq", eq); el.title = `Баланс всех строк конуса: единиц ${o1}, нулей ${o0}` + (eq ? " — поровну" : `, разница ${o1 - o0 > 0 ? "+" : ""}${o1 - o0}`);
+  el.classList.toggle("eq", eq); el.title = `Баланс ячеек конуса с заполнением: единиц ${t1}, нулей ${t0}` + (eq ? " — поровну" : `, разница ${diff.sign() > 0 ? "+" : ""}${diff.text()}`);
   if (el.hidden) el.hidden = false; coneBalPlace();
 }
 function coneBalPlace(){
@@ -7102,7 +7148,7 @@ function c3AxesPlace(){
   const bal = document.getElementById("coneBal"), br = bal && !bal.hidden && bal.getClientRects().length ? bal.getBoundingClientRect() : null;
   // v0.024, «оси ромб побольше и между треугольников»: ромб 30 × 30 — в зазоре ряда треугольников на оси (вершина — у верхнего края, бока — по их сторонам)
   const center = cr.left + cxp;
-  const view = $("coneViewTools"), viewHeight = view && view.getClientRects().length ? view.offsetHeight + 4 : 0;
+  const viewHeight = 0;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top + viewHeight - hr.top - host.clientTop + host.scrollTop;
   b.setAttribute("aria-pressed", String(!!Z.coneAxes));
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
@@ -7112,10 +7158,7 @@ function c3AxesPlace(){
   if (zo && zi) { const zw = zo.offsetWidth || 30, zh = zo.offsetHeight || zw, gap = 6, tools = document.getElementById("coneBalanceTools");
     const below = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom + 6 : cr.top + w + 6;
     let L = br ? br.left - gap - zw : center - 30 - zw, R = br ? br.right + gap : center + 30, Y = br ? br.top + br.height / 2 - zh / 2 : below;
-    /* v0.024, «размером чуть меньше, чем ромбы из треугольников, и между треугольниками с отступами»: − и + — в крайних зазорах верхнего ряда (между 1-м и 2-м,
-       5-м и 6-м треугольником); стороны ромба параллельны сторонам соседей, отступ от них ровный (~4 px), низ выходит под ряд */
-    const tb = tools && tools.children.length > 2 && tools.getClientRects().length ? tools.getBoundingClientRect() : null, tw = tb ? tools.children[0].offsetWidth : 0;
-    if (tb && tw) { L = tb.left + tw - zw / 2; R = tb.left + (tools.children.length - 1) * tw - zw / 2; Y = tb.top + tw / 10; }
+    // v0.053: масштаб — по бокам чисел баланса, без наложения на верхние ромбы.
     const top = (Y - hr.top - host.clientTop + host.scrollTop).toFixed(1) + "px";
     const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
       if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== top) el.style.top = top; };
@@ -7224,7 +7267,7 @@ function tempoTrackSync(){
   const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
   set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
   const value = $("coneAutoSpV");
-  if (value) { const vw = value.offsetWidth, right = tx + 62, vx = right + vw <= lw - 10 ? right : tx - 62 - vw;
+  if (value) { const vw = value.offsetWidth, right = tx + 78, vx = right + vw <= lw - 10 ? right : tx - 78 - vw;
     set("--vx", Math.max(30, Math.min(lw - 30 - vw, vx)).toFixed(1) + "px"); }
   const thumb = $("coneTempoToggle"), on = !!($("bConeAuto") && $("bConeAuto").classList.contains("on"));
   L.classList.toggle("playing", on);
@@ -12627,6 +12670,8 @@ function triTag(){
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
   document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2), #w-cone .tools .cgrp > .glab, #paneGrp .cgrp > .glab").forEach(b => {
+    const grape = b.closest(".cgrp");
+    if (sfzColumnGroup(grape) && !grape.classList.contains("cmin")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.classList.contains("r1form")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
     // v0.1022: поля шариков раскладываются внутри подписи; сцепка соседних рядов им не подходит.
@@ -13111,12 +13156,63 @@ window.addEventListener("resize", lpKick);
 function sfzColumnGroup(g){ return !!(g && !g.classList.contains("cg-r1") && g.closest("#w-cone .tools,#paneGrp")); }
 function sfzColumnSize(g){
   const collapsed = g.classList.contains("cmin"), size = !collapsed && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
-  const requested = size && Number(size.w), width = Math.max(128, Number.isFinite(requested) && requested > 0 ? requested : 180);
   g.classList.toggle("csz", !!size);
   if (g.style.height) g.style.height = ""; if (g.style.minWidth) g.style.minWidth = "";
   if (g.style.flexShrink !== "0") g.style.flexShrink = "0";
-  const value = width + "px"; if (g.style.getPropertyValue("--sfz-column-width") !== value) g.style.setProperty("--sfz-column-width", value);
-  const target = collapsed ? "" : value; if (g.style.width !== target) g.style.width = target;
+  if (g.style.width) g.style.width = "";
+  if (!g.classList.contains("sfz-grape")) g.classList.add("sfz-grape");
+  if (!collapsed) sfzGrapeSync(g);
+}
+function sfzGrapeStyle(el, key, value){ if (el.style.getPropertyValue(key) !== value) el.style.setProperty(key, value); }
+function sfzGrapeIcon(el, name){
+  if (!el.matches("button,label") || el.querySelector('input:not([type="checkbox"]),select,textarea')) return;
+  const text = el.textContent.trim();
+  if (!el.title && !el.dataset.zzTip) el.title = text;
+  if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.title || el.dataset.zzTip || text);
+  let icon = el.querySelector(":scope > .sfz-grape-icon");
+  if (!icon) { icon = document.createElement("span"); icon.className = "sfz-grape-icon"; icon.setAttribute("aria-hidden", "true"); el.prepend(icon); }
+  const key = (el.id + " " + text).toLowerCase();
+  let kind = /пуск|запуск|продолж|play|auto/.test(key) ? "play" : /пауза|pause|stop/.test(key) ? "pause" : /магнит|mag/.test(key) ? "magnet" : /ось|оси|axis|axes/.test(key) ? "axes" : /луч|свет|sun|light|glow/.test(key) ? "light" : /бит|bit|01/.test(key) ? "bit" : /крут|turn|spin|rotate|верт/.test(key) ? "turn" : /щел|slit|cut/.test(key) ? "slit" : /3d|тор|cube/.test(key) ? "cube" : /шар|ball/.test(key) ? "ball" : "ring";
+  if (kind === "ring") kind = /3d/.test(name) ? "cube" : /шар/.test(name) ? "ball" : /грани/.test(name) ? "cube" : /щел/.test(name) ? "slit" : /круч/.test(name) ? "turn" : "ring";
+  if (icon.dataset.kind === kind) return; icon.dataset.kind = kind;
+  const paths = { play:'<path d="M8 5l11 7-11 7z"/>', pause:'<path d="M8 5v14M16 5v14"/>', magnet:'<path d="M5 5v9a7 7 0 0014 0V5M5 9h4M15 9h4"/>', axes:'<path d="M12 2v20M2 12h20M9 5l3-3 3 3M19 9l3 3-3 3"/>', light:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2"/>', bit:'<circle cx="7" cy="12" r="4"/><path d="M17 8v8M15 9l2-1"/>', turn:'<path d="M19 8a8 8 0 10.5 7M19 3v6h-6"/>', slit:'<path d="M3 5h18M3 12h7M14 12h7M3 19h18M12 8v8"/>', cube:'<path d="M12 2l9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/>', ball:'<circle cx="12" cy="12" r="8"/><path d="M7 7l2-1"/>', ring:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>' };
+  icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths[kind] + '</svg>';
+}
+function sfzGrapeLayout(box, items, name){
+  const cell = 48, step = 26; let y = 0, side = 0, width = 48, bottom = 0;
+  for (const item of items) {
+    if (!item.classList.contains("sfz-grape-item")) { if (item.classList.contains("tz")) triOff(item); tzcClean(item); item.classList.add("sfz-grape-item"); }
+    const wide = item.matches("select,input,textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea') || item.classList.contains("sfz-grape-note");
+    if (wide && side) { y += cell + cell / 2; side = 0; }
+    const x = wide ? 0 : side * step, top = y + (wide ? 0 : side * cell / 2), w = wide ? 120 : cell;
+    sfzGrapeStyle(item, "--grape-x", x + "px"); sfzGrapeStyle(item, "--grape-y", top + "px"); sfzGrapeStyle(item, "--grape-w", w + "px");
+    width = Math.max(width, x + w); bottom = Math.max(bottom, top + cell);
+    sfzGrapeIcon(item, name || "");
+    if (wide) { y = top + cell + 2; side = 0; } else { side = 1 - side; if (!side) y += cell; }
+  }
+  sfzGrapeStyle(box, "--sfz-grape-width", width + "px"); sfzGrapeStyle(box, "--sfz-grape-height", bottom + "px");
+  return { width, height: bottom };
+}
+function sfzGrapeSync(g){
+  const box = g.querySelector(":scope > .cgb"); if (!box) return;
+  const items = [];
+  const collect = node => {
+    if (node.hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,#coneBallStatus")) return;
+    if (node.matches("button,label,select,textarea,input:not([type=hidden])")) { items.push(node); return; }
+    if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { if (node.textContent.trim()) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
+    if (!node.classList.contains("sfz-grape-wrap")) node.classList.add("sfz-grape-wrap");
+    for (const child of node.children) collect(child);
+  };
+  for (const child of box.children) collect(child);
+  const layout = sfzGrapeLayout(box, items, g.dataset.g);
+  sfzGrapeStyle(g, "--sfz-grape-width", layout.width + "px");
+  const lab = g.querySelector(":scope > .glab");
+  if (lab) {
+    const title = "Гроздь «" + g.dataset.g + "». ✥ — перетащить; × — свернуть. Развернуть — кнопкой + в заголовке группы.";
+    if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
+    const fold = lab.querySelector(".gfold"), label = "Свернуть гроздь «" + g.dataset.g + "»";
+    if (fold && fold.getAttribute("aria-label") !== label) fold.setAttribute("aria-label", label);
+  }
 }
 function tzJustify(g){
   if (sfzColumnGroup(g)) {
@@ -13727,6 +13823,7 @@ function tzSliders(){
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
 setInterval(() => { if (!document.hidden && !ZZ_BG) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
 function tzgFrame(g){
+  if (sfzColumnGroup(g) && !g.classList.contains("cmin")) { sfzColumnSize(g); return; }
   if (document.body.classList.contains("sol-mobile") && g.closest("#w-cone")) return;
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
@@ -14575,7 +14672,7 @@ function init(){
       if (h > 0 && h !== Z.rowsH) { Z.rowsH = h; clearTimeout(th); th = setTimeout(save, 300); }
     }).observe($("rowList"));
     let rf = 0;   // v0.153: поле стало ниже / выше (окно, разделитель, окна под строками) — межстрочный подгоняется заново
-    new ResizeObserver(() => { cancelAnimationFrame(rf); rf = requestAnimationFrame(rowsFit); }).observe($("rowList"));
+    new ResizeObserver(() => { cancelAnimationFrame(rf); rf = requestAnimationFrame(() => { rowsFit(); rowsCenterFitting(); }); }).observe($("rowList"));
   }
 
   const opEntries = Object.entries(ZZ_OPS).map(([k, o]) => [k, o.lab]);
