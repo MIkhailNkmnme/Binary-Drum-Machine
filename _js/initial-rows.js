@@ -73,9 +73,11 @@ const ZZ_INITIAL_ROWS = Object.freeze([
   "100000001110110000011001001110101111110110010101111000111111000001100",
   "1101001001101110000100101101100100001100011010011011000100111011110001"
 ]);
-const ZZ_ROWS_SEQUENCE_REVISION = 1;
+const ZZ_ROWS_SEQUENCE_REVISION = 2;
 function zzUseInitialRows(state){
-  const rows = ZZ_INITIAL_ROWS.slice(), lane = Math.max(0, state.lane | 0);
+  const count = Math.max(1, Math.min(4, state.laneCount | 0 || 1));
+  const rows = ZZ_INITIAL_ROWS.slice(), lane = Math.max(0, Math.min(count - 1, state.lane | 0));
+  state.lane = lane;
   state.rows = rows; state.cur = 0;
   if (Array.isArray(state.lanes)) state.lanes[lane] = rows;
   if (Array.isArray(state.lanesHid)) state.lanesHid[lane] = [];
@@ -93,8 +95,11 @@ function zzInitialRowsMigrate(state, raw, key){
     state.rowsSequenceRevision = ZZ_ROWS_SEQUENCE_REVISION; return;
   } } catch (e) {}
   if (raw) try {
-    const backup = key + "_before_rows_sequence_1";
+    const backup = key + "_before_rows_sequence_" + ZZ_ROWS_SEQUENCE_REVISION;
     if (!localStorage.getItem(backup)) localStorage.setItem(backup, raw);
   } catch (e) {}
   zzUseInitialRows(state);
+  // The "Initial rows" button restores the saved star's rows. Migrate those too,
+  // keeping its layout and other settings; the previous snapshot is in the backup.
+  if (state.home && typeof state.home === "object") zzUseInitialRows(state.home);
 }
