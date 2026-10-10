@@ -32,14 +32,10 @@
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
       (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0));
     const box = $("ballLabTurns"); if (!box) return;
-    if (!slicing) { box.replaceChildren(); delete box.dataset.sliceSummary; return; }
-    const summary = [];
-    for (let k = 1; k < slicing.count; k++) {
-      const out = slicing.paths.filter(p => p.k === k && p.move > 0), back = slicing.paths.filter(p => p.k === k && p.move < 0);
-      const a = out[0], b = back[0], complete = a && b && a.r0.eq(b.r1) && a.r1.eq(b.r0);
-      const mirror = complete && a.raw0.add(b.raw1).eq(a.raw1.add(b.raw0));
-      const opposite = complete && b.raw1.sub(a.raw0).mod().eq(HALF) && b.raw0.sub(a.raw1).mod().eq(HALF);
-      summary.push("К" + (k + 1) + ": " + (complete ? "зеркально " + (mirror ? "да" : "нет") + " · на 1/2 оборота " + (opposite ? "да" : "нет") : "след ещё не завершён"));
+    const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
+    for (let k = 1; slicing && k < slicing.count; k++) {
+      const cuts = slicing.cuts[k] || [], opposite = cuts.length > 0 && cuts.every(a => cuts.some(b => b.sub(a).mod().eq(HALF)));
+      summary.push("К" + (k + 1) + ": вырезы " + cuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет"));
     }
     const key = summary.join("\n"); if (box.dataset.sliceSummary === key) return;
     box.dataset.sliceSummary = key; box.replaceChildren();
@@ -50,63 +46,99 @@
     let speed; try { speed = Q(Z.coneSliceSpeed || "2/3"); } catch { status("Нарезка: укажи скорость положительной дробью"); return false; }
     if (speed.sign() <= 0) { status("Нарезка: скорость должна быть положительной"); return false; }
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
+    coneViewRemember();
     slicing = {count:S.rings.length,rQ:ZERO,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,move:1,done:false,
-      offsetQ:QUARTER.neg(),paths:[],outerBounces:0,innerBounces:0,startClock:coneMotionClock()};
+      k:0,rawQ:QUARTER.neg(),cuts:{},paths:[],outerBounces:0,innerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     sliceStatus(); save(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
   function sliceRecord(k, move, r0, r1, A, B){
     if (k < 1 || r0.eq(r1)) return;
-    const raw = S => S.rings[0].phaseQ.add(slicing.offsetQ).sub(S.rings[k].phaseQ);
-    const raw0 = raw(A), raw1 = raw(B), slope = raw1.sub(raw0).div(r1.sub(r0)), last = slicing.paths[slicing.paths.length - 1];
+    const raw0 = slicing.rawQ, raw1 = raw0, slope = ZERO, last = slicing.paths[slicing.paths.length - 1];
     if (last && last.k === k && last.move === move && last.r1.eq(r0) && last.raw1.eq(raw0) && last.slope.eq(slope)) {
       last.r1 = r1; last.raw1 = raw1;
     } else slicing.paths.push({k,move,r0,r1,raw0,raw1,slope});
   }
-  function sliceAdvance(A, B){
+  function sliceGrow(){
+    if (Z.coneSliceGrow === false || Z.rows.length >= CONE_MAX) return false;
+    const n = Z.rows.length + 1;
+    Z.rows.push("0".repeat(n)); coneRot.push(0); Z.coneRot = coneRot.slice(); Z.fillCells = null;
+    slicing.count = n; slicing.RQ = Q(n); renderRows(); save(); renderCone(); return true;
+  }
+  function sliceEnter(k, S, angle){
+    slicing.k = k; slicing.rawQ = Q(angle).sub(S.rings[k].phaseQ).sub(S.spinQ);
+    if (!k) return;
+    const raw = slicing.rawQ.mod(), cuts = slicing.cuts[k] || (slicing.cuts[k] = []);
+    if (!cuts.some(a => a.eq(raw))) cuts.push(raw);
+  }
+  function sliceAdvance(A, B, dt){
     if (!slicing || slicing.done || paused || !A || !B) return;
     if (A.rings.length !== slicing.count || B.rings.length !== slicing.count) { paused = true; status("Нарезка: кольца изменились · запусти заново"); return; }
     const C = frame(A,B), duration = C.durationQ; if (!duration.sign()) return;
     let elapsed = ZERO;
     while (elapsed.cmp(duration) < 0 && !slicing.done) {
       const r0 = slicing.rQ, move = slicing.move;
-      const k = Number(move > 0 ? r0.floor() : r0.ceil() - 1n);
+      const k = slicing.k;
       const stop = move > 0 ? Q(k + 1) : Q(k), distance = stop.sub(r0).abs();
       const step = ZZExact.min(duration.sub(elapsed),distance.div(slicing.speedQ));
       const from = C.at(elapsed.div(duration)); elapsed = elapsed.add(step);
       const to = C.at(elapsed.div(duration)), r1 = r0.add(slicing.speedQ.mul(step).mul(move));
       sliceRecord(k,move,r0,r1,from,to); slicing.rQ = r1; slicing.elapsedQ = slicing.elapsedQ.add(step);
       if (!r1.eq(stop)) break;
-      if (move > 0 && r1.eq(slicing.RQ)) { slicing.move = -1; slicing.outerBounces++; }
+      const angle = to.rings[k].phaseQ.add(to.spinQ).add(slicing.rawQ);
+      if (move > 0 && r1.eq(slicing.RQ)) {
+        if (Z.coneSliceGrow !== false && Z.rows.length < CONE_MAX) {
+          coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
+          if (sliceGrow()) {
+            sliceEnter(k + 1,snapshot(),angle);
+            const remaining = Q(dt).mul(ONE.sub(elapsed.div(duration)));
+            if (remaining.sign() && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+            sliceStatus(); return;
+          }
+        }
+        slicing.move = -1; slicing.outerBounces++;
+      }
       else if (move < 0 && r1.eq(0)) { slicing.done = true; }
-      // The line follows K1, hence its return meets the same open cut exactly.
+      else {
+        const next = k + move;
+        if (!next && move < 0) {
+          const d = angle.sub(to.rings[0].phaseQ).sub(to.spinQ).add(QUARTER).mod(), halfGap = Q(Z.coneSliceGap || "1/4").div(2);
+          if (d.cmp(halfGap) > 0 && d.cmp(ONE.sub(halfGap)) < 0) { slicing.move = 1; slicing.innerBounces++; continue; }
+        }
+        sliceEnter(next,to,angle);
+      }
     }
     sliceStatus();
   }
   function sliceDraw(g, o){
     const S = snapshot(); if (!S) return;
     const {cx,cy,dr,dpr} = o, count = S.rings.length, first = S.rings[0].phaseQ.add(S.spinQ);
-    const offset = slicing ? slicing.offsetQ : QUARTER.neg(), a = radians(first.add(offset));
+    const gapAngle = radians(first.sub(QUARTER));
+    const a = slicing ? radians(S.rings[slicing.k].phaseQ.add(S.spinQ).add(slicing.rawQ)) : gapAngle;
     const gap = Q(Z.coneSliceGap || "1/4"), halfGap = radians(gap.div(2));
     g.save(); g.globalAlpha = 1; g.shadowBlur = 0; g.setLineDash([]);
     g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#171c26";
     g.beginPath(); g.arc(cx,cy,count * dr + 2 * dpr,0,TAU); g.fill();
     for (let k = count - 1; k >= 0; k--) {
       g.fillStyle = "#f1f2f4"; g.beginPath();
-      if (!k) { g.moveTo(cx,cy); g.arc(cx,cy,dr,a + halfGap,a + TAU - halfGap); g.closePath(); }
+      if (!k) { g.moveTo(cx,cy); g.arc(cx,cy,dr,gapAngle + halfGap,gapAngle + TAU - halfGap); g.closePath(); }
       else { g.arc(cx,cy,(k + 1) * dr,0,TAU); g.arc(cx,cy,k * dr,TAU,0,true); }
       g.fill(); g.strokeStyle = "#8b929e"; g.lineWidth = dpr; g.beginPath(); g.arc(cx,cy,(k + 1) * dr,0,TAU); g.stroke();
+      const mark = radians(S.rings[k].phaseQ.add(S.spinQ).sub(QUARTER).add(k ? ZERO : HALF)), rr = (k + 0.6) * dr;
+      const x = cx + rr * Math.cos(mark), y = cy + rr * Math.sin(mark);
+      g.fillStyle = "#252c38"; g.beginPath(); g.arc(x,y,3 * dpr,0,TAU); g.fill();
+      g.font = "bold " + 12 * dpr + "px Consolas, monospace"; g.textAlign = "center"; g.textBaseline = "bottom";
+      g.fillText("К" + (k + 1),x,y - 5 * dpr);
     }
-    if (slicing) for (const p of slicing.paths) {
-      const phase = S.rings[p.k].phaseQ.add(S.spinQ), sweep = p.raw1.sub(p.raw0);
-      const steps = Math.max(2,Math.ceil(Math.abs(sweep.number()) * 128));
-      g.strokeStyle = p.move > 0 ? "#e58b21" : "#007f89"; g.lineWidth = 2 * dpr; g.beginPath();
-      for (let j = 0; j <= steps; j++) {
-        const u = Q(j,steps), r = p.r0.add(p.r1.sub(p.r0).mul(u)).number() * dr;
-        const angle = radians(p.raw0.add(sweep.mul(u)).add(phase)), x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
-        if (!j) g.moveTo(x,y); else g.lineTo(x,y);
+    if (slicing) for (const [key,cuts] of Object.entries(slicing.cuts)) {
+      const k = +key, phase = S.rings[k].phaseQ.add(S.spinQ);
+      for (const raw of cuts) {
+        const angle = radians(raw.add(phase)), c = Math.cos(angle), s = Math.sin(angle);
+        const path = slicing.paths.find(p => p.k === k && p.raw0.mod().eq(raw));
+        g.strokeStyle = (path ? path.move : slicing.move) > 0 ? "#e58b21" : "#007f89";
+        g.lineWidth = 2 * dpr; g.beginPath(); g.moveTo(cx + k * dr * c,cy + k * dr * s);
+        g.lineTo(cx + (k + 1) * dr * c,cy + (k + 1) * dr * s); g.stroke();
       }
-      g.stroke();
     }
     const radius = (slicing ? slicing.rQ.number() : 0) * dr;
     g.strokeStyle = "#26bdb4"; g.globalAlpha = 0.6; g.setLineDash([4 * dpr,4 * dpr]);
@@ -237,6 +269,7 @@
   const throughCount = () => [2, 3, 4].includes(+Z.coneBallThroughCount) ? +Z.coneBallThroughCount : 1;
   // Keep coincident endpoints separate: each belongs to its own bit edge.
   function boundaryPoints(S) {
+    if (slicingOn()) return [{id:"center",k:0,raw:null,rawQ:null,r:0,kind:"center",label:"Центр"}];
     const out = [];
     for (const [tag, r] of [["outer", S.rings[1].ro], ["inner", S.rings[1].ri]]) {
       S.rings[1].blocks.forEach((b, j) => [b.lo, b.hi].forEach((raw, side) => out.push({
@@ -426,7 +459,7 @@
     const cut = coneCutOn();
     if (!coneGeom || !(cut || plainRings()) || Z.cone3d || Z.conePoly || cutPrevMode() || coneFreeOn() || Z.coneBitStep) return null;
     const N = Math.min(Z.rows.length, CONE_MAX), count = N + (coneGeom.fill ? 1 : 0);
-    if (count < 2) return null;
+    if (count < 2 && !slicingOn()) return null;
     const rings = [], clock = coneMotionClock(), spinQ = clock.degrees.div(360);
     const block = (lo, hi, bit) => ({loQ:Q(lo),hiQ:Q(hi),lo:radians(lo),hi:radians(hi),bit});
     for (let i = 0; i < count; i++) {
@@ -474,7 +507,7 @@
       rings.push({ri:i,ro:i + 1,riQ:Q(i),roQ:Q(i + 1),phaseQ:R.phase,phase:radians(R.phase),coefficientQ:R.coefficient,
         blocks,cells,contactBlocks,solid,fill:i === N,oneWay:!i && !solid && !coneQuadOn() && !coneHalfOn() && R.n === 1 && centerMode() !== "through",shape});
     }
-    if (!rings[1].blocks.length) return null;
+    if (!slicingOn() && !rings[1].blocks.length) return null;
     const mode = Z.coneSpinMode || "all", clockQ = mode === "all" ? spinQ : coneBitMode(mode) ? clock.phase : clock.phase.div(360);
     return {rings,rotationQ:rings.map(r => r.phaseQ),rotation:rings.map(r => r.phase),clockQ,clockPhaseQ:clock.phase,clockPh:clock.phase.number(),spinQ,spin:radians(spinQ),shape:rings.map(r => r.shape).join("|")};
   }
@@ -491,6 +524,10 @@
   function labControls() {
     if (!$("ballLabTime")) return;
     if ($("ballSliceSpeedBox")) $("ballSliceSpeedBox").hidden = !slicingOn();
+    if ($("ballSliceGrow")) {
+      $("ballSliceGrow").textContent = Z.coneSliceGrow === false ? "рост: выкл." : "рост: вкл.";
+      $("ballSliceGrow").setAttribute("aria-pressed",String(Z.coneSliceGrow !== false));
+    }
     for (const id of ["ballLabStart","ballLabThrough","ballLabArc","ballLabOne"]) if ($(id)) $(id).disabled = slicingOn();
     lab.querySelectorAll("[data-ball-through]").forEach(b => { b.disabled = slicingOn(); });
     $("bConeBall").setAttribute("aria-pressed", String(enabled));
@@ -970,7 +1007,7 @@
   }
   window.zzBallAfterSpin = (dt,before) => {
     if (!enabled) return;
-    if (slicingOn()) { sliceAdvance(before,snapshot()); return; }
+    if (slicingOn()) { sliceAdvance(before,snapshot(),dt); return; }
     spinFrame++;
     const S = snapshot(); growRun(S);
     if (before && S && S.rings.length > before.rings.length && F && F.shape === S.shape) {
@@ -1175,7 +1212,10 @@
     save(); if (typeof renderRows === "function") renderRows();
   }
   window.zzBallToStart = () => {
-    if (slicingOn()) { if (slicing) coneMotionSetClock(slicing.startClock.phase,slicing.startClock.degrees); slicing = null; sliceStatus(); renderCone(); return; }
+    if (slicingOn()) {
+      if (slicing) { coneMotionSetClock(slicing.startClock.phase,slicing.startClock.degrees); Z.rows = slicing.startRows.slice(); coneRot = slicing.startRot.slice(); Z.coneRot = coneRot.slice(); Z.coneViewPose = slicing.startView; coneViewRestore(); renderRows(); }
+      slicing = null; sliceStatus(); renderCone(); return;
+    }
     if (F || balls.length) reset(false, true);
   };   // «↩ старт» в «Кручении»: шарики — на свои старты, закрытие колец остаётся
   function metrics(S) {
@@ -1299,7 +1339,7 @@
     lab = $("solBallLab"); const host = lab && lab.querySelector(":scope > .cgb"); if (!host) return;
     if (!host.querySelector(".ball-lab-body")) host.insertAdjacentHTML("beforeend", `<div class="ball-lab-body cgrp-fill">
       <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option><option value="in">в центр</option><option value="slice">нарезка</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
-      <div class="ball-lab-row" id="ballSliceSpeedBox" hidden><label>Толщин за оборот К1 <input id="ballSliceSpeed" type="text" value="2/3" size="5" title="Постоянная скорость нарезки, точная положительная дробь. Новый запуск очищает следы."></label></div>
+      <div class="ball-lab-row" id="ballSliceSpeedBox" hidden><label>Толщин за оборот К1 <input id="ballSliceSpeed" type="text" value="2/3" size="5" title="Постоянная скорость нарезки, точная положительная дробь. Новый запуск очищает следы."></label><button id="ballSliceGrow" type="button" title="Вкл.: на внешнем краю добавить следующее целое кольцо и продолжить наружу. Выкл.: отразиться от текущей внешней границы и вернуться.">рост: вкл.</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
       <div class="ball-lab-row"><button id="ballLabOne" type="button" aria-pressed="false" title="Что делает шарик в центре у кольца 1 из одного бита — по кругу:
@@ -1324,6 +1364,7 @@
       if (paused && (!enabled || !F || F.ready)) launch(); else $("bConeAuto").click();
     };
     $("ballSliceSpeed").value = Z.coneSliceSpeed || "2/3";
+    $("ballSliceGrow").onclick = () => { Z.coneSliceGrow = Z.coneSliceGrow === false; save(); renderCone(); };
     $("ballSliceSpeed").onchange = () => {
       const value = inputFraction($("ballSliceSpeed").value);
       if (!value) { $("ballSliceSpeed").value = Z.coneSliceSpeed || "2/3"; status("Нарезка: нужна положительная дробь до 1000"); return; }
