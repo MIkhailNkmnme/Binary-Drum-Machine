@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v12</title>
+<title>Grid Module — v13</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -721,13 +721,16 @@ function seedOverlayGetSeeds() {
 
 // Длина строки r — позиция последней непустой ячейки + 1 (строки в сетке могут быть
 // разной длины, как строки-паттерны в основном файле).
+// v13, «почему-то сбивается при Автоплей»: длина — от ПЕРВОЙ непустой ячейки, а не от левого края. Строки начальной
+// последовательности стоят по центру (слева — пустые клетки), и счёт от края делал их почти одной длины: после Автоплея
+// пирамида превращалась в прямоугольник с треугольником.
 function seedOverlayRowLength(r) {
-    let maxC = -1;
+    let minC = -1, maxC = -1;
     let bound = Math.max(dataColCount(), 1);
     for (let c = 0; c < bound; c++) {
-        if (getCell(r, c)) maxC = c;
+        if (getCell(r, c)) { if (minC < 0) minC = c; maxC = c; }
     }
-    return maxC + 1;
+    return maxC < 0 ? 0 : maxC - minC + 1;
 }
 
 function seedOverlayHasContent() {
@@ -1048,6 +1051,9 @@ function useInitialGridRows() {
     const d = initialGridRows();
     GRID.setLiveSource(() => d.rows);
     GRID.frameLabel = () => d.label;
+    // v13: последовательность стоит по центру — и сид-наложение (Шаг / Автоплей) выравнивает по центру, иначе пирамида уезжала бы влево лесенкой
+    GRID.seedOverlayAlign = 'center'; document.getElementById('seedOverlayAlignSelect').value = 'center';
+    GRID.seedOverlayRows = null;
 }
 useInitialGridRows();
 document.getElementById('defaultRowsBtn').addEventListener('click', () => {
