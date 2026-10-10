@@ -7854,7 +7854,7 @@ function setupCone(){
     else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
     else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneBallChain = false; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
     coneBallArmUi(); save(); renderCone();
-    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. На внешнем краю — отскок и возврат. Шарик создаёт прямой вырез и едет с кольцом. После обратного прохода кольца доступно ручное закрытие и открытие следующего в панели шариков; автоматический критерий пока не выбран." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. При первом выходе из К1 появляется целое К2. Шарик прорезает К2 и едет с ним; от внешнего края К2 — отскок и возврат. К3 пока не создаём. Критерий закрытия пока не выбран." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
   }
   coneBallArmUi();
   function coneBallOutLaunch(){
