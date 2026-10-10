@@ -7992,7 +7992,7 @@ function setupCone(){
   function coneSliceChainUi(){
     for (const button of document.querySelectorAll("[data-slice-next]")) {
       button.hidden = Z.coneBallArm !== "slice";
-      const active = button.dataset.sliceNext === (Z.coneSliceNext || "pass");
+      const active = !!Z.coneBallChain && button.dataset.sliceNext === (Z.coneSliceNext || "pass");
       button.classList.toggle("on",active); button.setAttribute("aria-pressed",String(active));
     }
     const button = $("bConeBallChain");
@@ -8000,8 +8000,8 @@ function setupCone(){
   }
   window.zzBallSliceControls = coneSliceChainUi;
   document.querySelectorAll("[data-slice-next]").forEach(button => { button.onclick = () => {
-    Z.coneSliceNext = button.dataset.sliceNext; coneSliceChainUi(); save(); renderCone();
-    say("Нарезка: следующий шарик — " + button.textContent + ". " + (Z.coneBallChain ? "Цепочка включена." : "Для выпуска следующих включи «Цепочку»."));
+    Z.coneSliceNext = button.dataset.sliceNext; Z.coneBallChain = true; coneSliceChainUi(); save(); renderCone();
+    say("Нарезка: Цепочка включена · " + button.textContent + ". Следующий появляется в центре и идёт наружу с той же скоростью.");
   }; });
   if ($("bConeBallChain")) {
     coneSliceChainUi(); $("bConeBallChain").onclick = () => { Z.coneBallChain = !Z.coneBallChain; coneSliceChainUi(); save(); renderCone();
