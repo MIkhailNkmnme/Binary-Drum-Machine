@@ -7014,11 +7014,10 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   // v0.1013: абсолютные кнопки привязаны к offsetParent; статическое тело окна давало лишний отступ снизу.
   const host = b.parentElement, anchor = b.offsetParent || host, hr = anchor.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
-  const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
-  // v0.023: нижний пульт — ряд треугольников вплотную, как верхний: ↩ старт · ◀ · ▶ (на оси конуса) · ▶ · ⌖✕; справа режимы, над пультом темп
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
+  // v0.042: пуск — ромб темпа, шаги — на его краях; в нижнем ряду остаются старт и сброс.
   const bottom = cr.bottom - hr.top + scrollTop, left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4, gap = 6;
-  const sp = document.getElementById("bC3Spin"), ms = $("c3Modes");
+  const ms = $("c3Modes");
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const startButton = $("bConeStartBack"), speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
   for (const [id, control] of [["coneTransportStart", startButton], ["coneTransportTempo", speedLabel]]) {
@@ -7029,10 +7028,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     if (control.classList.contains("tz")) triOff(control);   // v0.023: без сцепки групп — она ставила ширину с !important (темп сжимался до 138 px, ползунок — до нуля)
   }
   const startBox = $("coneTransportStart"), tempoBox = $("coneTransportTempo");
+  tempoTrackSync();
   const size = (e) => e && e.parentElement === host ? e.offsetWidth : 0;
-  const ws = size(startBox), wb = st ? size(stB) : 0, wf = st ? size(stF) : 0, wr = b.offsetWidth || w, rh = Math.max(b.offsetHeight || w / 2, startBox ? startBox.offsetHeight : 0, sp ? sp.offsetHeight : 0);
-  const rowWidth = ws + wb + w + wf + wr, x = Math.max(left + ws + wb, Math.min(edge - w - wf - wr, cr.left - hr.left + scrollLeft + cxp - w / 2));
-  const rowLeft = x - wb - ws, rowRight = x + w + wf + wr, mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeLeft = rowRight + 12;
+  const ws = size(startBox), wr = b.offsetWidth || 60, rh = Math.max(b.offsetHeight || 30, startBox ? startBox.offsetHeight : 0);
+  const x = Math.max(left + ws, Math.min(edge - wr, cr.left - hr.left + scrollLeft + cxp));
+  const rowLeft = x - ws, rowRight = x + wr, mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeLeft = rowRight + 12;
   const modesBelow = mw > 0 && edge - modeLeft < mw; let lift = modesBelow ? rh + gap : 0;
   for (const g of document.querySelectorAll("#w-cone .cgrp.cmin")) {   // свёрнутые группы у нижнего края («3D» и др.) не перекрывать — пульт встаёт над ними
     if (!g.getClientRects().length) continue;
@@ -7041,11 +7041,9 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   }
   const y = bottom - rh - lift, base = bottom - lift, on = (e) => base - (e.offsetHeight || rh);   // v0.024: кнопки разной высоты (▶ крупнее) — на одном нижнем крае
   if (startBox && ws) put(startBox, rowLeft, on(startBox));
-  if (st) { put(stB, x - wb, on(stB)); if (stF && stF.parentElement === host) put(stF, x + w, on(stF)); }
-  if (sp && sp.parentElement === host) put(sp, x, on(sp));
-  put(b, x + w + wf, on(b));
+  put(b, x, on(b));
   if (tempoBox) {
-    const tw = Math.max(0, Math.min(600, edge - left)), centre = x + w / 2;   // v0.023, «ширину в 2 раза больше»: 600 (было 300)
+    const tw = Math.max(0, Math.min(600, edge - left)), centre = x;   // v0.023, «ширину в 2 раза больше»: 600 (было 300)
     tempoBox.style.width = tw.toFixed(1) + "px";
     put(tempoBox, Math.max(left, Math.min(edge - tw, centre - tw / 2)), Math.max(cr.top - hr.top + scrollTop + 2, y - gap - (tempoBox.offsetHeight || 36)));
     tempoTrackSync();
@@ -7060,14 +7058,14 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     put(caption, X, bottom - lift - caption.offsetHeight - 4);
   }
 }
-/* v0.023, «не работает и ширину в 2 раза больше», образец — ползунки «Пирамиды»: дорожка темпа — плоский ромб-контур, вершины которого у бегунка (--tx, --ta),
-   стрелки ◂ ▸ — треугольники в остриях дорожки, бегунок — ромб, число — рядом с ним (справа; у правого края — слева). Прежде метке темпа раскладка групп
-   давала flex 0 0 138px, и сам ползунок сжимался до нуля: дорожки не было, щелчок ставил минимум */
+/* Дорожка темпа — ромб-контур с вершиной у бегунка (--tx/--ta). v0.042: число сверху, шаги на краях,
+   ромб 31,5 × 45 — пуск по щелчку и темп при перетаскивании. */
 function tempoTrackSync(){
   const r = $("coneAutoSp"), L = r && r.closest("#coneTransportTempo > label"); if (!L || !L.offsetWidth) return;
+  tempoControlsSetup(r, L);
   if (!r._tempoBound) { r._tempoBound = true; r.addEventListener("input", tempoTrackSync); }
   const lw = L.offsetWidth, H = L.offsetHeight || 33, mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, f = mx > mn ? Math.max(0, Math.min(1, (+r.value - mn) / (mx - mn))) : 0;
-  const tw = 21, tx = r.offsetLeft + tw / 2 + f * Math.max(0, r.offsetWidth - tw);
+  const tw = 31.5, lr = L.getBoundingClientRect(), rr = r.getBoundingClientRect(), tx = rr.left - lr.left + tw / 2 + f * Math.max(0, rr.width - tw);
   const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
   set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
   const arrows = L.querySelectorAll(".zerk-arrow"), half = H / 2;
@@ -7075,7 +7073,43 @@ function tempoTrackSync(){
     const bw = b.offsetWidth || 18, run = i ? lw - tx : tx, a = Math.max(2, Math.min(half - 2, half - half * bw / Math.max(bw, run) + 2));
     b.style.setProperty("--clip", i ? `polygon(0 ${a.toFixed(1)}px, calc(100% - 3px) 50%, 0 ${(H - a).toFixed(1)}px)` : `polygon(3px 50%, 100% ${a.toFixed(1)}px, 100% ${(H - a).toFixed(1)}px)`);
   });
-  const v = $("coneAutoSpV"); if (v) { const vw = v.offsetWidth, right = tx + tw / 2 + 6 + vw <= lw - 20; set("--vx", (right ? tx + tw / 2 + 6 : tx - tw / 2 - 6 - vw).toFixed(1) + "px"); }
+  const thumb = $("coneTempoToggle"), on = !!($("bConeAuto") && $("bConeAuto").classList.contains("on"));
+  if (thumb) { thumb.classList.toggle("on", on); thumb.setAttribute("aria-pressed", String(on)); thumb.textContent = on ? "⏸" : "▶"; }
+}
+function tempoControlsSetup(r, L){
+  const wrap = r.closest(".zerk-range-wrap"); if (!wrap) return;
+  wrap.querySelectorAll(".zerk-arrow").forEach(b => b.remove());
+  for (const id of ["bC3StepB", "bC3StepF"]) { const b = $(id); if (b && b.parentElement !== wrap) wrap.appendChild(b); }
+  const value = $("coneAutoSpV"); if (value && value.parentElement !== L) L.appendChild(value);
+  if ($("coneTempoToggle")) return;
+  const thumb = document.createElement("button"); thumb.id = "coneTempoToggle"; thumb.type = "button";
+  thumb.title = "Щелчок — пуск / пауза. Перетаскивание ромба — темп."; thumb.setAttribute("aria-label", "Пуск / пауза; перетаскивание меняет темп");
+  L.appendChild(thumb);
+  let drag = null;
+  thumb.addEventListener("pointerdown", e => {
+    if (e.button !== 0 || drag) return; e.preventDefault(); e.stopPropagation();
+    drag = { id:e.pointerId, x:e.clientX, y:e.clientY, value:+r.value, width:Math.max(1,r.getBoundingClientRect().width - 31.5), moved:false };
+    thumb.setPointerCapture(e.pointerId);
+  });
+  thumb.addEventListener("pointermove", e => {
+    if (!drag || drag.id !== e.pointerId) return; e.preventDefault(); e.stopPropagation();
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    drag.moved = true;
+    const mn = +r.min || 0, mx = +r.max || 100, step = +r.step || 1;
+    r.value = String(Math.max(mn,Math.min(mx,mn + Math.round((drag.value + (e.clientX-drag.x)*(mx-mn)/drag.width - mn)/step)*step)));
+    r.dispatchEvent(new Event("input", {bubbles:true}));
+  });
+  const finish = (e, cancel) => {
+    if (!drag || drag.id !== e.pointerId) return; e.preventDefault(); e.stopPropagation();
+    const moved = drag.moved; drag = null;
+    if (thumb.hasPointerCapture(e.pointerId)) thumb.releasePointerCapture(e.pointerId);
+    if (moved) r.dispatchEvent(new Event("change", {bubbles:true}));
+    else if (!cancel) $("bConeAuto").click();
+  };
+  thumb.addEventListener("pointerup", e => finish(e,false));
+  thumb.addEventListener("pointercancel", e => finish(e,true));
+  thumb.addEventListener("lostpointercapture", () => { if (drag && drag.moved) r.dispatchEvent(new Event("change", {bubbles:true})); drag = null; });
+  thumb.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); if (e.detail === 0) $("bConeAuto").click(); });
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
   { const s = posStarP(); if (s) return !posEq(posCur(), s); }   // v0.842: есть начальное ★ — сравнивать с ним
@@ -7687,6 +7721,7 @@ function setupCone(){
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
     { const cm = $("c3Modes"); if (cm) cm.classList.toggle("spin", on); }   // v0.846: крутится — в полоске у ▶ ползунок скорости
     const s3 = $("bC3Spin"); if (s3) { s3.classList.toggle("on", on); s3.innerHTML = on ? "⏸<small>стоп</small>" : "▶"; }   // v0.985: убрать подпись «крутить», оставить крупную стрелку
+    tempoTrackSync();
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
   if ($("bConeStartBack")) $("bConeStartBack").onclick = () => {   // v0.1064: ↩ старт — кольца на запомненный старт, для всех режимов
