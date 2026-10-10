@@ -7920,6 +7920,13 @@ function setupCone(){
     if (!window.zzBallLaunch) return false;
     Z.coneBallAuto = true; Z.coneBallArc = false;
     const ok = window.zzBallLaunch({start:"all",batch:true,route:"in",slit:true,loss:true,mark:false,chain:false,keepRun});
+    { const SP = ok && window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;   // Синхрофазотрон v0.006: план выпуска по очереди
+      if (SP) { const fr = q => q.text().replace(".", ","), when = SP.list.map((x, i) => "№" + (i + 1) + " — " + fr(x.atQ) + " об.").join(", ");
+        const nb = n => n + " " + (n % 10 === 1 && n % 100 !== 11 ? "шарик" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "шарика" : "шариков");
+        say(SP.covered === SP.total ? `● В центр по очереди: ${nb(SP.total)}, скорость ×${fr(SP.ratio)} от базовой; выпуск (обороты К1 от старта): ${when} Все дойдут до центра и исчезнут в счёт.`
+          : SP.covered ? `● В центр по очереди: общей скорости для всех ${SP.total} щелей не нашлось — при ×${fr(SP.ratio)} до центра доходят из ${SP.covered}; выпуск: ${when}`
+          : `● В центр по очереди: ни при одной из проверенных скоростей ни одна щель не доводит шарик до центра — выпуска нет.`);
+        return ok; } }
     { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
       const P = ok && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null;
       if (P) setTimeout(() => say("● " + coneInwardForecastText(P) + "."), A ? 4200 : 1600);   // v0.1060: прогноз до хода опыта

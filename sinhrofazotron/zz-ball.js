@@ -125,6 +125,7 @@
     if (window.zzBallLostReset) window.zzBallLostReset();
   }
   window.zzBallClearRun = (options = {}) => {
+    seqQueue = []; seqPlan = null;
     if (!options.keepCenter) clearCenter();
     inwardAuto = inwardFc = null; run = null; stuck = []; resting = []; F = null; balls = []; pendingMarks = []; pendingBits = []; chain = lossRun = markRun = false; lossSpeedQ = ZERO; cycles = passes = 0;
     if (window.zzBallLostClear) window.zzBallLostClear();
@@ -248,6 +249,73 @@
       points.push({id:"outer-slit:" + points.length,k,rawQ,raw:radians(rawQ),r:ring.ro,kind:"edge",label:"К" + (k + 1) + " · внешняя щель " + (points.length + 1)});
     }
     return points;
+  }
+  /* Синхрофазотрон v0.006, «надо сделать так, чтобы из внешнего кольца шарики не одновременно, но с одинаковой скоростью влетали по очереди, но через
+     разные щели, и в итоге оказывались в центре и пропадали там, ведя себе счёт»; выбрано: по одному из каждой щели, без закрытия и роста колец,
+     авто — общая скорость под все щели. Всё точно, дробями (время — обороты К1): для каждой внешней щели ищутся моменты выпуска, при которых шарик
+     с общей скоростью проходит все стыки ровно по щелям (lossPass без допусков) до центра; выпуск — строго по очереди, каждый в свой момент */
+  let seqQueue = [], seqPlan = null;
+  window.zzBallSeqPlan = () => seqPlan;
+  const seqMode = () => Z.coneBallRoute === "in";
+  function seqReach(S, raw, t, v) {   // точный путь из внешней щели raw при выпуске в t: момент прихода в центр или null
+    const K = S.rings.length - 1; let cur = raw, time = t;
+    for (let k = K; k >= 0; k--) {
+      const ring = S.rings[k]; time = time.add(ring.roQ.sub(ring.riQ).div(v));
+      if (k === 0) return time;
+      const St = atTurns(S, time), e = lossPass(St, k - 1, angleQ(St, k, cur), {});
+      if (e === null) return null; cur = e;
+    }
+    return null;
+  }
+  function seqHorizon(S) {   // полный период всей картины: все кольца снова на тех же местах
+    let n = 1n, d = 0n;
+    for (const w of ratesQ(S)) { if (!w.sign()) continue; const p = ONE.div(w.abs()); n = n / ZZExact.gcd(n, p.n) * p.n; d = ZZExact.gcd(d, p.d); }
+    return d ? Q(n, d) : ONE;
+  }
+  function seqWindows(S, raw, v, H) {   // моменты выпуска t ∈ [0, H), при которых шарик дойдёт до центра
+    const K = S.rings.length - 1, w = ratesQ(S); let cur = raw, lead = ZERO;
+    for (let k = K; k >= 1; k--) {
+      lead = lead.add(S.rings[k].roQ.sub(S.rings[k].riQ).div(v));
+      const dw = w[k].sub(w[k - 1]);
+      if (dw.sign()) {
+        const out = new Map();
+        for (const f of slitEdges(S.rings[k - 1])) {
+          const d = angleQ(S, k - 1, f).sub(angleQ(S, k, cur));   // dw·T ≡ d (mod 1), T = t + lead
+          const a = dw.mul(lead).sub(d), b2 = dw.mul(lead.add(H)).sub(d);
+          const lo = (dw.sign() > 0 ? a : b2).ceil(), hi = (dw.sign() > 0 ? b2 : a).floor();
+          for (let m = lo; m <= hi && out.size < 4000; m++) {
+            const t = d.add(m).div(dw).sub(lead);
+            if (t.sign() >= 0 && t.cmp(H) < 0 && seqReach(S, raw, t, v)) out.set(t.text(), t);
+          }
+        }
+        return [...out.values()].sort((x, y) => x.cmp(y));
+      }
+      const e = lossPass(S, k - 1, angleQ(S, k, cur), {});   // кольца крутятся одинаково — стык от времени не зависит
+      if (e === null) return [];
+      cur = e;
+    }
+    return seqReach(S, raw, ZERO, v) ? [ZERO] : [];
+  }
+  const SEQ_RATIOS = [[1,1],[2,1],[1,2],[3,2],[2,3],[3,1],[1,3],[4,3],[3,4],[4,1],[1,4],[5,4],[4,5],[5,3],[3,5],[5,2],[2,5],[5,1],[1,5],[6,1],[1,6],[8,1],[1,8]];
+  function seqPlanMake(S, base) {
+    const starts = outerStarts(S), H = seqHorizon(S);
+    let best = null;
+    for (const [p, q] of SEQ_RATIOS) {
+      const v = base.mul(p).div(q), windows = starts.map(s => seqWindows(S, s.rawQ, v, H)), covered = windows.filter(x => x.length).length;
+      if (!best || covered > best.covered) best = { v, ratio: Q(p, q), windows, covered };
+      if (covered === starts.length) break;
+    }
+    if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0 };
+    // строго по очереди: каждый следующий — в ближайшее своё окно позже предыдущего
+    const next = (ws, last) => { for (let n = 0n; n < 64n; n++) for (const t of ws) { const x = t.add(H.mul(Q(n))); if (last === null ? x.sign() >= 0 : x.cmp(last) > 0) return x; } return null; };
+    const left = starts.map((s, i) => ({ s, ws: best.windows[i] })).filter(x => x.ws.length), list = []; let last = null;
+    while (left.length) {
+      let pick = -1, at = null;
+      left.forEach((x, i) => { const t = next(x.ws, last); if (t && (at === null || t.cmp(at) < 0)) { pick = i; at = t; } });
+      if (pick < 0) break;
+      list.push({ point: left[pick].s, atQ: at, arriveQ: seqReach(S, left[pick].s.rawQ, at, best.v) }); last = at; left.splice(pick, 1);
+    }
+    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered };
   }
   function inputFraction(value) {
     try { const q = Q(value); return q.sign() > 0 && q.cmp(1000) <= 0 ? q : null; } catch { return null; }
@@ -465,6 +533,14 @@
   }
   function appendInwardGroup(S, launch) {
     const TQ = periodQ(S), B = inwardBase(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
+    if (launch && seqMode() && base.sign() > 0) {   // Синхрофазотрон v0.006: выпуск по очереди
+      const plan = seqPlanMake(S, base), now = run ? run.elapsedQ : ZERO;
+      seqPlan = { ...plan, baseQ: base, total: plan.starts.length, startQ: now };
+      seqQueue = plan.list.map((x, i) => ({ ...x, number: i + 1, atQ: now.add(x.atQ), periodQ: TQ }));
+      inwardAuto = null; inwardFc = null;
+      if (run) run.inwardOuter = S.rings.length;
+      return seqQueue.length > 0;
+    }
     const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;
     if (inwardAuto) Object.assign(inwardAuto, { baseExact:base.text(),bitTurnsExact:B ? B.bitTurnsQ.text() : null, outer:S.rings.length - 1 });
     const group = [], busy = batchBusy;
@@ -634,7 +710,7 @@
     status("✕ Шарик " + (F.number || 1) + " застрял в бите кольца " + (k + 1));
   }
   function writeInwardImpact(k, S, a) {
-    if (F.route !== "in") return false;
+    if (F.route !== "in" || seqMode()) return false;   // Синхрофазотрон v0.006: по очереди — шарики битов не пишут
     const value = F.move < 0 ? "1" : Z.coneBallZeroBounce && F.bounces > 0 ? "0" : null;
     if (value === null) return false;
     const ring = S.rings[k], bit = fillCellAt(ring, Q(a).sub(ring.phaseQ).sub(S.spinQ));
@@ -698,11 +774,11 @@
       const fraction = duration.sign() ? elapsed.div(duration) : ZERO, S = C.at(fraction), a = angleQ(S,F.k,F.rawQ);
       if (F.k === A.rings.length - 1 && F.move > 0) {
         F.crossings++; if (F.loop) { outerArc(S); continue; }
-        F.growReq = F.route === "in" && !!ring.fill && Z.rows.length < CONE_MAX - 1 && !!window.zzBallGrowOuter;
+        F.growReq = F.route === "in" && !seqMode() && !!ring.fill && Z.rows.length < CONE_MAX - 1 && !!window.zzBallGrowOuter;
         finish(); break;
       }
       if (!F.k && F.move < 0) {
-        if (F.route === "in") { F.atCenter = true; closeCenterRing(0,S,F.rawQ); finish(); break; }
+        if (F.route === "in") { F.atCenter = true; if (!seqMode()) closeCenterRing(0,S,F.rawQ); finish(); break; }   // Синхрофазотрон v0.006: в центре — исчезает и в счёт, без закрытия
         const edge = edgeAt(S,0,a.add(HALF));
         if (edge === null && S.rings[0].oneWay && centerMode() === "flip") {
           F.move = 1; F.stage = "out"; F.seg = null; F.flipReq = true; F.flips = (F.flips || 0) + 1; break;
@@ -754,13 +830,24 @@
     if (F.loopError) status(F.loopError);
   }
   // Every inward ball sees closure at the same event time, independent of array order and frame size.
+  function seqLaunchDue(Sat, nowQ) {   // Синхрофазотрон v0.006: выпустить шарики, чей момент настал (точно)
+    while (seqQueue.length && seqQueue[0].atQ.cmp(nowQ) <= 0) {
+      const x = seqQueue.shift(), busy = batchBusy; batchBusy = true;
+      try { begin(Sat, false, true, { point: x.point, route: "in", periodQ: x.periodQ, speedQ: seqPlan.v, auto: false });
+        Object.assign(F, { id: x.point.id, number: x.number, label: x.point.label }); balls.push(F); }
+      finally { batchBusy = busy; }
+    }
+  }
   function advanceInwardGroup(dt,A,B,stopAtSame = false) {
     const C = frame(A,B,dt), duration = C.durationQ;
     if (!duration.sign()) return null;
-    let elapsed = ZERO;
+    let elapsed = ZERO; const base0 = run ? run.elapsedQ : ZERO;
     while (elapsed.cmp(duration) < 0) {
+      if (seqQueue.length) seqLaunchDue(C.at(elapsed.div(duration)), base0.add(elapsed));
       const list = balls.length ? balls : F ? [F] : [], live = list.filter(b => !b.ready && b.stage !== "done" && b.stage !== "lost");
-      if (!live.length) break;
+      const queued = seqQueue.length ? seqQueue[0].atQ.sub(base0).sub(elapsed) : null;
+      if (!live.length && queued === null) break;
+      if (!live.length) { elapsed = ZZExact.min(duration, elapsed.add(queued)); continue; }
       const before = C.at(elapsed.div(duration));
       for (const b of live) if (b.auto) {
         F = b; const plan = planSegment(before,C,dt);
@@ -772,7 +859,7 @@
           b.speedQ.sign() > 0 ? (b.move > 0 ? r.roQ.sub(b.qQ) : b.qQ.sub(r.riQ)).div(b.speedQ) : duration.sub(elapsed);
         return {ball:b,time:ZZExact.max(ZERO,time)};
       });
-      const step = stops.reduce((t,p) => ZZExact.min(t,p.time),duration.sub(elapsed));
+      const step = stops.reduce((t,p) => ZZExact.min(t,p.time),queued !== null ? ZZExact.min(queued,duration.sub(elapsed)) : duration.sub(elapsed));
       const same = stops.filter(p => p.time.eq(step)).map(({ball:b}) => ({number:b.number || 1,
         ring:b.stage === "arc" ? "конец дуги" : !b.k && b.move < 0 ? "центр" : b.k + b.move >= A.rings.length ? "выход" : "К" + (b.k + b.move + 1)}));
       const after = C.at(elapsed.add(step).div(duration));
@@ -895,7 +982,7 @@
     }
     if (run && run.lane !== (Z.lane | 0)) window.zzBallClearRun();
     const list = balls.length ? balls : F ? [F] : [];
-    if (paused || !list.length || !before || !S) return;
+    if (paused || (!list.length && !seqQueue.length) || !before || !S) return;
     if (list.some(b => b.shape !== S.shape || b.shape !== before.shape)) {
       if (markRun) restartRun(S); else { balls = []; F = null; status(hint()); } return;
     }
@@ -904,7 +991,7 @@
     let event;
     batchBusy = true;
     try { event = advanceInwardGroup(dt,before,S,!!Z.coneBallSimPause); }
-    finally { batchBusy = false; F = list[0]; }
+    finally { batchBusy = false; F = balls[0] || list[0] || F; }   // Синхрофазотрон v0.006: шарики очереди появляются внутри шага
     const fractionQ = event ? event.fractionQ : ONE, moved = C.durationQ.mul(fractionQ);
     if (run) {
       run.elapsedQ = run.elapsedQ.add(moved); run.elapsed = run.elapsedQ.number();
@@ -1054,6 +1141,7 @@
     const visible = new Set([...(balls.length ? balls : F ? [F] : []), ...resting]);
     for (const ball of visible) {
       if (ball.stage === "lost") continue;   // v0.1052: упёрся в дугу — исчез
+      if (seqMode() && ball.stage === "done" && ball.atCenter) continue;   // Синхрофазотрон v0.006: дошёл до центра — пропал (он в счёте)
       // A ball turns with the ring whose edge it rides.
       if (S && S.rings[ball.k]) ball.a = angle(S, ball.k, ball.rawQ);
       const q = ball.q * dr, a = ball.a;
@@ -1068,6 +1156,14 @@
         g.lineWidth = 4 * dpr; g.strokeStyle = "#0b0d12"; g.strokeText(String(ball.number), tx, ty); g.fillText(String(ball.number), tx, ty);
       }
       positions.push({ x, y }); g.restore();
+    }
+    if (S && seqQueue.length) {   // Синхрофазотрон v0.006: ждущие выпуска — пустые кружки в своих щелях
+      const K = S.rings.length - 1, R = S.rings[K].ro * dr;
+      for (const x of seqQueue) {
+        const a = angle(S, K, x.point.rawQ), px = cx + R * Math.cos(a), py = cy + R * Math.sin(a);
+        g.save(); g.strokeStyle = "#a8b3c5"; g.lineWidth = 1.5 * dpr; g.beginPath(); g.arc(px, py, 4 * dpr, 0, TAU); g.stroke();
+        g.font = "bold " + 13 * dpr + "px monospace"; g.textAlign = "left"; g.textBaseline = "bottom"; g.fillStyle = "#a8b3c5"; g.fillText(String(x.number), px + 7 * dpr, py - 6 * dpr); g.restore();
+      }
     }
   };
   function reset(toStart = false, keepCenter = false) {
@@ -1150,7 +1246,7 @@
     chain = !!config.chain; lossRun = !!config.loss; lossSpeedQ = ZERO; markRun = !!config.mark; pendingMarks = []; pendingBits = [];
     prepare(S, !keepRun, true);
     if (keepRun) { balls.forEach(b => { b.number = b.runNumber; }); balls = previous.concat(balls); F = balls[0] || F; }
-    save(); if (!F || F.ready) return false;
+    save(); if ((!F || F.ready) && !seqQueue.length) return false;
     if (chain && !balls.length) { Object.assign(F, { number: 1, label: "Вылет 1" }); balls = [F]; batchStatus(); }   // v0.1051: первый шарик цепочки
     if (!coneSpinning) $("bConeAuto").click();
     paused = !coneSpinning;
