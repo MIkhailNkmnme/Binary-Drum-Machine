@@ -394,6 +394,107 @@ function brStream(rows){
    потока — линия между серединами её двух бит: в одной строке — хорда внутри своего кольца, в разных — нить от кольца к кольцу. Цвет — глубина
    (те же 6 цветов), полупрозрачно. Угол бита — по той же формуле, что у балансов четвертей (поворот кольца, вырезы, кручение); у многоугольных колец
    точка — на их стороне. Строка 1 из одного бита (половина, части) не участвует — у неё своя геометрия */
+/* v0.038, «каскад из Excel — в конус» (Xoroorius, XORR_1: SimulateCascadeRound / RunCascadeRound / CascadeXorStep), решения пользователя: эталон
+   кольца — строка выше, сид — один на все кольца, путь — зигзаг от разреза. Кольцо i — запись: длина — длина строки i, эталон — строка i−1 (у кольца 1
+   эталона нет, оно не закрывается). Раунд R: каждый поток (свой у каждого кольца) с нуля кладёт R копий сида XOR-ом в результат своего кольца, зигзагом
+   от разреза: вперёд (синий), у края — отскок назад (красный). Как только в результате кольца появляется его эталон (подстрокой), кольцо закрывается,
+   а остаток потока тем же цветом и направлением уходит в следующее открытое кольцо (вперёд — с начала, назад — с конца). Проход мимо закрытого кольца
+   стоит столько бит, сколько ушло на его закрытие. Потоки — с последнего кольца к первому (свой сид ложится в кольцо первым). Кольцо, закрывшееся
+   в раунде, запирается: его результат и цена остаются в следующих раундах; открытые кольца каждый раунд считаются заново. Всё как в макросе */
+const CAS_MAX = 5000;
+let casCache = null, casTimer = 0;
+function casKey(){ return (Z.casSeed || "1") + "|" + Z.rows.join("|"); }
+function casMatch(arr, pat, pos){   // эталон в результате кольца — по окну, накрывающему изменённый бит (раньше его там не было)
+  const m = pat.length, L = arr.length; if (!m || m > L) return false;
+  if (pat.indexOf("1") < 0) { let z = 0; for (let k = 0; k < L; k++) { z = arr[k] ? 0 : z + 1; if (z >= m) return true; } return false; }
+  for (let s = Math.max(0, pos - m + 1); s <= Math.min(pos, L - m); s++) {
+    let ok = true; for (let k = 0; k < m; k++) if (arr[s + k] !== (pat.charCodeAt(k) - 48)) { ok = false; break; }
+    if (ok) return true;
+  }
+  return false;
+}
+function casRound(rows, seed, R, prev){
+  const n = rows.length, sb = Array.from(seed, ch => ch === "1" ? 1 : 0), sl = sb.length;
+  const closed = prev.closed.slice(), cost = prev.cost.slice(), newCost = new Array(n).fill(0);
+  const bits = rows.map((t, i) => closed[i] ? prev.bits[i] : new Uint8Array(t.length));
+  const col = rows.map((t, i) => closed[i] ? prev.col[i] : new Uint8Array(t.length));
+  let carried = 0;
+  for (let j = n - 1; j >= 0; j--) {
+    const L0 = rows[j].length; if (!sl || !L0) continue;
+    const total = R * sl; let cur = j, c = 0, ph = 0, k = 0, local = 0;
+    while (k < total) {
+      if (cur >= n) break;
+      const L = rows[cur].length;
+      if (closed[cur]) { k += cost[cur] + newCost[cur]; cur++; local = 0; if (cur < n) c = ph ? rows[cur].length - 1 : 0; continue; }
+      if (!L) { cur++; continue; }
+      const w = c; bits[cur][w] ^= sb[k % sl]; col[cur][w] = ph + 1; k++; local++;
+      if (cur !== j) carried++;
+      if (ph === 0) { if (c === L - 1) ph = 1; else c++; } else { if (c === 0) ph = 0; else c--; }
+      const pat = cur > 0 ? rows[cur - 1] : "";
+      if (pat && casMatch(bits[cur], pat, w)) { closed[cur] = true; newCost[cur] = local; cur++; local = 0; if (cur < n) c = ph ? rows[cur].length - 1 : 0; }
+    }
+  }
+  for (let i = 0; i < n; i++) if (newCost[i]) cost[i] = newCost[i];
+  return { R, closed, cost, bits, col, carried, fresh: newCost.map(v => v > 0) };
+}
+const CAS_CP = 25;   // отметка состояния через каждые 25 раундов: «−» и возврат назад считают от ближайшей, а не с нуля (раунд R стоит O(R·колец))
+function casState(R){
+  const key = casKey(), rows = Z.rows, seed = (Z.casSeed || "1");
+  if (!casCache || casCache.key !== key) {
+    const zero = { R: 0, closed: new Array(rows.length).fill(false), cost: new Array(rows.length).fill(0), bits: rows.map(t => new Uint8Array(t.length)), col: rows.map(t => new Uint8Array(t.length)), carried: 0, fresh: [] };
+    casCache = { key, st: zero, cps: new Map([[0, zero]]) };
+  }
+  if (R < casCache.st.R) { let b = 0; casCache.cps.forEach((v, r) => { if (r <= R && r > b) b = r; }); casCache.st = casCache.cps.get(b); }
+  while (casCache.st.R < R) { casCache.st = casRound(rows, seed, casCache.st.R + 1, casCache.st); if (casCache.st.R % CAS_CP === 0) casCache.cps.set(casCache.st.R, casCache.st); }
+  return casCache.st;
+}
+function casInfo(){
+  const st = casState(Z.casRound | 0), closable = Z.rows.length - 1, k = st.closed.filter(Boolean).length;
+  const list = st.closed.map((v, i) => v ? i + 1 : 0).filter(Boolean);
+  return `⛓ Каскад, сид ${Z.casSeed || "1"}: раунд ${st.R} · закрыто колец ${k} из ${closable}` + (list.length ? " (" + list.slice(0, 24).join(", ") + (list.length > 24 ? "…" : "") + ")" : "") + (st.R ? ` · перелилось в другие кольца бит: ${st.carried}` : "") + ".";
+}
+function casUi(){
+  const on = !!Z.casOn, b = $("bCas"); if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
+  for (const id of ["casSeedL", "bCasPrev", "casRoundV", "bCasNext", "bCasAuto", "bCasReset"]) { const e = $(id); if (e) e.hidden = !on; }
+  const v = $("casRoundV"); if (v) v.textContent = "раунд " + (Z.casRound | 0);
+  const a = $("bCasAuto"); if (a) { a.classList.toggle("on", !!casTimer); a.textContent = casTimer ? "⏸" : "▶"; }
+}
+function casSet(R, quiet){
+  Z.casRound = Math.max(0, Math.min(CAS_MAX, R | 0)); save(); casUi(); renderCone(); if (!quiet) say(casInfo());
+}
+function casAuto(on){
+  if (casTimer) { clearInterval(casTimer); casTimer = 0; }
+  if (on) casTimer = setInterval(() => {
+    const st = casState(Z.casRound | 0);
+    if (!Z.casOn || st.closed.slice(1).every(Boolean) || (Z.casRound | 0) >= CAS_MAX) { casAuto(false); say(casInfo() + (st.closed.slice(1).every(Boolean) ? " Все кольца закрыты." : "")); return; }
+    casSet((Z.casRound | 0) + 1, true); const v = $("casRoundV"); if (v) v.title = casInfo();
+  }, 220);
+  casUi();
+}
+function coneCascadeDraw(g, o){
+  if (!Z.casOn || Z.cone3d) return;
+  const st = casState(Z.casRound | 0); if (!st.R) return;
+  const q = ZZExact.from, zero = q(0), spin = coneMotionClock().degrees.div(360), Nn = Math.min(Z.rows.length, o.N);
+  g.save(); g.setLineDash([]); g.shadowBlur = 0;
+  for (let i = 0; i < Nn; i++) {
+    const s = Z.rows[i] || "", n = s.length; if (!n || (i === 0 && n === 1) || !o.shown(i)) continue;
+    const cut = i >= 1 && coneCutOn(), P = cut ? coneCutP(n) : n;
+    const rot = coneMotionRot(i, n, false).value.sub(cut ? coneMotionOff(i, n, true) : zero);
+    const ri = o.r0 + i * o.dr, band = Math.max(1, o.dr * o.band), a1r = ri + band * 0.18, a2r = ri + band * 0.82;
+    for (let j = 0; j < n; j++) {
+      const cl = st.col[i][j]; if (!cl) continue;
+      const p = cut ? coneCutSym() ? q(j).mul(q(2 * n - 1, n)) : q(cutPrevPos(i, j)) : q(j);
+      const t0 = p.sub(rot).div(P).add(spin).number() * 2 * Math.PI - Math.PI / 2, t1 = p.add(1).sub(rot).div(P).add(spin).number() * 2 * Math.PI - Math.PI / 2;
+      g.fillStyle = cl === 1 ? "#3d8bff" : "#ff4d5e"; g.globalAlpha = st.bits[i][j] ? 0.9 : 0.22;
+      g.beginPath(); coneArc(g, o.cx, o.cy, i, a2r, t0, t1); coneArc(g, o.cx, o.cy, i, a1r, t1, t0, true); g.closePath(); g.fill();
+    }
+    if (st.closed[i]) {   // закрытое кольцо — зелёной обводкой
+      g.globalAlpha = 0.95; g.strokeStyle = "#3ddc84"; g.lineWidth = Math.max(1.5, 2 * o.dpr);
+      g.beginPath(); coneArc(g, o.cx, o.cy, i, ri + band / 2, -Math.PI / 2, 1.5 * Math.PI); g.stroke();
+    }
+  }
+  g.restore();
+}
 function coneBracketThreads(g, o){
   if (!Z.brDepth || Z.cone3d) return;
   const B = brStream(Z.rows); if (!B.list.length) return;
@@ -3507,6 +3608,7 @@ function renderCone(){
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
   coneBracketThreads(g, { dpr, cx, cy, r0, dr, N, band, shown });   // v0.036: пары скобок — хорды и нити
+  coneCascadeDraw(g, { dpr, cx, cy, r0, dr, N, band, shown });   // v0.038: каскад из Excel
   coneBalanceSync(g, { cv, R, W, H, dpr, cx, cy, r0, dr, N, band, shown, ballClosedCount, cR });
   if (window.zzQuarterRingDraw) window.zzQuarterRingDraw(g, { W, H, dpr, cx, cy, ballClosedCount });
   coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA, cBg);
@@ -8730,6 +8832,17 @@ function setupCone(){
   $("animByPass").onchange = (e) => { Z.animByPass = e.target.checked; animAcc = 0; save(); animUi(); };
   $("animSp").value = Z.animSp ?? 40;
   $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
+  if ($("bCas")) {   // v0.038: ⛓ каскад — управление
+    $("casSeed").value = Z.casSeed || "1";
+    Z.casRound = 0;   // раунд с прошлого раза не поднимаем: до R пришлось бы считать заново все R раундов разом (на тысячах — минуты)
+    $("bCas").onclick = () => { Z.casOn = !Z.casOn; if (!Z.casOn) casAuto(false); save(); casUi(); renderCone(); if (Z.casOn) say(casInfo()); };
+    $("casSeed").onchange = (e) => { const v = e.target.value.replace(/[^01]/g, "") || "1"; e.target.value = v; Z.casSeed = v; casSet(Z.casRound | 0); };
+    $("bCasPrev").onclick = () => casSet((Z.casRound | 0) - 1);
+    $("bCasNext").onclick = () => casSet((Z.casRound | 0) + 1);
+    $("bCasAuto").onclick = () => casAuto(!casTimer);
+    $("bCasReset").onclick = () => { casAuto(false); casSet(0); };
+    casUi();
+  }
   { const b = $("bBrDepth"); if (b) {   // v0.035: 🌈 ( ) — цифры поля по глубине скобок, главы
     const ui = () => { b.classList.toggle("on", !!Z.brDepth); b.setAttribute("aria-pressed", String(!!Z.brDepth)); };
     ui(); b.onclick = () => { Z.brDepth = !Z.brDepth; ui(); save(); renderRows(); renderCone();
