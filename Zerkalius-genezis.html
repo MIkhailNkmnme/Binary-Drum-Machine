@@ -5,6 +5,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 ВЕРСИЯ ФАЙЛА (правь вручную при каждом сохранении, чтобы не путать копии между компьютерами):
+LAST EDIT: 2026-10-10 — v0.429: кнопка «★ По умолчанию» под «пирамидой из сида» — начальная последовательность (Ctrl+Z вернёт).
 LAST EDIT: 2026-10-10 — v0.428: начальная последовательность из 71 строки, обновление автосохранения с резервной копией.
 LAST EDIT: 2026-07-17 — Добавлено правило расстановки маркеров (см. ниже).
 LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 тулбара слева (Undo/Redo, Центр/Радар/Поворот, Вставить), счётчик кадра у правой панели, Зеркало ←/→ приклеивает к строке.
@@ -35,7 +36,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         })();
     </script>
-    <title>Zerkalius: Interleaving Genesis — v0.428</title>
+    <title>Zerkalius: Interleaving Genesis — v0.429</title>
     <!-- WebGL-рендер "чистого движения" (см. галка "⚡ WebGL-рендер") — только для этого режима, остальной движок на Canvas2D не тронут -->
     <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
 <!-- === МАРКЕР 02: HEAD И НАСТРОЙКИ КОНЕЦ === -->
@@ -460,7 +461,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.428 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.429 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -640,6 +641,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
                 <button id="sierpBtn" class="btn-action" style="flex:2; margin:0; color:#00ff66; border-color:#00ff66;">Сгенерировать</button>
             </div>
             <button id="buildTriangleBtn" class="btn-action" style="margin:0; color:#ffd500; border-color:#ffd500;" title="Строит пирамиду из сида (поле 'Сид' выше): строка1 = сид, строка2 = сид+сид, строка3 = сид+сид+сид, и т.д. до N строк (N — поле 'Строки')">▲ Пирамида из сида (сид+сид=след.стр.)</button>
+            <button id="defaultRowsBtn" class="btn-action" style="margin:3px 0 0; color:#ffcc00; border-color:#ffcc00;" title="★ По умолчанию: начальная последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — та же, что при первом открытии и на остальных страницах. Ctrl+Z / ↶ вернёт прежнее">★ По умолчанию</button>
         </details>
 
         <details class="control-group" id="seedGroup">
@@ -5205,6 +5207,13 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
         safeBind('slotVisSendBtn', 'click', () => slotVisSendToCanvas());
         safeBind('slotVisGetBtn', 'click', () => slotVisGetFromCanvas());
 <!-- === МАРКЕР 31: ГЕНЕРАТОР СЕРПИНСКОГО === -->
+        // v0.429, «да» на «кнопку ★ По умолчанию и в Генезис»: начальная последовательность (_js/initial-rows.js, 71 строка) — так же, как генератор свою фигуру
+        safeBind('defaultRowsBtn', 'click', () => {
+            if (typeof ZZ_INITIAL_ROWS === 'undefined' || !ZZ_INITIAL_ROWS.length) { showNotification("ФАЙЛ ПОСЛЕДОВАТЕЛЬНОСТИ НЕ ЗАГРУЗИЛСЯ"); return; }
+            if (window.saveUndoState) saveUndoState();
+            loadText(ZZ_INITIAL_ROWS.join(String.fromCharCode(10)), false, false, true);
+            showNotification("★ НАЧАЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ: " + ZZ_INITIAL_ROWS.length + " СТРОК");
+        });
         safeBind('sierpBtn', 'click', () => {
             let seed = safeValue('sierpSeed', '1').trim().replace(/\s+/g, '') || "1";
             let rows = parseInt(safeValue('sierpRows', 128)) || 128;
