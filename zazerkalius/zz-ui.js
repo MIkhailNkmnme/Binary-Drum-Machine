@@ -14065,6 +14065,15 @@ function lpTop(col, vis){
   };
   [...top.children].forEach(walk); end();
   const shape = () => runs.forEach(r => r.forEach((b, i) => {
+    // v0.1115: постоянные вкладки не меряются по тексту и не меняют шаг при выборе.
+    if (b.closest("#pinBar") && b.dataset.aw) {
+      const active = b.classList.contains("on"), h = 22, ht = h / (2 * Math.sqrt(3));
+      b._gcol = tzLnBg() || getComputedStyle(b).borderTopColor || col; b._tzar = ""; b._tzfix = true;
+      b._tzL = active ? [0, 2, 0] : TZ_NOTCH; b._tzR = active ? [0, 2, 0] : TZ_TIP;
+      b._tzm = i ? 1 : 0;
+      b._tzn = b._tzn0 = (88 - (b._tzm ? 1 : 0) - (b._tzL[1] + b._tzR[1]) * ht) / (2 * ht);
+      b.style.zIndex = active ? "5" : ""; tzGeo(b); return;
+    }
     b.classList.remove("tz"); const bc = getComputedStyle(b).borderTopColor; b.classList.add("tz");
     const rg = document.createRange(); rg.selectNodeContents(b); const tw = rg.getBoundingClientRect().width;
     const selectedWindow = !!(b.closest("#pinBar") && b.classList.contains("on"));
@@ -16166,7 +16175,12 @@ function init(){
       h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные пять — свернуть")}">${winLab(el, t)}</button>`;
     });
     if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
-    $("pinBar").innerHTML = h;
+    const bar = $("pinBar"), template = document.createElement("template"); template.innerHTML = h;
+    const next = [...template.content.children], old = [...bar.children];
+    // v0.1115: при выборе окна сохраняем сами кнопки, их фокус, геометрию и прокрутку ряда.
+    if (old.length === next.length && old.every((b, i) => b.dataset.aw === next[i].dataset.aw && b.dataset.k === next[i].dataset.k && b.innerHTML === next[i].innerHTML)) {
+      old.forEach((b, i) => { b.classList.toggle("on", next[i].classList.contains("on")); if (b.title !== next[i].title) b.title = next[i].title; });
+    } else bar.replaceChildren(template.content);
   };
   window.renderPins = renderPins;
   { let q = 0; const mo = new MutationObserver(() => { if (!q) q = requestAnimationFrame(() => { q = 0; renderPins(); }); });
