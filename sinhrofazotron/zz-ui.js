@@ -6175,6 +6175,7 @@ function coneBalanceColors(Q){
 }
 function coneBalanceBackdrop(g, W, H, cx, cy, closed){
   if (!Z.coneAxes || !(Z.coneQuadBalances || Z.coneBalanceHighlight) || Z.cone3d) return;
+  if (coneSpinning || !coneBalanceMagnetic(coneBalanceData(closed).quarters)) return;   // v0.033: подложка — только стоя и в магнитном положении
   const Q = coneBalanceData(closed).quarters, colors = coneBalanceColors(Q);
   const radius = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy)) + 1;
   // v0.024, «фон балансов 4 четвертей потемнее: цвет как сейчас, а фон — вообще чёрный»: под цветами четвертей — чёрный, сами цвета чуть плотнее
@@ -6189,6 +6190,18 @@ function coneBalanceBackdrop(g, W, H, cx, cy, closed){
 }
 function coneBalanceAdd(a, b){ return [ZZExact.from(a[0]).add(b[0]), ZZExact.from(a[1]).add(b[1])]; }
 function coneBalanceNumber(n){ return ZZExact.from(n).text(); }
+/* v0.033, «баланс надо дробный и из нормальных дробей, без нулей в знаменателе» → «пусть по магнитам только считает», «только при авто на магнитах»,
+   «(при плавном Авто) вообще неактивно пусть»: при обычном (плавном) Авто кольца стоят в долях от времени кадра, и точная дробь такого
+   положения — с огромным знаменателем (18·10¹⁵…). Поэтому балансы четвертей (числа у четвертей, числа в кольцах четвертей, цветная подложка)
+   при Авто не показываются (см. ниже). Пауза при равенстве и автобаланс считают по-прежнему */
+//    v0.033, «а появляться только когда вращение остановлено, и показывать только части магнитные»: балансы видны только когда кручение стоит
+//    и положение магнитное. Магнитное — дроби из размеров колец (знаменатели без больших степеней 2 и 5); после плавного Авто положение задано
+//    десятичным числом (~15 знаков), в знаменателе 10¹⁵ = 2¹⁵·5¹⁵ — такие «части» не показываются
+function coneBalanceMagnetic(Q){
+  const ok = (x) => { let d = ZZExact.from(x).d, k2 = 0, k5 = 0; while (d % 2n === 0n) { d /= 2n; k2++; } while (d % 5n === 0n) { d /= 5n; k5++; } return k2 <= 10 && k5 <= 4; };
+  return Q.every(v => ok(v[0]) && ok(v[1]));
+}
+function coneBalanceLive(Q){ return !coneSpinning && (!Q || coneBalanceMagnetic(Q)); }
 function coneBalancePauseData(){
   return coneBalanceData(window.zzBallCenterState ? window.zzBallCenterState().count : 0, true);
 }
@@ -6682,7 +6695,9 @@ function coneBalanceSync(g, o){
   coneHistorySync(o.cv);
   let el = $("coneQuarterBalances");
   if (!Z.coneAxes || !(Z.coneQuadBalances || Z.coneBalanceHighlight) || Z.cone3d) { if (el) el.hidden = true; return; }
+  if (coneSpinning) { if (el) el.hidden = true; return; }   // v0.033: пока крутится — балансов нет
   const data = coneBalanceData(o.ballClosedCount), Q = data.quarters, names = ["верх справа", "низ справа", "низ слева", "верх слева"];
+  if (!coneBalanceMagnetic(Q)) { if (el) el.hidden = true; return; }   // v0.033: положение не магнитное — балансов нет
   const allEqual = Q.slice(1).every(q => coneBalanceEqual(q, Q[0])), colors = coneBalanceColors(Q);
   if (!el) { el = document.createElement("div"); el.id = "coneQuarterBalances"; $("coneMain").parentElement.appendChild(el);
     el.innerHTML = names.map(() => '<div class="qb"><strong></strong><span class="qb-bits"><b class="b1" title="Сумма единиц"></b><b class="b0" title="Сумма нулей"></b></span></div>').join(""); }

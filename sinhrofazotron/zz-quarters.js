@@ -94,6 +94,7 @@
         }
       }
       g.globalAlpha = 0.7; g.strokeStyle = colors[q]; g.lineWidth = dpr; g.beginPath(); g.arc(x, y, r + dpr, 0, TAU); g.stroke();
+      if (typeof coneBalanceLive === "function" && !coneBalanceLive(data.quarters)) continue;   // v0.033: числа — только стоя и в магнитном положении
       const Q = data.quarters[q], diff = Q[1].sub(Q[0]), size = Math.min(14 * dpr, inner * 0.23);
       g.globalAlpha = 1; g.fillStyle = colors[q]; g.font = `900 ${size}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
       g.fillText("Δ " + (diff.sign() > 0 ? "+" : "") + coneBalanceNumber(diff), x, y - size * 0.65);
