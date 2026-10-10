@@ -7837,6 +7837,7 @@ function setupCone(){
      (Z.coneBallArm = "out" | "in" | ""), выбирают опыт; запуск — ▶ пуск в «Кручении» (и двойной щелчок по конусу), как у «⚡ луча». Шариков
      в пути нет — ▶ запускает выбранный опыт заново (в «В центр» закрытие продолжается); опыт на паузе — ▶ продолжает. Две галки сразу не горят */
   function coneBallArmUi(){
+    coneSliceChainUi();
     for (const [id, m] of [["bConeNotchBall", "out"], ["bConeBallIn", "in"], ["bConeBallSlice", "slice"]]) { const b = $(id); if (!b) continue; const on = Z.coneBallArm === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
   }
   function coneBallArmLaunch(){
@@ -7852,9 +7853,9 @@ function setupCone(){
     { const on = Z.coneBallOn !== false, want = !!Z.coneBallArm, bb = $("bConeBall"); if (bb && on !== want) bb.click(); }   // галка снята — шарики выключены (▶ просто крутит), выбрана — включены
     if (Z.coneBallArm === "in") { Z.coneBallRoute = "in"; Z.coneBallBatch = true; if (window.zzBallInwardPrime) window.zzBallInwardPrime(); }
     else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
-    else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneBallChain = false; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
+    else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
     coneBallArmUi(); save(); renderCone();
-    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Старт шарика — внешняя граница К1, сразу в целое К2. При открытии К3 из двух щелей К2 стартуют два шарика. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. Шарик продолжает без остановки." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Старт шарика — внешняя граница К1, сразу в целое К2. Без «Цепочки» движется один шарик. С «Цепочкой» следующий выходит наружу с той же скоростью: после прохода следующего кольца, при открытии нового кольца или при отскоке от внешнего края — по выбранной кнопке. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. Шарик продолжает без остановки." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
   }
   coneBallArmUi();
   function coneBallOutLaunch(){
@@ -7988,10 +7989,23 @@ function setupCone(){
     ui(); $("bConeBallLoss").onclick = () => { Z.coneBallLoss = !Z.coneBallLoss; ui(); save();
       say(Z.coneBallLoss ? "✕ Дуга: скорость первого вылета подбирается сама и дальше постоянная; на стыке шарик проходит, только если щель следующего кольца лежит ровно на его прямой (без допусков) или под ним открытый вырез; упёршись в дугу бита — застревает или отскакивает (кнопка «удар»)." : "✕ Дуга выключена: шарик подстраивает скорость на каждом отрезке и в дугу не упирается."); };
   }
-  if ($("bConeBallChain")) {   // v0.1051: «⛓ цепочка» — к «● вылету»: за каждым вышедшим из кольца 1 шариком из центра стартует следующий
-    const ui = () => { const b = $("bConeBallChain"); b.classList.toggle("on", !!Z.coneBallChain); b.setAttribute("aria-pressed", String(!!Z.coneBallChain)); };
-    ui(); $("bConeBallChain").onclick = () => { Z.coneBallChain = !Z.coneBallChain; ui(); save();
-      say(Z.coneBallChain ? "⛓ Цепочка: «● вылет» пускает шарики один за другим — следующий стартует из центра, как только предыдущий вышел из кольца 1 (до 64)." : "⛓ Цепочка выключена: «● вылет» — один шарик."); };
+  function coneSliceChainUi(){
+    for (const button of document.querySelectorAll("[data-slice-next]")) {
+      button.hidden = Z.coneBallArm !== "slice";
+      const active = button.dataset.sliceNext === (Z.coneSliceNext || "pass");
+      button.classList.toggle("on",active); button.setAttribute("aria-pressed",String(active));
+    }
+    const button = $("bConeBallChain");
+    if (button) { button.classList.toggle("on",!!Z.coneBallChain); button.setAttribute("aria-pressed",String(!!Z.coneBallChain)); }
+  }
+  window.zzBallSliceControls = coneSliceChainUi;
+  document.querySelectorAll("[data-slice-next]").forEach(button => { button.onclick = () => {
+    Z.coneSliceNext = button.dataset.sliceNext; coneSliceChainUi(); save(); renderCone();
+    say("Нарезка: следующий шарик — " + button.textContent + ". " + (Z.coneBallChain ? "Цепочка включена." : "Для выпуска следующих включи «Цепочку»."));
+  }; });
+  if ($("bConeBallChain")) {
+    coneSliceChainUi(); $("bConeBallChain").onclick = () => { Z.coneBallChain = !Z.coneBallChain; coneSliceChainUi(); save(); renderCone();
+      say(Z.coneBallArm === "slice" ? (Z.coneBallChain ? "Нарезка: цепочка включена — следующий выходит по выбранному событию с той же скоростью, наружу от центра (до 64)." : "Нарезка: цепочка выключена — новые шарики не выпускаются; уже выпущенные продолжают движение.") : Z.coneBallChain ? "⛓ Цепочка: «● вылет» пускает шарики один за другим — следующий стартует из центра, как только предыдущий вышел из кольца 1 (до 64)." : "⛓ Цепочка выключена: «● вылет» — один шарик."); };
   }
   if ($("bConeRay")) {   // v0.1058: «⚡ луч» — мгновенный проход по сквозной прямой граней, «1» под лучом, закрытие стартового кольца
     $("bConeRay").onclick = () => { Z.coneRay = !Z.coneRay; save(); renderCone();
