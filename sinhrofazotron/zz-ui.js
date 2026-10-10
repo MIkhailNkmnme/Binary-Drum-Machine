@@ -834,6 +834,9 @@ function sfzSettingsInit(){
   const bar = $("rowInputBar"); if (bar) { rows.appendChild(bar); for (const el of bar.children) { triOff(el); tzcClean(el); } }
   const group = $("cutGrp"); if (group) { group.classList.remove("min"); build.appendChild(group); }
   const head = $("fieldHead"); if (head) head.hidden = true;
+  const rings = document.createElement("button"); rings.type = "button"; rings.textContent = "Ромбы колец";
+  rings.title = "Показать столбцы видов колец и заполнения";
+  rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
   const close = () => menus.querySelectorAll("details[open]").forEach(d => d.open = false);
   document.addEventListener("pointerdown", e => { if (!menus.contains(e.target)) close(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = document.activeElement.closest("#sfzSettingsMenus details"); close(); if (active) active.querySelector("summary").focus(); } });
@@ -1346,12 +1349,12 @@ function rowNumDigits(){
 function rowCounterWidths(){
   const L = document.getElementById("rowList"); if (!L) return;
   const ctx = rowCounterWidths.ctx || (rowCounterWidths.ctx = document.createElement("canvas").getContext("2d")); if (!ctx) return;
-  for (const [cls, prop, min] of [["rrot", "--rrot-w", 25], ["rtn", "--rtn-w", 20]]) {
+  for (const [cls, prop, min] of [["rrot", "--rrot-w", 0], ["rtn", "--rtn-w", 20]]) {
     const cells = L.querySelectorAll(".rw > .no > ." + cls); let w = min;
     if (cells.length) {
       const s = getComputedStyle(cells[0]); ctx.font = s.fontWeight + " " + s.fontSize + " " + s.fontFamily;
       const pad = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
-      for (const el of cells) w = Math.max(w, Math.ceil(ctx.measureText(el.textContent).width + pad));
+      for (const el of cells) if (el.textContent.trim()) w = Math.max(w, Math.ceil(ctx.measureText(el.textContent).width + pad));
     }
     const value = w + "px"; if (L.style.getPropertyValue(prop) !== value) L.style.setProperty(prop, value);
   }
@@ -2493,7 +2496,7 @@ const RINGTBL = [
   { v: "cutA", t: "меж" },
   { v: "cutS", t: "сим" }
 ];
-function ringTblOpen(){ return true; }
+function ringTblOpen(){ return !Z.coneRingModesHidden; }
 function ringTblBuild(host){
   const el = document.createElement("div"); el.id = "ringTbl"; el.className = "ring-mode-list";
   RINGTBL.forEach(r => {
@@ -2504,6 +2507,13 @@ function ringTblBuild(host){
     b.textContent = r.t; el.appendChild(b);
   });
   host.appendChild(el);
+  const handles = document.createElement("div"); handles.className = "ring-handles";
+  for (const [kind, icon, title] of [["move", "✥", "Переместить столбцы ромбов"], ["close", "×", "Скрыть ромбы; вернуть: верхнее меню Вид → Ромбы колец"]]) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "ring-" + kind; b.textContent = icon; b.title = title; b.setAttribute("aria-label", title);
+    if (kind === "close") b.onclick = e => { e.stopPropagation(); Z.coneRingModesHidden = true; el.hidden = true; save(); };
+    handles.appendChild(b);
+  }
+  el.appendChild(handles);
   el.addEventListener("click", (e) => {
     const tr = e.target.closest("button[data-v]"); if (!tr || tr.parentElement !== el) return; e.stopPropagation();
     if (el._skipClick) { el._skipClick = false; e.preventDefault(); return; }
@@ -2514,7 +2524,7 @@ function ringTblBuild(host){
   });
   el.addEventListener("pointerdown", e => {
     if (e.button || !e.target.closest("button")) return; e.stopPropagation(); el._skipClick = false;
-    if (e.target.closest(".ring-fill-column")) return;
+    if (e.target.closest(".ring-fill-column,.ring-close")) return;
     const cv = $("coneCv"), cr = cv.getBoundingClientRect(), r = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY;
     const target = e.target.closest("button"), id = e.pointerId; target.setPointerCapture(id); let moved = false;
     const move = ev => { if (ev.pointerId !== id) return; const dx = ev.clientX - sx, dy = ev.clientY - sy;
@@ -2734,7 +2744,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.closest("#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || button.closest("#coneViewTools,#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -2795,6 +2805,7 @@ function renderCone(){
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  coneViewToolsSync(cv);
 
   { const rt = document.getElementById("ringTbl"); if (rt && !rt.hidden) ringTblPlace(rt); }   // v0.023: столбец видов колец — за осью в том же кадре
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
@@ -6818,8 +6829,31 @@ async function coneBalanceAutoEqualize(){
     else if (limited) say("≋ За лимит поиска равенство не найдено. Кольца остались на месте; это не доказательство невозможности.");
   }
 }
+function coneViewToolsSync(cv){
+  const host = $("coneMain") && $("coneMain").parentElement; if (!host) return 0;
+  let box = $("coneViewTools");
+  if (!box) { box = document.createElement("div"); box.id = "coneViewTools"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Вид конуса"); host.appendChild(box); }
+  for (const [id, caption] of [["bConeCanon", "◯ мин"], ["bShowFix", "🔴 ⇄"], ["bShowFixIr", "🟢 ⇄"], ["coneSame", "цвет"], ["coneOnlySel", "выдел"], ["coneNoPick", "🚫"], ["coneSect", "◔"], ["coneClean", "◯"], ["conePoly", "⬡"], ["bConeArcs", "◠"], ["bConeHits", "✦"], ["bLightSolid", "☀"], ["bSunParts", "доли"], ["coneBit1", "①"], ["coneRaysB", null], ["coneGlow", "✨"], ["bConeAxes", "✛"]]) {
+    const source = $(id); if (!source) continue;
+    const node = source.matches("input") ? source.closest("label") : source;
+    if (!node || node.parentElement === box) continue;
+    triOff(node); tzcClean(node); node.classList.remove("w2", "w4", "wm"); node.removeAttribute("data-w1");
+    if (caption !== null) {
+      if (source !== node) { for (const child of [...node.childNodes]) if (child !== source) child.remove(); node.appendChild(document.createTextNode(caption)); }
+      else node.textContent = caption;
+    }
+    node.setAttribute("aria-label", node.title); box.appendChild(node);
+  }
+  const cr = cv.getBoundingClientRect(), anchor = box.offsetParent || host, hr = anchor.getBoundingClientRect();
+  const size = Math.max(20, Math.min(40, Math.floor((cr.width - 16) / 9) - 2)); box.style.setProperty("--view-size", size + "px");
+  const G = coneGeom, cx = cr.left + (G && G.dpr ? G.cx / G.dpr : cr.width / 2), width = box.offsetWidth;
+  box.style.left = (Math.max(cr.left, Math.min(cr.right - width, cx - width / 2)) - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
+  box.style.top = (cr.top - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
+  return box.offsetHeight + 4;
+}
 function coneBalanceToolsSync(cv){
   const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
+  const viewHeight = coneViewToolsSync(cv);
   let el = $("coneBalanceTools");
   if (!el) {
     el = document.createElement("div"); el.id = "coneBalanceTools"; host.appendChild(el);
@@ -6859,7 +6893,7 @@ function coneBalanceToolsSync(cv){
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
   const x = Math.max(cr.left, Math.min(cr.right - w, cr.left + cxp - w / 2));
   el.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  el.style.top = (cr.top - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
+  el.style.top = (cr.top + viewHeight - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
   coneBalPlace();
   coneBalanceAxisBind(cv);
   coneAlignToolsSync(cv);
@@ -6907,12 +6941,14 @@ function coneHistorySync(cv){
   const changed = coneHistoryPose !== null && coneHistoryPose !== pose; coneHistoryPose = pose;
   if (window.zzTapePose) window.zzTapePose(changed);
   if (changed) coneHistoryPulse(); else coneHistoryVisibility();
-  const cr = cv.getBoundingClientRect(), tr = tools.getBoundingClientRect(), anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect();
-  const width = Math.max(0, Math.min(560, cr.width - 16)); box.style.width = width + "px";
-  const x = Math.max(cr.left + width / 2 + 8, Math.min(cr.right - width / 2 - 8, tr.left + tr.width / 2));
+  const cr = cv.getBoundingClientRect(), anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect(), G = coneGeom;
+  const axis = coneAxisScr() || { x: cr.left + (G && G.dpr ? G.cx / G.dpr : cr.width / 2), y: cr.top + (G && G.dpr ? G.cy / G.dpr : cr.height / 2) };
+  const available = Math.max(0, cr.right - Math.max(cr.left, axis.x) - 12);
+  const width = Math.min(available, Math.max(100, 220 / Math.sqrt(Math.max(1, coneZoom)))); box.style.width = width + "px";
+  box.style.visibility = width >= 40 ? "visible" : "hidden";
+  const x = cr.right - width - 8;
   box.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  const alignment = $("coneAlignTools"), balance = $("coneBal"), bottom = Math.max(tr.bottom, alignment ? alignment.getBoundingClientRect().bottom : tr.bottom, balance && !balance.hidden ? balance.getBoundingClientRect().bottom : tr.bottom);   // v0.024: балансы теперь под рядом
-  box.style.top = (bottom + 8 - hr.top - anchor.clientTop + anchor.scrollTop) + "px"; box.style.bottom = "auto";
+  box.style.top = (axis.y - 10 - hr.top - anchor.clientTop + anchor.scrollTop) + "px"; box.style.bottom = "auto";
 }
 function coneBalanceAxisSnap(a, radius){
   if (magSymOf() === "off") return a;
@@ -7052,7 +7088,7 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.offsetParent || el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 120;
-  const tools = document.getElementById("coneBalanceTools"), th = tools && tools.getClientRects().length ? tools.offsetHeight + 6 : 0;   // v0.024: под рядом треугольников
+  const tools = document.getElementById("coneBalanceTools"), th = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom - cr.top + 6 : 0;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop + th;   // v0.1011: верх трио вплотную к первой полосе меню, на верхней линии холста
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
   c3AxesPlace();
@@ -7066,7 +7102,8 @@ function c3AxesPlace(){
   const bal = document.getElementById("coneBal"), br = bal && !bal.hidden && bal.getClientRects().length ? bal.getBoundingClientRect() : null;
   // v0.024, «оси ромб побольше и между треугольников»: ромб 30 × 30 — в зазоре ряда треугольников на оси (вершина — у верхнего края, бока — по их сторонам)
   const center = cr.left + cxp;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;
+  const view = $("coneViewTools"), viewHeight = view && view.getClientRects().length ? view.offsetHeight + 4 : 0;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top + viewHeight - hr.top - host.clientTop + host.scrollTop;
   b.setAttribute("aria-pressed", String(!!Z.coneAxes));
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
   // v0.1047: «−» вплотную слева от пары балансов, «+» — справа (нет балансов — по бокам ромба осей, через зазор шириной в ромб)
@@ -7169,10 +7206,10 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
     // v0.050: короткая подпись у видимого левого края, под горизонтальной осью.
-    const X = left, available = Math.max(0, edge - left);
+    const X = left + 4, available = Math.max(0, edge - X);
     const axisY = axis ? axis.y : cr.top + (coneGeom && coneGeom.dpr ? coneGeom.cy / coneGeom.dpr : cr.height / 2);
     caption.style.maxWidth = available.toFixed(1) + "px";
-    put(caption, X, axisY - hr.top + scrollTop + 4);
+    put(caption, X, axisY - hr.top + scrollTop + 6);
   }
 }
 /* Дорожка темпа — ромб-контур с вершиной у бегунка (--tx/--ta). v0.042: число сверху, шаги на краях,
@@ -13298,6 +13335,7 @@ function tzcOff(g){
   const ov = cgb.querySelector(":scope > .tzco"); if (ov) ov.remove();
 }
 function tzcApply(g){
+  if (g.closest("#w-cone .tools,#paneGrp")) { tzcOff(g); return; } // v0.051: кнопки плавающих групп — одним столбцом, без изменения сохранённого рисунка.
   if (g.classList.contains("cg-r1")) { tzcOff(g); return; } // v0.046: формы К1 — самостоятельные ромбы.
   if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
   const d = Z.cgrpTri && Z.cgrpTri[g.dataset.g], cgb = g.querySelector(".cgb");
