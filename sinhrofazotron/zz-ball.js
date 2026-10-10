@@ -327,6 +327,16 @@
      весь цикл сочетаний (НОК числа внешних щелей и щелей колец) достижим; каждый шарик — в ближайший свой момент (с «1 в кольце» — не раньше
      предыдущего + время кольца). Всё точно, дробями */
   let seqFlow = null;
+  /* v0.014, «пусть шарик из середины бита идёт, и если в центр попадает, то откуда исходил — там 1, а если нет вариантов — 0; если нет вариантов
+     всех в центр, ищется самый ближайший: 4 не получается — 3, потом 2… 1 точно всегда будет; хотя середина бита ничего не меняет, но так смотреть
+     проще»: «из середины бита» (Z.coneBallFromBits) — старты — середины бит внешнего кольца; скорость — та, при которой до центра доходит больше всего
+     бит (все, иначе наибольшее число); бит, из которого путь есть, — 1, остальные — 0; выпуск — по очереди только из «единиц» */
+  const bitsOn = () => Z.coneBallFromBits === true;
+  function cellStarts(S) {
+    const k = S.rings.length - 1, ring = S.rings[k], cells = ring.cells && ring.cells.length ? ring.cells : ring.blocks, out = [];
+    cells.forEach((c, j) => { const rawQ = c.loQ.add(c.hiQ).div(2); out.push({ id: "outer-bit:" + j, k, rawQ, raw: radians(rawQ), r: ring.ro, kind: "bit", bit: c.bit ?? j, label: "К" + (k + 1) + " · бит " + ((c.bit ?? j) + 1) }); });
+    return out;
+  }
   /* v0.013, «пусть, когда проходит, закрасит пройденный путь своим цветом, каждый шарик разный»: у шарика № n свой цвет (оттенок по золотому углу),
      след — отрезки щелей, по которым он ехал (кольцо, грань в его системе, от радиуса до радиуса); след прикреплён к кольцу и крутится с ним */
   let trails = [];
@@ -409,7 +419,7 @@
   window.zzBallSeqCheck = () => { const S = snapshot(); if (!S) return null; const B = inwardBase(S), TQ = periodQ(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
     if (!(base.sign() > 0)) return null; const P = seqPlanMake(S, base, true); return { ...P, total: P.starts.length }; };
   function seqPlanMake(S, base, noSuggest = false) {
-    const starts = outerStarts(S), H = seqHorizon(S), t0 = Date.now(); seqDeadline = t0 + (noSuggest ? 3000 : 5000);
+    const starts = bitsOn() ? cellStarts(S) : outerStarts(S), H = seqHorizon(S), t0 = Date.now(); if (bitsOn()) noSuggest = true;   // v0.014: из бит — наибольшее число, без поворота seqDeadline = t0 + (noSuggest ? 3000 : 5000);
     try { return seqPlanBody(S, base, noSuggest, starts, H, t0); } finally { seqDeadline = Infinity; }
   }
   function seqPlanBody(S, base, noSuggest, starts, H, t0) {
@@ -426,7 +436,7 @@
       seqDeadline = Date.now() + 3000;   // подсказка — не дольше 3 с
       const suggest = noSuggest ? null : seqSuggest(S, base, H, starts);
       seqDeadline = Infinity;
-      if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0, suggest };
+      if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0, suggest, windows: starts.map(() => []) };   // v0.014: и «нет пути» — нули в биты
       best.suggest = suggest;
     }
     // строго по очереди: каждый следующий — в ближайшее своё окно позже предыдущего
@@ -443,7 +453,7 @@
       if (pick < 0) break;
       list.push({ point: left[pick].s, atQ: at, arriveQ: seqReach(S, left[pick].s.rawQ, at, best.v) }); last = at; left.splice(pick, 1);
     }
-    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered, gap, suggest: best.suggest || null };
+    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered, gap, suggest: best.suggest || null, windows: best.windows };
   }
   function inputFraction(value) {
     try { const q = Q(value); return q.sign() > 0 && q.cmp(1000) <= 0 ? q : null; } catch { return null; }
@@ -672,7 +682,10 @@
     }
     if (launch && seqMode() && base.sign() > 0) {   // Синхрофазотрон v0.006: выпуск по очереди
       const plan = seqPlanMake(S, base), now = run ? run.elapsedQ : ZERO;
-      seqPlan = { ...plan, baseQ: base, total: plan.starts.length, startQ: now };
+      seqPlan = { ...plan, baseQ: base, total: plan.starts.length, startQ: now, fromBits: bitsOn() };
+      if (bitsOn() && window.zzBallOuterBits && plan.windows) {   // v0.014: бит с путём до центра — 1, без пути — 0
+        const K = S.rings.length - 1; window.zzBallOuterBits(K, plan.starts.map((s, i) => ({ bit: s.bit, v: plan.windows[i] && plan.windows[i].length ? "1" : "0" })));
+      }
       seqQueue = plan.list.map((x, i) => ({ ...x, number: i + 1, atQ: now.add(x.atQ), periodQ: TQ }));
       inwardAuto = null; inwardFc = null;
       if (run) run.inwardOuter = S.rings.length;

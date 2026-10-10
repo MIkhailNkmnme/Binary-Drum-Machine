@@ -7879,6 +7879,11 @@ function setupCone(){
       say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 изнутри выключена; удары снаружи по-прежнему ставят 1.");
     };
   }
+  if ($("bConeBallFromBits")) {   // v0.014: «из середины бита»
+    const sync = () => { const b = $("bConeBallFromBits"); b.classList.toggle("on", !!Z.coneBallFromBits); b.setAttribute("aria-pressed", String(!!Z.coneBallFromBits)); };
+    sync(); $("bConeBallFromBits").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallFromBits = !Z.coneBallFromBits; sync(); save(); renderCone();
+      say(Z.coneBallFromBits ? "Из середины бита: шарики стартуют из середин бит внешнего кольца; бит, из которого есть путь до центра, — 1, нет — 0; скорость — при которой таких бит больше всего. ▶ — запуск." : "Из середины бита выключено: старты — щели внешнего кольца."); };
+  }
   if ($("bConeBallFlow")) {   // v0.012: «⟳ поток по кругу»
     const sync = () => { const b = $("bConeBallFlow"); b.classList.toggle("on", !!Z.coneBallFlow); b.setAttribute("aria-pressed", String(!!Z.coneBallFlow)); };
     sync(); $("bConeBallFlow").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallFlow = !Z.coneBallFlow; sync(); save(); renderCone();
@@ -7976,6 +7981,11 @@ function setupCone(){
         say(SP.failed ? "● Поток по кругу: ни при одной проверенной скорости (×1/60…×8) все сочетания щелей не достижимы — поток не запущен. Попробуй ½ бита внешнего или выключи «⟳ поток»."
           : `● Поток по кругу: скорость ×${fr(SP.ratio)} от базовой; внешние щели — 1…${SP.total} по кругу, в кольцах щели чередуются по кругу (${SP.sizes.map((n, i) => "К" + (SP.sizes.length - i) + ": " + n).join(", ")}); полный цикл — ${SP.L} шариков.${SP.gap ? ` В каждом кольце — не больше одного (шаг не меньше ${fr(SP.gap)} об.).` : ""} Счёт — «дошли».`);
         return ok; }
+      if (SP && SP.fromBits) {   // v0.014
+        const fr = q => q.text().replace(".", ","), bits = SP.starts.map((s, i) => SP.windows && SP.windows[i] && SP.windows[i].length ? "1" : "0").join("");
+        say(SP.covered ? `● Из середины бита: при ×${fr(SP.ratio)} от базовой до центра доходят из ${SP.covered} бит из ${SP.total}${SP.covered < SP.total ? " (больше — ни при какой проверенной скорости)" : ""}; биты внешнего — ${bits}. Шарики из «единиц» — по очереди.`
+          : `● Из середины бита: ни из одного бита до центра не дойти ни при какой проверенной скорости — биты внешнего ${bits}.`);
+        return ok; }
       if (SP) { const fr = q => q.text().replace(".", ","), when = SP.list.map((x, i) => "№" + (i + 1) + " — " + fr(x.atQ) + " об.").join(", ");
         const nb = n => n + " " + (n % 10 === 1 && n % 100 !== 11 ? "шарик" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "шарика" : "шариков");
         const one = SP.gap ? ` В каждом кольце — не больше одного: следующий не раньше чем через ${fr(SP.gap)} об.` : "";
@@ -8017,6 +8027,13 @@ function setupCone(){
     const om = Z.coneBallEmpty && Array.isArray(Z.coneBallEmpty.m) ? Z.coneBallEmpty.m : [];   // v0.1076: пустые ячейки закрытых колец остаются пустыми
     if (empty) { Z.rows = Z.rows.map((s, k) => k < closed ? s : "0".repeat(s.length)); Z.coneBallEmpty = { key, m: Z.rows.map((s, k) => k < closed ? (om[k] && om[k].length === s.length ? om[k] : "0".repeat(s.length)) : "1".repeat(s.length)) }; }
     else { if (Z.rows[0] && !closed) Z.rows[0] = "0".repeat(Z.rows[0].length); Z.coneBallEmpty = null; }
+    save(); renderRows();
+  };
+  // v0.014: «из середины бита» — записать 1/0 в биты внешнего кольца (кольцо за чертой — без автопереноса в строки)
+  window.zzBallOuterBits = (k, list) => {
+    if (k === Z.rows.length) { const f = fillDraft().split(""); for (const x of list) if (x.bit >= 0 && x.bit < f.length) f[x.bit] = x.v; Z.fillCells = f.join(""); }
+    else if (Z.rows[k]) { const r = Z.rows[k].split(""); for (const x of list) if (x.bit >= 0 && x.bit < r.length) r[x.bit] = x.v; Z.rows[k] = r.join("");
+      const M = window.zzBallEmptyMask ? window.zzBallEmptyMask() : null; if (M && M[k]) { const m = M[k].split(""); for (const x of list) if (m[x.bit] !== undefined) m[x.bit] = "0"; M[k] = m.join(""); } }
     save(); renderRows();
   };
   window.zzBallEmptyMask = () => { const E = Z.coneBallEmpty, key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/"); return E && E.key === key && Array.isArray(E.m) ? E.m : null; };
