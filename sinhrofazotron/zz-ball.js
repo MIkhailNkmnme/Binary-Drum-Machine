@@ -39,6 +39,11 @@
      При попадании шарик застревает в бите или отскакивает; все ячейки «1» — строка уходит в поле, вылеты продолжаются, счёт остаётся у строки. */
   let markRun = false, pendingMarks = [], pendingBits = [], markCfg = null;
   let balls = [], batchBusy = false;
+  window.zzBallFaceSources = () => {
+    const S = snapshot(); if (!enabled || !S) return [];
+    return (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && !["done", "lost"].includes(b.stage) && S.rings[b.k])
+      .map((b, i) => ({ id: "ball:" + (b.number || i + 1), angle: angleQ(S, b.k, b.rawQ), target: b.k }));
+  };
   // Current launch only: totals outlive the 64 moving-ball slots and row promotion.
   let run = null, stuck = [], resting = [];
   /* v0.1063, «как мне начать с 5 строки при закрытых 3 кольцах?»: закрытие хранится в состоянии (Z.coneBallClosed = {key, n}) — переживает
