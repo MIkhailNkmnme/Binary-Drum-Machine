@@ -7840,7 +7840,7 @@ function setupCone(){
   function coneBallArmLaunch(){
     // v0.1077, «не открыл 3 кольцо»: открыто только внешнее (или закрыты все) — ▶ открывает следующее кольцо и запускает из него, а не пробует запуск в закрытые
     if (Z.coneBallArm === "in" && window.zzBallCenterState && window.zzBallClosedMax && coneGeom && coneGeom.fill) { const c = window.zzBallCenterState().count; if (c > 0 && c >= window.zzBallClosedMax()) return window.zzBallInwardNext(); }
-    return Z.coneBallArm === "in" ? coneBallInLaunch() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false;
+    return Z.coneBallArm === "in" ? coneBallInLaunchAuto() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false;
   }
   window.zzBallArmLaunch = () => !!Z.coneBallArm && window.zzBallLive && window.zzBallLive() === 0 && coneBallArmLaunch();
   function coneBallArm(m){
@@ -7921,6 +7921,30 @@ function setupCone(){
     say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
     return ok;
   };
+  /* Синхрофазотрон v0.009, «сделать, чтобы подсказанный поворот ставился сам» — «да»: пути до центра нет у всех щелей, а подсказка есть (seqSuggest) —
+     нужные кольца сами поворачиваются на полбита и запуск повторяется. Сторона сдвига: сначала как в расчёте, не вышло — в другую */
+  function coneSeqTurnHalf(rings, sign){
+    for (const k of rings) {
+      if (k < Z.rows.length) { while (coneRot.length < Z.rows.length) coneRot.push(0); coneRot[k] = (coneRot[k] || 0) + sign * 0.5; }
+      else Z.coneFillTurn = (Z.coneFillTurn || 0) + sign * 0.5;
+    }
+    Z.coneRot = coneRot.slice(); save(); renderAll();
+  }
+  function coneBallInLaunchAuto(){
+    let ok = coneBallInLaunch(), SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;
+    if (!SP || SP.covered === SP.total || !SP.suggest) return ok;
+    const rings = SP.suggest.rings, names = rings.map(k => "К" + (k + 1)).join(", ");
+    for (const sign of [-1, 1]) {
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+      coneSeqTurnHalf(rings, sign);
+      ok = coneBallInLaunch(); SP = window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;
+      if (SP && SP.covered === SP.total) { setTimeout(() => say(`● Повернул на полбита ${names} — теперь путь до центра у всех ${SP.total} щелей, скорость ×${SP.ratio.text().replace(".", ",")}.`), 5000); return ok; }
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+      coneSeqTurnHalf(rings, -sign);   // не вышло — вернуть и попробовать в другую сторону
+    }
+    say(`● Подсказанный поворот ${names} на полбита не дал пути всем щелям — кольца оставлены как были.`);
+    return coneBallInLaunch();
+  }
   function coneBallInLaunch(keepRun = false){
     if (!window.zzBallLaunch) return false;
     Z.coneBallAuto = true; Z.coneBallArc = false;
@@ -7932,7 +7956,7 @@ function setupCone(){
         say(SP.covered === SP.total ? `● В центр по очереди: ${nb(SP.total)}, скорость ×${fr(SP.ratio)} от базовой; выпуск (обороты К1 от старта): ${when}${one} Все дойдут до центра и исчезнут в счёт.`
           : SP.covered ? `● В центр по очереди: общей скорости для всех ${SP.total} щелей не нашлось — при ×${fr(SP.ratio)} до центра доходят из ${SP.covered}; выпуск: ${when}`
           : `● В центр по очереди: при нынешнем положении колец ни одна щель не доводит шарик до центра ни при какой проверенной скорости (×1/60…×8) — выпуска нет.`);
-        if (SP.suggest) setTimeout(() => say(`● Вариант есть: повернуть на полбита ${SP.suggest.rings.map(k => "К" + (k + 1)).join(", ")} (кнопками ◁ ▷ в «Кольцах» или рукой) — тогда путь до центра у всех щелей при скорости ×${fr(SP.suggest.ratio)}.`), 4500);
+        // v0.009: подсказанный поворот ставится сам (coneBallInLaunchAuto)
         return ok; } }
     { const A = ok && window.zzBallInwardAuto ? window.zzBallInwardAuto() : null;   // v0.1059: что нашло авто
       const P = ok && window.zzBallInwardForecast ? window.zzBallInwardForecast() : null;
