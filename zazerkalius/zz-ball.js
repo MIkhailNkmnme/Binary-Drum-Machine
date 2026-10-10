@@ -49,10 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,done:false,
-      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0,exitedK:0}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
-    const first = slicing.moving[0], angle = S.rings[0].phaseQ.add(S.spinQ).add(first.rawQ);
-    if (slicing.count === 1) sliceGrow();
-    if (slicing.count > 1) sliceEnter(first,1,snapshot(),angle);
+      moving:[{id:1,rQ:ZERO,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0,exitedK:-1}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     sliceStatus(); save(); renderCone(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
@@ -117,7 +114,7 @@
         }
       }
       const last = slicing.count - 1;
-      const ready = last > 0 && (slicing.completedCuts[last] || []).length >= last + 1;
+      const ready = last === 0 ? contacts.some(ball => ball.k === 0 && ball.move > 0) : (slicing.completedCuts[last] || []).length >= last + 1;
       const latest = slicing.moving[slicing.moving.length - 1];
       const passed = contacts.some(ball => ball === latest && ball.move > 0 && ball.k === ball.launchK + 1);
       let grew = false, centre = false, outer = false;
@@ -180,7 +177,7 @@
         g.lineTo(cx + (k + 1) * dr * c,cy + (k + 1) * dr * s); g.stroke();
       }
     }
-    const moving = slicing ? slicing.moving : [{id:1,k:0,rawQ:QUARTER.neg(),rQ:ONE}];
+    const moving = slicing ? slicing.moving : [{id:1,k:0,rawQ:QUARTER.neg(),rQ:ZERO}];
     for (const ball of moving) {
       const a = radians(S.rings[ball.k].phaseQ.add(S.spinQ).add(ball.rawQ)), radius = ball.rQ.number() * dr;
       g.strokeStyle = "#26bdb4"; g.globalAlpha = 0.6; g.setLineDash([4 * dpr,4 * dpr]);
