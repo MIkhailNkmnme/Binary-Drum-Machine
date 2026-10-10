@@ -7388,6 +7388,7 @@ function setupCone(){
     return true;
     } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt, ballBefore); }
   };
+  window.zzBallContinueFrame = dt => autoStep(dt);
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
   const bitStepUi = () => { const b = $("bConeBitStep"), h = $("bConeHalfStep"), q = $("bConePrevStep"); if (b) b.classList.toggle("on", Z.coneBitStep === true); if (h) h.classList.toggle("on", Z.coneBitStep === 0.5); if (q) q.classList.toggle("on", Z.coneBitStep === "prev"); };
   bitStepUi();
@@ -7774,16 +7775,22 @@ function setupCone(){
   }
   if ($("solEdgeGrp")) $("solEdgeGrp").addEventListener("click", coneBallModeTip);
   if ($("bConeBallIn")) $("bConeBallIn").onclick = () => coneBallArm("in");
+  // Grow at the outward ball's arrival; existing balls continue without another group launch.
+  window.zzBallGrowOuter = () => {
+    const N0 = Z.rows.length, E = Z.coneBallEmpty;
+    if (N0 >= CONE_MAX - 1) return false;
+    const m0 = E && Array.isArray(E.m) && E.m.length === N0 ? E.m.slice() : null, f0 = fillDraft();
+    fillCommit();
+    if (Z.rows.length !== N0 + 1) return false;
+    const key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
+    if (m0) Z.coneBallEmpty = { key, m: m0.concat([f0.split("").map(c => c === "." ? "1" : "0").join("")]) };
+    save(); renderCone(); return true;
+  };
   // v0.1076: осталось открытым только внешнее кольцо — кольцо за чертой в строки, закрытие то же, запуск из нового внешнего
   window.zzBallInwardNext = () => {
-    const st = window.zzBallCenterState ? window.zzBallCenterState().count : 0, N0 = Z.rows.length, E = Z.coneBallEmpty;
-    const m0 = E && Array.isArray(E.m) && E.m.length === N0 ? E.m.slice() : null, f0 = fillDraft();
-    autoSet(false); fillCommit();
-    if (Z.rows.length !== N0 + 1) { say("● В центр: открыто только внешнее кольцо, но кольцо за чертой в строки не ушло — следующий запуск не начат."); return false; }
-    const key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
-    Z.coneBallClosed = { ...Z.coneBallClosed, key, n: st };
-    if (m0) Z.coneBallEmpty = { key, m: m0.concat([f0.split("").map(c => c === "." ? "1" : "0").join("")]) };
-    save();
+    const st = window.zzBallCenterState ? window.zzBallCenterState().count : 0, N0 = Z.rows.length;
+    autoSet(false);
+    if (!window.zzBallGrowOuter()) { say("● В центр: следующее кольцо не создано — следующий запуск не начат."); return false; }
     const ok = coneBallInLaunch(true);
     say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
     return ok;

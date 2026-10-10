@@ -147,7 +147,7 @@
   /* v0.1059, «режим В центр: авто скорость должна найти для текущего внешнего такую скорость, при которой во внутреннее зайдёт наибольшее количество
      шариков; или это не зависит от скорости? тогда хотя бы одно». Вся группа едет одной скоростью и приходит к стыку одновременно — через ширину / скорость;
      проходят те, у кого в этот миг щель внутреннего кольца (с v0.1067 — ровно на прямой, без допусков) или открытый вырез (lossPass). Картина на стыке зависит только от
-     относительного поворота двух колец, поэтому перебирается один его период: моменты точных совпадений + частая сетка, не быстрее 4× базовой.
+     относительного поворота двух колец. v0.1088: проверяются вычисленные моменты совпадений и интервалы между ними, без временной сетки.
      Наибольшее число; при равенстве — ближе к базовой. Кольца крутятся одинаково — от скорости не зависит, остаётся базовая. */
   let inwardAuto = null, inwardFc = null;
   window.zzBallInwardAuto = () => inwardAuto;
@@ -179,33 +179,32 @@
     inwardAuto = null;
     const k = S.rings.length - 1, inner = k - 1, starts = outerStarts(S), ring = S.rings[k];
     if (inner < 0 || !starts.length || !(base > 0)) return base;
-    /* v0.1066, «снять предел ×4» (вариант 1): при одной щели в кольце быстрая полоса — «успеть, пока щели не разошлись после старта» — лежит выше
-       ×4 (в пресете «В центр с 5-го кольца» — от ×7,3), и авто уходило в медленное окно через полный оборот (~95 с). Предела больше нет (до ×1000);
-       годные времена идут отрезками — берётся точка внутри отрезка с запасом 15 % от краёв, ближайшая к базовой по отношению (×8 и ×1/8 одинаково далеки) */
+    // The x1000 speed bound remains; there is no padding around ideal slit alignments.
     const w = rate(S), width = ring.ro - ring.ri, t0 = width / base, tmin = t0 / 1000, dw = (w[k] || 0) - (w[inner] || 0);
     const countAt = (t) => { const St = { ...S, rings: S.rings.map((r, i) => ({ ...r, phase: r.phase + (w[i] || 0) * t })) };
       return starts.filter(p => lossPass(St, inner, angle(St, k, p.raw)) !== null).length; };
     if (Math.abs(dw) < 1e-12) { inwardAuto = { count: countAt(t0), total: starts.length, ring: inner, fixed: true, mult: 1 }; return base; }
-    const Prel = TAU / Math.abs(dw), t1 = Math.max(tmin + Prel, t0 + Prel / 2), cand = [];
-    for (let j = 0; j <= 1440; j++) cand.push(tmin + (t1 - tmin) * j / 1440);
-    for (let j = 0; j <= 400; j++) cand.push(tmin * Math.pow(t0 / tmin, j / 400));   // быстрые — частой сеткой по логарифму
-    const innerEdges = S.rings[inner].blocks.flatMap(b => [b.lo, b.hi]), half = (S.rings[inner].tol || 0) / Math.abs(dw);
+    const Prel = TAU / Math.abs(dw), t1 = t0 + Prel, cand = [tmin, t0, t1];
+    const innerEdges = (S.rings[inner].contactBlocks || S.rings[inner].blocks).flatMap(b => [b.lo, b.hi]);
     for (const p of starts) for (const f of innerEdges) {   // точные совпадения: angle(k, raw) + w_k t = angle(inner, f) + w_inner t (mod 2π)
       const d = angle(S, inner, f) - angle(S, k, p.raw);
       for (let m = Math.ceil((dw * (dw > 0 ? tmin : t1) - d) / TAU) - 1; m <= Math.floor((dw * (dw > 0 ? t1 : tmin) - d) / TAU) + 1; m++) {
         const t = (d + m * TAU) / dw;
-        for (const x of [t, t - half / 2, t + half / 2, t - half * 0.9, t + half * 0.9]) if (x >= tmin - 1e-12 && x <= t1 + 1e-12) cand.push(x);   // окно совпадения
+        if (t >= tmin && t <= t1) cand.push(t);
       }
     }
-    const pts = [...new Set(cand)].sort((a, b) => a - b).map(t => ({ t, c: countAt(t) })), top = Math.max(0, ...pts.map(q => q.c));
+    const boundaries = [...new Set(cand)].sort((a, b) => a - b);
+    // Inside each interval no edge is crossed, so one midpoint represents its open cut-outs.
+    for (let i = 1; i < boundaries.length; i++) cand.push((boundaries[i - 1] + boundaries[i]) / 2);
+    const pts = [...new Set(cand)].map(t => ({ t, c: countAt(t) })), top = Math.max(0, ...pts.map(q => q.c));
+    // An already optimal base speed stays exactly at base.
+    if (countAt(t0) === top) {
+      inwardAuto = { count: top, total: starts.length, ring: inner, fixed: false, mult: 1 };
+      return base;
+    }
     let best = null;
-    if (top > 0) for (let i = 0; i < pts.length; i++) {
-      if (pts[i].c !== top) continue;
-      let j = i; while (j + 1 < pts.length && pts[j + 1].c === top) j++;
-      const a = pts[i].t, b = pts[j].t, mg = (b - a) * 0.15;
-      let t = j > i ? Math.min(Math.max(t0, a + mg), b - mg) : a; if (countAt(t) !== top) t = (a + b) / 2; if (countAt(t) !== top) t = a;
-      if (!best || Math.abs(Math.log(t / t0)) < Math.abs(Math.log(best.t / t0))) best = { t, c: top };   // ближе к базовой — по отношению («во сколько раз»), не по секундам
-      i = j;
+    if (top > 0) for (const p of pts) {
+      if (p.c === top && (!best || Math.abs(Math.log(p.t / t0)) < Math.abs(Math.log(best.t / t0)))) best = p;
     }
     if (!best) { inwardAuto = { count: 0, total: starts.length, ring: inner, fixed: false, mult: 1 }; return base; }
     inwardAuto = { count: best.c, total: starts.length, ring: inner, fixed: false, mult: t0 / best.t };
@@ -718,6 +717,7 @@
       if (F.k === A.rings.length - 1 && F.move > 0) {
         F.crossings++;
         if (F.loop) { outerArc(S, C, dt); continue; }
+        F.growReq = F.route === "in" && !!ring.fill && Z.rows.length < CONE_MAX - 1 && !!window.zzBallGrowOuter;
         finish(); break;
       }
       if (!F.k && F.move < 0) {
@@ -807,7 +807,14 @@
         F = b; F.atCenter = true; finish(); rememberResult();
         if (!same.some(e => e.number === b.number)) same.push({number:b.number || 1, ring:"центр К" + centerCount()});
       }
-      if (stopAtSame && same.length > 1) return {fraction:elapsed / dt, events:same};
+      const pause = stopAtSame && same.length > 1;
+      if (live.some(b => b.growReq)) return {fraction:elapsed / dt, events:same, grow:true, pause};
+      if (pause) return {fraction:elapsed / dt, events:same};
+      // Start the next generation at this event, not at the end of the animation frame.
+      if (centerCount() >= A.rings.length - 1 && A.rings[A.rings.length - 1].fill &&
+          balls.every(b => b.ready || b.stage === "done" || b.stage === "lost")) {
+        return {fraction:elapsed / dt, events:same, complete:true};
+      }
     }
     return null;
   }
@@ -835,7 +842,7 @@
       while (b.ringTurns.length < S.rings.length) b.ringTurns.push(0);
       // An outward ball parked at the old rim can now meet the new ring at that same joint.
       if (S.rings.length > oldCount && b.stage === "done" && !b.atCenter && b.move > 0 && b.k === oldCount - 1 && Math.abs(b.q - S.rings[b.k].ro) < EPS) {
-        b.stage = "out"; b.crossings = Math.max(0, b.crossings - 1);
+        b.stage = "out"; b.growReq = false; b.crossings = Math.max(0, b.crossings - 1);
         cycles = Math.max(0, cycles - 1); if (b.clean) passes = Math.max(0, passes - 1);
         resting = resting.filter(x => x !== b);
         if (!current.includes(b)) resumed.push(b);
@@ -921,12 +928,19 @@
       if (run) {
         run.seconds -= dt * (1 - f);
         C.turnDelta.forEach((v, k) => { ringStats(k).turns -= v * (1 - f); });
-        run.simultaneous = {seconds:run.seconds, events:simultaneous.events};
+        if (!simultaneous.complete && (!simultaneous.grow || simultaneous.pause)) run.simultaneous = {seconds:run.seconds, events:simultaneous.events};
       }
-      pauseRotation();
+      if (!simultaneous.grow || simultaneous.pause) pauseRotation();
     }
     applyFlips(balls);
     flushMarks();
+    if (simultaneous && simultaneous.grow) {
+      const grew = window.zzBallGrowOuter();
+      balls.forEach(b => { b.growReq = false; });
+      const remaining = dt * (1 - simultaneous.fraction);
+      if (grew && !simultaneous.pause && remaining > 1e-12 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+      batchStatus(); metrics(snapshot() || S); return;
+    }
     const afterMarks = markRun ? snapshot() : null;
     if (afterMarks && afterMarks.shape !== S.shape) {
       if (!F || F.shape !== afterMarks.shape) restartRun(afterMarks);
@@ -958,7 +972,12 @@
     if (Z.coneBallRoute === "in" && run && !inwardNextPending && window.zzBallInwardNext) {   // v0.1077: и после паузы «Одновременно» — шариков в пути нет, ждать нечего
       const S2 = snapshot(), c = centerCount();
       if (S2 && S2.rings[S2.rings.length - 1].fill && c > 0 && c >= S2.rings.length - 1 && window.zzBallLive() === 0) {
-        inwardNextPending = true; setTimeout(() => { try { window.zzBallInwardNext(); } finally { inwardNextPending = false; } }, 0);
+        const remaining = simultaneous && simultaneous.complete ? dt * (1 - simultaneous.fraction) : 0;
+        inwardNextPending = true; setTimeout(() => {
+          let started;
+          try { started = window.zzBallInwardNext(); } finally { inwardNextPending = false; }
+          if (started && remaining > 1e-12 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+        }, 0);
       }
     }
   };
