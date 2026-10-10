@@ -49,7 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,done:false,
-      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0}],cutCursor:{},cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     const first = slicing.moving[0], angle = S.rings[0].phaseQ.add(S.spinQ).add(first.rawQ);
     if (slicing.count === 1) sliceGrow();
     if (slicing.count > 1) sliceEnter(first,1,snapshot(),angle);
@@ -83,14 +83,9 @@
   }
   function sliceNext(S){
     if (!Z.coneBallChain || !slicing || slicing.moving.length >= CHAIN_MAX) return false;
-    const previous = slicing.moving[slicing.moving.length - 1], k = slicing.count - 2;
-    const cuts = k ? slicing.completedCuts[k] || [] : [QUARTER.neg()];
-    if (!cuts.length || !S?.rings[k + 1]) return false;
-    const cursor = ((slicing.cutCursor[k] || 0) + 1) % cuts.length;
-    slicing.cutCursor[k] = cursor;
-    const ball = {id:previous.id + 1,rQ:Q(k + 1),k,rawQ:cuts[cursor],move:1,speedQ:previous.speedQ,launchK:k};
-    const angle = S.rings[k].phaseQ.add(S.spinQ).add(ball.rawQ);
-    sliceEnter(ball,k + 1,S,angle);
+    if (!S?.rings[0]) return false;
+    const previous = slicing.moving[slicing.moving.length - 1];
+    const ball = {id:previous.id + 1,rQ:ZERO,k:0,rawQ:QUARTER.neg(),move:1,speedQ:previous.speedQ,launchK:0};
     slicing.moving.push(ball);
     return true;
   }
