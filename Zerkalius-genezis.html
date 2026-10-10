@@ -5,6 +5,7 @@ PROJECT: Binary Drum Machine (Zerkalius: Genesis)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 ВЕРСИЯ ФАЙЛА (правь вручную при каждом сохранении, чтобы не путать копии между компьютерами):
+LAST EDIT: 2026-10-10 — v0.428: начальная последовательность из 71 строки, обновление автосохранения с резервной копией.
 LAST EDIT: 2026-07-17 — Добавлено правило расстановки маркеров (см. ниже).
 LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 тулбара слева (Undo/Redo, Центр/Радар/Поворот, Вставить), счётчик кадра у правой панели, Зеркало ←/→ приклеивает к строке.
 ===========================================================================
@@ -34,7 +35,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
             }
         })();
     </script>
-    <title>Zerkalius: Interleaving Genesis</title>
+    <title>Zerkalius: Interleaving Genesis — v0.428</title>
     <!-- WebGL-рендер "чистого движения" (см. галка "⚡ WebGL-рендер") — только для этого режима, остальной движок на Canvas2D не тронут -->
     <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
 <!-- === МАРКЕР 02: HEAD И НАСТРОЙКИ КОНЕЦ === -->
@@ -459,7 +460,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <!-- === МАРКЕР 06: ЗАГОЛОВОК НАЧАЛО === -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.427 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
+            <div id="appTitle"><button type="button" id="langBtnRu" class="lang-btn" title="Русский">Зеркалиус</button> · v0.428 · <button type="button" id="langBtnEn" class="lang-btn" title="English">Zerkalius</button></div>
             <a id="hubLink" href="index.html" title="К Хабу" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -495,6 +496,8 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 <div id="rotateViewBadge">⟲ ВИД ПОВЁРНУТ НА 90°</div>
 <!-- === МАРКЕР 07: ЗАГОЛОВОК КОНЕЦ === -->
 <script src="_js/banks_data.js"></script>
+<script src="_js/initial-rows.js?v=2"></script>
+<script src="_js/genezis-initial-rows.js?v=428"></script>
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
             const canvas = document.getElementById('screenCanvas');
@@ -7960,6 +7963,7 @@ LAST EDIT: 2026-06-30 — Пульт компактнее (высота), 3 ту
 
             return {
                 step: STATE.globalStep, rows: STATE.lines.map(l => l.orig), active: activeLinesIndices,
+                rowsSequenceRevision: ZZ_ROWS_SEQUENCE_REVISION,
                 localSteps: localSteps, patterns: Array.from(STATE.foundPatterns),
                 patternsMetadata: Object.fromEntries(STATE.foundPatternsMetadata),
                 currentTargetPatternIdx: STATE.currentTargetPatternIdx, lastFindMethod: STATE.lastFindMethod,
@@ -13027,7 +13031,10 @@ safeBind('stopBtn', 'click', () => {
             try {
                 if (localStorage.getItem('zerkalius_autosave_enabled') !== '0') {
                     let rawAuto = localStorage.getItem('zerkalius_autosave_v1');
-                    if (rawAuto) autoSnapshot = JSON.parse(rawAuto);
+                    if (rawAuto) {
+                        autoSnapshot = JSON.parse(rawAuto);
+                        zzGenezisRowsMigrate(autoSnapshot, rawAuto);
+                    }
                 }
             } catch(e) { autoSnapshot = null; }
 
