@@ -172,7 +172,6 @@
       const x = cx + rr * Math.cos(mark), y = cy + rr * Math.sin(mark);
       g.fillStyle = "#252c38"; g.beginPath(); g.arc(x,y,3 * dpr,0,TAU); g.fill();
       g.font = "bold " + 12 * dpr + "px Consolas, monospace"; g.textAlign = "center"; g.textBaseline = "bottom";
-      g.fillText("К" + (k + 1),x,y - 5 * dpr);
     }
     if (slicing) for (const [key,cuts] of Object.entries(slicing.cuts)) {
       const k = +key, phase = S.rings[k].phaseQ.add(S.spinQ);
