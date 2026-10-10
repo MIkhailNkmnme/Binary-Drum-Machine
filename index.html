@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.097. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.098. Точка входа: ссылки на все страницы проекта.
+     v0.098: ноты стартуют «галстуком» (До–Фа по вертикали, Соль справа, Ля — острие, Си справа выше); с правого края вверх нота встаёт на левую 1 строкой выше — по кругу.
      v0.097: ноты ходят, не меняя треугольник: на 1 — вниз-вправо, на 0 — вверх-вправо; за краем нота пропадает, её можно запустить снова.
      v0.096: «Гранидус» → «Бирамида» — кнопка Черновиков (oktaedr/Zerkalius-oktaedr.html) переименована вместе со страницей.
      v0.095: цветные ноты вверх-вправо по очереди, не поворачивая; встреченные 1 — ниже вправо. На краю — замкнутый обмен, кнопка идёт с нотой.
@@ -112,7 +113,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.097</title>
+    <title>Zerkalius Control Hub — v0.098</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -464,7 +465,7 @@
         @keyframes hub-down { 0% { transform: translate(-50%, -6px); opacity: .25; } 50% { opacity: 1; } 100% { transform: translate(-50%, 10px); opacity: .25; } }
     </style>
 <script src="_js/initial-rows.js?v=2"></script>
-<script src="_js/hub-rhomb-music.js?v=3"></script>
+<script src="_js/hub-rhomb-music.js?v=4"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -501,7 +502,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.097</div>
+        <div class="ver">v0.098</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -876,23 +877,27 @@
             NOTES.cv = document.createElement('canvas'); NOTES.cv.id = 'hubNoteCv'; NOTES.cv.setAttribute('aria-hidden', 'true');
             (fly || sier || document.body).after(NOTES.cv); NOTES.g = NOTES.cv.getContext('2d');
             const noteNames = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.dataset.ru || b.textContent.trim());
+            const noteDark = (hex) => { const m = /^#([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex; const v = parseInt(m[1], 16), k = 0.42, bg = [11, 13, 16];   // v0.098: цвет ноты ближе к фону
+                return 'rgb(' + [(v >> 16) & 255, (v >> 8) & 255, v & 255].map((c, i) => Math.round(c * k + bg[i] * (1 - k))).join(',') + ')'; };
             const noteDraw = (now) => {
                 const g = NOTES.g; if (!g) return false; const { W, H, dpr, dw, dh } = NOTES;
                 g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
                 for (const c of NOTES.cells) {
                     const col = noteCol[c.t] || '#9fffc8', on = NOTES.on.has(IDS[c.t]), bl = on && !NOTES.paused ? 0.55 + 0.45 * Math.sin(now / 1100 * 2 * Math.PI) : 1;
-                    const a = dw * 0.95 / 2, b = dh * 0.95 / 2;
-                    g.globalAlpha = on ? bl : 0.9; g.fillStyle = col; g.shadowColor = col; g.shadowBlur = on ? dw * 0.9 : dw * 0.25;
+                    /* v0.098, «зажжённые биты — немного с рамкой, чтоб больше были обычных ромбов», «и цвет немного потемнее, к фону ближе, но и цветовая»:
+                       ромб ноты — в 1,18 раза больше обычного, рамка — яркий цвет ноты, заливка — её цвет, наполовину смешанный с фоном, цифра — яркая */
+                    const a = dw * 1.18 / 2, b = dh * 1.18 / 2, dark = noteDark(col);
+                    g.globalAlpha = on ? 0.75 + 0.25 * bl : 0.95; g.fillStyle = dark; g.shadowColor = col; g.shadowBlur = on ? dw * 0.6 : 0;
                     g.beginPath(); g.moveTo(c.x, c.y - b); g.lineTo(c.x + a, c.y); g.lineTo(c.x, c.y + b); g.lineTo(c.x - a, c.y); g.closePath(); g.fill();
-                    g.shadowBlur = 0; g.globalAlpha = 1;
-                    if (dw >= 7) { g.fillStyle = '#0b0d10'; g.font = `bold ${Math.max(6, dw * 0.62).toFixed(1)}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.bit || '1', c.x, c.y + dw * 0.04); }
+                    g.shadowBlur = 0; g.strokeStyle = col; g.lineWidth = Math.max(1, dw * 0.09); g.lineJoin = 'round'; g.stroke(); g.globalAlpha = 1;
+                    if (dw >= 7) { g.fillStyle = col; g.font = `bold ${Math.max(6, dw * 0.66).toFixed(1)}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.bit || '1', c.x, c.y + dw * 0.04); }
                 }
                 return NOTES.on.size > 0 && !NOTES.paused;
             };
             const noteLoop = (now) => { NOTES.raf = noteDraw(now) ? requestAnimationFrame(noteLoop) : 0; };
             const noteKick = () => { if (!NOTES.raf) NOTES.raf = requestAnimationFrame(noteLoop); };
             const notePlace = (X, Y, dw, dh, W, H, dpr) => {
-                const starts = [[0, 0], [1, 0], [2, 0], [2, 1], [3, 0], [3, 1], [3, 2]];
+                const starts = [[1, 0], [3, 1], [5, 2], [7, 3], [7, 4], [9, 4], [5, 4]];   // v0.098: «галстук» — как в hub-rhomb-music.js v0.004
                 document.body.classList.add('allMode');
                 const cells = [];
                 starts.forEach(([sr, sj], t) => { const head = (hubHeads || []).find(h => h[2] === t), [r, j] = head || [sr, sj];
@@ -903,7 +908,7 @@
                     document.querySelectorAll('.hubNoteCell').forEach(b => b.remove());
                     const hit = dw, hitH = dh;
                     cells.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'hubNoteCell';
-                        b.title = noteNames[c.t] + ': строка ' + (c.r + 1) + ', бит ' + (c.j + 1) + '; на 1 — шаг вниз-вправо, на 0 — вверх-вправо, треугольник не меняется; за краем нота пропадает. Щелчок — включить / выключить (пропавшую — запустить снова)'; b.setAttribute('aria-label', noteNames[c.t]);
+                        b.title = noteNames[c.t] + ': строка ' + (c.r + 1) + ', бит ' + (c.j + 1) + '; на 1 — шаг вниз-вправо, на 0 — вверх-вправо, треугольник не меняется; с правого края вверх — на левую 1 строкой выше (по кругу), за низом — пропадает. Щелчок — включить / выключить'; b.setAttribute('aria-label', noteNames[c.t]);
                         b.dataset.note = IDS[c.t]; b.dataset.row = c.r; b.dataset.col = c.j; b.setAttribute('aria-pressed', String(NOTES.on.has(IDS[c.t])));
                         Object.assign(b.style, { left: (c.x - hit / 2).toFixed(1) + 'px', top: (c.y - hitH / 2).toFixed(1) + 'px', width: hit.toFixed(1) + 'px', height: hitH.toFixed(1) + 'px' });
                         b.onclick = () => { const id = IDS[c.t], on = !NOTES.on.has(id); if (on) NOTES.on.add(id); else NOTES.on.delete(id);

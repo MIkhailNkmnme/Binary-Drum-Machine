@@ -1,8 +1,11 @@
-/* HubRhombMusic v0.003: notes walk the triangle without changing it — on 1 down-right, on 0 up-right; past any edge a note vanishes. */
+/* HubRhombMusic v0.004: notes walk the triangle without changing it — on 1 down-right, on 0 up-right; past the edge going up a note jumps to
+   the leftmost 1 of the row above (a loop); past the bottom it vanishes. Starts form a «tie» near the apex. */
 (() => {
   'use strict';
   const ids = ['r', 'c', 'mi', 'fa', 'sol', 'la', 'si'];
-  const starts = [[0, 0], [1, 0], [2, 0], [2, 1], [3, 0], [3, 1], [3, 2]];
+  // v0.004, «цветными сделай галстук: по вертикали 4 отдельные единицы, и ещё одна справа от них, и ещё там найди для 5 и 6»: До–Фа — средняя
+  // вертикаль (строки 2, 4, 6, 8 — через строку, отдельно), Соль — справа на строке 8, Ля — острие на строке 10, Си — справа выше, строка 6
+  const starts = [[1, 0], [3, 1], [5, 2], [7, 3], [7, 4], [9, 4], [5, 4]];
   const frequencies = [261.626, 293.665, 329.628, 349.228, 391.995, 440, 493.883];
   window.HubRhombMusic = (rows, notify) => {
     const field = rows.map(row => row.split(''));
@@ -40,10 +43,15 @@
     const advance = (walker, id) => {
       const [r, j] = walker.pos, dir = field[r][j] === '1' ? 1 : -1, nr = r + dir;
       const gone = () => { active.delete(id); walkers.delete(id); return false; };
-      if (nr < 0 || nr >= field.length) return gone();
+      /* v0.004, «нота, падая на крайний 0, поднимается на левую 1 выше её строки — и так по кругу»: шаг вверх-вправо за край — не пропадает,
+         а встаёт на самую левую 1 строки выше (занята — ждёт); шаг вниз за низ треугольника — пропадает, как прежде */
+      const up = () => { const ar = r - 1, row = ar >= 0 ? field[ar] : null, aj = row ? row.indexOf('1') : -1; if (aj < 0) return gone();
+        const t = [ar, aj]; if (occupied(t, walker)) return true; walker.pos = t; walker.bit = field[ar][aj]; return true; };
+      if (nr < 0) return dir < 0 ? up() : gone();
+      if (nr >= field.length) return gone();
       const x = j + 0.5 + (field[nr].length - field[r].length) / 2, half = Math.abs(x - Math.round(x)) > 0.25;
       const ok = c => c >= 0 && c < field[nr].length, nj = half ? [Math.ceil(x), Math.floor(x)].find(ok) : Math.round(x);
-      if (nj === undefined || !ok(nj)) return gone();   // между двумя клетками — правая, нет её — левая; иначе за край — пропала
+      if (nj === undefined || !ok(nj)) return dir < 0 ? up() : gone();   // между двумя клетками — правая, нет её — левая; за край вверх — на левую 1 выше, вниз — пропала
       const target = [nr, nj]; if (occupied(target, walker)) return true;
       walker.pos = target; walker.bit = field[nr][nj]; return true;
     };
