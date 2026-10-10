@@ -28,15 +28,15 @@
   function sliceStatus(){
     if ($("ballLabTime")) labControls();
     const speed = slicing ? slicing.speedQ : Q(Z.coneSliceSpeed || "2/3");
-    status("Нарезка · " + (slicing ? slicing.done ? "К2: две щели · стоп" : paused ? "пауза" : slicing.move > 0 ? "наружу" : "обратно" : "▶ пуск") +
+    status("Нарезка · " + (slicing ? slicing.done ? "предел колец · стоп" : paused ? "пауза" : slicing.move > 0 ? "наружу" : "обратно" : "▶ пуск") +
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
       (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0));
     const box = $("ballLabTurns"); if (!box) return;
     const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
     for (let k = 0; slicing && k < slicing.count; k++) {
-      const cuts = slicing.cuts[k] || [], opposite = cuts.length > 0 && cuts.every(a => cuts.some(b => b.sub(a).mod().eq(HALF)));
-      summary.push("К" + (k + 1) + ": " + (slicing.returned[k] ? "обратный проход завершён · закрытие не выбрано" : "обратный проход не завершён") +
-        (k ? " · вырезы " + cuts.length + " · полностью пройдены " + slicing.completedCuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет") : " · исходный вырез"));
+      const cuts = slicing.cuts[k] || [], completed = slicing.completedCuts[k] || [], opposite = cuts.length > 0 && cuts.every(a => cuts.some(b => b.sub(a).mod().eq(HALF)));
+      summary.push("К" + (k + 1) + ": " + (slicing.returned[k] ? "обратный проход завершён" : "обратный проход не завершён") +
+        (k ? " · вырезы " + cuts.length + " · полностью пройдены " + completed.length + "/" + (k + 1) + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет") : " · исходный вырез"));
     }
     const key = summary.join("\n"); if (box.dataset.sliceSummary === key) return;
     box.dataset.sliceSummary = key; box.replaceChildren();
@@ -49,7 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,rQ:ZERO,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,move:1,done:false,
-      k:0,rawQ:QUARTER.neg(),cuts:{},completedCuts:[],returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      k:0,rawQ:QUARTER.neg(),cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     sliceStatus(); save(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
@@ -61,7 +61,8 @@
     } else slicing.paths.push({k,move,r0,r1,raw0,raw1,slope});
   }
   function sliceGrow(){
-    if (!slicing || slicing.count !== 1 || Z.rows.length !== 1) return false;
+    if (!slicing || slicing.count !== Z.rows.length || slicing.count >= CONE_MAX) return false;
+    if (slicing.count > 1 && (slicing.completedCuts[slicing.count - 1] || []).length < slicing.count) return false;
     const n = Z.rows.length + 1;
     Z.rows.push("0".repeat(n)); coneRot.push(0); Z.coneRot = coneRot.slice(); Z.fillCells = null;
     slicing.count = n; slicing.RQ = Q(n); renderRows(); save(); renderCone(); return true;
@@ -87,30 +88,29 @@
       const stop = move > 0 ? Q(k + 1) : Q(k), distance = stop.sub(r0).abs();
       const step = ZZExact.min(duration.sub(elapsed),distance.div(slicing.speedQ));
       const from = C.at(elapsed.div(duration)); elapsed = elapsed.add(step);
-      const to = C.at(elapsed.div(duration)), r1 = r0.add(slicing.speedQ.mul(step).mul(move));
+      let to = C.at(elapsed.div(duration));
+      const r1 = r0.add(slicing.speedQ.mul(step).mul(move));
       sliceRecord(k,move,r0,r1,from,to); slicing.rQ = r1; slicing.elapsedQ = slicing.elapsedQ.add(step);
       if (!r1.eq(stop)) break;
       const angle = to.rings[k].phaseQ.add(to.spinQ).add(slicing.rawQ);
       if (move < 0) slicing.returned[k] = true;
-      if (k === 1) {
-        const raw = slicing.rawQ.mod();
-        if (!slicing.completedCuts.some(a => a.eq(raw))) slicing.completedCuts.push(raw);
-        if (slicing.completedCuts.length >= 2) {
+      if (k > 0) {
+        const raw = slicing.rawQ.mod(), completed = slicing.completedCuts[k] || (slicing.completedCuts[k] = []);
+        if (!completed.some(a => a.eq(raw))) completed.push(raw);
+      }
+      const bootstrap = slicing.count === 1 && move > 0 && r1.eq(slicing.RQ);
+      const ready = k === slicing.count - 1 && k > 0 && (slicing.completedCuts[k] || []).length >= k + 1;
+      let grew = false;
+      if (bootstrap || ready) {
+        coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
+        if (slicing.count >= CONE_MAX) {
           slicing.done = true;
-          coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
           pauseRotation(); sliceStatus(); save(); renderCone(); return;
         }
+        grew = sliceGrow();
+        if (grew) to = snapshot();
       }
       if (move > 0 && r1.eq(slicing.RQ)) {
-        if (slicing.count === 1 && Z.rows.length === 1) {
-          coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
-          if (sliceGrow()) {
-            sliceEnter(1,snapshot(),angle);
-            const remaining = Q(dt).mul(ONE.sub(elapsed.div(duration)));
-            if (remaining.sign() && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
-            sliceStatus(); return;
-          }
-        }
         slicing.move = -1; slicing.outerBounces++;
       }
       else if (move < 0 && r1.eq(ZERO)) {
@@ -122,11 +122,18 @@
       }
       else {
         const next = k + move;
+        let hit = false;
         if (!next && move < 0) {
           const d = angle.sub(to.rings[0].phaseQ).sub(to.spinQ).add(QUARTER).mod(), halfGap = Q(Z.coneSliceGap || "1/4").div(2);
-          if (d.cmp(halfGap) > 0 && d.cmp(ONE.sub(halfGap)) < 0) { slicing.move = 1; slicing.innerBounces++; continue; }
+          hit = d.cmp(halfGap) > 0 && d.cmp(ONE.sub(halfGap)) < 0;
         }
-        sliceEnter(next,to,angle);
+        if (hit) { slicing.move = 1; slicing.innerBounces++; }
+        else sliceEnter(next,to,angle);
+      }
+      if (grew) {
+        const remaining = Q(dt).mul(ONE.sub(elapsed.div(duration)));
+        if (remaining.sign() && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
+        sliceStatus(); return;
       }
     }
     sliceStatus();
