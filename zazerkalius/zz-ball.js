@@ -169,10 +169,6 @@
       if (!k) { g.moveTo(cx,cy); g.arc(cx,cy,dr,gapAngle + halfGap,gapAngle + TAU - halfGap); g.closePath(); }
       else { g.arc(cx,cy,(k + 1) * dr,0,TAU); g.arc(cx,cy,k * dr,TAU,0,true); }
       g.fill(); g.strokeStyle = "#8b929e"; g.lineWidth = dpr; g.beginPath(); g.arc(cx,cy,(k + 1) * dr,0,TAU); g.stroke();
-      const mark = radians(S.rings[k].phaseQ.add(S.spinQ).sub(QUARTER).add(k ? ZERO : HALF)), rr = (k + 0.6) * dr;
-      const x = cx + rr * Math.cos(mark), y = cy + rr * Math.sin(mark);
-      g.fillStyle = "#252c38"; g.beginPath(); g.arc(x,y,3 * dpr,0,TAU); g.fill();
-      g.font = "bold " + 12 * dpr + "px Consolas, monospace"; g.textAlign = "center"; g.textBaseline = "bottom";
     }
     if (slicing) for (const [key,cuts] of Object.entries(slicing.cuts)) {
       const k = +key, phase = S.rings[k].phaseQ.add(S.spinQ);
@@ -191,7 +187,7 @@
       g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx + count * dr * Math.cos(a),cy + count * dr * Math.sin(a)); g.stroke();
       const x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
       g.globalAlpha = 1; g.setLineDash([]); g.fillStyle = "#21e777"; g.beginPath(); g.arc(x,y,4 * dpr,0,TAU); g.fill();
-      if (moving.length > 1) { g.font = "bold " + 12 * dpr + "px Consolas, monospace"; g.textBaseline = "bottom"; g.fillText(String(ball.id),x,y - 6 * dpr); }
+      if (moving.length > 1) { g.font = "bold " + 12 * dpr + "px Consolas, monospace"; g.textAlign = "center"; g.textBaseline = "bottom"; g.fillText(String(ball.id),x,y - 6 * dpr); }
     }
     g.restore();
     sliceStatus();
