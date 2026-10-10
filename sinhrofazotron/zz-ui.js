@@ -15496,6 +15496,10 @@ function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random
 var zzLoaded = false;   // v0.659 (var — triState зовут и выше по файлу): load() отработал — память прочитана
 function init(){
   load(); zzLoaded = true;
+  /* Синхрофазотрон v0.003, «можно удалить весь лазер — он не на дробях, его переделывать будем», «аниматрицу тоже», «звук»: лазер (луч-часы,
+     веер, солнце, луна, нить строки 1), звук нот и Аниматрица на этой странице выключены всегда — их группы и кнопки скрыты (CSS .sfz-off),
+     а включённое в сохранённой памяти или пресете гасится здесь, до первого кадра */
+  Object.assign(Z, { coneClock: false, coneFan: false, coneSun: false, sunMoon: false, sunMoonTurn: false, moonCross: false, r1Ray: false, snd2: false, coneClockStop: false });
   coneViewRestore();
   if (window.zzSolMobileDefaults) window.zzSolMobileDefaults();
   /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
