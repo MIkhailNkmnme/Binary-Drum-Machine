@@ -77,6 +77,7 @@ const Z = {
   win: {},
   helpOn: true,
   tipsOn: true,
+  coneAxisText: false,
   z: 10
 };
 const ZZ_ROWS0 = Z.rows.slice();   // v0.123: начальный столбик — до того, как load() положит сохранённый
@@ -2545,7 +2546,17 @@ function coneBallModeTip(){
   if (Z.tipsOn === false || lab.dataset.zzTip !== undefined) { if (lab.dataset.zzTip !== text) lab.dataset.zzTip = text; }
   else if (lab.title !== text) lab.title = text;
 }
+function coneAxisTextUi(){
+  const b = $("bAxisText"); if (!b) return;
+  const on = Z.coneAxisText === true; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+}
 function coneRunStatsSync(cv, R, dpr, cx){
+  if (Z.coneAxisText !== true) {
+    const el = $("coneRunStats"), turns = $("ballLabTurns");
+    if (el) el.hidden = true;
+    if (turns && turns.classList.contains("cone-run-turns")) turns.hidden = true;
+    return;
+  }
   const win = $("w-cone"), data = window.zzBallRunStats && window.zzBallRunStats();
   let el = $("coneRunStats"); const turns = $("ballLabTurns");
   if (!data || !win || Z.cone3d) { if (el) el.hidden = true; if (turns) turns.hidden = true; return; }
@@ -2575,6 +2586,7 @@ function coneRunStatsSync(cv, R, dpr, cx){
    кольца, шарики и щели — поверх. Сами панели остались прозрачным слоем того же места: текст по-прежнему выделяется и копируется, прокрутка
    и подсказки работают (CSS: color transparent). Статистика — переносом по ширине панели (как pre-wrap), таблица — по местам её ячеек */
 function coneRunPanelsPaint(g, R, dpr, cT){
+  if (Z.coneAxisText !== true) return;
   const els = [$("coneRunStats"), $("ballLabTurns")].filter(e => e && !e.hidden && e.getClientRects().length);
   for (const el of els) {
     const r = el.getBoundingClientRect(), X = (r.left - R.left) * dpr, Y = (r.top - R.top) * dpr, Wp = r.width * dpr, Hp = r.height * dpr;
@@ -13797,6 +13809,7 @@ function layoutAll(reset){
     applyWin(el);
   });
   $("bHelp").classList.toggle("on", Z.tipsOn !== false);
+  coneAxisTextUi();
   packWins();   // v0.015
 }
 /* v0.742, по снимку солнца с луной — «значок для вкладки Конус стилизуй», «без чисел»: у «◯ Конуса» вместо кружка — свой значок: солнце, золотой сектор
@@ -14325,6 +14338,7 @@ function factoryReset(){
     u = { rows: ZZ_ROWS0.slice() };
     if (!ZZ_SOLO) u.fieldRight = true;   // v0.551: первый запуск — строки справа, окна свёрнуты в список
   }
+  u.coneAxisText = false;
   if (Z.home) u.home = JSON.parse(JSON.stringify(Z.home));
   zzStateGo(u, "_pered_sbrosom", "✖ Сброшено: строки, кнопки и окна — в начальном состоянии." + (Z.home ? " Запомненное ⭐ на месте — «↺ Восстановить» вернёт его." : "") + " Прежнее отложено копией в памяти браузера.");
 }
@@ -15487,6 +15501,7 @@ function init(){
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; if (Z.paneIcons) Z.paneIconOpen = {}; applyPaneIcons(); save(); packWins(); };
   new MutationObserver(() => { if (Z.paneIcons) iconizePane(); }).observe($("rowsPane"), { childList: true, subtree: true, characterData: true });
   $("bHelp").onclick = () => { Z.tipsOn = !(Z.tipsOn !== false); tipsApply(); save(); say(Z.tipsOn ? "? Подсказки включены." : "? Подсказки отключены."); };
+  $("bAxisText").onclick = () => { Z.coneAxisText = Z.coneAxisText !== true; coneAxisTextUi(); save(); renderCone(); say(Z.coneAxisText ? "Текст у оси включён." : "Текст у оси выключен."); };
 
   // Клавиши: ↑/↓ — по строкам, Ctrl+Z — отмена (не в полях ввода).
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
