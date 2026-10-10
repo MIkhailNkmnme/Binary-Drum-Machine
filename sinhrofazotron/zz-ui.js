@@ -7171,7 +7171,12 @@ function tempoTrackSync(){
     set("--vx", Math.max(30, Math.min(lw - 30 - vw, vx)).toFixed(1) + "px"); }
   const thumb = $("coneTempoToggle"), on = !!($("bConeAuto") && $("bConeAuto").classList.contains("on"));
   L.classList.toggle("playing", on);
-  if (thumb) { thumb.classList.toggle("on", on); thumb.setAttribute("aria-pressed", String(on)); thumb.textContent = on ? "⏸" : "▶"; }
+  if (thumb) {
+    thumb.classList.toggle("on", on); thumb.setAttribute("aria-pressed", String(on));
+    let glyph = thumb.querySelector(".tempoPlayGlyph");
+    if (!glyph) { glyph = document.createElement("span"); glyph.className = "tempoPlayGlyph"; thumb.replaceChildren(glyph); }
+    const text = on ? "⏸" : "▶"; if (glyph.textContent !== text) glyph.textContent = text;
+  }
 }
 function tempoControlsSetup(r, L){
   const wrap = r.closest(".zerk-range-wrap"); if (!wrap) return;
