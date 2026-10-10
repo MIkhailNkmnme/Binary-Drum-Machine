@@ -1,5 +1,4 @@
-/* HubRhombMusic v0.002: notes move up-right without turning.
-   An encountered 1 is pushed down-right; the boundary closes the route. */
+/* HubRhombMusic v0.003: notes walk the triangle without changing it — on 1 down-right, on 0 up-right; past any edge a note vanishes. */
 (() => {
   'use strict';
   const ids = ['r', 'c', 'mi', 'fa', 'sol', 'la', 'si'];
@@ -33,51 +32,33 @@
     };
     const same = (a, b) => a[0] === b[0] && a[1] === b[1];
     const occupied = (pos, moving) => [...walkers.values()].some(w => w !== moving && same(w.pos, pos));
-    const advance = walker => {
-      const [r, j] = walker.pos;
-      // Up-right follows one column of the triangular lattice. At its upper
-      // edge the same line continues from its lowest cell, without reversing.
-      let nr = r - 1;
-      if (nr < 0 || j >= field[nr].length) {
-        nr = field.length - 1;
-        while (nr >= 0 && j >= field[nr].length) nr--;
-      }
-      if (nr < 0) return;
-      const target = [nr, j], old = walker.pos;
-      if (same(target, old) || occupied(target, walker)) return;
-      const changes = new Map([[old.join(':'), { pos: old, bit: '0' }]]);
-      const read = p => changes.get(p.join(':'))?.bit ?? field[p[0]][p[1]];
-      const write = (pos, bit) => changes.set(pos.join(':'), { pos, bit });
-      let p = target; const seen = new Set();
-      while (read(p) === '1') {
-        const key = p.join(':'); if (seen.has(key) || occupied(p, walker)) return; seen.add(key);
-        const dr = p[0] + 1, dc = p[1] + (field[dr] && field[dr].length > field[p[0]].length ? 1 : 0);
-        // A bit pushed past the lower edge fills the place vacated by the note:
-        // the whole exchange is a closed cycle, conserving the number of 1s.
-        const next = dr < field.length && dc < field[dr].length ? [dr, dc] : old;
-        if (occupied(next, walker)) return;
-        if (read(next) === '0') { write(next, '1'); break; }
-        p = next;
-      }
-      write(target, walker.bit);
-      for (const { pos, bit } of changes.values()) field[pos[0]][pos[1]] = bit;
-      walker.pos = target;
+    /* v0.003, «звук и ноты пусть двигаются, не изменяя треугольник: на 1 — вниз-вправо следующий ход, на 0 — вверх-вправо; когда уходит за
+       треугольник — просто пропадает; всегда можно запускать единицы»: поле не меняется. Нота смотрит на бит под собой: 1 — шаг вниз-вправо,
+       0 — вверх-вправо. Соседний ряд — со своей длиной (ряды по центру), поэтому колонка пересчитывается по геометрии: на полклетки правее;
+       попала ровно между двумя (соседние ряды одной длины) — правая, а нет правой — левая. Шаг за любой край треугольника — нота пропадает (её звук выключается), её ячейка на старте
+       снова зажигается, и её можно запустить заново. Занятая другой нотой клетка — ждёт ход */
+    const advance = (walker, id) => {
+      const [r, j] = walker.pos, dir = field[r][j] === '1' ? 1 : -1, nr = r + dir;
+      const gone = () => { active.delete(id); walkers.delete(id); return false; };
+      if (nr < 0 || nr >= field.length) return gone();
+      const x = j + 0.5 + (field[nr].length - field[r].length) / 2, half = Math.abs(x - Math.round(x)) > 0.25;
+      const ok = c => c >= 0 && c < field[nr].length, nj = half ? [Math.ceil(x), Math.floor(x)].find(ok) : Math.round(x);
+      if (nj === undefined || !ok(nj)) return gone();   // между двумя клетками — правая, нет её — левая; иначе за край — пропала
+      const target = [nr, nj]; if (occupied(target, walker)) return true;
+      walker.pos = target; walker.bit = field[nr][nj]; return true;
     };
     const tick = () => {
       timer = 0; if (paused || !active.size) return;
       for (let q = 0; q < ids.length; q++) {
         cursor = (cursor + 1) % ids.length; const id = ids[cursor]; if (!active.has(id)) continue;
-        const walker = walkers.get(id); advance(walker); tone(cursor, walker.pos); break;
+        const walker = walkers.get(id); if (advance(walker, id)) tone(cursor, walker.pos); break;
       }
       publish(); timer = setTimeout(tick, 1000 / 6);
     };
     const run = () => { if (!timer && !paused && active.size) timer = setTimeout(tick, 1000 / 6); };
     const start = id => {
       const t = ids.indexOf(id); if (occupied(starts[t], walkers.get(id))) return;
-      // A newly launched note is always its original coloured 1, even if an
-      // earlier exchange has left a 0 at its starting place.
-      field[starts[t][0]][starts[t][1]] = '1';
-      active.add(id); walkers.set(id, { pos: starts[t].slice(), bit: '1' });
+      active.add(id); walkers.set(id, { pos: starts[t].slice(), bit: field[starts[t][0]][starts[t][1]] });   // v0.003: поле не трогаем
     };
     return {
       send(message) {

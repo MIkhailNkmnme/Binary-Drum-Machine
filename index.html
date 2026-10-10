@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.096. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.097. Точка входа: ссылки на все страницы проекта.
+     v0.097: ноты ходят, не меняя треугольник: на 1 — вниз-вправо, на 0 — вверх-вправо; за краем нота пропадает, её можно запустить снова.
      v0.096: «Гранидус» → «Бирамида» — кнопка Черновиков (oktaedr/Zerkalius-oktaedr.html) переименована вместе со страницей.
      v0.095: цветные ноты вверх-вправо по очереди, не поворачивая; встреченные 1 — ниже вправо. На краю — замкнутый обмен, кнопка идёт с нотой.
      v0.094: семь нот на 1 / 1 / 11 / 111; по очереди вниз на 1, вверх на 0. Треугольник у верха; цветная надпись — маленькая кнопка меню.
@@ -111,7 +112,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.096</title>
+    <title>Zerkalius Control Hub — v0.097</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -463,7 +464,7 @@
         @keyframes hub-down { 0% { transform: translate(-50%, -6px); opacity: .25; } 50% { opacity: 1; } 100% { transform: translate(-50%, 10px); opacity: .25; } }
     </style>
 <script src="_js/initial-rows.js?v=2"></script>
-<script src="_js/hub-rhomb-music.js?v=2"></script>
+<script src="_js/hub-rhomb-music.js?v=3"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -500,7 +501,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.096</div>
+        <div class="ver">v0.097</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -902,7 +903,7 @@
                     document.querySelectorAll('.hubNoteCell').forEach(b => b.remove());
                     const hit = dw, hitH = dh;
                     cells.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'hubNoteCell';
-                        b.title = noteNames[c.t] + ': строка ' + (c.r + 1) + ', бит ' + (c.j + 1) + '; вверх-вправо; встреченная 1 сдвигается ниже. Щелчок — включить / выключить'; b.setAttribute('aria-label', noteNames[c.t]);
+                        b.title = noteNames[c.t] + ': строка ' + (c.r + 1) + ', бит ' + (c.j + 1) + '; на 1 — шаг вниз-вправо, на 0 — вверх-вправо, треугольник не меняется; за краем нота пропадает. Щелчок — включить / выключить (пропавшую — запустить снова)'; b.setAttribute('aria-label', noteNames[c.t]);
                         b.dataset.note = IDS[c.t]; b.dataset.row = c.r; b.dataset.col = c.j; b.setAttribute('aria-pressed', String(NOTES.on.has(IDS[c.t])));
                         Object.assign(b.style, { left: (c.x - hit / 2).toFixed(1) + 'px', top: (c.y - hitH / 2).toFixed(1) + 'px', width: hit.toFixed(1) + 'px', height: hitH.toFixed(1) + 'px' });
                         b.onclick = () => { const id = IDS[c.t], on = !NOTES.on.has(id); if (on) NOTES.on.add(id); else NOTES.on.delete(id);
