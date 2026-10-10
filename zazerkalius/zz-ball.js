@@ -30,7 +30,8 @@
     const speed = slicing ? slicing.speedQ : Q(Z.coneSliceSpeed || "2/3");
     status("Нарезка · " + (slicing ? slicing.done ? "предел колец · стоп" : paused ? "пауза" : "движение" : "▶ пуск") +
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · шариков " + (slicing ? slicing.moving.length : 1) + " · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
-      (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0));
+      (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0) +
+      (slicing?.spawnedK2 ? " · из щелей К2: 2" : ""));
     const box = $("ballLabTurns"); if (!box) return;
     const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
     for (let k = 0; slicing && k < slicing.count; k++) {
@@ -49,7 +50,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,done:false,
-      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed}],spawnedK2:false,cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     const first = slicing.moving[0], angle = S.rings[0].phaseQ.add(S.spinQ).add(first.rawQ);
     if (slicing.count === 1) sliceGrow();
     if (slicing.count > 1) sliceEnter(first,1,snapshot(),angle);
@@ -69,7 +70,9 @@
     if (slicing.count > 1 && (slicing.completedCuts[slicing.count - 1] || []).length < slicing.count) return false;
     const n = Z.rows.length + 1;
     Z.rows.push("0".repeat(n)); coneRot.push(0); Z.coneRot = coneRot.slice(); Z.fillCells = null;
-    slicing.count = n; slicing.RQ = Q(n); renderRows(); save(); renderCone(); return true;
+    slicing.count = n; slicing.RQ = Q(n);
+    if (n === 3) sliceLaunchK2Pair(snapshot());
+    renderRows(); save(); renderCone(); return true;
   }
   function sliceEnter(ball, k, S, angle){
     ball.k = k; ball.rawQ = Q(angle).sub(S.rings[k].phaseQ).sub(S.spinQ);
@@ -81,16 +84,21 @@
     ball.rQ = ZERO; ball.k = 0; ball.move = 1; slicing.centerBounces++;
   }
   function sliceLaunchK2Pair(S){
-    const first = slicing.moving[0], cuts = slicing.completedCuts[1];
+    if (!slicing || slicing.spawnedK2 || slicing.count < 3 || !S?.rings[2]) return false;
+    const first = slicing.moving.find(ball => ball.id === 1), cuts = slicing.cuts[1] || [];
+    if (!first || cuts.length < 2) return false;
     const own = cuts.find(raw => raw.eq(first.rawQ.mod())) || cuts[0];
     const other = cuts.find(raw => !raw.eq(own));
-    const pair = [first,{id:2,rQ:Q(2),k:1,rawQ:other,move:1,speedQ:first.speedQ}];
+    if (!other) return false;
+    const second = {id:2,rQ:Q(2),k:1,rawQ:other,move:1,speedQ:first.speedQ};
+    const pair = [first,second];
     for (let i = 0; i < pair.length; i++) {
       const ball = pair[i], raw = i ? other : own;
       ball.rQ = Q(2); ball.move = 1;
       sliceEnter(ball,2,S,S.rings[1].phaseQ.add(S.spinQ).add(raw));
     }
-    slicing.moving = pair;
+    slicing.moving.push(second); slicing.spawnedK2 = true;
+    return true;
   }
   function sliceAdvance(A, B, dt){
     if (!slicing || slicing.done || paused || !A || !B) return;
@@ -127,10 +135,11 @@
         if (slicing.count >= CONE_MAX) {
           slicing.done = true; pauseRotation(); sliceStatus(); save(); renderCone(); return;
         }
+        const spawnedBefore = slicing.spawnedK2;
         grew = sliceGrow();
         if (grew) {
           to = snapshot();
-          if (slicing.count === 3 && slicing.moving.length === 1) { sliceLaunchK2Pair(to); pair = true; }
+          pair = !spawnedBefore && slicing.spawnedK2;
         }
       }
       if (!pair) for (const ball of contacts) {
@@ -1026,7 +1035,13 @@
   }
   window.zzBallBeforeSpin = () => {
     if (!enabled) return null;
-    if (slicingOn()) { if (coneSpinning && slicing && !slicing.done) paused = false; return snapshot(); }
+    if (slicingOn()) {
+      if (coneSpinning && slicing && !slicing.done) {
+        paused = false;
+        if (slicing.count >= 3 && !slicing.spawnedK2) sliceLaunchK2Pair(snapshot());
+      }
+      return snapshot();
+    }
     const S = snapshot(); if (!S) { status(hint()); return null; }
     growRun(S);
     if (!F || F.shape !== S.shape) { if (markRun && !paused) restartRun(S); else prepare(S); } return S;
