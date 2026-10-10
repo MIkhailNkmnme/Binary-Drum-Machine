@@ -1509,7 +1509,7 @@
   function init() {
     if (!$("bConeBall")) return;
     Z.coneBallAuto = true; Z.coneBallMult = "1";   // v0.1028: только автоподстройка, ручной скорости нет
-    enabled = Z.coneBallOn !== false; paused = !coneSpinning; ui(); reset(false, true);
+    enabled = Z.coneBallOn === true; paused = !coneSpinning; ui(); reset(false, true);
     $("bConeBall").onclick = () => {
       enabled = !enabled; Z.coneBallOn = enabled; ui(); save(); reset();
       if (enabled && coneSpinning) { window.zzBallSpinState(true); renderCone(); }

@@ -34,7 +34,18 @@ const $ = (id) => {
   return null;
 };
 
+// v0.046: все переключаемые опыты «Грани» и «Шарики» выключены в начальном состоянии.
+const ZZ_FACE_BALL_DEFAULTS = {
+  coneFaceView: false, coneFaceOrder: false, coneNotch: false, coneNotchSlit: false, coneRay: false,
+  coneBallOn: false, coneBallArm: "", coneBallRoute: "cross", coneBallBatch: false,
+  coneBallPoints: false, coneBallArc: false, coneBallOne: false, coneBallCenter: "through",
+  coneBallReverse: false, coneBallChain: false, coneBallLoss: false, coneBallMark: false,
+  coneBallImpact: "stick", coneBallAbsorb: false, coneBallZeroBounce: false,
+  coneBallSimPause: false, coneBallOnePerRing: false, coneBallFlow: false, coneBallFromBits: false,
+  coneBallClosed: null, coneNotches: null, faceBallDefaultsRevision: 1
+};
 const Z = {
+  ...ZZ_FACE_BALL_DEFAULTS,
   coneQuadBalances: false,
   coneBalanceHighlight: false,
   coneBalancePause: false,
@@ -76,7 +87,7 @@ const Z = {
   manMode: "enc",
   win: {},
   helpOn: true,
-  tipsOn: true,
+  tipsOn: false,
   coneAxisText: false,
   z: 10
 };
@@ -108,7 +119,11 @@ function load(){
     if (!raw) { if (!ZZ_SOLO) Z.fieldRight = true; return; }   // v0.551: первый запуск — строки справа, окна свёрнуты в список «Окна» слева
     const u = JSON.parse(raw);
     if (first && u) { delete u.win; delete u.dockOrder; delete u.pins; }   // окна Zazerkalius ей ни к чему
-    if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) { zzInitialRowsMigrate(u, raw, ZZ_KEY); Object.assign(Z, u); }
+    if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) {
+      zzInitialRowsMigrate(u, raw, ZZ_KEY);
+      if ((u.faceBallDefaultsRevision | 0) < 1) Object.assign(u, ZZ_FACE_BALL_DEFAULTS);
+      Object.assign(Z, u);
+    }
   } catch (e) { /* хранилища нет — работаем с тем, что по умолчанию */ }
   if (!Z.rows.length) Z.rows = ["1"];
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
@@ -194,8 +209,8 @@ function tipsApply(){
     const algo = doc.getElementById("lasAlgo"); if (!on && algo) algo.classList.remove("tip");
   });
   const b = $("bHelp"); if (b) {
-    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
-    const t = on ? "Подсказки включены — щелчок: отключить" : "Подсказки выключены — щелчок: включить";
+    coneAxisTextUi();
+    const t = "Подсказки и текст у оси — щелчок: " + (on || Z.coneAxisText === true ? "выключить оба" : "включить оба");
     if (on) { b.title = t; delete b.dataset.zzTip; } else { b.dataset.zzTip = t; b.removeAttribute("title"); }
   }
 }
@@ -2547,8 +2562,8 @@ function coneBallModeTip(){
   else if (lab.title !== text) lab.title = text;
 }
 function coneAxisTextUi(){
-  const b = $("bAxisText"); if (!b) return;
-  const on = Z.coneAxisText === true; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+  const b = $("bHelp"); if (!b) return;
+  const on = Z.tipsOn !== false || Z.coneAxisText === true; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
 }
 function coneRunStatsSync(cv, R, dpr, cx){
   if (Z.coneAxisText !== true) {
@@ -5447,7 +5462,7 @@ function coneRow1PartsUi(){
   const one = document.getElementById("bRow1Parts1"), whole = !Z.laserQuad && !Z.sunHalf && !Z.cutRow1Slit && (!coneCut2n() || Z.row1Whole);
   if (one) { one.classList.toggle("on", whole); one.setAttribute("aria-pressed", String(whole)); }
   const last = document.getElementById("bRow1PartsLast");
-  if (last) { const text = "◈ по последней · " + Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length); if (last.textContent !== text) last.textContent = text; }
+  if (last) { const text = "посл.\n" + Math.max(1, (Z.rows[Z.rows.length - 1] || "1").length); if (last.textContent !== text) last.textContent = text; }
 }
 function coneRow1PartsSet(n){
   const was = Z.laserQuad ? ["sym2", "last"].includes(Z.row1Parts) ? Z.row1Parts : conePartCount() : Z.sunHalf ? 2 : 0, on = n !== 1 && was !== n;
@@ -7033,7 +7048,15 @@ function coneMagAxisPlace(){
   box.hidden = false;
   const anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect();
   const x = A.x - hr.left - anchor.clientLeft + anchor.scrollLeft - box.offsetWidth / 2;
-  const y = A.y - hr.top - anchor.clientTop + anchor.scrollTop;
+  // v0.046: магниты у верхнего конца оси, ниже верхних кнопок и чисел баланса.
+  let yTop = cv.getBoundingClientRect().top;
+  const leftEdge = A.x - box.offsetWidth / 2, rightEdge = A.x + box.offsetWidth / 2;
+  for (const id of ["coneBalanceTools", "coneAlignTools", "coneBal", "bC3Axes", "bC3ZoomOut", "bC3ZoomIn"]) {
+    const el = $(id); if (!el || el.hidden || !el.getClientRects().length) continue;
+    const r = el.getBoundingClientRect();
+    if (r.left < rightEdge && r.right > leftEdge) yTop = Math.max(yTop, r.bottom);
+  }
+  const y = yTop + 4 - hr.top - anchor.clientTop + anchor.scrollTop;
   const left = x.toFixed(1) + "px", top = y.toFixed(1) + "px";
   if (box.style.left !== left) box.style.left = left; if (box.style.top !== top) box.style.top = top;
 }
@@ -7043,9 +7066,17 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const host = b.parentElement, anchor = b.offsetParent || host, hr = anchor.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
   // v0.042: пуск — ромб темпа, шаги — на его краях; в нижнем ряду остаются старт и сброс.
-  const bottom = cr.bottom - hr.top + scrollTop, left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4, gap = 2, centre = (left + edge) / 2;
+  // v0.046: пульт — по центру видимого тела окна; размер и сдвиг холста его не уводят в сторону.
+  const vr = host.getBoundingClientRect(), viewLeft = Math.max(0, vr.left), viewRight = Math.min(document.documentElement.clientWidth, vr.right);
+  const bottom = Math.min(cr.bottom, vr.bottom, innerHeight) - 4 - hr.top + scrollTop;
+  const left = viewLeft - hr.left + scrollLeft + 4, edge = viewRight - hr.left + scrollLeft - 4, gap = 2, centre = (left + edge) / 2;
   const ms = $("c3Modes");
-  const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
+  const put = (e, X, Y) => {
+    const parent = e.offsetParent || host, r = parent.getBoundingClientRect();
+    const l = (X + hr.left - scrollLeft - r.left - parent.clientLeft + parent.scrollLeft).toFixed(1) + "px";
+    const t = (Y + hr.top - scrollTop - r.top - parent.clientTop + parent.scrollTop).toFixed(1) + "px";
+    if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t;
+  };
   const startButton = $("bConeStartBack"), speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
   for (const [id, control] of [["coneTransportStart", startButton], ["coneTransportTempo", speedLabel]]) {
     if (!control) continue;
@@ -7062,12 +7093,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const modesBelow = ws + wr + modeGap + mw > edge - left;
   const rowWidth = ws + wr + (modesBelow ? 0 : modeGap + mw);
   const rowLeft = Math.max(left, centre - rowWidth / 2), x = rowLeft + ws, rowRight = rowLeft + rowWidth, modeLeft = x + wr + modeGap;
-  let lift = modesBelow ? rh + gap : 0;
-  for (const g of document.querySelectorAll("#w-cone .cgrp.cmin")) {   // свёрнутые группы у нижнего края («3D» и др.) не перекрывать — пульт встаёт над ними
-    if (!g.getClientRects().length) continue;
-    const r = g.getBoundingClientRect(), gl = r.left - hr.left + scrollLeft, gt = r.top - hr.top + scrollTop;
-    if (gl < rowRight && gl + r.width > rowLeft && gt < bottom - lift && gt + r.height > bottom - lift - rh) lift = Math.max(lift, bottom - gt + 2);
-  }
+  const lift = modesBelow ? ms.offsetHeight + gap : 0;
   const y = bottom - rh - lift, base = bottom - lift, on = (e) => base - (e.offsetHeight || rh);   // v0.024: кнопки разной высоты (▶ крупнее) — на одном нижнем крае
   if (startBox && ws) put(startBox, rowLeft, on(startBox));
   put(b, x, on(b));
@@ -11269,13 +11295,27 @@ function cgrpInit(){
     const extra = Math.floor(br.right - right - 1); if (right > br.left && extra > 0) g.style.width = (parseFloat(g.style.width) - extra) + "px";
   };
   const NOGRAB = "button, [role=button], input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.1016: строки выбора вида колец — кнопки, их щелчок не захватывает перенос группы
-  const wb = tl.parentElement; let zTop = 500;
+  const wb = tl.parentElement;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   wb.closest(".win")._solFoldLayout = changed => {
     const local = changed.filter(g => groups.includes(g)); if (!local.length) return;
     cgbSnap(false); local.forEach(sizeApply); cgrpCols(); local.forEach(place);
   };
   const panels = () => [...groups, ...Object.keys(SOL_PLATES).map(id => document.getElementById(id)).filter(Boolean)];
+  // v0.046: щелчок по кнопке и фокус поднимают всю панель, включая таблицы.
+  let panelOrder = panels();
+  const frontPanel = el => {
+    panelOrder = panelOrder.filter(p => p.isConnected && p !== el);
+    if (el) panelOrder.push(el);
+    panelOrder.forEach((p, i) => p.style.setProperty("z-index", String(2147483501 + i), "important"));
+  };
+  frontPanel(null);
+  const activatePanel = e => {
+    const panel = e.target.closest && e.target.closest(".cgrp, .sol-plate");
+    if (panel && panel.closest("#w-cone, #paneGrp")) frontPanel(panel);
+  };
+  document.addEventListener("pointerdown", activatePanel, true);
+  document.addEventListener("focusin", activatePanel, true);
   const onCanvas = g => SOL_PLATES[g.id] ? g.parentElement === wb : g.parentElement === tl;
   const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
   window.zzAxisPanels = () => panels().filter(onCanvas);
@@ -11328,6 +11368,7 @@ function cgrpInit(){
      на рамку (заходит на 1 px), левые края вровень, если близко; нижняя прицеплена к верхней ({ to, v: 1, dx }) */
   if (!Z.cgrpLink || typeof Z.cgrpLink !== "object") Z.cgrpLink = {};
   const gByKey = k => panels().find(o => o.dataset.g === k);
+  Z.cgrpLink = {}; // v0.046: окна больше не связаны старыми сцепками.
   const linkCycle = (right, left) => solLinkCycle(Z.cgrpLink, right, left);
   const meshSnap = (g, x, y, w, h) => {
     const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H; let best = null;
@@ -11365,24 +11406,11 @@ function cgrpInit(){
     }
     return best;
   };
-  let linkSaveT = 0;
   const linkSync = () => {
+    // v0.046: сохраняем прищепки к оси и краям; сцепок панель-панель больше нет.
+    Z.cgrpLink = {};
     if (document.body.classList.contains("sol-mobile")) return;
-    const t = TZC_H / (2 * Math.sqrt(3)); let ch = false;
     for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpTop && Z.cgrpTop[g.dataset.g]) || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
-    for (let pass = 0; pass < panels().length; pass++) { let any = false;
-      for (const [k, L] of Object.entries(Z.cgrpLink)) {
-        const g = gByKey(k), o = L && gByKey(L.to);
-        if (!g || !o) { if ([k, L && L.to].some(key => key && key[0] === "@" && SOL_PLATES[key.slice(1)])) continue; delete Z.cgrpLink[k]; continue; }
-        if (solLinkCycle(Z.cgrpLink, k, L.to)) { delete Z.cgrpLink[k]; ch = true; continue; }
-        if (!onCanvas(g) || !onCanvas(o) || g.classList.contains("cdrag") || g.classList.contains("pdrag") || zrec(g) || zrec(o) || typeof nodePin(g) === "number" || !o.getClientRects().length || !g.getClientRects().length) continue;
-        const q = o.getBoundingClientRect(), x = L.v ? q.left + (L.dx || 0) : q.right - t;
-        const grid = L.grid || (solPanelFolded(g) && solPanelFolded(o));
-        const y = L.v ? (grid ? q.top + solPanelRowStep(o) : q.bottom - 1) + (L.gap || 0) : q.top + (L.dy || 0), r = g.getBoundingClientRect();
-        if (Math.abs(r.left - x) > 0.5 || Math.abs(r.top - y) > 0.5) { nodeSetPos(g, x, y); nodePlace(g); const a = g.getBoundingClientRect(); if (Math.abs(a.left - r.left) > 0.5 || Math.abs(a.top - r.top) > 0.5) any = ch = true; }
-      }
-      if (!any) break; }
-    if (ch && !document.body.classList.contains("cgdrag")) { clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
     if (window.zzPanelOrganizeSync) window.zzPanelOrganizeSync();
   };
   setInterval(() => { if (!document.hidden && !ZZ_BG) linkSync(); }, 300);
@@ -11421,43 +11449,21 @@ function cgrpInit(){
      приставлена край к краю, со щелью. Группы лазера, что стоят бок о бок (правая — в пределах двух шагов t от зубцов левой, ряды перекрываются), сами
      сцепляются: правая прицепляется к левой ряд в ряд (dy — целыми рядами по 24 px), linkSync ставит её остриём в выемку. Уже прицепленную к чему-то не
      трогает. Пересчёт — после отпускания группы лазера и один раз при загрузке */
-  const lasMesh = () => {
-    const t = TZC_H / (2 * Math.sqrt(3)), F = groups.filter(o => o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && !o.classList.contains("cdrag") && o.getClientRects().length);
-    let ch = false;
-    for (const b of F) { if (Z.cgrpLink[b.dataset.g] || typeof nodePin(b) === "number" || (Z.cgrpEdge && Z.cgrpEdge[b.dataset.g])) continue; const B = b.getBoundingClientRect(); let best = null;
-      for (const a of F) { if (a === b || linkCycle(b.dataset.g, a.dataset.g)) continue; const A = a.getBoundingClientRect(), d = B.left - (A.right - t);
-        if (d < -3 || d > 2 * t + 4 || B.top >= A.bottom - 4 || B.bottom <= A.top + 4) continue;
-        if (!best || Math.abs(d) < best.d) best = { a, A, d: Math.abs(d) }; }
-      if (best) { Z.cgrpLink[b.dataset.g] = { to: best.a.dataset.g, dy: Math.round((B.top - best.A.top) / TZC_H) * TZC_H }; ch = true; } }
-    if (ch) { linkSync(); save(); }
-  };
-  setTimeout(() => { if (!ZZ_BG) lasMesh(); }, 1100);
+  const lasMesh = () => {}; // v0.046: автоматическое сцепление соседних лазерных панелей снято.
   const snapXY = (g, x, y, w, h) => {   // v0.400: через zSnapTo — и с подсветкой того, к чему прилипла
-    const m = meshSnap(g, x, y, w, h); g._mesh = m;   // v0.502: зубцы в зубцы — сильнее прочего магнита
-    if (m) { zSnapGlow([m.o]); return [m.x, m.y]; }
+    g._mesh = null; // v0.046: соседние панели больше не притягивают.
     const T = [], add = (el, ov) => { if (!el || !el.getClientRects().length) return; const q = el.getBoundingClientRect(); if (q.width > 4 && q.height > 4) T.push([el, q, ov || 0]); };
     /* v0.478, «магнитить только там, но без щелей — обводка на обводку ложить»: группа к группе встык заходит на 1 px — их рамки ложатся одна на другую */
-    add(wb); add($("field")); add($("rowsPane")); panels().forEach(o => { if (o !== g) add(o, 1); });
+    add(wb); add($("field")); add($("rowsPane"));
     const bodyTarget = T.find(([el]) => el === wb);
     if (bodyTarget) { const q = bodyTarget[1], top = solPanelTop(wb, x, w); bodyTarget[1] = { left: q.left, right: q.right, top, bottom: q.bottom }; }
     const [sx, sy, hit] = zSnapTo(x, y, w, h, T, SNAP); zSnapGlow(hit); return [sx, sy];
   };
   window.zzGroupPinSync = () => linkSync();   // v0.929: единая верёвка для групп и таблиц
-  const attachMesh = (g, m) => {
-    if (m && m.side === "z") {
-      nodeUnpin(g); delete Z.cgrpLink[g.dataset.g]; Z.cgrpEdge ||= {};
-      Z.cgrpEdge[g.dataset.g] = { id: m.o.id, row: m.row };
-      nodePlace(g); return;
-    }
-    if (!m || !onCanvas(m.o) || !onCanvas(g)) return;
-    const gr = g.getBoundingClientRect(), qr = m.o.getBoundingClientRect(), key = solLinkAttach(Z.cgrpLink, g.dataset.g, m.o.dataset.g, m.side, gr, qr);
-    if (!key) return;
-    const kid = gByKey(key), par = gByKey(Z.cgrpLink[key].to), r = kid.getBoundingClientRect(); nodeUnpin(kid); nodeSetPos(kid, r.left, r.top);
-    say(`🧲 «${solPanelName(kid)}» прицеплена ${Z.cgrpLink[key].v ? "снизу" : "справа"} к «${solPanelName(par)}» — едет за ней; потянешь — отцепится.`);
-  };
+  const attachMesh = () => {}; // v0.046: отпускание рядом с другой панелью не связывает их.
   window.zzPlateSnap = (el, x, y, w, h) => snapXY(el, x, y, w, h);
   window.zzPanelLinkSync = linkSync;
-  window.zzPanelDragStart = (el, solo) => { el.style.zIndex = ++zTop; delete Z.cgrpLink[el.dataset.g]; nodeUnpin(el); if (solo) for (const [key, L] of Object.entries(Z.cgrpLink)) if (L && L.to === el.dataset.g) delete Z.cgrpLink[key]; };
+  window.zzPanelDragStart = (el, solo) => { frontPanel(el); delete Z.cgrpLink[el.dataset.g]; nodeUnpin(el); if (solo) for (const [key, L] of Object.entries(Z.cgrpLink)) if (L && L.to === el.dataset.g) delete Z.cgrpLink[key]; };
   window.zzPanelDragEnd = el => { const m = el._mesh; el._mesh = null; if (typeof nodePin(el) !== "number") attachMesh(el, m); linkSync(); if (!Z.cgrpLink[el.dataset.g]) grpFix(el); };
   const wbTop = (x, width) => solPanelTop(wb, x, width);
   const floatPlace = (g, x, y) => {
@@ -11519,41 +11525,7 @@ function cgrpInit(){
      другую больше чем на зубец (9 px — встык и зубцы в зубцы по-прежнему можно), сдвигается на ближайшее место вплотную к ней (справа, слева, снизу или сверху —
      куда короче и что в пределах окна). Когда отпустили группу — двигается она; само (раз в 0,3 с: группа выросла, окно сузилось) — верхняя из двух.
      Прицепленные 🧲 сами не двигаются — двигают другую */
-  const grpFix = (only) => {
-    if (document.body.classList.contains("sol-mobile")) return;
-    if (document.body.classList.contains("cgdrag")) return;
-    const vis = panels().filter(g => onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && g.offsetWidth > 4);
-    const mov = g => !(Z.cgrpTop && Z.cgrpTop[g.dataset.g]) && zrec(g)?.z !== "head" && (SOL_PLATES[g.id] || g.classList.contains("cfloat")) && !Z.cgrpLink[g.dataset.g] && !(Z.cgrpEdge && Z.cgrpEdge[g.dataset.g]) && typeof nodePin(g) !== "number" && !!(SOL_PLATES[g.id] || Z.cgrpFld[g.dataset.g] || Z.cgrpPos[g.dataset.g]);
-    const zOf = (g) => +g.style.zIndex || 0, TOL = 9;
-    let ch = false;
-    for (let pass = 0; pass < 12; pass++) {
-      let any = false;
-      for (const g of vis) {
-        if (only && g !== only) continue;
-        for (const o of vis) {
-          if (o === g) continue;
-          const a = g.getBoundingClientRect(), b = o.getBoundingClientRect();
-          const ix = Math.min(a.right, b.right) - Math.max(a.left, b.left), iy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-          if (ix <= TOL || iy <= TOL) continue;
-          let m = g, q = o;   // кого двигать
-          if (!only) { if (!mov(g) || (mov(o) && zOf(o) > zOf(g))) { m = o; q = g; } }
-          if (!mov(m)) continue;
-          const A = m.getBoundingClientRect(), B = q.getBoundingClientRect(), k = m.dataset.g, F = zrec(m);
-          const fr = F ? solZoneRect(F.z) : null, br = wb.getBoundingClientRect();
-          const box = fr ? { l: fr.left, t: fr.top, r: fr.left + fr.width, b: fr.top + fr.height } : { l: br.left, t: wbTop(), r: br.right, b: br.bottom };
-          const cand = [[B.right - 1 - A.left, 0], [B.left + 1 - A.right, 0], [0, B.bottom - 1 - A.top], [0, B.top + 1 - A.bottom]]
-            .map(([dx, dy]) => ({ dx, dy, d: Math.abs(dx) + Math.abs(dy), ok: A.left + dx >= box.l - 0.5 && A.right + dx <= box.r + 0.5 && A.top + dy >= box.t - 0.5 && A.bottom + dy <= box.b + 0.5 }))
-            .sort((u, v) => (v.ok - u.ok) || (u.d - v.d));
-          const c = cand[0]; if (!c || c.d < 0.5 || !c.ok) continue;   // v0.608, «группы не могут найти себе место и дёргаются по вертикали»: места рядом нет — не двигать (прежде сдвигал, place() возвращал в окно, и так раз в 0,3 с)
-          nodeSetPos(m, A.left + c.dx, A.top + c.dy); nodePlace(m); const r = m.getBoundingClientRect();
-          if (Math.abs(r.left - A.left) > 0.5 || Math.abs(r.top - A.top) > 0.5) any = ch = true; break;
-        }
-      }
-      if (!any) break;
-    }
-    if (ch) { linkSync(); clearTimeout(linkSaveT); linkSaveT = setTimeout(save, 400); }
-  };
-  setInterval(() => { if (!document.hidden && !ZZ_BG) grpFix(null); }, 300);
+  const grpFix = () => {}; // v0.046: перекрытие разрешено, панели сами не отодвигаются.
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
@@ -11697,7 +11669,7 @@ function cgrpInit(){
       /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
          встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
       const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left, dy = y0 - r.top; let moved = false, lx = x0, ly = y0;
-      g.style.zIndex = ++zTop;
+      frontPanel(g);
       /* v0.758, по снимку шести групп лазера, составленных вместе, — «как-то так объедини, не размагничивай их»: группа лазера (.cg-lx), что стоит поверх холста,
          тянется вместе со всеми группами лазера, которые с ней соприкасаются (и с их соседями — по цепочке): блок едет целиком, сцепки внутри него не рвутся,
          к чужим группам блок не цепляется и на левую панель / поле строк не встаёт. Одиночная группа лазера — как прочие */
@@ -11717,7 +11689,7 @@ function cgrpInit(){
         const seen = new Set([g]), q = [g];
         while (q.length) { const a = q.shift(); for (const o of fl) if (!seen.has(o) && near(a, o)) { seen.add(o); q.push(o); } }
         mates = [...seen].filter(o => o !== g).map(o => { const b = o.getBoundingClientRect(); return { o, dx: b.left - r.left, dy: b.top - r.top, w: b.width }; });
-        mates.forEach(m => { m.o.style.zIndex = ++zTop; });
+        mates.forEach(m => frontPanel(m.o)); frontPanel(g);
       }
       const mv = (ev) => {
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
@@ -11906,7 +11878,7 @@ function cgrpInit(){
     if (Z.cgrpMin[k]) { delete Z.cgrpMin[k]; g.classList.remove("cmin"); g.style.minHeight = ""; }
     cgbSnap(); sizeApply(g); place(g); linkSync();
     if (PANE_DOCK && !g.getClientRects().length && g.parentElement === tl && box && !document.body.classList.contains("pane-icons")) {   /* v0.579: на левую панель — больше нет */ delete Z.cgrpPos[k]; delete Z.cgrpFld[k]; g.classList.remove("cfloat", "cfld"); g.style.left = g.style.top = ""; box.appendChild(g); dockSync(); }
-    g.style.zIndex = ++zTop; g.classList.remove("cflash"); void g.offsetWidth; g.classList.add("cflash"); setTimeout(() => g.classList.remove("cflash"), 1600);
+    frontPanel(g); g.classList.remove("cflash"); void g.offsetWidth; g.classList.add("cflash"); setTimeout(() => g.classList.remove("cflash"), 1600);
     try { g.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* нет места */ }
     save(); if (window.palUi) palUi(); cgTabsUi();
   };
@@ -12551,6 +12523,7 @@ function triTag(){
      стоит в группах (окно конуса и левая панель): кнопки, галки-кнопки, списки, ползунки, поля чисел, подписи; все в одной цепочке «остриё в выемку».
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
   document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2), #w-cone .tools .cgrp > .glab, #paneGrp .cgrp > .glab").forEach(b => {
+    if (b.classList.contains("r1form")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
     // v0.1022: поля шариков раскладываются внутри подписи; сцепка соседних рядов им не подходит.
     const ballBody = b.closest(".ball-lab-body");
@@ -13259,6 +13232,7 @@ function tzcOff(g){
   const ov = cgb.querySelector(":scope > .tzco"); if (ov) ov.remove();
 }
 function tzcApply(g){
+  if (g.classList.contains("cg-r1")) { tzcOff(g); return; } // v0.046: формы К1 — самостоятельные ромбы.
   if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
   const d = Z.cgrpTri && Z.cgrpTri[g.dataset.g], cgb = g.querySelector(".cgb");
   if (!cgb || !d || !d.on || !g.closest("#w-cone")) { if (cgb && cgb.classList.contains("tzc")) tzcOff(g); return; }
@@ -13941,7 +13915,8 @@ function setupWin(el){
     head.querySelector(".bc").click();
   });
   const front = () => { Z.z++; el.style.zIndex = Z.z; };
-  el.addEventListener("pointerdown", front);
+  el.addEventListener("pointerdown", front, true);
+  el.addEventListener("focusin", front);
   head.addEventListener("pointerdown", (e) => {
     if (e.target.closest("button") || e.button !== 0) return;
     if (ZZ_SOLO) return;   // v0.141: на странице одного окна оно стоит на месте
@@ -13960,7 +13935,7 @@ function setupWin(el){
     const overField = (ev) => { const f = field.getBoundingClientRect(); return ev.clientX >= f.left && ev.clientX <= f.right && ev.clientY >= f.top && ev.clientY <= f.bottom; };
     /* v0.400, «такое же примагничивание надо» — окна: край окна ближе 10 px к краю другого окна, стола или поля строк — встаёт на него; сосед светится */
     const wt = [], wadd = (o) => { if (!o || o === el || !o.getClientRects().length) return; const q = o.getBoundingClientRect(); if (q.width > 4 && q.height > 4) wt.push([o, q]); };
-    document.querySelectorAll(".win").forEach(o => { if (!o.classList.contains("docked") && o.style.display !== "none") wadd(o); });
+    // v0.046: другие окна не служат магнитными целями.
     wadd($("desk")); wadd(field);
     const move = (ev) => {
       const of = overField(ev);
@@ -14344,6 +14319,7 @@ function homeRestore(){
    v0.005, «это не для режима N щель — там всегда один шарик, не закроются строки; режим В центр — T · все»: щели — «T · все» (coneSlits "all") */
 const ZZ_FACTORY = {"rows":["0"],"cur":0,"fixShow":true,"ff":"\"Roboto Mono\", Consolas, monospace","fs":15,"theme":"dark","lanes":[["0"],["1"],["1"],["1"]],"lane":0,"laneCount":1,"lanesHid":[[],[],[],[]],"fillCells":"..","laneView":"cols","axisPos":[58],"ovOp":"xor","pack":true,"paneIcons":true,"rowsH":0,"tplRef":0,"showFM":false,"show01":false,"showFix":false,"rowsAlign":"center","rowsW":112,"rowsFolded":true,"rowsWRestore":268,"tpl":[{"name":"Столбик · 64 стр.","rows":["1","11","101","1111","10001","110011","1010101","11111111","100000001","1100000011","10100000101","111100001111","1000100010001","11001100110011","101010101010101","1111111111111111","10000000000000001","110000000000000011","1010000000000000101","11110000000000001111","100010000000000010001","1100110000000000110011","10101010000000001010101","111111110000000011111111","1000000010000000100000001","11000000110000001100000011","101000001010000010100000101","1111000011110000111100001111","10001000100010001000100010001","110011001100110011001100110011","1010101010101010101010101010101","11111111111111111111111111111111","100000000000000000000000000000001","1100000000000000000000000000000011","10100000000000000000000000000000101","111100000000000000000000000000001111","1000100000000000000000000000000010001","11001100000000000000000000000000110011","101010100000000000000000000000001010101","1111111100000000000000000000000011111111","10000000100000000000000000000000100000001","110000001100000000000000000000001100000011","1010000010100000000000000000000010100000101","11110000111100000000000000000000111100001111","100010001000100000000000000000001000100010001","1100110011001100000000000000000011001100110011","10101010101010100000000000000000101010101010101","111111111111111100000000000000001111111111111111","1000000000000000100000000000000010000000000000001","11000000000000001100000000000000110000000000000011","101000000000000010100000000000001010000000000000101","1111000000000000111100000000000011110000000000001111","10001000000000001000100000000000100010000000000010001","110011000000000011001100000000001100110000000000110011","1010101000000000101010100000000010101010000000001010101","11111111000000001111111100000000111111110000000011111111","100000001000000010000000100000001000000010000000100000001","1100000011000000110000001100000011000000110000001100000011","10100000101000001010000010100000101000001010000010100000101","111100001111000011110000111100001111000011110000111100001111","1000100010001000100010001000100010001000100010001000100010001","11001100110011001100110011001100110011001100110011001100110011","101010101010101010101010101010101010101010101010101010101010101","1111111111111111111111111111111111111111111111111111111111111111"],"prev":{"rows":["1","11","101","1111","10001","110011","1010101"],"name":"Столбик · 7 стр."}}],"layoutVer":10,"maskStr":"10","maskN":16,"maskMode":"pascal","manMode":"enc","helpOn":true,"tipsOn":false,"z":8523,"triScenes":[{"R":23,"N":96,"c":{"0_0":7,"0_1":7,"0_2":7,"0_3":7,"0_4":7,"0_5":7,"0_6":7,"0_7":7,"0_8":7,"0_9":7,"0_10":7,"0_11":7,"0_12":4,"0_13":4,"0_14":4,"0_15":7,"0_16":4,"0_17":4,"0_18":4,"0_19":7,"0_20":4,"0_21":4,"0_22":4,"0_23":7,"0_24":7,"0_25":2,"0_26":2,"0_27":2,"0_28":2,"0_29":2,"0_30":2,"0_31":2,"0_32":2,"0_33":2,"0_34":2,"0_35":7,"0_36":7,"0_37":7,"0_38":7,"0_39":7,"0_40":7,"0_41":7,"0_42":7,"0_43":7,"0_44":7,"0_45":7,"0_46":7,"0_47":4,"0_48":4,"0_49":4,"0_50":4,"0_51":4,"0_52":4,"0_53":4,"0_54":4,"0_55":4,"0_56":4,"0_57":4,"0_58":4,"0_59":7,"0_60":7,"0_61":7,"0_62":7,"0_63":7,"0_64":7,"0_65":7,"0_66":7,"0_67":7,"0_68":7,"0_69":7,"0_70":7,"0_71":4,"0_72":4,"0_73":4,"0_74":4,"0_75":4,"0_76":4,"0_77":4,"0_78":4,"0_79":4,"0_80":4,"0_81":4,"0_82":4,"0_84":7,"0_85":7,"0_86":7,"0_87":7,"0_88":7,"0_89":7,"0_90":7,"0_91":7,"0_92":7,"0_93":7,"0_94":7,"1_0":7,"1_1":7,"1_2":7,"1_3":7,"1_4":7,"1_5":7,"1_6":7,"1_7":7,"1_8":7,"1_9":7,"1_11":7,"1_12":4,"1_13":4,"1_14":4,"1_15":7,"1_16":4,"1_17":4,"1_18":4,"1_19":7,"1_20":4,"1_21":4,"1_22":4,"1_23":7,"1_24":7,"1_25":2,"1_26":2,"1_27":2,"1_28":2,"1_29":2,"1_30":2,"1_31":2,"1_32":2,"1_33":2,"1_34":2,"1_35":7,"1_36":7,"1_37":7,"1_38":7,"1_39":7,"1_40":7,"1_41":7,"1_42":7,"1_43":7,"1_44":7,"1_45":7,"1_46":7,"1_47":4,"1_48":4,"1_49":4,"1_50":4,"1_51":4,"1_52":4,"1_53":4,"1_54":4,"1_55":4,"1_56":4,"1_57":4,"1_60":7,"1_61":7,"1_62":7,"1_63":7,"1_64":7,"1_65":7,"1_66":7,"1_67":7,"1_68":7,"1_69":7,"1_70":7,"1_71":4,"1_72":4,"1_73":4,"1_74":4,"1_75":4,"1_76":4,"1_77":4,"1_78":4,"1_79":4,"1_80":4,"1_81":4,"1_82":4,"1_84":7,"1_85":7,"1_86":7,"1_87":7,"1_88":7,"1_89":7,"1_90":7,"1_91":7,"1_92":7,"1_93":7,"1_94":7,"1_83":7,"0_83":7,"1_59":7,"1_58":4,"1_10":7},"gl":{},"gi":{},"gt":{"0_0":"Своя","0_1":"Своя","0_2":"Своя","0_3":"Своя","0_4":"Своя","0_5":"Своя","0_6":"Своя","0_7":"Своя","0_8":"Своя","0_9":"Своя","0_10":"Своя","0_11":"Своя","0_12":"1","0_13":"1","0_14":"1","0_15":"Своя","0_16":"0","0_17":"0","0_18":"0","0_19":"Своя","0_20":"а","0_21":"а","0_22":"а","0_25":"Янтарь","0_26":"Янтарь","0_27":"Янтарь","0_28":"Янтарь","0_29":"Янтарь","0_30":"Янтарь","0_31":"Янтарь","0_32":"Янтарь","0_33":"Янтарь","0_34":"Янтарь","0_35":"Океан","0_36":"Океан","0_37":"Океан","0_38":"Океан","0_39":"Океан","0_40":"Океан","0_41":"Океан","0_42":"Океан","0_43":"Океан","0_44":"Океан","0_45":"Океан","0_46":"Океан","0_47":"Лес","0_48":"Лес","0_49":"Лес","0_50":"Лес","0_51":"Лес","0_52":"Лес","0_53":"Лес","0_54":"Лес","0_55":"Лес","0_56":"Лес","0_57":"Лес","0_59":"Роза","0_60":"Роза","0_61":"Роза","0_62":"Роза","0_63":"Роза","0_64":"Роза","0_65":"Роза","0_66":"Роза","0_67":"Роза","0_68":"Роза","0_69":"Роза","0_70":"Роза","0_71":"Огонь","0_72":"Огонь","0_73":"Огонь","0_74":"Огонь","0_75":"Огонь","0_76":"Огонь","0_77":"Огонь","0_78":"Огонь","0_79":"Огонь","0_80":"Огонь","0_81":"Огонь","0_82":"Огонь","0_84":"Контраст","0_85":"Контраст","0_86":"Контраст","0_87":"Контраст","0_88":"Контраст","0_89":"Контраст","0_90":"Контраст","0_91":"Контраст","0_92":"Контраст","0_93":"Контраст","0_94":"Контраст","1_0":"Своя","1_1":"Своя","1_2":"Своя","1_3":"Своя","1_4":"Своя","1_5":"Своя","1_6":"Своя","1_7":"Своя","1_8":"Своя","1_9":"Своя","1_11":"Своя","1_12":"1","1_13":"1","1_14":"1","1_15":"Своя","1_16":"0","1_17":"0","1_18":"0","1_19":"Своя","1_20":"а","1_21":"а","1_22":"а","1_25":"Янтарь","1_26":"Янтарь","1_27":"Янтарь","1_28":"Янтарь","1_29":"Янтарь","1_30":"Янтарь","1_31":"Янтарь","1_32":"Янтарь","1_33":"Янтарь","1_34":"Янтарь","1_35":"Океан","1_36":"Океан","1_37":"Океан","1_38":"Океан","1_39":"Океан","1_40":"Океан","1_41":"Океан","1_42":"Океан","1_43":"Океан","1_44":"Океан","1_45":"Океан","1_46":"Океан","1_47":"Лес","1_48":"Лес","1_49":"Лес","1_50":"Лес","1_51":"Лес","1_52":"Лес","1_53":"Лес","1_54":"Лес","1_55":"Лес","1_56":"Лес","1_57":"Лес","1_60":"Роза","1_61":"Роза","1_62":"Роза","1_63":"Роза","1_64":"Роза","1_65":"Роза","1_66":"Роза","1_67":"Роза","1_68":"Роза","1_69":"Роза","1_70":"Роза","1_71":"Огонь","1_72":"Огонь","1_73":"Огонь","1_74":"Огонь","1_75":"Огонь","1_76":"Огонь","1_77":"Огонь","1_78":"Огонь","1_79":"Огонь","1_80":"Огонь","1_81":"Огонь","1_82":"Огонь","1_84":"Контраст","1_85":"Контраст","1_86":"Контраст","1_87":"Контраст","1_88":"Контраст","1_89":"Контраст","1_90":"Контраст","1_91":"Контраст","1_92":"Контраст","1_93":"Контраст","1_94":"Контраст"},"d":{},"l":{}},{"R":8,"N":14,"ring":1,"c":{"2_4":2,"2_5":2,"2_6":2,"2_7":2,"2_8":2,"3_4":2,"3_5":2,"3_7":2,"3_8":2,"4_5":2,"4_6":2,"4_7":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}},{"R":8,"N":14,"ring":2,"c":{"2_4":2,"2_5":2,"2_6":2,"2_7":2,"2_8":2,"3_3":2,"3_4":2,"3_8":2,"3_9":2,"4_3":2,"4_4":2,"4_8":2,"4_9":2,"5_4":2,"5_5":2,"5_6":2,"5_7":2,"5_8":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}},{"R":8,"N":14,"ring":3,"c":{"1_5":2,"1_6":2,"1_7":2,"2_2":2,"2_3":2,"2_4":2,"2_5":2,"2_7":2,"2_8":2,"2_9":2,"2_10":2,"3_2":2,"3_3":2,"3_9":2,"3_10":2,"4_2":2,"4_3":2,"4_9":2,"4_10":2,"5_2":2,"5_3":2,"5_4":2,"5_5":2,"5_7":2,"5_8":2,"5_9":2,"5_10":2,"6_5":2,"6_6":2,"6_7":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}}],"triCells":{"3_9":1,"4_9":1,"4_8":1,"5_8":1,"5_7":1,"6_7":1,"6_6":1,"7_6":1,"2_10":1,"3_10":1,"4_11":1,"5_12":1,"6_13":1,"7_14":1,"6_14":1,"5_13":1,"4_12":1,"3_11":1,"6_30":1,"7_30":1,"7_29":1,"8_29":1,"8_28":1,"8_30":1,"8_31":1,"8_32":1,"8_33":1,"8_34":1,"8_35":1,"8_36":1,"8_37":1,"8_38":1,"8_39":1,"8_40":1,"8_41":1,"8_42":1,"8_43":1,"8_44":1,"8_45":1,"8_46":1,"8_47":1,"8_48":1,"8_49":1,"8_50":1,"8_51":1,"8_52":1,"5_57":1,"5_31":1,"6_31":1,"5_32":1,"5_33":1,"5_34":1,"5_35":1,"5_36":1,"5_37":1,"5_38":1,"5_39":1,"5_40":1,"5_41":1,"5_42":1,"5_43":1,"5_44":1,"5_45":1,"5_46":1,"5_47":1,"5_48":1,"5_49":1,"5_50":1,"5_51":1,"5_52":1,"5_53":1,"5_54":1,"5_55":1,"5_56":1,"8_62":1,"7_61":1,"7_60":1,"6_60":1,"6_59":1,"5_59":1,"5_58":1,"8_53":1,"8_54":1,"8_55":1,"8_56":1,"8_57":1,"8_58":1,"8_59":1,"8_60":1,"8_61":1,"12_29":1,"13_30":1,"13_31":1,"14_31":1,"14_32":1,"12_30":1,"11_29":1,"11_30":1,"11_31":1,"11_32":1,"11_33":1,"11_34":1,"11_35":1,"11_36":1,"11_37":1,"11_38":1,"11_39":1,"11_40":1,"11_41":1,"11_42":1,"11_43":1,"11_44":1,"11_45":1,"11_46":1,"11_49":1,"11_50":1,"11_52":1,"11_53":1,"11_54":1,"11_55":1,"11_56":1,"11_57":1,"11_58":1,"11_59":1,"11_60":1,"11_61":1,"11_51":1,"11_47":1,"11_48":1,"12_61":1,"12_60":1,"13_60":1,"13_59":1,"14_59":1,"14_33":1,"14_34":1,"14_36":1,"14_37":1,"14_38":1,"14_39":1,"14_40":1,"14_41":1,"14_42":1,"14_43":1,"14_44":1,"14_45":1,"14_46":1,"14_47":1,"14_48":1,"14_49":1,"14_50":1,"14_51":1,"14_52":1,"14_53":1,"14_54":1,"14_55":1,"14_56":1,"14_57":1,"14_58":1,"14_35":1,"11_62":1,"11_28":1},"triGLn":{},"triGIn":{},"triGTx":{},"triDots":{},"triLines":{},"triR":21,"triN":111,"triS":26.369230769230768,"triCol":1,"triTCol":2,"triDotD":3,"triLW":2,"triCur":-1,"triSel":null,"fieldRight":true,"coneRot":[0],"fillV128":true,"voidHits":{"sig":"4:4","h":{},"lph":0,"fz":{},"ex":{},"exI":{},"off":{},"lk":0,"exH":[],"fd":{}},"coneSpin":0,"coneSpinPh":0,"coneClockN":0,"coneAimRot":0,"coneGlow":false,"coneClock":false,"coneAutoSp":6,"coneSpinMode":"bit","coneOnlySel":false,"cone3d":false,"cone3Yaw":-230,"cone3El":42.4,"coneLock":true,"coneVoid":false,"coneSect":false,"coneLocks":{},"cone3H":0,"ctw":{"open":false,"w":1194,"h":260,"x":0,"y":515,"pin":true,"min":false},"cgrpPos":{"гамма":{"x":0,"y":-6},"вид":{"x":494.015625,"y":-48},"за чертой":{"x":173.0717967697245,"y":312},"лазер":{"x":1014.015625,"y":-47},"кручение":{"x":1331.984375,"y":646},"☀ · ☾":{"x":0,"y":214},"строка 1":{"x":0,"y":-24},"кольца":{"x":0,"y":502},"шарики":{"x":1587.984375,"y":-48},"щели":{"x":0,"y":94},"грани":{"x":1588.984375,"y":262}},"pal":6,"cgrpMin":{"гамма":-1,"дзен":true,"3d":true,"аниматрица":true,"алгоритм":true,"алг. · подск.":true,"звук":true,"лазер":true,"вид":true},"cgrpSize":{"гамма":{"w":174,"h":121},"кручение":{"w":432,"h":120},"лазер":{"w":300,"h":24},"аниматрица":{"w":300,"h":24},"кольца":{"w":183,"h":288},"вид":{"w":212,"h":264},"за чертой":{"w":115,"h":168},"строка 1":{"w":420,"h":120},"3d":{"w":300,"h":24},"звук":{"w":300,"h":24},"щели":{"w":133,"h":120},"алгоритм":{"w":424,"h":24},"☀ · ☾":{"w":155,"h":264},"алг. · подск.":{"w":722,"h":188},"шарики":{"w":176,"h":456},"грани":{"w":98,"h":168}},"cgrpFld":{"алг. · подск.":{"x":5,"y":1,"z":"head"},"алгоритм":{"z":"head","x":0,"y":0},"звук":{"x":1083,"y":2,"z":"head"},"аниматрица":{"x":717,"y":2,"z":"head"},"3d":{"z":"head","x":0,"y":0}},"cgrpZen":{"дзен":true,"солнце":true,"3d":true,"☀ · ☾":true,"строка 1":true},"zenGrpInit":1,"cgrpOff":{"гамма":true},"cgrpDock":[],"coneBtns":[],"zenBtns":[],"btnLab":{},"triPin0":true,"barL":8,"barR":0,"paneFold":{"Треугольник из строки":true,"Построения":true,"Шаблоны":true,"Другое":true,"Нарезать треугольник":true,"Заготовки":true},"noCur":true,"coneExRun":116,"sndMark":true,"snd2":false,"sndDir":1,"coneMusK":16,"coneLaserFix":true,"cutTake":false,"sndSp":18,"cone3Bw":0.2,"coneOcta":true,"sndVol":100,"triPrevCol":2,"fzShow":false,"triBg":null,"triLn":null,"triLnMode":1,"triOut":true,"coneMir":"off","coneAxisOffs":{"0":-5},"palCust":{"dark":["#e8ecf4","#476bb3","#7d3ccd"]},"cgrpTri":{},"triBind":null,"coneArcs":true,"conePoly":false,"animByPass":false,"bitView":"txt","btnMove":{"#animByPass":{"p":"аниматрица","before":null},"#coneSpinModeB button[data-sm=\"all\"]":{"p":"кручение","before":"#coneSpinModeB"},"#w-cone button[data-sm=\"all\"]":{"p":"кручение","before":"#coneSpinModeB"},"#coneSpinModeB button[data-sm=\"bit\"]":{"p":"кручение","before":"#w-cone button[data-sm=\"all\"]"},"#coneSpinModeB button[data-sm=\"opp\"]":{"p":"кручение","before":"#bConeAuto"},"#coneOnlySel":{"p":"вид","before":null},"#coneBit1":{"p":"вид","before":null},"#coneGlow":{"p":"вид","before":null},"#bConeAuto":{"p":"кручение","before":null}},"animSp":41,"cone3Dig":false,"animRowsN":32,"cgrpOnC":{},"noLn":true,"cgrpLink":{"за чертой":{"to":"☀ · ☾","dy":98}},"coneClean":true,"paneW":221,"paneWUser":true,"cutGen":"las","coneFan":false,"coneSlit":4.9,"coneGoN":1,"cgrpMinPos":{"гамма":{"pos":{"x":991,"y":139},"fld":null},"@sunMoonTbl":{"pos":[1227,45],"fld":null},"алг. · подск.":{"pos":{"x":582,"y":188},"fld":null},"щели":{"pos":{"x":-107,"y":210},"fld":null},"алгоритм":{"pos":{"x":132,"y":556},"fld":null},"шарики":{"pos":{"x":572,"y":145},"fld":null},"3d":{"pos":{"x":19,"y":43},"fld":null}},"rowsOrig":{"0":["1","11","101","1111","10001","110011","1010101","11111111","100000001","1100000011","10100000101","111100001111","1000100010001","11001100110011","101010101010101","1111111111111111","10000000000000001","110000000000000011","1010000000000000101","11110000000000001111","100010000000000010001","1100110000000000110011","10101010000000001010101","111111110000000011111111","1000000010000000100000001","11000000110000001100000011","101000001010000010100000101","1111000011110000111100001111","10001000100010001000100010001","110011001100110011001100110011","1010101010101010101010101010101","11111111111111111111111111111111","100000000000000000000000000000001","1100000000000000000000000000000011","10100000000000000000000000000000101","111100000000000000000000000000001111","1000100000000000000000000000000010001","11001100000000000000000000000000110011","101010100000000000000000000000001010101","1111111100000000000000000000000011111111","10000000100000000000000000000000100000001","110000001100000000000000000000001100000011","1010000010100000000000000000000010100000101","11110000111100000000000000000000111100001111","100010001000100000000000000000001000100010001","1100110011001100000000000000000011001100110011","10101010101010100000000000000000101010101010101","111111111111111100000000000000001111111111111111","1000000000000000100000000000000010000000000000001","11000000000000001100000000000000110000000000000011","101000000000000010100000000000001010000000000000101","1111000000000000111100000000000011110000000000001111","10001000000000001000100000000000100010000000000010001","110011000000000011001100000000001100110000000000110011","1010101000000000101010100000000010101010000000001010101","11111111000000001111111100000000111111110000000011111111","100000001000000010000000100000001000000010000000100000001","1100000011000000110000001100000011000000110000001100000011","10100000101000001010000010100000101000001010000010100000101","111100001111000011110000111100001111000011110000111100001111","1000100010001000100010001000100010001000100010001000100010001","11001100110011001100110011001100110011001100110011001100110011","101010101010101010101010101010101010101010101010101010101010101","1111111111111111111111111111111111111111111111111111111111111111"]},"cutDel":true,"triRingsV":2,"coneSlits":"all","coneLaser0":45,"coneBitStep":false,"coneSun":false,"coneSunCut":"zero","coneScan":false,"coneRaysLast":"cur","coneRays":"off","lasPeek":false,"coneFillTurn":0,"coneMusIn":"write","coneMusN":5,"coneMusSlit":"zero","sndScale":"major","coneLaserChain":false,"coneClockStop":false,"triSelMore":[],"cgrpTriReset754":1,"lasSplit":1,"split3d":1,"lasPack":1,"cutPrev":"","cutAlign":"p","triView":false,"triGlass":"","rowLock":false,"tri90":false,"tri90Ls":0,"coneMagK":{"ax":true,"sym":true,"bnd":true,"mid":true,"scan":true},"padPos_pered_os":{"x":1707,"y":687},"coneAxes":true,"padFold":true,"coneTurns":[],"solPanelArrangeV":2,"cgrpPin":{},"ringTblMin":true,"solPanelClusters":[{"name":"Свет и вырезы","color":"#ffe14d","keys":["лазер","☀ · ☾","строка 1","щели","за чертой","алгоритм"]},{"name":"Движение","color":"#ffd166","keys":["кручение","кольца"]},{"name":"Вид","color":"#6cb4ff","keys":["вид","3d"]},{"name":"Звук и цикл","color":"#b98cff","keys":["аниматрица","звук"]},{"name":"Таблицы","color":"#22d3ee","keys":["@ringTbl"]}],"padFx":1,"padSide":"r","ringTblXY":[299,287],"coneFillTurns":0,"coneSame":false,"sunTbl":true,"ringTbl":true,"cgrpEdge":{"кольца":{"id":"paneZigOv","row":22},"шарики":{"id":"fieldZigOv","row":0},"☀ · ☾":{"id":"paneZigOv","row":10},"строка 1":{"id":"paneZigOv","row":0},"щели":{"id":"paneZigOv","row":5},"кручение":{"id":"fieldZigOv","row":29},"грани":{"id":"fieldZigOv","row":13}},"coneHits":false,"fillStill":false,"fillFree":null,"magSym":"both","coneTurnsShow":false,"coneFillFree":false,"padFreePos":{"x":1002,"y":17},"padViewportPos":{"x":1429,"y":17,"dock":true},"sunParts":false,"moonEcl":false,"moonBlk":false,"cutLen":"ctr","cutMem":{"cutS":{"1":[2,1.6617223505324148],"2":[3,3.75],"3":[4,5.51840337185199],"4":[5,7.1]},"cut":{"1":[2,2.2499999999999996]},"cut2":{"1":[2,0.9999999999999996]},"one":{"0":[1,0.25],"1":[2,0]}},"sunSweep":true,"moonSweep":false,"sunHalf":true,"sunMoonTurn":false,"sunMoon":false,"moonCross":false,"sunPanelMerged":1,"sunPass0":false,"moonPassE":true,"moonAlways":false,"sunWideMoon":false,"coneBallAngle":3.141592653589793,"coneBallReverse":true,"coneBallSeconds":4,"coneBallRings":2,"coneEdgeStop":false,"coneBallLabOpen":true,"coneBallOn":true,"coneBallRoute":"in","coneBallArm":"in","coneBallPoints":false,"coneBallStart":"center","coneBallMult":"1","solHeaderV":1,"solHeaderOrder":["алг. · подск.","кручение","@sunMoonTbl","строка 1","кольца","щели","алгоритм","шарики","звук","аниматрица","3d"],"coneMag":false,"solHeaderLeft":false,"fieldDrawerWidth":356,"fieldPeek":false,"paneIconOpen":{},"solPlateGroupsV":1,"magSnapParts":true,"coneBallThroughCount":1,"coneBallBatch":true,"sunTblOpen":{"1":false},"laserQuad":false,"cutRow1Slit":false,"row1Parts":2,"coneSpinMag":false,"coneBallAuto":true,"coneLast2":false,"coneFree":{},"coneNotch":true,"coneMagSp":1.2,"coneNotchSlit":false,"coneBallLoss":true,"coneBallSlitOnly":true,"coneBallSlitStart":true,"coneBallMark":false,"coneBallChain":false,"cgrpTop":{"вид":{"x":0.3126681170886076},"лазер":{"x":0.6417820411392405}},"coneBallSpeedMode":1,"coneBallImpact":"bounce","coneBallAbsorb":true,"coneBallZeroBounce":true,"coneBallClosed":null,"coneBallSimPause":false,"coneNotches":{"sig":"1:2","x":[]},"motionExact":{"clock.phase":{"view":0,"value":"0"},"clock.degrees":{"view":0,"value":"0"},"offset:0":{"view":0,"value":"0"},"hold.offset:0":{"view":0,"value":"0"},"phase.offset:0":{"view":0,"value":"0"},"rotation:0":{"view":0,"value":"0"},"aim.rotation":{"view":0,"value":"0"},"offset:1":{"view":0,"value":"0"},"hold.offset:1":{"view":0,"value":"0"},"phase.offset:1":{"view":0,"value":"0"},"fill.rotation":{"view":0,"value":"0"},"memory:one:0":{"view":0.25,"value":"1/4"},"memory:one:1":{"view":0,"value":"0"},"rotation:1":{"view":0.975379273124767,"value":"975379273124767/1000000000000000"},"offset:2":{"view":0,"value":"0"},"hold.offset:2":{"view":0,"value":"0"},"phase.offset:2":{"view":0,"value":"0"},"rotation:2":{"view":0.9961740434071515,"value":"1992348086814303/2000000000000000"},"offset:3":{"view":0,"value":"0"},"hold.offset:3":{"view":0,"value":"0"},"phase.offset:3":{"view":0,"value":"0"},"rotation:3":{"view":3.652797041871789,"value":"3652797041871789/1000000000000000"},"offset:4":{"view":0,"value":"0"},"hold.offset:4":{"view":0,"value":"0"},"phase.offset:4":{"view":0,"value":"0"},"rotation:4":{"view":0,"value":"0"},"offset:5":{"view":0,"value":"0"},"hold.offset:5":{"view":0,"value":"0"},"phase.offset:5":{"view":0,"value":"0"}}};
 zzUseInitialRows(ZZ_FACTORY);
+Object.assign(ZZ_FACTORY, ZZ_FACE_BALL_DEFAULTS);
 /* ✖ Сброс — начальное состояние ZZ_FACTORY (нет его — столбик ZZ_ROWS0 и всё прочее из объявления Z). У конуса отдельной
    страницей (?solo=cone) раскладка целой страницы ни к чему — снимается, как в пресетах (ZZ_PRESET_LAYOUT). Запомненное ⭐
    переезжает в новую память: сброс не отнимает того, что пользователь сохранил сам. */
@@ -15520,8 +15496,11 @@ function init(){
   // v0.035: левая панель значками — переключатель и слежение за перерисованными кнопками
   $("bPaneIcons").onclick = () => { Z.paneIcons = !Z.paneIcons; if (Z.paneIcons) Z.paneIconOpen = {}; applyPaneIcons(); save(); packWins(); };
   new MutationObserver(() => { if (Z.paneIcons) iconizePane(); }).observe($("rowsPane"), { childList: true, subtree: true, characterData: true });
-  $("bHelp").onclick = () => { Z.tipsOn = !(Z.tipsOn !== false); tipsApply(); save(); say(Z.tipsOn ? "? Подсказки включены." : "? Подсказки отключены."); };
-  $("bAxisText").onclick = () => { Z.coneAxisText = Z.coneAxisText !== true; coneAxisTextUi(); save(); renderCone(); say(Z.coneAxisText ? "Текст у оси включён." : "Текст у оси выключен."); };
+  $("bHelp").onclick = () => {
+    const on = !(Z.tipsOn !== false || Z.coneAxisText === true);
+    Z.tipsOn = Z.coneAxisText = on; tipsApply(); save(); renderCone();
+    say(on ? "Подсказки и текст у оси включены." : "Подсказки и текст у оси выключены.");
+  };
 
   // Клавиши: ↑/↓ — по строкам, Ctrl+Z — отмена (не в полях ввода).
   // v0.012: Del/Backspace — удалить выделенное, Ctrl+A — выделить все строки, Esc — снять выделение.
