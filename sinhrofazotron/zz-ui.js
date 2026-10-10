@@ -375,20 +375,54 @@ const BR_COLS = ["#ffd700", "#da70d6", "#179fff", "#7fff7f", "#ff7f50", "#40e0d0
 let brCache = null;
 function brStream(rows){
   const key = rows.join("|"); if (brCache && brCache.key === key) return brCache;
-  const depth = rows.map(r => new Int16Array(r.length).fill(-2)), stack = [], chapters = new Set();
+  const depth = rows.map(r => new Int16Array(r.length).fill(-2)), stack = [], chapters = new Set(), list = [];
   let pairs = 0, cross = 0, maxDepth = 0, badClose = 0;
   for (let r = 0; r < rows.length; r++) {
     const t = rows[r]; let any = false;
     for (let c = 0; c < t.length; c++) {
       const b = t[c]; if (b !== "0" && b !== "1") continue; any = true;
       if (b === "0") { depth[r][c] = stack.length; stack.push([r, c]); maxDepth = Math.max(maxDepth, stack.length); }
-      else if (stack.length) { const a = stack.pop(); depth[r][c] = stack.length; pairs++; if (a[0] !== r) cross++; }
+      else if (stack.length) { const a = stack.pop(); depth[r][c] = stack.length; pairs++; if (a[0] !== r) cross++; list.push([a[0], a[1], r, c, stack.length]); }
       else { depth[r][c] = -1; badClose++; }
     }
     if (any && !stack.length) chapters.add(r);
   }
   stack.forEach(([r, c]) => { depth[r][c] = -1; });
-  return (brCache = { key, depth, chapters, pairs, cross, maxDepth, badClose, badOpen: stack.length });
+  return (brCache = { key, depth, chapters, list, pairs, cross, maxDepth, badClose, badOpen: stack.length });
+}
+/* v0.036, пункт 3 «конус — пары как хорды внутри кольца и нити от кольца к кольцу, цвет по глубине»: при «🌈 ( )» в плоском конусе каждая пара скобок
+   потока — линия между серединами её двух бит: в одной строке — хорда внутри своего кольца, в разных — нить от кольца к кольцу. Цвет — глубина
+   (те же 6 цветов), полупрозрачно. Угол бита — по той же формуле, что у балансов четвертей (поворот кольца, вырезы, кручение); у многоугольных колец
+   точка — на их стороне. Строка 1 из одного бита (половина, части) не участвует — у неё своя геометрия */
+function coneBracketThreads(g, o){
+  if (!Z.brDepth || Z.cone3d) return;
+  const B = brStream(Z.rows); if (!B.list.length) return;
+  const q = ZZExact.from, zero = q(0), spin = coneMotionClock().degrees.div(360), Nn = Math.min(Z.rows.length, o.N), cache = new Map();
+  const at = (i, j) => {
+    const k = i + ":" + j; if (cache.has(k)) return cache.get(k);
+    let pt = null;
+    const s = Z.rows[i] || "", n = s.length;
+    if (i < Nn && n && !(i === 0 && n === 1) && o.shown(i)) {
+      const cut = i >= 1 && coneCutOn(), P = cut ? coneCutP(n) : n;
+      const rot = coneMotionRot(i, n, false).value.sub(cut ? coneMotionOff(i, n, true) : zero);
+      const p = cut ? coneCutSym() ? q(j).mul(q(2 * n - 1, n)) : q(cutPrevPos(i, j)) : q(j);
+      const t = p.add(q(1, 2)).sub(rot).div(P).add(spin).number() * 2 * Math.PI - Math.PI / 2;
+      const ri = o.r0 + i * o.dr, R = ri + Math.max(1, o.dr * o.band) / 2, rr = conePoly(i) ? R * coneRho(i, t) : R;
+      pt = [o.cx + rr * Math.cos(t), o.cy + rr * Math.sin(t)];
+    }
+    cache.set(k, pt); return pt;
+  };
+  g.save(); g.setLineDash([]); g.shadowBlur = 0; g.lineCap = "round"; g.lineWidth = Math.max(1, 1.2 * o.dpr); g.globalAlpha = 0.55;
+  for (let d = 0; d < 6; d++) {   // по цвету — одним путём
+    g.strokeStyle = BR_COLS[d]; g.beginPath(); let any = false;
+    for (const [r1, c1, r2, c2, depth] of B.list) {
+      if (depth % 6 !== d) continue;
+      const a = at(r1, c1), b = at(r2, c2); if (!a || !b) continue;
+      g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); any = true;
+    }
+    if (any) g.stroke();
+  }
+  g.restore();
 }
 function bitsShow(s, row = -1){
   const x = s.length > ROW_SHOW ? s.slice(0, ROW_SHOW) : s;
@@ -3472,6 +3506,7 @@ function renderCone(){
     `Разных колец <b>${groups.size}</b> на ${Z.rows.length} строк` + (multi.length ? `; совпадающих групп ${multi.length}: ` + multi.slice(0, 8).map(v => v.slice(0, 6).map(j => j + 1).join("=") + (v.length > 6 ? "…" : "")).join(" · ") : "") +
     (Z.rows.length > CONE_MAX ? `.\nНарисованы первые ${CONE_MAX} колец из ${Z.rows.length}.` : ".") +
     (coneZoom !== 1 ? ` Масштаб ×${coneZoom.toFixed(coneZoom < 10 ? 1 : 0)}.` : "");
+  coneBracketThreads(g, { dpr, cx, cy, r0, dr, N, band, shown });   // v0.036: пары скобок — хорды и нити
   coneBalanceSync(g, { cv, R, W, H, dpr, cx, cy, r0, dr, N, band, shown, ballClosedCount, cR });
   if (window.zzQuarterRingDraw) window.zzQuarterRingDraw(g, { W, H, dpr, cx, cy, ballClosedCount });
   coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, cA, cBg);
@@ -8697,7 +8732,7 @@ function setupCone(){
   $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
   { const b = $("bBrDepth"); if (b) {   // v0.035: 🌈 ( ) — цифры поля по глубине скобок, главы
     const ui = () => { b.classList.toggle("on", !!Z.brDepth); b.setAttribute("aria-pressed", String(!!Z.brDepth)); };
-    ui(); b.onclick = () => { Z.brDepth = !Z.brDepth; ui(); save(); renderRows();
+    ui(); b.onclick = () => { Z.brDepth = !Z.brDepth; ui(); save(); renderRows(); renderCone();
       if (Z.brDepth) { const B = brStream(Z.rows); say(`🌈 Скобки потоком с первой строки (0 = «(», 1 = «)»): пар ${B.pairs} (из них через строки ${B.cross}), глубина до ${B.maxDepth}, глав ${B.chapters.size}` + (B.badClose + B.badOpen ? `, непарных ${B.badClose + B.badOpen} (серые)` : "") + "."); } }; } }
   $("animSp").onchange = () => save();
   /* v0.200, «заготовки, по умолчанию 256 строк: все серпинские правила и последовательности»: выбор в списке — поле строк
