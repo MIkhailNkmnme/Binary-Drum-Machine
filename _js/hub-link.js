@@ -1,5 +1,5 @@
 /* ===========================================================================
-   ЗНАЧОК «В ХАБ» — один и тот же во всех машинах Зеркалиуса.
+   ЗНАЧОК «В ХАБ» — v0.001, один и тот же во всех машинах Зеркалиуса.
    Подключается одной строкой:  <script src="_js/hub-link.js"></script>
 
    Путь до хаба вычисляется сам, поэтому модуль одинаково работает и в корне,
@@ -18,11 +18,9 @@
     if (window.__zerkHubLink) return;
     window.__zerkHubLink = true;
 
-    const depth = location.pathname.replace(/\/[^/]*$/, '').split('/').filter(Boolean).length;
-    // На GitHub Pages проект лежит в корне домена, поэтому считаем от текущей папки:
-    // в корне это index.html, во вложенной папке — на уровень выше.
-    const up = depth > 0 && /\/(fold|fold-layers|oktaedr|zazerkalius|lively|oboi|issledovanie|rezultaty|sravnenie|prosmotr)\//.test(location.pathname) ? '../' : '';
-    const href = up + 'index.html', logo = up + 'oktaedr/zerkalius-mark.svg';
+    // v0.001: корень сайта — родитель папки этого модуля (_js), независимо от папки страницы.
+    const root = new URL('../', document.currentScript.src);
+    const href = new URL('index.html', root).href, logo = new URL('oktaedr/zerkalius-mark.svg', root).href;
 
     function favicon() {
         const old = document.querySelector('link[rel~="icon"]');
