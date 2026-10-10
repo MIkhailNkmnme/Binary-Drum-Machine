@@ -2669,7 +2669,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.closest("#coneBalanceTools,#coneAlignTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || button.closest("#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,#ringTbl,#c3Modes,#coneTapeBox,#coneTransportStart,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -2691,6 +2691,7 @@ function renderCone(){
       else if (coneMagCountStamp !== stamp) { coneMagCount = null; coneMagCountStamp = null; } }
   }
   coneRow1PartsUi();
+  coneMagAxisPlace();
   turnsMark();
   lasUi3d();   // v0.373
   lasDeps();   // v0.757
@@ -2737,6 +2738,7 @@ function renderCone(){
   { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
     coneBalShow(o1, o0); }   // v0.1004: баланс считается независимо от включения солнца
   c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом
+  coneMagAxisPlace();
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays && !(window.zzBallActive && window.zzBallActive())) {
     const hits = clockRays.filter(R => R.pass && R.cell >= 0); if (hits.length) coneClockMark(hits);
@@ -7021,14 +7023,27 @@ function lasAlgoPlace(){
   const host = el.closest(".wbody") || el.parentElement, hs = Math.ceil(Math.min(el._mh, Math.max(128, Math.min(480, (host.clientHeight || innerHeight) - 72))) / TZC_H) * TZC_H + "px";
   if (body.style.height !== hs) body.style.height = hs;
 }
+function coneMagAxisPlace(){
+  const cv = $("coneCv"), first = $("bMagSym"), second = $("bMagSnapParts");
+  if (!cv || !first || !second) return;
+  let box = $("coneMagAxisTools"); const A = coneAxisScr();
+  if (!A) { if (box) box.hidden = true; return; }
+  if (!box) { box = document.createElement("div"); box.id = "coneMagAxisTools"; box.setAttribute("aria-label", "Магниты на оси"); $("coneMain").parentElement.appendChild(box); }
+  for (const button of [first,second]) { if (button.classList.contains("tz")) triOff(button); if (button.parentElement !== box) box.appendChild(button); }
+  box.hidden = false;
+  const anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect();
+  const x = A.x - hr.left - anchor.clientLeft + anchor.scrollLeft - box.offsetWidth / 2;
+  const y = A.y - hr.top - anchor.clientTop + anchor.scrollTop;
+  const left = x.toFixed(1) + "px", top = y.toFixed(1) + "px";
+  if (box.style.left !== left) box.style.left = left; if (box.style.top !== top) box.style.top = top;
+}
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
   const b = document.getElementById("bC3Reset"), cv = document.getElementById("coneCv"); if (!b || !cv || b.parentElement === document.getElementById("cone3Pad")) return;
   // v0.1013: абсолютные кнопки привязаны к offsetParent; статическое тело окна давало лишний отступ снизу.
   const host = b.parentElement, anchor = b.offsetParent || host, hr = anchor.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
   // v0.042: пуск — ромб темпа, шаги — на его краях; в нижнем ряду остаются старт и сброс.
-  const bottom = cr.bottom - hr.top + scrollTop, left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4, gap = 6;
+  const bottom = cr.bottom - hr.top + scrollTop, left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4, gap = 2, centre = (left + edge) / 2;
   const ms = $("c3Modes");
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const startButton = $("bConeStartBack"), speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
@@ -7043,9 +7058,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   tempoTrackSync();
   const size = (e) => e && e.parentElement === host ? e.offsetWidth : 0;
   const ws = size(startBox), wr = b.offsetWidth || 60, rh = Math.max(b.offsetHeight || 30, startBox ? startBox.offsetHeight : 0);
-  const x = Math.max(left + ws, Math.min(edge - wr, cr.left - hr.left + scrollLeft + cxp));
-  const rowLeft = x - ws, rowRight = x + wr, mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeLeft = rowRight + 12;
-  const modesBelow = mw > 0 && edge - modeLeft < mw; let lift = modesBelow ? rh + gap : 0;
+  const mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeGap = mw ? 8 : 0;
+  const modesBelow = ws + wr + modeGap + mw > edge - left;
+  const rowWidth = ws + wr + (modesBelow ? 0 : modeGap + mw);
+  const rowLeft = Math.max(left, centre - rowWidth / 2), x = rowLeft + ws, rowRight = rowLeft + rowWidth, modeLeft = x + wr + modeGap;
+  let lift = modesBelow ? rh + gap : 0;
   for (const g of document.querySelectorAll("#w-cone .cgrp.cmin")) {   // свёрнутые группы у нижнего края («3D» и др.) не перекрывать — пульт встаёт над ними
     if (!g.getClientRects().length) continue;
     const r = g.getBoundingClientRect(), gl = r.left - hr.left + scrollLeft, gt = r.top - hr.top + scrollTop;
@@ -7055,14 +7072,14 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   if (startBox && ws) put(startBox, rowLeft, on(startBox));
   put(b, x, on(b));
   if (tempoBox) {
-    const tw = Math.max(0, Math.min(600, edge - left)), centre = x;   // v0.023, «ширину в 2 раза больше»: 600 (было 300)
+    const tw = Math.max(0, Math.min(600, edge - left));   // Ползунок и весь ряд кнопок — по центру холста.
     tempoBox.style.width = tw.toFixed(1) + "px";
     put(tempoBox, Math.max(left, Math.min(edge - tw, centre - tw / 2)), Math.max(cr.top - hr.top + scrollTop + 2, y - gap - (tempoBox.offsetHeight || 36)));
     tempoTrackSync();
   }
   { const cb = $("bSfzClean"); if (cb && cb.parentElement === host) put(cb, edge - cb.offsetWidth, cr.top - hr.top + scrollTop + 4); }   // v0.027: ◐ «только управление» — правый верхний угол холста
   // Режимы — у самого нижнего края справа от пульта; на узком холсте пульт стоит над ними.
-  if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, bottom - ms.offsetHeight);
+  if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, modesBelow ? bottom - ms.offsetHeight : on(ms));
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
     const X = cr.left - hr.left + scrollLeft + 2, available = Math.max(0, rowLeft - X - 4);
@@ -7080,6 +7097,9 @@ function tempoTrackSync(){
   const tw = 31.5, lr = L.getBoundingClientRect(), rr = r.getBoundingClientRect(), tx = rr.left - lr.left + tw / 2 + f * Math.max(0, rr.width - tw);
   const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
   set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
+  const value = $("coneAutoSpV");
+  if (value) { const vw = value.offsetWidth, right = tx + tw / 2 + 6, vx = right + vw <= lw - 40 ? right : tx - tw / 2 - 6 - vw;
+    set("--vx", Math.max(40, Math.min(lw - 40 - vw, vx)).toFixed(1) + "px"); }
   const arrows = L.querySelectorAll(".zerk-arrow"), half = H / 2;
   arrows.forEach((b, i) => {   // остриё стрелки — в вершине дорожки, основание — по её рёбрам на ширине стрелки
     const bw = b.offsetWidth || 18, run = i ? lw - tx : tx, a = Math.max(2, Math.min(half - 2, half - half * bw / Math.max(bw, run) + 2));
