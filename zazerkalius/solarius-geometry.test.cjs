@@ -73,7 +73,7 @@ function uiMath(){
   vm.runInContext(readFileSync(__dirname + '/zz-core.js', 'utf8'), ctx);
   const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneOneSlit coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
   for (const name of ['coneHalfOn', 'coneRow1Slit', 'conePartCount', 'coneRow1PartPhase', 'coneQuadOpen', 'coneRingFeat', 'coneMagRing', 'coneFeatEdges', 'coneFeatMids', 'cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
-  for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt', 'coneR1Align']) needed.add(name);
+  for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt', 'coneR1Align', 'coneFullOff', 'cutMemSave', 'cutMemAbsorb', 'coneCutHome', 'coneRotKeep', 'coneTorCut', 'coneFillSpin']) needed.add(name);
   for (const name of ['coneAngDiff', 'magSymOf', 'magPartsOnly', 'coneRingSymAxes', 'coneSymTargets', 'conePartTargets', 'coneHandSnap', 'coneR1AxisSnap', 'coneNextHandSnap']) needed.add(name);
   for (const match of source.matchAll(/^function \w+\(/gm)) {
     if (!needed.has(match[0].slice(9, -1))) continue;
@@ -116,6 +116,65 @@ test('default start alternates vertical and horizontal symmetry by ring number',
     ctx.Z.cutAlign = 'm'; const rememberedFallback = ctx.coneCutOff(1, 5);
     ctx.Z.cutAlign = 'c'; assert.equal(ctx.coneCutOff(1, 5), rememberedFallback);
   }
+});
+
+test('full rings and single slits alternate real symmetry axes with their outer ring', () => {
+  for (const mode of ['all', 'one']) {
+    const ctx = magnetMath();
+    Object.assign(ctx.Z, { rows: ['1', '010', '01110', '010010', '0110'], coneSlits: mode,
+      coneAimRot: 0, coneSpinPh: 0, fillStill: false });
+    ctx.coneRot = ctx.Z.rows.map(() => 0);
+    delete ctx.Z.cutAlign;
+    for (let i = 0; i < ctx.Z.rows.length; i++) {
+      const R = ctx.coneRingFeat(i), target = i % 2 ? 0 : -Math.PI / 2;
+      assert.ok(ctx.coneRingSymAxes(i).some(c => Math.abs(Math.sin(-Math.PI / 2 + (c - R.x0) * R.step - target)) < 1e-9), `${mode}: K${i + 1}`);
+      if (mode === 'one' && i > 0) assert.ok(Math.abs(Math.sin(-Math.PI / 2 - R.x0 * R.step - target)) < 1e-9, 'single slit follows the same axis');
+    }
+    const outer = ctx.coneRingFeat('f');
+    assert.ok(Math.abs(Math.sin(-Math.PI / 2 - outer.x0 * outer.step)) < 1e-9, 'even outer ring starts horizontally');
+    for (const spin of ['all', 'bit', 'obit', 'opp']) {
+      ctx.Z.coneSpinMode = spin; ctx.Z.coneSpinPh = spin === 'opp' ? 17 : 0.37;
+      ctx.Z.cutAlign = 'p'; const oriented = ctx.coneRingFeat(1);
+      ctx.Z.cutAlign = 'c'; const centred = ctx.coneRingFeat(1);
+      assert.ok(Math.abs((centred.x0 - oriented.x0) * oriented.step - Math.PI / 2) < 1e-9, `${mode}: ${spin} keeps a constant start offset`);
+    }
+  }
+});
+
+test('full-ring memory preserves the whole pose and absorbs subsequent hand turns', () => {
+  for (const mode of ['all', 'one']) {
+    const ctx = magnetMath();
+    vm.runInContext('function save(){}function renderRows(){}function renderCone(){}function say(){}', ctx);
+    Object.assign(ctx.Z, { rows: ['1', '010', '01110'], coneSlits: mode, cutAlign: 'p',
+      coneSpinMode: 'obit', coneSpinPh: 0.27, coneSpin: 43, coneAimRot: 19, coneFillTurn: 0.31 });
+    ctx.coneRot = [0.2, 0.7, -0.35];
+    const keys = [0, 1, 2, 'f'];
+    const angles = () => keys.map(i => { const R = ctx.coneRingFeat(i); return -Math.PI / 2 - R.x0 * R.step + (ctx.Z.coneSpin || 0) * Math.PI / 180; });
+    const before = angles(); ctx.cutMemSave();
+    assert.equal(ctx.Z.cutAlign, 'm');
+    angles().forEach((a, i) => assert.ok(Math.abs(Math.sin((a - before[i]) / 2)) < 1e-9, `${mode}: save preserves K${i + 1}`));
+    for (const i of [0, 1, 'f']) {
+      ctx.Z.coneSpinPh = 0.13;
+      if (i === 'f') ctx.Z.coneFillTurn = 0.39;
+      else if (i === 0) ctx.Z.coneAimRot = 23;
+      else ctx.coneRot[i] = 0.45;
+      const pose = angles(); assert.equal(ctx.cutMemAbsorb(i), true);
+      angles().forEach((a, k) => assert.ok(Math.abs(Math.sin((a - pose[k]) / 2)) < 1e-9, `${mode}: absorbing ${i} preserves K${k + 1}`));
+    }
+    const memory = JSON.stringify(ctx.Z.cutMem[mode]); ctx.Z.coneSlits = mode === 'all' ? 'one' : 'all';
+    assert.equal(ctx.coneFullOff(1, 3), 0, 'other ring type has its own memory');
+    ctx.Z.coneSlits = mode; assert.equal(JSON.stringify(ctx.Z.cutMem[mode]), memory);
+  }
+});
+
+test('holding the full outer ring does not double its start offset', () => {
+  const ctx = magnetMath();
+  Object.assign(ctx.Z, { rows: ['1', '11', '111'], coneSlits: 'all', cutAlign: 'p', coneSpinMode: 'bit', coneSpinPh: 0.37, coneFillTurn: 0.2, fillStill: false });
+  const before = ctx.coneFillRot();
+  ctx.Z.coneFillTurn += ctx.coneFillSpin(); ctx.Z.fillStill = true;
+  assert.ok(Math.abs(ctx.coneFillRot() - before) < 1e-9);
+  ctx.Z.fillStill = false; ctx.Z.coneFillTurn -= ctx.coneFillSpin();
+  assert.ok(Math.abs(ctx.coneFillRot() - before) < 1e-9);
 });
 test('first-ring magnetic steps use neighbor boundaries, never canvas axes', () => {
   for (const clock of [true, false]) for (const dir of [1, -1]) {

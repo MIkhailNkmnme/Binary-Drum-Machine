@@ -1074,7 +1074,6 @@
     if (!host.querySelector(".ball-lab-body")) host.insertAdjacentHTML("beforeend", `<div class="ball-lab-body cgrp-fill">
       <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option><option value="in">в центр</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
-      <div class="ball-lab-row ball-lab-rings"><div class="ball-lab-ring"><span>Кольцо 1</span><button type="button" class="ib" data-ball-ring="0" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="0" data-step=".5">+½</button></div><div class="ball-lab-ring"><span>Кольцо 2</span><button type="button" class="ib" data-ball-ring="1" data-step="-.5">−½</button><button type="button" class="ib" data-ball-ring="1" data-step=".5">+½</button></div></div>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
       <div class="ball-lab-row"><button id="ballLabOne" type="button" aria-pressed="false" title="Что делает шарик в центре у кольца 1 из одного бита — по кругу:
 центр: насквозь — едет дальше по прямой напротив разреза;
@@ -1100,12 +1099,6 @@
     $("ballLabRoute").onchange = () => { pauseRotation(); Z.coneBallThroughCount = 1; Z.coneBallRoute = $("ballLabRoute").value; save(); reset(); };
     $("ballLabPoints").onclick = () => { Z.coneBallPoints = Z.coneBallPoints === false; $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints)); save(); renderCone(); };
     $("ballLabPoints").setAttribute("aria-pressed", String(Z.coneBallPoints !== false));
-    lab.querySelectorAll("[data-ball-ring]").forEach(b => b.onclick = () => {
-      pauseRotation(); const i = +b.dataset.ballRing;
-      if (i === 1 && Z.rows.length === 1) { Z.coneFillTurn = (Z.coneFillTurn || 0) + +b.dataset.step; Z.coneFillFree = true; }
-      else { coneRot[i] = (coneRot[i] || 0) + +b.dataset.step; Z.coneFree ||= {}; Z.coneFree[i] = true; }
-      Z.coneRot = coneRot.slice(); save(); reset();
-    });
     observeLabFold(lab);
     const source = $("coneBallStatus"), syncStatus = () => { source.title = source.textContent; const name = lab.querySelector(":scope > .glab"); if (name) name.title = source.textContent + "\n\n" + LAB_HELP; };
     new MutationObserver(syncStatus).observe(source, { childList: true, characterData: true, subtree: true }); syncStatus();
