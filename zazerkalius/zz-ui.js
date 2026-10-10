@@ -7995,10 +7995,19 @@ function setupCone(){
       const active = !!Z.coneBallChain && button.dataset.sliceNext === (Z.coneSliceNext || "pass");
       button.classList.toggle("on",active); button.setAttribute("aria-pressed",String(active));
     }
+    const rebound = $("bConeSliceRebound");
+    if (rebound) {
+      rebound.hidden = Z.coneBallArm !== "slice";
+      rebound.classList.toggle("on",!!Z.coneSliceRebound); rebound.setAttribute("aria-pressed",String(!!Z.coneSliceRebound));
+    }
     const button = $("bConeBallChain");
     if (button) { button.classList.toggle("on",!!Z.coneBallChain); button.setAttribute("aria-pressed",String(!!Z.coneBallChain)); }
   }
   window.zzBallSliceControls = coneSliceChainUi;
+  if ($("bConeSliceRebound")) $("bConeSliceRebound").onclick = () => {
+    Z.coneSliceRebound = !Z.coneSliceRebound; coneSliceChainUi(); save(); renderCone();
+    say(Z.coneSliceRebound ? "Нарезка: вышел из кольца — при возвращении отскакивает от него наружу, даже при попадании в щель или грань. Скорость сохраняется." : "Нарезка: возврат в пройденные кольца разрешён.");
+  };
   document.querySelectorAll("[data-slice-next]").forEach(button => { button.onclick = () => {
     Z.coneSliceNext = button.dataset.sliceNext; Z.coneBallChain = true; coneSliceChainUi(); save(); renderCone();
     say("Нарезка: Цепочка включена · " + button.textContent + ". Следующий появляется в центре и идёт наружу с той же скоростью.");

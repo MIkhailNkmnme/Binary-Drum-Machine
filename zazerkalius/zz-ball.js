@@ -30,7 +30,7 @@
     const speed = slicing ? slicing.speedQ : Q(Z.coneSliceSpeed || "2/3");
     status("Нарезка · " + (slicing ? slicing.done ? "предел колец · стоп" : paused ? "пауза" : "движение" : "▶ пуск") +
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · шариков " + (slicing ? slicing.moving.length : 1) + " · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
-      (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0) + (Z.coneBallChain ? " · цепочка: " + ({pass:"проход кольца",open:"открытие кольца",edge:"внешний отскок"}[Z.coneSliceNext] || "проход кольца") : ""));
+      (slicing?.outerBounces || 0) + " · внутренний отскок " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0) + (Z.coneBallChain ? " · цепочка: " + ({pass:"проход кольца",open:"открытие кольца",edge:"внешний отскок"}[Z.coneSliceNext] || "проход кольца") : ""));
     const box = $("ballLabTurns"); if (!box) return;
     const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
     for (let k = 0; slicing && k < slicing.count; k++) {
@@ -49,7 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,done:false,
-      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      moving:[{id:1,rQ:ONE,k:0,rawQ:QUARTER.neg(),move:1,speedQ:speed,launchK:0,exitedK:0}],cuts:{},completedCuts:{},returned:{},paths:[],outerBounces:0,innerBounces:0,centerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     const first = slicing.moving[0], angle = S.rings[0].phaseQ.add(S.spinQ).add(first.rawQ);
     if (slicing.count === 1) sliceGrow();
     if (slicing.count > 1) sliceEnter(first,1,snapshot(),angle);
@@ -85,7 +85,7 @@
     if (!Z.coneBallChain || !slicing || slicing.moving.length >= CHAIN_MAX) return false;
     if (!S?.rings[0]) return false;
     const previous = slicing.moving[slicing.moving.length - 1];
-    const ball = {id:previous.id + 1,rQ:ZERO,k:0,rawQ:QUARTER.neg(),move:1,speedQ:previous.speedQ,launchK:0};
+    const ball = {id:previous.id + 1,rQ:ZERO,k:0,rawQ:QUARTER.neg(),move:1,speedQ:previous.speedQ,launchK:0,exitedK:-1};
     slicing.moving.push(ball);
     return true;
   }
@@ -135,8 +135,9 @@
         else if (move < 0 && ball.rQ.eq(ZERO)) { sliceReflectCenter(ball); centre = true; }
         else {
           const next = k + move;
-          let hit = false;
-          if (!next && move < 0) {
+          if (move > 0) ball.exitedK = Math.max(ball.exitedK,k);
+          let hit = move < 0 && !!Z.coneSliceRebound && next <= ball.exitedK;
+          if (!hit && !next && move < 0) {
             const d = angle.sub(to.rings[0].phaseQ).sub(to.spinQ).add(QUARTER).mod(), halfGap = Q(Z.coneSliceGap || "1/4").div(2);
             hit = d.cmp(halfGap) > 0 && d.cmp(ONE.sub(halfGap)) < 0;
           }
