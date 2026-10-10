@@ -6730,7 +6730,11 @@ function c3AxesPlace(){
   // v0.024, «+ и − сделай ромбами и под треугольники»: ромбы по бокам пары балансов, под рядом треугольников (нет балансов — там же, по бокам оси)
   if (zo && zi) { const zw = zo.offsetWidth || 30, zh = zo.offsetHeight || zw, gap = 6, tools = document.getElementById("coneBalanceTools");
     const below = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom + 6 : cr.top + w + 6;
-    const L = br ? br.left - gap - zw : center - 30 - zw, R = br ? br.right + gap : center + 30, Y = br ? br.top + br.height / 2 - zh / 2 : below;
+    let L = br ? br.left - gap - zw : center - 30 - zw, R = br ? br.right + gap : center + 30, Y = br ? br.top + br.height / 2 - zh / 2 : below;
+    /* v0.024, «размером чуть меньше, чем ромбы из треугольников, и между треугольниками с отступами»: − и + — в крайних зазорах верхнего ряда (между 1-м и 2-м,
+       5-м и 6-м треугольником); стороны ромба параллельны сторонам соседей, отступ от них ровный (~4 px), низ выходит под ряд */
+    const tb = tools && tools.children.length > 2 && tools.getClientRects().length ? tools.getBoundingClientRect() : null, tw = tb ? tools.children[0].offsetWidth : 0;
+    if (tb && tw) { L = tb.left + tw - zw / 2; R = tb.left + (tools.children.length - 1) * tw - zw / 2; Y = tb.top + tw / 10; }
     const top = (Y - hr.top - host.clientTop + host.scrollTop).toFixed(1) + "px";
     const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
       if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== top) el.style.top = top; };
