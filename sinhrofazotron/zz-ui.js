@@ -2277,7 +2277,7 @@ function ringTblBuild(host){
     const target = e.target.closest("button"), id = e.pointerId; target.setPointerCapture(id); let moved = false;
     const move = ev => { if (ev.pointerId !== id) return; const dx = ev.clientX - sx, dy = ev.clientY - sy;
       if (!moved && Math.hypot(dx, dy) < 4) return; moved = true; ev.preventDefault();
-      Z.coneRingModesXY = [r.left - cr.left + dx, r.top - cr.top + dy]; ringTblPlace(el);
+      Z.coneRingModesAx = [r.left - cr.left + dx, r.top + r.height / 2 - ringTblAxisY(cr) + dy]; delete Z.coneRingModesXY; ringTblPlace(el);   // v0.023: место — сдвиг середины от горизонтальной оси
     };
     const end = ev => { if (ev.pointerId !== id) return;
       target.removeEventListener("pointermove", move); target.removeEventListener("pointerup", end); target.removeEventListener("pointercancel", end);
@@ -2286,14 +2286,17 @@ function ringTblBuild(host){
     };
     target.addEventListener("pointermove", move); target.addEventListener("pointerup", end); target.addEventListener("pointercancel", end);
   });
-  el.addEventListener("contextmenu", e => { e.preventDefault(); e.stopPropagation(); delete Z.coneRingModesXY; ringTblPlace(el); save(); });
+  el.addEventListener("contextmenu", e => { e.preventDefault(); e.stopPropagation(); delete Z.coneRingModesXY; delete Z.coneRingModesAx; ringTblPlace(el); save(); });
   return el;
 }
+/* v0.023, «привяжи к оси горизонта»: середина столбца T / N / 2T−1 / 2T / меж / сим — на горизонтальной оси конуса (едет вместе с ней при сдвиге
+   и масштабе); перетаскивание запоминает сдвиг от оси (Z.coneRingModesAx = [x от левого края холста, сдвиг середины от оси]), правый щелчок — снова на оси */
+function ringTblAxisY(cr){ const G = coneGeom; return cr.top + (G && G.dpr ? G.cy / G.dpr : cr.height / 2); }
 function ringTblPlace(el){
   const cv = $("coneCv"); if (!cv || !el) return;
   const cr = cv.getBoundingClientRect(), host = el.offsetParent || el.parentElement, hr = host.getBoundingClientRect();
-  const xy = Array.isArray(Z.coneRingModesXY) ? Z.coneRingModesXY : [8, 104];
-  const x = Math.max(0, Math.min(Math.max(0, cr.width - el.offsetWidth), xy[0])), y = Math.max(0, Math.min(Math.max(0, cr.height - el.offsetHeight), xy[1]));
+  const ax = Array.isArray(Z.coneRingModesAx) ? Z.coneRingModesAx : [8, 0], cy = ringTblAxisY(cr) - cr.top;
+  const x = Math.max(0, Math.min(Math.max(0, cr.width - el.offsetWidth), ax[0])), y = Math.max(0, Math.min(Math.max(0, cr.height - el.offsetHeight), cy + ax[1] - el.offsetHeight / 2));
   el.style.left = (cr.left - hr.left - host.clientLeft + host.scrollLeft + x) + "px";
   el.style.top = (cr.top - hr.top - host.clientTop + host.scrollTop + y) + "px";
 }
@@ -2529,7 +2532,8 @@ function renderCone(){
   const sol3 = coneSol3d(), fillOn = coneFlat() && Z.rows.length <= CONE_MAX;   // v0.780: с ◎ торами — и в 3D; v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
-  coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  { const rt = document.getElementById("ringTbl"); if (rt && !rt.hidden) ringTblPlace(rt); }   // v0.023: столбец видов колец — за осью в том же кадре
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
@@ -6168,7 +6172,9 @@ function coneBalanceBackdrop(g, W, H, cx, cy, closed){
   if (!Z.coneAxes || !(Z.coneQuadBalances || Z.coneBalanceHighlight) || Z.cone3d) return;
   const Q = coneBalanceData(closed).quarters, colors = coneBalanceColors(Q);
   const radius = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy)) + 1;
-  g.save(); g.globalAlpha = Q.slice(1).every(q => coneBalanceEqual(q, Q[0])) ? 0.19 : 0.13;
+  // v0.024, «фон балансов 4 четвертей потемнее: цвет как сейчас, а фон — вообще чёрный»: под цветами четвертей — чёрный, сами цвета чуть плотнее
+  g.save(); g.globalAlpha = 1; g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+  g.globalAlpha = Q.slice(1).every(q => coneBalanceEqual(q, Q[0])) ? 0.24 : 0.17;
   for (let q = 0; q < 4; q++) {
     const a = coneBalanceAxisAngle() - Math.PI / 2 + q * Math.PI / 2;
     g.fillStyle = colors[q]; g.beginPath(); g.moveTo(cx, cy);
@@ -6542,10 +6548,12 @@ function coneBalanceToolsSync(cv){
   }
   quarters.classList.toggle("on", !!Z.coneQuarterRings); quarters.setAttribute("aria-pressed", String(!!Z.coneQuarterRings));
   const cr = cv.getBoundingClientRect(), anchor = el.offsetParent || host, hr = anchor.getBoundingClientRect(), w = el.offsetWidth;
-  const bal = $("coneBal"), br = bal && !bal.hidden ? bal.getBoundingClientRect() : null;
-  const x = Math.max(cr.left, Math.min(cr.right - w, (br ? br.left + br.width / 2 : cr.left + cr.width / 2) - w / 2));
+  // v0.024, «все эти жёлтые треугольники наверх прижми, а балансы опусти ниже»: ряд — на верхнем крае холста, стык 3-го и 4-го — на оси конуса
+  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
+  const x = Math.max(cr.left, Math.min(cr.right - w, cr.left + cxp - w / 2));
   el.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  el.style.top = ((br ? br.bottom : cr.top + 24) - hr.top - anchor.clientTop + anchor.scrollTop + 3) + "px";
+  el.style.top = (cr.top - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
+  coneBalPlace();
   coneBalanceAxisBind(cv);
   coneAlignToolsSync(cv);
 }
@@ -6595,7 +6603,7 @@ function coneHistorySync(cv){
   const width = Math.max(0, Math.min(560, cr.width - 16)); box.style.width = width + "px";
   const x = Math.max(cr.left + width / 2 + 8, Math.min(cr.right - width / 2 - 8, tr.left + tr.width / 2));
   box.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  const alignment = $("coneAlignTools"), bottom = Math.max(tr.bottom, alignment ? alignment.getBoundingClientRect().bottom : tr.bottom);
+  const alignment = $("coneAlignTools"), balance = $("coneBal"), bottom = Math.max(tr.bottom, alignment ? alignment.getBoundingClientRect().bottom : tr.bottom, balance && !balance.hidden ? balance.getBoundingClientRect().bottom : tr.bottom);   // v0.024: балансы теперь под рядом
   box.style.top = (bottom + 8 - hr.top - anchor.clientTop + anchor.scrollTop) + "px"; box.style.bottom = "auto";
 }
 function coneBalanceAxisSnap(a, radius){
@@ -6700,7 +6708,8 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.offsetParent || el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 120;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;   // v0.1011: верх трио вплотную к первой полосе меню, на верхней линии холста
+  const tools = document.getElementById("coneBalanceTools"), th = tools && tools.getClientRects().length ? tools.offsetHeight + 6 : 0;   // v0.024: под рядом треугольников
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop + th;   // v0.1011: верх трио вплотную к первой полосе меню, на верхней линии холста
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
   c3AxesPlace();
 }
@@ -6711,18 +6720,21 @@ function c3AxesPlace(){
   const host = b.offsetParent || b.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = b.offsetWidth || 24;
   const bal = document.getElementById("coneBal"), br = bal && !bal.hidden && bal.getClientRects().length ? bal.getBoundingClientRect() : null;
-  const center = br ? br.left + br.width / 2 : cr.left + cxp;
+  // v0.024, «оси ромб побольше и между треугольников»: ромб 30 × 30 — в зазоре ряда треугольников на оси (вершина — у верхнего края, бока — по их сторонам)
+  const center = cr.left + cxp;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, center - hr.left - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop;
   b.setAttribute("aria-pressed", String(!!Z.coneAxes));
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (b.style.left !== l) b.style.left = l; if (b.style.top !== t) b.style.top = t;
   // v0.1047: «−» вплотную слева от пары балансов, «+» — справа (нет балансов — по бокам ромба осей, через зазор шириной в ромб)
   const zo = document.getElementById("bC3ZoomOut"), zi = document.getElementById("bC3ZoomIn");
-  if (zo && zi) { const zw = zo.offsetWidth || 48, gap = w;
-    const L = br ? br.left : center - w / 2 - gap - zw, R = br ? br.right : center + w / 2 + gap;
+  // v0.024, «+ и − сделай ромбами и под треугольники»: ромбы по бокам пары балансов, под рядом треугольников (нет балансов — там же, по бокам оси)
+  if (zo && zi) { const zw = zo.offsetWidth || 30, zh = zo.offsetHeight || zw, gap = 6, tools = document.getElementById("coneBalanceTools");
+    const below = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom + 6 : cr.top + w + 6;
+    const L = br ? br.left - gap - zw : center - 30 - zw, R = br ? br.right + gap : center + 30, Y = br ? br.top + br.height / 2 - zh / 2 : below;
+    const top = (Y - hr.top - host.clientTop + host.scrollTop).toFixed(1) + "px";
     const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
-      if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== t) el.style.top = t; };
-    // v0.1048, «острые вверх»: треугольник остриём вверх заходит на баланс на полширины — наклонные стороны совпадают, как в сетке треугольников
-    if (br) { place(zo, L - zw / 2); place(zi, R - zw / 2); } else { place(zo, L - zw); place(zi, R); } }
+      if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== top) el.style.top = top; };
+    place(zo, L); place(zi, R); }
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
   /* v0.858, «проверь на телефон версию»: на телефоне полоса вкладок стоит ПОД холстом, и ромбы «у верха холста» (✛ оси, баланс) уезжали под неё, на
@@ -6758,7 +6770,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   }
   const startBox = $("coneTransportStart"), tempoBox = $("coneTransportTempo");
   const size = (e) => e && e.parentElement === host ? e.offsetWidth : 0;
-  const ws = size(startBox), wb = st ? size(stB) : 0, wf = st ? size(stF) : 0, wr = b.offsetWidth || w, rh = Math.max(b.offsetHeight || w / 2, startBox ? startBox.offsetHeight : 0);
+  const ws = size(startBox), wb = st ? size(stB) : 0, wf = st ? size(stF) : 0, wr = b.offsetWidth || w, rh = Math.max(b.offsetHeight || w / 2, startBox ? startBox.offsetHeight : 0, sp ? sp.offsetHeight : 0);
   const rowWidth = ws + wb + w + wf + wr, x = Math.max(left + ws + wb, Math.min(edge - w - wf - wr, cr.left - hr.left + scrollLeft + cxp - w / 2));
   const rowLeft = x - wb - ws, rowRight = x + w + wf + wr, mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeLeft = rowRight + 12;
   const modesBelow = mw > 0 && edge - modeLeft < mw; let lift = modesBelow ? rh + gap : 0;
@@ -6767,11 +6779,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     const r = g.getBoundingClientRect(), gl = r.left - hr.left + scrollLeft, gt = r.top - hr.top + scrollTop;
     if (gl < rowRight && gl + r.width > rowLeft && gt < bottom - lift && gt + r.height > bottom - lift - rh) lift = Math.max(lift, bottom - gt + 2);
   }
-  const y = bottom - rh - lift;
-  if (startBox && ws) put(startBox, rowLeft, y);
-  if (st) { put(stB, x - wb, y); if (stF && stF.parentElement === host) put(stF, x + w, y); }
-  if (sp && sp.parentElement === host) put(sp, x, y);
-  put(b, x + w + wf, y);
+  const y = bottom - rh - lift, base = bottom - lift, on = (e) => base - (e.offsetHeight || rh);   // v0.024: кнопки разной высоты (▶ крупнее) — на одном нижнем крае
+  if (startBox && ws) put(startBox, rowLeft, on(startBox));
+  if (st) { put(stB, x - wb, on(stB)); if (stF && stF.parentElement === host) put(stF, x + w, on(stF)); }
+  if (sp && sp.parentElement === host) put(sp, x, on(sp));
+  put(b, x + w + wf, on(b));
   if (tempoBox) {
     const tw = Math.max(0, Math.min(600, edge - left)), centre = x + w / 2;   // v0.023, «ширину в 2 раза больше»: 600 (было 300)
     tempoBox.style.width = tw.toFixed(1) + "px";
@@ -8256,7 +8268,7 @@ function setupCone(){
         host.appendChild(b); }
     if (host && !$("c3Modes")) {   // v0.841: режимы кручения — полоской справа от ▶, при наведении на него
       const s = document.createElement("div"); s.id = "c3Modes";
-      document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = o.textContent; c.title = o.title; s.appendChild(c); });
+      document.querySelectorAll("#coneSpinModeB > button[data-sm]").forEach(o => { const c = document.createElement("button"); c.dataset.sm = o.dataset.sm; c.textContent = ({ all: "ВСЁ", bit: "ПО1", opp: "ВС", obit: "ВБ" })[o.dataset.sm] || o.textContent.toUpperCase(); c.title = o.title; s.appendChild(c); });   // v0.024, «буквы заглавные и сократи по максимуму»: полное название — в подсказке
       /* v0.846, по снимку полоски — «скорость тоже ползунок, когда включено кручение, вместо этих вот»: пока конус крутится (класс .spin от autoSet), в полоске
          вместо режимов и 📍 — ползунок скорости, тот же, что «Скорость кручения» в «Кручении» (двигает его) */
       { const lb = document.createElement("label"); lb.id = "c3Speed"; lb.title = "Скорость кручения — то же, что ползунок в «Кручении» (только величина; направление — ◀ ▶ там)";
