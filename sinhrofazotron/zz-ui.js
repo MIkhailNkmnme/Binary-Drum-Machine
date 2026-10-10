@@ -368,8 +368,35 @@ function rowCounts(s){
    красным), "ir": при реверс-инверсии (бит ≠ зеркальному — разворот с инверсией кладёт его на то же место, зелёным). */
 function fixAt(s, i){ const n = s.length; return Z.showFix === "ir" ? s[i] !== s[n - 1 - i] : s[i] === s[n - 1 - i]; }
 function fixCls(){ return Z.showFix === "ir" ? " fxi" : " fxr"; }
-function bitsShow(s){
+/* v0.035, «поле строк Синхрофазотрона — цифры по глубине скобок и отметки глав» (вслед за Модулем сетки v16–v17, те же правила): поле строк — один
+   поток скобок с первой строки, 0 = «(», 1 = «)». Цифра — цветом глубины своей пары (6 цветов по кругу, как в Модуле сетки), непарная — серая.
+   Глава — строка, на конце которой стек пуст: под ней зелёная черта, номер зелёный. Кнопка «🌈 ( )» над полем (Z.brDepth); только рабочее поле */
+const BR_COLS = ["#ffd700", "#da70d6", "#179fff", "#7fff7f", "#ff7f50", "#40e0d0"], BR_BAD = "#6b7280";
+let brCache = null;
+function brStream(rows){
+  const key = rows.join("|"); if (brCache && brCache.key === key) return brCache;
+  const depth = rows.map(r => new Int16Array(r.length).fill(-2)), stack = [], chapters = new Set();
+  let pairs = 0, cross = 0, maxDepth = 0, badClose = 0;
+  for (let r = 0; r < rows.length; r++) {
+    const t = rows[r]; let any = false;
+    for (let c = 0; c < t.length; c++) {
+      const b = t[c]; if (b !== "0" && b !== "1") continue; any = true;
+      if (b === "0") { depth[r][c] = stack.length; stack.push([r, c]); maxDepth = Math.max(maxDepth, stack.length); }
+      else if (stack.length) { const a = stack.pop(); depth[r][c] = stack.length; pairs++; if (a[0] !== r) cross++; }
+      else { depth[r][c] = -1; badClose++; }
+    }
+    if (any && !stack.length) chapters.add(r);
+  }
+  stack.forEach(([r, c]) => { depth[r][c] = -1; });
+  return (brCache = { key, depth, chapters, pairs, cross, maxDepth, badClose, badOpen: stack.length });
+}
+function bitsShow(s, row = -1){
   const x = s.length > ROW_SHOW ? s.slice(0, ROW_SHOW) : s;
+  if (Z.brDepth && row >= 0 && row < Z.rows.length && Z.rows[row] === s) {   // v0.035: цвет — глубина скобки
+    const d = brStream(Z.rows).depth[row], c = Z.showFix ? fixCls() : ""; let h = "";
+    for (let i = 0; i < x.length; i++) h += '<span class="b' + x[i] + (c && fixAt(s, i) ? c : "") + '" style="color:' + (d[i] >= 0 ? BR_COLS[d[i] % 6] : BR_BAD) + '">' + x[i] + "</span>";
+    return h;
+  }
   if (!Z.showFix) return bitsPlain(x);
   const c = fixCls(); let h = "";
   for (let i = 0; i < x.length; i++) h += '<span class="b' + x[i] + (fixAt(s, i) ? c : "") + '">' + x[i] + "</span>";
@@ -1310,16 +1337,17 @@ function renderRows(){
         '<span class="lhx" data-lx="' + l + '" title="✕ Удалить поле ' + (l + 1) + ' со всеми строками (↩ вернёт)">✕</span></span>';   // v0.247
     h += "</div>";
   }
+  const brCh = Z.brDepth ? brStream(Z.rows).chapters : new Set();   // v0.035: главы — строки с пустым стеком на конце
   const head = h, rowHtml = []; h = "";
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + (brCh.has(i) ? " brch" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
       // v0.012: биты — в своём .bx (только 0 и 1: по нему считаются места выделенных символов), «ещё N бит» — снаружи.
       // v0.015: .bx — только у рабочего поля; выделение и Del работают с ним.
       h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '" title="' + (N > 1 ? "поле " + (l + 1) + ", " : "") + "строка " + i + ", " + s.length + ' бит · щелчок по биту — выделить, протяжка — выделить строки, F2, Enter или правый щелчок — править">' +
-           '<span class="' + (act ? "bx" : "bxo") + '">' + (qv ? bitsCells(s) : bitsShow(s)) + "</span>" +
+           '<span class="' + (act ? "bx" : "bxo") + '">' + (qv ? bitsCells(s) : bitsShow(s, act ? i : -1)) + "</span>" +
            (s.length > ROW_SHOW ? '<span class="more"> … ещё ' + (s.length - ROW_SHOW) + " бит</span>" : "") + "</span>";
     }
     h += "</div>"; rowHtml.push(h); h = "";
@@ -8667,6 +8695,10 @@ function setupCone(){
   $("animByPass").onchange = (e) => { Z.animByPass = e.target.checked; animAcc = 0; save(); animUi(); };
   $("animSp").value = Z.animSp ?? 40;
   $("animSp").oninput = (e) => { Z.animSp = +e.target.value; animUi(); };
+  { const b = $("bBrDepth"); if (b) {   // v0.035: 🌈 ( ) — цифры поля по глубине скобок, главы
+    const ui = () => { b.classList.toggle("on", !!Z.brDepth); b.setAttribute("aria-pressed", String(!!Z.brDepth)); };
+    ui(); b.onclick = () => { Z.brDepth = !Z.brDepth; ui(); save(); renderRows();
+      if (Z.brDepth) { const B = brStream(Z.rows); say(`🌈 Скобки потоком с первой строки (0 = «(», 1 = «)»): пар ${B.pairs} (из них через строки ${B.cross}), глубина до ${B.maxDepth}, глав ${B.chapters.size}` + (B.badClose + B.badOpen ? `, непарных ${B.badClose + B.badOpen} (серые)` : "") + "."); } }; } }
   $("animSp").onchange = () => save();
   /* v0.200, «заготовки, по умолчанию 256 строк: все серпинские правила и последовательности»: выбор в списке — поле строк
      заменяется целиком (↩ вернёт), счёт волны — заново. */
