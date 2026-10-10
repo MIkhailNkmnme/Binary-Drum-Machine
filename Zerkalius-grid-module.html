@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v17</title>
+<title>Grid Module — v18</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -110,6 +110,8 @@ GRID MODULE — отдельный скелет "живой/редактируе
         <button id="seedOverlayStepBtn" title="Один шаг = одна копия сида, XOR-наложенная на каждую строку (с отскоком от края)">Шаг</button>
         <button id="seedOverlayUndoBtn" title="Отменить последний шаг у всех строк">Шаг назад</button>
         <button id="seedOverlayResetBtn" title="Вернуть строки, какими они были до наложения (Автоплей останавливается). Если наложение начиналось с пустой сетки — обнулить строки и перечитать поле сида(ов)">Сброс</button>
+        <button id="seedOverlayMultiBtn" title="Σ Мульти (MultiXorStep из Excel Xoroorius): пока включено, каждый Шаг кладёт в строку копию своего сида И сидов всех строк выше. Переключение начинает наложение заново">Σ Мульти</button>
+        <button id="seedOverlayDirBtn" title="Цвет цифр — направление прохода сида: вперёд синий, назад красный (как в Excel Xoroorius). Строка «все 0» — жёлтым фоном, «все 1» — фиолетовым. Ещё раз — обычные цвета">🎨 Направления</button>
         <button id="seedOverlayPlayBtn" style="color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру">▶ Автоплей</button>
         <select id="seedOverlayAlignSelect" title="Выравнивание строк относительно самой длинной — промежуток заполняется пустыми (не нулевыми) ячейками">
             <option value="left">⯇ По левому краю</option>
@@ -233,7 +235,11 @@ const GRID = {
     // v16: лабиринт в «Диагоналях» (комнаты, проходы сверху вниз) и цветные скобки с дугами пар в «Скобках»
     mazeOn: true,
     bracketColor: true,
-    bracketFlow: true,   // v17: единый поток с первой строки, без сброса стека между строками
+    bracketFlow: true,
+    // v18, перенос скрипта Xoroorius из Excel (XORR_1, без сравнения с эталоном — это для Аниматрицы; каскад — для конуса):
+    // цвета по направлению прохода сида (вперёд — синий, назад — красный), «все 0» / «все 1» и MultiXor-шаг
+    seedOverlayMulti: false,
+    seedOverlayDirColors: true,   // v17: единый поток с первой строки, без сброса стека между строками
 
     // Толщина линий диагоналей 1/0 (px), размер шрифта (px, null = авто от cellSize) и гарнитура.
     diagLineWidth: 0.5,
@@ -996,7 +1002,7 @@ function seedOverlayBuildRows() {
             let tLen = seedOverlayRowLength(r);
             if (tLen <= 0) continue;
             let seed = seeds[rows.length % seeds.length];
-            rows.push({ row: r, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+            rows.push({ row: r, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0), dirs: new Array(tLen).fill(0) });
         }
         GRID.seedOverlayStandalone = false;
     } else {
@@ -1007,7 +1013,7 @@ function seedOverlayBuildRows() {
         for (let i = 0; i < SEED_OVERLAY_DEFAULT_ROWS; i++) {
             let tLen = i + 1;
             let seed = seeds[i % seeds.length];
-            rows.push({ row: i, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0) });
+            rows.push({ row: i, tLen: tLen, seed: seed, step: 0, resultBits: new Array(tLen).fill(0), dirs: new Array(tLen).fill(0) });
         }
         GRID.seedOverlayStandalone = true;
     }
@@ -1018,18 +1024,21 @@ function seedOverlayBuildRows() {
 // Только считает bit-XOR этой копии сида в row.resultBits — запись в сетку теперь ОТДЕЛЬНО
 // (seedOverlayWriteAllRows), потому что выравнивание "по правому краю"/"по центру" нужно
 // считать относительно самой ДЛИННОЙ строки среди ВСЕХ строк разом, а не одной этой.
-function seedOverlayApplyStep(row) {
-    let seedLen = row.seed.length;
-    let tLen = row.tLen;
-    let baseOffset = row.step * seedLen;
-    let period = 2 * tLen;
+// v18: одна копия сида seed на круге stepIdx (как ApplySeedOffsetXor в Excel): XOR с отскоком от краёв строки; в row.dirs —
+// направление последнего прохода по клетке (1 — вперёд, 2 — назад), им красится цифра.
+function seedOverlayApplyCopy(row, seed, stepIdx) {
+    const seedLen = seed.length, tLen = row.tLen, period = 2 * tLen, base = stepIdx * seedLen;
+    if (!row.dirs) row.dirs = new Array(tLen).fill(0);
     for (let j = 0; j < seedLen; j++) {
-        let t = baseOffset + j;
-        let m = t % period;
-        let pos = (m < tLen) ? m : (period - 1 - m);
-        let bit = parseInt(row.seed[j], 10) || 0;
-        row.resultBits[pos] = row.resultBits[pos] ^ bit;
+        const m = (base + j) % period, fwd = m < tLen, pos = fwd ? m : period - 1 - m;
+        row.resultBits[pos] = row.resultBits[pos] ^ (parseInt(seed[j], 10) || 0);
+        row.dirs[pos] = fwd ? 1 : 2;
     }
+}
+// Шаг строки idx: обычный — копия своего сида; «Σ Мульти» (MultiXorStep Excel) — по копии своего сида и сидов ВСЕХ строк выше
+function seedOverlayApplyStep(row, idx) {
+    if (GRID.seedOverlayMulti && GRID.seedOverlayRows) { for (let j = 0; j <= idx; j++) seedOverlayApplyCopy(row, GRID.seedOverlayRows[j].seed, row.step); }
+    else seedOverlayApplyCopy(row, row.seed, row.step);
     row.step++;
 }
 
@@ -1064,7 +1073,14 @@ function seedOverlayWriteAllRows() {
         else if (align === 'center') startCol = Math.floor((maxEffLen - effLen) / 2);
 
         for (let c = 0; c < maxEffLen; c++) GRID.cells.delete(row.row + '_' + c);
-        for (let c = 0; c < effLen; c++) setEditCell(row.row, startCol + c, String(bits[c]), null, null);
+        // v18: цвет — направление прохода (вперёд — синий, назад — красный); строка «все 0» — тёмно-жёлтым фоном, «все 1» — фиолетовым
+        const anti = effLen !== row.resultBits.length, dirs = row.dirs || [];
+        const all0 = row.step > 0 && row.resultBits.every(b => b === 0), all1 = row.resultBits.length > 0 && row.resultBits.every(b => b === 1);
+        for (let c = 0; c < effLen; c++) {
+            const d = dirs[anti ? Math.floor(c / 2) : c];
+            const color = all1 ? '#c77dff' : !GRID.seedOverlayDirColors ? null : d === 1 ? '#4da3ff' : d === 2 ? '#ff5a5a' : null;
+            setEditCell(row.row, startCol + c, String(bits[c]), all0 ? '#4d4300' : null, color);
+        }
     });
 }
 
@@ -1082,19 +1098,20 @@ function seedOverlayNeedsRebuild() {
 
 function seedOverlayStepAll() {
     if (seedOverlayNeedsRebuild()) seedOverlayBuildRows();
-    GRID.seedOverlayRows.forEach(row => seedOverlayApplyStep(row));
+    GRID.seedOverlayRows.forEach((row, idx) => seedOverlayApplyStep(row, idx));
     seedOverlayWriteAllRows();
     render();
 }
 
 function seedOverlayUndoAll() {
     if (!GRID.seedOverlayRows || GRID.seedOverlayRows.length === 0) return;
-    GRID.seedOverlayRows.forEach(row => {
+    GRID.seedOverlayRows.forEach((row, idx) => {
         let newStep = row.step - 1;
         if (newStep < 0) return;
         row.step = 0;
         row.resultBits = new Array(row.tLen).fill(0);
-        for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row);
+        row.dirs = new Array(row.tLen).fill(0);
+        for (let s = 0; s < newStep; s++) seedOverlayApplyStep(row, idx);
     });
     seedOverlayWriteAllRows();
     render();
@@ -1127,6 +1144,17 @@ function seedOverlayStopAutoplay() {
 }
 
 document.getElementById('seedOverlayStepBtn').addEventListener('click', () => seedOverlayStepAll());
+{   // v18: Σ Мульти и цвета направлений
+    const mb = document.getElementById('seedOverlayMultiBtn'), db = document.getElementById('seedOverlayDirBtn');
+    const ui = () => { mb.style.background = GRID.seedOverlayMulti ? '#ff3399' : ''; mb.style.color = GRID.seedOverlayMulti ? '#000' : ''; db.style.opacity = GRID.seedOverlayDirColors ? '1' : '0.45'; };
+    ui();
+    mb.addEventListener('click', () => {   // режим сменился — накопленное прежним режимом не смешивать (как в Excel): наложение заново с нуля
+        GRID.seedOverlayMulti = !GRID.seedOverlayMulti; ui();
+        if (GRID.seedOverlayRows) { GRID.seedOverlayRows.forEach(r => { r.step = 0; r.resultBits = new Array(r.tLen).fill(0); r.dirs = new Array(r.tLen).fill(0); }); seedOverlayWriteAllRows(); }
+        render();
+    });
+    db.addEventListener('click', () => { GRID.seedOverlayDirColors = !GRID.seedOverlayDirColors; ui(); if (GRID.seedOverlayRows) seedOverlayWriteAllRows(); render(); });
+}
 document.getElementById('seedOverlayUndoBtn').addEventListener('click', () => seedOverlayUndoAll());
 document.getElementById('seedOverlayResetBtn').addEventListener('click', () => seedOverlayResetAll());
 document.getElementById('seedOverlayPlayBtn').addEventListener('click', function() {
