@@ -219,7 +219,7 @@ document.addEventListener("mouseover", (e) => {
   if (el === tipEl) return;
   tipOff();
   if (!el) return;
-  const near = el.closest("#ringTbl,#coneViewTools,.sfz-grape:not(.cmin),#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,body.pane-icons #rowsPane");
+  const near = el.closest("#ringTbl,#coneViewTools,.sfz-grape,#coneBalanceTools,#coneAlignTools,#coneMagAxisTools,body.pane-icons #rowsPane");
   if (Z.tipsOn === false && !near) { tipsMuteElement(el); return; }
   const t = el.getAttribute("title") || el.dataset.zzTip || ""; if (!t.trim()) return;
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
@@ -2587,6 +2587,7 @@ function ringTblSync(){
   }
   const cur = coneSlitRaw(); el.querySelectorAll(":scope > button[data-v]").forEach((tr, i) => { tr.style.gridRow = String(i + 1); const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
   if (fill) for (const button of fill.children) button.setAttribute("aria-pressed", String(button.classList.contains("on")));
+  [...el.querySelectorAll(':scope > button[data-v],.ring-fill-column > button')].forEach((button,i)=>sfzGrapeStyle(button,"--grape-layer",String(2147483502+(i%2?60:0))));
   el.classList.remove("off"); el.title = "Выбор режима колец действует независимо от включения солнца и лазера.";
   if (el.hidden) el.hidden = false; ringTblPlace(el);
 }
@@ -6868,7 +6869,7 @@ function coneViewToolsSync(cv){
     handles.append(move, close); box.appendChild(handles);
   }
   box.hidden = !!Z.coneViewToolsHidden;
-  for (const [id, caption] of [["bConeCanon", "◯ мин"], ["bShowFix", "🔴 ⇄"], ["bShowFixIr", "🟢 ⇄"], ["coneSame", "цвет"], ["coneOnlySel", "выдел"], ["coneNoPick", "🚫"], ["coneSect", "◔"], ["coneClean", "◯"], ["conePoly", "⬡"], ["bConeArcs", "◠"], ["bConeHits", "✦"], ["bLightSolid", "☀"], ["bSunParts", "доли"], ["coneBit1", "①"], ["coneRaysB", null], ["coneGlow", "✨"], ["bConeAxes", "✛"]]) {
+  for (const [id, caption] of [["bConeCanon", "◯ мин"], ["bShowFix", "🔴 ⇄"], ["bShowFixIr", "🟢 ⇄"], ["coneSame", "цвет"], ["coneOnlySel", "выдел"], ["coneNoPick", "🚫"], ["coneSect", "◔"], ["coneClean", "◯"], ["conePoly", "⬡"], ["bConeArcs", "◠"], ["bConeHits", "✦"], ["bLightSolid", "☀"], ["bSunParts", "доли"], ["coneBit1", "①"], ["coneRaysB", null], ["coneGlow", "✨"]]) {
     const source = $(id); if (!source) continue;
     const node = source.matches("input") ? source.closest("label") : source;
     if (!node || node.parentElement === box) continue;
@@ -6936,6 +6937,9 @@ function coneBalanceToolsSync(cv){
   coneBalPlace();
   coneBalanceAxisBind(cv);
   coneAlignToolsSync(cv);
+  for (const [id,name] of [["bConeQuarterBalance","Баланс четвертей"],["bConeBalanceHighlight","Подсветка баланса"],["bConeBalancePause","Пауза на равенстве"],["bConeRotateAxis","Поворот осей"],["bConeBalanceAuto","Автобаланс"],["bConeQuarterRings","Кольца четвертей"],["bC3Axes","Оси"],["bC3ZoomOut","Меньше"],["bC3ZoomIn","Больше"]]) {
+    const button=$(id);if(button && button.dataset.hoverCaption!==name)button.dataset.hoverCaption=name;
+  }
 }
 function coneAlignToolsSync(cv){
   const source = document.querySelector('.lseg[data-seg="bCutAlign"]'), tools = $("coneBalanceTools"); if (!source || !tools) return;
@@ -7155,14 +7159,15 @@ function c3AxesPlace(){
   // v0.1047: «−» вплотную слева от пары балансов, «+» — справа (нет балансов — по бокам ромба осей, через зазор шириной в ромб)
   const zo = document.getElementById("bC3ZoomOut"), zi = document.getElementById("bC3ZoomIn");
   // v0.024, «+ и − сделай ромбами и под треугольники»: ромбы по бокам пары балансов, под рядом треугольников (нет балансов — там же, по бокам оси)
-  if (zo && zi) { const zw = zo.offsetWidth || 30, zh = zo.offsetHeight || zw, gap = 6, tools = document.getElementById("coneBalanceTools");
-    const below = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom + 6 : cr.top + w + 6;
-    let L = br ? br.left - gap - zw : center - 30 - zw, R = br ? br.right + gap : center + 30, Y = br ? br.top + br.height / 2 - zh / 2 : below;
-    // v0.053: масштаб — по бокам чисел баланса, без наложения на верхние ромбы.
-    const top = (Y - hr.top - host.clientTop + host.scrollTop).toFixed(1) + "px";
-    const place = (el, px) => { const xx = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - zw, px - hr.left)) - host.clientLeft + host.scrollLeft, sl = xx.toFixed(1) + "px";
-      if (el.style.left !== sl) el.style.left = sl; if (el.style.top !== top) el.style.top = top; };
-    place(zo, L); place(zi, R); }
+  if(zo && zi){
+    const size=zo.offsetWidth||48,gap=6,x=cr.right-size-20;
+    const middle=cr.top+cr.height/2;
+    for(const [button,y] of [[zo,middle-size-gap/2],[zi,middle+gap/2]]){
+      const left=(x-hr.left-host.clientLeft+host.scrollLeft).toFixed(1)+"px";
+      const top=(Math.max(cr.top,Math.min(cr.bottom-size,y))-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
+      if(button.style.left!==left)button.style.left=left;if(button.style.top!==top)button.style.top=top;
+    }
+  }
 }
 function cgTabsBottom(){ const tb = document.getElementById("cgTabs"); if (!tb || !tb.getClientRects().length || document.body.classList.contains("zen")) return -Infinity;
   /* v0.858, «проверь на телефон версию»: на телефоне полоса вкладок стоит ПОД холстом, и ромбы «у верха холста» (✛ оси, баланс) уезжали под неё, на
@@ -7185,6 +7190,7 @@ function coneMagAxisPlace(){
   if (!box) { box = document.createElement("div"); box.id = "coneMagAxisTools"; box.setAttribute("aria-label", "Магниты на оси"); $("coneMain").parentElement.appendChild(box); }
   for (const button of [first,second]) { if (button.classList.contains("tz")) triOff(button); if (button.parentElement !== box) box.appendChild(button); }
   box.hidden = false;
+  for(const button of [first,second]) { const brief=(button===first?"Симм. ":"Границы ")+button.textContent.trim(); if(button.dataset.hoverCaption!==brief)button.dataset.hoverCaption=brief; }
   const anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect();
   const x = A.x - hr.left - anchor.clientLeft + anchor.scrollLeft - box.offsetWidth / 2;
   // v0.046: магниты у верхнего конца оси, ниже верхних кнопок и чисел баланса.
@@ -11352,7 +11358,7 @@ function solPanelOrganizeInit(C){
     groups.filter(g => !g.classList.contains("cg-zen") && g.dataset.g !== "гамма").forEach(g => {
       delete Z.cgrpOff[g.dataset.g]; g.classList.remove("coff"); fold(g, true);
     });
-    const visible = panels().filter(g => !g.hidden && !Z.cgrpOff[g.dataset.g] && g.getClientRects().length);
+    const visible = panels().filter(g => g.dataset.g && !g.hidden && !Z.cgrpOff[g.dataset.g] && g.getClientRects().length);
     const keys = new Set(visible.map(g => g.dataset.g)); if (!keys.size) return;
     const used = sections.map(section => ({ ...section, keys: section.keys.filter(key => keys.has(key)) })).filter(section => section.keys.length);
     const known = new Set(used.flatMap(section => section.keys)), other = [...keys].filter(key => !known.has(key));
@@ -11362,7 +11368,7 @@ function solPanelOrganizeInit(C){
       nodeUnpin(g); delete Z.cgrpFld[g.dataset.g];
       if (Z.cgrpMinPos) delete Z.cgrpMinPos[g.dataset.g];
       if (!SOL_PLATES[g.id] && g.parentElement !== tl) tl.appendChild(g);
-      if (!SOL_PLATES[g.id]) Z.cgrpSize[g.dataset.g] = { w: 300, h: TZC_H };
+      if (!SOL_PLATES[g.id] && !sfzColumnGroup(g)) Z.cgrpSize[g.dataset.g] = { w: 300, h: TZC_H };
       fold(g, true);
     });
     Z.cgrpDock = Z.cgrpDock.filter(key => !keys.has(key));
@@ -11375,7 +11381,7 @@ function solPanelOrganizeInit(C){
       if (y > top && y + height > bottom - 8 && x + columnWidth + 180 < wr.right) { x += Math.max(160, columnWidth) + 12; y = top; columnWidth = 0; previous = null; }
       for (let i = 0; i < members.length; i++) { const g = members[i];
         g.style.zIndex = "450"; nodeSetPos(g, x, y); nodePlace(g);
-        if (previous) Z.cgrpLink[g.dataset.g] = { to: previous.dataset.g, v: 1, dx: 0, grid: true };
+        if (previous) Z.cgrpLink[g.dataset.g] = { to: previous.dataset.g, v: 1, dx: 0, grid: true, book: true };
         columnWidth = Math.max(columnWidth, g.offsetWidth); y += solPanelRowStep(g); previous = g;
       }
     }
@@ -11398,9 +11404,13 @@ function solPanelOrganizeInit(C){
   window.zzPanelOrganizeSync = controlsSync;
   controlsSync();
   // Однократная компактная укладка после загрузки; следующие изменения пользователя сохраняются.
-  if ((Z.solPanelArrangeV | 0) < 2 && window.innerWidth > 760) {
+  if ((Z.sfzBookArrangeV | 0) < 1) {
     const ready = document.fonts && document.fonts.ready || Promise.resolve();
-    ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => { if ((Z.solPanelArrangeV | 0) < 2) pack(false); })));
+    ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if ((Z.sfzBookArrangeV | 0) >= 1 || !wb.getClientRects().length) return;
+      if (Z.solPanelArrangeUndo) Z.sfzBookPreviousUndo = copy(Z.solPanelArrangeUndo);
+      Z.solPanelArrangeUndo = snapshot(); pack(false); Z.sfzBookArrangeV=1; save();
+    })));
   }
 }
 function cgrpInit(){
@@ -11452,7 +11462,7 @@ function cgrpInit(){
   const frontPanel = el => {
     panelOrder = panelOrder.filter(p => p.isConnected && p !== el);
     if (el) panelOrder.push(el);
-    panelOrder.forEach((p, i) => p.style.setProperty("z-index", String(2147483501 + i), "important"));
+    panelOrder.forEach((p,i)=>{if(sfzColumnGroup(p)||p.id==="ringTbl")p.style.removeProperty("z-index");else p.style.setProperty("z-index",String(2147483501+i),"important");});
   };
   frontPanel(null);
   const activatePanel = e => {
@@ -11460,6 +11470,7 @@ function cgrpInit(){
     if (panel && panel.closest("#w-cone, #paneGrp")) frontPanel(panel);
   };
   document.addEventListener("pointerdown", activatePanel, true);
+  document.addEventListener("mouseover", e => { if (e.target.closest(".sfz-grape-item,.sfz-grape > .glab")) activatePanel(e); }, true);
   document.addEventListener("focusin", activatePanel, true);
   const onCanvas = g => SOL_PLATES[g.id] ? g.parentElement === wb : g.parentElement === tl;
   const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
@@ -11513,7 +11524,7 @@ function cgrpInit(){
      на рамку (заходит на 1 px), левые края вровень, если близко; нижняя прицеплена к верхней ({ to, v: 1, dx }) */
   if (!Z.cgrpLink || typeof Z.cgrpLink !== "object") Z.cgrpLink = {};
   const gByKey = k => panels().find(o => o.dataset.g === k);
-  Z.cgrpLink = {}; // v0.046: окна больше не связаны старыми сцепками.
+  Z.cgrpLink = Object.fromEntries(Object.entries(Z.cgrpLink).filter(([,L])=>L && L.book)); // v0.054: только вертикальные цепочки ромбокниг.
   const linkCycle = (right, left) => solLinkCycle(Z.cgrpLink, right, left);
   const meshSnap = (g, x, y, w, h) => {
     const t = TZC_H / (2 * Math.sqrt(3)), P = TZC_H; let best = null;
@@ -11552,8 +11563,22 @@ function cgrpInit(){
     return best;
   };
   const linkSync = () => {
-    // v0.046: сохраняем прищепки к оси и краям; сцепок панель-панель больше нет.
-    Z.cgrpLink = {};
+    // Вертикальная стопка следует за высотой раскрытой книги; старые произвольные сцепки исключены.
+    Z.cgrpLink=Object.fromEntries(Object.entries(Z.cgrpLink).filter(([,L])=>L && L.book));
+    const done=new Set(), active=new Set();
+    const follow=g=>{
+      if(done.has(g)||active.has(g))return; active.add(g);
+      const L=Z.cgrpLink[g.dataset.g], parent=L&&gByKey(L.to);
+      if(parent && onCanvas(g) && onCanvas(parent) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && parent.getClientRects().length){
+        follow(parent); const r=parent.getBoundingClientRect(), wr=wb.getBoundingClientRect();
+        let x=r.left+(L.dx||0),y=r.top+solPanelRowStep(parent),top=wbTop(x,g.offsetWidth);
+        if(y+g.offsetHeight>wr.bottom-8 && y>top && x+g.offsetWidth+172<wr.right){x+=Math.max(160,parent.offsetWidth)+12;y=wbTop(x,g.offsetWidth);}
+        nodeSetPos(g,x,y);
+        if(!SOL_PLATES[g.id]){g.classList.add("cfloat");floatPlace(g,x,y);}else nodePlace(g);
+      }
+      active.delete(g);done.add(g);
+    };
+    panels().forEach(follow);
     if (document.body.classList.contains("sol-mobile")) return;
     for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpTop && Z.cgrpTop[g.dataset.g]) || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
     if (window.zzPanelOrganizeSync) window.zzPanelOrganizeSync();
@@ -12671,7 +12696,7 @@ function triTag(){
      Длина — целое число сторон: полкнопки 3, кнопка 6, двойная 12 (ползунок — 12), подпись — по своей ширине */
   document.querySelectorAll("#w-cone .tools .cgb :is(button, select, label, .glab2), #paneGrp .cgb :is(button, select, label, .glab2), #w-cone .tools .cgrp > .glab, #paneGrp .cgrp > .glab").forEach(b => {
     const grape = b.closest(".cgrp");
-    if (sfzColumnGroup(grape) && !grape.classList.contains("cmin")) { if (b.classList.contains("tz")) triOff(b); return; }
+    if (sfzColumnGroup(grape)) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.classList.contains("r1form")) { if (b.classList.contains("tz")) triOff(b); return; }
     if (b.classList.contains("tzk")) return;   // v0.452: в конструкторе — своя форма (tzcApply)
     // v0.1022: поля шариков раскладываются внутри подписи; сцепка соседних рядов им не подходит.
@@ -13161,7 +13186,7 @@ function sfzColumnSize(g){
   if (g.style.flexShrink !== "0") g.style.flexShrink = "0";
   if (g.style.width) g.style.width = "";
   if (!g.classList.contains("sfz-grape")) g.classList.add("sfz-grape");
-  if (!collapsed) sfzGrapeSync(g);
+  sfzGrapeSync(g);
 }
 function sfzGrapeStyle(el, key, value){ if (el.style.getPropertyValue(key) !== value) el.style.setProperty(key, value); }
 function sfzGrapeIcon(el, name){
@@ -13170,6 +13195,7 @@ function sfzGrapeIcon(el, name){
   if (!el.title && !el.dataset.zzTip) el.title = text;
   if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.title || el.dataset.zzTip || text);
   let icon = el.querySelector(":scope > .sfz-grape-icon");
+  if (/^[^\p{L}\p{N}]/u.test(text)) { if (icon) icon.remove(); return; }
   if (!icon) { icon = document.createElement("span"); icon.className = "sfz-grape-icon"; icon.setAttribute("aria-hidden", "true"); el.prepend(icon); }
   const key = (el.id + " " + text).toLowerCase();
   let kind = /пуск|запуск|продолж|play|auto/.test(key) ? "play" : /пауза|pause|stop/.test(key) ? "pause" : /магнит|mag/.test(key) ? "magnet" : /ось|оси|axis|axes/.test(key) ? "axes" : /луч|свет|sun|light|glow/.test(key) ? "light" : /бит|bit|01/.test(key) ? "bit" : /крут|turn|spin|rotate|верт/.test(key) ? "turn" : /щел|slit|cut/.test(key) ? "slit" : /3d|тор|cube/.test(key) ? "cube" : /шар|ball/.test(key) ? "ball" : "ring";
@@ -13178,37 +13204,57 @@ function sfzGrapeIcon(el, name){
   const paths = { play:'<path d="M8 5l11 7-11 7z"/>', pause:'<path d="M8 5v14M16 5v14"/>', magnet:'<path d="M5 5v9a7 7 0 0014 0V5M5 9h4M15 9h4"/>', axes:'<path d="M12 2v20M2 12h20M9 5l3-3 3 3M19 9l3 3-3 3"/>', light:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2"/>', bit:'<circle cx="7" cy="12" r="4"/><path d="M17 8v8M15 9l2-1"/>', turn:'<path d="M19 8a8 8 0 10.5 7M19 3v6h-6"/>', slit:'<path d="M3 5h18M3 12h7M14 12h7M3 19h18M12 8v8"/>', cube:'<path d="M12 2l9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/>', ball:'<circle cx="12" cy="12" r="8"/><path d="M7 7l2-1"/>', ring:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>' };
   icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths[kind] + '</svg>';
 }
+function sfzGrapeCaption(item){
+  if (!item.matches("button,label,.sfz-grape-note") || item.querySelector('input:not([type="checkbox"]),select,textarea')) return;
+  const full = item.textContent.trim().replace(/\s+/g," "); if (!full) return;
+  const names = {"через центр":"центр ↔","центр: насквозь":"центр ↔","↦ насквозной":"сквозь","∞ по дугам":"по дугам","▶ продолжить":"▶ далее","↩ к старту":"↩ старт","↻ против":"↻ назад","⊘ закрыто":"закрыт.","Σ расчёт":"Σ счёт","● = часть":"● часть"};
+  let brief = names[full] || full;
+  if (brief.length > 9) brief = brief.split(" ").map(w => w.length > 6 ? w.slice(0,5)+"." : w).slice(0,2).join(" ");
+  if (item.dataset.grapeCaption !== brief) item.dataset.grapeCaption = brief;
+  if (item.dataset.grapeFull !== full) item.dataset.grapeFull = full;
+  if (!item.title && !item.dataset.zzTip) item.title = full;
+}
 function sfzGrapeLayout(box, items, name){
-  const cell = 48, step = 26; let y = 0, side = 0, width = 48, bottom = 0;
+  const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0, index=0;
+  const group=box.closest(".sfz-grape"), order=group?[...document.querySelectorAll(".sfz-grape")].indexOf(group):0;
   for (const item of items) {
     if (!item.classList.contains("sfz-grape-item")) { if (item.classList.contains("tz")) triOff(item); tzcClean(item); item.classList.add("sfz-grape-item"); }
-    const wide = item.matches("select,input,textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea') || item.classList.contains("sfz-grape-note");
-    if (wide && side) { y += cell + cell / 2; side = 0; }
-    const x = wide ? 0 : side * step, top = y + (wide ? 0 : side * cell / 2), w = wide ? 120 : cell;
-    sfzGrapeStyle(item, "--grape-x", x + "px"); sfzGrapeStyle(item, "--grape-y", top + "px"); sfzGrapeStyle(item, "--grape-w", w + "px");
-    width = Math.max(width, x + w); bottom = Math.max(bottom, top + cell);
-    sfzGrapeIcon(item, name || "");
-    if (wide) { y = top + cell + 2; side = 0; } else { side = 1 - side; if (!side) y += cell; }
+    const editor = item.matches("select,input,textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
+    const large = !!item.querySelector('input:not([type="checkbox"]),textarea') || item.matches("input,textarea");
+    item.classList.toggle("sfz-grape-editor",editor); item.classList.toggle("sfz-grape-large",large);
+    if (large && side) { y += cell + cell / 2; side = 0; }
+    const x = large ? 0 : side * step, top = y + (large ? 0 : side * cell / 2), size = large ? 96 : cell;
+    sfzGrapeStyle(item,"--grape-layer",String(2147483501+(index++%2===order%2?60:0)+Math.max(0,order)));
+    sfzGrapeStyle(item,"--grape-x",x+"px"); sfzGrapeStyle(item,"--grape-y",top+"px"); sfzGrapeStyle(item,"--grape-w",size+"px"); sfzGrapeStyle(item,"--grape-h",size+"px");
+    width=Math.max(width,x+size); bottom=Math.max(bottom,top+size);
+    sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
+    if (large) { y=top+size+4; side=0; } else { side=1-side; if(!side)y+=cell; }
   }
-  sfzGrapeStyle(box, "--sfz-grape-width", width + "px"); sfzGrapeStyle(box, "--sfz-grape-height", bottom + "px");
-  return { width, height: bottom };
+  sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
+  return {width,height:bottom};
 }
 function sfzGrapeSync(g){
   const box = g.querySelector(":scope > .cgb"); if (!box) return;
   const items = [];
   const collect = node => {
-    if (node.hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,#coneBallStatus")) return;
+    const hidden = node.hidden || node.style.display === "none";
+    node.classList.toggle("sfz-grape-hidden",hidden);
+    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,#coneBallStatus")) return;
     if (node.matches("button,label,select,textarea,input:not([type=hidden])")) { items.push(node); return; }
-    if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { if (node.textContent.trim()) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
+    if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { const empty=!node.textContent.trim(); node.classList.toggle("sfz-grape-empty",empty); if (!empty) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
     if (!node.classList.contains("sfz-grape-wrap")) node.classList.add("sfz-grape-wrap");
     for (const child of node.children) collect(child);
   };
   for (const child of box.children) collect(child);
   const layout = sfzGrapeLayout(box, items, g.dataset.g);
-  sfzGrapeStyle(g, "--sfz-grape-width", layout.width + "px");
+  sfzGrapeStyle(g,"--sfz-grape-width","120px");
+  sfzGrapeStyle(g,"--sfz-book-body-width",layout.width+"px");
+  let cover=g.querySelector(":scope > .sfz-book-cover");
+  if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
   const lab = g.querySelector(":scope > .glab");
   if (lab) {
-    const title = "Гроздь «" + g.dataset.g + "». ✥ — перетащить; × — свернуть. Развернуть — кнопкой + в заголовке группы.";
+    if (lab.dataset.grapeName !== g.dataset.g) lab.dataset.grapeName = g.dataset.g;
+    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок — переместить; + / − — раскрыть или сжать гроздь между крышками.";
     if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
     const fold = lab.querySelector(".gfold"), label = "Свернуть гроздь «" + g.dataset.g + "»";
     if (fold && fold.getAttribute("aria-label") !== label) fold.setAttribute("aria-label", label);
@@ -13823,7 +13869,7 @@ function tzSliders(){
 document.addEventListener("input", (e) => { if (e.target && e.target.type === "range") tzSliders(); }, true);
 setInterval(() => { if (!document.hidden && !ZZ_BG) tzcAll(); }, 300);   // и ползунки, и обводки «нажата» (v0.468) — кнопки загораются и гаснут сами
 function tzgFrame(g){
-  if (sfzColumnGroup(g) && !g.classList.contains("cmin")) { sfzColumnSize(g); return; }
+  if (sfzColumnGroup(g)) { sfzColumnSize(g); return; }
   if (document.body.classList.contains("sol-mobile") && g.closest("#w-cone")) return;
   if (!g.closest("#w-cone .tools, #paneGrp")) { if (g.classList.contains("tzg")) { g.classList.remove("tzg"); for (const k of ["--gclip", "--gmask", "--gfc"]) g.style.removeProperty(k); g._tzgk = ""; } return; }
   if (!g._tzgRO && window.ResizeObserver) { g._tzgRO = new ResizeObserver(() => tzgFrame(g)); g._tzgRO.observe(g); }
@@ -14281,6 +14327,36 @@ function palStep(d){
    ввода и ✕ у своих шаблонов в столбике не показываются; «△ Построить» строит по тому, что вписано в развёрнутой
    панели. ▸ разворачивает обратно, выбор запоминается. Кнопки, которые страница перерисовывает сама (шаблоны,
    ⇉/⇇ кода), превращаются в значки заново — за этим следит MutationObserver. ─── */
+
+function sfzPaneCarousels(){
+  const roots=document.querySelectorAll('#rowsPane :is(#lookBtns,#fileBtns,#saveBtns,#rowBtns,#triBtns,#maskBar2,#tplBar,#tplList,#paneWins)');
+  for(const root of roots){
+    const items=[...root.querySelectorAll('button:not(.tx):not(.zerk-arrow)')].filter(b=>!b.hidden&&b.style.display!=="none"&&!b.classList.contains("sfz-off"));
+    root.classList.toggle("sfz-carousel",items.length>1);
+    if(items.length<2) { root.querySelectorAll('.sfz-carousel-item').forEach(b=>b.classList.remove('sfz-carousel-item','sfz-carousel-active')); continue; }
+    root._sfzItems=items;
+    if(!root._sfzCurrent || !items.includes(root._sfzCurrent))root._sfzCurrent=items[0];
+    const sync=()=>{for(const b of root._sfzItems){b.classList.add('sfz-carousel-item');b.classList.toggle('sfz-carousel-active',b===root._sfzCurrent);}};
+    sync(); if(root._sfzCarouselBound)continue; root._sfzCarouselBound=true;
+    let timer=0, swapping=0, hovered=false, pressed=false;
+    const stop=()=>{clearTimeout(timer);timer=0;};
+    const turn=dir=>{
+      const list=root._sfzItems;if(!list||list.length<2||swapping)return;
+      let index=list.indexOf(root._sfzCurrent);const old=root._sfzCurrent;
+      old.classList.add('sfz-carousel-turn');
+      swapping=setTimeout(()=>{old.classList.remove('sfz-carousel-turn');const focused=document.activeElement===old;root._sfzCurrent=list[(index+dir+list.length)%list.length];sync();swapping=0;
+        tipOff(); if(focused)root._sfzCurrent.focus({preventScroll:true});
+        else if(hovered)root._sfzCurrent.dispatchEvent(new MouseEvent("mouseover",{bubbles:true}));},150);
+    };
+    const schedule=()=>{stop();if(!hovered||pressed||!Z.paneIcons)return;timer=setTimeout(()=>{turn(1);schedule();},1400);};
+    root.addEventListener('pointerenter',()=>{hovered=true;pressed=false;schedule();});
+    root.addEventListener('pointerleave',()=>{hovered=false;stop();if(swapping){clearTimeout(swapping);swapping=0;root._sfzCurrent.classList.remove('sfz-carousel-turn');}});
+    root.addEventListener('pointerdown',()=>{pressed=true;stop();if(swapping){clearTimeout(swapping);swapping=0;root._sfzCurrent.classList.remove('sfz-carousel-turn');}},true);
+    root.addEventListener('focusin',()=>{pressed=true;stop();});
+    root.addEventListener('wheel',e=>{if(!Z.paneIcons||e.ctrlKey)return;e.preventDefault();stop();turn(e.deltaY<0?-1:1);},{passive:false});
+    root.addEventListener('keydown',e=>{if(!Z.paneIcons||!['ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();stop();turn(e.key==='ArrowUp'?-1:1);});
+  }
+}
 function paneIcon(label){
   const t = label.trim(), w = t.split(/\s+/)[0] || "";
   const ch = /[A-Za-zА-Яа-яЁё]/.test(w) ? Array.from(w.replace(/[^A-Za-zА-Яа-яЁё]/g, "")).slice(0, 2) : Array.from(w);
@@ -14294,9 +14370,11 @@ function iconizePane(){
     if (b.dataset.tip0 === undefined) b.dataset.tip0 = b.title || "";
     const ic = paneIcon(cur);
     b.dataset.full = cur; b.dataset.icon = ic;
+    b.setAttribute("aria-label",cur.trim());
     b.title = cur.trim() + (b.dataset.tip0 ? " — " + b.dataset.tip0 : "");
     b.textContent = ic;
   });
+  sfzPaneCarousels();
 }
 /* v0.310, «скрывай вкладки при нажатии заголовка»: щелчок по заголовку группы левой панели (.pane-head) сворачивает всё, что под ним,
    до следующего заголовка; ещё щелчок — разворачивает. Какие свёрнуты — Z.paneFold (по тексту заголовка), помнится. Заголовки с id
