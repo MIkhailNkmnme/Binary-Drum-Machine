@@ -307,7 +307,12 @@
     }
     if (!best || !best.covered) return { starts, H, v: base, ratio: ONE, list: [], covered: 0 };
     // строго по очереди: каждый следующий — в ближайшее своё окно позже предыдущего
-    const next = (ws, last) => { for (let n = 0n; n < 64n; n++) for (const t of ws) { const x = t.add(H.mul(Q(n))); if (last === null ? x.sign() >= 0 : x.cmp(last) > 0) return x; } return null; };
+    /* v0.007, «и вариант, чтобы в 1 кольцо заходил только 1 шарик и, пока он не дошёл в центр, нельзя заходить в него, и так же для 2…» («1 в кольце»,
+       Z.coneBallOnePerRing): скорость у всех одна, расписание у всех одно, сдвинутое на момент выпуска, — два шарика в одном кольце, только если выпущены
+       ближе, чем время одного кольца (ширина / скорость). Поэтому следующий — не раньше, чем через это время после предыдущего (вход в миг выхода — можно) */
+    const gap = Z.coneBallOnePerRing ? S.rings.reduce((m, r) => ZZExact.max(m, r.roQ.sub(r.riQ)), ZERO).div(best.v) : null;
+    const ok = (x, last) => last === null ? x.sign() >= 0 : gap ? x.cmp(last.add(gap)) >= 0 : x.cmp(last) > 0;
+    const next = (ws, last) => { for (let n = 0n; n < 4096n; n++) for (const t of ws) { const x = t.add(H.mul(Q(n))); if (ok(x, last)) return x; } return null; };
     const left = starts.map((s, i) => ({ s, ws: best.windows[i] })).filter(x => x.ws.length), list = []; let last = null;
     while (left.length) {
       let pick = -1, at = null;
@@ -315,7 +320,7 @@
       if (pick < 0) break;
       list.push({ point: left[pick].s, atQ: at, arriveQ: seqReach(S, left[pick].s.rawQ, at, best.v) }); last = at; left.splice(pick, 1);
     }
-    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered };
+    return { starts, H, v: best.v, ratio: best.ratio, list, covered: best.covered, gap };
   }
   function inputFraction(value) {
     try { const q = Q(value); return q.sign() > 0 && q.cmp(1000) <= 0 ? q : null; } catch { return null; }

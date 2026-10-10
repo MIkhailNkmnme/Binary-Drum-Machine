@@ -7878,6 +7878,11 @@ function setupCone(){
       say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 изнутри выключена; удары снаружи по-прежнему ставят 1.");
     };
   }
+  if ($("bConeBallOneRing")) {   // Синхрофазотрон v0.007: «1 в кольце» — в каждом кольце не больше одного шарика
+    const sync = () => { const b = $("bConeBallOneRing"); b.classList.toggle("on", !!Z.coneBallOnePerRing); b.setAttribute("aria-pressed", String(!!Z.coneBallOnePerRing)); };
+    sync(); $("bConeBallOneRing").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallOnePerRing = !Z.coneBallOnePerRing; sync(); save(); renderCone();
+      say(Z.coneBallOnePerRing ? "1 в кольце: в каждом кольце — не больше одного шарика; следующий входит, только когда предыдущий из него вышел (в К1 — дошёл до центра). ▶ — запуск." : "1 в кольце выключено: шарики выпускаются по очереди без этого условия."); };
+  }
   if ($("bConeBallSimPause")) {   // v0.1079: пауза на одновременных событиях «В центр» — по умолчанию выключена
     const sync = () => { const b = $("bConeBallSimPause"); b.classList.toggle("on", !!Z.coneBallSimPause); b.setAttribute("aria-pressed", String(!!Z.coneBallSimPause)); };
     sync(); $("bConeBallSimPause").onclick = () => { Z.coneBallSimPause = !Z.coneBallSimPause; sync(); save();
@@ -7923,7 +7928,8 @@ function setupCone(){
     { const SP = ok && window.zzBallSeqPlan ? window.zzBallSeqPlan() : null;   // Синхрофазотрон v0.006: план выпуска по очереди
       if (SP) { const fr = q => q.text().replace(".", ","), when = SP.list.map((x, i) => "№" + (i + 1) + " — " + fr(x.atQ) + " об.").join(", ");
         const nb = n => n + " " + (n % 10 === 1 && n % 100 !== 11 ? "шарик" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "шарика" : "шариков");
-        say(SP.covered === SP.total ? `● В центр по очереди: ${nb(SP.total)}, скорость ×${fr(SP.ratio)} от базовой; выпуск (обороты К1 от старта): ${when} Все дойдут до центра и исчезнут в счёт.`
+        const one = SP.gap ? ` В каждом кольце — не больше одного: следующий не раньше чем через ${fr(SP.gap)} об.` : "";
+        say(SP.covered === SP.total ? `● В центр по очереди: ${nb(SP.total)}, скорость ×${fr(SP.ratio)} от базовой; выпуск (обороты К1 от старта): ${when}${one} Все дойдут до центра и исчезнут в счёт.`
           : SP.covered ? `● В центр по очереди: общей скорости для всех ${SP.total} щелей не нашлось — при ×${fr(SP.ratio)} до центра доходят из ${SP.covered}; выпуск: ${when}`
           : `● В центр по очереди: ни при одной из проверенных скоростей ни одна щель не доводит шарик до центра — выпуска нет.`);
         return ok; } }
