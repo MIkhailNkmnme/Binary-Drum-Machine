@@ -15,7 +15,7 @@
      а прежний выходил из кольца 1 посреди кадра — опоздание до 1/60 с (К1 из одного бита при 3 бит/с — до 0,3 рад). Прежде его скрывал допуск
      щели, без допусков (v0.1067) шарик бился. Теперь момент выхода из К1 запоминается долей кадра (k1Frac, кадр spinFrame), и новый шарик
      стартует ровно тогда: остаток кадра он проезжает сразу */
-  let spinFrame = 0;
+  let spinFrame = 0, inwardNextPending = false;
   const markK1 = (t, next) => { if (F && F.k === 0 && next === 1 && F.k1Frame !== spinFrame) { F.k1Frac = t; F.k1Frame = spinFrame; } };
   /* v0.1052, «режим: шарик вылетает и упирается в дугу, а не в щель или вырез, — исчезает»; скорость — «сначала автоподстройка на первый вылет первого
      шарика, и она постоянная дальше всегда»; внутри кольца — «едет по щели». lossRun — вылет из «Граней» с «✕ дуга»; lossSpeed — найденная скорость */
@@ -890,6 +890,15 @@
       }
     }
     batchStatus(); metrics(simultaneous ? snapshot() : S);
+    /* v0.1076, «в центр: когда строка закрылась и осталось только внешнее кольцо — открыть следующее внешнее и пустить с него в центр»:
+       закрыты все кольца, кроме внешнего (за чертой), шариков в пути нет — кольцо за чертой уходит в строки, закрытие сохраняется, и опыт
+       сам запускается из нового внешнего кольца (zzBallInwardNext в zz-ui.js) */
+    if (Z.coneBallRoute === "in" && run && !paused && !inwardNextPending && window.zzBallInwardNext) {
+      const S2 = snapshot(), c = centerCount();
+      if (S2 && S2.rings[S2.rings.length - 1].fill && c > 0 && c >= S2.rings.length - 1 && window.zzBallLive() === 0) {
+        inwardNextPending = true; setTimeout(() => { try { window.zzBallInwardNext(); } finally { inwardNextPending = false; } }, 0);
+      }
+    }
   };
   window.zzBallSpinState = on => {
     paused = !on; if (!enabled) return;

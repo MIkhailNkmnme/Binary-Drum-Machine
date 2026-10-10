@@ -7725,6 +7725,19 @@ function setupCone(){
   }
   if ($("solEdgeGrp")) $("solEdgeGrp").addEventListener("click", coneBallModeTip);
   if ($("bConeBallIn")) $("bConeBallIn").onclick = () => coneBallArm("in");
+  // v0.1076: осталось открытым только внешнее кольцо — кольцо за чертой в строки, закрытие то же, запуск из нового внешнего
+  window.zzBallInwardNext = () => {
+    const st = window.zzBallCenterState ? window.zzBallCenterState().count : 0, N0 = Z.rows.length, E = Z.coneBallEmpty;
+    const m0 = E && Array.isArray(E.m) && E.m.length === N0 ? E.m.slice() : null, f0 = fillDraft();
+    autoSet(false); fillCommit();
+    if (Z.rows.length !== N0 + 1) { say("● В центр: открыто только внешнее кольцо, но кольцо за чертой в строки не ушло — следующий запуск не начат."); return; }
+    const key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
+    Z.coneBallClosed = { key, n: st };
+    if (m0) Z.coneBallEmpty = { key, m: m0.concat([f0.split("").map(c => c === "." ? "1" : "0").join("")]) };
+    save();
+    const ok = coneBallInLaunch();
+    say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
+  };
   function coneBallInLaunch(){
     if (!window.zzBallLaunch) return false;
     Z.coneBallAuto = true; Z.coneBallArc = false;
@@ -7759,7 +7772,8 @@ function setupCone(){
   /* v0.1053: отметки шариков в строке за чертой — «1» в ячейки (как у лазера: строка из одних «1» сама уходит в поле) */
   // v0.1069: при «удар: отскок» новый опыт «В центр» — все строки пустые (пометка Z.coneBallEmpty поверх нулей), иначе — только К1 нулевой
   window.zzBallCenterInit = (empty, key, closed = 0) => {   // v0.1070: закрытые кольца (closed) хранят свои биты, пустеют остальные
-    if (empty) { Z.rows = Z.rows.map((s, k) => k < closed ? s : "0".repeat(s.length)); Z.coneBallEmpty = { key, m: Z.rows.map((s, k) => (k < closed ? "0" : "1").repeat(s.length)) }; }
+    const om = Z.coneBallEmpty && Array.isArray(Z.coneBallEmpty.m) ? Z.coneBallEmpty.m : [];   // v0.1076: пустые ячейки закрытых колец остаются пустыми
+    if (empty) { Z.rows = Z.rows.map((s, k) => k < closed ? s : "0".repeat(s.length)); Z.coneBallEmpty = { key, m: Z.rows.map((s, k) => k < closed ? (om[k] && om[k].length === s.length ? om[k] : "0".repeat(s.length)) : "1".repeat(s.length)) }; }
     else { if (Z.rows[0] && !closed) Z.rows[0] = "0".repeat(Z.rows[0].length); Z.coneBallEmpty = null; }
     save(); renderRows();
   };
