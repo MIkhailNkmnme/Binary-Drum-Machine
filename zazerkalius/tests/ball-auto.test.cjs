@@ -1,4 +1,7 @@
-// Auto-tuned straight speeds: every ring mode, every start, no reversals.
+// v0.1081: constant speed per ball (user: «постоянная для каждого шарика; когда я начал про шарики, я сразу сказал, что скорость константа»;
+// «но возможны шарики с разными константными скоростями»). Auto picks a speed once — for the first segment — then it never changes:
+// no per-segment retuning, no waiting at a joint. A joint without an exact edge on the ball's line (no width tolerance) and without an
+// open cut-out is an arc hit. Every ring mode, every start, both frame sizes.
 // Run: node zazerkalius/tests/ball-auto.test.cjs
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -17,28 +20,17 @@ vm.runInContext(source.replace('  if (document.readyState === "loading")', `
       enabled = true; Z.coneBallArc = loop;
       const pose = t => ({ ...S, rings: S.rings.map((r, k) => ({ ...r, phase: r.phase + w[k] * t })) });
       begin(S, true, true, { point, route: point.r === 0 ? 'out' : 'cross', period: 6, speed: 1, auto });
-      const speeds = new Set();
-      for (let t = 0; t < limit && F.stage !== 'done'; t += dt) {
+      let fixed = null, changed = false, waited = false, constantTravel = true;
+      for (let t = 0; t < limit && F.stage !== 'done' && F.stage !== 'lost'; t += dt) {
         advance(dt, pose(t), pose(t + dt));
-        if (F.seg) speeds.add(Math.round(F.seg.speed * 1e9));
+        if (F.stage === 'wait') waited = true;
+        const effective = F.arc ? F.arc.speed : F.seg ? F.seg.speed : F.speed;
+        if (fixed === null) fixed = effective;
+        else if (Math.abs(effective - fixed) > 1e-12) changed = true;
+        constantTravel &&= Math.abs(F.travel - fixed * F.elapsed) < 1e-8;
       }
       Z.coneBallArc = false;
-      return { ...ballInfo(F), speeds: speeds.size };
-    },
-    // v0.1046 «щель 180°»: after a frame with a centre arrival ring 1 turns half a turn (as applyFlips does), the ball goes on outward.
-    runFlip(S, w, point, dt, limit = 40) {
-      enabled = true; Z.coneBallArc = false; Z.coneBallCenter = 'flip';
-      let flip = 0, before = null, after = null;
-      const pose = t => ({ ...S, rings: S.rings.map((r, k) => ({ ...r, phase: r.phase + w[k] * t + (k ? 0 : flip * Math.PI) })) });
-      begin(S, true, true, { point, route: point.r === 0 ? 'out' : 'cross', period: 6, speed: 1, auto: true });
-      for (let t = 0; t < limit && F.stage !== 'done'; t += dt) {
-        const k0 = F.k, m0 = F.move, a0 = F.a;
-        advance(dt, pose(t), pose(t + dt));
-        if (F.flipReq) { F.flipReq = false; flip++; before = a0; after = null; }
-        else if (flip && after === null && F.k === 0 && F.move > 0) after = F.a;
-      }
-      Z.coneBallCenter = undefined;
-      return { ...ballInfo(F), flipsSeen: flip, before, after };
+      return { ...ballInfo(F), fixed, changed, waited, constantTravel, loss: F.loss };
     }
   };
   if (document.readyState === "loading")`), context);
@@ -51,83 +43,67 @@ const modes = {
   'симм.': parts(3, [[0, 1], [1.5, 2.5]]),
   '2n': parts(4, [[0, 1], [1, 2]]),
   'все': parts(2, [[0, 1], [1, 2]]),
-  // «N щель»: the only edge of a row ring is its slit, so one block covers the whole circle.
   'N щель': [{ lo: 0, hi: 2 * pi }]
 };
-// Without cuts ring 1 is one bit: its slit and the line through the centre opposite it.
 const row1 = { half: [{ lo: pi / 2, hi: 3 * pi / 2 }], quad: parts(4, [[1, 2], [3, 4]]), slit: [{ lo: -pi / 2, hi: pi / 2 }] };
 const geometry = (k2, k1, phases, k3) => ({
   shape: 'auto', spin: 0,
   rings: [
-    { ri: 0, ro: 1, phase: phases[0], blocks: k1 },
-    { ri: 1, ro: 2, phase: phases[1], blocks: k2 },
-    ...(k3 ? [{ ri: 2, ro: 3, phase: phases[2], blocks: k3 }] : [])
+    { ri: 0, ro: 1, phase: phases[0], blocks: k1, tol: 0 },
+    { ri: 1, ro: 2, phase: phases[1], blocks: k2, tol: 0 },
+    ...(k3 ? [{ ri: 2, ro: 3, phase: phases[2], blocks: k3, tol: 0 }] : [])
   ]
 });
 const rates = { bit: [pi, 2 * pi / 3, pi / 2], opp: [pi, -4 * pi / 3, pi / 3], obit: [pi, -2 * pi / 3, -pi / 5] };
-let runs = 0, retuned = 0;
+let runs = 0, exited = 0, hit = 0;
 for (const [name, k2] of Object.entries(modes)) for (const [r1, k1] of Object.entries(row1)) {
   for (const [mode, w] of Object.entries(rates)) for (const phases of [[0, 0, 0], [.123, -.71, .4], [1.9, .33, -2.2]]) {
     for (const k3 of [null, parts(5, [[0, 1], [1, 2], [2, 3]])]) {
       const S = geometry(k2, k1, phases, k3), label = `${name}/${r1}/${mode}/${phases}/${k3 ? 3 : 2}`;
       for (const point of boundaryPoints(S)) for (const dt of [1 / 60, .073]) {
         const ball = run(S, w, point, true, dt);
-        assert.equal(ball.stage, 'done', label + ' ' + point.id + ' must exit');
-        assert.equal(ball.reversals, 0, label + ' ' + point.id + ' never reverses');
-        assert.equal(ball.clean, true, label);
-        assert.equal(ball.ring, S.rings.length - 1, label + ' exits through the outermost ring');
-        runs++; if (ball.tuned) retuned++;
+        assert.equal(ball.loss, true, label + ' every ball checks the joint (arc rule)');
+        assert.equal(ball.waited, false, label + ' ' + point.id + ' never waits at a joint');
+        assert.equal(ball.changed, false, label + ' ' + point.id + ' keeps one constant speed after the first segment');
+        assert.equal(ball.constantTravel, true, label + ' ' + point.id + ' travels at the same speed from launch');
+        assert.ok(ball.tuned <= 1, label + ' speed is selected at most once');
+        assert.ok(ball.stage === 'done' || ball.stage === 'lost', label + ' ' + point.id + ' ends: exit or arc hit, got ' + ball.stage);
+        runs++; if (ball.stage === 'done') exited++; else hit++;
       }
     }
   }
 }
-assert.ok(retuned > runs / 2, 'most passages need retuned segment speeds');
-// Without tuning the same poses do reverse: the feature, not the geometry, makes them clean.
-const plain = geometry(modes['T−1'], row1.half, [.123, -.71, 0]);
-assert.ok(boundaryPoints(plain).some(p => run(plain, rates.bit, p, false, 1 / 60).reversals > 0));
-// Speed is never more than 4x the nominal one.
-const S = geometry(modes['T−1'], row1.half, [.123, -.71, 0]);
-const fast = run(S, rates.opp, boundaryPoints(S)[0], true, 1 / 60);
-assert.ok(fast.elapsed >= fast.distance / 4 - 1e-9);
-// Same-rate rings: aligned joints keep the nominal speed, unaligned ones wait instead of reversing.
-const still = run(geometry(modes['2n'], row1.half, [0, 0]), [pi, pi], boundaryPoints(geometry(modes['2n'], row1.half, [0, 0]))[0], true, 1 / 60, false, 5);
-assert.equal(still.reversals, 0);
-// ∞ loop keeps going cleanly in a mode without opposite outer edges.
-for (const name of ['T−1', 'между']) {
-  const L = geometry(modes[name], row1.half, [.3, -.2]);
-  const ball = run(L, rates.bit, boundaryPoints(L)[0], true, .037, true, 60);
-  assert.notEqual(ball.stage, 'done'); assert.equal(ball.reversals, 0); assert.ok(ball.arcs >= 5, name + ' loop repeats');
-}
-// v0.1044 one path: ring 1 knows only its seam; a ball reaching the centre leaves along the same seam, cleanly.
-for (const [name, k2] of Object.entries(modes)) for (const [mode, w] of Object.entries(rates)) {
-  const S = geometry(k2, [{ lo: -pi / 2, hi: 3 * pi / 2 }], [.21, -.4]); S.rings[0].oneWay = true;
-  for (const point of boundaryPoints(S)) for (const dt of [1 / 60, .073]) {
-    const ball = run(S, w, point, true, dt);
-    assert.equal(ball.stage, 'done', 'one path ' + name + '/' + mode + ' ' + point.id);
-    assert.equal(ball.reversals, 0, 'one path never reverses');
-  }
-}
-// v0.1046 «щель 180°»: the ball reaches the centre, ring 1 turns 180°, the ball keeps its direction through the centre.
+assert.ok(exited > 0 && hit > 0, 'both outcomes occur: exact joints pass, others hit an arc');
+// A start inside K1 without an opposite edge must keep its first speed after the centre reversal.
 {
-  const norm = x => Math.atan2(Math.sin(x), Math.cos(x));
-  for (const [name, k2] of Object.entries(modes)) for (const [mode, w] of Object.entries(rates)) {
-    const S = geometry(k2, [{ lo: -pi / 2, hi: 3 * pi / 2 }], [.21, -.4]); S.rings[0].oneWay = true;
-    for (const point of boundaryPoints(S).filter(p => p.k === 1 && p.r === 2)) {
-      const ball = context.window.autoTest.runFlip(S, w, point, 1 / 60);
-      assert.equal(ball.stage, 'done', 'flip ' + name + '/' + mode); assert.equal(ball.reversals, 0);
-      assert.ok(ball.flipsSeen >= 1 && ball.flips >= 1, 'ring 1 turned at the centre');
-      // inward along angle a, outward along a + pi plus ring-1 rotation in one frame: the direction of travel is kept
-      assert.ok(Math.abs(norm(ball.after - ball.before - pi)) < Math.abs(w[0]) * 3 / 60 + 1e-6, 'goes on in the same direction');
-    }
+  const S = geometry(modes['T−1'], [{ lo: 0, hi: 2 * pi }], [.123, -.71, 0]);
+  for (const dt of [1 / 60, .073]) {
+    const ball = run(S, rates.bit, { k: 0, raw: 0, r: .5, id: 'inside K1' }, true, dt);
+    assert.equal(ball.changed, false, 'centre reversal must not select another speed');
+    assert.equal(ball.constantTravel, true, 'constant travel from the first segment through the reversal');
+    assert.equal(ball.fixed, 1);
   }
 }
-// Group launches fall back to auto-tuned runs when no common constant speed exists.
+// Fixed speed modes and explicit speeds: never tuned at all.
+{
+  const S = geometry(modes['T−1'], row1.half, [.123, -.71, 0]);
+  for (const point of boundaryPoints(S)) {
+    const ball = run(S, rates.bit, point, false, 1 / 60);
+    assert.equal(ball.changed, false); assert.equal(ball.waited, false);
+    assert.ok(Math.abs(ball.fixed - 1) < 1e-12, 'explicit speed 1 stays 1');
+  }
+}
+// ∞ loop: arcs at the ball's own speed, no waiting.
+for (const name of ['T−1', 'между', 'все']) {
+  const L = geometry(modes[name], row1.half, [.3, -.2]);
+  const ball = run(L, rates.bit, boundaryPoints(L)[0], true, .037, true, 30);
+  assert.equal(ball.waited, false, name + ' loop never waits'); assert.equal(ball.changed, false, name + ' loop keeps its speed');
+}
+// Group launches still find a common constant speed or fall back to a first-segment auto speed.
 context.Z.coneBallAuto = true; context.Z.coneBallBatch = false;
+const plain = geometry(modes['T−1'], row1.half, [.123, -.71, 0]);
 for (const count of [1, 2, 3]) {
   const group = movingGroup(plain, rates.bit, 6, count);
   assert.ok(!group.error, group.error); assert.equal(group.runs.length, count);
-  assert.ok(group.runs.every(r => r.auto));
 }
-context.Z.coneBallAuto = false;
-assert.ok(movingGroup(plain, rates.bit, 6, 2).error, 'without tuning T−1 has no opposite pair');
-console.log(`PASS: auto-tuned speeds in T−1, между, симм., 2n, все, N щель × half/quad/slit ring 1 × 3 spin modes × 2/3 rings: ${runs} runs, ${retuned} retuned, 0 reversals; ∞ loops; group fallback`);
+console.log(`PASS: constant speed per ball in T−1, между, симм., 2n, все, N щель × half/quad/slit ring 1 × 3 spin modes × 2/3 rings: ${runs} runs (${exited} exited, ${hit} arc hits), no waiting, no retuning; ∞ loops; groups`);

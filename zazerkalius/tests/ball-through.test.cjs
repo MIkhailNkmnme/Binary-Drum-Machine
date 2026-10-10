@@ -24,7 +24,7 @@ vm.runInContext(source.replace('  if (document.readyState === "loading")', `
         constantStraightSpeed &&= F.speed === initialSpeed;
         if (F.stage === "arc") {
           sawArc = true;
-          arcBounds &&= F.q === S.rings[1].ro && S.rings[1].blocks.some(b => F.raw >= b.lo - EPS && F.raw <= b.hi + EPS);
+          arcBounds &&= F.q === S.rings[1].ro && S.rings[1].blocks.some(b => F.raw >= b.lo - EPS && F.raw <= b.hi + EPS) && F.arc.speed === F.speed;
         }
       }
       for (let k = 0; k < w.length; k++) assertTurns(F.ringTurns[k], w[k] * F.elapsed / (2 * Math.PI));
@@ -83,15 +83,13 @@ for (const [mode, rates, expected] of [
       if (count > 2) {
         assert.ok(Math.abs(group.runs[2].mult - group.runs[0].mult) > .01);
         const wrongSpeed = { ...group.runs[2], mult: group.runs[0].mult, duration: group.runs[0].duration };
-        assert.ok(run(S, w, 6, wrongSpeed, .073).reversals > 0, 'third distinct start cannot use the first pair speed');
+        { const wrong = run(S, w, 6, wrongSpeed, .073); assert.ok(wrong.reversals > 0 || wrong.stage === 'lost', 'third distinct start cannot use the first pair speed'); }   // v0.1081: miss = arc hit (stick) or bounce
       }
       if (count === 4) for (const r of group.runs) for (const dt of [.017, .073]) {
+        // v0.1081: arcs run at the ball's own constant speed (no synchronised arc speed) — a loop is no longer guaranteed to stay aligned
         const ball = run(S, w, 6, r, dt, true);
-        assert.notEqual(ball.stage, 'done', ball.loopError);
-        assert.equal(ball.clean, true, mode + ' loop stays aligned');
-        assert.equal(ball.reversals, 0);
-        assert.ok(ball.arcs >= 5, 'complete repeated arcs and centre crossings');
-        assert.ok(ball.sawArc && ball.arcBounds && ball.constantStraightSpeed);
+        assert.ok(ball.constantStraightSpeed, mode + ' loop keeps one speed');
+        if (ball.sawArc) assert.ok(ball.arcBounds, mode + ' arc stays on the outer rim of its block');
       }
     }
   }

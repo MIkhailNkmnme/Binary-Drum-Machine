@@ -113,11 +113,14 @@ test('draft impact paints actual cell 0 and counts its absorption exactly once',
     assert.deepEqual(e.hits,[0]); assert.deepEqual(e.lost,[2]);
   }
 });
-test('passing a slit, including its width tolerance, never paints', () => {
-  for (const phase of [0,.02,-.02]) {
-    const e=experiment(), S=geometry(phase); e.api.start(S,{loss:true});
+// v0.1067: slit is a line without width — only an exact alignment passes; 0.02 rad off is an arc hit
+test('passing an exactly aligned slit never paints; a slit off the line is an arc hit (no width tolerance)', () => {
+  { const e=experiment(), S=geometry(0); e.api.start(S,{loss:true});
     assert.equal(e.api.step(2,S).stage,'done');
-    assert.deepEqual(e.hits,[]); assert.deepEqual(e.lost,[]);
+    assert.deepEqual(e.hits,[]); assert.deepEqual(e.lost,[]); }
+  for (const phase of [.02,-.02]) {
+    const e=experiment(), S=geometry(phase); e.api.start(S,{loss:true});
+    assert.equal(e.api.step(2,S).stage,'lost','no tolerance at phase '+phase);
   }
 });
 test('rotating draft is hit at contact time, independent of frame size', () => {
@@ -191,8 +194,8 @@ test('all outer slit starts are distinct, including the full-circle seam', () =>
   assert.ok(starts.every(p=>p.k===2 && p.r===3));
 });
 test('one-bit first ring has one real slit; the opposite route and both half-circles are solid', () => {
-  for (const mode of ['through','back','flip']) for (const a of [-pi/2+.02,pi/2,-pi/4,3*pi/4]) {
-    const e=experiment(), S=e.api.singleBitSnapshot(mode), slit=Math.abs(a+pi/2)<.05;
+  for (const mode of ['through','back','flip']) for (const a of [-pi/2,-pi/2+.02,pi/2,-pi/4,3*pi/4]) {
+    const e=experiment(), S=e.api.singleBitSnapshot(mode), slit=Math.abs(a+pi/2)<1e-9;   // v0.1067: only the exact slit line passes
     e.api.start(S,{route:'in',mark:false,point:{k:1,raw:a,r:2,label:'outer'}});
     const b=e.api.step(3,S);
     assert.equal(b.stage,slit?'done':'lost',mode+' at '+a);

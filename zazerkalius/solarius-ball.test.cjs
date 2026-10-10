@@ -8,7 +8,7 @@ const vm = require('node:vm');
 function experiment({ q = 1, angle = 0, speed = 1, route = 'cross', phase = [0, 0], rings } = {}) {
   const status = { textContent: '' };
   const ctx = vm.createContext({
-    window: {}, Z: { coneAutoSp: 30, coneSpinMode: 'bit', coneBallBatch: false },
+    window: {}, Z: { coneAutoSp: 30, coneSpinMode: 'bit', coneBallBatch: false, coneBallImpact: 'bounce' },   // v0.1081: без щели на стыке — удар; с отскоком шарик разворачивается по своей грани
     document: { readyState: 'loading', addEventListener() {}, getElementById: id => id === 'coneBallStatus' ? status : null }
   });
   const source = readFileSync(__dirname + '/zz-ball.js', 'utf8');
@@ -47,10 +47,11 @@ test('at the joint the ball moves onto the coincident edge of the first ring', (
   assert.equal(info.ring, 0); assert.equal(info.reversals, 0); assert.equal(info.clean, true);
 });
 
+// v0.1081: angle 0 now lies in ring 1's open half (a cut-out passes); the wall of ring 1 is at π
 test('without a coincident edge at the joint the ball reverses along its own edge', () => {
-  const trial = experiment({ q: 1.5, angle: 0 });
+  const trial = experiment({ q: 1.5, angle: Math.PI });
   const info = trial.step(1);
-  near(info.q, 1.5); same(info.angle, 0);
+  near(info.q, 1.5); same(info.angle, Math.PI);
   assert.equal(info.ring, 1); assert.equal(info.reversals, 1); assert.equal(info.stage, 'out');
   const done = trial.step(1);
   near(done.q, 2); near(done.distance, 1.5);
@@ -91,12 +92,12 @@ test('inside the first ring a ball can bounce from joint to joint', () => {
 test('a launch exactly at the joint decides at once', () => {
   const pass = experiment({ q: 1, angle: Math.PI / 2 }).step(0.25);
   near(pass.q, 0.75); assert.equal(pass.ring, 0); assert.equal(pass.reversals, 0);
-  const back = experiment({ q: 1, angle: 0 }).step(0.25);
+  const back = experiment({ q: 1, angle: Math.PI }).step(0.25);
   near(back.q, 1.25); assert.equal(back.ring, 1); assert.equal(back.reversals, 1);
 });
 
 test('a fast ball handles a reversal and the exit in one frame', () => {
-  const trial = experiment({ q: 1.8, angle: 0, speed: 10 });
+  const trial = experiment({ q: 1.8, angle: Math.PI, speed: 10 });
   const info = trial.step(0.2);
   near(info.q, 2); near(info.distance, 1.8); near(info.elapsed, 0.18);
   assert.equal(info.stage, 'done'); assert.equal(info.reversals, 1);
@@ -106,4 +107,10 @@ test('a saved eight route falls back to the centre crossing', () => {
   const trial = experiment({ q: 1.5, angle: Math.PI / 2, route: 'eight' });
   const info = trial.step(0.2);
   near(info.q, 1.3); assert.equal(info.route, 'cross'); assert.equal(info.stage, 'in');
+});
+
+// v0.1081: a cut-out is open — the ball passes through ring 1's open half without an edge
+test('the open half of ring 1 is a cut-out and passes', () => {
+  const info = experiment({ q: 1.5, angle: 0 }).step(1);
+  near(info.q, 0.5); assert.equal(info.ring, 0); assert.equal(info.reversals, 0);
 });
