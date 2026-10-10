@@ -6564,13 +6564,14 @@ function coneAlignToolsSync(cv){
   const labels = ["ч/н", "▥", "◧", "◨", "💾"];
   [...source.children].forEach((b, i) => { if (b.textContent !== labels[i]) b.textContent = labels[i]; b.setAttribute("aria-pressed", String(b.classList.contains("on"))); });
   const cr = cv.getBoundingClientRect(), tr = tools.getBoundingClientRect(), anchor = source.offsetParent || host, hr = anchor.getBoundingClientRect();
-  const x = Math.max(cr.left, Math.min(cr.right - source.offsetWidth, tr.right + 6));
-  let y = Math.max(cr.top, tr.top - source.offsetHeight - 4);
-  const bal = $("coneBal"), br = bal && !bal.hidden ? bal.getBoundingClientRect() : null;
-  if (br && x < br.right && x + source.offsetWidth > br.left && y < br.bottom && y + source.offsetHeight > br.top) y = br.bottom + 4;
-  if (x < tr.right && x + source.offsetWidth > tr.left && y + source.offsetHeight + 4 > tr.top) {
-    const ta = tools.offsetParent || host, th = ta.getBoundingClientRect();
-    tools.style.top = (y + source.offsetHeight + 4 - th.top - ta.clientTop + ta.scrollTop) + "px";
+  /* v0.026, «проверь мобильную версию»: ряд ч/н ▥ ◧ ◨ 💾 — справа от треугольников на том же верхнем крае; не влезает (телефон) — под треугольниками,
+     балансами и ромбами − / +, у правого края. Прежде он вставал на верхний край и сталкивал треугольники вниз (ромб оси выпадал из зазора, балансы закрывались) */
+  const sw = source.offsetWidth, fits = tr.right + 6 + sw <= cr.right;
+  const x = fits ? tr.right + 6 : Math.max(cr.left, cr.right - sw);
+  let y = Math.max(cr.top, tr.top);
+  if (!fits) for (const id of ["coneBalanceTools", "coneBal", "bC3ZoomOut", "bC3ZoomIn", "bC3Axes"]) {
+    const e = $(id); if (!e || e.hidden || !e.getClientRects().length) continue; const r = e.getBoundingClientRect();
+    if (r.left < x + sw && r.right > x) y = Math.max(y, r.bottom + 4);
   }
   source.style.left = (x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
   source.style.top = (y - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
@@ -9974,6 +9975,36 @@ function setupCone(){
     conePan = [mx - (mx - conePan[0]) * k, my - (my - conePan[1]) * k];
     coneZoom = z1; renderCone();
   }, { passive: false });
+  /* v0.026, «проверь мобильную версию, чтобы масштаб работал»: щипок двумя пальцами по холсту — масштаб вокруг середины между пальцами (как колесо вокруг курсора).
+     Холст глушит щипок браузера (touch-action: none), а своего не было — на телефоне масштаб был только кнопками − +. Второй палец отменяет начатое
+     первым (поворот кольца, сдвиг) через pointercancel; касания щипка дальше до остальных обработчиков не доходят */
+  { const pts = new Map(), done = new Set(); let pinch = null, synth = false;
+    const rel = (p) => { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; return [(p[0] - r.left) * dpr - cv.width / 2, (p[1] - r.top) * dpr - cv.height / 2]; };
+    const geo = () => { const [a, b] = [...pts.values()]; return { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, m: rel([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]) }; };
+    cv.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch") return;
+      if (pinch || done.size) { done.add(e.pointerId); e.stopImmediatePropagation(); return; }
+      pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size < 2) return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      const [first] = pts.keys(), p = pts.get(first);
+      synth = true; try { cv.dispatchEvent(new PointerEvent("pointercancel", { pointerId: first, pointerType: "touch", isPrimary: true, bubbles: true, clientX: p[0], clientY: p[1] })); } finally { synth = false; }
+      const g = geo(); pinch = { d0: g.d, m0: g.m, z0: coneZoom, p0: conePan.slice() };
+    }, true);
+    cv.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "touch") return;
+      if (done.has(e.pointerId)) { e.stopImmediatePropagation(); return; }
+      if (!pinch || !pts.has(e.pointerId)) { if (pts.has(e.pointerId)) pts.set(e.pointerId, [e.clientX, e.clientY]); return; }
+      e.stopImmediatePropagation(); e.preventDefault(); pts.set(e.pointerId, [e.clientX, e.clientY]);
+      const g = geo(), z1 = Math.max(CONE_ZMIN, Math.min(60, pinch.z0 * g.d / pinch.d0)), k = z1 / pinch.z0;
+      conePan = [g.m[0] - (pinch.m0[0] - pinch.p0[0]) * k, g.m[1] - (pinch.m0[1] - pinch.p0[1]) * k]; coneZoom = z1; renderCone();
+    }, true);
+    const end = (e) => {
+      if (e.pointerType !== "touch" || synth) return;
+      if (pinch && pts.has(e.pointerId)) { pts.delete(e.pointerId); [...pts.keys()].forEach(id => done.add(id)); pts.clear(); pinch = null; e.stopImmediatePropagation(); return; }
+      if (done.delete(e.pointerId)) { e.stopImmediatePropagation(); return; }
+      pts.delete(e.pointerId);
+    };
+    cv.addEventListener("pointerup", end, true); cv.addEventListener("pointercancel", end, true); }
   cv.addEventListener("dblclick", (e) => { if (!e.altKey) return; coneZoom = 1; coneDen = 0;   /* v0.173: сброс вида — Alt + двойной щелчок (Ctrl + щелчок меняет бит) */ conePan = [0, 0]; renderCone(); });
   if (window.ResizeObserver) new ResizeObserver(() => renderCone()).observe(cv);
 }
