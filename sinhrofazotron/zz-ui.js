@@ -11752,6 +11752,14 @@ function cgrpInit(){
       cgbSnap(); sizeApply(g); cgrpCols(); place(g); linkSync(); save();
     };
     g._solFold = foldToggle;
+    g._sfzTopToggle = () => {
+      const key=g.dataset.g, r=g.getBoundingClientRect(), pinned=!!Z.cgrpTop?.[key];
+      nodeUnpin(g); delete Z.cgrpLink[key]; delete Z.cgrpFld[key];
+      if(g.parentElement!==tl)undock(g);
+      nodeSetPos(g,r.left,r.top);
+      if(!pinned){const wr=$("w-cone").getBoundingClientRect();Z.cgrpTop ||= {};Z.cgrpTop[key]={x:Math.max(0,Math.min(1,(r.left-wr.left)/Math.max(1,wr.width-g.offsetWidth)))};}
+      place(g); sfzGrapeSync(g); linkSync(); save();
+    };
     // v0.1015: один щелчок меняет свёрнутость; двойной переносит вниз или возвращает обратно.
     const dockToggle = () => {
       const key = g.dataset.g, current = Z.cgrpFld[key];
@@ -11812,7 +11820,7 @@ function cgrpInit(){
        своё значение, Ctrl + колесо — масштаб страницы */
     g.addEventListener("wheel", e => { if (g.parentElement === tl) solPanelWheel(g, e); }, { passive: false });
     const edgeControl = (button, x, y) => {
-      if (!button || button.disabled || button.matches(".gfold, .gzen, .gon, .gx") || button.closest(".gzen, .gon, .gx")) return false;
+      if (!button || button.disabled || button.matches(".gfold, .gzen, .gon, .gx, .sfz-book-pin, .sfz-book-cover") || button.closest(".gzen, .gon, .gx")) return false;
       const r = button.getBoundingClientRect(), edge = 4;
       return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom &&
         Math.min(x - r.left, r.right - x, y - r.top, r.bottom - y) <= edge;
@@ -11865,7 +11873,7 @@ function cgrpInit(){
         if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
         g._solDragUntil = performance.now() + 400;
         if (!moved) { moved = true; g.style.width = r.width + "px"; g.classList.add("cdrag"); document.body.classList.add("cgdrag");
-          if (Z.cgrpEdge) { delete Z.cgrpEdge[g.dataset.g]; mates.forEach(m => delete Z.cgrpEdge[m.o.dataset.g]); }
+          nodeUnpin(g); mates.forEach(m => nodeUnpin(m.o));
           const L = Z.cgrpLink[g.dataset.g]; if (!(L && mates.some(m => m.o.dataset.g === L.to))) delete Z.cgrpLink[g.dataset.g];   // v0.502: потянул правую — отцепилась; v0.758: но не внутри блока лазера
           mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); });
           if (solo && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
@@ -13249,10 +13257,17 @@ function sfzGrapeSync(g){
   const layout = sfzGrapeLayout(box, items, g.dataset.g);
   sfzGrapeStyle(g,"--sfz-grape-width","120px");
   sfzGrapeStyle(g,"--sfz-book-body-width",layout.width+"px");
+  sfzGrapeStyle(g,"--sfz-book-first-half",items.length?(parseFloat(items[0].style.getPropertyValue("--grape-w"))||48)/2+"px":"24px");
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
   const lab = g.querySelector(":scope > .glab");
   if (lab) {
+    let pin=lab.querySelector(":scope > .sfz-book-pin");
+    if(!pin){pin=document.createElement("button");pin.type="button";pin.className="sfz-book-pin";pin.textContent="📌";pin.addEventListener("pointerdown",e=>e.stopPropagation());pin.addEventListener("dblclick",e=>e.stopPropagation());pin.onclick=e=>{e.stopPropagation();g._sfzTopToggle?.();};lab.appendChild(pin);}
+    const pinned=!!Z.cgrpTop?.[g.dataset.g], pinTitle=pinned?"Открепить верхний ромб":"Прищепить верхний ромб к верхнему краю";
+    if(pin.title!==pinTitle)pin.title=pinTitle;
+    if(pin.getAttribute("aria-label")!==pinTitle)pin.setAttribute("aria-label",pinTitle);
+    if(pin.getAttribute("aria-pressed")!==String(pinned))pin.setAttribute("aria-pressed",String(pinned));
     if (lab.dataset.grapeName !== g.dataset.g) lab.dataset.grapeName = g.dataset.g;
     const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок — переместить; + / − — раскрыть или сжать гроздь между крышками.";
     if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
