@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v13</title>
+<title>Grid Module — v14</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -104,7 +104,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
         <input type="text" id="seedOverlayInput" value="1" title="Сид(ы) через запятую или пробел. Несколько — раздаются строкам по кругу" style="width:110px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 4px;">
         <button id="seedOverlayStepBtn" title="Один шаг = одна копия сида, XOR-наложенная на каждую строку (с отскоком от края)">Шаг</button>
         <button id="seedOverlayUndoBtn" title="Отменить последний шаг у всех строк">Шаг назад</button>
-        <button id="seedOverlayResetBtn" title="Обнулить все строки (сохраняя их число и длину) и перечитать поле сида(ов)">Сброс</button>
+        <button id="seedOverlayResetBtn" title="Вернуть строки, какими они были до наложения (Автоплей останавливается). Если наложение начиналось с пустой сетки — обнулить строки и перечитать поле сида(ов)">Сброс</button>
         <button id="seedOverlayPlayBtn" style="color:#00ccff; border-color:#00ccff;" title="Автоматически повторять 'Шаг' по таймеру">▶ Автоплей</button>
         <select id="seedOverlayAlignSelect" title="Выравнивание строк относительно самой длинной — промежуток заполняется пустыми (не нулевыми) ячейками">
             <option value="left">⯇ По левому краю</option>
@@ -744,6 +744,8 @@ function seedOverlayHasContent() {
 function seedOverlayBuildRows() {
     let seeds = seedOverlayGetSeeds();
     let rows = [];
+    // v14: до первого наложения запомнить строки, какими они были, — их вернёт «Сброс»
+    if (!GRID.seedOverlayOrig) GRID.seedOverlayOrig = { mode: GRID.mode, cells: new Map(Array.from(GRID.cells, ([k, v]) => [k, Object.assign({}, v)])), editRows: GRID.editRows, editCols: GRID.editCols };
 
     if (seedOverlayHasContent()) {
         if (GRID.mode !== 'edit') enterEditMode();
@@ -856,7 +858,19 @@ function seedOverlayUndoAll() {
     render();
 }
 
+// v14, «там сброс не восстанавливает»: «Сброс» останавливает Автоплей и возвращает строки, какими они были до наложения
+// (живой режим — живым, правленные клетки — как были). Прежде он только обнулял строки, и последовательность пропадала.
+// Запомненного нет (наложение начиналось с пустой сетки) — как прежде: строки обнуляются и сид перечитывается.
 function seedOverlayResetAll() {
+    seedOverlayStopAutoplay();
+    const o = GRID.seedOverlayOrig;
+    if (o) {
+        GRID.cells = new Map(Array.from(o.cells, ([k, v]) => [k, Object.assign({}, v)]));
+        GRID.editRows = o.editRows; GRID.editCols = o.editCols; GRID.mode = o.mode;
+        document.getElementById('modeBtn').textContent = o.mode === 'edit' ? '✏️ Редакт.' : '🔴 Живой';
+        GRID.seedOverlayOrig = null; GRID.seedOverlayRows = null;
+        render(); return;
+    }
     seedOverlayBuildRows(); // уже сам вызывает seedOverlayWriteAllRows() внутри
     render();
 }
@@ -1053,7 +1067,7 @@ function useInitialGridRows() {
     GRID.frameLabel = () => d.label;
     // v13: последовательность стоит по центру — и сид-наложение (Шаг / Автоплей) выравнивает по центру, иначе пирамида уезжала бы влево лесенкой
     GRID.seedOverlayAlign = 'center'; document.getElementById('seedOverlayAlignSelect').value = 'center';
-    GRID.seedOverlayRows = null;
+    GRID.seedOverlayRows = null; GRID.seedOverlayOrig = null;
 }
 useInitialGridRows();
 document.getElementById('defaultRowsBtn').addEventListener('click', () => {
