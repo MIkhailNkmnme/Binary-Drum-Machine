@@ -7682,7 +7682,11 @@ function setupCone(){
   function coneBallArmUi(){
     for (const [id, m] of [["bConeNotchBall", "out"], ["bConeBallIn", "in"]]) { const b = $(id); if (!b) continue; const on = Z.coneBallArm === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
   }
-  function coneBallArmLaunch(){ return Z.coneBallArm === "in" ? coneBallInLaunch() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false; }
+  function coneBallArmLaunch(){
+    // v0.1077, «не открыл 3 кольцо»: открыто только внешнее (или закрыты все) — ▶ открывает следующее кольцо и запускает из него, а не пробует запуск в закрытые
+    if (Z.coneBallArm === "in" && window.zzBallCenterState && window.zzBallClosedMax && coneGeom && coneGeom.fill) { const c = window.zzBallCenterState().count; if (c > 0 && c >= window.zzBallClosedMax()) return window.zzBallInwardNext(); }
+    return Z.coneBallArm === "in" ? coneBallInLaunch() : Z.coneBallArm === "out" ? coneBallOutLaunch() : false;
+  }
   window.zzBallArmLaunch = () => !!Z.coneBallArm && window.zzBallLive && window.zzBallLive() === 0 && coneBallArmLaunch();
   function coneBallArm(m){
     autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
@@ -7730,13 +7734,14 @@ function setupCone(){
     const st = window.zzBallCenterState ? window.zzBallCenterState().count : 0, N0 = Z.rows.length, E = Z.coneBallEmpty;
     const m0 = E && Array.isArray(E.m) && E.m.length === N0 ? E.m.slice() : null, f0 = fillDraft();
     autoSet(false); fillCommit();
-    if (Z.rows.length !== N0 + 1) { say("● В центр: открыто только внешнее кольцо, но кольцо за чертой в строки не ушло — следующий запуск не начат."); return; }
+    if (Z.rows.length !== N0 + 1) { say("● В центр: открыто только внешнее кольцо, но кольцо за чертой в строки не ушло — следующий запуск не начат."); return false; }
     const key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
     Z.coneBallClosed = { key, n: st };
     if (m0) Z.coneBallEmpty = { key, m: m0.concat([f0.split("").map(c => c === "." ? "1" : "0").join("")]) };
     save();
     const ok = coneBallInLaunch();
     say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
+    return ok;
   };
   function coneBallInLaunch(){
     if (!window.zzBallLaunch) return false;

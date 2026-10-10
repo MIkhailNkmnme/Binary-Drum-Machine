@@ -893,7 +893,7 @@
     /* v0.1076, «в центр: когда строка закрылась и осталось только внешнее кольцо — открыть следующее внешнее и пустить с него в центр»:
        закрыты все кольца, кроме внешнего (за чертой), шариков в пути нет — кольцо за чертой уходит в строки, закрытие сохраняется, и опыт
        сам запускается из нового внешнего кольца (zzBallInwardNext в zz-ui.js) */
-    if (Z.coneBallRoute === "in" && run && !paused && !inwardNextPending && window.zzBallInwardNext) {
+    if (Z.coneBallRoute === "in" && run && !inwardNextPending && window.zzBallInwardNext) {   // v0.1077: и после паузы «Одновременно» — шариков в пути нет, ждать нечего
       const S2 = snapshot(), c = centerCount();
       if (S2 && S2.rings[S2.rings.length - 1].fill && c > 0 && c >= S2.rings.length - 1 && window.zzBallLive() === 0) {
         inwardNextPending = true; setTimeout(() => { try { window.zzBallInwardNext(); } finally { inwardNextPending = false; } }, 0);
