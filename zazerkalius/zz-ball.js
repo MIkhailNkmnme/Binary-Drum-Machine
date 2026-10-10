@@ -454,17 +454,34 @@
     status(!enabled ? "Шарик выключен · серая точка — старт · ● вкл. — включить" : launch ? routes[route] + " · старт: " + p.label + " · скорость " + speedQ.text() + " за оборот К1" : readyText(S));
     metrics(S);
   }
+  function appendInwardGroup(S, launch) {
+    const TQ = periodQ(S), B = inwardBase(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
+    const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;
+    if (inwardAuto) Object.assign(inwardAuto, { baseExact:base.text(),bitTurnsExact:B ? B.bitTurnsQ.text() : null, outer:S.rings.length - 1 });
+    const group = [], busy = batchBusy;
+    batchBusy = true;
+    try { outerStarts(S).forEach((point, i) => {
+      begin(S, false, launch, {point,route:"in",periodQ:TQ,speedQ:speed});
+      group.push(Object.assign(F,{id:point.id,number:launch ? F.runNumber || i + 1 : i + 1,label:point.label}));
+    }); }
+    finally { batchBusy = busy; balls.push(...group); F = balls[0] || null; }
+    const started = launch && group.some(b => !b.ready);
+    if (started && run) run.inwardOuter = S.rings.length;
+    inwardFc = started ? inwardForecast(S, group[0].speedQ) : null;
+    return started;
+  }
+  // One inward group per new outer ring; previous balls keep their own state and speed.
+  function ensureInwardGroup(S) {
+    if (!enabled || !run || Z.coneBallRoute !== "in" || !S?.rings[S.rings.length - 1]?.fill) return false;
+    if (run.inwardOuter === S.rings.length) return true;
+    return appendInwardGroup(S, true);
+  }
+  window.zzBallInwardSpawn = () => ensureInwardGroup(snapshot());
   function prepare(S, clear = false, launch = false) {
     balls = [];
     if (Z.coneBallRoute === "in") {
       if (clear) cycles = passes = 0;
-      const TQ = periodQ(S), B = inwardBase(S), base = B ? B.speedQ : TQ ? S.rings[S.rings.length - 1].roQ.div(TQ) : ZERO;
-      const speed = speedMode() === 1 && launch ? inwardAutoSpeed(S, base) : base;
-      if (inwardAuto) Object.assign(inwardAuto, { baseExact:base.text(),bitTurnsExact:B ? B.bitTurnsQ.text() : null, outer:S.rings.length - 1 });
-      batchBusy = true;
-      try { outerStarts(S).forEach((point, i) => { begin(S, false, launch, {point,route:"in",periodQ:TQ,speedQ:speed}); balls.push(Object.assign(F,{id:point.id,number:i+1,label:point.label})); }); }
-      finally { batchBusy = false; F = balls[0] || null; }
-      inwardFc = launch && balls.length ? inwardForecast(S, balls[0].speedQ) : null;
+      appendInwardGroup(S, launch);
       batchStatus(); metrics(S); return;
     }
     if (!allStarts() && throughCount() > 1) {
@@ -810,6 +827,8 @@
       if (empty && Array.isArray(empty.m)) Z.coneBallEmpty = { ...empty, key,
         m: empty.m.concat(Z.rows.slice(empty.m.length).map(row => "0".repeat(row.length))) };
       centerInitKey = key + (bounceOn() ? "|b" : "");
+      balls = [...new Set([...current, ...resumed])];
+      ensureInwardGroup(S);
     }
     return true;
   }
@@ -915,7 +934,7 @@
         inwardNextPending = true;
         setTimeout(() => {
           let started;
-          try { started = window.zzBallInwardNext(); } finally { inwardNextPending = false; }
+          try { started = window.zzBallInwardNext(!event?.pause); } finally { inwardNextPending = false; }
           if (started && !event?.pause && remaining.sign() > 0 && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
         },0);
       }

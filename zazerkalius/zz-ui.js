@@ -7414,7 +7414,11 @@ function setupCone(){
     if (!autoRaf) return;
     if (offDrive) { autoT0 = 0; autoRaf = requestAnimationFrame(autoTick); return; }
     if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
-    const dt = autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0; autoT0 = ts;
+    // Convert the clock readings before subtracting: do not import floating-point dt into K1 motion.
+    const exactClock = !Z.coneSpinMag && window.zzBallActive && window.zzBallActive();
+    const dt = exactClock ? (autoT0 ? ZZExact.min(ZZExact.from(1, 10), ZZExact.from(ts).sub(autoT0).div(1000)) : ZZExact.from(0))
+      : autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0;
+    autoT0 = ts;
     if (!autoStep(dt) || !coneSpinning) return;
     if (!zzBgHidden()) renderCone();   // v0.564: фон хаба, которого не видно, — не рисуется
     autoRaf = requestAnimationFrame(autoTick);
@@ -7889,11 +7893,13 @@ function setupCone(){
     save(); renderCone(); return true;
   };
   // v0.1076: осталось открытым только внешнее кольцо — кольцо за чертой в строки, закрытие то же, запуск из нового внешнего
-  window.zzBallInwardNext = () => {
+  window.zzBallInwardNext = (resume = true) => {
     const st = window.zzBallCenterState ? window.zzBallCenterState().count : 0, N0 = Z.rows.length;
     autoSet(false);
     if (!window.zzBallGrowOuter()) { say("● В центр: следующее кольцо не создано — следующий запуск не начат."); return false; }
-    const ok = coneBallInLaunch(true);
+    const appended = window.zzBallInwardSpawn && window.zzBallInwardSpawn();
+    const ok = appended ? (resume && autoSet(true), true) : coneBallInLaunch(true);
+    if (!resume) autoSet(false);
     say(ok ? `● Закрыты К1–К${st}, открытым оставалось только внешнее — К${N0 + 1} ушло в строки, за чертой К${N0 + 2}: запуск из него в центр.` : "● Следующее кольцо открыто, но запуск не начался — подсказка в группе «Шарики».");
     return ok;
   };
