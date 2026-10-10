@@ -11380,6 +11380,7 @@ function cgrpInit(){
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
      показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
   const sizeApply = (g) => {
+    if (sfzColumnGroup(g)) { sfzColumnSize(g); tzcOff(g); tzgFrame(g); return; }
     if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
     { const s0 = Z.cgrpSize[g.dataset.g]; if (s0 && s0.w > Math.max(screen.availWidth || 0, window.innerWidth, 800)) { delete Z.cgrpSize[g.dataset.g]; save(); } }   // v0.505: шире экрана — сбой (см. ручку), размер снят
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
@@ -12593,11 +12594,13 @@ const TZ_TIP = [1, 0, 1], TZ_NOTCH = [0, 1, 0];
 const tzFits = (r, l) => r[1] - r[0] <= l[0] - l[1] && r[1] - r[2] <= l[2] - l[1];   // правый край соседа r и левый l не перекрываются
 function triOff(b){ b.classList.remove("tz", "tzar"); ["width", "flex", "margin-left", "--lat"].forEach(k => b.style.removeProperty(k)); b._tzk = ""; b._tzL = null; b._tzm = 0; }
 function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn (сторон по средней черте), b._tzm (на сколько t зайти на соседа слева)
-  const h = parseFloat(getComputedStyle(b).height) || 24, L = b._tzL || TZ_TIP, R = b._tzR, n = b._tzn, m = b._tzm || 0;
-  const key = [L, R, n, h, m, b._tzar || "", b._gcol || "", Z.noLn ? 1 : 0].join("|");
+  const group = b.closest(".cgrp"), column = sfzColumnGroup(group) && !b.classList.contains("glab") && !b.closest(".zerk-range-wrap,.ball-lab-body");
+  const body = column && group.querySelector(":scope > .cgb"), columnWidth = body ? body.clientWidth : 0;
+  const h = column ? 25 : parseFloat(getComputedStyle(b).height) || 24, L = column ? TZ_TIP : b._tzL || TZ_TIP, R = column ? TZ_TIP : b._tzR, n = b._tzn, m = column ? 0 : b._tzm || 0;
+  const key = [L, R, n, h, m, columnWidth, b._tzar || "", b._gcol || "", Z.noLn ? 1 : 0].join("|");
   if (b._tzk === key && b.classList.contains("tz")) return;
   b._tzk = key;
-  const t = Math.min(h, TZC_H) / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);   // v0.478: шаг — по ряду 24 px, даже если кнопка на 1 px выше (заходит на ряд ниже)
+  const t = Math.min(h, TZC_H) / (2 * Math.sqrt(3)), px = (v) => v.toFixed(2) + "px", W = columnWidth || (L[1] + R[1] + 2 * n) * t + (m ? 1 : 0);   // v0.052: ширина элемента столбца задана группой, не растяжкой предыдущего кадра.
   /* v0.451, «убери двойную обводку между кнопками»: у сцепленных каждая обводила общий край со своей стороны, и между линиями просвечивал
      тёмный шов (сглаживание двух краёв). Теперь следующая заходит на соседку ещё на 1 px (шире на 1 px — шаг тот же) и её край ложится поверх
      линии соседки: стык — одна линия, без шва */
@@ -12605,7 +12608,7 @@ function tzGeo(b){   // форма по b._tzL / b._tzR (края в t), b._tzn 
   [["--a", L[0]], ["--b", L[1]], ["--c", L[2]], ["--d", R[0]], ["--e", R[1]], ["--f", R[2]]].forEach(([k, v]) => b.style.setProperty(k, px(v * t)));
   b.style.setProperty("--t", px(t));
   b.style.setProperty("width", px(W), "important"); b._tzOwnW = parseFloat(px(W));   // v0.483: своя — чтобы не принять её за заданную
-  if (b.tagName === "LABEL") b.style.setProperty("flex", "0 0 " + px(W), "important");
+  if (b.tagName === "LABEL") b.style.setProperty("flex", column ? "0 0 auto" : "0 0 " + px(W), "important");
   if (m) b.style.setProperty("margin-left", px(-m * t - 1), "important"); else b.style.removeProperty("margin-left");
   const pts = [[L[0], 0], [W / t - R[0], 0], [W / t - R[1], h / 2], [W / t - R[2], h], [L[2], h], [L[1], h / 2]].map(([x, y]) => (x * t).toFixed(2) + "," + y).join(" ");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(2)}" height="${h}"><polygon points="${pts}" stroke="${b._gcol || "rgba(232,235,242,.8)"}" stroke-width="${Z.noLn ? 4 : 2}" fill="none"/></svg>`;   // v0.498: цветом фона — толще (видно 2 px)
@@ -13105,7 +13108,22 @@ window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
    ряда дотягивается до правого края (целыми сторонами), группа — по самому длинному ряду; ромб-ручка — на правом конце последней кнопки нижнего ряда.
    У группы конструктора кнопки нарисованы — там только ширина по рисунку и ромб на последней кнопке (tzcApply) */
+function sfzColumnGroup(g){ return !!(g && !g.classList.contains("cg-r1") && g.closest("#w-cone .tools,#paneGrp")); }
+function sfzColumnSize(g){
+  const collapsed = g.classList.contains("cmin"), size = !collapsed && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
+  const requested = size && Number(size.w), width = Math.max(128, Number.isFinite(requested) && requested > 0 ? requested : 180);
+  g.classList.toggle("csz", !!size);
+  if (g.style.height) g.style.height = ""; if (g.style.minWidth) g.style.minWidth = "";
+  if (g.style.flexShrink !== "0") g.style.flexShrink = "0";
+  const value = width + "px"; if (g.style.getPropertyValue("--sfz-column-width") !== value) g.style.setProperty("--sfz-column-width", value);
+  const target = collapsed ? "" : value; if (g.style.width !== target) g.style.width = target;
+}
 function tzJustify(g){
+  if (sfzColumnGroup(g)) {
+    sfzColumnSize(g);
+    for (const b of g.querySelectorAll(".tz")) if (b._tzx) { b._tzx = 0; b._tzn = b._tzn0; tzGeo(b); }
+    tzHandle(g); return;
+  }
   if (g.classList.contains("cg-r1")) { tzHandle(g); return; } // v0.047: ширину компактной панели задаёт CSS.
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb || !g.closest("#w-cone .tools, #paneGrp") || !g.classList.contains("tzg")) return;
   if (cgb.classList.contains("tzc") || g.classList.contains("cmin")) { tzHandle(g); return; }
@@ -13758,6 +13776,7 @@ function tzgFrame(g){
 /* v0.480: самая широкая неразрывная часть группы (px) — уже её группу не сделать: у конструктора — блок переноса (tzcApply), у обычной — кнопка или
    блок-обёртка (заголовок тоже) */
 function tzMinW(g){
+  if (sfzColumnGroup(g)) return 128;
   const cgb = g.querySelector(":scope > .cgb"); if (!cgb) return 0;
   if (cgb.classList.contains("tzc")) return g._tzMinW || 0;
   let m = 0;
