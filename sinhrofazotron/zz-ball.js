@@ -44,6 +44,10 @@
   /* v0.1063, «как мне начать с 5 строки при закрытых 3 кольцах?»: закрытие хранится в состоянии (Z.coneBallClosed = {key, n}) — переживает
      перезагрузку и попадает в пресет; «◉ закрыто» задаёт его руками (zzBallSetClosed). Ключ — дорожка и длины строк, как прежде */
   let centerInitKey = "", centerBatch = false, pendingClosed = 0, centerBatchSlits = null;
+  /* Синхрофазотрон v0.002, «в режиме центр сделай, чтобы кольцо закрывалось только тогда, когда в него одновременно закрывают все его щели»:
+     щели, закрытые шариками в один миг (один пакет событий группы), собираются здесь; кольцо закрывается, только если в одном пакете закрыты
+     все его щели. Частичное закрытие не запоминается — щели остаются открытыми (прежде, с Zazerkalius v0.1085, закрытые щели копились) */
+  let batchCover = null;
   const centerKey = () => (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/");
   const centerCount = () => { const C = Z.coneBallClosed; return C && C.key === centerKey() ? Math.max(0, C.n | 0) : 0; };
   const centerSlits = () => { const C = Z.coneBallClosed; return C && C.key === centerKey() ? C.slits || {} : {}; };
@@ -90,6 +94,11 @@
   function closeCenterRing(k, S, raw) {
     if (k !== centerCount()) return;
     if (!S || !S.rings[k] || !raw || typeof raw.eq !== "function") return;
+    if (centerBatch && batchCover) {   // Синхрофазотрон v0.002: только отметка этого мига; решение — в конце пакета (advanceInwardGroup)
+      const ring = S.rings[k], value = rawFraction(ring, raw), edges = slitEdges(ring), slot = edges.findIndex(e => e.sub(value).mod().eq(0));
+      if (slot < 0) return;
+      const c = batchCover[k] || (batchCover[k] = { total: edges.length, slots: new Set() }); c.slots.add(slot); return;
+    }
     const slits = centerSlits(), complete = coverSlit(slits, k, S.rings[k], raw);
     Z.coneBallClosed = { key: centerKey(), n: centerCount(), slits };
     if (!complete) return;
@@ -768,9 +777,13 @@
         ring:b.stage === "arc" ? "конец дуги" : !b.k && b.move < 0 ? "центр" : b.k + b.move >= A.rings.length ? "выход" : "К" + (b.k + b.move + 1)}));
       const after = C.at(elapsed.add(step).div(duration));
       const identities = live.map(b => [b.k,b.move,b.stage,b.qQ.text(),b.rawQ.text()].join(":")).join("|");
-      centerBatch = true; pendingClosed = centerCount(); centerBatchSlits = JSON.parse(JSON.stringify(centerSlits()));
+      centerBatch = true; pendingClosed = centerCount(); centerBatchSlits = JSON.parse(JSON.stringify(centerSlits())); batchCover = {};
       try { for (const b of live) { F = b; advance(step,before,after,!step.sign()); } }
-      finally { centerBatch = false; centerBatchSlits = null; setClosed(pendingClosed); }
+      finally {
+        const c = batchCover[centerCount()];   // Синхрофазотрон v0.002: все щели кольца — в один миг
+        if (c && c.total > 0 && c.slots.size === c.total) pendingClosed = Math.max(pendingClosed, centerCount() + 1);
+        batchCover = null; centerBatch = false; centerBatchSlits = null; setClosed(pendingClosed);
+      }
       elapsed = elapsed.add(step);
       for (const b of live) if (b.route === "in" && b.stage !== "done" && b.stage !== "lost" && b.k < centerCount() && !(b.move > 0 && b.bounces > 0)) {
         F = b; b.atCenter = true; finish(); rememberResult();
