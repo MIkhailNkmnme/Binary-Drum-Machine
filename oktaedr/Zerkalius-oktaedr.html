@@ -1,4 +1,4 @@
-<!-- Zerkalius Гранидус — v0.071. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Гранидус — v0.072. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Гранидус — v0.071</title>
+<title>Zerkalius Гранидус — v0.072</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -98,6 +98,8 @@
     padding:4px 9px; font:12px/1.2 inherit; cursor:pointer; text-align:left; letter-spacing:.3px; }
   button:hover{ border-color:var(--up); color:var(--up); }
   button.act{ border-color:var(--up); color:var(--up); }
+  #bitSequence{ width:100%; min-width:0; background:var(--panel); color:var(--fg);
+    border:1px solid var(--line); border-radius:3px; padding:4px 6px; font:inherit; font-size:12px; }
   /* Настройки — той же плотности, что панели приложения: подпись со значением и ползунок под ней. */
   .set{ background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:5px 8px 7px; }
   .set label{ display:block; font-size:11px; color:var(--dim); letter-spacing:.3px; margin-bottom:3px; }
@@ -299,7 +301,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.071</div>
+<div id="ver">v0.072</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -563,6 +565,11 @@
   <!-- v0.035: треугольник Серпинского на каждой грани -->
   <button id="bSierp" title="На каждой грани — треугольник Серпинского: ряд r, место k — C(r, k) по модулю 2 (треугольник Паскаля, «Правило 90» от одной точки). Держится при смене плотности; снимается новой картиной или своими битами">△ Серпинский</button>
   <button id="bMy" title="Вписать свою картину бит">✎ Свои биты</button>
+  <select id="bitSequence" aria-label="Последовательности" title="Выбранная последовательность — в поле своих бит и на грани">
+    <option value="">Последовательности</option>
+    <option value="initial">★ По умолчанию</option>
+    <option value="serp">△ Серп</option>
+  </select>
   <div id="myBox" class="set">
     <label>Свои биты: считаются только 0 и 1</label>
     <textarea id="myBits" rows="4" spellcheck="false" placeholder="например 1011 0010&#10;короткая строка повторится по кругу&#10;или бросьте сюда текстовый файл"></textarea>
@@ -2029,6 +2036,7 @@ const myClean = (t) => t.replace(/[^01]/g, "");
 // v0.021: столько бит, самое большее, помнится в памяти браузера — с запасом на любую плотность. Больше
 // на грани всё равно не лечь, а память браузера у страницы не резиновая.
 const MY_MAX = 200000;
+let sequenceTicket = 0;
 function myInfoUpd(msg){
   const n = myClean(myArea.value).length, face = ROWS * (ROWS + 1) / 2, need = mySame ? face : face * NB;
   const where = mySame ? face + " на каждой грани" : need + " (по " + face + " на грань)";
@@ -2038,6 +2046,7 @@ function myInfoUpd(msg){
   if (!msg && myBits) myInfo.textContent += " · сейчас на гранях свои";
 }
 function myPut(){
+  sequenceTicket++;
   const t = myClean(myArea.value);
   if (!t) { myInfoUpd("в поле нет ни одного 0 или 1"); return; }
   myBits = t.slice(0, MY_MAX); sierp = false; rollBits(); myInfoUpd(); syncUI(); save();   // v0.035: свои биты снимают Серпинского
@@ -2050,10 +2059,32 @@ bTake.onclick = () => {
 bSame.onclick = () => { mySame = !mySame; if (myBits) rollBits(); syncUI(); myInfoUpd(); save(); };
 // v0.071, «сюда также по умолчанию»: ★ — начальная последовательность (../_js/initial-rows.js) в поле и сразу на грани, как обычный ввод
 const bDefault = document.getElementById("bDefault");
-if (bDefault) bDefault.onclick = () => { if (typeof ZZ_INITIAL_ROWS === "undefined" || !ZZ_INITIAL_ROWS.length) { myInfoUpd("файл последовательности не загрузился"); return; } myArea.value = ZZ_INITIAL_ROWS.join(String.fromCharCode(10)); myPut(); };
+const bitSequence = document.getElementById("bitSequence");
+// v0.072: список включает исходный серп.txt целиком, с обеими первыми строками «1».
+async function sequencePut(kind){
+  const ticket = ++sequenceTicket;
+  try {
+    let text;
+    if (kind === "initial") {
+      if (typeof ZZ_INITIAL_ROWS === "undefined" || !ZZ_INITIAL_ROWS.length) throw new Error("initial");
+      text = ZZ_INITIAL_ROWS.join(String.fromCharCode(10));
+    } else if (kind === "serp") {
+      const response = await fetch("serp.txt?v=72");
+      if (!response.ok) throw new Error("serp");
+      text = await response.text();
+      if (!myClean(text)) throw new Error("bits");
+    } else return;
+    if (ticket !== sequenceTicket) return;
+    myArea.value = text; bitSequence.value = kind; myOpen(); myPut();
+  } catch (err) {
+    if (ticket === sequenceTicket) { bitSequence.value = ""; myInfoUpd("файл последовательности не загрузился"); myOpen(); }
+  }
+}
+bitSequence.onchange = () => { if (bitSequence.value) sequencePut(bitSequence.value); else sequenceTicket++; };
+if (bDefault) bDefault.onclick = () => sequencePut("initial");
 // v0.025: вписываем на каждый ввод. Пустое поле (всё стёрли, чтобы набрать заново) картину не трогает:
 // иначе на полпути она прыгала бы в случайную и обратно.
-myArea.addEventListener("input", () => { if (myClean(myArea.value)) myPut(); else myInfoUpd(); });
+myArea.addEventListener("input", () => { if (myClean(myArea.value)) myPut(); else { sequenceTicket++; myInfoUpd(); } });
 /* ФАЙЛ В ПОЛЕ (v0.021, запрос пользователя: «возможность кидать текст файл прям в поле»).
    Файл принимается не только полем, а ВСЕЙ страницей: без перехвата браузер, получив файл мимо поля,
    открыл бы его вместо страницы, и прибор закрылся бы вместе с картиной. Пока файл несут, поле само
