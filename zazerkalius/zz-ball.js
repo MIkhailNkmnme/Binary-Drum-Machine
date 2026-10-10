@@ -616,15 +616,16 @@
     if (run) { run.absorbed = (run.absorbed || 0) + 1; ringStats(k).absorbed = (ringStats(k).absorbed || 0) + 1; if (F.atCenter) run.reachedCenter++; }
     status("ПоглотБит · шарик " + (F.number || 1) + " записал бит в К" + (k + 1) + " и поглощён");
   }
+  function bounceAt(k) {
+    if (run) ringStats(k).bounces++;
+    F.bounces = (F.bounces || 0) + 1;
+    turn("Отскок от дуги кольца " + (k + 1));
+  }
   function impactAt(k, S, a, marked = false) {
     if (run) ringStats(k).hits++;
     const written = writeInwardImpact(k, S, a) || marked;
     if (absorbOn() && written) { absorbAt(k); return; }
-    if (bounceOn()) {
-      if (run) ringStats(k).bounces++;
-      F.bounces = (F.bounces || 0) + 1;
-      turn("Отскок от дуги кольца " + (k + 1)); return;
-    }
+    if (bounceOn()) { bounceAt(k); return; }
     F.stage = "lost"; F.lostAt = k; F.seg = null; cycles++;
     if (run) ringStats(k).lost++;
     if (S) {
@@ -652,6 +653,8 @@
     let current = M && M[k]?.[bit] === "1" ? "." : text[bit];
     for (const h of pendingBits) if (h.k === k && h.bit === bit) current = h.value;
     if (k === Z.rows.length && pendingMarks.includes(bit)) current = "1";
+    // An outside hit fills an empty cell only. A recorded 0 or 1 is already a wall, not another write.
+    if (F.move < 0 && (current === "0" || current === "1")) return false;
     if (current === value) return false;
     pendingBits.push({k, bit, value}); return true;
   }
@@ -732,6 +735,7 @@
         if (run) ringStats(next).hits++;
         const written = writeInwardImpact(next, S, a);
         F.atCenter = true; closeCenterRing(F.k, S, F.raw);
+        if (!written && bounceOn()) { F.atCenter = false; bounceAt(next); continue; }
         if (absorbOn() && written) absorbAt(next); else finish(); break;
       }
       let e = touching ? edgeAt(S, next, a) : null;
@@ -795,7 +799,7 @@
       finally { centerBatch = false; centerBatchSlits = null; setClosed(pendingClosed); }
       elapsed += step;
       // A newly filled central ring also captures balls already inside it at this exact time.
-      for (const b of live) if (b.stage !== "done" && b.stage !== "lost" && b.k < centerCount()) {
+      for (const b of live) if (b.stage !== "done" && b.stage !== "lost" && b.k < centerCount() && !(b.move > 0 && b.bounces > 0)) {
         F = b; F.atCenter = true; finish(); rememberResult();
         if (!same.some(e => e.number === b.number)) same.push({number:b.number || 1, ring:"центр К" + centerCount()});
       }
