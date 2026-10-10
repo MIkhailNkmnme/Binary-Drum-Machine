@@ -44,6 +44,25 @@ const ZZExact = (() => {
   return {from,gcd,min:(a, b) => from(a).cmp(b) <= 0 ? from(a) : from(b),max:(a, b) => from(a).cmp(b) >= 0 ? from(a) : from(b)};
 })();
 
+// Balance geometry is measured in complete turns. Only drawing converts to radians.
+function zzBalanceArcs(start, end){
+  const q = ZZExact.from, width = q(end).sub(start);
+  if (width.sign() <= 0) return [];
+  if (width.cmp(1) >= 0) return [[q(0), q(1)]];
+  const lo = q(start).mod(1), hi = lo.add(width);
+  return hi.cmp(1) <= 0 ? [[lo, hi]] : [[lo, q(1)], [q(0), hi.sub(1)]];
+}
+function zzBalanceWeights(arcs, width, shift = 0){
+  const q = ZZExact.from, weights = Array(4).fill(q(0));
+  for (const [a, b] of arcs) for (const [lo, hi] of zzBalanceArcs(a.add(shift), b.add(shift))) {
+    for (let k = 0; k < 4; k++) {
+      const overlap = ZZExact.min(hi, q(k + 1, 4)).sub(ZZExact.max(lo, q(k, 4)));
+      if (overlap.sign() > 0) weights[k] = weights[k].add(overlap.div(width));
+    }
+  }
+  return weights;
+}
+
 function zzInv(s){ let o = ""; for (let i = 0; i < s.length; i++) o += s[i] === "1" ? "0" : "1"; return o; }
 function zzRev(s){ return s.split("").reverse().join(""); }
 function zzInvRev(s){ return zzInv(zzRev(s)); }

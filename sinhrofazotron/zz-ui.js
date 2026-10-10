@@ -42,7 +42,7 @@ const Z = {
   coneQuarterRings: false,
   coneAxisDragEnabled: false,
   coneBalanceAxis: 0,
-  rows: ["1", "11", "101", "1111", "10001", "110011", "1010101", "11111111", "100000001"],
+  rows: ZZ_INITIAL_ROWS.slice(), rowsSequenceRevision: ZZ_ROWS_SEQUENCE_REVISION,
   cur: 4,
   fixShow: true,
   ff: '"Roboto Mono", Consolas, monospace',
@@ -107,7 +107,7 @@ function load(){
     if (!raw) { if (!ZZ_SOLO) Z.fieldRight = true; return; }   // v0.551: первый запуск — строки справа, окна свёрнуты в список «Окна» слева
     const u = JSON.parse(raw);
     if (first && u) { delete u.win; delete u.dockOrder; delete u.pins; }   // окна Zazerkalius ей ни к чему
-    if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) Object.assign(Z, u);
+    if (u && Array.isArray(u.rows) && u.rows.every(zzIsBits)) { zzInitialRowsMigrate(u, raw, ZZ_KEY); Object.assign(Z, u); }
   } catch (e) { /* хранилища нет — работаем с тем, что по умолчанию */ }
   if (!Z.rows.length) Z.rows = ["1"];
   Z.cur = Math.max(0, Math.min(Z.rows.length - 1, Z.cur | 0));
@@ -2532,7 +2532,8 @@ function renderCone(){
   const sol3 = coneSol3d(), fillOn = coneFlat() && Z.rows.length <= CONE_MAX;   // v0.780: с ◎ торами — и в 3D; v0.114: снаружи — пунктирное кольцо для заполнения (в плоском виде)
   const cx = W / 2 + conePan[0], cy = H / 2 + conePan[1], rMax = (Math.min(W, H) / 2 - 6 * dpr) * coneZoom, denW = Math.max(1, fillOn ? coneRingsTotal(N) : N), den = ((!coneDen || (denW !== coneDenWant && (N === coneDenN || Math.abs(N - coneDenN) > 1)) ? (coneDen = denW) : coneDen), coneDenN = N, coneDenWant = denW, coneDen), r0 = 0, dr = (rMax - r0) / den;   /* v0.774, «убери эти 5 % дырки — это лишнее, пусть будет круг (и полукруг), из центра которого луч лазера или солнце просто из точки лучами»
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
-  coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+  coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
+
   { const rt = document.getElementById("ringTbl"); if (rt && !rt.hidden) ringTblPlace(rt); }   // v0.023: столбец видов колец — за осью в том же кадре
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
@@ -6150,6 +6151,10 @@ function r1RayPlace(el){
    Подсветка сравнивает отдельно единицы и нули, а не только их разность. */
 let coneBalanceAxisDragging = false;
 function coneBalanceAxisAngle(){ return Number.isFinite(Z.coneBalanceAxis) ? Z.coneBalanceAxis : 0; }
+function coneBalanceAxisTurn(){
+  const angle = coneBalanceAxisAngle();
+  return coneMotionRead("balance.axis", angle / TAU2);
+}
 function coneBalanceAxesPaint(g, cx, cy, W, H, dpr, col, offset = 0){
   const a = coneBalanceAxisAngle() - Math.PI / 2 + offset, r = Math.hypot(W, H) + Math.hypot(cx, cy);
   const Q = !Z.cone3d && (Z.coneQuadBalances || Z.coneBalanceHighlight)
@@ -6162,7 +6167,7 @@ function coneBalanceAxesPaint(g, cx, cy, W, H, dpr, col, offset = 0){
   }
   g.restore();
 }
-function coneBalanceEqual(a, b){ return Math.abs(a[0] - b[0]) < 1e-8 && Math.abs(a[1] - b[1]) < 1e-8; }
+function coneBalanceEqual(a, b){ return ZZExact.from(a[0]).eq(b[0]) && ZZExact.from(a[1]).eq(b[1]); }
 function coneBalanceColors(Q){
   const allEqual = Q.slice(1).every(q => coneBalanceEqual(q, Q[0]));
   const palette = ["#ffcf6a", "#f08080", "#73d5ff", "#bd9bff"];
@@ -6182,109 +6187,127 @@ function coneBalanceBackdrop(g, W, H, cx, cy, closed){
   }
   g.restore();
 }
-function coneBalanceAdd(a, b){ return [a[0] + b[0], a[1] + b[1]]; }
-function coneBalanceNumber(n){ return (Math.abs(n) < 0.0005 ? 0 : n).toFixed(3).replace(/\.?0+$/, "").replace(".", ","); }
+function coneBalanceAdd(a, b){ return [ZZExact.from(a[0]).add(b[0]), ZZExact.from(a[1]).add(b[1])]; }
+function coneBalanceNumber(n){ return ZZExact.from(n).text(); }
 function coneBalancePauseData(){
   return coneBalanceData(window.zzBallCenterState ? window.zzBallCenterState().count : 0, true);
 }
 function coneBalanceAllEqual(Q){
-  return Q.some(q => q[0] + q[1] > 0) && Q.slice(1).every(q => coneBalanceEqual(q, Q[0]));
+  return Q.some(q => q[0].add(q[1]).sign() > 0) && Q.slice(1).every(q => coneBalanceEqual(q, Q[0]));
 }
 /* Суммы линейны между пересечениями концов битовых дуг с четвертями.
    Ищем первое равенство внутри шага без перемещения колец и запуска лазера. */
 function coneBalancePauseSweep(dt, armed){
-  const seconds = typeof dt === "number" ? dt : dt.number(), data = coneBalancePauseData();
-  const v = data.quarters.flat(), slope = Array(8).fill(0), events = [], step = Math.PI / 2;
-  const mode = Z.coneSpinMode || "all", sp = Z.coneAutoSp ?? 30, axis = coneBalanceAxisAngle();
-  const quarter = x => ((x % 4) + 4) % 4;
-  if (!v.some(x => x > 0)) return { seconds: null, armed: false };
+  const q = ZZExact.from, zero = q(0), seconds = q(dt), data = coneBalancePauseData();
+  const v = data.quarters.flat(), slope = Array(8).fill(zero), events = [];
+  const mode = Z.coneSpinMode || "all", sp = q(Z.coneAutoSp ?? 30), axis = coneBalanceAxisTurn();
+  const quarter = x => Number((x % 4n + 4n) % 4n);
+  if (!v.some(x => x.sign() > 0)) return { seconds: null, armed: false };
   for (let i = 0; i < data.cells.length; i++) {
     if (!data.cells[i].length) continue;
-    const speed = mode === "all" ? sp * Math.PI / 180
-      : coneMotionRing(i).coefficient.number() * sp * TAU2 / (coneBitMode(mode) ? 10 : 360);
-    if (!speed) continue;
-    const dir = speed > 0 ? 1 : -1;
-    for (const cell of data.cells[i]) for (const arc of cell.arcs) for (let edge = 0; edge < 2; edge++) {
-      const x = (arc[edge] - axis) / step, contribution = (edge ? 1 : -1) * speed / cell.width;
-      const q = quarter(dir > 0 ? Math.floor(x + 1e-12) : Math.ceil(x - 1e-12) - 1);
-      slope[2 * q + cell.bit] += contribution;
-      let k = dir > 0 ? Math.floor(x + 1e-12) + 1 : Math.ceil(x - 1e-12) - 1;
+    const speed = mode === "all" ? sp.div(360)
+      : coneMotionRing(i).coefficient.mul(sp).div(coneBitMode(mode) ? 10 : 360);
+    const dir = speed.sign(); if (!dir) continue;
+    for (const cell of data.cells[i]) for (const arc of cell.arcsQ) for (let edge = 0; edge < 2; edge++) {
+      const x = arc[edge].sub(axis).mul(4), contribution = speed.mul(edge ? 1 : -1).div(cell.widthQ);
+      const index = 2 * quarter(dir > 0 ? x.floor() : x.ceil() - 1n) + cell.bit;
+      slope[index] = slope[index].add(contribution);
+      let k = dir > 0 ? x.floor() + 1n : x.ceil() - 1n;
       for (;;) {
-        const t = (k * step - arc[edge] + axis) / speed;
-        if (t > seconds + 1e-12) break;
-        if (t > 1e-12) {
-          const after = quarter(dir > 0 ? k : k - 1), before = quarter(after - dir);
-          events.push({ t: Math.min(seconds, t), before: 2 * before + cell.bit, after: 2 * after + cell.bit, contribution });
+        const t = q(k, 4).sub(arc[edge]).add(axis).div(speed);
+        if (t.cmp(seconds) > 0) break;
+        if (t.sign() > 0) {
+          const after = quarter(dir > 0 ? k : k - 1n), before = (after - dir + 4) % 4;
+          events.push({ t, before: 2 * before + cell.bit, after: 2 * after + cell.bit, contribution });
         }
-        k += dir;
+        k += BigInt(dir);
       }
     }
   }
-  events.sort((a, b) => a.t - b.t); events.push({ t: seconds });
-  const diff = a => [a[2] - a[0], a[3] - a[1], a[4] - a[0], a[5] - a[1], a[6] - a[0], a[7] - a[1]];
-  const equal = a => a.every(x => Math.abs(x) < 1e-8);
-  let previous = 0, index = 0;
+  events.sort((a, b) => a.t.cmp(b.t)); events.push({ t: seconds });
+  const diff = a => [a[2].sub(a[0]), a[3].sub(a[1]), a[4].sub(a[0]), a[5].sub(a[1]), a[6].sub(a[0]), a[7].sub(a[1])];
+  const equal = a => a.every(x => !x.sign());
+  let previous = zero, index = 0;
   while (index < events.length) {
-    const end = events[index].t, span = end - previous, a = diff(v), change = diff(slope).map(x => x * span);
+    const end = events[index].t, span = end.sub(previous), a = diff(v), change = diff(slope).map(x => x.mul(span));
     if (!equal(a)) armed = true;
     if (armed) {
       if (equal(a)) return { seconds: previous, armed };
-      let j = 0; for (let k = 1; k < change.length; k++) if (Math.abs(change[k]) > Math.abs(change[j])) j = k;
-      if (Math.abs(change[j]) > 1e-12) {
-        const u = -a[j] / change[j];
-        if (u >= 0 && u <= 1 && equal(a.map((x, k) => x + u * change[k]))) return { seconds: previous + span * u, armed };
+      const j = change.findIndex(x => x.sign());
+      if (j >= 0) {
+        const u = a[j].neg().div(change[j]);
+        if (u.sign() >= 0 && u.cmp(1) <= 0 && equal(a.map((x, k) => x.add(u.mul(change[k]))))) return { seconds: previous.add(span.mul(u)), armed };
       }
-    } else if (!equal(a.map((x, k) => x + change[k]))) armed = true;
-    for (let k = 0; k < 8; k++) v[k] += slope[k] * span;
+    } else if (!equal(a.map((x, k) => x.add(change[k])))) armed = true;
+    for (let k = 0; k < 8; k++) v[k] = v[k].add(slope[k].mul(span));
     previous = end;
-    while (index < events.length && Math.abs(events[index].t - end) < 1e-12) {
+    while (index < events.length && events[index].t.eq(end)) {
       const e = events[index++];
-      if (e.contribution !== undefined) { slope[e.before] -= e.contribution; slope[e.after] += e.contribution; }
+      if (e.contribution !== undefined) { slope[e.before] = slope[e.before].sub(e.contribution); slope[e.after] = slope[e.after].add(e.contribution); }
     }
   }
   return { seconds: null, armed };
 }
+let coneBalanceCache = null;
+function coneBalanceCacheKey(closed){
+  return JSON.stringify([Z.rows, coneRot, Z.motionExact, Z.coneSpin, Z.coneSpinPh, Z.coneAimRot, Z.coneBalanceAxis,
+    Z.cone3d, Z.coneTor, Z.coneBipy, Z.coneBipyM, Z.coneSlits, Z.cutAlign, Z.cutMem, Z.cutPrev,
+    Z.sunHalf, Z.row1Whole, Z.laserQuad, Z.row1Parts, Z.cutRow1Slit, Z.row1SlitDeg, Z.coneSlit,
+    Z.coneSpinMode, Z.coneBitStep, Z.fillStill, Z.coneHold, Z.coneHoldOff, Z.ringPhOff, Z.voidHits, closed]);
+}
 function coneBalanceData(closed, keepCells = false){
-  const quarters = Array.from({ length: 4 }, () => [0, 0]), prefix = [], rings = [], cells = [], axis = coneBalanceAxisAngle();
-  const spin = !Z.cone3d ? (Z.coneSpin || 0) * Math.PI / 180 : 0;
+  const key = coneBalanceCacheKey(closed);
+  if (coneBalanceCache && coneBalanceCache.key === key && (!keepCells || coneBalanceCache.keepCells)) return coneBalanceCache.data;
+  const q = ZZExact.from, zero = q(0), quarters = Array.from({ length: 4 }, () => [zero, zero]);
+  const prefix = [], rings = [], cells = [], axis = coneBalanceAxisTurn();
+  const spin = !Z.cone3d ? coneMotionClock().degrees.div(360) : zero;
   for (let i = 0; i < Z.rows.length; i++) {
     const s = Z.rows[i] || "", n = s.length, spans = [], ringCells = []; cells.push(ringCells);
     if (!n) { rings.push(spans); prefix.push(quarters.map(q => q.slice())); continue; }
-    const CG = coneCutGeo(i, n), rot = coneRotOf(i) - CG.off;
+    const cut = i >= 1 && coneCutOn(), P = cut ? coneCutP(n) : n;
+    const rot = coneMotionRot(i, n, false).value.sub(cut ? coneMotionOff(i, n, true) : zero);
     const addCell = (arcs, ch) => {
       if (ch !== "0" && ch !== "1") return;
-      const width = arcs.reduce((v, [a, b]) => v + b - a, 0); if (!width) return;
+      const widthQ = arcs.reduce((v, [a, b]) => v.add(b.sub(a)), zero); if (!widthQ.sign()) return;
       const bit = ch === "1" ? 1 : 0;
-      if (keepCells) ringCells.push({ bit, width, arcs: arcs.map(([a, b]) => [a + spin, b + spin]) });
-      for (const [a, b] of arcs) {
-        ivNorm(a + spin, b + spin, spans);
-        const parts = []; ivNorm(a + spin - axis, b + spin - axis, parts);
-        for (const [lo, hi] of parts) for (let q = 0; q < 4; q++) {
-          const overlap = Math.min(hi, (q + 1) * Math.PI / 2) - Math.max(lo, q * Math.PI / 2);
-          if (overlap > 0) quarters[q][bit] += overlap / width;
-        }
+      const arcsQ = arcs.flatMap(([a, b]) => zzBalanceArcs(a.add(spin), b.add(spin)));
+      const weights = zzBalanceWeights(arcsQ, widthQ, axis.neg());
+      if (keepCells) ringCells.push({ bit, widthQ, arcsQ, weights,
+        width: widthQ.number() * TAU2, arcs: arcsQ.map(([a, b]) => [a.number() * TAU2, b.number() * TAU2]) });
+      for (let k = 0; k < 4; k++) quarters[k][bit] = quarters[k][bit].add(weights[k]);
+      for (const [a, b] of arcsQ) {
+        spans.push([a.number() * TAU2, b.number() * TAU2]);
       }
     };
     for (let j = 0; j < n; j++) {
       let arcs = [];
-      if (i === 0 && n === 1 && !closed && coneQuadOn()) arcs = coneQuadArcs(false);
-      else if (i === 0 && n === 1 && !closed && coneHalfOn()) ivNorm((-0.5 - coneRotOf(0)) * Math.PI, (0.5 - coneRotOf(0)) * Math.PI, arcs);
+      if (i === 0 && n === 1 && !closed && coneQuadOn()) {
+        const parts = conePartCount(), phase = coneMotionPartPhase();
+        for (let k = 1; k < parts; k += 2) arcs.push(...zzBalanceArcs(q(k).sub(rot).div(parts).add(phase), q(k + 1).sub(rot).div(parts).add(phase)));
+      }
+      else if (i === 0 && n === 1 && !closed && coneHalfOn()) arcs = zzBalanceArcs(q(-1, 2).sub(rot).div(2), q(1, 2).sub(rot).div(2));
       else if (i === 0 && n === 1 && !closed && coneRow1Slit()) {
-        const t = coneCutAngle() + Math.PI / 2, h = coneRow1Half(); ivNorm(t + h, t + TAU2 - h, arcs);
-      } else { const p = CG.cut ? cutPrevPos(i, j) : j; ivNorm((p - rot) * CG.step, (p + 1 - rot) * CG.step, arcs); }
+        const t = rot.neg(), h = q(Math.max(0.1, Math.min(360, +Z.row1SlitDeg || +Z.coneSlit || 2))).div(720);
+        arcs = zzBalanceArcs(t.add(h), t.add(1).sub(h));
+      } else {
+        const p = cut ? coneCutSym() ? q(j).mul(q(2 * n - 1, n)) : q(cutPrevPos(i, j)) : q(j);
+        arcs = zzBalanceArcs(p.sub(rot).div(P), p.add(1).sub(rot).div(P));
+      }
       addCell(arcs, s[j]);
       if (i === 0 && n === 1 && !closed && coneHalfOn() && cutPrevOwn()) {
-        const inverse = []; for (const [a, b] of arcs) ivNorm(a + Math.PI, b + Math.PI, inverse);
+        const inverse = arcs.flatMap(([a, b]) => zzBalanceArcs(a.add(q(1, 2)), b.add(q(1, 2))));
         addCell(inverse, cpInv(s[j]));
       }
     }
-    if (CG.cut && cutPrevOwn()) for (const [p, j] of cutPrevCells(i, n)) {
-      const arcs = []; ivNorm((p - rot) * CG.step, (p + 1 - rot) * CG.step, arcs);
+    if (cut && cutPrevOwn()) for (const [p, j] of cutPrevCells(i, n)) {
+      const arcs = zzBalanceArcs(q(p).sub(rot).div(P), q(p + 1).sub(rot).div(P));
       addCell(arcs, cpInv(s[j]));
     }
     rings.push(ivUnion(spans)); prefix.push(quarters.map(q => q.slice()));
   }
-  return { quarters, prefix, rings, cells };
+  const data = { quarters, prefix, rings, cells };
+  coneBalanceCache = { key: coneBalanceCacheKey(closed), keepCells, data };
+  return data;
 }
 /* v0.016: подбор выполняется по неподвижному снимку геометрии. Во время поиска
    кольца не двигаются; применяются только найденные равные четверти, одним шагом.
@@ -6304,13 +6327,10 @@ function coneBalanceAutoTip(){
   b.title = tip; b.setAttribute("aria-label", tip);
 }
 function coneBalanceVector(cells, turn){
-  const v = Array(8).fill(0), axis = coneBalanceAxisAngle();
-  for (const cell of cells) for (const [a, b] of cell.arcs) {
-    const arcs = []; ivNorm(a + turn - axis, b + turn - axis, arcs);
-    for (const [lo, hi] of arcs) for (let q = 0; q < 4; q++) {
-      const overlap = Math.min(hi, (q + 1) * Math.PI / 2) - Math.max(lo, q * Math.PI / 2);
-      if (overlap > 0) v[2 * q + cell.bit] += overlap / cell.width;
-    }
+  const v = Array(8).fill(ZZExact.from(0)), shift = ZZExact.from(turn).sub(coneBalanceAxisTurn());
+  for (const cell of cells) {
+    const weights = zzBalanceWeights(cell.arcsQ, cell.widthQ, shift);
+    for (let k = 0; k < 4; k++) v[2 * k + cell.bit] = v[2 * k + cell.bit].add(weights[k]);
   }
   return v;
 }
@@ -6320,35 +6340,35 @@ function coneBalanceSearchKey(){
     window.zzBallCenterState ? window.zzBallCenterState().count : 0]);
 }
 async function coneBalancePairSearch(groups, fixed, pair, key, deadline){
-  const [a, b] = pair, vector = v => [v[2 * a] - v[2 * b], v[2 * a + 1] - v[2 * b + 1]];
+  const [a, b] = pair, vector = v => [v[2 * a].sub(v[2 * b]), v[2 * a + 1].sub(v[2 * b + 1])];
   const options = groups.map(group => {
     const seen = new Map();
     for (const option of group.options) {
-      const v = vector(option.value), hash = v.map(x => Math.round(x * 1e8)).join("/");
+      const v = vector(option.value), hash = JSON.stringify(v);
       if (!seen.has(hash)) seen.set(hash, { option, v });
     }
     return [...seen.values()];
   });
-  const equal = v => v.every(x => Math.abs(x) < 1e-8), score = v => v[0] ** 2 + v[1] ** 2;
+  const equal = v => v.every(x => !x.sign()), score = v => v[0].mul(v[0]).add(v[1].mul(v[1]));
   const chosen = options.map(list => list[0]), sum = vector(fixed);
-  chosen.forEach(o => o.v.forEach((x, k) => { sum[k] += x; }));
+  chosen.forEach(o => o.v.forEach((x, k) => { sum[k] = sum[k].add(x); }));
   for (let pass = 0; pass < 8 && !equal(sum); pass++) {
     let moved = false;
     for (let i = 0; i < options.length; i++) {
       const old = chosen[i]; let best = old, bestScore = score(sum);
       for (const option of options[i]) {
-        const next = sum.map((x, k) => x - old.v[k] + option.v[k]);
-        if (score(next) < bestScore - 1e-14) { best = option; bestScore = score(next); }
+        const next = sum.map((x, k) => x.sub(old.v[k]).add(option.v[k]));
+        if (score(next).cmp(bestScore) < 0) { best = option; bestScore = score(next); }
       }
-      if (best !== old) { best.v.forEach((x, k) => { sum[k] += x - old.v[k]; }); chosen[i] = best; moved = true; }
+      if (best !== old) { best.v.forEach((x, k) => { sum[k] = sum[k].add(x).sub(old.v[k]); }); chosen[i] = best; moved = true; }
     }
     if (!moved) break;
   }
   if (equal(sum)) return { solution: chosen.map(o => o.option) };
-  const count = groups.length, low = Array.from({ length: count + 1 }, () => [0, 0]), high = low.map(v => v.slice());
+  const count = groups.length, low = Array.from({ length: count + 1 }, () => [ZZExact.from(0), ZZExact.from(0)]), high = low.map(v => v.slice());
   for (let i = count - 1; i >= 0; i--) for (let k = 0; k < 2; k++) {
-    low[i][k] = low[i + 1][k] + Math.min(...options[i].map(o => o.v[k]));
-    high[i][k] = high[i + 1][k] + Math.max(...options[i].map(o => o.v[k]));
+    low[i][k] = low[i + 1][k].add(options[i].map(o => o.v[k]).reduce(ZZExact.min));
+    high[i][k] = high[i + 1][k].add(options[i].map(o => o.v[k]).reduce(ZZExact.max));
   }
   const current = vector(fixed), path = []; let nodes = 0, limited = false, changed = false, solution = null;
   const search = async depth => {
@@ -6358,11 +6378,11 @@ async function coneBalancePairSearch(groups, fixed, pair, key, deadline){
       limited = nodes >= 30000 || performance.now() > deadline;
       if (limited || changed) return false;
     }
-    for (let k = 0; k < 2; k++) if (current[k] + low[depth][k] > 1e-8 || current[k] + high[depth][k] < -1e-8) return false;
-    if (depth === count) { solution = path.map(o => o.option); return true; }
+    for (let k = 0; k < 2; k++) if (current[k].add(low[depth][k]).sign() > 0 || current[k].add(high[depth][k]).sign() < 0) return false;
+    if (depth === count) { if (!equal(current)) return false; solution = path.map(o => o.option); return true; }
     for (const o of options[depth]) {
-      path[depth] = o; o.v.forEach((x, k) => { current[k] += x; });
-      const found = await search(depth + 1); o.v.forEach((x, k) => { current[k] -= x; });
+      path[depth] = o; o.v.forEach((x, k) => { current[k] = current[k].add(x); });
+      const found = await search(depth + 1); o.v.forEach((x, k) => { current[k] = current[k].sub(x); });
       if (found) return true; if (limited || changed) return false;
     }
     return false;
@@ -6381,16 +6401,16 @@ async function coneBalanceAutoEqualize(){
   coneBalanceVariantStats = null; coneBalanceSearching = true; renderCone(); say("≋ Ищу равные четверти по магнитным осям симметрии…");
   const key = coneBalanceSearchKey(), started = performance.now(), q = ZZExact.from, groups = [];
   await new Promise(resolve => setTimeout(resolve, 0));
-  const spin = q(Z.coneSpin || 0).div(360), axis = q(coneBalanceAxisAngle() / TAU2);
-  const target = Array.from({ length: 8 }, (_, k) => data.quarters.reduce((sum, Q) => sum + Q[k % 2], 0) / 4);
+  const spin = coneMotionClock().degrees.div(360), axis = coneBalanceAxisTurn();
+  const target = Array.from({ length: 8 }, (_, k) => data.quarters.reduce((sum, Q) => sum.add(Q[k % 2]), q(0)).div(4));
   let limited = false, changed = false, nodes = 0, attempts = 0, rollback = null, matchedPair = null, nextPairCursor = null;
-  const tol = 1e-8, sum = Array(8).fill(0), chosen = [], zero = q(0);
+  const sum = Array(8).fill(q(0)), chosen = [], zero = q(0);
   try {
     for (let i = 0; i < data.cells.length; i++) {
       const R = coneRingFeat(i), options = new Map(), base = coneMotionRead("rotation:" + i, coneRot[i] || 0);
       const add = delta => {
-        const value = coneBalanceVector(data.cells[i], R ? -delta.div(R.P).number() * TAU2 : 0);
-        const hash = value.map(x => Math.round(x * 1e8)).join("/"), old = options.get(hash);
+        const value = coneBalanceVector(data.cells[i], R ? delta.div(R.P).neg() : zero);
+        const hash = JSON.stringify(value), old = options.get(hash);
         if (!old || delta.abs().cmp(old.delta.abs()) < 0) options.set(hash, { value, delta, rotation: base.add(delta) });
       };
       add(zero); // оставить стоящее кольцо — допустимо, новые повороты только магнитные
@@ -6398,7 +6418,7 @@ async function coneBalanceAutoEqualize(){
       const full = R && !R.cut && R.n === s.length && (i !== 0 || closed || !(coneHalfOn() || coneQuadOn() || coneRow1Slit()));
       const invariant = full && (sameQuarter || !s.includes("0") || !s.includes("1"));
       if (R && R.P && i < coneGeom.N && !invariant) {
-        const exact = window.zzBallClockOn && window.zzBallClockOn(), x = exact ? coneMotionRing(i).phase.neg().mul(R.P) : q(R.x0);
+        const x = coneMotionRing(i).phase.neg().mul(R.P);
         const unit = i > 0 && R.cut && coneCutSym() ? R.n : 1;
         candidates: for (const c of coneRingSymAxes(i)) for (let a = 0; a < 4; a++) {
           const own = q(Math.round(c * 2 * unit), 2 * unit);
@@ -6413,38 +6433,38 @@ async function coneBalanceAutoEqualize(){
       }
       const list = [...options.values()].sort((a, b) => a.delta.abs().cmp(b.delta.abs()));
       if (changed || limited) break;
-      if (list.length === 1) { for (let k = 0; k < 8; k++) sum[k] += list[0].value[k]; }
+      if (list.length === 1) { for (let k = 0; k < 8; k++) sum[k] = sum[k].add(list[0].value[k]); }
       else groups.push({ i, options: list });
       if (i % 8 === 7) { await new Promise(resolve => setTimeout(resolve, 0)); if (coneBalanceSearchKey() !== key) { changed = true; break; } }
       if (performance.now() - started > 3500) { limited = true; break; }
     }
     if (changed || limited) return;
     groups.sort((a, b) => a.options.length - b.options.length);
-    const count = groups.length, low = Array.from({ length: count + 1 }, () => Array(8).fill(0)), high = low.map(v => v.slice());
+    const count = groups.length, low = Array.from({ length: count + 1 }, () => Array(8).fill(zero)), high = low.map(v => v.slice());
     const variants = Array(count + 1).fill(1n);
     for (let i = count - 1; i >= 0; i--) variants[i] = variants[i + 1] * BigInt(groups[i].options.length);
     coneBalanceVariantStats = { total: variants[0], checked: 0n }; coneBalanceAutoTip();
     for (let i = count - 1; i >= 0; i--) for (let k = 0; k < 8; k++) {
-      low[i][k] = low[i + 1][k] + Math.min(...groups[i].options.map(o => o.value[k]));
-      high[i][k] = high[i + 1][k] + Math.max(...groups[i].options.map(o => o.value[k]));
+      low[i][k] = low[i + 1][k].add(groups[i].options.map(o => o.value[k]).reduce(ZZExact.min));
+      high[i][k] = high[i + 1][k].add(groups[i].options.map(o => o.value[k]).reduce(ZZExact.max));
     }
-    const score = v => v.reduce((n, x, k) => n + (x - target[k]) ** 2, 0);
+    const score = v => v.reduce((n, x, k) => { const d = x.sub(target[k]); return n.add(d.mul(d)); }, zero);
     // Быстрый подбор стартового сочетания перед полным перебором с отсечениями.
     const greedy = groups.map(g => g.options[0]), total = sum.slice();
-    greedy.forEach(o => o.value.forEach((x, k) => { total[k] += x; }));
+    greedy.forEach(o => o.value.forEach((x, k) => { total[k] = total[k].add(x); }));
     for (let pass = 0; pass < 8; pass++) {
       let moved = false;
       for (let i = 0; i < count; i++) {
         const old = greedy[i]; let best = old, bestScore = score(total);
         for (const option of groups[i].options) {
-          const next = total.map((x, k) => x - old.value[k] + option.value[k]), s = score(next);
-          if (s < bestScore - 1e-14) { best = option; bestScore = s; }
+          const next = total.map((x, k) => x.sub(old.value[k]).add(option.value[k])), s = score(next);
+          if (s.cmp(bestScore) < 0) { best = option; bestScore = s; }
         }
-        if (best !== old) { for (let k = 0; k < 8; k++) total[k] += best.value[k] - old.value[k]; greedy[i] = best; moved = true; }
+        if (best !== old) { for (let k = 0; k < 8; k++) total[k] = total[k].add(best.value[k]).sub(old.value[k]); greedy[i] = best; moved = true; }
       }
       if (!moved) break;
     }
-    let solution = total.every((x, k) => Math.abs(x - target[k]) < tol) ? greedy : null;
+    let solution = total.every((x, k) => x.eq(target[k])) ? greedy : null;
     if (solution) coneBalanceVariantStats.checked = 1n;
     const search = async depth => {
       if (limited || changed) return false;
@@ -6454,12 +6474,12 @@ async function coneBalanceAutoEqualize(){
         limited = nodes >= 120000 || performance.now() - started > 3500;
         if (limited || changed) return false;
       }
-      for (let k = 0; k < 8; k++) if (sum[k] + low[depth][k] > target[k] + tol || sum[k] + high[depth][k] < target[k] - tol) { coneBalanceVariantStats.checked += variants[depth]; return false; }
-      if (depth === count) { coneBalanceVariantStats.checked++; solution = chosen.slice(); return true; }
+      for (let k = 0; k < 8; k++) if (sum[k].add(low[depth][k]).cmp(target[k]) > 0 || sum[k].add(high[depth][k]).cmp(target[k]) < 0) { coneBalanceVariantStats.checked += variants[depth]; return false; }
+      if (depth === count) { coneBalanceVariantStats.checked++; if (!sum.every((x, k) => x.eq(target[k]))) return false; solution = chosen.slice(); return true; }
       for (const option of groups[depth].options) {
-        chosen[depth] = option; for (let k = 0; k < 8; k++) sum[k] += option.value[k];
+        chosen[depth] = option; for (let k = 0; k < 8; k++) sum[k] = sum[k].add(option.value[k]);
         const found = await search(depth + 1);
-        for (let k = 0; k < 8; k++) sum[k] -= option.value[k];
+        for (let k = 0; k < 8; k++) sum[k] = sum[k].sub(option.value[k]);
         if (found) return true; if (limited || changed) return false;
       }
       return false;
@@ -6486,7 +6506,7 @@ async function coneBalanceAutoEqualize(){
     const before = coneRot.slice(), exactBefore = JSON.parse(JSON.stringify(Z.motionExact || {})), freeBefore = Z.coneFree && { ...Z.coneFree };
     rollback = () => { coneRot = before; Z.motionExact = exactBefore; if (freeBefore) Z.coneFree = freeBefore; else delete Z.coneFree; };
     let moved = 0;
-    for (let i = 0; i < count; i++) if (solution[i].delta.abs().number() > 1e-10) {
+    for (let i = 0; i < count; i++) if (solution[i].delta.sign()) {
       const ring = groups[i].i; coneRot[ring] = coneMotionWrite("rotation:" + ring, solution[i].rotation);
       if (!Z.coneFree) Z.coneFree = {}; Z.coneFree[ring] = true; moved++;
     }
@@ -6610,16 +6630,24 @@ function coneHistorySync(cv){
 function coneBalanceAxisSnap(a, radius){
   if (magSymOf() === "off") return a;
   const K = coneMagK(), spin = (Z.coneSpin || 0) * Math.PI / 180, tol = 7 * (coneGeom.dpr || 1) / Math.max(radius, 30 * (coneGeom.dpr || 1));
-  let best = tol, result = a;
-  const tryAngle = t => { const d = ((t + Math.PI / 2 - a + Math.PI / 4) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2) - Math.PI / 4; if (Math.abs(d) < best) { best = Math.abs(d); result = a + d; } };
+  const q = ZZExact.from, spinQ = coneMotionClock().degrees.div(360);
+  let best = tol, result = a, exact = q(a / TAU2);
+  const tryAngle = (t, turn) => { const d = ((t + Math.PI / 2 - a + Math.PI / 4) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2) - Math.PI / 4; if (Math.abs(d) < best) {
+    best = Math.abs(d); result = a + d;
+    const candidate = turn || q((t + Math.PI / 2) / TAU2);
+    exact = candidate.add(q(Math.round((result / TAU2 - candidate.number()) * 4), 4));
+  } };
   for (let i = 0; i < coneGeom.N + (coneGeom.fill ? 1 : 0); i++) {
     const k = i === coneGeom.N ? "f" : i, R = coneRingFeat(k); if (!R) continue;
     const angle = x => -Math.PI / 2 + (x - R.x0) * R.step + spin;
-    if (K.bnd) for (const x of coneFeatEdges(R)) tryAngle(angle(x));
-    if (K.mid && !magPartsOnly()) for (const x of coneFeatMids(R)) tryAngle(angle(x));
-    if (K.sym && !magPartsOnly()) for (const x of coneRingSymAxes(k)) tryAngle(angle(x));
+    const unit = R.cut && coneCutSym() ? R.n : 1;
+    const turn = x => coneMotionRing(i).phase.add(q(Math.round(x * 2 * unit), 2 * unit).div(R.P)).add(spinQ);
+    if (K.bnd) for (const x of coneFeatEdges(R)) tryAngle(angle(x), turn(x));
+    if (K.mid && !magPartsOnly()) for (const x of coneFeatMids(R)) tryAngle(angle(x), turn(x));
+    if (K.sym && !magPartsOnly()) for (const x of coneRingSymAxes(k)) tryAngle(angle(x), turn(x));
   }
   if (K.scan && Z.coneScan && !magPartsOnly()) for (const t of coneScanTargets) tryAngle(t.t + spin);
+  coneMotionWrite("balance.axis", exact, result / TAU2);
   return result;
 }
 function coneBalanceAxisBind(cv){
@@ -6663,7 +6691,7 @@ function coneBalanceSync(g, o){
   [...el.children].forEach((b, q) => {
     b.classList.toggle("eq-all", allEqual);
     b.style.setProperty("--qb-color", colors[q]);
-    const diff = Q[q][1] - Q[q][0], number = coneBalanceNumber(diff), texts = ["Δ " + (diff > 0.0005 ? "+" : "") + number, coneBalanceNumber(Q[q][1]), coneBalanceNumber(Q[q][0])];
+    const diff = Q[q][1].sub(Q[q][0]), number = coneBalanceNumber(diff), texts = ["Δ " + (diff.sign() > 0 ? "+" : "") + number, coneBalanceNumber(Q[q][1]), coneBalanceNumber(Q[q][0])];
     [b.querySelector("strong"), b.querySelector(".b1"), b.querySelector(".b0")].forEach((n, k) => { if (n.textContent !== texts[k]) n.textContent = texts[k]; });
     b.title = "Четверть " + (q + 1) + " (" + names[q] + " при вертикальной оси): сумма по всем кольцам. Доля бита на оси делится между четвертями";
     const w = b.offsetWidth || 90, h = b.offsetHeight || 36, gap = 24;
@@ -7356,13 +7384,25 @@ function setupCone(){
   };
   const autoStep = (dt) => {
     const watching = !!Z.coneBalancePause && !Z.cone3d;
+    const clock = watching ? coneMotionClock() : null, ph0 = Z.coneSpinPh || 0, deg0 = Z.coneSpin || 0;
     let time = dt;
     if (watching && !Z.coneSpinMag && !(Z.coneBitStep && coneBitMode(Z.coneSpinMode || "all"))) {
       const found = coneBalancePauseSweep(dt, balancePauseArmed); balancePauseArmed = found.armed;
-      if (found.seconds !== null) time = typeof dt === "number" ? found.seconds : ZZExact.from(found.seconds);
+      if (found.seconds !== null) time = found.seconds;
     }
-    const running = autoStepMove(time);
+    const exactDrive = Z.coneFaceOrder || window.zzBallActive && window.zzBallActive();
+    const projectedTime = typeof time === "number" ? time : time.number();
+    const running = autoStepMove(exactDrive ? time : projectedTime);
     if (!running || !watching) return running;
+    // Keep the exact event time through the legacy drawing/laser step, unless it
+    // stopped or changed the clock itself. A rounded time must not spoil equality.
+    if (!exactDrive && !Z.coneSpinMag && !Z.coneBitStep) {
+      const mode = Z.coneSpinMode || "all", sp = Z.coneAutoSp ?? 30, duration = ZZExact.from(time);
+      if (mode === "all" && Z.coneSpin === (deg0 + sp * projectedTime) % 360)
+        coneMotionSetClock(clock.phase, clock.degrees.add(duration.mul(sp)));
+      else if (mode !== "all" && Z.coneSpinPh === ph0 + (coneBitMode(mode) ? sp / 10 : sp) * projectedTime)
+        coneMotionSetClock(clock.phase.add(duration.mul(sp).div(coneBitMode(mode) ? 10 : 1)), clock.degrees);
+    }
     const equal = coneBalanceAllEqual(coneBalancePauseData().quarters);
     if (!equal) balancePauseArmed = true;
     if (equal && balancePauseArmed) {
@@ -13984,6 +14024,7 @@ function homeRestore(){
    панелей, окна Zazerkalius (win, dockOrder, pins). Раскладка групп конуса (cgrpPos, cgrpSize, cgrpMin…) — остаётся, это часть «таких»
    v0.005, «это не для режима N щель — там всегда один шарик, не закроются строки; режим В центр — T · все»: щели — «T · все» (coneSlits "all") */
 const ZZ_FACTORY = {"rows":["0"],"cur":0,"fixShow":true,"ff":"\"Roboto Mono\", Consolas, monospace","fs":15,"theme":"dark","lanes":[["0"],["1"],["1"],["1"]],"lane":0,"laneCount":1,"lanesHid":[[],[],[],[]],"fillCells":"..","laneView":"cols","axisPos":[58],"ovOp":"xor","pack":true,"paneIcons":true,"rowsH":0,"tplRef":0,"showFM":false,"show01":false,"showFix":false,"rowsAlign":"center","rowsW":112,"rowsFolded":true,"rowsWRestore":268,"tpl":[{"name":"Столбик · 64 стр.","rows":["1","11","101","1111","10001","110011","1010101","11111111","100000001","1100000011","10100000101","111100001111","1000100010001","11001100110011","101010101010101","1111111111111111","10000000000000001","110000000000000011","1010000000000000101","11110000000000001111","100010000000000010001","1100110000000000110011","10101010000000001010101","111111110000000011111111","1000000010000000100000001","11000000110000001100000011","101000001010000010100000101","1111000011110000111100001111","10001000100010001000100010001","110011001100110011001100110011","1010101010101010101010101010101","11111111111111111111111111111111","100000000000000000000000000000001","1100000000000000000000000000000011","10100000000000000000000000000000101","111100000000000000000000000000001111","1000100000000000000000000000000010001","11001100000000000000000000000000110011","101010100000000000000000000000001010101","1111111100000000000000000000000011111111","10000000100000000000000000000000100000001","110000001100000000000000000000001100000011","1010000010100000000000000000000010100000101","11110000111100000000000000000000111100001111","100010001000100000000000000000001000100010001","1100110011001100000000000000000011001100110011","10101010101010100000000000000000101010101010101","111111111111111100000000000000001111111111111111","1000000000000000100000000000000010000000000000001","11000000000000001100000000000000110000000000000011","101000000000000010100000000000001010000000000000101","1111000000000000111100000000000011110000000000001111","10001000000000001000100000000000100010000000000010001","110011000000000011001100000000001100110000000000110011","1010101000000000101010100000000010101010000000001010101","11111111000000001111111100000000111111110000000011111111","100000001000000010000000100000001000000010000000100000001","1100000011000000110000001100000011000000110000001100000011","10100000101000001010000010100000101000001010000010100000101","111100001111000011110000111100001111000011110000111100001111","1000100010001000100010001000100010001000100010001000100010001","11001100110011001100110011001100110011001100110011001100110011","101010101010101010101010101010101010101010101010101010101010101","1111111111111111111111111111111111111111111111111111111111111111"],"prev":{"rows":["1","11","101","1111","10001","110011","1010101"],"name":"Столбик · 7 стр."}}],"layoutVer":10,"maskStr":"10","maskN":16,"maskMode":"pascal","manMode":"enc","helpOn":true,"tipsOn":false,"z":8523,"triScenes":[{"R":23,"N":96,"c":{"0_0":7,"0_1":7,"0_2":7,"0_3":7,"0_4":7,"0_5":7,"0_6":7,"0_7":7,"0_8":7,"0_9":7,"0_10":7,"0_11":7,"0_12":4,"0_13":4,"0_14":4,"0_15":7,"0_16":4,"0_17":4,"0_18":4,"0_19":7,"0_20":4,"0_21":4,"0_22":4,"0_23":7,"0_24":7,"0_25":2,"0_26":2,"0_27":2,"0_28":2,"0_29":2,"0_30":2,"0_31":2,"0_32":2,"0_33":2,"0_34":2,"0_35":7,"0_36":7,"0_37":7,"0_38":7,"0_39":7,"0_40":7,"0_41":7,"0_42":7,"0_43":7,"0_44":7,"0_45":7,"0_46":7,"0_47":4,"0_48":4,"0_49":4,"0_50":4,"0_51":4,"0_52":4,"0_53":4,"0_54":4,"0_55":4,"0_56":4,"0_57":4,"0_58":4,"0_59":7,"0_60":7,"0_61":7,"0_62":7,"0_63":7,"0_64":7,"0_65":7,"0_66":7,"0_67":7,"0_68":7,"0_69":7,"0_70":7,"0_71":4,"0_72":4,"0_73":4,"0_74":4,"0_75":4,"0_76":4,"0_77":4,"0_78":4,"0_79":4,"0_80":4,"0_81":4,"0_82":4,"0_84":7,"0_85":7,"0_86":7,"0_87":7,"0_88":7,"0_89":7,"0_90":7,"0_91":7,"0_92":7,"0_93":7,"0_94":7,"1_0":7,"1_1":7,"1_2":7,"1_3":7,"1_4":7,"1_5":7,"1_6":7,"1_7":7,"1_8":7,"1_9":7,"1_11":7,"1_12":4,"1_13":4,"1_14":4,"1_15":7,"1_16":4,"1_17":4,"1_18":4,"1_19":7,"1_20":4,"1_21":4,"1_22":4,"1_23":7,"1_24":7,"1_25":2,"1_26":2,"1_27":2,"1_28":2,"1_29":2,"1_30":2,"1_31":2,"1_32":2,"1_33":2,"1_34":2,"1_35":7,"1_36":7,"1_37":7,"1_38":7,"1_39":7,"1_40":7,"1_41":7,"1_42":7,"1_43":7,"1_44":7,"1_45":7,"1_46":7,"1_47":4,"1_48":4,"1_49":4,"1_50":4,"1_51":4,"1_52":4,"1_53":4,"1_54":4,"1_55":4,"1_56":4,"1_57":4,"1_60":7,"1_61":7,"1_62":7,"1_63":7,"1_64":7,"1_65":7,"1_66":7,"1_67":7,"1_68":7,"1_69":7,"1_70":7,"1_71":4,"1_72":4,"1_73":4,"1_74":4,"1_75":4,"1_76":4,"1_77":4,"1_78":4,"1_79":4,"1_80":4,"1_81":4,"1_82":4,"1_84":7,"1_85":7,"1_86":7,"1_87":7,"1_88":7,"1_89":7,"1_90":7,"1_91":7,"1_92":7,"1_93":7,"1_94":7,"1_83":7,"0_83":7,"1_59":7,"1_58":4,"1_10":7},"gl":{},"gi":{},"gt":{"0_0":"Своя","0_1":"Своя","0_2":"Своя","0_3":"Своя","0_4":"Своя","0_5":"Своя","0_6":"Своя","0_7":"Своя","0_8":"Своя","0_9":"Своя","0_10":"Своя","0_11":"Своя","0_12":"1","0_13":"1","0_14":"1","0_15":"Своя","0_16":"0","0_17":"0","0_18":"0","0_19":"Своя","0_20":"а","0_21":"а","0_22":"а","0_25":"Янтарь","0_26":"Янтарь","0_27":"Янтарь","0_28":"Янтарь","0_29":"Янтарь","0_30":"Янтарь","0_31":"Янтарь","0_32":"Янтарь","0_33":"Янтарь","0_34":"Янтарь","0_35":"Океан","0_36":"Океан","0_37":"Океан","0_38":"Океан","0_39":"Океан","0_40":"Океан","0_41":"Океан","0_42":"Океан","0_43":"Океан","0_44":"Океан","0_45":"Океан","0_46":"Океан","0_47":"Лес","0_48":"Лес","0_49":"Лес","0_50":"Лес","0_51":"Лес","0_52":"Лес","0_53":"Лес","0_54":"Лес","0_55":"Лес","0_56":"Лес","0_57":"Лес","0_59":"Роза","0_60":"Роза","0_61":"Роза","0_62":"Роза","0_63":"Роза","0_64":"Роза","0_65":"Роза","0_66":"Роза","0_67":"Роза","0_68":"Роза","0_69":"Роза","0_70":"Роза","0_71":"Огонь","0_72":"Огонь","0_73":"Огонь","0_74":"Огонь","0_75":"Огонь","0_76":"Огонь","0_77":"Огонь","0_78":"Огонь","0_79":"Огонь","0_80":"Огонь","0_81":"Огонь","0_82":"Огонь","0_84":"Контраст","0_85":"Контраст","0_86":"Контраст","0_87":"Контраст","0_88":"Контраст","0_89":"Контраст","0_90":"Контраст","0_91":"Контраст","0_92":"Контраст","0_93":"Контраст","0_94":"Контраст","1_0":"Своя","1_1":"Своя","1_2":"Своя","1_3":"Своя","1_4":"Своя","1_5":"Своя","1_6":"Своя","1_7":"Своя","1_8":"Своя","1_9":"Своя","1_11":"Своя","1_12":"1","1_13":"1","1_14":"1","1_15":"Своя","1_16":"0","1_17":"0","1_18":"0","1_19":"Своя","1_20":"а","1_21":"а","1_22":"а","1_25":"Янтарь","1_26":"Янтарь","1_27":"Янтарь","1_28":"Янтарь","1_29":"Янтарь","1_30":"Янтарь","1_31":"Янтарь","1_32":"Янтарь","1_33":"Янтарь","1_34":"Янтарь","1_35":"Океан","1_36":"Океан","1_37":"Океан","1_38":"Океан","1_39":"Океан","1_40":"Океан","1_41":"Океан","1_42":"Океан","1_43":"Океан","1_44":"Океан","1_45":"Океан","1_46":"Океан","1_47":"Лес","1_48":"Лес","1_49":"Лес","1_50":"Лес","1_51":"Лес","1_52":"Лес","1_53":"Лес","1_54":"Лес","1_55":"Лес","1_56":"Лес","1_57":"Лес","1_60":"Роза","1_61":"Роза","1_62":"Роза","1_63":"Роза","1_64":"Роза","1_65":"Роза","1_66":"Роза","1_67":"Роза","1_68":"Роза","1_69":"Роза","1_70":"Роза","1_71":"Огонь","1_72":"Огонь","1_73":"Огонь","1_74":"Огонь","1_75":"Огонь","1_76":"Огонь","1_77":"Огонь","1_78":"Огонь","1_79":"Огонь","1_80":"Огонь","1_81":"Огонь","1_82":"Огонь","1_84":"Контраст","1_85":"Контраст","1_86":"Контраст","1_87":"Контраст","1_88":"Контраст","1_89":"Контраст","1_90":"Контраст","1_91":"Контраст","1_92":"Контраст","1_93":"Контраст","1_94":"Контраст"},"d":{},"l":{}},{"R":8,"N":14,"ring":1,"c":{"2_4":2,"2_5":2,"2_6":2,"2_7":2,"2_8":2,"3_4":2,"3_5":2,"3_7":2,"3_8":2,"4_5":2,"4_6":2,"4_7":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}},{"R":8,"N":14,"ring":2,"c":{"2_4":2,"2_5":2,"2_6":2,"2_7":2,"2_8":2,"3_3":2,"3_4":2,"3_8":2,"3_9":2,"4_3":2,"4_4":2,"4_8":2,"4_9":2,"5_4":2,"5_5":2,"5_6":2,"5_7":2,"5_8":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}},{"R":8,"N":14,"ring":3,"c":{"1_5":2,"1_6":2,"1_7":2,"2_2":2,"2_3":2,"2_4":2,"2_5":2,"2_7":2,"2_8":2,"2_9":2,"2_10":2,"3_2":2,"3_3":2,"3_9":2,"3_10":2,"4_2":2,"4_3":2,"4_9":2,"4_10":2,"5_2":2,"5_3":2,"5_4":2,"5_5":2,"5_7":2,"5_8":2,"5_9":2,"5_10":2,"6_5":2,"6_6":2,"6_7":2},"gl":{},"gi":{},"gt":{},"d":{},"l":{}}],"triCells":{"3_9":1,"4_9":1,"4_8":1,"5_8":1,"5_7":1,"6_7":1,"6_6":1,"7_6":1,"2_10":1,"3_10":1,"4_11":1,"5_12":1,"6_13":1,"7_14":1,"6_14":1,"5_13":1,"4_12":1,"3_11":1,"6_30":1,"7_30":1,"7_29":1,"8_29":1,"8_28":1,"8_30":1,"8_31":1,"8_32":1,"8_33":1,"8_34":1,"8_35":1,"8_36":1,"8_37":1,"8_38":1,"8_39":1,"8_40":1,"8_41":1,"8_42":1,"8_43":1,"8_44":1,"8_45":1,"8_46":1,"8_47":1,"8_48":1,"8_49":1,"8_50":1,"8_51":1,"8_52":1,"5_57":1,"5_31":1,"6_31":1,"5_32":1,"5_33":1,"5_34":1,"5_35":1,"5_36":1,"5_37":1,"5_38":1,"5_39":1,"5_40":1,"5_41":1,"5_42":1,"5_43":1,"5_44":1,"5_45":1,"5_46":1,"5_47":1,"5_48":1,"5_49":1,"5_50":1,"5_51":1,"5_52":1,"5_53":1,"5_54":1,"5_55":1,"5_56":1,"8_62":1,"7_61":1,"7_60":1,"6_60":1,"6_59":1,"5_59":1,"5_58":1,"8_53":1,"8_54":1,"8_55":1,"8_56":1,"8_57":1,"8_58":1,"8_59":1,"8_60":1,"8_61":1,"12_29":1,"13_30":1,"13_31":1,"14_31":1,"14_32":1,"12_30":1,"11_29":1,"11_30":1,"11_31":1,"11_32":1,"11_33":1,"11_34":1,"11_35":1,"11_36":1,"11_37":1,"11_38":1,"11_39":1,"11_40":1,"11_41":1,"11_42":1,"11_43":1,"11_44":1,"11_45":1,"11_46":1,"11_49":1,"11_50":1,"11_52":1,"11_53":1,"11_54":1,"11_55":1,"11_56":1,"11_57":1,"11_58":1,"11_59":1,"11_60":1,"11_61":1,"11_51":1,"11_47":1,"11_48":1,"12_61":1,"12_60":1,"13_60":1,"13_59":1,"14_59":1,"14_33":1,"14_34":1,"14_36":1,"14_37":1,"14_38":1,"14_39":1,"14_40":1,"14_41":1,"14_42":1,"14_43":1,"14_44":1,"14_45":1,"14_46":1,"14_47":1,"14_48":1,"14_49":1,"14_50":1,"14_51":1,"14_52":1,"14_53":1,"14_54":1,"14_55":1,"14_56":1,"14_57":1,"14_58":1,"14_35":1,"11_62":1,"11_28":1},"triGLn":{},"triGIn":{},"triGTx":{},"triDots":{},"triLines":{},"triR":21,"triN":111,"triS":26.369230769230768,"triCol":1,"triTCol":2,"triDotD":3,"triLW":2,"triCur":-1,"triSel":null,"fieldRight":true,"coneRot":[0],"fillV128":true,"voidHits":{"sig":"4:4","h":{},"lph":0,"fz":{},"ex":{},"exI":{},"off":{},"lk":0,"exH":[],"fd":{}},"coneSpin":0,"coneSpinPh":0,"coneClockN":0,"coneAimRot":0,"coneGlow":false,"coneClock":false,"coneAutoSp":6,"coneSpinMode":"bit","coneOnlySel":false,"cone3d":false,"cone3Yaw":-230,"cone3El":42.4,"coneLock":true,"coneVoid":false,"coneSect":false,"coneLocks":{},"cone3H":0,"ctw":{"open":false,"w":1194,"h":260,"x":0,"y":515,"pin":true,"min":false},"cgrpPos":{"гамма":{"x":0,"y":-6},"вид":{"x":494.015625,"y":-48},"за чертой":{"x":173.0717967697245,"y":312},"лазер":{"x":1014.015625,"y":-47},"кручение":{"x":1331.984375,"y":646},"☀ · ☾":{"x":0,"y":214},"строка 1":{"x":0,"y":-24},"кольца":{"x":0,"y":502},"шарики":{"x":1587.984375,"y":-48},"щели":{"x":0,"y":94},"грани":{"x":1588.984375,"y":262}},"pal":6,"cgrpMin":{"гамма":-1,"дзен":true,"3d":true,"аниматрица":true,"алгоритм":true,"алг. · подск.":true,"звук":true,"лазер":true,"вид":true},"cgrpSize":{"гамма":{"w":174,"h":121},"кручение":{"w":432,"h":120},"лазер":{"w":300,"h":24},"аниматрица":{"w":300,"h":24},"кольца":{"w":183,"h":288},"вид":{"w":212,"h":264},"за чертой":{"w":115,"h":168},"строка 1":{"w":420,"h":120},"3d":{"w":300,"h":24},"звук":{"w":300,"h":24},"щели":{"w":133,"h":120},"алгоритм":{"w":424,"h":24},"☀ · ☾":{"w":155,"h":264},"алг. · подск.":{"w":722,"h":188},"шарики":{"w":176,"h":456},"грани":{"w":98,"h":168}},"cgrpFld":{"алг. · подск.":{"x":5,"y":1,"z":"head"},"алгоритм":{"z":"head","x":0,"y":0},"звук":{"x":1083,"y":2,"z":"head"},"аниматрица":{"x":717,"y":2,"z":"head"},"3d":{"z":"head","x":0,"y":0}},"cgrpZen":{"дзен":true,"солнце":true,"3d":true,"☀ · ☾":true,"строка 1":true},"zenGrpInit":1,"cgrpOff":{"гамма":true},"cgrpDock":[],"coneBtns":[],"zenBtns":[],"btnLab":{},"triPin0":true,"barL":8,"barR":0,"paneFold":{"Треугольник из строки":true,"Построения":true,"Шаблоны":true,"Другое":true,"Нарезать треугольник":true,"Заготовки":true},"noCur":true,"coneExRun":116,"sndMark":true,"snd2":false,"sndDir":1,"coneMusK":16,"coneLaserFix":true,"cutTake":false,"sndSp":18,"cone3Bw":0.2,"coneOcta":true,"sndVol":100,"triPrevCol":2,"fzShow":false,"triBg":null,"triLn":null,"triLnMode":1,"triOut":true,"coneMir":"off","coneAxisOffs":{"0":-5},"palCust":{"dark":["#e8ecf4","#476bb3","#7d3ccd"]},"cgrpTri":{},"triBind":null,"coneArcs":true,"conePoly":false,"animByPass":false,"bitView":"txt","btnMove":{"#animByPass":{"p":"аниматрица","before":null},"#coneSpinModeB button[data-sm=\"all\"]":{"p":"кручение","before":"#coneSpinModeB"},"#w-cone button[data-sm=\"all\"]":{"p":"кручение","before":"#coneSpinModeB"},"#coneSpinModeB button[data-sm=\"bit\"]":{"p":"кручение","before":"#w-cone button[data-sm=\"all\"]"},"#coneSpinModeB button[data-sm=\"opp\"]":{"p":"кручение","before":"#bConeAuto"},"#coneOnlySel":{"p":"вид","before":null},"#coneBit1":{"p":"вид","before":null},"#coneGlow":{"p":"вид","before":null},"#bConeAuto":{"p":"кручение","before":null}},"animSp":41,"cone3Dig":false,"animRowsN":32,"cgrpOnC":{},"noLn":true,"cgrpLink":{"за чертой":{"to":"☀ · ☾","dy":98}},"coneClean":true,"paneW":221,"paneWUser":true,"cutGen":"las","coneFan":false,"coneSlit":4.9,"coneGoN":1,"cgrpMinPos":{"гамма":{"pos":{"x":991,"y":139},"fld":null},"@sunMoonTbl":{"pos":[1227,45],"fld":null},"алг. · подск.":{"pos":{"x":582,"y":188},"fld":null},"щели":{"pos":{"x":-107,"y":210},"fld":null},"алгоритм":{"pos":{"x":132,"y":556},"fld":null},"шарики":{"pos":{"x":572,"y":145},"fld":null},"3d":{"pos":{"x":19,"y":43},"fld":null}},"rowsOrig":{"0":["1","11","101","1111","10001","110011","1010101","11111111","100000001","1100000011","10100000101","111100001111","1000100010001","11001100110011","101010101010101","1111111111111111","10000000000000001","110000000000000011","1010000000000000101","11110000000000001111","100010000000000010001","1100110000000000110011","10101010000000001010101","111111110000000011111111","1000000010000000100000001","11000000110000001100000011","101000001010000010100000101","1111000011110000111100001111","10001000100010001000100010001","110011001100110011001100110011","1010101010101010101010101010101","11111111111111111111111111111111","100000000000000000000000000000001","1100000000000000000000000000000011","10100000000000000000000000000000101","111100000000000000000000000000001111","1000100000000000000000000000000010001","11001100000000000000000000000000110011","101010100000000000000000000000001010101","1111111100000000000000000000000011111111","10000000100000000000000000000000100000001","110000001100000000000000000000001100000011","1010000010100000000000000000000010100000101","11110000111100000000000000000000111100001111","100010001000100000000000000000001000100010001","1100110011001100000000000000000011001100110011","10101010101010100000000000000000101010101010101","111111111111111100000000000000001111111111111111","1000000000000000100000000000000010000000000000001","11000000000000001100000000000000110000000000000011","101000000000000010100000000000001010000000000000101","1111000000000000111100000000000011110000000000001111","10001000000000001000100000000000100010000000000010001","110011000000000011001100000000001100110000000000110011","1010101000000000101010100000000010101010000000001010101","11111111000000001111111100000000111111110000000011111111","100000001000000010000000100000001000000010000000100000001","1100000011000000110000001100000011000000110000001100000011","10100000101000001010000010100000101000001010000010100000101","111100001111000011110000111100001111000011110000111100001111","1000100010001000100010001000100010001000100010001000100010001","11001100110011001100110011001100110011001100110011001100110011","101010101010101010101010101010101010101010101010101010101010101","1111111111111111111111111111111111111111111111111111111111111111"]},"cutDel":true,"triRingsV":2,"coneSlits":"all","coneLaser0":45,"coneBitStep":false,"coneSun":false,"coneSunCut":"zero","coneScan":false,"coneRaysLast":"cur","coneRays":"off","lasPeek":false,"coneFillTurn":0,"coneMusIn":"write","coneMusN":5,"coneMusSlit":"zero","sndScale":"major","coneLaserChain":false,"coneClockStop":false,"triSelMore":[],"cgrpTriReset754":1,"lasSplit":1,"split3d":1,"lasPack":1,"cutPrev":"","cutAlign":"p","triView":false,"triGlass":"","rowLock":false,"tri90":false,"tri90Ls":0,"coneMagK":{"ax":true,"sym":true,"bnd":true,"mid":true,"scan":true},"padPos_pered_os":{"x":1707,"y":687},"coneAxes":true,"padFold":true,"coneTurns":[],"solPanelArrangeV":2,"cgrpPin":{},"ringTblMin":true,"solPanelClusters":[{"name":"Свет и вырезы","color":"#ffe14d","keys":["лазер","☀ · ☾","строка 1","щели","за чертой","алгоритм"]},{"name":"Движение","color":"#ffd166","keys":["кручение","кольца"]},{"name":"Вид","color":"#6cb4ff","keys":["вид","3d"]},{"name":"Звук и цикл","color":"#b98cff","keys":["аниматрица","звук"]},{"name":"Таблицы","color":"#22d3ee","keys":["@ringTbl"]}],"padFx":1,"padSide":"r","ringTblXY":[299,287],"coneFillTurns":0,"coneSame":false,"sunTbl":true,"ringTbl":true,"cgrpEdge":{"кольца":{"id":"paneZigOv","row":22},"шарики":{"id":"fieldZigOv","row":0},"☀ · ☾":{"id":"paneZigOv","row":10},"строка 1":{"id":"paneZigOv","row":0},"щели":{"id":"paneZigOv","row":5},"кручение":{"id":"fieldZigOv","row":29},"грани":{"id":"fieldZigOv","row":13}},"coneHits":false,"fillStill":false,"fillFree":null,"magSym":"both","coneTurnsShow":false,"coneFillFree":false,"padFreePos":{"x":1002,"y":17},"padViewportPos":{"x":1429,"y":17,"dock":true},"sunParts":false,"moonEcl":false,"moonBlk":false,"cutLen":"ctr","cutMem":{"cutS":{"1":[2,1.6617223505324148],"2":[3,3.75],"3":[4,5.51840337185199],"4":[5,7.1]},"cut":{"1":[2,2.2499999999999996]},"cut2":{"1":[2,0.9999999999999996]},"one":{"0":[1,0.25],"1":[2,0]}},"sunSweep":true,"moonSweep":false,"sunHalf":true,"sunMoonTurn":false,"sunMoon":false,"moonCross":false,"sunPanelMerged":1,"sunPass0":false,"moonPassE":true,"moonAlways":false,"sunWideMoon":false,"coneBallAngle":3.141592653589793,"coneBallReverse":true,"coneBallSeconds":4,"coneBallRings":2,"coneEdgeStop":false,"coneBallLabOpen":true,"coneBallOn":true,"coneBallRoute":"in","coneBallArm":"in","coneBallPoints":false,"coneBallStart":"center","coneBallMult":"1","solHeaderV":1,"solHeaderOrder":["алг. · подск.","кручение","@sunMoonTbl","строка 1","кольца","щели","алгоритм","шарики","звук","аниматрица","3d"],"coneMag":false,"solHeaderLeft":false,"fieldDrawerWidth":356,"fieldPeek":false,"paneIconOpen":{},"solPlateGroupsV":1,"magSnapParts":true,"coneBallThroughCount":1,"coneBallBatch":true,"sunTblOpen":{"1":false},"laserQuad":false,"cutRow1Slit":false,"row1Parts":2,"coneSpinMag":false,"coneBallAuto":true,"coneLast2":false,"coneFree":{},"coneNotch":true,"coneMagSp":1.2,"coneNotchSlit":false,"coneBallLoss":true,"coneBallSlitOnly":true,"coneBallSlitStart":true,"coneBallMark":false,"coneBallChain":false,"cgrpTop":{"вид":{"x":0.3126681170886076},"лазер":{"x":0.6417820411392405}},"coneBallSpeedMode":1,"coneBallImpact":"bounce","coneBallAbsorb":true,"coneBallZeroBounce":true,"coneBallClosed":null,"coneBallSimPause":false,"coneNotches":{"sig":"1:2","x":[]},"motionExact":{"clock.phase":{"view":0,"value":"0"},"clock.degrees":{"view":0,"value":"0"},"offset:0":{"view":0,"value":"0"},"hold.offset:0":{"view":0,"value":"0"},"phase.offset:0":{"view":0,"value":"0"},"rotation:0":{"view":0,"value":"0"},"aim.rotation":{"view":0,"value":"0"},"offset:1":{"view":0,"value":"0"},"hold.offset:1":{"view":0,"value":"0"},"phase.offset:1":{"view":0,"value":"0"},"fill.rotation":{"view":0,"value":"0"},"memory:one:0":{"view":0.25,"value":"1/4"},"memory:one:1":{"view":0,"value":"0"},"rotation:1":{"view":0.975379273124767,"value":"975379273124767/1000000000000000"},"offset:2":{"view":0,"value":"0"},"hold.offset:2":{"view":0,"value":"0"},"phase.offset:2":{"view":0,"value":"0"},"rotation:2":{"view":0.9961740434071515,"value":"1992348086814303/2000000000000000"},"offset:3":{"view":0,"value":"0"},"hold.offset:3":{"view":0,"value":"0"},"phase.offset:3":{"view":0,"value":"0"},"rotation:3":{"view":3.652797041871789,"value":"3652797041871789/1000000000000000"},"offset:4":{"view":0,"value":"0"},"hold.offset:4":{"view":0,"value":"0"},"phase.offset:4":{"view":0,"value":"0"},"rotation:4":{"view":0,"value":"0"},"offset:5":{"view":0,"value":"0"},"hold.offset:5":{"view":0,"value":"0"},"phase.offset:5":{"view":0,"value":"0"}}};
+zzUseInitialRows(ZZ_FACTORY);
 /* ✖ Сброс — начальное состояние ZZ_FACTORY (нет его — столбик ZZ_ROWS0 и всё прочее из объявления Z). У конуса отдельной
    страницей (?solo=cone) раскладка целой страницы ни к чему — снимается, как в пресетах (ZZ_PRESET_LAYOUT). Запомненное ⭐
    переезжает в новую память: сброс не отнимает того, что пользователь сохранил сам. */
@@ -15227,7 +15268,7 @@ function bgApply(){   // v0.184: живой фон хаба (?solo=cone&bg=1)
     document.title = "Синхрофазотрон — " + (ZZ_PRESET.title || ZZ_PRESET.name || "пресет");
     return;
   }
-  const r = ["1"]; while (r.length < 64) r.push(zzPascalNext(r[r.length - 1]));
+  const r = ZZ_INITIAL_ROWS.slice();
   Z.rows = r; Z.cur = 0; rowSel.clear(); syncLane();
   Object.assign(Z, { cone3d: true, coneOcta: true, coneGlow: true, cone3H: 2.6, cone3El: 12, cone3Yaw: 30, coneSpin: 0, coneSpinMode: "all", coneAutoSp: 10,
     coneClock: false, coneSect: false, coneOnlySel: false, conePoly: false, coneRays: "off", coneMir: "off", coneLock: true });

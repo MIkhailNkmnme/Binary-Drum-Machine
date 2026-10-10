@@ -33,15 +33,15 @@
     data.cells.forEach(cells => {
       const ring = [[], [], [], []];
       cells.forEach(cell => {
-        const overlaps = [0, 0, 0, 0], angles = [Infinity, Infinity, Infinity, Infinity];
+        const overlaps = cell.weights, angles = [Infinity, Infinity, Infinity, Infinity];
         for (const [a, b] of cell.arcs) {
           const arcs = []; ivNorm(a - axis, b - axis, arcs);
           for (const [lo, hi] of arcs) for (let q = 0; q < 4; q++) {
             const start = Math.max(lo, q * Math.PI / 2), end = Math.min(hi, (q + 1) * Math.PI / 2);
-            if (end > start) { overlaps[q] += (end - start) / cell.width; angles[q] = Math.min(angles[q], start); }
+            if (end > start) angles[q] = Math.min(angles[q], start);
           }
         }
-        overlaps.forEach((weight, q) => { if (weight > 1e-10) ring[q].push({ bit: cell.bit, weight, angle: angles[q] }); });
+        overlaps.forEach((weight, q) => { if (weight.sign() > 0) ring[q].push({ bit: cell.bit, weight: weight.number(), angle: angles[q] }); });
       });
       ring.forEach((entries, q) => { entries.sort((a, b) => a.angle - b.angle); lists[q].push(...entries); });
     });
@@ -94,9 +94,9 @@
         }
       }
       g.globalAlpha = 0.7; g.strokeStyle = colors[q]; g.lineWidth = dpr; g.beginPath(); g.arc(x, y, r + dpr, 0, TAU); g.stroke();
-      const Q = data.quarters[q], diff = Q[1] - Q[0], size = Math.min(14 * dpr, inner * 0.23);
+      const Q = data.quarters[q], diff = Q[1].sub(Q[0]), size = Math.min(14 * dpr, inner * 0.23);
       g.globalAlpha = 1; g.fillStyle = colors[q]; g.font = `900 ${size}px ${ff}`; g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillText("Δ " + (diff > 0.0005 ? "+" : "") + coneBalanceNumber(diff), x, y - size * 0.65);
+      g.fillText("Δ " + (diff.sign() > 0 ? "+" : "") + coneBalanceNumber(diff), x, y - size * 0.65);
       g.font = `700 ${size * 0.78}px ${ff}`; g.fillStyle = "#fff"; g.fillText(coneBalanceNumber(Q[1]) + "  ·  " + coneBalanceNumber(Q[0]), x, y + size * 0.65);
     }
     g.restore();
