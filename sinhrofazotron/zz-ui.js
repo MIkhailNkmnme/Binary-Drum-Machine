@@ -4325,6 +4325,7 @@ function spinSpUi(){
   el.textContent = window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
     Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
+  tempoTrackSync();
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
@@ -6743,48 +6744,65 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
   const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
-  const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
-  const bottom = cr.bottom - hr.top + scrollTop;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft;
-  const ws = w * 7 / 8, gap = 6, clusterRight = x + w + (st ? ws + gap : 0);
-  const ms = $("c3Modes"), edge = cr.right - hr.left + scrollLeft - 4, modeLeft = clusterRight + 12;
-  const modesBelow = !!ms && edge - modeLeft < 300, lift = modesBelow ? 52 : 0, y = bottom - rh - gap - w - lift;
-  // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
-  const sp = document.getElementById("bC3Spin");
+  // v0.023: нижний пульт — ряд треугольников вплотную, как верхний: ↩ старт · ◀ · ▶ (на оси конуса) · ▶ · ⌖✕; справа режимы, над пультом темп
+  const bottom = cr.bottom - hr.top + scrollTop, left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4, gap = 6;
+  const sp = document.getElementById("bC3Spin"), ms = $("c3Modes");
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const startButton = $("bConeStartBack"), speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
   for (const [id, control] of [["coneTransportStart", startButton], ["coneTransportTempo", speedLabel]]) {
     if (!control) continue;
-    let box = $(id); if (!box) { box = document.createElement("div"); box.id = id; box.className = "tools lpw"; host.appendChild(box); }
+    let box = $(id); if (!box) { box = document.createElement("div"); box.id = id; box.className = "tools"; host.appendChild(box); }
+    box.classList.remove("lpw");   // v0.023: не в цепочку треугольников lpTools — у пульта своя форма
     if (control.parentElement !== box) box.appendChild(control);
-    control.classList.add("tz");
+    if (control.classList.contains("tz")) triOff(control);   // v0.023: без сцепки групп — она ставила ширину с !important (темп сжимался до 138 px, ползунок — до нуля)
   }
   const startBox = $("coneTransportStart"), tempoBox = $("coneTransportTempo");
-  if (startBox && tempoBox) {
-    const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
-    const clusterLeft = x - (st ? ws + gap : 0), tempoLeft = clusterRight + 12;
-    const room = edge - tempoLeft, wide = room >= 240 && clusterLeft - 12 - left >= 112;
-    const speedWidth = Math.max(0, Math.min(380, wide ? room : edge - left));
-    const startWidth = Math.min(112, edge - left), top = cr.top - hr.top + scrollTop + 2;
-    startBox.style.width = startWidth.toFixed(1) + "px"; tempoBox.style.width = speedWidth.toFixed(1) + "px";
-    put(startBox, wide ? clusterLeft - 12 - startWidth : edge - startWidth, Math.max(top, wide ? bottom - lift - 36 : y - 42));
-    put(tempoBox, wide ? tempoLeft : left + (edge - left - speedWidth) / 2, Math.max(top, wide ? y : y - 84));
+  const size = (e) => e && e.parentElement === host ? e.offsetWidth : 0;
+  const ws = size(startBox), wb = st ? size(stB) : 0, wf = st ? size(stF) : 0, wr = b.offsetWidth || w, rh = Math.max(b.offsetHeight || w / 2, startBox ? startBox.offsetHeight : 0);
+  const rowWidth = ws + wb + w + wf + wr, x = Math.max(left + ws + wb, Math.min(edge - w - wf - wr, cr.left - hr.left + scrollLeft + cxp - w / 2));
+  const rowLeft = x - wb - ws, rowRight = x + w + wf + wr, mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeLeft = rowRight + 12;
+  const modesBelow = mw > 0 && edge - modeLeft < mw; let lift = modesBelow ? rh + gap : 0;
+  for (const g of document.querySelectorAll("#w-cone .cgrp.cmin")) {   // свёрнутые группы у нижнего края («3D» и др.) не перекрывать — пульт встаёт над ними
+    if (!g.getClientRects().length) continue;
+    const r = g.getBoundingClientRect(), gl = r.left - hr.left + scrollLeft, gt = r.top - hr.top + scrollTop;
+    if (gl < rowRight && gl + r.width > rowLeft && gt < bottom - lift && gt + r.height > bottom - lift - rh) lift = Math.max(lift, bottom - gt + 2);
   }
+  const y = bottom - rh - lift;
+  if (startBox && ws) put(startBox, rowLeft, y);
+  if (st) { put(stB, x - wb, y); if (stF && stF.parentElement === host) put(stF, x + w, y); }
   if (sp && sp.parentElement === host) put(sp, x, y);
-  put(b, x + (w - rw) / 2, bottom - rh - lift);
-  if (st) { const stepY = y + (w - ws) / 2; put(stB, x - ws - gap, stepY); if (stF && stF.parentElement === host) put(stF, x + w + gap, stepY); }
-  // Режимы всегда видны у самого нижнего края; на узком холсте пульт стоит над полосой.
-  if (ms && ms.parentElement === host) {
-    const left = cr.left - hr.left + scrollLeft + 4, width = Math.min(346, modesBelow ? edge - left : edge - modeLeft);
-    ms.style.width = Math.max(0, width) + "px";
-    put(ms, modesBelow ? left + (edge - left - width) / 2 : modeLeft, bottom - 44);
+  put(b, x + w + wf, y);
+  if (tempoBox) {
+    const tw = Math.max(0, Math.min(600, edge - left)), centre = x + w / 2;   // v0.023, «ширину в 2 раза больше»: 600 (было 300)
+    tempoBox.style.width = tw.toFixed(1) + "px";
+    put(tempoBox, Math.max(left, Math.min(edge - tw, centre - tw / 2)), Math.max(cr.top - hr.top + scrollTop + 2, y - gap - (tempoBox.offsetHeight || 36)));
+    tempoTrackSync();
   }
+  // Режимы — у самого нижнего края справа от пульта; на узком холсте пульт стоит над ними.
+  if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, bottom - ms.offsetHeight);
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws - gap : x, available = Math.max(0, groupLeft - X - 4);
+    const X = cr.left - hr.left + scrollLeft + 2, available = Math.max(0, rowLeft - X - 4);
     caption.style.maxWidth = available.toFixed(1) + "px";
     put(caption, X, bottom - lift - caption.offsetHeight - 4);
   }
+}
+/* v0.023, «не работает и ширину в 2 раза больше», образец — ползунки «Пирамиды»: дорожка темпа — плоский ромб-контур, вершины которого у бегунка (--tx, --ta),
+   стрелки ◂ ▸ — треугольники в остриях дорожки, бегунок — ромб, число — рядом с ним (справа; у правого края — слева). Прежде метке темпа раскладка групп
+   давала flex 0 0 138px, и сам ползунок сжимался до нуля: дорожки не было, щелчок ставил минимум */
+function tempoTrackSync(){
+  const r = $("coneAutoSp"), L = r && r.closest("#coneTransportTempo > label"); if (!L || !L.offsetWidth) return;
+  if (!r._tempoBound) { r._tempoBound = true; r.addEventListener("input", tempoTrackSync); }
+  const lw = L.offsetWidth, H = L.offsetHeight || 33, mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, f = mx > mn ? Math.max(0, Math.min(1, (+r.value - mn) / (mx - mn))) : 0;
+  const tw = 21, tx = r.offsetLeft + tw / 2 + f * Math.max(0, r.offsetWidth - tw);
+  const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
+  set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
+  const arrows = L.querySelectorAll(".zerk-arrow"), half = H / 2;
+  arrows.forEach((b, i) => {   // остриё стрелки — в вершине дорожки, основание — по её рёбрам на ширине стрелки
+    const bw = b.offsetWidth || 18, run = i ? lw - tx : tx, a = Math.max(2, Math.min(half - 2, half - half * bw / Math.max(bw, run) + 2));
+    b.style.setProperty("--clip", i ? `polygon(0 ${a.toFixed(1)}px, calc(100% - 3px) 50%, 0 ${(H - a).toFixed(1)}px)` : `polygon(3px 50%, 100% ${a.toFixed(1)}px, 100% ${(H - a).toFixed(1)}px)`);
+  });
+  const v = $("coneAutoSpV"); if (v) { const vw = v.offsetWidth, right = tx + tw / 2 + 6 + vw <= lw - 20; set("--vx", (right ? tx + tw / 2 + 6 : tx - tw / 2 - 6 - vw).toFixed(1) + "px"); }
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
   { const s = posStarP(); if (s) return !posEq(posCur(), s); }   // v0.842: есть начальное ★ — сравнивать с ним
@@ -13380,7 +13398,7 @@ function soloApply(){
   if (h) {   // v0.226, «тут название — после Zazerkalius, а не вместо»: «Zazerkalius ◯ Конус»
     /* v0.616, «при клике на заголовок Zazerkalius — переход из соло-режима»: «Zazerkalius» — ссылка на всю страницу (тот же адрес без ?solo=…) */
     // Синхрофазотрон v0.001: своё название, без ссылки на Zazerkalius; значок конуса — значком вкладки
-    h.textContent = "Синхрофазотрон";
+    // v0.023: название — битовый логотип в самой разметке (svg.sfzlogo); текстом его не перезаписывать
     if (el.id === "w-cone") { const ic = document.createElement("link"); ic.rel = "icon"; ic.href = "data:image/svg+xml," + encodeURIComponent(CONE_ICO.replace('class="zico"', 'xmlns="http://www.w3.org/2000/svg"')); document.head.append(ic); } }
   document.title = "Синхрофазотрон — " + ((document.title.match(/v[\d.]+/) || [""])[0]);
   $("desk").scrollTop = 0;
