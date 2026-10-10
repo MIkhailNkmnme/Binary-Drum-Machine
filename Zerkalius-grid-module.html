@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v14</title>
+<title>Grid Module — v15</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -63,6 +63,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
         <span id="gridStatusLabel">📊 Кадр: 0</span>
         <button id="modeBtn">🔴 Живой</button>
         <button id="defaultRowsBtn" title="★ По умолчанию: начальная последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — та же, что у Треугольника, Слоёв, Синхрофазотрона и Зазеркалиуса. Возвращает живой режим">★ По умолчанию</button>
+        <button id="threePanesBtn" title="Три окна рядом: цифры · диагонали · скобки (данные, масштаб и выделение общие). Ещё раз — одно окно">▥ 3 поля</button>
         <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры ⇄ произвольные символы (задаются справа)">╲ Диагонали</button>
         <span class="lbl" style="opacity:0.7;">Симв. '1'</span>
         <input type="text" id="symbol1Input" value="&lt;" title="Символ, которым показывается '1' в режиме 'Символы'" style="width:28px; background:#222; color:#fff; border:1px solid #444; border-radius:3px; font-size:11px; padding:2px 3px; text-align:center;">
@@ -221,6 +222,10 @@ const GRID = {
     symbolMode: 'diagonal',
     symbol1: '<',
     symbol0: '>',
+    // v15: три окна сразу (цифры · диагонали · скобки); скобки третьего окна — как у 4-го слота Генезиса: 1 = ')', 0 = '('
+    threePanes: true,
+    bracket1: ')',
+    bracket0: '(',
 
     // Толщина линий диагоналей 1/0 (px), размер шрифта (px, null = авто от cellSize) и гарнитура.
     diagLineWidth: 0.5,
@@ -294,8 +299,7 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-function render() {
-    const W = canvas.width, H = canvas.height;
+function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (diagonal / digits / symbols / brackets)
     // Округляем масштаб ДО целого пикселя только для самого рендера (GRID.cellSize остаётся
     // дробным — зум по колесу считается от него точно). При дробном cs соседние ячейки
     // округляют свои x/y по-разному ("дрейф"), из-за чего границы сетки и диагонали то
@@ -349,7 +353,7 @@ function render() {
 
             if (data) {
                 if (data.bg) { ctx.fillStyle = data.bg; ctx.fillRect(x, y, cs, cs); }
-                if ((data.ch === '1' || data.ch === '0') && GRID.symbolMode === 'diagonal') {
+                if ((data.ch === '1' || data.ch === '0') && mode === 'diagonal') {
                     // Без отступа от края ячейки (раньше было x+2..x+cs-2) — диагонали соседних
                     // ячеек должны смыкаться ровно в углу, одной непрерывной зигзаг-линией, а не
                     // рваться на отдельные "бусины" с зазором.
@@ -364,9 +368,12 @@ function render() {
                     // В режиме "символы" 1/0 показываются как GRID.symbol1/symbol0 (по умолчанию
                     // "<"/">"), а не как сырые цифры; остальные символы (текст) — как есть.
                     let displayCh = data.ch;
-                    if (GRID.symbolMode === 'symbols') {
+                    if (mode === 'symbols') {
                         if (data.ch === '1') displayCh = GRID.symbol1;
                         else if (data.ch === '0') displayCh = GRID.symbol0;
+                    } else if (mode === 'brackets') {   // v15: третье окно — скобки
+                        if (data.ch === '1') displayCh = GRID.bracket1;
+                        else if (data.ch === '0') displayCh = GRID.bracket0;
                     }
                     ctx.fillText(displayCh, x + cs / 2, y + cs / 2 + 1);
                 }
@@ -417,6 +424,45 @@ function render() {
     }
     ctx.fillStyle = '#111'; ctx.fillRect(0, 0, ROWHEAD_W, COLHEAD_H);
 
+}
+
+// v15, «здесь надо 3 поля-холста таких же, одновременно, друг к другу окна примыкают (блоки): в первой числа-биты, во второй их аналог в
+// диагоналях и третья в скобках». Холст делится на три окна вплотную: «10 Цифры» · «╲ Диагонали» · «( ) Скобки». Данные, масштаб, сдвиг
+// и выделение у окон общие — двигаются вместе; у каждого свои номера строк и столбцов. «▥ 3 поля» в шапке переключает обратно к одному
+// окну (его вид — кнопкой «╲ Диагонали / 10 Цифры / <> Символы», как прежде).
+function gridPanes(W) {
+    if (!GRID.threePanes) return [{ x0: 0, w: W, mode: GRID.symbolMode }];
+    const w = Math.floor(W / 3);
+    return [{ x0: 0, w: w, mode: 'digits' }, { x0: w, w: w, mode: 'diagonal' }, { x0: 2 * w, w: W - 2 * w, mode: 'brackets' }];
+}
+// v15: вписать данные в окно (при открытии, смене 3 поля / 1 поле и «★ По умолчанию»): масштаб — чтобы фигура целиком вошла в окно
+// ниже панели управления, по центру окна. Дальше — колесо и пан, как прежде
+function fitGridToPanes() {
+    const rows = dataRowCount(), cols = dataColCount(); if (!rows || !cols) return;
+    const panel = document.getElementById('gridControlsPanel'), cr = canvas.getBoundingClientRect();
+    const top = panel && !panel.classList.contains('floating') ? Math.max(0, panel.getBoundingClientRect().bottom - cr.top) : 0;
+    const pw = gridPanes(canvas.width)[0].w, availW = pw - ROWHEAD_W - 8, availH = canvas.height - COLHEAD_H - top - 8;
+    const cs = Math.max(3, Math.min(80, Math.floor(Math.min(availW / cols, availH / rows))));
+    GRID.cellSize = cs;
+    GRID.panX = -(4 + Math.max(0, (availW - cols * cs) / 2));
+    GRID.panY = COLHEAD_H - top - 4;
+    render();
+}
+function paneAt(clientX) {   // окно под курсором и x внутри него
+    const rect = canvas.getBoundingClientRect(), x = clientX - rect.left, panes = gridPanes(canvas.width);
+    const p = panes.find(q => x >= q.x0 && x < q.x0 + q.w) || (x < 0 ? panes[0] : panes[panes.length - 1]);
+    return { pane: p, x: x - p.x0 };
+}
+function render() {
+    const W = canvas.width, H = canvas.height, panes = gridPanes(W);
+    ctx.fillStyle = GRID.colors.bg; ctx.fillRect(0, 0, W, H);
+    panes.forEach(p => { ctx.save(); ctx.beginPath(); ctx.rect(p.x0, 0, p.w, H); ctx.clip(); ctx.translate(p.x0, 0); renderPane(p.w, H, p.mode); ctx.restore(); });
+    if (panes.length > 1) {   // стыки окон
+        ctx.strokeStyle = '#ffd500'; ctx.lineWidth = 2; ctx.beginPath();
+        panes.slice(1).forEach(p => { ctx.moveTo(p.x0, 0); ctx.lineTo(p.x0, H); });
+        ctx.stroke();
+    }
+    const sel = selBounds();
     document.getElementById('gridStatusLabel').textContent =
         (GRID.mode === 'edit' ? '✏️ ' : '📊 ') + GRID.frameLabel();
 
@@ -439,7 +485,7 @@ let isSelecting = false;
 
 function screenToCell(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left - ROWHEAD_W + GRID.panX;
+    const x = paneAt(clientX).x - ROWHEAD_W + GRID.panX;   // v15: x — внутри окна под курсором
     const y = clientY - rect.top - COLHEAD_H + GRID.panY;
     return { c: Math.floor(x / GRID.cellSize), r: Math.floor(y / GRID.cellSize) };
 }
@@ -479,7 +525,7 @@ canvas.addEventListener('wheel', e => {
     GRID.cellSize = Math.max(3, Math.min(80, GRID.cellSize * factor));
     // Зумим относительно позиции курсора, а не левого верхнего угла — привычнее.
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left - ROWHEAD_W, my = e.clientY - rect.top - COLHEAD_H;
+    const mx = paneAt(e.clientX).x - ROWHEAD_W, my = e.clientY - rect.top - COLHEAD_H;   // v15: зум к курсору внутри его окна
     GRID.panX = (GRID.panX + mx) * (GRID.cellSize / old) - mx;
     GRID.panY = (GRID.panY + my) * (GRID.cellSize / old) - my;
     render();
@@ -547,6 +593,12 @@ document.getElementById('modeBtn').addEventListener('click', () => {
         enterEditMode();
     }
     render();
+});
+
+document.getElementById('threePanesBtn').addEventListener('click', function() {   // v15
+    GRID.threePanes = !GRID.threePanes;
+    this.textContent = GRID.threePanes ? '▥ 3 поля' : '▢ 1 поле';
+    fitGridToPanes();
 });
 
 const SYMBOL_MODE_LABELS = { diagonal: '╲ Диагонали', digits: '10 Цифры', symbols: '<> Символы' };
@@ -1073,10 +1125,11 @@ useInitialGridRows();
 document.getElementById('defaultRowsBtn').addEventListener('click', () => {
     useInitialGridRows();
     GRID.mode = 'live'; document.getElementById('modeBtn').textContent = '🔴 Живой';
-    render();
+    fitGridToPanes();
 });
 
 resizeCanvas();
+fitGridToPanes();   // v15: при открытии — фигура целиком в каждом из трёх окон
 </script>
     <script src="_js/recorder.js"></script>
     <script src="_js/hub-link.js"></script>
