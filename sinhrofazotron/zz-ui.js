@@ -7879,6 +7879,17 @@ function setupCone(){
       say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 изнутри выключена; удары снаружи по-прежнему ставят 1.");
     };
   }
+  if ($("bConeOuterHalf")) {   // Синхрофазотрон v0.011, «не понятно, как повернуть на полбита 3-ю строку или только 4-ю? где кнопка»: ½ бита — внешнее кольцо (за чертой)
+    const turn = (sign) => {
+      autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+      const k = Z.rows.length; coneSeqTurnHalf([k], sign);
+      const C = window.zzBallSeqCheck ? window.zzBallSeqCheck() : null, t = Z.coneFillTurn || 0;
+      say(`½ бита: внешнее К${k + 1} (за чертой) повёрнуто ${sign > 0 ? "вперёд" : "назад"} — сдвиг ${String(t).replace(".", ",")} ячейки. ` +
+        (C ? (C.covered === C.total ? `Путь до центра у всех ${C.total} щелей при ×${C.ratio.text()} — ▶ пуск.` : `Путь до центра у ${C.covered} из ${C.total} щелей.`) : ""));
+    };
+    $("bConeOuterHalf").onclick = () => turn(1);
+    $("bConeOuterHalf").oncontextmenu = (e) => { e.preventDefault(); turn(-1); };
+  }
   if ($("bConeBallOneRing")) {   // Синхрофазотрон v0.007: «1 в кольце» — в каждом кольце не больше одного шарика
     const sync = () => { const b = $("bConeBallOneRing"); b.classList.toggle("on", !!Z.coneBallOnePerRing); b.setAttribute("aria-pressed", String(!!Z.coneBallOnePerRing)); };
     sync(); $("bConeBallOneRing").onclick = () => { autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true}); Z.coneBallOnePerRing = !Z.coneBallOnePerRing; sync(); save(); renderCone();
