@@ -118,6 +118,7 @@ function load(){
 let sessLoading = false;   // v0.115: файл сессии уже лёг в хранилище, страница перезагружается — ничего поверх не писать
 function save(){
   syncLane();
+  coneViewRemember();
   if (ZZ_BG) return;   // v0.184: фон хаба ничего не запоминает
   if (ZZ_PRESET_FULL) return;   // v0.196: пресет по ссылке — тоже
   if (sessLoading) return;
@@ -1981,6 +1982,20 @@ let coneDen = 0, coneDenN = -1, coneDenWant = 0;
    внешние оставались за краем. Теперь — до 0,02 */
 const CONE_ZMIN = 0.02;
 let coneZoom = 1, conePan = [0, 0];   // v0.049: масштаб вокруг курсора и сдвиг (в пикселях холста)
+// v0.1091: view belongs to exported sessions and links; pan uses CSS pixels across screens.
+function coneViewRemember(){
+  const dpr = window.devicePixelRatio || 1;
+  Z.coneViewPose = {zoom:coneZoom,pan:conePan.map(p => p / dpr),den:coneDen,denN:coneDenN,denWant:coneDenWant};
+}
+function coneViewRestore(){
+  const p = Z.coneViewPose;
+  if (!p || typeof p !== "object") return;
+  if (Number.isFinite(p.zoom) && p.zoom >= CONE_ZMIN && p.zoom <= 60) coneZoom = p.zoom;
+  if (Array.isArray(p.pan) && p.pan.length === 2 && p.pan.every(Number.isFinite)) conePan = p.pan.map(v => v * (window.devicePixelRatio || 1));
+  if (Number.isFinite(p.den) && p.den > 0) coneDen = p.den;
+  if (Number.isInteger(p.denN) && p.denN >= -1) coneDenN = p.denN;
+  if (Number.isFinite(p.denWant) && p.denWant >= 0) coneDenWant = p.denWant;
+}
 function coneCss(v, dflt){ try { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || dflt; } catch (e) { return dflt; } }
 function coneInfo(){
   const nk = Z.rows.map(zzNecklace), groups = new Map();
@@ -15486,6 +15501,7 @@ function randomBits(n){ let o = ""; for (let i = 0; i < n; i++) o += Math.random
 var zzLoaded = false;   // v0.659 (var — triState зовут и выше по файлу): load() отработал — память прочитана
 function init(){
   load(); zzLoaded = true;
+  coneViewRestore();
   if (window.zzSolMobileDefaults) window.zzSolMobileDefaults();
   /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
      теперь помнится (Z.noCur) — следим за классом и пишем, когда он меняется */
