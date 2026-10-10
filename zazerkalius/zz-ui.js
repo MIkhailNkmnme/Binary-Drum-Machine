@@ -7718,6 +7718,11 @@ function setupCone(){
       say(Z.coneBallZeroBounce ? "В центр: удар снаружи ставит 1; после отскока удар в дугу изнутри ставит 0." : "Запись 0 изнутри выключена; удары снаружи по-прежнему ставят 1.");
     };
   }
+  if ($("bConeBallSimPause")) {   // v0.1079: пауза на одновременных событиях «В центр» — по умолчанию выключена
+    const sync = () => { const b = $("bConeBallSimPause"); b.classList.toggle("on", !!Z.coneBallSimPause); b.setAttribute("aria-pressed", String(!!Z.coneBallSimPause)); };
+    sync(); $("bConeBallSimPause").onclick = () => { Z.coneBallSimPause = !Z.coneBallSimPause; sync(); save();
+      say(Z.coneBallSimPause ? "⏸ Одновременно: в «В центр», когда события нескольких шариков приходятся на один миг, опыт встаёт на паузу с их номерами; ▶ — дальше." : "⏸ Одновременно выключено: одновременные события опыт не останавливают."); };
+  }
   if ($("bConeBallSpeed")) {
     const labels = ["1 · авто", "2 · оборот К1", "3 · ½ оборота К1"], sync = () => { const n = [2, 3].includes(+Z.coneBallSpeedMode) ? +Z.coneBallSpeedMode : 1; $("bConeBallSpeed").textContent = labels[n - 1]; $("bConeBallSpeed").dataset.mode = n; };
     sync(); $("bConeBallSpeed").onclick = () => {

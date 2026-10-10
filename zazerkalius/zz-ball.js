@@ -850,7 +850,8 @@
     if (balls.some(b => b.dir !== ((Z.coneAutoSp ?? 30) < 0 ? -1 : 1))) { prepare(S, true); status("Направление изменено · ▶ — общий запуск"); return; }
     batchBusy = true;
     let simultaneous = null;
-    try { if (balls.every(b => b.route === "in")) simultaneous = advanceInwardGroup(dt, before, S, true); else for (const ball of balls) { F = ball; advance(dt, before, S); } }
+    // v0.1079, «паузы „Одновременно“ — надо кнопку отключения, по умолчанию откл.»: пауза на одновременных событиях — только с «⏸ одновременно» (Z.coneBallSimPause)
+    try { if (balls.every(b => b.route === "in")) simultaneous = advanceInwardGroup(dt, before, S, !!Z.coneBallSimPause); else for (const ball of balls) { F = ball; advance(dt, before, S); } }
     finally { batchBusy = false; F = balls[0]; }
     if (simultaneous) {
       const f = simultaneous.fraction, C = frame(before, S, dt);
