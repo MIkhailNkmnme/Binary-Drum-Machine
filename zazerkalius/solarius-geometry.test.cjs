@@ -73,7 +73,7 @@ function uiMath(){
   vm.runInContext(readFileSync(__dirname + '/zz-core.js', 'utf8'), ctx);
   const needed = new Set(('ivNorm ivUnion ivAnd ivMinus coneSunTrace coneRingsTotal coneVoidOn coneFlat coneSol3d bipyMode coneSunOn coneSunTurnOn coneMoonTurn coneQuadOn coneQuadArcs coneSunSlit coneSunSlitArc coneSunHalf coneSunHalfArc coneLenOn coneCutOn coneSlitMode coneOneSlit coneRingNR coneVoidLen coneRotOf coneRingPh fillStillOn coneBitF conePrevStep coneBitMode coneVoidRot coneSunGateOn coneSunGateOk coneLenScale coneLenK coneLenF coneSunCutR coneFillCut coneFillRot fillLen coneCutGeo coneCutP coneCutOff cutHoles coneCutSym coneCutAlt cutPer cutPos sunPass coneZeroOpen coneFreeOn fillDraft coneCellCovered coneFillPass coneOnesArcs cutBit sunWideMoonOn coneCutSpread coneCut2n coneSunCut coneNoGap').split(' '));
   for (const name of ['coneHalfOn', 'coneRow1Slit', 'conePartCount', 'coneRow1PartPhase', 'coneQuadOpen', 'coneRingFeat', 'coneMagRing', 'coneFeatEdges', 'coneFeatMids', 'cutSymHits', 'lightWide', 'lightPieces', 'coneFreeRing', 'fillFreeDraft', 'coneFreeCan', 'coneCtrHits', 'coneSunPaint', 'coneVoidHits', 'coneMoonSweep', 'coneSweepStep', 'coneSweepGet', 'coneSweepRayStep', 'coneEdgeSweep', 'coneCtrStopAt', 'coneClockSweep']) needed.add(name);
-  for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt']) needed.add(name);
+  for (const name of ['bipyGeo', 'rotTxt', 'turnsParts', 'turnsFmt', 'coneR1Align']) needed.add(name);
   for (const name of ['coneAngDiff', 'magSymOf', 'magPartsOnly', 'coneRingSymAxes', 'coneSymTargets', 'conePartTargets', 'coneHandSnap', 'coneR1AxisSnap', 'coneNextHandSnap']) needed.add(name);
   for (const match of source.matchAll(/^function \w+\(/gm)) {
     if (!needed.has(match[0].slice(9, -1))) continue;
@@ -95,6 +95,28 @@ function magnetMath(){
   ctx.coneRot = [0, -1 / 6]; // Neighbor boundaries at 30° and 210°, away from canvas axes.
   return ctx;
 }
+
+test('default start alternates vertical and horizontal symmetry by ring number', () => {
+  for (const mode of ['cut', 'cut2', 'cutA', 'cutS']) {
+    const ctx = magnetMath();
+    Object.assign(ctx.Z, { rows: ['1', '11111', '111', '1111', '111111', '11'], coneSlits: mode,
+      coneAimRot: 0, coneSpinPh: 0, sunHalf: true, cutRow1Slit: false });
+    ctx.coneRot = ctx.Z.rows.map(() => 0);
+    delete ctx.Z.cutAlign;
+    for (let i = 0; i < ctx.Z.rows.length; i++) {
+      const R = ctx.coneRingFeat(i), target = i % 2 ? 0 : -Math.PI / 2;
+      const axes = ctx.coneRingSymAxes(i).map(c => -Math.PI / 2 + (c - R.x0) * R.step);
+      assert.ok(axes.some(a => Math.abs(Math.sin(a - target)) < 1e-9), `${mode}: K${i + 1}`);
+    }
+    ctx.Z.coneAimRot = 37;
+    assert.equal(ctx.coneR1Align('p'), true);
+    const first = ctx.coneRingFeat(0);
+    assert.ok(ctx.coneRingSymAxes(0).some(c => Math.abs(Math.sin((c - first.x0) * first.step)) < 1e-9), `${mode}: K1 realigns vertically`);
+    // Saved memory with no matching row keeps the previous centred fallback.
+    ctx.Z.cutAlign = 'm'; const rememberedFallback = ctx.coneCutOff(1, 5);
+    ctx.Z.cutAlign = 'c'; assert.equal(ctx.coneCutOff(1, 5), rememberedFallback);
+  }
+});
 test('first-ring magnetic steps use neighbor boundaries, never canvas axes', () => {
   for (const clock of [true, false]) for (const dir of [1, -1]) {
     const ctx = magnetMath(); ctx.Z.coneClock = clock;
