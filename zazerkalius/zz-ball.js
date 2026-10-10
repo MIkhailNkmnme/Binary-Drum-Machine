@@ -33,9 +33,10 @@
       (slicing?.outerBounces || 0) + " · от К1 " + (slicing?.innerBounces || 0));
     const box = $("ballLabTurns"); if (!box) return;
     const S = snapshot(), summary = S ? ratesQ(S).map((rate,k) => "К" + (k + 1) + ": " + rate.text() + " оборота за оборот К1") : [];
-    for (let k = 1; slicing && k < slicing.count; k++) {
+    for (let k = 0; slicing && k < slicing.count; k++) {
       const cuts = slicing.cuts[k] || [], opposite = cuts.length > 0 && cuts.every(a => cuts.some(b => b.sub(a).mod().eq(HALF)));
-      summary.push("К" + (k + 1) + ": вырезы " + cuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет"));
+      summary.push("К" + (k + 1) + ": " + (slicing.closed[k] ? "закрыто" : slicing.returned[k] ? "обратный проход завершён · закрытие не выбрано" : "обратный проход не завершён") +
+        (k ? " · вырезы " + cuts.length + " · " + cuts.map(a => a.text()).join(", ") + " · симметрия на 1/2 оборота " + (opposite ? "да" : "нет") : " · исходный вырез"));
     }
     const key = summary.join("\n"); if (box.dataset.sliceSummary === key) return;
     box.dataset.sliceSummary = key; box.replaceChildren();
@@ -48,7 +49,7 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {count:S.rings.length,rQ:ZERO,RQ:Q(S.rings.length),speedQ:speed,elapsedQ:ZERO,move:1,done:false,
-      k:0,rawQ:QUARTER.neg(),cuts:{},paths:[],outerBounces:0,innerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      k:0,rawQ:QUARTER.neg(),cuts:{},returned:{},closed:{},paths:[],outerBounces:0,innerBounces:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     sliceStatus(); save(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
@@ -60,10 +61,20 @@
     } else slicing.paths.push({k,move,r0,r1,raw0,raw1,slope});
   }
   function sliceGrow(){
-    if (Z.coneSliceGrow === false || Z.rows.length >= CONE_MAX) return false;
+    if (!slicing || !Array.from({length:slicing.count},(_,k) => slicing.closed[k]).every(Boolean) || Z.rows.length >= CONE_MAX) return false;
     const n = Z.rows.length + 1;
     Z.rows.push("0".repeat(n)); coneRot.push(0); Z.coneRot = coneRot.slice(); Z.fillCells = null;
     slicing.count = n; slicing.RQ = Q(n); renderRows(); save(); renderCone(); return true;
+  }
+  function sliceReadyClose(){
+    return !!slicing && !slicing.closed[slicing.count - 1] && !!slicing.returned[slicing.count - 1] &&
+      Array.from({length:slicing.count - 1},(_,k) => slicing.closed[k]).every(Boolean);
+  }
+  function sliceCloseNext(){
+    if (!sliceReadyClose()) return;
+    slicing.closed[slicing.count - 1] = true;
+    if (sliceGrow() && slicing.done) { slicing.done = false; slicing.move = 1; }
+    sliceStatus(); save(); renderCone();
   }
   function sliceEnter(k, S, angle){
     slicing.k = k; slicing.rawQ = Q(angle).sub(S.rings[k].phaseQ).sub(S.spinQ);
@@ -86,16 +97,8 @@
       sliceRecord(k,move,r0,r1,from,to); slicing.rQ = r1; slicing.elapsedQ = slicing.elapsedQ.add(step);
       if (!r1.eq(stop)) break;
       const angle = to.rings[k].phaseQ.add(to.spinQ).add(slicing.rawQ);
+      if (move < 0) slicing.returned[k] = true;
       if (move > 0 && r1.eq(slicing.RQ)) {
-        if (Z.coneSliceGrow !== false && Z.rows.length < CONE_MAX) {
-          coneMotionSetClock(to.clockPhaseQ,to.spinQ.mul(360));
-          if (sliceGrow()) {
-            sliceEnter(k + 1,snapshot(),angle);
-            const remaining = Q(dt).mul(ONE.sub(elapsed.div(duration)));
-            if (remaining.sign() && window.zzBallContinueFrame) window.zzBallContinueFrame(remaining);
-            sliceStatus(); return;
-          }
-        }
         slicing.move = -1; slicing.outerBounces++;
       }
       else if (move < 0 && r1.eq(0)) { slicing.done = true; }
@@ -123,7 +126,7 @@
       g.fillStyle = "#f1f2f4"; g.beginPath();
       if (!k) { g.moveTo(cx,cy); g.arc(cx,cy,dr,gapAngle + halfGap,gapAngle + TAU - halfGap); g.closePath(); }
       else { g.arc(cx,cy,(k + 1) * dr,0,TAU); g.arc(cx,cy,k * dr,TAU,0,true); }
-      g.fill(); g.strokeStyle = "#8b929e"; g.lineWidth = dpr; g.beginPath(); g.arc(cx,cy,(k + 1) * dr,0,TAU); g.stroke();
+      g.fill(); g.strokeStyle = slicing?.closed[k] ? "#26bdb4" : "#8b929e"; g.lineWidth = dpr; g.beginPath(); g.arc(cx,cy,(k + 1) * dr,0,TAU); g.stroke();
       const mark = radians(S.rings[k].phaseQ.add(S.spinQ).sub(QUARTER).add(k ? ZERO : HALF)), rr = (k + 0.6) * dr;
       const x = cx + rr * Math.cos(mark), y = cy + rr * Math.sin(mark);
       g.fillStyle = "#252c38"; g.beginPath(); g.arc(x,y,3 * dpr,0,TAU); g.fill();
@@ -525,8 +528,10 @@
     if (!$("ballLabTime")) return;
     if ($("ballSliceSpeedBox")) $("ballSliceSpeedBox").hidden = !slicingOn();
     if ($("ballSliceGrow")) {
-      $("ballSliceGrow").textContent = Z.coneSliceGrow === false ? "рост: выкл." : "рост: вкл.";
-      $("ballSliceGrow").setAttribute("aria-pressed",String(Z.coneSliceGrow !== false));
+      const n = slicing ? slicing.count : Z.rows.length;
+      $("ballSliceGrow").textContent = "закрыть К" + n + (n < CONE_MAX ? " → К" + (n + 1) : "");
+      $("ballSliceGrow").disabled = !sliceReadyClose();
+      $("ballSliceGrow").removeAttribute("aria-pressed");
     }
     for (const id of ["ballLabStart","ballLabThrough","ballLabArc","ballLabOne"]) if ($(id)) $(id).disabled = slicingOn();
     lab.querySelectorAll("[data-ball-through]").forEach(b => { b.disabled = slicingOn(); });
@@ -1339,7 +1344,7 @@
     lab = $("solBallLab"); const host = lab && lab.querySelector(":scope > .cgb"); if (!host) return;
     if (!host.querySelector(".ball-lab-body")) host.insertAdjacentHTML("beforeend", `<div class="ball-lab-body cgrp-fill">
       <div class="ball-lab-row"><label>Путь <select id="ballLabRoute"><option value="cross">через центр</option><option value="out">на вылет</option><option value="in">в центр</option><option value="slice">нарезка</option></select></label><button id="ballLabPoints" type="button" aria-pressed="true">◎ точки</button></div>
-      <div class="ball-lab-row" id="ballSliceSpeedBox" hidden><label>Толщин за оборот К1 <input id="ballSliceSpeed" type="text" value="2/3" size="5" title="Постоянная скорость нарезки, точная положительная дробь. Новый запуск очищает следы."></label><button id="ballSliceGrow" type="button" title="Вкл.: на внешнем краю добавить следующее целое кольцо и продолжить наружу. Выкл.: отразиться от текущей внешней границы и вернуться.">рост: вкл.</button></div>
+      <div class="ball-lab-row" id="ballSliceSpeedBox" hidden><label>Толщин за оборот К1 <input id="ballSliceSpeed" type="text" value="2/3" size="5" title="Постоянная скорость нарезки, точная положительная дробь. Новый запуск очищает следы."></label><button id="ballSliceGrow" type="button" title="Критерий автоматического закрытия пока не выбран. После полного обратного прохода последнего кольца можно вручную закрыть его и открыть следующее. Все внутренние кольца должны быть закрыты.">закрыть кольцо → следующее</button></div>
       <label>Старт <select id="ballLabStart"><option value="all">Все 11: углы К2, края К1 и центр</option></select></label>
       <div class="ball-lab-row"><button id="ballLabThrough" type="button" aria-pressed="false" title="Рассчитать скорость и запустить один сквозной проход в текущем режиме вращения. Старт — выбранный внешний угол; при выборе всех точек начинаем поиск с крайнего левого. Кольца без промежутков. Поиск до 64 относительных оборотов; в конце зелёный шарик и ✓ — проход без разворота.">↦ сквозной</button><button type="button" data-ball-through="2" aria-pressed="false" title="Два шарика одновременно с противоположных внешних краёв, с одной постоянной скоростью. В центре проходят друг сквозь друга.">⇄ 2</button><button type="button" data-ball-through="3" aria-pressed="false" title="Три шарика одновременно с разных внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 3</button><button type="button" data-ball-through="4" aria-pressed="false" title="Четыре шарика одновременно с четырёх внешних граней. Каждому подбирается своя постоянная скорость; столкновений нет.">↦ 4</button></div>
       <div class="ball-lab-row"><button id="ballLabOne" type="button" aria-pressed="false" title="Что делает шарик в центре у кольца 1 из одного бита — по кругу:
@@ -1364,7 +1369,7 @@
       if (paused && (!enabled || !F || F.ready)) launch(); else $("bConeAuto").click();
     };
     $("ballSliceSpeed").value = Z.coneSliceSpeed || "2/3";
-    $("ballSliceGrow").onclick = () => { Z.coneSliceGrow = Z.coneSliceGrow === false; save(); renderCone(); };
+    $("ballSliceGrow").onclick = sliceCloseNext;
     $("ballSliceSpeed").onchange = () => {
       const value = inputFraction($("ballSliceSpeed").value);
       if (!value) { $("ballSliceSpeed").value = Z.coneSliceSpeed || "2/3"; status("Нарезка: нужна положительная дробь до 1000"); return; }
