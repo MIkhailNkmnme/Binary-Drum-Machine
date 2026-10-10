@@ -8,7 +8,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius GPU v0.194 (Core + Synth)</title>
+    <title>Zerkalius GPU v0.195 (Core + Synth)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
         body { background: #050505; color: #00ff66; font-family: 'Roboto Mono', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
@@ -189,7 +189,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
     <!-- Верхняя полоса-меню: пункты открывают выпадающие окна, в Дзене полоса скрывается -->
     <div id="menuBar">
         <div style="display:flex; align-items:center; gap:6px; justify-self:start;">
-            <h3 id="appTitle" title="Обновить страницу" style="margin:0;">Zerkalius GPU Core + Synth — v0.191</h3>
+            <h3 id="appTitle" title="Обновить страницу" style="margin:0;">Zerkalius GPU Core + Synth — v0.195</h3>
             <a id="hubLink" href="index.html" title="К Zerkalius Control Hub" style="text-decoration:none; font-size:14px; line-height:1;">🏠</a>
         </div>
         <div id="menuTabs">
@@ -333,6 +333,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
                     <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="wrapXCheck"><span style="color:#ff9900;">🔁 Кольцевать по X (повтор)</span></label>
                     <label class="checkbox-row"><input type="checkbox" id="wrapYCheck" checked><span style="color:#ff9900;">🔁 Кольцевать по Y (повтор)</span></label>
                     <button id="zerkaliusBtn" class="btn-zerkalius" style="background:#00ccff;">Создать Фигуру</button>
+                    <button id="defaultRowsBtn" class="btn-zerkalius" style="background:transparent;color:#00ccff;border:1px solid #00ccff;" title="★ По умолчанию: начальная последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — та же, что у Треугольника, Слоёв, Модуля сетки, Синхрофазотрона и Зазеркалиуса. Строки по центру, прежняя фигура заменяется целиком">★ По умолчанию</button>
                 </div>
 
                 <div class="control-group control-group-highlight" id="pasteAlignGroup" style="border-color: #00ccff;">
@@ -818,6 +819,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         }
     </script>
 
+    <script src="_js/initial-rows.js?v=2"></script>   <!-- v0.195: общая начальная последовательность (из _pzl.txt) — первый запуск, «★ По умолчанию», заводские настройки -->
     <script>
         // ИНТЕРФЕЙС И ЭЛЕМЕНТЫ (ЭТАП 2: ПОЧИЩЕНЫ БИТЫЕ ССЫЛКИ)
         const UI = {
@@ -1706,6 +1708,20 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             return 0; // left (по умолчанию — прежнее поведение, каждая строка с x=0)
         }
 
+        /* v0.195, «/Zerkalius-gpu.html» (вслед за Треугольником, Слоями и Модулем сетки: «при первой загрузке этот код», «кнопку по умолчанию»):
+           начальная последовательность (_js/initial-rows.js, 71 строка) — строки по центру, без наложения на прежнюю фигуру (как загрузка снимка сцены).
+           Нет файла — false, и вызывающий строит фигуру генератором, как прежде */
+        function loadInitialRows() {
+            if (typeof ZZ_INITIAL_ROWS === 'undefined' || !ZZ_INITIAL_ROWS.length) return false;
+            const rows = ZZ_INITIAL_ROWS.slice(), h = rows.length, w = Math.max(...rows.map(r => r.length));
+            let m = createEmptyMatrix(w, h);
+            for (let y = 0; y < h; y++) { const sh = alignShift(w, rows[y].length, 'center'); for (let x = 0; x < rows[y].length; x++) m[y][x + sh].c = rows[y][x]; }
+            STATE.COLS = w; STATE.ROWS = h;
+            if (typeof syncLoopRowsBounds === 'function') syncLoopRowsBounds();
+            STATE.lines = precalcAct(m); STATE.animatrixRow = 0; resetClearBackup(); updateDataTexture(); fitView();
+            document.getElementById('statusInfo').textContent = '★ Начальная последовательность: ' + h + ' строк';
+            return true;
+        }
         // Ctrl+V: вставить фигуру (строки из 0/1) прямо на холст
         function loadFigureFromText(txt) {
             let lines = txt.replace(/\r/g, '').split('\n').filter(l => /[01]/.test(l)); if(!lines.length) return false;
@@ -2264,6 +2280,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             setupFBO();
         });
         UI.zerkaliusBtn.addEventListener('click', () => { UI.stopBtn.click(); generateMatrix(); });
+        document.getElementById('defaultRowsBtn').addEventListener('click', () => { UI.stopBtn.click(); if (!loadInitialRows()) document.getElementById('statusInfo').textContent = 'Файл последовательности не загрузился'; });   // v0.195
         function togglePlay() {
             STATE.isPlaying = !STATE.isPlaying; UI.playBtn.innerHTML = STATE.isPlaying ? '⏸ ПАУЗА' : '▶ ПУСК GPU';
             if(STATE.isPlaying) SYNTH.init();
@@ -2587,7 +2604,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
             document.getElementById('layersLabel').textContent = UI.layersRange.value;
             document.getElementById('speedMultLabel').textContent = UI.speedMultInput.value;
             cellStepLabel();
-            applyLightBg(); buildFontAtlas(); setSearchPattern(); generateMatrix();
+            applyLightBg(); buildFontAtlas(); setSearchPattern(); if (!loadInitialRows()) generateMatrix();   // v0.195: заводские — начальная последовательность
             document.getElementById('statusInfo').textContent = '🧹 Заводские настройки — нажми «Запомнить всё», чтобы закрепить';
         });
         function loadCache() {
@@ -2600,7 +2617,7 @@ PROD: Pure WebGL Shader + Web Audio Synth Engine
         }
         document.getElementById('cacheSaveBtn').addEventListener('click', saveCache);
 
-        window.onload = () => { window.dispatchEvent(new Event('resize')); if(!loadCache()) generateMatrix(); requestAnimationFrame(renderLoop); };
+        window.onload = () => { window.dispatchEvent(new Event('resize')); if(!loadCache() && !loadInitialRows()) generateMatrix(); requestAnimationFrame(renderLoop); };   // v0.195: первый запуск — начальная последовательность
     </script>
     <script src="_js/recorder.js"></script>
     <script src="_js/hub-link.js"></script>
