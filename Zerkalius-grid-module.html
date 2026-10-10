@@ -24,7 +24,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grid Module — v15</title>
+<title>Grid Module — v16</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Anton&family=Orbitron&family=Press+Start+2P&display=swap');
     body { margin: 0; overflow: hidden; background: #050505; font-family: 'Consolas', monospace; }
@@ -63,6 +63,8 @@ GRID MODULE — отдельный скелет "живой/редактируе
         <span id="gridStatusLabel">📊 Кадр: 0</span>
         <button id="modeBtn">🔴 Живой</button>
         <button id="defaultRowsBtn" title="★ По умолчанию: начальная последовательность 1, 1, 11, 111, 1000, 10101… (71 строка) — та же, что у Треугольника, Слоёв, Синхрофазотрона и Зазеркалиуса. Возвращает живой режим">★ По умолчанию</button>
+        <button id="mazeBtn" title="🧩 Комнаты лабиринта в «Диагоналях»: замкнутые области — своим цветом, проход от вершины до основания — золотом. Ещё раз — без заливки">🧩 Комнаты</button>
+        <button id="bracketBtn" title="🌈 Цветные скобки: цвет — глубина вложенности, непарные — серые, у выделенных строк — дуги к паре, строки, где всё закрылось, — зелёным номером. Ещё раз — обычные">🌈 Скобки</button>
         <button id="threePanesBtn" title="Три окна рядом: цифры · диагонали · скобки (данные, масштаб и выделение общие). Ещё раз — одно окно">▥ 3 поля</button>
         <button id="digitsModeBtn" title="Показ 1/0: диагонали ⇄ цифры ⇄ произвольные символы (задаются справа)">╲ Диагонали</button>
         <span class="lbl" style="opacity:0.7;">Симв. '1'</span>
@@ -99,6 +101,7 @@ GRID MODULE — отдельный скелет "живой/редактируе
     <div id="gridFormulaBar">
         <span id="gridFormulaAddr">R1:C1</span>
         <span id="gridFormulaValue">(пусто)</span>
+        <span id="gridMazeInfo" style="margin-left:auto; color:#ffd500; white-space:nowrap;"></span>
     </div>
     <div id="seedOverlayBar" style="display:flex; align-items:center; gap:6px; padding:4px 8px; box-sizing:border-box; font-size:11px; border-top:1px solid #333;">
         <span style="color:#ff3399; font-weight:bold;">🧬 Сид-наложение:</span>
@@ -226,6 +229,9 @@ const GRID = {
     threePanes: true,
     bracket1: ')',
     bracket0: '(',
+    // v16: лабиринт в «Диагоналях» (комнаты, проходы сверху вниз) и цветные скобки с дугами пар в «Скобках»
+    mazeOn: true,
+    bracketColor: true,
 
     // Толщина линий диагоналей 1/0 (px), размер шрифта (px, null = авто от cellSize) и гарнитура.
     diagLineWidth: 0.5,
@@ -299,6 +305,80 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
+// ===========================================================================
+// v16, «давай попробуем и сделаем» (по разговору о трёх полях: «диагонали — это лабиринт», «скобки — это баланс, ставший видимым»):
+// ЛАБИРИНТ. Каждая клетка разрезана своей диагональю на два треугольника: '1' = «\» (верх+право | лево+низ), '0' = «/» (верх+лево | низ+право).
+// Треугольники соседних клеток через общую сторону срастаются (union-find). Область, не выходящая к пустым клеткам и краю данных, —
+// «комната» (своим цветом, крупные — первыми); область, касающаяся и верха первой строки, и низа последней, — «проход сверху вниз» (золото).
+// СКОБКИ. '(' и ')' третьего окна парятся по строке как в коде: глубина — цвет (как радужные скобки в редакторах), непарные — серые;
+// у выделенных строк — дуги над строкой от скобки к её паре; строка, где все скобки закрылись, — зелёным номером.
+// ===========================================================================
+let gridSigCache = null;
+function gridData() {   // строки данных одним видом: '1' / '0' / ' ' (прочее — как пусто); пересчёт — только когда данные изменились
+    const R = dataRowCount(), C = dataColCount(), rows = [];
+    let sig = R + 'x' + C + '|';
+    for (let r = 0; r < R; r++) {
+        let t = '';
+        for (let c = 0; c < C; c++) { const d = getCell(r, c); t += d && (d.ch === '1' || d.ch === '0') ? d.ch : ' '; }
+        rows.push(t); sig += t + '|';
+    }
+    if (gridSigCache && gridSigCache.sig === sig) return gridSigCache;
+    gridSigCache = { sig, rows, R, C, maze: null, br: [] };
+    return gridSigCache;
+}
+function mazeInfo() {
+    const D = gridData(); if (D.maze) return D.maze;
+    const { rows, R, C } = D, size = R * C * 2, par = new Int32Array(size);
+    for (let i = 0; i < size; i++) par[i] = i;
+    const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+    const uni = (a, b) => { a = find(a); b = find(b); if (a !== b) par[a] = b; };
+    const ch = (r, c) => r >= 0 && r < R && c >= 0 && c < C ? rows[r][c] : ' ';
+    const half = (r, c, side) => { const k = (r * C + c) * 2;
+        if (ch(r, c) === '1') return k + (side === 't' || side === 'r' ? 0 : 1);
+        return k + (side === 't' || side === 'l' ? 0 : 1); };
+    const open = new Uint8Array(size), top = new Uint8Array(size), bot = new Uint8Array(size);
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+        if (ch(r, c) === ' ') continue;
+        if (ch(r, c + 1) !== ' ') uni(half(r, c, 'r'), half(r, c + 1, 'l')); else open[half(r, c, 'r')] = 1;
+        if (ch(r + 1, c) !== ' ') uni(half(r, c, 'b'), half(r + 1, c, 't')); else open[half(r, c, 'b')] = 1;
+        if (ch(r, c - 1) === ' ') open[half(r, c, 'l')] = 1;
+        if (ch(r - 1, c) === ' ') open[half(r, c, 't')] = 1;
+        if (r === 0) top[half(r, c, 't')] = 1;
+        if (r === R - 1) bot[half(r, c, 'b')] = 1;
+    }
+    const info = new Map();
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+        if (ch(r, c) === ' ') continue;
+        for (let h = 0; h < 2; h++) {
+            const k = (r * C + c) * 2 + h, root = find(k);
+            let o = info.get(root); if (!o) { o = { n: 0, open: 0, top: 0, bot: 0 }; info.set(root, o); }
+            o.n++; o.open |= open[k]; o.top |= top[k]; o.bot |= bot[k];
+        }
+    }
+    const rooms = Array.from(info.entries()).filter(([, o]) => !o.open).sort((a, b) => b[1].n - a[1].n);
+    const color = new Map();
+    rooms.forEach(([root], i) => color.set(root, 'hsla(' + ((i * 137.508) % 360).toFixed(1) + ', 75%, 55%, 0.45)'));
+    let passages = 0;
+    info.forEach((o, root) => { if (o.top && o.bot) { passages++; color.set(root, 'rgba(255, 213, 0, 0.5)'); } });
+    D.maze = { find, color, rooms: rooms.length, biggest: rooms.length ? rooms[0][1].n / 2 : 0, passages };
+    return D.maze;
+}
+const BR_COLS = ['#ffd700', '#da70d6', '#179fff', '#7fff7f', '#ff7f50', '#40e0d0'];
+function bracketRow(r) {
+    const D = gridData(); if (D.br[r]) return D.br[r];
+    const t = D.rows[r] || '', open = GRID.bracket0 === '(' ? '0' : GRID.bracket1 === '(' ? '1' : '0';
+    const depth = new Map(), partner = new Map(), stack = [];
+    let bad = 0, any = 0;
+    for (let c = 0; c < t.length; c++) {
+        const b = t[c]; if (b === ' ') continue; any++;
+        if (b === open) { stack.push(c); depth.set(c, stack.length - 1); }
+        else if (stack.length) { const o = stack.pop(); depth.set(c, stack.length); partner.set(c, o); partner.set(o, c); }
+        else { bad++; depth.set(c, -1); }
+    }
+    stack.forEach(c => depth.set(c, -1)); bad += stack.length;
+    return (D.br[r] = { depth, partner, balanced: any > 0 && bad === 0, bad });
+}
+
 function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (diagonal / digits / symbols / brackets)
     // Округляем масштаб ДО целого пикселя только для самого рендера (GRID.cellSize остаётся
     // дробным — зум по колесу считается от него точно). При дробном cs соседние ячейки
@@ -342,6 +422,26 @@ function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (
     }
     ctx.stroke();
 
+    if (mode === 'diagonal' && GRID.mazeOn) {   // v16: комнаты и проходы лабиринта — заливкой треугольников под диагоналями
+        const M = mazeInfo(), D = gridSigCache;
+        for (let ri = 0; ri < visibleRows; ri++) {
+            const r = firstRow + ri; if (r < 0 || r >= D.R) continue;
+            const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
+            for (let ci = 0; ci < visibleCols; ci++) {
+                const c = firstCol + ci; if (c < 0 || c >= D.C) continue;
+                const b = D.rows[r][c]; if (b === ' ') continue;
+                const x = ROWHEAD_W + Math.round(c * cs - GRID.panX), k = (r * D.C + c) * 2;
+                for (let h = 0; h < 2; h++) {
+                    const col = M.color.get(M.find(k + h)); if (!col) continue;
+                    ctx.fillStyle = col; ctx.beginPath();
+                    if (b === '1') { if (h === 0) { ctx.moveTo(x, y); ctx.lineTo(x + cs, y); ctx.lineTo(x + cs, y + cs); } else { ctx.moveTo(x, y); ctx.lineTo(x, y + cs); ctx.lineTo(x + cs, y + cs); } }
+                    else { if (h === 0) { ctx.moveTo(x, y); ctx.lineTo(x + cs, y); ctx.lineTo(x, y + cs); } else { ctx.moveTo(x + cs, y); ctx.lineTo(x + cs, y + cs); ctx.lineTo(x, y + cs); } }
+                    ctx.closePath(); ctx.fill();
+                }
+            }
+        }
+    }
+
     for (let ri = 0; ri < visibleRows; ri++) {
         const r = firstRow + ri;
         const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
@@ -365,6 +465,9 @@ function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (
                     ctx.stroke();
                 } else {
                     ctx.fillStyle = data.color || (data.ch === '1' ? GRID.colors.c1 : data.ch === '0' ? GRID.colors.c0 : GRID.colors.c1);
+                    if (mode === 'brackets' && GRID.bracketColor && !data.color && (data.ch === '1' || data.ch === '0')) {   // v16: цвет — глубина, непарная — серая
+                        const d = bracketRow(r).depth.get(c); ctx.fillStyle = d === undefined || d < 0 ? '#5a5a5a' : BR_COLS[d % BR_COLS.length];
+                    }
                     // В режиме "символы" 1/0 показываются как GRID.symbol1/symbol0 (по умолчанию
                     // "<"/">"), а не как сырые цифры; остальные символы (текст) — как есть.
                     let displayCh = data.ch;
@@ -390,6 +493,21 @@ function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (
                 ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2);
             }
         }
+    }
+
+    if (mode === 'brackets' && GRID.bracketColor) {   // v16: дуги от скобки к её паре — у выделенных строк (до 40), над строкой
+        const D = gridData(), r0 = Math.max(0, sel.r0), r1 = Math.min(D.R - 1, sel.r1, sel.r0 + 39);
+        ctx.lineWidth = Math.max(1, cs * 0.08);
+        for (let r = r0; r <= r1; r++) {
+            const B = bracketRow(r), y = COLHEAD_H + Math.round(r * cs - GRID.panY) + cs * 0.15;
+            B.partner.forEach((c2, c1) => {
+                if (c2 <= c1) return;
+                const d = B.depth.get(c1), x1 = ROWHEAD_W + Math.round(c1 * cs - GRID.panX) + cs / 2, x2 = ROWHEAD_W + Math.round(c2 * cs - GRID.panX) + cs / 2, rx = (x2 - x1) / 2;
+                ctx.strokeStyle = BR_COLS[d % BR_COLS.length]; ctx.globalAlpha = 0.9;
+                ctx.beginPath(); ctx.ellipse(x1 + rx, y, rx, Math.min(rx * 0.7, cs * 8), 0, Math.PI, 2 * Math.PI); ctx.stroke();
+            });
+        }
+        ctx.globalAlpha = 1;
     }
 
     // Внешний контур всего диапазона (поверх заливки отдельных ячеек) — виднее, когда
@@ -420,7 +538,10 @@ function renderPane(W, H, mode) {   // v15: одно окно; вид — mode (
         const y = COLHEAD_H + Math.round(r * cs - GRID.panY);
         ctx.strokeStyle = GRID.colors.line; ctx.lineWidth = 0.5;
         ctx.strokeRect(0.25, y + 0.25, ROWHEAD_W - 0.5, cs - 0.5);
+        const okRow = mode === 'brackets' && GRID.bracketColor && r >= 0 && r < dataRowCount() && bracketRow(r).balanced;   // v16: все скобки строки закрылись
+        if (okRow) { ctx.fillStyle = 'rgba(127, 255, 127, 0.25)'; ctx.fillRect(0, y, ROWHEAD_W, cs); ctx.fillStyle = '#7fff7f'; }
         ctx.fillText(r + 1, ROWHEAD_W / 2, y + cs / 2 + 1);
+        if (okRow) ctx.fillStyle = '#888';
     }
     ctx.fillStyle = '#111'; ctx.fillRect(0, 0, ROWHEAD_W, COLHEAD_H);
 
@@ -474,6 +595,12 @@ function render() {
         : `R${sel.r0 + 1}:C${sel.c0 + 1} — R${sel.r1 + 1}:C${sel.c1 + 1}`;
     document.getElementById('gridFormulaAddr').textContent = addr;
     document.getElementById('gridFormulaValue').textContent = selData ? selData.ch : '(пусто)';
+    {   // v16: сводка лабиринта и скобок
+        const parts = [], modes = gridPanes(canvas.width).map(p => p.mode);
+        if (GRID.mazeOn && modes.includes('diagonal')) { const M = mazeInfo(); parts.push('🧩 комнат ' + M.rooms + ', самая большая ' + M.biggest + ' кл., проходов сверху вниз ' + M.passages); }
+        if (GRID.bracketColor && modes.includes('brackets')) { let k = 0; const R = dataRowCount(); for (let r = 0; r < R; r++) if (bracketRow(r).balanced) k++; parts.push('🌈 строк, где скобки закрылись: ' + k + ' из ' + R); }
+        const el = document.getElementById('gridMazeInfo'), t = parts.join('   ·   '); if (el && el.textContent !== t) el.textContent = t;
+    }
 }
 
 // ===========================================================================
@@ -595,6 +722,11 @@ document.getElementById('modeBtn').addEventListener('click', () => {
     render();
 });
 
+['mazeBtn', 'bracketBtn'].forEach(id => {   // v16
+    const key = id === 'mazeBtn' ? 'mazeOn' : 'bracketColor', b = document.getElementById(id);
+    const ui = () => { b.style.opacity = GRID[key] ? '1' : '0.45'; };
+    ui(); b.addEventListener('click', () => { GRID[key] = !GRID[key]; ui(); render(); });
+});
 document.getElementById('threePanesBtn').addEventListener('click', function() {   // v15
     GRID.threePanes = !GRID.threePanes;
     this.textContent = GRID.threePanes ? '▥ 3 поля' : '▢ 1 поле';
