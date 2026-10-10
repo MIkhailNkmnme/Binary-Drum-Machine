@@ -53,6 +53,12 @@
     sliceStatus(); save(); renderCone(); return true;
   }
   window.zzBallSliceLaunch = sliceLaunch;
+  window.zzBallFaceGeometry = () => { if(!slicingOn() || !slicing) return null; const S=snapshot(); return S ? {...S,cuts:slicing.cuts} : null; };
+  window.zzBallFaceSources = () => {
+    const S = snapshot(); if (!enabled || !S) return [];
+    if (slicingOn()) return (slicing?.moving || []).map(b => ({id:"ball:"+b.id,angle:S.rings[b.k].phaseQ.add(S.spinQ).add(b.rawQ),target:b.k}));
+    return (balls.length ? balls : F ? [F] : []).filter(b => !b.ready && !["done","lost"].includes(b.stage) && S.rings[b.k]).map((b,i) => ({id:"ball:"+(b.number || i+1),angle:angleQ(S,b.k,b.rawQ),target:b.k}));
+  };
   function sliceRecord(ball, r0, r1){
     const {k,move} = ball;
     if (k < 1 || r0.eq(r1)) return;

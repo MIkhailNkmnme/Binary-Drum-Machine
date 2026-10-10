@@ -2847,6 +2847,8 @@ function coneArtBlocksButton(e){
 document.addEventListener("pointerdown", coneArtBlocksButton, true);
 document.addEventListener("click", coneArtBlocksButton, true);
 function renderCone(){
+  if (window.zzFaceObserve) window.zzFaceObserve();
+  if (window.zzFaceUi) window.zzFaceUi();
   const ballClosedCount = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
   coneBallClosedUi();
   coneBallModeTip();
@@ -3770,6 +3772,7 @@ function renderCone(){
     g.restore();
   }
   if (window.zzBallDraw && !Z.cone3d) window.zzBallDraw(g, { cx, cy, dr, dpr });
+  if (window.zzFaceDraw && !Z.cone3d) window.zzFaceDraw(g, {cx,cy,r0,dr,dpr,band:Z.coneBallArm === "slice" ? 1 : band,shown:i=>i===N ? fillOn : shown(i)});
   // текст
   const i = Z.cur, s = cur(), k = nk[i], key = s.length + ":" + k.canon, mates = (groups.get(key) || []).filter(j => j !== i);
   const multi = [...groups.values()].filter(v => v.length > 1);
@@ -5010,6 +5013,7 @@ function coneSweepStep(S, N){   // → { s: ["N:q" — прошёл весь с�
   return out;
 }
 function coneSunPaint(){
+  if (Z.coneFaceOrder) return false;
   const S = coneSunTrace(), N0 = Math.min(Z.rows.length, CONE_MAX);
   const W = Z.sunSweep || coneMoonSweep() ? coneSweepStep(S, N0) : { s: [], m: [] };
   if (!Z.sunSweep) W.s = []; if (!coneMoonSweep()) W.m = [];
@@ -5278,7 +5282,8 @@ function coneFreezeRing(i){
   if (fz[i] !== undefined) return false;
   fz[i] = coneRingPh(i); return true;   // v0.191: со сдвигом отпущенного кольца
 }
-function coneFreezePassed(R){   // кольца, из которых луч вышел: строка 1 (вырез открыт) и все с пройденными щелями; → новые остановленные
+function coneFreezePassed(R){
+  if (Z.coneFaceOrder) return [];   // кольца, из которых луч вышел: строка 1 (вырез открыт) и все с пройденными щелями; → новые остановленные
   if (!R || !(coneBitMode(Z.coneSpinMode) || Z.coneSpinMode === "opp") || (!R.stop && !R.pass)) return [];
   const nf = Z.voidHits && Z.voidHits.nf;   // v0.201: ✺ — затор только что разобран, кольца пока не встают
   if (nf) { if (Math.abs((Z.coneSpinPh || 0) - nf.from) < nf.span) return []; delete Z.voidHits.nf; }
@@ -5571,7 +5576,8 @@ function coneRayBit(i, a, w){   // i — номер кольца строки и
   const n = R.n, b = R.cut ? cutBit(x, n) : Math.floor(x) % n;
   return b >= 0 && b < n ? b : null;
 }
-function coneRaySweep(ph0, dph){   // → сколько лучей прошло
+function coneRaySweep(ph0, dph){
+  if (Z.coneFaceOrder) return 0;   // → сколько лучей прошло
   if (!coneRayOn() || !dph) return 0;
   const bak = Z.coneSpinPh, now = performance.now(); let ph = ph0, rem = dph, fired = 0, commit = false;
   try {
@@ -6108,6 +6114,7 @@ function coneExitNote(R){
 let coneWallWasM = {};   // v0.201: ✺ — конец каждого луча на прошлом шаге (номер → ключ)
 function coneRayKey(R){ return !R ? null : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop; }
 function coneWallPaint(tr){
+  if (Z.coneFaceOrder) return window.zzFaceObserve ? window.zzFaceObserve() : false;
   if (coneSunOn()) return coneSunPaint();   // v0.206: солнце — свой счёт краски
   if (coneFanOn()) {   // v0.201: все лучи — у каждого свой конец, краска и лог — как у одного
     const N = Math.min(Z.rows.length, CONE_MAX), first = coneWallWas === undefined;
@@ -6291,6 +6298,7 @@ function hidAutoBack(){
   return true;
 }
 function coneClockMark(hits){
+  if (Z.coneFaceOrder) return false;
   if (hits.length && hidAutoBack()) return;   // v0.738
   let f = fillDraft(); const ch = [];
   for (const h of hits) if (h.cell >= 0 && h.cell < f.length && f[h.cell] !== "1") { f = f.slice(0, h.cell) + "1" + f.slice(h.cell + 1); ch.push(h.cell + 1); }
@@ -6669,6 +6677,10 @@ function cone3DDraw(g, o){
   g.globalAlpha = 1;
   g.lineWidth = Math.max(1.5 * dpr, Math.min(sc * 0.08, 4 * dpr));
   for (const t of ticks) { g.strokeStyle = t.col; g.beginPath(); g.moveTo(t.p[0], t.p[1]); g.lineTo(t.q[0], t.q[1]); g.stroke(); }
+  if (window.zzFaceDraw) window.zzFaceDraw(g, {cx,cy,dr:sc,dpr,band:1,shown:i=>i<N && shown(i),project:(i,a,t)=>{
+    const local=a-coneMotionClock().degrees.mod(360).number()*Math.PI/180, r=tor ? (i ? ringR(i)+(t ? 0.5 : -0.5) : t*torBallR) : Math.max(0,ringR(i)+(t ? 0.38 : -0.38));
+    return at(i,local,r);
+  }});
   if (o.light) {   /* v0.785: свет на ◇ бипирамиде — по тому же плоскому расчёту: ☀ — освещённые дуги на внутреннем крае колец (куда свет пришёл), ⌖ — луч
      ломаной от вершины по кольцам до стены (красная точка) или насквозь (золотая за основанием). Углы — те же, что в плоском виде */
     const L = o.light, top = P(0, 0, ringZ(0)), arcPts = (i, a0, a1, rr) => { const K = Math.max(2, Math.ceil(Math.abs(a1 - a0) / 0.08)), q = []; for (let k = 0; k <= K; k++) q.push(at(i, a0 + (a1 - a0) * k / K, rr)); return q; };
@@ -6841,6 +6853,7 @@ let r1W = null;
 function r1RayX(){ const n0 = (Z.rows[0] || "").length || 1, x = Number.isFinite(+Z.r1RayX) ? +Z.r1RayX : 0.5; return ((x % n0) + n0) % n0; }
 function r1RayAngle(){ const n0 = (Z.rows[0] || "").length || 1, CG = coneCutGeo(0, n0); return -Math.PI / 2 + (r1RayX() - coneRotOf(0) + CG.off) * CG.step; }   // в своём (повёрнутом с конусом) виде
 function r1RayTrack(t){
+  if (Z.coneFaceOrder) return false;
   const n = fillLen(), F = coneFillCut(), step = F ? F.step : 2 * Math.PI / n, Pw = F ? F.P : n, off = F ? F.off : 0;
   const sig = Z.rows.length + ":" + n + ":" + (F ? 1 : 0);
   let w = (t + Math.PI / 2) / step + coneFillRot() - off;
@@ -7288,7 +7301,7 @@ function setupCone(){
     }
     e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing";
     const cutD = coneCutGeo(h.i, (Z.rows[h.i] || "").length).cut;   // v0.671: в режиме вырезов кольцо крутится частями и только на вид (строку частью не сдвинуть)
-    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: coneLocked(h.i) || cutD || magOn, cut: cutD, v0: coneRot[h.i] || 0, rb, mag: magOn };
+    coneDrag = { i: h.i, last: h.a, turn: 0, base: Z.rows[h.i], applied: 0, snap: false, view: !!Z.coneFaceOrder || coneLocked(h.i) || cutD || magOn, cut: cutD, v0: coneRot[h.i] || 0, rb, mag: magOn };
   });
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
@@ -7401,7 +7414,7 @@ function setupCone(){
        самой нижней из выделенных строк, ничего не выделено — нижней строки конуса. Держишь — дальше тем же шагом. */
     const sel = [...rowSel].filter(i => i < Math.min(Z.rows.length, CONE_MAX)), k = sel.length ? Math.max(...sel) : Math.min(Z.rows.length, CONE_MAX) - 1;
     const deg = 360 / Math.max(1, (Z.rows[k] || "").length || 1);
-    const go = () => { Z.coneSpin = ((Z.coneSpin || 0) + dir * deg) % 360; renderCone(); };
+    const go = () => { Z.coneSpin = Z.coneFaceOrder ? coneMotionWrite("clock.degrees",coneMotionClock().degrees.add(ZZExact.from(dir*360,(Z.rows[k] || "1").length))) : ((Z.coneSpin || 0)+dir*deg)%360; renderCone(); };
     go(); say(`◯ Весь конус на бит строки ${k + 1} (${(Z.rows[k] || "").length} бит) — ${+deg.toFixed(2)}°.`);
     spinT = setTimeout(() => { spinI = setInterval(go, 140); }, 350);
   };
@@ -7414,6 +7427,11 @@ function setupCone(){
   $("bConeAllHome2").onclick = () => $("bConeAllHome").click();   // v0.540: зелёная ⟲ «всё на места» — и перед |◀ крутить ▶|
   $("bConeSpin0").onclick = () => { Z.coneSpin = 0; save(); renderCone(); say("◯ Весь конус — в начальном положении (0°)."); };   // v0.539: «весь» между ⟲ ⟳ — к 0°
   const ringStep = (dir) => {   // dir: +1 — по часовой, −1 — против
+    if (Z.coneFaceOrder) {
+      const selected = rowSel.size ? [...rowSel].filter(i => i < Z.rows.length) : [Z.cur];
+      selected.forEach(i => { coneRot[i] = coneMotionWrite("rotation:"+i,coneMotionRead("rotation:"+i,coneRot[i] || 0).sub(dir)); });
+      Z.coneRot = coneRot.slice(); renderAll(); save(); return;
+    }
     const T = rowSel.size ? [...rowSel].filter(i => i < Z.rows.length) : [Z.cur], free = T.filter(i => !coneLocked(i)), sel = [...rowSel];
     if (free.length) { snapshot(); free.forEach(i => { Z.rows[i] = coneRotStr(Z.rows[i], -dir); }); sel.forEach(i => rowSel.add(i)); }
     T.filter(i => coneLocked(i)).forEach(i => { const n = Z.rows[i].length; coneRot[i] = (((Math.round(coneRot[i] || 0) - dir) % n) + n) % n; });
@@ -7430,7 +7448,7 @@ function setupCone(){
     if (offDrive) { autoT0 = 0; autoRaf = requestAnimationFrame(autoTick); return; }
     if (ZZ_BG && autoT0 && ts - autoT0 < 48) { autoRaf = requestAnimationFrame(autoTick); return; }   // v0.184: фоном хаба — не чаще 20 кадров в секунду (кадр ~20 мс, кручение медленное)
     // Convert the clock readings before subtracting: do not import floating-point dt into K1 motion.
-    const exactClock = !Z.coneSpinMag && window.zzBallActive && window.zzBallActive();
+    const exactClock = !Z.coneSpinMag && (Z.coneFaceOrder || window.zzBallActive && window.zzBallActive());
     const dt = exactClock ? (autoT0 ? ZZExact.min(ZZExact.from(1, 10), ZZExact.from(ts).sub(autoT0).div(1000)) : ZZExact.from(0))
       : autoT0 ? Math.min(0.1, (ts - autoT0) / 1000) : 0;
     autoT0 = ts;
@@ -7450,7 +7468,7 @@ function setupCone(){
     }
     // v0.942: the two-ring ball trial has its own passage result. Rotation keeps
     // going at a blocked ball; laser painting and automatic new rows wait.
-    if (window.zzBallActive && window.zzBallActive()) {
+    if (Z.coneFaceOrder || window.zzBallActive && window.zzBallActive()) {
       const p0 = Z.coneSpinPh || 0; coneMotionAdvance(dt);
       if (m !== "all") { if (coneNotchSweep(p0, Z.coneSpinPh - p0)) save(); coneSeamSweep(p0, Z.coneSpinPh - p0); coneRaySweep(p0, Z.coneSpinPh - p0); }
       return true;
@@ -7506,7 +7524,7 @@ function setupCone(){
     if (Z.coneClock || coneSunOn()) fillAutoCommit();
     tapeRec();   // v0.720: кадр — на ленту перемотки
     return true;
-    } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt,ballBefore); if (ballBefore) tapeRec(); }
+    } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt,ballBefore); if (window.zzFaceObserve) window.zzFaceObserve(); if (ballBefore || Z.coneFaceOrder) tapeRec(); }
   };
   window.zzBallContinueFrame = dt => autoStep(dt);
   let bitAcc = 0;   // v0.605: ▦ побитно — накопленная доля бита
@@ -7643,7 +7661,7 @@ function setupCone(){
      а в историю идут все шаги: «шаг ↷», «½ шаг», |◀ ▶| и нажатие, которое только опускает черту (lasRec). Только в памяти страницы, до 500 шагов */
   const lasHist = [];
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
-    exact:posCopy(Z.motionExact),ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
+    exact:posCopy(Z.motionExact),ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null, faces:window.zzFaceState ? window.zzFaceState() : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
   function lasRec(fn){ tapeRec(); const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
@@ -7654,7 +7672,7 @@ function setupCone(){
   const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
   // v0.1084: история обычного кручения тоже доступна, независимо от солнца и вида щелей.
   const tapeOn = () => coneFlat();
-  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
+  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0, window.zzFaceState ? window.zzFaceState() : null]);
   function tapeUi(){
     const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
     box.classList.toggle("on", tapeOn());
@@ -7673,9 +7691,9 @@ function setupCone(){
   }
   function tapeGo(i){
     i = Math.max(0, Math.min(tape.length - 1, i | 0)); const T = tape[i]; if (!T) return;
-    let heavy = false;
+    let heavy = false, faceState;
     if (T.s !== tapeAt) {   // состояние — как в тот миг (так же, как ↶ откат)
-      const S = JSON.parse(tapeSt[T.s]);
+      const S = JSON.parse(tapeSt[T.s]); faceState=S.faces;
       if (S.rows.join(",") !== Z.rows.join(",")) {
         Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = S.hid.slice();
         Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
@@ -7688,6 +7706,7 @@ function setupCone(){
       tapeAt = T.s; heavy = true;
     }
     if (T.phaseExact !== undefined) coneMotionSetClock(T.phaseExact,T.degreesExact); else { Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; } tapeHead = i; tapeKey = tapeK();
+    if (window.zzFaceRestore) window.zzFaceRestore(faceState);
     coneSunWas = new Set(coneSunTrace().hits);   // что светит сейчас — уже учтено: показ ленты ничего не красит
     if (heavy) { renderAll(); coneLogRender(); } else renderCone();
   }
@@ -7963,6 +7982,7 @@ function setupCone(){
   };
   window.zzBallEmptyMask = () => { const E = Z.coneBallEmpty, key = (Z.lane | 0) + ":" + Z.rows.map(s => s.length).join("/"); return E && E.key === key && Array.isArray(E.m) ? E.m : null; };
   window.zzBallBitWrite = (hits) => {
+    if (Z.coneFaceOrder) return [];
     const changes = [], M = window.zzBallEmptyMask();
     for (const h of hits) {
       const s = h.k === Z.rows.length ? fillDraft() : Z.rows[h.k];
@@ -8107,6 +8127,7 @@ function setupCone(){
     Z.fillCells = S.fill; Z.fillFree = S.ff ?? null; if (S.log) Z.coneLog = S.log; else delete Z.coneLog; Z.coneClockN = S.n;
     coneWallWas = S.wall === "__u" ? undefined : S.wall; coneWallWasM = S.wm; coneSunWas = S.sun ? new Set(S.sun) : undefined;
     if (S.exact) Z.motionExact = posCopy(S.exact); else delete Z.motionExact;
+    if (window.zzFaceRestore) window.zzFaceRestore(S.faces);
     save(); renderAll(); coneLogRender();
     say(`↶ Откат шага${rowsBack ? " (черта поднята обратно)" : ""}: всё как было${lasHist.length ? ` (назад ещё ${lasHist.length})` : ""}.`);
   };
@@ -8283,6 +8304,7 @@ function setupCone(){
      вернулось»; до неё сброс был в трёх местах): «⟲ всё на места» — разом у всех колец накрутка «на вид», кручение (и счёт кругов
      и проходов), довод строки 1. Строки не трогает: сдвиг строки открытым кольцом — настоящая правка, её возвращает ↩. */
   $("bConeAllHome").onclick = () => {
+    if (window.zzFaceReset) window.zzFaceReset();
     autoSet(false);
     if (window.zzBallClearRun) window.zzBallClearRun();
     const H = Z.home;
