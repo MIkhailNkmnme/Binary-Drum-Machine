@@ -6746,10 +6746,11 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
   const bottom = cr.bottom - hr.top + scrollTop;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft;
-  const ms = $("c3Modes"), edge = cr.right - hr.left + scrollLeft - 4, modeLeft = x + w / 2 + (st ? w * 7 / 16 : w / 2) + 4;
-  const modesBelow = !!ms && edge - modeLeft < 220, lift = modesBelow ? 28 : 0, y = bottom - w - lift;
+  const ws = w * 7 / 8, gap = 6, clusterRight = x + w + (st ? ws + gap : 0);
+  const ms = $("c3Modes"), edge = cr.right - hr.left + scrollLeft - 4, modeLeft = clusterRight + 12;
+  const modesBelow = !!ms && edge - modeLeft < 300, lift = modesBelow ? 52 : 0, y = bottom - rh - gap - w - lift;
   // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
-  const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8;
+  const sp = document.getElementById("bC3Spin");
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const startButton = $("bConeStartBack"), speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
   for (const [id, control] of [["coneTransportStart", startButton], ["coneTransportTempo", speedLabel]]) {
@@ -6761,25 +6762,26 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const startBox = $("coneTransportStart"), tempoBox = $("coneTransportTempo");
   if (startBox && tempoBox) {
     const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
-    const centre = x + w / 2, half = st ? w / 2 + ws / 2 : w / 2, gap = 6;
-    const room = edge - (centre + half + gap), wide = room >= 140 && centre - half - gap - left >= 88;
-    const speedWidth = Math.max(80, Math.min(wide ? 280 : edge - left - 94, wide ? room : edge - left - 94));
-    startBox.style.width = "88px"; tempoBox.style.width = speedWidth.toFixed(1) + "px";
-    put(startBox, wide ? centre - half - gap - 88 : left, Math.max(cr.top - hr.top + scrollTop + 2, y - 28));
-    put(tempoBox, wide ? centre + half + gap : edge - speedWidth, Math.max(cr.top - hr.top + scrollTop + 2, y - 28));
+    const clusterLeft = x - (st ? ws + gap : 0), tempoLeft = clusterRight + 12;
+    const room = edge - tempoLeft, wide = room >= 240 && clusterLeft - 12 - left >= 112;
+    const speedWidth = Math.max(0, Math.min(380, wide ? room : edge - left));
+    const startWidth = Math.min(112, edge - left), top = cr.top - hr.top + scrollTop + 2;
+    startBox.style.width = startWidth.toFixed(1) + "px"; tempoBox.style.width = speedWidth.toFixed(1) + "px";
+    put(startBox, wide ? clusterLeft - 12 - startWidth : edge - startWidth, Math.max(top, wide ? bottom - lift - 36 : y - 42));
+    put(tempoBox, wide ? tempoLeft : left + (edge - left - speedWidth) / 2, Math.max(top, wide ? y : y - 84));
   }
   if (sp && sp.parentElement === host) put(sp, x, y);
   put(b, x + (w - rw) / 2, bottom - rh - lift);
-  if (st) { const overlap = ws / 2; put(stB, x - ws + overlap, y); if (stF && stF.parentElement === host) put(stF, x + w - overlap, y); }   // v0.985: сдвинуть шаги внутрь до перекрытия примерно четверти их площади центральным ромбом
+  if (st) { const stepY = y + (w - ws) / 2; put(stB, x - ws - gap, stepY); if (stF && stF.parentElement === host) put(stF, x + w + gap, stepY); }
   // Режимы всегда видны у самого нижнего края; на узком холсте пульт стоит над полосой.
   if (ms && ms.parentElement === host) {
     const left = cr.left - hr.left + scrollLeft + 4, width = Math.min(346, modesBelow ? edge - left : edge - modeLeft);
     ms.style.width = Math.max(0, width) + "px";
-    put(ms, modesBelow ? left + (edge - left - width) / 2 : modeLeft, bottom - 24);
+    put(ms, modesBelow ? left + (edge - left - width) / 2 : modeLeft, bottom - 44);
   }
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws / 2 : x, available = Math.max(0, groupLeft - X - 4);   // v0.985: подпись цикла прижата к левому краю, поля до ромбов сжаты
+    const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws - gap : x, available = Math.max(0, groupLeft - X - 4);
     caption.style.maxWidth = available.toFixed(1) + "px";
     put(caption, X, bottom - lift - caption.offsetHeight - 4);
   }
@@ -13172,7 +13174,7 @@ function tzcPreview(){
    в ромбе-бегунке, число (.rv) — рядом с бегунком: справа, а если справа места нет — слева (.rvl). Место бегунка — --thx у метки (центр ромба, px);
    пересчёт — на движение ползунка, раз в 300 мс (значение меняет и код) и после раскладки групп */
 function tzSliders(){
-  document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz, #rowInputBar label.tz, #coneTransportTempo label.tz").forEach(L => {   // v0.543: и размер цифр над полем
+  document.querySelectorAll("#w-cone .tools .cgb label.tz, #paneGrp .cgb label.tz, #rowInputBar label.tz").forEach(L => {   // Нижний темп использует обычный ромб-бегунок и подпись постоянной ширины.
     const r = L.querySelector(":scope > .zerk-range-wrap > input[type=range]"); if (!r || !r.getClientRects().length) return;
     const lr = L.getBoundingClientRect(), ir = r.getBoundingClientRect(), t = 12 / 2.5, tw = 24;   // v0.822: бегунок — ромб 24 × 24 (половина — 2,5t при t = 4,8)   // v0.473: бегунок — шестигранник 4t; v0.489 — «стрелка вправо» 5t
     const mn = +r.min || 0, mx = r.max === "" ? 100 : +r.max, v = +r.value, f = mx > mn ? Math.max(0, Math.min(1, (v - mn) / (mx - mn))) : 0;

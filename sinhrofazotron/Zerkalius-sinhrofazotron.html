@@ -1,4 +1,4 @@
-<!-- Синхрофазотрон — v0.021. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
+<!-- Синхрофазотрон — v0.022. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
      Родился 2026-10-10 копией Zazerkalius v0.1091 (слово пользователя: «сделай теперь отдельную страницу чисто для соляриус, но назовём её синхрофазотрон —
      это вообще не в зазеркалиусе будет страница, просто скопируй текущий соляриус», «удали всё лишнее оттуда»). Свой код (копии zz-*.js рядом),
      своя память (sinhrofazotron_*), своя версия v0.NNN; пресеты читает из ../zazerkalius/presety/. -->
@@ -7,7 +7,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Синхрофазотрон — v0.021</title>
+<title>Синхрофазотрон — v0.022</title>
 <!-- Разметка и стили Синхрофазотрона. Математика — zz-core.js; интерфейс — zz-ui.js; шарики — zz-ball.js; грани — zz-faces.js; кольца четвертей — zz-quarters.js; мобильная раскладка — zz-mobile.js. -->
 <style>
 :root{
@@ -1812,10 +1812,26 @@ body.bgmode #bC3Reset{display:none !important}
 /* Режимы кручения — постоянная полоса-трапеция на нижнем краю холста. */
 #c3Modes{position:absolute;z-index:2147483630;display:flex;height:24px;white-space:nowrap;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 100%,0 100%);background:color-mix(in srgb,#4fd1a0 45%,#2a3038)}
 #c3Modes.show{display:flex}
-#coneTransportStart,#coneTransportTempo{position:absolute;z-index:2147483630;display:flex !important;height:24px;padding:0;margin:0;gap:0;--gfc:var(--gold);--acc:var(--gold);--bu:83px}
-#coneTransportStart > button,#coneTransportTempo > label{position:relative !important;width:100% !important;min-width:0 !important;height:24px !important;box-sizing:border-box;margin:0 !important;padding:0 10px !important;border:0;border-radius:0;font:700 10.5px/1 var(--ff);color:var(--txt);background:color-mix(in srgb,var(--gold) 18%,var(--bg));clip-path:polygon(6.93px 0,calc(100% - 6.93px) 0,100% 50%,calc(100% - 6.93px) 100%,6.93px 100%,0 50%);display:flex;align-items:center;justify-content:center}
-#coneTransportTempo > label > .zerk-range-wrap{width:auto !important;flex:1 1 auto !important;min-width:0}
-#coneTransportTempo input[type=range]{width:100% !important;min-width:0;margin:0;border:0;border-radius:0}
+/* v0.022: крупный темп с ромбом; старт ниже, кнопки пульта с зазорами. */
+#coneTransportStart,#coneTransportTempo{position:absolute;z-index:2147483630;display:flex !important;height:36px;padding:0;margin:0;gap:0;--gfc:var(--gold);--acc:var(--gold);--bu:112px}
+#coneTransportStart#coneTransportStart > button,#coneTransportTempo#coneTransportTempo > label{position:relative !important;width:100% !important;min-width:0 !important;height:36px !important;box-sizing:border-box;margin:0 !important;padding:0 12px !important;border:0;border-radius:0;font:700 13px/1 var(--ff);color:#fff3c8 !important;background:#443d2e !important;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%) !important;display:flex;align-items:center;justify-content:center}
+#coneTransportStart#coneTransportStart > button{background:#284b60 !important;color:#d8f2ff !important}
+#coneTransportStart#coneTransportStart > button:hover{background:#386b87 !important}
+#coneTransportStart#coneTransportStart > button::before,#coneTransportTempo#coneTransportTempo > label::before,#coneTransportTempo#coneTransportTempo > label::after{content:none !important}
+#coneTransportTempo#coneTransportTempo > label > .zerk-range-wrap{display:contents !important}
+#coneTransportTempo#coneTransportTempo input[type=range]{appearance:none;-webkit-appearance:none;flex:1 1 0 !important;width:100% !important;min-width:0;height:36px !important;margin:0 !important;padding:0 !important;border:0;border-radius:0;background:none !important;clip-path:none !important}
+#coneTransportTempo#coneTransportTempo input[type=range]::-webkit-slider-runnable-track{height:4px;background:#9e8850;border:0;border-radius:0}
+#coneTransportTempo#coneTransportTempo input[type=range]::-moz-range-track{height:4px;background:#9e8850;border:0;border-radius:0}
+#coneTransportTempo#coneTransportTempo input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:30px;height:30px;margin-top:-13px;border:0;border-radius:0;background:#f3ce70;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#coneTransportTempo#coneTransportTempo input[type=range]::-moz-range-thumb{width:30px;height:30px;border:0;border-radius:0;background:#f3ce70;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+#coneTransportTempo#coneTransportTempo .zerk-arrow{width:24px !important;height:36px !important;flex:0 0 24px !important;margin:0 !important;color:#f3ce70 !important;background:#443d2e !important;clip-path:none !important;font-size:16px;border:0 !important}
+#coneTransportTempo#coneTransportTempo #coneAutoSpV{position:static !important;inset:auto !important;flex:0 0 6.4em;min-width:6.4em !important;margin:0 6px 0 2px !important;justify-content:flex-end !important;text-align:right;font-size:13px !important;font-variant-numeric:tabular-nums;pointer-events:none}
+#coneTransportTempo#coneTransportTempo .sli{display:none !important}
+#bC3Spin::before{background:#214b40}
+#bC3Spin.on::before{background:#32876a}
+#bC3StepB::before,#bC3StepF::before{background:#28475f}
+#bC3StepB.on::before,#bC3StepF.on::before{background:#386c94}
+#bC3Reset::before{background:#643d43}
 body.bgmode #coneTransportStart,body.bgmode #coneTransportTempo{display:none !important}
 #coneFaceResult{display:block;width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#28d9e8;font:11px var(--ff);text-align:center}
 #coneFaceResult[hidden]{display:none}
@@ -1846,8 +1862,13 @@ body.bgmode #c3Modes{display:none !important}
 #conePosPop .ppi.cur .ppn{box-shadow:inset 3px 0 0 var(--green);color:var(--green)}
 #conePosPop .ppi [data-pa="star"]{width:28px;padding:0;color:var(--gold)}
 #conePosPop .ppi [data-pa="del"]{width:28px;padding:0;color:#ff8a8a}
-#c3Modes > button.on{background:#4fd1a0;color:#10251d;font-weight:700}
-#c3Modes > button:first-child,#c3Modes > button:last-of-type{clip-path:none}
+#c3Modes > button.on{background:#62bfaa;color:#10251d;font-weight:700}
+/* v0.022: режимы — отдельные треугольники, подписи у основания. */
+#c3Modes{height:44px;gap:4px;clip-path:none;background:none}
+#c3Modes > button,#c3Modes > button:nth-child(even),#c3Modes > button:first-child,#c3Modes > button:last-of-type{height:44px;box-sizing:border-box;margin:0;padding:18px 2px 0;clip-path:polygon(50% 0,100% 100%,0 100%);background:#294e4b;color:#cee9e5}
+#c3Modes > button:hover{background:#39776d;color:#fff}
+#c3Modes > button.on{background:#62bfaa;color:#10251d}
+#c3Modes > #c3PosB{padding:18px 0 0}
 /* v0.812: баланс единиц и нулей — два ромба столбиком на вертикали через центр конуса, у верхнего края холста (coneBalShow) */
 /* v0.814, «1 и 0 балансы — кнопки в одну строку, без знаков равенства, просто зажги их, когда равны»: ромбы рядом, острие к острию; поровну — оба горят */
 #coneBal{position:absolute;z-index:2147483630;display:flex;flex-direction:row;align-items:center;gap:24px;pointer-events:auto;cursor:default}   /* v0.997: балансы и оси выше групп кнопок */
@@ -2283,7 +2304,7 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-<h1 aria-label="Синхрофазотрон" class="sfz-title">Синхрофазотрон</h1><span class="ver">v0.021</span>
+<h1 aria-label="Синхрофазотрон" class="sfz-title">Синхрофазотрон</h1><span class="ver">v0.022</span>
   <div id="pinBar"></div>
   <span class="sp"></span>
   <!-- v0.268, «одну кнопку на всё — и потом выбор окна кликом: строки, конус, 3D»: ⏺ в шапке — щелчок, затем щелчок по окну -->
@@ -2935,12 +2956,12 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
   <div class="ctwBody"></div>
 </div>
 
-<script src="zz-core.js?v=21"></script>
-<script src="zz-ui.js?v=21"></script>
-<script src="zz-ball.js?v=21"></script>
-<script src="zz-quarters.js?v=21"></script>
-<script src="zz-faces.js?v=21"></script>
-<script src="zz-mobile.js?v=21"></script>
+<script src="zz-core.js?v=22"></script>
+<script src="zz-ui.js?v=22"></script>
+<script src="zz-ball.js?v=22"></script>
+<script src="zz-quarters.js?v=22"></script>
+<script src="zz-faces.js?v=22"></script>
+<script src="zz-mobile.js?v=22"></script>
 <script src="../_js/hub-link.js"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
@@ -2948,6 +2969,6 @@ body.sol-mobile #solBallLab .ball-lab-row:has(#ballLabRun){grid-template-columns
 <script src="../_js/slider-arrows.js"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
-<script src="../_js/recorder.js?v=21" data-bez-knopki></script>
+<script src="../_js/recorder.js?v=22" data-bez-knopki></script>
 </body>
 </html>
