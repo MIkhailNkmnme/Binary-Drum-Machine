@@ -6876,6 +6876,31 @@ function coneBalanceAxisBind(cv){
   }, true);
   cv.addEventListener("dblclick", e => { if (!hit(e)) return; e.preventDefault(); e.stopImmediatePropagation(); Z.coneBalanceAxis = 0; save(); renderCone(); }, true);
 }
+/* v0.040, по снимку четырёх балансов «Δ +1» — «баланс: если у верхних одинаковый, то нижние; если разные — показать стрелкой, куда вертимся от центра»
+   и «и наоборот»: Δ четверти (единиц − нулей) — её вес. Верхняя пара поровну — решает нижняя, нижняя поровну — верхняя, разные обе — общий перевес
+   (правые − левые). Стрелка выходит из центра вверх по оси балансов и загибается в сторону вращения: перевесила правая сторона — по часовой, левая — против.
+   Всё поровну — стрелки нет. Видна вместе с балансами четвертей (магнитное положение, конус стоит) */
+function coneBalanceTurnShow(el, Q, o){
+  let sv = el.querySelector(":scope > .qb-turn");
+  if (!sv) { el.insertAdjacentHTML("beforeend", '<svg class="qb-turn" xmlns="http://www.w3.org/2000/svg"><g><path class="o"/><path class="i"/><path class="h"/></g></svg>'); sv = el.querySelector(":scope > .qb-turn"); }
+  const d = Q.map(x => x[1].sub(x[0])), sideR = d[0].add(d[1]), sideL = d[3].add(d[2]), dir = sideR.sub(sideL).sign();
+  if (!dir) { if (sv.style.display !== "none") sv.style.display = "none"; return; }
+  const outer = Math.max(0, o.r0 + (o.N - 1 + o.band) * o.dr) / o.dpr, rr = Math.max(14, outer * 0.42), c = rr + 14, th = 70 * Math.PI / 180;
+  const ex = c + rr * Math.sin(th), ey = c - rr * Math.cos(th), tx = Math.cos(th), ty = Math.sin(th), nx = Math.sin(th), ny = -Math.cos(th), hs = Math.max(6, rr * 0.12);
+  const arc = `M${c} ${c}L${c} ${c - rr}A${rr} ${rr} 0 0 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+  const head = `M${(ex + tx * hs * 1.6).toFixed(2)} ${(ey + ty * hs * 1.6).toFixed(2)}L${(ex + nx * hs).toFixed(2)} ${(ey + ny * hs).toFixed(2)}L${(ex - nx * hs).toFixed(2)} ${(ey - ny * hs).toFixed(2)}Z`;
+  const deg = coneBalanceAxisAngle() * 180 / Math.PI, size = 2 * c;
+  sv.setAttribute("width", size); sv.setAttribute("height", size); sv.setAttribute("viewBox", `0 0 ${size} ${size}`);
+  sv.querySelector("g").setAttribute("transform", `rotate(${deg.toFixed(3)} ${c} ${c}) translate(${c} 0) scale(${dir} 1) translate(${-c} 0)`);
+  sv.querySelector(".o").setAttribute("d", arc); sv.querySelector(".i").setAttribute("d", arc); sv.querySelector(".h").setAttribute("d", head);
+  const anchor = el.offsetParent || el.parentElement, hr = anchor.getBoundingClientRect();
+  sv.style.left = (o.R.left - hr.left - anchor.clientLeft + anchor.scrollLeft + o.cx / o.dpr - c) + "px";
+  sv.style.top = (o.R.top - hr.top - anchor.clientTop + anchor.scrollTop + o.cy / o.dpr - c) + "px";
+  sv.style.display = "";
+  const top = coneBalanceEqual(Q[0], Q[3]), bottom = coneBalanceEqual(Q[1], Q[2]);
+  const t = (dir > 0 ? "↻ Вертимся по часовой" : "↺ Вертимся против часовой") + ": " + (top && !bottom ? "верхние поровну — перевес внизу" : bottom && !top ? "нижние поровну — перевес вверху" : "общий перевес") + ", " + (dir > 0 ? "правая" : "левая") + " сторона тяжелее (Δ справа " + coneBalanceNumber(sideR) + ", слева " + coneBalanceNumber(sideL) + ")";
+  if (sv.dataset.t !== t) { sv.dataset.t = t; let ti = sv.querySelector("title"); if (!ti) { ti = document.createElementNS("http://www.w3.org/2000/svg", "title"); sv.prepend(ti); } ti.textContent = t; }
+}
 function coneBalanceSync(g, o){
   coneBalanceToolsSync(o.cv);
   coneHistorySync(o.cv);
@@ -6889,7 +6914,7 @@ function coneBalanceSync(g, o){
     el.innerHTML = names.map(() => '<div class="qb"><strong></strong><span class="qb-bits"><b class="b1" title="Сумма единиц"></b><b class="b0" title="Сумма нулей"></b></span></div>').join(""); }
   el.hidden = !Z.coneQuadBalances;
   const anchor = el.offsetParent || el.parentElement, hr = anchor.getBoundingClientRect();
-  [...el.children].forEach((b, q) => {
+  [...el.querySelectorAll(":scope > .qb")].forEach((b, q) => {
     b.classList.toggle("eq-all", allEqual);
     b.style.setProperty("--qb-color", colors[q]);
     const diff = Q[q][1].sub(Q[q][0]), number = coneBalanceNumber(diff), texts = ["Δ " + (diff.sign() > 0 ? "+" : "") + number, coneBalanceNumber(Q[q][1]), coneBalanceNumber(Q[q][0])];
@@ -6904,6 +6929,7 @@ function coneBalanceSync(g, o){
     b.style.left = (o.R.left - hr.left - anchor.clientLeft + anchor.scrollLeft + x) + "px";
     b.style.top = (o.R.top - hr.top - anchor.clientTop + anchor.scrollTop + y) + "px";
   });
+  coneBalanceTurnShow(el, Q, o);   // v0.040
   if (!Z.coneBalanceHighlight) return;
   const auto = $("bConeAuto"), active = coneDrag || coneR1Drag || coneFillDrag || coneBalanceAxisDragging || auto && auto.classList.contains("on");
   if (!active || !data.prefix.length) return;
