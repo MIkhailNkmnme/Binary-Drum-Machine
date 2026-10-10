@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.092. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.093. Точка входа: ссылки на все страницы проекта.
+     v0.093: «убери доп. разноцветный треугольник с фона» — кнопки «все 7 нот» нет; ноты — по две цветные ячейки на единицах треугольника; в ромбах — цифры.
      v0.092: фон — 71 строка последовательности из _pzl.txt, общий набор с Зазеркалиусом и Синхрофазотроном.
      v0.091: кнопка Синхрофазотрона — битовая надпись ромбами на треугольной сетке, как заголовок страницы (2026-10-10).
      v0.090: «Синхрофазотрон» (sinhrofazotron/, 2026-10-10) — Соляриус отдельной страницей; кнопка — последней в Черновиках.
@@ -107,7 +108,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.092</title>
+    <title>Zerkalius Control Hub — v0.093</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -290,6 +291,14 @@
         body.allMode #hubAll, body.allMode #hubFly { display: block; }
         body.allMode #hubSndBox { display: none; }
         @media (hover: hover) { #hubAll:not(.on):hover + #hubFly { filter: brightness(1.35); } }
+        /* v0.093, «убери этот доп. разноцветный треугольник с фона, а на единицах треугольника на некоторых поставь по 2 цветные ячейки для каждой ноты»:
+           кнопки «все 7 нот» (дырка с 28 цветными битами) больше нет; ноты — 14 ячеек на единицах фонового треугольника, по две на ноту: на строках
+           N·(t+1)/8 (До сверху … Си снизу) — крайняя левая и крайняя правая единица. Видно — холст #hubNoteCv, нажимается — кнопка .hubNoteCell над ячейкой */
+        body.allMode #hubAll, body.allMode #hubFly { display: none !important; }
+        #hubNoteCv { display: none; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
+        .hubNoteCell { display: none; position: fixed; z-index: 7; padding: 0; border: none; background: transparent; cursor: pointer; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+                       touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+        body.allMode #hubNoteCv, body.allMode .hubNoteCell { display: block; }
         /* v0.061: ⏺ видеозапись хаба — правый верхний угол; идёт запись — красная, мигает */
         #hubRec { position: fixed; right: 10px; top: 6px; z-index: 6; font: 22px/1 system-ui, sans-serif; padding: 4px 8px; cursor: pointer; color: #7d8388;
                   background: none; border: none; text-shadow: 0 0 6px #000; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -432,6 +441,7 @@
             body { overflow-x: hidden; overflow-y: auto; }
             #hubSier { display: block; position: absolute; left: 0; top: 0; width: 100vw; height: 100svh; z-index: 1; pointer-events: none; opacity: 1; }
             #hubAll { position: absolute; } #hubFly { position: absolute; height: 100svh; }   /* v0.081: там же, где треугольник */
+            #hubNoteCv { position: absolute; height: 100svh; } .hubNoteCell { position: absolute; }   /* v0.093: ноты-ячейки — там же, где треугольник */
             #hubSndBox { position: absolute; top: 55svh; }
             .hub { height: auto; margin-top: 100svh; justify-content: flex-start; overflow: visible; padding: 28px 12px 64px; }
             .mainrow { flex-direction: column; align-items: center; gap: 14px; }
@@ -486,7 +496,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.092</div>
+        <div class="ver">v0.093</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -867,6 +877,53 @@
                     if (ids.includes(id) && !ALL.cells.some(c => c.t === t && c.st !== 'in')) { const c = ALL.queue.find(q => q.t === t && q.st === 'in'); if (c) allRelease(c, now); } });
                 allKick();
             });
+            /* v0.093: ноты — по две ячейки на единицах фонового треугольника (см. стили .hubNoteCell). Ячейка нажата — её нота включается и стартует
+               прямо из этого бита (from — как у прежней кнопки «все 7 нот»), ещё раз — выключается. Горит — цветом ноты, мигает, пока звучит */
+            const NOTES = { cells: [], on: new Set(), paused: false, raf: 0, W: 0, H: 0, dpr: 1, dw: 0, dh: 0, cv: null, g: null };
+            NOTES.cv = document.createElement('canvas'); NOTES.cv.id = 'hubNoteCv'; NOTES.cv.setAttribute('aria-hidden', 'true');
+            (fly || sier || document.body).after(NOTES.cv); NOTES.g = NOTES.cv.getContext('2d');
+            const noteNames = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.dataset.ru || b.textContent.trim());
+            const noteDraw = (now) => {
+                const g = NOTES.g; if (!g) return false; const { W, H, dpr, dw, dh } = NOTES;
+                g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+                for (const c of NOTES.cells) {
+                    const col = noteCol[c.t] || '#9fffc8', on = NOTES.on.has(IDS[c.t]), bl = on && !NOTES.paused ? 0.55 + 0.45 * Math.sin(now / 1100 * 2 * Math.PI) : 1;
+                    const a = dw * 0.95 / 2, b = dh * 0.95 / 2;
+                    g.globalAlpha = on ? bl : 0.9; g.fillStyle = col; g.shadowColor = col; g.shadowBlur = on ? dw * 0.9 : dw * 0.25;
+                    g.beginPath(); g.moveTo(c.x, c.y - b); g.lineTo(c.x + a, c.y); g.lineTo(c.x, c.y + b); g.lineTo(c.x - a, c.y); g.closePath(); g.fill();
+                    g.shadowBlur = 0; g.globalAlpha = 1;
+                    if (dw >= 7) { g.fillStyle = '#0b0d10'; g.font = `bold ${Math.max(6, dw * 0.62).toFixed(1)}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('1', c.x, c.y + dw * 0.04); }
+                }
+                return NOTES.on.size > 0 && !NOTES.paused;
+            };
+            const noteLoop = (now) => { NOTES.raf = noteDraw(now) ? requestAnimationFrame(noteLoop) : 0; };
+            const noteKick = () => { if (!NOTES.raf) NOTES.raf = requestAnimationFrame(noteLoop); };
+            const notePlace = (X, Y, dw, dh, W, H, dpr) => {
+                const N = PR.length, rowsOf = []; for (let t = 0; t < 7; t++) rowsOf.push(Math.min(N - 1, Math.round(N * (t + 1) / 8)));
+                document.body.classList.add('allMode');
+                const cells = [];
+                rowsOf.forEach((r, t) => { const row = PR[r] || '', jl = row.indexOf('1'), jr = row.lastIndexOf('1'); if (jl < 0) return;
+                    for (const j of jl === jr ? [jl] : [jl, jr]) cells.push({ t, r, j, x: X(r, j), y: Y(r) }); });
+                Object.assign(NOTES, { cells, W, H, dpr, dw, dh });
+                const key = cells.map(c => c.x.toFixed(1) + ',' + c.y.toFixed(1)).join(';') + '|' + dw.toFixed(2);
+                if (NOTES.key !== key) { NOTES.key = key;
+                    document.querySelectorAll('.hubNoteCell').forEach(b => b.remove());
+                    const hit = Math.max(dw * 1.2, 26), hitH = Math.max(dh * 1.2, 26);
+                    cells.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'hubNoteCell';
+                        b.title = noteNames[c.t] + ': щелчок — нота звучит из этой ячейки, ещё раз — выключить'; b.setAttribute('aria-label', noteNames[c.t]);
+                        Object.assign(b.style, { left: (c.x - hit / 2).toFixed(1) + 'px', top: (c.y - hitH / 2).toFixed(1) + 'px', width: hit.toFixed(1) + 'px', height: hitH.toFixed(1) + 'px' });
+                        b.onclick = () => { const id = IDS[c.t], on = !NOTES.on.has(id); if (on) NOTES.on.add(id); else NOTES.on.delete(id);
+                            post(on ? { zerkSndHead: id, on: true, from: [c.r, c.j] } : { zerkSndHead: id, on: false }); noteDraw(performance.now()); noteKick(); };
+                        NOTES.cv.after(b); });
+                }
+                if (NOTES.cv.width !== Math.round(W * dpr) || NOTES.cv.height !== Math.round(H * dpr)) { NOTES.cv.width = Math.round(W * dpr); NOTES.cv.height = Math.round(H * dpr); }
+                if (!NOTES.raf) noteDraw(performance.now()); return true;
+            };
+            window.addEventListener('message', e => {
+                if (!bg || e.source !== bg.contentWindow || !e.data || e.data.zerkSndOn === undefined) return;
+                const ids = Array.isArray(e.data.zerkSndHeads) ? e.data.zerkSndHeads : [];
+                NOTES.on = new Set(e.data.zerkSndOn ? ids : []); NOTES.paused = !!e.data.zerkSndPaused; noteDraw(performance.now()); noteKick();
+            });
             const sierDraw = () => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
@@ -895,19 +952,25 @@
                     const big = !desk && allBtn && fg && 7 * fit(H * 0.9) >= 30, hMax = (desk ? H * 0.97 : big ? H * 0.9 : H * 0.49) - top; dw = fit(hMax + top); dh = dw * 1.732;
                     const cx = W / 2, y0 = top + (hMax - (N + 1) * dh / 2) / 2 + dh / 2;
                     spots = [(r, j) => [cx - (PR[r].length - 1) * dw / 2 + j * dw, y0 + r * dh / 2]];
-                    allPlace((r, j) => cx - (PR[r].length - 1) * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr, desk); }
+                    notePlace((r, j) => cx - (PR[r].length - 1) * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr); }   // v0.093: ноты — ячейки на единицах (вместо дырки «все 7 нот»)
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же
                             равносторонний из ромбов, но на боку — вершина у своего края экрана (◀ слева, ▶ справа), основание к нотам; ромбы повёрнуты с ним */
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw]]; }
                 const rhomb = (x, y, k) => { const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); };
+                /* v0.093, «а в ромбы поставь цифры»: в ромбе единицы — «1» тёмным, на месте нуля — бледный «0» (видна вся строка последовательности);
+                   цифры — только когда ромб не мельче 7 px, иначе их не прочесть */
+                const digits = (side ? dh : dw) >= 7, fs = Math.max(6, Math.min(dw, dh) * 0.62);
+                if (digits) { sg.font = `bold ${fs.toFixed(1)}px system-ui, sans-serif`; sg.textAlign = 'center'; sg.textBaseline = 'middle'; }
                 for (let r = 0; r < N; r++) { const row = PR[r];
-                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1'; if (!hc && !on) continue;
+                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1';
+                        if (!hc && !on) { if (digits) { sg.globalAlpha = desk ? 0.28 : 0.4; sg.fillStyle = '#9fffc8'; for (const f of spots) { const [x, y] = f(r, j); sg.fillText('0', x, y + fs * 0.06); } } continue; }
                         sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8; }
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9); }
-                        if (hc) sg.shadowBlur = 0; } }
+                        if (hc) sg.shadowBlur = 0;
+                        if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); sg.fillText(row[j], x, y + fs * 0.06); } } } }
                 sg.globalAlpha = 1; return true;
             };
             { let last = 0; const loop = (t) => { if (t - last > 33 && window.scrollY < innerHeight) { last = t; sierDraw(); } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
