@@ -2863,12 +2863,12 @@ function renderCone(){
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
+  { const tb = $("coneTapeBox"); if (tb) { tb.classList.toggle("on", coneFlat()); tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; } }
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
   { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
     coneBalShow(o1, o0); }   // v0.1004: баланс считается независимо от включения солнца
   c3AxesPlace();   // v0.850: ✛ оси — ромбом над балансом
-  { const tb = $("coneTapeBox"); if (tb) tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; }   // v0.721: перемотка — прямо под центром солнца
   const clockRays = Z.coneClock && fillOn ? coneClockTrace() : null, cE = "#1c2130";   // v0.131: пустая ячейка — чёрная (в обеих темах)   // v0.116: луч-часы — прошёл все кольца: «1» в ячейку под ним
   if (clockRays && !(window.zzBallActive && window.zzBallActive())) {
     const hits = clockRays.filter(R => R.pass && R.cell >= 0); if (hits.length) coneClockMark(hits);
@@ -6825,12 +6825,14 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
   const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
   const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft, y = cr.bottom - hr.top - w + scrollTop;   // v0.984: ромбы кручения опущены до края холста поверх нижнего треугольника сброса
+  const tb = document.getElementById("coneTapeBox"), tapeSpace = tb && tb.offsetHeight ? tb.offsetHeight + 16 : 0;   // v0.1084: место для истории под пультом
+  const bottom = cr.bottom - hr.top + scrollTop - tapeSpace;
+  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft, y = bottom - w;
   // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
   const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2, sideGap = w / 5;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   if (sp && sp.parentElement === host) put(sp, x, y);
-  put(b, x + (w - rw) / 2, cr.bottom - hr.top - rh + scrollTop);
+  put(b, x + (w - rw) / 2, bottom - rh);
   if (st) { const overlap = ws / 2; put(stB, x - ws + overlap, y); if (stF && stF.parentElement === host) put(stF, x + w - overlap, y); }   // v0.985: сдвинуть шаги внутрь до перекрытия примерно четверти их площади центральным ромбом
   // v0.931: режимы справа от кручения; копия «На места» убрана из нижнего блока.
   const ms = document.getElementById("c3Modes");
@@ -6848,7 +6850,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   if (caption && caption.parentElement === host) {
     const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws / 2 : x, available = Math.max(0, groupLeft - X - 4);   // v0.985: подпись цикла прижата к левому краю, поля до ромбов сжаты
     caption.style.maxWidth = available.toFixed(1) + "px";
-    put(caption, X, cr.bottom - hr.top + scrollTop - caption.offsetHeight - 4);
+    put(caption, X, bottom - caption.offsetHeight - 4);
   }
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
@@ -7508,19 +7510,20 @@ function setupCone(){
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
     ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
-  function lasRec(fn){ const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
+  function lasRec(fn){ tapeRec(); const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
      при этом откатывая шаги назад — не то что шаги, а как будто перемотку назад кручения». Лента: пока солнце в вырезах крутится (▶ крутить, шаги), каждый
      кадр пишется — фаза и поворот конуса (лёгкое) и ссылка на состояние (строки, краска, строка за чертой, лог…) — само состояние пишется заново, только когда
      оно сменилось. Ползунок #coneTape внизу посередине холста — по ленте: тянешь назад — всё как было в тот миг (кручение встаёт), вперёд — обратно до конца
      записанного. Крутить дальше с отмотанного места — лента впереди стирается и пишется заново (как на магнитофоне). Только в памяти страницы; ⌖✕ — с нуля */
   const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
-  const tapeOn = () => coneSunOn() && coneCutOn() && coneFlat();
+  // v0.1084: история обычного кручения тоже доступна, независимо от солнца и вида щелей.
+  const tapeOn = () => coneFlat();
   const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0]);
   function tapeUi(){
     const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
-    const on = tapeOn() && tape.length > 1; box.classList.toggle("on", on); if (!on) return;
-    el.max = tape.length - 1; el.value = tapeHead;
+    box.classList.toggle("on", tapeOn());
+    el.disabled = tape.length < 2; el.max = Math.max(0, tape.length - 1); el.value = Math.max(0, tapeHead);
   }
   function tapeClear(){ tape.length = 0; tapeSt.length = 0; tapeHead = -1; tapeKey = ""; tapeAt = -1; tapeUi(); }
   function tapeRec(){
@@ -7531,7 +7534,7 @@ function setupCone(){
     const si = tapeSt.length - 1, ph = Z.coneSpinPh || 0, sp = Z.coneSpin || 0, L = tape[tape.length - 1];
     if (!L || L.ph !== ph || L.sp !== sp || L.s !== si) { tape.push({ ph, sp, s: si }); if (tape.length > 60000) { tape.splice(0, 20000); } }
     tapeHead = tape.length - 1; tapeAt = si;
-    const el = $("coneTape"); if (el && $("coneTapeBox").classList.contains("on")) { el.max = tape.length - 1; el.value = tapeHead; } else tapeUi();
+    const el = $("coneTape"); if (el && $("coneTapeBox").classList.contains("on")) { el.disabled = tape.length < 2; el.max = tape.length - 1; el.value = tapeHead; } else tapeUi();
   }
   function tapeGo(i){
     i = Math.max(0, Math.min(tape.length - 1, i | 0)); const T = tape[i]; if (!T) return;
@@ -7555,13 +7558,14 @@ function setupCone(){
   { const main = $("coneMain");
     if (main && !$("coneTapeBox")) {
       const box = document.createElement("div"); box.id = "coneTapeBox";
-      box.innerHTML = '<input type="range" id="coneTape" min="0" max="0" step="1" value="0" title="⏪ Перемотка кручения (солнце, вырезы T−1): тяни назад — всё как было в тот миг (кольца, краска, строки), вперёд — обратно до конца записанного. Крутить дальше с отмотанного места — запись впереди стирается и идёт заново">';
+      box.innerHTML = '<input type="range" id="coneTape" min="0" max="0" step="1" value="0" disabled aria-label="История кручения" title="⏪ История кручения: тяни назад — кольца, краска и строки возвращаются к выбранному моменту, вперёд — до конца записи. Крутить дальше с отмотанного места — запись впереди стирается и идёт заново">';
       main.appendChild(box);
       const el = box.querySelector("input");
       el.addEventListener("input", () => { if (autoRaf) autoSet(false); tapeGo(+el.value); });
       el.addEventListener("change", () => save());
       ["pointerdown", "wheel", "dblclick"].forEach(t => box.addEventListener(t, e => e.stopPropagation()));
     }
+    tapeUi();
   }
   if ($("bLasStep")) $("bLasStep").onclick = () => lasRec(() => {
     if (fillAutoCommit()) return;   // v0.702: строка готова — этим нажатием только черта вниз, крутит следующее
