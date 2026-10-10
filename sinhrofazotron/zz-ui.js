@@ -14538,6 +14538,7 @@ function init(){
   $("bShowFixIr").onclick = () => showFixSet("ir");
   $("rowsAlign").value = Z.rowsAlign || "center";
   $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save();  };   // v0.794: «◇ бит» в Ромбоидах стоит, как поле
+  Z.bitView = "txt";   // v0.031: в поле строк только цифры — квадраты, ромбы и сетка сняты (список вида бит убран; старая память и пресеты тоже открываются цифрами)
   if ($("bitView")) { $("bitView").value = Z.bitView || "txt";   // v0.456: вид бит — цифры, квадраты, ромбы
     $("bitView").onchange = (e) => { Z.bitView = e.target.value; renderRows(); save();
       if (Z.bitView === "rg") say("◇ Сетка: каждый бит — ромб, как зубец края поля; ряд — 24 px, при смене шрифта — вдвое: 12 / 24 / 48 / 96.");
