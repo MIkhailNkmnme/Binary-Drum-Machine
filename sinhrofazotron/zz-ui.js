@@ -781,8 +781,29 @@ function cutPanelMount(){
    за экран вправо-влево, смотря где панель, и не мешают»: достройка (#cutA: 🗑 90 30 м ⌖ ⤒) и заготовка (#cutB: 📋 стр сид, свои шаблоны) — в строке за
    чертой, по бокам её ячеек (.cutSide внутри .fcs; CSS держит их вне сетки и обрезает за краем колонки). Строки по центру — достройка слева, заготовка
    справа; строки слева — обе справа; справа — обе слева (достройка ближе к ячейкам). Строки за чертой нет — обе снова под чертой, в #cutPanel */
+/* v0.039, по снимку полосы под чертой (🗑 · 🔺90 · 30 · м · 01 · ⌖ · ⤒ · 📋… · стр · сид) — «эти кнопки от строк открепи в отдельное меню-группу
+   в окне, которое строк будет»: кнопки достройки (#cutA) и заготовок (#cutB) переезжают в своё меню «Достройка» (#cutGrp) — в шапке окна строк,
+   под строкой ввода; щелчок по «Достройке» сворачивает меню до заголовка (Z.cutGrpMin). Строки под чертой их больше не несут (cutPartsPlace — CUT_GROUPED).
+   Свои шаблоны (#tplBar) остаются под чертой. Обработчики висят на самих кнопках, поэтому переезд их не трогает */
+let CUT_GROUPED = false;
+function cutGroupBuild(){
+  if (CUT_GROUPED || !CUT_A || !CUT_B) return;
+  const head = document.getElementById("fieldHead"); if (!head) return;
+  const g = document.createElement("div"); g.id = "cutGrp"; g.className = "cutPart";
+  const lab = document.createElement("span"); lab.className = "glab"; lab.textContent = "Достройка";
+  lab.title = "Достройка строк под чертой и заготовки — щелчок сворачивает и разворачивает меню"; g.appendChild(lab);
+  for (const part of [CUT_A, CUT_B]) [...part.children].forEach(el => { if (el.id !== "tplBar") g.appendChild(el); });
+  const bar = document.getElementById("rowInputBar"); if (bar && bar.parentNode === head) bar.after(g); else head.appendChild(g);
+  g.classList.toggle("min", !!Z.cutGrpMin);
+  lab.addEventListener("click", () => { Z.cutGrpMin = !Z.cutGrpMin; g.classList.toggle("min", Z.cutGrpMin); save(); });
+  CUT_GROUPED = true; cutPartsPlace();
+}
 function cutPartsPlace(){
   if (!CUT_PANEL || !CUT_A || !CUT_B) return;
+  if (CUT_GROUPED) {   // v0.039: кнопки — в меню «Достройка»; под чертой — только свои шаблоны, боковые ячейки у строки под чертой не нужны
+    if (CUT_A.parentNode !== CUT_PANEL || CUT_B.parentNode !== CUT_PANEL) CUT_PANEL.prepend(CUT_A, CUT_B);
+    CUT_PANEL.style.display = ""; document.querySelectorAll("#rowList .cutSide").forEach(e => e.remove()); return;
+  }
   const L = document.getElementById("rowList"), fc = L && L.querySelector(".rw.fillrw > .bits.la > .fcs");
   if (!fc) { if (CUT_A.parentNode !== CUT_PANEL || CUT_B.parentNode !== CUT_PANEL) CUT_PANEL.prepend(CUT_A, CUT_B); CUT_PANEL.style.display = ""; return; }
   const al = L.classList.contains("al-right") ? "r" : L.classList.contains("al-left") ? "l" : "c";
@@ -11121,6 +11142,7 @@ function solPanelOrganizeInit(C){
 }
 function cgrpInit(){
   const tl = document.querySelector("#w-cone .wbody > .tools"); if (!tl) return;
+  cutGroupBuild();   // v0.039
   sunPanelMergeLayout();
   if (!Z.cgrpPos || typeof Z.cgrpPos !== "object") Z.cgrpPos = {};
   if (!Z.cgrpEdge || typeof Z.cgrpEdge !== "object") Z.cgrpEdge = {};
