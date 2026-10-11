@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.113. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.114. Точка входа: ссылки на все страницы проекта.
+     v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
      v0.113: кнопка «Маятник» в Черновиках — XOR-маятник из Excel (mayatnik/).
      v0.112: автоповорот линии зеркала; отдельные скорости зеркала и 3D до ×1000; кэш исходных битов.
      v0.109: «Код» — прежняя страница Code, «Зеркалиус» — три зеркала.
@@ -125,7 +126,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.113</title>
+    <title>Zerkalius Control Hub — v0.114</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -577,8 +578,8 @@
         .hubTilt>label{border:0;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
         .hubViewRotation{grid-column:1/-1;width:144px!important;height:20px;margin:0;accent-color:#70e0d7}
         .hubMirrorSettings .hubRhomb[aria-pressed=true]{background:#286650;color:#fff}
-        #hubZoom{position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:21;display:flex;flex-direction:column;align-items:center;gap:3px;font:10px/1 monospace;color:#ddd}
-        #hubZoom button{width:48px;height:48px;padding:0;border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);color:#edf3ff;font:700 22px/1 monospace;cursor:pointer;background:color-mix(in srgb,var(--zoom-color) 22%,transparent)}
+        #hubZoom{position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;align-items:center;gap:3px;font:10px/1 monospace;color:#ddd}
+        #hubZoom button{--zoom-color:#70e0d7;width:48px;height:48px;padding:0;border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);color:#edf3ff;font:700 22px/1 monospace;cursor:pointer;background:color-mix(in srgb,var(--zoom-color) 22%,transparent)}
         #hubZoom .hub-zoom-minus{--zoom-color:#d99a4a}#hubZoom .hub-zoom-plus{--zoom-color:#6da4e7}
         #hubZoom button:hover,#hubZoom button:focus-visible{background:color-mix(in srgb,var(--zoom-color) 42%,transparent)}#hubZoom button:disabled{opacity:.3;cursor:default}
         #hubZoom output{cursor:pointer;font-variant-numeric:tabular-nums}
@@ -587,7 +588,8 @@
         /* v0.112: canvas controls live above the field, independent of menu scroll. */
         #hubFieldTools.hubMirrorSettings{position:fixed;left:318px;top:8px;z-index:24;display:flex;flex-wrap:wrap;align-items:flex-start;gap:2px;width:calc(100vw - 430px);max-width:700px;padding:0;overflow:visible}
         #hubFieldTools .hubRhomb,#hubFieldTools .hubTilt{flex:0 0 48px}
-        #hubFieldTools .hubFlip{white-space:pre-line;font-size:12px}
+        #hubFieldTools .hubFlip,#hubFieldTools .hubFloodControl{white-space:pre-line;font-size:12px}
+        #hubFieldTools .hubFloodControl[aria-pressed=true]{background:#297966;color:#fff;filter:drop-shadow(0 0 5px #70e0d7)}
         #hubFieldTools .hubViewRotation{order:2;flex:0 0 144px;align-self:center}
         #hubFieldTools .hubViewRotationControl{order:2;flex:0 0 156px;display:flex;flex-direction:column;gap:2px;margin:0;padding:0;color:#9fffc8;font:11px/1.2 system-ui,sans-serif}
         #hubFieldTools .hubViewRotationControl .hubViewRotation{flex:0 0 auto;width:156px!important;touch-action:none}
@@ -602,10 +604,10 @@
 <script src="_js/hub-perf.js?v=1"></script>
 <script src="_js/initial-rows.js?v=2"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
-<script src="_js/hub-mirror.js?v=112"></script>
+<script src="_js/hub-mirror.js?v=114"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
-<script src="_js/hub-view.js?v=112"></script>
+<script src="_js/hub-view.js?v=114"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -642,7 +644,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.113</div>
+        <div class="ver">v0.114</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -852,6 +854,15 @@
             const ROW_PATTERNS = { base: HUB_ROWS, serp: SERP_ROWS };
             const music = HubRhombMusic(ROW_PATTERNS[window.HubMirror.state.pattern], data => window.dispatchEvent(new CustomEvent('hubmusic', { detail: data })));
             const post = m => music.send(m);
+            // Доступный запуск остаётся в полосе даже при сдвиге вершины за край поля.
+            let floodPlay, floodSpeed;
+            document.addEventListener('DOMContentLoaded',()=>{
+                const tools=document.getElementById('hubFieldTools');
+                const control=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb hubFloodControl';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;tools.append(b);return b;};
+                floodPlay=control('Биты\n▶','Пуск / пауза битов',()=>post(hubLive?{zerkSndToggle:true}:{zerkFlood:true}));floodPlay.setAttribute('aria-pressed','false');
+                floodSpeed=control('1/с','Скорость битов',()=>{const i=FLOOD_SPEEDS.indexOf(NOTES.speed);post({zerkFloodSpeed:FLOOD_SPEEDS[(i+1)%FLOOD_SPEEDS.length]});});
+                control('Биты\n■','Остановить биты и вернуть к началу',()=>post({zerkSndReset:true}));
+            },{once:true});
             let resumeFlood=false;
             window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeFlood=hubLive&&!document.getElementById('hubSndBox').classList.contains('paused');if(resumeFlood)post({zerkSndToggle:true});}else{if(resumeFlood&&hubLive&&document.getElementById('hubSndBox').classList.contains('paused'))post({zerkSndToggle:true});resumeFlood=false;}});
             window.addEventListener('hubpattern', () => music.setRows(ROW_PATTERNS[window.HubMirror.state.pattern]));
@@ -1087,6 +1098,7 @@
                     let copy = document.querySelector('.hubNoteCell[data-note="' + original.dataset.note + '-mirror"]');
                     if (!reflected || !window.HubMirror.contains(reflected[0], reflected[1], w, h) || Math.abs(reflected[0] - x - w / 2) + Math.abs(reflected[1] - y - h / 2) < 1) { copy?.remove(); continue; }
                     if (!copy) { copy = original.cloneNode(true); copy.dataset.note += '-mirror'; copy.onclick = original.onclick; original.after(copy); }
+                    if(original.dataset.note==='apex')copy.setAttribute('aria-pressed',String(NOTES.on.size>0));
                     copy.style.left = (reflected[0] - w / 2).toFixed(1) + 'px'; copy.style.top = (reflected[1] - h / 2).toFixed(1) + 'px'; window.HubView.apply(copy);
                 }
             };
@@ -1107,6 +1119,7 @@
                     const apex = document.createElement('button'); apex.type = 'button'; apex.className = 'hubNoteCell'; apex.dataset.note = 'apex';
                     apex.title = 'Вершина: щелчок — окраска стекает вниз по соседним единицам, строка за строкой, каждая строка звучит нотой (До…Си по кругу); ещё щелчок — стоп. Биты не меняются';
                     apex.setAttribute('aria-label', 'Вершина — пустить окраску вниз');
+                    apex.setAttribute('aria-pressed',String(NOTES.on.size>0));
                     Object.assign(apex.style, { left: (ax - hit / 2).toFixed(1) + 'px', top: (ay - hitH / 2).toFixed(1) + 'px', width: hit.toFixed(1) + 'px', height: hitH.toFixed(1) + 'px' });
                     apex.onclick = () => { post({ zerkFlood: true }); noteKick(); };
                     NOTES.cv.after(apex);
@@ -1123,9 +1136,11 @@
             window.addEventListener('hubmusic', e => {
                 const d = e.detail;
                 NOTES.on = new Set(d.zerkSndOn ? ['flood'] : []); NOTES.paused = !!d.zerkSndPaused;
+                if(d.zerkFloodSpeed&&NOTES.speed!==d.zerkFloodSpeed){NOTES.speed=d.zerkFloodSpeed;NOTES.key='';sierDraw.k='';}
+                if(floodPlay){floodPlay.textContent='Биты\n'+(d.zerkSndOn&&!d.zerkSndPaused?'Ⅱ':'▶');floodPlay.setAttribute('aria-pressed',String(d.zerkSndOn&&!d.zerkSndPaused));floodPlay.title=d.zerkSndOn&&!d.zerkSndPaused?'Биты звучат — поставить на паузу':d.zerkSndPaused?'Продолжить биты с этой строки':'Запустить биты с вершины';floodSpeed.textContent=NOTES.speed+'/с';}
                 // v0.107: музыка меняет только слой звучащих битов; фон треугольника уже готов.
                 if(NOTES.X&&NOTES.Y){NOTES.cells=[{t:0,r:0,j:0,bit:'1',x:NOTES.X(0,0),y:NOTES.Y(0),apex:true},...(d.zerkHeads||[]).filter(h=>h[0]>0).map(h=>({t:h[2]|0,r:h[0],j:h[1],bit:h[3]||'1',x:NOTES.X(h[0],h[1]),y:NOTES.Y(h[0]),front:true}))];}
-                document.querySelectorAll('.hubNoteCell[data-note=apex]').forEach(b=>b.setAttribute('aria-pressed',String(!!d.zerkSndOn)));noteDraw(performance.now());noteKick();
+                document.querySelectorAll('.hubNoteCell[data-note=apex],.hubNoteCell[data-note=apex-mirror]').forEach(b=>b.setAttribute('aria-pressed',String(!!d.zerkSndOn)));noteDraw(performance.now());noteKick();
             });
             const sierBase = document.createElement('canvas'), sierSource = document.createElement('canvas');
             const finishSier = (canvas, output) => {
@@ -1155,7 +1170,8 @@
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — v0.107: фон обновляется только при изменении геометрии, узора или зеркала */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
+                const fieldTools=document.getElementById('hubFieldTools'), fieldTop=Math.min(H*.55,Math.max(8,Math.ceil((fieldTools?.getBoundingClientRect().bottom||0)+(matchMedia('(max-width:1100px)').matches?scrollY:0))+12));
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
                 if (!output) { if (key === sierDraw.k) {
                     if (sierDraw.mirror !== window.HubMirror.revision) { sg.save(); sg.setTransform(1,0,0,1,0,0); sg.clearRect(0,0,canvas.width,canvas.height); sg.drawImage(sierSource,0,0); sg.restore(); window.HubMirror.reflect(canvas); reflectNotes(); noteDraw(performance.now()); return finishSier(canvas, null); }
                     if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase); sierDraw.view = window.HubView.revision; } return true;
@@ -1179,8 +1195,8 @@
                 /* v0.083, «треугольник ниже»: верх — под надписью «Зеркалиус», низ — на прежнем месте (компьютер — 97 % высоты, телефон — 49 %) */
                 /* v0.087, «проверь на телефон версию»: телефон стоя держал треугольник в 49 % высоты (под ним — ноты), и дырка выходила меньше порога —
                    на iPhone кнопки не было вовсе (ноты по-старому), на Pixel — 39 px. В режиме одной кнопки нот нет — треугольник до 90 % высоты */
-                if (!land) { const top = 8, fieldW = desk ? W - 300 : W, fit = b => Math.min(fieldW * 0.94 / N, (b - top) / ((N + 1) * 0.866));
-                    const big = !desk && allBtn && fg && 7 * fit(H * 0.9) >= 30, hMax = (desk ? H * 0.97 : big ? H * 0.9 : H * 0.49) - top; dw = fit(hMax + top); dh = dw * 1.732;
+                if (!land) { const top = fieldTop, fieldW = desk ? W - 300 : W, fit = b => Math.min(fieldW * 0.94 / N, (b - top) / ((N + 1) * 0.866));
+                    dw = fit(H * 0.97); dh = dw * 1.732;
                     const cx = (desk ? 300 : 0) + fieldW / 2, y0 = top + dh / 2;
                     spots = [(r, j) => [cx - (PR[r].length - 1) * dw / 2 + j * dw, y0 + r * dh / 2]];
                     if (!output) notePlace((r, j) => cx - (PR[r].length - 1) * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr); }   // v0.093: ноты — ячейки на единицах (вместо дырки «все 7 нот»)

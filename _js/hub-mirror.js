@@ -1,4 +1,4 @@
-/* Hub v0.112: automatic planar mirror rotation with speed and selective field pause. */
+/* Hub v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
   const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp',magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
@@ -145,6 +145,7 @@
   }
   window.HubMirror = {
     state, get revision() { return revision; },
+    home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:Math.PI/2});changed();save();},
     setBitCenters(points){bitCenters=points;},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
