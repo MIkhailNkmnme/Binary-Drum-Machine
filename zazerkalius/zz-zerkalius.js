@@ -1,3 +1,4 @@
+/* v0.1128: nearest valid magnetic target; digit toggle applies in both net views. */
 /* v0.1127: free top/bottom docking, header axis toggles, shared transport, magnetic axes and tiled vector net bits. */
 /* v0.1126: zoomed bits and nets render directly at output resolution; cached images remain for reduced views and picking. */
 /* v0.1125: закрепление групп в верхней шапке, крупные номера, коралловое третье зеркало, затемнение вне пересечений и отмена ручных движений; поворот холста на 360°, захват всех фигур за биты без квадратных ручек; линия тянет зеркало, точки кручения поверх всех осей; v0.1124: только пересечения фигур, перенос пустого холста и осей, дзен колёсиком; v0.1123: читаемое меню тёмного зеркала, развёртки → Бирамида, только биты, шрифты, палитры и движение вдоль оси; v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
@@ -173,8 +174,8 @@
           if(turning){const raw=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=magnetic?sceneMath.snapAngle(raw,others):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
           else{const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);if(m.along){m.spin=false;m.angle=a;}m.x=clamp(x+dx/drawW,.01,.99);m.y=clamp(y+dy/drawH,.01,.99);
             if(m.along){const p=sceneMath.axisMove(x*drawW,y*drawH,dx,dy,a,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}
-            if(magnetic){const z=state.zoom,result=sceneMath.snapPosition(m.x*drawW*z,m.y*drawH*z,others.map(other=>({x:other.x*drawW*z,y:other.y*drawH*z,angle:other.angle})),drawW*z,drawH*z,10,[.01*drawW*z,.01*drawH*z,.99*drawW*z,.99*drawH*z],[drawW*z/2,drawH*z/2]);
-              const bit=nearestBit(m.x*drawW,m.y*drawH,targets,10/z);if(bit&&(!m.along||Math.abs((bit[0]-x*drawW)*Math.sin(a)-(bit[1]-y*drawH)*Math.cos(a))<1e-6)){result.x=bit[0]*z;result.y=bit[1]*z;result.snapped=true;result.label='центр бита';}if(!m.along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
+            if(magnetic){const z=state.zoom,result=magneticPosition(m.x*drawW,m.y*drawH,others,z,targets,m.along?{x:x*drawW,y:y*drawH,angle:a}:null);
+              if(!m.along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
           line.classList.toggle('snapped',snapped);changed();};
         const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped','grabbing');snapHint='';if(!moved&&turning&&ev.type==='pointerup')rotate(15);else{if(moved)pushMotion(before);persist();request();}};
         node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
@@ -312,6 +313,14 @@
   stage.addEventListener('wheel',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion')||!e.deltaY)return;e.preventDefault();e.stopPropagation();const r=stage.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?drawH:1);zoomBy(Math.exp(-clamp(delta,-120,120)*.0015),e.clientX-r.left,e.clientY-r.top,true);},{passive:false});
   function magnetBits(){const data=scene(),points=data.labels.map(v=>v.point);for(const item of data.items)if(!item.mask)for(const p of item.src.points||[])points.push(sceneMath.point(item.matrix,...p));return points;}
   function nearestBit(x,y,points,radius){let best=null;for(const p of points){const d=Math.hypot(x-p[0],y-p[1]);if(d<radius){radius=d;best=p;}}return best;}
+  function magneticPosition(x,y,others,z,targets,along=null){
+    const permitted=p=>!along||Math.abs((p[0]-along.x)*Math.sin(along.angle)-(p[1]-along.y)*Math.cos(along.angle))<1e-6;
+    let result=sceneMath.snapPosition(x*z,y*z,others.map(m=>({x:m.x*drawW*z,y:m.y*drawH*z,angle:m.angle})),drawW*z,drawH*z,10,[.01*drawW*z,.01*drawH*z,.99*drawW*z,.99*drawH*z],[drawW*z/2,drawH*z/2]);
+    if(!permitted([result.x/z,result.y/z]))result={x:x*z,y:y*z,snapped:false,label:''};
+    const bit=nearestBit(x,y,along?targets.filter(permitted):targets,10/z);
+    if(bit&&(!result.snapped||Math.hypot(bit[0]-x,bit[1]-y)<Math.hypot(result.x/z-x,result.y/z-y)-1e-9))result={x:bit[0]*z,y:bit[1]*z,snapped:true,label:'центр бита'};
+    return result;
+  }
   function pickFigures(x,y){
     const mirrors=new Set(),sources=new Set();
     for(const item of scene().items){const [a,b,c,d,e,f]=item.matrix,det=a*d-b*c;if(Math.abs(det)<1e-12)continue;const px=(d*(x-e)-c*(y-f))/det,py=(-b*(x-e)+a*(y-f))/det,B=item.bounds,img=item.src.image;
@@ -489,7 +498,7 @@
       if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),{P,C:[x,y]}=netCell(f,r,k,R);
         if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         if(!state.bitsOnly){ctx.globalAlpha=alpha*(bit?.42:.11);ctx.fillStyle=colorMap(col);ctx.beginPath();ctx.moveTo(...P[0]);P.slice(1).forEach(p=>ctx.lineTo(...p));ctx.closePath();ctx.fill();}
-        if(state.bitsOnly||state.netDigits){ctx.save();ctx.globalAlpha=alpha*(state.bitsOnly?(bit?1:.7):(bit?1:.7));ctx.fillStyle=colorMap(state.bitsOnly||!bit?col:'#06150d');ctx.translate(x,y);ctx.scale(.6/R/16,.6/R/16);ctx.font='700 16px '+state.font;ctx.fillText(String(bit),0,0);ctx.restore();}}
+        if(state.netDigits){ctx.save();ctx.globalAlpha=alpha*(state.bitsOnly?(bit?1:.7):(bit?1:.7));ctx.fillStyle=colorMap(state.bitsOnly||!bit?col:'#06150d');ctx.translate(x,y);ctx.scale(.6/R/16,.6/R/16);ctx.font='700 16px '+state.font;ctx.fillText(String(bit),0,0);ctx.restore();}}
       if(labels&&!preview&&!state.bitsOnly){const x=(A[0]+L[0]+B[0])/3,y=(A[1]+L[1]+B[1])/3;ctx.globalAlpha=alpha;ctx.font='700 '+(12/scale)+'px system-ui';ctx.lineWidth=3/scale;ctx.strokeStyle=colorMap('#000000');ctx.strokeText(f.name,x,y);ctx.fillStyle=colorMap('#ffffff');ctx.fillText(f.name,x,y);}
     }ctx.globalAlpha=alpha;
   }
