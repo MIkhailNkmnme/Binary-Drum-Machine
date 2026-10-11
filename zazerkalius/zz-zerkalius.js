@@ -1,4 +1,4 @@
-/* v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
+/* v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
 (() => {
   'use strict';
   const win = document.getElementById('w-zerkalius');
@@ -206,7 +206,7 @@
     buildPathEditor(m,i,group);c.section.remove();
     compactUpdates.push(()=>{group.parentElement.style.setProperty('--mirror-color',m.color);speedSlider.value=m.speed;c.spin.classList.toggle('on',m.spin);c.spin.textContent=m.spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(m.spin));});
   });
-  const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[8,248]:[stage.clientWidth-88,8]);
+  const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[8,248]:[stage.clientWidth-104,8]);
   for(const [i,n] of oldView.entries()){
     if(i<2){const label=['Наклон 0','Наклон 1'][i],el=editor([n]);editDiamond('↶\n'+i,label,el,viewGroup);}
     else if(i<4){diamond(n,'',viewGroup);for(const t of [...n.childNodes])if(t.nodeType===3)t.textContent=i===2?'◈\nцвет':'╲ 1\n╱ 0';}
@@ -216,6 +216,7 @@
   const labelToggle=button('Аа\nподп.','Подписи зеркал и холстов',()=>{state.labels=!state.labels;changed();},viewGroup);diamond(labelToggle,'Аа\nподп.',viewGroup);
   compactUpdates.push(()=>{labelToggle.classList.toggle('on',state.labels);labelToggle.setAttribute('aria-pressed',String(state.labels));});
   const magnetToggle=button('🧲\nмагн.','Магнит зеркал: центры, середины и половины линий; углы 30°, 45°, 60°, 90°',()=>{state.magnet=!state.magnet;changed();},viewGroup);diamond(magnetToggle,'🧲\nмагн.',viewGroup);
+  magnetToggle.style.left='48px';magnetToggle.style.top=labelToggle.style.top;viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');viewGroup.parentElement.classList.add('zerk-view-group');
   compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
   const annotations=document.createElement('div');annotations.className='zerk-annotations';annotations.hidden=!state.labels;stage.append(annotations);
   const annotationNodes=Array.from({length:6},()=>{const el=document.createElement('span');el.className='zerk-annotation';annotations.append(el);return el;});
