@@ -13315,21 +13315,28 @@ function sfzWeaveSync(){
 function sfzGrapeLayout(box, items, name, up=false){
   const slots=[];
   const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0;
+  const isEditor = item => item.matches("select,input:not([type=checkbox]),textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
+  const axis = items.length && isEditor(items[0]) ? 60 : 24;
+  const sliderNames = {cone3H:"Высота",cone3Bw:"Толщина",coneSlit:"Щель",row1Slit:"Щель 1",sndSp:"Темп",sndVol:"Громкость",triS:"Масштаб"};
 
   for (const item of items) {
     if (!item.classList.contains("sfz-grape-item")) { if (item.classList.contains("tz")) triOff(item); tzcClean(item); item.classList.add("sfz-grape-item"); }
-    const editor = item.matches("select,input,textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
-    const large = !!item.querySelector('input:not([type="checkbox"]),textarea') || item.matches("input,textarea");
+    const editor = isEditor(item), large = editor;
     item.classList.toggle("sfz-grape-editor",editor); item.classList.toggle("sfz-grape-large",large);
-    if (large && side) { y += cell + cell / 2; side = 0; }
-    const x = large ? 0 : side * step, top = y + (large ? 0 : side * cell / 2), size = large ? 96 : cell;
+    const range = item.querySelector('input[type="range"]'), caption = item.querySelector(":scope > .sli");
+    if (range && caption && sliderNames[range.id] && caption.textContent !== sliderNames[range.id]) caption.textContent = sliderNames[range.id];
+    if (range && !range.hasAttribute("aria-label")) range.setAttribute("aria-label",sliderNames[range.id] || caption?.textContent || item.title);
+    // v0.059: редакторы занимают отдельную широкую строку, без пустого ромба и наложения на кнопки.
+    if (editor) { y = Math.max(y,bottom + (bottom ? 8 : 0)); side = 0; }
+    const x = editor ? axis - 60 : axis - 24 + side * step, top = y + (editor ? 0 : side * cell / 2);
+    const w = editor ? 120 : cell, h = editor ? (range ? 52 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
 
-    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,size}); sfzGrapeStyle(item,"--grape-w",size+"px"); sfzGrapeStyle(item,"--grape-h",size+"px");
-    width=Math.max(width,x+size); bottom=Math.max(bottom,top+size);
+    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
+    width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
-    if (large) { y=top+size+4; side=0; } else { side=1-side; if(!side)y+=cell; }
+    if (editor) { y=top+h+8; side=0; } else { side=1-side; if(!side)y+=cell; }
   }
-  for(const {item,top,size} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-size:top)+"px");
+  for(const {item,top,h} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-h:top)+"px");
   sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
   sfzWeaveKick();
   return {width,height:bottom};
