@@ -40,7 +40,17 @@
 #zerkStage .zerk-grape-body{position:relative;width:72px;margin:4px 0 0 4px;padding:0;height:var(--grape-height)}
 #zerkStage .zerk-diamond{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px;margin:0!important;padding:0 4px!important;border:0!important;border-radius:0!important;background:color-mix(in srgb,var(--mirror-color) 12%,transparent)!important;color:var(--mirror-color)!important;font:600 11px/1.1 var(--ff,monospace)!important;white-space:pre-line;text-align:center;cursor:pointer;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
 #zerkStage .zerk-diamond::before,#zerkStage .zerk-grape .smh::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--mirror-color);opacity:.7;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 .7 47.3 24 24 47.3 .7 24Z' fill='none' stroke='black' stroke-width='1'/%3E%3C/svg%3E") center/100% 100% no-repeat}
-#zerkStage .zerk-diamond:hover,#zerkStage .zerk-diamond:focus-visible,#zerkStage .zerk-diamond.on,#zerkStage .zerk-diamond:has(input:checked){background:color-mix(in srgb,var(--mirror-color) 26%,transparent)!important}
+#zerkStage .zerk-diamond:hover,#zerkStage .zerk-diamond:focus-visible,#zerkStage .zerk-diamond:focus-within{background:color-mix(in srgb,var(--mirror-color) 26%,transparent)!important}
+/* A saved choice stays brighter than hover; borders and marks never change the hit box. */
+#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked)){background:color-mix(in srgb,var(--mirror-color) 62%,transparent)!important;color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px #000,0 0 3px #000}
+#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked))::before{background:#fff;opacity:1;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 1.5 46.5 24 24 46.5 1.5 24Z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked))::after{content:"✓";position:absolute;top:5px;left:20px;width:8px;font:800 8px/1 var(--ff,monospace);color:#fff;pointer-events:none;text-shadow:0 1px 2px #000}
+#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked)) .zerk-half{color:#fff!important}
+#zerkStage .zerk-diamond:active{background:color-mix(in srgb,var(--mirror-color) 80%,transparent)!important}
+.zerk-annotations{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.zerk-annotation{position:absolute;transform:translateX(-50%);padding:3px 6px;border-bottom:1px solid currentColor;background:#050806d9;font:700 12px/1.2 var(--ff,monospace);white-space:nowrap;pointer-events:none}
+.zerk-annotations[hidden],.zerk-annotation[hidden]{display:none}
+.zerk-annotation.off{opacity:.45}
 #zerkStage .zerk-diamond input[type=checkbox],#zerkStage .zerk-diamond input[type=color]{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
 #zerkStage .zerk-diamond input[type=color]+span{pointer-events:none}
 #zerkTools .zerk-editor[hidden]{display:none!important}
