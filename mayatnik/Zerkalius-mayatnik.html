@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.005. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.006. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.005</title>
+<title>Zerkalius Маятник — v0.006</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -22,6 +22,8 @@
   v0.003: обводка «шумной» зоны (ступенчатая, по данным); готовые кнопки «хорр» 256 / 512 / 1024 / 2024 / 4096; предел строк 2048 → 4096.
   v0.004: обрезка на N/3 — кнопка «N/3» и галочка «до N/3» для кнопок «хорр» (до гибели последней дыры).
   v0.005: кнопка «4N» — до застывания картинки (к 4N вершинам новые конусы уже не достают до конуса якоря); вершин до 16384.
+  v0.006: цвет не хранится, а считается по формуле — чётность числа конусов над клеткой (сверено с прежним хранимым цветом на 15,3 млн клеток):
+    поле 5 байт на клетку вместо 6, расчёт на ~20 % быстрее, опорные кадры вдвое меньше.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -56,7 +58,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.005</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.006</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -108,16 +110,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script>
 /* ==== ЯДРО (чистые функции; сверено с Excel) ==== */
 const MAYATNIK = (() => {
-  // val: Int8Array W*H, -1 пусто, 0, 1; col: Uint8Array, 0 чёрный, 1 синий, 2 красный
+  // val: Int8Array W*H, -1 пусто, 0, 1. v0.006: цвет не хранится — он считается по формуле (tint ниже)
   function field(W, H, bg) {
     const val = new Int8Array(W * H).fill(bg === '1' ? 1 : bg === '0' ? 0 : -1);
-    return { W, H, val, col: new Uint8Array(W * H) };
+    return { W, H, val };
   }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
   function cone(f, a, D) {
-    const { W, H, val, col } = f;
+    const { W, H, val } = f;
     if (a < 0 || a >= W) return;
-    if (val[a] === -1) { val[a] = 1; col[a] = 0; }
+    if (val[a] === -1) val[a] = 1;
     const apex = val[a]; val[a] = 1;             // родитель-вершина всегда 1 (в Excel: parentCell = startCell)
     const last = Math.min(D, H);
     for (let r = 1; r < last; r++) {             // r = step − 1; клетки конуса a−r … a+r через одну
@@ -129,7 +131,6 @@ const MAYATNIK = (() => {
         const i = row + c, old = val[i];
         const nv = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
         val[i] = nv;
-        col[i] = old === -1 ? 0 : (col[i] !== 0 ? 0 : (nv ? 1 : 2));
       }
       if (r === 1) val[a] = apex;
     }
@@ -148,7 +149,26 @@ const MAYATNIK = (() => {
     const pad = D - 1;
     return { W: hi - lo + 2 * pad + 1, anchor: pad - lo };
   }
-  return { field, cone, offset, geometry };
+  // v0.006: цвет «мерцания» из Excel — это чётность числа конусов над клеткой: первая запись чёрная, каждая следующая
+  // переключает «чёрный ↔ цветной», а цветной показывает бит на момент записи (он с тех пор не менялся).
+  // Вершины всех ходов идут подряд, поэтому конусы над клеткой (r, c) — вершины a из [lo, hi] (относительно якоря)
+  // с |c − a| ≤ r и той же чётностью, что c + r: их число считается сразу, без хранения.
+  // Возвращает 0 — чёрный, 1 — синий (стал 1), 2 — красный (стал 0); v — бит клетки, filled — фон «все 1 / все 0».
+  function tint(r, c, v, lo, hi, filled) {
+    if (r === 0) return 0;                                 // строку вершин конусы не переписывают
+    const a0 = Math.max(lo, c - r), a1 = Math.min(hi, c + r);
+    let n = 0;
+    if (a0 <= a1) { const first = a0 + (((c + r - a0) % 2) + 2) % 2; if (first <= a1) n = ((a1 - first) >> 1) + 1; }
+    if (filled) n++;                                       // на заполненном фоне первая же запись — «перекрытие»
+    return n % 2 ? 0 : (v ? 1 : 2);
+  }
+  // Крайние вершины после k конусов
+  function span(mode, k) {
+    let lo = 0, hi = 0;
+    for (let j = 0; j < k; j++) { const o = offset(mode, j); if (o < lo) lo = o; if (o > hi) hi = o; }
+    return [lo, hi];
+  }
+  return { field, cone, offset, geometry, tint, span };
 })();
 if (typeof module !== 'undefined') module.exports = MAYATNIK;
 /* ==== /ЯДРО ==== */
@@ -190,13 +210,13 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
     // v0.002: опорные кадры для ползунка «кадр» — все кадры не влезут (2024 × 24 МБ), поэтому каждый interval-й,
     // не больше ~200 МБ на всё; нужный кадр досчитывается от ближайшего опорного
-    snaps = new Map(); interval = Math.max(1, Math.ceil(S * 2 * f.val.length / 200e6)); snap();
+    snaps = new Map(); interval = Math.max(1, Math.ceil(S * f.val.length / 200e6)); snap();   // v0.006: кадр — 1 байт на клетку (цвет не хранится)
     target = 0; const fr = $('frame'); fr.max = S; fr.value = 0;
     cv.width = geo.W; cv.height = st.rows; img = g.createImageData(geo.W, st.rows);
     layout(); draw();
   }
   function total() { return st.mode === 'one' ? 1 : st.steps; }
-  function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice(), col: f.col.slice() }); }
+  function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice() }); }   // v0.006: только биты — цвет считается
   function addOne() {
     if (k >= total()) return false;
     MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++;
@@ -208,7 +228,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     stop(); if (!f) reset();
     t = Math.max(0, Math.min(total(), t | 0));
     if (t < k) { let s = 0; for (const key of snaps.keys()) if (key <= t && key > s) s = key;
-      const o = snaps.get(s); f.val.set(o.val); f.col.set(o.col); k = s; }
+      const o = snaps.get(s); f.val.set(o.val); k = s; }
     target = t;
     if (k === t) { draw(); return; }
     fast = true; t0 = 0; playing = true; next();
@@ -216,10 +236,15 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
   function draw() {
-    const P = PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { val, col } = f;
+    const P = PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
-    for (let i = 0; i < val.length; i++) { const v = val[i]; px[i] = v < 0 ? empty : T[v * 3 + col[i]]; }
+    if (st.view === 'bits') for (let i = 0; i < val.length; i++) { const v = val[i]; px[i] = v < 0 ? empty : T[v * 3]; }
+    else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
+      const [lo, hi] = MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
+      for (let r = 0; r < H; r++) { const row = r * W;
+        for (let c = 0; c < W; c++) { const v = val[row + c]; px[row + c] = v < 0 ? empty : T[v * 3 + MAYATNIK.tint(r, c - A, v, lo, hi, filled)]; } }
+    }
     if (st.outline) outline(px);
     g.putImageData(img, 0, 0);
     status();
@@ -294,7 +319,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   function play() {
     if (playing) { stop(); return; }
     if (!f) reset();
-    else if (k >= total()) { const o = snaps.get(0); f.val.set(o.val); f.col.set(o.col); k = 0; }   // повтор с кадра 0
+    else if (k >= total()) { const o = snaps.get(0); f.val.set(o.val); k = 0; }   // повтор с кадра 0
     target = total();
     playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = 'Ⅱ Пауза';
     next();
@@ -388,7 +413,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     if (!f) return;
     const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
     if (x < 0 || y < 0 || x >= f.W || y >= f.H) { tip.style.display = 'none'; return; }
-    const v = f.val[y * f.W + x], c = ['чёрн', 'син', 'красн'][f.col[y * f.W + x]];
+    const v = f.val[y * f.W + x], sp = MAYATNIK.span(st.mode, k), c = v < 0 ? '' : ['чёрн', 'син', 'красн'][MAYATNIK.tint(y, x - geo.anchor, v, sp[0], sp[1], st.bg !== 'empty')];
     tip.textContent = `строка ${y + 1} · столбец ${x - geo.anchor >= 0 ? '+' : ''}${x - geo.anchor} · ${v < 0 ? 'пусто' : v + ' ' + c}`;
     tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
   });
