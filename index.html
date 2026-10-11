@@ -1,6 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.110. Точка входа: ссылки на все страницы проекта.
-     v0.110: пульт над полем, переворот 3D вокруг зеркала, магнит оси и двойной щелчок — пауза / продолжить.
+<!-- Zerkalius Hub (index) — v0.111. Точка входа: ссылки на все страницы проекта.
+     v0.111: рабочий ползунок угла с подписью; кэш рисунка для плавного 3D-переворота.
      v0.109: «Код» — прежняя страница Code, «Зеркалиус» — три зеркала.
      v0.107: ровные кнопки, ссылка на окно «Зеркалиус», компактные ромбы настроек и PNG рядом с видео.
      v0.106: главные кнопки «Треугольник» и «Зазеркалиус» — вверху левого меню.
@@ -124,7 +124,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.110</title>
+    <title>Zerkalius Control Hub — v0.111</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -583,11 +583,13 @@
         #hubZoom output{cursor:pointer;font-variant-numeric:tabular-nums}
         body.hubCanvasUnlocked{touch-action:none}
         .hubMirrorHandle{display:none!important}
-        /* v0.110: canvas controls live above the field, independent of menu scroll. */
+        /* v0.111: canvas controls live above the field, independent of menu scroll. */
         #hubFieldTools.hubMirrorSettings{position:fixed;left:318px;top:8px;z-index:24;display:flex;flex-wrap:wrap;align-items:flex-start;gap:2px;width:calc(100vw - 430px);max-width:700px;padding:0;overflow:visible}
         #hubFieldTools .hubRhomb,#hubFieldTools .hubTilt{flex:0 0 48px}
         #hubFieldTools .hubFlip{white-space:pre-line;font-size:12px}
         #hubFieldTools .hubViewRotation{order:2;flex:0 0 144px;align-self:center}
+        #hubFieldTools .hubViewRotationControl{order:2;flex:0 0 156px;display:flex;flex-direction:column;gap:2px;margin:0;padding:0;color:#9fffc8;font:11px/1.2 system-ui,sans-serif}
+        #hubFieldTools .hubViewRotationControl .hubViewRotation{flex:0 0 auto;width:156px!important;touch-action:none}
         #hubFieldTools .hubImageStatus{order:3;flex:0 0 100%;width:100%;margin:0}
         .hub{scrollbar-width:none!important}.hub::-webkit-scrollbar{display:none;width:0;height:0}
         @media(max-width:1100px){#hubFieldTools.hubMirrorSettings{position:absolute;left:12px;top:68px;width:calc(100% - 24px);max-width:none}}
@@ -598,7 +600,7 @@
 <script src="_js/hub-mirror.js?v=110"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
-<script src="_js/hub-view.js?v=110"></script>
+<script src="_js/hub-view.js?v=111"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -635,7 +637,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.110</div>
+        <div class="ver">v0.111</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1116,6 +1118,15 @@
                 if(NOTES.X&&NOTES.Y){NOTES.cells=[{t:0,r:0,j:0,bit:'1',x:NOTES.X(0,0),y:NOTES.Y(0),apex:true},...(d.zerkHeads||[]).filter(h=>h[0]>0).map(h=>({t:h[2]|0,r:h[0],j:h[1],bit:h[3]||'1',x:NOTES.X(h[0],h[1]),y:NOTES.Y(h[0]),front:true}))];}
                 document.querySelectorAll('.hubNoteCell[data-note=apex]').forEach(b=>b.setAttribute('aria-pressed',String(!!d.zerkSndOn)));noteDraw(performance.now());noteKick();
             });
+            const sierBase = document.createElement('canvas');
+            const finishSier = (canvas, output) => {
+                if (!output) {
+                    if (sierBase.width !== canvas.width || sierBase.height !== canvas.height) { sierBase.width = canvas.width; sierBase.height = canvas.height; }
+                    const g = sierBase.getContext('2d'); g.clearRect(0, 0, sierBase.width, sierBase.height); g.drawImage(canvas, 0, 0);
+                    sierDraw.view = window.HubView.revision;
+                }
+                window.HubView.paint(canvas, output ? { left: output.left, scale: output.scale } : null, output ? null : sierBase); return true;
+            };
             const sierDrawCore = (output = null) => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
                 const dpr = output ? output.scale : window.devicePixelRatio || 1, W = sier.clientWidth, H = sier.clientHeight; if (!W || !H) return false;
@@ -1126,8 +1137,8 @@
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — v0.107: фон обновляется только при изменении геометрии, узора или зеркала */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + window.HubMirror.revision + '|' + window.HubImage.revision + '|' + window.HubView.revision;
-                if (!output) { if (key === sierDraw.k) return true; sierDraw.k = key; }
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + window.HubMirror.revision + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
+                if (!output) { if (key === sierDraw.k) { if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase); sierDraw.view = window.HubView.revision; } return true; } sierDraw.k = key; }
                 if (!output && (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr))) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, -left * dpr, 0); sg.clearRect(0, 0, W, H);
                 const heads = new Map((output ? hd || [] : []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
@@ -1136,7 +1147,7 @@
                 if (window.HubImage.active) {
                     if (!output) { NOTES.g.clearRect(0, 0, NOTES.cv.width, NOTES.cv.height); document.querySelectorAll('.hubNoteCell').forEach(b => b.remove()); NOTES.key = ''; }
                     window.HubImage.draw(sg, desk ? 300 : 0, desk ? W - 300 : W, H);
-                    window.HubView.source(canvas,output ? {left,scale:dpr}:null); window.HubMirror.reflect(canvas, output ? { left, scale: dpr } : null); window.HubView.paint(canvas,output ? {left,scale:dpr}:null); return true;
+                    window.HubView.source(canvas,output ? {left,scale:dpr}:null); window.HubMirror.reflect(canvas, output ? { left, scale: dpr } : null); return finishSier(canvas, output);
                 }
                 const N = PR.length, land = false; if (land) allOff();   // v0.081: лёжа — ноты, как прежде, между двумя треугольниками
                 const bw = sndBox.getBoundingClientRect().width;
@@ -1180,10 +1191,10 @@
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, row[j]); }
                         if (hc) sg.shadowBlur = 0;
                         if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); bitDigit(row[j], x, y); } } } }
-                sg.globalAlpha = 1; window.HubView.source(canvas,output ? {left,scale:dpr}:null); window.HubMirror.reflect(canvas, output ? { left, scale: dpr } : null); window.HubView.paint(canvas,output ? {left,scale:dpr}:null); return true;
+                sg.globalAlpha = 1; window.HubView.source(canvas,output ? {left,scale:dpr}:null); window.HubMirror.reflect(canvas, output ? { left, scale: dpr } : null); return finishSier(canvas, output);
             };
             const sierDraw = (...args) => window.hubPerfMeasure ? window.hubPerfMeasure('sierDraw', () => sierDrawCore(...args)) : sierDrawCore(...args);
-            window.addEventListener('hubview',()=>{sierDraw.k='';sierDraw();noteDraw(performance.now());});
+            window.addEventListener('hubview',()=>{sierDraw();noteDraw(performance.now());});
             window.addEventListener('hubimage', () => {
                 music.setRows(ROW_PATTERNS[window.HubMirror.state.pattern]); sierDraw.k = ''; sierDraw();
             });
