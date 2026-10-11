@@ -118,3 +118,20 @@
 #zerkTools .zerk-net-presets canvas{display:block;width:56px;height:48px;max-width:100%;margin:auto}
 #zerkTools .zerk-net-editor{display:flex;flex-direction:column;gap:6px}
 #zerkTools .zerk-editor>div:not(.zerk-net-editor){display:flex;flex-direction:column;gap:6px}
+
+/* The mirror canvas has its own Zen target; saved window/group positions stay untouched. */
+body.zen.zerk-zen #w-cone{display:none!important}
+body.zen.zerk-zen #w-zerkalius#w-zerkalius{display:block!important;position:fixed!important;inset:0!important;left:0!important;top:0!important;width:auto!important;height:auto!important;margin:0!important;z-index:1000!important;border:0!important;box-shadow:none!important}
+body.zen.zerk-zen #w-zerkalius>.whead,body.zen.zerk-zen #w-zerkalius>.whint{display:none!important}
+body.zen.zerk-zen #w-zerkalius>.wbody{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important}
+body.zen.zerk-zen #zerkStage .zerk-grape,body.zen.zerk-zen #zerkTools,body.zen.zerk-zen #zerkStatus{display:none!important}
+body.zen.zerk-zen #w-zerkalius #coneRecBar>button{z-index:4!important}
+#zerkZenExit{display:none}
+body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;width:40px;height:40px;justify-content:center;align-items:center;z-index:15;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;background:#c9a8ff22;color:#fff;font:18px monospace}
+
+/* Grab the empty stage or an axis without intercepting control diamonds. */
+#zerkStage{cursor:grab}
+#zerkStage.panning{cursor:grabbing}
+.zerk-axis{position:absolute;inset:9px 0 auto;height:14px;pointer-events:auto;touch-action:none;cursor:grab}
+.zerk-axis:focus-visible{outline:1px solid #fff;background:#ffffff18}
+.zerk-mirror button{z-index:1}

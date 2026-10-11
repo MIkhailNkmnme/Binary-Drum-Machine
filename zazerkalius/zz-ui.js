@@ -1,3 +1,4 @@
+/* v0.1124: дзен Зеркалиуса и его видеохолст; рисунок конуса не блокирует чужие кнопки записи. */
 /* v0.1123: выбранная развёртка Зеркалиуса передаётся в Бирамиду отдельно от строк поля. */
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    ZAZERKALIUS — ИНТЕРФЕЙС
@@ -2870,7 +2871,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || !button.closest("#w-cone") || button.closest("#coneRecBar") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -8477,14 +8478,17 @@ function setupCone(){
     cvz.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
     cvz.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); });   // без автопрокрутки браузера
   }
-  window.zenSet = (on) => {
-    const w = $("w-cone");
+  window.zenSet = (on, target) => {
+    const wasZerk = document.body.classList.contains("zerk-zen"), isZerk = on && (target === "w-zerkalius" || (!target && recPick().w?.id === "w-zerkalius"));
+    const w = $(isZerk ? "w-zerkalius" : "w-cone");
     if (on && w.classList.contains("collapsed")) w.querySelector(".bc").click();
-    if (window.cgrpZenMove) cgrpZenMove(on);   // v0.256: отмеченные 🧘 группы с левой панели — на время дзена к конусу
+    if (window.cgrpZenMove && !isZerk && !wasZerk) cgrpZenMove(on);
+    document.body.classList.toggle("zerk-zen", isZerk);
+    if (on) document.activeElement?.blur();   // v0.256: отмеченные 🧘 группы с левой панели — на время дзена к конусу
     document.body.classList.toggle("zen", on); document.body.classList.remove("zen-quiet");
     clearTimeout(zenT); if (on) zenT = setTimeout(() => document.body.classList.add("zen-quiet"), 3000);
     try { if (on && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
-    requestAnimationFrame(() => { renderCone(); if (!on) { packWins(); renderAll(); } });
+    requestAnimationFrame(() => { if (isZerk || wasZerk) window.zzZerkaliusRender?.(); else renderCone(); if (!on) { packWins(); renderAll(); } });
   };
   $("bConeZen").onclick = () => zenSet(true);
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("zen")) zenSet(false); });
@@ -9364,8 +9368,8 @@ function setupCone(){
      открытых окон с холстом (то, что поднято последним: из шапки — нажатое), — ◯ Конус, ◆ Гранидус (его холст в рамке), ✦ Развёртку, △ Сетку,
      ▲ Паскаля, 🧊 Вид… Окно берётся в миг старта и пишется до стопа. 🎞 и ↻1 крутят конус — они, как прежде, только для конуса */
   let recSrc = null;
-  const REC_CV = { "w-cone": "coneCv", "w-view": "viewCv", "w-razv": "razvCv", "w-tri": "triCv", "w-rmb": "rmbCv", "w-pyr": "pyrCv" };
-  const REC_NM = { "w-cone": "konus", "w-okt": "granidus", "w-razv": "razvertka", "w-tri": "setka", "w-rmb": "romboidy", "w-pyr": "piramida", "w-view": "vid", "w-struct": "struktura" };
+  const REC_CV = { "w-zerkalius": "zerkCanvas", "w-cone": "coneCv", "w-view": "viewCv", "w-razv": "razvCv", "w-tri": "triCv", "w-rmb": "rmbCv", "w-pyr": "pyrCv" };
+  const REC_NM = { "w-zerkalius": "zerkalius", "w-cone": "konus", "w-okt": "granidus", "w-razv": "razvertka", "w-tri": "setka", "w-rmb": "romboidy", "w-pyr": "piramida", "w-view": "vid", "w-struct": "struktura" };
   const recBig = (list) => list.filter(c => c.width > 40 && c.height > 40 && !c.hasAttribute("data-no-rec") && c.getClientRects().length).sort((a, b) => b.width * b.height - a.width * a.height)[0] || null;
   const recPick = () => {
     let best = null, bz = -1;
@@ -9386,7 +9390,7 @@ function setupCone(){
   const recUi = () => {
     const b = $("bConeRec");
     b.classList.toggle("snd", !!Z.coneRecSnd);
-    if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись открытого окна — верхнего из открытых (только его картинка, без кнопок) в файл .webm: ◯ Конус, ◆ Гранидус, ✦ Развёртка, △ Сетка, ▲ Паскаль… Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл";   // v0.637: любое окно
+    if (!rec) b.title = (Z.coneRecSnd ? "⏺♪ Видео со звуком ПК" : "⏺ Видео") + ": запись открытого окна — верхнего из открытых (только его картинка, без кнопок) в файл .webm: Зеркалиус, ◯ Конус, ◆ Гранидус, ✦ Развёртка, △ Сетка, ▲ Паскаль… Наведи — рамка того, что попадёт в кадр. Ещё раз — стоп и сохранить; пока пишет, рядом ⏸ пауза. Правый щелчок — звук ПК вкл/выкл";   // v0.637: любое окно
     const m = $("bConeRecMp4");   // v0.250
     if (m) { m.classList.toggle("snd", !!Z.coneRecSnd); if (!rec) m.title = (Z.coneRecSnd ? "⏺♪ mp4 со звуком ПК" : "⏺ mp4") + ": запись открытого окна (верхнего из открытых) в файл .mp4 (H.264) — открывается везде: телефон, Телеграм, YouTube. Наведи — рамка кадра. Ещё раз — стоп и сохранить. Правый щелчок — звук ПК вкл/выкл"; }
   };
@@ -16681,7 +16685,7 @@ function init(){
         /* v0.892, по снимку ● mp4 ↻1 ▣ в дзене под группой «Щели» — «пусть панели перекрывают в дзене эти кнопки»: в дзене окно конуса — свой слой на весь
            экран (z-index 1000), и кнопки записи из body (1001) были над всем в нём, группы их перекрыть не могли. В дзене цепочка записи переезжает в тело окна
            конуса — над холстом, но под группами и плашками (z-index 4, у полосы групп 5); вне дзена — обратно в body, как было */
-        if (rb) { const wbz = zen && document.querySelector("#w-cone > .wbody"), par = wbz || document.body; if (rb.parentElement !== par) par.appendChild(rb); }
+        if (rb) { const wbz = zen && document.querySelector(document.body.classList.contains("zerk-zen") ? "#w-zerkalius > .wbody" : "#w-cone > .wbody"), par = wbz || document.body; if (rb.parentElement !== par) par.appendChild(rb); }
         const chain = [...(zb && (vis || top) ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
         if (zb) zb.style.display = vis || top ? "" : "none";
         if (rb) rb.style.display = vis || zen || top ? "" : "none";
@@ -17096,7 +17100,8 @@ function init(){
   document.addEventListener("keydown", (e) => {
     const t = e.target;
     if (e.key === "Escape" && document.body.classList.contains("zen")) { e.preventDefault(); zenSet(false); return; }   // v0.105: выйти из дзена
-    if (document.body.classList.contains("zen") && !e.ctrlKey && !e.altKey && !e.metaKey) {   // v0.176, «кнопками стрелки»: в дзене стрелки двигают вид, + − — масштаб к центру
+    if (document.body.classList.contains("zerk-zen") && window.zzZerkaliusKey?.(e)) return;
+    if (document.body.classList.contains("zen") && !document.body.classList.contains("zerk-zen") && !e.ctrlKey && !e.altKey && !e.metaKey) {   // v0.176, «кнопками стрелки»: в дзене стрелки двигают вид, + − — масштаб к центру
       const d = 40 * (window.devicePixelRatio || 1) * (e.shiftKey ? 4 : 1), mvK = { ArrowLeft: [d, 0], ArrowRight: [-d, 0], ArrowUp: [0, d], ArrowDown: [0, -d] }[e.key];
       if (mvK) { e.preventDefault(); conePan = [conePan[0] + mvK[0], conePan[1] + mvK[1]]; renderCone(); return; }
       const zk = { "+": 1.2, "=": 1.2, "-": 1 / 1.2, "_": 1 / 1.2 }[e.key];

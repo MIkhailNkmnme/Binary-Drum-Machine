@@ -1,4 +1,4 @@
-/* v0.1123: читаемое меню тёмного зеркала, развёртки → Бирамида, только биты, шрифты, палитры и движение вдоль оси; v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
+/* v0.1124: только пересечения фигур, перенос пустого холста и осей, дзен колёсиком; v0.1123: читаемое меню тёмного зеркала, развёртки → Бирамида, только биты, шрифты, палитры и движение вдоль оси; v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
 (() => {
   'use strict';
   const win = document.getElementById('w-zerkalius');
@@ -41,6 +41,7 @@
   for(const name of ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','Space Mono','VT323','Share Tech Mono','Press Start 2P','Major Mono Display','Orbitron'])if(!fonts.some(([v])=>v.includes(name)))fonts.push(['"'+name+'", monospace',name]);
   state.font=fonts.some(([v])=>v===state.font)?state.font:fonts[0][0];
   state.bitsOnly=!!state.bitsOnly;
+  state.overlapOnly=!!state.overlapOnly;
   state.bitColor=/^#[0-9a-f]{6}$/i.test(state.bitColor)?state.bitColor:'#9fffc8';
   state.mult=[1,2,3].includes(state.mult)?state.mult:1;
   state.sets=Array.from({length:3},(_,i)=>{const v=state.sets?.[i]||{};return {source:['shared','field','own','serp'].includes(v.source)?v.source:'shared',rows:Array.isArray(v.rows)?v.rows:ZZ_INITIAL_ROWS.slice(),color:/^#[0-9a-f]{6}$/i.test(v.color)?v.color:['#70e0d7','#ffd166','#ed8fea'][i]};});
@@ -135,9 +136,9 @@
     controls.push({angle,output,spin,on,color,speed,section});
     const line=document.createElement('div');line.className='zerk-mirror';line.dataset.mirror=String(i+1);
     const center=document.createElement('button');center.type='button';center.className='zerk-center';center.textContent=i+1;center.setAttribute('aria-label','Переместить зеркало '+(i+1));
-    const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1)+' в поле');line.append(center,turn);layer.append(line);handles.push({line,center,turn});
-    for(const [node,rotateMode] of [[center,false],[turn,true]]){
-      node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
+    const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1)+' в поле');const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за ось');line.append(axis,center,turn);layer.append(line);handles.push({line,center,turn});
+    for(const [node,rotateMode] of [[center,false],[turn,true],[axis,false]]){
+      node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб или ось — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
       node.addEventListener('pointerdown',e=>{
         if(e.button!==0)return;e.preventDefault();e.stopPropagation();node.setPointerCapture(e.pointerId);
         const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,cx=r.left+viewX(x),cy=r.top+viewY(y),start=Math.atan2(sy-cy,sx-cx);let moved=false;
@@ -234,6 +235,10 @@
   compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
   const bitsToggle=button('01\nбиты','Только цифры 0 и 1 без ромбов и заливки',()=>{state.bitsOnly=!state.bitsOnly;body.querySelector('input[aria-label="Только биты 0 / 1"]').checked=state.bitsOnly;changed(true);},viewGroup);diamond(bitsToggle,'01\nбиты',viewGroup);bitsToggle.style.left='48px';bitsToggle.style.top='0px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{bitsToggle.classList.toggle('on',state.bitsOnly);bitsToggle.setAttribute('aria-pressed',String(state.bitsOnly));});
+  const zenToggle=button('◎\nдзен','Дзен: Зеркалиус на весь экран',()=>window.zenSet?.(true,'w-zerkalius'),viewGroup);diamond(zenToggle,'◎\nдзен',viewGroup);zenToggle.style.left='48px';zenToggle.style.top='48px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
+  const overlapToggle=button('⋂\nперес.','Только пересечения фигур: скрыть участки без наложения',()=>{state.overlapOnly=!state.overlapOnly;changed();},viewGroup);diamond(overlapToggle,'⋂\nперес.',viewGroup);overlapToggle.style.left='48px';overlapToggle.style.top='96px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
+  compactUpdates.push(()=>{overlapToggle.classList.toggle('on',state.overlapOnly);overlapToggle.setAttribute('aria-pressed',String(state.overlapOnly));});
+  const zenExit=button('↙','Выйти из дзена Зеркалиуса',()=>window.zenSet?.(false),stage);zenExit.id='zerkZenExit';
   const annotations=document.createElement('div');annotations.className='zerk-annotations';annotations.hidden=!state.labels;stage.append(annotations);
   const annotationNodes=Array.from({length:6},()=>{const el=document.createElement('span');el.className='zerk-annotation';annotations.append(el);return el;});
   tools.hidden=true;tools.querySelector('.pminbtn').textContent='×';tools.querySelector('.pminbtn').setAttribute('aria-label','Закрыть настройку');tools.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();tools.hidden=true;};
@@ -248,6 +253,16 @@
   function zoomBy(factor,x=drawW/2,y=drawH/2){if(!drawW||!drawH)return;const before=state.zoom,next=clamp(before*factor,.2,6),ratio=next/before;
     state.pan=[(x-drawW/2-(x-drawW/2-state.pan[0]*drawW)*ratio)/drawW,(y-drawH/2-(y-drawH/2-state.pan[1]*drawH)*ratio)/drawH];state.zoom=next;changed();}
   stage.addEventListener('wheel',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom')||!e.deltaY)return;e.preventDefault();e.stopPropagation();const r=stage.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?drawH:1);zoomBy(Math.exp(-clamp(delta,-120,120)*.0015),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+  stage.addEventListener('pointerdown',e=>{
+    if(![0,1].includes(e.button)||e.target.closest('button,input,select,textarea,.zerk-axis,.zerk-grape .smh,.zerk-diamond,#zerkTools'))return;e.preventDefault();e.stopPropagation();stage.classList.add('panning');stage.setPointerCapture(e.pointerId);
+    const sx=e.clientX,sy=e.clientY,start=state.pan.slice();let moved=false;
+    const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>4)moved=true;if(moved){state.pan=[start[0]+(ev.clientX-sx)/drawW,start[1]+(ev.clientY-sy)/drawH];changed();}};
+    const end=ev=>{if(ev.pointerId!==e.pointerId)return;stage.removeEventListener('pointermove',move);stage.removeEventListener('pointerup',end);stage.removeEventListener('pointercancel',end);if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);stage.classList.remove('panning');if(e.button===1&&!moved&&ev.type==='pointerup')window.zenSet?.(!document.body.classList.contains('zerk-zen'),'w-zerkalius');};
+    stage.addEventListener('pointermove',move);stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+  });
+  stage.addEventListener('auxclick',e=>{if(e.button===1)e.preventDefault();});
+  stage.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});
+  window.zzZerkaliusKey=e=>{if(e.ctrlKey||e.altKey||e.metaKey||e.target.closest('input,textarea,select,button'))return false;const step=40*(e.shiftKey?4:1),delta={ArrowLeft:[step,0],ArrowRight:[-step,0],ArrowUp:[0,step],ArrowDown:[0,-step]}[e.key],factor={'+':1.2,'=':1.2,'-':1/1.2,'_':1/1.2}[e.key];if(!delta&&!factor)return false;e.preventDefault();if(delta){state.pan=[state.pan[0]+delta[0]/drawW,state.pan[1]+delta[1]/drawH];changed();}else zoomBy(factor);return true;};
   function field(parent,title,type,value,choices){
     const label=document.createElement('label'),input=document.createElement(choices?'select':'input');label.append(document.createTextNode(title));
     if(choices)for(const [v,t] of choices){const o=document.createElement('option');o.value=v;o.textContent=t;input.append(o);}else input.type=type;
@@ -351,8 +366,8 @@
   }
   function setRows(i){const set=state.sets[i];return set.source==='field'?Z.rows:set.source==='own'?set.rows:set.source==='serp'?serp:rows();}
   function sourceImage(R,color,dw,ratio){
-    const dh=dw*Math.sqrt(3), shapes=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
-    const include=(x,y)=>{bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
+    const dh=dw*Math.sqrt(3), shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
+    const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
     for(let r=0;r<R.length;r++)for(let j=0;j<R[r].length;j++){
       const bit=R[r][j],x=-(R[r].length-1)*dw/2+j*dw,y=r*dh/2,a=state[bit==='0'?'zero':'one']*pi/180,c=Math.cos(a),sn=Math.sin(a);
       shapes.push([bit,x,y,a]);for(const [u,v] of [[0,-dh*.45],[dw*.45,0],[0,dh*.45],[-dw*.45,0]])include(x+u*c-v*sn,y+u*sn+v*c);
@@ -365,7 +380,7 @@
       if(state.bitsOnly){ctx.globalAlpha=bit==='1'?1:.6;ctx.fillStyle=color;ctx.fillText(bit,0,fs*.06);}
       else if(state.trace){const sign=bit==='1'?1:-1;ctx.globalAlpha=bit==='1'?.95:.55;ctx.strokeStyle=color;ctx.lineWidth=Math.max(.65,dw*.08);ctx.beginPath();ctx.moveTo(-dw*.22,-sign*dh*.22);ctx.lineTo(dw*.22,sign*dh*.22);ctx.stroke();}
       else if(digits){ctx.globalAlpha=bit==='1'?.9:.35;ctx.fillStyle=bit==='1'?'#06150d':color;ctx.fillText(bit,0,fs*.06);}ctx.restore();}
-    return {image,bounds};
+    return {image,bounds,polygons:[figureHull(vertices)]};
   }
   function netGeometry(preset=state.net.preset){
     const [tree,C]=(state.net.nb===4?RAZV_V:RAZV_V3)[preset],{F,pos}=razvUnfold(tree,state.net.nb);
@@ -386,7 +401,7 @@
     }ctx.globalAlpha=1;
   }
   function netPreview(canvas,preset){const model=netGeometry(preset),b=model.bounds,scale=Math.min(48/(b[2]-b[0]),40/(b[3]-b[1])),ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,56,48);ctx.setTransform(scale,0,0,scale,28-(b[0]+b[2])*scale/2,24-(b[1]+b[3])*scale/2);netFaces(ctx,model,[],scale,false,true);}
-  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);return {image,bounds};}
+  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);return {image,bounds,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale)))};}
   function reflectedMode(mask){return state.mirrors.reduce((v,m,j)=>v^((mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);}
   function transferNet(){
     const mask=state.net.copy;if(state.mirrors.some((m,i)=>(mask&(1<<i))&&!m.on)){notify('Включите зеркала выбранного отражения или выберите исходную развёртку');return;}
@@ -397,12 +412,12 @@
   }
   function scene(ratio=dpr){
     if(state.build==='net'){
-      const model=netGeometry(),b=model.bounds,reserve=drawW>650?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2,drawH/2-(b[1]+b[3])*scale/2,0),items=[];
+      const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2,drawH/2-(b[1]+b[3])*scale/2,0),items=[];
       const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
       for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
-    const reserve=drawW>650?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
+    const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
     const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
     for(let i=0;i<count;i++){
       const R=count===1?rows():setRows(i),N=Math.max(1,R.length),max=Math.max(1,...R.map(s=>s.length)),color=count===1?state.bitColor:state.sets[i].color;
@@ -419,12 +434,25 @@
     }
     return {items,bounds:sceneMath.bounds(items),count,labels};
   }
+  function figureHull(points){
+    const sorted=points.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]),cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+    const half=list=>{const out=[];for(const p of list){while(out.length>1&&cross(out.at(-2),out.at(-1),p)<=0)out.pop();out.push(p);}return out;};
+    if(sorted.length<3)return sorted;const lower=half(sorted),upper=half(sorted.slice().reverse());return lower.slice(0,-1).concat(upper.slice(0,-1));
+  }
+  function overlapPaths(items){
+    return items.map(item=>{const path=new Path2D();for(const polygon of item.src.polygons){const points=polygon.map(p=>sceneMath.point(item.matrix,...p));
+      // All subpaths share one winding, including reflected faces, so their union has no accidental holes.
+      const area=points.reduce((a,p,i)=>{const q=points[(i+1)%points.length];return a+p[0]*q[1]-q[0]*p[1];},0);if(area<0)points.reverse();
+      points.forEach((p,i)=>i?path.lineTo(...p):path.moveTo(...p));path.closePath();}return path;});
+  }
   function paint(ctx,data,camera){
-    const scratch=tintCanvas,sc=tintContext;let lastSrc=null,lastMask=-1;
-    for(const item of data.items){let image=item.src.image;if(state.tint&&item.mask){
+    const scratch=tintCanvas,sc=tintContext,paths=state.overlapOnly?overlapPaths(data.items):null;let lastSrc=null,lastMask=-1;
+    for(const [index,item] of data.items.entries()){
+      if(paths){const others=new Path2D();paths.forEach((path,j)=>{if(j!==index)others.addPath(path);});ctx.save();ctx.setTransform(...camera);ctx.clip(paths[index]);ctx.clip(others);}
+      let image=item.src.image;if(state.tint&&item.mask){
       if(lastSrc!==item.src||lastMask!==item.mask){scratch.width=image.width;scratch.height=image.height;sc.drawImage(image,0,0);sc.globalCompositeOperation='source-atop';for(let i=0;i<3;i++)if(item.mask&(1<<i)){sc.globalAlpha=.38;sc.fillStyle=state.mirrors[i].color;sc.fillRect(0,0,scratch.width,scratch.height);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';lastSrc=item.src;lastMask=item.mask;}image=scratch;
       }
-      const b=item.bounds;ctx.setTransform(...sceneMath.multiply(camera,item.matrix));ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);
+      const b=item.bounds;ctx.setTransform(...sceneMath.multiply(camera,item.matrix));ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);if(paths)ctx.restore();
     }ctx.setTransform(1,0,0,1,0,0);
   }
   function render(){
@@ -444,7 +472,7 @@
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
-    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(moving?' · '+moving+' по кривым':' · колесо — масштаб');if(status.textContent!==message)status.textContent=message;platePlace(tools);
+    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · только пересечения':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');if(status.textContent!==message)status.textContent=message;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
