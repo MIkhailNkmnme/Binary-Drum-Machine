@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.101. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.102. Точка входа: ссылки на все страницы проекта.
+     v0.102: одна передвижная линия зеркалит весь треугольник и окраску; ромб двигает ось, ручка меняет наклон, правый щелчок включает / выключает; отдельный наклон битов 0 и 1.
      v0.101: меню слева, две главные кнопки вдоль левой грани треугольника; на узком экране кнопки выровнены влево.
      v0.100: кнопки в боковой лесенке, треугольник свободен; все названия ромбическими битами.
      v0.099: без второй «1»; нот-«галстука» нет — вершина пускает окраску вниз по соседним единицам (1 / 2 / 4 / 8 строк в секунду), каждая строка звучит нотой.
@@ -116,7 +117,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.101</title>
+    <title>Zerkalius Control Hub — v0.102</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -507,9 +508,29 @@
                        z-index: 6; border: none; background: none; color: #9fffc8; font: 30px/0.55 system-ui, sans-serif;
                        padding: 6px 16px; cursor: pointer; touch-action: manipulation; }
         }
+
+        /* v0.102: одна передвижная ось отражает весь живой рисунок. */
+        #hubMirror { z-index: 9; pointer-events: none; overflow: hidden; user-select: none; }
+        .hubMirrorLine { position: absolute; height: 20px; pointer-events: auto; touch-action: none; cursor: move; transform-origin: center; }
+        .hubMirrorLine::before { content: ''; position: absolute; left: 0; right: 0; top: 9px;
+            border-top: 1px dashed #70e0d7; filter: drop-shadow(0 0 3px #22d3ee); opacity: .65; pointer-events: none; }
+        #hubMirror.off .hubMirrorLine::before { opacity: .2; }
+        .hubMirrorHandle { position: absolute; left: 50%; top: -6px; width: 32px; height: 32px;
+            padding: 0; border: 0; clip-path: polygon(50% 0,100% 50%,50% 100%,0 50%); background: #225e58;
+            color: #9fffc8; font: bold 20px/1 system-ui, sans-serif; cursor: move; touch-action: none; }
+        .hubMirrorTurn { position: absolute; top: 3px; width: 14px; height: 14px; padding: 0;
+            border: 1px solid #9fffc8; border-radius: 50%; background: #225e58; cursor: grab; touch-action: none; }
+        .hubMirrorHandle:focus-visible, .hubMirrorTurn:focus-visible { background: #806520; outline: 2px solid #ffd166; outline-offset: 3px; }
+        .hubMirrorSettings { width: 226px; box-sizing: border-box; padding: 10px; border: 1px solid #2c5a45;
+            color: #9fffc8; background: #07120e; font: 12px/1.4 system-ui,sans-serif; }
+        .hubMirrorSettings label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; white-space: nowrap; }
+        .hubMirrorSettings input[type=range] { width: 90px; min-width: 0; flex: 1; accent-color: #70e0d7; }
+        .hubMirrorSettings output { width: 32px; text-align: right; }
+        .hubMirrorSettings button { border: 1px solid #385449; padding: 5px; color: #9fffc8; background: #0a2019; cursor: pointer; font: inherit; }
     </style>
 <script src="_js/initial-rows.js?v=2"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
+<script src="_js/hub-mirror.js?v=102"></script>
 <script src="_js/hub-rhomb-music.js?v=5"></script>
 </head>
 <body>
@@ -547,7 +568,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.101</div>
+        <div class="ver">v0.102</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -948,13 +969,16 @@
                 const g = NOTES.g; if (!g) return false; const { W, H, dpr, dw, dh } = NOTES, live = NOTES.on.size > 0;
                 g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
                 for (const c of NOTES.cells) {
+                    g.save(); g.translate(c.x, c.y); g.rotate(window.HubMirror.bitAngle(c.bit || '1')); g.translate(-c.x, -c.y);
                     const col = noteCol[c.t] || '#9fffc8', lit = c.front || (c.apex && live), bl = lit && !NOTES.paused ? 0.55 + 0.45 * Math.sin(now / 1100 * 2 * Math.PI) : 1;
                     const a = dw * 1.18 / 2, b = dh * 1.18 / 2, dark = noteDark(col);
                     g.globalAlpha = lit ? 0.75 + 0.25 * bl : 0.95; g.fillStyle = dark; g.shadowColor = col; g.shadowBlur = lit ? dw * 0.6 : 0;
                     g.beginPath(); g.moveTo(c.x, c.y - b); g.lineTo(c.x + a, c.y); g.lineTo(c.x, c.y + b); g.lineTo(c.x - a, c.y); g.closePath(); g.fill();
                     g.shadowBlur = 0; g.strokeStyle = col; g.lineWidth = Math.max(1, dw * 0.09); g.lineJoin = 'round'; g.stroke(); g.globalAlpha = 1;
                     if (dw >= 7) { g.fillStyle = col; g.font = `bold ${Math.max(6, dw * 0.66).toFixed(1)}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.bit || '1', c.x, c.y + dw * 0.04); }
+                    g.restore();
                 }
+                window.HubMirror.reflect(NOTES.cv);
                 return live && !NOTES.paused;
             };
             const noteLoop = (now) => { NOTES.raf = noteDraw(now) ? requestAnimationFrame(noteLoop) : 0; };
@@ -964,7 +988,7 @@
                 const cells = [{ t: 0, r: 0, j: 0, bit: '1', x: X(0, 0), y: Y(0), apex: true }];
                 (hubHeads || []).forEach(h => { if (h[0] > 0) cells.push({ t: h[2] | 0, r: h[0], j: h[1], bit: h[3] || '1', x: X(h[0], h[1]), y: Y(h[0]), front: true }); });
                 Object.assign(NOTES, { cells, W, H, dpr, dw, dh });
-                const ax = cells[0].x, ay = cells[0].y, key = ax.toFixed(1) + ',' + ay.toFixed(1) + '|' + dw.toFixed(2) + '|' + NOTES.speed;
+                const ax = cells[0].x, ay = cells[0].y, key = ax.toFixed(1) + ',' + ay.toFixed(1) + '|' + dw.toFixed(2) + '|' + NOTES.speed + '|' + window.HubMirror.revision;
                 if (NOTES.key !== key) { NOTES.key = key;
                     document.querySelectorAll('.hubNoteCell').forEach(b => b.remove());
                     const hit = Math.max(dw * 1.3, 22), hitH = Math.max(dh * 1.3, 22);
@@ -979,6 +1003,15 @@
                     Object.assign(sp.style, { left: (ax + dw * 1.6).toFixed(1) + 'px', top: (ay - 11).toFixed(1) + 'px', width: '34px', height: '22px' });
                     sp.onclick = () => { const i = FLOOD_SPEEDS.indexOf(NOTES.speed); NOTES.speed = FLOOD_SPEEDS[(i + 1) % FLOOD_SPEEDS.length]; post({ zerkFloodSpeed: NOTES.speed }); sierDraw.k = ''; NOTES.key = ''; };
                     apex.after(sp);
+                    for (const original of [apex, sp]) {
+                        const x = parseFloat(original.style.left), y = parseFloat(original.style.top);
+                        const w = parseFloat(original.style.width), h = parseFloat(original.style.height);
+                        const reflected = window.HubMirror.point(x + w / 2, y + h / 2);
+                        if (!reflected || !window.HubMirror.contains(reflected[0], reflected[1], w, h) || Math.abs(reflected[0] - x - w / 2) + Math.abs(reflected[1] - y - h / 2) < 1) continue;
+                        const copy = original.cloneNode(true); copy.dataset.note += '-mirror'; copy.onclick = original.onclick;
+                        copy.style.left = (reflected[0] - w / 2).toFixed(1) + 'px'; copy.style.top = (reflected[1] - h / 2).toFixed(1) + 'px';
+                        sp.after(copy);
+                    }
                 }
                 if (NOTES.cv.width !== Math.round(W * dpr) || NOTES.cv.height !== Math.round(H * dpr)) { NOTES.cv.width = Math.round(W * dpr); NOTES.cv.height = Math.round(H * dpr); }
                 if (!NOTES.raf) noteDraw(performance.now()); return true;
@@ -996,12 +1029,13 @@
                 /* v0.075, «индекс тоже — тормозит он на мобиле»: треугольник перерисовывался 30 раз в секунду, даже когда ничего не менялось (с тенью-свечением
                    у звучащих бит) — теперь только когда сменились размер или звучащие биты */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null) + '|' + lgB + '|' + mrT;
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + JSON.stringify(hd || null) + '|' + lgB + '|' + mrT + '|' + window.HubMirror.revision;
                 if (key === sierDraw.k) return true; sierDraw.k = key;
                 if (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr)) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, 0, 0); sg.clearRect(0, 0, W, H);
                 const heads = new Map((hd || []).map(([r, j, kd]) => [r + ':' + j, noteCol[kd | 0] || '#22d3ee']));
                 const desk = !matchMedia('(max-width: 1100px)').matches;   // v0.072: компьютер — один по центру, во всю высоту
+                window.HubMirror.place(desk ? 300 : 0, desk ? W - 300 : W, H);
                 const N = PR.length, land = false; if (land) allOff();   // v0.081: лёжа — ноты, как прежде, между двумя треугольниками
                 const bw = sndBox.getBoundingClientRect().width;
                 /* v0.065, «треугольник должен быть выполнен из бит-ромбов, а не квадратов»: бит — ромб шириной dw и высотой dh с центром в spots(r, j).
@@ -1022,20 +1056,29 @@
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw]]; }
-                const rhomb = (x, y, k) => { const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); };
+                const rhomb = (x, y, k, bit) => {
+                    const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2, angle = window.HubMirror.bitAngle(bit);
+                    const co = Math.cos(angle), si = Math.sin(angle), point = (dx, dy) => [x + dx * co - dy * si, y + dx * si + dy * co];
+                    sg.beginPath(); sg.moveTo(...point(0, -b)); sg.lineTo(...point(a, 0)); sg.lineTo(...point(0, b)); sg.lineTo(...point(-a, 0)); sg.closePath(); sg.fill();
+                };
+                const bitDigit = (bit, x, y) => {
+                    const angle = window.HubMirror.bitAngle(bit);
+                    if (!angle) { sg.fillText(bit, x, y + fs * .06); return; }
+                    sg.save(); sg.translate(x, y); sg.rotate(angle); sg.fillText(bit, 0, fs * .06); sg.restore();
+                };
                 /* v0.093, «а в ромбы поставь цифры»: в ромбе единицы — «1» тёмным, на месте нуля — бледный «0» (видна вся строка последовательности);
                    цифры — только когда ромб не мельче 7 px, иначе их не прочесть */
                 const digits = (side ? dh : dw) >= 7, fs = Math.max(6, Math.min(dw, dh) * 0.62);
                 if (digits) { sg.font = `bold ${fs.toFixed(1)}px system-ui, sans-serif`; sg.textAlign = 'center'; sg.textBaseline = 'middle'; }
                 for (let r = 0; r < N; r++) { const row = PR[r];
                     for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1';
-                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = '#9fffc8'; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); sg.fillText('0', x, y + fs * 0.06); } } continue; }
+                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = '#9fffc8'; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
                         sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8; }
-                        for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9); }
+                        for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, row[j]); }
                         if (hc) sg.shadowBlur = 0;
-                        if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); sg.fillText(row[j], x, y + fs * 0.06); } } } }
-                sg.globalAlpha = 1; return true;
+                        if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); bitDigit(row[j], x, y); } } } }
+                sg.globalAlpha = 1; window.HubMirror.reflect(sier); return true;
             };
             { let last = 0; const loop = (t) => { if (t - last > 33 && window.scrollY < innerHeight) { last = t; sierDraw(); } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
             { const dn = document.getElementById('hubDown'); if (dn) dn.onclick = () => document.querySelector('.hub').scrollIntoView({ behavior: 'smooth' }); }
