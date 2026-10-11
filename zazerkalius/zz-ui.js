@@ -2406,6 +2406,8 @@ function plateFoldToggle(el, min = !Z[SOL_PLATES[el.id].min], defer = false){
   if (window.zzPanelLinkSync) window.zzPanelLinkSync(); save();
 }
 function platePlace(el){
+  const custom = SOL_PLATES[el.id];
+  if (custom?.place) { if (!el.classList.contains("pdrag")) custom.place(el); return; }
   if (document.body.classList.contains("sol-mobile")) return;
   if (el.classList.contains("pdrag")) return;
   const c = SOL_PLATES[el.id], f = Z[c.fld], fr = f && solZoneRect(f.z);   // v0.954: на поле строк или левой панели — поверх неё
@@ -2430,6 +2432,7 @@ function platePlace(el){
 function plateInit(el){
   el.classList.add("sol-plate");
   const c = SOL_PLATES[el.id], hd = el.querySelector(".smh, .rth"); el.dataset.g = "@" + el.id;
+  if (c.init) { c.init(el); plateFoldSync(el); return; }
   hd.title = c.name + ". Тяни за заголовок — перенести. Бока сцепляются зубцами, верх и низ — рамка на рамку; правая едет за левой, нижняя за верхней. Потяни ведомую — отцепить; Alt — переместить одну таблицу. Верхний край у горизонтальной оси — прищепка: таблица едет за конусом и его масштабом. Панели на оси раздвигаются от центра без наложения и могут уходить за экран. Один щелчок — открыть / свернуть; двойной — раскрыть эту и свернуть остальные / свернуть эту и раскрыть остальные; правый — на исходное место и без сцепки. Целиком над полем строк или левой панелью — встаёт поверх и едет с ней; магнит — и к их краям. Колесо — масштаб конуса.";
   const fold = el.querySelector(".pminbtn");
   fold.onclick = (e) => { e.stopPropagation(); if (e.detail < 2) plateFoldToggle(el); };
@@ -11990,7 +11993,7 @@ function defaultLayout(){
   // v0.010: стол стал правой колонкой; если он уже 900, окна идут одной колонкой, по важности.
   if (W0 < 900) {
     const w = Math.max(320, W0 - 2 * g);
-    const order = [["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520], ["w-tri", 420], ["w-rmb", 520],
+    const order = [["w-zerkalius", 600], ["w-mirror", 430], ["w-fix", 520], ["w-fold", 380], ["w-descent", 330], ["w-bwt", 460], ["w-sig", 460], ["w-chk", 460], ["w-view", 460], ["w-lin", 240], ["w-addr", 400], ["w-struct", 520], ["w-cone", 560], ["w-bal", 460], ["w-steps", 460], ["w-tiles", 560], ["w-pyr", 560], ["w-okt", 560], ["w-razv", 520], ["w-tri", 420], ["w-rmb", 520],
                    ["w-gf2", 240], ["w-cycle", 330], ["w-tape", 260], ["w-orbit", 240], ["w-help", 300]];
     const out = {}; let y = g;
     for (const [id, h] of order) { out[id] = { x: g, y, w, h }; y += h + g; }
@@ -12027,6 +12030,7 @@ function defaultLayout(){
     "w-razv":    { x: mw + 2 * g, y: 4160 + 11 * g, w: cw, h: 560 },   // v0.398
     "w-tri":     { x: g, y: 4720 + 12 * g, w: mw, h: 420 },   // v0.432
     "w-rmb":     { x: mw + 2 * g, y: 4720 + 12 * g, w: cw, h: 520 },   // v0.793
+    "w-zerkalius": { x: g, y: g, w: Math.min(W0 - 2 * g, 960), h: 600 },
   };
 }
 function applyWin(el){
@@ -15394,6 +15398,7 @@ function applyView(){
    данных пользователя, до «Вида» дело не доходило. Теперь каждое окно — в своём try: упавшее не гасит остальные,
    а ошибка с именем окна показывается внизу — её текст и нужен, чтобы починить. */
 function renderAll(){
+  window.zzZerkaliusRender?.();
   const parts = [["вид страницы", applyView], ["поле строк", renderRows], ["90°", tri90Apply], ["крест", renderCross], ["указатели", renderPointers],
     ["спуск", renderDescent], ["поправка", renderFix], ["сложить", renderFoldLive], ["проверка", renderCheck], ["вид 🧊", renderView], ["лин. сложность", renderLinLive], ["адрес 🔎", renderAddrLive], ["структура 🧪", renderStructLive], ["цикл, GF(2), лента, орбита, ⇅", renderLiveRest], ["конус ◯", renderCone], ["балансы ⚖", renderBal], ["лесенки 📐", renderSteps], ["разложить △", renderTiles], ["пирамида ▲", renderPyr], ["октаэдр ◆", renderOkt], ["развёртка ✦", renderRazv], ["ромбоиды ◇", renderRmb]];
   if (!renderAll.tplDone) parts.splice(2, 0, ["шаблоны", () => { renderTpl(); renderAll.tplDone = true; }]);
@@ -16157,7 +16162,7 @@ function init(){
     const t = (el.textContent || "").trim().replace(/\s+/g, " ");
     return t ? (t.length > 24 ? t.slice(0, 23) + "…" : t) : p.id;
   };
-  const PIN_WINS = ["w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661, по снимку шапки: «здесь надо не Структура, а это окно» — 🧊 (бывший «Вид», теперь «Лесенка»); «🧪 Структура» — снова в списке «Другое»
+  const PIN_WINS = ["w-zerkalius", "w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661, по снимку шапки: «здесь надо не Структура, а это окно» — 🧊 (бывший «Вид», теперь «Лесенка»); «🧪 Структура» — снова в списке «Другое»
     // v0.620, «только этих»: окна, которые всегда в шапке, — в этом порядке
   const renderPins = () => {
     let h = "";
@@ -16172,7 +16177,7 @@ function init(){
     PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
       if (el.classList.contains("popped")) return;
       const t = ({ "w-pyr": "▲ Паскаль", "w-okt": "◆ Бирамида" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
-      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные пять — свернуть")}">${winLab(el, t)}</button>`;
+      h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные вкладки — свернуть")}">${winLab(el, t)}</button>`;
     });
     if (renderPins._h === h) return; renderPins._h = h;   // ничего не поменялось (окно тащат, растягивают) — шапку не трогать
     const bar = $("pinBar"), template = document.createElement("template"); template.innerHTML = h;
@@ -16623,7 +16628,7 @@ function init(){
     });
     /* v0.631, «переименуй — Другое, и убери из них дубликаты, что в верхнем меню теперь всегда»: шесть окон шапки в списке не видны (кнопки остаются
        скрытыми — через них шапка сворачивает и разворачивает окна), заголовок списка — «Другое» */
-    const PINNED = ["w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661: как PIN_WINS
+    const PINNED = ["w-zerkalius", "w-cone", "w-okt", "w-razv", "w-tri", "w-rmb", "w-pyr", "w-view"];   // v0.661: как PIN_WINS
     $("paneWinsHead").style.display = list.some(el => !PINNED.includes(el.id)) ? "" : "none";
     $("paneWins").innerHTML = list.map(el => { const t = esc(el.dataset.title || el.id), op = !el.dataset.parked;
       return `<button data-w="${el.id}"${PINNED.includes(el.id) ? " hidden" : ""}${op ? ' class="on"' : ""} title="${op ? "Окно «" + t + "» на столе — щелчок: свернуть сюда" : "Развернуть окно «" + t + "» на стол"}">${t}</button>`; }).join("");

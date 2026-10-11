@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.105. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.106. Точка входа: ссылки на все страницы проекта.
+     v0.106: главные кнопки «Треугольник» и «Зазеркалиус» — вверху левого меню.
      v0.105: своя картинка под зеркалом и чёткий PNG 2K / 4K / 8K с перерисовкой ромбов и цифр.
      v0.104: переключатель «Исходный / Серпинский», одно зеркало и наклон битов для сравнения узоров.
      v0.103: переключаемый световой след единиц вниз по двум диагоналям, сквозь 0 и 1, без изменения битов.
@@ -120,7 +121,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.105</title>
+    <title>Zerkalius Control Hub — v0.106</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -479,8 +480,8 @@
                    align-items: stretch; justify-content: flex-start; padding: 6px 8px 16px; gap: 20px;
                    overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #385449 #050505; }
             .hub .mainrow, .hub .grid, .hub .row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-            .hub .mainrow { position: fixed; left: 0; right: 0; top: 72px; pointer-events: none; gap: 12px; }
-            .hub .mainrow > a { pointer-events: auto; margin-left: var(--hub-edge-x, 300px); }
+            .hub .mainrow { position: static; pointer-events: auto; gap: 12px; }
+            .hub .mainrow > a { margin-left: 0; }
             .hub .panel { padding: 0; border: 0; border-radius: 0; background: none; }
             .hub .panel-title { text-align: left; letter-spacing: 2px; margin: 0 0 10px 8px; }
             .hub .menu-btn { width: 226px; min-width: 0; flex: 0 0 auto; }
@@ -579,7 +580,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.105</div>
+        <div class="ver">v0.106</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -878,18 +879,6 @@
                fly — летит, out — ушёл, back — возвращается */
             const sndBox = document.getElementById('hubSndBox'), allBtn = document.getElementById('hubAll'), fly = document.getElementById('hubFly'), fg = fly && fly.getContext('2d');
             const mainRow = document.querySelector('.hub .mainrow');
-            const mainEdgePlace = (cx, y0, dw) => {
-                if (!mainRow || matchMedia('(max-width: 1100px)').matches) return;
-                // Край кнопки — снаружи грани по её нижнему углу, чтобы весь прямоугольник оставался вне узора.
-                const placements = Array.from(mainRow.querySelectorAll('a')).map(a => {
-                    const r = a.getBoundingClientRect();
-                    return [a, Math.max(12, cx - Math.max(0, r.bottom - y0) / Math.sqrt(3) - dw / 2 - r.width - 16)];
-                });
-                placements.forEach(([a, x]) => {
-                    const value = x.toFixed(1) + 'px';
-                    if (a.style.getPropertyValue('--hub-edge-x') !== value) a.style.setProperty('--hub-edge-x', value);
-                });
-            };
             const IDS = ['r', 'c', 'mi', 'fa', 'sol', 'la', 'si'];   // головки фона по нотам: До … Си
             const ALL = { cells: [], queue: [], poly: [], live: false, paused: false, heads: null, raf: 0, W: 0, H: 0, dpr: 1, cx: 0, y0: 0, dw: 0, dh: 0, vr: 0, X: null, Y: null };
             const A_STEP = 0.06, A_FLY = 0.75, A_BACK = 0.35, A_GAP = 0.035;
@@ -1099,7 +1088,6 @@
                 if (!land) { const top = 8, fieldW = desk ? W - 300 : W, fit = b => Math.min(fieldW * 0.94 / N, (b - top) / ((N + 1) * 0.866));
                     const big = !desk && allBtn && fg && 7 * fit(H * 0.9) >= 30, hMax = (desk ? H * 0.97 : big ? H * 0.9 : H * 0.49) - top; dw = fit(hMax + top); dh = dw * 1.732;
                     const cx = (desk ? 300 : 0) + fieldW / 2, y0 = top + dh / 2;
-                    if (!output) mainEdgePlace(cx, y0, dw);
                     spots = [(r, j) => [cx - (PR[r].length - 1) * dw / 2 + j * dw, y0 + r * dh / 2]];
                     if (!output) notePlace((r, j) => cx - (PR[r].length - 1) * dw / 2 + j * dw, (r) => y0 + r * dh / 2, dw, dh, W, H, dpr); }   // v0.093: ноты — ячейки на единицах (вместо дырки «все 7 нот»)
                 else {   /* v0.067, «а если треугольники для левого расположить катетами вдоль вертикали левой…» и по показу — «поменять местами»: тот же

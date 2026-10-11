@@ -1,0 +1,33 @@
+/* Зеркалиус: построение хаба с тремя независимыми зеркалами. */
+#w-zerkalius .wbody{position:relative;padding:0;overflow:hidden;background:#050806}
+#zerkStage{position:absolute;inset:0;overflow:hidden;touch-action:none}
+#zerkCanvas{display:block;width:100%;height:100%;background:#050806}
+#zerkMirrors{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.zerk-mirror{position:absolute;height:32px;transform-origin:50% 50%;pointer-events:none}
+.zerk-mirror::before{content:"";position:absolute;left:0;right:0;top:15px;border-top:1px dashed var(--mirror-color);opacity:.85}
+.zerk-mirror.off::before{opacity:.25}
+.zerk-mirror button{position:absolute;top:0;display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;margin:0;border:1px solid var(--mirror-color);border-radius:0;background:#08110e;color:var(--mirror-color);font:700 13px/1 var(--ff,monospace);pointer-events:auto;touch-action:none;cursor:grab;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.zerk-mirror .zerk-center{left:calc(50% - 16px)}
+.zerk-mirror .zerk-turn{width:28px;height:28px;top:2px;cursor:alias}
+.zerk-mirror button:focus-visible{outline:2px solid #fff;outline-offset:-6px;background:#26372f}
+#zerkTools{position:absolute;left:8px;top:8px;z-index:10;width:240px;max-width:calc(100% - 16px);max-height:calc(100% - 16px);overflow:auto;scrollbar-width:thin;background:color-mix(in srgb,var(--panel) 95%,transparent);color:var(--txt);font:11px/1.3 var(--ff,monospace)}
+#zerkTools .smh{display:flex;align-items:center;justify-content:space-between;gap:4px;height:24px;cursor:grab;color:#70e0d7}
+#zerkTools .zerk-controls{display:flex;flex-direction:column;gap:6px;padding:4px 2px 10px}
+#zerkTools label{display:flex;align-items:center;gap:4px;min-height:24px}
+#zerkTools button,#zerkTools select{min-height:26px;border-radius:0;padding:3px 6px;font:inherit;clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,5px 100%,0 50%)}
+#zerkTools select{flex:1;min-width:0}
+#zerkTools input[type=color]{width:28px;height:28px;padding:1px;border-radius:0;background:none;cursor:pointer}
+#zerkTools input[type=number]{width:44px;min-height:24px;border-radius:0;padding:2px 3px}
+#zerkTools input[type=range]{width:90px;min-width:30px;flex:1;margin:0}
+#zerkTools .zerk-range{display:flex;gap:2px;align-items:center;flex:1;min-width:0}
+#zerkTools .zerk-range button{width:24px;min-width:24px;padding:0}
+#zerkTools .zerk-angle{width:39px;text-align:right;font-variant-numeric:tabular-nums}
+#zerkTools .zerk-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+#zerkTools .zerk-mirror-controls{border-top:1px solid var(--mirror-color);padding-top:4px}
+#zerkTools .zerk-mirror-controls .zerk-auto{margin-left:auto;color:var(--mirror-color)}
+#zerkTools .zerk-label{color:var(--mirror-color);font-weight:700}
+#zerkOwn{display:flex;flex-direction:column;gap:4px}
+#zerkOwn[hidden]{display:none}
+#zerkText{width:100%;box-sizing:border-box;height:76px;resize:vertical;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:0;padding:4px;font:11px/1.2 var(--ff,monospace)}
+#zerkStatus{position:absolute;right:8px;bottom:6px;max-width:calc(100% - 16px);padding:3px 6px;background:#08110edd;color:#9fffc8;font:11px/1.3 var(--ff,monospace);pointer-events:none}
+@media(max-width:760px){#w-zerkalius .wbody{height:70svh!important;min-height:420px}#zerkTools{width:220px;font-size:12px}#zerkTools button,#zerkTools select,#zerkTools label{min-height:32px}.zerk-mirror button{width:40px;height:40px;top:-4px}.zerk-mirror .zerk-center{left:calc(50% - 20px)}.zerk-mirror .zerk-turn{width:36px;height:36px;top:-2px}}
