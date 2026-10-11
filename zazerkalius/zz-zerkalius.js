@@ -1,3 +1,4 @@
+/* v0.1127: free top/bottom docking, header axis toggles, shared transport, magnetic axes and tiled vector net bits. */
 /* v0.1126: zoomed bits and nets render directly at output resolution; cached images remain for reduced views and picking. */
 /* v0.1125: закрепление групп в верхней шапке, крупные номера, коралловое третье зеркало, затемнение вне пересечений и отмена ручных движений; поворот холста на 360°, захват всех фигур за биты без квадратных ручек; линия тянет зеркало, точки кручения поверх всех осей; v0.1124: только пересечения фигур, перенос пустого холста и осей, дзен колёсиком; v0.1123: читаемое меню тёмного зеркала, развёртки → Бирамида, только биты, шрифты, палитры и движение вдоль оси; v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
 (() => {
@@ -46,7 +47,7 @@
   const fonts=[...document.querySelectorAll('#fontSel option')].map(o=>[o.value,o.textContent]);
   for(const name of ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','Space Mono','VT323','Share Tech Mono','Press Start 2P','Major Mono Display','Orbitron'])if(!fonts.some(([v])=>v.includes(name)))fonts.push(['"'+name+'", monospace',name]);
   state.font=fonts.some(([v])=>v===state.font)?state.font:fonts[0][0];
-  state.bitsOnly=!!state.bitsOnly;
+  state.bitsOnly=!!state.bitsOnly;state.netDigits=state.netDigits!==false;
   state.overlapOnly=!!state.overlapOnly;
   state.bitColor=/^#[0-9a-f]{6}$/i.test(state.bitColor)?state.bitColor:'#9fffc8';
   state.mult=[1,2,3].includes(state.mult)?state.mult:1;
@@ -91,7 +92,7 @@
   }
   const plateSetup=el=>{
     const c=SOL_PLATES[el.id];
-    const hd=el.querySelector('.smh');hd.title='Тяни шапку к верхней строке — закрепить магнитом; обратно на холст — открепить; − / + — свернуть';
+    const hd=el.querySelector('.smh');hd.title='Тяни шапку к верхней или нижней полосе — закрепить на месте броска; обратно на холст — открепить; − / + — свернуть';
     el.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();plateFoldToggle(el);};
     hd.addEventListener('pointerdown',e=>{
       if(e.button!==0||e.target.closest('button,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();hd.setPointerCapture(e.pointerId);
@@ -100,9 +101,9 @@
         el._solDragUntil=performance.now()+400;
         if(!moved){moved=true;if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];hd.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
         const [x,y]=plateSnap(el,r0,ev.clientX-start[0],ev.clientY-start[1]),host=stage.getBoundingClientRect();
-        Z[c.xy]=[x-host.left,y-host.top];c.place(el);window.zzPanelLinkSync?.();if(el._zerkDock){const hr=win.querySelector(':scope > .whead').getBoundingClientRect();win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',!ev.altKey&&ev.clientX>=hr.left&&ev.clientX<=hr.right&&ev.clientY>=hr.top-24&&ev.clientY<=hr.bottom+24);}};
+        Z[c.xy]=[x-host.left,y-host.top];c.place(el);window.zzPanelLinkSync?.();if(el._zerkDock){const target=dockTarget(ev);win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',target==='top');footerDock.classList.toggle('zerk-dock-target',target==='bottom');}};
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);if(hd.hasPointerCapture(e.pointerId))hd.releasePointerCapture(e.pointerId);
-        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const wh=win.querySelector(':scope > .whead'),hr=wh.getBoundingClientRect();if(ev.type==='pointerup'&&!ev.altKey&&ev.clientX>=hr.left&&ev.clientX<=hr.right&&ev.clientY>=hr.top-24&&ev.clientY<=hr.bottom+24)el._zerkDock(true);wh.classList.remove('zerk-dock-target');}save();}};
+        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
       document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
     });
   };
@@ -153,7 +154,7 @@
     const rotate=(delta,group=false)=>motionStep({mirror:i},()=>{pause();m.angle=norm(m.angle+delta*pi/180);changed();},group?'turn'+i:null);
     button('◂','Повернуть зеркало '+(i+1)+' на −5°',()=>rotate(-5),wrap);wrap.append(angle);button('▸','Повернуть зеркало '+(i+1)+' на +5°',()=>rotate(5),wrap);
     angleRow.append(wrap,output);section.append(angleRow);body.append(section);
-    on.onchange=()=>{m.on=on.checked;changed();};color.oninput=()=>{m.color=color.value;state.palette='custom';section.style.setProperty('--mirror-color',m.color);changed();};
+    on.onchange=()=>{const active=state.mirrors.some(v=>v.on&&(v.spin||v.path.enabled));m.on=on.checked;if(!m.on){m.spin=false;m.path.enabled=false;}else if(active)m.spin=true;changed();};color.oninput=()=>{m.color=color.value;state.palette='custom';section.style.setProperty('--mirror-color',m.color);changed();};
     speed.onchange=()=>{m.speed=clamp(Number(speed.value)||0,-90,90);speed.value=m.speed;changed();};
     angle.oninput=()=>motionStep({mirror:i},()=>{pause();m.angle=Number(angle.value)*pi/180;changed();},'angle'+i);
     controls.push({angle,output,spin,on,color,speed,section});
@@ -164,18 +165,18 @@
       node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб или ось — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
       if(node===axis)node.title='Тяни в любом месте оси — перенести зеркало; по битам — захватить все фигуры под курсором; Alt — временно без магнита';
       node.addEventListener('pointerdown',e=>{
-        if(e.button!==0)return;if(node===axis&&beginStageDrag(e,true))return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i});
-        (rotateMode?turn:axis).focus({preventScroll:true});line.classList.add('grabbing');node.setPointerCapture(e.pointerId);
+        if(e.button!==0)return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),turning=rotateMode||(node===axis&&state.axisRotate),targets=magnetBits();
+        (turning?turn:axis).focus({preventScroll:true});line.classList.add('grabbing');node.setPointerCapture(e.pointerId);
         const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,p=viewPoint(x,y),cx=r.left+p[0],cy=r.top+p[1],start=Math.atan2(sy-cy,sx-cx);let moved=false;
         const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;stopPath(m);
           const magnetic=state.magnet&&!ev.altKey,others=state.mirrors.filter(other=>other!==m&&other.on);let snapped=false;snapHint='';
-          if(rotateMode){const raw=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=magnetic?sceneMath.snapAngle(raw,others):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
+          if(turning){const raw=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=magnetic?sceneMath.snapAngle(raw,others):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
           else{const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);if(m.along){m.spin=false;m.angle=a;}m.x=clamp(x+dx/drawW,.01,.99);m.y=clamp(y+dy/drawH,.01,.99);
             if(m.along){const p=sceneMath.axisMove(x*drawW,y*drawH,dx,dy,a,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}
             if(magnetic){const z=state.zoom,result=sceneMath.snapPosition(m.x*drawW*z,m.y*drawH*z,others.map(other=>({x:other.x*drawW*z,y:other.y*drawH*z,angle:other.angle})),drawW*z,drawH*z,10,[.01*drawW*z,.01*drawH*z,.99*drawW*z,.99*drawH*z],[drawW*z/2,drawH*z/2]);
-              if(!m.along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
+              const bit=nearestBit(m.x*drawW,m.y*drawH,targets,10/z);if(bit&&(!m.along||Math.abs((bit[0]-x*drawW)*Math.sin(a)-(bit[1]-y*drawH)*Math.cos(a))<1e-6)){result.x=bit[0]*z;result.y=bit[1]*z;result.snapped=true;result.label='центр бита';}if(!m.along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
           line.classList.toggle('snapped',snapped);changed();};
-        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped','grabbing');snapHint='';if(!moved&&rotateMode&&ev.type==='pointerup')rotate(15);else{if(moved)pushMotion(before);persist();request();}};
+        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped','grabbing');snapHint='';if(!moved&&turning&&ev.type==='pointerup')rotate(15);else{if(moved)pushMotion(before);persist();request();}};
         node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
       });
       node.oncontextmenu=e=>{e.preventDefault();m.on=!m.on;on.checked=m.on;changed();};
@@ -196,17 +197,20 @@
   button('Вернуть три зеркала','Вернуть начальные положения трёх зеркал',()=>{defaults().forEach((m,i)=>{stopPath(state.mirrors[i]);Object.assign(state.mirrors[i],m,{mode:'direct'});});state.mirrors.forEach((m,i)=>{Object.assign(controls[i].on,{checked:m.on});controls[i].color.value=m.color;controls[i].speed.value=m.speed;controls[i].section.style.setProperty('--mirror-color',m.color);controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');});changed();},body);
   const groups=[], compactUpdates=[];
   const headerDock=document.createElement('div');headerDock.id='zerkHeaderDock';headerDock.setAttribute('aria-label','Закреплённые группы Зеркалиуса');
+  const footerDock=document.createElement('div');footerDock.id='zerkFooterDock';footerDock.setAttribute('aria-label','Группы в нижней полосе Зеркалиуса');stage.append(footerDock);
+  function dockTarget(e){if(e.altKey)return null;const h=win.querySelector(':scope > .whead').getBoundingClientRect(),s=stage.getBoundingClientRect();if(e.clientX>=h.left&&e.clientX<=h.right&&e.clientY>=h.top-24&&e.clientY<=h.bottom+24)return 'top';if(e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.bottom-32&&e.clientY<=s.bottom+24)return 'bottom';return null;}
   win.querySelector(':scope > .whead').insertBefore(headerDock,win.querySelector(':scope > .whead .wt').nextSibling);
   headerDock.addEventListener('pointerdown',e=>e.stopPropagation());headerDock.addEventListener('dblclick',e=>e.stopPropagation());
+  footerDock.addEventListener('pointerdown',e=>e.stopPropagation());footerDock.addEventListener('dblclick',e=>e.stopPropagation());
   function grape(id,title,color,home){
     const el=document.createElement('aside');el.id=id;el.className='zerk-grape sol-plate';el.style.setProperty('--mirror-color',color);
     const hd=document.createElement('div');hd.className='smh zerk-grape-head';const caption=document.createElement('span');caption.textContent=title;hd.append(caption);
     const fold=button('−','Свернуть / раскрыть '+title,()=>{},hd);fold.className='pminbtn';el.append(hd);
     const content=document.createElement('div');content.className='zerk-grape-body';el.append(content);stage.append(el);
-    el._zerkDock=pinned=>{Z[id+'Head']=pinned;el.classList.toggle('zerk-docked',pinned);(pinned?headerDock:stage).append(el);SOL_PLATES[id].place(el);};
-    const place=node=>{if(Z[id+'Head']){node.style.left='';node.style.top='';return;}const xy=Z[id+'XY']||(typeof home==='function'?home():home);node.style.left=clamp(xy[0],0,Math.max(0,stage.clientWidth-node.offsetWidth))+'px';node.style.top=clamp(xy[1],0,Math.max(0,stage.clientHeight-node.offsetHeight))+'px';};
+    el._zerkDock=(pinned,x,edge)=>{if(edge)Z[id+'HeadEdge']=edge;const dock=Z[id+'HeadEdge']==='bottom'?footerDock:headerDock;if(pinned){if(Number.isFinite(x)){Z[id+'HeadX']=x;Z[id+'HeadWidth']=dock.clientWidth;}else if(!Number.isFinite(Z[id+'HeadX']))Z[id+'HeadX']=Math.max(0,...[...dock.children].filter(n=>n!==el).map(n=>n.offsetLeft+n.offsetWidth));if(!Number.isFinite(Z[id+'HeadWidth']))Z[id+'HeadWidth']=dock.clientWidth;}Z[id+'Head']=pinned;el.classList.toggle('zerk-docked',pinned);(pinned?dock:stage).append(el);SOL_PLATES[id].place(el);};
+    const place=node=>{if(Z[id+'Head']){const dock=Z[id+'HeadEdge']==='bottom'?footerDock:headerDock;const available=Math.max(0,dock.clientWidth-node.offsetWidth),savedWidth=Z[id+'HeadWidth']||dock.clientWidth,offset=Z[id+'HeadX']||0,x=dock.clientWidth<savedWidth?offset*available/Math.max(1,savedWidth-node.offsetWidth):offset;node.style.left=clamp(x,0,available)+'px';node.style.top='0px';return;}const xy=Z[id+'XY']||(typeof home==='function'?home():home);node.style.left=clamp(xy[0],0,Math.max(0,stage.clientWidth-node.offsetWidth))+'px';node.style.top=clamp(xy[1],0,Math.max(0,stage.clientHeight-node.offsetHeight))+'px';};
     SOL_PLATES[id]={name:title,min:id+'Min',xy:id+'XY',col:color,place,init:plateSetup};plateInit(el);groups.push(el);
-    hd.addEventListener('click',e=>{if(e.target.closest('button,input,select,textarea,label')||performance.now()<(el._solDragUntil||0))return;plateFoldToggle(el);});
+    hd.addEventListener('click',e=>{if(e.target.closest('button,input,select,textarea,label')||performance.now()<(el._solDragUntil||0))return;(el._zerkHeaderAction||(()=>plateFoldToggle(el)))();});
     hd.tabIndex=0;hd.setAttribute('role','button');hd.setAttribute('aria-label','Раскрыть / свернуть '+title);hd.onkeydown=e=>{if(e.target===hd&&(e.key==='Enter'||e.key===' ')){e.preventDefault();plateFoldToggle(el);}};
     el._zerkDock(!!Z[id+'Head']);
     return content;
@@ -233,12 +237,13 @@
   state.mirrors.forEach((m,i)=>{
     const c=controls[i],home=()=>stage.clientWidth>600?[100+136*i,8]:i===0?[100,8]:[8+(i-1)*144,248];
     const group=grape('zerkMirrorG'+(i+1),'Зеркало '+(i+1),m.color,home),head=group.parentElement.querySelector('.smh');group.parentElement.classList.add('zerk-speed-group');
-    const caption=head.querySelector('span');caption.textContent='Зеркало ';const number=document.createElement('b');number.className='zerk-header-number';number.textContent=i+1;caption.append(number);
-    const enabled=c.on.closest('label');diamond(enabled,(i+1)+'',group);for(const n of [...enabled.childNodes])if(n.nodeType===3)n.textContent='◇\n'+(i+1);
+    const caption=head.querySelector('span');caption.textContent='Зеркало';const number=button(String(i+1),'Включить / выключить ось '+(i+1),()=>{c.on.checked=!m.on;c.on.onchange();},head);number.className='zerk-header-number';
+    c.on.closest('label').remove();head.querySelector('.pminbtn').remove();head.parentElement._zerkHeaderAction=()=>number.click();head.removeAttribute('role');head.removeAttribute('tabindex');
+    compactUpdates.push(()=>{number.setAttribute('aria-pressed',String(m.on));number.title='Ось '+(i+1)+(m.on?' включена — выключить':' выключена — включить');plateFoldToggle(group.parentElement,!m.on,true);});
     const swatch=document.createElement('label');swatch.setAttribute('aria-label','Выбор цвета зеркала '+(i+1));const textColor=document.createElement('span');textColor.textContent='●\nцвет';swatch.append(c.color,textColor);diamond(swatch,'',group);
     const rotate=sign=>motionStep({mirror:i},()=>{stopPath(m);m.spin=false;m.angle=norm(m.angle+sign*pi/180);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();});
     splitDiamond('Угол зеркала '+(i+1),()=>Math.round(norm(m.angle)*180/pi)%180+'°',rotate,group);
-    diamond(c.spin,m.spin?'Ⅱ':'▶',group);
+    c.spin.remove();
     splitDiamond('Скорость зеркала '+(i+1),()=>m.speed+'\n°/с',sign=>{m.speed=clamp(m.speed+sign,-90,90);c.speed.value=m.speed;changed();},group);
     const speedWrap=document.createElement('span');speedWrap.className='zerk-header-speed range-with-arrows';
     const speedSlider=document.createElement('input');speedSlider.type='range';speedSlider.min=-90;speedSlider.max=90;speedSlider.step=1;speedSlider.value=m.speed;speedSlider.setAttribute('aria-label','Ползунок скорости зеркала '+(i+1));speedWrap.append(speedSlider);head.append(speedWrap);
@@ -248,7 +253,7 @@
     modeNode.classList.add('is-selected');
     compactUpdates.push(()=>{modeNode.setAttribute('aria-label','Режим зеркала '+(i+1)+': '+({direct:'прямой',inv:'инверсия',reverse:'реверс',both:'инверсия и реверс'})[m.mode]);});
     buildPathEditor(m,i,group);c.section.remove();
-    let along;along=button('↔\nось','Перетаскивать зеркало '+(i+1)+' только вдоль его оси',()=>{m.along=!m.along;changed();},group);diamond(along,'↔\nось',group);along.style.left='48px';along.style.top='144px';group.style.setProperty('--grape-height','192px');
+    let along;along=button('↔\nось','Перетаскивать зеркало '+(i+1)+' только вдоль его оси',()=>{m.along=!m.along;changed();},group);diamond(along,'↔\nось',group);along.style.left='48px';along.style.top='96px';group.style.setProperty('--grape-height','144px');
     compactUpdates.push(()=>{along.classList.toggle('on',!!m.along);along.setAttribute('aria-pressed',String(!!m.along));});
     compactUpdates.push(()=>{group.parentElement.style.setProperty('--mirror-color',m.color);group.parentElement.style.setProperty('--control-color',sceneMath.controlColor(m.color));speedSlider.value=m.speed;c.spin.classList.toggle('on',m.spin);c.spin.textContent=m.spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(m.spin));});
   });
@@ -274,6 +279,7 @@
   canvasRotation.tabIndex=0;canvasRotation.setAttribute('role','slider');canvasRotation.setAttribute('aria-label','Поворот холста на 360 градусов');canvasRotation.setAttribute('aria-valuemin','0');canvasRotation.setAttribute('aria-valuemax','359');compactUpdates.push(()=>canvasRotation.setAttribute('aria-valuenow',String(state.viewAngle)));
   const turnCanvas=delta=>motionStep({},()=>{state.viewAngle=(state.viewAngle+delta+360)%360;changed();},'canvas-turn');
   canvasRotation.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();turnCanvas(Math.sign(e.deltaY)*5);},{passive:false});canvasRotation.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();e.stopPropagation();if(e.key==='Home'||e.key==='End')motionStep({},()=>{state.viewAngle=e.key==='Home'?0:359;changed();});else turnCanvas((e.key==='ArrowLeft'?-1:1)*(e.shiftKey?15:1));};
+  const axisToggle=button('⟳\nось','Вращать оси зеркал за линию вместо переноса',()=>{state.axisRotate=!state.axisRotate;changed();},viewGroup);diamond(axisToggle,'⟳\nось',viewGroup);axisToggle.style.left='48px';axisToggle.style.top='216px';viewGroup.style.setProperty('--grape-height','264px');compactUpdates.push(()=>{axisToggle.classList.toggle('on',!!state.axisRotate);axisToggle.setAttribute('aria-pressed',String(!!state.axisRotate));});
   const annotations=document.createElement('div');annotations.className='zerk-annotations';annotations.hidden=!state.labels;stage.append(annotations);
   const annotationNodes=Array.from({length:6},()=>{const el=document.createElement('span');el.className='zerk-annotation';annotations.append(el);return el;});
   tools.hidden=true;tools.querySelector('.pminbtn').textContent='×';tools.querySelector('.pminbtn').setAttribute('aria-label','Закрыть настройку');tools.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();tools.hidden=true;};
@@ -285,12 +291,27 @@
   const zoomIn=button('+','Увеличить масштаб Зеркалиуса',()=>zoomBy(1.15),zoomBox);zoomIn.className='zerk-zoom-plus';
   zoomValue.title='Двойной щелчок — вернуть 100%';zoomValue.ondblclick=()=>motionStep({},()=>{state.zoom=1;state.pan=[0,0];changed();});
   const worldDelta=(x,y)=>{const a=-state.viewAngle*pi/180,c=Math.cos(a)/state.zoom,s=Math.sin(a)/state.zoom;return [x*c-y*s,x*s+y*c];};
+  const netDigitsToggle=button('01\nцифры','Биты в ячейках развёртки: включить / выключить',()=>{state.netDigits=!state.netDigits;changed(true);},viewGroup);diamond(netDigitsToggle,'01\nцифры',viewGroup);netDigitsToggle.style.left='24px';netDigitsToggle.style.top='192px';viewGroup.style.setProperty('--grape-height','264px');compactUpdates.push(()=>{netDigitsToggle.classList.toggle('on',state.netDigits);netDigitsToggle.setAttribute('aria-pressed',String(state.netDigits));});
+  state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,2);
+  const transport=document.createElement('div');transport.id='zerkMotion';transport.setAttribute('aria-label','Общий пуск включённых осей');stage.append(transport);
+  const motionRange=document.createElement('input');motionRange.type='range';motionRange.dataset.zerkArrowed='1';motionRange.min=0;motionRange.max=200;motionRange.value=Math.round(state.motionRate*100);motionRange.setAttribute('aria-label','Общая скорость включённых осей в процентах');transport.append(motionRange);
+  const motionPlay=button('▶','Запустить / остановить все включённые оси',()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));if(active){pausedMotion=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}else{state.mirrors.forEach((m,i)=>{if(!m.on)return;if(pausedMotion?.[i]?.path)m.path.enabled=true;else m.spin=true;});pausedMotion=null;}previous=0;changed();},transport);
+  const motionValue=document.createElement('output');motionValue.setAttribute('aria-label','Общая скорость осей');transport.append(motionValue);
+  motionRange.oninput=()=>{state.motionRate=Number(motionRange.value)/100;changed();};
+  const playAction=motionPlay.onclick;motionPlay.onclick=e=>{if(performance.now()<(motionPlay._dragUntil||0))return;playAction(e);};
+  motionPlay.title='Щелчок — общий пуск / пауза; перетаскивание ромба — общая скорость';
+  motionPlay.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();e.stopPropagation();motionPlay.setPointerCapture(e.pointerId);const sx=e.clientX,rate=state.motionRate;let moved=false;const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.abs(ev.clientX-sx)>3)moved=true;if(moved){state.motionRate=clamp(rate+(ev.clientX-sx)/72,0,2);motionPlay._dragUntil=performance.now()+400;changed();}};const end=ev=>{if(ev.pointerId!==e.pointerId)return;motionPlay.removeEventListener('pointermove',move);motionPlay.removeEventListener('pointerup',end);motionPlay.removeEventListener('pointercancel',end);if(motionPlay.hasPointerCapture(e.pointerId))motionPlay.releasePointerCapture(e.pointerId);};motionPlay.addEventListener('pointermove',move);motionPlay.addEventListener('pointerup',end);motionPlay.addEventListener('pointercancel',end);});
+  compactUpdates.push(()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));motionPlay.textContent=active?'Ⅱ':'▶';motionPlay.setAttribute('aria-pressed',String(active));motionPlay.style.left=(8+state.motionRate*72)+'px';motionValue.textContent=Math.round(state.motionRate*100)+'%';motionRange.value=Math.round(state.motionRate*100);});
+  let pausedMotion=null;
+  stage.addEventListener('dblclick',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion,.zerk-turn'))return;e.preventDefault();e.stopPropagation();if(pausedMotion){pausedMotion.forEach((v,i)=>{if(!state.mirrors[i].on)return;if(v.spin)state.mirrors[i].spin=true;if(v.path)state.mirrors[i].path.enabled=true;});pausedMotion=null;}else{const running=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));if(!running.some(v=>v.spin||v.path))return;pausedMotion=running;state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}previous=0;controls.forEach((c,i)=>{c.spin.textContent=state.mirrors[i].spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(state.mirrors[i].spin));});changed();});
   const viewMatrix=()=>{const a=state.viewAngle*pi/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom;return [c,s,-s,c,drawW*(.5+state.pan[0])-c*drawW/2+s*drawH/2,drawH*(.5+state.pan[1])-s*drawW/2-c*drawH/2];};
   const viewPoint=(x,y)=>sceneMath.point(viewMatrix(),x*drawW,y*drawH);
   const worldPoint=(x,y)=>{const p=worldDelta(x-drawW*(.5+state.pan[0]),y-drawH*(.5+state.pan[1]));return [p[0]+drawW/2,p[1]+drawH/2];};
   function zoomBy(factor,x=drawW/2,y=drawH/2,group=false){if(!drawW||!drawH)return;const history=motionSnap({}),before=state.zoom,next=clamp(before*factor,.2,6),ratio=next/before;
     state.pan=[(x-drawW/2-(x-drawW/2-state.pan[0]*drawW)*ratio)/drawW,(y-drawH/2-(y-drawH/2-state.pan[1]*drawH)*ratio)/drawH];state.zoom=next;changed();pushMotion(history,group?'zoom':null);}
-  stage.addEventListener('wheel',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom')||!e.deltaY)return;e.preventDefault();e.stopPropagation();const r=stage.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?drawH:1);zoomBy(Math.exp(-clamp(delta,-120,120)*.0015),e.clientX-r.left,e.clientY-r.top,true);},{passive:false});
+  stage.addEventListener('wheel',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion')||!e.deltaY)return;e.preventDefault();e.stopPropagation();const r=stage.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?drawH:1);zoomBy(Math.exp(-clamp(delta,-120,120)*.0015),e.clientX-r.left,e.clientY-r.top,true);},{passive:false});
+  function magnetBits(){const data=scene(),points=data.labels.map(v=>v.point);for(const item of data.items)if(!item.mask)for(const p of item.src.points||[])points.push(sceneMath.point(item.matrix,...p));return points;}
+  function nearestBit(x,y,points,radius){let best=null;for(const p of points){const d=Math.hypot(x-p[0],y-p[1]);if(d<radius){radius=d;best=p;}}return best;}
   function pickFigures(x,y){
     const mirrors=new Set(),sources=new Set();
     for(const item of scene().items){const [a,b,c,d,e,f]=item.matrix,det=a*d-b*c;if(Math.abs(det)<1e-12)continue;const px=(d*(x-e)-c*(y-f))/det,py=(-b*(x-e)+a*(y-f))/det,B=item.bounds,img=item.src.image;
@@ -300,7 +321,7 @@
     }return {mirrors:[...mirrors],sources:[...sources]};
   }
   function beginStageDrag(e,requireHit=false){
-    if(![0,1].includes(e.button)||e.target.closest('button,input,select,textarea,.zerk-grape .smh,.zerk-diamond,#zerkTools,#zerkZoom'))return false;
+    if(![0,1].includes(e.button)||e.target.closest('button,input,select,textarea,.zerk-grape .smh,.zerk-diamond,#zerkTools,#zerkZoom,#zerkMotion'))return false;
     const r=stage.getBoundingClientRect(),point=worldPoint(e.clientX-r.left,e.clientY-r.top),pick=e.button===0?pickFigures(...point):{mirrors:[],sources:[]},picked=pick.mirrors.length+pick.sources.length>0;
     if(requireHit&&!picked)return false;if(!requireHit&&e.button===0&&e.target.closest('.zerk-axis'))return false;
     e.preventDefault();e.stopPropagation();stage.classList.add('panning');stage.setPointerCapture(e.pointerId);
@@ -428,7 +449,7 @@
     const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
     for(let r=0;r<R.length;r++)for(let j=0;j<R[r].length;j++){
       const bit=R[r][j],x=-(R[r].length-1)*dw/2+j*dw,y=r*dh/2,a=state[bit==='0'?'zero':'one']*pi/180,c=Math.cos(a),sn=Math.sin(a);
-      shapes.push([bit,x,y,a]);for(const [u,v] of [[0,-dh*.45],[dw*.45,0],[0,dh*.45],[-dw*.45,0]])include(x+u*c-v*sn,y+u*sn+v*c);
+      shapes.push([bit,x,y,a]);for(const [u,v] of [[0,-dh*.5],[dw*.5,0],[0,dh*.5],[-dw*.5,0]])include(x+u*c-v*sn,y+u*sn+v*c);
     }
     bounds[0]-=2;bounds[1]-=2;bounds[2]+=2;bounds[3]+=2;
     const image=document.createElement('canvas'),w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h)));
@@ -438,13 +459,13 @@
       target.font='bold '+fs+'px '+state.font;target.textAlign='center';target.textBaseline='middle';
       for(const [bit,x,y,a] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?.42:.11);target.fillStyle=colorMap(color);
-        if(!state.bitsOnly){target.beginPath();target.moveTo(0,-dh*.45);target.lineTo(dw*.45,0);target.lineTo(0,dh*.45);target.lineTo(-dw*.45,0);target.closePath();target.fill();}
+        if(!state.bitsOnly){target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}
         if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(color);target.fillText(bit,0,fs*.06);}
         else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
         else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':color);target.fillText(bit,0,fs*.06);}target.restore();
       }target.globalAlpha=alpha;
     };
-    draw(ctx,safe);return {image,bounds,polygons:[figureHull(vertices)],draw};
+    draw(ctx,safe);return {image,bounds,polygons:[figureHull(vertices)],points:shapes.map(v=>[v[1],v[2]]),draw};
   }
 
   function netGeometry(preset=state.net.preset){
@@ -454,19 +475,26 @@
     else{const points=C[0]==='e'?[pos[C[1]][C[2]],pos[C[1]][C[3]]]:Object.values(pos[C[1]]);center=[0,1].map(i=>points.reduce((n,p)=>n+p[i],0)/points.length);}
     const bounds=[Infinity,Infinity,-Infinity,-Infinity];for(const f of faces)for(const p of f.P){bounds[0]=Math.min(bounds[0],p[0]);bounds[1]=Math.min(bounds[1],p[1]);bounds[2]=Math.max(bounds[2],p[0]);bounds[3]=Math.max(bounds[3],p[1]);}return {faces,bounds,center};
   }
+  // A lattice square becomes a rhombus; the last diagonal row is clipped to triangles.
+  // Together these cells tile the face exactly, with no spacing or overlapping interiors.
+  function netCell(f,r,k,R){
+    const [A,L,B]=f.P,u=r-k,v=k,map=(a,b)=>[A[0]+a/R*(L[0]-A[0])+b/R*(B[0]-A[0]),A[1]+a/R*(L[1]-A[1])+b/R*(B[1]-A[1])];
+    const edge=r===R-1,P=(edge?[[u,v],[u+1,v],[u,v+1]]:[[u,v],[u+1,v],[u+1,v+1],[u,v+1]]).map(([a,b])=>map(a,b));
+    return {P,C:map(u+(edge?1/3:.5),v+(edge?1/3:.5))};
+  }
   function netFaces(ctx,model,bits,scale,labels,preview=false,colorMap=c=>c,pixelScale=1){
-    const alpha=ctx.globalAlpha,view=visibleWorld(ctx,2/Math.max(1,bits.length)),R=bits.length,cell=scale/R;ctx.textAlign='center';ctx.textBaseline='middle';
+    const alpha=ctx.globalAlpha,R=bits.length,cell=scale/Math.max(1,R),view=visibleWorld(ctx,2/Math.max(1,R));ctx.textAlign='center';ctx.textBaseline='middle';
     for(const f of model.faces){const col=f.up?state.net.up:state.net.down,[A,L,B]=f.P;ctx.fillStyle=colorMap(col);ctx.strokeStyle=colorMap(col);
-      if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();ctx.globalAlpha=alpha*.1;ctx.fill();ctx.globalAlpha=alpha;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
-      if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),a=(r-k+1/3)/R,b=(k+1/3)/R,x=A[0]+a*(L[0]-A[0])+b*(B[0]-A[0]),y=A[1]+a*(L[1]-A[1])+b*(B[1]-A[1]);
-        if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;ctx.globalAlpha=alpha*(bit?1:.45);ctx.fillStyle=colorMap(col);
-        if(state.bitsOnly){ctx.font='700 '+(.72/R)+'px '+state.font;ctx.fillText(String(bit),x,y);}
-        else{const rad=(bit?Math.max(.7,cell*.3):cell*.12)/scale;if(!bit&&rad*scale*pixelScale<.8)continue;ctx.beginPath();ctx.arc(x,y,rad,0,2*pi);ctx.fill();}}
+      if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();if(preview){ctx.globalAlpha=alpha*.1;ctx.fill();}ctx.globalAlpha=alpha;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
+      if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),{P,C:[x,y]}=netCell(f,r,k,R);
+        if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
+        if(!state.bitsOnly){ctx.globalAlpha=alpha*(bit?.42:.11);ctx.fillStyle=colorMap(col);ctx.beginPath();ctx.moveTo(...P[0]);P.slice(1).forEach(p=>ctx.lineTo(...p));ctx.closePath();ctx.fill();}
+        if(state.bitsOnly||state.netDigits){ctx.save();ctx.globalAlpha=alpha*(state.bitsOnly?(bit?1:.7):(bit?1:.7));ctx.fillStyle=colorMap(state.bitsOnly||!bit?col:'#06150d');ctx.translate(x,y);ctx.scale(.6/R/16,.6/R/16);ctx.font='700 16px '+state.font;ctx.fillText(String(bit),0,0);ctx.restore();}}
       if(labels&&!preview&&!state.bitsOnly){const x=(A[0]+L[0]+B[0])/3,y=(A[1]+L[1]+B[1])/3;ctx.globalAlpha=alpha;ctx.font='700 '+(12/scale)+'px system-ui';ctx.lineWidth=3/scale;ctx.strokeStyle=colorMap('#000000');ctx.strokeText(f.name,x,y);ctx.fillStyle=colorMap('#ffffff');ctx.fillText(f.name,x,y);}
     }ctx.globalAlpha=alpha;
   }
   function netPreview(canvas,preset){const model=netGeometry(preset),b=model.bounds,scale=Math.min(48/(b[2]-b[0]),40/(b[3]-b[1])),ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,56,48);ctx.setTransform(scale,0,0,scale,28-(b[0]+b[2])*scale/2,24-(b[1]+b[3])*scale/2);netFaces(ctx,model,[],scale,false,true);}
-  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);return {image,bounds,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
+  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);const points=[];for(const f of model.faces){const [A,L,B]=f.P;for(let r=0;r<pattern.length;r++)for(let k=0;k<=r;k++){points.push(netCell(f,r,k,pattern.length).C.map(v=>v*scale));}}return {image,bounds,points,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
   function reflectedMode(mask){return state.mirrors.reduce((v,m,j)=>v^((mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);}
   function transferNet(){
     const mask=state.net.copy;if(state.mirrors.some((m,i)=>(mask&(1<<i))&&!m.on)){notify('Включите зеркала выбранного отражения или выберите исходную развёртку');return;}
@@ -479,7 +507,7 @@
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
       const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
-      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
+      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
@@ -548,8 +576,8 @@
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
-      if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt;const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
-      else if(m.spin)m.angle=norm(m.angle+m.speed*pi/180*dt);
+      if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1);const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
+      else if(m.spin)m.angle=norm(m.angle+m.speed*pi/180*dt*(state.motionRate??1));
     }
     render();if(spinning)raf=requestAnimationFrame(tick);else previous=0;
   }

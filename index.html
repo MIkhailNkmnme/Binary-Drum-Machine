@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.109. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.110. Точка входа: ссылки на все страницы проекта.
+     v0.110: пульт над полем, переворот 3D вокруг зеркала, магнит оси и двойной щелчок — пауза / продолжить.
      v0.109: «Код» — прежняя страница Code, «Зеркалиус» — три зеркала.
      v0.107: ровные кнопки, ссылка на окно «Зеркалиус», компактные ромбы настроек и PNG рядом с видео.
      v0.106: главные кнопки «Треугольник» и «Зазеркалиус» — вверху левого меню.
@@ -123,7 +124,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.109</title>
+    <title>Zerkalius Control Hub — v0.110</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -582,14 +583,22 @@
         #hubZoom output{cursor:pointer;font-variant-numeric:tabular-nums}
         body.hubCanvasUnlocked{touch-action:none}
         .hubMirrorHandle{display:none!important}
+        /* v0.110: canvas controls live above the field, independent of menu scroll. */
+        #hubFieldTools.hubMirrorSettings{position:fixed;left:318px;top:8px;z-index:24;display:flex;flex-wrap:wrap;align-items:flex-start;gap:2px;width:calc(100vw - 430px);max-width:700px;padding:0;overflow:visible}
+        #hubFieldTools .hubRhomb,#hubFieldTools .hubTilt{flex:0 0 48px}
+        #hubFieldTools .hubFlip{white-space:pre-line;font-size:12px}
+        #hubFieldTools .hubViewRotation{order:2;flex:0 0 144px;align-self:center}
+        #hubFieldTools .hubImageStatus{order:3;flex:0 0 100%;width:100%;margin:0}
+        .hub{scrollbar-width:none!important}.hub::-webkit-scrollbar{display:none;width:0;height:0}
+        @media(max-width:1100px){#hubFieldTools.hubMirrorSettings{position:absolute;left:12px;top:68px;width:calc(100% - 24px);max-width:none}}
     </style>
 <script src="_js/hub-perf.js?v=1"></script>
 <script src="_js/initial-rows.js?v=2"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
-<script src="_js/hub-mirror.js?v=109"></script>
+<script src="_js/hub-mirror.js?v=110"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
-<script src="_js/hub-view.js?v=109"></script>
+<script src="_js/hub-view.js?v=110"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -626,7 +635,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.109</div>
+        <div class="ver">v0.110</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -834,6 +843,8 @@
             const ROW_PATTERNS = { base: HUB_ROWS, serp: SERP_ROWS };
             const music = HubRhombMusic(ROW_PATTERNS[window.HubMirror.state.pattern], data => window.dispatchEvent(new CustomEvent('hubmusic', { detail: data })));
             const post = m => music.send(m);
+            let resumeFlood=false;
+            window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeFlood=hubLive&&!document.getElementById('hubSndBox').classList.contains('paused');if(resumeFlood)post({zerkSndToggle:true});}else{if(resumeFlood&&hubLive&&document.getElementById('hubSndBox').classList.contains('paused'))post({zerkSndToggle:true});resumeFlood=false;}});
             window.addEventListener('hubpattern', () => music.setRows(ROW_PATTERNS[window.HubMirror.state.pattern]));
             document.getElementById('hubLogo').onclick = () => document.querySelector('.hub').scrollIntoView({ behavior: 'smooth' });
             document.addEventListener('click', e => {
@@ -847,7 +858,7 @@
                    нота — включает и выключает только себя (её onclick); кнопка меню — просто ведёт дальше; пустое место — пауза / дальше, только
                    если что-то звучит (из тишины ничего не включает) */
                 if (note || link) return;
-                if (bg && hubLive) post({ zerkSndToggle: true });
+                // Общая пауза поля — двойным щелчком; одиночный не мешает переносить рисунок.
             }, true);
             /* v0.067, «запустить нажатием — отправить в бесконечность»: обычный щелчок по кнопке меню (замок уже открыт — запертое меню
                щелчок гасит раньше) — кнопка улетает вдаль к середине экрана, потом переход. Ctrl, Shift, средняя кнопка — как обычно, без полёта.
@@ -1146,6 +1157,7 @@
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw]]; }
+                if(!output)window.HubMirror.setBitCenters(PR.flatMap((row,r)=>[...row].flatMap((_,j)=>spots.map(f=>{const [x,y]=f(r,j);return [left+x,y];}))));
                 const rhomb = (x, y, k, bit) => {
                     const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2, angle = window.HubMirror.bitAngle(bit);
                     const co = Math.cos(angle), si = Math.sin(angle), point = (dx, dy) => [x + dx * co - dy * si, y + dx * si + dy * co];

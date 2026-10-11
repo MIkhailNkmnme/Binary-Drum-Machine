@@ -1,19 +1,21 @@
-/* Hub v0.109: поворот и масштаб всего поля с точным захватом зеркала; исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
+/* Hub v0.110: настройки зеркала и поля над холстом; исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp' }, clamp = v => Math.max(.01, Math.min(.99, v));
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp',magnet:true,axisRotate:false }, clamp = v => Math.max(.01, Math.min(.99, v));
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
+      state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.pattern === 'base' ? 'base' : 'serp';
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? saved.angle % Math.PI : saved.axis === 'h' ? 0 : Math.PI / 2;
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
       for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = Math.max(-60, Math.min(60, saved[k]));
     }
   } catch (_) {}
-  let frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null;
+  let frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
+  function magneticPoint(x,y){let best=[x,y],distance=10/Math.max(.2,window.HubView?.scale||1);const shift=window.HubView?.sourceShift()||[0,0];for(const p of [[frame.left+frame.width/2,frame.height/2],...bitCenters.map(p=>[p[0]+shift[0],p[1]+shift[1]])]){const d=Math.hypot(x-p[0],y-p[1]);if(d<=distance){distance=d;best=p;}}return best;}
   const buffers = new WeakMap(),liveSources=new Set();
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
@@ -27,7 +29,7 @@
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = (length / 2 + Math.min(frame.width, frame.height) * .22) + 'px';
     window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
-    handle.title = 'Зеркало: тяни за линию или отражённые биты; круглая точка — наклон; вкл / выкл — ромб ◇ в меню';
+    handle.title = 'Зеркало: тяни за линию или отражённые биты; круглая точка — наклон; вкл / выкл — ромб ◇ над полем';
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(state.angle * 180 / Math.PI) + ' градусов');
     turn.title = 'Повернуть зеркало: тяни ручку или крути колесо';
   };
@@ -39,7 +41,8 @@
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
     line.append(handle, turn); root.append(line); document.body.append(root);
-    const settings = document.createElement('div'); settings.className = 'hubMirrorSettings';
+    const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
+    settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
     settings.addEventListener('click', e => e.stopPropagation());
     const patternLabel = document.createElement('label'), pattern = document.createElement('select');
     pattern.setAttribute('aria-label', 'Узор треугольника');
@@ -70,15 +73,16 @@
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; });
       settings.querySelectorAll('output').forEach(el => { el.textContent = '0°'; }); changed(); save();
     });
-    document.querySelector('.hub .mainrow')?.after(settings);
+    document.body.append(settings);
+    for(const [key,text,title] of [['magnet','🧲','Магнит оси: центр поля и центры битов'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     root.addEventListener('pointerdown', e => {
       if (e.button !== 0 || !frame) return;
-      if(e.target!==turn&&window.HubView?.grabBits?.(e,true))return;
       e.preventDefault(); e.stopPropagation();
       const [mx,my]=window.HubView?window.HubView.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY];
+      if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved: false, handle: e.target === handle, turn: e.target === turn };
+        moved: false, handle: e.target === handle, turn: e.target === turn||state.axisRotate };
       drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);
       root.setPointerCapture(e.pointerId);
     });
@@ -86,12 +90,14 @@
       if (!drag || drag.id !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
       const [mx,my]=window.HubView?window.HubView.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY],dx=mx-drag.x,dy=my-drag.y;
+      if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       if (!drag.moved && Math.hypot(dx, dy) < 3) return;
       drag.moved = true;
       if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
         state.angle = ((drag.angle + Math.atan2(my - drag.cy, mx - drag.cx) - drag.startAngle) % Math.PI + Math.PI) % Math.PI;
-      } else { state.x = clamp(drag.px + dx / frame.width); state.y = clamp(drag.py + dy / frame.height); }
+        if(state.magnet&&!e.altKey){const step=Math.PI/12,nearest=Math.round(state.angle/step)*step;if(Math.abs(nearest-state.angle)<=Math.PI/90)state.angle=nearest%Math.PI;}
+      } else {let x=frame.left+drag.px*frame.width+dx,y=drag.py*frame.height+dy;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);}
       changed();
     });
     const finish = e => {
@@ -117,6 +123,7 @@
   }
   window.HubMirror = {
     state, get revision() { return revision; },
+    setBitCenters(points){bitCenters=points;},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false);for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x,y);if(reflected)mirror||=read(image,...reflected);}return {source:original,mirror};},
