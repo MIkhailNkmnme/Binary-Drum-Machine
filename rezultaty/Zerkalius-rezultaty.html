@@ -1,4 +1,4 @@
-<!-- Zerkalius Битмультфильмы — v0.014 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+<!-- Zerkalius Битмультфильмы — v0.015 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
      картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
      (Python по тем же правилам, что в Треугольнике), страница только показывает.
      v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
@@ -22,13 +22,14 @@
      v0.013: раздел «Маятник — XOR из Excel» (слово пользователя 2026-10-11 «закинь кадры в Битфильм и ссылку на страницу с отрисовкой»):
              mayatnik-256.gif (все 256 кадров), mayatnik-512.gif (каждый 8-й), mayatnik-2024.webp (последний кадр 2024 строк);
              кадры посчитаны ядром MAYATNIK из mayatnik/Zerkalius-mayatnik.html, ссылка ▶ — на саму страницу.
-     v0.014: «Прилёт Зеркалиуса» — запись пользователя из хаба, MP4 с обложкой и встроенным плеером. -->
+     v0.014: «Прилёт Зеркалиуса» — запись пользователя из хаба, MP4 с обложкой и встроенным плеером.
+     v0.015: рисунок «Три зеркала»; живые предпросмотры запускаются по одному и останавливаются вне экрана. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Битмультфильмы — v0.014</title>
+<title>Zerkalius Битмультфильмы — v0.015</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --gold:#ffcc00; }
@@ -60,6 +61,9 @@
   .live{ position:relative; aspect-ratio:1 / 1; background:#000; border-radius:3px; overflow:hidden; }
   .live iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; pointer-events:none; }
   .live a{ position:absolute; inset:0; cursor:zoom-in; }
+  .preview-play{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2; width:64px; height:64px; padding:0; border:0; clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); background:#244753; color:var(--up); font:24px system-ui; cursor:pointer; }
+  .preview-play[aria-pressed="true"]{ left:auto; right:8px; top:8px; transform:none; width:40px; height:40px; font-size:18px; }
+  .drawings .card img{ height:340px; object-fit:contain; }
   /* v0.002: ▶ в Треугольнике — открыть этот случай с заготовкой и запущенной Аниматрицей */
   a.go{ display:inline-block; margin-left:8px; padding:1px 8px; border:1px solid currentColor; border-radius:4px; text-decoration:none; font-weight:600; }
   a.go:hover{ filter:brightness(1.3); }
@@ -112,6 +116,15 @@
 </figure>
 </section>
 
+<section id="risunki-zerkaliusa">
+<h2>Рисунки Зеркалиуса</h2>
+<div class="grid drawings">
+  <div class="card"><img src="zerkalius-tri-zerkala.png" alt="Рисунок Зеркалиуса — три зеркала" width="517" height="526" loading="lazy">
+    <h3>Три зеркала</h3><p>Наложение ромбов и битов в трёх зеркалах.</p>
+    <div class="more"><a href="zerkalius-tri-zerkala.png" download>Скачать PNG</a></div></div>
+</div>
+</section>
+
 <div class="hero">
   <figure><img src="cikl-1024.gif" alt="Весь цикл треугольника 1024 строк" loading="lazy">
     <figcaption>1024 строки, весь цикл — 1024 прохода (показан каждый 4-й). Цвет — густота единиц. Внутри «дышат»
@@ -133,20 +146,20 @@
 <!-- v0.006: живые пресеты конуса — карточки строит скрипт ниже по ../zazerkalius/presety/spisok.js -->
 <div id="konusyBox" hidden>
 <h2>Конусы — живые пресеты</h2>
-<p class="lead">Строки треугольника кольцами конуса Zazerkalius — так, как их сохранили кнопкой «💾 Всё». Конус крутится прямо в карточке;
-щелчок — на весь экран. Твоя страница «◯ Конус» при этом не меняется.</p>
+<p class="lead">Строки треугольника кольцами конуса Zazerkalius — так, как их сохранили кнопкой «💾 Всё». ▶ — запустить предпросмотр;
+щелчок по карточке — на весь экран. Твоя страница «◯ Конус» при этом не меняется.</p>
 <div class="grid" id="konusy"></div>
 </div>
 
 <!-- v0.012: живые пирамиды — ссылки 🔗 Пирамиды, в карточке режим ?kino (только пирамида, память гостя не трогается) -->
 <h2>Пирамиды — живые</h2>
-<p class="lead">Пирамида из тетраэдров, вид сверху, на стробоскопической скорости — так, как её сохранили кнопкой 🔗. Крутится прямо в карточке;
-щелчок — открыть с кнопками и крутить самому. Твои настройки Пирамиды при этом не меняются.</p>
+<p class="lead">Пирамида из тетраэдров, вид сверху, на стробоскопической скорости — так, как её сохранили кнопкой 🔗. ▶ — запустить предпросмотр;
+щелчок по карточке — открыть с кнопками и крутить самому. Твои настройки Пирамиды при этом не меняются.</p>
 <div class="grid">
-  <div class="card"><div class="live"><iframe src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" loading="lazy" tabindex="-1" title="8 слоёв сверху · ×785"></iframe><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" target="_blank" title="Открыть с кнопками"></a></div>
+  <div class="card"><div class="live"><div data-preview-src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" loading="lazy" tabindex="-1" title="8 слоёв сверху · ×785"></div><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" target="_blank" title="Открыть с кнопками"></a></div>
     <h3>8 слоёв сверху · ×785</h3><p>Тетраэдры вверх и вниз без октаэдров, радуга, вплотную. Скорость — около ×785: картинка будто стоит и переливается.</p>
     <div class="more"><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6OCwiWCI6MCwic2wiOjAsInUiOjEsIm8iOjAsImQiOjEsImYiOjEsImUiOjEsImMiOjEsIm1jIjoiI2NhYjM2MyIsImF4IjowLCJ5dyI6Mi4wODI2LCJwdCI6MS41NzA4LCJzcCI6MSwidiI6OS42MTczLCJ6IjoxLjE2MTgsInB4Ijo3NiwicHkiOi0xMDAsInRyIjowfQ" target="_blank">▶ открыть с кнопками</a></div></div>
-  <div class="card"><div class="live"><iframe src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" loading="lazy" tabindex="-1" title="13 слоёв, раздвинута · ×256"></iframe><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" target="_blank" title="Открыть с кнопками"></a></div>
+  <div class="card"><div class="live"><div data-preview-src="../oktaedr/Zerkalius-piramida.html?kino#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" loading="lazy" tabindex="-1" title="13 слоёв, раздвинута · ×256"></div><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" target="_blank" title="Открыть с кнопками"></a></div>
     <h3>13 слоёв, раздвинута · ×256</h3><p>Те же тетраэдры, слои чуть раздвинуты (12 %), ×256 — ровно на стробоскопической метке.</p>
     <div class="more"><a href="../oktaedr/Zerkalius-piramida.html#s=eyJiaSI6MCwiTCI6MTMsIlgiOjAuMTIsInNsIjowLCJ1IjoxLCJvIjowLCJkIjoxLCJmIjoxLCJlIjoxLCJjIjoxLCJtYyI6IiNmOWNiMjQiLCJheCI6MCwieXciOjQuNjM4NSwicHQiOjEuNTcwOCwic3AiOjEsInYiOjgsInoiOjEuNTY4MywicHgiOi0zNywicHkiOi00NH0" target="_blank">▶ открыть с кнопками</a></div></div>
 </div>
@@ -481,13 +494,14 @@
   var esc = function(t){ return String(t || "").replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   box.innerHTML = L.map(function(p){
     var u = "../zazerkalius/Zerkalius-zazerkalius.html?solo=cone&amp;preset=" + encodeURIComponent(p.name);
-    return '<div class="card"><div class="live"><iframe src="' + u + '" loading="lazy" tabindex="-1" title="' + esc(p.title) + '"></iframe><a href="' + u + '" target="_blank" title="На весь экран"></a></div>' +
+    return '<div class="card"><div class="live"><div data-preview-src="' + u + '" tabindex="-1" title="' + esc(p.title) + '"></div><a href="' + u + '" target="_blank" title="На весь экран"></a></div>' +
       '<h3>' + esc(p.title) + '</h3><p>' + esc(p.note) + (p.rows ? " · " + p.rows + " строк" : "") + '</p>' +
       '<div class="more"><a href="' + u + '" target="_blank">▶ на весь экран</a></div></div>';
   }).join("");
   document.getElementById("konusyBox").hidden = false;
 })();
 </script>
+<script src="gallery-preview.js?v=15"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
