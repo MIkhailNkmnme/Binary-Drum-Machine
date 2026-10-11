@@ -5,14 +5,14 @@ PROJECT: Zerkalius Треугольник — отдельная страниц�
          Заведена 2026-09-24 копией Zerkalius Code 35.74: для начала в ней есть всё, что есть в Code.
          Память (текст, вид, раскладка) — СВОЯ, ключи ztri_*; с v0.009 у Code ничего не подхватывает (кроме сцен, если
          своих нет): первый запуск — треугольник правила 90 на 50 строк. Ключи Code никогда не пишутся.
-VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
+VERSION: v0.049 (копия Zerkalius Code 35.74 целиком — отправная точка отдельной страницы треугольника)
 "We are not just moving strings, we are weaving the fabric of the Matrix."
 ===========================================================================
 -->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Zerkalius Треугольник v0.048</title>
+    <title>Zerkalius Треугольник v0.049</title>
     <!-- v0.045: общая начальная последовательность (из _pzl.txt) — та же, что у Синхрофазотрона, Зазеркалиуса и фона хаба; ставится при первом открытии -->
     <script src="_js/initial-rows.js?v=2"></script>
     <style>
@@ -403,7 +403,7 @@ VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправ
              скриптом из .tab-sec), разделы — в левой и правой панели; вкладка прячет/показывает свой раздел. -->
         <div class="controls" id="leftPanel">
             <div class="fixed-top">
-                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.048</h3>
+                <h3 id="appTitle" style="cursor:pointer;" title="Щелчок — перезагрузить страницу (как F5: текст, вид и счёт Аниматрицы сохранятся)">Zerkalius Треугольник v0.049</h3>
             </div>
             <div class="scrollable-settings" id="leftSlot">
                 <div class="tab-sec" data-tab="file" data-title="📂 Файл">
@@ -1106,7 +1106,7 @@ VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправ
             <ul>
                 <li>Первый раз страница открывается сразу играющей: сцена «Код Матрицы», радар и реверс включены, рамка выключена.
                     Дальше F5 и повторное открытие возвращают всё как было: текст, вид, галочки, цвета, сцену и кадр плеера.</li>
-                <li><b>Щелчок по холсту</b> — пауза / продолжить. <b>Двойной щелчок</b> или <b>щелчок колесом</b> — режим Дзен (только картинка, без панелей).</li>
+                <li><b>Щелчок по холсту</b> — пауза / продолжить. <b>Щелчок колесом</b> — режим Дзен (только картинка, без панелей).</li>
                 <li><b>Колесо мыши</b> над холстом — масштаб. <b>Перетаскивание</b> — сдвинуть картинку.</li>
                 <li>Свой материал: вкладка <b>📂 Файл</b> → «📂 Текст» (файл .txt) или выбрать готовую сцену в «📍 Карта Сокровищ».</li>
             </ul>
@@ -1181,7 +1181,7 @@ VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправ
         <div id="screenContainer">
             <div id="recTimer">● REC 0:00</div>
             <!-- 35.35: строка состояния — внизу холста по центру (была под названием в шапке левой панели) -->
-            <div id="statusInfo">Двойной клик по холсту — Режим Дзен</div>
+            <div id="statusInfo">Щелчок колесом по холсту — Режим Дзен</div>
             <!-- 35.47: счётчик циклов Аниматрицы — внизу, среди уведомлений, над строкой состояния -->
             <div id="animInfo" style="display:none"></div>
             <button id="recBtn" class="float-btn" title="Запись видео с холста (пишется всё, что происходит, вместе с треком)">⏺</button>
@@ -4244,7 +4244,6 @@ VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправ
                 if(UI.canvas) {
                     const toggleZen = (e) => { e.preventDefault(); document.body.classList.toggle('zen-mode');
                         MODULE_STATE.offsetX = 0; MODULE_STATE.offsetY = 0; setTimeout(() => RENDERER.renderFrame(), 50); };
-                    UI.canvas.addEventListener('dblclick', toggleZen);
                     // Щелчок колесиком — тот же дзен. mousedown нужен, чтобы погасить
                     // автопрокрутку Windows, иначе браузер включит её вместо режима.
                     UI.canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
@@ -4393,7 +4392,6 @@ VERSION: v0.048 (копия Zerkalius Code 35.74 целиком — отправ
                     const sel = document.getElementById('glyphShapeSelect'), bar = document.getElementById('bitShapeBar'); if (!sel || !bar) return;
                     const sync = () => bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === sel.value));
                     bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sel.value = b.dataset.v; sel.dispatchEvent(new Event('change', { bubbles: true })); sync(); });
-                    bar.addEventListener('dblclick', e => e.stopPropagation());   // двойной щелчок по кнопкам — не дзен
                     sel.addEventListener('change', sync); sync(); setTimeout(sync, 0); setTimeout(sync, 800);   // значение могло прийти из памяти позже
                     // место — под полосой вкладок; без неё (спрятана) — у верха холста
                     const menu = document.getElementById('menuTabs');
