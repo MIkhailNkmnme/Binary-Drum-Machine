@@ -2417,9 +2417,33 @@ function coneAxisScr(){   // центр конуса на экране — пр�
   const cv = document.getElementById("coneCv"); if (!cv) return null; const r = cv.getBoundingClientRect(); if (!r.width || !cv.width) return null;
   const dpr = cv.width / r.width; return { x: r.left + (cv.width / 2 + conePan[0]) / dpr, y: r.top + (cv.height / 2 + conePan[1]) / dpr };
 }
+/* v0.067: меню держит группы на осях сетки с шагом полутреугольника. */
+function sfzMenuGridOrigin(){
+  const cv=$("coneCv"),r=cv?.getBoundingClientRect();
+  return r?r.left+r.width/2-300:0;
+}
+function sfzMenuGridLeft(g,left){
+  const origin=sfzMenuGridOrigin(),half=g.offsetWidth/2;
+  return origin+Math.round((left+half-origin)/30)*30-half;
+}
 function sfzMenuPin(g,left,side){
   const wr=$("w-cone").getBoundingClientRect(),axis=coneAxisScr();
-  return {x:(left-wr.left)/Math.max(1,wr.width-g.offsetWidth),side,menuAnchor:true,...(axis?{axisDx:(left+g.offsetWidth/2-axis.x)/Math.max(.00001,coneZoom)}:{})};
+  const mesh=Math.round((left+g.offsetWidth/2-sfzMenuGridOrigin())/30);
+  left=sfzMenuGridOrigin()+mesh*30-g.offsetWidth/2;
+  return {x:(left-wr.left)/Math.max(1,wr.width-g.offsetWidth),side,mesh,menuAnchor:true,...(axis?{axisDx:(left+g.offsetWidth/2-axis.x)/Math.max(.00001,coneZoom)}:{})};
+}
+function sfzMenuGridSync(rect){
+  let grid=$("sfzBottomGrid");
+  if(!grid){grid=document.createElement("div");grid.id="sfzBottomGrid";grid.setAttribute("aria-hidden","true");document.body.appendChild(grid);}
+  grid.style.left=rect.left+"px";grid.style.top=(rect.bottom-30)+"px";grid.style.width=rect.width+"px";
+  grid.style.backgroundPosition=(sfzMenuGridOrigin()-rect.left)+"px 0";
+}
+function sfzCentreAxis(){
+  const cv=$("coneCv"),r=cv?.getBoundingClientRect();if(!r?.width || !r.height)return;
+  const dpr=cv.width/r.width;
+  conePan=[(innerWidth/2-r.left)*dpr-cv.width/2,(innerHeight/2-r.top)*dpr-cv.height/2];
+  Z.coneAxes=true;$("bConeAxes")?.classList.add("on");$("bC3Axes")?.classList.add("on");
+  coneViewRemember();save();renderCone();
 }
 // v0.929: пересекающиеся панели на оси раздвигаются наружу; границы окна не ограничивают верёвку.
 function solAxisPack(items, center){
@@ -6541,10 +6565,16 @@ function coneBalanceAxesPaint(g, cx, cy, W, H, dpr, col, offset = 0){
   // Ось проходит через середину шапки, но скрыта под её надписью.
   const canvas=$("coneCv"),cr=canvas?.getBoundingClientRect();
   if(cr){const inv=g.getTransform().inverse(),path=new Path2D();
-    const rect=(x,y,w,h)=>{const points=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(([px,py])=>new DOMPoint(px,py).matrixTransform(inv));path.moveTo(points[0].x,points[0].y);for(let i=1;i<4;i++)path.lineTo(points[i].x,points[i].y);path.closePath();};
+    const rect=(x,y,w,h,target=path)=>{const points=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(([px,py])=>new DOMPoint(px,py).matrixTransform(inv));target.moveTo(points[0].x,points[0].y);for(let i=1;i<4;i++)target.lineTo(points[i].x,points[i].y);target.closePath();};
     rect(0,0,W,H);
     for(const head of document.querySelectorAll(".sfz-grape > .glab,#ringTbl > .rth")){if(!head.getClientRects().length)continue;const r=head.getBoundingClientRect(),text=head.dataset.grapeName||"Кольца",w=Math.min(108,Math.max(30,text.length*7+8));rect((r.left+r.width/2-w/2-cr.left)*dpr,(r.top+r.height/2-8-cr.top)*dpr,w*dpr,16*dpr);}
     g.clip(path,"evenodd");
+    // v0.067: вся дорожка и нижние кнопки лежат над осью; пересекающиеся маски не открывают её снова.
+    for(const control of document.querySelectorAll("#coneTransportTempo,#c3Modes,#bC3Reset,#coneTransportStart,#bC3Axes")){
+      if(!control.getClientRects().length || control.hidden)continue;
+      const r=control.getBoundingClientRect(),mask=new Path2D();rect(0,0,W,H,mask);
+      rect((r.left-cr.left)*dpr,(r.top-cr.top)*dpr,r.width*dpr,r.height*dpr,mask);g.clip(mask,"evenodd");
+    }
   }
   g.strokeStyle = col; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]);
   for (let q = 0; q < 4; q++) {
@@ -7213,9 +7243,13 @@ function c3AxesPlace(){
   const desktop=!document.body.classList.contains("sol-mobile") && innerWidth>760;
   const size=b.offsetWidth||48;
   b.setAttribute("aria-pressed",String(!!Z.coneAxes));
-  const l=(desktop?center-size/2:center-hr.left-host.clientLeft+host.scrollLeft-size/2).toFixed(1)+"px";
+  const offCenter=Math.abs(center-innerWidth/2)>.5 || Math.abs(middle-innerHeight/2)>.5;
+  b.classList.toggle("sfz-axis-displaced",offCenter);
+  if(desktop)sfzMenuGridSync(cr);
+  const buttonX=offCenter?Math.max(size/2,Math.min(innerWidth-size/2,center)):center;
+  const l=(desktop?buttonX-size/2:buttonX-hr.left-host.clientLeft+host.scrollLeft-size/2).toFixed(1)+"px";
   const controlY=desktop?15:cr.top+1+size/2;
-  const t=(desktop?0:cr.top+1-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
+  const t=(desktop?(offCenter?$("top").getBoundingClientRect().bottom-size/2:0):cr.top+1-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   if(b.style.left!==l)b.style.left=l;if(b.style.top!==t)b.style.top=t;
   const undo=$("undoBox");if(undo){const ur=(undo.offsetParent||undo.parentElement).getBoundingClientRect();const half=desktop?90:46,h=desktop?30:24,menuCenter=desktop?cr.left+cr.width/2:center;
     if(desktop)document.body.style.setProperty("--sfz-grid-origin",(menuCenter-300)+"px");
@@ -7356,8 +7390,25 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     put(caption, X, axisY - hr.top + scrollTop + 6);
   }
 }
-/* Дорожка темпа — ромб-контур с вершиной у бегунка (--tx/--ta). v0.042: число сверху, шаги на краях,
-   ромб 31,5 × 45 — пуск по щелчку и темп при перетаскивании. */
+/* v0.067: внутренние треугольники сходятся под полным ромбом темпа.
+   Вершина следует бегунку; внешний контур и шаги сохраняются. */
+function tempoContourSync(label, tx){
+  const back=$("bC3StepB"), forward=$("bC3StepF"); if(!back || !forward)return;
+  let svg=label.querySelector(":scope > .tempoHourglass");
+  if(!svg){
+    const ns="http://www.w3.org/2000/svg";
+    svg=document.createElementNS(ns,"svg"); svg.classList.add("tempoHourglass");
+    svg.setAttribute("aria-hidden","true"); svg.setAttribute("focusable","false");
+    svg.appendChild(document.createElementNS(ns,"path")); label.appendChild(svg);
+  }
+  const width=label.offsetWidth, height=label.offsetHeight;
+  const viewBox=`0 0 ${width} ${height}`;
+  if(svg.getAttribute("viewBox")!==viewBox)svg.setAttribute("viewBox",viewBox);
+  const left=back.offsetLeft+back.offsetWidth, right=forward.offsetLeft;
+  const top=back.offsetTop+.5, bottom=back.offsetTop+back.offsetHeight-.5, mid=height/2;
+  const d=`M${left} ${top}L${tx} ${mid}L${left} ${bottom}Z M${right} ${top}L${tx} ${mid}L${right} ${bottom}Z`;
+  const path=svg.firstElementChild; if(path.getAttribute("d")!==d)path.setAttribute("d",d);
+}
 function tempoTrackSync(){
   const r = $("coneAutoSp"), L = r && r.closest("#coneTransportTempo > label"); if (!L || !L.offsetWidth) return;
   tempoControlsSetup(r, L);
@@ -7369,6 +7420,7 @@ function tempoTrackSync(){
   const tx=rr.left-lr.left+thumbWidth/2+f*Math.max(1,rr.width-thumbWidth);
   const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
   set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
+  tempoContourSync(L, tx);
   const value = $("coneAutoSpV");
   if (value) { const vw = value.offsetWidth, right = tx + 78, vx = right + vw <= lw - 10 ? right : tx - 78 - vw;
     set("--vx", Math.max(30, Math.min(lw - 30 - vw, vx)).toFixed(1) + "px"); }
@@ -8867,8 +8919,10 @@ function setupCone(){
       if (host && !$(id)) { const b = document.createElement("button"); b.id = id; b.className = "c3step"; b.title = tip; b.innerHTML = t;   // v0.986: на ромбах шага остаются только стрелки
         b.onclick = () => { const a = $(src); if (a) a.click(); }; host.appendChild(b); }
     coneDirUi();
-    if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.setAttribute("aria-label", "Ось: вертикаль и горизонталь"); b.title = "✛ Оси: вертикаль и горизонталь через центр конуса — пунктиром во весь холст"; b.textContent = "✛";   // v0.850
-      b.classList.toggle("on", !!Z.coneAxes); b.onclick = () => { const a = $("bConeAxes"); if (a) a.click(); }; host.appendChild(b); }
+    if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.setAttribute("aria-label", "Вернуть ось в центр экрана"); b.title = "✛ Любой щелчок — ось в центр экрана"; b.textContent = "✛";   // v0.850
+      b.classList.toggle("on", !!Z.coneAxes);
+      const centre=e=>{e.preventDefault();e.stopPropagation();sfzCentreAxis();};
+      b.onclick=centre;b.addEventListener("contextmenu",centre);b.addEventListener("auxclick",centre);host.appendChild(b); }
     /* v0.1047, «кнопки плюс и минус масштаб, наверху треугольники рядом с балансами, правее и левее, такого же размера»: «−» слева от баланса «1»,
        «+» справа от баланса «0» — треугольники остриём вниз, как балансы. Масштаб — к центру конуса (как − ＋ пульта 3D); держишь — повторяется */
     for (const [id, t, f, tip] of [["bC3ZoomOut", "−", 0.8, "− Мельче: масштаб конуса; центр осей остаётся на месте. Держи — повторяется"], ["bC3ZoomIn", "+", 1.25, "+ Крупнее: масштаб конуса; центр осей остаётся на месте. Держи — повторяется"]])
@@ -11763,8 +11817,8 @@ function cgrpInit(){
       }
       const axis=coneAxisScr(),oldX=wr.left+Math.max(0,wr.width-g.offsetWidth)*topPin.x;
       if(axis&&!Number.isFinite(topPin.axisDx))topPin.axisDx=(oldX+g.offsetWidth/2-axis.x)/Math.max(.00001,coneZoom);
-      const x=axis?axis.x+topPin.axisDx*coneZoom-g.offsetWidth/2:oldX;
-      g.classList.add("cfloat", "cg-abovebody"); g.classList.remove("cfld");
+      const x=Number.isInteger(topPin.mesh)?sfzMenuGridOrigin()+topPin.mesh*30-g.offsetWidth/2:axis?axis.x+topPin.axisDx*coneZoom-g.offsetWidth/2:oldX;
+      g.classList.add("cfloat", "cg-abovebody"); g.classList.remove("cfld", "axpin");
       const y = lower ? wb.getBoundingClientRect().bottom-g.offsetHeight : top.bottom;
       g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px"; return;
     }
@@ -12061,6 +12115,7 @@ function cgrpInit(){
           g._floor = !mates.length && sfzColumnGroup(g) && sx >= body.left - 1 && sx + r.width <= body.right + 1 && Math.abs(sy + g.offsetHeight - floor) <= 16;
           if (g._ceil) { sy = ceiling; g._floor = false; g._mesh = null; }
           else if (g._floor) sy = floor - g.offsetHeight;
+          if(g._ceil || g._floor){sx=sfzMenuGridLeft(g,sx);zSnapGlow([g._ceil?$("top"):$("sfzBottomGrid")]);}
           if (!mates.length) { const A=coneAxisScr();
             const edges=["head",...(g.querySelector(":scope > .sfz-book-cover")?["foot"]:[])].map(edge=>({edge,offset:solPanelAxisOffset(g,edge)})).sort((a,b)=>Math.abs(ly-dy+a.offset-(A?.y||0))-Math.abs(ly-dy+b.offset-(A?.y||0)));
             const {edge,offset}=edges[0],distance=A?Math.abs(ly-dy+offset-A.y):Infinity,edgeDistance=Math.min(g._ceil?Math.abs(ly-dy-ceiling):Infinity,g._floor?Math.abs(ly-dy+g.offsetHeight-floor):Infinity);if(A&&distance<=12&&distance<=edgeDistance){sy=A.y-offset;g._ceil=false;g._floor=false;g._mesh=null;g._pin=(sx-A.x)/(coneZoom||1);g._sfzAxisEdge=edge;}
@@ -12091,13 +12146,15 @@ function cgrpInit(){
           all.forEach((x, i) => { delete Z.cgrpFld[x.dataset.g]; Z.cgrpPos[x.dataset.g] = { x: at[i].left + sx - tr.left, y: at[i].top + sy - tr.top }; place(x); });
           linkSync(); lasMesh(); save(); return;
         }
-        if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
+        if (!g._ceil && !g._floor && paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
         if (g._floor || g._ceil || zone === "head") {
           const key=g.dataset.g, wr=$("w-cone").getBoundingClientRect();
           delete Z.cgrpFld[key];delete Z.cgrpLink[key];nodeSetPos(g,gr.left,gr.top);
-          Z.cgrpTop ||= {};Z.cgrpTop[key]=sfzMenuPin(g,gr.left,g._ceil?"top":"bottom");
-          place(g);sfzGrapeSync(g);linkSync();save();return;
+          const side=g._floor?"bottom":"top";
+          Z.sfzBookUp ||= {};if(side==="bottom")Z.sfzBookUp[key]=true;else delete Z.sfzBookUp[key];
+          Z.cgrpTop ||= {};Z.cgrpTop[key]=sfzMenuPin(g,gr.left,side);
+          sfzGrapeSync(g);place(g);linkSync();save();return;
         }
         if (zone) {
           Z.cgrpFld[g.dataset.g] = solZoneRec(zone, gr, solZoneRect(zone)); delete Z.cgrpPos[g.dataset.g];
