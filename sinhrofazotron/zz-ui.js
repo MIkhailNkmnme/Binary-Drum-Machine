@@ -830,6 +830,7 @@ function sfzSettingsInit(){
   menus._ready = true;
   const pane=$("rowsPane"); if(pane)pane.insertBefore(menus,pane.querySelector(":scope > .pane-head"));
   menus.classList.remove("pane-fold-hid","pane-icon-body-hid");
+  const zen=$("bConeZen");if(zen)menus.appendChild(zen);
   for(const [i,text] of ["Вид","01","+"].entries()){
     const summary=menus.querySelectorAll("summary")[i];if(!summary)continue;
     const title=["Вид","Строки","Достройка"][i];summary.textContent=text;summary.title=title;summary.setAttribute("aria-label",title);
@@ -7113,7 +7114,7 @@ function coneBalPlace(){
   const el = document.getElementById("coneBal"), cv = document.getElementById("coneCv"); if (!el || el.hidden || !cv) return;
   const host = el.offsetParent || el.parentElement, hr = host.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = el.offsetWidth || 120;
-  const tools = document.getElementById("coneBalanceTools"), th = tools && tools.getClientRects().length ? tools.getBoundingClientRect().bottom - cr.top + 6 : 0;
+  const magnets=document.getElementById("coneMagAxisTools"), th=coneMagAxisTop(cv)-cr.top+(magnets&&magnets.offsetHeight||48)+4;
   const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) - host.clientLeft + host.scrollLeft, y = cr.top - hr.top - host.clientTop + host.scrollTop + th;   // v0.1011: верх трио вплотную к первой полосе меню, на верхней линии холста
   const l = x.toFixed(1) + "px", t = y.toFixed(1) + "px"; if (el.style.left !== l) el.style.left = l; if (el.style.top !== t) el.style.top = t;
   c3AxesPlace();
@@ -7157,6 +7158,11 @@ function lasAlgoPlace(){
   const host = el.closest(".wbody") || el.parentElement, hs = Math.ceil(Math.min(el._mh, Math.max(128, Math.min(480, (host.clientHeight || innerHeight) - 72))) / TZC_H) * TZC_H + "px";
   if (body.style.height !== hs) body.style.height = hs;
 }
+function coneMagAxisTop(cv){
+  const tools=$("coneBalanceTools"), first=tools&&tools.querySelector(":scope > button");
+  if(first&&first.getClientRects().length){const r=first.getBoundingClientRect();return r.top+r.height/2+6;}
+  return cv.getBoundingClientRect().top+30;
+}
 function coneMagAxisPlace(){
   const cv = $("coneCv"), first = $("bMagSym"), second = $("bMagSnapParts");
   if (!cv || !first || !second) return;
@@ -7168,15 +7174,8 @@ function coneMagAxisPlace(){
   for(const button of [first,second]) { const brief=(button===first?"Симм. ":"Границы ")+button.textContent.trim(); if(button.dataset.hoverCaption!==brief)button.dataset.hoverCaption=brief; }
   const anchor = box.offsetParent || box.parentElement, hr = anchor.getBoundingClientRect();
   const x = A.x - hr.left - anchor.clientLeft + anchor.scrollLeft - box.offsetWidth / 2;
-  // v0.046: магниты у верхнего конца оси, ниже верхних кнопок и чисел баланса.
-  let yTop = cv.getBoundingClientRect().top;
-  const leftEdge = A.x - box.offsetWidth / 2, rightEdge = A.x + box.offsetWidth / 2;
-  for (const id of ["coneBalanceTools", "coneAlignTools", "coneBal", "bC3Axes", "bC3ZoomOut", "bC3ZoomIn"]) {
-    const el = $(id); if (!el || el.hidden || !el.getClientRects().length) continue;
-    const r = el.getBoundingClientRect();
-    if (r.left < rightEdge && r.right > leftEdge) yTop = Math.max(yTop, r.bottom);
-  }
-  const y = yTop + 4 - hr.top - anchor.clientTop + anchor.scrollTop;
+  // v0.062: the magnets sit between the top diamonds and the balance numbers.
+  const y = coneMagAxisTop(cv) - hr.top - anchor.clientTop + anchor.scrollTop;
   const left = x.toFixed(1) + "px", top = y.toFixed(1) + "px";
   if (box.style.left !== left) box.style.left = left; if (box.style.top !== top) box.style.top = top;
 }
@@ -15680,7 +15679,8 @@ function init(){
   { const P = $("rowsPane");
     if (P) {
       const mk = (cls, ch) => { const a = document.createElement("div"); a.className = "rpArr " + cls; a.textContent = ch; a.title = cls === "up" ? "Выше есть ещё — щелчок: листать вверх" : "Ниже есть ещё — щелчок: листать вниз"; document.body.appendChild(a); return a; };
-      const up = mk("up", "▲"), dn = mk("dn", "▼"), zb = $("bConeZen"); if (zb) document.body.appendChild(zb);   // v0.603: ромб дзена — fixed у низа панели
+      const up = mk("up", "▲"), dn = mk("dn", "▼"), zb = $("bConeZen"); if (zb && !zb.closest("#sfzSettingsMenus")) document.body.appendChild(zb);   // v0.603: ромб дзена — fixed у низа панели
+      const zenInMenu=!!(zb&&zb.closest("#sfzSettingsMenus"));
       const rb = $("coneRecBar"); if (rb) document.body.appendChild(rb);   // v0.637: и кнопки записи — из холста конуса сюда же
       const upd = () => {
         const r = P.getBoundingClientRect(), vis = r.width > 0 && r.height > 0 && getComputedStyle(P).display !== "none" && !document.body.classList.contains("zen");
@@ -15691,7 +15691,7 @@ function init(){
            как было (дзен — левый нижний угол экрана, телефон — низ открытой панели) */
         const UB = $("bRedo"), top = !matchMedia("(max-width: 760px)").matches && !document.body.classList.contains("zen") && UB && UB.getClientRects().length > 0;
         if (document.body.classList.contains("recTop") !== !!top) document.body.classList.toggle("recTop", !!top);
-        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), zh = zb && !top ? 72 : 0, b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - zh || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2));
+        const t = vis && (P.scrollTop > 2 || (pwV && PW.scrollTop > 2)), zh = zb && !zenInMenu && !top ? 72 : 0, b = vis && (P.scrollTop + P.clientHeight < P.scrollHeight - 2 - zh || (pwV && PW.scrollTop + PW.clientHeight < PW.scrollHeight - 2));
         /* v0.609, «по вертикали выровняй» (◎ дзена и ● mp4 🎞 ↻1 ▣ записи): ромб дзена — на одной высоте с полосой записи на холсте конуса, если она у низа
            (не дальше 80 px от низа панели); иначе — как было, у низа панели */
         /* v0.637, «поставь под меню, где стоит Дзен»: ◎ дзена и кнопки записи (● mp4 🎞 ↻1 ⏸ ▣) — одной цепочкой ромбов внизу левой панели: ромбы
@@ -15705,7 +15705,7 @@ function init(){
            экран (z-index 1000), и кнопки записи из body (1001) были над всем в нём, группы их перекрыть не могли. В дзене цепочка записи переезжает в тело окна
            конуса — над холстом, но под группами и плашками (z-index 4, у полосы групп 5); вне дзена — обратно в body, как было */
         if (rb) { const wbz = zen && document.querySelector("#w-cone > .wbody"), par = wbz || document.body; if (rb.parentElement !== par) par.appendChild(rb); }
-        const chain = [...(zb && (vis || top) ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
+        const chain = [...(zb && !zenInMenu && (vis || top) ? [zb] : []), ...(rb ? [...rb.children].filter(x => getComputedStyle(x).display !== "none") : [])];
         if (zb) zb.style.display = vis || top ? "" : "none";
         if (rb) rb.style.display = vis || zen || top ? "" : "none";
         if (top) { const u = UB.getBoundingClientRect(), hx = Math.round(u.right + 4), hy = Math.round((u.top + u.bottom) / 2 - 14);
