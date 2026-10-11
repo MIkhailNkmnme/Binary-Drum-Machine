@@ -1,4 +1,4 @@
-/* v0.1121: manual mirror snapping; affine scene composition and periodic mirror paths. */
+/* v0.1123: contrast-safe controls, triangular face mapping and constrained axis motion; v0.1121: manual mirror snapping; affine scene composition and periodic mirror paths. */
 (() => {
   'use strict';
   const identity = () => [1,0,0,1,0,0];
@@ -8,6 +8,17 @@
   function copies(mirrors,reflect){let out=[{matrix:identity(),mask:0}];mirrors.forEach((m,i)=>{if(m.on){const r=reflect(m.x,m.y,m.angle);out=out.concat(out.map(c=>({matrix:multiply(r,c.matrix),mask:c.mask|(1<<i)})));}});return out;}
   function bounds(items){let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const item of items){const b=item.bounds;for(const p of [[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]]]){const [x,y]=point(item.matrix,...p);x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}}return [x0,y0,x1,y1];}
   function transformRows(rows,mode){return rows.map(row=>{let s=(mode&2)?[...row].reverse().join(''):row;if(mode&1)s=s.replace(/[01]/g,bit=>bit==='0'?'1':'0');return s;});}
+  // UI colours may brighten a dark mirror; the actual drawing colour stays intact.
+  function controlColor(hex){
+    const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),lum=c=>c.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((n,v,i)=>n+v*[.2126,.7152,.0722][i],0);
+    if(lum(rgb)>=.24)return hex;let lo=0,hi=1;
+    for(let i=0;i<16;i++){const t=(lo+hi)/2;if(lum(rgb.map(v=>v+(255-v)*t))<.24)lo=t;else hi=t;}
+    return '#'+rgb.map(v=>Math.ceil(v+(255-v)*hi).toString(16).padStart(2,'0')).join('');
+  }
+  // Triangular rows are mapped once, so the flat net and solid receive identical bits.
+  function faceRows(rows,limit=160){const n=Math.max(2,Math.min(limit,rows.length));return Array.from({length:n},(_,r)=>Array.from({length:r+1},(_,k)=>String(rows[r]||'')[k]==='1'?1:0));}
+  function facePairs(rows,nb){const u=faceRows(rows),d=u.map(row=>row.map(bit=>bit^1));return Array.from({length:nb},()=>({u:u.map(row=>row.slice()),d:d.map(row=>row.slice())}));}
+  function axisMove(x,y,dx,dy,angle,width,height){const c=Math.cos(angle),s=Math.sin(angle);let lo=-Infinity,hi=Infinity;for(const [p,d,size] of [[x,c,width],[y,s,height]])if(Math.abs(d)>1e-10){const a=(.01*size-p)/d,b=(.99*size-p)/d;lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}const t=Math.max(lo,Math.min(hi,dx*c+dy*s));return [x+t*c,y+t*s];}
   function snapAngle(angle,mirrors=[],tolerance=4*Math.PI/180){
     const pi=Math.PI,wrap=a=>((a%pi)+pi)%pi,targets=[0,30,45,60,90,120,135,150].map(d=>d*pi/180);
     for(const m of mirrors)targets.push(wrap(m.angle),wrap(m.angle+pi/2));
@@ -58,6 +69,6 @@
     if(Math.abs(fx(0)-fx(1))>1e-6||Math.abs(fy(0)-fy(1))>1e-6||Math.abs(Math.sin(fa(0)-fa(1)))>1e-6)throw Error('Начало и конец кривой должны совпадать');
     return t=>[fx(t),fy(t),fa(t)];
   }
-  const api={identity,multiply,point,placement,copies,bounds,transformRows,snapAngle,snapPosition,expression,compile};
+  const api={identity,multiply,point,placement,copies,bounds,transformRows,controlColor,faceRows,facePairs,axisMove,snapAngle,snapPosition,expression,compile};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else window.ZZMirrorScene=api;
 })();

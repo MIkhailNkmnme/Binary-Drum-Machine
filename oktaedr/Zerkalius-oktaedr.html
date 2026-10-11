@@ -1,4 +1,4 @@
-<!-- Zerkalius Бирамида — v0.073. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Бирамида — v0.074. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Бирамида — v0.073</title>
+<title>Zerkalius Бирамида — v0.074</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -301,7 +301,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.073</div>
+<div id="ver">v0.074</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -1764,6 +1764,7 @@ document.querySelectorAll("#baseRow button").forEach(b => b.onclick = () => {
    это bitCol: биты по значению, цвета из квадратиков 0 и 1. Рамки и фон при этом остаются той палитры,
    из которой пришли (зелень), а выход из своих цветов — в палитру приложения, как у круга и положено. */
 bTheme.onclick = () => {
+  netStyle=null;applyNetStyle();
   const green = document.documentElement.getAttribute("data-theme") === "green";
   if (bitCol) { bitCol = false; document.documentElement.setAttribute("data-theme", ""); }
   else if (green) bitCol = true;
@@ -1787,9 +1788,13 @@ function save(){
     localStorage.setItem(KEY, JSON.stringify({
       ROWS, DIG, SPEED, GLOW, spin, showDigits, showHidden, showEdges, showDirs, dotMode, dotShape, zoom, yaw, pitch, roll, showAxes, showFill, stepOp, TICK,
       showLinks, LINK_EVERY, hoverOn, myBits, mySame, glowV: 1, bitCol, col0, col1, NB, sierp, faceMode, TEMPO,
-      theme: document.documentElement.getAttribute("data-theme") || ""
+      netStyle, theme: document.documentElement.getAttribute("data-theme") || ""
     }));
   } catch (e) {}
+}
+let netStyle = null;
+function applyNetStyle(){
+  for(const key of ["up","dn"])if(netStyle && /^#[0-9a-f]{6}$/i.test(netStyle[key]||""))document.documentElement.style.setProperty("--"+key,netStyle[key]);else document.documentElement.style.removeProperty("--"+key);
 }
 let firstSeq = false;   // v0.073: первое открытие — начальная последовательность
 function load(){
@@ -1818,6 +1823,7 @@ function load(){
   if (typeof o.roll === "number") roll = o.roll;   // v0.050
   if (typeof o.showAxes === "boolean") showAxes = o.showAxes;   // v0.053
   if (typeof o.showFill === "boolean") showFill = o.showFill;   // v0.065
+  netStyle=o.netStyle||null;applyNetStyle();
   if (o.theme === "green") document.documentElement.setAttribute("data-theme", "green");
   if (o.stepOp === "rev" || o.stepOp === "revinv" || o.stepOp === "roll" || o.stepOp === "animL" || o.stepOp === "animR") stepOp = o.stepOp;
   if (o.TICK >= 60 && o.TICK <= 1200) TICK = o.TICK | 0;
@@ -2679,6 +2685,7 @@ viewThumbs();
    не влезает (у начального столбика 1, 11, 101, … длины как раз такие). Рядов — сколько строк (не меньше 2, не больше ROWS_MAX).
    Все грани одинаковые (mySame), низ, как всегда, — та же картина, отражённая и инвертированная. Строки видны и в «Своих битах». */
 function zzRows(rows){
+  document.getElementById("netImportInfo")?.remove();
   if (!Array.isArray(rows)) return;
   const L = rows.map(r => String(r).replace(/[^01]/g, "")), R = Math.max(2, Math.min(ROWS_MAX, L.length));
   let face = "";
@@ -2694,6 +2701,7 @@ function zzRows(rows){
    Пара граней slot получает ромб list[slot % длина]. Нижняя грань берёт СВОИ биты (botBits), а не инверсию верхней: у ромба
    низ — настоящее продолжение картины. Любая новая картина (rollBits: свои биты, строки, ↻) снимает botBits — низ снова зеркало. */
 function zzRhombs(list, h){
+  document.getElementById("netImportInfo")?.remove();
   if (!Array.isArray(list) || !list.length) return;
   const R = Math.max(2, Math.min(ROWS_MAX, (h | 0) + 1));
   const fit = (rows) => { const out = []; for (let r = 0; r < R; r++) { const a = []; for (let k = 0; k <= r; k++) a.push(rows && rows[r] && rows[r][k] ? 1 : 0); out.push(a); } return out; };
@@ -2708,9 +2716,25 @@ function zzRhombs(list, h){
   bits = top; botBits = bot; dotVer++;
   if (!same) syncUI();
 }
+/* v0.074: flat net U/D faces -> matching solid faces, without changing the parent row field. */
+function zzNet(data){
+  if(![3,4].includes(data.nb) || !Number.isInteger(data.h) || data.h<1 || data.h>=160 || !Array.isArray(data.list) || data.list.length!==data.nb)return;
+  const R=data.h+1;
+  if(data.list.some(p=>!p || [p.u,p.d].some(rows=>!Array.isArray(rows)||rows.length!==R||rows.some((row,r)=>!Array.isArray(row)||row.length!==r+1||row.some(v=>v!==0&&v!==1)))))return;
+  if(NB!==data.nb){buildBody(data.nb);hoverBit=null;pinned.clear();rollBits();}
+  // Outward face normals swap equator vertices: keep each bit attached to its named edge.
+  const list=data.list.map((p,i)=>({u:p.u.map(row=>FTOP[i].v[1]===EQ[i]?row:row.slice().reverse()),d:p.d.map(row=>FBOT[i].v[1]===EQ[i]?row:row.slice().reverse())}));
+  zzRhombs(list,data.h);unpinAll();faceMode=0;bitCol=false;
+  netStyle={up:data.up,dn:data.down};applyNetStyle();dotVer++;
+  myBits=bits[0].map(row=>row.join("")).join("");mySame=true;
+  myArea.value=data.list[0].u.map(row=>row.join("")).join("\n");myInfoUpd();syncUI();save();
+  const info=document.getElementById("netImportInfo") || document.createElement("div");info.id="netImportInfo";info.className="cap";info.textContent="Из Зеркалиуса · "+(NB*2)+" граней · "+R+" рядов · U / D";
+  document.getElementById("baseRow").after(info);
+}
 if (ZZ_EMB) {
   window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rows") zzRows(e.data.rows); });
   window.addEventListener("message", (e) => { if (e.source === window.parent && e.data && e.data.type === "zz-rhombs") zzRhombs(e.data.list, e.data.h); });   // v0.069
+  window.addEventListener("message", e=>{if(e.source===window.parent && e.origin===location.origin && e.data?.type==="zz-net")zzNet(e.data);});
   try { window.parent.postMessage({ type: "zz-okt-ready" }, "*"); } catch (e) {}
 }
 /* ═══ ГОРЯЧИЕ КЛАВИШИ (v0.006, запрос пользователя) ═══════════════════════════════════════════

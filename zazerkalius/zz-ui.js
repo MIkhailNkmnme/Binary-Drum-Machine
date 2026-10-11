@@ -1,3 +1,4 @@
+/* v0.1123: выбранная развёртка Зеркалиуса передаётся в Бирамиду отдельно от строк поля. */
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    ZAZERKALIUS — ИНТЕРФЕЙС
    Всё состояние — в объекте Z; сохраняется в localStorage (обёрнуто в try: в приватном окне
@@ -11092,8 +11093,16 @@ function renderOkt(){
   const fr = $("oktFr"); if (!fr) return;
   $("bOktSync").classList.toggle("on", Z.oktSync !== false);   // v0.399: галка → кнопка
   if (!winOpen("w-okt")) return;
-  if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz"; return; }
-  if (!oktReady || Z.oktSync === false) return;
+  if (!fr.getAttribute("src")) { fr.src = "../oktaedr/Zerkalius-oktaedr.html?zz&v=74"; return; }
+  if (!oktReady) return;
+  if (Z.oktSync === false) {
+    const net = Z.oktInput === "zerk-net" ? Z.zerkBipy : null;
+    if (net && net.revision && oktSent !== "net/" + net.revision) {
+      oktSent = "net/" + net.revision;
+      try { fr.contentWindow.postMessage({ ...net, type: "zz-net" }, location.protocol === "file:" ? "*" : location.origin); } catch (e) {}
+    }
+    return;
+  }
   if (Z.razvRomb) {   // v0.440: ◇ ромбы из кадров — на 3D-тело, пары граней по ромбу (четыре — хватит и октаэдру)
     const RB = razvRombs(), n = RB.list.length;
     if (n) {
@@ -11113,7 +11122,7 @@ window.addEventListener("message", (e) => {
   if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== "zz-okt-ready") return;
   oktReady = true; oktSent = null; renderOkt();
 });
-if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
+if ($("bOktSync")) $("bOktSync").onclick = () => { Z.oktInput = "field"; Z.oktSync = Z.oktSync === false; oktSent = null; save(); renderOkt(); };
 if ($("bOktOpen")) $("bOktOpen").onclick = () => window.open("../oktaedr/Zerkalius-oktaedr.html", "_blank");
 /* v0.440: ◇ РОМБЫ ИЗ КАДРОВ НА ТРИРАМИДУСЕ (слова пользователя: «самое главное — натянуть Аниматрицу на ТриРамидус», «ромбы из
    кадров», «раскадровка — развёртка есть», «на html — Зазеркалиус»; выбрано: кадры листаются, и на развёртке, и на 3D-теле). Ромбы —
