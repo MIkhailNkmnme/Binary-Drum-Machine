@@ -1,0 +1,272 @@
+<!-- Zerkalius Маятник — v0.001. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Маятник — v0.001</title>
+<!--
+  ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
+  Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
+  на листах «Лист19 (3…6)»). Слово пользователя: «нужно маятника на 512 строк в зеркалиус проект куда
+  нибудь, выбери где не будет тормозить строки, там генерировать». Поэтому отдельная страница: поле —
+  типизированные массивы, рисунок — один ImageData на холсте (пиксель = бит), без DOM-клеток.
+
+  Правило клетки конуса (CoreBuilder, «СТРОИМ ВНИЗ»), перенесено дословно:
+    новое = старое ⊕ левый родитель ⊕ правый родитель; родитель, совпавший с вершиной, всегда 1;
+    пустая вершина становится 1; родители читаются из строки выше уже пересчитанными.
+  Цвет («мерцание»): клетка была пустой — чёрная (здесь: светлая); была красной или синей — чёрная;
+    была чёрной — синяя, если стала 1, красная, если стала 0.
+  Маятник (MacroSequencePendulumStepByStep): вершины якорь, −1, +1, −2, +2, … в одной строке.
+  Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
+  ═════════════════════════════════════════════════════════════════════
+-->
+<style>
+:root{--bg:#0f1218;--panel:#161b24;--line:#262e3b;--fg:#d8dee9;--mute:#8a95a8;--acc:#4f8fdc;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--sans);display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px 6px;flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.02em}
+.ver{font:12px var(--mono);color:var(--mute)}
+.sub{color:var(--mute);font-size:12.5px;flex-basis:100%;margin:0}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;background:var(--panel);border-block:1px solid var(--line)}
+.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+label{color:var(--mute);font-size:12.5px;display:flex;gap:6px;align-items:center}
+input[type=number]{width:72px}
+input,select,button{font:13px var(--sans);color:var(--fg);background:#0c0f14;border:1px solid var(--line);border-radius:3px;padding:5px 8px}
+button{cursor:pointer;background:#1d2430}
+button:hover{border-color:var(--acc)}
+button.go{background:#1f3b63;border-color:#2f5d99}
+button[aria-pressed=true]{background:#2f5d99}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+#stat{font:12px var(--mono);color:var(--mute);margin-left:auto;white-space:nowrap}
+#wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#tip{position:fixed;pointer-events:none;font:12px var(--mono);background:#000c;border:1px solid var(--line);padding:2px 6px;border-radius:3px;display:none}
+.lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute)}
+.lg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.001</span>
+  <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
+</header>
+<div class="bar">
+  <div class="grp">
+    <label>строк <input id="rows" type="number" min="8" max="2048" step="1" value="512"></label>
+    <label>вершин <input id="steps" type="number" min="1" max="4096" step="1" value="512"></label>
+    <label>ход <select id="mode">
+      <option value="pend">лево-право (маятник)</option>
+      <option value="right">вправо</option>
+      <option value="left">влево</option>
+      <option value="one">одна вершина</option>
+    </select></label>
+    <label>поле <select id="bg">
+      <option value="empty">пустое</option>
+      <option value="1">все 1</option>
+      <option value="0">все 0</option>
+    </select></label>
+  </div>
+  <div class="grp">
+    <button id="bBuild" class="go" title="Посчитать сразу все вершины">Построить</button>
+    <button id="bPlay" aria-pressed="false" title="Анимация: вершина за вершиной (пробел)">▶ Анимация</button>
+    <button id="bStep" title="Одна вершина (→)">+1 вершина</button>
+    <button id="bReset" title="Очистить поле">Очистить</button>
+    <label>скорость <input id="speed" type="range" min="1" max="32" value="4"></label>
+  </div>
+  <div class="grp">
+    <label>вид <select id="view">
+      <option value="col">цвета перекрытий</option>
+      <option value="bits">только биты</option>
+    </select></label>
+    <label>масштаб <select id="zoom">
+      <option value="fit">по ширине</option><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option><option value="4">4×</option><option value="8">8×</option>
+    </select></label>
+    <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
+    <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
+  </div>
+  <div class="lg" aria-hidden="true"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span><i style="background:#4f9bff"></i>стал 1</span><span><i style="background:#ff5a4f"></i>стал 0</span></div>
+  <span id="stat"></span>
+</div>
+<div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
+<div id="tip"></div>
+
+<script>
+/* ==== ЯДРО (чистые функции; сверено с Excel) ==== */
+const MAYATNIK = (() => {
+  // val: Int8Array W*H, -1 пусто, 0, 1; col: Uint8Array, 0 чёрный, 1 синий, 2 красный
+  function field(W, H, bg) {
+    const val = new Int8Array(W * H).fill(bg === '1' ? 1 : bg === '0' ? 0 : -1);
+    return { W, H, val, col: new Uint8Array(W * H) };
+  }
+  // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
+  function cone(f, a, D) {
+    const { W, H, val, col } = f;
+    if (a < 0 || a >= W) return;
+    if (val[a] === -1) { val[a] = 1; col[a] = 0; }
+    const apex = val[a]; val[a] = 1;             // родитель-вершина всегда 1 (в Excel: parentCell = startCell)
+    const last = Math.min(D, H);
+    for (let r = 1; r < last; r++) {             // r = step − 1; клетки конуса a−r … a+r через одну
+      const row = r * W, up = row - W, end = a + r;
+      let c = a - r;
+      if (c < 0) c += ((-c + 1) >> 1) << 1;
+      for (; c <= end && c < W; c += 2) {
+        const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0;
+        const i = row + c, old = val[i];
+        const nv = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        val[i] = nv;
+        col[i] = old === -1 ? 0 : (col[i] !== 0 ? 0 : (nv ? 1 : 2));
+      }
+      if (r === 1) val[a] = apex;
+    }
+  }
+  // Сдвиг k-й вершины от якоря
+  function offset(mode, k) {
+    if (mode === 'pend') return k === 0 ? 0 : (k % 2 ? -((k + 1) >> 1) : (k >> 1));
+    if (mode === 'right') return k;
+    if (mode === 'left') return -k;
+    return 0;
+  }
+  // Ширина поля, чтобы все конусы влезли целиком, и столбец якоря
+  function geometry(mode, S, D) {
+    let lo = 0, hi = 0;
+    for (let k = 0; k < S; k++) { const o = offset(mode, k); if (o < lo) lo = o; if (o > hi) hi = o; }
+    const pad = D - 1;
+    return { W: hi - lo + 2 * pad + 1, anchor: pad - lo };
+  }
+  return { field, cone, offset, geometry };
+})();
+if (typeof module !== 'undefined') module.exports = MAYATNIK;
+/* ==== /ЯДРО ==== */
+</script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
+  const KEY = 'zerk_mayatnik';
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4 };
+  try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
+
+  let f = null, geo = null, k = 0, img = null, playing = false, raf = 0;
+
+  // Палитра: [пусто], затем [бит][цвет]
+  const EMPTY = [0, 0, 0];
+  const PAL = { col: [[[91,100,117],[79,155,255],[255,90,79]], [[232,237,245],[79,155,255],[255,90,79]]],
+                bits: [[[91,100,117],[91,100,117],[91,100,117]], [[232,237,245],[232,237,245],[232,237,245]]] };
+
+  function clampInt(v, a, b, d) { v = Math.round(Number(v)); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; }
+  function readUI() {
+    st.rows = clampInt($('rows').value, 8, 2048, 512); st.steps = clampInt($('steps').value, 1, 4096, 512);
+    st.mode = $('mode').value; st.bg = $('bg').value; st.view = $('view').value; st.zoom = $('zoom').value;
+    st.speed = clampInt($('speed').value, 1, 32, 4);
+    $('rows').value = st.rows; $('steps').value = st.steps; save();
+  }
+  function writeUI() {
+    $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
+    $('view').value = st.view; $('zoom').value = st.zoom; $('speed').value = st.speed;
+  }
+
+  function reset() {
+    stop(); readUI();
+    const S = st.mode === 'one' ? 1 : st.steps;
+    geo = MAYATNIK.geometry(st.mode, S, st.rows);
+    f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
+    cv.width = geo.W; cv.height = st.rows; img = g.createImageData(geo.W, st.rows);
+    layout(); draw();
+  }
+  function total() { return st.mode === 'one' ? 1 : st.steps; }
+  function addOne() {
+    if (k >= total()) return false;
+    MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++; return true;
+  }
+  function draw() {
+    const P = PAL[st.view] || PAL.col, d = img.data, { val, col } = f;
+    for (let i = 0, j = 0; i < val.length; i++, j += 4) {
+      const v = val[i], c = v < 0 ? EMPTY : P[v][col[i]];
+      d[j] = c[0]; d[j + 1] = c[1]; d[j + 2] = c[2]; d[j + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}`;
+  }
+  function layout() {
+    let s;
+    if (st.zoom === 'fit') s = Math.max(0.1, (wrap.clientWidth - 32) / geo.W);
+    else s = Number(st.zoom);
+    cv.style.width = Math.round(geo.W * s) + 'px'; cv.style.height = Math.round(st.rows * s) + 'px';
+  }
+  // «Построить» — те же вершины, но порциями по ~12 мс на кадр: страница не замирает, виден прогресс
+  let fast = false, t0 = 0;
+  function build() {
+    reset(); fast = true; t0 = performance.now(); play();
+  }
+  function tick() {
+    raf = 0; if (!playing) return;
+    if (fast) { const t = performance.now(); while (performance.now() - t < 12) if (!addOne()) { stop(); break; } }
+    else for (let n = 0; n < st.speed; n++) if (!addOne()) { stop(); break; }
+    draw();
+    if (!playing && t0) { $('stat').textContent += ` · ${Math.round(performance.now() - t0)} мс`; t0 = 0; }
+    if (playing) raf = requestAnimationFrame(tick);
+  }
+  function play() {
+    if (playing) { stop(); return; }
+    if (!f || k >= total()) reset();
+    playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = 'Ⅱ Пауза';
+    raf = requestAnimationFrame(tick);
+  }
+  function stop() {
+    playing = false; fast = false; cancelAnimationFrame(raf); raf = 0;
+    $('bPlay').setAttribute('aria-pressed', 'false'); $('bPlay').textContent = '▶ Анимация';
+  }
+
+  function rowsText() {
+    const { W, H, val } = f, out = [];
+    for (let r = 0; r < H; r++) {
+      let s = '';
+      for (let c = 0; c < W; c++) { const v = val[r * W + c]; s += v < 0 ? '.' : v; }
+      out.push(s.replace(/\.+$/, ''));
+    }
+    return out.join('\n') + '\n';
+  }
+  function download(name, blob) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  const fname = ext => `mayatnik-${st.mode}-${st.rows}x${total()}-${st.bg}.${ext}`;
+
+  $('bBuild').onclick = build;
+  $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
+  $('bStep').onclick = () => { stop(); if (!f) reset(); addOne(); draw(); };
+  $('bReset').onclick = reset;
+  $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
+  $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
+  for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
+  $('view').addEventListener('change', () => { readUI(); draw(); });
+  $('zoom').addEventListener('change', () => { readUI(); layout(); });
+  $('speed').addEventListener('input', readUI);
+  addEventListener('resize', () => { if (st.zoom === 'fit' && geo) layout(); });
+  addEventListener('keydown', e => {
+    if (e.target.closest('input,select')) return;
+    if (e.code === 'Space') { e.preventDefault(); play(); }
+    else if (e.key === 'ArrowRight') { $('bStep').click(); }
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!f) return;
+    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
+    if (x < 0 || y < 0 || x >= f.W || y >= f.H) { tip.style.display = 'none'; return; }
+    const v = f.val[y * f.W + x], c = ['чёрн', 'син', 'красн'][f.col[y * f.W + x]];
+    tip.textContent = `строка ${y + 1} · столбец ${x - geo.anchor >= 0 ? '+' : ''}${x - geo.anchor} · ${v < 0 ? 'пусто' : v + ' ' + c}`;
+    tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
+  });
+  cv.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+
+  writeUI(); build();
+})();
+</script>
+<script src="../_js/hub-link.js?v=1"></script>
+</body>
+</html>
