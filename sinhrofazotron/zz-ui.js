@@ -2587,7 +2587,7 @@ function ringTblSync(){
   }
   const cur = coneSlitRaw(); el.querySelectorAll(":scope > button[data-v]").forEach((tr, i) => { tr.style.gridRow = String(i + 1); const on = tr.dataset.v === cur, a = on ? "true" : "false"; if (tr.classList.contains("on") !== on) tr.classList.toggle("on", on); if (tr.getAttribute("aria-pressed") !== a) tr.setAttribute("aria-pressed", a); });
   if (fill) for (const button of fill.children) button.setAttribute("aria-pressed", String(button.classList.contains("on")));
-  [...el.querySelectorAll(':scope > button[data-v],.ring-fill-column > button')].forEach((button,i)=>sfzGrapeStyle(button,"--grape-layer",String(2147483502+(i%2?60:0))));
+  sfzWeaveKick();
   el.classList.remove("off"); el.title = "Выбор режима колец действует независимо от включения солнца и лазера.";
   if (el.hidden) el.hidden = false; ringTblPlace(el);
 }
@@ -6861,9 +6861,10 @@ function coneViewToolsSync(cv){
     close.onclick = e => { e.stopPropagation(); Z.coneViewToolsHidden = true; box.hidden = true; save(); };
     move.addEventListener("pointerdown", e => {
       if (e.button) return; e.preventDefault(); e.stopPropagation(); move.setPointerCapture(e.pointerId);
+      box._sfzDragging=true;
       const id = e.pointerId, sx = e.clientX, sy = e.clientY, start = box.getBoundingClientRect(), canvas = cv.getBoundingClientRect();
       const drag = ev => { if (ev.pointerId !== id) return; Z.coneViewToolsXY = [start.left - canvas.left + ev.clientX - sx, start.top - canvas.top + ev.clientY - sy]; coneViewToolsSync(cv); };
-      const end = ev => { if (ev.pointerId !== id) return; move.removeEventListener("pointermove", drag); move.removeEventListener("pointerup", end); move.removeEventListener("pointercancel", end); if (move.hasPointerCapture(id)) move.releasePointerCapture(id); save(); };
+      const end = ev => { if (ev.pointerId !== id) return; move.removeEventListener("pointermove", drag); move.removeEventListener("pointerup", end); move.removeEventListener("pointercancel", end); if (move.hasPointerCapture(id)) move.releasePointerCapture(id); box._sfzDragging=false; sfzWeaveKick(); save(); };
       move.addEventListener("pointermove", drag); move.addEventListener("pointerup", end); move.addEventListener("pointercancel", end);
     });
     handles.append(move, close); box.appendChild(handles);
@@ -11586,6 +11587,7 @@ function cgrpInit(){
     if (document.body.classList.contains("sol-mobile")) return;
     for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpTop && Z.cgrpTop[g.dataset.g]) || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
     if (window.zzPanelOrganizeSync) window.zzPanelOrganizeSync();
+    sfzWeaveKick();
   };
   setInterval(() => { if (!document.hidden && !ZZ_BG) linkSync(); }, 300);
   /* v0.758, «как-то так объедини» (снимок: «Алгоритм» сверху во всю ширину, под ним столбцами Лазер · Солнце · За чертой · Строка 1 · Щели): один раз (Z.lasPack)
@@ -11705,7 +11707,30 @@ function cgrpInit(){
      другую больше чем на зубец (9 px — встык и зубцы в зубцы по-прежнему можно), сдвигается на ближайшее место вплотную к ней (справа, слева, снизу или сверху —
      куда короче и что в пределах окна). Когда отпустили группу — двигается она; само (раз в 0,3 с: группа выросла, окно сузилось) — верхняя из двух.
      Прицепленные 🧲 сами не двигаются — двигают другую */
-  const grpFix = () => {}; // v0.046: перекрытие разрешено, панели сами не отодвигаются.
+  const grpFix = () => sfzWeaveKick();
+  window.zzSfzSeparate = (g,entries) => {
+    if(!groups.includes(g)||g.classList.contains("cdrag"))return false;
+    const own=entries.find(e=>e.root===g);if(!own)return false;
+    const rest=entries.filter(e=>e!==own), r=g.getBoundingClientRect(), key=g.dataset.g;
+    const f=zrec(g), frame=(f&&solZoneRect(f.z))||wb.getBoundingClientRect();
+    const topPin=Z.cgrpTop?.[key], axis=typeof nodePin(g)==="number";
+    const candidates=[];
+    for(let n=1;n<=Math.min(100,Math.ceil(frame.width/26)+1);n++)for(const sign of [-1,1])candidates.push([n*26*sign,0]);
+    if(!topPin&&!axis)for(const o of rest){const q=o.root.getBoundingClientRect();candidates.push([0,q.bottom-r.top+6],[0,q.top-r.bottom-6]);}
+    candidates.sort((a,b)=>a[0]*a[0]+a[1]*a[1]-b[0]*b[0]-b[1]*b[1]);
+    const shift=candidates.find(([dx,dy])=>{
+      if(r.left+dx<frame.left-1||r.right+dx>frame.right+1)return false;
+      if(dy&&(r.top+dy<wbTop(r.left+dx,r.width)||r.bottom+dy>frame.bottom))return false;
+      return !rest.some(o=>own.items.some(a=>o.items.some(b=>sfzRhombsMeet({...a.rect,left:a.rect.left+dx,top:a.rect.top+dy},b.rect))));
+    });
+    if(!shift)return false;
+    if(!Z.sfzWeaveUndo)Z.sfzWeaveUndo=JSON.parse(JSON.stringify({cgrpPos:Z.cgrpPos,cgrpFld:Z.cgrpFld,cgrpLink:Z.cgrpLink,cgrpTop:Z.cgrpTop,cgrpPin:Z.cgrpPin,cgrpEdge:Z.cgrpEdge,sfzBookBottom:Z.sfzBookBottom}));
+    const [dx,dy]=shift;delete Z.cgrpLink[key];if(Z.cgrpEdge)delete Z.cgrpEdge[key];
+    if(topPin){const wr=$("w-cone").getBoundingClientRect();topPin.x=Math.max(0,Math.min(1,(r.left+dx-wr.left)/Math.max(1,wr.width-r.width)));}
+    else if(axis){const A=coneAxisScr();if(A)Z.cgrpPin[key]=nodePin(g)+dx/(coneZoom||1);}
+    else nodeSetPos(g,r.left+dx,r.top+dy);
+    place(g);const placed=g.getBoundingClientRect();if(Math.abs(placed.left-r.left)+Math.abs(placed.top-r.top)<.5)return false;save();return true;
+  };
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
@@ -13221,7 +13246,10 @@ function sfzColumnSize(g){
   if (!g.classList.contains("sfz-grape")) g.classList.add("sfz-grape");
   sfzGrapeSync(g);
 }
-function sfzGrapeStyle(el, key, value){ if (el.style.getPropertyValue(key) !== value) el.style.setProperty(key, value); }
+function sfzGrapeStyle(el, key, value){
+  if(el.style.getPropertyValue(key)===value)return;el.style.setProperty(key,value);
+  if(/^--grape-[xywh]$/.test(key))window.zzSfzWeaveRevision=(window.zzSfzWeaveRevision||0)+1;
+}
 function sfzGrapeIcon(el, name){
   if (!el.matches("button,label") || el.querySelector('input:not([type="checkbox"]),select,textarea')) return;
   const text = el.textContent.trim();
@@ -13247,10 +13275,83 @@ function sfzGrapeCaption(item){
   if (item.dataset.grapeFull !== full) item.dataset.grapeFull = full;
   if (!item.title && !item.dataset.zzTip) item.title = full;
 }
+
+/* v0.057: пересечения ромбов считаются по форме, увеличение правой кнопкой сохраняется отдельно от действия кнопки. */
+function sfzSizeTarget(target){return target.closest?.(".sfz-grape-item,#ringTbl > button[data-v],#ringTbl .ring-fill-column > button");}
+function sfzSizeKey(el){
+  if(el.id)return "#"+el.id;
+  const input=el.querySelector("input[id],select[id],textarea[id]");if(input)return "#"+input.id;
+  if(el.dataset.sfzSizeKey)return el.dataset.sfzSizeKey;
+  const root=el.closest(".sfz-grape,#coneViewTools,#ringTbl"), index=root?[...root.querySelectorAll(".sfz-grape-item,button[data-v],.ring-fill-column > button")].indexOf(el):-1;
+  const key=(root?.id||"group:"+root?.dataset.g)+":"+index;
+  el.dataset.sfzSizeKey=key;return key;
+}
+function sfzSizeSync(el){el.classList.toggle("sfz-stay-big",!!Z.sfzRhombBig?.[sfzSizeKey(el)]);}
+document.addEventListener("pointerdown",e=>{if(e.button===2&&!document.body.classList.contains("cedit")&&sfzSizeTarget(e.target))e.stopPropagation();},true);
+document.addEventListener("contextmenu",e=>{
+  if(document.body.classList.contains("cedit"))return;const el=sfzSizeTarget(e.target);if(!el)return;
+  e.preventDefault();e.stopImmediatePropagation();const key=sfzSizeKey(el);Z.sfzRhombBig ||= {};
+  if(Z.sfzRhombBig[key])delete Z.sfzRhombBig[key];else Z.sfzRhombBig[key]=true;
+  sfzSizeSync(el);save();
+},true);
+function sfzRhombsMeet(a,b){
+  if(a.left+a.width<=b.left+.5||b.left+b.width<=a.left+.5||a.top+a.height<=b.top+.5||b.top+b.height<=a.top+.5)return false;
+  const points=r=>[[r.left+r.width/2,r.top],[r.left+r.width,r.top+r.height/2],[r.left+r.width/2,r.top+r.height],[r.left,r.top+r.height/2]], A=points(a),B=points(b);
+  for(const poly of [A,B])for(let i=0;i<4;i++){
+    const u=poly[i],v=poly[(i+1)%4],nx=-(v[1]-u[1]),ny=v[0]-u[0],pa=A.map(p=>p[0]*nx+p[1]*ny),pb=B.map(p=>p[0]*nx+p[1]*ny);
+    if(Math.max(...pa)<=Math.min(...pb)+.5||Math.max(...pb)<=Math.min(...pa)+.5)return false;
+  }
+  return true;
+}
+function sfzWeaveEntries(){
+  const entries=[];
+  for(const root of document.querySelectorAll(".sfz-grape,#coneViewTools,#ringTbl")){
+    if(root.hidden||root.matches(".cmin,.coff,.cdrag,.pdrag")||!root.getClientRects().length)continue;
+    const items=[];
+    for(const el of root.querySelectorAll(".sfz-grape-item,button[data-v],.ring-fill-column > button")){
+      if(el.hidden||!el.getClientRects().length||getComputedStyle(el).display==="none")continue;
+      const parent=el.offsetParent;if(!parent)continue;const pr=parent.getBoundingClientRect();
+      sfzSizeSync(el);items.push({el,rect:{left:pr.left+parent.clientLeft+el.offsetLeft,top:pr.top+parent.clientTop+el.offsetTop,width:el.offsetWidth,height:el.offsetHeight}});
+    }
+    if(!items.length)continue;
+    let stack=root.closest(".win")||document.body;
+    for(let n=root;n&&n!==stack;n=n.parentElement){const c=getComputedStyle(n);if(c.position==="fixed"||c.position==="sticky"||c.transform!=="none"||c.filter!=="none"||+c.opacity<1||c.isolation==="isolate"||c.clipPath!=="none"||(c.zIndex!=="auto"&&c.position!=="static")){stack=n;break;}}
+    entries.push({root,items,stack});
+  }
+  return entries;
+}
+let sfzWeaveFrame=0, sfzWeaveLast="";
+function sfzWeaveKick(){if(!sfzWeaveFrame)sfzWeaveFrame=requestAnimationFrame(sfzWeaveSync);}
+function sfzWeaveSync(){
+  sfzWeaveFrame=0;if(document.body.classList.contains("cgdrag"))return;
+  const roots=[...document.querySelectorAll(".sfz-grape,#coneViewTools,#ringTbl")];
+  if(roots.some(root=>root._sfzDragging||root.matches(".cdrag,.pdrag")))return;
+  const signature=(window.zzSfzWeaveRevision||0)+"|"+roots.map(root=>{const r=root.getBoundingClientRect();return [root.id,root.dataset.g,root.className,root.hidden,r.left,r.top,r.width,r.height].join(":");}).join("|");
+  if(signature===sfzWeaveLast)return;sfzWeaveLast=signature;
+  const entries=sfzWeaveEntries(), edges=entries.map(()=>new Set()), layers=new Map();
+  for(const e of entries)e.items.forEach((a,i)=>layers.set(a.el,2147483501+i%2));
+  for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++)if(entries[i].items.some(a=>entries[j].items.some(b=>sfzRhombsMeet(a.rect,b.rect)))){edges[i].add(j);edges[j].add(i);}
+  const seen=new Set();
+  for(let i=0;i<entries.length;i++){
+    if(seen.has(i)||!edges[i].size)continue;const component=[],queue=[i];seen.add(i);
+    while(queue.length){const k=queue.shift();component.push(k);for(const n of edges[k])if(!seen.has(n)){seen.add(n);queue.push(n);}}
+    if(component.length===2&&entries[component[0]].stack===entries[component[1]].stack){
+      const A=entries[component[0]],B=entries[component[1]];
+      B.items.forEach(b=>layers.set(b.el,2147483520));
+      const crossings=A.items.filter(a=>B.items.some(b=>sfzRhombsMeet(a.rect,b.rect))).sort((a,b)=>a.rect.top+a.rect.height/2-b.rect.top-b.rect.height/2||a.rect.left-b.rect.left);
+      crossings.forEach((a,k)=>layers.set(a.el,k%2?2147483501:2147483540));
+    }else{
+      const movable=component.map(k=>entries[k].root).filter(root=>root.classList.contains("sfz-grape")).sort((a,b)=>Number(!!Z.cgrpTop?.[a.dataset.g])-Number(!!Z.cgrpTop?.[b.dataset.g]));
+      if(movable.some(root=>window.zzSfzSeparate?.(root,entries))){sfzWeaveKick();return;}
+    }
+  }
+  for(const [el,layer] of layers)sfzGrapeStyle(el,"--grape-layer",String(layer));
+}
+
 function sfzGrapeLayout(box, items, name, up=false){
   const slots=[];
-  const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0, index=0;
-  const group=box.closest(".sfz-grape"), order=group?[...document.querySelectorAll(".sfz-grape")].indexOf(group):0;
+  const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0;
+
   for (const item of items) {
     if (!item.classList.contains("sfz-grape-item")) { if (item.classList.contains("tz")) triOff(item); tzcClean(item); item.classList.add("sfz-grape-item"); }
     const editor = item.matches("select,input,textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
@@ -13258,7 +13359,7 @@ function sfzGrapeLayout(box, items, name, up=false){
     item.classList.toggle("sfz-grape-editor",editor); item.classList.toggle("sfz-grape-large",large);
     if (large && side) { y += cell + cell / 2; side = 0; }
     const x = large ? 0 : side * step, top = y + (large ? 0 : side * cell / 2), size = large ? 96 : cell;
-    sfzGrapeStyle(item,"--grape-layer",String(2147483501+(index++%2===order%2?60:0)+Math.max(0,order)));
+
     sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,size}); sfzGrapeStyle(item,"--grape-w",size+"px"); sfzGrapeStyle(item,"--grape-h",size+"px");
     width=Math.max(width,x+size); bottom=Math.max(bottom,top+size);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
@@ -13266,6 +13367,7 @@ function sfzGrapeLayout(box, items, name, up=false){
   }
   for(const {item,top,size} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-size:top)+"px");
   sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
+  sfzWeaveKick();
   return {width,height:bottom};
 }
 function sfzGrapeSync(g){
