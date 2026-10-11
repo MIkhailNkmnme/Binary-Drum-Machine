@@ -80,4 +80,7 @@
 #zerkTools .zerk-own-set{display:flex;flex-wrap:wrap;gap:4px}
 #zerkTools [hidden]{display:none!important}
 .zerk-path-preview{width:100%;height:100px;background:#050806;border:1px solid var(--line)}
+/* Transparent gaps must not intercept controls in a neighbouring saved group. */
+#zerkStage .zerk-grape,#zerkStage .zerk-grape-body{pointer-events:none}
+#zerkStage .zerk-grape .smh,#zerkStage .zerk-grape .zerk-diamond{pointer-events:auto}
 @media(hover:none){#zerkStage .zerk-half{opacity:1}#zerkStage .zerk-header-speed input[type=range]{height:22px}#zerkStage .zerk-header-speed input::-webkit-slider-thumb{width:12px;height:12px;margin-top:-5px}}
