@@ -1,4 +1,4 @@
-/* Hub v0.104: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
+/* Hub v0.105: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
 (() => {
   'use strict';
   const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp' }, clamp = v => Math.max(.01, Math.min(.99, v));
@@ -124,18 +124,20 @@
       return [x - 2 * distance * nx, y - 2 * distance * ny];
     },
     contains(x, y, w, h) { return frame && x - w / 2 >= frame.left && x + w / 2 <= frame.left + frame.width && y - h / 2 >= 0 && y + h / 2 <= frame.height; },
-    reflect(canvas) {
+    reflect(canvas, view = null) {
       if (!frame || !state.on || !canvas.width || !canvas.height) return;
       let source = buffers.get(canvas);
       if (!source) { source = document.createElement('canvas'); buffers.set(canvas, source); }
       if (source.width !== canvas.width || source.height !== canvas.height) { source.width = canvas.width; source.height = canvas.height; }
       const copy = source.getContext('2d'); copy.clearRect(0, 0, source.width, source.height); copy.drawImage(canvas, 0, 0);
-      const g = canvas.getContext('2d'), sx = canvas.width / (frame.left + frame.width), sy = canvas.height / frame.height;
-      const [cx, cy] = center(), a = Math.cos(2 * state.angle), b = Math.sin(2 * state.angle);
+      const g = canvas.getContext('2d'), offset = view ? view.left : 0;
+      const sx = view ? view.scale : canvas.width / (frame.left + frame.width), sy = view ? view.scale : canvas.height / frame.height;
+      const [x, y] = center(), cx = (x - offset) * sx, cy = y * sy, a = Math.cos(2 * state.angle), b = Math.sin(2 * state.angle);
       g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.shadowBlur = 0;
-      g.beginPath(); g.rect(frame.left * sx, 0, frame.width * sx, canvas.height); g.clip();
-      g.setTransform(a, b * sy / sx, b * sx / sy, -a, (cx - a * cx - b * cy) * sx, (cy - b * cx + a * cy) * sy);
+      g.beginPath(); g.rect((frame.left - offset) * sx, 0, frame.width * sx, canvas.height); g.clip();
+      g.setTransform(a, b * sy / sx, b * sx / sy, -a, cx - a * cx - b * sx / sy * cy, cy - b * sy / sx * cx + a * cy);
       g.drawImage(source, 0, 0); g.restore();
+      if (view) { source.width = 0; source.height = 0; }
     }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
