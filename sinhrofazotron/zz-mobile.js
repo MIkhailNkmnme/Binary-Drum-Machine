@@ -30,25 +30,21 @@
     if (ZZ_SOLO !== "w-cone" || ZZ_BG) return;
     const wb = $("w-cone").querySelector(":scope > .wbody"), tools = wb.querySelector(":scope > .tools"); if (!tools) return;
     const bar = document.createElement("div"); bar.id = "solMobileBar";
-    const button = (label, title, action) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.title = title; b.onclick = action; bar.appendChild(b); return b; };
-    /* Синхрофазотрон v0.027, «в телефоне какие-то кнопки непонятные» → «да, всё делай»: «▶ крутить» снята (то же, что ▶ на холсте), «2 кольца» снята
-       (одним касанием заменяла все строки на 1 и 11 и перезагружала страницу); направление и возврат шариков подписаны словами */
-    const dir = button("↻ направление", "Изменить направление вращения и сторону старта шарика", () => $("bConeDir").click());
-    button("● шарики на старт", "Вернуть шарики в выбранную стартовую точку", () => $("bConeBallReset").click());
-    const ballStatus = document.createElement("div"); ballStatus.id = "solMobileStatus";
-    ballStatus.setAttribute("role", "status"); ballStatus.setAttribute("aria-live", "polite"); bar.appendChild(ballStatus);
-    const statusSource = $("coneBallStatus"), syncStatus = () => { ballStatus.textContent = statusSource.textContent; };
-    new MutationObserver(syncStatus).observe(statusSource, { childList: true, characterData: true, subtree: true }); syncStatus();
-    const menu = document.createElement("button"); menu.id = "solMobileMenu"; menu.type = "button"; menu.textContent = "☰ Настройки";
+    const button = (label, title, action) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.title = title; b.setAttribute("aria-label", title); b.onclick = action; bar.appendChild(b); return b; };
+    /* v0.064: мобильные действия — ромбы со значками; названия в aria-label и подсказках. */
+    const dir = button("↻", "Изменить направление вращения и сторону старта шарика", () => $("bConeDir").click());
+    button("●", "Вернуть шарики в выбранную стартовую точку", () => $("bConeBallReset").click());
+    const menu = document.createElement("button"); menu.id = "solMobileMenu"; menu.type = "button"; menu.textContent = "☰";
+    menu.title = "Настройки"; menu.setAttribute("aria-label", "Настройки");
     tools.id = tools.id || "solMobileTools";
     menu.setAttribute("aria-expanded", "false"); menu.setAttribute("aria-controls", tools.id + " sunMoonTbl ringTbl");
     menu.onclick = () => {
-      const open = document.body.classList.toggle("sol-mobile-menus"); menu.textContent = open ? "✕ Свернуть настройки" : "☰ Настройки"; menu.setAttribute("aria-expanded", String(open));
-      if (open) { cgrpCols(); requestAnimationFrame(() => tools.scrollIntoView({ block: "nearest", behavior: "smooth" })); }
+      const open = document.body.classList.toggle("sol-mobile-menus"); menu.textContent = open ? "✕" : "☰"; menu.setAttribute("aria-expanded", String(open));
+      if (open) { cgrpCols(); requestAnimationFrame(() => menu.scrollIntoView({ block: "start", behavior: "smooth" })); }
     };
-    wb.insertBefore(bar, tools); wb.insertBefore(menu, tools);
+    bar.appendChild(menu); wb.insertBefore(bar, tools);
     const sync = () => {
-      const text = ((Z.coneAutoSp ?? 30) < 0 ? "↺" : "↻") + " направление"; if (dir.textContent !== text) dir.textContent = text;
+      const text = (Z.coneAutoSp ?? 30) < 0 ? "↺" : "↻"; if (dir.textContent !== text) dir.textContent = text;
     };
     for (const id of ["bConeAuto", "bConeDir"]) new MutationObserver(sync).observe($(id), { childList: true, characterData: true, subtree: true });
     wb.addEventListener("pointerdown", e => {
@@ -59,7 +55,7 @@
     const layout = () => {
       const on = mobile(); document.body.classList.toggle("sol-mobile", on);
       const ballLab = $("solBallLab"); if (on && !was && ballLab && ballLab._solFold) ballLab._solFold(false);
-      if (on && !was) { document.body.classList.remove("sol-mobile-menus"); menu.textContent = "☰ Настройки"; menu.setAttribute("aria-expanded", "false"); coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
+      if (on && !was) { document.body.classList.remove("sol-mobile-menus"); menu.textContent = "☰"; menu.setAttribute("aria-expanded", "false"); coneZoom = 1; conePan = [0, 0]; coneDen = 0; }
       was = on; sync(); requestAnimationFrame(() => { cgrpCols(); tzcAll(); renderCone(); });
     };
     small.addEventListener("change", layout); landscape.addEventListener("change", layout); layout();
@@ -78,7 +74,7 @@
       if (!tip) { tip = document.createElement("div"); tip.id = "solTouchTip"; tip.setAttribute("role", "tooltip"); document.body.appendChild(tip); }
       tip.textContent = t; tip.hidden = false;
       const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, m = 8;
-      const x = Math.max(m, Math.min(innerWidth - w - m, r.left + r.width / 2 - w / 2)), y = r.top - h - m >= m ? r.top - h - m : Math.min(innerHeight - h - m, r.bottom + m);
+      const x = Math.max(m, Math.min(innerWidth - w - m, (start?.x ?? r.left) + 14)), y = Math.max(m,Math.min(innerHeight - h - m,(start?.y ?? r.bottom) + 18));
       tip.style.left = x + "px"; tip.style.top = y + "px"; tipFor = el; return true;
     };
     window.addEventListener("pointerdown", e => {

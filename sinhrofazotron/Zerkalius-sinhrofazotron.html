@@ -1,4 +1,4 @@
-<!-- Синхрофазотрон — v0.063. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
+<!-- Синхрофазотрон — v0.064. Соляриус отдельной страницей: окно «◯ Solarius» (конус, лазер, солнце, грани, шарики, кручение) без остального Zazerkalius.
      Родился 2026-10-10 копией Zazerkalius v0.1091 (слово пользователя: «сделай теперь отдельную страницу чисто для соляриус, но назовём её синхрофазотрон —
      это вообще не в зазеркалиусе будет страница, просто скопируй текущий соляриус», «удали всё лишнее оттуда»). Свой код (копии zz-*.js рядом),
      своя память (sinhrofazotron_*), своя версия v0.NNN; пресеты читает из ../zazerkalius/presety/. -->
@@ -7,7 +7,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Синхрофазотрон — v0.063</title>
+<title>Синхрофазотрон — v0.064</title>
 <!-- Разметка и стили Синхрофазотрона. Математика — zz-core.js; интерфейс — zz-ui.js; шарики — zz-ball.js; грани — zz-faces.js; кольца четвертей — zz-quarters.js; мобильная раскладка — zz-mobile.js. -->
 <style>
 :root{
@@ -296,7 +296,7 @@ body:not(.pane-icons) .pane-fold-hid{display:none !important}
    поверх первого заголовка «💾 Страница целиком» и закрывала его ▸ / ▾ — свёрнутую группу было не развернуть. Заголовок кончается левее кнопки */
 body:not(.pane-icons) #bPaneIcons + .pane-head{padding-right:44px}
 #rowInputBar{display:flex;gap:4px;padding:0 10px 6px}
-#rowInput{flex:1 1 180px;min-width:120px;max-width:340px;font-family:var(--ff)}   /* v0.063: уже — рядом встали поля и выравнивание */
+#rowInput{flex:1 1 180px;min-width:120px;max-width:340px;font-family:var(--ff)}   /* v0.064: уже — рядом встали поля и выравнивание */
 #rowInputBar{flex-wrap:wrap;align-items:center}
 #rowInputBar select,#rowInputBar button{font-size:12px}   /* как было в верхней полосе поля */
 #rowInputBar button{padding:2px 6px}
@@ -918,7 +918,7 @@ body.bgmode #coneVarN{display:none !important}
 #coneSnapInfo{position:fixed;transform:translate(-50%,-100%);z-index:2147483001;pointer-events:none;font:600 13px/1.3 var(--ff,monospace);color:#f472b6;background:rgba(11,13,18,.88);border:1px solid #f472b6;padding:3px 10px;white-space:nowrap}
 #coneSnapInfo[hidden]{display:none} .cgrp.cg-anim{--gc:#ff9a52} .cgrp.cg-snd{--gc:#b98cff} .cgrp.cg-las{--gc:#ff6b8e} .cgrp.cg-pal{--gc:#f0abfc} .cgrp.cg-3d{--gc:#3b82f6}
 /* v0.757: группы, на которые разобран «Лазер» — у каждой свой цвет (он же у вкладки) */
-.cgrp.cg-sun{--gc:#ffe14d} .cgrp.cg-r1{--gc:#a3e635} .cgrp.cg-slit{--gc:#22d3ee} .cgrp.cg-bld{--gc:#fb7c4a} .cgrp.cg-alg{--gc:#cbd5e1} .cgrp.cg-algo-info{--gc:#ffd166}
+.cgrp.cg-sun{--gc:#ffe14d} .cgrp.cg-r1{--gc:#a3e635} .cgrp.cg-slit{--gc:#b18aff} .cgrp.cg-bld{--gc:#fb7c4a} .cgrp.cg-alg{--gc:#cbd5e1} .cgrp.cg-algo-info{--gc:#ffd166}
 /* v0.757, «затемнять кнопки, которые неактивны при нажатых уже других»: не действует в нынешнем режиме — темнее и бледная надпись (с v0.758 не жмётся,
    нажатие перехватывает lasDeps); почему — первой строкой подсказки. .lhl — кнопки строки алгоритма, на которую навели (и наоборот) */
 :is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).ldim,:is(#w-cone, #paneGrp) .cgrp :is(button, label, select, input).ldim.tz.tz.tz{filter:brightness(.55) saturate(.4);color:color-mix(in srgb, var(--txt) 45%, transparent) !important;cursor:not-allowed}
@@ -2617,7 +2617,7 @@ body.pane-icons #rowsPane#rowsPane :is(#rowBtns,#triBtns,#fileBtns,#lookBtns,#sa
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > :not(.gfold):not(.sfz-book-pin):not(.sfz-book-direction){display:none!important}
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > .gfold{position:absolute!important;left:122px!important;top:13px!important;width:20px!important;min-width:20px!important;height:20px!important;margin:0!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;background:none!important;border:0!important;clip-path:none!important;font:700 18px/20px var(--ff)!important;color:var(--gc);-webkit-text-fill-color:var(--gc);cursor:pointer}
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > .gfold::before,:is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > .gfold::after{content:none!important}
-:is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .cgb{position:relative!important;display:block!important;width:var(--sfz-book-body-width,74px)!important;height:var(--sfz-grape-height,48px)!important;min-height:0!important;margin:0 0 0 calc(60px - var(--sfz-book-first-half,24px))!important;padding:0!important;overflow:visible!important;background:none!important;clip-path:none!important;transform-origin:50% 0;transform:scaleY(1);opacity:1;transition:transform .2s ease,opacity .16s ease}
+:is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .cgb{position:relative!important;display:block!important;width:var(--sfz-book-body-width,74px)!important;height:var(--sfz-grape-height,48px)!important;min-height:0!important;margin:0 0 0 calc(60px - var(--sfz-book-core-center,37px))!important;padding:0!important;overflow:visible!important;background:none!important;clip-path:none!important;transform-origin:50% 0;transform:scaleY(1);opacity:1;transition:transform .2s ease,opacity .16s ease}
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape.cmin > .cgb{height:0!important;margin-block:0!important;overflow:hidden!important;transform:scaleY(0);opacity:0;visibility:hidden;pointer-events:none}
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape .sfz-grape-wrap{display:contents!important;position:static!important;transform:none!important;clip-path:none!important}
 :is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape .sfz-grape-wrap::before,:is(#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape .sfz-grape-wrap::after{content:none!important;display:none!important}
@@ -2716,16 +2716,6 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp,#coneViewTools#coneViewTools#coneViewTools) select.sfz-grape-editor{padding:0 25px 0 12px!important;font-size:12px!important;text-align:left!important;text-align-last:left!important;white-space:nowrap;text-overflow:ellipsis;appearance:none!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='m3 4 3 4 3-4' fill='none' stroke='%23dbe4f0' stroke-width='1.5'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp,#coneViewTools#coneViewTools#coneViewTools) select.sfz-grape-editor option{font:12px "Segoe UI",system-ui,sans-serif;background:var(--panel2);color:var(--txt)}
 /* v0.062: общая верёвка, компактные ползунки и меню в левой полосе. */
-#sfzRope{position:fixed;height:24px;box-sizing:border-box;z-index:2147483638;pointer-events:none;touch-action:none;user-select:none}
-#sfzRope[hidden]{display:none}
-#sfzRope::before{content:"";position:absolute;left:0;right:0;top:12px;border-top:1px dashed #6cb4ff;opacity:.65;pointer-events:auto;cursor:grab}
-#sfzRope.locked::before{cursor:default;opacity:.35}
-#sfzRope button{position:absolute;top:0;display:flex;align-items:center;justify-content:center;width:24px;height:24px;margin:0;padding:0;border:0;border-radius:0;color:#6cb4ff;background:var(--bg);font:15px/1 "Segoe UI",system-ui,sans-serif;pointer-events:auto;touch-action:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#sfzRope .sfz-rope-grip{left:calc(50% - 12px);cursor:grab}
-#sfzRope .sfz-rope-grip:active{cursor:grabbing}
-#sfzRope .sfz-rope-lock{left:calc(50% + 16px);cursor:pointer}
-#sfzRope button:focus-visible{background:#244b75;outline:2px solid #6cb4ff}
-#sfzRope.locked .sfz-rope-grip{opacity:.4;cursor:default}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .cg-vid{--gc:#6cb4ff!important;--gon:#6cb4ff!important}
 #rowList,#field{scrollbar-width:none!important}
 #rowList::-webkit-scrollbar,#field::-webkit-scrollbar{display:none!important;width:0;height:0}
@@ -2744,7 +2734,7 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 /* v0.062: «Дзен» целиком в левом меню, без наложения на верхнюю полосу. */
 #rowsPane#rowsPane #sfzSettingsMenus#sfzSettingsMenus #bConeZen{position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;right:auto!important;width:44px!important;height:22px!important;min-height:22px!important;min-width:0!important;margin:2px 0 0!important;padding:0!important;font-size:14px!important;line-height:22px!important;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,0 100%,5px 50%)!important}
 #sfzSettingsMenus #bConeZen::before{content:none!important}
-/* v0.063: размеры шапки и группы совпадают; один нижний край, компактные ползунки с числом. */
+/* v0.064: размеры шапки и группы совпадают; один нижний край, компактные ползунки с числом. */
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape:is(.cfld,.cg-abovebody):not(.cdrag){z-index:2147483635!important}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape{max-height:none!important}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape::after{content:none!important;display:none!important}
@@ -2761,6 +2751,259 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 #ringTbl#ringTbl#ringTbl > .ring-handles{position:relative;left:0;top:0;grid-column:1 / 3;grid-row:1;width:100px;height:36px;display:block}
 #ringTbl#ringTbl#ringTbl .ring-handles > .ring-move{width:100px;height:36px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb,#22d3ee 28%,var(--bg));color:var(--txt);font:700 11px/1 "Segoe UI",system-ui,sans-serif}
 #ringTbl#ringTbl#ringTbl .ring-handles > .ring-close{position:absolute;left:102px;top:8px}
+
+/* v0.064: stationary book covers, independent menu pins and compact controls. */
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab::before{content:""!important;display:block!important;inset:0!important;width:120px!important;height:48px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:color-mix(in srgb,var(--gc) 32%,var(--bg))!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab{display:block!important;visibility:visible!important;height:48px!important;min-height:48px!important;flex:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .sfz-book-cover{display:block!important;visibility:visible!important;width:120px!important;height:24px!important;min-height:24px!important;background:color-mix(in srgb,var(--gc) 32%,var(--bg))!important;flex:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape.cmin > .sfz-book-cover{height:6px!important;min-height:6px!important;padding:0!important;font-size:0!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > :is(.gfold,.sfz-book-direction){display:none!important}
+.sol-plate .pminbtn{display:none!important}
+#coneBal#coneBal#coneBal{z-index:2147483629!important}
+#coneBal#coneBal#coneBal .bd{width:36px!important;height:32px!important;font-size:11px!important}
+#coneBalanceTools#coneBalanceTools#coneBalanceTools > button{height:36px!important;min-height:36px!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;padding-bottom:7px!important}
+#bC3Axes#bC3Axes#bC3Axes{clip-path:polygon(0 0,100% 0,50% 100%)!important;height:36px!important;min-height:36px!important;padding-bottom:7px!important}
+#coneMagAxisTools .sfz-mag-symbol{display:block;font-size:15px;line-height:17px}
+#coneMagAxisTools .sfz-mag-label{display:block;font:700 10px/11px "Segoe UI",sans-serif}
+#coneMagAxisTools#coneMagAxisTools#coneMagAxisTools > button{flex-direction:column!important;gap:0!important;font-size:12px!important}
+body.recTop #coneRecBar > button{width:36px!important;height:36px!important;min-width:36px!important;line-height:36px!important;font-size:13px!important}
+body.recTop #coneRecBar > :is(#bConeRecMp4,#bConeRecTurn){font-size:10px!important}
+
+/* Thin vertical sliders next to each grape, names/values in the hover tip. */
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range{width:20px!important;min-width:20px!important;max-width:20px!important;height:var(--grape-h,180px)!important;min-height:var(--grape-h,180px)!important;max-height:none!important;padding:0!important;clip-path:none!important;background:none!important;gap:0!important;overflow:visible!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range > :is(.sli,.rv){display:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range > .zerk-range-wrap{position:relative!important;display:flex!important;flex-direction:column-reverse!important;align-items:center!important;width:20px!important;height:var(--grape-h,180px)!important;margin:0!important;gap:0!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]{writing-mode:vertical-lr!important;direction:rtl!important;appearance:auto!important;-webkit-appearance:auto!important;width:10px!important;min-width:10px!important;height:calc(var(--grape-h,180px) - 28px)!important;min-height:0!important;flex:1 1 auto!important;margin:0!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow{width:16px!important;min-width:16px!important;height:14px!important;min-height:14px!important;flex:0 0 14px!important;transform:rotate(-90deg)!important;background:none!important;padding:0!important;clip-path:none!important}
+
+/* All header plates remain reachable above rhomb weaving. */
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > :is(.glab,.sfz-book-cover){position:relative!important;z-index:2147483640!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab > .sfz-book-pin{display:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) :is(select.sfz-grape-editor,.sfz-grape-editor:has(select)){height:26px!important;min-height:26px!important;width:100px!important;max-width:100px!important;padding:2px 8px!important;font-size:11px!important;line-height:18px!important;gap:0!important;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)!important;background:color-mix(in srgb,var(--gc) 16%,var(--bg))!important;color:var(--txt)!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-editor:has(select) > :is(.sli,.glab2){display:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-editor select{width:100%!important;min-width:0!important;padding:0!important;font-size:11px!important;background:none!important;color:var(--txt)!important;border:0!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) select option{background:var(--bg);color:var(--txt);font-size:11px}
+#coneBalanceTools#coneBalanceTools#coneBalanceTools{grid-template-columns:repeat(7,60px);gap:2px}
+#coneBalanceTools#coneBalanceTools#coneBalanceTools.compact{grid-template-columns:repeat(5,60px)}
+#coneAlignTools#coneAlignTools#coneAlignTools{height:30px!important;gap:2px!important}
+:is(#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools,#coneAlignTools#coneAlignTools#coneAlignTools#coneAlignTools) > button,#bC3Axes#bC3Axes#bC3Axes#bC3Axes{position:relative!important;isolation:isolate!important;width:60px!important;min-width:60px!important;height:30px!important;min-height:30px!important;clip-path:polygon(0 0,100% 0,50% 100%)!important;align-items:flex-start!important;padding:3px 0 0!important;background:color-mix(in srgb,var(--gold) 80%,transparent)!important;color:var(--gold)!important;opacity:1!important;font-size:16px!important}
+:is(#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools,#coneAlignTools#coneAlignTools#coneAlignTools#coneAlignTools) > button::before,#bC3Axes#bC3Axes#bC3Axes#bC3Axes::before{content:""!important;position:absolute;inset:0;z-index:-1;background:var(--bg);clip-path:polygon(3px 1.5px,calc(100% - 3px) 1.5px,50% calc(100% - 3.4px))}
+:is(#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools,#coneAlignTools#coneAlignTools#coneAlignTools#coneAlignTools) > button.on,#bC3Axes#bC3Axes#bC3Axes#bC3Axes.on{background:var(--gold)!important;color:#1a1408!important}
+:is(#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools,#coneAlignTools#coneAlignTools#coneAlignTools#coneAlignTools) > button.on::before,#bC3Axes#bC3Axes#bC3Axes#bC3Axes.on::before{content:none!important}
+
+/* The field must not scroll when focusing a tall unfolded control group. */
+.cgrp.cg-spin{--gc:var(--gold)} .cgrp.cg-zen{--gc:var(--acc)}
+@media(min-width:761px){
+ body:not(.sol-mobile) #w-cone > .wbody{position:relative!important;overflow:visible!important;min-height:0!important}
+ body:not(.sol-mobile) #w-cone #coneMain{position:absolute!important;inset:0!important;min-height:0!important;flex:none!important}
+}
+
+@media(min-width:761px){
+ body:not(.sol-mobile) #w-cone{overflow:visible!important;z-index:auto!important}
+ body:not(.sol-mobile) #desk{overflow:clip!important}
+ body:not(.sol-mobile) :is(#coneBalanceTools#coneBalanceTools#coneBalanceTools,#coneAlignTools#coneAlignTools#coneAlignTools,#bC3Axes#bC3Axes#bC3Axes){position:fixed!important;z-index:2147483645!important}
+}
+
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape.sfz-panel-front{z-index:2147483642!important;isolation:isolate!important}
+body.recTop #coneRecBar > button{width:48px!important;height:48px!important;min-width:48px!important;line-height:48px!important;font-size:15px!important}
+body.recTop #coneRecBar > :is(#bConeRecMp4,#bConeRecTurn){font-size:11px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo > label{position:relative!important;display:block!important;width:100%!important;min-width:0!important;height:36px!important;min-height:36px!important;margin:0!important;padding:0!important;clip-path:none!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo .zerk-range-wrap{display:block!important;position:relative!important;width:100%!important;height:36px!important;min-width:0!important;margin:0!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo input[type=range]{position:absolute!important;left:32px!important;top:0!important;width:calc(100% - 64px)!important;min-width:0!important;height:36px!important;writing-mode:horizontal-tb!important;direction:ltr!important;touch-action:none}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepB{left:0!important;width:26px!important;height:36px!important;top:0!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepF{left:auto!important;right:0!important;width:26px!important;height:36px!important;top:0!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo #coneTempoToggle{transform:translateX(-50%)!important;width:24px!important;height:34px!important;top:1px!important}
+
+/* Undo and redo flank the axis, like the sideways balance triangles. */
+@media(min-width:761px){
+ body:not(.sol-mobile) #coneBalanceTools#coneBalanceTools#coneBalanceTools{grid-template-columns:repeat(9,60px)}
+ body:not(.sol-mobile) #coneBalanceTools#coneBalanceTools#coneBalanceTools > button:nth-child(4){grid-column:7}
+ body:not(.sol-mobile) #bC3Axes#bC3Axes#bC3Axes#bC3Axes{position:fixed!important;z-index:2147483645!important}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox{position:fixed!important;width:184px!important;height:30px!important;transform:none!important;z-index:2147483646!important;pointer-events:none}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox > button{position:absolute!important;top:0!important;width:60px!important;min-width:60px!important;height:30px!important;min-height:30px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:var(--gold)!important;color:#1a1408!important;font-size:16px!important;pointer-events:auto;opacity:1!important;border:0!important;transform:none!important}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox > button:disabled{background:color-mix(in srgb,var(--gold) 28%,var(--bg))!important;color:var(--txt)!important}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox > #bUndo{left:0!important;clip-path:polygon(0 50%,100% 0,100% 100%)!important;padding-left:15px!important}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox > #bRedo{right:0!important;clip-path:polygon(0 0,100% 50%,0 100%)!important;padding-right:15px!important}
+ body:not(.sol-mobile) #undoBox#undoBox#undoBox > button::before,body:not(.sol-mobile) #undoBox#undoBox#undoBox .tzg-svg{display:none!important}
+}
+
+/* Phone controls stay on the canvas; the settings button remains uncovered. */
+body.sol-mobile #bC3Axes#bC3Axes#bC3Axes#bC3Axes{position:absolute!important}
+body.sol-mobile #coneAlignTools#coneAlignTools#coneAlignTools#coneAlignTools{position:relative!important;left:auto!important;top:auto!important;order:1;align-self:center;flex:none;margin:4px 0 0!important}
+body.sol-mobile #solMobileBar{order:2}
+body.sol-mobile #ringTbl#ringTbl#ringTbl{position:relative!important;inset:auto!important;order:5;align-self:flex-start;margin:8px!important;transform:none!important}
+body.sol-mobile:not(.sol-mobile-menus) #ringTbl#ringTbl#ringTbl{display:none!important}
+body.sol-mobile #w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools > .sfz-grape{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;min-width:0!important;max-width:100%!important;z-index:auto!important;isolation:auto!important}
+body.sol-mobile #w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools > .sfz-grape > .glab{touch-action:pan-y;cursor:pointer}
+
+body.sol-mobile #top{overflow:visible}
+body.sol-mobile #coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools{grid-template-columns:repeat(9,40px)!important;gap:2px}
+body.sol-mobile #coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools > button{width:40px!important;min-width:40px!important;height:24px!important;min-height:24px!important;font-size:12px!important;padding-top:2px!important}
+body.sol-mobile #coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools#coneBalanceTools > button:nth-child(4){grid-column:7!important}
+body.sol-mobile #bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes{width:40px!important;min-width:40px!important;height:24px!important;min-height:24px!important;font-size:12px!important;padding-top:2px!important}
+body.sol-mobile #undoBox#undoBox#undoBox{position:absolute!important;display:block!important;width:124px!important;height:24px!important;transform:none!important;z-index:2147483646!important;pointer-events:none}
+body.sol-mobile #undoBox#undoBox#undoBox > button{position:absolute!important;top:0!important;width:40px!important;min-width:40px!important;height:24px!important;min-height:24px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:var(--gold)!important;color:#1a1408!important;font-size:12px!important;pointer-events:auto;border:0!important;transform:none!important}
+body.sol-mobile #undoBox#undoBox#undoBox > button:disabled{background:color-mix(in srgb,var(--gold) 28%,var(--bg))!important;color:var(--txt)!important}
+body.sol-mobile #undoBox#undoBox#undoBox > #bUndo{left:0!important;clip-path:polygon(0 50%,100% 0,100% 100%)!important;padding-left:8px!important}
+body.sol-mobile #undoBox#undoBox#undoBox > #bRedo{right:0!important;clip-path:polygon(0 0,100% 50%,0 100%)!important;padding-right:8px!important}
+body.sol-mobile #undoBox#undoBox#undoBox > button::before,body.sol-mobile #undoBox#undoBox#undoBox .tzg-svg{display:none!important}
+
+/* Bigger play diamond and step arrows, all within the tempo outline. */
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo{height:48px!important;min-height:48px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label,#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo .zerk-range-wrap{height:48px!important;min-height:48px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label::before{height:48px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label::after{height:44px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo input[type=range]{left:60px!important;width:calc(100% - 120px)!important;height:48px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo input[type=range]::-webkit-slider-thumb{width:48px;height:44px;margin-top:-19px}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo input[type=range]::-moz-range-thumb{width:48px;height:44px}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #coneTempoToggle{width:48px!important;min-width:48px!important;height:44px!important;top:2px!important;font-size:18px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo :is(#bC3StepB,#bC3StepF){width:40px!important;height:32px!important;top:8px!important;font-size:22px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepB{left:12px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepF{right:12px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #coneAutoSpV{height:48px!important;line-height:48px!important}
+
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo{padding:0!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label{box-sizing:border-box!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label::before{clip-path:polygon(0 50%,24px 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,24px 100%)!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label::after{clip-path:polygon(0 50%,22px 0,calc(100% - 22px) 0,100% 50%,calc(100% - 22px) 100%,22px 100%)!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepB{left:24px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepF{right:24px!important}
+
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range{width:24px!important;min-width:24px!important;max-width:24px!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range > .zerk-range-wrap{width:24px!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]{appearance:none!important;-webkit-appearance:none!important;width:24px!important;min-width:24px!important;height:calc(var(--grape-h,180px) - 56px)!important;touch-action:none;background:transparent!important;border:0!important;padding:0!important;accent-color:var(--gc)}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]::-webkit-slider-runnable-track{width:100%;height:100%;background:linear-gradient(90deg,transparent calc(50% - 1.5px),color-mix(in srgb,var(--gc) 28%,transparent) calc(50% - 1.5px),color-mix(in srgb,var(--gc) 28%,transparent) calc(50% + 1.5px),transparent calc(50% + 1.5px))!important;border:0;border-radius:0}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:12px;height:12px;margin:0 0 0 -4.5px;border:0;border-radius:0;background:transparent;clip-path:none}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]::-moz-range-track{width:3px;background:color-mix(in srgb,var(--gc) 28%,transparent)}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range input[type=range]::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:0;background:transparent;clip-path:none}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range[data-range-value]::after{content:attr(data-range-value)!important;display:block!important;position:absolute!important;left:50%!important;top:var(--grape-value-y,50%)!important;transform:translate(-50%,-50%)!important;max-width:none!important;max-height:none!important;width:max-content;padding:1px 2px!important;background:color-mix(in srgb,var(--bg) 60%,transparent)!important;clip-path:none!important;font:600 10px/12px var(--ff)!important;color:var(--txt)!important;pointer-events:none!important;z-index:10!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow{position:relative!important;isolation:isolate;width:24px!important;min-width:24px!important;height:28px!important;min-height:28px!important;flex:0 0 28px!important;transform:none!important;font-size:0!important;border:0!important;background:color-mix(in srgb,var(--gc) 45%,transparent)!important;color:var(--txt)!important;clip-path:polygon(50% 0,100% 100%,0 100%)!important;display:flex!important;align-items:center;justify-content:center;padding:6px 0 0!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow:first-child{clip-path:polygon(0 0,100% 0,50% 100%)!important;padding:0 0 6px!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow::before{content:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow::after{content:"+"!important;font:700 13px/16px var(--ff)!important;position:static!important;background:none!important;clip-path:none!important;color:var(--txt)!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .zerk-arrow:first-child::after{content:"−"!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range .rv{display:none!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape-range::before{content:none!important;background:none!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo > label::after{left:1px!important;right:1px!important;top:1px!important;height:46px!important;clip-path:polygon(0 50%,23px 0,calc(100% - 23px) 0,100% 50%,calc(100% - 23px) 100%,23px 100%)!important}
+
+/* v0.064: centered standard covers and compact stacked ranges. */
+body #zenGrp#zenGrp#zenGrp#zenGrp#zenGrp{display:none!important}
+#rowsPane#rowsPane#rowsPane #sfzSettingsMenus#sfzSettingsMenus #bConeZen{width:48px!important;height:48px!important;min-height:48px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;line-height:48px!important}
+#bSfzClean#bSfzClean{width:48px!important;height:48px!important}
+#cone3Pad#cone3Pad#cone3Pad > .c3grip{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important}
+#ringTbl#ringTbl#ringTbl#ringTbl{width:120px!important;justify-content:center;grid-template-rows:48px repeat(6,var(--ring-size)) 24px}
+#ringTbl#ringTbl#ringTbl#ringTbl > .ring-handles,#ringTbl#ringTbl#ringTbl#ringTbl > .ring-foot{width:120px;height:48px;grid-column:1 / 3;margin-left:calc((1.5 * var(--ring-size) + 2px - 120px) / 2)}
+#ringTbl#ringTbl#ringTbl#ringTbl .ring-move{width:120px;height:48px;font-size:12px;font-weight:700}
+#ringTbl#ringTbl#ringTbl#ringTbl > .ring-foot{height:24px;grid-row:8;clip-path:polygon(0 100%,50% 0,100% 100%);background:color-mix(in srgb,#22d3ee 28%,var(--bg));color:var(--txt);text-align:center;box-sizing:border-box;padding-top:12px;font-size:9px;line-height:10px}
+
+
++/* Headers remain reachable above overlapping open bodies. */
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape:not(.cdrag){z-index:auto!important;isolation:auto!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape > .glab{z-index:2147483644!important}
+:is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape.sfz-panel-front .sfz-grape-item{z-index:2147483638!important}
+
+
+#top#top#top > #bConeZen{align-self:flex-start!important;position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;display:inline-flex!important;flex:0 0 48px!important;align-items:center;justify-content:center;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;margin:0 4px!important;padding:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;font-size:18px!important;z-index:2147483646!important}
+#top#top#top > #bConeZen::before{content:none!important}
+#fieldHead#fieldHead{display:block!important;min-height:0!important;margin:0!important;padding:0!important}
+#sfzRowsButtons{display:flex;align-items:center;justify-content:flex-start;gap:0;height:28px;padding:0 3px;flex-wrap:nowrap}
+#sfzRowsButtons#sfzRowsButtons > button{position:relative!important;left:auto!important;top:auto!important;display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 28px!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;margin:0!important;padding:0!important;box-sizing:border-box!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:color-mix(in srgb,var(--b0) 45%,var(--bg))!important;font-size:14px!important;line-height:1!important}
+
+
+#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:28px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:0!important;margin:0!important;padding:0 3px!important;overflow:visible!important;z-index:2147483645!important}
+#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details{position:relative!important;display:block!important;flex:0 0 28px!important;width:28px!important;height:28px!important;margin:0!important;padding:0!important;border:0!important;background:none!important;overflow:visible!important}
+#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details > summary{display:flex!important;align-items:center!important;justify-content:center!important;width:28px!important;height:28px!important;min-height:28px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:color-mix(in srgb,var(--b0) 45%,var(--bg))!important;font-size:10px!important;line-height:1!important;box-sizing:border-box!important}
+#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details > summary::after{content:none!important}
+#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus .sfzSettingsColumn{position:absolute!important;left:auto!important;right:0!important;top:28px!important;width:172px!important;padding:5px!important;max-height:calc(100dvh - 100px);overflow:auto;z-index:2147483646!important;background:var(--panel2,var(--bg));border:1px solid var(--dim)}
+@media(max-width:760px){#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus .sfzSettingsColumn{left:0!important;right:auto!important}}
+
+
+#ringTbl#ringTbl#ringTbl#ringTbl > .ring-foot{min-height:24px!important;min-width:120px!important;margin-top:0!important;padding:12px 0 0!important;border:0!important;border-radius:0!important;touch-action:none;cursor:move}
+@media(min-width:761px){#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus{position:fixed!important;left:var(--sfz-menu-left)!important;top:0!important;right:auto!important;width:84px!important;padding:0!important;z-index:2147483647!important}}
+
+
+body.recTop #coneRecBar#coneRecBar#coneRecBar{z-index:2147483646!important}
+
+body.zen #ringTbl#ringTbl#ringTbl#ringTbl#ringTbl{display:none!important}
+body.zen #w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools > .cg-r1{display:none!important}
+
+
+/* v0.064: общий размер боковых ромбов и значков; шесть кнопок над строками в верхней полосе. */
+body.pane-icons #rowsPane#rowsPane#rowsPane#rowsPane .pane-icon-group{font-size:0!important;line-height:1!important}
+body.pane-icons #rowsPane#rowsPane#rowsPane#rowsPane .pane-icon-group::before{font-size:18px!important;line-height:48px!important}
+body.pane-icons #rowsPane#rowsPane#rowsPane#rowsPane button:not(.tx):not(.zerk-arrow):not(#bPaneIcons){font-size:18px!important;line-height:48px!important}
+#coneTopArt#coneTopArt{z-index:2147483646!important}
+/* Замки перемещаются внутри прежней сетки; колонка номеров сохраняет место. */
+#rowList#rowList .rw > .no > .rlk{position:relative;left:calc(-1 * (var(--rnd,2) * 1ch + 4px + min(12px,var(--fs) * .8)));font-size:inherit!important}
+#rowList#rowList .rw > .no > .rlk::before{width:8px;height:1px;min-height:1px;border-width:.5px;border-radius:0}
+@media(min-width:761px){
+ #sfzRowsButtons#sfzRowsButtons{position:fixed!important;left:calc(var(--sfz-menu-left) + 84px)!important;top:0!important;width:84px!important;padding:0!important;z-index:2147483647!important}
+ #fieldHead#fieldHead{height:0!important}
+ body.zen #sfzRowsButtons#sfzRowsButtons{display:none!important}
+}
+
+
+/* v0.064: серо-белая ось на пересечении, примкнутые стрелки и постоянный Дзен. */
+#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes{width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;align-items:center!important;justify-content:center!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:#858b96!important;color:#f2f4f8!important;font-size:22px!important;z-index:2147483647!important}
+#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes::before{content:none!important}
+body:not(.sol-mobile) #undoBox#undoBox#undoBox#undoBox{width:168px!important}
+body:not(.sol-mobile) #undoBox#undoBox#undoBox#undoBox > button{width:84px!important;min-width:84px!important}
+body.sol-mobile #undoBox#undoBox#undoBox#undoBox{width:120px!important}
+body.sol-mobile #undoBox#undoBox#undoBox#undoBox > button{width:60px!important;min-width:60px!important}
+#bConeZen#bConeZen#bConeZen{position:fixed!important;display:flex!important;align-items:center;justify-content:center;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;margin:0!important;padding:0!important;font-size:18px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;z-index:2147483647!important}
+body.pane-icons #rowsPane#rowsPane{padding-bottom:56px!important}
+#rowList#rowList .rw > .no > .rlk::before{border:0!important;background:var(--dim)!important}
+#rowList#rowList .rw > .no > .rlk:not(.on)::before{background:var(--gold)!important;opacity:.6}
+#rowList#rowList .rw > .no > .rn,#rowList#rowList .rw > .no > .rn b{font-weight:400!important}
+
+
+body.pane-icons #rowsPane#rowsPane .sfz-carousel::after{content:none!important;display:none!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo :is(#bC3StepB,#bC3StepF){width:64px!important;min-width:64px!important;height:36px!important;min-height:36px!important;top:6px!important;background:color-mix(in srgb,var(--gold) 65%,var(--bg))!important;color:#f6eed8!important;font-size:24px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepB{left:8px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo #bC3StepF{right:8px!important}
+#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo#coneTransportTempo input[type=range]{left:84px!important;width:calc(100% - 168px)!important}
+#sfzRowsButtons#sfzRowsButtons > button,#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details > summary{vertical-align:top!important;transform:none!important;align-items:center!important;line-height:1!important}
+@media(min-width:761px){
+ #coneMagAxisTools#coneMagAxisTools#coneMagAxisTools#coneMagAxisTools{position:fixed!important;display:flex!important;width:122px!important;height:30px!important;gap:2px!important;z-index:2147483645!important}
+ #coneMagAxisTools#coneMagAxisTools#coneMagAxisTools#coneMagAxisTools > button{width:60px!important;min-width:60px!important;height:30px!important;min-height:30px!important;clip-path:polygon(50% 0,100% 100%,0 100%)!important;justify-content:flex-end!important;padding:8px 0 1px!important}
+ #coneMagAxisTools .sfz-mag-symbol{font-size:12px;line-height:12px}
+ #coneMagAxisTools .sfz-mag-label{font-size:8px;line-height:9px}
+ #coneMagAxisTools svg{width:30px;height:22px}
+}
+
+
+@media(min-width:761px){
+ body.field-right #main{grid-template-columns:var(--paneW,250px) 1fr max(180px,var(--rowsW,44%))}
+ body.field-right.pane-icons #main{grid-template-columns:56px 1fr max(180px,var(--rowsW,44%))}
+ #sfzRowsButtons#sfzRowsButtons#sfzRowsButtons{left:var(--sfz-menu-left)!important}
+ #sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus{left:calc(var(--sfz-menu-left) + 84px)!important}
+}
+
+
+#cone3Pad#cone3Pad#cone3Pad#cone3Pad{--d:48px;--h:24px}
+
+#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools > .sfz-grape:not(.cdrag){z-index:auto!important;isolation:auto!important}
+
+@media(min-width:761px){
+ body.field-right #main{grid-template-columns:var(--paneW,250px) 1fr max(300px,var(--rowsW,44%))}
+ body.field-right.pane-icons #main{grid-template-columns:56px 1fr max(300px,var(--rowsW,44%))}
+ #sfzRowsButtons#sfzRowsButtons#sfzRowsButtons{width:144px!important;height:48px!important}
+ #sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus{left:calc(var(--sfz-menu-left) + 144px)!important;width:144px!important;height:48px!important}
+ #sfzRowsButtons#sfzRowsButtons#sfzRowsButtons > button,#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details,#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details > summary{flex:0 0 48px!important;width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;font-size:14px!important}
+ #sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus .sfzSettingsColumn{top:34px!important}
+ #sfzRowsButtons#sfzRowsButtons#sfzRowsButtons > button,#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus#sfzSettingsMenus > details > summary,body.recTop #coneRecBar > button,#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes#bC3Axes{clip-path:polygon(50% 0,100% 50%,79.1667% 70.8333%,20.8333% 70.8333%,0 50%)!important}
+}
+
+/* v0.064: хаб по центру сжатой полосы; заголовок за её границей. */
+body.pane-icons #top{padding-left:56px}
+body.pane-icons #top > #zerkHubBtn{position:absolute;left:15px;top:3.5px;margin:0}
+#top > :is(h1,.ver){position:relative;z-index:2147483647;background:var(--panel)}
+body.sol-mobile #solMobileBar{gap:4px;flex-wrap:nowrap;padding:4px 8px;background:transparent}
+body.sol-mobile #solMobileBar > button:first-child{flex:0 0 48px;min-width:48px}
+body.sol-mobile #solMobileBar > button,body.sol-mobile #solMobileBar > #solMobileMenu{display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;min-width:48px;height:48px;min-height:48px;margin:0;padding:0;border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-size:20px;text-align:center}
+#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools > .sfz-grape.axpin > .glab{box-shadow:none!important}
+#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools > .sfz-grape.axpin > .glab::before{background:linear-gradient(transparent calc(50% - .5px),#f472b6 calc(50% - .5px),#f472b6 calc(50% + .5px),transparent calc(50% + .5px)),color-mix(in srgb,var(--gc) 32%,var(--bg))!important}
+#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools#solMobileTools > .sfz-grape.axpin > .glab::after{inset:0!important;margin:auto!important;width:max-content!important;max-width:80px!important;height:16px!important;padding-inline:4px;background:color-mix(in srgb,var(--gc) 32%,var(--bg))!important}
 </style>
 <script>
 /* v0.185: ?preset=<имя> — подключить пресет presety/<имя>.js до скрипта страницы (document.write — синхронно, и с диска тоже) */
@@ -2777,7 +3020,7 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 <!-- v0.580, по снимку «Своя» — «цвета прямо в ней должны, 3 значка»: в v0.578 строка «Своя» закрывалась после «1» (разметка резалась по первому </span>), цвета 1 / 0 / а вываливались под неё -->
 <div id="palMenu" hidden><div class="pmOwn" title="🎨 Своя гамма и цвета выбранной гаммы: 1 — единицы, 0 — нули, а — акцент"><button data-pal="0" title="🎨 Своя: свои цвета единиц, нулей и акцента — они в 1, 0, а рядом. Поменяешь цвет на любой гамме — её цвета с правкой сохранятся в «Своей». Не заданы — цвета страницы. Правый щелчок — вернуть цвета страницы">Своя</button><label class="pcol" title="Цвет единиц (1) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>1</span><input type="color" id="palC1"></label><label class="pcol" title="Цвет нулей (0) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>0</span><input type="color" id="palC0"></label><label class="pcol" title="Акцент (рамки, подписи, выделение) выбранной гаммы; поменяешь — сохранится в «Своей»"><span>а</span><input type="color" id="palCa"></label></div><button data-pal="1" title="🎨 Гамма «Янтарь»">Янтарь</button><button data-pal="2" title="🎨 Гамма «Океан»">Океан</button><button data-pal="3" title="🎨 Гамма «Лес»">Лес</button><button data-pal="4" title="🎨 Гамма «Роза»">Роза</button><button data-pal="5" title="🎨 Гамма «Огонь»">Огонь</button><button data-pal="6" title="🎨 Гамма «Контраст»">Контраст</button></div>
 <div id="top">
-<h1 aria-label="Синхрофазотрон" class="sfz-title"><svg class="sfzlogo" viewBox="-0.1 -0.1 181.2 19.25" role="img" aria-label="Синхрофазотрон"><title>Синхрофазотрон</title><defs><clipPath id="sfzlc"><path d="M0,0L170,0L181,19.05L11,19.05Z"/></clipPath></defs><path class="s0" fill="#12161f" d="M0,0L170,0L181,19.05L11,19.05Z"/><path class="s1" fill="#4f8fdc" d="M5,1.73H11L12,3.46H6ZM4,3.46H6L7,5.2H5ZM12,3.46H14L15,5.2H13ZM80,3.46H82L83,5.2H81ZM5,5.2H7L8,6.93H6ZM17,5.2H19L20,6.93H18ZM25,5.2H27L28,6.93H26ZM29,5.2H31L32,6.93H30ZM37,5.2H39L40,6.93H38ZM41,5.2H43L44,6.93H42ZM49,5.2H51L52,6.93H50ZM53,5.2H61L62,6.93H54ZM67,5.2H73L74,6.93H68ZM79,5.2H85L86,6.93H80ZM91,5.2H97L98,6.93H92ZM103,5.2H109L110,6.93H104ZM115,5.2H121L122,6.93H116ZM125,5.2H135L136,6.93H126ZM137,5.2H145L146,6.93H138ZM151,5.2H157L158,6.93H152ZM161,5.2H163L164,6.93H162ZM169,5.2H171L172,6.93H170ZM6,6.93H8L9,8.66H7ZM18,6.93H20L21,8.66H19ZM24,6.93H28L29,8.66H25ZM30,6.93H32L33,8.66H31ZM38,6.93H40L41,8.66H39ZM44,6.93H46L47,8.66H45ZM48,6.93H50L51,8.66H49ZM54,6.93H56L57,8.66H55ZM62,6.93H64L65,8.66H63ZM66,6.93H68L69,8.66H67ZM74,6.93H76L77,8.66H75ZM78,6.93H80L81,8.66H79ZM82,6.93H84L85,8.66H83ZM86,6.93H88L89,8.66H87ZM98,6.93H100L101,8.66H99ZM102,6.93H104L105,8.66H103ZM110,6.93H112L113,8.66H111ZM114,6.93H116L117,8.66H115ZM122,6.93H124L125,8.66H123ZM130,6.93H132L133,8.66H131ZM138,6.93H140L141,8.66H139ZM146,6.93H148L149,8.66H147ZM150,6.93H152L153,8.66H151ZM158,6.93H160L161,8.66H159ZM162,6.93H164L165,8.66H163ZM170,6.93H172L173,8.66H171ZM7,8.66H9L10,10.39H8ZM19,8.66H21L22,10.39H20ZM23,8.66H25L26,10.39H24ZM27,8.66H29L30,10.39H28ZM31,8.66H41L42,10.39H32ZM47,8.66H49L50,10.39H48ZM55,8.66H57L58,10.39H56ZM63,8.66H65L66,10.39H64ZM67,8.66H69L70,10.39H68ZM75,8.66H77L78,10.39H76ZM79,8.66H81L82,10.39H80ZM83,8.66H85L86,10.39H84ZM87,8.66H89L90,10.39H88ZM93,8.66H101L102,10.39H94ZM107,8.66H111L112,10.39H108ZM115,8.66H117L118,10.39H116ZM123,8.66H125L126,10.39H124ZM131,8.66H133L134,10.39H132ZM139,8.66H141L142,10.39H140ZM147,8.66H149L150,10.39H148ZM151,8.66H153L154,10.39H152ZM159,8.66H161L162,10.39H160ZM163,8.66H173L174,10.39H164ZM8,10.39H10L11,12.12H9ZM16,10.39H18L19,12.12H17ZM20,10.39H24L25,12.12H21ZM28,10.39H30L31,12.12H29ZM32,10.39H34L35,12.12H33ZM40,10.39H42L43,12.12H41ZM46,10.39H48L49,12.12H47ZM50,10.39H52L53,12.12H51ZM56,10.39H58L59,12.12H57ZM64,10.39H66L67,12.12H65ZM68,10.39H70L71,12.12H69ZM76,10.39H78L79,12.12H77ZM80,10.39H82L83,12.12H81ZM84,10.39H86L87,12.12H85ZM88,10.39H90L91,12.12H89ZM92,10.39H94L95,12.12H93ZM100,10.39H102L103,12.12H101ZM104,10.39H106L107,12.12H105ZM112,10.39H114L115,12.12H113ZM116,10.39H118L119,12.12H117ZM124,10.39H126L127,12.12H125ZM132,10.39H134L135,12.12H133ZM140,10.39H142L143,12.12H141ZM148,10.39H150L151,12.12H149ZM152,10.39H154L155,12.12H153ZM160,10.39H162L163,12.12H161ZM164,10.39H166L167,12.12H165ZM172,10.39H174L175,12.12H173ZM11,12.12H17L18,13.86H12ZM21,12.12H23L24,13.86H22ZM29,12.12H31L32,13.86H30ZM33,12.12H35L36,13.86H34ZM41,12.12H43L44,13.86H42ZM45,12.12H47L48,13.86H46ZM53,12.12H55L56,13.86H54ZM57,12.12H65L66,13.86H58ZM71,12.12H77L78,13.86H72ZM83,12.12H89L90,13.86H84ZM95,12.12H103L104,13.86H96ZM107,12.12H113L114,13.86H108ZM119,12.12H125L126,13.86H120ZM133,12.12H135L136,13.86H134ZM141,12.12H149L150,13.86H142ZM155,12.12H161L162,13.86H156ZM165,12.12H167L168,13.86H166ZM173,12.12H175L176,13.86H174ZM58,13.86H60L61,15.59H59ZM86,13.86H88L89,15.59H87ZM142,13.86H144L145,15.59H143ZM59,15.59H61L62,17.32H60ZM87,15.59H89L90,17.32H88ZM143,15.59H145L146,17.32H144Z"/><path class="sg" fill="none" stroke="#4a5263" stroke-width=".12" clip-path="url(#sfzlc)" d="M1,1.73H171M2,3.46H172M3,5.2H173M4,6.93H174M5,8.66H175M6,10.39H176M7,12.12H177M8,13.86H178M9,15.59H179M10,17.32H180M0,0L11,19.05M2,0L13,19.05M4,0L15,19.05M6,0L17,19.05M8,0L19,19.05M10,0L21,19.05M12,0L23,19.05M14,0L25,19.05M16,0L27,19.05M18,0L29,19.05M20,0L31,19.05M22,0L33,19.05M24,0L35,19.05M26,0L37,19.05M28,0L39,19.05M30,0L41,19.05M32,0L43,19.05M34,0L45,19.05M36,0L47,19.05M38,0L49,19.05M40,0L51,19.05M42,0L53,19.05M44,0L55,19.05M46,0L57,19.05M48,0L59,19.05M50,0L61,19.05M52,0L63,19.05M54,0L65,19.05M56,0L67,19.05M58,0L69,19.05M60,0L71,19.05M62,0L73,19.05M64,0L75,19.05M66,0L77,19.05M68,0L79,19.05M70,0L81,19.05M72,0L83,19.05M74,0L85,19.05M76,0L87,19.05M78,0L89,19.05M80,0L91,19.05M82,0L93,19.05M84,0L95,19.05M86,0L97,19.05M88,0L99,19.05M90,0L101,19.05M92,0L103,19.05M94,0L105,19.05M96,0L107,19.05M98,0L109,19.05M100,0L111,19.05M102,0L113,19.05M104,0L115,19.05M106,0L117,19.05M108,0L119,19.05M110,0L121,19.05M112,0L123,19.05M114,0L125,19.05M116,0L127,19.05M118,0L129,19.05M120,0L131,19.05M122,0L133,19.05M124,0L135,19.05M126,0L137,19.05M128,0L139,19.05M130,0L141,19.05M132,0L143,19.05M134,0L145,19.05M136,0L147,19.05M138,0L149,19.05M140,0L151,19.05M142,0L153,19.05M144,0L155,19.05M146,0L157,19.05M148,0L159,19.05M150,0L161,19.05M152,0L163,19.05M154,0L165,19.05M156,0L167,19.05M158,0L169,19.05M160,0L171,19.05M162,0L173,19.05M164,0L175,19.05M166,0L177,19.05M168,0L179,19.05M170,0L181,19.05M2,0L-9,19.05M4,0L-7,19.05M6,0L-5,19.05M8,0L-3,19.05M10,0L-1,19.05M12,0L1,19.05M14,0L3,19.05M16,0L5,19.05M18,0L7,19.05M20,0L9,19.05M22,0L11,19.05M24,0L13,19.05M26,0L15,19.05M28,0L17,19.05M30,0L19,19.05M32,0L21,19.05M34,0L23,19.05M36,0L25,19.05M38,0L27,19.05M40,0L29,19.05M42,0L31,19.05M44,0L33,19.05M46,0L35,19.05M48,0L37,19.05M50,0L39,19.05M52,0L41,19.05M54,0L43,19.05M56,0L45,19.05M58,0L47,19.05M60,0L49,19.05M62,0L51,19.05M64,0L53,19.05M66,0L55,19.05M68,0L57,19.05M70,0L59,19.05M72,0L61,19.05M74,0L63,19.05M76,0L65,19.05M78,0L67,19.05M80,0L69,19.05M82,0L71,19.05M84,0L73,19.05M86,0L75,19.05M88,0L77,19.05M90,0L79,19.05M92,0L81,19.05M94,0L83,19.05M96,0L85,19.05M98,0L87,19.05M100,0L89,19.05M102,0L91,19.05M104,0L93,19.05M106,0L95,19.05M108,0L97,19.05M110,0L99,19.05M112,0L101,19.05M114,0L103,19.05M116,0L105,19.05M118,0L107,19.05M120,0L109,19.05M122,0L111,19.05M124,0L113,19.05M126,0L115,19.05M128,0L117,19.05M130,0L119,19.05M132,0L121,19.05M134,0L123,19.05M136,0L125,19.05M138,0L127,19.05M140,0L129,19.05M142,0L131,19.05M144,0L133,19.05M146,0L135,19.05M148,0L137,19.05M150,0L139,19.05M152,0L141,19.05M154,0L143,19.05M156,0L145,19.05M158,0L147,19.05M160,0L149,19.05M162,0L151,19.05M164,0L153,19.05M166,0L155,19.05M168,0L157,19.05M170,0L159,19.05M172,0L161,19.05M174,0L163,19.05M176,0L165,19.05M178,0L167,19.05M180,0L169,19.05M182,0L171,19.05"/></svg></h1><span class="ver">v0.063</span>
+<h1 aria-label="Синхрофазотрон" class="sfz-title"><svg class="sfzlogo" viewBox="-0.1 -0.1 181.2 19.25" role="img" aria-label="Синхрофазотрон"><title>Синхрофазотрон</title><defs><clipPath id="sfzlc"><path d="M0,0L170,0L181,19.05L11,19.05Z"/></clipPath></defs><path class="s0" fill="#12161f" d="M0,0L170,0L181,19.05L11,19.05Z"/><path class="s1" fill="#4f8fdc" d="M5,1.73H11L12,3.46H6ZM4,3.46H6L7,5.2H5ZM12,3.46H14L15,5.2H13ZM80,3.46H82L83,5.2H81ZM5,5.2H7L8,6.93H6ZM17,5.2H19L20,6.93H18ZM25,5.2H27L28,6.93H26ZM29,5.2H31L32,6.93H30ZM37,5.2H39L40,6.93H38ZM41,5.2H43L44,6.93H42ZM49,5.2H51L52,6.93H50ZM53,5.2H61L62,6.93H54ZM67,5.2H73L74,6.93H68ZM79,5.2H85L86,6.93H80ZM91,5.2H97L98,6.93H92ZM103,5.2H109L110,6.93H104ZM115,5.2H121L122,6.93H116ZM125,5.2H135L136,6.93H126ZM137,5.2H145L146,6.93H138ZM151,5.2H157L158,6.93H152ZM161,5.2H163L164,6.93H162ZM169,5.2H171L172,6.93H170ZM6,6.93H8L9,8.66H7ZM18,6.93H20L21,8.66H19ZM24,6.93H28L29,8.66H25ZM30,6.93H32L33,8.66H31ZM38,6.93H40L41,8.66H39ZM44,6.93H46L47,8.66H45ZM48,6.93H50L51,8.66H49ZM54,6.93H56L57,8.66H55ZM62,6.93H64L65,8.66H63ZM66,6.93H68L69,8.66H67ZM74,6.93H76L77,8.66H75ZM78,6.93H80L81,8.66H79ZM82,6.93H84L85,8.66H83ZM86,6.93H88L89,8.66H87ZM98,6.93H100L101,8.66H99ZM102,6.93H104L105,8.66H103ZM110,6.93H112L113,8.66H111ZM114,6.93H116L117,8.66H115ZM122,6.93H124L125,8.66H123ZM130,6.93H132L133,8.66H131ZM138,6.93H140L141,8.66H139ZM146,6.93H148L149,8.66H147ZM150,6.93H152L153,8.66H151ZM158,6.93H160L161,8.66H159ZM162,6.93H164L165,8.66H163ZM170,6.93H172L173,8.66H171ZM7,8.66H9L10,10.39H8ZM19,8.66H21L22,10.39H20ZM23,8.66H25L26,10.39H24ZM27,8.66H29L30,10.39H28ZM31,8.66H41L42,10.39H32ZM47,8.66H49L50,10.39H48ZM55,8.66H57L58,10.39H56ZM63,8.66H65L66,10.39H64ZM67,8.66H69L70,10.39H68ZM75,8.66H77L78,10.39H76ZM79,8.66H81L82,10.39H80ZM83,8.66H85L86,10.39H84ZM87,8.66H89L90,10.39H88ZM93,8.66H101L102,10.39H94ZM107,8.66H111L112,10.39H108ZM115,8.66H117L118,10.39H116ZM123,8.66H125L126,10.39H124ZM131,8.66H133L134,10.39H132ZM139,8.66H141L142,10.39H140ZM147,8.66H149L150,10.39H148ZM151,8.66H153L154,10.39H152ZM159,8.66H161L162,10.39H160ZM163,8.66H173L174,10.39H164ZM8,10.39H10L11,12.12H9ZM16,10.39H18L19,12.12H17ZM20,10.39H24L25,12.12H21ZM28,10.39H30L31,12.12H29ZM32,10.39H34L35,12.12H33ZM40,10.39H42L43,12.12H41ZM46,10.39H48L49,12.12H47ZM50,10.39H52L53,12.12H51ZM56,10.39H58L59,12.12H57ZM64,10.39H66L67,12.12H65ZM68,10.39H70L71,12.12H69ZM76,10.39H78L79,12.12H77ZM80,10.39H82L83,12.12H81ZM84,10.39H86L87,12.12H85ZM88,10.39H90L91,12.12H89ZM92,10.39H94L95,12.12H93ZM100,10.39H102L103,12.12H101ZM104,10.39H106L107,12.12H105ZM112,10.39H114L115,12.12H113ZM116,10.39H118L119,12.12H117ZM124,10.39H126L127,12.12H125ZM132,10.39H134L135,12.12H133ZM140,10.39H142L143,12.12H141ZM148,10.39H150L151,12.12H149ZM152,10.39H154L155,12.12H153ZM160,10.39H162L163,12.12H161ZM164,10.39H166L167,12.12H165ZM172,10.39H174L175,12.12H173ZM11,12.12H17L18,13.86H12ZM21,12.12H23L24,13.86H22ZM29,12.12H31L32,13.86H30ZM33,12.12H35L36,13.86H34ZM41,12.12H43L44,13.86H42ZM45,12.12H47L48,13.86H46ZM53,12.12H55L56,13.86H54ZM57,12.12H65L66,13.86H58ZM71,12.12H77L78,13.86H72ZM83,12.12H89L90,13.86H84ZM95,12.12H103L104,13.86H96ZM107,12.12H113L114,13.86H108ZM119,12.12H125L126,13.86H120ZM133,12.12H135L136,13.86H134ZM141,12.12H149L150,13.86H142ZM155,12.12H161L162,13.86H156ZM165,12.12H167L168,13.86H166ZM173,12.12H175L176,13.86H174ZM58,13.86H60L61,15.59H59ZM86,13.86H88L89,15.59H87ZM142,13.86H144L145,15.59H143ZM59,15.59H61L62,17.32H60ZM87,15.59H89L90,17.32H88ZM143,15.59H145L146,17.32H144Z"/><path class="sg" fill="none" stroke="#4a5263" stroke-width=".12" clip-path="url(#sfzlc)" d="M1,1.73H171M2,3.46H172M3,5.2H173M4,6.93H174M5,8.66H175M6,10.39H176M7,12.12H177M8,13.86H178M9,15.59H179M10,17.32H180M0,0L11,19.05M2,0L13,19.05M4,0L15,19.05M6,0L17,19.05M8,0L19,19.05M10,0L21,19.05M12,0L23,19.05M14,0L25,19.05M16,0L27,19.05M18,0L29,19.05M20,0L31,19.05M22,0L33,19.05M24,0L35,19.05M26,0L37,19.05M28,0L39,19.05M30,0L41,19.05M32,0L43,19.05M34,0L45,19.05M36,0L47,19.05M38,0L49,19.05M40,0L51,19.05M42,0L53,19.05M44,0L55,19.05M46,0L57,19.05M48,0L59,19.05M50,0L61,19.05M52,0L63,19.05M54,0L65,19.05M56,0L67,19.05M58,0L69,19.05M60,0L71,19.05M62,0L73,19.05M64,0L75,19.05M66,0L77,19.05M68,0L79,19.05M70,0L81,19.05M72,0L83,19.05M74,0L85,19.05M76,0L87,19.05M78,0L89,19.05M80,0L91,19.05M82,0L93,19.05M84,0L95,19.05M86,0L97,19.05M88,0L99,19.05M90,0L101,19.05M92,0L103,19.05M94,0L105,19.05M96,0L107,19.05M98,0L109,19.05M100,0L111,19.05M102,0L113,19.05M104,0L115,19.05M106,0L117,19.05M108,0L119,19.05M110,0L121,19.05M112,0L123,19.05M114,0L125,19.05M116,0L127,19.05M118,0L129,19.05M120,0L131,19.05M122,0L133,19.05M124,0L135,19.05M126,0L137,19.05M128,0L139,19.05M130,0L141,19.05M132,0L143,19.05M134,0L145,19.05M136,0L147,19.05M138,0L149,19.05M140,0L151,19.05M142,0L153,19.05M144,0L155,19.05M146,0L157,19.05M148,0L159,19.05M150,0L161,19.05M152,0L163,19.05M154,0L165,19.05M156,0L167,19.05M158,0L169,19.05M160,0L171,19.05M162,0L173,19.05M164,0L175,19.05M166,0L177,19.05M168,0L179,19.05M170,0L181,19.05M2,0L-9,19.05M4,0L-7,19.05M6,0L-5,19.05M8,0L-3,19.05M10,0L-1,19.05M12,0L1,19.05M14,0L3,19.05M16,0L5,19.05M18,0L7,19.05M20,0L9,19.05M22,0L11,19.05M24,0L13,19.05M26,0L15,19.05M28,0L17,19.05M30,0L19,19.05M32,0L21,19.05M34,0L23,19.05M36,0L25,19.05M38,0L27,19.05M40,0L29,19.05M42,0L31,19.05M44,0L33,19.05M46,0L35,19.05M48,0L37,19.05M50,0L39,19.05M52,0L41,19.05M54,0L43,19.05M56,0L45,19.05M58,0L47,19.05M60,0L49,19.05M62,0L51,19.05M64,0L53,19.05M66,0L55,19.05M68,0L57,19.05M70,0L59,19.05M72,0L61,19.05M74,0L63,19.05M76,0L65,19.05M78,0L67,19.05M80,0L69,19.05M82,0L71,19.05M84,0L73,19.05M86,0L75,19.05M88,0L77,19.05M90,0L79,19.05M92,0L81,19.05M94,0L83,19.05M96,0L85,19.05M98,0L87,19.05M100,0L89,19.05M102,0L91,19.05M104,0L93,19.05M106,0L95,19.05M108,0L97,19.05M110,0L99,19.05M112,0L101,19.05M114,0L103,19.05M116,0L105,19.05M118,0L107,19.05M120,0L109,19.05M122,0L111,19.05M124,0L113,19.05M126,0L115,19.05M128,0L117,19.05M130,0L119,19.05M132,0L121,19.05M134,0L123,19.05M136,0L125,19.05M138,0L127,19.05M140,0L129,19.05M142,0L131,19.05M144,0L133,19.05M146,0L135,19.05M148,0L137,19.05M150,0L139,19.05M152,0L141,19.05M154,0L143,19.05M156,0L145,19.05M158,0L147,19.05M160,0L149,19.05M162,0L151,19.05M164,0L153,19.05M166,0L155,19.05M168,0L157,19.05M170,0L159,19.05M172,0L161,19.05M174,0L163,19.05M176,0L165,19.05M178,0L167,19.05M180,0L169,19.05M182,0L171,19.05"/></svg></h1><span class="ver">v0.064</span>
   <div id="pinBar"></div>
 
   <span class="sp"></span>
@@ -2898,7 +3141,7 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
     <!-- v0.167, по снимку полосы «Строки» — «удалить пустоту и текст, и так всё понятно»: полосы нет, её кнопки — в конце полосы ниже -->
     <!-- v0.012: ввод строки — здесь, над полем: «окно для вставки строки ненашёл» -->
     <div id="rowInputBar">
-      <!-- v0.063: «это — слева от поля ввода строки, а поле сузить»: поля, наложение и выравнивание — здесь -->
+      <!-- v0.064: «это — слева от поля ввода строки, а поле сузить»: поля, наложение и выравнивание — здесь -->
       <!-- v0.169, «замок общий — на место «1 поле», его — вправо»: общий замок колец — первым в полосе, «1 поле» — в её конце -->
       <!-- v0.212, «над номерами — сброс строк, кнопку на начальные»: «↺» над колонкой номеров — жмёт «↺ Начало» -->
       <!-- v0.382, «поменяй значок над номерами — он похож на кручение»: ↺ → ⇤ -->
@@ -3444,12 +3687,12 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 </div>
 
 <script src="../_js/initial-rows.js?v=2"></script>
-<script src="zz-core.js?v=63"></script>
-<script src="zz-ui.js?v=63"></script>
-<script src="zz-ball.js?v=63"></script>
-<script src="zz-quarters.js?v=63"></script>
-<script src="zz-faces.js?v=63"></script>
-<script src="zz-mobile.js?v=63"></script>
+<script src="zz-core.js?v=64"></script>
+<script src="zz-ui.js?v=64"></script>
+<script src="zz-ball.js?v=64"></script>
+<script src="zz-quarters.js?v=64"></script>
+<script src="zz-faces.js?v=64"></script>
+<script src="zz-mobile.js?v=64"></script>
 <script src="../_js/hub-link.js?v=1"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
@@ -3457,6 +3700,6 @@ body.cgdrag #w-cone#w-cone#w-cone#w-cone .tools:has(.sfz-grape.cdrag){z-index:21
 <script src="../_js/slider-arrows.js"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
-<script src="../_js/recorder.js?v=63" data-bez-knopki></script>
+<script src="../_js/recorder.js?v=64" data-bez-knopki></script>
 </body>
 </html>
