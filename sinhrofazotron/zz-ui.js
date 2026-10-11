@@ -11862,6 +11862,12 @@ function cgrpInit(){
     g.addEventListener("pointerleave", clearEdgeCursor);
     // On a control's narrow outer edge, start the existing group drag; its center remains a normal control click.
     g.addEventListener("pointerdown", e => {
+      const grip = e.target.closest && e.target.closest(".sfz-grape-grip");
+      if (e.button === 0 && grip && grip.closest(".cgrp") === g) {
+        e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
+        startGroupDrag({ target: g, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
+        return;
+      }
       const b = e.target.closest && e.target.closest("button");
       if (e.button !== 0 || !edgeControl(b, e.clientX, e.clientY)) return;
       e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
@@ -13331,12 +13337,35 @@ function sfzGrapeLayout(box, items, name, up=false){
     const x = editor ? axis - 60 : axis - 24 + side * step, top = y + (editor ? 0 : side * cell / 2);
     const w = editor ? 120 : cell, h = editor ? (range ? 52 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
 
-    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
+    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w,editor}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
     width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
     if (editor) { y=top+h+8; side=0; } else { side=1-side; if(!side)y+=cell; }
   }
   for(const {item,top,h} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-h:top)+"px");
+  if (box.closest(".cgrp")) {
+    const places = [];
+    for (let i = 1; i < slots.length; i++) {
+      const a = slots[i-1], b = slots[i];
+      if (a.editor || b.editor || a.item.hidden || b.item.hidden || getComputedStyle(a.item).display === "none" || getComputedStyle(b.item).display === "none") continue;
+      // Free hollow beside the touching corners, away from both control centers.
+      const x = b.x > a.x ? a.x + 12 : a.x + a.w - 12;
+      const y = b.top + b.h / 2;
+      places.push([x, up ? bottom - y : y]);
+    }
+    const grips = [...box.querySelectorAll(":scope > .sfz-grape-grip")];
+    places.forEach(([x,y],i) => {
+      let grip = grips[i];
+      if (!grip) {
+        grip = document.createElement("div"); grip.className = "sfz-grape-grip"; grip.textContent = "⠿";
+        grip.title = "Тяни зацеп — переместить гроздь «" + name + "»"; grip.setAttribute("aria-label",grip.title);
+        for (const type of ["click","dblclick","contextmenu"]) grip.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();});
+        box.appendChild(grip);
+      }
+      sfzGrapeStyle(grip,"left",(x-12)+"px"); sfzGrapeStyle(grip,"top",(y-12)+"px");
+    });
+    for (let i=places.length;i<grips.length;i++) grips[i].remove();
+  }
   sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
   sfzWeaveKick();
   return {width,height:bottom};
@@ -13348,7 +13377,7 @@ function sfzGrapeSync(g){
   const collect = node => {
     const hidden = node.hidden || node.style.display === "none";
     node.classList.toggle("sfz-grape-hidden",hidden);
-    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,#coneBallStatus")) return;
+    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,.sfz-grape-grip,#coneBallStatus")) return;
     if (node.matches("button,label,select,textarea,input:not([type=hidden])")) { items.push(node); return; }
     if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { const empty=!node.textContent.trim(); node.classList.toggle("sfz-grape-empty",empty); if (!empty) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
     if (!node.classList.contains("sfz-grape-wrap")) node.classList.add("sfz-grape-wrap");
