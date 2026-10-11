@@ -1,0 +1,14 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса",
+  "date": "2026-10-12",
+  "archiveSha256": "4edee8c6bb5950c6b06025239bec4cf7181e55d42f5e15aa6b50f64b68aa5603",
+  "archiveBytes": 18587988,
+  "rows": 512,
+  "frames": 179,
+  "comparedWords": 3482624,
+  "comparedStoredBits": 111443968,
+  "checkedHashes": 179,
+  "mismatches": 0,
+  "recordedViews": 3,
+  "scope": "all stored words including padding match an independently rebuilt history; page kernel equivalence checked separately; screen resampling does not change these bits"
+}

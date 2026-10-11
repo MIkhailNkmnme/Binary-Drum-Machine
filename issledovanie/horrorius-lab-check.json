@@ -1,0 +1,30 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса",
+  "date": "2026-10-12",
+  "labVersion": "v0.001",
+  "browser": "Chrome",
+  "verifiedRenderer": "parallel projection; WebGL unavailable in this browser",
+  "rotation": {
+    "edgeAt90VisuallyConfirmed": true,
+    "renderedFieldAt0And360Identical": true,
+    "comparison": "decoded JPEG browser screenshots; same canvas rectangle [344,240,1561,772]",
+    "fieldHashAt0": "d9282e68f53508cb77d3c484909dbcfca3ebfb58934840f3398977f05fcedad8",
+    "fieldHashAt360": "d9282e68f53508cb77d3c484909dbcfca3ebfb58934840f3398977f05fcedad8",
+    "perspectiveBranchVerifiedInBrowser": false
+  },
+  "wheel": { "beforePercent": 95.33, "afterPercent": 24.02, "frameUnchanged": 179 },
+  "drag": { "recordedViewsBefore": 3, "recordedViewsAfter": 11 },
+  "responsive": { "testViewportWidth": 390, "documentScrollWidth": 375, "buttonsOutsideViewport": 0 },
+  "archive": {
+    "frames": 179,
+    "rows": 512,
+    "angles": [0, 90, 360],
+    "colourEnabled": true,
+    "sha256": "4edee8c6bb5950c6b06025239bec4cf7181e55d42f5e15aa6b50f64b68aa5603",
+    "allWordsVerified": true,
+    "allFrameHashesVerified": true,
+    "workerImportAndReexportVerified": true,
+    "browserFilePickerVerified": false,
+    "filePickerLimitation": "automation extension requires Allow access to file URLs"
+  }
+}

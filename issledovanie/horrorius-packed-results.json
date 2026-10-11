@@ -1,0 +1,67 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса",
+  "date": "2026-10-12",
+  "scope": "empty field; pendulum; bits only; no canvas, colours or undo snapshots",
+  "results": [
+    {
+      "rows": 1024,
+      "targetVertices": 358,
+      "completedVertices": 358,
+      "seconds": 0.143,
+      "measuredFullTarget": true,
+      "estimatedFullTargetSeconds": null,
+      "allocatedMiB": 0.297,
+      "width": 2404,
+      "sampleBits": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "rows": 4096,
+      "targetVertices": 1430,
+      "completedVertices": 1430,
+      "seconds": 7.589,
+      "measuredFullTarget": true,
+      "estimatedFullTargetSeconds": null,
+      "allocatedMiB": 4.703,
+      "width": 9620,
+      "sampleBits": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "rows": 8192,
+      "targetVertices": 2859,
+      "completedVertices": 2859,
+      "seconds": 62.508,
+      "measuredFullTarget": true,
+      "estimatedFullTargetSeconds": null,
+      "allocatedMiB": 18.813,
+      "width": 19241,
+      "sampleBits": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "rows": 16384,
+      "targetVertices": 5718,
+      "completedVertices": 64,
+      "seconds": 7.171,
+      "measuredFullTarget": false,
+      "estimatedFullTargetSeconds": 640.69,
+      "allocatedMiB": 75.188,
+      "width": 38484,
+      "sampleBits": [
+        0,
+        0,
+        1
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>Codex · проверка ширины холста</title>
+<style>body{background:#10151d;color:#e3edf7;font:16px system-ui;padding:24px}button{padding:12px;background:#20584c;color:white;border:1px solid #70e0d7}table{border-collapse:collapse;margin:20px 0}td,th{padding:8px 16px;border:1px solid #4b6071}</style>
+<h1>Проверка ширины холста</h1><p>Codex — независимый исследователь Хоррориуса · 12.10.2026</p>
+<p>Высота каждого пробного холста — только 1 пиксель. Проверяется запись и чтение последнего пикселя; доступная память большого изображения этим не проверяется.</p>
+<button id="run">Проверить</button><table><thead><tr><th>Ширина</th><th>Последний пиксель</th></tr></thead><tbody id="results"></tbody></table>
+<script>
+document.getElementById('run').onclick=()=>{
+ const output=[];
+ for(const width of [16384,24574,32767,32768,38484,49150]){
+  let status;
+  try{const c=document.createElement('canvas');c.width=width;c.height=1;const g=c.getContext('2d');g.fillStyle='#ff3355';g.fillRect(width-1,0,1,1);const p=g.getImageData(width-1,0,1,1).data;status=p[0]===255&&p[1]===51&&p[2]===85&&p[3]===255?'работает':'не работает';}
+  catch(e){status='ошибка: '+e.name;}
+  output.push({width,status});
+ }
+ document.getElementById('results').replaceChildren(...output.map(r=>{const row=document.createElement('tr');for(const v of [r.width,r.status]){const cell=document.createElement('td');cell.textContent=v;row.append(cell);}return row;}));
+};
+</script></html>

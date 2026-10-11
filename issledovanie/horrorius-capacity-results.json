@@ -1,0 +1,249 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса",
+  "date": "2026-10-12",
+  "sourcePageVersion": "v0.006",
+  "bytesPerCell": 1,
+  "cpu": "AMD Athlon(tm) X4 760K Quad Core Processor     ",
+  "runtime": "v24.18.1",
+  "physicalRamGiB": 7.95,
+  "coreTimings": [
+    {
+      "rows": 256,
+      "measuredVertices": 256,
+      "seconds": 0.0966,
+      "secondsPerVertex": 0.000377,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 0.1,
+      "estimatedSecondsForThird": 0.03,
+      "arrayMiB": 0.2
+    },
+    {
+      "rows": 512,
+      "measuredVertices": 512,
+      "seconds": 0.7481,
+      "secondsPerVertex": 0.001461,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 0.75,
+      "estimatedSecondsForThird": 0.26,
+      "arrayMiB": 0.7
+    },
+    {
+      "rows": 1024,
+      "measuredVertices": 1024,
+      "seconds": 6.0513,
+      "secondsPerVertex": 0.00591,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 6.05,
+      "estimatedSecondsForThird": 2.12,
+      "arrayMiB": 3
+    },
+    {
+      "rows": 2024,
+      "measuredVertices": 64,
+      "seconds": 1.227,
+      "secondsPerVertex": 0.019172,
+      "allNVertices": "extrapolated",
+      "estimatedSecondsForN": 38.8,
+      "estimatedSecondsForThird": 13.55,
+      "arrayMiB": 11.7
+    },
+    {
+      "rows": 4096,
+      "measuredVertices": 64,
+      "seconds": 4.8051,
+      "secondsPerVertex": 0.075079,
+      "allNVertices": "extrapolated",
+      "estimatedSecondsForN": 307.52,
+      "estimatedSecondsForThird": 107.36,
+      "arrayMiB": 48
+    }
+  ],
+  "memory": [
+    {
+      "rows": 1024,
+      "vertices": 1024,
+      "width": 3070,
+      "cells": 3143680,
+      "snapshotCount": 61,
+      "explicitBytes": 207482880,
+      "withOneCanvasBackingBytes": 220057600,
+      "explicitMiB": 197.9,
+      "withOneCanvasBackingMiB": 209.9
+    },
+    {
+      "rows": 1024,
+      "vertices": 358,
+      "width": 2404,
+      "cells": 2461696,
+      "snapshotCount": 72,
+      "explicitBytes": 189550592,
+      "withOneCanvasBackingBytes": 199397376,
+      "explicitMiB": 180.8,
+      "withOneCanvasBackingMiB": 190.2
+    },
+    {
+      "rows": 1024,
+      "vertices": 4096,
+      "width": 6142,
+      "cells": 6289408,
+      "snapshotCount": 32,
+      "explicitBytes": 232708096,
+      "withOneCanvasBackingBytes": 257865728,
+      "explicitMiB": 221.9,
+      "withOneCanvasBackingMiB": 245.9
+    },
+    {
+      "rows": 2024,
+      "vertices": 2024,
+      "width": 6070,
+      "cells": 12285680,
+      "snapshotCount": 17,
+      "explicitBytes": 270284960,
+      "withOneCanvasBackingBytes": 319427680,
+      "explicitMiB": 257.8,
+      "withOneCanvasBackingMiB": 304.6
+    },
+    {
+      "rows": 2024,
+      "vertices": 707,
+      "width": 4753,
+      "cells": 9620072,
+      "snapshotCount": 21,
+      "explicitBytes": 250121872,
+      "withOneCanvasBackingBytes": 288602160,
+      "explicitMiB": 238.5,
+      "withOneCanvasBackingMiB": 275.2
+    },
+    {
+      "rows": 2024,
+      "vertices": 8096,
+      "width": 12142,
+      "cells": 24575408,
+      "snapshotCount": 9,
+      "explicitBytes": 344055712,
+      "withOneCanvasBackingBytes": 442357344,
+      "explicitMiB": 328.1,
+      "withOneCanvasBackingMiB": 421.9
+    },
+    {
+      "rows": 4096,
+      "vertices": 4096,
+      "width": 12286,
+      "cells": 50323456,
+      "snapshotCount": 4,
+      "explicitBytes": 452911104,
+      "withOneCanvasBackingBytes": 654204928,
+      "explicitMiB": 431.9,
+      "withOneCanvasBackingMiB": 623.9
+    },
+    {
+      "rows": 4096,
+      "vertices": 1430,
+      "width": 9620,
+      "cells": 39403520,
+      "snapshotCount": 6,
+      "explicitBytes": 433438720,
+      "withOneCanvasBackingBytes": 591052800,
+      "explicitMiB": 413.4,
+      "withOneCanvasBackingMiB": 563.7
+    },
+    {
+      "rows": 4096,
+      "vertices": 16384,
+      "width": 24574,
+      "cells": 100655104,
+      "snapshotCount": 2,
+      "explicitBytes": 704585728,
+      "withOneCanvasBackingBytes": 1107206144,
+      "explicitMiB": 671.9,
+      "withOneCanvasBackingMiB": 1055.9
+    },
+    {
+      "rows": 8192,
+      "vertices": 8192,
+      "width": 24574,
+      "cells": 201310208,
+      "snapshotCount": 1,
+      "explicitBytes": 1207861248,
+      "withOneCanvasBackingBytes": 2013102080,
+      "explicitMiB": 1151.9,
+      "withOneCanvasBackingMiB": 1919.8
+    },
+    {
+      "rows": 8192,
+      "vertices": 2859,
+      "width": 19241,
+      "cells": 157622272,
+      "snapshotCount": 2,
+      "explicitBytes": 1103355904,
+      "withOneCanvasBackingBytes": 1733844992,
+      "explicitMiB": 1052.2,
+      "withOneCanvasBackingMiB": 1653.5
+    },
+    {
+      "rows": 8192,
+      "vertices": 32768,
+      "width": 49150,
+      "cells": 402636800,
+      "snapshotCount": 1,
+      "explicitBytes": 2415820800,
+      "withOneCanvasBackingBytes": 4026368000,
+      "explicitMiB": 2303.9,
+      "withOneCanvasBackingMiB": 3839.8
+    },
+    {
+      "rows": 16384,
+      "vertices": 16384,
+      "width": 49150,
+      "cells": 805273600,
+      "snapshotCount": 1,
+      "explicitBytes": 4831641600,
+      "withOneCanvasBackingBytes": 8052736000,
+      "explicitMiB": 4607.8,
+      "withOneCanvasBackingMiB": 7679.7
+    },
+    {
+      "rows": 16384,
+      "vertices": 5718,
+      "width": 38484,
+      "cells": 630521856,
+      "snapshotCount": 1,
+      "explicitBytes": 3783131136,
+      "withOneCanvasBackingBytes": 6305218560,
+      "explicitMiB": 3607.9,
+      "withOneCanvasBackingMiB": 6013.1
+    },
+    {
+      "rows": 16384,
+      "vertices": 65536,
+      "width": 98302,
+      "cells": 1610579968,
+      "snapshotCount": 1,
+      "explicitBytes": 9663479808,
+      "withOneCanvasBackingBytes": 16105799680,
+      "explicitMiB": 9215.8,
+      "withOneCanvasBackingMiB": 15359.7
+    }
+  ],
+  "canvasWidthProbe": {
+    "height": 1,
+    "testedWidths": [
+      16384,
+      24574,
+      32767,
+      32768,
+      38484,
+      49150
+    ],
+    "allLastPixelsCorrect": true,
+    "verifiesLargeArea": false
+  },
+  "browserVerification": {
+    "pageVersion": "v0.006",
+    "rows": 4096,
+    "vertices": 1430,
+    "seconds": 227.3,
+    "result": "completed 1430/1430; 9620x4096; Chrome; bits view; outline off; page visible",
+    "load": "current computer workload; no claim of isolated CPU benchmark"
+  }
+}

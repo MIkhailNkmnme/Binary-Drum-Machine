@@ -1,0 +1,234 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса",
+  "date": "2026-10-12",
+  "cpu": "AMD Athlon(tm) X4 760K Quad Core Processor     ",
+  "runtime": "v24.18.1",
+  "physicalRamGiB": 7.95,
+  "coreTimings": [
+    {
+      "rows": 256,
+      "measuredVertices": 256,
+      "seconds": 0.1934,
+      "secondsPerVertex": 0.000755,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 0.19,
+      "estimatedSecondsForThird": 0.07,
+      "arrayMiB": 0.4
+    },
+    {
+      "rows": 512,
+      "measuredVertices": 512,
+      "seconds": 1.2446,
+      "secondsPerVertex": 0.002431,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 1.24,
+      "estimatedSecondsForThird": 0.44,
+      "arrayMiB": 1.5
+    },
+    {
+      "rows": 1024,
+      "measuredVertices": 1024,
+      "seconds": 8.9482,
+      "secondsPerVertex": 0.008739,
+      "allNVertices": "measured",
+      "estimatedSecondsForN": 8.95,
+      "estimatedSecondsForThird": 3.13,
+      "arrayMiB": 6
+    },
+    {
+      "rows": 2024,
+      "measuredVertices": 64,
+      "seconds": 2.1548,
+      "secondsPerVertex": 0.033669,
+      "allNVertices": "extrapolated",
+      "estimatedSecondsForN": 68.15,
+      "estimatedSecondsForThird": 23.8,
+      "arrayMiB": 23.4
+    },
+    {
+      "rows": 4096,
+      "measuredVertices": 64,
+      "seconds": 6.9998,
+      "secondsPerVertex": 0.109371,
+      "allNVertices": "extrapolated",
+      "estimatedSecondsForN": 447.99,
+      "estimatedSecondsForThird": 156.4,
+      "arrayMiB": 96
+    }
+  ],
+  "memory": [
+    {
+      "rows": 1024,
+      "vertices": 1024,
+      "width": 3070,
+      "cells": 3143680,
+      "snapshotCount": 32,
+      "explicitBytes": 220057600,
+      "withOneCanvasBackingBytes": 232632320,
+      "explicitMiB": 209.9,
+      "withOneCanvasBackingMiB": 221.9
+    },
+    {
+      "rows": 1024,
+      "vertices": 358,
+      "width": 2404,
+      "cells": 2461696,
+      "snapshotCount": 40,
+      "explicitBytes": 211705856,
+      "withOneCanvasBackingBytes": 221552640,
+      "explicitMiB": 201.9,
+      "withOneCanvasBackingMiB": 211.3
+    },
+    {
+      "rows": 2024,
+      "vertices": 2024,
+      "width": 6070,
+      "cells": 12285680,
+      "snapshotCount": 9,
+      "explicitBytes": 294856320,
+      "withOneCanvasBackingBytes": 343999040,
+      "explicitMiB": 281.2,
+      "withOneCanvasBackingMiB": 328.1
+    },
+    {
+      "rows": 2024,
+      "vertices": 707,
+      "width": 4753,
+      "cells": 9620072,
+      "snapshotCount": 11,
+      "explicitBytes": 269362016,
+      "withOneCanvasBackingBytes": 307842304,
+      "explicitMiB": 256.9,
+      "withOneCanvasBackingMiB": 293.6
+    },
+    {
+      "rows": 4096,
+      "vertices": 4096,
+      "width": 12286,
+      "cells": 50323456,
+      "snapshotCount": 2,
+      "explicitBytes": 503234560,
+      "withOneCanvasBackingBytes": 704528384,
+      "explicitMiB": 479.9,
+      "withOneCanvasBackingMiB": 671.9
+    },
+    {
+      "rows": 4096,
+      "vertices": 1430,
+      "width": 9620,
+      "cells": 39403520,
+      "snapshotCount": 3,
+      "explicitBytes": 472842240,
+      "withOneCanvasBackingBytes": 630456320,
+      "explicitMiB": 450.9,
+      "withOneCanvasBackingMiB": 601.3
+    },
+    {
+      "rows": 8192,
+      "vertices": 8192,
+      "width": 24574,
+      "cells": 201310208,
+      "snapshotCount": 1,
+      "explicitBytes": 1610481664,
+      "withOneCanvasBackingBytes": 2415722496,
+      "explicitMiB": 1535.9,
+      "withOneCanvasBackingMiB": 2303.8
+    },
+    {
+      "rows": 8192,
+      "vertices": 2859,
+      "width": 19241,
+      "cells": 157622272,
+      "snapshotCount": 1,
+      "explicitBytes": 1260978176,
+      "withOneCanvasBackingBytes": 1891467264,
+      "explicitMiB": 1202.6,
+      "withOneCanvasBackingMiB": 1803.8
+    },
+    {
+      "rows": 16384,
+      "vertices": 16384,
+      "width": 49150,
+      "cells": 805273600,
+      "snapshotCount": 1,
+      "explicitBytes": 6442188800,
+      "withOneCanvasBackingBytes": 9663283200,
+      "explicitMiB": 6143.8,
+      "withOneCanvasBackingMiB": 9215.6
+    },
+    {
+      "rows": 16384,
+      "vertices": 5718,
+      "width": 38484,
+      "cells": 630521856,
+      "snapshotCount": 1,
+      "explicitBytes": 5044174848,
+      "withOneCanvasBackingBytes": 7566262272,
+      "explicitMiB": 4810.5,
+      "withOneCanvasBackingMiB": 7215.8
+    },
+    {
+      "rows": 1024,
+      "vertices": 4096,
+      "width": 6142,
+      "cells": 6289408,
+      "snapshotCount": 16,
+      "explicitBytes": 238997504,
+      "withOneCanvasBackingBytes": 264155136,
+      "explicitMiB": 227.9,
+      "withOneCanvasBackingMiB": 251.9
+    },
+    {
+      "rows": 2024,
+      "vertices": 8096,
+      "width": 12142,
+      "cells": 24575408,
+      "snapshotCount": 5,
+      "explicitBytes": 393206528,
+      "withOneCanvasBackingBytes": 491508160,
+      "explicitMiB": 375,
+      "withOneCanvasBackingMiB": 468.7
+    },
+    {
+      "rows": 4096,
+      "vertices": 16384,
+      "width": 24574,
+      "cells": 100655104,
+      "snapshotCount": 1,
+      "explicitBytes": 805240832,
+      "withOneCanvasBackingBytes": 1207861248,
+      "explicitMiB": 767.9,
+      "withOneCanvasBackingMiB": 1151.9
+    },
+    {
+      "rows": 8192,
+      "vertices": 32768,
+      "width": 49150,
+      "cells": 402636800,
+      "snapshotCount": 1,
+      "explicitBytes": 3221094400,
+      "withOneCanvasBackingBytes": 4831641600,
+      "explicitMiB": 3071.9,
+      "withOneCanvasBackingMiB": 4607.8
+    },
+    {
+      "rows": 16384,
+      "vertices": 65536,
+      "width": 98302,
+      "cells": 1610579968,
+      "snapshotCount": 1,
+      "explicitBytes": 12884639744,
+      "withOneCanvasBackingBytes": 19326959616,
+      "explicitMiB": 12287.8,
+      "withOneCanvasBackingMiB": 18431.6
+    }
+  ],
+  "browserVerification": {
+    "pageVersion": "v0.005",
+    "rows": 2024,
+    "vertices": 707,
+    "seconds": 23.6,
+    "result": "completed 707/707; 4753x2024; Chrome"
+  },
+  "sourcePageVersion": "v0.005"
+}

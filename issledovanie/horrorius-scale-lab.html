@@ -1,0 +1,72 @@
+<!-- Codex — независимый исследователь Хоррориуса · 12.10.2026. Лаборатория масштаба v0.001. -->
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Хоррориус · масштаб · Codex v0.001</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#080d10;color:#cde9e5;font:14px system-ui,sans-serif}main{max-width:1250px;margin:auto;padding:16px}h1{font-size:21px;margin:0 0 10px}a{color:#79d7d0}.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}button{min-height:38px;background:#183d36b0;border:0;color:#a0eadf;padding:6px 20px;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);cursor:pointer}button:hover,button.on{background:#2c6b5dc0;color:white}button:disabled{opacity:.35;cursor:default}.rhomb{width:44px;height:44px;padding:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-size:23px}input[type=range]{accent-color:#68d4c4;min-width:130px;flex:1}select,input[type=number]{background:#18252b;color:#d0e3e6;border:1px solid #3a5a59;padding:7px;width:90px}.field{height:58vh;min-height:280px;position:relative;background:#020505;overflow:hidden}canvas{display:block;width:100%;height:100%;object-fit:contain;touch-action:none;cursor:grab}.note{color:#90aaa8;line-height:1.5;font-size:13px}.value{min-width:110px;font-variant-numeric:tabular-nums}.foot{margin-top:16px;color:#7c9390;font-size:12px}#status{min-height:22px}label{display:flex;gap:6px;align-items:center}.hidden{display:none}@media(max-width:500px){main{padding:10px}.bar{gap:5px}button{padding:6px 14px}.field{height:52vh}h1{font-size:18px}}
+</style></head><body><main>
+<h1>Хоррориус · рисунок меняется вместе с масштабом</h1>
+<p class="note"><a href="Zerkalius-issledovanie.html?v=35#horrorius-scale">Исследование</a> · Биты рассчитываются один раз. Каждый шаг построения сохраняется; запись масштаба сохраняет каждый показанный вид.</p>
+<div class="bar"><label>Строки <select id="rows"><option>128</option><option>256</option><option selected>512</option></select></label><label>Вершины <input id="steps" type="number" value="179" min="1" max="2048"></label><button id="build">Построить</button><span id="status" role="status">Подготовка…</span></div>
+<div class="bar"><button id="minus" class="rhomb" aria-label="Уменьшить">−</button><input id="zoom" type="range" aria-label="Масштаб" min="-7" max="5" step="0.001" value="0"><button id="plus" class="rhomb" aria-label="Увеличить">+</button><span id="scale" class="value"></span><button id="fit">В поле</button><button id="one">1 бит : 1 пиксель</button></div>
+<div class="bar"><button id="color" class="on" aria-pressed="true">Цвет</button><button id="spin" aria-pressed="false">⟳ Ось Y</button><input id="angle" type="range" aria-label="Поворот вокруг вертикальной оси" min="0" max="360" step="0.1" value="0"><span id="angleV" class="value">0°</span><button id="angleReset">Сброс поворота</button><span id="renderMode" class="note"></span></div>
+<div class="field"><canvas id="field" aria-label="Биты Хоррориуса. Колесо — масштаб, перетаскивание — сдвиг"></canvas></div>
+<div class="bar"><label>Кадр <input id="frame" type="range" aria-label="Шаг построения" min="0" max="179" value="179"></label><span id="frameLabel" class="value"></span><button id="record" class="on" aria-pressed="true">● Запись масштаба</button><button id="replay">▶ Запись</button><span id="count"></span></div>
+<div class="bar"><button id="save">Сохранить всё</button><button id="load">Открыть архив</button><button id="png">PNG вида</button><input id="file" class="hidden" type="file" accept="application/json,.json"></div>
+<p class="note">Поворот идёт вокруг вертикальной оси центра кадра: 90° — ребром, 180° — обратная сторона, 360° — исходное положение. «Ось Y» включает автоматическое вращение; ползунок задаёт угол вручную. Цвета — как в исходном Маятнике.</p>
+<p class="note">Архив содержит <b>все битовые кадры построения без потерь</b> и параметры всех показанных видов: масштаб, сдвиг, угол, цвет, размер поля и время. Начальное поле задано как пустое; каждый рассчитанный кадр хранится отдельно. Контрольная сумма проверяет каждый кадр при открытии. PNG сохраняет текущий вид с подписью. При переносе между браузерами порог выбора пикселя может немного отличаться. Здесь — до 512 строк; это проверочная лаборатория, не замена программы на 70 000 строк.</p>
+<p class="foot">Codex — независимый исследователь Хоррориуса · 12.10.2026 · v0.001</p>
+</main><script src="horrorius-scale-renderer.js"></script><script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('field'),renderer=new HorroriusRenderer(canvas),worker=new Worker('horrorius-scale-worker.js');
+let meta=null,view={zoom:1,x:0,y:0,frame:179,angle:0,color:true},views=[],recording=true,start=performance.now(),scheduled=false,replaying=false,playToken=0,drag=null,building=false,spinning=false,lastTurn=0;
+$('renderMode').textContent=renderer.gl?'Перспектива':'Параллельная проекция';
+const cache=new Map(),pending=new Map();
+function info(){ $('scale').textContent=(view.zoom*100).toFixed(2)+'%';$('zoom').value=Math.log2(view.zoom);$('frame').value=view.frame;$('frameLabel').textContent=view.frame+' / '+(meta?.steps||179);$('count').textContent=views.length+' видов';$('angle').value=view.angle;$('angleV').textContent=view.angle.toFixed(1)+'°';$('color').classList.toggle('on',view.color);$('color').setAttribute('aria-pressed',String(view.color)); }
+function clearCache(){for(const b of cache.values()){renderer.release(b);b.close();}cache.clear();pending.clear();}
+function image(n,color){const key=n+':'+Number(color);if(cache.has(key)){const b=cache.get(key);cache.delete(key);cache.set(key,b);return Promise.resolve(b);}return new Promise(resolve=>{if(pending.has(key))pending.get(key).push(resolve);else{pending.set(key,[resolve]);worker.postMessage({type:'image',frame:n,color});}});}
+function size(){const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*d));canvas.height=Math.max(1,Math.round(r.height*d));}
+function state(){return {...view,w:canvas.width,h:canvas.height,dpr:devicePixelRatio||1,t:performance.now()-start};}
+async function draw(){scheduled=false;if(!meta||building)return;const n=view.frame,color=view.color,b=await image(n,color);if(n!==view.frame||color!==view.color||building)return;
+ renderer.draw(b,view);
+ if(recording&&!replaying){const v=state(),last=views.at(-1);if(!last||['zoom','x','y','frame','w','h','dpr','angle','color'].some(k=>v[k]!==last[k]))views.push(v);}info();
+}
+function schedule(){if(!scheduled){scheduled=true;requestAnimationFrame(draw);}}
+function stop(){replaying=false;playToken++;$('replay').textContent='▶ Запись';}
+function haltSpin(){spinning=false;lastTurn=0;$('spin').classList.remove('on');$('spin').setAttribute('aria-pressed','false');}
+function spinLoop(t){if(!spinning)return;if(lastTurn)view.angle=(view.angle+(t-lastTurn)*.02)%360;lastTurn=t;schedule();requestAnimationFrame(spinLoop);}
+$('spin').onclick=()=>{if(spinning)haltSpin();else{stop();spinning=true;lastTurn=0;$('spin').classList.add('on');$('spin').setAttribute('aria-pressed','true');requestAnimationFrame(spinLoop);}};
+$('angle').oninput=e=>{stop();haltSpin();view.angle=+e.target.value;schedule();};$('angleReset').onclick=()=>{stop();haltSpin();view.angle=0;schedule();};
+$('color').onclick=()=>{stop();view.color=!view.color;schedule();};
+function restored(v){return {zoom:v.zoom,x:v.x,y:v.y,frame:v.frame,angle:v.angle||0,color:v.color===true};}
+function fit(){if(!meta)return;stop();size();view.zoom=Math.min(canvas.width/meta.width,canvas.height/meta.rows)*.94;view.x=(canvas.width-meta.width*view.zoom)/2;view.y=(canvas.height-meta.rows*view.zoom)/2;schedule();}
+function zoomAt(z,px=canvas.width/2,py=canvas.height/2){if(!meta||building)return;stop();z=Math.max(2**-7,Math.min(32,z));const ratio=z/view.zoom;view.x=px-(px-view.x)*ratio;view.y=py-(py-view.y)*ratio;view.zoom=z;schedule();}
+canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect();zoomAt(view.zoom*Math.exp(-e.deltaY*.0015),(e.clientX-r.left)*canvas.width/r.width,(e.clientY-r.top)*canvas.height/r.height);},{passive:false});
+canvas.addEventListener('pointerdown',e=>{stop();canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const r=canvas.getBoundingClientRect();view.x=drag.vx+(e.clientX-drag.x)*canvas.width/r.width;view.y=drag.vy+(e.clientY-drag.y)*canvas.height/r.height;schedule();});
+const release=()=>drag=null;canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+$('zoom').oninput=e=>zoomAt(2**+e.target.value);$('plus').onclick=()=>zoomAt(view.zoom*1.12);$('minus').onclick=()=>zoomAt(view.zoom/1.12);$('fit').onclick=fit;$('one').onclick=()=>zoomAt(1);
+$('frame').oninput=e=>{stop();view.frame=+e.target.value;schedule();};
+$('record').onclick=()=>{recording=!recording;$('record').classList.toggle('on',recording);$('record').setAttribute('aria-pressed',String(recording));};
+function saveBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+$('save').onclick=()=>{if(!meta||building)return;stop();haltSpin();$('build').disabled=true;$('save').disabled=true;$('status').textContent='Упаковка архива в фоне…';worker.postMessage({type:'export',views});};
+$('load').onclick=()=>{if(!building&&!$('save').disabled)$('file').click();};$('file').onchange=e=>{const file=e.target.files[0];if(!file)return;stop();building=true;worker.postMessage({type:'import',file});e.target.value='';};
+$('png').onclick=()=>{if(!meta||building)return;const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height+28;const g=c.getContext('2d');g.fillStyle='#080d10';g.fillRect(0,0,c.width,c.height);g.drawImage(canvas,0,0);g.fillStyle='#b6ccc8';g.font='12px system-ui';g.fillText('Codex · Хоррориус · 12.10.2026 · n='+view.frame+' · '+(view.zoom*100).toFixed(3)+'% · Y '+view.angle.toFixed(1)+'°',10,c.height-9);c.toBlob(b=>saveBlob(b,'horrorius-view-'+view.frame+'.png'));};
+$('replay').onclick=async()=>{if(replaying){stop();return;}if(!views.length||building)return;haltSpin();const sequence=views.slice(),token=++playToken;replaying=true;$('replay').textContent='Ⅱ Запись';
+ for(let i=0;i<sequence.length;i++){if(token!==playToken)break;const v=sequence[i];view=restored(v);canvas.width=v.w;canvas.height=v.h;await draw();if(i+1<sequence.length)await new Promise(r=>setTimeout(r,Math.min(1000,Math.max(16,sequence[i+1].t-v.t))));}
+ if(token===playToken)stop();
+};
+function build(){if(building)return;stop();haltSpin();building=true;$('build').disabled=true;meta=null;clearCache();views=[];start=performance.now();$('status').textContent='Расчёт в фоне…';worker.postMessage({type:'build',rows:+$('rows').value,steps:+$('steps').value});}
+$('build').onclick=build;
+worker.onmessage=({data:m})=>{
+ if(m.type==='progress')$('status').textContent=m.done+' / '+m.total+' — сохраняю каждый кадр';
+ if(m.type==='ready'||m.type==='imported'){
+  clearCache();building=false;$('build').disabled=false;meta=m.meta;view.frame=meta.steps;$('frame').max=meta.steps;$('steps').value=meta.steps;$('rows').value=meta.rows;
+  $('status').textContent='Сохранено '+meta.steps+' битовых кадров · '+(m.bytes/1048576).toFixed(1)+' МБ';
+  if(m.type==='imported'){views=m.views;start=performance.now()-(views.at(-1)?.t||0);if(views.length){const v=views.at(-1);view=restored(v);canvas.width=v.w;canvas.height=v.h;schedule();}else fit();}else fit();
+ }
+ if(m.type==='image'){const key=m.frame+':'+Number(m.color);cache.set(key,m.bitmap);while(cache.size>8){const n=cache.keys().next().value;renderer.release(cache.get(n));cache.get(n).close();cache.delete(n);}for(const done of pending.get(key)||[])done(m.bitmap);pending.delete(key);}
+ if(m.type==='archive'){saveBlob(m.blob,'horrorius-all-frames.json');$('build').disabled=false;$('save').disabled=false;$('status').textContent='Архив: '+meta.steps+' кадров; записанных видов: '+views.length;}
+ if(m.type==='error'){building=false;$('build').disabled=false;$('save').disabled=false;$('status').textContent=m.message;}
+};
+window.addEventListener('resize',()=>{if(!replaying){size();schedule();}});build();
+</script></body></html>
