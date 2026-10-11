@@ -1,3 +1,4 @@
+/* v0.1126: zoomed bits and nets render directly at output resolution; cached images remain for reduced views and picking. */
 /* v0.1125: закрепление групп в верхней шапке, крупные номера, коралловое третье зеркало, затемнение вне пересечений и отмена ручных движений; поворот холста на 360°, захват всех фигур за биты без квадратных ручек; линия тянет зеркало, точки кручения поверх всех осей; v0.1124: только пересечения фигур, перенос пустого холста и осей, дзен колёсиком; v0.1123: читаемое меню тёмного зеркала, развёртки → Бирамида, только биты, шрифты, палитры и движение вдоль оси; v0.1122: магнит рядом с подписями без роста группы; v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
 (() => {
   'use strict';
@@ -418,6 +419,10 @@
     editDiamond('∞\nциклы','Три зеркала · циклы',el,parent);
   }
   function setRows(i){const set=state.sets[i];return set.source==='field'?Z.rows:set.source==='own'?set.rows:set.source==='serp'?serp:rows();}
+  function visibleWorld(ctx,pad=0){
+    const t=ctx.getTransform(),det=t.a*t.d-t.b*t.c,points=[[0,0],[ctx.canvas.width,0],[ctx.canvas.width,ctx.canvas.height],[0,ctx.canvas.height]].map(([x,y])=>[(t.d*(x-t.e)-t.c*(y-t.f))/det,(-t.b*(x-t.e)+t.a*(y-t.f))/det]);
+    return [Math.min(...points.map(p=>p[0]))-pad,Math.min(...points.map(p=>p[1]))-pad,Math.max(...points.map(p=>p[0]))+pad,Math.max(...points.map(p=>p[1]))+pad];
+  }
   function sourceImage(R,color,dw,ratio){
     const dh=dw*Math.sqrt(3), shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
     const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
@@ -428,13 +433,20 @@
     bounds[0]-=2;bounds[1]-=2;bounds[2]+=2;bounds[3]+=2;
     const image=document.createElement('canvas'),w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h)));
     image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(safe,0,0,safe,-bounds[0]*safe,-bounds[1]*safe);
-    const fs=state.bitsOnly?dw*.72:Math.max(5,dw*.62),digits=state.bitsOnly||dw*safe>=7;ctx.font='bold '+fs+'px '+state.font;ctx.textAlign='center';ctx.textBaseline='middle';
-    for(const [bit,x,y,a] of shapes){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.globalAlpha=bit==='1'?.42:.11;ctx.fillStyle=color;if(!state.bitsOnly){ctx.beginPath();ctx.moveTo(0,-dh*.45);ctx.lineTo(dw*.45,0);ctx.lineTo(0,dh*.45);ctx.lineTo(-dw*.45,0);ctx.closePath();ctx.fill();}
-      if(state.bitsOnly){ctx.globalAlpha=bit==='1'?1:.6;ctx.fillStyle=color;ctx.fillText(bit,0,fs*.06);}
-      else if(state.trace){const sign=bit==='1'?1:-1;ctx.globalAlpha=bit==='1'?.95:.55;ctx.strokeStyle=color;ctx.lineWidth=Math.max(.65,dw*.08);ctx.beginPath();ctx.moveTo(-dw*.22,-sign*dh*.22);ctx.lineTo(dw*.22,sign*dh*.22);ctx.stroke();}
-      else if(digits){ctx.globalAlpha=bit==='1'?.9:.35;ctx.fillStyle=bit==='1'?'#06150d':color;ctx.fillText(bit,0,fs*.06);}ctx.restore();}
-    return {image,bounds,polygons:[figureHull(vertices)]};
+    const draw=(target,pixelScale=1,colorMap=c=>c)=>{
+      const alpha=target.globalAlpha,fs=state.bitsOnly?dw*.72:Math.max(5/Math.max(1,pixelScale),dw*.62),digits=state.bitsOnly||dw*pixelScale>=7,view=visibleWorld(target,Math.max(dh,fs));
+      target.font='bold '+fs+'px '+state.font;target.textAlign='center';target.textBaseline='middle';
+      for(const [bit,x,y,a] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
+        target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?.42:.11);target.fillStyle=colorMap(color);
+        if(!state.bitsOnly){target.beginPath();target.moveTo(0,-dh*.45);target.lineTo(dw*.45,0);target.lineTo(0,dh*.45);target.lineTo(-dw*.45,0);target.closePath();target.fill();}
+        if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(color);target.fillText(bit,0,fs*.06);}
+        else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
+        else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':color);target.fillText(bit,0,fs*.06);}target.restore();
+      }target.globalAlpha=alpha;
+    };
+    draw(ctx,safe);return {image,bounds,polygons:[figureHull(vertices)],draw};
   }
+
   function netGeometry(preset=state.net.preset){
     const [tree,C]=(state.net.nb===4?RAZV_V:RAZV_V3)[preset],{F,pos}=razvUnfold(tree,state.net.nb);
     const faces=Object.keys(pos).map(name=>({name,up:name[0]==='U',P:F[name].map(v=>pos[name][v])}));let center;
@@ -442,19 +454,19 @@
     else{const points=C[0]==='e'?[pos[C[1]][C[2]],pos[C[1]][C[3]]]:Object.values(pos[C[1]]);center=[0,1].map(i=>points.reduce((n,p)=>n+p[i],0)/points.length);}
     const bounds=[Infinity,Infinity,-Infinity,-Infinity];for(const f of faces)for(const p of f.P){bounds[0]=Math.min(bounds[0],p[0]);bounds[1]=Math.min(bounds[1],p[1]);bounds[2]=Math.max(bounds[2],p[0]);bounds[3]=Math.max(bounds[3],p[1]);}return {faces,bounds,center};
   }
-  function netFaces(ctx,model,bits,scale,labels,preview=false){
-    const R=bits.length,cell=scale/R;ctx.textAlign='center';ctx.textBaseline='middle';
-    for(const f of model.faces){const col=f.up?state.net.up:state.net.down,[A,L,B]=f.P;ctx.fillStyle=col;ctx.strokeStyle=col;
-      if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();ctx.globalAlpha=.1;ctx.fill();ctx.globalAlpha=1;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
+  function netFaces(ctx,model,bits,scale,labels,preview=false,colorMap=c=>c,pixelScale=1){
+    const alpha=ctx.globalAlpha,view=visibleWorld(ctx,2/Math.max(1,bits.length)),R=bits.length,cell=scale/R;ctx.textAlign='center';ctx.textBaseline='middle';
+    for(const f of model.faces){const col=f.up?state.net.up:state.net.down,[A,L,B]=f.P;ctx.fillStyle=colorMap(col);ctx.strokeStyle=colorMap(col);
+      if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();ctx.globalAlpha=alpha*.1;ctx.fill();ctx.globalAlpha=alpha;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
       if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),a=(r-k+1/3)/R,b=(k+1/3)/R,x=A[0]+a*(L[0]-A[0])+b*(B[0]-A[0]),y=A[1]+a*(L[1]-A[1])+b*(B[1]-A[1]);
-        ctx.globalAlpha=bit?1:.45;ctx.fillStyle=col;
+        if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;ctx.globalAlpha=alpha*(bit?1:.45);ctx.fillStyle=colorMap(col);
         if(state.bitsOnly){ctx.font='700 '+(.72/R)+'px '+state.font;ctx.fillText(String(bit),x,y);}
-        else{const rad=(bit?Math.max(.7,cell*.3):cell*.12)/scale;if(!bit&&rad*scale<.8)continue;ctx.beginPath();ctx.arc(x,y,rad,0,2*pi);ctx.fill();}}
-      if(labels&&!preview&&!state.bitsOnly){const x=(A[0]+L[0]+B[0])/3,y=(A[1]+L[1]+B[1])/3;ctx.globalAlpha=1;ctx.font='700 '+(12/scale)+'px system-ui';ctx.lineWidth=3/scale;ctx.strokeStyle='#000';ctx.strokeText(f.name,x,y);ctx.fillStyle='#fff';ctx.fillText(f.name,x,y);}
-    }ctx.globalAlpha=1;
+        else{const rad=(bit?Math.max(.7,cell*.3):cell*.12)/scale;if(!bit&&rad*scale*pixelScale<.8)continue;ctx.beginPath();ctx.arc(x,y,rad,0,2*pi);ctx.fill();}}
+      if(labels&&!preview&&!state.bitsOnly){const x=(A[0]+L[0]+B[0])/3,y=(A[1]+L[1]+B[1])/3;ctx.globalAlpha=alpha;ctx.font='700 '+(12/scale)+'px system-ui';ctx.lineWidth=3/scale;ctx.strokeStyle=colorMap('#000000');ctx.strokeText(f.name,x,y);ctx.fillStyle=colorMap('#ffffff');ctx.fillText(f.name,x,y);}
+    }ctx.globalAlpha=alpha;
   }
   function netPreview(canvas,preset){const model=netGeometry(preset),b=model.bounds,scale=Math.min(48/(b[2]-b[0]),40/(b[3]-b[1])),ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,56,48);ctx.setTransform(scale,0,0,scale,28-(b[0]+b[2])*scale/2,24-(b[1]+b[3])*scale/2);netFaces(ctx,model,[],scale,false,true);}
-  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);return {image,bounds,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale)))};}
+  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);return {image,bounds,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
   function reflectedMode(mask){return state.mirrors.reduce((v,m,j)=>v^((mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);}
   function transferNet(){
     const mask=state.net.copy;if(state.mirrors.some((m,i)=>(mask&(1<<i))&&!m.on)){notify('Включите зеркала выбранного отражения или выберите исходную развёртку');return;}
@@ -499,14 +511,17 @@
       points.forEach((p,i)=>i?path.lineTo(...p):path.moveTo(...p));path.closePath();}return path;});
   }
   function paint(ctx,data,camera){
-    const scratch=tintCanvas,sc=tintContext,paths=state.overlapOnly?overlapPaths(data.items):null;let lastSrc=null,lastMask=-1;
+    const scratch=tintCanvas,sc=tintContext,paths=state.overlapOnly?overlapPaths(data.items):null,mappers=new Map();let lastSrc=null,lastMask=-1;
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    const tintMap=mask=>{if(!state.tint||!mask)return c=>c;if(mappers.has(mask))return mappers.get(mask);const cache=new Map(),map=color=>{if(cache.has(color))return cache.get(color);let rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));state.mirrors.forEach((m,i)=>{if(mask&(1<<i))rgb=rgb.map((v,j)=>v*.62+parseInt(m.color.slice(1+j*2,3+j*2),16)*.38);});const result='#'+rgb.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');cache.set(color,result);return result;};mappers.set(mask,map);return map;};
     for(const [index,item] of data.items.entries()){
-      let image=item.src.image;if(state.tint&&item.mask){
-      if(lastSrc!==item.src||lastMask!==item.mask){scratch.width=image.width;scratch.height=image.height;sc.drawImage(image,0,0);sc.globalCompositeOperation='source-atop';for(let i=0;i<3;i++)if(item.mask&(1<<i)){sc.globalAlpha=.38;sc.fillStyle=state.mirrors[i].color;sc.fillRect(0,0,scratch.width,scratch.height);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';lastSrc=item.src;lastMask=item.mask;}image=scratch;
+      const b=item.bounds,transform=sceneMath.multiply(camera,item.matrix),pixelScale=Math.max(Math.hypot(transform[0],transform[1]),Math.hypot(transform[2],transform[3])),density=Math.min(item.src.image.width/(b[2]-b[0]),item.src.image.height/(b[3]-b[1])),vector=item.src.draw&&pixelScale>density*1.05;
+      let image=item.src.image;if(!vector&&state.tint&&item.mask){
+        if(lastSrc!==item.src||lastMask!==item.mask){scratch.width=image.width;scratch.height=image.height;sc.drawImage(image,0,0);sc.globalCompositeOperation='source-atop';for(let i=0;i<3;i++)if(item.mask&(1<<i)){sc.globalAlpha=.38;sc.fillStyle=state.mirrors[i].color;sc.fillRect(0,0,scratch.width,scratch.height);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';lastSrc=item.src;lastMask=item.mask;}image=scratch;
       }
-      const b=item.bounds,transform=sceneMath.multiply(camera,item.matrix);
-      ctx.setTransform(...transform);ctx.globalAlpha=paths ? .06 : 1;ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);ctx.globalAlpha=1;
-      if(paths){const others=new Path2D();paths.forEach((path,j)=>{if(j!==index)others.addPath(path);});ctx.save();ctx.setTransform(...camera);ctx.clip(paths[index]);ctx.clip(others);ctx.setTransform(...transform);ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);ctx.restore();}
+      const draw=()=>vector?item.src.draw(ctx,pixelScale,tintMap(item.mask)):ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);
+      ctx.setTransform(...transform);ctx.globalAlpha=paths?.06:1;draw();ctx.globalAlpha=1;
+      if(paths){const others=new Path2D();paths.forEach((path,j)=>{if(j!==index)others.addPath(path);});ctx.save();ctx.setTransform(...camera);ctx.clip(paths[index]);ctx.clip(others);ctx.setTransform(...transform);draw();ctx.restore();}
     }ctx.setTransform(1,0,0,1,0,0);
   }
   function render(){
