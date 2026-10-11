@@ -32,31 +32,31 @@
 #zerkOwn[hidden]{display:none}
 #zerkText{width:100%;box-sizing:border-box;height:76px;resize:vertical;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:0;padding:4px;font:11px/1.2 var(--ff,monospace)}
 #zerkStatus{position:absolute;right:8px;bottom:6px;max-width:calc(100% - 16px);padding:3px 6px;background:#08110edd;color:#9fffc8;font:11px/1.3 var(--ff,monospace);pointer-events:none}
-#zerkStage .zerk-grape{position:absolute;z-index:12;width:80px;padding:0!important;min-height:0!important;max-height:none;background:none!important;border:0!important;box-shadow:none!important;clip-path:none!important;overflow:visible;color:var(--control-color,var(--mirror-color));font:11px/1.1 var(--ff,monospace)}
-#zerkStage .zerk-grape::before,#zerkStage .zerk-grape::after{display:none!important}
-#zerkStage .zerk-grape.pmin{height:32px!important;max-height:32px!important}
-#zerkStage .zerk-grape.pmin .smh{height:32px!important}
-#zerkStage .zerk-grape.pdrag,#zerkTools.pdrag{position:absolute!important}
-#zerkStage .zerk-grape .smh{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:80px;height:32px;margin:0;padding:0 14px 0 4px;cursor:grab;white-space:nowrap;font:600 9px/1 var(--ff,monospace);background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,transparent);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#zerkStage .zerk-grape .pminbtn{position:absolute;right:6px;top:8px;width:14px!important;height:16px!important;min-width:0;min-height:0;padding:0;border:0;background:none;font:12px/1 var(--ff,monospace);color:inherit;clip-path:none}
-#zerkStage .zerk-grape-body{position:relative;width:72px;margin:4px 0 0 4px;padding:0;height:var(--grape-height)}
-#zerkStage .zerk-view-group{width:104px}
-#zerkStage .zerk-view-group .zerk-grape-body{width:96px}
-#zerkStage .zerk-diamond{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px;margin:0!important;padding:0 4px!important;border:0!important;border-radius:0!important;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,transparent)!important;color:var(--control-color,var(--mirror-color))!important;font:600 11px/1.1 var(--ff,monospace)!important;white-space:pre-line;text-align:center;cursor:pointer;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
-#zerkStage .zerk-diamond::before,#zerkStage .zerk-grape .smh::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--control-color,var(--mirror-color));opacity:.7;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 .7 47.3 24 24 47.3 .7 24Z' fill='none' stroke='black' stroke-width='1'/%3E%3C/svg%3E") center/100% 100% no-repeat}
-#zerkStage .zerk-diamond:hover,#zerkStage .zerk-diamond:focus-visible,#zerkStage .zerk-diamond:focus-within{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 26%,transparent)!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape{position:absolute;z-index:12;width:80px;padding:0!important;min-height:0!important;max-height:none;background:none!important;border:0!important;box-shadow:none!important;clip-path:none!important;overflow:visible;color:var(--control-color,var(--mirror-color));font:11px/1.1 var(--ff,monospace)}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape::before,:is(#zerkStage,#zerkHeaderDock) .zerk-grape::after{display:none!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape.pmin{height:32px!important;max-height:32px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape.pmin .smh{height:32px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape.pdrag,#zerkTools.pdrag{position:absolute!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape .smh{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:80px;height:32px;margin:0;padding:0 14px 0 4px;cursor:grab;white-space:nowrap;font:600 9px/1 var(--ff,monospace);background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,transparent);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape .pminbtn{position:absolute;right:6px;top:8px;width:14px!important;height:16px!important;min-width:0;min-height:0;padding:0;border:0;background:none;font:12px/1 var(--ff,monospace);color:inherit;clip-path:none}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape-body{position:relative;width:72px;margin:4px 0 0 4px;padding:0;height:var(--grape-height)}
+:is(#zerkStage,#zerkHeaderDock) .zerk-view-group{width:104px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-view-group .zerk-grape-body{width:96px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond{position:absolute;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;max-width:48px;margin:0!important;padding:0 4px!important;border:0!important;border-radius:0!important;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,transparent)!important;color:var(--control-color,var(--mirror-color))!important;font:600 11px/1.1 var(--ff,monospace)!important;white-space:pre-line;text-align:center;cursor:pointer;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond::before,:is(#zerkStage,#zerkHeaderDock) .zerk-grape .smh::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--control-color,var(--mirror-color));opacity:.7;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 .7 47.3 24 24 47.3 .7 24Z' fill='none' stroke='black' stroke-width='1'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:hover,:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:focus-visible,:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:focus-within{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 26%,transparent)!important}
 /* A saved choice stays brighter than hover; borders and marks never change the hit box. */
-#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked)){background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,transparent)!important;color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px #000,0 0 3px #000}
-#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked))::before{background:#fff;opacity:1;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 1.5 46.5 24 24 46.5 1.5 24Z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/100% 100% no-repeat}
-#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked))::after{content:"✓";position:absolute;top:5px;left:20px;width:8px;font:800 8px/1 var(--ff,monospace);color:#fff;pointer-events:none;text-shadow:0 1px 2px #000}
-#zerkStage .zerk-diamond:is(.on,.is-selected,:has(input:checked)) .zerk-half{color:#fff!important}
-#zerkStage .zerk-diamond:active{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 80%,transparent)!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:is(.on,.is-selected,:has(input:checked)){background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,transparent)!important;color:#fff!important;font-weight:800!important;text-shadow:0 1px 2px #000,0 0 3px #000}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:is(.on,.is-selected,:has(input:checked))::before{background:#fff;opacity:1;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 1.5 46.5 24 24 46.5 1.5 24Z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:is(.on,.is-selected,:has(input:checked))::after{content:"✓";position:absolute;top:5px;left:20px;width:8px;font:800 8px/1 var(--ff,monospace);color:#fff;pointer-events:none;text-shadow:0 1px 2px #000}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:is(.on,.is-selected,:has(input:checked)) .zerk-half{color:#fff!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond:active{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 80%,transparent)!important}
 .zerk-annotations{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .zerk-annotation{position:absolute;transform:translateX(-50%);padding:3px 6px;border-bottom:1px solid currentColor;background:#050806d9;font:700 12px/1.2 var(--ff,monospace);white-space:nowrap;pointer-events:none}
 .zerk-annotations[hidden],.zerk-annotation[hidden]{display:none}
 .zerk-annotation.off{opacity:.45}
-#zerkStage .zerk-diamond input[type=checkbox],#zerkStage .zerk-diamond input[type=color]{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
-#zerkStage .zerk-diamond input[type=color]+span{pointer-events:none}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond input[type=checkbox],:is(#zerkStage,#zerkHeaderDock) .zerk-diamond input[type=color]{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+:is(#zerkStage,#zerkHeaderDock) .zerk-diamond input[type=color]+span{pointer-events:none}
 #zerkTools .zerk-editor[hidden]{display:none!important}
 #zerkTools .zerk-editor{display:flex;flex-direction:column;gap:6px}
 #zerkTools{z-index:30;background:color-mix(in srgb,var(--panel) 88%,transparent)}
@@ -67,23 +67,23 @@
 #zerkZoom output{cursor:pointer;font-variant-numeric:tabular-nums}
 @media(max-width:760px){#w-zerkalius .wbody{height:70svh!important;min-height:420px}#zerkTools{width:220px;font-size:12px}#zerkTools button,#zerkTools select,#zerkTools label{min-height:32px}.zerk-mirror button{width:40px;height:40px;top:-4px}.zerk-mirror .zerk-center{left:calc(50% - 20px)}.zerk-mirror .zerk-turn{width:36px;height:36px;top:-2px}}
 /* Speed lives in the longer group header; values change inside the diamond. */
-#zerkStage .zerk-speed-group{width:128px}
-#zerkStage .zerk-speed-group .smh{width:128px;align-items:flex-start;padding-top:7px}
-#zerkStage .zerk-speed-group .pminbtn{right:12px}
-#zerkStage .zerk-speed-group .smh::before{mask-size:100% 100%}
+:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group{width:128px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh{width:128px;align-items:flex-start;padding-top:3px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .pminbtn{right:12px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh::before{mask-size:100% 100%}
 .zerk-header-speed{position:absolute;left:30px;right:30px;bottom:6px;height:10px;display:flex;align-items:center}
-#zerkStage .zerk-header-speed input[type=range]{appearance:none;width:100%;min-width:0;height:10px;min-height:0;margin:0;padding:0;background:none;accent-color:var(--control-color,var(--mirror-color));cursor:ew-resize;clip-path:none;border:0;touch-action:pan-y}
-#zerkStage .zerk-header-speed input::-webkit-slider-runnable-track{height:2px;background:var(--control-color,var(--mirror-color));opacity:.75}
-#zerkStage .zerk-header-speed input::-webkit-slider-thumb{appearance:none;width:10px;height:10px;margin-top:-4px;background:var(--control-color,var(--mirror-color));border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#zerkStage .zerk-header-speed input::-moz-range-track{height:2px;background:var(--control-color,var(--mirror-color))}
-#zerkStage .zerk-header-speed input::-moz-range-thumb{width:10px;height:10px;background:var(--control-color,var(--mirror-color));border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-#zerkStage .zerk-split{padding:0!important;cursor:default}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input[type=range]{appearance:none;width:100%;min-width:0;height:10px;min-height:0;margin:0;padding:0;background:none;accent-color:var(--control-color,var(--mirror-color));cursor:ew-resize;clip-path:none;border:0;touch-action:pan-y}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input::-webkit-slider-runnable-track{height:2px;background:var(--control-color,var(--mirror-color));opacity:.75}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input::-webkit-slider-thumb{appearance:none;width:10px;height:10px;margin-top:-4px;background:var(--control-color,var(--mirror-color));border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input::-moz-range-track{height:2px;background:var(--control-color,var(--mirror-color))}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input::-moz-range-thumb{width:10px;height:10px;background:var(--control-color,var(--mirror-color));border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split{padding:0!important;cursor:default}
 .zerk-split-value{pointer-events:none;white-space:pre-line;font-variant-numeric:tabular-nums}
-#zerkStage .zerk-half{position:absolute;top:0;width:50%!important;height:100%!important;min-height:0!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;clip-path:none!important;color:var(--control-color,var(--mirror-color))!important;font:700 14px/1 monospace!important;opacity:0;cursor:pointer}
-#zerkStage .zerk-half-minus{left:0;border-right:1px solid var(--control-color,var(--mirror-color))!important;text-align:left;padding-left:5px!important}
-#zerkStage .zerk-half-plus{right:0;text-align:right;padding-right:5px!important}
-#zerkStage .zerk-split:hover .zerk-half,#zerkStage .zerk-split:focus-within .zerk-half{opacity:1}
-#zerkStage .zerk-half:hover,#zerkStage .zerk-half:focus-visible{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 22%,transparent)!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-half{position:absolute;top:0;width:50%!important;height:100%!important;min-height:0!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;clip-path:none!important;color:var(--control-color,var(--mirror-color))!important;font:700 14px/1 monospace!important;opacity:0;cursor:pointer}
+:is(#zerkStage,#zerkHeaderDock) .zerk-half-minus{left:0;border-right:1px solid var(--control-color,var(--mirror-color))!important;text-align:left;padding-left:5px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-half-plus{right:0;text-align:right;padding-right:5px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split:hover .zerk-half,:is(#zerkStage,#zerkHeaderDock) .zerk-split:focus-within .zerk-half{opacity:1}
+:is(#zerkStage,#zerkHeaderDock) .zerk-half:hover,:is(#zerkStage,#zerkHeaderDock) .zerk-half:focus-visible{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 22%,transparent)!important}
 #zerkTools fieldset{margin:0;padding:5px;border:1px solid var(--line);min-width:0}
 #zerkTools legend{color:#70e0d7;padding:0 3px}
 #zerkTools .zerk-help{font:10px/1.4 var(--ff,monospace);color:var(--dim);margin:2px 0}
@@ -95,9 +95,9 @@
 #zerkTools [hidden]{display:none!important}
 .zerk-path-preview{width:100%;height:100px;background:#050806;border:1px solid var(--line)}
 /* Transparent gaps must not intercept controls in a neighbouring saved group. */
-#zerkStage .zerk-grape,#zerkStage .zerk-grape-body{pointer-events:none}
-#zerkStage .zerk-grape .smh,#zerkStage .zerk-grape .zerk-diamond{pointer-events:auto}
-@media(hover:none){#zerkStage .zerk-half{opacity:1}#zerkStage .zerk-header-speed input[type=range]{height:22px}#zerkStage .zerk-header-speed input::-webkit-slider-thumb{width:12px;height:12px;margin-top:-5px}}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape,:is(#zerkStage,#zerkHeaderDock) .zerk-grape-body{pointer-events:none}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape .smh,:is(#zerkStage,#zerkHeaderDock) .zerk-grape .zerk-diamond{pointer-events:auto}
+@media(hover:none){:is(#zerkStage,#zerkHeaderDock) .zerk-half{opacity:1}:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input[type=range]{height:22px}:is(#zerkStage,#zerkHeaderDock) .zerk-header-speed input::-webkit-slider-thumb{width:12px;height:12px;margin-top:-5px}}
 
 /* Project fonts, also available offline. */
   @font-face { font-family:"JetBrains Mono"; src:url("../_fonts/JetBrainsMono[wght].ttf"); font-weight:100 900 }
@@ -124,7 +124,7 @@ body.zen.zerk-zen #w-cone{display:none!important}
 body.zen.zerk-zen #w-zerkalius#w-zerkalius{display:block!important;position:fixed!important;inset:0!important;left:0!important;top:0!important;width:auto!important;height:auto!important;margin:0!important;z-index:1000!important;border:0!important;box-shadow:none!important}
 body.zen.zerk-zen #w-zerkalius>.whead,body.zen.zerk-zen #w-zerkalius>.whint{display:none!important}
 body.zen.zerk-zen #w-zerkalius>.wbody{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important}
-body.zen.zerk-zen #zerkStage .zerk-grape,body.zen.zerk-zen #zerkTools,body.zen.zerk-zen #zerkStatus{display:none!important}
+body.zen.zerk-zen :is(#zerkStage,#zerkHeaderDock) .zerk-grape,body.zen.zerk-zen #zerkTools,body.zen.zerk-zen #zerkStatus{display:none!important}
 body.zen.zerk-zen #w-zerkalius #coneRecBar>button{z-index:4!important}
 #zerkZenExit{display:none}
 body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;width:40px;height:40px;justify-content:center;align-items:center;z-index:15;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;background:#c9a8ff22;color:#fff;font:18px monospace}
@@ -132,6 +132,31 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 /* Grab the empty stage or an axis without intercepting control diamonds. */
 #zerkStage{cursor:grab}
 #zerkStage.panning{cursor:grabbing}
-.zerk-axis{position:absolute;inset:9px 0 auto;height:14px;pointer-events:auto;touch-action:none;cursor:grab}
+.zerk-axis{position:absolute;height:32px;transform-origin:50% 50%;z-index:0;pointer-events:auto;touch-action:none;cursor:grab}
 .zerk-axis:focus-visible{outline:1px solid #fff;background:#ffffff18}
+.zerk-mirror{z-index:1}
+.zerk-mirror.grabbing::before{border-top:2px solid var(--control-color,var(--mirror-color));opacity:1}
+.zerk-mirror .zerk-center:focus,.zerk-mirror .zerk-turn:focus{outline:2px solid #fff;outline-offset:-6px;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,#050806);color:#fff}
+@media(max-width:760px){.zerk-axis{height:40px}}
 .zerk-mirror button{z-index:1}
+.zerk-mirror .zerk-center{display:none!important}
+
+/* Groups may live on the upper window line without replacing their saved canvas positions. */
+#w-zerkalius>.whead{position:relative;overflow:visible;z-index:25}
+#w-zerkalius>.whead .wt{flex:0 1 90px;min-width:32px}
+#zerkHeaderDock{display:flex;align-items:flex-start;flex-wrap:wrap;flex:1 1 auto;gap:0;min-width:0;min-height:0;overflow:visible}
+#zerkHeaderDock:empty{display:none}
+#zerkHeaderDock .zerk-grape.zerk-docked{position:relative!important;flex:0 0 auto;height:32px!important;max-height:32px!important;margin:0}
+#zerkHeaderDock .zerk-docked .zerk-grape-body{position:absolute;top:32px;left:0;margin-top:0}
+#w-zerkalius>.whead.zerk-dock-target{box-shadow:inset 0 -2px #70e0d7;background:#203334}
+:is(#zerkStage,#zerkHeaderDock) .zerk-header-number{font-size:17px;font-weight:900;line-height:16px;text-shadow:0 0 3px currentColor}
+:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh>span:first-child{font-size:10px;line-height:16px}
+#zerkHeaderDock .zerk-grape:hover,#zerkHeaderDock .zerk-grape:focus-within{z-index:13}
+#w-zerkalius.collapsed #zerkHeaderDock .zerk-grape-body{display:none!important}
+
+@media(max-width:760px){
+  #w-zerkalius>.whead{flex-wrap:wrap}
+  #zerkHeaderDock{order:10;flex-basis:100%;width:100%}
+  #zerkHeaderDock .zerk-grape.zerk-docked{flex-basis:104px;width:104px}
+  #zerkHeaderDock .zerk-grape .smh{width:104px}
+}

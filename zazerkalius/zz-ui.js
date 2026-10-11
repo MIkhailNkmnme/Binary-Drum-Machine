@@ -1,3 +1,4 @@
+/* v0.1125: общая отмена/повтор принимает ручные движения и углы Зеркалиуса отдельно от строк. */
 /* v0.1124: дзен Зеркалиуса и его видеохолст; рисунок конуса не блокирует чужие кнопки записи. */
 /* v0.1123: выбранная развёртка Зеркалиуса передаётся в Бирамиду отдельно от строк поля. */
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -274,21 +275,21 @@ function undoApply(u){
    порядку. Шаг сетки — { tri: снимок сетки } (triSnap / triApply); замок строк 🔒 его не держит */
 function undo(){
   const top = undoStack[undoStack.length - 1];
-  if (!(top && top.tri) && rowsLocked()) return;   // v0.061
+  if (!(top && (top.tri || top.zerk)) && rowsLocked()) return;   // v0.061
   const u = undoStack.pop();
   if (!u) { say("↩ Отменять нечего."); return; }
-  redoStack.push(u.tri ? { tri: triSnap() } : undoState()); if (redoStack.length > 200) redoStack.shift();
-  if (u.tri) triApply(u.tri); else undoApply(u);
-  undoUi(); say(u.tri ? "↩ Отменено в △ Сетке. ↪ — повторить." : "↩ Отменено. ↪ — повторить.");
+  redoStack.push(u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (redoStack.length > 200) redoStack.shift();
+  if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
+  undoUi(); say(u.zerk ? "↩ Отменено в Зеркалиусе. ↪ — повторить." : u.tri ? "↩ Отменено в △ Сетке. ↪ — повторить." : "↩ Отменено. ↪ — повторить.");
 }
 function redo(){
   const top = redoStack[redoStack.length - 1];
-  if (!(top && top.tri) && rowsLocked()) return;
+  if (!(top && (top.tri || top.zerk)) && rowsLocked()) return;
   const u = redoStack.pop();
   if (!u) { say("↪ Повторять нечего."); return; }
-  undoStack.push(u.tri ? { tri: triSnap() } : undoState()); if (undoStack.length > 200) undoStack.shift();
-  if (u.tri) triApply(u.tri); else undoApply(u);
-  undoUi(); say(u.tri ? "↪ Повторено в △ Сетке." : "↪ Повторено.");
+  undoStack.push(u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (undoStack.length > 200) undoStack.shift();
+  if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
+  undoUi(); say(u.zerk ? "↪ Повторено в Зеркалиусе." : u.tri ? "↪ Повторено в △ Сетке." : "↪ Повторено.");
 }
 /* Сделать рабочим поле k (и строку row, если задана). */
 function switchLane(k, row, quiet){

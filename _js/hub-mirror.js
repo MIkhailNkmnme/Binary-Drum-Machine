@@ -1,4 +1,4 @@
-/* Hub v0.107: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
+/* Hub v0.109: поворот и масштаб всего поля с точным захватом зеркала; исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
 (() => {
   'use strict';
   const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp' }, clamp = v => Math.max(.01, Math.min(.99, v));
@@ -14,7 +14,7 @@
     }
   } catch (_) {}
   let frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null;
-  const buffers = new WeakMap();
+  const buffers = new WeakMap(),liveSources=new Set();
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
   const update = () => {
@@ -26,8 +26,8 @@
     Object.assign(line.style, { left: (frame.width * state.x - length / 2) + 'px', top: (frame.height * state.y - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = (length / 2 + Math.min(frame.width, frame.height) * .22) + 'px';
-    handle.textContent = state.on ? '◇' : '×';
-    handle.title = 'Зеркало: тяни ромб или линию; маленькая ручка — наклон; щелчок по ромбу — поворот на 15°; правый щелчок — вкл / выкл';
+    window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
+    handle.title = 'Зеркало: тяни за линию или отражённые биты; круглая точка — наклон; вкл / выкл — ромб ◇ в меню';
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(state.angle * 180 / Math.PI) + ' градусов');
     turn.title = 'Повернуть зеркало: тяни ручку или крути колесо';
   };
@@ -35,7 +35,7 @@
   const rotate = delta => { state.angle = (state.angle + delta + Math.PI) % Math.PI; changed(); save(); };
   function init() {
     root = document.createElement('div'); root.id = 'hubMirror';
-    line = document.createElement('div'); line.className = 'hubMirrorLine';
+    line = document.createElement('div'); line.className = 'hubMirrorLine';line.tabIndex=0;line.setAttribute('role','button');line.setAttribute('aria-label','Переместить зеркало за линию');
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
     line.append(handle, turn); root.append(line); document.body.append(root);
@@ -67,29 +67,30 @@
     }
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
-      state.zero = 0; state.one = 0; settings.querySelectorAll('input[type=range]').forEach(el => { el.value = '0'; });
+      state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; });
       settings.querySelectorAll('output').forEach(el => { el.textContent = '0°'; }); changed(); save();
     });
     document.querySelector('.hub .mainrow')?.after(settings);
     root.addEventListener('pointerdown', e => {
       if (e.button !== 0 || !frame) return;
+      if(e.target!==turn&&window.HubView?.grabBits?.(e,true))return;
       e.preventDefault(); e.stopPropagation();
-      const r = root.getBoundingClientRect();
-      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: state.x, py: state.y, angle: state.angle,
-        cx: r.left + frame.width * state.x, cy: r.top + frame.height * state.y,
+      const [mx,my]=window.HubView?window.HubView.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY];
+      drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
+        cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
         moved: false, handle: e.target === handle, turn: e.target === turn };
-      drag.startAngle = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx);
+      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);
       root.setPointerCapture(e.pointerId);
     });
     root.addEventListener('pointermove', e => {
       if (!drag || drag.id !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      const [mx,my]=window.HubView?window.HubView.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY],dx=mx-drag.x,dy=my-drag.y;
       if (!drag.moved && Math.hypot(dx, dy) < 3) return;
       drag.moved = true;
       if (drag.turn) {
-        if (Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) < 12) return;
-        state.angle = ((drag.angle + Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx) - drag.startAngle) % Math.PI + Math.PI) % Math.PI;
+        if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
+        state.angle = ((drag.angle + Math.atan2(my - drag.cy, mx - drag.cx) - drag.startAngle) % Math.PI + Math.PI) % Math.PI;
       } else { state.x = clamp(drag.px + dx / frame.width); state.y = clamp(drag.py + dy / frame.height); }
       changed();
     });
@@ -116,20 +117,25 @@
   }
   window.HubMirror = {
     state, get revision() { return revision; },
+    position(){return {x:state.x,y:state.y};},
+    moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
+    hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false);for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x,y);if(reflected)mirror||=read(image,...reflected);}return {source:original,mirror};},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
-    place(left, width, height) { frame = { left, width, height }; update(); },
-    point(x, y) {
+    place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
+    point(x, y,shift=true) {
       if (!frame || !state.on) return null;
+      if(shift){const p=window.HubView?.sourceShift()||[0,0];x+=p[0];y+=p[1];}
       const [cx, cy] = center(), nx = -Math.sin(state.angle), ny = Math.cos(state.angle), distance = (x - cx) * nx + (y - cy) * ny;
       return [x - 2 * distance * nx, y - 2 * distance * ny];
     },
     contains(x, y, w, h) { return frame && x - w / 2 >= frame.left && x + w / 2 <= frame.left + frame.width && y - h / 2 >= 0 && y + h / 2 <= frame.height; },
     reflect(canvas, view = null) {
-      if (!frame || !state.on || !canvas.width || !canvas.height) return;
+      if (!frame || !canvas.width || !canvas.height) return;
       let source = buffers.get(canvas);
       if (!source) { source = document.createElement('canvas'); buffers.set(canvas, source); }
       if (source.width !== canvas.width || source.height !== canvas.height) { source.width = canvas.width; source.height = canvas.height; }
       const copy = source.getContext('2d'); copy.clearRect(0, 0, source.width, source.height); copy.drawImage(canvas, 0, 0);
+      if(!view)liveSources.add(canvas);if(!state.on)return;
       const g = canvas.getContext('2d'), offset = view ? view.left : 0;
       const sx = view ? view.scale : canvas.width / (frame.left + frame.width), sy = view ? view.scale : canvas.height / frame.height;
       const [x, y] = center(), cx = (x - offset) * sx, cy = y * sy, a = Math.cos(2 * state.angle), b = Math.sin(2 * state.angle);
