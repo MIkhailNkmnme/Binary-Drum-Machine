@@ -1,4 +1,4 @@
-/* Hub v0.105: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
+/* Hub v0.107: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
 (() => {
   'use strict';
   const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp' }, clamp = v => Math.max(.01, Math.min(.99, v));
@@ -43,29 +43,29 @@
     settings.addEventListener('click', e => e.stopPropagation());
     const patternLabel = document.createElement('label'), pattern = document.createElement('select');
     pattern.setAttribute('aria-label', 'Узор треугольника');
-    for (const [value, title] of [['base', 'Исходный'], ['serp', 'Серпинский']]) {
+    for (const [value, title] of [['base', 'П'], ['serp', 'С']]) {
       const option = document.createElement('option'); option.value = value; option.textContent = title; pattern.append(option);
     }
-    pattern.value = state.pattern; patternLabel.append(document.createTextNode('Узор'), pattern); settings.append(patternLabel);
+    pattern.value = state.pattern; patternLabel.className='hubRhomb';patternLabel.title='Узор: исходный / Серпинский';patternLabel.append(pattern); settings.append(patternLabel);
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
-    toggle.append(enabled, document.createTextNode(' ◇ Зеркало')); settings.append(toggle);
+    toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
     enabled.addEventListener('change', () => { state.on = enabled.checked; changed(); save(); });
     const traceLabel = document.createElement('label'), trace = document.createElement('input');
     trace.type = 'checkbox'; trace.checked = state.trace;
-    traceLabel.append(trace, document.createTextNode(' ↓ След единиц')); settings.append(traceLabel);
+    traceLabel.className='hubRhomb';trace.setAttribute('aria-label','След единиц');traceLabel.append(trace, document.createTextNode('↓')); settings.append(traceLabel);
     traceLabel.title = 'Две световые дорожки вниз через 0 и 1; исходные биты не меняются';
     trace.addEventListener('change', () => { state.trace = trace.checked; changed(); save(); });
     for (const [key, bit] of [['zero', '0'], ['one', '1']]) {
       const label = document.createElement('label'), range = document.createElement('input'), value = document.createElement('output');
       range.type = 'range'; range.min = '-60'; range.max = '60'; range.step = '1'; range.value = state[key];
       range.setAttribute('aria-label', 'Наклон ромбов ' + bit); value.textContent = state[key] + '°';
-      label.append(document.createTextNode('Наклон ' + bit), range, value); settings.append(label);
+      const tilt=document.createElement('details'),summary=document.createElement('summary');tilt.className='hubTilt';summary.title='Наклон ромбов '+bit;summary.append(document.createTextNode(bit+' · '),value);label.append(range);tilt.append(summary,label);settings.append(tilt);
       range.addEventListener('input', () => { state[key] = Number(range.value); value.textContent = state[key] + '°'; changed(); });
       range.addEventListener('change', save);
     }
-    const reset = document.createElement('button'); reset.type = 'button'; reset.textContent = '0° — сброс наклона битов'; settings.append(reset);
+    const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[type=range]').forEach(el => { el.value = '0'; });
       settings.querySelectorAll('output').forEach(el => { el.textContent = '0°'; }); changed(); save();

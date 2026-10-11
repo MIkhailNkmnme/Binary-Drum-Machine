@@ -1,4 +1,4 @@
-/* Hub image v0.001: local picture source and freshly rendered high-resolution PNG. */
+/* Hub image v0.002: local picture source and freshly rendered high-resolution PNG. */
 (() => {
   'use strict';
   let picture = null, revision = 0, pending = 0, status, restore;
@@ -25,16 +25,16 @@
     const tools = document.createElement('div'); tools.className = 'hubImageTools';
     tools.addEventListener('click', e => e.stopPropagation());
     const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
-    const upload = document.createElement('button'); upload.type = 'button'; upload.textContent = '↑ Загрузить картинку';
+    const upload = document.createElement('button'); upload.type = 'button'; upload.className='hubRhomb';upload.textContent='↑▧';upload.setAttribute('aria-label','Загрузить картинку');
     upload.title = 'Своя картинка вместо треугольника; зеркало отражает её целиком'; upload.onclick = () => file.click();
-    restore = document.createElement('button'); restore.type = 'button'; restore.textContent = '△ Вернуть треугольник'; restore.hidden = true; restore.onclick = clear;
-    const label = document.createElement('label'), size = document.createElement('select'); label.append(document.createTextNode('PNG'), size);
+    restore = document.createElement('button'); restore.type = 'button'; restore.className='hubRhomb';restore.textContent='△';restore.title='Вернуть треугольник';restore.setAttribute('aria-label',restore.title); restore.hidden = true; restore.onclick = clear;
+    const label = document.createElement('label'), size = document.createElement('select'); label.className='hubRhomb';label.title='Разрешение PNG';label.append(size);
     size.setAttribute('aria-label', 'Разрешение PNG по длинной стороне');
     for (const [value, text] of [[2048, '2K'], [4096, '4K'], [8192, '8K']]) {
       const option = document.createElement('option'); option.value = value; option.textContent = text; size.append(option);
     }
     size.value = '4096';
-    const download = document.createElement('button'); download.type = 'button'; download.textContent = '↓ Скачать PNG';
+    const download = document.createElement('button'); download.type = 'button'; download.id='hubPNG';download.textContent='PNG';download.setAttribute('aria-label','Скачать снимок PNG');
     download.title = 'Чёткий рисунок с отражением и светом, без кнопок и ручек зеркала';
     status = document.createElement('div'); status.className = 'hubImageStatus'; status.setAttribute('role', 'status'); status.textContent = 'PNG: длинная сторона 4096 px';
     size.onchange = () => { status.textContent = 'PNG: длинная сторона ' + size.value + ' px'; };
@@ -64,7 +64,7 @@
       } catch (_) { status.textContent = 'Не удалось сохранить PNG. Попробуй меньшее разрешение.'; }
       finally { if (canvas) { canvas.width = 0; canvas.height = 0; } download.disabled = false; }
     };
-    tools.append(upload, file, restore, label, download, status); settings.append(tools);
+    tools.append(upload, file, restore, label, status); settings.append(tools); document.body.append(download);
     window.addEventListener('hubpattern', clear);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();

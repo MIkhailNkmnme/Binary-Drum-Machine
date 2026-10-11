@@ -852,7 +852,7 @@ function sfzSettingsInit(){
   const group = $("cutGrp"); if (group) { group.classList.remove("min"); build.appendChild(group); }
   const head = $("fieldHead"); if (head) {
     head.hidden=false;const controls=document.createElement("div");controls.id="sfzRowsButtons";head.prepend(controls);head.appendChild(menus);
-    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const fieldLeft=head.parentElement.getBoundingClientRect().left,cr=$("coneCv").getBoundingClientRect(),origin=cr.left+cr.width/2-300;const recordEnd=desktop?Math.max(0,...[...document.querySelectorAll("#coneRecBar > button")].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=="none").map(e=>e.getBoundingClientRect().right)):0;const left=(desktop?origin+30+Math.ceil((Math.max(fieldLeft,recordEnd)-origin-30)/60)*60:fieldLeft)+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);};
+    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const fieldLeft=head.parentElement.getBoundingClientRect().left,origin=sfzMenuGridOrigin();const recordEnd=desktop?Math.max(0,...[...document.querySelectorAll("#coneRecBar > button")].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=="none").map(e=>e.getBoundingClientRect().right)):0;const start=origin+30,fieldSnap=start+Math.floor((fieldLeft-start)/60)*60;const left=(desktop?Math.max(fieldSnap,start+Math.ceil((recordEnd-start)/60)*60):fieldLeft)+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);};
     window.sfzRowsMenuPlace=menuPlace;menuPlace();addEventListener("resize",menuPlace);if(window.ResizeObserver)new ResizeObserver(menuPlace).observe(head.parentElement);
     for(const id of ["bRowsStartTop","coneLockAll","bConeAllHome"]){const button=$(id);if(button){triOff(button);tzcClean(button);controls.appendChild(button);}}
   }
@@ -2419,8 +2419,8 @@ function coneAxisScr(){   // центр конуса на экране — пр�
 }
 /* v0.067: меню держит группы на осях сетки с шагом полутреугольника. */
 function sfzMenuGridOrigin(){
-  const cv=$("coneCv"),r=cv?.getBoundingClientRect();
-  return r?r.left+r.width/2-300:0;
+  // v0.068: общий центр меню — центр экрана, как у возвращённой оси.
+  return innerWidth/2-300;
 }
 function sfzMenuGridLeft(g,left){
   const origin=sfzMenuGridOrigin(),half=g.offsetWidth/2;
@@ -7011,7 +7011,7 @@ function coneBalanceToolsSync(cv){
   const w = el.offsetWidth;
   // v0.053: стандартные ромбы у верхнего края, свободное место по центру — для ромба осей.
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
-  const x = (!document.body.classList.contains("sol-mobile") && innerWidth>760 ? cr.left+cr.width/2 : coneAxisScr()?.x ?? cr.left+cxp)-w/2;
+  const x = (!document.body.classList.contains("sol-mobile") && innerWidth>760 ? innerWidth/2 : coneAxisScr()?.x ?? cr.left+cxp)-w/2;
   const menuTop=!document.body.classList.contains("sol-mobile") && innerWidth>760;
   el.style.left = (menuTop?x:x-hr.left-anchor.clientLeft+anchor.scrollLeft)+"px";
   el.style.top = (menuTop?0:cr.top+viewHeight-hr.top-anchor.clientTop+anchor.scrollTop)+"px";
@@ -7225,7 +7225,7 @@ function coneBalPlace(){
   const host=el.offsetParent||el.parentElement,hr=host.getBoundingClientRect(),cr=cv.getBoundingClientRect();
   const desktop=!document.body.classList.contains("sol-mobile")&&innerWidth>760;
   const center=coneAxisScr()?.x ?? cr.left+cr.width/2;
-  const x=(desktop?cr.left+cr.width/2:center)-el.offsetWidth/2,y=desktop?30:cr.top+25;
+  const x=(desktop?innerWidth/2:center)-el.offsetWidth/2,y=desktop?30:cr.top+25;
   el.style.left=(desktop?x:x-hr.left-host.clientLeft+host.scrollLeft).toFixed(1)+"px";
   el.style.top=(desktop?y:y-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   c3AxesPlace();
@@ -7251,7 +7251,7 @@ function c3AxesPlace(){
   const controlY=desktop?15:cr.top+1+size/2;
   const t=(desktop?(offCenter?$("top").getBoundingClientRect().bottom-size/2:0):cr.top+1-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   if(b.style.left!==l)b.style.left=l;if(b.style.top!==t)b.style.top=t;
-  const undo=$("undoBox");if(undo){const ur=(undo.offsetParent||undo.parentElement).getBoundingClientRect();const half=desktop?90:46,h=desktop?30:24,menuCenter=desktop?cr.left+cr.width/2:center;
+  const undo=$("undoBox");if(undo){const ur=(undo.offsetParent||undo.parentElement).getBoundingClientRect();const half=desktop?90:46,h=desktop?30:24,menuCenter=desktop?innerWidth/2:center;
     if(desktop)document.body.style.setProperty("--sfz-grid-origin",(menuCenter-300)+"px");
     undo.style.left=(desktop?menuCenter-half:center-half-ur.left).toFixed(1)+"px";
     undo.style.top=(desktop?controlY-h/2:controlY-h/2-ur.top).toFixed(1)+"px";
@@ -11861,7 +11861,8 @@ function cgrpInit(){
        низ заголовка окна (wb — само окно, его верх — это верх заголовка) */
     const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw));
     const hb = wbTop(tr.left + x, gw);
-    let y = Math.max(hb - tr.top, Math.min(p.y, br.bottom - tr.top - gh));
+    const head=g.querySelector(":scope > .glab"),headOffset=sfzColumnGroup(g)&&head?head.offsetTop:0,keepHeight=sfzColumnGroup(g)&&head?head.offsetHeight:gh;
+    let y = Math.max(hb-tr.top-headOffset,Math.min(p.y,br.bottom-tr.top-headOffset-keepHeight));
     /* v0.656, «…чтобы зубцами синхронизировалась группа»: по вертикали группа встаёт на ряды сетки — шагом 24 px от низа полосы вкладок (ряды зубцов
        левой панели выровнены по вкладкам, v0.636); прижатая к меню — ровно под ним */
     if (!sfzColumnGroup(g) && !Z.cgrpLink[g.dataset.g]) { const k = Math.round((tr.top + y - hb) / TZC_H); let y2 = hb - tr.top + k * TZC_H; if (y2 + gh > br.bottom - tr.top + 0.5) y2 -= TZC_H; if (y2 >= hb - tr.top - 0.5) y = y2; }
@@ -11921,11 +11922,13 @@ function cgrpInit(){
     const fold = document.createElement("button"); fold.type = "button"; fold.className = "gfold"; lab.appendChild(fold);
     const foldUi = () => solFoldButton(fold, !!Z.cgrpMin[g.dataset.g], solPanelName(g));
     const foldToggle = (on = !Z.cgrpMin[g.dataset.g], defer = false) => {
-      const key = g.dataset.g;
+      const key = g.dataset.g,head=lab.getBoundingClientRect(),free=sfzColumnGroup(g)&&g.parentElement===tl&&!Z.cgrpTop?.[key]&&typeof Z.cgrpPin?.[key]!=="number"&&!Z.cgrpEdge?.[key]&&!Z.cgrpLink?.[key];
       if (on) Z.cgrpMin[key] = true; else delete Z.cgrpMin[key];
       g.classList.toggle("cmin", on); g.style.minHeight = ""; foldUi();
       if (defer) return;
-      sizeApply(g); cgrpCols(); place(g); linkSync(); save();
+      sizeApply(g); cgrpCols();
+      if(free&&head.width){const now=lab.getBoundingClientRect(),r=g.getBoundingClientRect();nodeSetPos(g,r.left+head.left-now.left,r.top+head.top-now.top);}
+      place(g); linkSync(); save();
     };
     g._solFold = foldToggle;
     g._sfzTopToggle = () => {
@@ -11959,7 +11962,7 @@ function cgrpInit(){
       const key=g.dataset.g;
       if(Z.sfzBookUp?.[key] && g.parentElement===tl && !Z.cgrpFld[key] && !Z.cgrpLink[key] && !g.classList.contains("cdrag"))place(g);
     };
-    // v0.064: одиночный складывает; двойной переворачивает и закрепляет сверху. Старый dockToggle оставлен для команд других пультов.
+    // v0.068: одиночный и двойной щелчок складывают на месте; переворот — при переносе к полосе. Старый dockToggle оставлен для команд других пультов.
     const dockToggle = () => {
       const key = g.dataset.g, current = Z.cgrpFld[key];
       Z.cgrpMinPos ||= {};
@@ -11993,9 +11996,9 @@ function cgrpInit(){
     g.addEventListener("click", e => {
       // v0.958: группа при нажатии забирает указатель (setPointerCapture) — щелчок приходит на саму группу; где нажали, помнит g._downLab
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || e.detail > 1 || performance.now() < (g._solDragUntil || 0)) return;
-      e.stopPropagation(); if(e.altKey){g._sfzBookTurn?.();return;} clearTimeout(g._solClickTimer);g._solClickTimer=setTimeout(()=>{g._solClickTimer=0;foldToggle();},250);
+      e.stopPropagation(); if(e.altKey){g._sfzBookTurn?.();return;} foldToggle();
     });
-    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — свернуть / развернуть на месте; двойной — перевернуть и примагнитить: вверх ногами к верхней полосе меню, в обычном положении к низу. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
+    lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — свернуть / развернуть на месте; двойной — то же действие один раз, на месте. При перетаскивании в верхнюю полосу — раскрывать вниз, в нижнюю — вверх, сразу при входе; Alt + щелчок — перевернуть вручную. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
     { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
@@ -12077,7 +12080,8 @@ function cgrpInit(){
       e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
       /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
          встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
-      const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left, dy = y0 - r.top; let moved = false, lx = x0, ly = y0;
+      const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, dx = x0 - r.left; let dy = y0 - r.top, moved = false, lx = x0, ly = y0;
+      const grab=e.target.closest(".glab,button,label,select,textarea,input")||g;
       frontPanel(g); g._floor = false; g._ceil = false;
       /* v0.758, по снимку шести групп лазера, составленных вместе, — «как-то так объедини, не размагничивай их»: группа лазера (.cg-lx), что стоит поверх холста,
          тянется вместе со всеми группами лазера, которые с ней соприкасаются (и с их соседями — по цепочке): блок едет целиком, сцепки внутри него не рвутся,
@@ -12109,14 +12113,27 @@ function cgrpInit(){
           mates.forEach(m => { m.o.style.width = m.w + "px"; m.o.classList.add("cdrag"); });
           if (solo && g.classList.contains("cg-lx")) for (const [k, L] of Object.entries(Z.cgrpLink)) if (L && L.to === g.dataset.g) delete Z.cgrpLink[k]; }   // v0.760: Alt — совсем одна, прицепленные к ней остаются на месте
         lx = ev.clientX; ly = ev.clientY;
+        // v0.068: переворот уже при удерживаемом указателе в полосе; хват остаётся под ним.
+        const topStrip=$("top").getBoundingClientRect(),bottomStrip=$("sfzBottomGrid")?.getBoundingClientRect();
+        const inside=b=>b&&lx>=b.left&&lx<=b.right&&ly>=b.top&&ly<=b.bottom;
+        const strip=mates.length?null:inside(topStrip)?"top":inside(bottomStrip)?"bottom":null;
+        if(strip){
+          const key=g.dataset.g,wantUp=strip==="bottom";
+          if(!!Z.sfzBookUp?.[key]!==wantUp){
+            const before=grab.getBoundingClientRect().top-g.getBoundingClientRect().top;
+            Z.sfzBookUp ||= {};if(wantUp)Z.sfzBookUp[key]=true;else delete Z.sfzBookUp[key];
+            if(Z.sfzBookBottom)delete Z.sfzBookBottom[key];
+            sfzGrapeSync(g);dy+=grab.getBoundingClientRect().top-g.getBoundingClientRect().top-before;
+          }
+        }
         { let [sx, sy] = mates.length ? [lx - dx, ly - dy] : snapXY(g, lx - dx, ly - dy, r.width, g.offsetHeight); g._pin = null;   // v0.366: магнит (у блока лазера — нет)
           const body = wb.getBoundingClientRect(), floor = body.bottom, ceiling = $("top").getBoundingClientRect().bottom;
-          g._ceil = !mates.length && Math.abs(ly-dy-ceiling) <= 16;
-          g._floor = !mates.length && sfzColumnGroup(g) && sx >= body.left - 1 && sx + r.width <= body.right + 1 && Math.abs(sy + g.offsetHeight - floor) <= 16;
+          g._ceil = !mates.length && (strip==="top" || !strip && Math.abs(ly-dy-ceiling) <= 16);
+          g._floor = !mates.length && sfzColumnGroup(g) && (strip==="bottom" || !strip && sx >= body.left - 1 && sx + r.width <= body.right + 1 && Math.abs(sy + g.offsetHeight - floor) <= 16);
           if (g._ceil) { sy = ceiling; g._floor = false; g._mesh = null; }
           else if (g._floor) sy = floor - g.offsetHeight;
           if(g._ceil || g._floor){sx=sfzMenuGridLeft(g,sx);zSnapGlow([g._ceil?$("top"):$("sfzBottomGrid")]);}
-          if (!mates.length) { const A=coneAxisScr();
+          if (!mates.length && !strip) { const A=coneAxisScr();
             const edges=["head",...(g.querySelector(":scope > .sfz-book-cover")?["foot"]:[])].map(edge=>({edge,offset:solPanelAxisOffset(g,edge)})).sort((a,b)=>Math.abs(ly-dy+a.offset-(A?.y||0))-Math.abs(ly-dy+b.offset-(A?.y||0)));
             const {edge,offset}=edges[0],distance=A?Math.abs(ly-dy+offset-A.y):Infinity,edgeDistance=Math.min(g._ceil?Math.abs(ly-dy-ceiling):Infinity,g._floor?Math.abs(ly-dy+g.offsetHeight-floor):Infinity);if(A&&distance<=12&&distance<=edgeDistance){sy=A.y-offset;g._ceil=false;g._floor=false;g._mesh=null;g._pin=(sx-A.x)/(coneZoom||1);g._sfzAxisEdge=edge;}
           }   // v0.911: прищепка к оси
@@ -12174,11 +12191,10 @@ function cgrpInit(){
       return mv;
     };
     g.addEventListener("pointerdown", startGroupDrag);
-    // v0.064: двойной щелчок заголовка — переворот с магнитом к верхней полосе.
+    // v0.068: первый щелчок уже переключил; второй и dblclick ничего не сдвигают.
     g.addEventListener("dblclick", (e) => {
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
-      e.preventDefault(); e.stopPropagation(); clearTimeout(g._solClickTimer); g._solClickTimer = 0;
-      g._sfzBookTurn?.(true);
+      e.preventDefault(); e.stopPropagation();
     });
     lab.addEventListener("contextmenu", (e) => {
       if (e.target.closest("button, .gzen, .gon, .gx")) return;
@@ -13629,7 +13645,7 @@ function sfzGrapeSync(g){
     if(turn.getAttribute("aria-label")!==turnTitle)turn.setAttribute("aria-label",turnTitle);
     if(turn.getAttribute("aria-pressed")!==String(up))turn.setAttribute("aria-pressed",String(up));
     if (lab.dataset.grapeName !== g.dataset.g) lab.dataset.grapeName = g.dataset.g;
-    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок или любую кнопку — переместить; короткое нажатие на кнопку — её действие; нажатие на шапку — раскрыть или сжать; двойное нажатие или Alt + нажатие на шапку — перевернуть и закрепить гроздь сверху или снизу.";
+    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок или любую кнопку — переместить; короткое нажатие на кнопку — её действие; одиночное или двойное нажатие на шапку — раскрыть или сжать на месте. При перетаскивании в верхнюю полосу гроздь раскрывается вниз, в нижнюю — вверх, ещё до отпускания. Alt + нажатие — перевернуть вручную.";
     if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
     const fold = lab.querySelector(".gfold"), label = (g.classList.contains("cmin")?"Раскрыть гроздь "+(up?"вверх":"вниз"):"Свернуть гроздь "+(up?"вниз":"вверх"))+" «"+g.dataset.g+"»";
     if (fold && fold.getAttribute("aria-label") !== label) fold.setAttribute("aria-label", label);
@@ -15754,7 +15770,17 @@ function init(){
        протяжки больше не перекладывается совсем: за мышью идёт тонкая черта (там встанет граница), ширина — когда отпустили. */
     const fr = $("field").getBoundingClientRect();
     let on = false, lastX = x0, raf = 0, ghost = null, done = false;
-    const wAt = () => Math.max(minW, Math.min(window.innerWidth - 520, Math.round(w0 + sg * (lastX - x0))));
+    const wAt = () => {
+      const maxW=Math.max(minW,window.innerWidth-520),w=Math.max(minW,Math.min(maxW,Math.round(w0+sg*(lastX-x0))));
+      if(innerWidth<=760 || document.body.classList.contains("sol-mobile"))return w;
+      // v0.068: край поля идёт по целым треугольникам 60 px, в той же фазе, что кнопки.
+      const origin=sfzMenuGridOrigin()+30,edge=sg>0?fr.left+w:fr.right-w;
+      const lo=sg>0?fr.left+minW:fr.right-maxW,hi=sg>0?fr.left+maxW:fr.right-minW;
+      const first=Math.ceil((lo-origin)/60),last=Math.floor((hi-origin)/60);
+      if(first>last)return w;
+      const snap=origin+Math.max(first,Math.min(last,Math.round((edge-origin)/60)))*60;
+      return sg>0?snap-fr.left:fr.right-snap;
+    };
     const ghostAt = () => {
       raf = 0; if (!on) return;
       if (!ghost) { ghost = document.createElement("div"); ghost.id = "wGhost"; document.body.appendChild(ghost); }
