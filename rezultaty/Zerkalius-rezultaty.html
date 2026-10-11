@@ -1,4 +1,4 @@
-<!-- Zerkalius Битмультфильмы — v0.013 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
+<!-- Zerkalius Битмультфильмы — v0.014 (до v0.004 — «Результаты»). Витрина: что получилось у треугольника Аниматрицы, готовым к просмотру — анимации и
      картинки с короткой подписью, у каждой ссылка на разбор в «Исследовании». Считается не здесь: всё собрано заранее
      (Python по тем же правилам, что в Треугольнике), страница только показывает.
      v0.001: заведена 2026-09-25 по слову пользователя («это в методичку, может и в хаб? все результаты — очень интересное
@@ -21,13 +21,14 @@
              с iframe на Zerkalius-piramida.html?kino#s=… — только пирамида, крутится; щелчок — та же ссылка с кнопками.
      v0.013: раздел «Маятник — XOR из Excel» (слово пользователя 2026-10-11 «закинь кадры в Битфильм и ссылку на страницу с отрисовкой»):
              mayatnik-256.gif (все 256 кадров), mayatnik-512.gif (каждый 8-й), mayatnik-2024.webp (последний кадр 2024 строк);
-             кадры посчитаны ядром MAYATNIK из mayatnik/Zerkalius-mayatnik.html, ссылка ▶ — на саму страницу. -->
+             кадры посчитаны ядром MAYATNIK из mayatnik/Zerkalius-mayatnik.html, ссылка ▶ — на саму страницу.
+     v0.014: «Прилёт Зеркалиуса» — запись пользователя из хаба, MP4 с обложкой и встроенным плеером. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Битмультфильмы — v0.013</title>
+<title>Zerkalius Битмультфильмы — v0.014</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --gold:#ffcc00; }
@@ -65,6 +66,9 @@
   .num{ color:var(--gold); font-family:Consolas, monospace; }
   figure{ margin:0; }
   figcaption{ font-size:12px; color:var(--dim); margin-top:5px; }
+  .film{ max-width:960px; margin:12px auto 0; }
+  .film video{ display:block; width:100%; aspect-ratio:16 / 9; background:#000; }
+  .film figcaption{ display:flex; flex-wrap:wrap; gap:8px 20px; line-height:1.6; }
   #viewer{ position:fixed; inset:0; z-index:50; display:none; background:rgba(5,7,11,.94); overflow:auto; }
   #viewer.on{ display:block; }
   #viewer .bar{ position:sticky; top:0; left:0; display:flex; gap:6px; align-items:center; padding:8px 12px;
@@ -91,10 +95,22 @@
 <body>
 <div class="wrap">
 <h1>zerkalius · битмультфильмы</h1>
-<p class="sub">Что получилось у треугольника Аниматрицы — готовым к просмотру. Щелчок по картинке — в полный размер (и ×2, ×4).
+<p class="sub">Видео, анимации и картинки Зеркалиуса — готовым к просмотру. Щелчок по картинке — в полный размер (и ×2, ×4).
 Разбор каждого пункта — в <a href="../issledovanie/Zerkalius-issledovanie.html">«Исследовании»</a>, сделать то же самому — в
 <a href="../Zerkalius-treugolnik.html">«Треугольнике»</a>. У каждого случая — <b>▶ в Треугольнике</b>: откроет Треугольник
 с этой заготовкой и уже запущенной Аниматрицей (твоё состояние Треугольника при этом не трогается).</p>
+
+<section id="prilyot-zerkaliusa" aria-labelledby="prilyot-title">
+<h2 id="prilyot-title">Прилёт Зеркалиуса</h2>
+<p class="lead">Вращение рисунка и зеркала в хабе. Запись автора · 1:56 · Full HD.</p>
+<figure class="film">
+  <video controls playsinline preload="metadata" poster="prilyot-zerkaliusa.jpg" aria-label="Прилёт Зеркалиуса">
+    <source src="prilyot-zerkaliusa.mp4" type="video/mp4">
+    <a href="prilyot-zerkaliusa.mp4">Скачать видео «Прилёт Зеркалиуса»</a>
+  </video>
+  <figcaption><a href="prilyot-zerkaliusa.mp4" download="Прилёт Зеркалиуса.mp4">Скачать MP4 · 4,6 МБ</a><a href="../index.html">Открыть хаб</a></figcaption>
+</figure>
+</section>
 
 <div class="hero">
   <figure><img src="cikl-1024.gif" alt="Весь цикл треугольника 1024 строк" loading="lazy">
