@@ -1,11 +1,12 @@
-/* Hub v0.102: одно передвижное зеркало с произвольным наклоном; исходные биты и звук не меняются. */
+/* Hub v0.103: передвижное зеркало, наклон битов и отдельный световой след; исходные биты и звук не меняются. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0 }, clamp = v => Math.max(.01, Math.min(.99, v));
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false }, clamp = v => Math.max(.01, Math.min(.99, v));
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
+      state.trace = saved.trace === true;
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? saved.angle % Math.PI : saved.axis === 'h' ? 0 : Math.PI / 2;
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
       for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = Math.max(-60, Math.min(60, saved[k]));
@@ -43,6 +44,11 @@
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.append(enabled, document.createTextNode(' ◇ Зеркало')); settings.append(toggle);
     enabled.addEventListener('change', () => { state.on = enabled.checked; changed(); save(); });
+    const traceLabel = document.createElement('label'), trace = document.createElement('input');
+    trace.type = 'checkbox'; trace.checked = state.trace;
+    traceLabel.append(trace, document.createTextNode(' ↓ След единиц')); settings.append(traceLabel);
+    traceLabel.title = 'Две световые дорожки вниз через 0 и 1; исходные биты не меняются';
+    trace.addEventListener('change', () => { state.trace = trace.checked; changed(); save(); });
     for (const [key, bit] of [['zero', '0'], ['one', '1']]) {
       const label = document.createElement('label'), range = document.createElement('input'), value = document.createElement('output');
       range.type = 'range'; range.min = '-60'; range.max = '60'; range.step = '1'; range.value = state[key];
