@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.103. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.104. Точка входа: ссылки на все страницы проекта.
+     v0.104: переключатель «Исходный / Серпинский», одно зеркало и наклон битов для сравнения узоров.
      v0.103: переключаемый световой след единиц вниз по двум диагоналям, сквозь 0 и 1, без изменения битов.
      v0.102: одна передвижная линия зеркалит весь треугольник и окраску; ромб двигает ось, ручка меняет наклон, правый щелчок включает / выключает; отдельный наклон битов 0 и 1.
      v0.101: меню слева, две главные кнопки вдоль левой грани треугольника; на узком экране кнопки выровнены влево.
@@ -118,7 +119,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.103</title>
+    <title>Zerkalius Control Hub — v0.104</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -527,12 +528,13 @@
         .hubMirrorSettings label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; white-space: nowrap; }
         .hubMirrorSettings input[type=range] { width: 90px; min-width: 0; flex: 1; accent-color: #70e0d7; }
         .hubMirrorSettings output { width: 32px; text-align: right; }
+        .hubMirrorSettings select { flex: 1; min-width: 0; padding: 4px; border: 1px solid #385449; background: #0a2019; color: #9fffc8; font: inherit; }
         .hubMirrorSettings button { border: 1px solid #385449; padding: 5px; color: #9fffc8; background: #0a2019; cursor: pointer; font: inherit; }
     </style>
 <script src="_js/initial-rows.js?v=2"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
-<script src="_js/hub-mirror.js?v=103"></script>
-<script src="_js/hub-rhomb-music.js?v=5"></script>
+<script src="_js/hub-mirror.js?v=104"></script>
+<script src="_js/hub-rhomb-music.js?v=6"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -569,7 +571,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.103</div>
+        <div class="ver">v0.104</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -767,8 +769,16 @@
             });
             // v0.099, «пусть первая 1 будет, а вторая удали»: в треугольнике хаба нет второй «1» (строки 2 начальной последовательности) — 1, 11, 111…
             const HUB_ROWS = ZZ_INITIAL_ROWS.filter((_, i) => i !== 1);
-            const music = HubRhombMusic(HUB_ROWS, data => window.dispatchEvent(new CustomEvent('hubmusic', { detail: data })));
+            const SERP_ROWS = ['1'];
+            for (let r = 1; r < HUB_ROWS.length; r++) {
+                const prev = SERP_ROWS[r - 1]; let next = '';
+                for (let j = 0; j <= r; j++) next += Number(prev[j - 1] || '0') ^ Number(prev[j] || '0');
+                SERP_ROWS.push(next);
+            }
+            const ROW_PATTERNS = { base: HUB_ROWS, serp: SERP_ROWS };
+            const music = HubRhombMusic(ROW_PATTERNS[window.HubMirror.state.pattern], data => window.dispatchEvent(new CustomEvent('hubmusic', { detail: data })));
             const post = m => music.send(m);
+            window.addEventListener('hubpattern', () => music.setRows(ROW_PATTERNS[window.HubMirror.state.pattern]));
             document.getElementById('hubLogo').onclick = () => document.querySelector('.hub').scrollIntoView({ behavior: 'smooth' });
             document.addEventListener('click', e => {
                 const t = e.target, note = t.closest && t.closest('.hubSnd'), link = t.closest && t.closest('a, button');
@@ -849,7 +859,7 @@
                звучащие биты сообщением { zerkHeads } */
             let hubHeads = null;
             window.addEventListener('hubmusic', e => { hubHeads = e.detail.zerkHeads; PR = e.detail.zerkRows; });
-            let PR = HUB_ROWS.slice();   // v0.095: рабочие биты меняются, когда нота выталкивает единицу ниже
+            let PR = ROW_PATTERNS[window.HubMirror.state.pattern].slice();   // v0.104: зеркало и окраска используют один выбранный узор
             const noteCol = Array.from(document.querySelectorAll('.hubSnd')).map(b => b.style.getPropertyValue('--c'));
             /* v0.083: кнопка «все 7 нот» — первая перевёрнутая дырка треугольника (см. стили #hubAll). При N строках дырка — строки R0 = N/8 … R0 + S − 1,
                S = N/8 − 1 (при 64 — 8…14, семь строк); в строке R0 + t бит j = 1 + t + c, c < S − t; нота бита — t (До сверху, Си — вершина). Бит в решётке —

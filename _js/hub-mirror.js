@@ -1,12 +1,13 @@
-/* Hub v0.103: передвижное зеркало, наклон битов и отдельный световой след; исходные биты и звук не меняются. */
+/* Hub v0.104: исходный узор / Серпинский, передвижное зеркало, наклон битов и световой след. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false }, clamp = v => Math.max(.01, Math.min(.99, v));
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp' }, clamp = v => Math.max(.01, Math.min(.99, v));
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
+      state.pattern = saved.pattern === 'base' ? 'base' : 'serp';
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? saved.angle % Math.PI : saved.axis === 'h' ? 0 : Math.PI / 2;
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
       for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = Math.max(-60, Math.min(60, saved[k]));
@@ -40,6 +41,13 @@
     line.append(handle, turn); root.append(line); document.body.append(root);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings';
     settings.addEventListener('click', e => e.stopPropagation());
+    const patternLabel = document.createElement('label'), pattern = document.createElement('select');
+    pattern.setAttribute('aria-label', 'Узор треугольника');
+    for (const [value, title] of [['base', 'Исходный'], ['serp', 'Серпинский']]) {
+      const option = document.createElement('option'); option.value = value; option.textContent = title; pattern.append(option);
+    }
+    pattern.value = state.pattern; patternLabel.append(document.createTextNode('Узор'), pattern); settings.append(patternLabel);
+    pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.append(enabled, document.createTextNode(' ◇ Зеркало')); settings.append(toggle);
