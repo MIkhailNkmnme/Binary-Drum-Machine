@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.003. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.004. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.003</title>
+<title>Zerkalius Маятник — v0.004</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -20,6 +20,7 @@
   Маятник (MacroSequencePendulumStepByStep): вершины якорь, −1, +1, −2, +2, … в одной строке.
   v0.002: при «Построить» поле перерисовывается раз в секунду, ползунок «кадр» (опорные кадры), масштаб колесом / пальцами.
   v0.003: обводка «шумной» зоны (ступенчатая, по данным); готовые кнопки «хорр» 256 / 512 / 1024 / 2024 / 4096; предел строк 2048 → 4096.
+  v0.004: обрезка на N/3 — кнопка «N/3» и галочка «до N/3» для кнопок «хорр» (до гибели последней дыры).
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -54,14 +55,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.003</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.004</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
   <div class="grp">
     <label>строк <input id="rows" type="number" min="8" max="4096" step="1" value="512"></label>
     <label>вершин <input id="steps" type="number" min="1" max="8192" step="1" value="512"></label>
-    <span class="grp" title="Сразу построить маятник: строк и вершин поровну">хорр <button class="pre" data-n="256">256</button><button class="pre" data-n="512">512</button><button class="pre go" data-n="1024">1024</button><button class="pre go" data-n="2024">2024</button><button class="pre" data-n="4096" title="~10 минут, ~0,5 ГБ памяти">4096</button></span>
+    <button id="bThird" title="Вершин = N/3 с запасом: ровно до гибели последней дыры (раздел 14¾ «Исследования»)">N/3</button>
+    <span class="grp" title="Сразу построить маятник: строк = N, вершин = N (или N/3, если отмечено «до N/3»)">хорр <button class="pre" data-n="256">256</button><button class="pre" data-n="512">512</button><button class="pre go" data-n="1024">1024</button><button class="pre go" data-n="2024">2024</button><button class="pre" data-n="4096" title="~10 минут, ~0,5 ГБ памяти">4096</button>
+      <label title="Кнопки «хорр» строят не N вершин, а N/3 с запасом — до гибели последней дыры; дальше кадры почти одинаковый шум"><input id="third" type="checkbox"> до N/3</label></span>
     <label>ход <select id="mode">
       <option value="pend">лево-право (маятник)</option>
       <option value="right">вправо</option>
@@ -155,7 +158,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -176,7 +179,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline;
+    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline; $('third').checked = !!st.third;
   }
 
   function reset() {
@@ -322,8 +325,12 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   $('bBuild').onclick = build;
   // v0.003: готовые кнопки — строк = вершин = N, ход «лево-право», сразу «Построить»
   document.querySelectorAll('button.pre').forEach(b => b.onclick = () => {
-    $('rows').value = $('steps').value = b.dataset.n; $('mode').value = 'pend'; build();
+    const N = +b.dataset.n; $('rows').value = N; $('steps').value = st.third ? thirdOf(N) : N; $('mode').value = 'pend'; build();
   });
+  // v0.004: обрезка на N/3 — центральная дыра гибнет при n = N/3 (верх N/2 + n/2 встречает кончик N − n); запас N/64 — чтобы увидеть, как она закрылась
+  function thirdOf(N) { return Math.ceil(N / 3) + Math.ceil(N / 64); }
+  $('bThird').onclick = () => { $('steps').value = thirdOf(clampInt($('rows').value, 8, 4096, 512)); $('mode').value = 'pend'; build(); };
+  $('third').addEventListener('change', () => { st.third = $('third').checked; save(); });
   $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
   $('bStep').onclick = () => goTo(k + 1);
   // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
