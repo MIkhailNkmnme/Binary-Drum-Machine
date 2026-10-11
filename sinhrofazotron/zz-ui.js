@@ -672,14 +672,14 @@ function renderRowsOver(){
     h += '<div class="rw ovr' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) +
          '</span><span class="trk" style="width:' + W + '">' + lines + t + "</span></div>";
   }
-  h += '<div id="infoSlot"></div>' + cutLine() + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой; v0.112; v0.225: под чертой — кнопки достройки и шаблоны
+  h += '<div id="infoSlot"></div>' + cutLine() + '<div id="sfzSettingsSlot"></div>' + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой; v0.112; v0.225: под чертой — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
     let t = "";
     for (const [p, list] of ovRowMap(j, A, OV_SHOW, true)) t += '<span class="ob" style="left:' + (p / 2) + 'ch">' + (list.length === 1 ? list[0].b : ovCombine(list)) + "</span>";
     h += hidRowHtml(H + j, '<span class="trk" style="width:' + W + '">' + lines + t + "</span>").replace('class="rw hid"', 'class="rw ovr hid"');
   }
-  L.innerHTML = h + '<div id="voidRows"></div></div>'; cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.869   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
+  L.innerHTML = h + "</div>"; cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.869   // v0.225; v0.693: пустые кольца «до 256» — строками под чертой
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   $("fieldInfo").textContent = `наложение ${N} полей · рабочее ${Z.lane + 1} · ${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1}` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr();
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
@@ -802,7 +802,7 @@ const CUT_PANEL = document.getElementById("cutPanel"), CUT_A = document.getEleme
 const FIELD_INFO = document.getElementById("fieldInfo");   // v0.237, «эту надпись вниз, под последнюю строку»: сведения поля — строкой под последней строкой
 function cutPanelMount(){
   const s = document.getElementById("cutSlot"); if (s && CUT_PANEL && CUT_PANEL.parentNode !== s) s.appendChild(CUT_PANEL);
-  cutPartsPlace();   // v0.955
+  cutPartsPlace(); sfzSettingsDockMount();   // v0.066: настройки под последней строкой
   const f = document.getElementById("infoSlot"); if (f && FIELD_INFO && FIELD_INFO.parentNode !== f) f.appendChild(FIELD_INFO);
   const b = document.getElementById("bCutClr"); if (b) b.classList.toggle("on", !!Z.cutDel);   // v0.563: 🗑 — переключатель
   cutHidUi();   // v0.288
@@ -829,6 +829,11 @@ function cutGroupBuild(){
   CUT_GROUPED = true; cutPartsPlace();
 }
 // v0.047: исходные элементы переезжают в три столбца, сохраняя обработчики и значения.
+let SFZ_SETTINGS_DOCK = null;
+function sfzSettingsDockMount(){
+  const slot = $("sfzSettingsSlot");
+  if (slot && SFZ_SETTINGS_DOCK && SFZ_SETTINGS_DOCK.parentNode !== slot) slot.appendChild(SFZ_SETTINGS_DOCK);
+}
 function sfzSettingsInit(){
   const menus = $("sfzSettingsMenus"), view = $("sfzViewSettings"), rows = $("sfzRowsSettings"), build = $("sfzBuildSettings");
   if (!menus || menus._ready) return;
@@ -840,14 +845,14 @@ function sfzSettingsInit(){
     const summary=menus.querySelectorAll("summary")[i];if(!summary)continue;
     const title=["Вид","Строки","Достройка"][i];summary.textContent=text;summary.title=title;summary.setAttribute("aria-label",title);
   }
-  for (const id of ["bFieldL", "bFieldHide", "bFieldR", "bFieldOnly", "fontSel", "fsBox", "laneView", "ovOp", "bOvReset", "rowsAlign", "bShowFM", "bTri90", "bShow01", "bTriView", "bTriGlass", "laneCount", "bBrDepth"]) {
+  for (const id of ["bFieldL", "bFieldHide", "bFieldR", "bFieldOnly", "fontSel", "fsBox", "laneView", "ovOp", "bOvReset", "rowsAlign", "bShowFM", "bTri90", "bShow01", "bTriView", "bTriGlass", "laneCount", "bBrDepth", "bHelp"]) {
     const el = $(id); if (el) { triOff(el); tzcClean(el); view.appendChild(el); }
   }
-  const bar = $("rowInputBar"); if (bar) { rows.appendChild(bar); for (const el of bar.children) { triOff(el); tzcClean(el); } }
+  const bar = $("rowInputBar"); if (bar) { bar.classList.remove("lpt"); rows.appendChild(bar); for (const el of bar.children) { triOff(el); tzcClean(el); } }
   const group = $("cutGrp"); if (group) { group.classList.remove("min"); build.appendChild(group); }
   const head = $("fieldHead"); if (head) {
     head.hidden=false;const controls=document.createElement("div");controls.id="sfzRowsButtons";head.prepend(controls);head.appendChild(menus);
-    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const left=head.parentElement.getBoundingClientRect().left+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);};
+    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const fieldLeft=head.parentElement.getBoundingClientRect().left,cr=$("coneCv").getBoundingClientRect(),origin=cr.left+cr.width/2-300;const recordEnd=desktop?Math.max(0,...[...document.querySelectorAll("#coneRecBar > button")].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=="none").map(e=>e.getBoundingClientRect().right)):0;const left=(desktop?origin+30+Math.ceil((Math.max(fieldLeft,recordEnd)-origin-30)/60)*60:fieldLeft)+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);};
     window.sfzRowsMenuPlace=menuPlace;menuPlace();addEventListener("resize",menuPlace);if(window.ResizeObserver)new ResizeObserver(menuPlace).observe(head.parentElement);
     for(const id of ["bRowsStartTop","coneLockAll","bConeAllHome"]){const button=$(id);if(button){triOff(button);tzcClean(button);controls.appendChild(button);}}
   }
@@ -856,11 +861,34 @@ function sfzSettingsInit(){
   rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
   const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь «Вид»";
   coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид"); save(); renderCone(); }; view.appendChild(coneView);
-  const close = () => menus.querySelectorAll("details[open]").forEach(d => d.open = false);
-  document.addEventListener("pointerdown", e => { if (!menus.contains(e.target)) close(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = document.activeElement.closest("#sfzSettingsMenus details"); close(); if (active) active.querySelector("summary").focus(); } });
+  // v0.066: исходные элементы и их обработчики сохраняются при обновлении строк.
+  SFZ_SETTINGS_DOCK = document.createElement("div"); SFZ_SETTINGS_DOCK.id = "sfzSettingsDock";
+  SFZ_SETTINGS_DOCK.hidden = true; document.body.appendChild(SFZ_SETTINGS_DOCK);
+  const columns = [view, rows, build], tabs = [...menus.querySelectorAll("details")];
+  for (const [i, column] of columns.entries()) {
+    column.hidden = true; SFZ_SETTINGS_DOCK.appendChild(column);
+    tabs[i].querySelector("summary").setAttribute("aria-controls", column.id);
+  }
+  const icons = {bFieldL:"◀",bFieldHide:"01",bFieldR:"▶",bFieldOnly:"▣",bShowFM:"⇄",bShow01:"0:1",bBrDepth:"( )",bCas:"⛓",bBipyShift:"◇",bOvReset:"↔",bOvOut:"⤓"};
+  for (const [id, icon] of Object.entries(icons)) { const button=$(id); if(button) { button.dataset.sfzIcon=icon; button.setAttribute("aria-label",button.title||button.dataset.zzTip||button.textContent); } }
+  rings.dataset.sfzIcon="◈"; rings.setAttribute("aria-label",rings.title);
+  coneView.dataset.sfzIcon="◉"; coneView.title="Гроздь «Вид»"; coneView.setAttribute("aria-label",coneView.title);
+  for (const id of ["cutMask"]) { const input=$(id); if(input && input.parentElement===group) { const label=document.createElement("label"); label.className="sfz-setting-input"; label.title=input.title||"Маска из 0 и 1"; input.before(label); label.appendChild(input); } }
+  const resize = () => SFZ_SETTINGS_DOCK.style.setProperty("--sfz-settings-cols", $("rowList").clientWidth >= 168 ? 3 : 2);
+  resize(); if(window.ResizeObserver)new ResizeObserver(resize).observe($("rowList"));
+  sfzSettingsDockMount();
+  const sync = () => { columns.forEach((column,i)=>column.hidden=!tabs[i].open); SFZ_SETTINGS_DOCK.hidden=!tabs.some(d=>d.open); tabs.forEach(d=>d.querySelector("summary").setAttribute("aria-expanded",String(d.open))); };
+  const close = () => { tabs.forEach(d => d.open = false); sync(); };
+  document.addEventListener("pointerdown", e => { if (!menus.contains(e.target) && !SFZ_SETTINGS_DOCK.contains(e.target)) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = tabs.find(d=>d.open); close(); if (active) active.querySelector("summary").focus(); } });
   menus.addEventListener("toggle", e => {
     if (e.target.open) menus.querySelectorAll("details[open]").forEach(d => { if (d !== e.target) d.open = false; });
+    sync(); sfzSettingsDockMount();
+    if(e.target.open) {
+      const list=$("rowList"), lr=list.getBoundingClientRect(), dr=SFZ_SETTINGS_DOCK.getBoundingClientRect();
+      if(dr.bottom>lr.bottom) list.scrollTop+=dr.bottom-lr.bottom;
+      else if(dr.top<lr.top) list.scrollTop+=dr.top-lr.top;
+    }
     lpKick();
   }, true);
 }
@@ -1137,6 +1165,14 @@ function fillDraft(){
   if (!Z.fillV128) { Z.fillV128 = true; if (typeof Z.fillCells === "string" && Z.fillCells === "1" + ".".repeat(L - 1)) Z.fillCells = null; }
   if (typeof Z.fillCells !== "string" || Z.fillCells.length !== L || !/^[.01]*$/.test(Z.fillCells)) Z.fillCells = ".".repeat(L);
   return Z.fillCells;
+}
+// v0.066: правый щелчок меняет только выбранный бит; пустая ячейка считается нулём.
+function fillToggleBit(k, free = false){
+  const f = free ? fillFreeDraft() : fillDraft(); if (!Number.isInteger(k) || k < 0 || k >= f.length) return false;
+  if (free && f[k] === "." && !coneFreeCan(f,k,fillLen())) return false;
+  const next = f.slice(0,k) + (f[k] === "1" ? "0" : "1") + f.slice(k+1);
+  if (free) Z.fillFree = next; else Z.fillCells = next;
+  renderRows(); renderCone(); save(); return true;
 }
 function fillCycle(k){
   const f = fillDraft(); if (k < 0 || k >= f.length) return;
@@ -1602,7 +1638,7 @@ function renderRows(){
     h += "</div>"; rowHtml.push(h); h = "";
   }
   // v0.112: черта-граница под нижней строкой, под ней — строки за границей, бесцветные
-  h += '<div id="infoSlot"></div>' + cutLine() + fillRowHtml(N) + '<div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой
+  h += '<div id="infoSlot"></div>' + cutLine() + '<div id="sfzSettingsSlot"></div><div id="cutSlot"></div>';   // v0.237: сведения — под последней строкой
   //   // v0.114: сразу под чертой — строка для заполнения; v0.225: под ней — кнопки достройки и шаблоны
   let HH = 0; for (let l = 0; l < N; l++) HH = Math.max(HH, hidRows(l).length);
   for (let j = 0; j < HH; j++) {
@@ -1614,7 +1650,7 @@ function renderRows(){
     }
     h += hidRowHtml(H + j, t);
   }
-  rowsDomPatch(L, head, rowHtml, h + '<div id="voidRows"></div></div>'); cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.1018: обновляем только изменившиеся строки
+  rowsDomPatch(L, head, rowHtml, h + "</div>"); cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.1018: обновляем только изменившиеся строки
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
   const infoText = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
   if ($("fieldInfo").textContent !== infoText) $("fieldInfo").textContent = infoText;
@@ -6945,7 +6981,7 @@ function coneBalanceToolsSync(cv){
   const w = el.offsetWidth;
   // v0.053: стандартные ромбы у верхнего края, свободное место по центру — для ромба осей.
   const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2;
-  const x = (coneAxisScr()?.x ?? cr.left+cxp)-w/2;
+  const x = (!document.body.classList.contains("sol-mobile") && innerWidth>760 ? cr.left+cr.width/2 : coneAxisScr()?.x ?? cr.left+cxp)-w/2;
   const menuTop=!document.body.classList.contains("sol-mobile") && innerWidth>760;
   el.style.left = (menuTop?x:x-hr.left-anchor.clientLeft+anchor.scrollLeft)+"px";
   el.style.top = (menuTop?0:cr.top+viewHeight-hr.top-anchor.clientTop+anchor.scrollTop)+"px";
@@ -6970,7 +7006,7 @@ function coneAlignToolsSync(cv){
      балансами и ромбами − / +, у правого края. Прежде он вставал на верхний край и сталкивал треугольники вниз (ромб оси выпадал из зазора, балансы закрывались) */
   const menuTop=!document.body.classList.contains("sol-mobile") && innerWidth>760;
   const sw = source.offsetWidth, fits = tr.right + 6 + sw <= (menuTop?innerWidth:cr.right);
-  const x = menuTop || fits ? tr.right + 6 : Math.max(cr.left, cr.right - sw);
+  const x = menuTop ? tr.right : fits ? tr.right + 6 : Math.max(cr.left, cr.right - sw);
   let y = fits ? tr.top : Math.max(cr.top,tr.top);
   if (!fits && !menuTop) for (const id of ["coneBalanceTools", "coneBal", "bC3ZoomOut", "bC3ZoomIn", "bC3Axes"]) {
     const e = $(id); if (!e || e.hidden || !e.getClientRects().length) continue; const r = e.getBoundingClientRect();
@@ -7159,7 +7195,7 @@ function coneBalPlace(){
   const host=el.offsetParent||el.parentElement,hr=host.getBoundingClientRect(),cr=cv.getBoundingClientRect();
   const desktop=!document.body.classList.contains("sol-mobile")&&innerWidth>760;
   const center=coneAxisScr()?.x ?? cr.left+cr.width/2;
-  const x=center-el.offsetWidth/2,y=desktop?34:cr.top+25;
+  const x=(desktop?cr.left+cr.width/2:center)-el.offsetWidth/2,y=desktop?30:cr.top+25;
   el.style.left=(desktop?x:x-hr.left-host.clientLeft+host.scrollLeft).toFixed(1)+"px";
   el.style.top=(desktop?y:y-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   c3AxesPlace();
@@ -7178,13 +7214,14 @@ function c3AxesPlace(){
   const size=b.offsetWidth||48;
   b.setAttribute("aria-pressed",String(!!Z.coneAxes));
   const l=(desktop?center-size/2:center-hr.left-host.clientLeft+host.scrollLeft-size/2).toFixed(1)+"px";
-  const controlY=desktop?1+size/2:cr.top+1+size/2;
-  const t=(desktop?1:cr.top+1-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
+  const controlY=desktop?15:cr.top+1+size/2;
+  const t=(desktop?0:cr.top+1-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   if(b.style.left!==l)b.style.left=l;if(b.style.top!==t)b.style.top=t;
-  const undo=$("undoBox");if(undo){const ur=(undo.offsetParent||undo.parentElement).getBoundingClientRect();const half=desktop?102:46,h=desktop?32:24;
-    undo.style.left=(desktop?center-half:center-half-ur.left).toFixed(1)+"px";
+  const undo=$("undoBox");if(undo){const ur=(undo.offsetParent||undo.parentElement).getBoundingClientRect();const half=desktop?90:46,h=desktop?30:24,menuCenter=desktop?cr.left+cr.width/2:center;
+    if(desktop)document.body.style.setProperty("--sfz-grid-origin",(menuCenter-300)+"px");
+    undo.style.left=(desktop?menuCenter-half:center-half-ur.left).toFixed(1)+"px";
     undo.style.top=(desktop?controlY-h/2:controlY-h/2-ur.top).toFixed(1)+"px";
-    for(const button of undo.querySelectorAll(":scope > button")){const width=(desktop?84:32)+"px";if(button.style.width!==width)button.style.setProperty("width",width,"important");}
+    for(const button of undo.querySelectorAll(":scope > button")){const width=(desktop?88:44)+"px";if(button.style.width!==width)button.style.setProperty("width",width,"important");}
   }
   // v0.1047: «−» вплотную слева от пары балансов, «+» — справа (нет балансов — по бокам ромба осей, через зазор шириной в ромб)
   const zo = document.getElementById("bC3ZoomOut"), zi = document.getElementById("bC3ZoomIn");
@@ -7289,14 +7326,15 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const startBox = $("coneTransportStart"), tempoBox = $("coneTransportTempo");
   tempoTrackSync();
   const size = (e) => e && e.parentElement === host ? e.offsetWidth : 0;
-  const ws = size(startBox), wr = b.offsetWidth || 60, rh = Math.max(b.offsetHeight || 30, startBox ? startBox.offsetHeight : 0);
-  const mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeGap = mw ? 8 : 0;
-  const modesBelow = ws + wr + modeGap + mw > edge - left;
-  const rowWidth = ws + wr + (modesBelow ? 0 : modeGap + mw);
-  const rowLeft = centre - rowWidth / 2, x = rowLeft + ws, rowRight = rowLeft + rowWidth, modeLeft = x + wr + modeGap;
+  const ws = Math.max(size(startBox), startButton ? startButton.offsetWidth : 0), wr = b.offsetWidth || 60, rh = Math.max(b.offsetHeight || 30, startBox ? startBox.offsetHeight : 0);
+  const mw = ms && ms.parentElement === host ? ms.offsetWidth : 0, modeGap = mw ? gap : 0;
+  const modesBelow = ws + gap + wr + modeGap + mw > edge - left;
+  const rowWidth = ws + gap + wr + (modesBelow ? 0 : modeGap + mw);
+  // v0.066: третья из пяти кнопок режима строго на оси; сброс слева, старт справа, зазоры одинаковы.
+  const modeLeft = centre - mw / 2, rowLeft = modesBelow ? centre - (wr + gap + ws) / 2 : modeLeft - modeGap - wr, x = rowLeft, startLeft = modesBelow ? x + wr + gap : modeLeft + mw + modeGap, rowRight = rowLeft + rowWidth;
   const lift = modesBelow ? ms.offsetHeight + gap : 0;
   const y = bottom - rh - lift, base = bottom - lift, on = (e) => base - (e.offsetHeight || rh);   // v0.024: кнопки разной высоты (▶ крупнее) — на одном нижнем крае
-  if (startBox && ws) put(startBox, rowLeft, on(startBox));
+  if (startBox && ws) put(startBox, startLeft, on(startBox));
   put(b, x, on(b));
   if (tempoBox) {
     const tw = Math.max(0, Math.min(480, edge - left));   // Ползунок и весь ряд кнопок — по центру окна.
@@ -7308,7 +7346,7 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     if(cb && cb.parentElement===host && zoom){const zr=zoom.getBoundingClientRect();put(cb,zr.left-hr.left+scrollLeft+(zr.width-cb.offsetWidth)/2,zr.top-hr.top+scrollTop-cb.offsetHeight-6);}
   }   // ◐ «только управление» — над парой масштаба − / +.
   // Режимы — у самого нижнего края справа от пульта; на узком холсте пульт стоит над ними.
-  if (mw) put(ms, modesBelow ? left + Math.max(0, (edge - left - mw) / 2) : modeLeft, modesBelow ? bottom - ms.offsetHeight : on(ms));
+  if (mw) put(ms, modesBelow ? centre - mw / 2 : modeLeft, modesBelow ? bottom - ms.offsetHeight : on(ms));
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
     // v0.050: короткая подпись у видимого левого края, под горизонтальной осью.
@@ -7560,7 +7598,7 @@ function setupCone(){
     say(n ? `◯ Выделение снято (${n}).` : "◯ Выделение снято.");
   };
   /* v0.735, «сделай перемещение не по Ctrl, а по правой кнопке»: всё, что тянулось с Ctrl, тянется и правой кнопкой мыши — кольца крутятся (строки 1,
-     за чертой, любое), в объёме — сдвиг вида. Правый щелчок без движения ничего не выбирает (по кольцу за чертой — как прежде, стереть его); меню браузера
+     за чертой, любое), в объёме — сдвиг вида. Правый щелчок без движения ничего не выбирает (по биту кольца за чертой — 0 ↔ 1); меню браузера
      над конусом не всплывает. Ctrl + щелчок — выделить кольцо, как было */
   cv.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.button !== 2) return;
@@ -10555,7 +10593,9 @@ function setupCone(){
   // все кольца разом — свои замки колец стираются (прежде кольцо со своим замком общий не слушал и было в золотой рамке)
   $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; Z.coneLocks = {}; save(); renderRows(); renderCone(); say(Z.coneLock ? "🔒 Все кольца заперты: крутятся только на вид, строки не сдвигаются." : "🔓 Все кольца открыты: тянешь кольцо (с Ctrl) — крутится и сама строка в поле."); };
   cv.addEventListener("contextmenu", (e) => { e.preventDefault(); const D = coneRDown; coneRDown = null; if (D && Math.abs(e.clientX - D[0]) + Math.abs(e.clientY - D[1]) > 4) return;   // v0.735: тянули правой — не стирать, меню не нужно
-    const h = coneRing(e); if (h !== -1 && h.fill !== undefined) fillReset(); });   // v0.118: правый щелчок по кольцу для заполнения — заново
+    const h = coneRing(e); if (h === -1 || h.fill === undefined) return;
+    const free=coneFreeOn(), t=h.a-(Z.coneSpin||0)*Math.PI/180, u=((t+Math.PI/2)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+    fillToggleBit(free ? Math.floor(coneFillPart(u)) : h.fill, free); });   // v0.066: выбранный бит 0 ↔ 1, вырез не меняется
   $("coneRays").value = Z.coneRays || "off";
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; coneRaysUi(); save(); renderCone(); };
   coneRaysUi();   // v0.576: кнопки ✳ нет / выдел. / все
@@ -13274,7 +13314,7 @@ function lpWin(col, vis){
    своими столбиками (fieldInfoFit двигает их отступом) — каждая сама по себе, шестигранником, её отступ не трогается */
 function lpBar(col, vis){
   const bar = document.getElementById("rowInputBar"); if (!bar) return;
-  if (bar.closest("#sfzSettingsMenus")) return;
+  if (bar.closest("#sfzSettingsMenus,#sfzSettingsDock")) return;
   bar.classList.add("lpt");
   if (!bar._lpObs && lpTag._mo) { bar._lpObs = 1; lpTag._mo.observe(bar, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] }); }
   const t = TZC_H / (2 * Math.sqrt(3)), sd = 2 * t, solo = new Set(["bRowsStartTop", "coneLockAll", "bConeAllHome"]), runs = []; let run = [];
@@ -15761,8 +15801,8 @@ function init(){
         if (rb) rb.style.display = vis || zen || top ? "" : "none";
         if(top){const teeth=$("coneAlignTools"),boxes=teeth?[...teeth.children].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect()).sort((a,b)=>a.left-b.left):[];
           const gap=boxes.length>1?boxes[1].left-boxes[0].right:2,hy=0;
-          chain.filter(x=>x.id!=="bConeFrame").forEach((x,i)=>{const a=boxes[i],next=boxes[i+1],anchor=a?(next?(a.right+next.left)/2:a.right+gap/2):(boxes[0]?.left||UB.getBoundingClientRect().right)+62*(i+1);x.style.left=(anchor-24)+"px";x.style.top=hy+"px";});
-          const frame=$("bConeFrame");if(frame){frame.style.left=((boxes[0]?.left||0)-gap/2-24)+"px";frame.style.top=hy+"px";}
+          chain.filter(x=>x.id!=="bConeFrame").forEach((x,i)=>{const a=boxes[i],next=boxes[i+1],anchor=a?(next?(a.right+next.left)/2:a.right+gap/2):(boxes[0]?.left||UB.getBoundingClientRect().right)+62*(i+1);x.style.left=(anchor-30)+"px";x.style.top=hy+"px";});
+          const frame=$("bConeFrame");if(frame){frame.style.left=((boxes[0]?.left||0)-gap/2-30)+"px";frame.style.top=hy+"px";}
         }
         else chain.forEach((x, i) => { x.style.left = (x0 + 20 * i) + "px"; x.style.top = (yb - (i % 2 ? 20 : 0)) + "px"; });
         [[up, t, r.top], [dn, b, r.bottom - zh - 22]].forEach(([a, on, y]) => { a.classList.toggle("on", on); if (on) { a.style.left = Math.round(r.left) + "px"; a.style.width = Math.round(r.width) + "px"; a.style.top = Math.round(y) + "px"; } });
