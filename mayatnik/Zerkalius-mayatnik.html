@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.001. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.002. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.001</title>
+<title>Zerkalius Маятник — v0.002</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -18,6 +18,7 @@
   Цвет («мерцание»): клетка была пустой — чёрная (здесь: светлая); была красной или синей — чёрная;
     была чёрной — синяя, если стала 1, красная, если стала 0.
   Маятник (MacroSequencePendulumStepByStep): вершины якорь, −1, +1, −2, +2, … в одной строке.
+  v0.002: при «Построить» поле перерисовывается раз в секунду, ползунок «кадр» (опорные кадры), масштаб колесом / пальцами.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -42,8 +43,9 @@ button.go{background:#1f3b63;border-color:#2f5d99}
 button[aria-pressed=true]{background:#2f5d99}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
 #stat{font:12px var(--mono);color:var(--mute);margin-left:auto;white-space:nowrap}
-#wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0}
-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0;cursor:grab;touch-action:none;overscroll-behavior:contain}
+#wrap.drag{cursor:grabbing}
+canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 #tip{position:fixed;pointer-events:none;font:12px var(--mono);background:#000c;border:1px solid var(--line);padding:2px 6px;border-radius:3px;display:none}
 .lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute)}
 .lg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
@@ -51,7 +53,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.001</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.002</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -82,9 +84,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;backg
       <option value="col">цвета перекрытий</option>
       <option value="bits">только биты</option>
     </select></label>
-    <label>масштаб <select id="zoom">
-      <option value="fit">по ширине</option><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option><option value="4">4×</option><option value="8">8×</option>
-    </select></label>
+    <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
+      <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
+      <button id="zFit">по ширине</button>
+    </span>
+    <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
   </div>
@@ -150,9 +154,10 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   const KEY = 'zerk_mayatnik';
   let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4 };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
-  let f = null, geo = null, k = 0, img = null, playing = false, raf = 0;
+  let f = null, geo = null, k = 0, img = null, playing = false, raf = 0, snaps = new Map(), interval = 1, target = 0;
 
   // Палитра: [пусто], затем [бит][цвет]
   const EMPTY = [0, 0, 0];
@@ -162,13 +167,13 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   function clampInt(v, a, b, d) { v = Math.round(Number(v)); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; }
   function readUI() {
     st.rows = clampInt($('rows').value, 8, 2048, 512); st.steps = clampInt($('steps').value, 1, 4096, 512);
-    st.mode = $('mode').value; st.bg = $('bg').value; st.view = $('view').value; st.zoom = $('zoom').value;
+    st.mode = $('mode').value; st.bg = $('bg').value; st.view = $('view').value;
     st.speed = clampInt($('speed').value, 1, 32, 4);
     $('rows').value = st.rows; $('steps').value = st.steps; save();
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('zoom').value = st.zoom; $('speed').value = st.speed;
+    $('view').value = st.view; $('speed').value = st.speed;
   }
 
   function reset() {
@@ -176,45 +181,91 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     const S = st.mode === 'one' ? 1 : st.steps;
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
     f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
+    // v0.002: опорные кадры для ползунка «кадр» — все кадры не влезут (2024 × 24 МБ), поэтому каждый interval-й,
+    // не больше ~200 МБ на всё; нужный кадр досчитывается от ближайшего опорного
+    snaps = new Map(); interval = Math.max(1, Math.ceil(S * 2 * f.val.length / 200e6)); snap();
+    target = 0; const fr = $('frame'); fr.max = S; fr.value = 0;
     cv.width = geo.W; cv.height = st.rows; img = g.createImageData(geo.W, st.rows);
     layout(); draw();
   }
   function total() { return st.mode === 'one' ? 1 : st.steps; }
+  function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice(), col: f.col.slice() }); }
   function addOne() {
     if (k >= total()) return false;
-    MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++; return true;
+    MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++;
+    if (k % interval === 0) snap();
+    return true;
   }
+  // Перейти к кадру t: назад — от ближайшего опорного кадра, вперёд — досчитать
+  function goTo(t) {
+    stop(); if (!f) reset();
+    t = Math.max(0, Math.min(total(), t | 0));
+    if (t < k) { let s = 0; for (const key of snaps.keys()) if (key <= t && key > s) s = key;
+      const o = snaps.get(s); f.val.set(o.val); f.col.set(o.col); k = s; }
+    target = t;
+    if (k === t) { draw(); return; }
+    fast = true; t0 = 0; playing = true; raf = requestAnimationFrame(tick);
+  }
+  // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
+  const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
   function draw() {
-    const P = PAL[st.view] || PAL.col, d = img.data, { val, col } = f;
-    for (let i = 0, j = 0; i < val.length; i++, j += 4) {
-      const v = val[i], c = v < 0 ? EMPTY : P[v][col[i]];
-      d[j] = c[0]; d[j + 1] = c[1]; d[j + 2] = c[2]; d[j + 3] = 255;
-    }
+    const P = PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { val, col } = f;
+    const empty = rgba(EMPTY), T = new Uint32Array(6);
+    for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
+    for (let i = 0; i < val.length; i++) { const v = val[i]; px[i] = v < 0 ? empty : T[v * 3 + col[i]]; }
     g.putImageData(img, 0, 0);
-    $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}`;
+    status();
   }
+  function status() {
+    $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
+    $('frame').value = k; $('frameV').textContent = k;
+  }
+  // v0.002: масштаб как в картах. st.zoom — 'fit' (по ширине) или число: экранных пикселей на бит.
+  const fitScale = () => Math.max(0.02, (wrap.clientWidth - 32) / geo.W);
+  const scale = () => st.zoom === 'fit' ? fitScale() : st.zoom;
   function layout() {
-    let s;
-    if (st.zoom === 'fit') s = Math.max(0.1, (wrap.clientWidth - 32) / geo.W);
-    else s = Number(st.zoom);
-    cv.style.width = Math.round(geo.W * s) + 'px'; cv.style.height = Math.round(st.rows * s) + 'px';
+    const s = scale();
+    cv.style.width = geo.W * s + 'px'; cv.style.height = st.rows * s + 'px';
+    $('zoomV').textContent = (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
+    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit'));
   }
-  // «Построить» — те же вершины, но порциями по ~12 мс на кадр: страница не замирает, виден прогресс
-  let fast = false, t0 = 0;
+  // Масштаб s, точка экрана (x, y) остаётся над тем же битом
+  function zoomTo(s, x, y) {
+    if (!geo) return;
+    const r = cv.getBoundingClientRect();
+    if (x === undefined) { const w = wrap.getBoundingClientRect(); x = w.left + w.width / 2; y = w.top + w.height / 2; }
+    const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
+    s = Math.max(Math.min(fitScale(), 1) / 2, Math.min(40, s));
+    st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout();
+    const n = cv.getBoundingClientRect();
+    wrap.scrollLeft += n.left + fx * n.width - x; wrap.scrollTop += n.top + fy * n.height - y;
+  }
+  function fit() { st.zoom = 'fit'; save(); layout(); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
+  // «Построить» — те же вершины, порциями по ~40 мс на кадр: страница не замирает, виден прогресс.
+  // v0.002: при «Построить» большое поле (2024 × 6070 = 12 млн пикселей) перерисовывается не каждый кадр, а раз в секунду —
+  // прежде перерисовка съедала почти всё время, и 2024 вершины шли ~8 минут. Считается при этом каждая вершина;
+  // «▶ Анимация» по-прежнему показывает каждый кадр (скорость 1 = вершина на кадр).
+  let fast = false, t0 = 0, lastDraw = 0;
   function build() {
     reset(); fast = true; t0 = performance.now(); play();
   }
+  const more = () => k < target && addOne();
   function tick() {
     raf = 0; if (!playing) return;
-    if (fast) { const t = performance.now(); while (performance.now() - t < 12) if (!addOne()) { stop(); break; } }
-    else for (let n = 0; n < st.speed; n++) if (!addOne()) { stop(); break; }
-    draw();
-    if (!playing && t0) { $('stat').textContent += ` · ${Math.round(performance.now() - t0)} мс`; t0 = 0; }
+    if (fast) { const t = performance.now(); while (performance.now() - t < 40) if (!more()) { stop(); break; } }
+    else for (let n = 0; n < st.speed; n++) if (!more()) { stop(); break; }
+    if (k >= target) stop();
+    const now = performance.now(), big = f.val.length > 2e6;
+    if (!playing || !fast || !big || now - lastDraw > 1000) { draw(); lastDraw = now; }   // «▶ Анимация» рисует каждый кадр
+    else status();
+    if (!playing && t0) { $('stat').textContent += ` · ${((now - t0) / 1000).toFixed(1)} с`; t0 = 0; }
     if (playing) raf = requestAnimationFrame(tick);
   }
   function play() {
     if (playing) { stop(); return; }
-    if (!f || k >= total()) reset();
+    if (!f) reset();
+    else if (k >= total()) { const o = snaps.get(0); f.val.set(o.val); f.col.set(o.col); k = 0; }   // повтор с кадра 0
+    target = total();
     playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = 'Ⅱ Пауза';
     raf = requestAnimationFrame(tick);
   }
@@ -240,19 +291,53 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
 
   $('bBuild').onclick = build;
   $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
-  $('bStep').onclick = () => { stop(); if (!f) reset(); addOne(); draw(); };
+  $('bStep').onclick = () => goTo(k + 1);
+  // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
+  $('frame').addEventListener('input', () => { const t = +$('frame').value; $('frameV').textContent = t; if (f && f.val.length <= 2e6) goTo(t); });
+  $('frame').addEventListener('change', () => goTo(+$('frame').value));
   $('bReset').onclick = reset;
   $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
   $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   $('view').addEventListener('change', () => { readUI(); draw(); });
-  $('zoom').addEventListener('change', () => { readUI(); layout(); });
   $('speed').addEventListener('input', readUI);
+  $('zIn').onclick = () => zoomTo(scale() * 1.5);
+  $('zOut').onclick = () => zoomTo(scale() / 1.5);
+  $('zFit').onclick = fit;
   addEventListener('resize', () => { if (st.zoom === 'fit' && geo) layout(); });
+  // Колесо — масштаб к курсору (плавно, тачпад тоже)
+  wrap.addEventListener('wheel', e => {
+    if (!geo) return; e.preventDefault();
+    const d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    zoomTo(scale() * Math.exp(-Math.max(-300, Math.min(300, d)) * 0.0025), e.clientX, e.clientY);
+  }, { passive: false });
+  // Тянуть — сдвиг; два пальца — масштаб; двойной щелчок — по ширине
+  const pts = new Map(); let pan = null, pinch = null;
+  wrap.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.button !== 1) return;
+    if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); wrap.setPointerCapture(e.pointerId);
+    if (pts.size === 1) { pan = { x: e.clientX, y: e.clientY, sl: wrap.scrollLeft, st: wrap.scrollTop }; wrap.classList.add('drag'); }
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale() }; pan = null; }
+  });
+  wrap.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch.d > 0) zoomTo(pinch.s * d / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); }
+    else if (pan) { wrap.scrollLeft = pan.sl - (e.clientX - pan.x); wrap.scrollTop = pan.st - (e.clientY - pan.y); }
+  });
+  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); } };
+  wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+  wrap.addEventListener('dblclick', fit);
   addEventListener('keydown', e => {
     if (e.target.closest('input,select')) return;
+    if (e.key === '+' || e.key === '=') { zoomTo(scale() * 1.5); return; }
+    if (e.key === '-' || e.key === '_') { zoomTo(scale() / 1.5); return; }
+    if (e.key === '0') { fit(); return; }
     if (e.code === 'Space') { e.preventDefault(); play(); }
-    else if (e.key === 'ArrowRight') { $('bStep').click(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); goTo(k + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(k - 1); }
   });
   cv.addEventListener('pointermove', e => {
     if (!f) return;
