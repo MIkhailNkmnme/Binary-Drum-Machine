@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.002. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.003. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.002</title>
+<title>Zerkalius Маятник — v0.003</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -19,6 +19,7 @@
     была чёрной — синяя, если стала 1, красная, если стала 0.
   Маятник (MacroSequencePendulumStepByStep): вершины якорь, −1, +1, −2, +2, … в одной строке.
   v0.002: при «Построить» поле перерисовывается раз в секунду, ползунок «кадр» (опорные кадры), масштаб колесом / пальцами.
+  v0.003: обводка «шумной» зоны (ступенчатая, по данным); готовые кнопки «хорр» 256 / 512 / 1024 / 2024 / 4096; предел строк 2048 → 4096.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -53,13 +54,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.002</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.003</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
   <div class="grp">
-    <label>строк <input id="rows" type="number" min="8" max="2048" step="1" value="512"></label>
-    <label>вершин <input id="steps" type="number" min="1" max="4096" step="1" value="512"></label>
+    <label>строк <input id="rows" type="number" min="8" max="4096" step="1" value="512"></label>
+    <label>вершин <input id="steps" type="number" min="1" max="8192" step="1" value="512"></label>
+    <span class="grp" title="Сразу построить маятник: строк и вершин поровну">хорр <button class="pre" data-n="256">256</button><button class="pre" data-n="512">512</button><button class="pre go" data-n="1024">1024</button><button class="pre go" data-n="2024">2024</button><button class="pre" data-n="4096" title="~10 минут, ~0,5 ГБ памяти">4096</button></span>
     <label>ход <select id="mode">
       <option value="pend">лево-право (маятник)</option>
       <option value="right">вправо</option>
@@ -84,6 +86,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="col">цвета перекрытий</option>
       <option value="bits">только биты</option>
     </select></label>
+    <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
       <button id="zFit">по ширине</button>
@@ -152,7 +155,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4 };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -166,14 +169,14 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
 
   function clampInt(v, a, b, d) { v = Math.round(Number(v)); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; }
   function readUI() {
-    st.rows = clampInt($('rows').value, 8, 2048, 512); st.steps = clampInt($('steps').value, 1, 4096, 512);
+    st.rows = clampInt($('rows').value, 8, 4096, 512); st.steps = clampInt($('steps').value, 1, 8192, 512);   // v0.003: до 4096 строк (поле ~12 300 × 4096, ~0,5 ГБ, ~10 мин)
     st.mode = $('mode').value; st.bg = $('bg').value; st.view = $('view').value;
     st.speed = clampInt($('speed').value, 1, 32, 4);
     $('rows').value = st.rows; $('steps').value = st.steps; save();
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed;
+    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline;
   }
 
   function reset() {
@@ -204,7 +207,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
       const o = snaps.get(s); f.val.set(o.val); f.col.set(o.col); k = s; }
     target = t;
     if (k === t) { draw(); return; }
-    fast = true; t0 = 0; playing = true; raf = requestAnimationFrame(tick);
+    fast = true; t0 = 0; playing = true; next();
   }
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
@@ -213,8 +216,29 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
     for (let i = 0; i < val.length; i++) { const v = val[i]; px[i] = v < 0 ? empty : T[v * 3 + col[i]]; }
+    if (st.outline) outline(px);
     g.putImageData(img, 0, 0);
     status();
+  }
+  // v0.003: обводка «шумной» зоны. Снаружи неё биты все одинаковые (полосы дают только цвета), поэтому край —
+  // крайний левый и правый бит, отличный от фона: 0 на пустом поле и на поле «все 1», 1 на поле «все 0».
+  // Ступеньки соединяются по строке; толщина — в битах, чтобы линию было видно и при мелком масштабе.
+  const GOLD = rgba([255, 204, 0]);
+  function outline(px) {
+    const { W, H, val } = f, Z = st.bg === '0' ? 1 : 0, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
+    const dot = (r, c) => { for (let y = r - h; y < r - h + t; y++) if (y >= 0 && y < H)
+      for (let x = c - h; x < c - h + t; x++) if (x >= 0 && x < W) px[y * W + x] = GOLD; };
+    const seg = (r, a, b) => { for (let c = Math.min(a, b); c <= Math.max(a, b); c++) dot(r, c); };
+    let pl = -1, pr = -1;
+    for (let r = 0; r < H; r++) {
+      const row = r * W; let l = -1, rr = -1;
+      for (let c = 0; c < W; c++) if (val[row + c] === Z) { l = c; break; }
+      if (l < 0) { pl = pr = -1; continue; }
+      for (let c = W - 1; c >= l; c--) if (val[row + c] === Z) { rr = c; break; }
+      if (pl < 0) seg(r, l, rr);                       // верхний край зоны
+      else { seg(r, pl, l); seg(r, pr, rr); }          // ступеньки слева и справа
+      pl = l; pr = rr;
+    }
   }
   function status() {
     $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
@@ -236,11 +260,13 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     if (x === undefined) { const w = wrap.getBoundingClientRect(); x = w.left + w.width / 2; y = w.top + w.height / 2; }
     const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
     s = Math.max(Math.min(fitScale(), 1) / 2, Math.min(40, s));
-    st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout();
+    st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout(); thick();
     const n = cv.getBoundingClientRect();
     wrap.scrollLeft += n.left + fx * n.width - x; wrap.scrollTop += n.top + fy * n.height - y;
   }
-  function fit() { st.zoom = 'fit'; save(); layout(); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
+  function fit() { st.zoom = 'fit'; save(); layout(); thick(); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
+  let lastT = 0;   // толщина обводки зависит от масштаба — перерисовать, только когда она поменялась
+  function thick() { const t = Math.max(1, Math.ceil(1.5 / scale())); if (st.outline && f && t !== lastT && !playing) { lastT = t; draw(); } }
   // «Построить» — те же вершины, порциями по ~40 мс на кадр: страница не замирает, виден прогресс.
   // v0.002: при «Построить» большое поле (2024 × 6070 = 12 млн пикселей) перерисовывается не каждый кадр, а раз в секунду —
   // прежде перерисовка съедала почти всё время, и 2024 вершины шли ~8 минут. Считается при этом каждая вершина;
@@ -251,15 +277,15 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   }
   const more = () => k < target && addOne();
   function tick() {
-    raf = 0; if (!playing) return;
-    if (fast) { const t = performance.now(); while (performance.now() - t < 40) if (!more()) { stop(); break; } }
+    raf = 0; timer = 0; if (!playing) return;
+    if (fast) { const t = performance.now(), budget = document.hidden ? 400 : 40; while (performance.now() - t < budget) if (!more()) { stop(); break; } }
     else for (let n = 0; n < st.speed; n++) if (!more()) { stop(); break; }
     if (k >= target) stop();
     const now = performance.now(), big = f.val.length > 2e6;
     if (!playing || !fast || !big || now - lastDraw > 1000) { draw(); lastDraw = now; }   // «▶ Анимация» рисует каждый кадр
     else status();
     if (!playing && t0) { $('stat').textContent += ` · ${((now - t0) / 1000).toFixed(1)} с`; t0 = 0; }
-    if (playing) raf = requestAnimationFrame(tick);
+    if (playing) next();
   }
   function play() {
     if (playing) { stop(); return; }
@@ -267,10 +293,14 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
     else if (k >= total()) { const o = snaps.get(0); f.val.set(o.val); f.col.set(o.col); k = 0; }   // повтор с кадра 0
     target = total();
     playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = 'Ⅱ Пауза';
-    raf = requestAnimationFrame(tick);
+    next();
   }
+  // v0.003: быстрое построение — на таймере, а не на кадрах: в скрытой вкладке кадры не идут, и расчёт стоял;
+  // таймер в фоне браузер замедляет до раза в секунду, поэтому там порция больше (400 мс)
+  let timer = 0;
+  function next() { if (fast) timer = setTimeout(tick, 0); else raf = requestAnimationFrame(tick); }
   function stop() {
-    playing = false; fast = false; cancelAnimationFrame(raf); raf = 0;
+    playing = false; fast = false; cancelAnimationFrame(raf); raf = 0; clearTimeout(timer); timer = 0;
     $('bPlay').setAttribute('aria-pressed', 'false'); $('bPlay').textContent = '▶ Анимация';
   }
 
@@ -290,6 +320,10 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   const fname = ext => `mayatnik-${st.mode}-${st.rows}x${total()}-${st.bg}.${ext}`;
 
   $('bBuild').onclick = build;
+  // v0.003: готовые кнопки — строк = вершин = N, ход «лево-право», сразу «Построить»
+  document.querySelectorAll('button.pre').forEach(b => b.onclick = () => {
+    $('rows').value = $('steps').value = b.dataset.n; $('mode').value = 'pend'; build();
+  });
   $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
   $('bStep').onclick = () => goTo(k + 1);
   // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
@@ -300,6 +334,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   $('view').addEventListener('change', () => { readUI(); draw(); });
+  $('outline').addEventListener('change', () => { st.outline = $('outline').checked; save(); if (f) draw(); });
   $('speed').addEventListener('input', readUI);
   $('zIn').onclick = () => zoomTo(scale() * 1.5);
   $('zOut').onclick = () => zoomTo(scale() / 1.5);
