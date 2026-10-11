@@ -1,4 +1,4 @@
-/* Affine scene composition and periodic mirror paths. No intermediate viewport clipping. */
+/* v0.1121: manual mirror snapping; affine scene composition and periodic mirror paths. */
 (() => {
   'use strict';
   const identity = () => [1,0,0,1,0,0];
@@ -8,6 +8,28 @@
   function copies(mirrors,reflect){let out=[{matrix:identity(),mask:0}];mirrors.forEach((m,i)=>{if(m.on){const r=reflect(m.x,m.y,m.angle);out=out.concat(out.map(c=>({matrix:multiply(r,c.matrix),mask:c.mask|(1<<i)})));}});return out;}
   function bounds(items){let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const item of items){const b=item.bounds;for(const p of [[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]]]){const [x,y]=point(item.matrix,...p);x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}}return [x0,y0,x1,y1];}
   function transformRows(rows,mode){return rows.map(row=>{let s=(mode&2)?[...row].reverse().join(''):row;if(mode&1)s=s.replace(/[01]/g,bit=>bit==='0'?'1':'0');return s;});}
+  function snapAngle(angle,mirrors=[],tolerance=4*Math.PI/180){
+    const pi=Math.PI,wrap=a=>((a%pi)+pi)%pi,targets=[0,30,45,60,90,120,135,150].map(d=>d*pi/180);
+    for(const m of mirrors)targets.push(wrap(m.angle),wrap(m.angle+pi/2));
+    let result=wrap(angle),distance=tolerance,locked=false;
+    for(const target of targets){const delta=Math.abs(wrap(angle)-target),d=Math.min(delta,pi-delta);if(d<=distance){distance=d;result=target;locked=true;}}
+    return {angle:result,snapped:locked,label:Math.round(result*180/pi)+'°'};
+  }
+  function snapPosition(x,y,mirrors,width,height,radius=10,allowed=[0,0,width,height],origin=[width/2,height/2]){
+    const inside=p=>p[0]>=allowed[0]&&p[0]<=allowed[2]&&p[1]>=allowed[1]&&p[1]<=allowed[3];
+    const anchors=[{point:origin,label:'центр холста'}],segments=[];
+    for(const m of mirrors){const dx=Math.cos(m.angle),dy=Math.sin(m.angle);let lo=-Infinity,hi=Infinity,valid=true;
+      for(const [c,d,size] of [[m.x,dx,width],[m.y,dy,height]]){if(Math.abs(d)<1e-10){if(c<0||c>size)valid=false;}else{const a=-c/d,b=(size-c)/d;lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}}
+      if(!valid||lo>hi)continue;segments.push({m,dx,dy,lo,hi});anchors.push({point:[m.x,m.y],label:'центр зеркала'});
+      for(const [t,label] of [[lo,'конец линии'],[hi,'конец линии'],[(lo+hi)/2,'½ линии'],[(3*lo+hi)/4,'½ половины'],[(lo+3*hi)/4,'½ половины']])anchors.push({point:[m.x+t*dx,m.y+t*dy],label});
+    }
+    for(let i=0;i<segments.length;i++)for(let j=i+1;j<segments.length;j++){const a=segments[i],b=segments[j],cross=a.dx*b.dy-a.dy*b.dx;if(Math.abs(cross)<1e-10)continue;const t=((b.m.x-a.m.x)*b.dy-(b.m.y-a.m.y)*b.dx)/cross;if(t>=a.lo&&t<=a.hi)anchors.push({point:[a.m.x+t*a.dx,a.m.y+t*a.dy],label:'пересечение линий'});}
+    let best=null,distance=radius;
+    for(const a of anchors){if(!inside(a.point))continue;const d=Math.hypot(x-a.point[0],y-a.point[1]);if(d<=distance){distance=d;best={x:a.point[0],y:a.point[1],snapped:true,label:a.label};}}
+    if(best)return best;
+    for(const s of segments){const t=(x-s.m.x)*s.dx+(y-s.m.y)*s.dy;if(t<s.lo||t>s.hi)continue;const p=[s.m.x+t*s.dx,s.m.y+t*s.dy],d=Math.hypot(x-p[0],y-p[1]);if(inside(p)&&d<=distance){distance=d;best={x:p[0],y:p[1],snapped:true,label:'линия зеркала'};}}
+    return best||{x,y,snapped:false,label:''};
+  }
   // A small expression grammar, deliberately limited to numbers, t, constants and math.
   function expression(raw){
     const src=String(raw).replace(/\s/g,'');if(!src||src.length>256)throw Error('Формула: от 1 до 256 символов');
@@ -36,6 +58,6 @@
     if(Math.abs(fx(0)-fx(1))>1e-6||Math.abs(fy(0)-fy(1))>1e-6||Math.abs(Math.sin(fa(0)-fa(1)))>1e-6)throw Error('Начало и конец кривой должны совпадать');
     return t=>[fx(t),fy(t),fa(t)];
   }
-  const api={identity,multiply,point,placement,copies,bounds,transformRows,expression,compile};
+  const api={identity,multiply,point,placement,copies,bounds,transformRows,snapAngle,snapPosition,expression,compile};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else window.ZZMirrorScene=api;
 })();

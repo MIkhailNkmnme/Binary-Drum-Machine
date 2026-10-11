@@ -1,4 +1,4 @@
-/* v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
+/* v0.1121: магнит при ручном перемещении и повороте; v0.1120: заметные включённые ромбы, выбранные режимы и подписи зеркал/холстов; v0.1118: оси, наборы, циклы, управление в ромбах, PNG и отражения без обрезки; v0.1117: колесо и масштаб, прозрачные группы ромбов; v0.1116: Зеркалиус — рисунок хаба, свои строки, три передвижных цветных зеркала. */
 (() => {
   'use strict';
   const win = document.getElementById('w-zerkalius');
@@ -18,6 +18,7 @@
   state.tint = state.tint !== false;
   state.trace = !!state.trace;
   state.labels = !!state.labels;
+  state.magnet = state.magnet !== false;
   state.zoom=Number.isFinite(state.zoom)?clamp(state.zoom,.2,6):1;
   state.pan=Array.isArray(state.pan)&&state.pan.length===2&&state.pan.every(Number.isFinite)?state.pan:[0,0];
   if (!Array.isArray(state.rows)) state.rows = ZZ_INITIAL_ROWS.slice();
@@ -42,7 +43,7 @@
   for(const m of state.mirrors){const p=m.path;p.period=clamp(Number(p.period)||12,.25,3600);p.phase=clamp(Number(p.phase)||0,0,360);p.ampX=Number.isFinite(p.ampX)?clamp(p.ampX,0,.45):.12;p.ampY=Number.isFinite(p.ampY)?clamp(p.ampY,0,.45):.08;p.elapsed=Math.max(0,Number(p.elapsed)||0);preparePath(m);}
 
   let raf = 0, previous = 0, dirty = true, geometry = '', rowsKey = '', drawW = 0, drawH = 0, dpr = 1;
-  let persistTimer = 0, notice = '';
+  let persistTimer = 0, notice = '', snapHint = '';
   const persist = () => { clearTimeout(persistTimer); persistTimer=setTimeout(save,200); };
   const visible = () => win.getClientRects().length && !win.classList.contains('collapsed') && !win.dataset.parked && !document.hidden;
   const serp = (() => { const rows=['1'];for(let r=1;r<64;r++){const p=rows[r-1];let s='';for(let j=0;j<=r;j++)s+=(Number(p[j-1]||0)^Number(p[j]||0));rows.push(s);}return rows; })();
@@ -127,14 +128,17 @@
     const center=document.createElement('button');center.type='button';center.className='zerk-center';center.textContent=i+1;center.setAttribute('aria-label','Переместить зеркало '+(i+1));
     const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1)+' в поле');line.append(center,turn);layer.append(line);handles.push({line,center,turn});
     for(const [node,rotateMode] of [[center,false],[turn,true]]){
-      node.title=rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить';
+      node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
       node.addEventListener('pointerdown',e=>{
         if(e.button!==0)return;e.preventDefault();e.stopPropagation();node.setPointerCapture(e.pointerId);
         const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,cx=r.left+viewX(x),cy=r.top+viewY(y),start=Math.atan2(sy-cy,sx-cx);let moved=false;
         const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;stopPath(m);
-          if(rotateMode){m.angle=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start);m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
-          else{m.x=clamp(x+(ev.clientX-sx)/(drawW*state.zoom),.01,.99);m.y=clamp(y+(ev.clientY-sy)/(drawH*state.zoom),.01,.99);}changed();};
-        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);if(!moved&&rotateMode&&ev.type==='pointerup')rotate(15);else persist();};
+          const magnetic=state.magnet&&!ev.altKey,others=state.mirrors.filter(other=>other!==m&&other.on);let snapped=false;snapHint='';
+          if(rotateMode){const raw=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=magnetic?sceneMath.snapAngle(raw,others):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
+          else{m.x=clamp(x+(ev.clientX-sx)/(drawW*state.zoom),.01,.99);m.y=clamp(y+(ev.clientY-sy)/(drawH*state.zoom),.01,.99);
+            if(magnetic){const result=sceneMath.snapPosition(viewX(m.x),viewY(m.y),others.map(other=>({x:viewX(other.x),y:viewY(other.y),angle:other.angle})),drawW,drawH,10,[viewX(.01),viewY(.01),viewX(.99),viewY(.99)],[viewX(.5),viewY(.5)]);m.x=(result.x/drawW-.5-state.pan[0])/state.zoom+.5;m.y=(result.y/drawH-.5-state.pan[1])/state.zoom+.5;snapped=result.snapped;snapHint=snapped?result.label:'';}}
+          line.classList.toggle('snapped',snapped);changed();};
+        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped');snapHint='';if(!moved&&rotateMode&&ev.type==='pointerup')rotate(15);else{persist();request();}};
         node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
       });
       node.oncontextmenu=e=>{e.preventDefault();m.on=!m.on;on.checked=m.on;changed();};
@@ -211,6 +215,8 @@
   buildCycleEditor(viewGroup);
   const labelToggle=button('Аа\nподп.','Подписи зеркал и холстов',()=>{state.labels=!state.labels;changed();},viewGroup);diamond(labelToggle,'Аа\nподп.',viewGroup);
   compactUpdates.push(()=>{labelToggle.classList.toggle('on',state.labels);labelToggle.setAttribute('aria-pressed',String(state.labels));});
+  const magnetToggle=button('🧲\nмагн.','Магнит зеркал: центры, середины и половины линий; углы 30°, 45°, 60°, 90°',()=>{state.magnet=!state.magnet;changed();},viewGroup);diamond(magnetToggle,'🧲\nмагн.',viewGroup);
+  compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
   const annotations=document.createElement('div');annotations.className='zerk-annotations';annotations.hidden=!state.labels;stage.append(annotations);
   const annotationNodes=Array.from({length:6},()=>{const el=document.createElement('span');el.className='zerk-annotation';annotations.append(el);return el;});
   tools.hidden=true;tools.querySelector('.pminbtn').textContent='×';tools.querySelector('.pminbtn').setAttribute('aria-label','Закрыть настройку');tools.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();tools.hidden=true;};
@@ -366,7 +372,7 @@
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=n.color;el.classList.toggle('off',!!n.off);});}
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
-    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(moving?' · '+moving+' по кривым':' · колесо — масштаб');if(status.textContent!==message)status.textContent=message;platePlace(tools);
+    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(moving?' · '+moving+' по кривым':' · колесо — масштаб');if(status.textContent!==message)status.textContent=message;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){

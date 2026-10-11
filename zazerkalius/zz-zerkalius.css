@@ -6,6 +6,8 @@
 .zerk-mirror{position:absolute;height:32px;transform-origin:50% 50%;pointer-events:none}
 .zerk-mirror::before{content:"";position:absolute;left:0;right:0;top:15px;border-top:1px dashed var(--mirror-color);opacity:.85}
 .zerk-mirror.off::before{opacity:.25}
+.zerk-mirror.snapped::before{border-top:2px solid #fff;opacity:1}
+.zerk-mirror.snapped button{background:color-mix(in srgb,var(--mirror-color) 62%,#050806);color:#fff}
 .zerk-mirror button{position:absolute;top:0;display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;margin:0;border:1px solid var(--mirror-color);border-radius:0;background:#08110e;color:var(--mirror-color);font:700 13px/1 var(--ff,monospace);pointer-events:auto;touch-action:none;cursor:grab;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .zerk-mirror .zerk-center{left:calc(50% - 16px)}
 .zerk-mirror .zerk-turn{width:28px;height:28px;top:2px;cursor:alias}
