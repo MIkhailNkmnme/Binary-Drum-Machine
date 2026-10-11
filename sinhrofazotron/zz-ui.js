@@ -828,6 +828,12 @@ function sfzSettingsInit(){
   const menus = $("sfzSettingsMenus"), view = $("sfzViewSettings"), rows = $("sfzRowsSettings"), build = $("sfzBuildSettings");
   if (!menus || menus._ready) return;
   menus._ready = true;
+  const pane=$("rowsPane"); if(pane)pane.insertBefore(menus,pane.querySelector(":scope > .pane-head"));
+  menus.classList.remove("pane-fold-hid","pane-icon-body-hid");
+  for(const [i,text] of ["Вид","01","+"].entries()){
+    const summary=menus.querySelectorAll("summary")[i];if(!summary)continue;
+    const title=["Вид","Строки","Достройка"][i];summary.textContent=text;summary.title=title;summary.setAttribute("aria-label",title);
+  }
   for (const id of ["bFieldL", "bFieldHide", "bFieldR", "bFieldOnly", "fontSel", "fsBox", "laneView", "ovOp", "bOvReset", "rowsAlign", "bShowFM", "bTri90", "bShow01", "bTriView", "bTriGlass", "laneCount", "bBrDepth"]) {
     const el = $(id); if (el) { triOff(el); tzcClean(el); view.appendChild(el); }
   }
@@ -837,8 +843,8 @@ function sfzSettingsInit(){
   const rings = document.createElement("button"); rings.type = "button"; rings.textContent = "Ромбы колец";
   rings.title = "Показать столбцы видов колец и заполнения";
   rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
-  const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь вида конуса";
-  coneView.onclick = () => { Z.coneViewToolsHidden = false; save(); renderCone(); }; view.appendChild(coneView);
+  const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь «Вид»";
+  coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид"); save(); renderCone(); }; view.appendChild(coneView);
   const close = () => menus.querySelectorAll("details[open]").forEach(d => d.open = false);
   document.addEventListener("pointerdown", e => { if (!menus.contains(e.target)) close(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = document.activeElement.closest("#sfzSettingsMenus details"); close(); if (active) active.querySelector("summary").focus(); } });
@@ -1946,6 +1952,7 @@ const LAS_SEG = [
 function lasSegInit(){
   if (lasSegInit._ok) return; lasSegInit._ok = 1;
   for (const d of LAS_SEG) {
+    if (d.id === "bConeSlits") { document.querySelectorAll('.lseg[data-seg="bConeSlits"]').forEach(el=>el.remove()); continue; }
     const el = document.getElementById(d.id); if (!el) continue;
     let sp, last = el;
     d.v.forEach((v, i) => { if (!sp || (d.row && i % d.row === 0)) { sp = document.createElement("span"); sp.className = "cunit lseg"; sp.dataset.seg = d.id; last.after(sp); last = sp; }
@@ -6850,44 +6857,11 @@ async function coneBalanceAutoEqualize(){
   }
 }
 function coneViewToolsSync(cv){
-  const host = $("coneMain") && $("coneMain").parentElement; if (!host) return 0;
-  let box = $("coneViewTools");
-  if (!box) {
-    box = document.createElement("div"); box.id = "coneViewTools"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Вид конуса"); host.appendChild(box);
-    const handles = document.createElement("div"); handles.className = "grape-handles";
-    const move = document.createElement("button"), close = document.createElement("button"); move.type = close.type = "button";
-    move.className = "grape-move"; move.textContent = "✥"; move.title = "Переместить гроздь вида конуса";
-    close.textContent = "×"; close.title = "Скрыть гроздь; вернуть: верхнее меню Вид → Гроздь вида конуса";
-    close.onclick = e => { e.stopPropagation(); Z.coneViewToolsHidden = true; box.hidden = true; save(); };
-    move.addEventListener("pointerdown", e => {
-      if (e.button) return; e.preventDefault(); e.stopPropagation(); move.setPointerCapture(e.pointerId);
-      box._sfzDragging=true;
-      const id = e.pointerId, sx = e.clientX, sy = e.clientY, start = box.getBoundingClientRect(), canvas = cv.getBoundingClientRect();
-      const drag = ev => { if (ev.pointerId !== id) return; Z.coneViewToolsXY = [start.left - canvas.left + ev.clientX - sx, start.top - canvas.top + ev.clientY - sy]; coneViewToolsSync(cv); };
-      const end = ev => { if (ev.pointerId !== id) return; move.removeEventListener("pointermove", drag); move.removeEventListener("pointerup", end); move.removeEventListener("pointercancel", end); if (move.hasPointerCapture(id)) move.releasePointerCapture(id); box._sfzDragging=false; sfzWeaveKick(); save(); };
-      move.addEventListener("pointermove", drag); move.addEventListener("pointerup", end); move.addEventListener("pointercancel", end);
-    });
-    handles.append(move, close); box.appendChild(handles);
-  }
-  box.hidden = !!Z.coneViewToolsHidden;
-  for (const [id, caption] of [["bConeCanon", "◯ мин"], ["bShowFix", "🔴 ⇄"], ["bShowFixIr", "🟢 ⇄"], ["coneSame", "цвет"], ["coneOnlySel", "выдел"], ["coneNoPick", "🚫"], ["coneSect", "◔"], ["coneClean", "◯"], ["conePoly", "⬡"], ["bConeArcs", "◠"], ["bConeHits", "✦"], ["bLightSolid", "☀"], ["bSunParts", "доли"], ["coneBit1", "①"], ["coneRaysB", null], ["coneGlow", "✨"]]) {
-    const source = $(id); if (!source) continue;
-    const node = source.matches("input") ? source.closest("label") : source;
-    if (!node || node.parentElement === box) continue;
-    triOff(node); tzcClean(node); node.classList.remove("w2", "w4", "wm"); node.removeAttribute("data-w1");
-    if (caption !== null) {
-      if (source !== node) { for (const child of [...node.childNodes]) if (child !== source) child.remove(); node.appendChild(document.createTextNode(caption)); }
-      else node.textContent = caption;
-    }
-    node.setAttribute("aria-label", node.title); box.appendChild(node);
-  }
-  const cr = cv.getBoundingClientRect(), anchor = box.offsetParent || host, hr = anchor.getBoundingClientRect();
-  const layout = sfzGrapeLayout(box, [...box.children].filter(e => e.matches("button,label")), "вид");
-  const G = coneGeom, cx = G && G.dpr ? G.cx / G.dpr : cr.width / 2, tools = $("coneBalanceTools"), tw = tools && tools.offsetWidth || 360;
-  const saved = Z.coneViewToolsXY, px = Array.isArray(saved) ? saved[0] : cx - tw / 2 - layout.width - 8, py = Array.isArray(saved) ? saved[1] : 0;
-  const x = Math.max(0, Math.min(Math.max(0, cr.width - layout.width), px)), y = Math.max(0, Math.min(Math.max(0, cr.height - layout.height - 22), py));
-  box.style.left = (cr.left + x - hr.left - anchor.clientLeft + anchor.scrollLeft) + "px";
-  box.style.top = (cr.top + y - hr.top - anchor.clientTop + anchor.scrollTop) + "px";
+  // View controls belong to their book; a separate floating box detached them from its header.
+  const group=document.querySelector(".cgrp.cg-vid"), box=group&&group.querySelector(":scope > .cgb");
+  if(!box)return 0;
+  const old=$("coneViewTools");
+  if(old){for(const node of [...old.children])if(node.matches("button,label"))box.appendChild(node);old.remove();}
   return 0;
 }
 function coneBalanceToolsSync(cv){
@@ -11322,7 +11296,7 @@ function solPanelOrganizeInit(C){
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpTop", "sfzBookUp", "sfzBookBottom", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpTop", "sfzRope", "sfzBookUp", "sfzBookBottom", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
@@ -11574,7 +11548,7 @@ function cgrpInit(){
     const follow=g=>{
       if(done.has(g)||active.has(g))return; active.add(g);
       const L=Z.cgrpLink[g.dataset.g], parent=L&&gByKey(L.to);
-      if(parent && onCanvas(g) && onCanvas(parent) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && parent.getClientRects().length){
+      if(parent && !Z.cgrpTop?.[g.dataset.g] && onCanvas(g) && onCanvas(parent) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && parent.getClientRects().length){
         follow(parent); const r=parent.getBoundingClientRect(), wr=wb.getBoundingClientRect();
         let x=r.left+(L.dx||0),y=r.top+solPanelRowStep(parent),top=wbTop(x,g.offsetWidth);
         if(y+g.offsetHeight>wr.bottom-8 && y>top && x+g.offsetWidth+172<wr.right){x+=Math.max(160,parent.offsetWidth)+12;y=wbTop(x,g.offsetWidth);}
@@ -11587,6 +11561,7 @@ function cgrpInit(){
     if (document.body.classList.contains("sol-mobile")) return;
     for (const g of panels()) if ((typeof nodePin(g) === "number" || (Z.cgrpTop && Z.cgrpTop[g.dataset.g]) || (Z.cgrpEdge && Z.cgrpEdge[g.dataset.g])) && onCanvas(g) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length) nodePlace(g);
     if (window.zzPanelOrganizeSync) window.zzPanelOrganizeSync();
+    if (window.zzSfzRopeSync) window.zzSfzRopeSync();
     sfzWeaveKick();
   };
   setInterval(() => { if (!document.hidden && !ZZ_BG) linkSync(); }, 300);
@@ -11653,9 +11628,10 @@ function cgrpInit(){
     const topPin = Z.cgrpTop && Z.cgrpTop[g.dataset.g];
     if (topPin && !g.classList.contains("cdrag") && !g.classList.contains("pdrag")) {
       const wr = $("w-cone").getBoundingClientRect(), top = $("top").getBoundingClientRect();
-      const x = wr.left + Math.max(0, wr.width - g.offsetWidth) * Math.max(0, Math.min(1, topPin.x));
+      const rope = sfzRopeState(), lower = topPin.side === "bottom";
+      const x = topPin.locked && Number.isFinite(topPin.holdX) ? wr.left + topPin.holdX : wr.left + Math.max(0, wr.width - g.offsetWidth) * topPin.x + (lower ? 0 : rope.x);
       g.classList.add("cfloat", "cg-abovebody"); g.classList.remove("cfld");
-      const y=topPin.side==="bottom"?wb.getBoundingClientRect().bottom-8-g.offsetHeight:top.bottom;
+      const y = topPin.locked && Number.isFinite(topPin.holdY) ? top.bottom + topPin.holdY : lower ? wb.getBoundingClientRect().bottom-8-g.offsetHeight : top.bottom + rope.y;
       g.style.left = Math.round(x) + "px"; g.style.top = Math.round(y) + "px"; return;
     }
     const f = g.parentElement === tl && Z.cgrpFld[g.dataset.g], fr = f && solZoneRect(f.z);   // v0.348: на поле строк; v0.954: и на левой панели
@@ -11769,8 +11745,15 @@ function cgrpInit(){
       nodeUnpin(g); delete Z.cgrpLink[key]; delete Z.cgrpFld[key];
       if(g.parentElement!==tl)undock(g);
       nodeSetPos(g,r.left,r.top);
-      if(!pinned){const wr=$("w-cone").getBoundingClientRect();Z.cgrpTop ||= {};Z.cgrpTop[key]={x:Math.max(0,Math.min(1,(r.left-wr.left)/Math.max(1,wr.width-g.offsetWidth))),side:Z.sfzBookUp?.[key]?"bottom":"top"};}
+      if(!pinned){const wr=$("w-cone").getBoundingClientRect(), side=Z.sfzBookUp?.[key]?"bottom":"top", rope=sfzRopeState();Z.cgrpTop ||= {};Z.cgrpTop[key]={x:(r.left-wr.left-(side==="top"?rope.x:0))/Math.max(1,wr.width-g.offsetWidth),side};}
       place(g); sfzGrapeSync(g); linkSync(); save();
+    };
+    g._sfzPinLock = () => {
+      const pin=Z.cgrpTop?.[g.dataset.g]; if(!pin)return;
+      const r=g.getBoundingClientRect(), wr=$("w-cone").getBoundingClientRect(), top=$("top").getBoundingClientRect();
+      if(pin.locked){const rope=sfzRopeState();pin.x=(r.left-wr.left-(pin.side==="bottom"?0:rope.x))/Math.max(1,wr.width-g.offsetWidth);delete pin.locked;delete pin.holdX;delete pin.holdY;}
+      else{pin.locked=true;pin.holdX=r.left-wr.left;pin.holdY=r.top-top.bottom;}
+      place(g);sfzGrapeSync(g);linkSync();save();
     };
     g._sfzBookTurn = () => {
       const key=g.dataset.g, r=g.getBoundingClientRect(), oldPin=Z.cgrpTop?.[key];
@@ -11846,36 +11829,63 @@ function cgrpInit(){
        строки. Стол с окнами при этом не едет. Группы на левой панели — как прежде (листают панель), число или список в фокусе — меняют
        своё значение, Ctrl + колесо — масштаб страницы */
     g.addEventListener("wheel", e => { if (g.parentElement === tl) solPanelWheel(g, e); }, { passive: false });
-    const edgeControl = (button, x, y) => {
-      if (!button || button.disabled || button.matches(".gfold, .gzen, .gon, .gx, .sfz-book-pin, .sfz-book-cover, .sfz-book-direction") || button.closest(".gzen, .gon, .gx")) return false;
-      const r = button.getBoundingClientRect(), edge = 4;
-      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom &&
-        Math.min(x - r.left, r.right - x, y - r.top, r.bottom - y) <= edge;
-    };
-    const clearEdgeCursor = () => { if (g._cgEdgeButton) g._cgEdgeButton.classList.remove("cg-move-edge"); g._cgEdgeButton = null; };
-    g.addEventListener("pointermove", e => {
-      if (e.buttons) return;
-      const b = e.target.closest && e.target.closest("button"), next = edgeControl(b, e.clientX, e.clientY) ? b : null;
-      if (next === g._cgEdgeButton) return;
-      clearEdgeCursor(); if (next) { next.classList.add("cg-move-edge"); g._cgEdgeButton = next; }
+    // v0.061: any button is a grab surface; a stationary press still reaches its action.
+    let replayButtonDown = false, cancelButtonGrab = null, deferredMouseDown = null;
+    g.addEventListener("mousedown", e => {
+      if (replayButtonDown || !cancelButtonGrab || e.button !== 0) return;
+      deferredMouseDown = e; e.preventDefault(); e.stopImmediatePropagation();
     }, true);
-    g.addEventListener("pointerleave", clearEdgeCursor);
-    // On a control's narrow outer edge, start the existing group drag; its center remains a normal control click.
+    g.addEventListener("click", e => {
+      if (performance.now() >= (g._solDragUntil || 0)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
     g.addEventListener("pointerdown", e => {
-      const grip = e.target.closest && e.target.closest(".sfz-grape-grip");
-      if (e.button === 0 && grip && grip.closest(".cgrp") === g) {
-        e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
-        startGroupDrag({ target: g, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
-        return;
-      }
-      const b = e.target.closest && e.target.closest("button");
-      if (e.button !== 0 || !edgeControl(b, e.clientX, e.clientY)) return;
-      e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
-      startGroupDrag({ target: g, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
+      const button = e.target.closest && e.target.closest('button,[role=button],label:has(input[type=checkbox],input[type=radio])');
+      if (replayButtonDown || e.button !== 0 || !button || button.closest(".cgrp") !== g || button.disabled || button.querySelector("input:disabled") || document.body.classList.contains("cedit") || Z.cgrpTop?.[g.dataset.g]?.locked) return;
+      if (cancelButtonGrab) cancelButtonGrab();
+      const focus = button.matches("label") ? button.querySelector("input") : button;
+      if (focus) focus.focus({preventScroll:true});
+      // Defer pointerdown actions too (steppers, hide/zen), so pulling cannot activate them.
+      e.stopImmediatePropagation();
+      const target = e.target, id = e.pointerId, x = e.clientX, y = e.clientY;
+      const clean = () => {
+        document.removeEventListener("pointermove", move, true);
+        document.removeEventListener("pointerup", finish, true);
+        document.removeEventListener("pointercancel", finish, true);
+        window.removeEventListener("blur", clean); cancelButtonGrab = null; deferredMouseDown = null;
+      };
+      const move = ev => {
+        if (ev.pointerId !== id || Math.hypot(ev.clientX-x, ev.clientY-y) < 6) return;
+        clean();
+        const drag = startGroupDrag({target:g,button:0,pointerId:id,clientX:x,clientY:y,shiftKey:e.shiftKey,altKey:e.altKey,preventDefault(){}});
+        if (drag) { ev.preventDefault(); ev.stopImmediatePropagation(); drag(ev); }
+      };
+      const finish = ev => {
+        if (ev.pointerId !== id) return;
+        const mouseDown = deferredMouseDown; clean();
+        if (ev.type !== "pointerup" || !target.isConnected) return;
+        replayButtonDown = true;
+        try {
+          target.dispatchEvent(new PointerEvent("pointerdown", {
+            bubbles:true,cancelable:true,pointerId:id,pointerType:e.pointerType,isPrimary:e.isPrimary,
+            button:0,buttons:1,clientX:x,clientY:y,shiftKey:e.shiftKey,altKey:e.altKey,ctrlKey:e.ctrlKey,metaKey:e.metaKey
+          }));
+          if (mouseDown) target.dispatchEvent(new MouseEvent("mousedown", {
+            bubbles:true,cancelable:true,button:0,buttons:1,clientX:x,clientY:y,
+            shiftKey:e.shiftKey,altKey:e.altKey,ctrlKey:e.ctrlKey,metaKey:e.metaKey
+          }));
+        } finally { replayButtonDown = false; }
+      };
+      cancelButtonGrab = clean;
+      document.addEventListener("pointermove", move, {capture:true,passive:false});
+      document.addEventListener("pointerup", finish, true);
+      document.addEventListener("pointercancel", finish, true);
+      window.addEventListener("blur", clean);
     }, true);
     const startGroupDrag = (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
       g._downLab = !!e.target.closest(".glab");   // v0.958: нажали на заголовок — щелчок и двойной щелчок о нём (после захвата указателя их цель — группа)
       if (e.button !== 0 || e.target.closest(NOGRAB)) return;
+      if (Z.cgrpTop?.[g.dataset.g]?.locked) return;
       e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
       /* v0.252: пока тащат — группа висит над всей страницей (.cdrag, position: fixed), отпустил — решается, куда: над левой панелью —
          встаёт туда (в ряд с другими, перед той, над которой отпустил), иначе — висит поверх холста, как прежде (Z.cgrpPos). */
@@ -11892,7 +11902,7 @@ function cgrpInit(){
          с Alt — совсем одна (прицепленные к ней остаются на месте). «Алгоритм» в блок не входит */
       const solo = e.altKey || g.dataset.g === "алгоритм";
       if (e.shiftKey && !solo && g.classList.contains("cg-lx") && g.classList.contains("cfloat") && !g.classList.contains("cfld") && g.parentElement === tl) {
-        const fl = groups.filter(o => o !== g && o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
+        const fl = groups.filter(o => o !== g && !Z.cgrpTop?.[o.dataset.g] && o.classList.contains("cg-lx") && o.dataset.g !== "алгоритм" && o.parentElement === tl && o.classList.contains("cfloat") && !o.classList.contains("cfld") && o.getClientRects().length);
         /* v0.759: соседи — сцепленные (Z.cgrpLink) или почти касаются: по вертикали — до полуряда (группы стоят по сетке рядов 24 px, и под сцепленной сверху
            бывает зазор в несколько px — с допуском 3 px блок рвался: «Алгоритм» уезжал один, остальные догоняли сцепками и упирались в край окна) */
         const T = TZC_H / Math.sqrt(3) + 3, V = TZC_H / 2 + 1, lk = (a, b) => { const L = Z.cgrpLink[a.dataset.g]; return !!L && L.to === b.dataset.g; };
@@ -11941,16 +11951,14 @@ function cgrpInit(){
         }
         if (paneHit(lx, ly)) { delete Z.cgrpFld[g.dataset.g]; dock(g, lx, ly); save(); return; }
         if (g.parentElement !== tl) undock(g);
+        if (zone === "head") {
+          const key=g.dataset.g, wr=$("w-cone").getBoundingClientRect();
+          delete Z.cgrpFld[key];delete Z.cgrpLink[key];nodeSetPos(g,gr.left,gr.top);
+          Z.cgrpTop ||= {};Z.cgrpTop[key]={x:(gr.left-wr.left)/Math.max(1,wr.width-g.offsetWidth),side:"bottom"};
+          place(g);sfzGrapeSync(g);linkSync();save();return;
+        }
         if (zone) {
           Z.cgrpFld[g.dataset.g] = solZoneRec(zone, gr, solZoneRect(zone)); delete Z.cgrpPos[g.dataset.g];
-          if (zone === "head") {
-            delete Z.cgrpLink[g.dataset.g]; Z.cgrpMin[g.dataset.g] = true; g.classList.add("cmin"); sizeApply(g);
-            const room = solHeaderRoom(g.dataset.g);
-            Z.solHeaderOrder ||= []; Z.solHeaderOrder = Z.solHeaderOrder.filter(k => k !== g.dataset.g);
-            const head = solZoneRect("head"), leftEdge = head && lx <= head.left + Math.min(160, head.width * 0.25);
-            Z.solHeaderLeft = !!leftEdge || room < 128;
-            if (Z.solHeaderLeft) Z.solHeaderOrder.unshift(g.dataset.g); else Z.solHeaderOrder.push(g.dataset.g);
-          }
           place(g); if (zone === "head" && window.zzHeaderPlace) window.zzHeaderPlace(g); grpFix(g); save(); return;
         }
         delete Z.cgrpFld[g.dataset.g];
@@ -11964,6 +11972,7 @@ function cgrpInit(){
         save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+      return mv;
     };
     g.addEventListener("pointerdown", startGroupDrag);
     // v0.1015: двойной щелчок заголовка — вниз свёрнутой; снизу — обратно раскрытой.
@@ -12135,6 +12144,7 @@ function cgrpInit(){
     groups.forEach(g => mo.observe(g, { childList: true, characterData: true, subtree: true })); }
   cgbSnap();
   solPanelOrganizeInit({ tl, wb, groups, panels, sizeApply, place, nodePlace, nodeSetPos, nodeUnpin, linkSync, gByKey, wbTop, cgTabs, cgTabsUi });
+  sfzRopeInit({groups,place,linkSync});
   // v0.963: родные заголовки групп в шапке, в отдельной области после названия и кнопок.
   if (solHead) {
     const dock = document.createElement("div"); dock.id = "solHeaderDock"; document.body.appendChild(dock);
@@ -13219,6 +13229,71 @@ window.addEventListener("resize", lpKick);
 /* v0.484, по снимку «Гаммы» с пустым местом справа — «пустой длины не должно быть, а нижний ромб-размер накладывай на кнопку»: последняя кнопка каждого
    ряда дотягивается до правого края (целыми сторонами), группа — по самому длинному ряду; ромб-ручка — на правом конце последней кнопки нижнего ряда.
    У группы конструктора кнопки нарисованы — там только ширина по рисунку и ромб на последней кнопке (tzcApply) */
+function sfzRopeState(){
+  if(!Z.sfzRope || typeof Z.sfzRope!=="object")Z.sfzRope={x:0,y:0,locked:false};
+  for(const key of ["x","y"])if(!Number.isFinite(Z.sfzRope[key]))Z.sfzRope[key]=0;
+  return Z.sfzRope;
+}
+function sfzRopeInit({groups,place,linkSync}){
+  if($("sfzRope"))return;
+  const root=document.createElement("div");root.id="sfzRope";
+  const grip=document.createElement("button");grip.type="button";grip.className="sfz-rope-grip";grip.textContent="✥";
+  const lock=document.createElement("button");lock.type="button";lock.className="sfz-rope-lock";
+  root.append(grip,lock);document.body.appendChild(root);
+  let drag=null;
+  const members=()=>groups.filter(g=>Z.cgrpTop?.[g.dataset.g] && Z.cgrpTop[g.dataset.g].side!=="bottom" && !g.hidden && !g.classList.contains("coff") && g.getClientRects().length);
+  const sync=()=>{
+    const win=$("w-cone"), top=$("top");if(!win||!top)return;
+    const wr=win.getBoundingClientRect(), state=sfzRopeState();
+    root.hidden=document.body.classList.contains("sol-mobile")||document.body.classList.contains("zen")||!wr.width;
+    root.style.left=(wr.left+state.x)+"px";root.style.top=(top.getBoundingClientRect().bottom+state.y-9)+"px";root.style.width=wr.width+"px";
+    root.classList.toggle("locked",!!state.locked);lock.textContent=state.locked?"🔒":"🔓";lock.setAttribute("aria-pressed",String(!!state.locked));
+    lock.title=state.locked?"Верёвка закреплена. Разрешить перенос всех прикреплённых гроздей":"Закрепить верёвку: грозди на ней остаются, пока переносишь другие";
+    lock.setAttribute("aria-label",lock.title);
+    grip.title="Общая верёвка: тяни — переместить прикреплённые грозди ("+members().length+"). Правый щелчок по прищепке грозди — закрепить только её";
+    grip.setAttribute("aria-label",grip.title);grip.disabled=!!state.locked;
+  };
+  window.zzSfzRopeSync=sync;
+  const stop=e=>{e.preventDefault();e.stopPropagation();};
+  lock.addEventListener("pointerdown",e=>e.stopPropagation());
+  lock.onclick=e=>{stop(e);const state=sfzRopeState();state.locked=!state.locked;sync();save();};
+  root.addEventListener("click",e=>e.stopPropagation());
+  root.addEventListener("dblclick",stop);root.addEventListener("contextmenu",stop);
+  root.addEventListener("pointerdown",e=>{
+    if(e.button!==0||e.target===lock||sfzRopeState().locked)return;
+    stop(e);
+    const movable=members().filter(g=>!Z.cgrpTop[g.dataset.g].locked), boxes=movable.map(g=>g.getBoundingClientRect()), state=sfzRopeState();
+    const rr=root.getBoundingClientRect();
+    drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,x:state.x,y:state.y,moved:false,
+      minX:boxes.length?Math.min(...boxes.map(r=>r.left)):rr.left+rr.width/2-14,
+      maxX:boxes.length?Math.max(...boxes.map(r=>r.right)):rr.left+rr.width/2+40,
+      minY:boxes.length?Math.min(...boxes.map(r=>r.top)):rr.top,
+      maxY:boxes.length?Math.max(...boxes.map(r=>r.bottom)):rr.bottom};
+    root.setPointerCapture(e.pointerId);
+  });
+  root.addEventListener("pointermove",e=>{
+    if(!drag||drag.id!==e.pointerId)return;stop(e);
+    let dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;if(!drag.moved&&Math.hypot(dx,dy)<4)return;
+    drag.moved=true;
+    dx=Math.max(Math.min(0,4-drag.minX),Math.min(Math.max(0,innerWidth-4-drag.maxX),dx));
+    dy=Math.max(Math.min(0,$("top").getBoundingClientRect().bottom-drag.minY),Math.min(Math.max(0,innerHeight-30-drag.maxY),dy));
+    const state=sfzRopeState();state.x=drag.x+dx;state.y=drag.y+dy;
+    members().forEach(place);linkSync();sync();
+  });
+  const finish=e=>{
+    if(!drag||drag.id!==e.pointerId)return;const done=drag;drag=null;
+    if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);
+    if(done.moved)save();sync();
+  };
+  root.addEventListener("pointerup",finish);root.addEventListener("pointercancel",finish);
+  root.addEventListener("lostpointercapture",()=>{if(drag){drag=null;save();sync();}});
+  grip.addEventListener("keydown",e=>{
+    const delta=({ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]})[e.key];
+    if(!delta||sfzRopeState().locked)return;stop(e);const state=sfzRopeState(), step=e.shiftKey?20:4;
+    state.x+=delta[0]*step;state.y+=delta[1]*step;members().forEach(place);linkSync();sync();save();
+  });
+  addEventListener("resize",sync);sync();
+}
 function sfzColumnGroup(g){ return !!(g && !g.classList.contains("cg-r1") && g.closest("#w-cone .tools,#paneGrp")); }
 function sfzColumnSize(g){
   const collapsed = g.classList.contains("cmin"), size = !collapsed && Z.cgrpSize && Z.cgrpSize[g.dataset.g];
@@ -13332,40 +13407,32 @@ function sfzGrapeLayout(box, items, name, up=false){
     const range = item.querySelector('input[type="range"]'), caption = item.querySelector(":scope > .sli");
     if (range && caption && sliderNames[range.id] && caption.textContent !== sliderNames[range.id]) caption.textContent = sliderNames[range.id];
     if (range && !range.hasAttribute("aria-label")) range.setAttribute("aria-label",sliderNames[range.id] || caption?.textContent || item.title);
+    if(range){
+      if(!range._sfzCompactTip){
+        range._sfzCompactTip=true;
+        const name=sliderNames[range.id]||range.getAttribute("aria-label")||"Значение", help=item.dataset.zzTip||item.title||"";
+        range._sfzTipSync=()=>{
+          const text=name+": "+range.value+(["coneSlit","row1Slit"].includes(range.id)?"°":"")+(help?". "+help:"");
+          if(item.dataset.zzTip!==text)item.dataset.zzTip=text;
+          if(Z.tipsOn!==false&&item.title!==text)item.title=text;
+          if(Z.tipsOn!==false&&range.title!==text)range.title=text;
+        };
+        range.addEventListener("input",range._sfzTipSync);
+      }
+      range._sfzTipSync();
+    }
     // v0.059: редакторы занимают отдельную широкую строку, без пустого ромба и наложения на кнопки.
     if (editor) { y = Math.max(y,bottom + (bottom ? 8 : 0)); side = 0; }
     const x = editor ? axis - 60 : axis - 24 + side * step, top = y + (editor ? 0 : side * cell / 2);
-    const w = editor ? 120 : cell, h = editor ? (range ? 52 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
+    const w = editor ? 120 : cell, h = editor ? (range ? 26 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
 
-    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w,editor}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
+    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
     width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
     if (editor) { y=top+h+8; side=0; } else { side=1-side; if(!side)y+=cell; }
   }
   for(const {item,top,h} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-h:top)+"px");
-  if (box.closest(".cgrp")) {
-    const places = [];
-    for (let i = 1; i < slots.length; i++) {
-      const a = slots[i-1], b = slots[i];
-      if (a.editor || b.editor || a.item.hidden || b.item.hidden || getComputedStyle(a.item).display === "none" || getComputedStyle(b.item).display === "none") continue;
-      // Free hollow beside the touching corners, away from both control centers.
-      const x = b.x > a.x ? a.x + 12 : a.x + a.w - 12;
-      const y = b.top + b.h / 2;
-      places.push([x, up ? bottom - y : y]);
-    }
-    const grips = [...box.querySelectorAll(":scope > .sfz-grape-grip")];
-    places.forEach(([x,y],i) => {
-      let grip = grips[i];
-      if (!grip) {
-        grip = document.createElement("div"); grip.className = "sfz-grape-grip"; grip.textContent = "⠿";
-        grip.title = "Тяни зацеп — переместить гроздь «" + name + "»"; grip.setAttribute("aria-label",grip.title);
-        for (const type of ["click","dblclick","contextmenu"]) grip.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();});
-        box.appendChild(grip);
-      }
-      sfzGrapeStyle(grip,"left",(x-12)+"px"); sfzGrapeStyle(grip,"top",(y-12)+"px");
-    });
-    for (let i=places.length;i<grips.length;i++) grips[i].remove();
-  }
+  box.querySelectorAll(":scope > .sfz-grape-grip").forEach(grip=>grip.remove());
   sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
   sfzWeaveKick();
   return {width,height:bottom};
@@ -13407,13 +13474,15 @@ function sfzGrapeSync(g){
     if(turn.getAttribute("aria-label")!==turnTitle)turn.setAttribute("aria-label",turnTitle);
     if(turn.getAttribute("aria-pressed")!==String(up))turn.setAttribute("aria-pressed",String(up));
     let pin=lab.querySelector(":scope > .sfz-book-pin");
-    if(!pin){pin=document.createElement("button");pin.type="button";pin.className="sfz-book-pin";pin.textContent="📌";pin.addEventListener("pointerdown",e=>e.stopPropagation());pin.addEventListener("dblclick",e=>e.stopPropagation());pin.onclick=e=>{e.stopPropagation();g._sfzTopToggle?.();};lab.appendChild(pin);}
-    const pinned=!!Z.cgrpTop?.[g.dataset.g], pinTitle=pinned?"Снять прищепку":up?"Прищепить нижнюю тарелку к нижнему краю":"Прищепить верхний ромб к верхнему краю";
+    if(!pin){pin=document.createElement("button");pin.type="button";pin.className="sfz-book-pin";pin.addEventListener("pointerdown",e=>e.stopPropagation());pin.addEventListener("dblclick",e=>e.stopPropagation());pin.onclick=e=>{e.stopPropagation();g._sfzTopToggle?.();};pin.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();g._sfzPinLock?.();});lab.appendChild(pin);}
+    const pinned=!!Z.cgrpTop?.[g.dataset.g], locked=!!Z.cgrpTop?.[g.dataset.g]?.locked;
+    const pinTitle=pinned?(locked?"Гроздь закреплена на месте. Правый щелчок — разрешить движение; щелчок — снять прищепку":"Снять прищепку. Правый щелчок — закрепить гроздь на месте, независимо от верёвки"):up?"Прищепить нижнюю тарелку к нижнему краю":"Прищепить верхний ромб к общей верёвке";
+    const pinText=locked?"🔒":"📌";if(pin.textContent!==pinText)pin.textContent=pinText;
     if(pin.title!==pinTitle)pin.title=pinTitle;
     if(pin.getAttribute("aria-label")!==pinTitle)pin.setAttribute("aria-label",pinTitle);
     if(pin.getAttribute("aria-pressed")!==String(pinned))pin.setAttribute("aria-pressed",String(pinned));
     if (lab.dataset.grapeName !== g.dataset.g) lab.dataset.grapeName = g.dataset.g;
-    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок — переместить; + / − — раскрыть или сжать гроздь между крышками.";
+    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок или любую кнопку — переместить; короткое нажатие на кнопку — её действие; + / − — раскрыть или сжать гроздь между крышками.";
     if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
     const fold = lab.querySelector(".gfold"), label = (g.classList.contains("cmin")?"Раскрыть гроздь "+(up?"вверх":"вниз"):"Свернуть гроздь "+(up?"вниз":"вверх"))+" «"+g.dataset.g+"»";
     if (fold && fold.getAttribute("aria-label") !== label) fold.setAttribute("aria-label", label);
@@ -14525,7 +14594,7 @@ function paneIcon(label){
 }
 function iconizePane(){
   document.querySelectorAll("#rowsPane button").forEach(b => {
-    if (b.id === "bPaneIcons" || b.classList.contains("tx")) return;
+    if (b.id === "bPaneIcons" || b.classList.contains("tx") || b.closest("#sfzSettingsMenus")) return;
     const cur = b.textContent;
     if (b.dataset.icon !== undefined && b.dataset.icon === cur) return;   // уже значок
     if (b.dataset.tip0 === undefined) b.dataset.tip0 = b.title || "";
@@ -14544,7 +14613,7 @@ function iconizePane(){
    показывает и прячет parkSync (есть ли что в нём), свёрнутость — отдельно, в Z.paneFold. Скрытые кнопки шести окон шапки щёлкаются и в свёрнутом */
 function paneFoldBody(h){
   const out = [];
-  for (let e = h.nextElementSibling; e && !e.classList.contains("pane-head"); e = e.nextElementSibling) if (e.id !== "paneEdge") out.push(e);
+  for (let e = h.nextElementSibling; e && !e.classList.contains("pane-head"); e = e.nextElementSibling) if (e.id !== "paneEdge" && e.id !== "sfzSettingsMenus") out.push(e);
   return out;
 }
 function paneFoldApply(){
