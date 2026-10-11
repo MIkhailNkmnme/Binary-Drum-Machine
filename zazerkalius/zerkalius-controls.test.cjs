@@ -3,6 +3,13 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
 const sceneMath=require('../_js/mirror-scene.js');
 const source=fs.readFileSync(__dirname+'/zz-zerkalius.js','utf8');
+test('shared axis speed supports zero, x1000 and existing saved rates',()=>{
+  const ctx={clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};vm.createContext(ctx);
+  vm.runInContext(source.split('\n').filter(line=>/^  function motionRate(FromStep|Step)\(/.test(line)).join('\n'),ctx);
+  assert.equal(ctx.motionRateFromStep(0),0);assert.equal(ctx.motionRateFromStep(401),1000);
+  for(const rate of [0,.1,.5,1,2,10,100,1000])assert(Math.abs(ctx.motionRateFromStep(ctx.motionRateStep(rate))-rate)<1e-9);
+  for(let step=1;step<=401;step++)assert(ctx.motionRateFromStep(step)>=ctx.motionRateFromStep(step-1));
+});
 function functions(names){const ctx={sceneMath,drawW:1000,drawH:800,state:{bitsOnly:false,netDigits:true,font:'monospace',net:{up:'#4dd4ff',down:'#e8b64a'}},visibleWorld:()=>[-Infinity,-Infinity,Infinity,Infinity]};vm.createContext(ctx);for(const name of names){const begin=source.indexOf('  function '+name+'('),end=source.indexOf('\n  function ',begin+1);assert(begin>=0);vm.runInContext(source.slice(begin,end),ctx);}return ctx;}
 const math=functions(['nearestBit','magneticPosition','netCell','netFaces']);
 test('canvas centre wins over a more distant bit',()=>{const r=math.magneticPosition(500,400,[],1,[[502,406]]);assert.equal(r.label,'центр холста');assert.equal(r.x,500);assert.equal(r.y,400);});
