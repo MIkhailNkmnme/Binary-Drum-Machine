@@ -11708,29 +11708,6 @@ function cgrpInit(){
      куда короче и что в пределах окна). Когда отпустили группу — двигается она; само (раз в 0,3 с: группа выросла, окно сузилось) — верхняя из двух.
      Прицепленные 🧲 сами не двигаются — двигают другую */
   const grpFix = () => sfzWeaveKick();
-  window.zzSfzSeparate = (g,entries) => {
-    if(!groups.includes(g)||g.classList.contains("cdrag"))return false;
-    const own=entries.find(e=>e.root===g);if(!own)return false;
-    const rest=entries.filter(e=>e!==own), r=g.getBoundingClientRect(), key=g.dataset.g;
-    const f=zrec(g), frame=(f&&solZoneRect(f.z))||wb.getBoundingClientRect();
-    const topPin=Z.cgrpTop?.[key], axis=typeof nodePin(g)==="number";
-    const candidates=[];
-    for(let n=1;n<=Math.min(100,Math.ceil(frame.width/26)+1);n++)for(const sign of [-1,1])candidates.push([n*26*sign,0]);
-    if(!topPin&&!axis)for(const o of rest){const q=o.root.getBoundingClientRect();candidates.push([0,q.bottom-r.top+6],[0,q.top-r.bottom-6]);}
-    candidates.sort((a,b)=>a[0]*a[0]+a[1]*a[1]-b[0]*b[0]-b[1]*b[1]);
-    const shift=candidates.find(([dx,dy])=>{
-      if(r.left+dx<frame.left-1||r.right+dx>frame.right+1)return false;
-      if(dy&&(r.top+dy<wbTop(r.left+dx,r.width)||r.bottom+dy>frame.bottom))return false;
-      return !rest.some(o=>own.items.some(a=>o.items.some(b=>sfzRhombsMeet({...a.rect,left:a.rect.left+dx,top:a.rect.top+dy},b.rect))));
-    });
-    if(!shift)return false;
-    if(!Z.sfzWeaveUndo)Z.sfzWeaveUndo=JSON.parse(JSON.stringify({cgrpPos:Z.cgrpPos,cgrpFld:Z.cgrpFld,cgrpLink:Z.cgrpLink,cgrpTop:Z.cgrpTop,cgrpPin:Z.cgrpPin,cgrpEdge:Z.cgrpEdge,sfzBookBottom:Z.sfzBookBottom}));
-    const [dx,dy]=shift;delete Z.cgrpLink[key];if(Z.cgrpEdge)delete Z.cgrpEdge[key];
-    if(topPin){const wr=$("w-cone").getBoundingClientRect();topPin.x=Math.max(0,Math.min(1,(r.left+dx-wr.left)/Math.max(1,wr.width-r.width)));}
-    else if(axis){const A=coneAxisScr();if(A)Z.cgrpPin[key]=nodePin(g)+dx/(coneZoom||1);}
-    else nodeSetPos(g,r.left+dx,r.top+dy);
-    place(g);const placed=g.getBoundingClientRect();if(Math.abs(placed.left-r.left)+Math.abs(placed.top-r.top)<.5)return false;save();return true;
-  };
   groups.forEach((g) => {
     const lab = g.querySelector(".glab"); if (!lab) return;
     g.dataset.g = lab.textContent.trim().toLowerCase();
@@ -13256,7 +13233,8 @@ function sfzGrapeIcon(el, name){
   if (!el.title && !el.dataset.zzTip) el.title = text;
   if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.title || el.dataset.zzTip || text);
   let icon = el.querySelector(":scope > .sfz-grape-icon");
-  if (/^[^\p{L}\p{N}]/u.test(text)) { if (icon) icon.remove(); return; }
+  // v0.058: стрелки и одиночные символы уже служат значком; текстовые действия — с SVG.
+  if (!/[\p{L}]/u.test(text) || /^(?:\d|[01]\s)/u.test(text)) { if (icon) icon.remove(); return; }
   if (!icon) { icon = document.createElement("span"); icon.className = "sfz-grape-icon"; icon.setAttribute("aria-hidden", "true"); el.prepend(icon); }
   const key = (el.id + " " + text).toLowerCase();
   let kind = /пуск|запуск|продолж|play|auto/.test(key) ? "play" : /пауза|pause|stop/.test(key) ? "pause" : /магнит|mag/.test(key) ? "magnet" : /ось|оси|axis|axes/.test(key) ? "axes" : /луч|свет|sun|light|glow/.test(key) ? "light" : /бит|bit|01/.test(key) ? "bit" : /крут|turn|spin|rotate|верт/.test(key) ? "turn" : /щел|slit|cut/.test(key) ? "slit" : /3d|тор|cube/.test(key) ? "cube" : /шар|ball/.test(key) ? "ball" : "ring";
@@ -13268,32 +13246,20 @@ function sfzGrapeIcon(el, name){
 function sfzGrapeCaption(item){
   if (!item.matches("button,label,.sfz-grape-note") || item.querySelector('input:not([type="checkbox"]),select,textarea')) return;
   const full = item.textContent.trim().replace(/\s+/g," "); if (!full) return;
-  const names = {"через центр":"центр ↔","центр: насквозь":"центр ↔","↦ насквозной":"сквозь","∞ по дугам":"по дугам","▶ продолжить":"▶ далее","↩ к старту":"↩ старт","↻ против":"↻ назад","⊘ закрыто":"закрыт.","Σ расчёт":"Σ счёт","● = часть":"● часть"};
+  const names = {"через центр":"центр","центр: насквозь":"сквозь","↦ насквозной":"сквозь","∞ по дугам":"дуги","▶ продолжить":"далее","↩ к старту":"старт","↻ по часовой":"вперёд","↻ против":"назад","⊘ закрыто":"закрыт","Σ расчёт":"расчёт","● = часть":"часть","Л / П грани":"Л / П","Л→П 1 · П→Л 0":"Л→П 1\nП→Л 0","1 за чертой":"1 за\nчертой","1 в кольце":"1 в\nкольце","½ бита внешнего":"½ бита","⟳ поток по кругу":"поток","из середины бита":"из\nсеред.","ПоглотБит":"поглот.","0 изнутри":"0\nизнутри","⏸ одновременно":"одновр.","удар: застрять":"застрять","удар: отскок":"отскок","⛓ цепочка":"цепь","◇ через 1":"через 1","↺ снять ↻":"снять ↻","⌖ меж битами":"меж","середина":"серед.","◎ точки":"точки","▶ запуск":"запуск"};
   let brief = names[full] || full;
-  if (brief.length > 9) brief = brief.split(" ").map(w => w.length > 6 ? w.slice(0,5)+"." : w).slice(0,2).join(" ");
+  if (item.id === "bConeBallSpeed") brief = ["1 · авто", "2 · К1", "3 · ½К1"][parseInt(full, 10) - 1] || full;
+  if (brief === "застрять") brief = "застр.";
+  brief = brief.replace(/^◉ закрыто (\d+)$/, "закр. $1");
+  if (item.querySelector(":scope > .sfz-grape-icon")) brief = brief.replace(/^[^\p{L}\p{N}]+/u, "").trim();
+  if (brief.length > 12) brief = brief.split(/\s+/).map(w => w.length > 7 ? w.slice(0,6)+"." : w).slice(0,2).join(" ");
   if (item.dataset.grapeCaption !== brief) item.dataset.grapeCaption = brief;
+  item.classList.toggle("sfz-grape-symbol", [...brief].length <= 3 && !/[\p{L}]/u.test(brief));
   if (item.dataset.grapeFull !== full) item.dataset.grapeFull = full;
   if (!item.title && !item.dataset.zzTip) item.title = full;
 }
 
-/* v0.057: пересечения ромбов считаются по форме, увеличение правой кнопкой сохраняется отдельно от действия кнопки. */
-function sfzSizeTarget(target){return target.closest?.(".sfz-grape-item,#ringTbl > button[data-v],#ringTbl .ring-fill-column > button");}
-function sfzSizeKey(el){
-  if(el.id)return "#"+el.id;
-  const input=el.querySelector("input[id],select[id],textarea[id]");if(input)return "#"+input.id;
-  if(el.dataset.sfzSizeKey)return el.dataset.sfzSizeKey;
-  const root=el.closest(".sfz-grape,#coneViewTools,#ringTbl"), index=root?[...root.querySelectorAll(".sfz-grape-item,button[data-v],.ring-fill-column > button")].indexOf(el):-1;
-  const key=(root?.id||"group:"+root?.dataset.g)+":"+index;
-  el.dataset.sfzSizeKey=key;return key;
-}
-function sfzSizeSync(el){el.classList.toggle("sfz-stay-big",!!Z.sfzRhombBig?.[sfzSizeKey(el)]);}
-document.addEventListener("pointerdown",e=>{if(e.button===2&&!document.body.classList.contains("cedit")&&sfzSizeTarget(e.target))e.stopPropagation();},true);
-document.addEventListener("contextmenu",e=>{
-  if(document.body.classList.contains("cedit"))return;const el=sfzSizeTarget(e.target);if(!el)return;
-  e.preventDefault();e.stopImmediatePropagation();const key=sfzSizeKey(el);Z.sfzRhombBig ||= {};
-  if(Z.sfzRhombBig[key])delete Z.sfzRhombBig[key];else Z.sfzRhombBig[key]=true;
-  sfzSizeSync(el);save();
-},true);
+/* v0.058: пересечения ромбов меняют слои, без увеличения и перемещения кнопок. */
 function sfzRhombsMeet(a,b){
   if(a.left+a.width<=b.left+.5||b.left+b.width<=a.left+.5||a.top+a.height<=b.top+.5||b.top+b.height<=a.top+.5)return false;
   const points=r=>[[r.left+r.width/2,r.top],[r.left+r.width,r.top+r.height/2],[r.left+r.width/2,r.top+r.height],[r.left,r.top+r.height/2]], A=points(a),B=points(b);
@@ -13311,7 +13277,7 @@ function sfzWeaveEntries(){
     for(const el of root.querySelectorAll(".sfz-grape-item,button[data-v],.ring-fill-column > button")){
       if(el.hidden||!el.getClientRects().length||getComputedStyle(el).display==="none")continue;
       const parent=el.offsetParent;if(!parent)continue;const pr=parent.getBoundingClientRect();
-      sfzSizeSync(el);items.push({el,rect:{left:pr.left+parent.clientLeft+el.offsetLeft,top:pr.top+parent.clientTop+el.offsetTop,width:el.offsetWidth,height:el.offsetHeight}});
+      items.push({el,rect:{left:pr.left+parent.clientLeft+el.offsetLeft,top:pr.top+parent.clientTop+el.offsetTop,width:el.offsetWidth,height:el.offsetHeight}});
     }
     if(!items.length)continue;
     let stack=root.closest(".win")||document.body;
@@ -13340,10 +13306,8 @@ function sfzWeaveSync(){
       B.items.forEach(b=>layers.set(b.el,2147483520));
       const crossings=A.items.filter(a=>B.items.some(b=>sfzRhombsMeet(a.rect,b.rect))).sort((a,b)=>a.rect.top+a.rect.height/2-b.rect.top-b.rect.height/2||a.rect.left-b.rect.left);
       crossings.forEach((a,k)=>layers.set(a.el,k%2?2147483501:2147483540));
-    }else{
-      const movable=component.map(k=>entries[k].root).filter(root=>root.classList.contains("sfz-grape")).sort((a,b)=>Number(!!Z.cgrpTop?.[a.dataset.g])-Number(!!Z.cgrpTop?.[b.dataset.g]));
-      if(movable.some(root=>window.zzSfzSeparate?.(root,entries))){sfzWeaveKick();return;}
     }
+    // v0.058: пересечения меняют только слои. Сохранённые места и сцепки не раздвигаем сами.
   }
   for(const [el,layer] of layers)sfzGrapeStyle(el,"--grape-layer",String(layer));
 }
@@ -13384,10 +13348,16 @@ function sfzGrapeSync(g){
     for (const child of node.children) collect(child);
   };
   for (const child of box.children) collect(child);
-  const layout = sfzGrapeLayout(box, items, g.dataset.g, up);
+  // v0.058: скрытый режимом элемент оставляет своё место; новые элементы занимают следующий свободный слот.
+  // До конца загрузки списки ещё заменяются кнопками — эту временную разметку не запоминаем.
+  const settled = document.readyState === "complete";
+  const stable = (settled && box._sfzGrapeSlots || items).filter(item => box.contains(item));
+  for (const item of items) if (!stable.includes(item)) stable.push(item);
+  if (settled) box._sfzGrapeSlots = stable;
+  const layout = sfzGrapeLayout(box, stable, g.dataset.g, up);
   sfzGrapeStyle(g,"--sfz-grape-width","120px");
   sfzGrapeStyle(g,"--sfz-book-body-width",layout.width+"px");
-  sfzGrapeStyle(g,"--sfz-book-first-half",items.length?(parseFloat(items[0].style.getPropertyValue("--grape-w"))||48)/2+"px":"24px");
+  sfzGrapeStyle(g,"--sfz-book-first-half",stable.length?(parseFloat(stable[0].style.getPropertyValue("--grape-w"))||48)/2+"px":"24px");
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
   const mark=up?"▾":"▴";if(cover.textContent!==mark)cover.textContent=mark;
