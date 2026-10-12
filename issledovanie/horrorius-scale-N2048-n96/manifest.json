@@ -1,0 +1,1443 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "date": "2026-10-12",
+  "source": "source-original.png",
+  "sourceSha256": "5f2105738f8b77d367556d324513efac5dfaa9cbdfa9e063dc74f14819ce7a99",
+  "sourceSize": [
+    8190,
+    2048
+  ],
+  "outputFieldSize": [
+    1024,
+    768
+  ],
+  "centerSourceCells": [
+    "4863.5",
+    "1407.5"
+  ],
+  "algorithm": "exact nearest cell: floor(center+((pixel+.5)-viewport/2-phase)/scale); out-of-source black",
+  "scope": "one unchanged source frame; finite pilot sweep, not every possible continuous zoom; captions outside the sampled field",
+  "sourceCapture": {
+    "exportedBy": "Codex — независимый исследователь Хоррориуса",
+    "date": "2026-10-12",
+    "rows": 2048,
+    "completedVertices": 96,
+    "allocatedTargetVertices": 4096,
+    "width": 8190,
+    "height": 2048,
+    "mode": "pendulum",
+    "background": "empty",
+    "view": "bits",
+    "pixelEqualsOneCell": true,
+    "export": "original canvas PNG, copied byte for byte; no resampling or annotations"
+  },
+  "scales": [
+    "1/4",
+    "1/3",
+    "3/8",
+    "1/2",
+    "5/8",
+    "2/3",
+    "3/4",
+    "4/5",
+    "7/8",
+    "15/16",
+    "1",
+    "17/16",
+    "35/32",
+    "9/8",
+    "5/4",
+    "3/2",
+    "2"
+  ],
+  "phasesInScreenPixels": [
+    "0",
+    "1/3",
+    "2/3"
+  ],
+  "cases": [
+    {
+      "scale": "1/4",
+      "scaleDecimal": 0.25,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "ea01d74e2c941859a46b855fc679f5c18321ac9a86d17510a01b0cffccd7b81a",
+      "sourceColumns": [
+        2817,
+        6909
+      ],
+      "sourceRows": [
+        -127,
+        2941
+      ],
+      "outsideSourcePixels": 262144,
+      "file": "view-01-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-01-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/4",
+      "scaleDecimal": 0.25,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "55c712494fc472c0ebe79620821ee3ada22906f9f047588530ef3a7e9fd4e5f1",
+      "sourceColumns": [
+        2816,
+        6908
+      ],
+      "sourceRows": [
+        -128,
+        2940
+      ],
+      "outsideSourcePixels": 262144,
+      "file": "view-01-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-01-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/4",
+      "scaleDecimal": 0.25,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "ae9cf7b9b05cfab2cfeaf3cb44b1b46294bca9d97055177ef6c10b0dfbbe881d",
+      "sourceColumns": [
+        2814,
+        6906
+      ],
+      "sourceRows": [
+        -130,
+        2938
+      ],
+      "outsideSourcePixels": 262144,
+      "file": "view-01-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-01-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/3",
+      "scaleDecimal": 0.3333333333333333,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "2e26b888631ac71add461672b2f753ebcd86b40e4dfc8eb56f75568e245e5eea",
+      "sourceColumns": [
+        3329,
+        6398
+      ],
+      "sourceRows": [
+        257,
+        2558
+      ],
+      "outsideSourcePixels": 175104,
+      "file": "view-02-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-02-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/3",
+      "scaleDecimal": 0.3333333333333333,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "9ddc8bb8875c384f65cac81134e33e2caf7da78d79534e75b46a4514df6c22bd",
+      "sourceColumns": [
+        3328,
+        6397
+      ],
+      "sourceRows": [
+        256,
+        2557
+      ],
+      "outsideSourcePixels": 174080,
+      "file": "view-02-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-02-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/3",
+      "scaleDecimal": 0.3333333333333333,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "da620bb436119adced78437156f750efa938437c068af8b3d527594d1848e1a9",
+      "sourceColumns": [
+        3327,
+        6396
+      ],
+      "sourceRows": [
+        255,
+        2556
+      ],
+      "outsideSourcePixels": 174080,
+      "file": "view-02-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-02-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/8",
+      "scaleDecimal": 0.375,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "c5f73faf974ae58d5b845cdbb6b88c83830137481d4e722c96ae5bdb91b044fb",
+      "sourceColumns": [
+        3499,
+        6227
+      ],
+      "sourceRows": [
+        384,
+        2430
+      ],
+      "outsideSourcePixels": 147456,
+      "file": "view-03-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-03-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/8",
+      "scaleDecimal": 0.375,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "d98400f5dff73c1f0f674ba9c588067161bc78c471279301d09e278c9162b207",
+      "sourceColumns": [
+        3498,
+        6226
+      ],
+      "sourceRows": [
+        383,
+        2429
+      ],
+      "outsideSourcePixels": 146432,
+      "file": "view-03-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-03-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/8",
+      "scaleDecimal": 0.375,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "2e80a289e985fe19e4df41463ed41fcd6c93e0530db3d526a8d2077554a286ad",
+      "sourceColumns": [
+        3497,
+        6225
+      ],
+      "sourceRows": [
+        383,
+        2428
+      ],
+      "outsideSourcePixels": 146432,
+      "file": "view-03-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-03-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/2",
+      "scaleDecimal": 0.5,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "6d012d820131ff2642f125610283d0e34dce8214aa7bd8fa02338a3cb950f32a",
+      "sourceColumns": [
+        3840,
+        5886
+      ],
+      "sourceRows": [
+        640,
+        2174
+      ],
+      "outsideSourcePixels": 65536,
+      "file": "view-04-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-04-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/2",
+      "scaleDecimal": 0.5,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "a1edb12a3d108b19f95251f7585d31926afbff089fe554540eb0956208f17a48",
+      "sourceColumns": [
+        3839,
+        5885
+      ],
+      "sourceRows": [
+        639,
+        2173
+      ],
+      "outsideSourcePixels": 64512,
+      "file": "view-04-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-04-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1/2",
+      "scaleDecimal": 0.5,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "a1edb12a3d108b19f95251f7585d31926afbff089fe554540eb0956208f17a48",
+      "sourceColumns": [
+        3839,
+        5885
+      ],
+      "sourceRows": [
+        639,
+        2173
+      ],
+      "outsideSourcePixels": 64512,
+      "file": "view-04-phase-2.png",
+      "duplicateOfSamePixels": true,
+      "pixelDuplicateOf": "view-04-phase-1.png",
+      "tileFile": "tile-04-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/8",
+      "scaleDecimal": 0.625,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "74d5b24599e2244521a3c2e8a48ca65daca1271491d046f49a28e8539e400729",
+      "sourceColumns": [
+        4045,
+        5681
+      ],
+      "sourceRows": [
+        793,
+        2021
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-05-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-05-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/8",
+      "scaleDecimal": 0.625,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "0cdecf6e9cf89b8c52964f3e7c99f504a35fe319ef60da8cf94bdd045d8940dd",
+      "sourceColumns": [
+        4044,
+        5681
+      ],
+      "sourceRows": [
+        793,
+        2020
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-05-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-05-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/8",
+      "scaleDecimal": 0.625,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "7f4821b301dd86a959c4bb956fb370caa360c46d7509ddaf8cc48a3fbcbe97e3",
+      "sourceColumns": [
+        4044,
+        5680
+      ],
+      "sourceRows": [
+        792,
+        2020
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-05-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-05-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2/3",
+      "scaleDecimal": 0.6666666666666666,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "425f78494051b68f3497571f56e722582ddf9a4c8ac63bddea7fc09607f1ea0c",
+      "sourceColumns": [
+        4096,
+        5630
+      ],
+      "sourceRows": [
+        832,
+        1982
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-06-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-06-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2/3",
+      "scaleDecimal": 0.6666666666666666,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "dadefd206ec1cde653dbd917ad3fe7cf7269f5f2d0f1789125939711ab3fbcdc",
+      "sourceColumns": [
+        4095,
+        5630
+      ],
+      "sourceRows": [
+        831,
+        1982
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-06-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-06-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2/3",
+      "scaleDecimal": 0.6666666666666666,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "a33e30f2ccdd2d6cfff01b7780645de51c1142224b032022747dff895e36468c",
+      "sourceColumns": [
+        4095,
+        5629
+      ],
+      "sourceRows": [
+        831,
+        1981
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-06-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-06-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/4",
+      "scaleDecimal": 0.75,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "73edd61f5c96490846e5e1371da72d045fb6147fa9ac1af7bce516e9a017f8c4",
+      "sourceColumns": [
+        4181,
+        5545
+      ],
+      "sourceRows": [
+        896,
+        1918
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-07-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-07-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/4",
+      "scaleDecimal": 0.75,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "b7e8ce36b4ce9ef377419a9dd696b768dfeffcdf28c5148452416315086db228",
+      "sourceColumns": [
+        4181,
+        5545
+      ],
+      "sourceRows": [
+        895,
+        1918
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-07-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-07-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/4",
+      "scaleDecimal": 0.75,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "d41429f9b388e58019f6b0d99184f563e70cde6695520eddaf8323d6b2b4e7ff",
+      "sourceColumns": [
+        4180,
+        5544
+      ],
+      "sourceRows": [
+        895,
+        1917
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-07-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-07-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "4/5",
+      "scaleDecimal": 0.8,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "b20d5b4d7062d07b90c2d324dae66bb3a96e44655f8e829e3b63a05298a07528",
+      "sourceColumns": [
+        4224,
+        5502
+      ],
+      "sourceRows": [
+        928,
+        1886
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-08-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-08-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "4/5",
+      "scaleDecimal": 0.8,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "1ea84f3ee00a23348eb229452bc0fb325c1415626af693d3e72aaa0cf7de04e2",
+      "sourceColumns": [
+        4223,
+        5502
+      ],
+      "sourceRows": [
+        927,
+        1886
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-08-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-08-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "4/5",
+      "scaleDecimal": 0.8,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "281415c7c91fd8223c6c04e23bd288599e0a8c882ba97d165384c9b02a591d25",
+      "sourceColumns": [
+        4223,
+        5502
+      ],
+      "sourceRows": [
+        927,
+        1886
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-08-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-08-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "7/8",
+      "scaleDecimal": 0.875,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "b9a7ba83823a1f00b914f3e5b30f355dc105535ccf4237c3b0b515221ebe8341",
+      "sourceColumns": [
+        4278,
+        5448
+      ],
+      "sourceRows": [
+        969,
+        1845
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-09-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-09-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "7/8",
+      "scaleDecimal": 0.875,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "6cfdee84bc0597d07a7c4e462dd60d406fba83815db8053bba33a77545eda022",
+      "sourceColumns": [
+        4278,
+        5447
+      ],
+      "sourceRows": [
+        968,
+        1845
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-09-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-09-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "7/8",
+      "scaleDecimal": 0.875,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "d534c627fcc7c1d1828a54e93c6cc1ae4a9d961cfd71b0793793b68ad119d000",
+      "sourceColumns": [
+        4278,
+        5447
+      ],
+      "sourceRows": [
+        968,
+        1845
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-09-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-09-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "15/16",
+      "scaleDecimal": 0.9375,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "51120e99bb622eac49ef98e82ea0f227d1846ff8746b6ec8b95ee23f3b069fb2",
+      "sourceColumns": [
+        4317,
+        5409
+      ],
+      "sourceRows": [
+        998,
+        1816
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-10-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-10-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "15/16",
+      "scaleDecimal": 0.9375,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "61eda3018c27dbaa4dfb56aaf85715275ea93087d08ade6b25c0f5ae3389325b",
+      "sourceColumns": [
+        4317,
+        5408
+      ],
+      "sourceRows": [
+        998,
+        1816
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-10-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-10-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "15/16",
+      "scaleDecimal": 0.9375,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "cfb2ab14ab690906b4b5a09e3f868ca6c5067460037eac13276f474e5bee2b35",
+      "sourceColumns": [
+        4317,
+        5408
+      ],
+      "sourceRows": [
+        997,
+        1815
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-10-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-10-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1",
+      "scaleDecimal": 1.0,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "246705e3b938a85f67f80c8f7eaacd425263a49d03bb85e651815d74d86faed8",
+      "sourceColumns": [
+        4352,
+        5375
+      ],
+      "sourceRows": [
+        1024,
+        1791
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-11-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-11-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1",
+      "scaleDecimal": 1.0,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "bbb214add800bae75d668d602990d2686cf09de5d3835c9ffe81c3be0b118ea1",
+      "sourceColumns": [
+        4351,
+        5374
+      ],
+      "sourceRows": [
+        1023,
+        1790
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-11-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-11-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "1",
+      "scaleDecimal": 1.0,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "bbb214add800bae75d668d602990d2686cf09de5d3835c9ffe81c3be0b118ea1",
+      "sourceColumns": [
+        4351,
+        5374
+      ],
+      "sourceRows": [
+        1023,
+        1790
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-11-phase-2.png",
+      "duplicateOfSamePixels": true,
+      "pixelDuplicateOf": "view-11-phase-1.png",
+      "tileFile": "tile-11-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "17/16",
+      "scaleDecimal": 1.0625,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "0b87d8a70cb1397e544551153ff907c09b27b4c00e49bf8a047caca7ae8879c2",
+      "sourceColumns": [
+        4382,
+        5344
+      ],
+      "sourceRows": [
+        1046,
+        1768
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-12-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-12-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "17/16",
+      "scaleDecimal": 1.0625,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "74d16d0b72b1ad05bc2e854db9763dbd5c10e66a162cb6c71ff61d97fefd738a",
+      "sourceColumns": [
+        4381,
+        5344
+      ],
+      "sourceRows": [
+        1046,
+        1768
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-12-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-12-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "17/16",
+      "scaleDecimal": 1.0625,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "b9a2aae774eab952a7a2dd4cc2245844eb3fe9966cd1ae232b5a08a0c87f1f5d",
+      "sourceColumns": [
+        4381,
+        5344
+      ],
+      "sourceRows": [
+        1045,
+        1767
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-12-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-12-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "35/32",
+      "scaleDecimal": 1.09375,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "cdc14c16183714decba97b5693e0611054cb10ce5d5678140c30cc4260cb1624",
+      "sourceColumns": [
+        4395,
+        5331
+      ],
+      "sourceRows": [
+        1056,
+        1758
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-13-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-13-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "35/32",
+      "scaleDecimal": 1.09375,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "ba869f918f7b38d82f8c1d5b3ad5a673c241d40b0971e495cc05f49d9fe464ab",
+      "sourceColumns": [
+        4395,
+        5330
+      ],
+      "sourceRows": [
+        1056,
+        1757
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-13-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-13-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "35/32",
+      "scaleDecimal": 1.09375,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "138b7e636b28591de4826d60c37ec31199727adb315c49ad7721d963b610d0e8",
+      "sourceColumns": [
+        4395,
+        5330
+      ],
+      "sourceRows": [
+        1056,
+        1757
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-13-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-13-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "9/8",
+      "scaleDecimal": 1.125,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "53dd44b18c455a0794401d48dc864ded528127bd5ca079e017053e66054b255f",
+      "sourceColumns": [
+        4408,
+        5318
+      ],
+      "sourceRows": [
+        1066,
+        1748
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-14-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-14-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "9/8",
+      "scaleDecimal": 1.125,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "f8d2984453375ad380e4c77a72a69898448a8acc4df33e08b064d16c22bc6ef3",
+      "sourceColumns": [
+        4408,
+        5317
+      ],
+      "sourceRows": [
+        1066,
+        1748
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-14-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-14-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "9/8",
+      "scaleDecimal": 1.125,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "c8ac1c1c0829792b9e82c2e1b5c127627ccc5d809ce42a736828dbca698247d7",
+      "sourceColumns": [
+        4408,
+        5317
+      ],
+      "sourceRows": [
+        1066,
+        1747
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-14-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-14-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/4",
+      "scaleDecimal": 1.25,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "c6564199ff8e058e1987b98fb3d0e03eedac1e0805ef9c026c6c888bba901dd4",
+      "sourceColumns": [
+        4454,
+        5272
+      ],
+      "sourceRows": [
+        1100,
+        1714
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-15-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-15-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/4",
+      "scaleDecimal": 1.25,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "128b9e94bcfae31e99185bf9bc6aa3f8a1001ee17703ed45978ad6bee4bd73c2",
+      "sourceColumns": [
+        4454,
+        5272
+      ],
+      "sourceRows": [
+        1100,
+        1714
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-15-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-15-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "5/4",
+      "scaleDecimal": 1.25,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "4bfe0f4c31e541d882c0c509b0f52a061d032a2f6e7f1eeda1a4f11f5f668862",
+      "sourceColumns": [
+        4453,
+        5272
+      ],
+      "sourceRows": [
+        1100,
+        1713
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-15-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-15-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/2",
+      "scaleDecimal": 1.5,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "f9a2f8f4d838e0d76f416070c156bf390da79b22b082b10a82710b7729d213f8",
+      "sourceColumns": [
+        4522,
+        5204
+      ],
+      "sourceRows": [
+        1151,
+        1663
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-16-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-16-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/2",
+      "scaleDecimal": 1.5,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "4189f7a984806de9fed3ff00f93687711b496b63bfb67aa966dafddded3092db",
+      "sourceColumns": [
+        4522,
+        5204
+      ],
+      "sourceRows": [
+        1151,
+        1662
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-16-phase-1.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-16-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "3/2",
+      "scaleDecimal": 1.5,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "4189f7a984806de9fed3ff00f93687711b496b63bfb67aa966dafddded3092db",
+      "sourceColumns": [
+        4522,
+        5204
+      ],
+      "sourceRows": [
+        1151,
+        1662
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-16-phase-2.png",
+      "duplicateOfSamePixels": true,
+      "pixelDuplicateOf": "view-16-phase-1.png",
+      "tileFile": "tile-16-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2",
+      "scaleDecimal": 2.0,
+      "phase": [
+        "0",
+        "0"
+      ],
+      "sampledFieldSha256": "f52732fbdf2bdb7fcfc931a9c2a11a39340cf88f6f453ce104197c89a81f3671",
+      "sourceColumns": [
+        4607,
+        5119
+      ],
+      "sourceRows": [
+        1215,
+        1599
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-17-phase-0.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-17-phase-0.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2",
+      "scaleDecimal": 2.0,
+      "phase": [
+        "1/3",
+        "1/3"
+      ],
+      "sampledFieldSha256": "f52732fbdf2bdb7fcfc931a9c2a11a39340cf88f6f453ce104197c89a81f3671",
+      "sourceColumns": [
+        4607,
+        5119
+      ],
+      "sourceRows": [
+        1215,
+        1599
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-17-phase-1.png",
+      "duplicateOfSamePixels": true,
+      "pixelDuplicateOf": "view-17-phase-0.png",
+      "tileFile": "tile-17-phase-1.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    },
+    {
+      "scale": "2",
+      "scaleDecimal": 2.0,
+      "phase": [
+        "2/3",
+        "2/3"
+      ],
+      "sampledFieldSha256": "2627ae006f15bd348da07c8edf6b2a1a91a90a5ae234031b20edc57380d43470",
+      "sourceColumns": [
+        4607,
+        5118
+      ],
+      "sourceRows": [
+        1215,
+        1598
+      ],
+      "outsideSourcePixels": 0,
+      "file": "view-17-phase-2.png",
+      "duplicateOfSamePixels": false,
+      "tileFile": "tile-17-phase-2.png",
+      "tileRectangleInOutput": [
+        384,
+        256,
+        640,
+        512
+      ]
+    }
+  ],
+  "caseCount": 51,
+  "uniqueImageCount": 47
+}
