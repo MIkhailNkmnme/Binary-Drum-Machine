@@ -859,10 +859,13 @@ function sfzSettingsInit(){
       /* v0.076, «пусть эти 6 кнопок располагаются вертикально треугольниками слева, справа от строк»: ⇤ · замок · ⟲ · Вид · 01 · + — столбиком
          треугольников ▶◀ (остриё в выемку) у левого края холста: сразу правее левой панели строк и её зубцов (и поля строк, когда оно слева), ниже верхней полосы */
       if(desktop){/* v0.083: столбик — у поля строк, левее его зубцов (их ставит fieldZig уже по устоявшейся ширине) */
-        const zl=id=>{const e=$(id);return e&&e.style.display!=="none"&&e.style.left?parseFloat(e.style.left):NaN;};
+        /* v0.085, «переверни, расположи под зубьями, но на линии впадин зубьев поля строк»: основание столбика — на линии впадин (левый край поля),
+           треугольники — под зубьями (слой ниже #fieldZigOv), остриём к холсту */
+        const zo=$("fieldZigOv"),zl=id=>{const e=$(id);return e&&e.style.display!=="none"&&e.style.left?parseFloat(e.style.left)+(parseFloat(e.style.width)||0):NaN;};
         let edge=zl("fieldZigOv");if(!(edge>0)){const f=$("field"),q=f&&f.getClientRects().length?f.getBoundingClientRect():null;edge=q&&q.width>0?q.left:innerWidth;}
-        const topBar=$("top"),tb=topBar&&topBar.getClientRects().length?topBar.getBoundingClientRect().bottom:0,colLeft=Math.round(edge-30)+"px",colTop=Math.round(tb+6)+"px";
-        for(const el of [controls,menus]){if(el.style.getPropertyValue("--sfz-col-left")!==colLeft)el.style.setProperty("--sfz-col-left",colLeft);if(el.style.getPropertyValue("--sfz-col-top")!==colTop)el.style.setProperty("--sfz-col-top",colTop);}}};
+        const topBar=$("top"),tb=topBar&&topBar.getClientRects().length?topBar.getBoundingClientRect().bottom:0,colLeft=Math.round(edge-30)+"px",colTop=(()=>{/* v0.085, «соедини зуб в зуб»: верх столбика — на впадине зубьев поля (шаг TZC_H), треугольник — ровно два зубца */const H=TZC_H,zt=zo&&zo.style.top?parseFloat(zo.style.top):tb,bp=zo?parseFloat(String(zo.style.backgroundPosition||"0 0").split(" ")[1])||0:0;let y=zt+bp;while(y<tb+2)y+=H;while(y-H>=tb+2)y-=H;return y.toFixed(2)+"px";})();
+        const colZ=String(Math.max(1,(parseInt(zo&&zo.style.zIndex)||45)-1));
+        for(const el of [controls,menus]){if(el.style.getPropertyValue("--sfz-col-z")!==colZ)el.style.setProperty("--sfz-col-z",colZ);if(el.style.getPropertyValue("--sfz-col-left")!==colLeft)el.style.setProperty("--sfz-col-left",colLeft);if(el.style.getPropertyValue("--sfz-col-top")!==colTop)el.style.setProperty("--sfz-col-top",colTop);}}};
     window.sfzRowsMenuPlace=menuPlace;menuPlace();addEventListener("resize",menuPlace);if(window.ResizeObserver){const ro=new ResizeObserver(menuPlace);ro.observe(head.parentElement);const pane=$("rowsPane");if(pane)ro.observe(pane);}
     for(const id of ["bRowsStartTop","coneLockAll","bConeAllHome"]){const button=$(id);if(button){triOff(button);tzcClean(button);controls.appendChild(button);}}
   }
