@@ -43,3 +43,23 @@ test('coincident axis points do not corrupt the angle',()=>{assert.equal(sceneMa
 test('the second square is an exact magnetic target',()=>{const r=math.magneticPosition(700,300,[{x:.5,y:.5,angle:Math.atan2(-100,200),turnGrip:Math.hypot(200,100)/Math.hypot(1000,800)}],1,[]);assert.equal(r.snapped,true);assert.equal(r.label,'точка оси');assert(Math.abs(r.x-700)<1e-9);assert(Math.abs(r.y-300)<1e-9);});
 test('rhombi and edge triangles tile the entire face',()=>{const f={P:[[0,0],[1,0],[0,1]]},area=p=>Math.abs(p.reduce((a,v,i)=>{const w=p[(i+1)%p.length];return a+v[0]*w[1]-w[0]*v[1]},0))/2;for(const R of [1,2,3,8,64,71]){let sum=0;for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const cell=math.netCell(f,r,k,R);sum+=area(cell.P);assert.equal(cell.P.length,r===R-1?3:4);for(const p of cell.P)assert(p[0]>=0&&p[1]>=0&&p[0]+p[1]<=1+1e-12);}assert(Math.abs(sum-.5)<1e-12);}});
 test('digit switch controls numbers with filled cells and with digits-only view',()=>{const calls=[],ctx={globalAlpha:1,beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fill(){},save(){},restore(){},translate(){},scale(){},fillText(v){calls.push(v);}},model={faces:[{up:true,P:[[0,0],[1,0],[0,1]]}]};for(const bitsOnly of [false,true])for(const digits of [false,true]){math.state.bitsOnly=bitsOnly;math.state.netDigits=digits;calls.length=0;math.netFaces(ctx,model,[[1]],100,false);assert.equal(calls.length,digits?1:0);}});
+test('row lattice holds every bit of triangular and uneven rows',()=>{
+  const {rowsLattice}=functions(['rowsLattice']),dw=12,dh=dw*Math.sqrt(3);
+  for(const R of [['1','01','101','0110','11011'],['','1','10','101'],['101','1','10011','11']]){
+    const L=rowsLattice(R,dw),det=L.e1[0]*L.e2[1]-L.e1[1]*L.e2[0];
+    for(let r=0;r<R.length;r++)for(let j=0;j<R[r].length;j++){
+      const v=[-(R[r].length-1)*dw/2+j*dw-L.o[0],r*dh/2-L.o[1]],c=[(v[0]*L.e2[1]-v[1]*L.e2[0])/det,(L.e1[0]*v[1]-L.e1[1]*v[0])/det];
+      for(const x of c)assert(Math.abs(x-Math.round(x))<1e-9);
+    }
+  }
+  const tri=rowsLattice(['1','01','101'],dw),half=rowsLattice(['101','1'],dw);assert.equal(tri.e1[0],dw);assert.equal(half.e1[0],dw/2);   // массивы из vm — другого realm, deepEqual их не сравнит
+});
+test('glide magnet lands the reflected lattice on the still one and keeps off-grid axes free',()=>{
+  const {glideSnap}=functions(['glideSnap']),dw=12,b={o:[100,50],e1:[dw,0],e2:[dw/2,dw*Math.sqrt(3)/2]},u=[Math.cos(Math.PI/3),Math.sin(Math.PI/3)];
+  const node=[b.o[0]+2*b.e1[0]+3*b.e2[0],b.o[1]+2*b.e1[1]+3*b.e2[1]],p=[node[0]+.37*dw*u[0],node[1]+.37*dw*u[1]];
+  const t=glideSnap([{p,b}],u,0,10,1.5);assert(Math.abs(t+.37*dw)<1e-9);
+  assert(Math.abs(glideSnap([{p,b}],u,8,10,1.5)-(1-.37)*dw)<1e-9);
+  assert.equal(glideSnap([{p,b}],u,0,3,1.5),null);
+  const n=[-u[1],u[0]],between=[p[0]+n[0]*dw*Math.sqrt(3)/4,p[1]+n[1]*dw*Math.sqrt(3)/4];
+  assert.equal(glideSnap([{p:between,b}],u,0,10,1.5),null);
+});

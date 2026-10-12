@@ -1,6 +1,8 @@
+/* v0.1142, «да, сделай магнит по сетке битов»: протяжка за линию магнитит сдвиг отражения так, чтобы его биты легли в узлы сетки неподвижных битов (строки и
+   чужие зеркала того же набора) — край к краю без зазора и наезда. Порог — 10 px экрана, Alt — без магнита. */
 /* v0.1141, «вдоль оси надо проехать отражение — не даёт» (выбор: «едет только рисунок»): протяжка за линию сдвигает только отражения этого зеркала
    вдоль оси (скользящее отражение: та же линия, сдвиг рисунка — figureOffset / copyOffsets); квадраты, линия и угол стоят, края поля не мешают — раньше
-   точка 1 упиралась в 1–99 % поля, и отражение дальше не ехало. Магнит в этой протяжке не участвует. */
+   точка 1 упиралась в 1–99 % поля, и отражение дальше не ехало. Магнит в этой протяжке не участвует (v0.1142 — магнит по сетке битов). */
 /* v0.1138: линия скользит только вдоль себя с обоими квадратами и всеми своими отражениями. */
 /* v0.1137: выключенное зеркало скрывает линию оси, обе точки и подпись. */
 /* v0.1136: линия переносит ось и её рисунок без поворота; горизонт поля виден в зеркалах сразу. */
@@ -244,15 +246,17 @@
     }
     for(const [node,rotateMode] of [[center,false],[axis,false]]){
       node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб или ось — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
-      if(node===axis)node.title='Тяни линию — отражение едет вдоль оси, квадраты, линия и угол стоят на месте; отдельный квадратик — изменить угол';
+      if(node===axis)node.title='Тяни линию — отражение едет вдоль оси, квадраты, линия и угол стоят на месте; магнит — по сетке битов (край к краю), Alt — без магнита; отдельный квадратик — изменить угол';
       node.addEventListener('pointerdown',e=>{
-        if(e.button!==0)return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),turning=rotateMode,along=node===axis||m.along,glide=node===axis&&!turning,targets=magnetBits(i);
+        if(e.button!==0)return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),turning=rotateMode,along=node===axis||m.along,glide=node===axis&&!turning,targets=magnetBits(i),glidePairs=glide?glideLattice(i):null;
         (turning?turn:axis).focus({preventScroll:true});line.classList.add('grabbing');node.setPointerCapture(e.pointerId);
         const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,p=viewPoint(x,y),cx=r.left+p[0],cy=r.top+p[1],start=Math.atan2(sy-cy,sx-cx);let moved=false;
         const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;pause();
           const magnetic=state.magnet&&!ev.altKey,others=state.mirrors.filter(other=>other!==m&&other.on);let snapped=false;snapHint='';
           if(turning){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy),raw=norm(a+(Math.hypot(sx-cx,sy-cy)<24?(-dx*Math.sin(a)+dy*Math.cos(a))/80:Math.atan2(ev.clientY-cy,ev.clientX-cx)-start)),result=magnetic?sceneMath.snapAngle(raw,others.concat(fieldAxisTargets())):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
-          else if(glide){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy),t=dx*Math.cos(a)+dy*Math.sin(a);translateMirror(m,before.values,x+t*Math.cos(a)/drawW,y+t*Math.sin(a)/drawH);m.x=x;m.y=y;}
+          else if(glide){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);let t=dx*Math.cos(a)+dy*Math.sin(a);
+            if(magnetic){const z=state.zoom,hit=glideSnap(glidePairs,[Math.cos(a),Math.sin(a)],t,10/z,1.5/z);if(hit!==null){t=hit;snapped=true;snapHint='сетка битов';}}
+            translateMirror(m,before.values,x+t*Math.cos(a)/drawW,y+t*Math.sin(a)/drawH);m.x=x;m.y=y;}
           else{const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);m.x=clamp(x+dx/drawW,.01,.99);m.y=clamp(y+dy/drawH,.01,.99);
             if(along){const p=sceneMath.axisMove(x*drawW,y*drawH,dx,dy,a,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}
             if(magnetic){const z=state.zoom,result=magneticPosition(m.x*drawW,m.y*drawH,others,z,targets,along?{x:x*drawW,y:y*drawH,angle:a}:null);
@@ -421,6 +425,38 @@
      только биты строк, как прежде. */
   function magnetBits(own=-1){const data=scene(),points=data.labels.map(v=>v.point),skip=own<0?~0:1<<own;for(const item of data.items)if(!(item.mask&skip))for(const p of item.src.points||[])points.push(sceneMath.point(item.matrix,...p));return points;}
   function nearestBit(x,y,points,radius){let best=null;for(const p of points){const d=Math.hypot(x-p[0],y-p[1]);if(d<radius){radius=d;best=p;}}return best;}
+  /* v0.1142: сетка битов набора в его собственных координатах — узел и два шага. Строки лежат треугольником (шаг dw вдоль строки, (dw/2, dw·√3/2) к следующей),
+     если чётность длин строк это позволяет; иначе — общая сетка полушагов. */
+  function rowsLattice(R,dw){
+    const dh=dw*Math.sqrt(3),r0=R.findIndex(row=>row.length);if(r0<0)return null;
+    const L0=R[r0].length,tri=R.every((row,r)=>!row.length||((row.length-L0+r-r0)%2+2)%2===0);
+    return {o:[-(L0-1)*dw/2,r0*dh/2],e1:tri?[dw,0]:[dw/2,0],e2:tri?[dw/2,dh/2]:[0,dh/2]};
+  }
+  /* v0.1142: сдвиг t вдоль оси u подбирается так, чтобы узел отражённой сетки p + t·u лёг в узел неподвижной сетки b (o, e1, e2): ближайший к t0 в пределах
+     radius, промах поперёк — не больше eps. Нет такого — null: ось не по направлению сетки или стоит между её рядами. */
+  function glideSnap(pairs,u,t0,radius,eps){
+    let best=null;
+    for(const {p,b} of pairs){
+      const det=b.e1[0]*b.e2[1]-b.e1[1]*b.e2[0];if(Math.abs(det)<1e-12)continue;
+      const inv=v=>[(v[0]*b.e2[1]-v[1]*b.e2[0])/det,(b.e1[0]*v[1]-b.e1[1]*v[0])/det];
+      const c=inv([p[0]+t0*u[0]-b.o[0],p[1]+t0*u[1]-b.o[1]]),w=inv(u),k=Math.abs(w[0])>=Math.abs(w[1])?0:1,o=1-k;
+      if(Math.abs(w[k])<1e-12)continue;
+      const span=Math.abs(w[k])*radius;
+      for(let n=Math.ceil(c[k]-span);n<=Math.floor(c[k]+span);n++){
+        const dt=(n-c[k])/w[k];if(Math.abs(dt)>radius||(best!==null&&Math.abs(dt)>=Math.abs(best)))continue;
+        const rest=c[o]+dt*w[o];if(Math.abs(rest-Math.round(rest))*Math.hypot(...(o?b.e2:b.e1))<=eps)best=dt;
+      }
+    }
+    return best===null?null:t0+best;
+  }
+  /* v0.1142: пары для glideSnap — узел сетки каждой прямой копии зеркала own и сетки всего, что при его протяжке стоит на месте (строки, чужие зеркала), того же набора. */
+  function glideLattice(own){
+    const data=scene(),bit=1<<own,pairs=[];
+    const lat=item=>{const L=item.src.lattice,M=item.matrix;if(!L)return null;const lin=v=>[M[0]*v[0]+M[2]*v[1],M[1]*v[0]+M[3]*v[1]];return {o:sceneMath.point(M,...L.o),e1:lin(L.e1),e2:lin(L.e2)};};
+    const still=data.items.filter(item=>!(item.mask&bit)).map(item=>({item,l:lat(item)})).filter(v=>v.l);
+    for(const item of data.items)if(item.mask===bit){const l=lat(item);if(l)for(const v of still)if(v.item.source===item.source)pairs.push({p:l.o,b:v.l});}
+    return pairs;
+  }
   function magneticPosition(x,y,others,z,targets,along=null,includeField=true){
     if(includeField)others=others.concat(fieldAxisTargets());
     const permitted=p=>!along||Math.abs((p[0]-along.x)*Math.sin(along.angle)-(p[1]-along.y)*Math.cos(along.angle))<1e-6;
@@ -615,7 +651,7 @@
       let rgb=palette.get(color);if(!rgb){rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));palette.set(color,rgb);}const o=(r*W+c)*4;data.data.set(rgb,o);data.data[o+3]=255;
     }if(first>=0)edges.push([bounds[0]+first*dw,(r-.5)*dy],[bounds[0]+(last+1)*dw,(r+.5)*dy]);}
     ctx.putImageData(data,0,0);
-    return {image,bounds,pixelated:true,polygons:edges.length?[figureHull(edges)]:[],points:{*[Symbol.iterator](){for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(data.data[(r*W+c)*4+3])yield [bounds[0]+(c+.5)*dw,r*dy];}},
+    return {image,bounds,pixelated:true,lattice:{o:[bounds[0]+dw/2,0],e1:[dw,0],e2:[0,dy]},polygons:edges.length?[figureHull(edges)]:[],points:{*[Symbol.iterator](){for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(data.data[(r*W+c)*4+3])yield [bounds[0]+(c+.5)*dw,r*dy];}},
       draw(target,pixelScale=1,colorMap=c=>c){
         const view=visibleWorld(target,dw),c0=clamp(Math.floor((view[0]-bounds[0])/dw),0,W),c1=clamp(Math.ceil((view[2]-bounds[0])/dw),0,W),r0=clamp(Math.floor(view[1]/dy),0,H),r1=clamp(Math.ceil(view[3]/dy)+1,0,H);
         const digits=state.bitsOnly&&dw*pixelScale>=7;target.textAlign='center';target.textBaseline='middle';target.font='bold '+(dw*.72)+'px '+state.font;
@@ -646,7 +682,7 @@
         else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':color);target.fillText(bit,0,fs*.06);}target.restore();
       }target.globalAlpha=alpha;
     };
-    draw(ctx,safe);return {image,bounds,polygons:[figureHull(vertices)],points:shapes.map(v=>[v[1],v[2]]),draw};
+    draw(ctx,safe);return {image,bounds,lattice:rowsLattice(R,dw),polygons:[figureHull(vertices)],points:shapes.map(v=>[v[1],v[2]]),draw};
   }
 
   function netGeometry(preset=state.net.preset){
