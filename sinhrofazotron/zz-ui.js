@@ -11729,7 +11729,8 @@ function cgrpInit(){
       const L=Z.cgrpLink[g.dataset.g], parent=L&&gByKey(L.to);
       if(parent && !Z.cgrpTop?.[g.dataset.g] && onCanvas(g) && onCanvas(parent) && !g.classList.contains("cdrag") && !g.classList.contains("pdrag") && g.getClientRects().length && parent.getClientRects().length){
         follow(parent); const r=parent.getBoundingClientRect(), wr=wb.getBoundingClientRect();
-        const up=rising.get(parent) ?? (Z.cgrpTop?.[parent.dataset.g]?.side === "bottom" || !!Z.sfzBookUp?.[parent.dataset.g]);
+        // v0.071: незакреплённая стопка растёт к середине поля — та, что стоит выше середины, идёт вниз (иначе уезжала за верхний край).
+        const pin=Z.cgrpTop?.[parent.dataset.g],up=rising.get(parent) ?? (pin ? pin.side === "bottom" : r.top+r.bottom > wr.top+wr.bottom);
         rising.set(g,up);
         let x=r.left+(L.dx||0),y=r.top+(up?-1:1)*(parent.classList.contains("sfz-grape")?54:solPanelRowStep(parent));
         nodeSetPos(g,x,y);
@@ -11936,7 +11937,7 @@ function cgrpInit(){
       nodeUnpin(g); delete Z.cgrpLink[key]; delete Z.cgrpFld[key];
       if(g.parentElement!==tl)undock(g);
       nodeSetPos(g,r.left,r.top);
-      if(!pinned){const wr=$("w-cone").getBoundingClientRect(), side=Z.sfzBookUp?.[key]?"bottom":"top";Z.cgrpTop ||= {};Z.cgrpTop[key]=sfzMenuPin(g,r.left,side);}
+      if(!pinned){const wr=$("w-cone").getBoundingClientRect(), side=Z.sfzBookUp?.[key]?"top":"bottom";Z.cgrpTop ||= {};Z.cgrpTop[key]=sfzMenuPin(g,r.left,side);}
       place(g); sfzGrapeSync(g); linkSync(); save();
     };
     g._sfzPinLock = () => {
@@ -11954,7 +11955,7 @@ function cgrpInit(){
       if(Z.sfzBookUp[key]){delete Z.sfzBookUp[key];delete Z.sfzBookBottom[key];}
       else{Z.sfzBookUp[key]=true;const tr=tl.getBoundingClientRect();Z.sfzBookBottom[key]={x:r.left-tr.left,y:r.bottom-tr.top};}
       if(topDock){Z.cgrpTop ||= {};const wr=$("w-cone").getBoundingClientRect();Z.cgrpTop[key]=sfzMenuPin(g,r.left,Z.sfzBookUp[key]?"top":"bottom");}
-      else if(oldPin){Z.cgrpTop ||= {};Z.cgrpTop[key]={...oldPin,side:Z.sfzBookUp[key]?"bottom":"top"};}
+      else if(oldPin){Z.cgrpTop ||= {};Z.cgrpTop[key]={...oldPin,side:Z.sfzBookUp[key]?"top":"bottom"};}
       else if(!Z.sfzBookUp[key])nodeSetPos(g,r.left,r.top);
       sfzGrapeSync(g);place(g);linkSync();save();
     };
@@ -12118,7 +12119,7 @@ function cgrpInit(){
         const inside=b=>b&&lx>=b.left&&lx<=b.right&&ly>=b.top&&ly<=b.bottom;
         const strip=mates.length?null:inside(topStrip)?"top":inside(bottomStrip)?"bottom":null;
         if(strip){
-          const key=g.dataset.g,wantUp=strip==="bottom";
+          const key=g.dataset.g,wantUp=strip==="top";
           if(!!Z.sfzBookUp?.[key]!==wantUp){
             const before=grab.getBoundingClientRect().top-g.getBoundingClientRect().top;
             Z.sfzBookUp ||= {};if(wantUp)Z.sfzBookUp[key]=true;else delete Z.sfzBookUp[key];
@@ -12169,7 +12170,7 @@ function cgrpInit(){
           const key=g.dataset.g, wr=$("w-cone").getBoundingClientRect();
           delete Z.cgrpFld[key];delete Z.cgrpLink[key];nodeSetPos(g,gr.left,gr.top);
           const side=g._floor?"bottom":"top";
-          Z.sfzBookUp ||= {};if(side==="bottom")Z.sfzBookUp[key]=true;else delete Z.sfzBookUp[key];
+          Z.sfzBookUp ||= {};if(side==="top")Z.sfzBookUp[key]=true;else delete Z.sfzBookUp[key];
           Z.cgrpTop ||= {};Z.cgrpTop[key]=sfzMenuPin(g,gr.left,side);
           sfzGrapeSync(g);place(g);linkSync();save();return;
         }
@@ -13609,6 +13610,9 @@ function sfzGrapeLayout(box, items, name, up=false){
   return {width,height:bottom,coreCenter:(coreMin-(verticalRanges.length?24:0)+coreMax)/2};
 }
 function sfzGrapeSync(g){
+  // v0.070: внизу заголовок над кнопками, наверху треугольная крышка над ними.
+  const pin=Z.cgrpTop?.[g.dataset.g],legacyBottom=Z.cgrpFld?.[g.dataset.g]?.z==="head";
+  if(pin||legacyBottom){Z.sfzBookUp ||= {};if(pin?pin.side==="bottom":legacyBottom)delete Z.sfzBookUp[g.dataset.g];else Z.sfzBookUp[g.dataset.g]=true;}
   const up=!!Z.sfzBookUp?.[g.dataset.g];g.classList.toggle("sfz-book-up",up);
   const box = g.querySelector(":scope > .cgb"); if (!box) return;
   const items = [];
@@ -13645,7 +13649,7 @@ function sfzGrapeSync(g){
     if(turn.getAttribute("aria-label")!==turnTitle)turn.setAttribute("aria-label",turnTitle);
     if(turn.getAttribute("aria-pressed")!==String(up))turn.setAttribute("aria-pressed",String(up));
     if (lab.dataset.grapeName !== g.dataset.g) lab.dataset.grapeName = g.dataset.g;
-    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок или любую кнопку — переместить; короткое нажатие на кнопку — её действие; одиночное или двойное нажатие на шапку — раскрыть или сжать на месте. При перетаскивании в верхнюю полосу гроздь раскрывается вниз, в нижнюю — вверх, ещё до отпускания. Alt + нажатие — перевернуть вручную.";
+    const title = "Ромбокнига «" + g.dataset.g + "». Тяни заголовок или любую кнопку — переместить; короткое нажатие на кнопку — её действие; одиночное или двойное нажатие на шапку — раскрыть или сжать на месте. В нижней полосе заголовок над кнопками, треугольная крышка снизу; в верхней полосе крышка сверху, заголовок под кнопками. Переворот — ещё до отпускания. Alt + нажатие — перевернуть вручную.";
     if (!lab._grapeTip) { lab._grapeTip = true; lab.title = title; lab.dataset.zzTip = title; }
     const fold = lab.querySelector(".gfold"), label = (g.classList.contains("cmin")?"Раскрыть гроздь "+(up?"вверх":"вниз"):"Свернуть гроздь "+(up?"вниз":"вверх"))+" «"+g.dataset.g+"»";
     if (fold && fold.getAttribute("aria-label") !== label) fold.setAttribute("aria-label", label);
