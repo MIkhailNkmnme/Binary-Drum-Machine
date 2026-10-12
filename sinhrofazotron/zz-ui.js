@@ -16068,13 +16068,15 @@ function init(){
     el.scrollIntoView({ block: "nearest" });
   };
   const sideUi = () => { const only = !!Z.fieldOnly && !Z.fieldHidden; document.body.classList.toggle("field-right", !!Z.fieldRight); document.body.classList.toggle("field-only", only); $("bFieldL").classList.toggle("on", !Z.fieldRight && !Z.fieldHidden && !only); $("bFieldR").classList.toggle("on", !!Z.fieldRight && !Z.fieldHidden && !only); if ($("bFieldOnly")) $("bFieldOnly").classList.toggle("on", only); };   // v0.792: «только строки» — горит она одна (и «строки»)   // v0.595: поле спрятано — гаснут все три   // v0.591: (слева(строки)справа) — горит одна   // v0.412, «строки — слева»: подпись — куда переставит щелчок
+  /* v0.078, «сделай строки всегда справа»: поле строк — всегда справа (и по ссылке, и из памяти); «◀ слева» убрана из меню «Вид» */
+  Z.fieldRight = true; if ($("bFieldL")) $("bFieldL").hidden = true;
   sideUi(); fieldDrawerSync(); requestAnimationFrame(() => { parkSync(); packWins(); });
   const sideRe = () => { sideUi(); fieldDrawerSync(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); ; }); };
   const sideSet = (right) => { if (Z.fieldOnly) { Z.fieldOnly = false; if (!!Z.fieldRight === right) { sideRe(); say("Окна снова на месте."); return; } }   /* v0.792: из «только строки» — «слева» / «справа» возвращают окна */
     if (Z.fieldHidden) { $("bFieldHide").click(); if (!!Z.fieldRight === right) return; }   /* v0.595: поле спрятано — «слева» / «справа» сперва его показывает */
     if (!!Z.fieldRight === right) return; Z.fieldRight = right; Z.fieldPeek = false; sideUi(); fieldDrawerSync(); parkSync(); save(); requestAnimationFrame(() => { packWins(); renderAll(); ; });
     say(Z.fieldRight ? "⇆ Окна слева, поле строк справа. Окно, прикреплённое под полем, перетащи за шапку на левую сторону — встанет среди окон." : "⇆ Поле строк снова слева."); };
-  $("bFieldL").onclick = () => sideSet(false); $("bFieldR").onclick = () => sideSet(true);
+  $("bFieldL").onclick = () => sideSet(true); $("bFieldR").onclick = () => sideSet(true);   // v0.078: слева больше не бывает
   /* v0.792, «нужен ещё режим — только строки»: окна прячутся, поле строк — на всю ширину; места окон не меняются. Поле было спрятано — показывается */
   if ($("bFieldOnly")) $("bFieldOnly").onclick = () => { Z.fieldOnly = !(Z.fieldOnly && !Z.fieldHidden); if (Z.fieldHidden) { Z.fieldHidden = false; document.body.classList.remove("field-hidden"); $("bFieldHide").classList.add("on"); }
     sideRe(); say(Z.fieldOnly ? "Только строки — окна спрятаны. Вернуть — ещё раз, «слева» или «справа»." : "Окна снова на месте."); };
