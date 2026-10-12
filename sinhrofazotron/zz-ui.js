@@ -2115,6 +2115,10 @@ function lasDeps(){
      раньше всех (в захвате) и гасится, вместо действия — всплывает, почему она сейчас не действует. Наведение и подсказка остаются */
   if (!lasDeps._b) { lasDeps._b = 1;
     const stop = (e) => { const x = e.target && e.target.closest && e.target.closest(".cgrp .ldim"); if (!x) return;
+      /* v0.074, «не могу открепить от низа»: у гроздей шапки нет, хват — сами кнопки; затемнённые гасили и нажатие, и гроздь «щели» (в обычном режиме вся
+         затемнена) нельзя было ни оторвать от полосы, ни свернуть. Настоящее нажатие на кнопку грозди идёт дальше — к переносу и сворачиванию; действие
+         по-прежнему гасится: повтор нажатия после короткого щелчка (не isTrusted), mousedown, click и правое нажатие самой кнопки. */
+      if (e.type === "pointerdown" && e.isTrusted && x.closest(".sfz-grape-item")) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if (e.type === "click") say("⛔ «" + ((x.dataset.lab || x.textContent || "").trim() || "кнопка") + "» сейчас не действует: " + (x.dataset.why || "не в этом режиме") + "."); };
     ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "keydown"].forEach(t => document.addEventListener(t, stop, { capture: true, passive: false }));
@@ -12204,98 +12208,55 @@ function cgrpInit(){
     g.addEventListener("pointerdown", startGroupDrag);
     /* v0.072, «группы убери у всех шляпки и ножки; перемещать кнопки внутри группы правой кнопкой мыши, примагничивая к любой грани свободных; верхняя или
        нижняя одна или 2, которые самые, могут притягивать всю группу вниз или вверх в свободные места в полосках; синхронизируй их» (выбор: левой — вся группа
-       за любую, правой — внутри; сворачивание — двойной щелчок по крайней (v0.073 — правый щелчок); верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
+       за любую, правой — внутри; сворачивание — двойной щелчок по крайней (v0.073 — правый щелчок по крайней, v0.074 — по любой; правая протяжка снята); верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
        (или на своё прежнее место); крайний ромб (верхний ряд вверх, нижний вниз) и свёрнутая гроздь тянут всю группу — в полосе она встаёт на свободное место.
        Места — Z.sfzGrapePos[группа] в виде «вниз»; в верхней полосе та же раскладка отражена. */
     if (sfzColumnGroup(g)) {
-      const px = (el, k) => parseFloat(el.style.getPropertyValue(k)) || 0;
       const rItems = box => [...box.querySelectorAll(".sfz-grape-item")].filter(el => !el.classList.contains("sfz-grape-range") && !el.classList.contains("sfz-grape-hidden") && el.getClientRects().length);
-      const rhomb = el => !el.classList.contains("sfz-grape-editor");
       const freeGroup = () => { const key = g.dataset.g; return g.parentElement === tl && !Z.cgrpTop?.[key] && typeof Z.cgrpPin?.[key] !== "number" && !Z.cgrpEdge?.[key] && !Z.cgrpLink?.[key]; };
-      const ends = (box, item) => {
-        const all = rItems(box), minT = Math.min(...all.map(el => px(el, "--grape-y"))), maxB = Math.max(...all.map(el => px(el, "--grape-y") + px(el, "--grape-h")));
-        const y = px(item, "--grape-y"), h = px(item, "--grape-h");
-        return { all, top: y <= minT + 24, bottom: y + h >= maxB - 24 };
-      };
+      /* v0.074, «не могу открепить от низа, пусть откреп только левой протяжкой по любой кнопке группы, а правая только по щелчку в любой кнопки группы
+         сворачивает верх или низ группы»: правая протяжка больше ничего не двигает — ни ромб внутри, ни группу; переносит и открепляет только левая протяжка
+         за любую кнопку (и затемнённую — см. lasDeps). Правый щелчок без протяжки по любой кнопке грозди, кроме бегунка, сворачивает её к ближнему краю:
+         щелчок в верхней половине — остаются два верхних ромба, в нижней — два нижних; по свёрнутой — раскрывает. Места, расставленные правой протяжкой
+         в v0.072–v0.073, остаются (Z.sfzGrapePos), новых она не ставит. */
       g.addEventListener("pointerdown", e => {
         if (e.button !== 2 || document.body.classList.contains("cedit")) return;
         const item = e.target.closest && e.target.closest(".sfz-grape-item"), box = g.querySelector(":scope > .cgb");
         if (!item || !box || item.closest(".cgrp") !== g || item.classList.contains("sfz-grape-range")) return;
-        const id = e.pointerId, x0 = e.clientX, y0 = e.clientY, folded = g.classList.contains("cmin"), E = ends(box, item);
-        const foldHit = folded || ((E.top || E.bottom) && E.all.length > 2); g._sfzFoldHit = foldHit;   // v0.073: правый щелчок здесь — свернуть / раскрыть
-        const others = E.all.filter(o => o !== item), ox = px(item, "--grape-x"), oy = px(item, "--grape-y"), w = px(item, "--grape-w") || 48, h = px(item, "--grape-h") || 48;
-        let mode = null, spot = null, cands = null;
-        const center = o => [px(o, "--grape-x") + (px(o, "--grape-w") || 48) / 2, px(o, "--grape-y") + (px(o, "--grape-h") || 48) / 2];
-        const free = (cx, cy) => others.every(o => {
-          const [qx, qy] = center(o), ow = px(o, "--grape-w") || 48, oh = px(o, "--grape-h") || 48;
-          if (rhomb(o)) return Math.abs(cx - qx) / ((ow + w) / 2) + Math.abs(cy - qy) / ((oh + h) / 2) >= 0.98;
-          return cx + w / 2 - 6 <= qx - ow / 2 || cx - w / 2 + 6 >= qx + ow / 2 || cy + h / 2 - 6 <= qy - oh / 2 || cy - h / 2 + 6 >= qy + oh / 2;
-        });
-        const listCands = () => {   // грани соседних ромбов (смещение на полсуммы полуразмеров) и прежнее место
-          const out = [[ox + w / 2, oy + h / 2]];
-          for (const o of others) if (rhomb(o)) { const [qx, qy] = center(o), ow = px(o, "--grape-w") || 48, oh = px(o, "--grape-h") || 48;
-            for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const c = [qx + sx * (ow + w) / 4, qy + sy * (oh + h) / 4]; if (free(...c)) out.push(c); } }
-          return out;
-        };
+        if (item.closest(".ldim") || item.querySelector(".ldim")) e.stopPropagation();   // затемнённая: правое нажатие — только сворачивание
+        const id = e.pointerId, x0 = e.clientX, y0 = e.clientY, foldHit = g.classList.contains("cmin") || rItems(box).length > 2;
+        let moved = false; g._sfzFoldHit = foldHit;
         const clean = () => { document.removeEventListener("pointermove", move, true); document.removeEventListener("pointerup", finish, true); document.removeEventListener("pointercancel", finish, true); };
-        const move = ev => {
-          if (ev.pointerId !== id) return;
-          const dx = ev.clientX - x0, dy = ev.clientY - y0;
-          if (!mode) {
-            if (Math.hypot(dx, dy) < 6) return;
-            g._sfzRDragUntil = Infinity;
-            const vertical = Math.abs(dy) > Math.abs(dx);
-            if (folded || !rhomb(item) || !others.length || (vertical && ((E.top && dy < 0) || (E.bottom && dy > 0)))) {
-              mode = "group"; clean();
-              const drag = startGroupDrag({ target: g, button: 0, pointerId: id, clientX: x0, clientY: y0, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
-              const done = () => { g.removeEventListener("pointerup", done); g.removeEventListener("pointercancel", done); g._sfzRDragUntil = performance.now() + 400; };
-              g.addEventListener("pointerup", done); g.addEventListener("pointercancel", done);
-              if (drag) { ev.preventDefault(); ev.stopImmediatePropagation(); drag(ev); } else done();
-              return;
-            }
-            mode = "item"; box._sfzRDrag = item; item.classList.add("sfz-grape-moving"); cands = listCands();
-          }
-          ev.preventDefault(); ev.stopImmediatePropagation();
-          const cx = ox + w / 2 + dx, cy = oy + h / 2 + dy;
-          spot = cands.reduce((b, c) => Math.hypot(c[0] - cx, c[1] - cy) < Math.hypot(b[0] - cx, b[1] - cy) ? c : b, cands[0]);
-          item.style.setProperty("--grape-x", (spot[0] - w / 2) + "px"); item.style.setProperty("--grape-y", (spot[1] - h / 2) + "px");
-        };
+        const move = ev => { if (ev.pointerId === id && Math.hypot(ev.clientX - x0, ev.clientY - y0) >= 6) moved = true; };
         const finish = ev => {
           if (ev.pointerId !== id) return;
-          clean();
-          if (mode !== "item") { if (!mode) { g._sfzRDragUntil = foldHit ? performance.now() + 400 : 0; if (foldHit && ev.type === "pointerup") foldFlip(item); } return; }
-          g._sfzRDragUntil = performance.now() + 400;
-          item.classList.remove("sfz-grape-moving"); box._sfzRDrag = null;
-          const up = g.classList.contains("sfz-book-up"), H = px(box, "--sfz-grape-height") || box.offsetHeight, key = g.dataset.g;
-          const ref = others[0].getBoundingClientRect(), gr = g.getBoundingClientRect(), map = {};
-          for (const el of (box._sfzGrapeSlots || E.all)) if (el.classList.contains("sfz-grape-item") && !el.classList.contains("sfz-grape-range") && box.contains(el)) {
-            const y = px(el, "--grape-y"), hh = px(el, "--grape-h") || 48;
-            map[sfzGrapeKey(el)] = { x: Math.round(px(el, "--grape-x") * 10) / 10, y: Math.round((up ? H - y - hh : y) * 10) / 10 };
-          }
-          Z.sfzGrapePos ||= {}; Z.sfzGrapePos[key] = map;
-          sfzGrapeSync(g);
-          const now = others[0].getBoundingClientRect(), ddx = ref.left - now.left, ddy = ref.top - now.top;
-          if (freeGroup() && (Math.abs(ddx) > 0.5 || Math.abs(ddy) > 0.5)) nodeSetPos(g, gr.left + ddx, gr.top + ddy);
-          place(g); linkSync(); save();
+          clean(); g._sfzRDragUntil = moved || foldHit ? performance.now() + 400 : 0;
+          if (!moved && foldHit && ev.type === "pointerup") foldFlip(item);
         };
-        document.addEventListener("pointermove", move, { capture: true, passive: false });
+        document.addEventListener("pointermove", move, true);
         document.addEventListener("pointerup", finish, true);
         document.addEventListener("pointercancel", finish, true);
       }, true);
-      /* После протяжки правый щелчок не доходит до кнопки (у многих кнопок он — второе действие). v0.073: у крайних ромбов и свёрнутой грозди правый
-         щелчок — сворачивание, своё второе действие у них не срабатывает (в Windows contextmenu приходит после отпускания, в других — при нажатии). */
+      // Правый щелчок по кнопке грозди — сворачивание: её второе действие и меню браузера не срабатывают (в Windows contextmenu приходит после отпускания, в других — при нажатии).
       g.addEventListener("contextmenu", e => { if (g._sfzFoldHit || performance.now() < (g._sfzRDragUntil || 0)) { g._sfzFoldHit = false; e.preventDefault(); e.stopPropagation(); } }, true);
-      /* v0.073, «пусть правой кнопкой один клик сворачивание разворачивание, и ещё чтобы всегда минимум 2 кнопки оставались при сворачивании»: правый
-         щелчок без протяжки по крайнему ромбу сворачивает гроздь в него и ближайшего к нему соседа (sfzFoldPair), по свёрнутой — раскрывает; прежний
-         двойной щелчок снят — он ещё и дважды нажимал кнопку. Щёлкнутый ромб остаётся на том же месте экрана. Гроздь из двух ромбов не сворачивается. */
+      /* v0.073: свёрнутая гроздь — не меньше двух ромбов (крайний и ближайший к нему сосед по диагонали, sfzFoldPair); гроздь из двух не сворачивается.
+         v0.074: край выбирает половина, где щёлкнули; крайний ромб остаётся на том же месте экрана, при раскрытии — щёлкнутый. */
       function foldFlip(item) {
         const box = g.querySelector(":scope > .cgb"); if (!box || document.body.classList.contains("cedit")) return;
-        const key = g.dataset.g, on = !g.classList.contains("cmin"), before = item.getBoundingClientRect(), gr = g.getBoundingClientRect(), wasFree = freeGroup();
+        const key = g.dataset.g, on = !g.classList.contains("cmin"), gr = g.getBoundingClientRect(), wasFree = freeGroup();
+        let anchor = item;
         Z.sfzFoldKeep ||= {};
-        if (on) { const vis = rItems(box); if (vis.length <= 2) return; Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzFoldPair(vis, [sfzGrapeKey(item)]).map(sfzGrapeKey); } else delete Z.cgrpMin[key];
+        if (on) {
+          const vis = rItems(box); if (vis.length <= 2) return;
+          const px = (el, k) => parseFloat(el.style.getPropertyValue(k)) || 0, top = el => px(el, "--grape-y"), bottom = el => top(el) + (px(el, "--grape-h") || 48);
+          const upper = top(item) + bottom(item) <= Math.min(...vis.map(top)) + Math.max(...vis.map(bottom));
+          anchor = vis.slice().sort((a, b) => (upper ? top(a) - top(b) : bottom(b) - bottom(a)) || px(a, "--grape-x") - px(b, "--grape-x"))[0];
+          Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzFoldPair(vis, [sfzGrapeKey(anchor)]).map(sfzGrapeKey);
+        } else delete Z.cgrpMin[key];
+        const before = anchor.getBoundingClientRect();
         g.classList.toggle("cmin", on); g.style.minHeight = "";
         sfzGrapeSync(g);
-        if (wasFree) { const now = item.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
+        if (wasFree) { const now = anchor.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
         place(g); linkSync(); save();
       }
     }
