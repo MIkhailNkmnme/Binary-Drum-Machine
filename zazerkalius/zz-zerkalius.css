@@ -180,7 +180,7 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 
 @media(max-width:760px){:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group,:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh{width:104px}}
 
-/* v0.1131: drag individual diamonds without activating their click action. */
+/* v0.1132: a button drags its whole grape; clicking still activates it. */
 #w-zerkalius .zerk-diamond{cursor:grab;touch-action:none;user-select:none}
-#w-zerkalius .zerk-diamond.zerk-button-drag{cursor:grabbing!important;filter:drop-shadow(0 0 4px var(--control-color,var(--mirror-color)))}
-#w-zerkalius .zerk-grape.zerk-button-drag-host{z-index:30}
+#w-zerkalius .zerk-grape.pdrag,#w-zerkalius .zerk-grape.pdrag .zerk-diamond{cursor:grabbing!important}
+#w-zerkalius .zerk-grape.pdrag{z-index:30}

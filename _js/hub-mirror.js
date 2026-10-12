@@ -1,18 +1,20 @@
+/* Hub v0.116: complete source survives displacement and reflection before the camera. */
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'horr',magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
       state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
-      state.pattern = ['base', 'serp', 'horr'].includes(saved.pattern) ? saved.pattern : 'horr';   // v0.115: сохранённый выбор не трогаем
+      state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
       for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = Math.max(-60, Math.min(60, saved[k]));
+      localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
   let frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
@@ -149,7 +151,7 @@
     setBitCenters(points){bitCenters=points;},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
-    hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false);for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x,y);if(reflected)mirror||=read(image,...reflected);}return {source:original,mirror};},
+    hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
@@ -159,22 +161,20 @@
       return [x - 2 * distance * nx, y - 2 * distance * ny];
     },
     contains(x, y, w, h) { return frame && x - w / 2 >= frame.left && x + w / 2 <= frame.left + frame.width && y - h / 2 >= 0 && y + h / 2 <= frame.height; },
+    matrix(canvas,view=null){
+      if(!frame||!state.on)return null;
+      const offset=view?view.left:0,sx=view?view.scale:canvas.width/(frame.left+frame.width),sy=view?view.scale:canvas.height/frame.height;
+      const [x,y]=center(),cx=(x-offset)*sx,cy=y*sy,a=Math.cos(2*state.angle),b=Math.sin(2*state.angle);
+      return [a,b*sy/sx,b*sx/sy,-a,cx-a*cx-b*sx/sy*cy,cy-b*sy/sx*cx+a*cy];
+    },
     reflect(canvas, view = null) {
-      if (!frame || !canvas.width || !canvas.height) return;
-      let source = buffers.get(canvas);
-      if (!source) { source = document.createElement('canvas'); buffers.set(canvas, source); }
-      if (source.width !== canvas.width || source.height !== canvas.height) { source.width = canvas.width; source.height = canvas.height; }
-      const copy = source.getContext('2d'); copy.clearRect(0, 0, source.width, source.height); copy.drawImage(canvas, 0, 0);
-      if(!view)liveSources.add(canvas);if(!state.on)return;
-      const g = canvas.getContext('2d'), offset = view ? view.left : 0;
-      const sx = view ? view.scale : canvas.width / (frame.left + frame.width), sy = view ? view.scale : canvas.height / frame.height;
-      const [x, y] = center(), cx = (x - offset) * sx, cy = y * sy, a = Math.cos(2 * state.angle), b = Math.sin(2 * state.angle);
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.shadowBlur = 0;
-      g.beginPath(); g.rect((frame.left - offset) * sx, 0, frame.width * sx, canvas.height); g.clip();
-      g.setTransform(a, b * sy / sx, b * sx / sy, -a, cx - a * cx - b * sx / sy * cy, cy - b * sy / sx * cx + a * cy);
-      g.drawImage(source, 0, 0); g.restore();
-      if (view) { source.width = 0; source.height = 0; }
+      // Keep the complete source. Reflection is composed with the camera in HubView.paint.
+      if(!frame||!canvas.width||!canvas.height||view)return;
+      let source=buffers.get(canvas);if(!source){source=document.createElement('canvas');buffers.set(canvas,source);}
+      if(source.width!==canvas.width||source.height!==canvas.height){source.width=canvas.width;source.height=canvas.height;}
+      const copy=source.getContext('2d');copy.clearRect(0,0,source.width,source.height);copy.drawImage(canvas,0,0);liveSources.add(canvas);
     }
+
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
 })();

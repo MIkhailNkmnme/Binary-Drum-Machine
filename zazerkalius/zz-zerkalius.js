@@ -1,3 +1,4 @@
+/* v0.1132: захват любой кнопки переносит целую гроздь с закреплением в шапке. */
 /* v0.1131: ромбовые кнопки перетаскиваются отдельно; щелчок сохраняет действие. */
 /* v0.1130: зеркальный маятник внутри Зеркалиуса, общие исходные биты, кадры и баланс. */
 /* v0.1129: shared axis speed multiplier up to 1000 with logarithmic slider and reset. */
@@ -102,18 +103,21 @@
     const c=SOL_PLATES[el.id];
     const hd=el.querySelector('.smh');hd.title='Тяни шапку к верхней или нижней полосе — закрепить на месте броска; обратно на холст — открепить; − / + — свернуть';
     el.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();plateFoldToggle(el);};
-    hd.addEventListener('pointerdown',e=>{
-      if(e.button!==0||e.target.closest('button,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();hd.setPointerCapture(e.pointerId);
+    el.addEventListener('click',e=>{if(e.detail!==0&&performance.now()<(el._solDragUntil||0)){e.preventDefault();e.stopImmediatePropagation();}},true);
+    el.addEventListener('pointerdown',e=>{
+      const diamond=e.target.closest('.zerk-diamond'),head=e.target.closest('.smh');
+      if(e.button!==0||(!diamond&&!head)||e.target.closest('input[type=range],input[type=number],select,textarea')||(!diamond&&e.target.closest('button,input,label')))return;
+      el._solDragUntil=0;const handle=diamond||hd;e.stopPropagation();
       const start=[e.clientX,e.clientY],r0=el.getBoundingClientRect();let moved=false;
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-start[0],ev.clientY-start[1])<4)return;
-        el._solDragUntil=performance.now()+400;
-        if(!moved){moved=true;if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];hd.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
+        ev.preventDefault();ev.stopPropagation();el._solDragUntil=performance.now()+400;
+        if(!moved){moved=true;handle.setPointerCapture(e.pointerId);if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];handle.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
         const [x,y]=plateSnap(el,r0,ev.clientX-start[0],ev.clientY-start[1]),host=stage.getBoundingClientRect();
         Z[c.xy]=[x-host.left,y-host.top];c.place(el);window.zzPanelLinkSync?.();if(el._zerkDock){const target=dockTarget(ev);win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',target==='top');footerDock.classList.toggle('zerk-dock-target',target==='bottom');}};
-      const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);if(hd.hasPointerCapture(e.pointerId))hd.releasePointerCapture(e.pointerId);
+      const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);
         if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
       document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
-    });
+    },true);
   };
   SOL_PLATES.zerkTools={name:'Зеркалиус · три зеркала',min:'zerkToolsMin',xy:'zerkToolsXY',col:'#70e0d7',place:placeTools,init:plateSetup};
   plateInit(tools);
@@ -205,55 +209,10 @@
   for(const [key,caption] of [['tint','Цветные отражения'],['trace','Отрезки битов: 1 ↘, 0 ↗']]){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=state[key];input.setAttribute('aria-label',caption);input.title=key==='trace'?'Короткий отрезок внутри ячейки: 1 — наклон вправо вниз, 0 — вправо вверх':caption;label.append(input,document.createTextNode(caption));body.append(label);input.onchange=()=>{state[key]=input.checked;changed(key==='trace');};}
   button('Вернуть три зеркала','Вернуть начальные положения трёх зеркал',()=>{defaults().forEach((m,i)=>{stopPath(state.mirrors[i]);Object.assign(state.mirrors[i],m,{mode:'direct'});});state.mirrors.forEach((m,i)=>{Object.assign(controls[i].on,{checked:m.on});controls[i].color.value=m.color;controls[i].speed.value=m.speed;controls[i].section.style.setProperty('--mirror-color',m.color);controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');});changed();},body);
   const groups=[], compactUpdates=[];
-  const buttonHomes=new Map();
-  state.buttonPositions=state.buttonPositions&&typeof state.buttonPositions==='object'?state.buttonPositions:{};
-  function placeButtons(){
-    const bounds=win.getBoundingClientRect();
-    for(const [node,{key,home}] of buttonHomes){
-      const xy=state.buttonPositions[key];
-      if(!Array.isArray(xy)||xy.length!==2||!xy.every(Number.isFinite))continue;
-      node.style.left=xy[0]+'px';node.style.top=xy[1]+'px';
-      if(!node.getClientRects().length)continue;
-      const r=node.getBoundingClientRect();
-      node.style.left=(xy[0]+clamp(r.left,bounds.left,Math.max(bounds.left,bounds.right-r.width))-r.left)+'px';
-      node.style.top=(xy[1]+clamp(r.top,bounds.top,Math.max(bounds.top,bounds.bottom-r.height))-r.top)+'px';
-    }
+  delete state.buttonPositions; // v0.1132: layout belongs to whole grapes.
+  function resetGroups(){
+    for(const group of groups){delete Z[group.id+'XY'];group._zerkDock(false);platePlace(group);}save();
   }
-  function buttonDragInit(){
-    for(const group of groups)for(const [i,node] of [...group.querySelectorAll('.zerk-diamond')].entries()){
-      const key=node.id||group.id+':'+i,home=[parseFloat(node.style.left)||0,parseFloat(node.style.top)||0];
-      buttonHomes.set(node,{key,home});node.title+=(node.title?' · ':'')+'Тяни — перенести эту кнопку';
-    }
-    let blocked=null;
-    win.addEventListener('click',e=>{
-      if(blocked&&e.detail!==0&&e.target.closest('.zerk-diamond')===blocked){blocked=null;e.preventDefault();e.stopImmediatePropagation();}
-    },true);
-    win.addEventListener('pointerdown',e=>{
-      blocked=null;
-      const node=e.target.closest('.zerk-diamond'),saved=buttonHomes.get(node);
-      if(e.button!==0||!saved)return;
-      const start=[e.clientX,e.clientY],r0=node.getBoundingClientRect(),origin=[parseFloat(node.style.left)||0,parseFloat(node.style.top)||0];
-      let moved=false;const oldZ=node.style.zIndex;
-      const move=ev=>{
-        if(ev.pointerId!==e.pointerId)return;
-        const dx=ev.clientX-start[0],dy=ev.clientY-start[1];if(!moved&&Math.hypot(dx,dy)<5)return;
-        ev.preventDefault();ev.stopPropagation();
-        if(!moved){moved=true;node.setPointerCapture(e.pointerId);node.classList.add('zerk-button-drag');node.closest('.zerk-grape').classList.add('zerk-button-drag-host');node.style.zIndex='20';}
-        const box=win.getBoundingClientRect(),x=clamp(r0.left+dx,box.left,Math.max(box.left,box.right-r0.width)),y=clamp(r0.top+dy,box.top,Math.max(box.top,box.bottom-r0.height));
-        state.buttonPositions[saved.key]=[origin[0]+x-r0.left,origin[1]+y-r0.top];placeButtons();
-      };
-      const end=ev=>{
-        if(ev.pointerId!==e.pointerId)return;
-        document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);
-        if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);
-        node.classList.remove('zerk-button-drag');node.closest('.zerk-grape').classList.remove('zerk-button-drag-host');node.style.zIndex=oldZ;
-        if(moved){blocked=node;save();}
-      };
-      document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
-    },true);
-    placeButtons();
-  }
-  function resetButtons(){state.buttonPositions={};for(const [node,{home}] of buttonHomes){node.style.left=home[0]+'px';node.style.top=home[1]+'px';}save();}
   const headerDock=document.createElement('div');headerDock.id='zerkHeaderDock';headerDock.setAttribute('aria-label','Закреплённые группы Зеркалиуса');
   const footerDock=document.createElement('div');footerDock.id='zerkFooterDock';footerDock.setAttribute('aria-label','Группы в нижней полосе Зеркалиуса');stage.append(footerDock);
   function dockTarget(e){if(e.altKey)return null;const h=win.querySelector(':scope > .whead').getBoundingClientRect(),s=stage.getBoundingClientRect();if(e.clientX>=h.left&&e.clientX<=h.right&&e.clientY>=h.top-24&&e.clientY<=h.bottom+24)return 'top';if(e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.bottom-32&&e.clientY<=s.bottom+24)return 'bottom';return null;}
@@ -457,7 +416,7 @@
 
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
-    button('Кнопки на места','Вернуть отдельные кнопки в исходную раскладку групп',resetButtons,el);
+    button('Грозди на места','Вернуть группы кнопок в исходную раскладку',resetGroups,el);
     const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
     const bitColor=field(el,'Цвет исходных битов','color',state.bitColor);bitColor.oninput=()=>{state.bitColor=bitColor.value;state.palette='custom';changed(true);};
@@ -704,7 +663,7 @@
       const placed=[];annotationNodes.forEach((el,i)=>{const n=names[i];el.hidden=!n;if(!n)return;el.textContent=n.text;const w=el.offsetWidth,h=el.offsetHeight;
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
-    compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));placeButtons();zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
+    compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
     const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message:message;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
@@ -721,7 +680,6 @@
   new MutationObserver(()=>{if(!visible())previous=0;request();}).observe(win,{attributes:true,attributeFilter:['class','style','data-parked']});
   document.addEventListener('visibilitychange',()=>{previous=0;if(document.hidden)save();else request();});
   window.addEventListener('pagehide',save);
-  buttonDragInit();
   document.fonts?.ready.then(()=>{dirty=true;request();});
   if(location.hash==='#zerkalius')document.querySelector('#pinBar button[data-aw="w-zerkalius"]')?.click();
   request();

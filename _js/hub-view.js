@@ -1,3 +1,4 @@
+/* Hub v0.116: compose displacement, mirror and camera before clipping to the viewport. */
 /* Hub v0.114: always available zoom and one-click recovery of the whole drawing. */
 (() => {
   'use strict';
@@ -22,12 +23,14 @@
   function home(){stopFlip();fieldPaused=false;resumeFlip=false;Object.assign(state,{zoom:1,angle:0,flip:0,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
   function rotate(delta){state.angle=((state.angle+delta)%360+360)%360;changed();}
   window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,apply,sourceShift,place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
-    const [x,y]=sourceShift();if(!x&&!y)return;let copy=buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}copy.width=canvas.width;copy.height=canvas.height;copy.getContext('2d').drawImage(canvas,0,0);const k=view?view.scale:canvas.width/innerWidth,g=canvas.getContext('2d');g.save();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(copy,x*k,y*k);g.restore();
+    // Source displacement is applied together with the final camera, without clipping a temporary image.
   },paint(canvas,view=null,cached=null){
-    if(!cached&&state.zoom===1&&state.angle===0&&state.flip===0&&state.pan.every(v=>v===0))return;
-    let copy=cached||buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}
-    const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix();
-    g.save();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,canvas.width,canvas.height);g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.drawImage(copy,0,0);g.restore();
+    let copy=cached||buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}
+    if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}
+    const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(),shift=sourceShift(),reflection=window.HubMirror?.matrix?.(canvas,view);
+    g.save();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,canvas.width,canvas.height);g.globalAlpha=1;g.shadowBlur=0;
+    g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.drawImage(copy,shift[0]*k,shift[1]*k);
+    if(reflection){g.transform(...reflection);g.drawImage(copy,shift[0]*k,shift[1]*k);}g.restore();
   }};
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};

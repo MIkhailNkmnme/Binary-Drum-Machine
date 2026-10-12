@@ -54,3 +54,14 @@ test('home recovers saved offscreen drawing, source displacement, rotation and e
   assert.deepEqual(Array.from(f.window.HubView.inverse(750,400)),[750,400]);
   assert.equal(f.button('Переворот вокруг оси зеркала в 3D').attributes['aria-pressed'],'false');
 });
+
+test('displaced rows return through the final camera without an intermediate viewport crop',()=>{
+  const f=fixture({zoom:.2,sourcePan:[0,-.5]}),draws=[];
+  const multiply=(a,b)=>[a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]];
+  let current=[1,0,0,1,0,0];
+  const raw={width:1200,height:800},g={save(){},restore(){},clearRect(){},setTransform(...m){current=m;},transform(...m){current=multiply(current,m);},drawImage(image,x,y){assert.equal(image,raw);const px=750+x,py=140+y;draws.push([current[0]*px+current[2]*py+current[4],current[1]*px+current[3]*py+current[5]]);}};
+  f.window.HubMirror.matrix=()=>[1,0,0,-1,0,800];
+  f.window.HubView.paint({width:1200,height:800,getContext:()=>g},null,raw);
+  // The original row was moved to y=-260 before the camera. Both copies are still visible.
+  assert.equal(draws.length,2);assert.deepEqual(draws,[[750,268],[750,532]]);
+});

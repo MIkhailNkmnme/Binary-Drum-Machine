@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.010. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.011. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.010</title>
+<title>Zerkalius Маятник — v0.011</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -26,6 +26,7 @@
     поле 5 байт на клетку вместо 6, расчёт на ~20 % быстрее, опорные кадры вдвое меньше.
   v0.007: флажок «симметрия» — вертикали зеркальной симметрии и края их зон по строкам (расширение «маятником»).
   v0.008: общее ядро с зеркальным маятником Зеркалиуса; математическое правило сохранено.
+  v0.011: выбранная ось → Соляриус; размер, точный счёт 0/1, цифры при приближении, угловатые кнопки Синхрофазотрона.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -53,16 +54,39 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 #wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0;cursor:grab;touch-action:none;overscroll-behavior:contain}
 #wrap.drag{cursor:grabbing}
 canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
-#bKonus{display:none}#bKonus.on{display:inline-block}
+#bKonus:disabled{opacity:.45;cursor:default}#konusInfo{color:var(--mute);font:12px var(--mono)}
 #tip{position:fixed;pointer-events:none;font:12px var(--mono);background:#000c;border:1px solid var(--line);padding:2px 6px;border-radius:3px;display:none}
 .lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute);cursor:pointer;user-select:none}
 .lg.bits .tc{opacity:.25;text-decoration:line-through}   /* v0.010: «только биты» — цвета перекрытий погашены */
 .lg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+
+/* v0.011: controls in the angular language of Synchrophasotron. */
+.bar button,.bar a{--key:#7cbcff;--t:9.24px;position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 calc(var(--t) + 8px);border:0;border-radius:0;clip-path:polygon(var(--t) 0,calc(100% - var(--t)) 0,100% 50%,calc(100% - var(--t)) 100%,var(--t) 100%,0 50%);background:color-mix(in srgb,var(--key) 70%,var(--panel));color:var(--key);font:12px var(--mono);text-decoration:none;white-space:nowrap;touch-action:manipulation}
+.bar button::before,.bar a::before{content:"";position:absolute;inset:1px;z-index:-1;clip-path:inherit;background:color-mix(in srgb,var(--key) 12%,var(--panel))}
+.bar button:hover::before,.bar a:hover::before{background:color-mix(in srgb,var(--key) 24%,var(--panel))}
+.bar button[aria-pressed=true]::before,.bar button.on::before{background:color-mix(in srgb,var(--key) 42%,var(--panel))}
+.bar button:disabled{opacity:.4;cursor:default}
+.bar #bPlay,.bar #bBuild{--key:#73e4a5}
+.bar #bReset{--key:#ff7373}
+.bar #bAxisPick,.bar #bKonus{--key:#ff87cf}
+.bar #bTxt,.bar #bPng{--key:#ffd166}
+.bar #bPlay{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
+.bar input,.bar select{border-radius:0;font:12px var(--mono);min-height:28px}
+.bar input[type=range]{appearance:none;border:0;padding:0;height:32px;background:transparent}
+.bar input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line)}
+.bar input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;margin-top:-7px;background:var(--acc);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.bar input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+.bar input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:0;background:var(--acc);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.bar .zerk-arrow{width:28px;min-width:28px;padding:0;font-size:14px}
+#imageStats{display:flex;flex-wrap:wrap;gap:4px 20px;padding:7px 16px;background:var(--panel);border-bottom:1px solid var(--line);font:12px/1.6 var(--mono);color:var(--fg)}
+#bitDigits{position:fixed;pointer-events:none;margin:0;background:transparent;image-rendering:auto;z-index:2}
+#bitDigits[hidden]{display:none}
+@media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.010</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.011</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -95,6 +119,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label>вид <select id="view">
       <option value="col">цвета перекрытий</option>
       <option value="bits">только биты</option>
+      <option value="digits">цифры 0/1</option>
     </select></label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
@@ -106,12 +131,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <a href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
-    <button id="bKonus" title="Выбранный конус (Shift + щелчок по оси симметрии или по полю) — на грани Бирамиды">◭ в Бирамиду</button>
+    <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
+    <button id="bKonus" disabled title="Сначала выбери ось на поле">◯ в Соляриус</button>
+    <output id="konusInfo" aria-live="polite">Ось не выбрана</output>
   </div>
   <div class="lg" id="lg" role="button" tabindex="0" title="Щелчок — цвета перекрытий вкл / выкл (то же, что «вид»)"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span class="tc"><i style="background:#4f9bff"></i>стал 1</span><span class="tc"><i style="background:#ff5a4f"></i>стал 0</span></div>
   <span id="stat"></span>
 </div>
+<div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output></div>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
+<canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
 <div id="tip"></div>
 
 <script src="mayatnik-core.js?v=1"></script>
@@ -126,6 +155,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
+  let pictureStats = null, digitsRaf = 0;
+  const digitCanvas = $('bitDigits'), digitG = digitCanvas.getContext('2d');
   let f = null, geo = null, k = 0, img = null, playing = false, raf = 0, snaps = new Map(), interval = 1, target = 0;
 
   // Палитра: [пусто], затем [бит][цвет]
@@ -146,7 +177,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
 
   function reset() {
-    stop(); readUI();
+    stop(); clearKonus(); readUI();
     const S = st.mode === 'one' ? 1 : st.steps;
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
     f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
@@ -161,13 +192,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice() }); }   // v0.006: только биты — цвет считается
   function addOne() {
     if (k >= total()) return false;
+    if (konus) clearKonus();
     MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++;
     if (k % interval === 0) snap();
     return true;
   }
   // Перейти к кадру t: назад — от ближайшего опорного кадра, вперёд — досчитать
   function goTo(t) {
-    stop(); if (!f) reset();
+    stop(); if (konus && t !== k) clearKonus(); if (!f) reset();
     t = Math.max(0, Math.min(total(), t | 0));
     if (t < k) { let s = 0; for (const key of snaps.keys()) if (key <= t && key > s) s = key;
       const o = snaps.get(s); f.val.set(o.val); k = s; }
@@ -178,19 +210,21 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
   function draw() {
-    const P = PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
+    const P = st.view === 'digits' ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
+    let zero = 0, one = 0;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
-    if (st.view === 'bits') for (let i = 0; i < val.length; i++) { const v = val[i]; px[i] = v < 0 ? empty : T[v * 3]; }
+    if (st.view === 'bits' || st.view === 'digits') for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; px[i] = v < 0 ? empty : T[v * 3]; }
     else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
       const [lo, hi] = MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
       for (let r = 0; r < H; r++) { const row = r * W;
-        for (let c = 0; c < W; c++) { const v = val[row + c]; px[row + c] = v < 0 ? empty : T[v * 3 + MAYATNIK.tint(r, c - A, v, lo, hi, filled)]; } }
+        for (let c = 0; c < W; c++) { const v = val[row + c]; if (v === 0) zero++; else if (v === 1) one++; px[row + c] = v < 0 ? empty : T[v * 3 + MAYATNIK.tint(r, c - A, v, lo, hi, filled)]; } }
     }
     if (st.outline) outline(px);
     if (st.sym && !playing) symmetry(px);
     konusDraw(px);
     g.putImageData(img, 0, 0);
+    pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
   }
   // v0.003: обводка «шумной» зоны. Снаружи неё биты все одинаковые (полосы дают только цвета), поэтому край —
@@ -260,31 +294,65 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     for (const sg of symCache.segs) for (let y = sg.y0; y <= sg.y1; y++) { dot(y, sg.x, SYM_OR); dot(y, sg.x + 1, SYM_OR); }
   }
-  /* v0.009, «любой конус симметрии в Бирамиду вставить… выбрать»: Shift + щелчок — конус. У оранжевой оси — её конус
-     (вершина — верх оси, ось между столбцами x и x + 1), мимо осей — конус с вершиной в клетке щелчка. Вниз до низа поля,
-     не больше 512 строк. Ряд грани i (i + 1 бит) — настоящие биты: левая половина — клетки x − i, x − i + 2, … слева от оси,
-     правая — их зеркальные клетки справа (c = x − i + 2j, а при 2j > i ещё +1). Если конус зеркален, ряд — палиндром.
-     Передача — память браузера (zerk_mayatnik_konus), её же читает Бирамида («◭ конус из Маятника»). */
+  /* v0.011: выбранный отрезок оси → Соляриус. Ряд i содержит i+1 бит из двух зеркальных
+     половин, без изменения исходного поля. До 256 колец (предел Соляриуса). Shift позволяет
+     выбрать конус от клетки. Передача текущего кадра через zerk_mayatnik_solarius. */
   let konus = null;
   const KONUS_COL = rgba([255, 60, 200]);
-  function konusPick(x, y) {
-    let ax = x, top = y, from = 'клетка';
-    if (st.sym && symCache) { const tol = Math.max(3, Math.ceil(8 / scale())); let best = null;
-      for (const sg of symCache.segs) { const d = Math.abs(x - sg.x - 0.5); if (d <= tol && y >= sg.y0 - tol && y <= sg.y1 + tol && (!best || d < best.d)) best = { d, sg }; }
-      if (best) { ax = best.sg.x; top = best.sg.y0; from = 'ось'; } }
-    const { W, H, val } = f, rows = [];
-    for (let i = 0; top + i < H && i < 512; i++) { const row = (top + i) * W; let s = '';
+  let axisPicking = false;
+  function clearKonus() {
+    konus = null; $('bKonus').disabled = true; $('bKonus').classList.remove('on');
+    $('bKonus').title = 'Сначала выбери ось на поле'; $('konusInfo').textContent = 'Ось не выбрана';
+  }
+  function konusData() {
+    if (!konus || konus.frame !== k) return null;
+    const { ax, top, n, from } = konus, { W, val } = f, rows = [];
+    for (let i = 0; i < n; i++) { const row = (top + i) * W; let s = '';
       for (let j = 0; j <= i; j++) { const c = ax - i + 2 * j + (2 * j > i ? 1 : 0); const v = c >= 0 && c < W ? val[row + c] : -1; s += v === 1 ? '1' : '0'; }
-      rows.push(s); }
-    konus = { ax, top, n: rows.length };
-    try { localStorage.setItem('zerk_mayatnik_konus', JSON.stringify({ rows, k, N: st.rows, top: top + 1, col: ax - geo.anchor, from, when: new Date().toISOString() })); } catch (_) {}
-    $('bKonus').classList.add('on'); $('bKonus').title = `Конус: ${from}, строка ${top + 1}, столбец ${ax - geo.anchor >= 0 ? '+' : ''}${ax - geo.anchor}, рядов ${rows.length} — на грани Бирамиды`;
-    draw();
+      rows.push(s);
+    }
+    return { rows, k, N: st.rows, top: top + 1, col: ax - geo.anchor, axis: ax + .5 - geo.anchor, from, when: new Date().toISOString() };
+  }
+  function konusPick(x, y, axisOnly = false) {
+    let ax = x, top = y, from = 'клетка', height = Math.min(256, f.H - y);
+    if (st.sym) {
+      const key = k + '|' + f.W + '|' + f.H;
+      if (!symCache || symCache.key !== key) symCache = { key, segs: symFind() };
+      const tol = Math.max(3, Math.ceil(8 / scale())); let best = null;
+      for (const sg of symCache.segs) { const d = Math.abs(x - sg.x - .5); if (d <= tol && y >= sg.y0 - tol && y <= sg.y1 + tol && (!best || d < best.d)) best = { d, sg }; }
+      if (best) { ax = best.sg.x; top = best.sg.y0; height = Math.min(256, best.sg.y1 - top + 1); from = 'ось'; }
+    }
+    if (axisOnly && from !== 'ось') { if (axisPicking) $('konusInfo').textContent = 'Нажми на оранжевую ось симметрии'; return false; }
+    konus = { ax, top, n: height, from, frame: k };
+    $('bKonus').disabled = false; $('bKonus').classList.add('on');
+    const axis = ax + .5 - geo.anchor;
+    $('konusInfo').textContent = `${from === 'ось' ? 'Ось' : 'Конус'} ${axis >= 0 ? '+' : ''}${axis} · строки ${top + 1}–${top + height} · кадр ${k}`;
+    $('bKonus').title = `На кольца Соляриуса: ${height} рядов выбранного конуса, кадр ${k}`;
+    axisPicking = false; $('bAxisPick').setAttribute('aria-pressed', 'false'); draw(); return true;
   }
   function konusDraw(px) {   // обводка выбранного конуса: два края под 45° от вершины
     if (!konus) return; const { W, H } = f;
     for (let i = 0; i < konus.n && konus.top + i < H; i++) { const y = konus.top + i;
       for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= 0 && x < W) px[y * W + x] = KONUS_COL; }
+  }
+  function imageStats() {
+    if (!f) return;
+    const r = cv.getBoundingClientRect(), num = n => n.toLocaleString('ru-RU');
+    $('imageSize').textContent = `Картинка ${num(f.W)} × ${num(f.H)} px · на странице ${num(Math.round(r.width))} × ${num(Math.round(r.height))} px`;
+    if (!pictureStats) return;
+    const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
+    $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
+  }
+  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(drawDigits);}
+  function drawDigits() {
+    digitsRaf=0;
+    if(!f||st.view!=='digits'||scale()<4){digitCanvas.hidden=true;return;}
+    const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),s=scale(),ratio=Math.min(2,devicePixelRatio||1),width=wrap.clientWidth,height=wrap.clientHeight;
+    digitCanvas.hidden=false;digitCanvas.style.left=host.left+'px';digitCanvas.style.top=host.top+'px';digitCanvas.style.width=width+'px';digitCanvas.style.height=height+'px';
+    digitCanvas.width=Math.max(1,Math.round(width*ratio));digitCanvas.height=Math.max(1,Math.round(height*ratio));digitG.setTransform(ratio,0,0,ratio,0,0);digitG.clearRect(0,0,width,height);
+    const x0=r.left-host.left,y0=r.top-host.top,c0=Math.max(0,Math.floor(-x0/s)),c1=Math.min(f.W,Math.ceil((width-x0)/s)),r0=Math.max(0,Math.floor(-y0/s)),r1=Math.min(f.H,Math.ceil((height-y0)/s));
+    digitG.font=`600 ${s*.8}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;digitG.textAlign='center';digitG.textBaseline='middle';
+    for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){const v=f.val[y*f.W+x];if(v<0)continue;digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);}
   }
   function status() {
     $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
@@ -297,7 +365,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const s = scale();
     cv.style.width = geo.W * s + 'px'; cv.style.height = st.rows * s + 'px';
     $('zoomV').textContent = (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
-    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit'));
+    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit')); imageStats(); queueDigits();
   }
   // Масштаб s, точка экрана (x, y) остаётся над тем же битом
   function zoomTo(s, x, y) {
@@ -336,7 +404,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function play() {
     if (playing) { stop(); return; }
     if (!f) reset();
-    else if (k >= total()) { const o = snaps.get(0); f.val.set(o.val); k = 0; }   // повтор с кадра 0
+    else if (k >= total()) { clearKonus(); const o = snaps.get(0); f.val.set(o.val); k = 0; }   // повтор с кадра 0
     target = total();
     playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = 'Ⅱ Пауза';
     next();
@@ -386,8 +454,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
-  const lgSync = () => $('lg').classList.toggle('bits', st.view === 'bits');
-  $('view').addEventListener('change', () => { readUI(); lgSync(); if (f) draw(); });
+  const lgSync = () => $('lg').classList.toggle('bits', st.view !== 'col');
+  $('view').addEventListener('change', () => { readUI(); lgSync(); if (st.view === 'digits' && scale() < 4) zoomTo(8); if (f) draw(); });
   const lgToggle = () => { $('view').value = st.view === 'bits' ? 'col' : 'bits'; readUI(); lgSync(); if (f) draw(); };
   $('lg').addEventListener('click', lgToggle);
   $('lg').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lgToggle(); } });
@@ -398,7 +466,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('zIn').onclick = () => zoomTo(scale() * 1.5);
   $('zOut').onclick = () => zoomTo(scale() / 1.5);
   $('zFit').onclick = fit;
-  addEventListener('resize', () => { if (st.zoom === 'fit' && geo) layout(); });
+  addEventListener('resize', () => { if (geo) layout(); });
+  wrap.addEventListener('scroll', queueDigits, {passive:true});
   // Колесо — масштаб к курсору (плавно, тачпад тоже)
   wrap.addEventListener('wheel', e => {
     if (!geo) return; e.preventDefault();
@@ -411,7 +480,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (e.button !== 0 && e.button !== 1) return;
     if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); wrap.setPointerCapture(e.pointerId);
-    if (pts.size === 1) { pan = { x: e.clientX, y: e.clientY, sl: wrap.scrollLeft, st: wrap.scrollTop }; wrap.classList.add('drag'); }
+    if (pts.size === 1) { pan = { x: e.clientX, y: e.clientY, sl: wrap.scrollLeft, st: wrap.scrollTop, moved: false }; wrap.classList.add('drag'); }
     if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale() }; pan = null; }
   });
   wrap.addEventListener('pointermove', e => {
@@ -419,9 +488,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
       if (pinch.d > 0) zoomTo(pinch.s * d / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); }
-    else if (pan) { wrap.scrollLeft = pan.sl - (e.clientX - pan.x); wrap.scrollTop = pan.st - (e.clientY - pan.y); }
+    else if (pan) { if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 5) pan.moved = true; if (!pan.moved) return; wrap.scrollLeft = pan.sl - (e.clientX - pan.x); wrap.scrollTop = pan.st - (e.clientY - pan.y); }
   });
-  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); } };
+  const up = e => {
+    const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
+    pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
+    if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
+    if (!tap || !f || !(e.shiftKey || axisPicking || st.sym)) return;
+    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
+    if (x >= 0 && y >= 0 && x < f.W && y < f.H) { stop(); target = k; konusPick(x, y, !e.shiftKey); }
+  };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
   wrap.addEventListener('dblclick', fit);
   addEventListener('keydown', e => {
@@ -442,16 +518,24 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
   });
   cv.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
-  cv.addEventListener('click', e => {   // v0.009: Shift + щелчок — выбрать конус
-    if (!f || !e.shiftKey) return;
-    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
-    if (x >= 0 && y >= 0 && x < f.W && y < f.H) konusPick(x, y);
-  });
-  $('bKonus').onclick = () => window.open('../oktaedr/Zerkalius-oktaedr.html?konus=1', '_blank');
+  $('bAxisPick').onclick = () => {
+    stop(); target = k; axisPicking = !axisPicking;
+    if (axisPicking) { st.sym = true; $('sym').checked = true; save(); }
+    $('bAxisPick').setAttribute('aria-pressed', String(axisPicking));
+    $('konusInfo').textContent = axisPicking ? 'Нажми на оранжевую ось симметрии' : konus ? $('konusInfo').textContent : 'Ось не выбрана'; draw();
+  };
+  $('bKonus').onclick = () => {
+    const data = konusData(); if (!data) { clearKonus(); return; }
+    try { localStorage.setItem('zerk_mayatnik_solarius', JSON.stringify(data)); }
+    catch (_) { $('konusInfo').textContent = 'Не удалось сохранить конус для перехода'; return; }
+    location.href = '../sinhrofazotron/Zerkalius-sinhrofazotron.html?mayatnik=axis&bg=0';
+  };
+
 
   writeUI(); build();
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
+<script src="../_js/slider-arrows.js"></script>
 </body>
 </html>
