@@ -4740,22 +4740,55 @@ function coneRingNR(b){   // кольцо b ≥ 1 на пути луча: { n �
 /* v0.198, «скорость надо больше возможностей»: ползунок кручения — по логарифму, 1…3600 (было 5…120 ровным шагом), рядом — число. */
 function spinSpOf(p){ const v = Math.pow(3600, p / 100); return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
 function spinPosOf(sp){ return Math.max(0, Math.min(100, Math.round(100 * Math.log(Math.max(1, sp)) / Math.log(3600)))); }
+/* v0.079, «тут реально можем делать только кратные обороту? 1-го (внутреннего), внешнего, 256» → «3» (переключатель на все три): темп — только точные
+   обороты выбранного кольца в секунду, ступенями 1/64 … 64 (знаменатели — степени двойки, скорость в памяти — точное двоичное число). Щелчок по числу
+   у бегунка — от какого кольца считать: К1 → внешнее (кольцо за чертой, растёт с каждой строкой — темп пересчитывается) → кольцо 256. В побитных
+   режимах (Каждое, Встр.бит) кольцо из U частей за оборот проходит U частей; во «Встр.стр» и «Всё» все кольца — оборот за 360°, кольцо не важно.
+   Z.tempoRef — кольцо, Z.tempoRev — оборотов в секунду строкой («1/4», «2»). Темп 🧲 по граням и часы шариков — по-прежнему свои */
+const TEMPO_REV = ["1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "3", "4", "6", "8", "12", "16", "24", "32", "48", "64"];
+const TEMPO_REF = { k1: "К1", out: "внеш.", r256: "256" };
+function tempoRevNum(s){ const [a, b] = String(s).split("/"); return b ? +a / +b : +a; }
+function tempoExactOn(){ return !Z.coneSpinMag && !(window.zzBallClockOn && window.zzBallClockOn()); }
+function tempoRefOf(){ return TEMPO_REF[Z.tempoRef] ? Z.tempoRef : "k1"; }
+function tempoUnits(){   // частей за оборот у выбранного кольца
+  const ref = tempoRefOf(), N = Math.min(Z.rows.length, CONE_MAX);
+  const [i, n] = ref === "k1" ? [0, (Z.rows[0] || "1").length || 1] : ref === "out" ? [N, ((Z.rows[N - 1] || "").length || 0) + 1] : [255, 256];
+  return Math.max(1, Math.round(2 * Math.PI / coneCutGeo(i, n).step));
+}
+function tempoSpOf(rev){ return coneBitMode(Z.coneSpinMode || "all") ? 10 * tempoRevNum(rev) * tempoUnits() : 360 * tempoRevNum(rev); }
+function tempoLadder(){ return TEMPO_REV.filter(r => { const v = tempoSpOf(r); return v >= 0.1 && v <= 3600; }); }
+function tempoExactSync(){
+  if (!tempoExactOn()) return false;
+  const L = tempoLadder(); if (!L.length) return false;
+  if (!L.includes(Z.tempoRev)) {   // своего нет или для этого кольца вне шкалы — ближайшая ступень (по своим оборотам, иначе по нынешней скорости)
+    const has = TEMPO_REV.includes(Z.tempoRev), cur = Math.abs(Z.coneAutoSp ?? 30) || 30; let best = L[0], d = Infinity;
+    for (const r of L) { const e = Math.abs(Math.log(has ? tempoRevNum(r) / tempoRevNum(Z.tempoRev) : tempoSpOf(r) / cur)); if (e < d) { d = e; best = r; } }
+    Z.tempoRev = best;
+  }
+  const sp = (Z.coneAutoSp < 0 ? -1 : 1) * tempoSpOf(Z.tempoRev); if (Z.coneAutoSp !== sp) Z.coneAutoSp = sp;
+  return true;
+}
+function tempoPos(){ const L = tempoLadder(), i = L.indexOf(Z.tempoRev); return L.length > 1 && i >= 0 ? Math.round(i * 100 / (L.length - 1)) : 50; }
 /* v0.1027, «в режиме магнита по граням надо скорость задавать — шаг к грани в секунду»: при 🧲 по магнитам ползунок — своя скорость Z.coneMagSp,
    0,1…30 шагов к следующей грани в секунду (по логарифму, по умолчанию 2); направление — по-прежнему знак Z.coneAutoSp */
 function magSpOf(p){ const v = 0.1 * Math.pow(300, p / 100); return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
 function magPosOf(v){ return Math.max(0, Math.min(100, Math.round(100 * Math.log(Math.max(0.1, v) / 0.1) / Math.log(300)))); }
 function coneMagSp(){ const v = +Z.coneMagSp; return v > 0 ? v : 2; }
 function spinSpUi(){
-  const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
+  const exact = tempoExactSync(), v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
+  if (!el._tempoRef) { el._tempoRef = true; el.title = "Темп — точные обороты кольца в секунду. Щелчок — от какого кольца считать: К1 → внешнее → 256";
+    el.addEventListener("click", (e) => { if (!tempoExactOn()) return; e.preventDefault(); e.stopPropagation();
+      Z.tempoRef = { k1: "out", out: "r256", r256: "k1" }[tempoRefOf()]; coneDirUi(); save();
+      say("Темп — обороты кольца " + { k1: "К1 (внутреннего)", out: "внешнего (за чертой)", r256: "256" }[Z.tempoRef] + ": " + Z.tempoRev + " об/с" + (coneBitMode(Z.coneSpinMode || "all") ? "." : " — во «Встр.стр» и «Всё» все кольца крутятся одинаково, кольцо не важно.")); }); }
   const f = x => window.zzBallClockOn && window.zzBallClockOn() ? ZZExact.from(x).text() : x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
+  el.textContent = exact ? TEMPO_REF[tempoRefOf()] + " · " + Z.tempoRev + " об/с" : window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
     Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
   tempoTrackSync();
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
-  $("coneAutoSp").value = Z.coneSpinMag ? magPosOf(coneMagSp()) : spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
+  $("coneAutoSp").value = Z.coneSpinMag ? magPosOf(coneMagSp()) : tempoExactSync() ? tempoPos() : spinPosOf(Math.abs(sp || 30)); $("bConeDir").textContent = sp < 0 ? "↺ против" : "↻ по часовой"; spinSpUi();
   const d3 = $("bC3Dir"); if (d3) d3.textContent = sp < 0 ? "↺" : "↻";   // v0.279: направление и в пульте
   { const b = $("bConeStepB"), f = $("bConeStepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }
   { const b = $("bC3StepB"), f = $("bC3StepF"); if (b) b.classList.toggle("on", sp < 0); if (f) f.classList.toggle("on", sp >= 0); }   // v0.856: и ромбы шага у ▶   // v0.511: горит стрелка направления
@@ -8041,6 +8074,7 @@ function setupCone(){
     } finally { if (window.zzBallAfterSpin) window.zzBallAfterSpin(dt,ballBefore); if (window.zzFaceObserve) window.zzFaceObserve(); if (ballBefore || Z.coneFaceOrder) tapeRec(); }
   };
   const autoStep = (dt) => {
+    tempoExactSync();   // v0.079: точный темп — внешнее кольцо растёт с каждой строкой, режим кручения мог смениться
     const watching = !!Z.coneBalancePause && !Z.cone3d;
     const clock = watching ? coneMotionClock() : null, ph0 = Z.coneSpinPh || 0, deg0 = Z.coneSpin || 0;
     let time = dt;
@@ -9148,7 +9182,9 @@ function setupCone(){
   /* v0.136, «эта скорость непонятная — раздели: одна только скорость, а направление задавать другой кнопкой; слева-справа — стрелки
      шаг»: ползунок — величина (5…120), знак Z.coneAutoSp — направление, его переключает «↻ по часовой / ↺ против». */
   coneDirUi();
-  $("coneAutoSp").oninput = (e) => { if (Z.coneSpinMag) Z.coneMagSp = magSpOf(+e.target.value); else Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * spinSpOf(+e.target.value); spinSpUi(); };   // v0.1027: при 🧲 — шаги в секунду   // v0.198: по логарифму
+  $("coneAutoSp").oninput = (e) => { if (Z.coneSpinMag) Z.coneMagSp = magSpOf(+e.target.value);
+    else if (tempoExactOn() && tempoLadder().length) { const L = tempoLadder(); Z.tempoRev = L[Math.max(0, Math.min(L.length - 1, Math.round(+e.target.value / 100 * (L.length - 1))))]; tempoExactSync(); }   // v0.079: точные обороты
+    else Z.coneAutoSp = (Z.coneAutoSp < 0 ? -1 : 1) * spinSpOf(+e.target.value); spinSpUi(); };   // v0.1027: при 🧲 — шаги в секунду   // v0.198: по логарифму
   $("coneAutoSp").onchange = () => save();
   $("bConeDir").onclick = () => { Z.coneAutoSp = -(Z.coneAutoSp || 30); coneDirUi(); save(); say(Z.coneAutoSp < 0 ? "↺ Кручение — против часовой." : "↻ Кручение — по часовой."); };
   /* v0.198, «аниматрицу надо ещё сюда» (из Треугольника) и «скорость — больше возможностей». 🌊 Волна сверху вниз: строка r+1
