@@ -23,7 +23,9 @@
      node mayatnik/mayatnik-big.cjs --rows 512 --check           сверка с ядром страницы
    Ключи: --rows N, --steps n (по умолчанию ⌈N/3⌉ + ⌈N/64⌉), --frames K (контрольных кадров, 24),
           --width px (ширина картинок, 2000), --out папка (по умолчанию E:\GD\_pzl\mayatnik-big\N…),
-          --save-min m (сохранять состояние раз в m минут, 20; 0 — не сохранять), --fresh (не продолжать).
+          --save-min m (сохранять состояние раз в m минут, 20; 0 — не сохранять), --fresh (не продолжать),
+          --bits (2026-10-12: последний кадр ещё и бит в бит — kadr-NNNNNN-bity.png, пиксель = бит, всё поле:
+          белый — 1, серый — 0, тёмный — пусто; PNG 2 бита на пиксель с палитрой).
    Выгрузка: kadr-NNNNNN.png (серое — доля единиц в клетке картинки, чёрное — дыры, тёмно-синее — пусто),
              cifry.csv и cifry.json (дыра по закону и по замеру, доля единиц, время), progress.json, state.*.
    =========================================================================== */
@@ -37,7 +39,7 @@ const STEPS = parseInt(opt('steps', Math.ceil(N / 3) + Math.ceil(N / 64)), 10);
 const FRAMES = Math.max(1, parseInt(opt('frames', 24), 10));
 const IMGW = Math.max(64, parseInt(opt('width', 2000), 10));
 const SAVE_MIN = parseFloat(opt('save-min', 20));
-const CHECK = !!opt('check', false), FRESH = !!opt('fresh', false);
+const CHECK = !!opt('check', false), FRESH = !!opt('fresh', false), BITS = !!opt('bits', false);
 const OUT = path.resolve(String(opt('out', path.join(__dirname, '..', '..', '..', 'mayatnik-big', `N${N}-n${STEPS}`))));
 
 // ---------- вершины маятника ----------
@@ -157,6 +159,30 @@ function picture(file, k) {
   png(file, W, H, rgb);
   return { W, H, s };
 }
+// Кадр бит в бит (--bits): всё поле, столбцы lo − (N − 1) … hi + (N − 1). Внутри конуса якоря — биты поля,
+// снаружи — полоса «1» там, где лёг хоть один конус, иначе пусто. PNG: палитра, 2 бита на пиксель, строки потоком в deflate.
+function bitsPng(file, k) {
+  const [lo, hi] = span(k), c0 = lo - (N - 1), Wd = hi - lo + 2 * (N - 1) + 1, rowB = Math.ceil(Wd / 4);
+  const chunk = (t, d) => { const len = Buffer.alloc(4); len.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]); const c = Buffer.alloc(4); c.writeUInt32BE(crc32(td)); return Buffer.concat([len, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(Wd, 0); ihdr.writeUInt32BE(N, 4); ihdr[8] = 2; ihdr[9] = 3;
+  const plte = Buffer.from([13, 15, 22, 91, 100, 117, 232, 237, 245]);   // пусто, 0, 1 — цвета страницы
+  const parts = [], line = Buffer.alloc(rowB + 1);
+  let ones = 0, zeros = 0;
+  for (let r = 0; r < N; r++) {
+    line.fill(0);
+    for (let x = 0; x < Wd; x++) {
+      const c = c0 + x; let v;
+      if (Math.abs(c) <= r) v = getBit(r, c) ? 2 : (covered(r, c, lo, hi) ? 1 : 0);
+      else v = covered(r, c, lo, hi) ? 2 : 0;
+      if (v === 2) ones++; else if (v === 1) zeros++;
+      if (v) line[1 + (x >> 2)] |= v << (6 - 2 * (x & 3));
+    }
+    parts.push(Buffer.from(line));
+  }
+  const idat = zlib.deflateSync(Buffer.concat(parts), { level: 6 });
+  fs.writeFileSync(file, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('PLTE', plte), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))]));
+  return { W: Wd, H: N, c0, ones, zeros };
+}
 // Маска клеток конуса якоря (|c| ≤ r) в слове w строки r
 function wordMask(r, w) {
   const Xl = -r + OFF, Xh = r + OFF, a = w * 32, b = a + 31;
@@ -218,4 +244,10 @@ for (let k = k0; k < STEPS; k++) {
 }
 writeNumbers();
 if (SAVE_MIN > 0) save();
+if (BITS) {
+  const f = path.join(OUT, `kadr-${String(kDone).padStart(6, '0')}-bity.png`), b = bitsPng(f, kDone);
+  fs.writeFileSync(path.join(OUT, 'bity.json'), JSON.stringify({ N, n: kDone, W: b.W, H: b.H, stolbec0: b.c0, edinic: b.ones, nulej: b.zeros, file: path.basename(f),
+    cveta: { pusto: '#0d0f16', nol: '#5b6475', edinica: '#e8edf5' }, pravilo: 'пиксель (x, y) = бит строки y, столбца x + stolbec0 от якоря' }, null, 1));
+  console.log(`\nКадр бит в бит: ${f} — ${b.W} × ${b.H}, единиц ${b.ones}, нулей ${b.zeros}`);
+}
 console.log(`\nГотово: ${((Date.now() - t0) / 60000).toFixed(1)} мин. Картинки и цифры — в ${OUT}`);
