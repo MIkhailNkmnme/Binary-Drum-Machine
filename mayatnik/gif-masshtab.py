@@ -42,6 +42,8 @@ gif-masshtab.py — «отъезд камеры» от битового кадр
   --out          имя GIF; по умолчанию рядом с кадром: <имя>-masshtab.gif
   --cveta        цвета нулей и единиц в GIF: seryi (как Маятник), ChB (1 чёрные, 0 белые), BCh (1 белые, 0 чёрные),
                  BK (1 белые, 0 красные), KB (1 красные, 0 белые); имя GIF получает приставку цвета
+  --romby S      вместе с --razmery: ещё PNG ромбами впритык — подслой конуса якоря (ряд r — r + 1 бит, как треугольники
+                 Зеркалиуса), бит — ромб с полудиагональю S px, ряды сдвинуты на полромба, пусто прозрачное
   --razmery      только PNG Хоррориуса разных размеров, без GIF: --razmery 64,128,256,512,1024,2048
                  (в E:\GD\_pzl\mayatnik-big\png\, пиксель = бит; второй файл — с прозрачным пустым местом)
 Цвета кадра сохраняются как есть (палитра исходника); за краем кадра — тёмный фон.
@@ -98,6 +100,27 @@ def pendulum(N, offs):
             v[r, s] ^= v[r - 1, c - r - 1:c + r:2] ^ v[r - 1, c - r + 1:c + r + 2:2]
             f[r, s] = True
     return np.where(f, v + 1, 0).astype(np.uint8)
+
+
+def rhombs(F, N, n, S):
+    """Подслой конуса якоря ромбами впритык: бит (r, c), c = −r, −r + 2, …, +r от якоря — ромб с центром (c·S, r·S)
+    и полудиагоналями S по горизонтали и по вертикали (|dx| + |dy| ≤ S). Такие ромбы одного подслоя покрывают
+    плоскость без щелей и наложений; ряд r — r + 1 ромбов, соседние ряды сдвинуты на полромба. Вне конуса — пусто (0)."""
+    cols = np.nonzero((F > 0).any(0))[0]
+    A = (N - 1) - min(pend_offs(n)) + 1                 # столбец якоря в поле pendulum()
+    Wd, Hd = 2 * N * S + 1, N * S + S + 1
+    out = np.zeros((Hd, Wd), np.uint8)
+    X = np.arange(Wd)[None, :] / S - N                  # в клетках, якорь — 0
+    for y0 in range(0, Hd, 512):                        # полосами — экономно по памяти
+        Y = (np.arange(y0, min(Hd, y0 + 512))[:, None]) / S - 0.5
+        a, b = X + Y, X - Y                             # повёрнутые координаты: центры — где a и b чётные
+        Aa, Bb = 2 * np.round(a / 2), 2 * np.round(b / 2)
+        c = ((Aa + Bb) / 2).astype(np.int64); r = ((Aa - Bb) / 2).astype(np.int64)
+        ok = (r >= 0) & (r < N) & (np.abs(c) <= r)
+        rr, cc = np.where(ok, r, 0), np.where(ok, A + c, 0)
+        v = F[rr, cc]
+        out[y0:y0 + Y.shape[0]] = np.where(ok, v, 0)
+    return out
 
 
 def pend_offs(n):   # якорь, −1, +1, −2, +2, …
@@ -185,6 +208,7 @@ def main():
     ap.add_argument('--spisok', action='store_true', help='показать заготовки')
     ap.add_argument('--stroki', type=int, default=None); ap.add_argument('--vershin', type=int, default=None)
     ap.add_argument('--cveta', default=None, help='цвета нулей и единиц: seryi, ChB, BCh, BK, KB')
+    ap.add_argument('--romby', type=int, default=0, help='с --razmery: ещё PNG ромбами впритык (подслой конуса якоря), полудиагональ ромба в пикселях')
     ap.add_argument('--razmery', default=None, help='только PNG Хоррориуса этих размеров, например 64,128,256,512 (вершин — N + 1 или --vershin)')
     ap.add_argument('--w', type=int, default=1280); ap.add_argument('--h', type=int, default=720)
     ap.add_argument('--ot', type=float, default=1.0); ap.add_argument('--do', type=float, default=None)
@@ -201,6 +225,13 @@ def main():
         for N in [int(x) for x in a.razmery.split(',')]:
             n = a.vershin or (N + 1)
             F = pendulum(N, pend_offs(n)); cols = np.nonzero((F > 0).any(0))[0]; F = F[:, cols.min():cols.max() + 1]
+            if a.romby:   # «ромбами тоже, впритык и только битами»: подслой конуса якоря, бит — ромб, без щелей
+                Fr = rhombs(pendulum(N, pend_offs(n)), N, n, a.romby)
+                ir = Image.fromarray(Fr, 'P')
+                for nm, (c0, c1) in CVETA.items():
+                    ir.putpalette([0, 0, 0] + list(c0) + list(c1) + [0] * 759)
+                    ir.save(os.path.join(D, f'horr-{N}x{n}-romby{a.romby}-{nm}.png'), optimize=True, transparency=bytes([0]) + bytes([255] * 255))
+                print(f'  ромбами (полудиагональ {a.romby} px): {Fr.shape[1]} × {Fr.shape[0]}')
             im = Image.fromarray(F, 'P'); tr = bytes([0]) + bytes([255] * 255)   # пусто (индекс 0) — прозрачное
             for nm, (c0, c1) in CVETA.items():       # «с разными вариантами и с ЧБ, БЧ… БК — красный вместо чёрного»
                 im.putpalette([0, 0, 0] + list(c0) + list(c1) + [0] * 759)
