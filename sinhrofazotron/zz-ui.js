@@ -4409,8 +4409,9 @@ function coneSunPeek(){
   if (conePeekC.k === k) return conePeekC.S;
   let tolDeg = coneSlitHalf() * 180 / Math.PI; for (let i = 1; i < N; i++) tolDeg = Math.min(tolDeg, coneSlitHalf(Z.rows[i].length || 1) * 180 / Math.PI);
   const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
-  const p0 = Z.coneSpinPh || 0, k0 = coneSunTrace().hits.join("|"); let S = null;
-  try { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (T.hits.join("|") !== k0) { S = T; break; } } }
+  const sig = T => T.hits.join("|") + "/" + T.zhits.join("|");   // v0.075: и луна — как у «шаг ↷»
+  const p0 = Z.coneSpinPh || 0, k0 = sig(coneSunTrace()); let S = null;
+  try { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (sig(T) !== k0) { S = T; break; } } }
   finally { Z.coneSpinPh = p0; }
   conePeekC = { k, S }; return S;
 }
@@ -8118,8 +8119,11 @@ function setupCone(){
     const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1;   // градусов за единицу фазы у самого быстрого кольца
     const d = dir * (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2, key = (R) => !R ? "" : R.wall ? "w" + R.wall : R.pass ? (R.cells.length ? "v" + R.cells[0] : "e") : "s" + R.stop;   // v0.136: вперёд — в выбранном направлении
     if (coneSunOn()) {   // v0.206: ☀ — до мига, когда свет упал иначе
-      const k0 = coneSunTrace().hits.join("|"), p0 = Z.coneSpinPh || 0; let p = p0, s = 0;
-      for (; s < 3000; s++) { p += d; Z.coneSpinPh = p; if (coneSunTrace().hits.join("|") !== k0) break; }
+      /* v0.075: и свет луны (zhits) — прежде шаг смотрел только на солнце и в «☀/☾ обороте» перепрыгивал целый лунный оборот: нули луны при шагах
+         не вставали, а при ▶ вставали (1111 вместо 1000 на «☀/☾ оборот + Встр.бит»). */
+      const lightKey = () => { const T = coneSunTrace(); return T.hits.join("|") + "/" + T.zhits.join("|"); };
+      const k0 = lightKey(), p0 = Z.coneSpinPh || 0; let p = p0, s = 0;
+      for (; s < 3000; s++) { p += d; Z.coneSpinPh = p; if (lightKey() !== k0) break; }
       if (s >= 3000) { Z.coneSpinPh = p0; say("☀ За 3000 мелких шагов свет не сменился — крути ▶."); return; }
       save(); renderCone(); say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + ": свет упал иначе."); return;
     }
@@ -15200,8 +15204,9 @@ var zzLoaded = false;   // v0.659 (var — triState зовут и выше по 
 function init(){
   load(); zzLoaded = true;
   /* Синхрофазотрон: лазер, звук и Аниматрица сохраняют прежнее выключенное
-     начальное состояние. Код лазера оставлен для дальнейшей работы. */
-  Object.assign(Z, { coneClock: false, coneFan: false, coneSun: false, sunMoon: false, sunMoonTurn: false, moonCross: false, r1Ray: false, snd2: false, coneClockStop: false });
+     начальное состояние. Код лазера оставлен для дальнейшей работы.
+     v0.075, «ссылки на настройки»: по ссылке #z=… и из пресета свет не выключается — открывший видит ровно сохранённое (солнце, ☀/☾ оборот и т. д.). */
+  if (!ZZ_PRESET) Object.assign(Z, { coneClock: false, coneFan: false, coneSun: false, sunMoon: false, sunMoonTurn: false, moonCross: false, r1Ray: false, snd2: false, coneClockStop: false });
   coneViewRestore();
   if (window.zzSolMobileDefaults) window.zzSolMobileDefaults();
   /* v0.262, «после перезагрузки — выделенная строка почему-то, хотя я снял выделение»: снятая подсветка текущей строки (body.nocur)
