@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.006. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.007. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.006</title>
+<title>Zerkalius Маятник — v0.007</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -24,6 +24,7 @@
   v0.005: кнопка «4N» — до застывания картинки (к 4N вершинам новые конусы уже не достают до конуса якоря); вершин до 16384.
   v0.006: цвет не хранится, а считается по формуле — чётность числа конусов над клеткой (сверено с прежним хранимым цветом на 15,3 млн клеток):
     поле 5 байт на клетку вместо 6, расчёт на ~20 % быстрее, опорные кадры вдвое меньше.
+  v0.007: флажок «симметрия» — вертикали зеркальной симметрии и края их зон по строкам (расширение «маятником»).
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -58,7 +59,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.006</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.007</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -93,6 +94,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="bits">только биты</option>
     </select></label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
+    <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
       <button id="zFit">по ширине</button>
@@ -179,7 +181,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -200,7 +202,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline; $('third').checked = !!st.third;
+    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
   }
 
   function reset() {
@@ -246,6 +248,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
         for (let c = 0; c < W; c++) { const v = val[row + c]; px[row + c] = v < 0 ? empty : T[v * 3 + MAYATNIK.tint(r, c - A, v, lo, hi, filled)]; } }
     }
     if (st.outline) outline(px);
+    if (st.sym && !playing) symmetry(px);
     g.putImageData(img, 0, 0);
     status();
   }
@@ -268,6 +271,53 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
       else { seg(r, pl, l); seg(r, pr, rr); }          // ступеньки слева и справа
       pl = l; pr = rr;
     }
+  }
+  // v0.007: линии симметрии (слово пользователя 2026-10-12: «вместо кружков рисуй линии симметрии и обрывай их,
+  // когда симметрия по ней закончится»; расширение — его же способ «как Хорохориус»).
+  // 1) Ось — между любыми соседними столбцами x и x+1. В строке y от оси сравниваются пары x−k и x+1+k, пока совпадают:
+  //    это зеркальная ширина t; засчитывается, если t ≥ 6 и в ней есть и 0, и 1 (не дыра и не полоса).
+  //    Вертикаль — ≥ 8 таких строк подряд на одной оси (одна строка-пропуск допустима). Случайно: ≈ (1/64)^8.
+  // 2) Ширина по строкам «маятником»: расстояния до смен бита справа и слева сравниваются по очереди; совпало — ширина
+  //    растёт; нет — ещё шаг влево, потом вправо; не сошлось — строка остановлена. Зона выходит треугольником под 45°.
+  let symCache = null;
+  const SYM_OR = rgba([255, 150, 30]), SYM_CY = rgba([60, 220, 230]);
+  function symFind() {
+    const { W, H, val } = f, TMIN = 6, HMIN = 8, CAP = 64, segs = [];
+    const tAt = (y, x) => { const row = y * W; if (val[row + x] !== val[row + x + 1] || val[row + x] < 0) return 0;
+      let k = 0, z = 0, o = 0; while (k < CAP && x - k >= 0 && x + 1 + k < W) { const a = val[row + x - k], b = val[row + x + 1 + k]; if (a < 0 || a !== b) break; if (a) o++; else z++; k++; }
+      return (z && o) ? k : 0; };
+    for (let x = 0; x < W - 1; x++) {
+      let y = 0;
+      while (y < H) {
+        if (tAt(y, x) < TMIN) { y++; continue; }
+        const y0 = y; let gap = 0, last = y;
+        while (y < H) { if (tAt(y, x) >= TMIN) { last = y; gap = 0; } else if (++gap > 1) break; y++; }
+        if (last - y0 + 1 >= HMIN) segs.push({ x, y0, y1: last });
+      }
+    }
+    // ширина маятником
+    const edges = (y, x, dir) => { const row = y * W, res = []; const p = dir > 0 ? x + 1 : x, b0 = val[row + p]; if (b0 < 0) return { b0, res };
+      let prev = b0; for (let d = 1; ; d++) { const q = p + dir * d; if (q < 0 || q >= W) break; const v = val[row + q]; if (v < 0) { res.push(d); break; } if (v !== prev) { res.push(d); prev = v; } } return { b0, res }; };
+    for (const sg of segs) {
+      sg.w = [];
+      for (let y = sg.y0; y <= sg.y1; y++) {
+        const R = edges(y, sg.x, 1), L = edges(y, sg.x, -1); let w = 0;
+        if (R.b0 >= 0 && R.b0 === L.b0) { const r = R.res, l = L.res; let i = 0, j = 0;
+          while (i < r.length && j < l.length) { if (r[i] === l[j]) { w = r[i]; i++; j++; } else if (j + 1 < l.length && l[j + 1] === r[i]) j++; else if (i + 1 < r.length && r[i + 1] === l[j]) i++; else break; } }
+        sg.w.push(w);
+      }
+    }
+    return segs;
+  }
+  function symmetry(px) {
+    const key = k + '|' + f.W + '|' + f.H;
+    if (!symCache || symCache.key !== key) symCache = { key, segs: symFind() };
+    const { W, H } = f, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
+    const dot = (y, x, c) => { for (let yy = y - h; yy < y - h + t; yy++) if (yy >= 0 && yy < H) for (let xx = x - h; xx < x - h + t; xx++) if (xx >= 0 && xx < W) px[yy * W + xx] = c; };
+    for (const sg of symCache.segs) {
+      for (let i = 0; i < sg.w.length; i++) { const y = sg.y0 + i, w = sg.w[i]; if (w > 0) { dot(y, sg.x - w + 1, SYM_CY); dot(y, sg.x + w, SYM_CY); } }
+    }
+    for (const sg of symCache.segs) for (let y = sg.y0; y <= sg.y1; y++) { dot(y, sg.x, SYM_OR); dot(y, sg.x + 1, SYM_OR); }
   }
   function status() {
     $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
@@ -295,7 +345,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   }
   function fit() { st.zoom = 'fit'; save(); layout(); thick(); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
   let lastT = 0;   // толщина обводки зависит от масштаба — перерисовать, только когда она поменялась
-  function thick() { const t = Math.max(1, Math.ceil(1.5 / scale())); if (st.outline && f && t !== lastT && !playing) { lastT = t; draw(); } }
+  function thick() { const t = Math.max(1, Math.ceil(1.5 / scale())); if ((st.outline || st.sym) && f && t !== lastT && !playing) { lastT = t; draw(); } }
   // «Построить» — те же вершины, порциями по ~40 мс на кадр: страница не замирает, виден прогресс.
   // v0.002: при «Построить» большое поле (2024 × 6070 = 12 млн пикселей) перерисовывается не каждый кадр, а раз в секунду —
   // прежде перерисовка съедала почти всё время, и 2024 вершины шли ~8 минут. Считается при этом каждая вершина;
@@ -370,6 +420,7 @@ if (typeof module !== 'undefined') module.exports = MAYATNIK;
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   $('view').addEventListener('change', () => { readUI(); draw(); });
   $('outline').addEventListener('change', () => { st.outline = $('outline').checked; save(); if (f) draw(); });
+  $('sym').addEventListener('change', () => { st.sym = $('sym').checked; save(); if (f) draw(); });
   $('speed').addEventListener('input', readUI);
   $('zIn').onclick = () => zoomTo(scale() * 1.5);
   $('zOut').onclick = () => zoomTo(scale() / 1.5);
