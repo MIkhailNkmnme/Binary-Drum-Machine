@@ -1,0 +1,14 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "verifiedApproximateRegions": 54,
+  "allSavedStatisticsMatchDirectCorrelation": true,
+  "allInsideRowScoresPass": true,
+  "allThreeOutsideScoreChecksFail": true,
+  "controls": {
+    "exactSmoothSymmetryScore": 1,
+    "asymmetricControlRejected": true,
+    "bitNoiseRawEquality": 0.9004629629629629,
+    "bitNoiseSmoothedCorrelation": 0.918240495719573
+  },
+  "scope": "verifies the declared model and encoded user screenshots; not a validation against human observers or physical monitor optics"
+}

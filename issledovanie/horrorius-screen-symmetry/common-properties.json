@@ -1,0 +1,179 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "axisCounts": {
+    "90": 28,
+    "0": 25,
+    "135": 1
+  },
+  "modelCorrelationRange": [
+    0.8841429219800576,
+    0.9788844811008329
+  ],
+  "rawEqualityRange": [
+    0.47692307692307695,
+    0.9629629629629629
+  ],
+  "screens": [
+    {
+      "number": 1,
+      "wholeShapeAxisBetweenPixelIndices": 517.5,
+      "comparedVisibleFieldPixels": 260816,
+      "wholeShapeRawReflectionEquality": 1.0,
+      "partnerRegions": [
+        {
+          "ids": [
+            2,
+            3
+          ],
+          "pixels": 1387,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            4,
+            5
+          ],
+          "pixels": 1504,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            6,
+            7
+          ],
+          "pixels": 696,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            8,
+            9
+          ],
+          "pixels": 520,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "wholeShapeAxisBetweenPixelIndices": 326.5,
+      "comparedVisibleFieldPixels": 96298,
+      "wholeShapeRawReflectionEquality": 1.0,
+      "partnerRegions": [
+        {
+          "ids": [
+            2,
+            3
+          ],
+          "pixels": 1024,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            5,
+            6
+          ],
+          "pixels": 765,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            7,
+            8
+          ],
+          "pixels": 663,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "wholeShapeAxisBetweenPixelIndices": 408.5,
+      "comparedVisibleFieldPixels": 158600,
+      "wholeShapeRawReflectionEquality": 1.0,
+      "partnerRegions": [
+        {
+          "ids": [
+            1,
+            2
+          ],
+          "pixels": 2047,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            3,
+            4
+          ],
+          "pixels": 1407,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            5,
+            6
+          ],
+          "pixels": 2310,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            7,
+            8
+          ],
+          "pixels": 1280,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            10,
+            11
+          ],
+          "pixels": 784,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "wholeShapeAxisBetweenPixelIndices": 658.5,
+      "comparedVisibleFieldPixels": 413938,
+      "wholeShapeRawReflectionEquality": 0.9992849170648744,
+      "partnerRegions": [
+        {
+          "ids": [
+            1,
+            2
+          ],
+          "pixels": 2058,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            7,
+            8
+          ],
+          "pixels": 1105,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            9,
+            10
+          ],
+          "pixels": 918,
+          "rawEqualityUnderWholeFrameReflection": 1.0
+        },
+        {
+          "ids": [
+            11,
+            12
+          ],
+          "pixels": 672,
+          "rawEqualityUnderWholeFrameReflection": 0.9925595238095238
+        }
+      ]
+    }
+  ],
+  "scope": "measured shared reflection properties, not a claim that all regions are the same motif or all five screenshots share a verified source frame"
+}

@@ -1,0 +1,2815 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "input": "five user-provided PNG screenshots copied byte for byte",
+  "threshold": 0.85,
+  "analysisBlurRadiusScreenPixels": 2,
+  "minimumRowStddev": 0.025,
+  "initialHalfWidths": [
+    8,
+    16,
+    24,
+    32
+  ],
+  "scope": "approximate correlation of reflected smoothed screen pixels; a declared model, not a validated universal human perception metric; source generation and monitor optics are not inferred",
+  "screens": [
+    {
+      "number": 1,
+      "inputFile": "screen-1.png",
+      "sourceSha256": "de2b64ca8bb2a0c0d95fdb75053ae5b435845c50c69332044dfad3610e59d72e",
+      "size": [
+        1068,
+        520
+      ],
+      "excludedTooltips": [],
+      "classifiedPixels": 260816,
+      "differentColorsInEntirePNG": 4,
+      "candidateCount": 34,
+      "shownApproximateRegions": 9,
+      "exactRegionsAtPriorThresholds": 10,
+      "regions": [
+        {
+          "direction": "V",
+          "left": 501,
+          "right": 534,
+          "top": 35,
+          "bottom": 72,
+          "initialRadius": 16,
+          "even": false,
+          "minimumRowScore": 0.8544365167617798,
+          "modelCorrelation": 0.9524399164123217,
+          "rawPixelEquality": 0.5167895167895168,
+          "beforeScore": 0.8273442983627319,
+          "afterScore": 0.7642592191696167,
+          "normalOutsideFailure": {
+            "row": 71,
+            "score": 0.8359692096710205
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              501.0,
+              35.0
+            ],
+            [
+              534.0,
+              35.0
+            ],
+            [
+              534.0,
+              72.0
+            ],
+            [
+              501.0,
+              72.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              517.5,
+              35.0
+            ],
+            [
+              517.5,
+              72.0
+            ]
+          ],
+          "id": 1,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 431,
+          "right": 504,
+          "top": 135,
+          "bottom": 154,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8502958416938782,
+          "modelCorrelation": 0.9023333745877008,
+          "rawPixelEquality": 0.665465032444124,
+          "beforeScore": 0.8209919929504395,
+          "afterScore": 0.8260024189949036,
+          "normalOutsideFailure": {
+            "row": 143,
+            "score": 0.8440609574317932
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              135.0,
+              431.0
+            ],
+            [
+              135.0,
+              504.0
+            ],
+            [
+              154.0,
+              504.0
+            ],
+            [
+              154.0,
+              431.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              135.0,
+              467.5
+            ],
+            [
+              154.0,
+              467.5
+            ]
+          ],
+          "id": 2,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 431,
+          "right": 504,
+          "top": 882,
+          "bottom": 901,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8502958416938782,
+          "modelCorrelation": 0.9023333894738126,
+          "rawPixelEquality": 0.665465032444124,
+          "beforeScore": 0.8260024189949036,
+          "afterScore": 0.8209919929504395,
+          "normalOutsideFailure": {
+            "row": 891,
+            "score": 0.8498771786689758
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              882.0,
+              431.0
+            ],
+            [
+              882.0,
+              504.0
+            ],
+            [
+              901.0,
+              504.0
+            ],
+            [
+              901.0,
+              431.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              882.0,
+              467.5
+            ],
+            [
+              901.0,
+              467.5
+            ]
+          ],
+          "id": 3,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 299,
+          "right": 393,
+          "top": 259,
+          "bottom": 275,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8697725534439087,
+          "modelCorrelation": 0.9203368491607611,
+          "rawPixelEquality": 0.6382978723404256,
+          "beforeScore": 0.8459497690200806,
+          "afterScore": 0.7843377590179443,
+          "normalOutsideFailure": {
+            "row": 259,
+            "score": 0.8477383852005005
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              259.0,
+              299.0
+            ],
+            [
+              259.0,
+              393.0
+            ],
+            [
+              275.0,
+              393.0
+            ],
+            [
+              275.0,
+              299.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              259.0,
+              346.0
+            ],
+            [
+              275.0,
+              346.0
+            ]
+          ],
+          "id": 4,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 299,
+          "right": 393,
+          "top": 761,
+          "bottom": 777,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8697725534439087,
+          "modelCorrelation": 0.9203368506046247,
+          "rawPixelEquality": 0.6382978723404256,
+          "beforeScore": 0.7843377590179443,
+          "afterScore": 0.8459497690200806,
+          "normalOutsideFailure": {
+            "row": 776,
+            "score": 0.8477383852005005
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              761.0,
+              299.0
+            ],
+            [
+              761.0,
+              393.0
+            ],
+            [
+              777.0,
+              393.0
+            ],
+            [
+              777.0,
+              299.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              761.0,
+              346.0
+            ],
+            [
+              777.0,
+              346.0
+            ]
+          ],
+          "id": 5,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 440,
+          "right": 498,
+          "top": 387,
+          "bottom": 399,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8512242436408997,
+          "modelCorrelation": 0.9505498167444869,
+          "rawPixelEquality": 0.7183908045977011,
+          "beforeScore": 0.8206404447555542,
+          "afterScore": 0.7304285168647766,
+          "normalOutsideFailure": {
+            "row": 398,
+            "score": 0.8498515486717224
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              387.0,
+              440.0
+            ],
+            [
+              387.0,
+              498.0
+            ],
+            [
+              399.0,
+              498.0
+            ],
+            [
+              399.0,
+              440.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              387.0,
+              469.0
+            ],
+            [
+              399.0,
+              469.0
+            ]
+          ],
+          "id": 6,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 440,
+          "right": 498,
+          "top": 637,
+          "bottom": 649,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8512242436408997,
+          "modelCorrelation": 0.9505498049776266,
+          "rawPixelEquality": 0.7183908045977011,
+          "beforeScore": 0.7304285168647766,
+          "afterScore": 0.8206404447555542,
+          "normalOutsideFailure": {
+            "row": 637,
+            "score": 0.8498515486717224
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              637.0,
+              440.0
+            ],
+            [
+              637.0,
+              498.0
+            ],
+            [
+              649.0,
+              498.0
+            ],
+            [
+              649.0,
+              440.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              637.0,
+              469.0
+            ],
+            [
+              649.0,
+              469.0
+            ]
+          ],
+          "id": 7,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 357,
+          "right": 397,
+          "top": 192,
+          "bottom": 205,
+          "initialRadius": 16,
+          "even": true,
+          "minimumRowScore": 0.874202311038971,
+          "modelCorrelation": 0.9416027054797478,
+          "rawPixelEquality": 0.47692307692307695,
+          "beforeScore": 0.7689529657363892,
+          "afterScore": 0.8470865488052368,
+          "normalOutsideFailure": {
+            "row": 203,
+            "score": 0.8055123686790466
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              357.0,
+              192.0
+            ],
+            [
+              397.0,
+              192.0
+            ],
+            [
+              397.0,
+              205.0
+            ],
+            [
+              357.0,
+              205.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              377.0,
+              192.0
+            ],
+            [
+              377.0,
+              205.0
+            ]
+          ],
+          "id": 8,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 639,
+          "right": 679,
+          "top": 192,
+          "bottom": 205,
+          "initialRadius": 16,
+          "even": true,
+          "minimumRowScore": 0.874202311038971,
+          "modelCorrelation": 0.9416027090315181,
+          "rawPixelEquality": 0.47692307692307695,
+          "beforeScore": 0.7689529657363892,
+          "afterScore": 0.8470865488052368,
+          "normalOutsideFailure": {
+            "row": 203,
+            "score": 0.8055123686790466
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              639.0,
+              192.0
+            ],
+            [
+              679.0,
+              192.0
+            ],
+            [
+              679.0,
+              205.0
+            ],
+            [
+              639.0,
+              205.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              659.0,
+              192.0
+            ],
+            [
+              659.0,
+              205.0
+            ]
+          ],
+          "id": 9,
+          "rawEqualityGrid": "native screen pixels"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "inputFile": "screen-2.png",
+      "sourceSha256": "c7cb784b6385d79aee4b2f1b96cd38f8b0a8f1ac2efac9b54a68ae2ac3dff626",
+      "size": [
+        702,
+        332
+      ],
+      "excludedTooltips": [],
+      "classifiedPixels": 96298,
+      "differentColorsInEntirePNG": 4,
+      "candidateCount": 41,
+      "shownApproximateRegions": 8,
+      "exactRegionsAtPriorThresholds": 2,
+      "regions": [
+        {
+          "direction": "H",
+          "left": 87,
+          "right": 216,
+          "top": 316,
+          "bottom": 338,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8831697702407837,
+          "modelCorrelation": 0.9329446970738877,
+          "rawPixelEquality": 0.9041578576462297,
+          "beforeScore": 0.8201898336410522,
+          "afterScore": 0.8201898336410522,
+          "normalOutsideFailure": {
+            "row": 325,
+            "score": 0.8495306968688965
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              316.0,
+              87.0
+            ],
+            [
+              316.0,
+              216.0
+            ],
+            [
+              338.0,
+              216.0
+            ],
+            [
+              338.0,
+              87.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              316.0,
+              151.5
+            ],
+            [
+              338.0,
+              151.5
+            ]
+          ],
+          "id": 1,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 143,
+          "right": 207,
+          "top": 202,
+          "bottom": 218,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8525737524032593,
+          "modelCorrelation": 0.9468513666374044,
+          "rawPixelEquality": 0.638671875,
+          "beforeScore": 0.8169217109680176,
+          "afterScore": 0.7995580434799194,
+          "normalOutsideFailure": {
+            "row": 215,
+            "score": 0.8469720482826233
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              143.0,
+              202.0
+            ],
+            [
+              207.0,
+              202.0
+            ],
+            [
+              207.0,
+              218.0
+            ],
+            [
+              143.0,
+              218.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              175.0,
+              202.0
+            ],
+            [
+              175.0,
+              218.0
+            ]
+          ],
+          "id": 2,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 447,
+          "right": 511,
+          "top": 202,
+          "bottom": 218,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8525737524032593,
+          "modelCorrelation": 0.9468513666374044,
+          "rawPixelEquality": 0.638671875,
+          "beforeScore": 0.8169217109680176,
+          "afterScore": 0.7995580434799194,
+          "normalOutsideFailure": {
+            "row": 215,
+            "score": 0.8469720482826233
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              447.0,
+              202.0
+            ],
+            [
+              511.0,
+              202.0
+            ],
+            [
+              511.0,
+              218.0
+            ],
+            [
+              447.0,
+              218.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              479.0,
+              202.0
+            ],
+            [
+              479.0,
+              218.0
+            ]
+          ],
+          "id": 3,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 51,
+          "right": 100,
+          "top": 319,
+          "bottom": 335,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8520224094390869,
+          "modelCorrelation": 0.9225076872757998,
+          "rawPixelEquality": 0.7346938775510204,
+          "beforeScore": 0.8201454877853394,
+          "afterScore": 0.8201454877853394,
+          "normalOutsideFailure": {
+            "row": 326,
+            "score": 0.8336254358291626
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              319.0,
+              51.0
+            ],
+            [
+              319.0,
+              100.0
+            ],
+            [
+              335.0,
+              100.0
+            ],
+            [
+              335.0,
+              51.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              319.0,
+              75.5
+            ],
+            [
+              335.0,
+              75.5
+            ]
+          ],
+          "id": 4,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 126,
+          "right": 177,
+          "top": 396,
+          "bottom": 411,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8527629375457764,
+          "modelCorrelation": 0.9056751941443142,
+          "rawPixelEquality": 0.8065359477124183,
+          "beforeScore": 0.7693316340446472,
+          "afterScore": 0.749313235282898,
+          "normalOutsideFailure": {
+            "row": 403,
+            "score": 0.8481383323669434
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              396.0,
+              126.0
+            ],
+            [
+              396.0,
+              177.0
+            ],
+            [
+              411.0,
+              177.0
+            ],
+            [
+              411.0,
+              126.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              396.0,
+              151.5
+            ],
+            [
+              411.0,
+              151.5
+            ]
+          ],
+          "id": 5,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 126,
+          "right": 177,
+          "top": 243,
+          "bottom": 258,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8527629375457764,
+          "modelCorrelation": 0.9056751862626496,
+          "rawPixelEquality": 0.8065359477124183,
+          "beforeScore": 0.749313235282898,
+          "afterScore": 0.7693316340446472,
+          "normalOutsideFailure": {
+            "row": 243,
+            "score": 0.811658501625061
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              243.0,
+              126.0
+            ],
+            [
+              243.0,
+              177.0
+            ],
+            [
+              258.0,
+              177.0
+            ],
+            [
+              258.0,
+              126.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              243.0,
+              151.5
+            ],
+            [
+              258.0,
+              151.5
+            ]
+          ],
+          "id": 6,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 227,
+          "right": 278,
+          "top": 279,
+          "bottom": 292,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8539939522743225,
+          "modelCorrelation": 0.9577304937714097,
+          "rawPixelEquality": 0.698340874811463,
+          "beforeScore": 0.4855082035064697,
+          "afterScore": 0.6582667827606201,
+          "normalOutsideFailure": {
+            "row": 291,
+            "score": 0.8467492461204529
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              227.0,
+              279.0
+            ],
+            [
+              278.0,
+              279.0
+            ],
+            [
+              278.0,
+              292.0
+            ],
+            [
+              227.0,
+              292.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              252.5,
+              279.0
+            ],
+            [
+              252.5,
+              292.0
+            ]
+          ],
+          "id": 7,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 376,
+          "right": 427,
+          "top": 279,
+          "bottom": 292,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8539939522743225,
+          "modelCorrelation": 0.9577304937714097,
+          "rawPixelEquality": 0.698340874811463,
+          "beforeScore": 0.4855082035064697,
+          "afterScore": 0.6582669019699097,
+          "normalOutsideFailure": {
+            "row": 291,
+            "score": 0.8467492461204529
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              376.0,
+              279.0
+            ],
+            [
+              427.0,
+              279.0
+            ],
+            [
+              427.0,
+              292.0
+            ],
+            [
+              376.0,
+              292.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              401.5,
+              279.0
+            ],
+            [
+              401.5,
+              292.0
+            ]
+          ],
+          "id": 8,
+          "rawEqualityGrid": "native screen pixels"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "inputFile": "screen-3.png",
+      "sourceSha256": "2bf6d35e71bbc888ff618831e1cd959e4cc0b3818acdb59cf30701c6227decd3",
+      "size": [
+        835,
+        412
+      ],
+      "excludedTooltips": [],
+      "classifiedPixels": 158600,
+      "differentColorsInEntirePNG": 4,
+      "candidateCount": 89,
+      "shownApproximateRegions": 13,
+      "exactRegionsAtPriorThresholds": 4,
+      "regions": [
+        {
+          "direction": "V",
+          "left": 170,
+          "right": 259,
+          "top": 259,
+          "bottom": 282,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8508296012878418,
+          "modelCorrelation": 0.9524500596269123,
+          "rawPixelEquality": 0.8495359062042013,
+          "beforeScore": 0.6997013092041016,
+          "afterScore": 0.822471022605896,
+          "normalOutsideFailure": {
+            "row": 259,
+            "score": 0.8487496376037598
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              170.0,
+              259.0
+            ],
+            [
+              259.0,
+              259.0
+            ],
+            [
+              259.0,
+              282.0
+            ],
+            [
+              170.0,
+              282.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              214.5,
+              259.0
+            ],
+            [
+              214.5,
+              282.0
+            ]
+          ],
+          "id": 1,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 559,
+          "right": 648,
+          "top": 259,
+          "bottom": 282,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8508296012878418,
+          "modelCorrelation": 0.9524500596269123,
+          "rawPixelEquality": 0.8495359062042013,
+          "beforeScore": 0.6997013092041016,
+          "afterScore": 0.8224709630012512,
+          "normalOutsideFailure": {
+            "row": 259,
+            "score": 0.8487496376037598
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              559.0,
+              259.0
+            ],
+            [
+              648.0,
+              259.0
+            ],
+            [
+              648.0,
+              282.0
+            ],
+            [
+              559.0,
+              282.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              603.5,
+              259.0
+            ],
+            [
+              603.5,
+              282.0
+            ]
+          ],
+          "id": 2,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 260,
+          "right": 327,
+          "top": 204,
+          "bottom": 225,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8624496459960938,
+          "modelCorrelation": 0.932723740838039,
+          "rawPixelEquality": 0.7810945273631841,
+          "beforeScore": 0.8199654221534729,
+          "afterScore": 0.7652267217636108,
+          "normalOutsideFailure": {
+            "row": 213,
+            "score": 0.847184419631958
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              204.0,
+              260.0
+            ],
+            [
+              204.0,
+              327.0
+            ],
+            [
+              225.0,
+              327.0
+            ],
+            [
+              225.0,
+              260.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              204.0,
+              293.5
+            ],
+            [
+              225.0,
+              293.5
+            ]
+          ],
+          "id": 3,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 260,
+          "right": 327,
+          "top": 593,
+          "bottom": 614,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8624496459960938,
+          "modelCorrelation": 0.932723740838039,
+          "rawPixelEquality": 0.7810945273631841,
+          "beforeScore": 0.7652267217636108,
+          "afterScore": 0.8199654221534729,
+          "normalOutsideFailure": {
+            "row": 593,
+            "score": 0.843450665473938
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              593.0,
+              260.0
+            ],
+            [
+              593.0,
+              327.0
+            ],
+            [
+              614.0,
+              327.0
+            ],
+            [
+              614.0,
+              260.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              593.0,
+              293.5
+            ],
+            [
+              614.0,
+              293.5
+            ]
+          ],
+          "id": 4,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 62,
+          "right": 172,
+          "top": 357,
+          "bottom": 378,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8517938256263733,
+          "modelCorrelation": 0.9149305103256488,
+          "rawPixelEquality": 0.5965367965367966,
+          "beforeScore": 0.7874464392662048,
+          "afterScore": 0.751654863357544,
+          "normalOutsideFailure": {
+            "row": 357,
+            "score": 0.8434807658195496
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              62.0,
+              357.0
+            ],
+            [
+              172.0,
+              357.0
+            ],
+            [
+              172.0,
+              378.0
+            ],
+            [
+              62.0,
+              378.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              117.0,
+              357.0
+            ],
+            [
+              117.0,
+              378.0
+            ]
+          ],
+          "id": 5,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 646,
+          "right": 756,
+          "top": 357,
+          "bottom": 378,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8517938256263733,
+          "modelCorrelation": 0.9149305103256488,
+          "rawPixelEquality": 0.5965367965367966,
+          "beforeScore": 0.7874464988708496,
+          "afterScore": 0.751654863357544,
+          "normalOutsideFailure": {
+            "row": 357,
+            "score": 0.8434807658195496
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              646.0,
+              357.0
+            ],
+            [
+              756.0,
+              357.0
+            ],
+            [
+              756.0,
+              378.0
+            ],
+            [
+              646.0,
+              378.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              701.0,
+              357.0
+            ],
+            [
+              701.0,
+              378.0
+            ]
+          ],
+          "id": 6,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 164,
+          "right": 228,
+          "top": 303,
+          "bottom": 323,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8520155549049377,
+          "modelCorrelation": 0.9149523811434792,
+          "rawPixelEquality": 0.771875,
+          "beforeScore": 0.8355138897895813,
+          "afterScore": 0.845380425453186,
+          "normalOutsideFailure": {
+            "row": 313,
+            "score": 0.8474109768867493
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              303.0,
+              164.0
+            ],
+            [
+              303.0,
+              228.0
+            ],
+            [
+              323.0,
+              228.0
+            ],
+            [
+              323.0,
+              164.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              303.0,
+              196.0
+            ],
+            [
+              323.0,
+              196.0
+            ]
+          ],
+          "id": 7,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 164,
+          "right": 228,
+          "top": 495,
+          "bottom": 515,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8520155549049377,
+          "modelCorrelation": 0.9149523811434792,
+          "rawPixelEquality": 0.771875,
+          "beforeScore": 0.845380425453186,
+          "afterScore": 0.8355138897895813,
+          "normalOutsideFailure": {
+            "row": 503,
+            "score": 0.8471101522445679
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              495.0,
+              164.0
+            ],
+            [
+              495.0,
+              228.0
+            ],
+            [
+              515.0,
+              228.0
+            ],
+            [
+              515.0,
+              164.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              495.0,
+              196.0
+            ],
+            [
+              515.0,
+              196.0
+            ]
+          ],
+          "id": 8,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 373,
+          "right": 442,
+          "top": 66,
+          "bottom": 83,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.852043628692627,
+          "modelCorrelation": 0.9212501468872331,
+          "rawPixelEquality": 0.6965046888320545,
+          "beforeScore": 0.82752525806427,
+          "afterScore": 0.8320398330688477,
+          "normalOutsideFailure": {
+            "row": 82,
+            "score": 0.8476665019989014
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              373.0,
+              66.0
+            ],
+            [
+              442.0,
+              66.0
+            ],
+            [
+              442.0,
+              83.0
+            ],
+            [
+              373.0,
+              83.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              407.5,
+              66.0
+            ],
+            [
+              407.5,
+              83.0
+            ]
+          ],
+          "id": 9,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 342,
+          "right": 391,
+          "top": 303,
+          "bottom": 319,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8629859089851379,
+          "modelCorrelation": 0.8977944673238472,
+          "rawPixelEquality": 0.6785714285714286,
+          "beforeScore": 0.829331636428833,
+          "afterScore": 0.8400043845176697,
+          "normalOutsideFailure": {
+            "row": 312,
+            "score": 0.8396228551864624
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              303.0,
+              342.0
+            ],
+            [
+              303.0,
+              391.0
+            ],
+            [
+              319.0,
+              391.0
+            ],
+            [
+              319.0,
+              342.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              303.0,
+              366.5
+            ],
+            [
+              319.0,
+              366.5
+            ]
+          ],
+          "id": 10,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 342,
+          "right": 391,
+          "top": 499,
+          "bottom": 515,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8629859089851379,
+          "modelCorrelation": 0.8977944673238472,
+          "rawPixelEquality": 0.6785714285714286,
+          "beforeScore": 0.8400043845176697,
+          "afterScore": 0.829331636428833,
+          "normalOutsideFailure": {
+            "row": 504,
+            "score": 0.8382155895233154
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              499.0,
+              342.0
+            ],
+            [
+              499.0,
+              391.0
+            ],
+            [
+              515.0,
+              391.0
+            ],
+            [
+              515.0,
+              342.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              499.0,
+              366.5
+            ],
+            [
+              515.0,
+              366.5
+            ]
+          ],
+          "id": 11,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 339,
+          "right": 395,
+          "top": 110,
+          "bottom": 125,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8575605154037476,
+          "modelCorrelation": 0.9064111134290882,
+          "rawPixelEquality": 0.7095238095238096,
+          "beforeScore": 0.7795951962471008,
+          "afterScore": 0.7652697563171387,
+          "normalOutsideFailure": {
+            "row": 114,
+            "score": 0.8438124060630798
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              110.0,
+              339.0
+            ],
+            [
+              110.0,
+              395.0
+            ],
+            [
+              125.0,
+              395.0
+            ],
+            [
+              125.0,
+              339.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              110.0,
+              367.0
+            ],
+            [
+              125.0,
+              367.0
+            ]
+          ],
+          "id": 12,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 492,
+          "right": 509,
+          "top": 622,
+          "bottom": 638,
+          "initialRadius": 8,
+          "even": false,
+          "minimumRowScore": 0.8932634592056274,
+          "modelCorrelation": 0.9599524905422985,
+          "rawPixelEquality": 0.5220588235294118,
+          "beforeScore": 0.7790520191192627,
+          "afterScore": 0.8408410549163818,
+          "normalOutsideFailure": {
+            "row": 622,
+            "score": 0.8325115442276001
+          },
+          "angleTransform": 45,
+          "axisAngleInScreenDegrees": 135,
+          "polygon": [
+            [
+              325.22256505515554,
+              369.69521984468577
+            ],
+            [
+              337.24338033532683,
+              381.71603512485706
+            ],
+            [
+              325.9296718363421,
+              393.0297436238418
+            ],
+            [
+              313.9088565561708,
+              381.0089283436705
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              331.2329726952412,
+              375.7056274847714
+            ],
+            [
+              319.91926419625645,
+              387.01933598375615
+            ]
+          ],
+          "id": 13,
+          "rawEqualityGrid": "nearest rotated screen sampling grid"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "inputFile": "screen-4.png",
+      "sourceSha256": "0d97d7189aae3d6b704e85c145e0d6f5e8efc44cca79591e8eb20b6d85d04417",
+      "size": [
+        1387,
+        655
+      ],
+      "excludedTooltips": [
+        [
+          400,
+          375,
+          665,
+          407
+        ]
+      ],
+      "classifiedPixels": 422035,
+      "differentColorsInEntirePNG": 50,
+      "candidateCount": 59,
+      "shownApproximateRegions": 12,
+      "exactRegionsAtPriorThresholds": 24,
+      "regions": [
+        {
+          "direction": "H",
+          "left": 543,
+          "right": 641,
+          "top": 168,
+          "bottom": 189,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8561128377914429,
+          "modelCorrelation": 0.9164180791870836,
+          "rawPixelEquality": 0.6452866861030127,
+          "beforeScore": 0.7867619395256042,
+          "afterScore": 0.841689944267273,
+          "normalOutsideFailure": {
+            "row": 168,
+            "score": 0.8428680300712585
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              168.0,
+              543.0
+            ],
+            [
+              168.0,
+              641.0
+            ],
+            [
+              189.0,
+              641.0
+            ],
+            [
+              189.0,
+              543.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              168.0,
+              592.0
+            ],
+            [
+              189.0,
+              592.0
+            ]
+          ],
+          "id": 1,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 543,
+          "right": 641,
+          "top": 1129,
+          "bottom": 1150,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8561128377914429,
+          "modelCorrelation": 0.9164180791870836,
+          "rawPixelEquality": 0.6452866861030127,
+          "beforeScore": 0.841689944267273,
+          "afterScore": 0.7867619395256042,
+          "normalOutsideFailure": {
+            "row": 1149,
+            "score": 0.8428680300712585
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              1129.0,
+              543.0
+            ],
+            [
+              1129.0,
+              641.0
+            ],
+            [
+              1150.0,
+              641.0
+            ],
+            [
+              1150.0,
+              543.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              1129.0,
+              592.0
+            ],
+            [
+              1150.0,
+              592.0
+            ]
+          ],
+          "id": 2,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 220,
+          "right": 321,
+          "top": 488,
+          "bottom": 508,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8539533019065857,
+          "modelCorrelation": 0.8952497361461441,
+          "rawPixelEquality": 0.6861386138613862,
+          "beforeScore": 0.8297246098518372,
+          "afterScore": 0.790767252445221,
+          "normalOutsideFailure": {
+            "row": 507,
+            "score": 0.8492289781570435
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              488.0,
+              220.0
+            ],
+            [
+              488.0,
+              321.0
+            ],
+            [
+              508.0,
+              321.0
+            ],
+            [
+              508.0,
+              220.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              488.0,
+              270.5
+            ],
+            [
+              508.0,
+              270.5
+            ]
+          ],
+          "id": 3,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 547,
+          "right": 640,
+          "top": 810,
+          "bottom": 829,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8593751788139343,
+          "modelCorrelation": 0.9187108095979025,
+          "rawPixelEquality": 0.6593095642331636,
+          "beforeScore": 0.8435858488082886,
+          "afterScore": 0.8155706524848938,
+          "normalOutsideFailure": {
+            "row": 828,
+            "score": 0.8422225117683411
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              810.0,
+              547.0
+            ],
+            [
+              810.0,
+              640.0
+            ],
+            [
+              829.0,
+              640.0
+            ],
+            [
+              829.0,
+              547.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              810.0,
+              593.5
+            ],
+            [
+              829.0,
+              593.5
+            ]
+          ],
+          "id": 4,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 209,
+          "right": 333,
+          "top": 811,
+          "bottom": 829,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8522968292236328,
+          "modelCorrelation": 0.8841429219800576,
+          "rawPixelEquality": 0.6335125448028673,
+          "beforeScore": 0.8043961524963379,
+          "afterScore": 0.8156145215034485,
+          "normalOutsideFailure": {
+            "row": 828,
+            "score": 0.8496930599212646
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              811.0,
+              209.0
+            ],
+            [
+              811.0,
+              333.0
+            ],
+            [
+              829.0,
+              333.0
+            ],
+            [
+              829.0,
+              209.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              811.0,
+              271.0
+            ],
+            [
+              829.0,
+              271.0
+            ]
+          ],
+          "id": 5,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 546,
+          "right": 641,
+          "top": 491,
+          "bottom": 508,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.861967146396637,
+          "modelCorrelation": 0.9202594468890309,
+          "rawPixelEquality": 0.6643962848297214,
+          "beforeScore": 0.8389768600463867,
+          "afterScore": 0.827582836151123,
+          "normalOutsideFailure": {
+            "row": 507,
+            "score": 0.8484734892845154
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              491.0,
+              546.0
+            ],
+            [
+              491.0,
+              641.0
+            ],
+            [
+              508.0,
+              641.0
+            ],
+            [
+              508.0,
+              546.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              491.0,
+              593.5
+            ],
+            [
+              508.0,
+              593.5
+            ]
+          ],
+          "id": 6,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 400,
+          "right": 465,
+          "top": 329,
+          "bottom": 346,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8513097763061523,
+          "modelCorrelation": 0.9056318678554685,
+          "rawPixelEquality": 0.7484162895927602,
+          "beforeScore": 0.783731997013092,
+          "afterScore": 0.7917805314064026,
+          "normalOutsideFailure": {
+            "row": 329,
+            "score": 0.8475134372711182
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              329.0,
+              400.0
+            ],
+            [
+              329.0,
+              465.0
+            ],
+            [
+              346.0,
+              465.0
+            ],
+            [
+              346.0,
+              400.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              329.0,
+              432.5
+            ],
+            [
+              346.0,
+              432.5
+            ]
+          ],
+          "id": 7,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "H",
+          "left": 400,
+          "right": 465,
+          "top": 972,
+          "bottom": 989,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.8513097763061523,
+          "modelCorrelation": 0.9056318762395927,
+          "rawPixelEquality": 0.7484162895927602,
+          "beforeScore": 0.7917805314064026,
+          "afterScore": 0.783731997013092,
+          "normalOutsideFailure": {
+            "row": 988,
+            "score": 0.8475134372711182
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 0,
+          "polygon": [
+            [
+              972.0,
+              400.0
+            ],
+            [
+              972.0,
+              465.0
+            ],
+            [
+              989.0,
+              465.0
+            ],
+            [
+              989.0,
+              400.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              972.0,
+              432.5
+            ],
+            [
+              989.0,
+              432.5
+            ]
+          ],
+          "id": 8,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 433,
+          "right": 484,
+          "top": 623,
+          "bottom": 641,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8608367443084717,
+          "modelCorrelation": 0.9763157999443681,
+          "rawPixelEquality": 0.9629629629629629,
+          "beforeScore": 0.8307243585586548,
+          "afterScore": 0.7852960824966431,
+          "normalOutsideFailure": {
+            "row": 629,
+            "score": 0.8368996381759644
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              433.0,
+              623.0
+            ],
+            [
+              484.0,
+              623.0
+            ],
+            [
+              484.0,
+              641.0
+            ],
+            [
+              433.0,
+              641.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              458.5,
+              623.0
+            ],
+            [
+              458.5,
+              641.0
+            ]
+          ],
+          "id": 9,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 834,
+          "right": 885,
+          "top": 623,
+          "bottom": 641,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8608367443084717,
+          "modelCorrelation": 0.9764016330483546,
+          "rawPixelEquality": 0.9629629629629629,
+          "beforeScore": 0.8307243585586548,
+          "afterScore": 0.7882663011550903,
+          "normalOutsideFailure": {
+            "row": 629,
+            "score": 0.8368996381759644
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              834.0,
+              623.0
+            ],
+            [
+              885.0,
+              623.0
+            ],
+            [
+              885.0,
+              641.0
+            ],
+            [
+              834.0,
+              641.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              859.5,
+              623.0
+            ],
+            [
+              859.5,
+              641.0
+            ]
+          ],
+          "id": 10,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 812,
+          "right": 868,
+          "top": 558,
+          "bottom": 570,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8618513941764832,
+          "modelCorrelation": 0.9205015955896863,
+          "rawPixelEquality": 0.5386904761904762,
+          "beforeScore": 0.6776381134986877,
+          "afterScore": 0.7213470935821533,
+          "normalOutsideFailure": {
+            "row": 558,
+            "score": 0.8238754272460938
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              812.0,
+              558.0
+            ],
+            [
+              868.0,
+              558.0
+            ],
+            [
+              868.0,
+              570.0
+            ],
+            [
+              812.0,
+              570.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              840.0,
+              558.0
+            ],
+            [
+              840.0,
+              570.0
+            ]
+          ],
+          "id": 11,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 450,
+          "right": 506,
+          "top": 558,
+          "bottom": 570,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8636380434036255,
+          "modelCorrelation": 0.9140449557307795,
+          "rawPixelEquality": 0.5357142857142857,
+          "beforeScore": 0.6908348202705383,
+          "afterScore": 0.7289783358573914,
+          "normalOutsideFailure": {
+            "row": 558,
+            "score": 0.825749397277832
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              450.0,
+              558.0
+            ],
+            [
+              506.0,
+              558.0
+            ],
+            [
+              506.0,
+              570.0
+            ],
+            [
+              450.0,
+              570.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              478.0,
+              558.0
+            ],
+            [
+              478.0,
+              570.0
+            ]
+          ],
+          "id": 12,
+          "rawEqualityGrid": "native screen pixels"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "inputFile": "screen-5.png",
+      "sourceSha256": "8fc0108dc8187c2cd1ff1b9b7ac587a8dd82437b8fca72809f8671ac6093feeb",
+      "size": [
+        568,
+        529
+      ],
+      "excludedTooltips": [
+        [
+          0,
+          32,
+          240,
+          62
+        ]
+      ],
+      "classifiedPixels": 293272,
+      "differentColorsInEntirePNG": 42,
+      "candidateCount": 87,
+      "shownApproximateRegions": 12,
+      "exactRegionsAtPriorThresholds": 19,
+      "regions": [
+        {
+          "direction": "V",
+          "left": 225,
+          "right": 293,
+          "top": 120,
+          "bottom": 227,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8500462174415588,
+          "modelCorrelation": 0.9617454772614386,
+          "rawPixelEquality": 0.8886750962067069,
+          "beforeScore": 0.8348535895347595,
+          "afterScore": 0.8420575857162476,
+          "normalOutsideFailure": {
+            "row": 120,
+            "score": 0.8494435548782349
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              225.0,
+              120.0
+            ],
+            [
+              293.0,
+              120.0
+            ],
+            [
+              293.0,
+              227.0
+            ],
+            [
+              225.0,
+              227.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              259.0,
+              120.0
+            ],
+            [
+              259.0,
+              227.0
+            ]
+          ],
+          "id": 1,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 465,
+          "right": 542,
+          "top": 288,
+          "bottom": 372,
+          "initialRadius": 32,
+          "even": false,
+          "minimumRowScore": 0.853589653968811,
+          "modelCorrelation": 0.9663237876051219,
+          "rawPixelEquality": 0.9270253555967841,
+          "beforeScore": 0.770783543586731,
+          "afterScore": 0.8340123295783997,
+          "normalOutsideFailure": {
+            "row": 371,
+            "score": 0.8465232253074646
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              465.0,
+              288.0
+            ],
+            [
+              542.0,
+              288.0
+            ],
+            [
+              542.0,
+              372.0
+            ],
+            [
+              465.0,
+              372.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              503.5,
+              288.0
+            ],
+            [
+              503.5,
+              372.0
+            ]
+          ],
+          "id": 2,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 114,
+          "right": 162,
+          "top": 472,
+          "bottom": 503,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8523925542831421,
+          "modelCorrelation": 0.9144236734233298,
+          "rawPixelEquality": 0.8508064516129032,
+          "beforeScore": 0.8266534805297852,
+          "afterScore": 0.8070312738418579,
+          "normalOutsideFailure": {
+            "row": 489,
+            "score": 0.84383225440979
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              114.0,
+              472.0
+            ],
+            [
+              162.0,
+              472.0
+            ],
+            [
+              162.0,
+              503.0
+            ],
+            [
+              114.0,
+              503.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              138.0,
+              472.0
+            ],
+            [
+              138.0,
+              503.0
+            ]
+          ],
+          "id": 3,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 357,
+          "right": 405,
+          "top": 472,
+          "bottom": 503,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8523925542831421,
+          "modelCorrelation": 0.9144236734233298,
+          "rawPixelEquality": 0.8508064516129032,
+          "beforeScore": 0.8266534805297852,
+          "afterScore": 0.8070312738418579,
+          "normalOutsideFailure": {
+            "row": 489,
+            "score": 0.84383225440979
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              357.0,
+              472.0
+            ],
+            [
+              405.0,
+              472.0
+            ],
+            [
+              405.0,
+              503.0
+            ],
+            [
+              357.0,
+              503.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              381.0,
+              472.0
+            ],
+            [
+              381.0,
+              503.0
+            ]
+          ],
+          "id": 4,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 105,
+          "right": 171,
+          "top": 429,
+          "bottom": 451,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8537734746932983,
+          "modelCorrelation": 0.9414933281523205,
+          "rawPixelEquality": 0.8292011019283747,
+          "beforeScore": 0.8256084322929382,
+          "afterScore": 0.8478355407714844,
+          "normalOutsideFailure": {
+            "row": 429,
+            "score": 0.8483746647834778
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              105.0,
+              429.0
+            ],
+            [
+              171.0,
+              429.0
+            ],
+            [
+              171.0,
+              451.0
+            ],
+            [
+              105.0,
+              451.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              138.0,
+              429.0
+            ],
+            [
+              138.0,
+              451.0
+            ]
+          ],
+          "id": 5,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 348,
+          "right": 414,
+          "top": 429,
+          "bottom": 451,
+          "initialRadius": 32,
+          "even": true,
+          "minimumRowScore": 0.8537734746932983,
+          "modelCorrelation": 0.9414933281523205,
+          "rawPixelEquality": 0.8292011019283747,
+          "beforeScore": 0.8256084322929382,
+          "afterScore": 0.8478355407714844,
+          "normalOutsideFailure": {
+            "row": 429,
+            "score": 0.8483746647834778
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              348.0,
+              429.0
+            ],
+            [
+              414.0,
+              429.0
+            ],
+            [
+              414.0,
+              451.0
+            ],
+            [
+              348.0,
+              451.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              381.0,
+              429.0
+            ],
+            [
+              381.0,
+              451.0
+            ]
+          ],
+          "id": 6,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 241,
+          "right": 277,
+          "top": 247,
+          "bottom": 285,
+          "initialRadius": 16,
+          "even": true,
+          "minimumRowScore": 0.8636038303375244,
+          "modelCorrelation": 0.9509603653003047,
+          "rawPixelEquality": 0.8961988304093568,
+          "beforeScore": 0.8101449012756348,
+          "afterScore": 0.7548031806945801,
+          "normalOutsideFailure": {
+            "row": 252,
+            "score": 0.8334788680076599
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              241.0,
+              247.0
+            ],
+            [
+              277.0,
+              247.0
+            ],
+            [
+              277.0,
+              285.0
+            ],
+            [
+              241.0,
+              285.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              259.0,
+              247.0
+            ],
+            [
+              259.0,
+              285.0
+            ]
+          ],
+          "id": 7,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 243,
+          "right": 275,
+          "top": 334,
+          "bottom": 372,
+          "initialRadius": 16,
+          "even": true,
+          "minimumRowScore": 0.8570868968963623,
+          "modelCorrelation": 0.9438256144434121,
+          "rawPixelEquality": 0.8536184210526315,
+          "beforeScore": 0.8310670256614685,
+          "afterScore": 0.8308506608009338,
+          "normalOutsideFailure": {
+            "row": 371,
+            "score": 0.8432120084762573
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              243.0,
+              334.0
+            ],
+            [
+              275.0,
+              334.0
+            ],
+            [
+              275.0,
+              372.0
+            ],
+            [
+              243.0,
+              372.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              259.0,
+              334.0
+            ],
+            [
+              259.0,
+              372.0
+            ]
+          ],
+          "id": 8,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 475,
+          "right": 534,
+          "top": 384,
+          "bottom": 409,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.855042576789856,
+          "modelCorrelation": 0.9160530987613564,
+          "rawPixelEquality": 0.856271186440678,
+          "beforeScore": 0.8354023694992065,
+          "afterScore": 0.8473429679870605,
+          "normalOutsideFailure": {
+            "row": 384,
+            "score": 0.8338682055473328
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              475.0,
+              384.0
+            ],
+            [
+              534.0,
+              384.0
+            ],
+            [
+              534.0,
+              409.0
+            ],
+            [
+              475.0,
+              409.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              504.5,
+              384.0
+            ],
+            [
+              504.5,
+              409.0
+            ]
+          ],
+          "id": 9,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 234,
+          "right": 284,
+          "top": 68,
+          "bottom": 92,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8548599481582642,
+          "modelCorrelation": 0.9788844811008329,
+          "rawPixelEquality": 0.8883333333333333,
+          "beforeScore": 0.7934737205505371,
+          "afterScore": 0.8451069593429565,
+          "normalOutsideFailure": {
+            "row": 91,
+            "score": 0.8460612297058105
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              234.0,
+              68.0
+            ],
+            [
+              284.0,
+              68.0
+            ],
+            [
+              284.0,
+              92.0
+            ],
+            [
+              234.0,
+              92.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              259.0,
+              68.0
+            ],
+            [
+              259.0,
+              92.0
+            ]
+          ],
+          "id": 10,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 475,
+          "right": 534,
+          "top": 448,
+          "bottom": 470,
+          "initialRadius": 24,
+          "even": false,
+          "minimumRowScore": 0.8623687624931335,
+          "modelCorrelation": 0.9199494659629177,
+          "rawPixelEquality": 0.8767334360554699,
+          "beforeScore": 0.8301878571510315,
+          "afterScore": 0.8477150201797485,
+          "normalOutsideFailure": {
+            "row": 462,
+            "score": 0.8479613661766052
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              475.0,
+              448.0
+            ],
+            [
+              534.0,
+              448.0
+            ],
+            [
+              534.0,
+              470.0
+            ],
+            [
+              475.0,
+              470.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              504.5,
+              448.0
+            ],
+            [
+              504.5,
+              470.0
+            ]
+          ],
+          "id": 11,
+          "rawEqualityGrid": "native screen pixels"
+        },
+        {
+          "direction": "V",
+          "left": 479,
+          "right": 527,
+          "top": 475,
+          "bottom": 496,
+          "initialRadius": 24,
+          "even": true,
+          "minimumRowScore": 0.8578624725341797,
+          "modelCorrelation": 0.8959843543567614,
+          "rawPixelEquality": 0.8134920634920635,
+          "beforeScore": 0.8410781025886536,
+          "afterScore": 0.8494806289672852,
+          "normalOutsideFailure": {
+            "row": 489,
+            "score": 0.8419921398162842
+          },
+          "angleTransform": 0,
+          "axisAngleInScreenDegrees": 90,
+          "polygon": [
+            [
+              479.0,
+              475.0
+            ],
+            [
+              527.0,
+              475.0
+            ],
+            [
+              527.0,
+              496.0
+            ],
+            [
+              479.0,
+              496.0
+            ]
+          ],
+          "axisEndpoints": [
+            [
+              503.0,
+              475.0
+            ],
+            [
+              503.0,
+              496.0
+            ]
+          ],
+          "id": 12,
+          "rawEqualityGrid": "native screen pixels"
+        }
+      ]
+    }
+  ]
+}
