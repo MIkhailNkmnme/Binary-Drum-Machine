@@ -6068,6 +6068,7 @@ function coneStrSteps(m, n){   // n шагов (знак — направлен�
   syncLane();
   return false;
 }
+let coneSunLat = null;   // v0.086: сетка краски солнца при ▶ — как у «шага ↷»: { a — начало, d — шаг, n — колец }
 function coneClockSweep(ph0, dph, m){
   if (!dph || !coneGeom || !coneGeom.fill) return null;   // нет кольца для заполнения (3D, слишком много строк) — не метим
   const N = Math.min(Z.rows.length, CONE_MAX); if (!N) return null;
@@ -6081,11 +6082,25 @@ function coneClockSweep(ph0, dph, m){
      шаги кадра — целое число на каждый бит (полбита), и обрыв — только на целом */
   const q = Z.coneBitStep && coneBitMode(m) ? (Z.coneBitStep === 0.5 ? 0.5 : 1) : 0, nq = q ? Math.max(1, Math.round(Math.abs(dph) / q)) : 0, kq = nq ? Math.ceil(K / nq) : 1;
   if (nq) K = nq * kq;
+  /* v0.086, «при автоплее та же ссылка — неверно»: «шаг ↷» при солнце идёт по сетке от старта шагом в полщели (tolDeg / perUnit / 2) и красит в её
+     узлах; ▶ красил в своих подшагах кадра — другая сетка, и короткие миги (луна накрыла ячейку на долю шага) у шагов были, а у ▶ — нет: 1100 вместо 1000.
+     Теперь ▶ при солнце красит ровно в узлах той же сетки (coneSunLat — начало и шаг; после черты — заново от её места, как у шагов), конец кадра — без краски */
+  let pts = null;
+  if (coneSunOn() && !q && !coneFanOn() && !Z.coneEdgeStop) {
+    const dd = tolDeg / (coneBitMode(m) ? coneDegPhMax(N) : 1) / 2, sg = dph > 0 ? 1 : -1;
+    if (dd > 0 && isFinite(dd)) {
+      if (!coneSunLat || coneSunLat.d !== dd || coneSunLat.n !== N) coneSunLat = { a: ph0, d: dd, n: N };
+      const a = coneSunLat.a, end = ph0 + dph; pts = [];
+      let k = sg > 0 ? Math.floor((ph0 - a) / dd + 1e-9) + 1 : Math.ceil((ph0 - a) / dd - 1e-9) - 1;
+      for (let p = a + k * dd; sg > 0 ? p <= end + 1e-12 : p >= end - 1e-12; k += sg, p = a + k * dd) { pts.push(p); if (pts.length > 4000) break; }
+      if (pts.length > 4000) pts = null; else K = pts.length;
+    }
+  }
   const hits = [], seen = new Set(), t = performance.now();
   let edgeHit = q ? null : coneEdgeSweep(ph0, dph);   // v0.918: точное событие на кадр, пересчёт после изменения колец
   let stopPh = null, rec = 0, part = null, edgeStop = false, rayStop = false;   // v0.201: part — ✺ не успели за кадр: докуда просчитано
   for (let s = 1; s <= K; s++) {
-    Z.coneSpinPh = ph0 + dph * s / K;
+    Z.coneSpinPh = pts ? pts[s - 1] : ph0 + dph * s / K;
     if (Z.coneEdgeStop) {
       const oldPh = ph0 + dph * (s - kq) / K;
       const ray = q && s % kq === 0 && coneCtrStopAt(Z.coneSpinPh) && !coneCtrStopAt(oldPh);
@@ -6103,10 +6118,13 @@ function coneClockSweep(ph0, dph, m){
     if (coneWallPaint(tr)) { rec++;   // v0.131: на каждом шаге — бит, в который упёрся луч, красится
       /* v0.770: у солнца строка за чертой, готовая посреди кадра, уходит в поле сразу — остаток кадра светит уже на следующую (прежде — до конца кадра
          на готовую: с ⊕ xor её биты могли перевернуться, а следующая строка эти положения пропускала) */
-      if (coneSunOn() && s < K) fillAutoCommit();
+      if (coneSunOn() && (s < K || pts)) { let c = fillAutoCommit();
+        /* v0.086: черта — в узле сетки, и новое кольцо за чертой красится тут же, в том же положении (каскад, как у «шага ↷»: там отрисовка после черты
+           красит на месте); дальше сетка — от этого узла */
+        if (pts && c) { for (let g = 0; c && g < 64; g++) { c = false; if (coneWallPaint(coneClockTrace())) { rec++; c = fillAutoCommit(); } } part = pts[s - 1]; break; } }
       if (!q && s < K) edgeHit = coneEdgeSweep(Z.coneSpinPh, ph0 + dph - Z.coneSpinPh); }
     if (stopPh !== null) break;
-    if ((coneFanOn() || coneSunOn()) && s < K && (!nq || s % kq === 0) && performance.now() - t > 12) { part = ph0 + dph * s / K; break; }   // v0.201: ✺ — кадр не дольше ~12 мс, остальное — в следующем
+    if ((coneFanOn() || coneSunOn()) && s < K && (!nq || s % kq === 0) && performance.now() - t > 12) { part = pts ? pts[s - 1] : ph0 + dph * s / K; break; }   // v0.201: ✺ — кадр не дольше ~12 мс, остальное — в следующем
   }
   Z.coneSpinPh = ph0;
   if (hits.length) coneClockMark(hits); else if (rec) save();
