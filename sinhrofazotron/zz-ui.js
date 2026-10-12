@@ -2896,7 +2896,23 @@ function coneArtBlocksButton(e){
 }
 document.addEventListener("pointerdown", coneArtBlocksButton, true);
 document.addEventListener("click", coneArtBlocksButton, true);
+/* v0.084, «правый клик по кнопке Ось — пусть закрывает ход осей, то есть фиксирует и не даёт сдвинуть»: Z.coneAxisLock — оси закреплены. Центр осей
+   стоит на запомненном сдвиге вида (Z.coneAxisLockPan, в CSS-пикселях): что бы ни сдвигало вид (протяжка, колесо, щипок, стрелки, «✛ в центр»),
+   отрисовка возвращает его на место; масштаб — вокруг центра осей. Поворот пунктира осей тоже закрыт. Правый щелчок по ✛ — закрыть / открыть */
+function coneAxisLockHold(){
+  if (!Z.coneAxisLock || !Array.isArray(Z.coneAxisLockPan)) return;
+  const dpr = window.devicePixelRatio || 1, p = Z.coneAxisLockPan.map(v => v * dpr);
+  if (conePan[0] !== p[0] || conePan[1] !== p[1]) conePan = p;
+}
+function coneAxisLockSet(on){
+  Z.coneAxisLock = !!on;
+  if (on) Z.coneAxisLockPan = conePan.map(v => v / (window.devicePixelRatio || 1)); else delete Z.coneAxisLockPan;
+  const b = $("bC3Axes"); if (b) { b.classList.toggle("lock", !!on); b.title = on ? "🔒 Оси закреплены — не сдвигаются и не поворачиваются. Правый щелчок — открыть" : "✛ Щелчок — ось в центр экрана. Правый щелчок — закрепить оси"; }
+  save(); renderCone();
+  say(on ? "🔒 Оси закреплены: вид не сдвигается, пунктир не поворачивается; масштаб — вокруг центра осей. Правый щелчок по ✛ — открыть." : "🔓 Оси открыты — вид снова сдвигается, ✛ ставит ось в центр.");
+}
 function renderCone(){
+  coneAxisLockHold();
   if (window.zzFaceObserve) window.zzFaceObserve();
   if (window.zzFaceUi) window.zzFaceUi();
   const ballClosedCount = window.zzBallCenterState ? window.zzBallCenterState().count : 0;
@@ -7176,7 +7192,7 @@ function coneBalanceAxisBind(cv){
   if (cv._balanceAxisBound) return; cv._balanceAxisBound = true;
   const point = e => { const r = cv.getBoundingClientRect(), G = coneGeom; return { x: (e.clientX - r.left) * G.dpr - G.cx, y: (e.clientY - r.top) * G.dpr - G.cy }; };
   const hit = e => {
-    if (!Z.coneAxisDragEnabled || !Z.coneAxes || Z.cone3d || !coneGeom) return null;
+    if (!Z.coneAxisDragEnabled || Z.coneAxisLock || !Z.coneAxes || Z.cone3d || !coneGeom) return null;   // v0.084: закреплённые оси не поворачиваются
     const p = point(e), radius = Math.hypot(p.x, p.y), a = coneBalanceAxisAngle() - Math.PI / 2;
     const d = Math.min(Math.abs(p.x * Math.sin(a) - p.y * Math.cos(a)), Math.abs(p.x * Math.cos(a) + p.y * Math.sin(a)));
     return radius > 18 * coneGeom.dpr && d <= 7 * coneGeom.dpr ? p : null;
@@ -8999,8 +9015,11 @@ function setupCone(){
     coneDirUi();
     if (host && !$("bC3Axes")) { const b = document.createElement("button"); b.id = "bC3Axes"; b.setAttribute("aria-label", "Вернуть ось в центр экрана"); b.title = "✛ Любой щелчок — ось в центр экрана"; b.textContent = "✛";   // v0.850
       b.classList.toggle("on", !!Z.coneAxes);
-      const centre=e=>{e.preventDefault();e.stopPropagation();sfzCentreAxis();};
-      b.onclick=centre;b.addEventListener("contextmenu",centre);b.addEventListener("auxclick",centre);host.appendChild(b); }
+      const centre=e=>{e.preventDefault();e.stopPropagation();if(Z.coneAxisLock){say("🔒 Оси закреплены — правый щелчок по ✛ открывает.");return;}sfzCentreAxis();};
+      b.onclick=centre;b.addEventListener("auxclick",e=>{if(e.button!==2)centre(e);});
+      b.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();coneAxisLockSet(!Z.coneAxisLock);});   // v0.084: правый щелчок — закрыть / открыть ход осей
+      b.classList.toggle("lock",!!Z.coneAxisLock);if(Z.coneAxisLock)b.title="🔒 Оси закреплены — не сдвигаются и не поворачиваются. Правый щелчок — открыть";else b.title="✛ Щелчок — ось в центр экрана. Правый щелчок — закрепить оси";
+      host.appendChild(b); }
     /* v0.1047, «кнопки плюс и минус масштаб, наверху треугольники рядом с балансами, правее и левее, такого же размера»: «−» слева от баланса «1»,
        «+» справа от баланса «0» — треугольники остриём вниз, как балансы. Масштаб — к центру конуса (как − ＋ пульта 3D); держишь — повторяется */
     for (const [id, t, f, tip] of [["bC3ZoomOut", "−", 0.8, "− Мельче: масштаб конуса; центр осей остаётся на месте. Держи — повторяется"], ["bC3ZoomIn", "+", 1.25, "+ Крупнее: масштаб конуса; центр осей остаётся на месте. Держи — повторяется"]])
