@@ -12313,6 +12313,7 @@ function cgrpInit(){
       return mv;
     };
     g.addEventListener("pointerdown", startGroupDrag);
+    g._sfzStartGroupDrag = startGroupDrag;
     /* v0.072, «группы убери у всех шляпки и ножки; перемещать кнопки внутри группы правой кнопкой мыши, примагничивая к любой грани свободных; верхняя или
        нижняя одна или 2, которые самые, могут притягивать всю группу вниз или вверх в свободные места в полосках; синхронизируй их» (выбор: левой — вся группа
        за любую, правой — внутри; сворачивание — двойной щелчок по крайней (v0.073 — правый щелчок по крайней, v0.074 — по любой; правая протяжка снята); верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
@@ -13805,7 +13806,42 @@ function sfzGrapeLayout(box, items, name, up=false){
   sfzWeaveKick();
   return {width,height:bottom,coreCenter:(coreMin-(verticalRanges.length?24:0)+coreMax)/2};
 }
+// v0.088: the visible contour has a 4 px outer grab margin, including folded pairs.
+function sfzGrapeEdgeTarget(x,y){
+  let best=null;
+  for(const g of document.querySelectorAll(".sfz-grape")){
+    if(!g._sfzStartGroupDrag||g.hidden||g.matches(".coff,.cdrag")||!g.getClientRects().length)continue;
+    for(const item of g.querySelectorAll(".sfz-grape-item")){
+      if(!item.getClientRects().length)continue;
+      const r=item.getBoundingClientRect();
+      if(x<r.left-4||x>r.right+4||y<r.top-4||y>r.bottom+4)continue;
+      const style=getComputedStyle(item);if(style.display==="none"||style.visibility==="hidden")continue;
+      const clip=style.clipPath,coord=(s,size)=>parseFloat(s)*(s.endsWith("%")?size/100:1);
+      const points=clip.startsWith("polygon(")?clip.slice(8,-1).split(",").map(p=>{const a=p.trim().split(/\s+/);return [r.left+coord(a[0],r.width),r.top+coord(a[1],r.height)];}):[[r.left,r.top],[r.right,r.top],[r.right,r.bottom],[r.left,r.bottom]];
+      let inside=false,distance=Infinity;
+      for(let i=0,j=points.length-1;i<points.length;j=i++){
+        const [ax,ay]=points[j],[bx,by]=points[i],dx=bx-ax,dy=by-ay;
+        if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+        const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));
+        distance=Math.min(distance,Math.hypot(x-ax-t*dx,y-ay-t*dy));
+      }
+      if(!inside&&distance<=4&&(!best||distance<best.distance))best={g,distance};
+    }
+  }
+  return best?.g;
+}
+let sfzGrapeEdgeReady=false;
+function sfzGrapeEdgeInit(){
+  if(sfzGrapeEdgeReady)return;sfzGrapeEdgeReady=true;
+  document.addEventListener("pointerdown",e=>{
+    if(e.button!==0||document.body.classList.contains("cedit")||e.target.closest("button,[role=button],input,select,textarea,label,a,.sfz-grape-item,.sfz-fold-arrow,.cgsz"))return;
+    const g=sfzGrapeEdgeTarget(e.clientX,e.clientY);if(!g)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    g._sfzStartGroupDrag({target:g,button:e.button,pointerId:e.pointerId,clientX:e.clientX,clientY:e.clientY,shiftKey:e.shiftKey,altKey:e.altKey,preventDefault(){}});
+  },{capture:true,passive:false});
+}
 function sfzGrapeSync(g){
+  sfzGrapeEdgeInit();
   // v0.070: внизу заголовок над кнопками, наверху треугольная крышка над ними.
   const pin=Z.cgrpTop?.[g.dataset.g],legacyBottom=Z.cgrpFld?.[g.dataset.g]?.z==="head";
   if(pin||legacyBottom){Z.sfzBookUp ||= {};if(pin?pin.side==="bottom":legacyBottom)delete Z.sfzBookUp[g.dataset.g];else Z.sfzBookUp[g.dataset.g]=true;}
