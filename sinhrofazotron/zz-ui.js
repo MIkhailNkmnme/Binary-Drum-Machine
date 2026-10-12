@@ -7296,7 +7296,8 @@ function coneBalPlace(){
   const host=el.offsetParent||el.parentElement,hr=host.getBoundingClientRect(),cr=cv.getBoundingClientRect();
   const desktop=!document.body.classList.contains("sol-mobile")&&innerWidth>760;
   const center=coneAxisScr()?.x ?? cr.left+cr.width/2;
-  const x=(desktop?innerWidth/2:center)-el.offsetWidth/2,y=desktop?30:cr.top+25;
+  // v0.081, «вот эти надо, чтоб ездили с осью, а не магниты»: баланс 1 | 0 и на компьютере стоит над вертикалью оси (прежде — середина экрана)
+  const x=center-el.offsetWidth/2,y=desktop?30:cr.top+25;
   el.style.left=(desktop?x:x-hr.left-host.clientLeft+host.scrollLeft).toFixed(1)+"px";
   el.style.top=(desktop?y:y-hr.top-host.clientTop+host.scrollTop).toFixed(1)+"px";
   c3AxesPlace();
@@ -7395,8 +7396,9 @@ function coneMagAxisPlace(){
   // v0.062: the magnets sit between the top diamonds and the balance numbers.
   const y = (document.body.classList.contains("sol-mobile") ? cv.getBoundingClientRect().top+53 : coneMagAxisTop(cv)) - hr.top - anchor.clientTop + anchor.scrollTop;
   const desktop=!document.body.classList.contains("sol-mobile")&&innerWidth>760;
-  // v0.076, «пусть вместе с осью едет»: и на компьютере пара магнитов стоит над осью (x — вертикаль оси), а не в гнезде между ромбами (v0.062)
-  const left=x.toFixed(1)+"px",top=(desktop?0:y).toFixed(1)+"px";
+  const buttons=[...document.querySelectorAll("#coneBalanceTools > button")];
+  const a=buttons[3]?.getBoundingClientRect(),b=buttons[4]?.getBoundingClientRect();
+  const left=(desktop&&a&&b?(a.right+b.left)/2-30:x).toFixed(1)+"px",top=(desktop?0:y).toFixed(1)+"px";   // v0.081: магниты — снова в гнезде между ромбами (v0.077 отменён: за осью едет баланс 1 | 0)
   if(box.style.left!==left)box.style.left=left;if(box.style.top!==top)box.style.top=top;
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
@@ -12325,6 +12327,7 @@ function cgrpInit(){
         if (wasFree) { const now = anchor.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
         place(g); linkSync(); save();
       }
+      g._sfzFoldFlip = foldFlip;   // v0.081: стрелка свёрнутой грозди разворачивает её тем же путём
     }
     // v0.068: первый щелчок уже переключил; второй и dblclick ничего не сдвигают.
     g.addEventListener("dblclick", (e) => {
@@ -13810,7 +13813,13 @@ function sfzGrapeSync(g){
         const down=rest.reduce((s,el)=>s+mid(el),0)/rest.length>=(kTop+kBot)/2;
         const edge=keep.slice().sort((a,b)=>down?(px(b,"--grape-y")+h(b))-(px(a,"--grape-y")+h(a)):px(a,"--grape-y")-px(b,"--grape-y"))[0];
         let arrow=box.querySelector(":scope > .sfz-fold-arrow");
-        if(!arrow){arrow=document.createElement("span");arrow.className="sfz-fold-arrow";arrow.setAttribute("aria-hidden","true");box.appendChild(arrow);}
+        if(!arrow){arrow=document.createElement("span");arrow.className="sfz-fold-arrow";arrow.title="Щелчок — развернуть группу; тянуть — переместить";box.appendChild(arrow);
+          /* v0.081, «пусть нажимает — открывает, и перемещает»: протяжка левой кнопкой — как за любой ромб грозди (startGroupDrag), щелчок без сдвига — развернуть */
+          arrow.addEventListener("pointerdown",e=>{if(e.button!==0)return;const x0=e.clientX,y0=e.clientY,id=e.pointerId;
+            const up=ev=>{if(ev.pointerId!==id)return;document.removeEventListener("pointerup",up,true);
+              if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)setTimeout(()=>{if(g.classList.contains("cmin")&&g._sfzFoldFlip&&arrow._edge&&arrow._edge.isConnected)g._sfzFoldFlip(arrow._edge);},0);};
+            document.addEventListener("pointerup",up,true);});}
+        arrow._edge=edge;
         arrow.dataset.dir=down?"down":"up";
         sfzGrapeStyle(arrow,"--fa-x",(px(edge,"--grape-x")-x0+w(edge)/2-2*t).toFixed(2)+"px");
         sfzGrapeStyle(arrow,"--fa-y",(down?kBot-y0+2*t:kTop-y0-4*t).toFixed(2)+"px");
