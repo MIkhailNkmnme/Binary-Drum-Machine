@@ -7362,9 +7362,8 @@ function coneMagAxisPlace(){
   // v0.062: the magnets sit between the top diamonds and the balance numbers.
   const y = (document.body.classList.contains("sol-mobile") ? cv.getBoundingClientRect().top+53 : coneMagAxisTop(cv)) - hr.top - anchor.clientTop + anchor.scrollTop;
   const desktop=!document.body.classList.contains("sol-mobile")&&innerWidth>760;
-  const buttons=[...document.querySelectorAll("#coneBalanceTools > button")];
-  const a=buttons[3]?.getBoundingClientRect(),b=buttons[4]?.getBoundingClientRect();
-  const left=(desktop&&a&&b?(a.right+b.left)/2-30:x).toFixed(1)+"px",top=(desktop?0:y).toFixed(1)+"px";
+  // v0.076, «пусть вместе с осью едет»: и на компьютере пара магнитов стоит над осью (x — вертикаль оси), а не в гнезде между ромбами (v0.062)
+  const left=x.toFixed(1)+"px",top=(desktop?0:y).toFixed(1)+"px";
   if(box.style.left!==left)box.style.left=left;if(box.style.top!==top)box.style.top=top;
 }
 function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикали через центр конуса, у нижнего края холста, поверх всего
