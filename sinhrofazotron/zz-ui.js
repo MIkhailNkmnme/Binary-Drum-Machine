@@ -12204,7 +12204,7 @@ function cgrpInit(){
     g.addEventListener("pointerdown", startGroupDrag);
     /* v0.072, «группы убери у всех шляпки и ножки; перемещать кнопки внутри группы правой кнопкой мыши, примагничивая к любой грани свободных; верхняя или
        нижняя одна или 2, которые самые, могут притягивать всю группу вниз или вверх в свободные места в полосках; синхронизируй их» (выбор: левой — вся группа
-       за любую, правой — внутри; сворачивание — двойной щелчок по крайней; верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
+       за любую, правой — внутри; сворачивание — двойной щелчок по крайней (v0.073 — правый щелчок); верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
        (или на своё прежнее место); крайний ромб (верхний ряд вверх, нижний вниз) и свёрнутая гроздь тянут всю группу — в полосе она встаёт на свободное место.
        Места — Z.sfzGrapePos[группа] в виде «вниз»; в верхней полосе та же раскладка отражена. */
     if (sfzColumnGroup(g)) {
@@ -12222,6 +12222,7 @@ function cgrpInit(){
         const item = e.target.closest && e.target.closest(".sfz-grape-item"), box = g.querySelector(":scope > .cgb");
         if (!item || !box || item.closest(".cgrp") !== g || item.classList.contains("sfz-grape-range")) return;
         const id = e.pointerId, x0 = e.clientX, y0 = e.clientY, folded = g.classList.contains("cmin"), E = ends(box, item);
+        const foldHit = folded || ((E.top || E.bottom) && E.all.length > 2); g._sfzFoldHit = foldHit;   // v0.073: правый щелчок здесь — свернуть / раскрыть
         const others = E.all.filter(o => o !== item), ox = px(item, "--grape-x"), oy = px(item, "--grape-y"), w = px(item, "--grape-w") || 48, h = px(item, "--grape-h") || 48;
         let mode = null, spot = null, cands = null;
         const center = o => [px(o, "--grape-x") + (px(o, "--grape-w") || 48) / 2, px(o, "--grape-y") + (px(o, "--grape-h") || 48) / 2];
@@ -12262,7 +12263,7 @@ function cgrpInit(){
         const finish = ev => {
           if (ev.pointerId !== id) return;
           clean();
-          if (mode !== "item") { if (!mode) g._sfzRDragUntil = 0; return; }
+          if (mode !== "item") { if (!mode) { g._sfzRDragUntil = foldHit ? performance.now() + 400 : 0; if (foldHit && ev.type === "pointerup") foldFlip(item); } return; }
           g._sfzRDragUntil = performance.now() + 400;
           item.classList.remove("sfz-grape-moving"); box._sfzRDrag = null;
           const up = g.classList.contains("sfz-book-up"), H = px(box, "--sfz-grape-height") || box.offsetHeight, key = g.dataset.g;
@@ -12281,23 +12282,22 @@ function cgrpInit(){
         document.addEventListener("pointerup", finish, true);
         document.addEventListener("pointercancel", finish, true);
       }, true);
-      // После протяжки правый щелчок не доходит до кнопки (у многих кнопок он — второе действие).
-      g.addEventListener("contextmenu", e => { if (performance.now() < (g._sfzRDragUntil || 0)) { e.preventDefault(); e.stopPropagation(); } }, true);
-      // Двойной щелчок по крайнему ромбу — свернуть гроздь в него; по свёрнутой — развернуть.
-      g.addEventListener("dblclick", e => {
-        const item = e.target.closest && e.target.closest(".sfz-grape-item"), box = g.querySelector(":scope > .cgb");
-        if (!item || !box || item.closest(".cgrp") !== g || performance.now() < (g._solDragUntil || 0) || document.body.classList.contains("cedit")) return;
-        const on = !g.classList.contains("cmin");
-        if (on) { const E = ends(box, item); if (!E.top && !E.bottom) return; }
-        e.preventDefault(); e.stopPropagation();
-        const key = g.dataset.g, before = item.getBoundingClientRect(), gr = g.getBoundingClientRect(), wasFree = freeGroup();
+      /* После протяжки правый щелчок не доходит до кнопки (у многих кнопок он — второе действие). v0.073: у крайних ромбов и свёрнутой грозди правый
+         щелчок — сворачивание, своё второе действие у них не срабатывает (в Windows contextmenu приходит после отпускания, в других — при нажатии). */
+      g.addEventListener("contextmenu", e => { if (g._sfzFoldHit || performance.now() < (g._sfzRDragUntil || 0)) { g._sfzFoldHit = false; e.preventDefault(); e.stopPropagation(); } }, true);
+      /* v0.073, «пусть правой кнопкой один клик сворачивание разворачивание, и ещё чтобы всегда минимум 2 кнопки оставались при сворачивании»: правый
+         щелчок без протяжки по крайнему ромбу сворачивает гроздь в него и ближайшего к нему соседа (sfzFoldPair), по свёрнутой — раскрывает; прежний
+         двойной щелчок снят — он ещё и дважды нажимал кнопку. Щёлкнутый ромб остаётся на том же месте экрана. Гроздь из двух ромбов не сворачивается. */
+      function foldFlip(item) {
+        const box = g.querySelector(":scope > .cgb"); if (!box || document.body.classList.contains("cedit")) return;
+        const key = g.dataset.g, on = !g.classList.contains("cmin"), before = item.getBoundingClientRect(), gr = g.getBoundingClientRect(), wasFree = freeGroup();
         Z.sfzFoldKeep ||= {};
-        if (on) { Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzGrapeKey(item); } else delete Z.cgrpMin[key];
+        if (on) { const vis = rItems(box); if (vis.length <= 2) return; Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzFoldPair(vis, [sfzGrapeKey(item)]).map(sfzGrapeKey); } else delete Z.cgrpMin[key];
         g.classList.toggle("cmin", on); g.style.minHeight = "";
         sfzGrapeSync(g);
         if (wasFree) { const now = item.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
         place(g); linkSync(); save();
-      }, true);
+      }
     }
     // v0.068: первый щелчок уже переключил; второй и dblclick ничего не сдвигают.
     g.addEventListener("dblclick", (e) => {
@@ -13569,6 +13569,15 @@ function sfzGrapeStyle(el, key, value){
 }
 // v0.072: ключ ромба в грозди — для своих мест (Z.sfzGrapePos) и ромба свёрнутой грозди (Z.sfzFoldKeep).
 function sfzGrapeKey(el){ return el.id || el.querySelector("[id]")?.id || "t:" + el.textContent.trim().replace(/\s+/g, " ").slice(0, 40); }
+// v0.073: свёрнутая гроздь — не меньше двух ромбов: выбранный крайний (want[0], иначе верхний) и ближайший к нему сосед (want[1], иначе по расстоянию).
+function sfzFoldPair(vis, want){
+  const px=(el,k)=>parseFloat(el.style.getPropertyValue(k))||0, mid=el=>[px(el,"--grape-x")+(px(el,"--grape-w")||48)/2,px(el,"--grape-y")+(px(el,"--grape-h")||48)/2];
+  const first=vis.find(el=>sfzGrapeKey(el)===want[0])||vis.slice().sort((a,b)=>px(a,"--grape-y")-px(b,"--grape-y")||px(a,"--grape-x")-px(b,"--grape-x"))[0];
+  if(!first)return [];
+  const [fx,fy]=mid(first), rest=vis.filter(el=>el!==first), d=el=>{const [x,y]=mid(el);return Math.hypot(x-fx,y-fy);};
+  const second=rest.find(el=>sfzGrapeKey(el)===want[1])||rest.sort((a,b)=>d(a)-d(b))[0];
+  return second?[first,second]:[first];
+}
 function sfzGrapeIcon(el, name){
   if (!el.matches("button,label") || el.querySelector('input:not([type="checkbox"]),select,textarea')) return;
   const text = el.textContent.trim();
@@ -13753,15 +13762,20 @@ function sfzGrapeSync(g){
   sfzGrapeStyle(g,"--sfz-grape-width","120px");
   sfzGrapeStyle(g,"--sfz-book-body-width",layout.width+"px");
   sfzGrapeStyle(g,"--sfz-book-core-center",layout.coreCenter+"px");
-  // v0.072: шапки и крышки нет; свёрнутая гроздь — один крайний ромб (двойной щелчок по нему), остальные спрятаны на своих местах.
-  let keep=null;
+  // v0.072: шапки и крышки нет; v0.073: свёрнутая гроздь — крайний ромб и его ближайший сосед, как стояли в грозди; остальные спрятаны на своих местах.
+  let keep=[];
   if(g.classList.contains("cmin")){
-    const want=Z.sfzFoldKeep?.[g.dataset.g], px=(el,k)=>parseFloat(el.style.getPropertyValue(k))||0;
+    const px=(el,k)=>parseFloat(el.style.getPropertyValue(k))||0;
     const vis=stable.filter(el=>el.classList.contains("sfz-grape-item")&&!el.classList.contains("sfz-grape-hidden")&&!el.classList.contains("sfz-grape-range"));
-    keep=vis.find(el=>sfzGrapeKey(el)===want)||vis.slice().sort((a,b)=>px(a,"--grape-y")-px(b,"--grape-y")||px(a,"--grape-x")-px(b,"--grape-x"))[0]||null;
-    if(keep){sfzGrapeStyle(g,"--sfz-fold-w",(px(keep,"--grape-w")||48)+"px");sfzGrapeStyle(g,"--sfz-fold-h",(px(keep,"--grape-h")||48)+"px");}
+    keep=sfzFoldPair(vis,[].concat(Z.sfzFoldKeep?.[g.dataset.g]||[]));
+    if(keep.length){
+      const x0=Math.min(...keep.map(el=>px(el,"--grape-x"))),y0=Math.min(...keep.map(el=>px(el,"--grape-y")));
+      for(const el of keep){sfzGrapeStyle(el,"--fold-x",(px(el,"--grape-x")-x0)+"px");sfzGrapeStyle(el,"--fold-y",(px(el,"--grape-y")-y0)+"px");}
+      sfzGrapeStyle(g,"--sfz-fold-w",Math.max(...keep.map(el=>px(el,"--grape-x")+(px(el,"--grape-w")||48)))-x0+"px");
+      sfzGrapeStyle(g,"--sfz-fold-h",Math.max(...keep.map(el=>px(el,"--grape-y")+(px(el,"--grape-h")||48)))-y0+"px");
+    }
   }
-  for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==(el===keep))el.classList.toggle("sfz-fold-keep",el===keep);
+  for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
   const mark=up?"▾":"▴";if(cover.textContent!==mark)cover.textContent=mark;
