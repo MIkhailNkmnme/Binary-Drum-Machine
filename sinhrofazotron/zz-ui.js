@@ -2426,6 +2426,15 @@ function sfzMenuGridLeft(g,left){
   const origin=sfzMenuGridOrigin(),half=g.offsetWidth/2;
   return origin+Math.round((left+half-origin)/30)*30-half;
 }
+/* v0.072: в полосе группа встаёт только на свободное место сетки — мимо других групп той же полосы и нижних квадратов пульта (они сами не двигаются). */
+function sfzStripFreeLeft(g,left,side,top,bottom){
+  const w=g.offsetWidth,busy=[],add=r=>{if(r.width&&r.bottom>top&&r.top<bottom)busy.push([r.left,r.right]);};
+  for(const o of document.querySelectorAll(".sfz-grape"))if(o!==g&&!o.classList.contains("cdrag")&&o.getClientRects().length&&Z.cgrpTop?.[o.dataset.g]?.side===side)add(o.getBoundingClientRect());
+  if(side==="bottom")for(const id of ["bC3Reset","c3Modes","coneTransportStart"]){const e=$(id);if(e&&e.getClientRects().length)add(e.getBoundingClientRect());}
+  const origin=sfzMenuGridOrigin(),k0=Math.round((left+w/2-origin)/30);
+  for(let d=0;d<120;d++)for(const k of d?[k0+d,k0-d]:[k0]){const L=origin+k*30-w/2;if(L<0||L+w>innerWidth)continue;if(busy.every(([a,b])=>L+w<=a+.5||L>=b-.5))return L;}
+  return origin+k0*30-w/2;
+}
 function sfzMenuPin(g,left,side){
   const wr=$("w-cone").getBoundingClientRect(),axis=coneAxisScr();
   const mesh=Math.round((left+g.offsetWidth/2-sfzMenuGridOrigin())/30);
@@ -11472,7 +11481,7 @@ function solPanelOrganizeInit(C){
     { name: "Таблицы", color: "#22d3ee", keys: ["@ringTbl"] },
     { name: "Дзен", color: "#4fd1a0", keys: ["дзен"] }
   ];
-  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpTop", "sfzRope", "sfzBookUp", "sfzBookBottom", "sfzBookAxisEdge", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
+  const fields = ["cgrpPos", "cgrpFld", "cgrpLink", "cgrpPin", "cgrpTop", "sfzRope", "sfzBookUp", "sfzBookBottom", "sfzBookAxisEdge", "sfzGrapePos", "sfzFoldKeep", "cgrpEdge", "cgrpMin", "cgrpMinPos", "cgrpSize", "cgrpOff", "cgrpDock", "sunTblXY", "sunTblPin", "sunTblMin", "ringTblXY", "ringTblPin", "ringTblMin", "coneBallLabXY", "coneBallLabPin", "coneBallLabMin", "lasAlgoXY", "lasAlgoPin", "lasAlgoMin", "sunTblFld", "ringTblFld", "coneBallLabFld", "lasAlgoFld"];
   const copy = value => JSON.parse(JSON.stringify(value));
   const snapshot = () => Object.fromEntries(fields.map(key => [key, typeof Z[key] !== "undefined" ? { value: copy(Z[key]) } : {}]));
   const fold = (g, min) => {
@@ -11732,7 +11741,8 @@ function cgrpInit(){
         // v0.071: незакреплённая стопка растёт к середине поля — та, что стоит выше середины, идёт вниз (иначе уезжала за верхний край).
         const pin=Z.cgrpTop?.[parent.dataset.g],up=rising.get(parent) ?? (pin ? pin.side === "bottom" : r.top+r.bottom > wr.top+wr.bottom);
         rising.set(g,up);
-        let x=r.left+(L.dx||0),y=r.top+(up?-1:1)*(parent.classList.contains("sfz-grape")?54:solPanelRowStep(parent));
+        // v0.072: без шапок гроздь встаёт за краем предыдущей (с зазором 6 px), а не на шаг шапки.
+        let x=r.left+(L.dx||0),y=parent.classList.contains("sfz-grape")?(up?r.top-g.offsetHeight-6:r.bottom+6):r.top+(up?-1:1)*solPanelRowStep(parent);
         nodeSetPos(g,x,y);
         if(!SOL_PLATES[g.id]){g.classList.add("cfloat");floatPlace(g,x,y);}else nodePlace(g);
       }
@@ -12133,7 +12143,7 @@ function cgrpInit(){
           g._floor = !mates.length && sfzColumnGroup(g) && (strip==="bottom" || !strip && sx >= body.left - 1 && sx + r.width <= body.right + 1 && Math.abs(sy + g.offsetHeight - floor) <= 16);
           if (g._ceil) { sy = ceiling; g._floor = false; g._mesh = null; }
           else if (g._floor) sy = floor - g.offsetHeight;
-          if(g._ceil || g._floor){sx=sfzMenuGridLeft(g,sx);zSnapGlow([g._ceil?$("top"):$("sfzBottomGrid")]);}
+          if(g._ceil || g._floor){sx=sfzStripFreeLeft(g,sx,g._ceil?"top":"bottom",sy,sy+g.offsetHeight);zSnapGlow([g._ceil?$("top"):$("sfzBottomGrid")]);}
           if (!mates.length && !strip) { const A=coneAxisScr();
             const edges=["head",...(g.querySelector(":scope > .sfz-book-cover")?["foot"]:[])].map(edge=>({edge,offset:solPanelAxisOffset(g,edge)})).sort((a,b)=>Math.abs(ly-dy+a.offset-(A?.y||0))-Math.abs(ly-dy+b.offset-(A?.y||0)));
             const {edge,offset}=edges[0],distance=A?Math.abs(ly-dy+offset-A.y):Infinity,edgeDistance=Math.min(g._ceil?Math.abs(ly-dy-ceiling):Infinity,g._floor?Math.abs(ly-dy+g.offsetHeight-floor):Infinity);if(A&&distance<=12&&distance<=edgeDistance){sy=A.y-offset;g._ceil=false;g._floor=false;g._mesh=null;g._pin=(sx-A.x)/(coneZoom||1);g._sfzAxisEdge=edge;}
@@ -12192,6 +12202,103 @@ function cgrpInit(){
       return mv;
     };
     g.addEventListener("pointerdown", startGroupDrag);
+    /* v0.072, «группы убери у всех шляпки и ножки; перемещать кнопки внутри группы правой кнопкой мыши, примагничивая к любой грани свободных; верхняя или
+       нижняя одна или 2, которые самые, могут притягивать всю группу вниз или вверх в свободные места в полосках; синхронизируй их» (выбор: левой — вся группа
+       за любую, правой — внутри; сворачивание — двойной щелчок по крайней; верх и низ зеркально). Правая протяжка ромба: он встаёт к свободной грани соседа
+       (или на своё прежнее место); крайний ромб (верхний ряд вверх, нижний вниз) и свёрнутая гроздь тянут всю группу — в полосе она встаёт на свободное место.
+       Места — Z.sfzGrapePos[группа] в виде «вниз»; в верхней полосе та же раскладка отражена. */
+    if (sfzColumnGroup(g)) {
+      const px = (el, k) => parseFloat(el.style.getPropertyValue(k)) || 0;
+      const rItems = box => [...box.querySelectorAll(".sfz-grape-item")].filter(el => !el.classList.contains("sfz-grape-range") && !el.classList.contains("sfz-grape-hidden") && el.getClientRects().length);
+      const rhomb = el => !el.classList.contains("sfz-grape-editor");
+      const freeGroup = () => { const key = g.dataset.g; return g.parentElement === tl && !Z.cgrpTop?.[key] && typeof Z.cgrpPin?.[key] !== "number" && !Z.cgrpEdge?.[key] && !Z.cgrpLink?.[key]; };
+      const ends = (box, item) => {
+        const all = rItems(box), minT = Math.min(...all.map(el => px(el, "--grape-y"))), maxB = Math.max(...all.map(el => px(el, "--grape-y") + px(el, "--grape-h")));
+        const y = px(item, "--grape-y"), h = px(item, "--grape-h");
+        return { all, top: y <= minT + 24, bottom: y + h >= maxB - 24 };
+      };
+      g.addEventListener("pointerdown", e => {
+        if (e.button !== 2 || document.body.classList.contains("cedit")) return;
+        const item = e.target.closest && e.target.closest(".sfz-grape-item"), box = g.querySelector(":scope > .cgb");
+        if (!item || !box || item.closest(".cgrp") !== g || item.classList.contains("sfz-grape-range")) return;
+        const id = e.pointerId, x0 = e.clientX, y0 = e.clientY, folded = g.classList.contains("cmin"), E = ends(box, item);
+        const others = E.all.filter(o => o !== item), ox = px(item, "--grape-x"), oy = px(item, "--grape-y"), w = px(item, "--grape-w") || 48, h = px(item, "--grape-h") || 48;
+        let mode = null, spot = null, cands = null;
+        const center = o => [px(o, "--grape-x") + (px(o, "--grape-w") || 48) / 2, px(o, "--grape-y") + (px(o, "--grape-h") || 48) / 2];
+        const free = (cx, cy) => others.every(o => {
+          const [qx, qy] = center(o), ow = px(o, "--grape-w") || 48, oh = px(o, "--grape-h") || 48;
+          if (rhomb(o)) return Math.abs(cx - qx) / ((ow + w) / 2) + Math.abs(cy - qy) / ((oh + h) / 2) >= 0.98;
+          return cx + w / 2 - 6 <= qx - ow / 2 || cx - w / 2 + 6 >= qx + ow / 2 || cy + h / 2 - 6 <= qy - oh / 2 || cy - h / 2 + 6 >= qy + oh / 2;
+        });
+        const listCands = () => {   // грани соседних ромбов (смещение на полсуммы полуразмеров) и прежнее место
+          const out = [[ox + w / 2, oy + h / 2]];
+          for (const o of others) if (rhomb(o)) { const [qx, qy] = center(o), ow = px(o, "--grape-w") || 48, oh = px(o, "--grape-h") || 48;
+            for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const c = [qx + sx * (ow + w) / 4, qy + sy * (oh + h) / 4]; if (free(...c)) out.push(c); } }
+          return out;
+        };
+        const clean = () => { document.removeEventListener("pointermove", move, true); document.removeEventListener("pointerup", finish, true); document.removeEventListener("pointercancel", finish, true); };
+        const move = ev => {
+          if (ev.pointerId !== id) return;
+          const dx = ev.clientX - x0, dy = ev.clientY - y0;
+          if (!mode) {
+            if (Math.hypot(dx, dy) < 6) return;
+            g._sfzRDragUntil = Infinity;
+            const vertical = Math.abs(dy) > Math.abs(dx);
+            if (folded || !rhomb(item) || !others.length || (vertical && ((E.top && dy < 0) || (E.bottom && dy > 0)))) {
+              mode = "group"; clean();
+              const drag = startGroupDrag({ target: g, button: 0, pointerId: id, clientX: x0, clientY: y0, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
+              const done = () => { g.removeEventListener("pointerup", done); g.removeEventListener("pointercancel", done); g._sfzRDragUntil = performance.now() + 400; };
+              g.addEventListener("pointerup", done); g.addEventListener("pointercancel", done);
+              if (drag) { ev.preventDefault(); ev.stopImmediatePropagation(); drag(ev); } else done();
+              return;
+            }
+            mode = "item"; box._sfzRDrag = item; item.classList.add("sfz-grape-moving"); cands = listCands();
+          }
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          const cx = ox + w / 2 + dx, cy = oy + h / 2 + dy;
+          spot = cands.reduce((b, c) => Math.hypot(c[0] - cx, c[1] - cy) < Math.hypot(b[0] - cx, b[1] - cy) ? c : b, cands[0]);
+          item.style.setProperty("--grape-x", (spot[0] - w / 2) + "px"); item.style.setProperty("--grape-y", (spot[1] - h / 2) + "px");
+        };
+        const finish = ev => {
+          if (ev.pointerId !== id) return;
+          clean();
+          if (mode !== "item") { if (!mode) g._sfzRDragUntil = 0; return; }
+          g._sfzRDragUntil = performance.now() + 400;
+          item.classList.remove("sfz-grape-moving"); box._sfzRDrag = null;
+          const up = g.classList.contains("sfz-book-up"), H = px(box, "--sfz-grape-height") || box.offsetHeight, key = g.dataset.g;
+          const ref = others[0].getBoundingClientRect(), gr = g.getBoundingClientRect(), map = {};
+          for (const el of (box._sfzGrapeSlots || E.all)) if (el.classList.contains("sfz-grape-item") && !el.classList.contains("sfz-grape-range") && box.contains(el)) {
+            const y = px(el, "--grape-y"), hh = px(el, "--grape-h") || 48;
+            map[sfzGrapeKey(el)] = { x: Math.round(px(el, "--grape-x") * 10) / 10, y: Math.round((up ? H - y - hh : y) * 10) / 10 };
+          }
+          Z.sfzGrapePos ||= {}; Z.sfzGrapePos[key] = map;
+          sfzGrapeSync(g);
+          const now = others[0].getBoundingClientRect(), ddx = ref.left - now.left, ddy = ref.top - now.top;
+          if (freeGroup() && (Math.abs(ddx) > 0.5 || Math.abs(ddy) > 0.5)) nodeSetPos(g, gr.left + ddx, gr.top + ddy);
+          place(g); linkSync(); save();
+        };
+        document.addEventListener("pointermove", move, { capture: true, passive: false });
+        document.addEventListener("pointerup", finish, true);
+        document.addEventListener("pointercancel", finish, true);
+      }, true);
+      // После протяжки правый щелчок не доходит до кнопки (у многих кнопок он — второе действие).
+      g.addEventListener("contextmenu", e => { if (performance.now() < (g._sfzRDragUntil || 0)) { e.preventDefault(); e.stopPropagation(); } }, true);
+      // Двойной щелчок по крайнему ромбу — свернуть гроздь в него; по свёрнутой — развернуть.
+      g.addEventListener("dblclick", e => {
+        const item = e.target.closest && e.target.closest(".sfz-grape-item"), box = g.querySelector(":scope > .cgb");
+        if (!item || !box || item.closest(".cgrp") !== g || performance.now() < (g._solDragUntil || 0) || document.body.classList.contains("cedit")) return;
+        const on = !g.classList.contains("cmin");
+        if (on) { const E = ends(box, item); if (!E.top && !E.bottom) return; }
+        e.preventDefault(); e.stopPropagation();
+        const key = g.dataset.g, before = item.getBoundingClientRect(), gr = g.getBoundingClientRect(), wasFree = freeGroup();
+        Z.sfzFoldKeep ||= {};
+        if (on) { Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzGrapeKey(item); } else delete Z.cgrpMin[key];
+        g.classList.toggle("cmin", on); g.style.minHeight = "";
+        sfzGrapeSync(g);
+        if (wasFree) { const now = item.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
+        place(g); linkSync(); save();
+      }, true);
+    }
     // v0.068: первый щелчок уже переключил; второй и dblclick ничего не сдвигают.
     g.addEventListener("dblclick", (e) => {
       if (!(g._downLab || e.target.closest(".glab")) || e.target.closest("button, input, select, textarea, label, .gzen, .gon, .gx, .cgsz") || performance.now() < (g._solDragUntil || 0)) return;
@@ -13460,6 +13567,8 @@ function sfzGrapeStyle(el, key, value){
   if(el.style.getPropertyValue(key)===value)return;el.style.setProperty(key,value);
   if(/^--grape-[xywh]$/.test(key))window.zzSfzWeaveRevision=(window.zzSfzWeaveRevision||0)+1;
 }
+// v0.072: ключ ромба в грозди — для своих мест (Z.sfzGrapePos) и ромба свёрнутой грозди (Z.sfzFoldKeep).
+function sfzGrapeKey(el){ return el.id || el.querySelector("[id]")?.id || "t:" + el.textContent.trim().replace(/\s+/g, " ").slice(0, 40); }
 function sfzGrapeIcon(el, name){
   if (!el.matches("button,label") || el.querySelector('input:not([type="checkbox"]),select,textarea')) return;
   const text = el.textContent.trim();
@@ -13587,10 +13696,18 @@ function sfzGrapeLayout(box, items, name, up=false){
     const w = editor ? (range ? 96 : dropdown ? 100 : 120) : cell, h = editor ? (range ? 34 : dropdown ? 26 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
     const x = editor ? axis - w / 2 : axis - 24 + side * step, top = y + (editor ? 0 : (side % 2) * cell / 2);
 
-    sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
+    if(item!==box._sfzRDrag)sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
     width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
     if (editor) { y=top+h+8; side=0; } else if (straight) { y+=cell; side=0; } else { side=(side+1)%columns; if(!side)y+=cell; }
+  }
+  // v0.072: места, расставленные правой протяжкой, — поверх раскладки; хранятся в виде «вниз», при перевороте отражаются (верх и низ зеркально).
+  const custom=Z.sfzGrapePos?.[name];
+  if(custom&&slots.length){
+    for(const s of slots){const p=custom[sfzGrapeKey(s.item)];if(p){s.x=p.x;s.top=p.y;}}
+    const mx=Math.min(...slots.map(s=>s.x))-(verticalRanges.length?24:0),my=Math.min(...slots.map(s=>s.top));
+    width=74;bottom=0;
+    for(const s of slots){s.x-=mx;s.top-=my;width=Math.max(width,s.x+s.w);bottom=Math.max(bottom,s.top+s.h);if(s.item!==box._sfzRDrag)sfzGrapeStyle(s.item,"--grape-x",s.x+"px");}
   }
   const coreMin=slots.length?Math.min(...slots.map(s=>s.x)):0, coreMax=slots.length?Math.max(...slots.map(s=>s.x+s.w)):48;
   if(verticalRanges.length){
@@ -13603,7 +13720,7 @@ function sfzGrapeLayout(box, items, name, up=false){
     });
     bottom=Math.max(bottom,verticalRanges.length*height+8*(verticalRanges.length-1));
   }
-  for(const {item,top,h} of slots)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-h:top)+"px");
+  for(const {item,top,h} of slots)if(item!==box._sfzRDrag)sfzGrapeStyle(item,"--grape-y",(up?bottom-top-h:top)+"px");
   box.querySelectorAll(":scope > .sfz-grape-grip").forEach(grip=>grip.remove());
   sfzGrapeStyle(box,"--sfz-grape-width",width+"px"); sfzGrapeStyle(box,"--sfz-grape-height",bottom+"px");
   sfzWeaveKick();
@@ -13636,6 +13753,15 @@ function sfzGrapeSync(g){
   sfzGrapeStyle(g,"--sfz-grape-width","120px");
   sfzGrapeStyle(g,"--sfz-book-body-width",layout.width+"px");
   sfzGrapeStyle(g,"--sfz-book-core-center",layout.coreCenter+"px");
+  // v0.072: шапки и крышки нет; свёрнутая гроздь — один крайний ромб (двойной щелчок по нему), остальные спрятаны на своих местах.
+  let keep=null;
+  if(g.classList.contains("cmin")){
+    const want=Z.sfzFoldKeep?.[g.dataset.g], px=(el,k)=>parseFloat(el.style.getPropertyValue(k))||0;
+    const vis=stable.filter(el=>el.classList.contains("sfz-grape-item")&&!el.classList.contains("sfz-grape-hidden")&&!el.classList.contains("sfz-grape-range"));
+    keep=vis.find(el=>sfzGrapeKey(el)===want)||vis.slice().sort((a,b)=>px(a,"--grape-y")-px(b,"--grape-y")||px(a,"--grape-x")-px(b,"--grape-x"))[0]||null;
+    if(keep){sfzGrapeStyle(g,"--sfz-fold-w",(px(keep,"--grape-w")||48)+"px");sfzGrapeStyle(g,"--sfz-fold-h",(px(keep,"--grape-h")||48)+"px");}
+  }
+  for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==(el===keep))el.classList.toggle("sfz-fold-keep",el===keep);
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
   const mark=up?"▾":"▴";if(cover.textContent!==mark)cover.textContent=mark;
