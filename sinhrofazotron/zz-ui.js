@@ -13773,7 +13773,7 @@ function sfzGrapeSync(g){
   const collect = node => {
     const hidden = node.hidden || node.style.display === "none";
     node.classList.toggle("sfz-grape-hidden",hidden);
-    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,.sfz-grape-grip,#coneBallStatus")) return;
+    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,.sfz-grape-grip,.sfz-fold-arrow,#coneBallStatus")) return;
     if (node.matches("button,label,select,textarea,input:not([type=hidden])")) { items.push(node); return; }
     if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { const empty=!node.textContent.trim(); node.classList.toggle("sfz-grape-empty",empty); if (!empty) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
     if (!node.classList.contains("sfz-grape-wrap")) node.classList.add("sfz-grape-wrap");
@@ -13801,8 +13801,24 @@ function sfzGrapeSync(g){
       for(const el of keep){sfzGrapeStyle(el,"--fold-x",(px(el,"--grape-x")-x0)+"px");sfzGrapeStyle(el,"--fold-y",(px(el,"--grape-y")-y0)+"px");}
       sfzGrapeStyle(g,"--sfz-fold-w",Math.max(...keep.map(el=>px(el,"--grape-x")+(px(el,"--grape-w")||48)))-x0+"px");
       sfzGrapeStyle(g,"--sfz-fold-h",Math.max(...keep.map(el=>px(el,"--grape-y")+(px(el,"--grape-h")||48)))-y0+"px");
+      /* v0.080, «у свёрнутой группы сделай стрелку через отступ 2 граней вниз или вверх — куда откроются кнопки, когда развернуть»: треугольник
+         4t × 2t (t — грань стандарта треугольников) остриём туда, где лежат спрятанные ромбы, в 2t от крайнего ромба пары */
+      const rest=vis.filter(el=>!keep.includes(el));
+      if(rest.length){
+        const t=TZC_H/(2*Math.sqrt(3)),h=el=>px(el,"--grape-h")||48,w=el=>px(el,"--grape-w")||48,mid=el=>px(el,"--grape-y")+h(el)/2;
+        const kTop=Math.min(...keep.map(el=>px(el,"--grape-y"))),kBot=Math.max(...keep.map(el=>px(el,"--grape-y")+h(el)));
+        const down=rest.reduce((s,el)=>s+mid(el),0)/rest.length>=(kTop+kBot)/2;
+        const edge=keep.slice().sort((a,b)=>down?(px(b,"--grape-y")+h(b))-(px(a,"--grape-y")+h(a)):px(a,"--grape-y")-px(b,"--grape-y"))[0];
+        let arrow=box.querySelector(":scope > .sfz-fold-arrow");
+        if(!arrow){arrow=document.createElement("span");arrow.className="sfz-fold-arrow";arrow.setAttribute("aria-hidden","true");box.appendChild(arrow);}
+        arrow.dataset.dir=down?"down":"up";
+        sfzGrapeStyle(arrow,"--fa-x",(px(edge,"--grape-x")-x0+w(edge)/2-2*t).toFixed(2)+"px");
+        sfzGrapeStyle(arrow,"--fa-y",(down?kBot-y0+2*t:kTop-y0-4*t).toFixed(2)+"px");
+        sfzGrapeStyle(arrow,"--fa-t",t.toFixed(3)+"px");
+      }
     }
   }
+  if(!keep.length||!g.classList.contains("cmin")){const a=box.querySelector(":scope > .sfz-fold-arrow");if(a)a.remove();}
   for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
