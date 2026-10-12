@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.008. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.009. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.008</title>
+<title>Zerkalius Маятник — v0.009</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -53,6 +53,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 #wrap{flex:1;overflow:auto;padding:12px 16px;min-height:0;cursor:grab;touch-action:none;overscroll-behavior:contain}
 #wrap.drag{cursor:grabbing}
 canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+#bKonus{display:none}#bKonus.on{display:inline-block}
 #tip{position:fixed;pointer-events:none;font:12px var(--mono);background:#000c;border:1px solid var(--line);padding:2px 6px;border-radius:3px;display:none}
 .lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute)}
 .lg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
@@ -60,7 +61,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.008</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.009</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -104,6 +105,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <a href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
+    <button id="bKonus" title="Выбранный конус (Shift + щелчок по оси симметрии или по полю) — на грани Бирамиды">◭ в Бирамиду</button>
   </div>
   <div class="lg" aria-hidden="true"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span><i style="background:#4f9bff"></i>стал 1</span><span><i style="background:#ff5a4f"></i>стал 0</span></div>
   <span id="stat"></span>
@@ -186,6 +188,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     if (st.outline) outline(px);
     if (st.sym && !playing) symmetry(px);
+    konusDraw(px);
     g.putImageData(img, 0, 0);
     status();
   }
@@ -255,6 +258,32 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       for (let i = 0; i < sg.w.length; i++) { const y = sg.y0 + i, w = sg.w[i]; if (w > 0) { dot(y, sg.x - w + 1, SYM_CY); dot(y, sg.x + w, SYM_CY); } }
     }
     for (const sg of symCache.segs) for (let y = sg.y0; y <= sg.y1; y++) { dot(y, sg.x, SYM_OR); dot(y, sg.x + 1, SYM_OR); }
+  }
+  /* v0.009, «любой конус симметрии в Бирамиду вставить… выбрать»: Shift + щелчок — конус. У оранжевой оси — её конус
+     (вершина — верх оси, ось между столбцами x и x + 1), мимо осей — конус с вершиной в клетке щелчка. Вниз до низа поля,
+     не больше 512 строк. Ряд грани i (i + 1 бит) — настоящие биты: левая половина — клетки x − i, x − i + 2, … слева от оси,
+     правая — их зеркальные клетки справа (c = x − i + 2j, а при 2j > i ещё +1). Если конус зеркален, ряд — палиндром.
+     Передача — память браузера (zerk_mayatnik_konus), её же читает Бирамида («◭ конус из Маятника»). */
+  let konus = null;
+  const KONUS_COL = rgba([255, 60, 200]);
+  function konusPick(x, y) {
+    let ax = x, top = y, from = 'клетка';
+    if (st.sym && symCache) { const tol = Math.max(3, Math.ceil(8 / scale())); let best = null;
+      for (const sg of symCache.segs) { const d = Math.abs(x - sg.x - 0.5); if (d <= tol && y >= sg.y0 - tol && y <= sg.y1 + tol && (!best || d < best.d)) best = { d, sg }; }
+      if (best) { ax = best.sg.x; top = best.sg.y0; from = 'ось'; } }
+    const { W, H, val } = f, rows = [];
+    for (let i = 0; top + i < H && i < 512; i++) { const row = (top + i) * W; let s = '';
+      for (let j = 0; j <= i; j++) { const c = ax - i + 2 * j + (2 * j > i ? 1 : 0); const v = c >= 0 && c < W ? val[row + c] : -1; s += v === 1 ? '1' : '0'; }
+      rows.push(s); }
+    konus = { ax, top, n: rows.length };
+    try { localStorage.setItem('zerk_mayatnik_konus', JSON.stringify({ rows, k, N: st.rows, top: top + 1, col: ax - geo.anchor, from, when: new Date().toISOString() })); } catch (_) {}
+    $('bKonus').classList.add('on'); $('bKonus').title = `Конус: ${from}, строка ${top + 1}, столбец ${ax - geo.anchor >= 0 ? '+' : ''}${ax - geo.anchor}, рядов ${rows.length} — на грани Бирамиды`;
+    draw();
+  }
+  function konusDraw(px) {   // обводка выбранного конуса: два края под 45° от вершины
+    if (!konus) return; const { W, H } = f;
+    for (let i = 0; i < konus.n && konus.top + i < H; i++) { const y = konus.top + i;
+      for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= 0 && x < W) px[y * W + x] = KONUS_COL; }
   }
   function status() {
     $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
@@ -406,6 +435,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
   });
   cv.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+  cv.addEventListener('click', e => {   // v0.009: Shift + щелчок — выбрать конус
+    if (!f || !e.shiftKey) return;
+    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
+    if (x >= 0 && y >= 0 && x < f.W && y < f.H) konusPick(x, y);
+  });
+  $('bKonus').onclick = () => window.open('../oktaedr/Zerkalius-oktaedr.html?konus=1', '_blank');
 
   writeUI(); build();
 })();

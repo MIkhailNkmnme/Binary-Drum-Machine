@@ -1,4 +1,4 @@
-<!-- Zerkalius Бирамида — v0.075. Знак Zerkalius в объёме: две пирамиды под общим основанием.
+<!-- Zerkalius Бирамида — v0.076. Знак Zerkalius в объёме: две пирамиды под общим основанием.
      Верхняя половина несёт картину бит, нижняя — ТУ ЖЕ картину, отражённую и инвертированную.
      Крутится мышью; смотреть можно с любой стороны, в том числе снизу — там зазеркалье. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Бирамида — v0.075</title>
+<title>Zerkalius Бирамида — v0.076</title>
 <style>
   /* Палитра — из самого приложения (fold.html, :root): фон #12141a, полотно #1a1d26,
      линии #2b3040, текст #d8dce6, приглушённый #7d8598. Тема «зелень» — прежний знак. */
@@ -301,7 +301,7 @@
 </head>
 <body>
 <button id="gear" title="Показать или спрятать настройки">⚙</button>
-<div id="ver">v0.075</div>
+<div id="ver">v0.076</div>
 <div id="helpWrap">
 <div id="help">
   <button id="helpClose" title="Esc">✕ Закрыть</button>
@@ -570,6 +570,7 @@
     <option value="initial">★ По умолчанию</option>
     <option value="serp">△ Серп</option>
     <option value="horr">◭ Хоррориус 512</option>
+    <option value="konus">◭ конус из Маятника</option>
   </select>
   <div id="myBox" class="set">
     <label>Свои биты: считаются только 0 и 1</label>
@@ -1895,7 +1896,7 @@ const ROWS_SLIDE = 32, ROWS_MAX = 256;
 function setRows(n){
   ROWS = n; sRows.value = n; vRows.textContent = ROWS;
   rollBits(); unpinAll(); myInfoUpd(); syncUI(); save();   // v0.031: syncUI — подпись и запрет свечения
-  if (document.getElementById("bitSequence").value === "horr") sequencePut("horr");   // v0.075: Хоррориус — заново под новое число рядов
+  if (["horr", "konus"].includes(document.getElementById("bitSequence").value)) sequencePut(document.getElementById("bitSequence").value);   // v0.075: Хоррориус — заново под новое число рядов
 }
 sRows.oninput  = () => setRows(+sRows.value);
 sSize.oninput  = () => { DIG = +sSize.value;  vSize.textContent = DIG;  save(); };
@@ -2072,6 +2073,17 @@ bSame.onclick = () => { mySame = !mySame; if (myBits) rollBits(); syncUI(); myIn
 const bDefault = document.getElementById("bDefault");
 const bitSequence = document.getElementById("bitSequence");
 // v0.072: список включает исходный серп.txt целиком, с обеими первыми строками «1».
+// v0.076: ряды r + 1 бит любой высоты → ровно ROWS рядов грани, выборкой ближайшего (и уменьшает, и увеличивает)
+function sampleRows(src){
+  const R = ROWS, out = [];
+  for (let i = 0; i < R; i++) {
+    const row = src[Math.min(src.length - 1, Math.floor((i + 0.5) * src.length / R))];
+    let t = "";
+    for (let k = 0; k <= i; k++) t += row[Math.min(row.length - 1, Math.floor((k + 0.5) * row.length / (i + 1)))];
+    out.push(t);
+  }
+  return out.join(String.fromCharCode(10));
+}
 async function sequencePut(kind){
   const ticket = ++sequenceTicket;
   try {
@@ -2084,6 +2096,12 @@ async function sequencePut(kind){
       if (!response.ok) throw new Error("serp");
       text = await response.text();
       if (!myClean(text)) throw new Error("bits");
+    } else if (kind === "konus") {
+      /* v0.076: конус симметрии, выбранный на Маятнике (Shift + щелчок по оси), — из памяти браузера zerk_mayatnik_konus;
+         ряды подгоняются под число рядов грани той же выборкой ближайшего, что у Хоррориуса */
+      const kon = JSON.parse(localStorage.getItem("zerk_mayatnik_konus") || "null");
+      if (!kon || !kon.rows || !kon.rows.length) throw new Error("konus");
+      text = sampleRows(kon.rows);
     } else if (kind === "horr") {
       /* v0.075, «надо в бирамиду»: кадр Хоррориуса из XorRora_512x512.xlsx (512 строк, 513 вершин; строка r — клетки
          конуса якоря через одну, r + 1 бит, как ряд грани). На грани ROWS рядов — кадр уменьшается до них выборкой
@@ -2092,14 +2110,7 @@ async function sequencePut(kind){
       if (!response.ok) throw new Error("horr");
       const src = (await response.text()).split(String.fromCharCode(10)).map(myClean).filter(r => r.length);
       if (!src.length) throw new Error("bits");
-      const R = Math.min(ROWS, src.length), out = [];
-      for (let i = 0; i < R; i++) {
-        const row = src[Math.min(src.length - 1, Math.floor((i + 0.5) * src.length / R))];
-        let t = "";
-        for (let k = 0; k <= i; k++) t += row[Math.min(row.length - 1, Math.floor((k + 0.5) * row.length / (i + 1)))];
-        out.push(t);
-      }
-      text = out.join(String.fromCharCode(10));
+      text = sampleRows(src);
     } else return;
     if (ticket !== sequenceTicket) return;
     myArea.value = text; bitSequence.value = kind; myOpen(); myPut();
@@ -2109,6 +2120,7 @@ async function sequencePut(kind){
 }
 bitSequence.onchange = () => { if (bitSequence.value) sequencePut(bitSequence.value); else sequenceTicket++; };
 if (bDefault) bDefault.onclick = () => sequencePut("initial");
+if (new URLSearchParams(location.search).get("konus")) setTimeout(() => sequencePut("konus"), 0);   // v0.076: пришли с Маятника кнопкой «◭ в Бирамиду»
 // v0.025: вписываем на каждый ввод. Пустое поле (всё стёрли, чтобы набрать заново) картину не трогает:
 // иначе на полпути она прыгала бы в случайную и обратно.
 myArea.addEventListener("input", () => { if (myClean(myArea.value)) myPut(); else { sequenceTicket++; myInfoUpd(); } });
