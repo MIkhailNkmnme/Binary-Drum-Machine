@@ -1,0 +1,35 @@
+Codex — независимый исследователь Хоррориуса · 12.10.2026
+
+Frame n=96, N=2048. Exact source RGB classes: black=outside, grey=0, white=1.
+Axes V, H, +45 and -45 degrees; exact integer-lattice reflection, no interpolation.
+Normal thresholds 16,32,64,128; tangent span >=16; pixel count >=384.
+Axis/normal coordinates are doubled for V/H; x-y and x+y for diagonals.
+Coordinates in JSON are zero based within the nonblack bounding rectangle.
+The input.bbox field maps them back to the full input PNG.
+
+Each region has exact interior equality and three exterior unequal pairs:
+normalOutside is beyond maximal half width; before and after are immediately
+outside the tangent interval. A boundary witness is an actual 0/1 difference,
+not an image boundary or an arbitrary crop edge.
+The search uses four finite size thresholds and four directions. It does not
+enumerate every possible contour, small feature or arbitrary reflection angle.
+Different threshold runs may yield overlapping or nested regions.
+
+1234 source domains verified independently; 794 compact by aspect ratio.
+116 compact domains have >=15% white cells in every row, avoiding empty grey holes.
+36 spatially distributed textured examples are projected on the 35/32 frame.
+The scaled pixels themselves need not preserve the exact source reflection.
+The separate rendered scan found 176 exact domains with the same thresholds.
+
+Reproduce from the project root (Python: numpy + Pillow; Node.js):
+python -B issledovanie/horrorius-symmetry-prepare.py --out symmetry-work
+node issledovanie/horrorius-symmetry-scan.cjs 4190 2048 symmetry-work/source.bin issledovanie/horrorius-symmetry-N2048-n96/source-findings.json
+node issledovanie/horrorius-symmetry-scan.cjs 4583 2240 symmetry-work/rendered.bin issledovanie/horrorius-symmetry-N2048-n96/rendered-findings.json
+python -B issledovanie/horrorius-symmetry-report.py
+
+Checks:
+node issledovanie/horrorius-symmetry-scan.cjs --test-pal
+python -B issledovanie/horrorius-symmetry-test.py
+
+Input original PNG and full scaled PNG are included in the ZIP at their
+matching relative paths. The ZIP root corresponds to issledovanie/.

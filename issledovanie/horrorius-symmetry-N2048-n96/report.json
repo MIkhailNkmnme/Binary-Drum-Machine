@@ -1,0 +1,2592 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "sourceVerification": {
+    "regions": 1234,
+    "independentlyComparedPixels": 7063644,
+    "everyInteriorPixelMatches": true,
+    "outsideMismatchPairs": 3702,
+    "allOutsideWitnessesDiffer": true
+  },
+  "renderedVerification": {
+    "regions": 176,
+    "independentlyComparedPixels": 553170,
+    "everyInteriorPixelMatches": true,
+    "outsideMismatchPairs": 528,
+    "allOutsideWitnessesDiffer": true
+  },
+  "sourceCountsByAxis": {
+    "V": 1234,
+    "H": 0,
+    "D+": 0,
+    "D-": 0
+  },
+  "renderedCountsByAxis": {
+    "V": 176,
+    "H": 0,
+    "D+": 0,
+    "D-": 0
+  },
+  "compactRegions": 794,
+  "texturedCompactRegions": 116,
+  "shownExamples": 36,
+  "examplesStartingAboveSourceRow1024": 10,
+  "scope": "four exact lattice axis families and finite width thresholds; not all possible shapes or arbitrary angles; annotations on scaled frame project source domains",
+  "selected": [
+    {
+      "family": "V",
+      "axis": 4061,
+      "tangent": [
+        236,
+        289
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1965,
+            289
+          ],
+          [
+            2096,
+            289
+          ]
+        ],
+        "before": [
+          [
+            2030,
+            235
+          ],
+          [
+            2031,
+            235
+          ]
+        ],
+        "after": [
+          [
+            1966,
+            290
+          ],
+          [
+            2095,
+            290
+          ]
+        ]
+      },
+      "id": 383,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          4338.90625,
+          259.21875
+        ],
+        [
+          4480.0,
+          259.21875
+        ],
+        [
+          4480.0,
+          317.1875
+        ],
+        [
+          4338.90625,
+          317.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4326,
+        247,
+        4493,
+        331
+      ],
+      "file": "region-0383.png"
+    },
+    {
+      "family": "V",
+      "axis": 4317,
+      "tangent": [
+        236,
+        289
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2093,
+            289
+          ],
+          [
+            2224,
+            289
+          ]
+        ],
+        "before": [
+          [
+            2158,
+            235
+          ],
+          [
+            2159,
+            235
+          ]
+        ],
+        "after": [
+          [
+            2094,
+            290
+          ],
+          [
+            2223,
+            290
+          ]
+        ]
+      },
+      "id": 413,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          4478.90625,
+          259.21875
+        ],
+        [
+          4620.0,
+          259.21875
+        ],
+        [
+          4620.0,
+          317.1875
+        ],
+        [
+          4478.90625,
+          317.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4466,
+        247,
+        4633,
+        331
+      ],
+      "file": "region-0413.png"
+    },
+    {
+      "family": "V",
+      "axis": 3549,
+      "tangent": [
+        492,
+        545
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1709,
+            545
+          ],
+          [
+            1840,
+            545
+          ]
+        ],
+        "before": [
+          [
+            1774,
+            491
+          ],
+          [
+            1775,
+            491
+          ]
+        ],
+        "after": [
+          [
+            1710,
+            546
+          ],
+          [
+            1839,
+            546
+          ]
+        ]
+      },
+      "id": 347,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          4058.90625,
+          539.21875
+        ],
+        [
+          4200.0,
+          539.21875
+        ],
+        [
+          4200.0,
+          597.1875
+        ],
+        [
+          4058.90625,
+          597.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4046,
+        527,
+        4213,
+        611
+      ],
+      "file": "region-0347.png"
+    },
+    {
+      "family": "V",
+      "axis": 4829,
+      "tangent": [
+        492,
+        545
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2349,
+            545
+          ],
+          [
+            2480,
+            545
+          ]
+        ],
+        "before": [
+          [
+            2414,
+            491
+          ],
+          [
+            2415,
+            491
+          ]
+        ],
+        "after": [
+          [
+            2350,
+            546
+          ],
+          [
+            2479,
+            546
+          ]
+        ]
+      },
+      "id": 450,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          4758.90625,
+          539.21875
+        ],
+        [
+          4900.0,
+          539.21875
+        ],
+        [
+          4900.0,
+          597.1875
+        ],
+        [
+          4758.90625,
+          597.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4746,
+        527,
+        4913,
+        611
+      ],
+      "file": "region-0450.png"
+    },
+    {
+      "family": "V",
+      "axis": 4957,
+      "tangent": [
+        684,
+        737
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2413,
+            737
+          ],
+          [
+            2544,
+            737
+          ]
+        ],
+        "before": [
+          [
+            2478,
+            683
+          ],
+          [
+            2479,
+            683
+          ]
+        ],
+        "after": [
+          [
+            2414,
+            738
+          ],
+          [
+            2543,
+            738
+          ]
+        ]
+      },
+      "id": 466,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          4828.90625,
+          749.21875
+        ],
+        [
+          4970.0,
+          749.21875
+        ],
+        [
+          4970.0,
+          807.1875
+        ],
+        [
+          4828.90625,
+          807.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4816,
+        737,
+        4983,
+        821
+      ],
+      "file": "region-0466.png"
+    },
+    {
+      "family": "V",
+      "axis": 3037,
+      "tangent": [
+        748,
+        801
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1453,
+            801
+          ],
+          [
+            1584,
+            801
+          ]
+        ],
+        "before": [
+          [
+            1518,
+            747
+          ],
+          [
+            1519,
+            747
+          ]
+        ],
+        "after": [
+          [
+            1454,
+            802
+          ],
+          [
+            1583,
+            802
+          ]
+        ]
+      },
+      "id": 249,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3778.90625,
+          819.21875
+        ],
+        [
+          3920.0,
+          819.21875
+        ],
+        [
+          3920.0,
+          877.1875
+        ],
+        [
+          3778.90625,
+          877.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3766,
+        807,
+        3933,
+        891
+      ],
+      "file": "region-0249.png"
+    },
+    {
+      "family": "V",
+      "axis": 3293,
+      "tangent": [
+        748,
+        801
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1581,
+            801
+          ],
+          [
+            1712,
+            801
+          ]
+        ],
+        "before": [
+          [
+            1646,
+            747
+          ],
+          [
+            1647,
+            747
+          ]
+        ],
+        "after": [
+          [
+            1582,
+            802
+          ],
+          [
+            1711,
+            802
+          ]
+        ]
+      },
+      "id": 308,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3918.90625,
+          819.21875
+        ],
+        [
+          4060.0,
+          819.21875
+        ],
+        [
+          4060.0,
+          877.1875
+        ],
+        [
+          3918.90625,
+          877.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3906,
+        807,
+        4073,
+        891
+      ],
+      "file": "region-0308.png"
+    },
+    {
+      "family": "V",
+      "axis": 5341,
+      "tangent": [
+        748,
+        801
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2605,
+            801
+          ],
+          [
+            2736,
+            801
+          ]
+        ],
+        "before": [
+          [
+            2670,
+            747
+          ],
+          [
+            2671,
+            747
+          ]
+        ],
+        "after": [
+          [
+            2606,
+            802
+          ],
+          [
+            2735,
+            802
+          ]
+        ]
+      },
+      "id": 548,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5038.90625,
+          819.21875
+        ],
+        [
+          5180.0,
+          819.21875
+        ],
+        [
+          5180.0,
+          877.1875
+        ],
+        [
+          5038.90625,
+          877.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5026,
+        807,
+        5193,
+        891
+      ],
+      "file": "region-0548.png"
+    },
+    {
+      "family": "V",
+      "axis": 2525,
+      "tangent": [
+        1004,
+        1057
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1197,
+            1057
+          ],
+          [
+            1328,
+            1057
+          ]
+        ],
+        "before": [
+          [
+            1262,
+            1003
+          ],
+          [
+            1263,
+            1003
+          ]
+        ],
+        "after": [
+          [
+            1198,
+            1058
+          ],
+          [
+            1327,
+            1058
+          ]
+        ]
+      },
+      "id": 166,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3498.90625,
+          1099.21875
+        ],
+        [
+          3640.0,
+          1099.21875
+        ],
+        [
+          3640.0,
+          1157.1875
+        ],
+        [
+          3498.90625,
+          1157.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3486,
+        1087,
+        3653,
+        1171
+      ],
+      "file": "region-0166.png"
+    },
+    {
+      "family": "V",
+      "axis": 5853,
+      "tangent": [
+        1004,
+        1057
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2861,
+            1057
+          ],
+          [
+            2992,
+            1057
+          ]
+        ],
+        "before": [
+          [
+            2926,
+            1003
+          ],
+          [
+            2927,
+            1003
+          ]
+        ],
+        "after": [
+          [
+            2862,
+            1058
+          ],
+          [
+            2991,
+            1058
+          ]
+        ]
+      },
+      "id": 631,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5318.90625,
+          1099.21875
+        ],
+        [
+          5460.0,
+          1099.21875
+        ],
+        [
+          5460.0,
+          1157.1875
+        ],
+        [
+          5318.90625,
+          1157.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5306,
+        1087,
+        5473,
+        1171
+      ],
+      "file": "region-0631.png"
+    },
+    {
+      "family": "V",
+      "axis": 2397,
+      "tangent": [
+        1196,
+        1249
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1133,
+            1249
+          ],
+          [
+            1264,
+            1249
+          ]
+        ],
+        "before": [
+          [
+            1198,
+            1195
+          ],
+          [
+            1199,
+            1195
+          ]
+        ],
+        "after": [
+          [
+            1134,
+            1250
+          ],
+          [
+            1263,
+            1250
+          ]
+        ]
+      },
+      "id": 150,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          3428.90625,
+          1309.21875
+        ],
+        [
+          3570.0,
+          1309.21875
+        ],
+        [
+          3570.0,
+          1367.1875
+        ],
+        [
+          3428.90625,
+          1367.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3416,
+        1297,
+        3583,
+        1381
+      ],
+      "file": "region-0150.png"
+    },
+    {
+      "family": "V",
+      "axis": 5981,
+      "tangent": [
+        1196,
+        1249
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2925,
+            1249
+          ],
+          [
+            3056,
+            1249
+          ]
+        ],
+        "before": [
+          [
+            2990,
+            1195
+          ],
+          [
+            2991,
+            1195
+          ]
+        ],
+        "after": [
+          [
+            2926,
+            1250
+          ],
+          [
+            3055,
+            1250
+          ]
+        ]
+      },
+      "id": 648,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          5388.90625,
+          1309.21875
+        ],
+        [
+          5530.0,
+          1309.21875
+        ],
+        [
+          5530.0,
+          1367.1875
+        ],
+        [
+          5388.90625,
+          1367.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5376,
+        1297,
+        5543,
+        1381
+      ],
+      "file": "region-0648.png"
+    },
+    {
+      "family": "V",
+      "axis": 1885,
+      "tangent": [
+        1229,
+        1281
+      ],
+      "normalRadius": 65,
+      "pixels": 3498,
+      "whiteFraction": 0.5180102915951973,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            909,
+            1281
+          ],
+          [
+            976,
+            1281
+          ]
+        ],
+        "before": [
+          [
+            910,
+            1228
+          ],
+          [
+            975,
+            1228
+          ]
+        ],
+        "after": [
+          [
+            910,
+            1282
+          ],
+          [
+            975,
+            1282
+          ]
+        ]
+      },
+      "id": 92,
+      "minimumWhiteFractionPerRow": 0.2727272727272727,
+      "projectedPolygon": [
+        [
+          3183.90625,
+          1345.3125
+        ],
+        [
+          3255.0,
+          1345.3125
+        ],
+        [
+          3255.0,
+          1402.1875
+        ],
+        [
+          3183.90625,
+          1402.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3171,
+        1333,
+        3268,
+        1416
+      ],
+      "file": "region-0092.png"
+    },
+    {
+      "family": "V",
+      "axis": 6493,
+      "tangent": [
+        1229,
+        1281
+      ],
+      "normalRadius": 65,
+      "pixels": 3498,
+      "whiteFraction": 0.5180102915951973,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3213,
+            1281
+          ],
+          [
+            3280,
+            1281
+          ]
+        ],
+        "before": [
+          [
+            3214,
+            1228
+          ],
+          [
+            3279,
+            1228
+          ]
+        ],
+        "after": [
+          [
+            3214,
+            1282
+          ],
+          [
+            3279,
+            1282
+          ]
+        ]
+      },
+      "id": 703,
+      "minimumWhiteFractionPerRow": 0.2727272727272727,
+      "projectedPolygon": [
+        [
+          5703.90625,
+          1345.3125
+        ],
+        [
+          5775.0,
+          1345.3125
+        ],
+        [
+          5775.0,
+          1402.1875
+        ],
+        [
+          5703.90625,
+          1402.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5691,
+        1333,
+        5788,
+        1416
+      ],
+      "file": "region-0703.png"
+    },
+    {
+      "family": "V",
+      "axis": 2013,
+      "tangent": [
+        1260,
+        1313
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            941,
+            1313
+          ],
+          [
+            1072,
+            1313
+          ]
+        ],
+        "before": [
+          [
+            1006,
+            1259
+          ],
+          [
+            1007,
+            1259
+          ]
+        ],
+        "after": [
+          [
+            942,
+            1314
+          ],
+          [
+            1071,
+            1314
+          ]
+        ]
+      },
+      "id": 105,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3218.90625,
+          1379.21875
+        ],
+        [
+          3360.0,
+          1379.21875
+        ],
+        [
+          3360.0,
+          1437.1875
+        ],
+        [
+          3218.90625,
+          1437.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3206,
+        1367,
+        3373,
+        1451
+      ],
+      "file": "region-0105.png"
+    },
+    {
+      "family": "V",
+      "axis": 2269,
+      "tangent": [
+        1260,
+        1313
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1069,
+            1313
+          ],
+          [
+            1200,
+            1313
+          ]
+        ],
+        "before": [
+          [
+            1134,
+            1259
+          ],
+          [
+            1135,
+            1259
+          ]
+        ],
+        "after": [
+          [
+            1070,
+            1314
+          ],
+          [
+            1199,
+            1314
+          ]
+        ]
+      },
+      "id": 135,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3358.90625,
+          1379.21875
+        ],
+        [
+          3500.0,
+          1379.21875
+        ],
+        [
+          3500.0,
+          1437.1875
+        ],
+        [
+          3358.90625,
+          1437.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3346,
+        1367,
+        3513,
+        1451
+      ],
+      "file": "region-0135.png"
+    },
+    {
+      "family": "V",
+      "axis": 6109,
+      "tangent": [
+        1260,
+        1313
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2989,
+            1313
+          ],
+          [
+            3120,
+            1313
+          ]
+        ],
+        "before": [
+          [
+            3054,
+            1259
+          ],
+          [
+            3055,
+            1259
+          ]
+        ],
+        "after": [
+          [
+            2990,
+            1314
+          ],
+          [
+            3119,
+            1314
+          ]
+        ]
+      },
+      "id": 661,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5458.90625,
+          1379.21875
+        ],
+        [
+          5600.0,
+          1379.21875
+        ],
+        [
+          5600.0,
+          1437.1875
+        ],
+        [
+          5458.90625,
+          1437.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5446,
+        1367,
+        5613,
+        1451
+      ],
+      "file": "region-0661.png"
+    },
+    {
+      "family": "V",
+      "axis": 6365,
+      "tangent": [
+        1260,
+        1313
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3117,
+            1313
+          ],
+          [
+            3248,
+            1313
+          ]
+        ],
+        "before": [
+          [
+            3182,
+            1259
+          ],
+          [
+            3183,
+            1259
+          ]
+        ],
+        "after": [
+          [
+            3118,
+            1314
+          ],
+          [
+            3247,
+            1314
+          ]
+        ]
+      },
+      "id": 691,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5598.90625,
+          1379.21875
+        ],
+        [
+          5740.0,
+          1379.21875
+        ],
+        [
+          5740.0,
+          1437.1875
+        ],
+        [
+          5598.90625,
+          1437.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5586,
+        1367,
+        5753,
+        1451
+      ],
+      "file": "region-0691.png"
+    },
+    {
+      "family": "V",
+      "axis": 5469,
+      "tangent": [
+        1452,
+        1505
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2669,
+            1505
+          ],
+          [
+            2800,
+            1505
+          ]
+        ],
+        "before": [
+          [
+            2734,
+            1451
+          ],
+          [
+            2735,
+            1451
+          ]
+        ],
+        "after": [
+          [
+            2670,
+            1506
+          ],
+          [
+            2799,
+            1506
+          ]
+        ]
+      },
+      "id": 576,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          5108.90625,
+          1589.21875
+        ],
+        [
+          5250.0,
+          1589.21875
+        ],
+        [
+          5250.0,
+          1647.1875
+        ],
+        [
+          5108.90625,
+          1647.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5096,
+        1577,
+        5263,
+        1661
+      ],
+      "file": "region-0576.png"
+    },
+    {
+      "family": "V",
+      "axis": 1501,
+      "tangent": [
+        1516,
+        1569
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            685,
+            1569
+          ],
+          [
+            816,
+            1569
+          ]
+        ],
+        "before": [
+          [
+            750,
+            1515
+          ],
+          [
+            751,
+            1515
+          ]
+        ],
+        "after": [
+          [
+            686,
+            1570
+          ],
+          [
+            815,
+            1570
+          ]
+        ]
+      },
+      "id": 69,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          2938.90625,
+          1659.21875
+        ],
+        [
+          3080.0,
+          1659.21875
+        ],
+        [
+          3080.0,
+          1717.1875
+        ],
+        [
+          2938.90625,
+          1717.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        2926,
+        1647,
+        3093,
+        1731
+      ],
+      "file": "region-0069.png"
+    },
+    {
+      "family": "V",
+      "axis": 2781,
+      "tangent": [
+        1516,
+        1569
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1325,
+            1569
+          ],
+          [
+            1456,
+            1569
+          ]
+        ],
+        "before": [
+          [
+            1390,
+            1515
+          ],
+          [
+            1391,
+            1515
+          ]
+        ],
+        "after": [
+          [
+            1326,
+            1570
+          ],
+          [
+            1455,
+            1570
+          ]
+        ]
+      },
+      "id": 206,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3638.90625,
+          1659.21875
+        ],
+        [
+          3780.0,
+          1659.21875
+        ],
+        [
+          3780.0,
+          1717.1875
+        ],
+        [
+          3638.90625,
+          1717.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3626,
+        1647,
+        3793,
+        1731
+      ],
+      "file": "region-0206.png"
+    },
+    {
+      "family": "V",
+      "axis": 6877,
+      "tangent": [
+        1516,
+        1569
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3373,
+            1569
+          ],
+          [
+            3504,
+            1569
+          ]
+        ],
+        "before": [
+          [
+            3438,
+            1515
+          ],
+          [
+            3439,
+            1515
+          ]
+        ],
+        "after": [
+          [
+            3374,
+            1570
+          ],
+          [
+            3503,
+            1570
+          ]
+        ]
+      },
+      "id": 728,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5878.90625,
+          1659.21875
+        ],
+        [
+          6020.0,
+          1659.21875
+        ],
+        [
+          6020.0,
+          1717.1875
+        ],
+        [
+          5878.90625,
+          1717.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5866,
+        1647,
+        6033,
+        1731
+      ],
+      "file": "region-0728.png"
+    },
+    {
+      "family": "V",
+      "axis": 1373,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            621,
+            1761
+          ],
+          [
+            752,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            686,
+            1707
+          ],
+          [
+            687,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            622,
+            1762
+          ],
+          [
+            751,
+            1762
+          ]
+        ]
+      },
+      "id": 57,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          2868.90625,
+          1869.21875
+        ],
+        [
+          3010.0,
+          1869.21875
+        ],
+        [
+          3010.0,
+          1927.1875
+        ],
+        [
+          2868.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        2856,
+        1857,
+        3023,
+        1941
+      ],
+      "file": "region-0057.png"
+    },
+    {
+      "family": "V",
+      "axis": 2909,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1389,
+            1761
+          ],
+          [
+            1520,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            1454,
+            1707
+          ],
+          [
+            1455,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            1390,
+            1762
+          ],
+          [
+            1519,
+            1762
+          ]
+        ]
+      },
+      "id": 226,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          3708.90625,
+          1869.21875
+        ],
+        [
+          3850.0,
+          1869.21875
+        ],
+        [
+          3850.0,
+          1927.1875
+        ],
+        [
+          3708.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3696,
+        1857,
+        3863,
+        1941
+      ],
+      "file": "region-0226.png"
+    },
+    {
+      "family": "V",
+      "axis": 3421,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1645,
+            1761
+          ],
+          [
+            1776,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            1710,
+            1707
+          ],
+          [
+            1711,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            1646,
+            1762
+          ],
+          [
+            1775,
+            1762
+          ]
+        ]
+      },
+      "id": 335,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          3988.90625,
+          1869.21875
+        ],
+        [
+          4130.0,
+          1869.21875
+        ],
+        [
+          4130.0,
+          1927.1875
+        ],
+        [
+          3988.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3976,
+        1857,
+        4143,
+        1941
+      ],
+      "file": "region-0335.png"
+    },
+    {
+      "family": "V",
+      "axis": 4957,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2413,
+            1761
+          ],
+          [
+            2544,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            2478,
+            1707
+          ],
+          [
+            2479,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            2414,
+            1762
+          ],
+          [
+            2543,
+            1762
+          ]
+        ]
+      },
+      "id": 467,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          4828.90625,
+          1869.21875
+        ],
+        [
+          4970.0,
+          1869.21875
+        ],
+        [
+          4970.0,
+          1927.1875
+        ],
+        [
+          4828.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4816,
+        1857,
+        4983,
+        1941
+      ],
+      "file": "region-0467.png"
+    },
+    {
+      "family": "V",
+      "axis": 5469,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2669,
+            1761
+          ],
+          [
+            2800,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            2734,
+            1707
+          ],
+          [
+            2735,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            2670,
+            1762
+          ],
+          [
+            2799,
+            1762
+          ]
+        ]
+      },
+      "id": 577,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          5108.90625,
+          1869.21875
+        ],
+        [
+          5250.0,
+          1869.21875
+        ],
+        [
+          5250.0,
+          1927.1875
+        ],
+        [
+          5108.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5096,
+        1857,
+        5263,
+        1941
+      ],
+      "file": "region-0577.png"
+    },
+    {
+      "family": "V",
+      "axis": 7005,
+      "tangent": [
+        1708,
+        1761
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5096866096866097,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3437,
+            1761
+          ],
+          [
+            3568,
+            1761
+          ]
+        ],
+        "before": [
+          [
+            3502,
+            1707
+          ],
+          [
+            3503,
+            1707
+          ]
+        ],
+        "after": [
+          [
+            3438,
+            1762
+          ],
+          [
+            3567,
+            1762
+          ]
+        ]
+      },
+      "id": 742,
+      "minimumWhiteFractionPerRow": 0.36923076923076925,
+      "projectedPolygon": [
+        [
+          5948.90625,
+          1869.21875
+        ],
+        [
+          6090.0,
+          1869.21875
+        ],
+        [
+          6090.0,
+          1927.1875
+        ],
+        [
+          5948.90625,
+          1927.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5936,
+        1857,
+        6103,
+        1941
+      ],
+      "file": "region-0742.png"
+    },
+    {
+      "family": "V",
+      "axis": 989,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            429,
+            1825
+          ],
+          [
+            560,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            494,
+            1771
+          ],
+          [
+            495,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            430,
+            1826
+          ],
+          [
+            559,
+            1826
+          ]
+        ]
+      },
+      "id": 14,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          2658.90625,
+          1939.21875
+        ],
+        [
+          2800.0,
+          1939.21875
+        ],
+        [
+          2800.0,
+          1997.1875
+        ],
+        [
+          2658.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        2646,
+        1927,
+        2813,
+        2011
+      ],
+      "file": "region-0014.png"
+    },
+    {
+      "family": "V",
+      "axis": 1245,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            557,
+            1825
+          ],
+          [
+            688,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            622,
+            1771
+          ],
+          [
+            623,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            558,
+            1826
+          ],
+          [
+            687,
+            1826
+          ]
+        ]
+      },
+      "id": 43,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          2798.90625,
+          1939.21875
+        ],
+        [
+          2940.0,
+          1939.21875
+        ],
+        [
+          2940.0,
+          1997.1875
+        ],
+        [
+          2798.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        2786,
+        1927,
+        2953,
+        2011
+      ],
+      "file": "region-0043.png"
+    },
+    {
+      "family": "V",
+      "axis": 3037,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1453,
+            1825
+          ],
+          [
+            1584,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            1518,
+            1771
+          ],
+          [
+            1519,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            1454,
+            1826
+          ],
+          [
+            1583,
+            1826
+          ]
+        ]
+      },
+      "id": 251,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3778.90625,
+          1939.21875
+        ],
+        [
+          3920.0,
+          1939.21875
+        ],
+        [
+          3920.0,
+          1997.1875
+        ],
+        [
+          3778.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3766,
+        1927,
+        3933,
+        2011
+      ],
+      "file": "region-0251.png"
+    },
+    {
+      "family": "V",
+      "axis": 3293,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1581,
+            1825
+          ],
+          [
+            1712,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            1646,
+            1771
+          ],
+          [
+            1647,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            1582,
+            1826
+          ],
+          [
+            1711,
+            1826
+          ]
+        ]
+      },
+      "id": 309,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          3918.90625,
+          1939.21875
+        ],
+        [
+          4060.0,
+          1939.21875
+        ],
+        [
+          4060.0,
+          1997.1875
+        ],
+        [
+          3918.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        3906,
+        1927,
+        4073,
+        2011
+      ],
+      "file": "region-0309.png"
+    },
+    {
+      "family": "V",
+      "axis": 5085,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2477,
+            1825
+          ],
+          [
+            2608,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            2542,
+            1771
+          ],
+          [
+            2543,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            2478,
+            1826
+          ],
+          [
+            2607,
+            1826
+          ]
+        ]
+      },
+      "id": 491,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          4898.90625,
+          1939.21875
+        ],
+        [
+          5040.0,
+          1939.21875
+        ],
+        [
+          5040.0,
+          1997.1875
+        ],
+        [
+          4898.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        4886,
+        1927,
+        5053,
+        2011
+      ],
+      "file": "region-0491.png"
+    },
+    {
+      "family": "V",
+      "axis": 5341,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2605,
+            1825
+          ],
+          [
+            2736,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            2670,
+            1771
+          ],
+          [
+            2671,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            2606,
+            1826
+          ],
+          [
+            2735,
+            1826
+          ]
+        ]
+      },
+      "id": 550,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          5038.90625,
+          1939.21875
+        ],
+        [
+          5180.0,
+          1939.21875
+        ],
+        [
+          5180.0,
+          1997.1875
+        ],
+        [
+          5038.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        5026,
+        1927,
+        5193,
+        2011
+      ],
+      "file": "region-0550.png"
+    },
+    {
+      "family": "V",
+      "axis": 7133,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3501,
+            1825
+          ],
+          [
+            3632,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            3566,
+            1771
+          ],
+          [
+            3567,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            3502,
+            1826
+          ],
+          [
+            3631,
+            1826
+          ]
+        ]
+      },
+      "id": 754,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          6018.90625,
+          1939.21875
+        ],
+        [
+          6160.0,
+          1939.21875
+        ],
+        [
+          6160.0,
+          1997.1875
+        ],
+        [
+          6018.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        6006,
+        1927,
+        6173,
+        2011
+      ],
+      "file": "region-0754.png"
+    },
+    {
+      "family": "V",
+      "axis": 7389,
+      "tangent": [
+        1772,
+        1825
+      ],
+      "normalRadius": 129,
+      "pixels": 7020,
+      "whiteFraction": 0.5094017094017094,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3629,
+            1825
+          ],
+          [
+            3760,
+            1825
+          ]
+        ],
+        "before": [
+          [
+            3694,
+            1771
+          ],
+          [
+            3695,
+            1771
+          ]
+        ],
+        "after": [
+          [
+            3630,
+            1826
+          ],
+          [
+            3759,
+            1826
+          ]
+        ]
+      },
+      "id": 783,
+      "minimumWhiteFractionPerRow": 0.2923076923076923,
+      "projectedPolygon": [
+        [
+          6158.90625,
+          1939.21875
+        ],
+        [
+          6300.0,
+          1939.21875
+        ],
+        [
+          6300.0,
+          1997.1875
+        ],
+        [
+          6158.90625,
+          1997.1875
+        ]
+      ],
+      "projectedRectangleWithContext": [
+        6146,
+        1927,
+        6313,
+        2011
+      ],
+      "file": "region-0783.png"
+    }
+  ]
+}

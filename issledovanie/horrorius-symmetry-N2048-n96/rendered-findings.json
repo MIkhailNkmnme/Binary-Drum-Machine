@@ -1,0 +1,7778 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "width": 4583,
+  "height": 2240,
+  "normalThresholds": [
+    16,
+    32,
+    64,
+    128
+  ],
+  "minTangentSpan": 16,
+  "minPixels": 384,
+  "scope": "four exact raster reflections; mixed nonempty pixels only; bounded in both tangent directions and at maximal normal radius; finite width thresholds",
+  "count": 176,
+  "findings": [
+    {
+      "family": "V",
+      "axis": 942,
+      "tangent": [
+        1876,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            462,
+            1988
+          ],
+          [
+            480,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            463,
+            1875
+          ],
+          [
+            479,
+            1875
+          ]
+        ],
+        "after": [
+          [
+            463,
+            1989
+          ],
+          [
+            479,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1012,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            497,
+            2023
+          ],
+          [
+            515,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            505,
+            1972
+          ],
+          [
+            507,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            498,
+            2024
+          ],
+          [
+            514,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1082,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            532,
+            2058
+          ],
+          [
+            550,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            540,
+            1937
+          ],
+          [
+            542,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            533,
+            2059
+          ],
+          [
+            549,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1117,
+      "tangent": [
+        2003,
+        2020
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            493,
+            2020
+          ],
+          [
+            624,
+            2020
+          ]
+        ],
+        "before": [
+          [
+            553,
+            2002
+          ],
+          [
+            564,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            495,
+            2021
+          ],
+          [
+            622,
+            2021
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1152,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            567,
+            2093
+          ],
+          [
+            585,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            575,
+            1972
+          ],
+          [
+            577,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            568,
+            2094
+          ],
+          [
+            584,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1292,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            637,
+            2093
+          ],
+          [
+            655,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            645,
+            1972
+          ],
+          [
+            647,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            638,
+            2094
+          ],
+          [
+            654,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1327,
+      "tangent": [
+        2003,
+        2019
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            597,
+            2019
+          ],
+          [
+            730,
+            2019
+          ]
+        ],
+        "before": [
+          [
+            658,
+            2002
+          ],
+          [
+            669,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            599,
+            2020
+          ],
+          [
+            728,
+            2020
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1362,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            672,
+            2058
+          ],
+          [
+            690,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            680,
+            1937
+          ],
+          [
+            682,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            673,
+            2059
+          ],
+          [
+            689,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1432,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            707,
+            2023
+          ],
+          [
+            725,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            715,
+            1972
+          ],
+          [
+            717,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            708,
+            2024
+          ],
+          [
+            724,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1502,
+      "tangent": [
+        1596,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            742,
+            1708
+          ],
+          [
+            760,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            743,
+            1595
+          ],
+          [
+            759,
+            1595
+          ]
+        ],
+        "after": [
+          [
+            743,
+            1709
+          ],
+          [
+            759,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1502,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            742,
+            1988
+          ],
+          [
+            760,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            750,
+            1867
+          ],
+          [
+            752,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            743,
+            1989
+          ],
+          [
+            759,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1572,
+      "tangent": [
+        1693,
+        1743
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            777,
+            1743
+          ],
+          [
+            795,
+            1743
+          ]
+        ],
+        "before": [
+          [
+            785,
+            1692
+          ],
+          [
+            787,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            778,
+            1744
+          ],
+          [
+            794,
+            1744
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1642,
+      "tangent": [
+        1658,
+        1778
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            812,
+            1778
+          ],
+          [
+            830,
+            1778
+          ]
+        ],
+        "before": [
+          [
+            820,
+            1657
+          ],
+          [
+            822,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            813,
+            1779
+          ],
+          [
+            829,
+            1779
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1677,
+      "tangent": [
+        1723,
+        1740
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            773,
+            1740
+          ],
+          [
+            904,
+            1740
+          ]
+        ],
+        "before": [
+          [
+            833,
+            1722
+          ],
+          [
+            844,
+            1722
+          ]
+        ],
+        "after": [
+          [
+            775,
+            1741
+          ],
+          [
+            902,
+            1741
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1712,
+      "tangent": [
+        1693,
+        1813
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            847,
+            1813
+          ],
+          [
+            865,
+            1813
+          ]
+        ],
+        "before": [
+          [
+            855,
+            1692
+          ],
+          [
+            857,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            848,
+            1814
+          ],
+          [
+            864,
+            1814
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1782,
+      "tangent": [
+        1456,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            882,
+            1848
+          ],
+          [
+            900,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            883,
+            1455
+          ],
+          [
+            899,
+            1455
+          ]
+        ],
+        "after": [
+          [
+            883,
+            1849
+          ],
+          [
+            899,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1852,
+      "tangent": [
+        1693,
+        1883
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            917,
+            1883
+          ],
+          [
+            935,
+            1883
+          ]
+        ],
+        "before": [
+          [
+            925,
+            1692
+          ],
+          [
+            927,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            918,
+            1884
+          ],
+          [
+            934,
+            1884
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 1922,
+      "tangent": [
+        1658,
+        1918
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            952,
+            1918
+          ],
+          [
+            970,
+            1918
+          ]
+        ],
+        "before": [
+          [
+            960,
+            1657
+          ],
+          [
+            962,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            953,
+            1919
+          ],
+          [
+            969,
+            1919
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2062,
+      "tangent": [
+        1316,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1022,
+            1428
+          ],
+          [
+            1040,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            1023,
+            1315
+          ],
+          [
+            1039,
+            1315
+          ]
+        ],
+        "after": [
+          [
+            1023,
+            1429
+          ],
+          [
+            1039,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2062,
+      "tangent": [
+        1588,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1022,
+            1988
+          ],
+          [
+            1040,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            1030,
+            1587
+          ],
+          [
+            1032,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            1023,
+            1989
+          ],
+          [
+            1039,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2132,
+      "tangent": [
+        1413,
+        1463
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1057,
+            1463
+          ],
+          [
+            1075,
+            1463
+          ]
+        ],
+        "before": [
+          [
+            1065,
+            1412
+          ],
+          [
+            1067,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            1058,
+            1464
+          ],
+          [
+            1074,
+            1464
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2202,
+      "tangent": [
+        1378,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1092,
+            1498
+          ],
+          [
+            1110,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            1100,
+            1377
+          ],
+          [
+            1102,
+            1377
+          ]
+        ],
+        "after": [
+          [
+            1093,
+            1499
+          ],
+          [
+            1109,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2202,
+      "tangent": [
+        1658,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1092,
+            2058
+          ],
+          [
+            1110,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            1100,
+            1657
+          ],
+          [
+            1102,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            1093,
+            2059
+          ],
+          [
+            1109,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2237,
+      "tangent": [
+        1443,
+        1460
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1053,
+            1460
+          ],
+          [
+            1184,
+            1460
+          ]
+        ],
+        "before": [
+          [
+            1113,
+            1442
+          ],
+          [
+            1124,
+            1442
+          ]
+        ],
+        "after": [
+          [
+            1055,
+            1461
+          ],
+          [
+            1182,
+            1461
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2272,
+      "tangent": [
+        1413,
+        1533
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1127,
+            1533
+          ],
+          [
+            1145,
+            1533
+          ]
+        ],
+        "before": [
+          [
+            1135,
+            1412
+          ],
+          [
+            1137,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            1128,
+            1534
+          ],
+          [
+            1144,
+            1534
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2412,
+      "tangent": [
+        1413,
+        1533
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1197,
+            1533
+          ],
+          [
+            1215,
+            1533
+          ]
+        ],
+        "before": [
+          [
+            1205,
+            1412
+          ],
+          [
+            1207,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            1198,
+            1534
+          ],
+          [
+            1214,
+            1534
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2447,
+      "tangent": [
+        1443,
+        1459
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1157,
+            1459
+          ],
+          [
+            1290,
+            1459
+          ]
+        ],
+        "before": [
+          [
+            1218,
+            1442
+          ],
+          [
+            1229,
+            1442
+          ]
+        ],
+        "after": [
+          [
+            1159,
+            1460
+          ],
+          [
+            1288,
+            1460
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2482,
+      "tangent": [
+        1378,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1232,
+            1498
+          ],
+          [
+            1250,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            1240,
+            1377
+          ],
+          [
+            1242,
+            1377
+          ]
+        ],
+        "after": [
+          [
+            1233,
+            1499
+          ],
+          [
+            1249,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2482,
+      "tangent": [
+        1658,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1232,
+            2058
+          ],
+          [
+            1250,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            1240,
+            1657
+          ],
+          [
+            1242,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            1233,
+            2059
+          ],
+          [
+            1249,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2552,
+      "tangent": [
+        1413,
+        1463
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1267,
+            1463
+          ],
+          [
+            1285,
+            1463
+          ]
+        ],
+        "before": [
+          [
+            1275,
+            1412
+          ],
+          [
+            1277,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            1268,
+            1464
+          ],
+          [
+            1284,
+            1464
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2622,
+      "tangent": [
+        1036,
+        1148
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1302,
+            1148
+          ],
+          [
+            1320,
+            1148
+          ]
+        ],
+        "before": [
+          [
+            1303,
+            1035
+          ],
+          [
+            1319,
+            1035
+          ]
+        ],
+        "after": [
+          [
+            1303,
+            1149
+          ],
+          [
+            1319,
+            1149
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2622,
+      "tangent": [
+        1308,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1302,
+            1428
+          ],
+          [
+            1320,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            1310,
+            1307
+          ],
+          [
+            1312,
+            1307
+          ]
+        ],
+        "after": [
+          [
+            1303,
+            1429
+          ],
+          [
+            1319,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2622,
+      "tangent": [
+        1588,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1302,
+            1988
+          ],
+          [
+            1320,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            1310,
+            1587
+          ],
+          [
+            1312,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            1303,
+            1989
+          ],
+          [
+            1319,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2692,
+      "tangent": [
+        1133,
+        1183
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1337,
+            1183
+          ],
+          [
+            1355,
+            1183
+          ]
+        ],
+        "before": [
+          [
+            1345,
+            1132
+          ],
+          [
+            1347,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            1338,
+            1184
+          ],
+          [
+            1354,
+            1184
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2762,
+      "tangent": [
+        1098,
+        1218
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1372,
+            1218
+          ],
+          [
+            1390,
+            1218
+          ]
+        ],
+        "before": [
+          [
+            1380,
+            1097
+          ],
+          [
+            1382,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            1373,
+            1219
+          ],
+          [
+            1389,
+            1219
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2762,
+      "tangent": [
+        1658,
+        1918
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1372,
+            1918
+          ],
+          [
+            1390,
+            1918
+          ]
+        ],
+        "before": [
+          [
+            1380,
+            1657
+          ],
+          [
+            1382,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            1373,
+            1919
+          ],
+          [
+            1389,
+            1919
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2797,
+      "tangent": [
+        1163,
+        1180
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1333,
+            1180
+          ],
+          [
+            1464,
+            1180
+          ]
+        ],
+        "before": [
+          [
+            1393,
+            1162
+          ],
+          [
+            1404,
+            1162
+          ]
+        ],
+        "after": [
+          [
+            1335,
+            1181
+          ],
+          [
+            1462,
+            1181
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2832,
+      "tangent": [
+        1133,
+        1253
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1407,
+            1253
+          ],
+          [
+            1425,
+            1253
+          ]
+        ],
+        "before": [
+          [
+            1415,
+            1132
+          ],
+          [
+            1417,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            1408,
+            1254
+          ],
+          [
+            1424,
+            1254
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2832,
+      "tangent": [
+        1693,
+        1883
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1407,
+            1883
+          ],
+          [
+            1425,
+            1883
+          ]
+        ],
+        "before": [
+          [
+            1415,
+            1692
+          ],
+          [
+            1417,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            1408,
+            1884
+          ],
+          [
+            1424,
+            1884
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2902,
+      "tangent": [
+        896,
+        1288
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1442,
+            1288
+          ],
+          [
+            1460,
+            1288
+          ]
+        ],
+        "before": [
+          [
+            1443,
+            895
+          ],
+          [
+            1459,
+            895
+          ]
+        ],
+        "after": [
+          [
+            1443,
+            1289
+          ],
+          [
+            1459,
+            1289
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2902,
+      "tangent": [
+        1448,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.3687839225465747,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1442,
+            1848
+          ],
+          [
+            1460,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            1450,
+            1447
+          ],
+          [
+            1452,
+            1447
+          ]
+        ],
+        "after": [
+          [
+            1443,
+            1849
+          ],
+          [
+            1459,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2972,
+      "tangent": [
+        1133,
+        1323
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1477,
+            1323
+          ],
+          [
+            1495,
+            1323
+          ]
+        ],
+        "before": [
+          [
+            1485,
+            1132
+          ],
+          [
+            1487,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            1478,
+            1324
+          ],
+          [
+            1494,
+            1324
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 2972,
+      "tangent": [
+        1693,
+        1813
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1477,
+            1813
+          ],
+          [
+            1495,
+            1813
+          ]
+        ],
+        "before": [
+          [
+            1485,
+            1692
+          ],
+          [
+            1487,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            1478,
+            1814
+          ],
+          [
+            1494,
+            1814
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3007,
+      "tangent": [
+        1723,
+        1739
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1437,
+            1739
+          ],
+          [
+            1570,
+            1739
+          ]
+        ],
+        "before": [
+          [
+            1498,
+            1722
+          ],
+          [
+            1509,
+            1722
+          ]
+        ],
+        "after": [
+          [
+            1439,
+            1740
+          ],
+          [
+            1568,
+            1740
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3042,
+      "tangent": [
+        1098,
+        1358
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1512,
+            1358
+          ],
+          [
+            1530,
+            1358
+          ]
+        ],
+        "before": [
+          [
+            1520,
+            1097
+          ],
+          [
+            1522,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            1513,
+            1359
+          ],
+          [
+            1529,
+            1359
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3042,
+      "tangent": [
+        1658,
+        1778
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1512,
+            1778
+          ],
+          [
+            1530,
+            1778
+          ]
+        ],
+        "before": [
+          [
+            1520,
+            1657
+          ],
+          [
+            1522,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            1513,
+            1779
+          ],
+          [
+            1529,
+            1779
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3112,
+      "tangent": [
+        1693,
+        1743
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1547,
+            1743
+          ],
+          [
+            1565,
+            1743
+          ]
+        ],
+        "before": [
+          [
+            1555,
+            1692
+          ],
+          [
+            1557,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            1548,
+            1744
+          ],
+          [
+            1564,
+            1744
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3182,
+      "tangent": [
+        756,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1582,
+            868
+          ],
+          [
+            1600,
+            868
+          ]
+        ],
+        "before": [
+          [
+            1583,
+            755
+          ],
+          [
+            1599,
+            755
+          ]
+        ],
+        "after": [
+          [
+            1583,
+            869
+          ],
+          [
+            1599,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3182,
+      "tangent": [
+        1028,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1582,
+            1428
+          ],
+          [
+            1600,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            1590,
+            1027
+          ],
+          [
+            1592,
+            1027
+          ]
+        ],
+        "after": [
+          [
+            1583,
+            1429
+          ],
+          [
+            1599,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3182,
+      "tangent": [
+        1588,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1582,
+            1708
+          ],
+          [
+            1600,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            1590,
+            1587
+          ],
+          [
+            1592,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            1583,
+            1709
+          ],
+          [
+            1599,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3182,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1582,
+            1988
+          ],
+          [
+            1600,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            1590,
+            1867
+          ],
+          [
+            1592,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            1583,
+            1989
+          ],
+          [
+            1599,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3252,
+      "tangent": [
+        853,
+        903
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1617,
+            903
+          ],
+          [
+            1635,
+            903
+          ]
+        ],
+        "before": [
+          [
+            1625,
+            852
+          ],
+          [
+            1627,
+            852
+          ]
+        ],
+        "after": [
+          [
+            1618,
+            904
+          ],
+          [
+            1634,
+            904
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3252,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1617,
+            2023
+          ],
+          [
+            1635,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            1625,
+            1972
+          ],
+          [
+            1627,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            1618,
+            2024
+          ],
+          [
+            1634,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3322,
+      "tangent": [
+        818,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1652,
+            938
+          ],
+          [
+            1670,
+            938
+          ]
+        ],
+        "before": [
+          [
+            1660,
+            817
+          ],
+          [
+            1662,
+            817
+          ]
+        ],
+        "after": [
+          [
+            1653,
+            939
+          ],
+          [
+            1669,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3322,
+      "tangent": [
+        1098,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1652,
+            1498
+          ],
+          [
+            1670,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            1660,
+            1097
+          ],
+          [
+            1662,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            1653,
+            1499
+          ],
+          [
+            1669,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3322,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1652,
+            2058
+          ],
+          [
+            1670,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            1660,
+            1937
+          ],
+          [
+            1662,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            1653,
+            2059
+          ],
+          [
+            1669,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3357,
+      "tangent": [
+        883,
+        900
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1613,
+            900
+          ],
+          [
+            1744,
+            900
+          ]
+        ],
+        "before": [
+          [
+            1673,
+            882
+          ],
+          [
+            1684,
+            882
+          ]
+        ],
+        "after": [
+          [
+            1615,
+            901
+          ],
+          [
+            1742,
+            901
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3357,
+      "tangent": [
+        2003,
+        2020
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1613,
+            2020
+          ],
+          [
+            1744,
+            2020
+          ]
+        ],
+        "before": [
+          [
+            1673,
+            2002
+          ],
+          [
+            1684,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            1615,
+            2021
+          ],
+          [
+            1742,
+            2021
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3392,
+      "tangent": [
+        853,
+        973
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1687,
+            973
+          ],
+          [
+            1705,
+            973
+          ]
+        ],
+        "before": [
+          [
+            1695,
+            852
+          ],
+          [
+            1697,
+            852
+          ]
+        ],
+        "after": [
+          [
+            1688,
+            974
+          ],
+          [
+            1704,
+            974
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3392,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1687,
+            2093
+          ],
+          [
+            1705,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            1695,
+            1972
+          ],
+          [
+            1697,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            1688,
+            2094
+          ],
+          [
+            1704,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3462,
+      "tangent": [
+        616,
+        1568
+      ],
+      "normalRadius": 16,
+      "pixels": 16201,
+      "whiteFraction": 0.2347385963829393,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1722,
+            1568
+          ],
+          [
+            1740,
+            1568
+          ]
+        ],
+        "before": [
+          [
+            1723,
+            615
+          ],
+          [
+            1739,
+            615
+          ]
+        ],
+        "after": [
+          [
+            1723,
+            1569
+          ],
+          [
+            1739,
+            1569
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3532,
+      "tangent": [
+        853,
+        973
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1757,
+            973
+          ],
+          [
+            1775,
+            973
+          ]
+        ],
+        "before": [
+          [
+            1765,
+            852
+          ],
+          [
+            1767,
+            852
+          ]
+        ],
+        "after": [
+          [
+            1758,
+            974
+          ],
+          [
+            1774,
+            974
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3532,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1757,
+            2093
+          ],
+          [
+            1775,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            1765,
+            1972
+          ],
+          [
+            1767,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            1758,
+            2094
+          ],
+          [
+            1774,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3567,
+      "tangent": [
+        883,
+        899
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1717,
+            899
+          ],
+          [
+            1850,
+            899
+          ]
+        ],
+        "before": [
+          [
+            1778,
+            882
+          ],
+          [
+            1789,
+            882
+          ]
+        ],
+        "after": [
+          [
+            1719,
+            900
+          ],
+          [
+            1848,
+            900
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3567,
+      "tangent": [
+        2003,
+        2019
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1717,
+            2019
+          ],
+          [
+            1850,
+            2019
+          ]
+        ],
+        "before": [
+          [
+            1778,
+            2002
+          ],
+          [
+            1789,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            1719,
+            2020
+          ],
+          [
+            1848,
+            2020
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3602,
+      "tangent": [
+        818,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1792,
+            938
+          ],
+          [
+            1810,
+            938
+          ]
+        ],
+        "before": [
+          [
+            1800,
+            817
+          ],
+          [
+            1802,
+            817
+          ]
+        ],
+        "after": [
+          [
+            1793,
+            939
+          ],
+          [
+            1809,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3602,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1792,
+            2058
+          ],
+          [
+            1810,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            1800,
+            1937
+          ],
+          [
+            1802,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            1793,
+            2059
+          ],
+          [
+            1809,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3672,
+      "tangent": [
+        853,
+        903
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1827,
+            903
+          ],
+          [
+            1845,
+            903
+          ]
+        ],
+        "before": [
+          [
+            1835,
+            852
+          ],
+          [
+            1837,
+            852
+          ]
+        ],
+        "after": [
+          [
+            1828,
+            904
+          ],
+          [
+            1844,
+            904
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3672,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1827,
+            2023
+          ],
+          [
+            1845,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            1835,
+            1972
+          ],
+          [
+            1837,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            1828,
+            2024
+          ],
+          [
+            1844,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3742,
+      "tangent": [
+        476,
+        588
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1862,
+            588
+          ],
+          [
+            1880,
+            588
+          ]
+        ],
+        "before": [
+          [
+            1863,
+            475
+          ],
+          [
+            1879,
+            475
+          ]
+        ],
+        "after": [
+          [
+            1863,
+            589
+          ],
+          [
+            1879,
+            589
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3742,
+      "tangent": [
+        748,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1862,
+            868
+          ],
+          [
+            1880,
+            868
+          ]
+        ],
+        "before": [
+          [
+            1870,
+            747
+          ],
+          [
+            1872,
+            747
+          ]
+        ],
+        "after": [
+          [
+            1863,
+            869
+          ],
+          [
+            1879,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3742,
+      "tangent": [
+        1028,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 11577,
+      "whiteFraction": 0.11160058737151249,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1862,
+            1708
+          ],
+          [
+            1880,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            1870,
+            1027
+          ],
+          [
+            1872,
+            1027
+          ]
+        ],
+        "after": [
+          [
+            1863,
+            1709
+          ],
+          [
+            1879,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3742,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1862,
+            1988
+          ],
+          [
+            1880,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            1870,
+            1867
+          ],
+          [
+            1872,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            1863,
+            1989
+          ],
+          [
+            1879,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3812,
+      "tangent": [
+        573,
+        623
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1897,
+            623
+          ],
+          [
+            1915,
+            623
+          ]
+        ],
+        "before": [
+          [
+            1905,
+            572
+          ],
+          [
+            1907,
+            572
+          ]
+        ],
+        "after": [
+          [
+            1898,
+            624
+          ],
+          [
+            1914,
+            624
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3882,
+      "tangent": [
+        538,
+        658
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1932,
+            658
+          ],
+          [
+            1950,
+            658
+          ]
+        ],
+        "before": [
+          [
+            1940,
+            537
+          ],
+          [
+            1942,
+            537
+          ]
+        ],
+        "after": [
+          [
+            1933,
+            659
+          ],
+          [
+            1949,
+            659
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3917,
+      "tangent": [
+        603,
+        620
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1893,
+            620
+          ],
+          [
+            2024,
+            620
+          ]
+        ],
+        "before": [
+          [
+            1953,
+            602
+          ],
+          [
+            1964,
+            602
+          ]
+        ],
+        "after": [
+          [
+            1895,
+            621
+          ],
+          [
+            2022,
+            621
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 3952,
+      "tangent": [
+        573,
+        693
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            1967,
+            693
+          ],
+          [
+            1985,
+            693
+          ]
+        ],
+        "before": [
+          [
+            1975,
+            572
+          ],
+          [
+            1977,
+            572
+          ]
+        ],
+        "after": [
+          [
+            1968,
+            694
+          ],
+          [
+            1984,
+            694
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4022,
+      "tangent": [
+        336,
+        728
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2002,
+            728
+          ],
+          [
+            2020,
+            728
+          ]
+        ],
+        "before": [
+          [
+            2003,
+            335
+          ],
+          [
+            2019,
+            335
+          ]
+        ],
+        "after": [
+          [
+            2003,
+            729
+          ],
+          [
+            2019,
+            729
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4022,
+      "tangent": [
+        888,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 16337,
+      "whiteFraction": 0.15388382199914305,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2002,
+            1848
+          ],
+          [
+            2020,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            2010,
+            887
+          ],
+          [
+            2012,
+            887
+          ]
+        ],
+        "after": [
+          [
+            2003,
+            1849
+          ],
+          [
+            2019,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4092,
+      "tangent": [
+        573,
+        763
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2037,
+            763
+          ],
+          [
+            2055,
+            763
+          ]
+        ],
+        "before": [
+          [
+            2045,
+            572
+          ],
+          [
+            2047,
+            572
+          ]
+        ],
+        "after": [
+          [
+            2038,
+            764
+          ],
+          [
+            2054,
+            764
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4162,
+      "tangent": [
+        538,
+        798
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2072,
+            798
+          ],
+          [
+            2090,
+            798
+          ]
+        ],
+        "before": [
+          [
+            2080,
+            537
+          ],
+          [
+            2082,
+            537
+          ]
+        ],
+        "after": [
+          [
+            2073,
+            799
+          ],
+          [
+            2089,
+            799
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4302,
+      "tangent": [
+        196,
+        308
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2142,
+            308
+          ],
+          [
+            2160,
+            308
+          ]
+        ],
+        "before": [
+          [
+            2143,
+            195
+          ],
+          [
+            2159,
+            195
+          ]
+        ],
+        "after": [
+          [
+            2143,
+            309
+          ],
+          [
+            2159,
+            309
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4302,
+      "tangent": [
+        468,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2142,
+            868
+          ],
+          [
+            2160,
+            868
+          ]
+        ],
+        "before": [
+          [
+            2150,
+            467
+          ],
+          [
+            2152,
+            467
+          ]
+        ],
+        "after": [
+          [
+            2143,
+            869
+          ],
+          [
+            2159,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4372,
+      "tangent": [
+        293,
+        343
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2177,
+            343
+          ],
+          [
+            2195,
+            343
+          ]
+        ],
+        "before": [
+          [
+            2185,
+            292
+          ],
+          [
+            2187,
+            292
+          ]
+        ],
+        "after": [
+          [
+            2178,
+            344
+          ],
+          [
+            2194,
+            344
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4442,
+      "tangent": [
+        258,
+        378
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2212,
+            378
+          ],
+          [
+            2230,
+            378
+          ]
+        ],
+        "before": [
+          [
+            2220,
+            257
+          ],
+          [
+            2222,
+            257
+          ]
+        ],
+        "after": [
+          [
+            2213,
+            379
+          ],
+          [
+            2229,
+            379
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4442,
+      "tangent": [
+        538,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2212,
+            938
+          ],
+          [
+            2230,
+            938
+          ]
+        ],
+        "before": [
+          [
+            2220,
+            537
+          ],
+          [
+            2222,
+            537
+          ]
+        ],
+        "after": [
+          [
+            2213,
+            939
+          ],
+          [
+            2229,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4477,
+      "tangent": [
+        323,
+        340
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2173,
+            340
+          ],
+          [
+            2304,
+            340
+          ]
+        ],
+        "before": [
+          [
+            2233,
+            322
+          ],
+          [
+            2244,
+            322
+          ]
+        ],
+        "after": [
+          [
+            2175,
+            341
+          ],
+          [
+            2302,
+            341
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4512,
+      "tangent": [
+        293,
+        413
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2247,
+            413
+          ],
+          [
+            2265,
+            413
+          ]
+        ],
+        "before": [
+          [
+            2255,
+            292
+          ],
+          [
+            2257,
+            292
+          ]
+        ],
+        "after": [
+          [
+            2248,
+            414
+          ],
+          [
+            2264,
+            414
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4652,
+      "tangent": [
+        293,
+        413
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2317,
+            413
+          ],
+          [
+            2335,
+            413
+          ]
+        ],
+        "before": [
+          [
+            2325,
+            292
+          ],
+          [
+            2327,
+            292
+          ]
+        ],
+        "after": [
+          [
+            2318,
+            414
+          ],
+          [
+            2334,
+            414
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4687,
+      "tangent": [
+        323,
+        339
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2277,
+            339
+          ],
+          [
+            2410,
+            339
+          ]
+        ],
+        "before": [
+          [
+            2338,
+            322
+          ],
+          [
+            2349,
+            322
+          ]
+        ],
+        "after": [
+          [
+            2279,
+            340
+          ],
+          [
+            2408,
+            340
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4722,
+      "tangent": [
+        258,
+        378
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2352,
+            378
+          ],
+          [
+            2370,
+            378
+          ]
+        ],
+        "before": [
+          [
+            2360,
+            257
+          ],
+          [
+            2362,
+            257
+          ]
+        ],
+        "after": [
+          [
+            2353,
+            379
+          ],
+          [
+            2369,
+            379
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4722,
+      "tangent": [
+        538,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2352,
+            938
+          ],
+          [
+            2370,
+            938
+          ]
+        ],
+        "before": [
+          [
+            2360,
+            537
+          ],
+          [
+            2362,
+            537
+          ]
+        ],
+        "after": [
+          [
+            2353,
+            939
+          ],
+          [
+            2369,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4792,
+      "tangent": [
+        293,
+        343
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2387,
+            343
+          ],
+          [
+            2405,
+            343
+          ]
+        ],
+        "before": [
+          [
+            2395,
+            292
+          ],
+          [
+            2397,
+            292
+          ]
+        ],
+        "after": [
+          [
+            2388,
+            344
+          ],
+          [
+            2404,
+            344
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4862,
+      "tangent": [
+        196,
+        308
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2422,
+            308
+          ],
+          [
+            2440,
+            308
+          ]
+        ],
+        "before": [
+          [
+            2423,
+            195
+          ],
+          [
+            2439,
+            195
+          ]
+        ],
+        "after": [
+          [
+            2423,
+            309
+          ],
+          [
+            2439,
+            309
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 4862,
+      "tangent": [
+        468,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2422,
+            868
+          ],
+          [
+            2440,
+            868
+          ]
+        ],
+        "before": [
+          [
+            2430,
+            467
+          ],
+          [
+            2432,
+            467
+          ]
+        ],
+        "after": [
+          [
+            2423,
+            869
+          ],
+          [
+            2439,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5002,
+      "tangent": [
+        538,
+        798
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2492,
+            798
+          ],
+          [
+            2510,
+            798
+          ]
+        ],
+        "before": [
+          [
+            2500,
+            537
+          ],
+          [
+            2502,
+            537
+          ]
+        ],
+        "after": [
+          [
+            2493,
+            799
+          ],
+          [
+            2509,
+            799
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5072,
+      "tangent": [
+        573,
+        763
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2527,
+            763
+          ],
+          [
+            2545,
+            763
+          ]
+        ],
+        "before": [
+          [
+            2535,
+            572
+          ],
+          [
+            2537,
+            572
+          ]
+        ],
+        "after": [
+          [
+            2528,
+            764
+          ],
+          [
+            2544,
+            764
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5142,
+      "tangent": [
+        336,
+        728
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2562,
+            728
+          ],
+          [
+            2580,
+            728
+          ]
+        ],
+        "before": [
+          [
+            2563,
+            335
+          ],
+          [
+            2579,
+            335
+          ]
+        ],
+        "after": [
+          [
+            2563,
+            729
+          ],
+          [
+            2579,
+            729
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5142,
+      "tangent": [
+        888,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 16337,
+      "whiteFraction": 0.15388382199914305,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2562,
+            1848
+          ],
+          [
+            2580,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            2570,
+            887
+          ],
+          [
+            2572,
+            887
+          ]
+        ],
+        "after": [
+          [
+            2563,
+            1849
+          ],
+          [
+            2579,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5212,
+      "tangent": [
+        573,
+        693
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2597,
+            693
+          ],
+          [
+            2615,
+            693
+          ]
+        ],
+        "before": [
+          [
+            2605,
+            572
+          ],
+          [
+            2607,
+            572
+          ]
+        ],
+        "after": [
+          [
+            2598,
+            694
+          ],
+          [
+            2614,
+            694
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5247,
+      "tangent": [
+        603,
+        619
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2557,
+            619
+          ],
+          [
+            2690,
+            619
+          ]
+        ],
+        "before": [
+          [
+            2618,
+            602
+          ],
+          [
+            2629,
+            602
+          ]
+        ],
+        "after": [
+          [
+            2559,
+            620
+          ],
+          [
+            2688,
+            620
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5282,
+      "tangent": [
+        538,
+        658
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2632,
+            658
+          ],
+          [
+            2650,
+            658
+          ]
+        ],
+        "before": [
+          [
+            2640,
+            537
+          ],
+          [
+            2642,
+            537
+          ]
+        ],
+        "after": [
+          [
+            2633,
+            659
+          ],
+          [
+            2649,
+            659
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5352,
+      "tangent": [
+        573,
+        623
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2667,
+            623
+          ],
+          [
+            2685,
+            623
+          ]
+        ],
+        "before": [
+          [
+            2675,
+            572
+          ],
+          [
+            2677,
+            572
+          ]
+        ],
+        "after": [
+          [
+            2668,
+            624
+          ],
+          [
+            2684,
+            624
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5422,
+      "tangent": [
+        476,
+        588
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2702,
+            588
+          ],
+          [
+            2720,
+            588
+          ]
+        ],
+        "before": [
+          [
+            2703,
+            475
+          ],
+          [
+            2719,
+            475
+          ]
+        ],
+        "after": [
+          [
+            2703,
+            589
+          ],
+          [
+            2719,
+            589
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5422,
+      "tangent": [
+        748,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2702,
+            868
+          ],
+          [
+            2720,
+            868
+          ]
+        ],
+        "before": [
+          [
+            2710,
+            747
+          ],
+          [
+            2712,
+            747
+          ]
+        ],
+        "after": [
+          [
+            2703,
+            869
+          ],
+          [
+            2719,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5422,
+      "tangent": [
+        1028,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 11577,
+      "whiteFraction": 0.11160058737151249,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2702,
+            1708
+          ],
+          [
+            2720,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            2710,
+            1027
+          ],
+          [
+            2712,
+            1027
+          ]
+        ],
+        "after": [
+          [
+            2703,
+            1709
+          ],
+          [
+            2719,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5422,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2702,
+            1988
+          ],
+          [
+            2720,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            2710,
+            1867
+          ],
+          [
+            2712,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            2703,
+            1989
+          ],
+          [
+            2719,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5492,
+      "tangent": [
+        853,
+        903
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2737,
+            903
+          ],
+          [
+            2755,
+            903
+          ]
+        ],
+        "before": [
+          [
+            2745,
+            852
+          ],
+          [
+            2747,
+            852
+          ]
+        ],
+        "after": [
+          [
+            2738,
+            904
+          ],
+          [
+            2754,
+            904
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5492,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2737,
+            2023
+          ],
+          [
+            2755,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            2745,
+            1972
+          ],
+          [
+            2747,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            2738,
+            2024
+          ],
+          [
+            2754,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5562,
+      "tangent": [
+        818,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2772,
+            938
+          ],
+          [
+            2790,
+            938
+          ]
+        ],
+        "before": [
+          [
+            2780,
+            817
+          ],
+          [
+            2782,
+            817
+          ]
+        ],
+        "after": [
+          [
+            2773,
+            939
+          ],
+          [
+            2789,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5562,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2772,
+            2058
+          ],
+          [
+            2790,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            2780,
+            1937
+          ],
+          [
+            2782,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            2773,
+            2059
+          ],
+          [
+            2789,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5597,
+      "tangent": [
+        883,
+        900
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2733,
+            900
+          ],
+          [
+            2864,
+            900
+          ]
+        ],
+        "before": [
+          [
+            2793,
+            882
+          ],
+          [
+            2804,
+            882
+          ]
+        ],
+        "after": [
+          [
+            2735,
+            901
+          ],
+          [
+            2862,
+            901
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5597,
+      "tangent": [
+        2003,
+        2020
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2733,
+            2020
+          ],
+          [
+            2864,
+            2020
+          ]
+        ],
+        "before": [
+          [
+            2793,
+            2002
+          ],
+          [
+            2804,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            2735,
+            2021
+          ],
+          [
+            2862,
+            2021
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5632,
+      "tangent": [
+        853,
+        973
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2807,
+            973
+          ],
+          [
+            2825,
+            973
+          ]
+        ],
+        "before": [
+          [
+            2815,
+            852
+          ],
+          [
+            2817,
+            852
+          ]
+        ],
+        "after": [
+          [
+            2808,
+            974
+          ],
+          [
+            2824,
+            974
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5632,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2807,
+            2093
+          ],
+          [
+            2825,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            2815,
+            1972
+          ],
+          [
+            2817,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            2808,
+            2094
+          ],
+          [
+            2824,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5702,
+      "tangent": [
+        616,
+        1568
+      ],
+      "normalRadius": 16,
+      "pixels": 16201,
+      "whiteFraction": 0.2347385963829393,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2842,
+            1568
+          ],
+          [
+            2860,
+            1568
+          ]
+        ],
+        "before": [
+          [
+            2843,
+            615
+          ],
+          [
+            2859,
+            615
+          ]
+        ],
+        "after": [
+          [
+            2843,
+            1569
+          ],
+          [
+            2859,
+            1569
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5772,
+      "tangent": [
+        853,
+        973
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2877,
+            973
+          ],
+          [
+            2895,
+            973
+          ]
+        ],
+        "before": [
+          [
+            2885,
+            852
+          ],
+          [
+            2887,
+            852
+          ]
+        ],
+        "after": [
+          [
+            2878,
+            974
+          ],
+          [
+            2894,
+            974
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5772,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2877,
+            2093
+          ],
+          [
+            2895,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            2885,
+            1972
+          ],
+          [
+            2887,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            2878,
+            2094
+          ],
+          [
+            2894,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5807,
+      "tangent": [
+        883,
+        899
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2837,
+            899
+          ],
+          [
+            2970,
+            899
+          ]
+        ],
+        "before": [
+          [
+            2898,
+            882
+          ],
+          [
+            2909,
+            882
+          ]
+        ],
+        "after": [
+          [
+            2839,
+            900
+          ],
+          [
+            2968,
+            900
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5807,
+      "tangent": [
+        2003,
+        2019
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2837,
+            2019
+          ],
+          [
+            2970,
+            2019
+          ]
+        ],
+        "before": [
+          [
+            2898,
+            2002
+          ],
+          [
+            2909,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            2839,
+            2020
+          ],
+          [
+            2968,
+            2020
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5842,
+      "tangent": [
+        818,
+        938
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2912,
+            938
+          ],
+          [
+            2930,
+            938
+          ]
+        ],
+        "before": [
+          [
+            2920,
+            817
+          ],
+          [
+            2922,
+            817
+          ]
+        ],
+        "after": [
+          [
+            2913,
+            939
+          ],
+          [
+            2929,
+            939
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5842,
+      "tangent": [
+        1098,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2912,
+            1498
+          ],
+          [
+            2930,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            2920,
+            1097
+          ],
+          [
+            2922,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            2913,
+            1499
+          ],
+          [
+            2929,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5842,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2912,
+            2058
+          ],
+          [
+            2930,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            2920,
+            1937
+          ],
+          [
+            2922,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            2913,
+            2059
+          ],
+          [
+            2929,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5912,
+      "tangent": [
+        853,
+        903
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2947,
+            903
+          ],
+          [
+            2965,
+            903
+          ]
+        ],
+        "before": [
+          [
+            2955,
+            852
+          ],
+          [
+            2957,
+            852
+          ]
+        ],
+        "after": [
+          [
+            2948,
+            904
+          ],
+          [
+            2964,
+            904
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5912,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2947,
+            2023
+          ],
+          [
+            2965,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            2955,
+            1972
+          ],
+          [
+            2957,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            2948,
+            2024
+          ],
+          [
+            2964,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5982,
+      "tangent": [
+        756,
+        868
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2982,
+            868
+          ],
+          [
+            3000,
+            868
+          ]
+        ],
+        "before": [
+          [
+            2983,
+            755
+          ],
+          [
+            2999,
+            755
+          ]
+        ],
+        "after": [
+          [
+            2983,
+            869
+          ],
+          [
+            2999,
+            869
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5982,
+      "tangent": [
+        1028,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2982,
+            1428
+          ],
+          [
+            3000,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            2990,
+            1027
+          ],
+          [
+            2992,
+            1027
+          ]
+        ],
+        "after": [
+          [
+            2983,
+            1429
+          ],
+          [
+            2999,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5982,
+      "tangent": [
+        1588,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2982,
+            1708
+          ],
+          [
+            3000,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            2990,
+            1587
+          ],
+          [
+            2992,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            2983,
+            1709
+          ],
+          [
+            2999,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 5982,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            2982,
+            1988
+          ],
+          [
+            3000,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            2990,
+            1867
+          ],
+          [
+            2992,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            2983,
+            1989
+          ],
+          [
+            2999,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6052,
+      "tangent": [
+        1693,
+        1743
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3017,
+            1743
+          ],
+          [
+            3035,
+            1743
+          ]
+        ],
+        "before": [
+          [
+            3025,
+            1692
+          ],
+          [
+            3027,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3018,
+            1744
+          ],
+          [
+            3034,
+            1744
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6122,
+      "tangent": [
+        1098,
+        1358
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3052,
+            1358
+          ],
+          [
+            3070,
+            1358
+          ]
+        ],
+        "before": [
+          [
+            3060,
+            1097
+          ],
+          [
+            3062,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            3053,
+            1359
+          ],
+          [
+            3069,
+            1359
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6122,
+      "tangent": [
+        1658,
+        1778
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3052,
+            1778
+          ],
+          [
+            3070,
+            1778
+          ]
+        ],
+        "before": [
+          [
+            3060,
+            1657
+          ],
+          [
+            3062,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3053,
+            1779
+          ],
+          [
+            3069,
+            1779
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6157,
+      "tangent": [
+        1723,
+        1740
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3013,
+            1740
+          ],
+          [
+            3144,
+            1740
+          ]
+        ],
+        "before": [
+          [
+            3073,
+            1722
+          ],
+          [
+            3084,
+            1722
+          ]
+        ],
+        "after": [
+          [
+            3015,
+            1741
+          ],
+          [
+            3142,
+            1741
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6192,
+      "tangent": [
+        1133,
+        1323
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3087,
+            1323
+          ],
+          [
+            3105,
+            1323
+          ]
+        ],
+        "before": [
+          [
+            3095,
+            1132
+          ],
+          [
+            3097,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            3088,
+            1324
+          ],
+          [
+            3104,
+            1324
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6192,
+      "tangent": [
+        1693,
+        1813
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3087,
+            1813
+          ],
+          [
+            3105,
+            1813
+          ]
+        ],
+        "before": [
+          [
+            3095,
+            1692
+          ],
+          [
+            3097,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3088,
+            1814
+          ],
+          [
+            3104,
+            1814
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6262,
+      "tangent": [
+        896,
+        1288
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3122,
+            1288
+          ],
+          [
+            3140,
+            1288
+          ]
+        ],
+        "before": [
+          [
+            3123,
+            895
+          ],
+          [
+            3139,
+            895
+          ]
+        ],
+        "after": [
+          [
+            3123,
+            1289
+          ],
+          [
+            3139,
+            1289
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6262,
+      "tangent": [
+        1448,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.3687839225465747,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3122,
+            1848
+          ],
+          [
+            3140,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            3130,
+            1447
+          ],
+          [
+            3132,
+            1447
+          ]
+        ],
+        "after": [
+          [
+            3123,
+            1849
+          ],
+          [
+            3139,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6332,
+      "tangent": [
+        1133,
+        1253
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3157,
+            1253
+          ],
+          [
+            3175,
+            1253
+          ]
+        ],
+        "before": [
+          [
+            3165,
+            1132
+          ],
+          [
+            3167,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            3158,
+            1254
+          ],
+          [
+            3174,
+            1254
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6332,
+      "tangent": [
+        1693,
+        1883
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3157,
+            1883
+          ],
+          [
+            3175,
+            1883
+          ]
+        ],
+        "before": [
+          [
+            3165,
+            1692
+          ],
+          [
+            3167,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3158,
+            1884
+          ],
+          [
+            3174,
+            1884
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6367,
+      "tangent": [
+        1163,
+        1179
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3117,
+            1179
+          ],
+          [
+            3250,
+            1179
+          ]
+        ],
+        "before": [
+          [
+            3178,
+            1162
+          ],
+          [
+            3189,
+            1162
+          ]
+        ],
+        "after": [
+          [
+            3119,
+            1180
+          ],
+          [
+            3248,
+            1180
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6402,
+      "tangent": [
+        1098,
+        1218
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3192,
+            1218
+          ],
+          [
+            3210,
+            1218
+          ]
+        ],
+        "before": [
+          [
+            3200,
+            1097
+          ],
+          [
+            3202,
+            1097
+          ]
+        ],
+        "after": [
+          [
+            3193,
+            1219
+          ],
+          [
+            3209,
+            1219
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6402,
+      "tangent": [
+        1658,
+        1918
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3192,
+            1918
+          ],
+          [
+            3210,
+            1918
+          ]
+        ],
+        "before": [
+          [
+            3200,
+            1657
+          ],
+          [
+            3202,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3193,
+            1919
+          ],
+          [
+            3209,
+            1919
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6472,
+      "tangent": [
+        1133,
+        1183
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3227,
+            1183
+          ],
+          [
+            3245,
+            1183
+          ]
+        ],
+        "before": [
+          [
+            3235,
+            1132
+          ],
+          [
+            3237,
+            1132
+          ]
+        ],
+        "after": [
+          [
+            3228,
+            1184
+          ],
+          [
+            3244,
+            1184
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6542,
+      "tangent": [
+        1036,
+        1148
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3262,
+            1148
+          ],
+          [
+            3280,
+            1148
+          ]
+        ],
+        "before": [
+          [
+            3263,
+            1035
+          ],
+          [
+            3279,
+            1035
+          ]
+        ],
+        "after": [
+          [
+            3263,
+            1149
+          ],
+          [
+            3279,
+            1149
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6542,
+      "tangent": [
+        1308,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3262,
+            1428
+          ],
+          [
+            3280,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            3270,
+            1307
+          ],
+          [
+            3272,
+            1307
+          ]
+        ],
+        "after": [
+          [
+            3263,
+            1429
+          ],
+          [
+            3279,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6542,
+      "tangent": [
+        1588,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3262,
+            1988
+          ],
+          [
+            3280,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            3270,
+            1587
+          ],
+          [
+            3272,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            3263,
+            1989
+          ],
+          [
+            3279,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6612,
+      "tangent": [
+        1413,
+        1463
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3297,
+            1463
+          ],
+          [
+            3315,
+            1463
+          ]
+        ],
+        "before": [
+          [
+            3305,
+            1412
+          ],
+          [
+            3307,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            3298,
+            1464
+          ],
+          [
+            3314,
+            1464
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6682,
+      "tangent": [
+        1378,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3332,
+            1498
+          ],
+          [
+            3350,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            3340,
+            1377
+          ],
+          [
+            3342,
+            1377
+          ]
+        ],
+        "after": [
+          [
+            3333,
+            1499
+          ],
+          [
+            3349,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6682,
+      "tangent": [
+        1658,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3332,
+            2058
+          ],
+          [
+            3350,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            3340,
+            1657
+          ],
+          [
+            3342,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3333,
+            2059
+          ],
+          [
+            3349,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6717,
+      "tangent": [
+        1443,
+        1460
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3293,
+            1460
+          ],
+          [
+            3424,
+            1460
+          ]
+        ],
+        "before": [
+          [
+            3353,
+            1442
+          ],
+          [
+            3364,
+            1442
+          ]
+        ],
+        "after": [
+          [
+            3295,
+            1461
+          ],
+          [
+            3422,
+            1461
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6752,
+      "tangent": [
+        1413,
+        1533
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3367,
+            1533
+          ],
+          [
+            3385,
+            1533
+          ]
+        ],
+        "before": [
+          [
+            3375,
+            1412
+          ],
+          [
+            3377,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            3368,
+            1534
+          ],
+          [
+            3384,
+            1534
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6892,
+      "tangent": [
+        1413,
+        1533
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3437,
+            1533
+          ],
+          [
+            3455,
+            1533
+          ]
+        ],
+        "before": [
+          [
+            3445,
+            1412
+          ],
+          [
+            3447,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            3438,
+            1534
+          ],
+          [
+            3454,
+            1534
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6927,
+      "tangent": [
+        1443,
+        1459
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3397,
+            1459
+          ],
+          [
+            3530,
+            1459
+          ]
+        ],
+        "before": [
+          [
+            3458,
+            1442
+          ],
+          [
+            3469,
+            1442
+          ]
+        ],
+        "after": [
+          [
+            3399,
+            1460
+          ],
+          [
+            3528,
+            1460
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6962,
+      "tangent": [
+        1378,
+        1498
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3472,
+            1498
+          ],
+          [
+            3490,
+            1498
+          ]
+        ],
+        "before": [
+          [
+            3480,
+            1377
+          ],
+          [
+            3482,
+            1377
+          ]
+        ],
+        "after": [
+          [
+            3473,
+            1499
+          ],
+          [
+            3489,
+            1499
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 6962,
+      "tangent": [
+        1658,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.08464133783189086,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3472,
+            2058
+          ],
+          [
+            3490,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            3480,
+            1657
+          ],
+          [
+            3482,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3473,
+            2059
+          ],
+          [
+            3489,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7032,
+      "tangent": [
+        1413,
+        1463
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3507,
+            1463
+          ],
+          [
+            3525,
+            1463
+          ]
+        ],
+        "before": [
+          [
+            3515,
+            1412
+          ],
+          [
+            3517,
+            1412
+          ]
+        ],
+        "after": [
+          [
+            3508,
+            1464
+          ],
+          [
+            3524,
+            1464
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7102,
+      "tangent": [
+        1316,
+        1428
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3542,
+            1428
+          ],
+          [
+            3560,
+            1428
+          ]
+        ],
+        "before": [
+          [
+            3543,
+            1315
+          ],
+          [
+            3559,
+            1315
+          ]
+        ],
+        "after": [
+          [
+            3543,
+            1429
+          ],
+          [
+            3559,
+            1429
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7102,
+      "tangent": [
+        1588,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 6817,
+      "whiteFraction": 0.18952618453865336,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3542,
+            1988
+          ],
+          [
+            3560,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            3550,
+            1587
+          ],
+          [
+            3552,
+            1587
+          ]
+        ],
+        "after": [
+          [
+            3543,
+            1989
+          ],
+          [
+            3559,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7242,
+      "tangent": [
+        1658,
+        1918
+      ],
+      "normalRadius": 16,
+      "pixels": 4437,
+      "whiteFraction": 0.1300428217263917,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3612,
+            1918
+          ],
+          [
+            3630,
+            1918
+          ]
+        ],
+        "before": [
+          [
+            3620,
+            1657
+          ],
+          [
+            3622,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3613,
+            1919
+          ],
+          [
+            3629,
+            1919
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7312,
+      "tangent": [
+        1693,
+        1883
+      ],
+      "normalRadius": 16,
+      "pixels": 3247,
+      "whiteFraction": 0.09886048660301817,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3647,
+            1883
+          ],
+          [
+            3665,
+            1883
+          ]
+        ],
+        "before": [
+          [
+            3655,
+            1692
+          ],
+          [
+            3657,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3648,
+            1884
+          ],
+          [
+            3664,
+            1884
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7382,
+      "tangent": [
+        1456,
+        1848
+      ],
+      "normalRadius": 16,
+      "pixels": 6681,
+      "whiteFraction": 0.36506511001347103,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3682,
+            1848
+          ],
+          [
+            3700,
+            1848
+          ]
+        ],
+        "before": [
+          [
+            3683,
+            1455
+          ],
+          [
+            3699,
+            1455
+          ]
+        ],
+        "after": [
+          [
+            3683,
+            1849
+          ],
+          [
+            3699,
+            1849
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7452,
+      "tangent": [
+        1693,
+        1813
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3717,
+            1813
+          ],
+          [
+            3735,
+            1813
+          ]
+        ],
+        "before": [
+          [
+            3725,
+            1692
+          ],
+          [
+            3727,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3718,
+            1814
+          ],
+          [
+            3734,
+            1814
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7487,
+      "tangent": [
+        1723,
+        1739
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3677,
+            1739
+          ],
+          [
+            3810,
+            1739
+          ]
+        ],
+        "before": [
+          [
+            3738,
+            1722
+          ],
+          [
+            3749,
+            1722
+          ]
+        ],
+        "after": [
+          [
+            3679,
+            1740
+          ],
+          [
+            3808,
+            1740
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7522,
+      "tangent": [
+        1658,
+        1778
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3752,
+            1778
+          ],
+          [
+            3770,
+            1778
+          ]
+        ],
+        "before": [
+          [
+            3760,
+            1657
+          ],
+          [
+            3762,
+            1657
+          ]
+        ],
+        "after": [
+          [
+            3753,
+            1779
+          ],
+          [
+            3769,
+            1779
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7592,
+      "tangent": [
+        1693,
+        1743
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3787,
+            1743
+          ],
+          [
+            3805,
+            1743
+          ]
+        ],
+        "before": [
+          [
+            3795,
+            1692
+          ],
+          [
+            3797,
+            1692
+          ]
+        ],
+        "after": [
+          [
+            3788,
+            1744
+          ],
+          [
+            3804,
+            1744
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7662,
+      "tangent": [
+        1596,
+        1708
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3822,
+            1708
+          ],
+          [
+            3840,
+            1708
+          ]
+        ],
+        "before": [
+          [
+            3823,
+            1595
+          ],
+          [
+            3839,
+            1595
+          ]
+        ],
+        "after": [
+          [
+            3823,
+            1709
+          ],
+          [
+            3839,
+            1709
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7662,
+      "tangent": [
+        1868,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.5493437044239183,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3822,
+            1988
+          ],
+          [
+            3840,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            3830,
+            1867
+          ],
+          [
+            3832,
+            1867
+          ]
+        ],
+        "after": [
+          [
+            3823,
+            1989
+          ],
+          [
+            3839,
+            1989
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7732,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3857,
+            2023
+          ],
+          [
+            3875,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            3865,
+            1972
+          ],
+          [
+            3867,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            3858,
+            2024
+          ],
+          [
+            3874,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7802,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3892,
+            2058
+          ],
+          [
+            3910,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            3900,
+            1937
+          ],
+          [
+            3902,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            3893,
+            2059
+          ],
+          [
+            3909,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7837,
+      "tangent": [
+        2003,
+        2020
+      ],
+      "normalRadius": 129,
+      "pixels": 2340,
+      "whiteFraction": 0.1111111111111111,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3853,
+            2020
+          ],
+          [
+            3984,
+            2020
+          ]
+        ],
+        "before": [
+          [
+            3913,
+            2002
+          ],
+          [
+            3924,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            3855,
+            2021
+          ],
+          [
+            3982,
+            2021
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 7872,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3927,
+            2093
+          ],
+          [
+            3945,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            3935,
+            1972
+          ],
+          [
+            3937,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            3928,
+            2094
+          ],
+          [
+            3944,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 8012,
+      "tangent": [
+        1973,
+        2093
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.15605250364608653,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3997,
+            2093
+          ],
+          [
+            4015,
+            2093
+          ]
+        ],
+        "before": [
+          [
+            4005,
+            1972
+          ],
+          [
+            4007,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            3998,
+            2094
+          ],
+          [
+            4014,
+            2094
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 8047,
+      "tangent": [
+        2003,
+        2019
+      ],
+      "normalRadius": 131,
+      "pixels": 2244,
+      "whiteFraction": 0.11764705882352941,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            3957,
+            2019
+          ],
+          [
+            4090,
+            2019
+          ]
+        ],
+        "before": [
+          [
+            4018,
+            2002
+          ],
+          [
+            4029,
+            2002
+          ]
+        ],
+        "after": [
+          [
+            3959,
+            2020
+          ],
+          [
+            4088,
+            2020
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 8082,
+      "tangent": [
+        1938,
+        2058
+      ],
+      "normalRadius": 16,
+      "pixels": 2057,
+      "whiteFraction": 0.2805055906660185,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            4032,
+            2058
+          ],
+          [
+            4050,
+            2058
+          ]
+        ],
+        "before": [
+          [
+            4040,
+            1937
+          ],
+          [
+            4042,
+            1937
+          ]
+        ],
+        "after": [
+          [
+            4033,
+            2059
+          ],
+          [
+            4049,
+            2059
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 8152,
+      "tangent": [
+        1973,
+        2023
+      ],
+      "normalRadius": 16,
+      "pixels": 867,
+      "whiteFraction": 0.370242214532872,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            4067,
+            2023
+          ],
+          [
+            4085,
+            2023
+          ]
+        ],
+        "before": [
+          [
+            4075,
+            1972
+          ],
+          [
+            4077,
+            1972
+          ]
+        ],
+        "after": [
+          [
+            4068,
+            2024
+          ],
+          [
+            4084,
+            2024
+          ]
+        ]
+      }
+    },
+    {
+      "family": "V",
+      "axis": 8222,
+      "tangent": [
+        1876,
+        1988
+      ],
+      "normalRadius": 16,
+      "pixels": 1921,
+      "whiteFraction": 0.5491931285788652,
+      "exactReflection": true,
+      "witnesses": {
+        "normalOutside": [
+          [
+            4102,
+            1988
+          ],
+          [
+            4120,
+            1988
+          ]
+        ],
+        "before": [
+          [
+            4103,
+            1875
+          ],
+          [
+            4119,
+            1875
+          ]
+        ],
+        "after": [
+          [
+            4103,
+            1989
+          ],
+          [
+            4119,
+            1989
+          ]
+        ]
+      }
+    }
+  ],
+  "input": {
+    "file": "../horrorius-full-N2048-n96/full-13-phase-0.png",
+    "bbox": [
+      2188,
+      1,
+      6771,
+      2241
+    ]
+  },
+  "inputSha256": "0ad741843150d1faa68dbfaf67c405c489dc5742413deb832f0bad226f212230",
+  "verification": {
+    "regions": 176,
+    "independentlyComparedPixels": 553170,
+    "everyInteriorPixelMatches": true,
+    "outsideMismatchPairs": 528,
+    "allOutsideWitnessesDiffer": true
+  }
+}
