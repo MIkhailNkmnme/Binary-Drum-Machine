@@ -12,7 +12,10 @@ const ZZ_SOLO = document.getElementById("w-cone") ? "w-cone" : "";
    (его пишет presety/dobavit.py из файла «💾 Всё»; страница подключает файл сама, до этого скрипта). Как фон хаба: только конус и
    кручение, память не читается и не пишется; состояние — из пресета. */
 const ZZ_PRESET = (window.ZZ_PRESET_DATA && window.ZZ_PRESET_DATA.state && Array.isArray(window.ZZ_PRESET_DATA.state.rows)) ? window.ZZ_PRESET_DATA : null;
-const ZZ_BG = (() => { try { const bg = new URLSearchParams(location.search).get("bg"); return !!ZZ_SOLO && (bg === "1" || !!ZZ_PRESET && bg !== "0"); } catch (e) { return false; } })();
+/* Синхрофазотрон v0.076, «дай ссылки с таким положением окон»: эта страница — всегда Solo (окно конуса), поэтому ссылка #z=… (она тоже пресет)
+   открывалась фоном хаба: без кнопок, а раскладка окон из ссылки снималась (ZZ_PRESET_LAYOUT). Теперь фон — только ?bg=1 и ?preset=<имя>;
+   ссылка — рабочая страница с раскладкой из ссылки, память гостя по-прежнему не читается и не пишется (ZZ_PRESET_FULL) */
+const ZZ_BG = (() => { try { const q = new URLSearchParams(location.search), bg = q.get("bg"); return !!ZZ_SOLO && (bg === "1" || !!ZZ_PRESET && bg !== "0" && (!window.ZZ_LINK_KEY || !!q.get("preset"))); } catch (e) { return false; } })();
 /* v0.196, «как сохранять, чтобы по ссылке открывали прямо там» → «да» (вся страница, а не только конус): ?preset=<имя> без solo —
    весь Zazerkalius в состоянии пресета: окна, конус, лазер, поля строк. Память не читается и не пишется: гость крутит и гоняет
    лазер, его собственные строки и раскладка не тронуты, а ссылка при каждом открытии снова даёт пресет как есть. */
@@ -852,8 +855,16 @@ function sfzSettingsInit(){
   const group = $("cutGrp"); if (group) { group.classList.remove("min"); build.appendChild(group); }
   const head = $("fieldHead"); if (head) {
     head.hidden=false;const controls=document.createElement("div");controls.id="sfzRowsButtons";head.prepend(controls);head.appendChild(menus);
-    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const fieldLeft=head.parentElement.getBoundingClientRect().left,origin=sfzMenuGridOrigin();const recordEnd=desktop?Math.max(0,...[...document.querySelectorAll("#coneRecBar > button")].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=="none").map(e=>e.getBoundingClientRect().right)):0;const start=origin+30,fieldSnap=start+Math.floor((fieldLeft-start)/60)*60;const left=(desktop?Math.max(fieldSnap,start+Math.ceil((recordEnd-start)/60)*60):fieldLeft)+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);};
-    window.sfzRowsMenuPlace=menuPlace;menuPlace();addEventListener("resize",menuPlace);if(window.ResizeObserver)new ResizeObserver(menuPlace).observe(head.parentElement);
+    const menuPlace=()=>{const desktop=innerWidth>760,parent=desktop?document.body:head;for(const el of [controls,menus])if(el.parentElement!==parent)parent.appendChild(el);const fieldLeft=head.parentElement.getBoundingClientRect().left,origin=sfzMenuGridOrigin();const recordEnd=desktop?Math.max(0,...[...document.querySelectorAll("#coneRecBar > button")].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=="none").map(e=>e.getBoundingClientRect().right)):0;const start=origin+30,fieldSnap=start+Math.floor((fieldLeft-start)/60)*60;const left=(desktop?Math.max(fieldSnap,start+Math.ceil((recordEnd-start)/60)*60):fieldLeft)+"px";for(const el of [menus,controls])if(el.style.getPropertyValue("--sfz-menu-left")!==left)el.style.setProperty("--sfz-menu-left",left);
+      /* v0.076, «пусть эти 6 кнопок располагаются вертикально треугольниками слева, справа от строк»: ⇤ · замок · ⟲ · Вид · 01 · + — столбиком
+         треугольников ▶◀ (остриё в выемку) у левого края холста: сразу правее левой панели строк и её зубцов (и поля строк, когда оно слева), ниже верхней полосы */
+      if(desktop){/* край — по зубцам панели (их ставит paneZig уже по устоявшейся ширине: живые размеры при загрузке бывают промежуточными) */
+        const zr=id=>{const e=$(id);if(!e||e.style.display==="none"||!e.style.left)return 0;return parseFloat(e.style.left)+(parseFloat(e.style.width)||0);};
+        let edge=zr("paneZigOv");if(!edge){const p=$("rowsPane");if(p&&p.getClientRects().length){const q=p.getBoundingClientRect();if(q.left+q.width/2<innerWidth/2)edge=q.right;}}
+        if(!document.body.classList.contains("field-right"))edge=Math.max(edge,zr("fieldZigOv"));
+        const topBar=$("top"),tb=topBar&&topBar.getClientRects().length?topBar.getBoundingClientRect().bottom:0,colLeft=Math.round(edge)+"px",colTop=Math.round(tb+6)+"px";
+        for(const el of [controls,menus]){if(el.style.getPropertyValue("--sfz-col-left")!==colLeft)el.style.setProperty("--sfz-col-left",colLeft);if(el.style.getPropertyValue("--sfz-col-top")!==colTop)el.style.setProperty("--sfz-col-top",colTop);}}};
+    window.sfzRowsMenuPlace=menuPlace;menuPlace();addEventListener("resize",menuPlace);if(window.ResizeObserver){const ro=new ResizeObserver(menuPlace);ro.observe(head.parentElement);const pane=$("rowsPane");if(pane)ro.observe(pane);}
     for(const id of ["bRowsStartTop","coneLockAll","bConeAllHome"]){const button=$(id);if(button){triOff(button);tzcClean(button);controls.appendChild(button);}}
   }
   const rings = document.createElement("button"); rings.type = "button"; rings.textContent = "Ромбы колец";
@@ -2114,7 +2125,7 @@ function lasDeps(){
   /* v0.758, «затемнённые кнопки сделай некликабельными»: нажатие на затемнённую (кнопка, галка, поле, список, ползунок со стрелками) перехватывается
      раньше всех (в захвате) и гасится, вместо действия — всплывает, почему она сейчас не действует. Наведение и подсказка остаются */
   if (!lasDeps._b) { lasDeps._b = 1;
-    const stop = (e) => { const x = e.target && e.target.closest && e.target.closest(".cgrp .ldim"); if (!x) return;
+    const stop = (e) => { const x = e.target && e.target.closest && e.target.closest(":is(.cgrp, #coneMagAxisTools, #coneBalanceTools) .ldim"); if (!x) return;   // v0.076: и магниты на оси, и ≋
       /* v0.074, «не могу открепить от низа»: у гроздей шапки нет, хват — сами кнопки; затемнённые гасили и нажатие, и гроздь «щели» (в обычном режиме вся
          затемнена) нельзя было ни оторвать от полосы, ни свернуть. Настоящее нажатие на кнопку грозди идёт дальше — к переносу и сворачиванию; действие
          по-прежнему гасится: повтор нажатия после короткого щелчка (не isTrusted), mousedown, click и правое нажатие самой кнопки. */
@@ -6768,7 +6779,20 @@ function coneBalanceAutoTip(){
     const remaining = stats.total > stats.checked ? stats.total - stats.checked : 0n;
     tip += "\nПоследний подбор: сочетаний магнитных поворотов с разными балансами — " + stats.total.toLocaleString("ru-RU") + "; осталось непроверенных для общего равенства — " + remaining.toLocaleString("ru-RU") + ". Это кандидаты; число решений с равными четвертями заранее неизвестно.";
   } else tip += "\nЧисло сочетаний магнитных поворотов будет показано после запуска поиска.";
-  b.title = tip; b.setAttribute("aria-label", tip);
+  /* v0.076, «затемняй все кнопки, которые в текущих настройках невозможно нажать»: ≋ ничего не делает в 3D, без магнитных осей симметрии
+     и когда четыре четверти уже равны — затемнён (.ldim), нажатие гасится, как у групп (lasDeps), причина — первой строкой подсказки */
+  let why = "";
+  if (Z.cone3d || !coneGeom || !Z.rows.length) why = "нужен плоский вид колец";
+  else if (magSymOf() === "off" || !coneMagK().sym) why = "автоподбор крутит только по магнитным осям симметрии — включи 🧲 соседей";
+  else if (!coneBalanceSearching && b.getClientRects().length) { try { const closed = window.zzBallCenterState ? window.zzBallCenterState().count : 0, Q = coneBalanceData(closed).quarters; if (Q.slice(1).every(q => coneBalanceEqual(q, Q[0]))) why = "все четыре четверти уже равны — подбирать нечего"; } catch (e) { /* баланс не посчитан — не затемняем */ } }
+  b.dataset.lab = "≋ автобаланс"; sfzToolDim(b, why, tip);
+}
+/* v0.076: кнопка вне групп (магниты на оси, балансы) — затемнить и сказать почему; нажатие на .ldim гасит lasDeps (захват) */
+function sfzToolDim(b, why, tip){
+  if (b.classList.contains("ldim") !== !!why) b.classList.toggle("ldim", !!why);
+  if (why) b.dataset.why = why; else delete b.dataset.why;
+  const t = (why ? "⛔ Сейчас не действует: " + why + ".\n\n" : "") + tip;
+  if (b.title !== t) b.title = t; b.setAttribute("aria-label", t);
 }
 function coneBalanceVector(cells, turn){
   const v = Array(8).fill(ZZExact.from(0)), shift = ZZExact.from(turn).sub(coneBalanceAxisTurn());
@@ -7310,10 +7334,13 @@ function coneMagButtonsUi(){
   if(second._sfzMagMode!==bounds || !second.querySelector("svg")){
     second.innerHTML='<svg viewBox="0 0 36 32" width="36" height="32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path fill="currentColor" fill-opacity=".15" d="M4.1 18 A16 16 0 0 1 31.9 18 L26.7 21 A10 10 0 0 0 9.3 21 Z"/><path stroke-width="'+(bounds?'2.6':'1.8')+'" d="M18 26 L1 16.2 M18 26 L35 16.2"/><path opacity="'+(bounds?'.22':'1')+'" d="M18 26 V5"/><text x="16" y="15" fill="currentColor" stroke="none" font-size="6">1</text></svg>';second._sfzMagMode=bounds;
   }
-  for(const [b,on,name] of [[first,mode!=="off","Магнит: "+({both:"оба соседа",in:"внутренний сосед",out:"наружный сосед",off:"нет"}[mode])],[second,bounds,bounds?"Границы: две выделенные грани":"Всё: битовая дуга и три оси"]]){
+  /* v0.076: магниты действуют только при кручении кольца рукой в плоском виде; «границы / всё» — ещё и только при включённых соседях */
+  const flat=!Z.cone3d&&!!coneGeom, w1=flat?"":"магнит — при кручении кольца рукой в плоском виде, в 3D его нет", w2=w1||(mode==="off"?"🧲 соседи выключены — «границы / всё» не к чему привязывать":"");
+  for(const [b,on,name,why] of [[first,mode!=="off","Магнит: "+({both:"оба соседа",in:"внутренний сосед",out:"наружный сосед",off:"нет"}[mode]),w1],[second,bounds,bounds?"Границы: две выделенные грани":"Всё: битовая дуга и три оси",w2]]){
     b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on));
     if(!b._sfzMagHelp)b._sfzMagHelp=b.dataset.zzTip||b.title||"";
-    const text=name+". "+b._sfzMagHelp;b.dataset.zzTip=text;b.setAttribute("aria-label",name);if(Z.tipsOn!==false)b.title=text;
+    const text=(why?"⛔ Сейчас не действует: "+why+".\n\n":"")+name+". "+b._sfzMagHelp;b.dataset.zzTip=text;b.setAttribute("aria-label",name);if(Z.tipsOn!==false)b.title=text;
+    if(b.classList.contains("ldim")!==!!why)b.classList.toggle("ldim",!!why); if(why)b.dataset.why=why; else delete b.dataset.why; b.dataset.lab=b===first?"🧲 соседи":"🧲 границы / всё";
   }
 }
 function coneMagAxisTop(cv){
@@ -13373,6 +13400,7 @@ function paneZig(){
         /* v0.1009: постоянный контур снова светлый, как на прежнем зубчатом крае; фон зубцов сохранён, слой остаётся ниже переднего окна. */
         const sq = (st, sw) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${wq.toFixed(2)}" height="${H}"><polygon points="${zq}" fill="${pc}"/><polyline points="${zq}" fill="none" stroke="${st}" stroke-width="${sw}"/></svg>`)}")`;
         ov.style.setProperty("--pz", sq(edgeLn, 1.5)); ov.style.setProperty("--pzh", sq(acq, 2)); ov.style.backgroundSize = wq.toFixed(2) + "px " + H + "px"; } } }
+  { const fr = document.getElementById("field"), mr = (innerWidth > 760 ? Math.round(pane.getBoundingClientRect().right) : -1) + "|" + document.body.classList.contains("field-right") + "|" + (fr ? Math.round(fr.getBoundingClientRect().left) : ""); if (pane._mr !== mr) { pane._mr = mr; if (window.sfzRowsMenuPlace) window.sfzRowsMenuPlace(); } }   // v0.076: столбик ⇤ · замок · ⟲ · Вид · 01 · + — за краем панели, когда зубцы уже на месте
   const key = ln + "|" + bg; if (pane._zk === key) return; pane._zk = key;
   const t = TZC_H / (2 * Math.sqrt(3)), w = t + 1, zz = `0.5,0 ${(t + 0.5).toFixed(2)},${H / 2} 0.5,${H}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${H}"><polygon points="${zz} ${w + 1},${H} ${w + 1},0" fill="${bg}"/><polyline points="${zz}" fill="none" stroke="${ln}" stroke-width="1"/></svg>`;
