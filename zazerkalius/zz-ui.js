@@ -1326,6 +1326,7 @@ function rowsDomPatch(L, head, rows, tail){
   L._zzRows = { root: L.firstElementChild, head, rows, tail };
 }
 function renderRows(){
+  window.zzZerkaliusFieldChanged?.();
   if (rowEditing >= 0) return;
   if (!renderRows._tv) { renderRows._tv = 1; queueMicrotask(() => { renderRows._tv = 0; triViewSync(); bipyTgUi(); }); }   // v0.788: ▲▼ — после отрисовки поля; v0.791: горят ли ◇ сдвиг / строить
   syncLane();

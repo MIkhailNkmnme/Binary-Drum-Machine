@@ -19,6 +19,19 @@
   function faceRows(rows,limit=160){const n=Math.max(2,Math.min(limit,rows.length));return Array.from({length:n},(_,r)=>Array.from({length:r+1},(_,k)=>String(rows[r]||'')[k]==='1'?1:0));}
   function facePairs(rows,nb){const u=faceRows(rows),d=u.map(row=>row.map(bit=>bit^1));return Array.from({length:nb},()=>({u:u.map(row=>row.slice()),d:d.map(row=>row.slice())}));}
   function axisMove(x,y,dx,dy,angle,width,height){const c=Math.cos(angle),s=Math.sin(angle);let lo=-Infinity,hi=Infinity;for(const [p,d,size] of [[x,c,width],[y,s,height]])if(Math.abs(d)>1e-10){const a=(.01*size-p)/d,b=(.99*size-p)/d;lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}const t=Math.max(lo,Math.min(hi,dx*c+dy*s));return [x+t*c,y+t*s];}
+  function axisFromPoints(p,q,width,height){
+    const dx=q[0]-p[0],dy=q[1]-p[1];if(Math.hypot(dx,dy)<1e-9)return null;
+    const pi=Math.PI,angle=((Math.atan2(dy,dx)%pi)+pi)%pi;
+    return {x:p[0]/width,y:p[1]/height,angle,turnGrip:(dx*Math.cos(angle)+dy*Math.sin(angle))/Math.hypot(width,height)};
+  }
+  function axisRotate(m,delta,width,height,anchor=0){
+    const diag=Math.hypot(width,height),span=m.turnGrip==null?Math.min(width,height)*.18:m.turnGrip*diag;
+    const target=m.angle+delta,pi=Math.PI,angle=((target%pi)+pi)%pi;
+    const nextSpan=Math.cos(target-angle)<0?-span:span;
+    const x=m.x*width+(anchor?span*Math.cos(m.angle)-nextSpan*Math.cos(angle):0);
+    const y=m.y*height+(anchor?span*Math.sin(m.angle)-nextSpan*Math.sin(angle):0);
+    return {x:x/width,y:y/height,angle,turnGrip:nextSpan/diag};
+  }
   function snapAngle(angle,mirrors=[],tolerance=4*Math.PI/180){
     const pi=Math.PI,wrap=a=>((a%pi)+pi)%pi,targets=[0,30,45,60,90,120,135,150].map(d=>d*pi/180);
     for(const m of mirrors)targets.push(wrap(m.angle),wrap(m.angle+pi/2));
@@ -32,6 +45,7 @@
     for(const m of mirrors){const dx=Math.cos(m.angle),dy=Math.sin(m.angle);let lo=-Infinity,hi=Infinity,valid=true;
       for(const [c,d,size] of [[m.x,dx,width],[m.y,dy,height]]){if(Math.abs(d)<1e-10){if(c<0||c>size)valid=false;}else{const a=-c/d,b=(size-c)/d;lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}}
       if(!valid||lo>hi)continue;segments.push({m,dx,dy,lo,hi});anchors.push({point:[m.x,m.y],label:'центр зеркала'});
+      for(const point of m.anchors||[])anchors.push({point,label:'точка оси'});
       for(const [t,label] of [[lo,'конец линии'],[hi,'конец линии'],[(lo+hi)/2,'½ линии'],[(3*lo+hi)/4,'½ половины'],[(lo+3*hi)/4,'½ половины']])anchors.push({point:[m.x+t*dx,m.y+t*dy],label});
     }
     for(let i=0;i<segments.length;i++)for(let j=i+1;j<segments.length;j++){const a=segments[i],b=segments[j],cross=a.dx*b.dy-a.dy*b.dx;if(Math.abs(cross)<1e-10)continue;const t=((b.m.x-a.m.x)*b.dy-(b.m.y-a.m.y)*b.dx)/cross;if(t>=a.lo&&t<=a.hi)anchors.push({point:[a.m.x+t*a.dx,a.m.y+t*a.dy],label:'пересечение линий'});}
@@ -69,6 +83,6 @@
     if(Math.abs(fx(0)-fx(1))>1e-6||Math.abs(fy(0)-fy(1))>1e-6||Math.abs(Math.sin(fa(0)-fa(1)))>1e-6)throw Error('Начало и конец кривой должны совпадать');
     return t=>[fx(t),fy(t),fa(t)];
   }
-  const api={identity,multiply,point,placement,copies,bounds,transformRows,controlColor,faceRows,facePairs,axisMove,snapAngle,snapPosition,expression,compile};
+  const api={identity,multiply,point,placement,copies,bounds,transformRows,controlColor,faceRows,facePairs,axisMove,axisFromPoints,axisRotate,snapAngle,snapPosition,expression,compile};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else window.ZZMirrorScene=api;
 })();

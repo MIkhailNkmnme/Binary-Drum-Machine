@@ -1,3 +1,9 @@
+/* v0.1141, «вдоль оси надо проехать отражение — не даёт» (выбор: «едет только рисунок»): протяжка за линию сдвигает только отражения этого зеркала
+   вдоль оси (скользящее отражение: та же линия, сдвиг рисунка — figureOffset / copyOffsets); квадраты, линия и угол стоят, края поля не мешают — раньше
+   точка 1 упиралась в 1–99 % поля, и отражение дальше не ехало. Магнит в этой протяжке не участвует. */
+/* v0.1138: линия скользит только вдоль себя с обоими квадратами и всеми своими отражениями. */
+/* v0.1137: выключенное зеркало скрывает линию оси, обе точки и подпись. */
+/* v0.1136: линия переносит ось и её рисунок без поворота; горизонт поля виден в зеркалах сразу. */
 /* v0.1132: захват любой кнопки переносит целую гроздь с закреплением в шапке. */
 /* v0.1131: ромбовые кнопки перетаскиваются отдельно; щелчок сохраняет действие. */
 /* v0.1130: зеркальный маятник внутри Зеркалиуса, общие исходные биты, кадры и баланс. */
@@ -14,12 +20,17 @@
   const status = document.getElementById('zerkStatus'), layer = document.getElementById('zerkMirrors');
   const pi = Math.PI, norm = a => ((a % pi) + pi) % pi, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const defaults = () => [
-    {x:.52,y:.48,angle:pi/2,color:'#70e0d7',on:true,spin:false,speed:10,grip:null},
-    {x:.68,y:.52,angle:pi/6,color:'#ffd166',on:true,spin:false,speed:-7,grip:null},
-    {x:.61,y:.70,angle:5*pi/6,color:'#ff735c',on:true,spin:false,speed:5,grip:null}
+    {x:.52,y:.48,angle:pi/2,color:'#70e0d7',on:true,spin:false,speed:10,grip:null,turnGrip:null},
+    {x:.68,y:.52,angle:pi/6,color:'#ffd166',on:true,spin:false,speed:-7,grip:null,turnGrip:null},
+    {x:.61,y:.70,angle:5*pi/6,color:'#ff735c',on:true,spin:false,speed:5,grip:null,turnGrip:null}
   ];
   const state = Z.zerkalius ||= {};
-  if (!['base','serp','field','own','pend'].includes(state.source)) state.source = 'serp';
+  if (!['base','serp','field','own','pend'].includes(state.source)) state.source = 'field';
+  state.followField = state.followField ?? ['base','serp','field'].includes(state.source);
+  if(!state.liveField1136){if(state.source!=='pend'){state.source='field';state.followField=true;}state.liveField1136=true;}
+  state.fieldAxes=Object.assign({on:true,x:.5,y:.5,angle:0},state.fieldAxes||{});
+  if(!state.fieldAxesCentered1133){state.fieldAxes.x=state.fieldAxes.y=.5;state.fieldAxesCentered1133=true;}
+  for(const key of ['x','y','angle'])if(!Number.isFinite(state.fieldAxes[key]))state.fieldAxes[key]=key==='angle'?0:.5;
   if(new URLSearchParams(location.search).get('mayatnik')==='1')state.source='pend';
   state.zero = Number.isFinite(state.zero) ? clamp(state.zero,-60,60) : 0;
   state.one = Number.isFinite(state.one) ? clamp(state.one,-60,60) : 0;
@@ -36,9 +47,14 @@
   state.mirrors = defaults().map((m,i) => {
     const v = old[i] || {};
     for (const k of ['x','y','angle','speed']) if (Number.isFinite(v[k])) m[k] = v[k];
-    m.x=clamp(m.x,.01,.99);m.y=clamp(m.y,.01,.99);m.angle=norm(m.angle);m.speed=clamp(m.speed,-90,90);
+    // Rotation about square 2 can legitimately put square 1 outside the viewport.
+    m.angle=norm(m.angle);m.speed=clamp(m.speed,-90,90);
     if (/^#[0-9a-f]{6}$/i.test(v.color)) m.color=v.color;
     m.grip=Number.isFinite(v.grip)?clamp(v.grip,-2,2):null;
+    m.turnGrip=Number.isFinite(v.turnGrip)&&Math.abs(v.turnGrip)>1e-6?v.turnGrip:null;
+    m.magnetPins=Array.from({length:2},(_,j)=>!!v.magnetPins?.[j]);
+    m.figureOffset=Array.isArray(v.figureOffset)&&v.figureOffset.length===2&&v.figureOffset.every(Number.isFinite)?v.figureOffset.slice():[0,0];
+    m.copyOffsets=Array.from({length:8},(_,mask)=>{const p=v.copyOffsets?.[mask];return Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)?p.slice():[0,0];});
     m.gripAngle=m.angle;
     m.on=v.on!==false;m.spin=!!v.spin;m.along=!!v.along;m.mode=['direct','inv','reverse','both'].includes(v.mode)?v.mode:'direct';m.path=v.path&&typeof v.path==='object'?v.path:{kind:'ellipse',period:12,phase:0,ampX:.12,ampY:.08,orient:'fixed',swing:30,fx:'cos(tau*t)',fy:'sin(tau*t)',fa:'0',enabled:false,elapsed:0};return m;
   });
@@ -77,10 +93,36 @@
   const button = (text, title, action, parent) => { const b=document.createElement('button');b.type='button';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.onclick=action;parent.append(b);return b; };
   const changed = (redrawBase=false) => { notice='';if(redrawBase)dirty=true;persist();request(); };
   const notify = message => { notice=message;status.textContent=message; };
-  const motionSnap=which=>which.batch?{batch:which.batch.map(motionSnap)}:which.source!==undefined?{source:which.source,offset:state.sourceOffsets[which.source].slice()}:which.mirror!==undefined?{mirror:which.mirror,values:Object.fromEntries(['x','y','angle','grip','gripAngle'].map(key=>[key,state.mirrors[which.mirror][key]]))}:{camera:{pan:state.pan.slice(),zoom:state.zoom,angle:state.viewAngle}};
+  const axisPinned=m=>m.magnetPins.some(Boolean);
+  const axisLocked=m=>m.magnetPins.every(Boolean);
+  const turnMirror=(m,delta,anchor=m.magnetPins[1]?1:0)=>Object.assign(m,sceneMath.axisRotate(m,delta,drawW,drawH,anchor));
+  function allowTurn(m){if(!axisLocked(m))return true;notify('Обе точки закреплены: двойной щелчок по квадрату снимает его привязку');request();return false;}
+  function allowPath(m){if(!axisPinned(m))return true;notify('Движение по кривой переносит обе точки: сначала сними привязки двойным щелчком по квадратам');request();return false;}
+  const motionSnap=which=>which.batch?{batch:which.batch.map(motionSnap)}:which.fieldAxes?{fieldAxes:{...state.fieldAxes}}:which.source!==undefined?{source:which.source,offset:state.sourceOffsets[which.source].slice()}:which.mirror!==undefined?{mirror:which.mirror,values:{...Object.fromEntries(['x','y','angle','grip','gripAngle','turnGrip'].map(key=>[key,state.mirrors[which.mirror][key]])),magnetPins:state.mirrors[which.mirror].magnetPins.slice(),figureOffset:state.mirrors[which.mirror].figureOffset.slice(),copyOffsets:state.mirrors[which.mirror].copyOffsets.map(p=>p.slice())}}:{camera:{pan:state.pan.slice(),zoom:state.zoom,angle:state.viewAngle}};
+  function translateMirror(m,before,x,y){
+    const dx=(x-before.x)*drawW,dy=(y-before.y)*drawH,a=before.angle,c=Math.cos(a),s=Math.sin(a),diag=Math.hypot(drawW,drawH),offset=before.figureOffset||[0,0];
+    Object.assign(m,{x,y,angle:a,grip:before.grip,gripAngle:before.gripAngle,turnGrip:before.turnGrip});
+    m.figureOffset=[offset[0]+(dx*c+dy*s)/diag,offset[1]+(dx*s-dy*c)/diag];
+    const index=state.mirrors.indexOf(m);
+    m.copyOffsets=Array.from({length:8},(_,mask)=>{const old=before.copyOffsets?.[mask]||[0,0];if(!(mask&(1<<index)))return old.slice();
+      let tx=dx,ty=dy;
+      for(let j=index+1;j<state.mirrors.length;j++)if(mask&(1<<j)){const angle=state.mirrors[j].angle,c2=Math.cos(2*angle),s2=Math.sin(2*angle),nx=c2*tx+s2*ty;ty=s2*tx-c2*ty;tx=nx;}
+      const ox=dx-tx,oy=dy-ty;return [old[0]+(ox*c+oy*s)/diag,old[1]+(-ox*s+oy*c)/diag];
+    });
+  }
+  function reflectedCopies(){
+    let copies=[{matrix:[1,0,0,1,0,0],mask:0}];
+    state.mirrors.forEach((m,i)=>{if(!m.on)return;const matrix=ZZMirrorGeometry.matrix(m.x*drawW,m.y*drawH,m.angle),c=Math.cos(m.angle),s=Math.sin(m.angle),diag=Math.hypot(drawW,drawH),[x,y]=m.figureOffset;
+      matrix[4]+=diag*(x*c-y*s);matrix[5]+=diag*(x*s+y*c);
+      copies=copies.concat(copies.map(copy=>({matrix:sceneMath.multiply(matrix,copy.matrix),mask:copy.mask|(1<<i)})));
+    });
+    for(const copy of copies)state.mirrors.forEach((m,i)=>{if(!(copy.mask&(1<<i)))return;const [x,y]=m.copyOffsets[copy.mask],c=Math.cos(m.angle),s=Math.sin(m.angle),diag=Math.hypot(drawW,drawH);copy.matrix[4]+=diag*(x*c-y*s);copy.matrix[5]+=diag*(x*s+y*c);});
+    return copies;
+  }
   window.zzZerkaliusSnap=motionSnap;
   window.zzZerkaliusApply=step=>{
     if(step.batch){step.batch.forEach(window.zzZerkaliusApply);return;}
+    if(step.fieldAxes){Object.assign(state.fieldAxes,step.fieldAxes);changed();return;}
     if(step.source!==undefined){state.sourceOffsets[step.source]=step.offset.slice();changed();return;}
     if(step.mirror!==undefined){const m=state.mirrors[step.mirror],c=controls[step.mirror];Object.assign(m,step.values);stopPath(m);m.spin=false;c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');}
     else{state.pan=step.camera.pan.slice();state.zoom=step.camera.zoom;state.viewAngle=step.camera.angle||0;}
@@ -101,23 +143,30 @@
   }
   const plateSetup=el=>{
     const c=SOL_PLATES[el.id];
-    const hd=el.querySelector('.smh');hd.title='Тяни шапку к верхней или нижней полосе — закрепить на месте броска; обратно на холст — открепить; − / + — свернуть';
+    const hd=el.querySelector('.smh');hd.title='Тяни гроздь правой кнопкой за любой ромб; шапку можно тянуть любой кнопкой. К верхней или нижней полосе — закрепить; обратно на холст — открепить; − / + — свернуть';
     el.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();plateFoldToggle(el);};
     el.addEventListener('click',e=>{if(e.detail!==0&&performance.now()<(el._solDragUntil||0)){e.preventDefault();e.stopImmediatePropagation();}},true);
     el.addEventListener('pointerdown',e=>{
       const diamond=e.target.closest('.zerk-diamond'),head=e.target.closest('.smh');
-      if(e.button!==0||(!diamond&&!head)||e.target.closest('input[type=range],input[type=number],select,textarea')||(!diamond&&e.target.closest('button,input,label')))return;
+      if(![0,2].includes(e.button)||(!diamond&&!head)||e.target.closest('input[type=range],input[type=number],select,textarea')||(!diamond&&e.target.closest('button,input,label')))return;
       el._solDragUntil=0;const handle=diamond||hd;e.stopPropagation();
       const start=[e.clientX,e.clientY],r0=el.getBoundingClientRect();let moved=false;
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-start[0],ev.clientY-start[1])<4)return;
         ev.preventDefault();ev.stopPropagation();el._solDragUntil=performance.now()+400;
         if(!moved){moved=true;handle.setPointerCapture(e.pointerId);if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];handle.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
         const [x,y]=plateSnap(el,r0,ev.clientX-start[0],ev.clientY-start[1]),host=stage.getBoundingClientRect();
-        Z[c.xy]=[x-host.left,y-host.top];c.place(el);window.zzPanelLinkSync?.();if(el._zerkDock){const target=dockTarget(ev);win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',target==='top');footerDock.classList.toggle('zerk-dock-target',target==='bottom');}};
+        /* v0.1141, «подтупливает при занесении в верхнюю полоску»: холст режет всё за своим краем, и гроздь, поднесённая к полосе, прижималась к его верху и
+           стояла, пока не отпустишь. Теперь над полосой она сразу встаёт в неё и едет за указателем; ушёл с полосы — снова на холсте. */
+        const target=el._zerkDock?dockTarget(ev):null;
+        if(target){const dock=target==='bottom'?footerDock:headerDock;if(el.parentElement!==dock){dock.append(el);el.classList.add('zerk-docked');try{handle.setPointerCapture(e.pointerId);}catch(_){}}
+          const d=dock.getBoundingClientRect();el.style.left=clamp(r0.left+ev.clientX-start[0]-d.left,0,Math.max(0,dock.clientWidth-el.offsetWidth))+'px';el.style.top='0px';}
+        else{if(el._zerkDock&&el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');try{handle.setPointerCapture(e.pointerId);}catch(_){}}Z[c.xy]=[x-host.left,y-host.top];c.place(el);}
+        window.zzPanelLinkSync?.();if(el._zerkDock){win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',target==='top');footerDock.classList.toggle('zerk-dock-target',target==='bottom');}};
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);
-        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
+        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}else if(el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');c.place(el);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
       document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
     },true);
+    el.addEventListener('contextmenu',e=>{if(e.target.closest('.zerk-diamond,.smh')){e.preventDefault();e.stopPropagation();}},true);
   };
   SOL_PLATES.zerkTools={name:'Зеркалиус · три зеркала',min:'zerkToolsMin',xy:'zerkToolsXY',col:'#70e0d7',place:placeTools,init:plateSetup};
   plateInit(tools);
@@ -143,7 +192,7 @@
   button('TXT / JSON','Загрузить свои строки из TXT или JSON',()=>file.click(),ownActions);
   file.onchange=async()=>{const f=file.files[0];if(!f)return;try{useOwn(await f.text());}catch(e){notify('Не удалось прочитать файл: '+e.message);}file.value='';};
   body.append(own);
-  source.onchange=()=>{state.source=source.value;pendPlaying=false;pendClock=0;if(state.source==='pend'){pendEngine();state.build='axes';}own.hidden=state.source!=='own';changed(true);plateZig(tools,'#70e0d7');placeTools(tools);};
+  source.onchange=()=>{state.source=source.value;state.followField=state.source==='field';pendPlaying=false;pendClock=0;if(state.source==='pend'){pendEngine();state.build='axes';}own.hidden=state.source!=='own';changed(true);plateZig(tools,'#70e0d7');placeTools(tools);};
   const actions=document.createElement('div');actions.className='zerk-row';body.append(actions);
   button('Поле → свои','Скопировать текущие строки поля в свои строки',()=>useOwn(Z.rows.join('\n')),actions);
   button('В поле','Перенести исходные строки выбранного узора в поле; ↩ отменяет',()=>{
@@ -158,45 +207,65 @@
     const on=document.createElement('input');on.type='checkbox';on.checked=m.on;on.setAttribute('aria-label','Зеркало '+(i+1)+' включено');
     const label=document.createElement('label');label.className='zerk-label';label.append(on,document.createTextNode('Зеркало '+(i+1)));row.append(label);
     const color=document.createElement('input');color.type='color';color.value=m.color;color.setAttribute('aria-label','Цвет зеркала '+(i+1));row.append(color);
-    const spin=button(m.spin?'Ⅱ':'▶','Вращать зеркало '+(i+1),()=>{stopPath(m);m.spin=!m.spin;spin.textContent=m.spin?'Ⅱ':'▶';spin.setAttribute('aria-pressed',String(m.spin));changed();},row);spin.className='zerk-auto';spin.setAttribute('aria-pressed',String(m.spin));
+    const spin=button(m.spin?'Ⅱ':'▶','Вращать зеркало '+(i+1),()=>{if(!allowTurn(m))return;stopPath(m);m.spin=!m.spin;spin.textContent=m.spin?'Ⅱ':'▶';spin.setAttribute('aria-pressed',String(m.spin));changed();},row);spin.className='zerk-auto';spin.setAttribute('aria-pressed',String(m.spin));
     const speed=document.createElement('input');speed.type='number';speed.min='-90';speed.max='90';speed.step='1';speed.value=m.speed;speed.setAttribute('aria-label','Скорость зеркала '+(i+1)+' в градусах в секунду');row.append(speed,document.createTextNode('°/с'));
     const angleRow=document.createElement('label'), wrap=document.createElement('span');wrap.className='zerk-range range-with-arrows';
     const angle=document.createElement('input');angle.type='range';angle.min='0';angle.max='179';angle.step='1';angle.value=Math.round(m.angle*180/pi)%180;angle.setAttribute('aria-label','Угол зеркала '+(i+1));angle.dataset.noSlider='true';
     const output=document.createElement('output');output.className='zerk-angle';output.textContent=angle.value+'°';
     const pause=()=>{stopPath(m);m.spin=false;spin.textContent='▶';spin.setAttribute('aria-pressed','false');};
-    const rotate=(delta,group=false)=>motionStep({mirror:i},()=>{pause();m.angle=norm(m.angle+delta*pi/180);changed();},group?'turn'+i:null);
+    const rotate=(delta,group=false,anchor)=>{if(anchor===undefined&&!allowTurn(m))return;motionStep({mirror:i},()=>{pause();turnMirror(m,delta*pi/180,anchor);if(anchor!==undefined)m.magnetPins[1-anchor]=false;changed();},group?'turn'+i:null);};
     button('◂','Повернуть зеркало '+(i+1)+' на −5°',()=>rotate(-5),wrap);wrap.append(angle);button('▸','Повернуть зеркало '+(i+1)+' на +5°',()=>rotate(5),wrap);
     angleRow.append(wrap,output);section.append(angleRow);body.append(section);
     on.onchange=()=>{const active=state.mirrors.some(v=>v.on&&(v.spin||v.path.enabled));m.on=on.checked;if(!m.on){m.spin=false;m.path.enabled=false;}else if(active)m.spin=true;changed();};color.oninput=()=>{m.color=color.value;state.palette='custom';section.style.setProperty('--mirror-color',m.color);changed();};
     speed.onchange=()=>{m.speed=clamp(Number(speed.value)||0,-90,90);speed.value=m.speed;changed();};
-    angle.oninput=()=>motionStep({mirror:i},()=>{pause();m.angle=Number(angle.value)*pi/180;changed();},'angle'+i);
+    angle.oninput=()=>{if(!allowTurn(m))return;motionStep({mirror:i},()=>{pause();turnMirror(m,Number(angle.value)*pi/180-m.angle);changed();},'angle'+i);};
     controls.push({angle,output,spin,on,color,speed,section});
     const line=document.createElement('div');line.className='zerk-mirror';line.dataset.mirror=String(i+1);
     const center=document.createElement('button');center.type='button';center.className='zerk-center';center.textContent=i+1;center.setAttribute('aria-label','Переместить зеркало '+(i+1));
-    const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1)+' в поле');const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за любое место оси');line.append(center,turn);layer.prepend(axis);layer.append(line);handles.push({line,center,turn,axis});
-    for(const [node,rotateMode] of [[center,false],[turn,true],[axis,false]]){
-      node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб или ось — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
-      if(node===axis)node.title='Тяни в любом месте оси — перенести зеркало; по битам — захватить все фигуры под курсором; Alt — временно без магнита';
+    const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='2';turn.setAttribute('aria-label','Вторая точка оси зеркала '+(i+1));
+    const pivot=document.createElement('button');pivot.type='button';pivot.className='zerk-turn zerk-pivot';pivot.textContent='1';pivot.setAttribute('aria-label','Опорная точка оси зеркала '+(i+1));
+    const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за любое место оси');line.append(center,pivot,turn);layer.prepend(axis);layer.append(line);handles.push({line,center,pivot,turn,axis});
+    for(const [node,index] of [[pivot,0],[turn,1]]){
+      node.title='Квадрат '+(index+1)+': тяни — изменить угол, противоположный квадрат неподвижен; правая протяжка — вдоль оси. Колесо или стрелки — поворот вокруг противоположного квадрата. Двойной щелчок — снять привязку этого квадрата; Alt — тянуть без магнита';
+      node.ondblclick=e=>{e.preventDefault();e.stopPropagation();motionStep({mirror:i},()=>{m.magnetPins[index]=false;notify('Привязка квадрата '+(index+1)+' зеркала '+(i+1)+' снята');changed();});};
+      node.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();};
+      node.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();rotate(Math.sign(e.deltaY)*5,true,1-index);},{passive:false});
+      node.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();rotate(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5,false,1-index);};
       node.addEventListener('pointerdown',e=>{
-        if(e.button!==0)return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),turning=rotateMode||(node===axis&&state.axisRotate),targets=magnetBits();
-        (turning?turn:axis).focus({preventScroll:true});line.classList.add('grabbing');node.setPointerCapture(e.pointerId);
-        const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,p=viewPoint(x,y),cx=r.left+p[0],cy=r.top+p[1],start=Math.atan2(sy-cy,sx-cx);let moved=false;
-        const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;stopPath(m);
-          const magnetic=state.magnet&&!ev.altKey,others=state.mirrors.filter(other=>other!==m&&other.on);let snapped=false;snapHint='';
-          if(turning){const raw=norm(a+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=magnetic?sceneMath.snapAngle(raw,others):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
-          else{const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);if(m.along){m.spin=false;m.angle=a;}m.x=clamp(x+dx/drawW,.01,.99);m.y=clamp(y+dy/drawH,.01,.99);
-            if(m.along){const p=sceneMath.axisMove(x*drawW,y*drawH,dx,dy,a,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}
-            if(magnetic){const z=state.zoom,result=magneticPosition(m.x*drawW,m.y*drawH,others,z,targets,m.along?{x:x*drawW,y:y*drawH,angle:a}:null);
-              if(!m.along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
-          line.classList.toggle('snapped',snapped);changed();};
-        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped','grabbing');snapHint='';if(!moved&&turning&&ev.type==='pointerup')rotate(15);else{if(moved)pushMotion(before);persist();request();}};
+        if(![0,2].includes(e.button))return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),sx=e.clientX,sy=e.clientY,a=m.angle,diag=Math.hypot(drawW,drawH),span=m.turnGrip===null?Math.min(drawW,drawH)*.18:m.turnGrip*diag;
+        const points=[[m.x*drawW,m.y*drawH],[m.x*drawW+span*Math.cos(a),m.y*drawH+span*Math.sin(a)]],base=points[index],fixed=points[1-index],targets=magnetBits(i);let moved=false;node.setPointerCapture(e.pointerId);
+        const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;pause();const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy),along=e.button===2&&!ev.shiftKey;
+          let p=along?[base[0]+(dx*Math.cos(a)+dy*Math.sin(a))*Math.cos(a),base[1]+(dx*Math.cos(a)+dy*Math.sin(a))*Math.sin(a)]:[base[0]+dx,base[1]+dy],pinned=false;snapHint='';
+          if(state.magnet&&!ev.altKey){const others=state.mirrors.filter(o=>o!==m&&o.on),anchors=others.concat(along?[{x:fixed[0]/drawW,y:fixed[1]/drawH,angle:a}]:[]),result=magneticPosition(...p,anchors,state.zoom,targets,along?{x:fixed[0],y:fixed[1],angle:a}:null);p=[result.x/state.zoom,result.y/state.zoom];pinned=!!result.snapped;snapHint=result.snapped?result.label:'';line.classList.toggle('snapped',pinned);}
+          if(Math.hypot(p[0]-fixed[0],p[1]-fixed[1])*state.zoom>=12){const next=sceneMath.axisFromPoints(index?fixed:p,index?p:fixed,drawW,drawH);if(next){Object.assign(m,next);m.magnetPins[index]=pinned;}}changed();};
+        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);if(ev.type==='pointercancel')Object.assign(m,before.values);else if(moved)pushMotion(before);line.classList.remove('snapped');snapHint='';changed();};
         node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
       });
-      node.oncontextmenu=e=>{e.preventDefault();m.on=!m.on;on.checked=m.on;changed();};
+    }
+    for(const [node,rotateMode] of [[center,false],[axis,false]]){
+      node.title=(rotateMode?'Тяни ручку — поворот; колесо или ← → — шаг 5°':'Тяни ромб или ось — перенести зеркало; стрелки — сдвиг; правый щелчок — включить / выключить')+'; Alt — временно без магнита';
+      if(node===axis)node.title='Тяни линию — отражение едет вдоль оси, квадраты, линия и угол стоят на месте; отдельный квадратик — изменить угол';
+      node.addEventListener('pointerdown',e=>{
+        if(e.button!==0)return;e.preventDefault();e.stopPropagation();const before=motionSnap({mirror:i}),turning=rotateMode,along=node===axis||m.along,glide=node===axis&&!turning,targets=magnetBits(i);
+        (turning?turn:axis).focus({preventScroll:true});line.classList.add('grabbing');node.setPointerCapture(e.pointerId);
+        const r=stage.getBoundingClientRect(), sx=e.clientX,sy=e.clientY,x=m.x,y=m.y,a=m.angle,p=viewPoint(x,y),cx=r.left+p[0],cy=r.top+p[1],start=Math.atan2(sy-cy,sx-cx);let moved=false;
+        const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;pause();
+          const magnetic=state.magnet&&!ev.altKey,others=state.mirrors.filter(other=>other!==m&&other.on);let snapped=false;snapHint='';
+          if(turning){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy),raw=norm(a+(Math.hypot(sx-cx,sy-cy)<24?(-dx*Math.sin(a)+dy*Math.cos(a))/80:Math.atan2(ev.clientY-cy,ev.clientX-cx)-start)),result=magnetic?sceneMath.snapAngle(raw,others.concat(fieldAxisTargets())):{angle:raw};m.angle=result.angle;snapped=!!result.snapped;snapHint=snapped?result.label:'';m.spin=false;controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');}
+          else if(glide){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy),t=dx*Math.cos(a)+dy*Math.sin(a);translateMirror(m,before.values,x+t*Math.cos(a)/drawW,y+t*Math.sin(a)/drawH);m.x=x;m.y=y;}
+          else{const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);m.x=clamp(x+dx/drawW,.01,.99);m.y=clamp(y+dy/drawH,.01,.99);
+            if(along){const p=sceneMath.axisMove(x*drawW,y*drawH,dx,dy,a,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}
+            if(magnetic){const z=state.zoom,result=magneticPosition(m.x*drawW,m.y*drawH,others,z,targets,along?{x:x*drawW,y:y*drawH,angle:a}:null);
+              if(!along||Math.abs((result.x/z-x*drawW)*Math.sin(a)-(result.y/z-y*drawH)*Math.cos(a))<1e-6){m.x=result.x/(drawW*z);m.y=result.y/(drawH*z);snapped=result.snapped;snapHint=snapped?result.label:'';}}}
+          if(!turning&&!glide)translateMirror(m,before.values,m.x,m.y);m.magnetPins=before.values.magnetPins.slice();if(Math.hypot((m.x-x)*drawW,(m.y-y)*drawH)>1e-9)m.magnetPins=[snapped,false];line.classList.toggle('snapped',snapped);changed();};
+        const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);line.classList.remove('snapped','grabbing');snapHint='';if(ev.type==='pointercancel'){Object.assign(m,before.values);changed();}else if(!moved&&turning)rotate(15);else{if(moved)pushMotion(before);persist();request();}};
+        node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
+      });
+      node.oncontextmenu=e=>{e.preventDefault();if(node===turn)return;m.on=!m.on;on.checked=m.on;changed();};
       node.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();
         if(rotateMode)rotate(e.key==='ArrowLeft'||e.key==='ArrowDown'?-5:5);
-        else{const before=motionSnap({mirror:i});stopPath(m);const step=e.shiftKey?20:4,[dx,dy]=worldDelta(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0,e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0);
-          if(m.along){const p=sceneMath.axisMove(m.x*drawW,m.y*drawH,dx,dy,m.angle,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}else{m.x=clamp(m.x+dx/drawW,.01,.99);m.y=clamp(m.y+dy/drawH,.01,.99);}changed();pushMotion(before);}};
+        else{const before=motionSnap({mirror:i});pause();const step=e.shiftKey?20:4,[dx,dy]=worldDelta(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0,e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0);
+          if(node===axis||m.along){const p=sceneMath.axisMove(m.x*drawW,m.y*drawH,dx,dy,m.angle,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}else{m.x=clamp(m.x+dx/drawW,.01,.99);m.y=clamp(m.y+dy/drawH,.01,.99);}translateMirror(m,before.values,m.x,m.y);if(Math.hypot((m.x-before.values.x)*drawW,(m.y-before.values.y)*drawH)>1e-9)m.magnetPins=[false,false];changed();pushMotion(before);}};
       if(rotateMode)node.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();rotate(Math.sign(e.deltaY)*5,true);},{passive:false});
     }
   }
@@ -207,7 +276,7 @@
     button('◂',caption+': −1°',()=>step(-1),wrap);wrap.append(input);button('▸',caption+': +1°',()=>step(1),wrap);
   }
   for(const [key,caption] of [['tint','Цветные отражения'],['trace','Отрезки битов: 1 ↘, 0 ↗']]){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=state[key];input.setAttribute('aria-label',caption);input.title=key==='trace'?'Короткий отрезок внутри ячейки: 1 — наклон вправо вниз, 0 — вправо вверх':caption;label.append(input,document.createTextNode(caption));body.append(label);input.onchange=()=>{state[key]=input.checked;changed(key==='trace');};}
-  button('Вернуть три зеркала','Вернуть начальные положения трёх зеркал',()=>{defaults().forEach((m,i)=>{stopPath(state.mirrors[i]);Object.assign(state.mirrors[i],m,{mode:'direct'});});state.mirrors.forEach((m,i)=>{Object.assign(controls[i].on,{checked:m.on});controls[i].color.value=m.color;controls[i].speed.value=m.speed;controls[i].section.style.setProperty('--mirror-color',m.color);controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');});changed();},body);
+  button('Вернуть три зеркала','Вернуть начальные положения трёх зеркал',()=>{defaults().forEach((m,i)=>{stopPath(state.mirrors[i]);Object.assign(state.mirrors[i],m,{mode:'direct',figureOffset:[0,0],copyOffsets:Array.from({length:8},()=>[0,0]),magnetPins:[false,false]});});state.mirrors.forEach((m,i)=>{Object.assign(controls[i].on,{checked:m.on});controls[i].color.value=m.color;controls[i].speed.value=m.speed;controls[i].section.style.setProperty('--mirror-color',m.color);controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');});changed();},body);
   const groups=[], compactUpdates=[];
   delete state.buttonPositions; // v0.1132: layout belongs to whole grapes.
   function resetGroups(){
@@ -259,19 +328,19 @@
     c.on.closest('label').remove();head.querySelector('.pminbtn').remove();head.parentElement._zerkHeaderAction=()=>number.click();head.removeAttribute('role');head.removeAttribute('tabindex');
     compactUpdates.push(()=>{number.setAttribute('aria-pressed',String(m.on));number.title='Ось '+(i+1)+(m.on?' включена — выключить':' выключена — включить');plateFoldToggle(group.parentElement,!m.on,true);});
     const swatch=document.createElement('label');swatch.setAttribute('aria-label','Выбор цвета зеркала '+(i+1));const textColor=document.createElement('span');textColor.textContent='●\nцвет';swatch.append(c.color,textColor);diamond(swatch,'',group);
-    const rotate=sign=>motionStep({mirror:i},()=>{stopPath(m);m.spin=false;m.angle=norm(m.angle+sign*pi/180);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();});
+    const rotate=sign=>{if(!allowTurn(m))return;motionStep({mirror:i},()=>{stopPath(m);m.spin=false;turnMirror(m,sign*pi/180);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();});};
     splitDiamond('Угол зеркала '+(i+1),()=>Math.round(norm(m.angle)*180/pi)%180+'°',rotate,group);
     c.spin.remove();
     splitDiamond('Скорость зеркала '+(i+1),()=>m.speed+'\n°/с',sign=>{m.speed=clamp(m.speed+sign,-90,90);c.speed.value=m.speed;changed();},group);
     const speedWrap=document.createElement('span');speedWrap.className='zerk-header-speed range-with-arrows';
-    const speedSlider=document.createElement('input');speedSlider.type='range';speedSlider.min=-90;speedSlider.max=90;speedSlider.step=1;speedSlider.value=m.speed;speedSlider.setAttribute('aria-label','Ползунок скорости зеркала '+(i+1));speedWrap.append(speedSlider);head.append(speedWrap);
+    const speedSlider=document.createElement('input');speedSlider.type='range';speedSlider.min=-90;speedSlider.max=90;speedSlider.step=1;speedSlider.value=m.speed;speedSlider.setAttribute('aria-label','Ползунок скорости зеркала '+(i+1));speedWrap.append(speedSlider);group.parentElement.append(speedWrap);   // v0.1141: бегунок — не в шапке, а вдоль граней шапки и первого ромба; при сворачивании остаётся
     speedSlider.oninput=()=>{m.speed=Number(speedSlider.value);c.speed.value=m.speed;changed();};speedSlider.addEventListener('pointerdown',e=>e.stopPropagation());speedSlider.addEventListener('click',e=>e.stopPropagation());
     const modes=['direct','inv','reverse','both'],captions=['→\nпрям','¬\nинв','⇄\nрев','¬⇄\nоба'];
     const modeNode=splitDiamond('Режим зеркала '+(i+1),()=>captions[modes.indexOf(m.mode)],sign=>{m.mode=modes[(modes.indexOf(m.mode)+sign+4)%4];changed();},group);
     modeNode.classList.add('is-selected');
     compactUpdates.push(()=>{modeNode.setAttribute('aria-label','Режим зеркала '+(i+1)+': '+({direct:'прямой',inv:'инверсия',reverse:'реверс',both:'инверсия и реверс'})[m.mode]);});
     buildPathEditor(m,i,group);c.section.remove();
-    let along;along=button('↔\nось','Перетаскивать зеркало '+(i+1)+' только вдоль его оси',()=>{m.along=!m.along;changed();},group);diamond(along,'↔\nось',group);along.style.left='48px';along.style.top='96px';group.style.setProperty('--grape-height','144px');
+    let along;along=button('↔\nось','Захват за биты зеркала '+(i+1)+': движение только вдоль оси; захват за линию всегда движется вдоль неё',()=>{m.along=!m.along;changed();},group);diamond(along,'↔\nось',group);along.style.left='48px';along.style.top='96px';group.style.setProperty('--grape-height','144px');
     compactUpdates.push(()=>{along.classList.toggle('on',!!m.along);along.setAttribute('aria-pressed',String(!!m.along));});
     compactUpdates.push(()=>{group.parentElement.style.setProperty('--mirror-color',m.color);group.parentElement.style.setProperty('--control-color',sceneMath.controlColor(m.color));speedSlider.value=m.speed;c.spin.classList.toggle('on',m.spin);c.spin.textContent=m.spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(m.spin));});
   });
@@ -297,7 +366,7 @@
   canvasRotation.tabIndex=0;canvasRotation.setAttribute('role','slider');canvasRotation.setAttribute('aria-label','Поворот холста на 360 градусов');canvasRotation.setAttribute('aria-valuemin','0');canvasRotation.setAttribute('aria-valuemax','359');compactUpdates.push(()=>canvasRotation.setAttribute('aria-valuenow',String(state.viewAngle)));
   const turnCanvas=delta=>motionStep({},()=>{state.viewAngle=(state.viewAngle+delta+360)%360;changed();},'canvas-turn');
   canvasRotation.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();turnCanvas(Math.sign(e.deltaY)*5);},{passive:false});canvasRotation.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();e.stopPropagation();if(e.key==='Home'||e.key==='End')motionStep({},()=>{state.viewAngle=e.key==='Home'?0:359;changed();});else turnCanvas((e.key==='ArrowLeft'?-1:1)*(e.shiftKey?15:1));};
-  const axisToggle=button('⟳\nось','Вращать оси зеркал за линию вместо переноса',()=>{state.axisRotate=!state.axisRotate;changed();},viewGroup);diamond(axisToggle,'⟳\nось',viewGroup);axisToggle.style.left='48px';axisToggle.style.top='216px';viewGroup.style.setProperty('--grape-height','264px');compactUpdates.push(()=>{axisToggle.classList.toggle('on',!!state.axisRotate);axisToggle.setAttribute('aria-pressed',String(!!state.axisRotate));});
+  state.axisRotate=false;
   const annotations=document.createElement('div');annotations.className='zerk-annotations';annotations.hidden=!state.labels;stage.append(annotations);
   const annotationNodes=Array.from({length:6},()=>{const el=document.createElement('span');el.className='zerk-annotation';annotations.append(el);return el;});
   tools.hidden=true;tools.querySelector('.pminbtn').textContent='×';tools.querySelector('.pminbtn').setAttribute('aria-label','Закрыть настройку');tools.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();tools.hidden=true;};
@@ -315,7 +384,7 @@
   state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,1000);
   const transport=document.createElement('div');transport.id='zerkMotion';transport.setAttribute('aria-label','Общий пуск включённых осей');stage.append(transport);
   const motionRange=document.createElement('input');motionRange.type='range';motionRange.dataset.zerkArrowed='1';motionRange.min=0;motionRange.max=401;motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-label','Множитель общей скорости включённых осей');transport.append(motionRange);
-  const motionPlay=button('▶','Запустить / остановить все включённые оси',()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));if(active){pausedMotion=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}else{state.mirrors.forEach((m,i)=>{if(!m.on)return;if(pausedMotion?.[i]?.path)m.path.enabled=true;else m.spin=true;});pausedMotion=null;}previous=0;changed();},transport);
+  const motionPlay=button('▶','Запустить / остановить все включённые оси',()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));if(active){pausedMotion=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}else{const available=state.mirrors.filter(m=>m.on&&!axisLocked(m));if(!available.length){const m=state.mirrors.find(m=>m.on);if(m)allowTurn(m);return;}state.mirrors.forEach((m,i)=>{if(!m.on||axisLocked(m))return;if(pausedMotion?.[i]?.path&&!axisPinned(m))m.path.enabled=true;else m.spin=true;});pausedMotion=null;}previous=0;changed();},transport);
   const motionValue=document.createElement('output');motionValue.setAttribute('aria-label','Общая скорость осей');transport.append(motionValue);
   motionRange.oninput=()=>{state.motionRate=motionRateFromStep(Number(motionRange.value));changed();};
   motionValue.title='Двойной щелчок — общая скорость ×1';motionValue.ondblclick=()=>{state.motionRate=1;changed();};
@@ -328,14 +397,34 @@
   const viewMatrix=()=>{const a=state.viewAngle*pi/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom;return [c,s,-s,c,drawW*(.5+state.pan[0])-c*drawW/2+s*drawH/2,drawH*(.5+state.pan[1])-s*drawW/2-c*drawH/2];};
   const viewPoint=(x,y)=>sceneMath.point(viewMatrix(),x*drawW,y*drawH);
   const worldPoint=(x,y)=>{const p=worldDelta(x-drawW*(.5+state.pan[0]),y-drawH*(.5+state.pan[1]));return [p[0]+drawW/2,p[1]+drawH/2];};
+  // Пунктирный крест и вращение за ось — из coneBalanceAxesPaint/Bind Синхрофазотрона.
+  function fieldAxisTargets(){const f=state.fieldAxes;return f.on?[0,pi/2].map(a=>({x:f.x,y:f.y,angle:f.angle+a})):[];}
+  const fieldAxesToggle=button('✛\nполе','Оси поля как в Синхрофазотроне: показать / скрыть',()=>{state.fieldAxes.on=!state.fieldAxes.on;changed();},viewGroup);
+  diamond(fieldAxesToggle,'✛\nполе',viewGroup);fieldAxesToggle.style.left='48px';fieldAxesToggle.style.top='264px';viewGroup.style.setProperty('--grape-height','312px');
+  compactUpdates.push(()=>{fieldAxesToggle.classList.toggle('on',state.fieldAxes.on);fieldAxesToggle.setAttribute('aria-pressed',String(state.fieldAxes.on));});
+  const fieldAxisNodes=[0,1].map(i=>{const node=document.createElement('span');node.className='zerk-axis zerk-field-axis';node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',i?'Вертикальная ось поля':'Горизонтальная ось поля');node.title='Левая протяжка — повернуть крест; правая — перенести центр. Магнит к битам и осям зеркал; Alt — без магнита; двойной щелчок — начальные оси';layer.prepend(node);
+    node.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();};node.ondblclick=e=>{e.preventDefault();e.stopPropagation();motionStep({fieldAxes:true},()=>{Object.assign(state.fieldAxes,{x:.5,y:.5,angle:0});changed();});};
+    node.addEventListener('pointerdown',e=>{if(![0,2].includes(e.button))return;e.preventDefault();e.stopPropagation();const before=motionSnap({fieldAxes:true}),f=state.fieldAxes,sx=e.clientX,sy=e.clientY,p=viewPoint(f.x,f.y),r=stage.getBoundingClientRect(),cx=r.left+p[0],cy=r.top+p[1],start=Math.atan2(sy-cy,sx-cx),targets=magnetBits();let moved=false;node.setPointerCapture(e.pointerId);
+      const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<3)return;moved=true;snapHint='';const b=before.fieldAxes;
+        if(e.button===2){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);let p=[b.x*drawW+dx,b.y*drawH+dy];if(state.magnet&&!ev.altKey){const result=magneticPosition(...p,state.mirrors.filter(m=>m.on),state.zoom,targets,null,false);p=[result.x/state.zoom,result.y/state.zoom];snapHint=result.snapped?result.label:'';}f.x=p[0]/drawW;f.y=p[1]/drawH;}
+        else{const a=norm(b.angle+Math.atan2(ev.clientY-cy,ev.clientX-cx)-start),result=state.magnet&&!ev.altKey?sceneMath.snapAngle(a,state.mirrors.filter(m=>m.on)):{angle:a};f.angle=result.angle;snapHint=result.snapped?result.label:'';}changed();};
+      const end=ev=>{if(ev.pointerId!==e.pointerId)return;node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',end);node.removeEventListener('pointercancel',end);if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);if(ev.type==='pointercancel')Object.assign(f,before.fieldAxes);else if(moved)pushMotion(before);snapHint='';changed();};
+      node.addEventListener('pointermove',move);node.addEventListener('pointerup',end);node.addEventListener('pointercancel',end);
+    });return node;});
+  function paintFieldAxes(ctx,camera){const f=state.fieldAxes;if(!f.on)return;ctx.save();ctx.setTransform(...camera);ctx.strokeStyle='#8a94a6';ctx.lineWidth=1/(state.zoom||1);ctx.globalAlpha=.7;ctx.setLineDash([6/state.zoom,4/state.zoom]);const radius=Math.hypot(drawW,drawH)*4/state.zoom;
+    for(const a of [f.angle,f.angle+pi/2]){const x=f.x*drawW,y=f.y*drawH,dx=Math.cos(a)*radius,dy=Math.sin(a)*radius;ctx.beginPath();ctx.moveTo(x-dx,y-dy);ctx.lineTo(x+dx,y+dy);ctx.stroke();}ctx.restore();}
   function zoomBy(factor,x=drawW/2,y=drawH/2,group=false){if(!drawW||!drawH)return;const history=motionSnap({}),before=state.zoom,next=clamp(before*factor,.2,6),ratio=next/before;
     state.pan=[(x-drawW/2-(x-drawW/2-state.pan[0]*drawW)*ratio)/drawW,(y-drawH/2-(y-drawH/2-state.pan[1]*drawH)*ratio)/drawH];state.zoom=next;changed();pushMotion(history,group?'zoom':null);}
   stage.addEventListener('wheel',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion')||!e.deltaY)return;e.preventDefault();e.stopPropagation();const r=stage.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?drawH:1);zoomBy(Math.exp(-clamp(delta,-120,120)*.0015),e.clientX-r.left,e.clientY-r.top,true);},{passive:false});
-  function magnetBits(){const data=scene(),points=data.labels.map(v=>v.point);for(const item of data.items)if(!item.mask)for(const p of item.src.points||[])points.push(sceneMath.point(item.matrix,...p));return points;}
+  /* v0.1140, «пусть ось не прицепляется к битам своего зеркальных битов, только к чужим и строчным»: квадратики и линия зеркала own магнитятся к битам
+     строк и к отражениям, в которых это зеркало не участвует (чужие зеркала); свои отражения едут вместе с осью — к ним не липнет. Без own (оси поля) —
+     только биты строк, как прежде. */
+  function magnetBits(own=-1){const data=scene(),points=data.labels.map(v=>v.point),skip=own<0?~0:1<<own;for(const item of data.items)if(!(item.mask&skip))for(const p of item.src.points||[])points.push(sceneMath.point(item.matrix,...p));return points;}
   function nearestBit(x,y,points,radius){let best=null;for(const p of points){const d=Math.hypot(x-p[0],y-p[1]);if(d<radius){radius=d;best=p;}}return best;}
-  function magneticPosition(x,y,others,z,targets,along=null){
+  function magneticPosition(x,y,others,z,targets,along=null,includeField=true){
+    if(includeField)others=others.concat(fieldAxisTargets());
     const permitted=p=>!along||Math.abs((p[0]-along.x)*Math.sin(along.angle)-(p[1]-along.y)*Math.cos(along.angle))<1e-6;
-    let result=sceneMath.snapPosition(x*z,y*z,others.map(m=>({x:m.x*drawW*z,y:m.y*drawH*z,angle:m.angle})),drawW*z,drawH*z,10,[.01*drawW*z,.01*drawH*z,.99*drawW*z,.99*drawH*z],[drawW*z/2,drawH*z/2]);
+    let result=sceneMath.snapPosition(x*z,y*z,others.map(m=>{const span=m.turnGrip===null?Math.min(drawW,drawH)*.18:m.turnGrip*Math.hypot(drawW,drawH);return {x:m.x*drawW*z,y:m.y*drawH*z,angle:m.angle,anchors:Number.isFinite(span)?[[(m.x*drawW+span*Math.cos(m.angle))*z,(m.y*drawH+span*Math.sin(m.angle))*z]]:[]};}),drawW*z,drawH*z,10,[.01*drawW*z,.01*drawH*z,.99*drawW*z,.99*drawH*z],[drawW*z/2,drawH*z/2]);
     if(!permitted([result.x/z,result.y/z]))result={x:x*z,y:y*z,snapped:false,label:''};
     const bit=nearestBit(x,y,along?targets.filter(permitted):targets,10/z);
     if(bit&&(!result.snapped||Math.hypot(bit[0]-x,bit[1]-y)<Math.hypot(result.x/z-x,result.y/z-y)-1e-9))result={x:bit[0]*z,y:bit[1]*z,snapped:true,label:'центр бита'};
@@ -356,7 +445,7 @@
     e.preventDefault();e.stopPropagation();stage.classList.add('panning');stage.setPointerCapture(e.pointerId);
     const selectors=[...pick.mirrors.map(mirror=>({mirror})),...pick.sources.map(source=>({source}))],before=motionSnap(picked?{batch:selectors}:{}),sx=e.clientX,sy=e.clientY,start=state.pan.slice(),starts=selectors.map(motionSnap);let moved=false;
     const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>4)moved=true;if(!moved)return;
-      if(picked){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);for(const step of starts){if(step.source!==undefined){state.sourceOffsets[step.source]=[step.offset[0]+dx/drawW,step.offset[1]+dy/drawH];continue;}const m=state.mirrors[step.mirror],v=step.values;stopPath(m);m.spin=false;controls[step.mirror].spin.textContent='▶';controls[step.mirror].spin.setAttribute('aria-pressed','false');if(m.along){const p=sceneMath.axisMove(v.x*drawW,v.y*drawH,dx,dy,v.angle,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}else{m.x=clamp(v.x+dx/drawW,.01,.99);m.y=clamp(v.y+dy/drawH,.01,.99);}}}
+      if(picked){const [dx,dy]=worldDelta(ev.clientX-sx,ev.clientY-sy);for(const step of starts){if(step.source!==undefined){state.sourceOffsets[step.source]=[step.offset[0]+dx/drawW,step.offset[1]+dy/drawH];continue;}const m=state.mirrors[step.mirror],v=step.values;if(axisPinned(m))continue;stopPath(m);m.spin=false;controls[step.mirror].spin.textContent='▶';controls[step.mirror].spin.setAttribute('aria-pressed','false');if(m.along){const p=sceneMath.axisMove(v.x*drawW,v.y*drawH,dx,dy,v.angle,drawW,drawH);m.x=p[0]/drawW;m.y=p[1]/drawH;}else{m.x=clamp(v.x+dx/drawW,.01,.99);m.y=clamp(v.y+dy/drawH,.01,.99);}}}
       else state.pan=[start[0]+(ev.clientX-sx)/drawW,start[1]+(ev.clientY-sy)/drawH];changed();
     };
     const end=ev=>{if(ev.pointerId!==e.pointerId)return;stage.removeEventListener('pointermove',move);stage.removeEventListener('pointerup',end);stage.removeEventListener('pointercancel',end);if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);stage.classList.remove('panning');if(moved)pushMotion(before);if(e.button===1&&!moved&&ev.type==='pointerup')window.zenSet?.(!document.body.classList.contains('zerk-zen'),'w-zerkalius');};
@@ -444,7 +533,7 @@
     const update=()=>{const n=state.layout==='quad'?2:state.layout==='tri'?3:0;sections.forEach((node,i)=>node.hidden=i>=n);mult.disabled=!n;plateZig(tools,'#70e0d7');};
     layout.onchange=()=>{state.layout=layout.value;update();changed(true);};mult.onchange=()=>{state.mult=Number(mult.value);changed(true);};update();
     button('Зеркала по осям','Выставить зеркала по выбранным начальным осям',()=>{const count=state.layout==='quad'?2:3,cx=drawW>650?(250+(drawW-250)/2)/drawW:.5;
-      state.mirrors.forEach((m,i)=>{stopPath(m);m.spin=false;m.x=cx;m.y=.52;m.angle=state.layout==='quad'?norm(i*pi/2):i*pi/3;m.on=i<count;controls[i].on.checked=m.on;});changed();},axes);
+      state.mirrors.forEach((m,i)=>{stopPath(m);m.spin=false;m.x=cx;m.y=.52;m.angle=state.layout==='quad'?norm(i*pi/2):i*pi/3;m.on=i<count;m.magnetPins=[false,false];m.figureOffset=[0,0];m.copyOffsets=Array.from({length:8},()=>[0,0]);m.turnGrip=null;controls[i].on.checked=m.on;});changed();},axes);
     const net=document.createElement('div');net.className='zerk-net-editor';el.append(net);
     const nb=field(net,'Тело развёртки','',state.net.nb,[[3,'△ Бирамида · 6 граней'],[4,'◇ Октаэдр · 8 граней']]),thumbs=document.createElement('div');thumbs.className='zerk-net-presets';net.append(thumbs);
     const previews=[];for(let i=0;i<6;i++){const b=button('','Развёртка '+String.fromCharCode(1040+i),()=>{state.net.preset=i;refresh();changed(true);},thumbs),cv=document.createElement('canvas');cv.width=56;cv.height=48;b.append(cv);previews.push({b,cv});}
@@ -496,8 +585,8 @@
     const show=()=>{formulas.hidden=kind.value!=='custom'&&orient.value!=='custom';fx.closest('label').hidden=fy.closest('label').hidden=kind.value!=='custom';fa.closest('label').hidden=orient.value!=='custom';swing.closest('label').hidden=orient.value!=='swing';ay.disabled=kind.value==='circle';plateZig(tools,m.color);};kind.onchange=orient.onchange=show;show();
     const draw=fn=>{const ctx=preview.getContext('2d');ctx.clearRect(0,0,220,100);ctx.strokeStyle=m.color;ctx.lineWidth=1;ctx.beginPath();for(let j=0;j<=256;j++){const v=fn(j/256),x=110+v[0]*42,y=50+v[1]*35;j?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();};try{draw(sceneMath.compile(p));}catch(e){}
     button('Проверить кривую','Проверить кривую'+label,()=>{try{draw(read().fn);notify('Кривая замкнута · формулы проверены');}catch(e){notify(e.message);}},el);
-    button('Применить и пуск','Запустить движение по кривой'+label,()=>{try{const {next,fn}=read();Object.assign(p,next);pathFns.set(m,fn);anchorPath(m);p.enabled=true;m.spin=false;draw(fn);changed();}catch(e){notify(e.message);}},el);
-    const pause=button('Пауза / продолжить','Пауза или продолжение кривой'+label,()=>{if(p.enabled)p.enabled=false;else{try{const fn=sceneMath.compile(p);pathFns.set(m,fn);if(!Number.isFinite(p.anchorX))anchorPath(m);p.enabled=true;m.spin=false;}catch(e){notify(e.message);return;}}changed();},el);
+    button('Применить и пуск','Запустить движение по кривой'+label,()=>{if(!allowPath(m))return;try{const {next,fn}=read();Object.assign(p,next);pathFns.set(m,fn);anchorPath(m);p.enabled=true;m.spin=false;draw(fn);changed();}catch(e){notify(e.message);}},el);
+    const pause=button('Пауза / продолжить','Пауза или продолжение кривой'+label,()=>{if(p.enabled)p.enabled=false;else{if(!allowPath(m))return;try{const fn=sceneMath.compile(p);pathFns.set(m,fn);if(!Number.isFinite(p.anchorX))anchorPath(m);p.enabled=true;m.spin=false;}catch(e){notify(e.message);return;}}changed();},el);
     button('Начало цикла','Вернуть движение'+label+' к началу цикла',()=>{p.elapsed=0;const v=pathValue(m);if(Number.isFinite(p.anchorX)){m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*(p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY);m.angle=norm(p.anchorAngle+v[2]);}changed();},el);
     const b=editDiamond('∞\nкривая','Циклическое движение'+label,el,parent);b.onclick=()=>{kind.value=p.kind;period.value=p.period;phase.value=p.phase;ax.value=p.ampX*100;ay.value=p.ampY*100;orient.value=p.orient;swing.value=p.swing||30;fx.value=p.fx||'cos(tau*t)';fy.value=p.fy||'sin(tau*t)';fa.value=p.fa||'0';show();try{draw(sceneMath.compile(p));}catch(e){}openEditor(el,'Циклическое движение'+label,b);};compactUpdates.push(()=>{b.classList.toggle('on',p.enabled);b.textContent=p.enabled?'∞\n'+Math.floor((p.elapsed||0)/p.period):'∞\nкривая';pause.setAttribute('aria-pressed',String(p.enabled));});
   }
@@ -511,6 +600,7 @@
     editDiamond('∞\nциклы','Три зеркала · циклы',el,parent);
   }
   function setRows(i){const set=state.sets[i];return set.source==='field'?Z.rows:set.source==='own'?set.rows:set.source==='serp'?serp:rows();}
+  function fieldRowsExtent(){return Z.rows.concat(hidRows(Z.lane));}
   function visibleWorld(ctx,pad=0){
     const t=ctx.getTransform(),det=t.a*t.d-t.b*t.c,points=[[0,0],[ctx.canvas.width,0],[ctx.canvas.width,ctx.canvas.height],[0,ctx.canvas.height]].map(([x,y])=>[(t.d*(x-t.e)-t.c*(y-t.f))/det,(-t.b*(x-t.e)+t.a*(y-t.f))/det]);
     return [Math.min(...points.map(p=>p[0]))-pad,Math.min(...points.map(p=>p[1]))-pad,Math.max(...points.map(p=>p[0]))+pad,Math.max(...points.map(p=>p[1]))+pad];
@@ -597,14 +687,14 @@
   function scene(ratio=dpr){
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
-      const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
+      const reflected=reflectedCopies();
       for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
-    const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
+    const reflected=reflectedCopies();
     for(let i=0;i<count;i++){
-      const R=count===1?rows():setRows(i),N=Math.max(1,R.length),max=Math.max(1,...R.map(s=>s.length)),color=count===1?state.bitColor:state.sets[i].color;
+      const R=count===1?rows():setRows(i),fromField=count===1?state.source==='field':state.sets[i].source==='field'||state.sets[i].source==='shared'&&state.source==='field',extent=fromField?fieldRowsExtent():R,N=Math.max(1,extent.length),max=Math.max(1,...extent.map(s=>s.length)),color=count===1?state.bitColor:state.sets[i].color;
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
       const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
@@ -651,29 +741,41 @@
     if(next!==rowsKey){rowsKey=next;dirty=true;}if(dirty){sourceCache.clear();dirty=false;}
     const data=scene();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);
     paint(g,data,sceneMath.multiply([dpr,0,0,dpr,0,0],viewMatrix()));
-    state.mirrors.forEach((m,i)=>{const {line,center,turn,axis}=handles[i],ctl=controls[i],p=viewPoint(m.x,m.y),screenAngle=m.angle+state.viewAngle*pi/180,length=Math.hypot(drawW,drawH)*2+40;
+    paintFieldAxes(g,sceneMath.multiply([dpr,0,0,dpr,0,0],viewMatrix()));
+    fieldAxisNodes.forEach((node,i)=>{const f=state.fieldAxes,p=viewPoint(f.x,f.y),length=(Math.hypot(drawW,drawH)+Math.hypot(...p))*2+40;node.hidden=!f.on;Object.assign(node.style,{width:length+'px',left:(p[0]-length/2)+'px',top:(p[1]-16)+'px',transform:'rotate('+(f.angle+i*pi/2+state.viewAngle*pi/180)+'rad)'});});
+    state.mirrors.forEach((m,i)=>{const {line,center,pivot,turn,axis}=handles[i],ctl=controls[i],p=viewPoint(m.x,m.y),screenAngle=m.angle+state.viewAngle*pi/180,length=Math.hypot(drawW,drawH)*2+40;
+      line.hidden=axis.hidden=!m.on;
       line.classList.toggle('off',!m.on);line.style.setProperty('--mirror-color',m.color);line.style.setProperty('--control-color',sceneMath.controlColor(m.color));Object.assign(line.style,{width:length+'px',left:(p[0]-length/2)+'px',top:(p[1]-16)+'px',transform:'rotate('+screenAngle+'rad)'});
       Object.assign(axis.style,{width:length+'px',left:line.style.left,top:(p[1]-axis.offsetHeight/2)+'px',transform:line.style.transform});
       if(m.grip!==null&&Math.abs(m.angle-m.gripAngle)>pi/2)m.grip=-m.grip;m.gripAngle=m.angle;
       const grip=m.grip===null?(i-1)*40:m.grip*Math.hypot(drawW,drawH)*state.zoom;
-      center.style.left=(length/2-center.offsetWidth/2+grip)+'px';center.style.transform='rotate('+(-screenAngle)+'rad)';turn.style.left=(length/2+Math.min(drawW,drawH)*.18)+'px';turn.style.transform='rotate('+(-screenAngle)+'rad)';const deg=Math.round(m.angle*180/pi)%180;ctl.angle.value=deg;ctl.output.textContent=deg+'°';});
+      pivot.style.left=(length/2-pivot.offsetWidth/2)+'px';pivot.style.transform='rotate('+(-screenAngle)+'rad)';
+      center.style.left=(length/2-center.offsetWidth/2+grip)+'px';center.style.transform='rotate('+(-screenAngle)+'rad)';turn.style.left=(length/2-turn.offsetWidth/2+(m.turnGrip===null?Math.min(drawW,drawH)*.18:m.turnGrip*Math.hypot(drawW,drawH))*state.zoom)+'px';turn.style.transform='rotate('+(-screenAngle)+'rad)';pivot.classList.toggle('pinned',m.magnetPins[0]);turn.classList.toggle('pinned',m.magnetPins[1]);axis.classList.toggle('pinned',axisPinned(m));const deg=Math.round(m.angle*180/pi)%180;ctl.angle.value=deg;ctl.output.textContent=deg+'°';});
     annotations.hidden=!state.labels;
     if(state.labels){const distance=Math.min(drawW,drawH)*.18,names=state.mirrors.map((m,i)=>{const p=viewPoint(m.x,m.y),a=m.angle+state.viewAngle*pi/180;return {x:p[0]+Math.cos(a)*distance,y:p[1]+Math.sin(a)*distance+20,text:'Зеркало '+(i+1),color:m.color,off:!m.on};});
       for(const label of data.labels){const p=viewPoint(label.point[0]/drawW,label.point[1]/drawH);names.push({x:p[0],y:p[1],text:label.text,color:label.color});}
-      const placed=[];annotationNodes.forEach((el,i)=>{const n=names[i];el.hidden=!n;if(!n)return;el.textContent=n.text;const w=el.offsetWidth,h=el.offsetHeight;
+      const placed=[];annotationNodes.forEach((el,i)=>{const n=names[i];el.hidden=!n||!!n.off;if(!n||n.off)return;el.textContent=n.text;const w=el.offsetWidth,h=el.offsetHeight;
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
     const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message:message;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
+    for(const m of state.mirrors){if(axisLocked(m))m.spin=false;if(axisPinned(m)&&m.path.enabled)stopPath(m);}
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
       if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1);const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
-      else if(m.spin)m.angle=norm(m.angle+m.speed*pi/180*dt*(state.motionRate??1));
+      else if(m.spin)turnMirror(m,m.speed*pi/180*dt*(state.motionRate??1));
     }
     const beforePend=pendulum?.revision,pendMoving=advancePendulum(now);if(spinning||dirty||!pendMoving||beforePend!==pendulum?.revision)render();if(spinning||pendMoving)raf=requestAnimationFrame(tick);else previous=0;
   }
   function request(){if(!raf&&visible())raf=requestAnimationFrame(tick);}
+  let fieldKey=JSON.stringify(fieldRowsExtent());
+  let fieldVisibleKey=JSON.stringify(Z.rows);
+  window.zzZerkaliusFieldChanged=()=>{
+    const next=JSON.stringify(fieldRowsExtent()),visibleKey=JSON.stringify(Z.rows);if(next===fieldKey&&visibleKey===fieldVisibleKey)return;fieldKey=next;fieldVisibleKey=visibleKey;
+    if(state.followField&&['base','serp'].includes(state.source)){state.source=source.value='field';own.hidden=true;persist();}
+    if(state.source==='field'||state.sets.some(set=>set.source==='field')){dirty=true;request();}
+  };
   window.zzZerkaliusRender=()=>{dirty=true;request();};
   new ResizeObserver(()=>{dirty=true;request();}).observe(stage);
   plateZig(tools,'#70e0d7');
