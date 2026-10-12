@@ -1,3 +1,4 @@
+/* v0.1131: ромбовые кнопки перетаскиваются отдельно; щелчок сохраняет действие. */
 /* v0.1130: зеркальный маятник внутри Зеркалиуса, общие исходные биты, кадры и баланс. */
 /* v0.1129: shared axis speed multiplier up to 1000 with logarithmic slider and reset. */
 /* v0.1128: nearest valid magnetic target; digit toggle applies in both net views. */
@@ -204,6 +205,55 @@
   for(const [key,caption] of [['tint','Цветные отражения'],['trace','Отрезки битов: 1 ↘, 0 ↗']]){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=state[key];input.setAttribute('aria-label',caption);input.title=key==='trace'?'Короткий отрезок внутри ячейки: 1 — наклон вправо вниз, 0 — вправо вверх':caption;label.append(input,document.createTextNode(caption));body.append(label);input.onchange=()=>{state[key]=input.checked;changed(key==='trace');};}
   button('Вернуть три зеркала','Вернуть начальные положения трёх зеркал',()=>{defaults().forEach((m,i)=>{stopPath(state.mirrors[i]);Object.assign(state.mirrors[i],m,{mode:'direct'});});state.mirrors.forEach((m,i)=>{Object.assign(controls[i].on,{checked:m.on});controls[i].color.value=m.color;controls[i].speed.value=m.speed;controls[i].section.style.setProperty('--mirror-color',m.color);controls[i].spin.textContent='▶';controls[i].spin.setAttribute('aria-pressed','false');});changed();},body);
   const groups=[], compactUpdates=[];
+  const buttonHomes=new Map();
+  state.buttonPositions=state.buttonPositions&&typeof state.buttonPositions==='object'?state.buttonPositions:{};
+  function placeButtons(){
+    const bounds=win.getBoundingClientRect();
+    for(const [node,{key,home}] of buttonHomes){
+      const xy=state.buttonPositions[key];
+      if(!Array.isArray(xy)||xy.length!==2||!xy.every(Number.isFinite))continue;
+      node.style.left=xy[0]+'px';node.style.top=xy[1]+'px';
+      if(!node.getClientRects().length)continue;
+      const r=node.getBoundingClientRect();
+      node.style.left=(xy[0]+clamp(r.left,bounds.left,Math.max(bounds.left,bounds.right-r.width))-r.left)+'px';
+      node.style.top=(xy[1]+clamp(r.top,bounds.top,Math.max(bounds.top,bounds.bottom-r.height))-r.top)+'px';
+    }
+  }
+  function buttonDragInit(){
+    for(const group of groups)for(const [i,node] of [...group.querySelectorAll('.zerk-diamond')].entries()){
+      const key=node.id||group.id+':'+i,home=[parseFloat(node.style.left)||0,parseFloat(node.style.top)||0];
+      buttonHomes.set(node,{key,home});node.title+=(node.title?' · ':'')+'Тяни — перенести эту кнопку';
+    }
+    let blocked=null;
+    win.addEventListener('click',e=>{
+      if(blocked&&e.detail!==0&&e.target.closest('.zerk-diamond')===blocked){blocked=null;e.preventDefault();e.stopImmediatePropagation();}
+    },true);
+    win.addEventListener('pointerdown',e=>{
+      blocked=null;
+      const node=e.target.closest('.zerk-diamond'),saved=buttonHomes.get(node);
+      if(e.button!==0||!saved)return;
+      const start=[e.clientX,e.clientY],r0=node.getBoundingClientRect(),origin=[parseFloat(node.style.left)||0,parseFloat(node.style.top)||0];
+      let moved=false;const oldZ=node.style.zIndex;
+      const move=ev=>{
+        if(ev.pointerId!==e.pointerId)return;
+        const dx=ev.clientX-start[0],dy=ev.clientY-start[1];if(!moved&&Math.hypot(dx,dy)<5)return;
+        ev.preventDefault();ev.stopPropagation();
+        if(!moved){moved=true;node.setPointerCapture(e.pointerId);node.classList.add('zerk-button-drag');node.closest('.zerk-grape').classList.add('zerk-button-drag-host');node.style.zIndex='20';}
+        const box=win.getBoundingClientRect(),x=clamp(r0.left+dx,box.left,Math.max(box.left,box.right-r0.width)),y=clamp(r0.top+dy,box.top,Math.max(box.top,box.bottom-r0.height));
+        state.buttonPositions[saved.key]=[origin[0]+x-r0.left,origin[1]+y-r0.top];placeButtons();
+      };
+      const end=ev=>{
+        if(ev.pointerId!==e.pointerId)return;
+        document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);
+        if(node.hasPointerCapture(e.pointerId))node.releasePointerCapture(e.pointerId);
+        node.classList.remove('zerk-button-drag');node.closest('.zerk-grape').classList.remove('zerk-button-drag-host');node.style.zIndex=oldZ;
+        if(moved){blocked=node;save();}
+      };
+      document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
+    },true);
+    placeButtons();
+  }
+  function resetButtons(){state.buttonPositions={};for(const [node,{home}] of buttonHomes){node.style.left=home[0]+'px';node.style.top=home[1]+'px';}save();}
   const headerDock=document.createElement('div');headerDock.id='zerkHeaderDock';headerDock.setAttribute('aria-label','Закреплённые группы Зеркалиуса');
   const footerDock=document.createElement('div');footerDock.id='zerkFooterDock';footerDock.setAttribute('aria-label','Группы в нижней полосе Зеркалиуса');stage.append(footerDock);
   function dockTarget(e){if(e.altKey)return null;const h=win.querySelector(':scope > .whead').getBoundingClientRect(),s=stage.getBoundingClientRect();if(e.clientX>=h.left&&e.clientX<=h.right&&e.clientY>=h.top-24&&e.clientY<=h.bottom+24)return 'top';if(e.clientX>=s.left&&e.clientX<=s.right&&e.clientY>=s.bottom-32&&e.clientY<=s.bottom+24)return 'bottom';return null;}
@@ -407,6 +457,7 @@
 
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
+    button('Кнопки на места','Вернуть отдельные кнопки в исходную раскладку групп',resetButtons,el);
     const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
     const bitColor=field(el,'Цвет исходных битов','color',state.bitColor);bitColor.oninput=()=>{state.bitColor=bitColor.value;state.palette='custom';changed(true);};
@@ -653,7 +704,7 @@
       const placed=[];annotationNodes.forEach((el,i)=>{const n=names[i];el.hidden=!n;if(!n)return;el.textContent=n.text;const w=el.offsetWidth,h=el.offsetHeight;
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
-    compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
+    compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));placeButtons();zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
     const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message:message;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
@@ -670,6 +721,7 @@
   new MutationObserver(()=>{if(!visible())previous=0;request();}).observe(win,{attributes:true,attributeFilter:['class','style','data-parked']});
   document.addEventListener('visibilitychange',()=>{previous=0;if(document.hidden)save();else request();});
   window.addEventListener('pagehide',save);
+  buttonDragInit();
   document.fonts?.ready.then(()=>{dirty=true;request();});
   if(location.hash==='#zerkalius')document.querySelector('#pinBar button[data-aw="w-zerkalius"]')?.click();
   request();

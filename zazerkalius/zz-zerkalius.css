@@ -179,3 +179,8 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 :is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh>span:first-child{position:absolute;left:18px;top:5px;font-size:7px;line-height:10px}
 
 @media(max-width:760px){:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group,:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh{width:104px}}
+
+/* v0.1131: drag individual diamonds without activating their click action. */
+#w-zerkalius .zerk-diamond{cursor:grab;touch-action:none;user-select:none}
+#w-zerkalius .zerk-diamond.zerk-button-drag{cursor:grabbing!important;filter:drop-shadow(0 0 4px var(--control-color,var(--mirror-color)))}
+#w-zerkalius .zerk-grape.zerk-button-drag-host{z-index:30}
