@@ -1,3 +1,4 @@
+/* v0.1130: зеркальный маятник внутри Зеркалиуса, общие исходные биты, кадры и баланс. */
 /* v0.1129: shared axis speed multiplier up to 1000 with logarithmic slider and reset. */
 /* v0.1128: nearest valid magnetic target; digit toggle applies in both net views. */
 /* v0.1127: free top/bottom docking, header axis toggles, shared transport, magnetic axes and tiled vector net bits. */
@@ -16,7 +17,8 @@
     {x:.61,y:.70,angle:5*pi/6,color:'#ff735c',on:true,spin:false,speed:5,grip:null}
   ];
   const state = Z.zerkalius ||= {};
-  if (!['base','serp','field','own'].includes(state.source)) state.source = 'serp';
+  if (!['base','serp','field','own','pend'].includes(state.source)) state.source = 'serp';
+  if(new URLSearchParams(location.search).get('mayatnik')==='1')state.source='pend';
   state.zero = Number.isFinite(state.zero) ? clamp(state.zero,-60,60) : 0;
   state.one = Number.isFinite(state.one) ? clamp(state.one,-60,60) : 0;
   state.tint = state.tint !== false;
@@ -66,7 +68,10 @@
   const persist = () => { clearTimeout(persistTimer); persistTimer=setTimeout(save,200); };
   const visible = () => win.getClientRects().length && !win.classList.contains('collapsed') && !win.dataset.parked && !document.hidden;
   const serp = (() => { const rows=['1'];for(let r=1;r<64;r++){const p=rows[r-1];let s='';for(let j=0;j<=r;j++)s+=(Number(p[j-1]||0)^Number(p[j]||0));rows.push(s);}return rows; })();
-  const rows = () => state.source==='field' ? Z.rows : state.source==='own' ? state.rows : state.source==='base' ? ZZ_INITIAL_ROWS : serp;
+  const pendSettings=state.pendulum ||= {depth:512,limit:512,frame:1,speed:8,colored:true};
+  let pendulum=null,pendTarget=null,pendPlaying=false,pendClock=0;
+  function pendEngine(){if(!pendulum){pendulum=new ZZMirrorPendulum(pendSettings.depth,pendSettings.limit);pendSettings.depth=pendulum.depth;pendSettings.limit=pendulum.limit;pendTarget=clamp(Number(pendSettings.frame)||0,0,pendulum.limit);}return pendulum;}
+  const rows = () => state.source==='pend' ? pendEngine().rows() : state.source==='field' ? Z.rows : state.source==='own' ? state.rows : state.source==='base' ? ZZ_INITIAL_ROWS : serp;
   const button = (text, title, action, parent) => { const b=document.createElement('button');b.type='button';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.onclick=action;parent.append(b);return b; };
   const changed = (redrawBase=false) => { notice='';if(redrawBase)dirty=true;persist();request(); };
   const notify = message => { notice=message;status.textContent=message; };
@@ -113,7 +118,7 @@
   plateInit(tools);
   const body=tools.querySelector('.zerk-controls');
   const sourceLabel=document.createElement('label'), source=document.createElement('select');source.id='zerkSource';source.setAttribute('aria-label','Источник строк Зеркалиуса');
-  for(const [v,t] of [['serp','Серпинский'],['base','Исходный из хаба'],['field','Строки поля'],['own','Свои строки']]){const o=document.createElement('option');o.value=v;o.textContent=t;source.append(o);}
+  for(const [v,t] of [['serp','Серпинский'],['base','Исходный из хаба'],['field','Строки поля'],['own','Свои строки'],['pend','Зеркальный маятник']]){const o=document.createElement('option');o.value=v;o.textContent=t;source.append(o);}
   source.value=state.source;sourceLabel.append(document.createTextNode('Узор'),source);body.append(sourceLabel);
   const own=document.createElement('div');own.id='zerkOwn';own.hidden=state.source!=='own';
   const text=document.createElement('textarea');text.id='zerkText';text.setAttribute('aria-label','Свои битовые строки');text.placeholder='1\n11\n101\n1111';text.value=state.rows.join('\n');own.append(text);
@@ -128,15 +133,16 @@
     if(value.reduce((n,s)=>n+s.length,0)>1000000)throw Error('Набор слишком большой: максимум 1 миллион бит');
     return value;
   }
-  function useOwn(raw){try{state.rows=parseRows(raw);state.source='own';source.value='own';own.hidden=false;text.value=state.rows.join('\n');changed(true);notify('Загружено '+state.rows.length+' строк');plateZig(tools,'#70e0d7');placeTools(tools);}catch(e){notify(e.message);}}
+  function useOwn(raw){try{pendPlaying=false;state.rows=parseRows(raw);state.source='own';source.value='own';own.hidden=false;text.value=state.rows.join('\n');changed(true);notify('Загружено '+state.rows.length+' строк');plateZig(tools,'#70e0d7');placeTools(tools);}catch(e){notify(e.message);}}
   button('Применить','Построить по своим строкам',()=>useOwn(text.value),ownActions);
   button('TXT / JSON','Загрузить свои строки из TXT или JSON',()=>file.click(),ownActions);
   file.onchange=async()=>{const f=file.files[0];if(!f)return;try{useOwn(await f.text());}catch(e){notify('Не удалось прочитать файл: '+e.message);}file.value='';};
   body.append(own);
-  source.onchange=()=>{state.source=source.value;own.hidden=state.source!=='own';changed(true);plateZig(tools,'#70e0d7');placeTools(tools);};
+  source.onchange=()=>{state.source=source.value;pendPlaying=false;pendClock=0;if(state.source==='pend'){pendEngine();state.build='axes';}own.hidden=state.source!=='own';changed(true);plateZig(tools,'#70e0d7');placeTools(tools);};
   const actions=document.createElement('div');actions.className='zerk-row';body.append(actions);
   button('Поле → свои','Скопировать текущие строки поля в свои строки',()=>useOwn(Z.rows.join('\n')),actions);
   button('В поле','Перенести исходные строки выбранного узора в поле; ↩ отменяет',()=>{
+    if(state.source==='pend'){notify('Кадр маятника содержит пустые клетки. Сохраните его как PNG; бинарные строки поля не хранят пустоту.');return;}
     if(rowsLocked())return;
     const next=rows().slice();snapshot();Z.rows=next;Z.cur=0;rowSel.clear();syncLane();rowsOrigSet();renderAll();save();say('Зеркалиус: '+next.length+' строк перенесено в поле. ↩ вернёт.');
   },actions);
@@ -226,11 +232,12 @@
   const oldActions=[...actions.children], oldView=[...body.children].filter(n=>n!==sourceLabel&&n!==own&&n!==actions&&!n.classList.contains('zerk-mirror-controls'));
   const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#70e0d7',[8,8]);
   const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
-  compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои'})[state.source];});
-  let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
+  compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
+  let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
   for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())diamond(oldActions[i],caption,rowGroup);actions.remove();
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
+  buildPendulumEditor(rowGroup);
   function splitDiamond(title,get,step,parent){
     const node=document.createElement('div');node.className='zerk-split';const value=document.createElement('span');value.className='zerk-split-value';node.append(value);
     const minus=button('◂',title+': уменьшить',()=>step(-1),node),plus=button('▸',title+': увеличить',()=>step(1),node);minus.className='zerk-half zerk-half-minus';plus.className='zerk-half zerk-half-plus';diamond(node,'',parent);
@@ -357,6 +364,47 @@
   }
   function numberField(parent,title,value,min,max,step=1){const el=field(parent,title,'number',value);Object.assign(el,{min,max,step});return el;}
   function textBlock(parent,text){const el=document.createElement('p');el.className='zerk-help';el.textContent=text;parent.append(el);return el;}
+
+  function buildPendulumEditor(parent){
+    const el=editor([]);el.id='zerkPendulumEditor';
+    textBlock(el,'Зеркальный маятник: 0, −1, +1, −2, +2… Каждая вершина меняет исходный кадр; три зеркала отражают один и тот же кадр. Пустые клетки прозрачны.');
+    const depth=numberField(el,'Строк маятника',pendSettings.depth,8,1024),limit=numberField(el,'Вершин маятника',pendSettings.limit,1,4096);
+    depth.id='zerkPendDepth';limit.id='zerkPendLimit';
+    const rate=numberField(el,'Кадров в секунду',pendSettings.speed||8,1,30);rate.onchange=()=>{pendSettings.speed=clamp(Number(rate.value)||8,1,30);rate.value=pendSettings.speed;persist();};
+    const colored=field(el,'Цвета перекрытий','checkbox',pendSettings.colored!==false);colored.onchange=()=>{pendSettings.colored=colored.checked;changed(true);};
+    const timeline=field(el,'Кадр маятника','range',pendSettings.frame);timeline.id='zerkPendFrame';timeline.min=0;timeline.max=pendSettings.limit;timeline.step=1;timeline.dataset.noSlider='true';
+    const exact=numberField(el,'Номер кадра',pendSettings.frame,0,pendSettings.limit);exact.id='zerkPendNumber';
+    const info=document.createElement('output');info.id='zerkPendInfo';info.className='zerk-help';el.append(info);
+    function activate(){state.source=source.value='pend';state.build='axes';own.hidden=true;pendEngine();changed(true);}
+    function seek(n){activate();pendPlaying=false;pendTarget=clamp(n,0,pendulum.limit);pendClock=0;request();}
+    const apply=button('Построить заново','Начать маятник с новыми строками и числом вершин',()=>{
+      pendPlaying=false;pendClock=0;pendulum=new ZZMirrorPendulum(depth.value,limit.value);Object.assign(pendSettings,{depth:pendulum.depth,limit:pendulum.limit,frame:0});depth.value=pendulum.depth;limit.value=pendulum.limit;timeline.max=pendulum.limit;pendTarget=1;activate();
+    },el);apply.id='zerkPendApply';
+    timeline.oninput=()=>seek(Number(timeline.value));exact.oninput=()=>seek(Number(exact.value));
+    const group=grape('zerkPendG','Маятник','#4f9bff',()=>[8,Math.max(120,stage.clientHeight-220)]);
+    let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';diamond(trigger,'↔\nмаят.',parent);
+    const settings=editDiamond('↔\nкадр','Зеркальный маятник',el,group);
+    const play=button('▶','Запустить / остановить маятник',()=>{activate();if(pendulum.frame===pendulum.limit)pendTarget=0;pendPlaying=!pendPlaying;play.textContent=pendPlaying?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(pendPlaying));pendClock=0;request();},group);play.id='zerkPendPlay';play.className='zerk-auto';diamond(play,'▶',group);
+    const back=button('◂','Предыдущий кадр маятника',()=>seek((pendTarget??pendEngine().frame)-1),group);back.id='zerkPendBack';diamond(back,'◂',group);
+    const next=button('▸','Следующий кадр маятника',()=>seek((pendTarget??pendEngine().frame)+1),group);next.id='zerkPendNext';diamond(next,'▸',group);
+    const reset=button('⟲','Вернуть маятник к первой вершине',()=>seek(1),group);reset.id='zerkPendReset';diamond(reset,'⟲',group);
+    compactUpdates.push(()=>{
+      const active=state.source==='pend';group.parentElement.hidden=!active;trigger.setAttribute('aria-pressed',String(active));
+      if(!active)return;const engine=pendEngine(),b=engine.balance();timeline.max=engine.limit;timeline.value=pendTarget??engine.frame;exact.max=engine.limit;exact.value=pendTarget??engine.frame;
+      const c=engine.frame?MAYATNIK.offset('pend',engine.frame-1):null;
+      settings.textContent='↔\n'+engine.frame;play.textContent=pendPlaying?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(pendPlaying));back.disabled=engine.frame===0&&pendTarget===null;next.disabled=engine.frame===engine.limit&&pendTarget===null;
+      info.textContent='Кадр '+engine.frame+' / '+engine.limit+' · вершина '+(c===null?'нет':c>0?'+'+c:c)+' · 0: '+b.zero.toLocaleString('ru-RU')+' · 1: '+b.one.toLocaleString('ru-RU')+' · 1: '+(b.one+b.zero?(100*b.one/(b.one+b.zero)).toFixed(2):'0')+'% (исходный кадр; пустые исключены)';
+    });
+    if(state.source==='pend'){pendEngine();state.build='axes';}
+  }
+  function advancePendulum(now){
+    if(state.source!=='pend')return false;const engine=pendEngine(),before=engine.revision;
+    if(pendTarget!==null){if(engine.seek(pendTarget,12))pendTarget=null;pendClock=now;}
+    else if(pendPlaying&&(!pendClock||now-pendClock>=1000/(pendSettings.speed||8))){engine.step();pendClock=now;if(engine.frame===engine.limit)pendPlaying=false;}
+    if(engine.revision!==before){pendSettings.frame=engine.frame;dirty=true;notice='';persist();}
+    return pendPlaying||pendTarget!==null;
+  }
+
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
     const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
@@ -399,7 +447,7 @@
     const copy=field(net,'В Бирамиду','',state.net.copy,Array.from({length:8},(_,mask)=>[mask,mask?'Отражение '+[1,2,3].filter(i=>mask&(1<<(i-1))).join(' + '):'Исходная развёртка']));copy.onchange=()=>{state.net.copy=Number(copy.value);persist();};
     button('◆ В Бирамиду','Перенести выбранную развёртку в Бирамиду',()=>transferNet(),net);
     textBlock(net,'Переносит биты и цвета U/D на 6 или 8 граней. Строки поля остаются прежними. «⇄ строки → грани» в Бирамиде вернёт связь с полем.');
-    const show=()=>{axes.hidden=state.build==='net';net.hidden=state.build!=='net';refresh();plateZig(tools,'#70e0d7');placeTools(tools);};build.onchange=()=>{state.build=build.value;show();changed(true);};show();
+    const show=()=>{axes.hidden=state.build==='net';net.hidden=state.build!=='net';refresh();plateZig(tools,'#70e0d7');placeTools(tools);};build.onchange=()=>{if(state.source==='pend'&&build.value==='net'){build.value='axes';notify('Маятник сохраняет полную решётку с пустыми клетками; здесь используйте зеркала и оси.');return;}state.build=build.value;show();changed(true);};show();
     const b=editDiamond('✣\nоси','Холст · оси, строки и развёртки',el,parent);compactUpdates.push(()=>b.textContent=state.build==='net'?'✦\n'+(state.net.preset+1):state.layout==='single'?'✣\nоси':(state.layout==='quad'?'2 · 90°':'3 · 60°')+'\n×'+state.mult);
   }
   function buildPngEditor(trigger){
@@ -457,6 +505,26 @@
     const t=ctx.getTransform(),det=t.a*t.d-t.b*t.c,points=[[0,0],[ctx.canvas.width,0],[ctx.canvas.width,ctx.canvas.height],[0,ctx.canvas.height]].map(([x,y])=>[(t.d*(x-t.e)-t.c*(y-t.f))/det,(-t.b*(x-t.e)+t.a*(y-t.f))/det]);
     return [Math.min(...points.map(p=>p[0]))-pad,Math.min(...points.map(p=>p[1]))-pad,Math.max(...points.map(p=>p[0]))+pad,Math.max(...points.map(p=>p[1]))+pad];
   }
+
+  function pendulumImage(mode,dw){
+    const engine=pendEngine(),{W,H,val}=engine.field,dy=dw,bounds=[-W*dw/2,-dy/2,W*dw/2,(H-.5)*dy],image=document.createElement('canvas');image.width=W;image.height=H;
+    const ctx=image.getContext('2d'),data=ctx.createImageData(W,H),palette=new Map(),edges=[];
+    for(let r=0;r<H;r++){let first=-1,last=-1;for(let c=0;c<W;c++){
+      const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)continue;
+      if(first<0)first=c;last=c;
+      let rgb=palette.get(color);if(!rgb){rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));palette.set(color,rgb);}const o=(r*W+c)*4;data.data.set(rgb,o);data.data[o+3]=255;
+    }if(first>=0)edges.push([bounds[0]+first*dw,(r-.5)*dy],[bounds[0]+(last+1)*dw,(r+.5)*dy]);}
+    ctx.putImageData(data,0,0);
+    return {image,bounds,pixelated:true,polygons:edges.length?[figureHull(edges)]:[],points:{*[Symbol.iterator](){for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(data.data[(r*W+c)*4+3])yield [bounds[0]+(c+.5)*dw,r*dy];}},
+      draw(target,pixelScale=1,colorMap=c=>c){
+        const view=visibleWorld(target,dw),c0=clamp(Math.floor((view[0]-bounds[0])/dw),0,W),c1=clamp(Math.ceil((view[2]-bounds[0])/dw),0,W),r0=clamp(Math.floor(view[1]/dy),0,H),r1=clamp(Math.ceil(view[3]/dy)+1,0,H);
+        const digits=state.bitsOnly&&dw*pixelScale>=7;target.textAlign='center';target.textBaseline='middle';target.font='bold '+(dw*.72)+'px '+state.font;
+        for(let r=r0;r<r1;r++)for(let c=c0;c<c1;c++){const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)continue;target.fillStyle=colorMap(color);const x=bounds[0]+c*dw,y=(r-.5)*dy;
+          if(digits){const original=mode&2?W-1-c:c;target.fillText(String(val[r*W+original]^(mode&1)),x+dw/2,r*dy);}else target.fillRect(x,y,dw,dy);
+        }
+      }};
+  }
+
   function sourceImage(R,color,dw,ratio){
     const dh=dw*Math.sqrt(3), shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
     const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
@@ -527,9 +595,10 @@
     const reflected=sceneMath.copies(state.mirrors.map(m=>({...m,x:m.x*drawW,y:m.y*drawH})),ZZMirrorGeometry.matrix);
     for(let i=0;i<count;i++){
       const R=count===1?rows():setRows(i),N=Math.max(1,R.length),max=Math.max(1,...R.map(s=>s.length)),color=count===1?state.bitColor:state.sets[i].color;
-      const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*.866)):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
+      const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
+      const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
-        const pattern=mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
+        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;
@@ -561,13 +630,13 @@
         if(lastSrc!==item.src||lastMask!==item.mask){scratch.width=image.width;scratch.height=image.height;sc.drawImage(image,0,0);sc.globalCompositeOperation='source-atop';for(let i=0;i<3;i++)if(item.mask&(1<<i)){sc.globalAlpha=.38;sc.fillStyle=state.mirrors[i].color;sc.fillRect(0,0,scratch.width,scratch.height);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';lastSrc=item.src;lastMask=item.mask;}image=scratch;
       }
       const draw=()=>vector?item.src.draw(ctx,pixelScale,tintMap(item.mask)):ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);
-      ctx.setTransform(...transform);ctx.globalAlpha=paths?.06:1;draw();ctx.globalAlpha=1;
+      ctx.setTransform(...transform);ctx.imageSmoothingEnabled=!item.src.pixelated;ctx.globalAlpha=paths?.06:1;draw();ctx.globalAlpha=1;
       if(paths){const others=new Path2D();paths.forEach((path,j)=>{if(j!==index)others.addPath(path);});ctx.save();ctx.setTransform(...camera);ctx.clip(paths[index]);ctx.clip(others);ctx.setTransform(...transform);draw();ctx.restore();}
     }ctx.setTransform(1,0,0,1,0,0);
   }
   function render(){
     if(!visible())return;const r=stage.getBoundingClientRect();if(r.width<10||r.height<10)return;drawW=r.width;drawH=r.height;dpr=Math.min(2,devicePixelRatio||1);
-    const key=Math.round(drawW*dpr)+'x'+Math.round(drawH*dpr),next=JSON.stringify([rows(),state.sets.map((_,i)=>setRows(i))]);
+    const key=Math.round(drawW*dpr)+'x'+Math.round(drawH*dpr),next=JSON.stringify([state.source==='pend'?['pend',pendEngine().revision]:rows(),state.sets.map((set,i)=>state.source==='pend'&&set.source==='shared'?null:setRows(i))]);
     if(key!==geometry){geometry=key;cv.width=Math.round(drawW*dpr);cv.height=Math.round(drawH*dpr);dirty=true;plateZig(tools,'#70e0d7');}
     if(next!==rowsKey){rowsKey=next;dirty=true;}if(dirty){sourceCache.clear();dirty=false;}
     const data=scene();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);
@@ -585,14 +654,14 @@
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
-    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');if(status.textContent!==message)status.textContent=message;platePlace(tools);
+    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message:message;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
       if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1);const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
       else if(m.spin)m.angle=norm(m.angle+m.speed*pi/180*dt*(state.motionRate??1));
     }
-    render();if(spinning)raf=requestAnimationFrame(tick);else previous=0;
+    const beforePend=pendulum?.revision,pendMoving=advancePendulum(now);if(spinning||dirty||!pendMoving||beforePend!==pendulum?.revision)render();if(spinning||pendMoving)raf=requestAnimationFrame(tick);else previous=0;
   }
   function request(){if(!raf&&visible())raf=requestAnimationFrame(tick);}
   window.zzZerkaliusRender=()=>{dirty=true;request();};

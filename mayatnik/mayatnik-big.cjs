@@ -166,9 +166,7 @@ function wordMask(r, w) {
 
 // ---------- сверка с ядром страницы ----------
 function check() {
-  const src = fs.readFileSync(path.join(__dirname, 'Zerkalius-mayatnik.html'), 'utf8');
-  const core = src.split('/* ==== ЯДРО')[1].split('/* ==== /ЯДРО')[0].split('\n').slice(1).join('\n');
-  const M = new Function('module', core + '\nreturn MAYATNIK;')({});
+  const M = require('./mayatnik-core.js');
   const S = STEPS, g = M.geometry('pend', S, N), f = M.field(g.W, N, 'empty');
   let bad = 0, cmp = 0;
   const marks = new Set([1, 2, 3, 5, 8, 13, Math.floor(S / 2), S]);

@@ -1,9 +1,7 @@
 /* Codex — независимый исследователь Хоррориуса, 2026-10-12. */
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {create}=require('./horrorius-packed.cjs');
-const html=fs.readFileSync(require('node:path').join(__dirname,'../mayatnik/Zerkalius-mayatnik.html'),'utf8');
-const ctx={module:{exports:{}}};vm.runInNewContext(html.match(/\/\* ==== ЯДРО[^]*?\*\/([^]*?)\/\* ==== \/ЯДРО/)[1],ctx);
-const M=ctx.module.exports;
+const M=require('../mayatnik/mayatnik-core.js');
 for(const N of [8,17,32,63,128])test(`packed bits match page after every vertex, including word boundaries: ${N} rows`,()=>{
  const steps=37,{W,anchor}=M.geometry('pend',steps,N),f=M.field(W,N,'empty'),packed=create(N,steps);
  assert.equal(packed.width,W);assert.equal(packed.anchor,anchor);

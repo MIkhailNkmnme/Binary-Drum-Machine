@@ -3,10 +3,7 @@
    node issledovanie/horrorius-edge-study.cjs [height] [comma-separated vertex counts] */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const html=fs.readFileSync(path.join(__dirname,'../mayatnik/Zerkalius-mayatnik.html'),'utf8');
-const kernel=html.match(/\/\* ==== ЯДРО[^]*?\*\/([^]*?)\/\* ==== \/ЯДРО/)[1];
-const context={module:{exports:{}}};vm.runInNewContext(kernel,context);
-const M=context.module.exports;
+const M=require('../mayatnik/mayatnik-core.js');
 
 function study(n,N,D=24){
   const offsets=Array.from({length:n},(_,k)=>M.offset('pend',k));

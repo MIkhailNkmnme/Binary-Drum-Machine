@@ -1,8 +1,7 @@
 /* Codex — независимый исследователь Хоррориуса · 12.10.2026. */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),test=require('node:test'),assert=require('node:assert/strict');
-const {horrorRGB}=require('./horrorius-view.js'),html=fs.readFileSync(path.join(__dirname,'../mayatnik/Zerkalius-mayatnik.html'),'utf8'),context={module:{exports:{}}};
-vm.runInNewContext(html.match(/\/\* ==== ЯДРО[^]*?\*\/([^]*?)\/\* ==== \/ЯДРО/)[1],context);const M=context.module.exports;
+const {horrorRGB}=require('./horrorius-view.js'),M=require('../mayatnik/mayatnik-core.js');
 test('colour of every tested covered cell equals original page palette and tint',()=>{
  const palette=[[[91,100,117],[79,155,255],[255,90,79]],[[232,237,245],[79,155,255],[255,90,79]]];
  for(let n=1;n<=67;n++)for(let r=0;r<128;r++)for(let c=-r-35;c<=r+35;c++)for(let bit=0;bit<2;bit++){

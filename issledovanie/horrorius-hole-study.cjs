@@ -2,9 +2,7 @@
    Measure actual all-zero inverted triangles; do not assume a visual hole is solid. */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const html=fs.readFileSync(path.join(__dirname,'../mayatnik/Zerkalius-mayatnik.html'),'utf8');
-const ctx={module:{exports:{}}};vm.runInNewContext(html.match(/\/\* ==== ЯДРО[^]*?\*\/([^]*?)\/\* ==== \/ЯДРО/)[1],ctx);
-const M=ctx.module.exports;
+const M=require('../mayatnik/mayatnik-core.js');
 function triangles(f,anchor){
   const {W,H,val}=f;let prev=new Uint16Array(W),row=new Uint16Array(W);
   let best={height:0,row:0,column:0},central={height:0,row:0,column:0};

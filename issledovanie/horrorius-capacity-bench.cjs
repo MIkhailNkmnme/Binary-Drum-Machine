@@ -2,9 +2,7 @@
    Actual core timing; page memory accounting is a lower estimate, not measured Chrome RSS. */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),os=require('node:os');
-const html=fs.readFileSync(path.join(__dirname,'../mayatnik/Zerkalius-mayatnik.html'),'utf8');
-const ctx={module:{exports:{}}};vm.runInNewContext(html.match(/\/\* ==== ЯДРО[^]*?\*\/([^]*?)\/\* ==== \/ЯДРО/)[1],ctx);
-const M=ctx.module.exports;
+const M=require('../mayatnik/mayatnik-core.js');
 const sample=M.field(1,1,'empty'),bytesPerCell=sample.val.byteLength+(sample.col?.byteLength||0);
 function pageMemory(N,S){
  const {W}=M.geometry('pend',S,N),cells=W*N,frame=bytesPerCell*cells,interval=Math.max(1,Math.ceil(S*frame/200e6));
