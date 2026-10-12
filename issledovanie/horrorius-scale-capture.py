@@ -60,7 +60,7 @@ def pack(out):
     with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_STORED) as z:
         for file in sorted(out.iterdir()):
             if file.is_file():z.write(file,str(Path(out.name)/file.name))
-        for name in ['horrorius-scale-capture.py','horrorius-scale-capture-test.py','horrorius-scale-capture-check.py']:
+        for name in ['horrorius-scale-capture.py','horrorius-scale-capture-test.py','horrorius-scale-capture-check.py','horrorius-mark-motif.py']:
             file=Path(__file__).with_name(name)
             if file.exists():z.write(file,name)
     return archive
@@ -121,9 +121,13 @@ def run(args):
     cards=[]
     for case in manifest['cases']:
         cards.append(f'<div><a href="{case["file"]}"><img loading="lazy" src="{case["file"]}" alt="Масштаб {html.escape(case["scale"])}"><span>Масштаб {html.escape(case["scale"])} · фаза {case["phase"][0]} px</span></a><a href="{case["tileFile"]}">Центральный фрагмент 256×256 →</a></div>')
+    extra=''
+    if out.name=='horrorius-scale-N2048-n96':
+        extra='<p><b>Это первый прогон с окнами.</b> <a href="../horrorius-full-N2048-n96/index.html">Новая серия: целый кадр на каждом масштабе →</a></p>'
+        if (out/'one-motif.html').exists():extra+='<p><a href="one-motif.html">Обведённые примеры: по одному выбранному участку в каждой части →</a></p>'
     page=f'''<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Хоррориус · один кадр · Codex</title>
 <style>body{{background:#0b1216;color:#d7e8e3;font:15px system-ui;margin:20px}}a{{color:#8ce0ce}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}}.grid a{{display:block;background:#142127;padding:10px;text-decoration:none}}img{{width:100%;height:auto}}span{{display:block;margin:8px}}p{{line-height:1.5;max-width:1000px}}</style>
-<h1>Один кадр · разные отображения</h1><p>{AUTHOR}</p><p>Исходник: {original.width}×{original.height} пикселей, кадр {frame_label}. Один и тот же участок с центром ({', '.join(center)}) в координатах исходных клеток.
+<h1>Один кадр · разные отображения</h1>{extra}<p>{AUTHOR}</p><p>Исходник: {original.width}×{original.height} пикселей, кадр {frame_label}. Один и тот же участок с центром ({', '.join(center)}) в координатах исходных клеток.
 {len(manifest['cases'])} проверенных сочетаний, {len(unique)} разных изображений. Это первая конечная серия, а не все возможные масштабы.
 Миниатюры сглажены; щелчок открывает отдельный PNG {size[0]}×{size[1]} пикселей плюс подпись. Для сравнения сетки открывайте его в размере 1:1.</p>
 <p><a href="source-original.png">Полный исходный кадр</a> · <a href="manifest.json">Все параметры и контрольные суммы</a> · <a href="all-views-sheet.png">Общий лист</a> · <a href="../horrorius-scale-capture.py">Скрипт</a></p>

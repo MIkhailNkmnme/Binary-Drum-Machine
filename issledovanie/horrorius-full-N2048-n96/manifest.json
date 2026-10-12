@@ -1,0 +1,1209 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "source": "../horrorius-scale-N2048-n96/source-original.png",
+  "sourceSha256": "5f2105738f8b77d367556d324513efac5dfaa9cbdfa9e063dc74f14819ce7a99",
+  "sourceSize": [
+    8190,
+    2048
+  ],
+  "sourceCapture": {
+    "exportedBy": "Codex — независимый исследователь Хоррориуса",
+    "date": "2026-10-12",
+    "rows": 2048,
+    "completedVertices": 96,
+    "allocatedTargetVertices": 4096,
+    "width": 8190,
+    "height": 2048,
+    "mode": "pendulum",
+    "background": "empty",
+    "view": "bits",
+    "pixelEqualsOneCell": true,
+    "export": "original canvas PNG, copied byte for byte; no resampling or annotations"
+  },
+  "scope": "whole source footprint at each scale, no 1024x768 viewport crop; exact same sampling grids as pilot",
+  "algorithm": "floor((outputPixel+.5-fractionalOrigin)/scale); black outside source",
+  "captions": "none in full PNGs; author and parameters in PNG metadata",
+  "cases": [
+    {
+      "file": "full-01-phase-0.png",
+      "scale": "1/4",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        2048,
+        513
+      ],
+      "fractionalOrigin": [
+        "1/8",
+        "1/8"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        704,
+        -32
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "3ae483cf4f8367ea514d6f0045275e2cdf88e551f732294642a26f18e425b838"
+    },
+    {
+      "file": "full-01-phase-1.png",
+      "scale": "1/4",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        2048,
+        513
+      ],
+      "fractionalOrigin": [
+        "11/24",
+        "11/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        704,
+        -32
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "a4992120a80b22dbdebf21c75f29d01bd5af843cdf7a8fa15ef8e4c76cee9a61"
+    },
+    {
+      "file": "full-01-phase-2.png",
+      "scale": "1/4",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        2049,
+        513
+      ],
+      "fractionalOrigin": [
+        "19/24",
+        "19/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        704,
+        -32
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "2408b02e026f7b03bc8731afc9b16d09aeae1785381f3f4723d5bfcaefa3b67e"
+    },
+    {
+      "file": "full-02-phase-0.png",
+      "scale": "1/3",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        2731,
+        684
+      ],
+      "fractionalOrigin": [
+        "5/6",
+        "5/6"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1110,
+        86
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "6c5059e2f14e038fbe13d48ca22b84e1eec269337a50c3873f643b7ac2a651a7"
+    },
+    {
+      "file": "full-02-phase-1.png",
+      "scale": "1/3",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        2731,
+        683
+      ],
+      "fractionalOrigin": [
+        "1/6",
+        "1/6"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1109,
+        85
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "6a2e9c588ed774123b00655b865c99f1bda20bd6fdc271eca60e74dc03ecd53f"
+    },
+    {
+      "file": "full-02-phase-2.png",
+      "scale": "1/3",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        2731,
+        684
+      ],
+      "fractionalOrigin": [
+        "1/2",
+        "1/2"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1109,
+        85
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "cf9bdbe524ecc57f8254783d1fbb0961a1bfc32ac7d36fbc6480e490c52fcf28"
+    },
+    {
+      "file": "full-03-phase-0.png",
+      "scale": "3/8",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        3072,
+        769
+      ],
+      "fractionalOrigin": [
+        "3/16",
+        "3/16"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1312,
+        144
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "218460bf251ad740a048ab3e8638d6c5c23e406835811a07b46b29016d3a62c6"
+    },
+    {
+      "file": "full-03-phase-1.png",
+      "scale": "3/8",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        3072,
+        769
+      ],
+      "fractionalOrigin": [
+        "25/48",
+        "25/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1312,
+        144
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "1cb5d5fe3e5555f144bf1ca5adb84da60c258ccba614b4846dfcbe0d061cfd32"
+    },
+    {
+      "file": "full-03-phase-2.png",
+      "scale": "3/8",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        3073,
+        769
+      ],
+      "fractionalOrigin": [
+        "41/48",
+        "41/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1312,
+        144
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "47e952081b7b897a1458141e9e9c22fb60ad65bda6765f216f791dbd2c7afed0"
+    },
+    {
+      "file": "full-04-phase-0.png",
+      "scale": "1/2",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        4096,
+        1025
+      ],
+      "fractionalOrigin": [
+        "1/4",
+        "1/4"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1920,
+        320
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "279b37d009fcf057f0a1263d7d01f69bcd4d28756956d3c0832236e6a9b22dc4"
+    },
+    {
+      "file": "full-04-phase-1.png",
+      "scale": "1/2",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        4096,
+        1025
+      ],
+      "fractionalOrigin": [
+        "7/12",
+        "7/12"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1920,
+        320
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "7557fa96536c4f91d82b9286362d7999ce17636efaf862b4657e0bfd2d06471c"
+    },
+    {
+      "file": "full-04-phase-2.png",
+      "scale": "1/2",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        4096,
+        1025
+      ],
+      "fractionalOrigin": [
+        "11/12",
+        "11/12"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        1920,
+        320
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "8b422cfdd3b7e36992be65dcf132be94d69a07e4f8286b70b0db932f6d833250"
+    },
+    {
+      "file": "full-05-phase-0.png",
+      "scale": "5/8",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        5120,
+        1281
+      ],
+      "fractionalOrigin": [
+        "5/16",
+        "5/16"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2528,
+        496
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "669436b15b0e6e5d73cab139cb7bd974bef1c4e47836f7ce6965ebd398cb852c"
+    },
+    {
+      "file": "full-05-phase-1.png",
+      "scale": "5/8",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        5120,
+        1281
+      ],
+      "fractionalOrigin": [
+        "31/48",
+        "31/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2528,
+        496
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "82116e7073e404162675e0c5069f6a6a7a3de72bbec4ffd99a23cba05b75627b"
+    },
+    {
+      "file": "full-05-phase-2.png",
+      "scale": "5/8",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        5120,
+        1281
+      ],
+      "fractionalOrigin": [
+        "47/48",
+        "47/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2528,
+        496
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "51bfe75eb5134efe3885469d4bdb229fbf6dff2ac92160044c613ecf78541bf0"
+    },
+    {
+      "file": "full-06-phase-0.png",
+      "scale": "2/3",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        5461,
+        1366
+      ],
+      "fractionalOrigin": [
+        "2/3",
+        "2/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2731,
+        555
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "4cc47020ffd5086b7f20027c323e5b816f185078eb200e68afc261d887dc3d71"
+    },
+    {
+      "file": "full-06-phase-1.png",
+      "scale": "2/3",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        5460,
+        1366
+      ],
+      "fractionalOrigin": [
+        "0",
+        "0"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2730,
+        554
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "08bd51d84ca6c724580702acd7a288e0c8eeb02e1ae48ae3ff55485db7b1afa4"
+    },
+    {
+      "file": "full-06-phase-2.png",
+      "scale": "2/3",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        5461,
+        1366
+      ],
+      "fractionalOrigin": [
+        "1/3",
+        "1/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        2730,
+        554
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "aeb6473f1abde9167d0c01f5f3c254fc777aa4e9b1f515e2e56f0256dd7121d8"
+    },
+    {
+      "file": "full-07-phase-0.png",
+      "scale": "3/4",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        6143,
+        1537
+      ],
+      "fractionalOrigin": [
+        "3/8",
+        "3/8"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3136,
+        672
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "cd071e60eba69b436e4351d2368c8bd7c0cb4ee0db3f988c2643341f458c6a26"
+    },
+    {
+      "file": "full-07-phase-1.png",
+      "scale": "3/4",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        6144,
+        1537
+      ],
+      "fractionalOrigin": [
+        "17/24",
+        "17/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3136,
+        672
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "93ed22fdf8ad64d6e3ce21b6121bf3927a8ae2f41aa06d0f1f7a4173f77e8509"
+    },
+    {
+      "file": "full-07-phase-2.png",
+      "scale": "3/4",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        6143,
+        1537
+      ],
+      "fractionalOrigin": [
+        "1/24",
+        "1/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3135,
+        671
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "849f85d2e54f1fece4138bc27ed87a6d6f14e1541953bce89361d5f0f94fe975"
+    },
+    {
+      "file": "full-08-phase-0.png",
+      "scale": "4/5",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        6553,
+        1639
+      ],
+      "fractionalOrigin": [
+        "1/5",
+        "0"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3379,
+        742
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "f3cc984aa77b494d96fbbeaca4c575ec1609e6d6290aadb6c7df9d9a113acb71"
+    },
+    {
+      "file": "full-08-phase-1.png",
+      "scale": "4/5",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        6553,
+        1639
+      ],
+      "fractionalOrigin": [
+        "8/15",
+        "1/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3379,
+        742
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "f8a90860cb9e0b3a37f980f21190ee614e0d3606e1f14c52be01f19ca89b4329"
+    },
+    {
+      "file": "full-08-phase-2.png",
+      "scale": "4/5",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        6553,
+        1640
+      ],
+      "fractionalOrigin": [
+        "13/15",
+        "2/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3379,
+        742
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "ba3082ae896c5379e5b72b4d0061943f7e1bb9ed9bb07674412506889bf39c7f"
+    },
+    {
+      "file": "full-09-phase-0.png",
+      "scale": "7/8",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        7167,
+        1793
+      ],
+      "fractionalOrigin": [
+        "7/16",
+        "7/16"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3744,
+        848
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "ab53fbaa391df94ca12b1964923e3c045421118d89e79489b0a841ad6fb7ad36"
+    },
+    {
+      "file": "full-09-phase-1.png",
+      "scale": "7/8",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        7168,
+        1793
+      ],
+      "fractionalOrigin": [
+        "37/48",
+        "37/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3744,
+        848
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "2e9840f712e2f4c2f6b3319cb2787b721b42c90dfcb411790e92a68354878287"
+    },
+    {
+      "file": "full-09-phase-2.png",
+      "scale": "7/8",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        7167,
+        1793
+      ],
+      "fractionalOrigin": [
+        "5/48",
+        "5/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        3743,
+        847
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "dad789770f4c7441b73522d4358fca59f3c29a3fcde8572979eb420b15013cdc"
+    },
+    {
+      "file": "full-10-phase-0.png",
+      "scale": "15/16",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        7679,
+        1921
+      ],
+      "fractionalOrigin": [
+        "15/32",
+        "15/32"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4048,
+        936
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "37d06c9195498fd69b5a8dda0d229f45e946a86b637b30f0d5aebd85e46402dd"
+    },
+    {
+      "file": "full-10-phase-1.png",
+      "scale": "15/16",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        7679,
+        1921
+      ],
+      "fractionalOrigin": [
+        "77/96",
+        "77/96"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4048,
+        936
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "277ab69c576e8b8a86270660c91a7ea312e3e32929445bdcb4c55fafb6608685"
+    },
+    {
+      "file": "full-10-phase-2.png",
+      "scale": "15/16",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        7679,
+        1921
+      ],
+      "fractionalOrigin": [
+        "13/96",
+        "13/96"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4047,
+        935
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "ef4df8f6812213d541d733cf5ec65191dda0f85675716207a41f94c24c0ad1a2"
+    },
+    {
+      "file": "full-11-phase-0.png",
+      "scale": "1",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        8191,
+        2049
+      ],
+      "fractionalOrigin": [
+        "1/2",
+        "1/2"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4352,
+        1024
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "4e29fff73745f32666eae0375a256af0e011ffe13257d0583577ff7aa40b2e79"
+    },
+    {
+      "file": "full-11-phase-1.png",
+      "scale": "1",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        8191,
+        2049
+      ],
+      "fractionalOrigin": [
+        "5/6",
+        "5/6"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4352,
+        1024
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "3b59731df4f7a1536830b5dbd2b3c4dab9fb10593d0ee286ffa47cb602144ddc"
+    },
+    {
+      "file": "full-11-phase-2.png",
+      "scale": "1",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        8191,
+        2049
+      ],
+      "fractionalOrigin": [
+        "1/6",
+        "1/6"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4351,
+        1023
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "6a5374be151d4dac9cdd783348cabd254724464078149c60a1d185c9b3b4b523"
+    },
+    {
+      "file": "full-12-phase-0.png",
+      "scale": "17/16",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        8703,
+        2177
+      ],
+      "fractionalOrigin": [
+        "17/32",
+        "17/32"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4656,
+        1112
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "f27ca18ab28e3b1cf1d28e909e6722d4a020c310b86c5b6c8a005f879dab6a11"
+    },
+    {
+      "file": "full-12-phase-1.png",
+      "scale": "17/16",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        8703,
+        2177
+      ],
+      "fractionalOrigin": [
+        "83/96",
+        "83/96"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4656,
+        1112
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "59876e63de5b890b15c11cdcbed5a3e61c83b3f53a7b331d4f931fb6a308d237"
+    },
+    {
+      "file": "full-12-phase-2.png",
+      "scale": "17/16",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        8703,
+        2177
+      ],
+      "fractionalOrigin": [
+        "19/96",
+        "19/96"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4655,
+        1111
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "d24abe60227b3947b161d2481e85ef6fb81414f75fcdb7b86f5e3efdc624b4fa"
+    },
+    {
+      "file": "full-13-phase-0.png",
+      "scale": "35/32",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        8959,
+        2241
+      ],
+      "fractionalOrigin": [
+        "35/64",
+        "35/64"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4808,
+        1156
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "0ad741843150d1faa68dbfaf67c405c489dc5742413deb832f0bad226f212230"
+    },
+    {
+      "file": "full-13-phase-1.png",
+      "scale": "35/32",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        8959,
+        2241
+      ],
+      "fractionalOrigin": [
+        "169/192",
+        "169/192"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4808,
+        1156
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "f2346d44e6cb45b57712423999c55126f43538b789b47acbf39ba4448caeff8a"
+    },
+    {
+      "file": "full-13-phase-2.png",
+      "scale": "35/32",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        8959,
+        2241
+      ],
+      "fractionalOrigin": [
+        "41/192",
+        "41/192"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4807,
+        1155
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "5cfa9cfc8edbe4e3a0a3fac5b69843a89e00e546f7ede8189d18869b4fbbd0fd"
+    },
+    {
+      "file": "full-14-phase-0.png",
+      "scale": "9/8",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        9215,
+        2305
+      ],
+      "fractionalOrigin": [
+        "9/16",
+        "9/16"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4960,
+        1200
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "1f7bd4b6e7d4a72d594463e52b79a2b1e4eb332307101d2ec66b9f78cbd78176"
+    },
+    {
+      "file": "full-14-phase-1.png",
+      "scale": "9/8",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        9215,
+        2305
+      ],
+      "fractionalOrigin": [
+        "43/48",
+        "43/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4960,
+        1200
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "0b7ffde3741428042e4f4094ddda846ba95824b9d9f4a83ee6deb43945442e13"
+    },
+    {
+      "file": "full-14-phase-2.png",
+      "scale": "9/8",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        9214,
+        2305
+      ],
+      "fractionalOrigin": [
+        "11/48",
+        "11/48"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        4959,
+        1199
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "b0bc871765aa2ff778c7a013b8f061c5bd617f56c35305259b6f37c1f55ee53d"
+    },
+    {
+      "file": "full-15-phase-0.png",
+      "scale": "5/4",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        10239,
+        2561
+      ],
+      "fractionalOrigin": [
+        "5/8",
+        "5/8"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        5568,
+        1376
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "c356543714c43c1b62b4f6b383fbe127afca75c996b4ec2ab41044754d59f3f3"
+    },
+    {
+      "file": "full-15-phase-1.png",
+      "scale": "5/4",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        10239,
+        2561
+      ],
+      "fractionalOrigin": [
+        "23/24",
+        "23/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        5568,
+        1376
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "38a0b3efca88884c2405edf25dabfc551cb6ae2854fa4f48f3a3a4bc1586a690"
+    },
+    {
+      "file": "full-15-phase-2.png",
+      "scale": "5/4",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        10238,
+        2561
+      ],
+      "fractionalOrigin": [
+        "7/24",
+        "7/24"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        5567,
+        1375
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "b15f0265761efea455a803f152b112c9e35a3fb9f125329a1f8b10879c4e4a8a"
+    },
+    {
+      "file": "full-16-phase-0.png",
+      "scale": "3/2",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        12286,
+        3073
+      ],
+      "fractionalOrigin": [
+        "3/4",
+        "3/4"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        6784,
+        1728
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "cb05d2080cc109bb265a7723182758a29fd8ead3da8e475bcf3a672dc404effd"
+    },
+    {
+      "file": "full-16-phase-1.png",
+      "scale": "3/2",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        12286,
+        3073
+      ],
+      "fractionalOrigin": [
+        "1/12",
+        "1/12"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        6783,
+        1727
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "edb343cbcf58d0f9302d0842ae1ae7277d2b949f0854cc9650dfe1af3c400c7f"
+    },
+    {
+      "file": "full-16-phase-2.png",
+      "scale": "3/2",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        12286,
+        3073
+      ],
+      "fractionalOrigin": [
+        "5/12",
+        "5/12"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        6783,
+        1727
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "798c7bd8107d317e72d311444418ad6bcfd1d51d14a7428a80a37336e5af05fd"
+    },
+    {
+      "file": "full-17-phase-0.png",
+      "scale": "2",
+      "pilotPhase": [
+        "0",
+        "0"
+      ],
+      "size": [
+        16380,
+        4096
+      ],
+      "fractionalOrigin": [
+        "0",
+        "0"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        9215,
+        2431
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "6533b0a21d3dc84028a14c50e39dac20a6f860ab7f755b53c4679ef6307935c7"
+    },
+    {
+      "file": "full-17-phase-1.png",
+      "scale": "2",
+      "pilotPhase": [
+        "1/3",
+        "1/3"
+      ],
+      "size": [
+        16381,
+        4097
+      ],
+      "fractionalOrigin": [
+        "1/3",
+        "1/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        9215,
+        2431
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "b0d79ba41a96981ad467dd0191699bca97a89611528bfa5a6d5d19262aa20d97"
+    },
+    {
+      "file": "full-17-phase-2.png",
+      "scale": "2",
+      "pilotPhase": [
+        "2/3",
+        "2/3"
+      ],
+      "size": [
+        16381,
+        4097
+      ],
+      "fractionalOrigin": [
+        "2/3",
+        "2/3"
+      ],
+      "pilotViewportOffsetInFullImage": [
+        9215,
+        2431
+      ],
+      "completeProjectedSource": true,
+      "pilotViewportPixelsMatch": true,
+      "fileSha256": "47d289ee71e67ec33395f0eadb65bc3d4f79ace01d7a8ca82ca971f539b05f77"
+    }
+  ],
+  "verification": {
+    "wholeFrames": 51,
+    "completeProjectedBounds": true,
+    "all51OldViewportsMatchPixelForPixel": true,
+    "matchedViewportPixels": 40108032,
+    "independentFractionIndices": 714,
+    "sourceUnchanged": true
+  }
+}

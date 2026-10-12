@@ -1,0 +1,150 @@
+{
+  "author": "Codex — независимый исследователь Хоррориуса · 12.10.2026",
+  "selection": "one manually selected visible motif at the same source location in each panel",
+  "sourceCenterCells": [
+    "9727/2",
+    "2903/2"
+  ],
+  "sourceHalfSizeCells": "32",
+  "scope": "visual annotation, not exact bit equality or automatic segmentation",
+  "cases": [
+    {
+      "number": 1,
+      "file": "one-motif-01.png",
+      "scale": "15/16",
+      "caseFile": "view-10-phase-0.png",
+      "rectangleInSampledView": [
+        482,
+        395,
+        542,
+        456
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        196.0,
+        342.5,
+        316.0,
+        462.5
+      ]
+    },
+    {
+      "number": 2,
+      "file": "one-motif-02.png",
+      "scale": "1",
+      "caseFile": "view-11-phase-0.png",
+      "rectangleInSampledView": [
+        480,
+        396,
+        544,
+        460
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        704.0,
+        344.0,
+        832.0,
+        472.0
+      ]
+    },
+    {
+      "number": 3,
+      "file": "one-motif-03.png",
+      "scale": "17/16",
+      "caseFile": "view-12-phase-0.png",
+      "rectangleInSampledView": [
+        478,
+        396,
+        546,
+        465
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        1212.0,
+        345.5,
+        1348.0,
+        481.5
+      ]
+    },
+    {
+      "number": 4,
+      "file": "one-motif-04.png",
+      "scale": "35/32",
+      "caseFile": "view-13-phase-0.png",
+      "rectangleInSampledView": [
+        477,
+        397,
+        547,
+        468
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        186.0,
+        898.25,
+        326.0,
+        1038.25
+      ]
+    },
+    {
+      "number": 5,
+      "file": "one-motif-05.png",
+      "scale": "9/8",
+      "caseFile": "view-14-phase-0.png",
+      "rectangleInSampledView": [
+        476,
+        397,
+        548,
+        470
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        696.0,
+        899.0,
+        840.0,
+        1043.0
+      ]
+    },
+    {
+      "number": 6,
+      "file": "one-motif-06.png",
+      "scale": "5/4",
+      "caseFile": "view-15-phase-0.png",
+      "rectangleInSampledView": [
+        472,
+        399,
+        552,
+        479
+      ],
+      "sourceSelection": [
+        "9727/2",
+        "2903/2"
+      ],
+      "selection": "manual visual motif",
+      "outlineInComparisonSheet": [
+        1200.0,
+        902.0,
+        1360.0,
+        1062.0
+      ]
+    }
+  ]
+}
