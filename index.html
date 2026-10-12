@@ -1,5 +1,6 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.114. Точка входа: ссылки на все страницы проекта.
+<!-- Zerkalius Hub (index) — v0.115. v0.115: треугольник по умолчанию — кадр Хоррориуса (узор «Х», _js/horr-rows.js).
+     Точка входа: ссылки на все страницы проекта.
      v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
      v0.113: кнопка «Маятник» в Черновиках — XOR-маятник из Excel (mayatnik/).
      v0.112: автоповорот линии зеркала; отдельные скорости зеркала и 3D до ×1000; кэш исходных битов.
@@ -126,7 +127,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.114</title>
+    <title>Zerkalius Control Hub — v0.115</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -602,9 +603,9 @@
         @media(max-width:1100px){#hubFieldTools.hubMirrorSettings{position:absolute;left:12px;top:68px;width:calc(100% - 24px);max-width:none}}
     </style>
 <script src="_js/hub-perf.js?v=1"></script>
-<script src="_js/initial-rows.js?v=2"></script>
+<script src="_js/initial-rows.js?v=2"></script><script src="_js/horr-rows.js?v=1"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
-<script src="_js/hub-mirror.js?v=114"></script>
+<script src="_js/hub-mirror.js?v=115"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
 <script src="_js/hub-view.js?v=114"></script>
@@ -644,7 +645,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.114</div>
+        <div class="ver">v0.115</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -851,7 +852,7 @@
                 for (let j = 0; j <= r; j++) next += Number(prev[j - 1] || '0') ^ Number(prev[j] || '0');
                 SERP_ROWS.push(next);
             }
-            const ROW_PATTERNS = { base: HUB_ROWS, serp: SERP_ROWS };
+            const ROW_PATTERNS = { base: HUB_ROWS, serp: SERP_ROWS, horr: ZZ_HORR_ROWS };   // v0.115: «Х» — кадр Хоррориуса, по умолчанию
             const music = HubRhombMusic(ROW_PATTERNS[window.HubMirror.state.pattern], data => window.dispatchEvent(new CustomEvent('hubmusic', { detail: data })));
             const post = m => music.send(m);
             // Доступный запуск остаётся в полосе даже при сдвиге вершины за край поля.

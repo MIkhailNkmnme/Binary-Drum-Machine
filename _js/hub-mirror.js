@@ -1,14 +1,14 @@
-/* Hub v0.114: recover the mirror axis along with the drawing. */
+/* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'serp',magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'horr',magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
       state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
-      state.pattern = saved.pattern === 'base' ? 'base' : 'serp';
+      state.pattern = ['base', 'serp', 'horr'].includes(saved.pattern) ? saved.pattern : 'horr';   // v0.115: сохранённый выбор не трогаем
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
@@ -61,10 +61,10 @@
     settings.addEventListener('click', e => e.stopPropagation());
     const patternLabel = document.createElement('label'), pattern = document.createElement('select');
     pattern.setAttribute('aria-label', 'Узор треугольника');
-    for (const [value, title] of [['base', 'П'], ['serp', 'С']]) {
+    for (const [value, title] of [['horr', 'Х'], ['base', 'П'], ['serp', 'С']]) {
       const option = document.createElement('option'); option.value = value; option.textContent = title; pattern.append(option);
     }
-    pattern.value = state.pattern; patternLabel.className='hubRhomb';patternLabel.title='Узор: исходный / Серпинский';patternLabel.append(pattern); settings.append(patternLabel);
+    pattern.value = state.pattern; patternLabel.className='hubRhomb';patternLabel.title='Узор: Хоррориус (кадр маятника) / исходный / Серпинский';patternLabel.append(pattern); settings.append(patternLabel);
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
