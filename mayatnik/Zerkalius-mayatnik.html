@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.009. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.010. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.009</title>
+<title>Zerkalius Маятник — v0.010</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -55,13 +55,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 #bKonus{display:none}#bKonus.on{display:inline-block}
 #tip{position:fixed;pointer-events:none;font:12px var(--mono);background:#000c;border:1px solid var(--line);padding:2px 6px;border-radius:3px;display:none}
-.lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute)}
+.lg{display:flex;gap:10px;font:12px var(--mono);color:var(--mute);cursor:pointer;user-select:none}
+.lg.bits .tc{opacity:.25;text-decoration:line-through}   /* v0.010: «только биты» — цвета перекрытий погашены */
 .lg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
 </style>
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.009</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.010</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -107,7 +108,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
     <button id="bKonus" title="Выбранный конус (Shift + щелчок по оси симметрии или по полю) — на грани Бирамиды">◭ в Бирамиду</button>
   </div>
-  <div class="lg" aria-hidden="true"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span><i style="background:#4f9bff"></i>стал 1</span><span><i style="background:#ff5a4f"></i>стал 0</span></div>
+  <div class="lg" id="lg" role="button" tabindex="0" title="Щелчок — цвета перекрытий вкл / выкл (то же, что «вид»)"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span class="tc"><i style="background:#4f9bff"></i>стал 1</span><span class="tc"><i style="background:#ff5a4f"></i>стал 0</span></div>
   <span id="stat"></span>
 </div>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
@@ -384,7 +385,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
   $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
-  $('view').addEventListener('change', () => { readUI(); draw(); });
+  // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
+  const lgSync = () => $('lg').classList.toggle('bits', st.view === 'bits');
+  $('view').addEventListener('change', () => { readUI(); lgSync(); if (f) draw(); });
+  const lgToggle = () => { $('view').value = st.view === 'bits' ? 'col' : 'bits'; readUI(); lgSync(); if (f) draw(); };
+  $('lg').addEventListener('click', lgToggle);
+  $('lg').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lgToggle(); } });
+  lgSync();
   $('outline').addEventListener('change', () => { st.outline = $('outline').checked; save(); if (f) draw(); });
   $('sym').addEventListener('change', () => { st.sym = $('sym').checked; save(); if (f) draw(); });
   $('speed').addEventListener('input', readUI);
