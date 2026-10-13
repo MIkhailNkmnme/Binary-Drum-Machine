@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.023. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.024. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.023</title>
+<title>Zerkalius Маятник — v0.024</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -42,6 +42,7 @@
   v0.022: «Очки» по диагоналям ромбов (↘ ↙, по умолчанию) или по рядам — выбор рядом с кнопкой; галки «инверс» и «реверс» — искать и варианты.
   v0.023: «без полос» на ромбах — срезанные ромбы у края зоны (справа, слева, у вершины) контуром со своей цифрой, окно на ромб шире;
     «Очки» при загрузке всегда выключены.
+  v0.024: исправлен запуск — цвета «Очков» и кромки были объявлены выше rgba (страница падала с v0.021).
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -106,7 +107,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.023</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.024</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -361,20 +362,23 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const A = geo.anchor - VX, x = fx - .5 - A - p, y = fy - .5, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2);
     return [i + j + A + p + VX, i - j];   // fx — в клетках окна, ответ — столбец поля
   }
-  const HL1 = rgba([255, 214, 70]), HL0 = rgba([150, 86, 30]);   // v0.021: «Очки» — найденные 1 и 0
-  const EDGE = rgba([214, 168, 40]);   // v0.023: кромка срезанных полос
   function drawRomb(px, T, empty, hl) {
     const { W, H, val } = f, K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
     const A = geo.anchor - VX;   // якорь в клетках окна
     for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - A - h[0] : 0; }
+    // v0.024: цвет клетки окна — один раз на кадр (зона, кромка, «Очки»), а не на каждый из миллионов пикселей
+    const cc = new Uint32Array(VW * VH);
+    for (let r = 0; r < VH; r++) for (let c = 0; c < VW; c++) {
+      const q = r * W + c + VX, v = val[q];
+      cc[r * VW + c] = v < 0 ? empty : outZone(r, c + VX) ? (cutEdge(r, c + VX) ? EDGE : empty) : hl && hl[q] ? (v ? HL1 : HL0) : T[v * 3];
+    }
     for (let Y = 0; Y < CH; Y++) {
       const y = (Y + .5) / K - .5, row = Y * CW;
       for (let X = 0; X < CW; X++) {
         const p = cp[X]; if (p < 0) { px[row + X] = div; continue; }
         const x = cx[X], i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + A + p, r = i - j;
-        const v = r >= 0 && r < VH && c >= 0 && c < VW && !outZone(r, c + VX) ? val[r * W + c + VX] : -1;
-        px[row + X] = v < 0 ? (cutEdge(r, c + VX) ? EDGE : empty) : hl && hl[r * W + c + VX] ? (v ? HL1 : HL0) : T[v * 3];
+        px[row + X] = r >= 0 && r < VH && c >= 0 && c < VW ? cc[r * VW + c] : empty;
       }
     }
   }
@@ -404,6 +408,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
+  // v0.024: цвета «Очков» и кромки — ПОСЛЕ rgba: объявленные выше (v0.021–v0.023), они роняли страницу при загрузке
+  // («Cannot access 'rgba' before initialization» — const ещё не задан). Новые цвета через rgba — только ниже этой строки.
+  const HL1 = rgba([255, 214, 70]), HL0 = rgba([150, 86, 30]);   // v0.021: «Очки» — найденные 1 и 0
+  const EDGE = rgba([214, 168, 40]);   // v0.023: кромка срезанных полос
   function draw() {
     const oldVX = VX, oldR = cv.getBoundingClientRect(), oldS = scale();
     if (updWin()) {   // v0.018: окно выросло (новая вершина, «показ строк») — холст и раскладка заново, якорь на том же месте экрана
