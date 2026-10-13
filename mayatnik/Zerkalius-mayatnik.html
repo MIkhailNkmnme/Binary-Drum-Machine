@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.022. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.023. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.022</title>
+<title>Zerkalius Маятник — v0.023</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -40,6 +40,8 @@
   v0.020: галка «без полос» — в виде только зона шума (от крайнего «0» до крайнего «0» в строке), окно обрезается по ней.
   v0.021: кнопка «👓 Очки» — сверху вниз ищет строки начальной последовательности в рядах решёток; найденное — жёлтым, список под панелью.
   v0.022: «Очки» по диагоналям ромбов (↘ ↙, по умолчанию) или по рядам — выбор рядом с кнопкой; галки «инверс» и «реверс» — искать и варианты.
+  v0.023: «без полос» на ромбах — срезанные ромбы у края зоны (справа, слева, у вершины) контуром со своей цифрой, окно на ромб шире;
+    «Очки» при загрузке всегда выключены.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -104,7 +106,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.022</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.023</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -183,6 +185,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const KEY = 'zerk_mayatnik';
   let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
@@ -261,6 +264,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return [mn, mx];
   }
   const outZone = (r, c) => ZL.length > r && (c < ZL[r] || c > ZR[r]);   // клетка (строка, столбец поля) — в полосе
+  // v0.023: «без полос — ромбы обводкой показать края обрезанные, с 1-цей, справа и слева». Кромка — срезанные клетки полосы,
+  // у которых сосед по стороне ромба (строка ± 1, столбец ± 1 — та же решётка) виден: рисуются контуром со своей цифрой.
+  const shownCell = (r, c) => r >= 0 && r < VH && c >= 0 && c < f.W && f.val[r * f.W + c] >= 0 && !outZone(r, c);
+  const cutEdge = (r, c) => ZL.length > 0 && r >= 0 && r < VH && c >= 0 && c < f.W && f.val[r * f.W + c] >= 0 && outZone(r, c) &&
+    (shownCell(r - 1, c - 1) || shownCell(r - 1, c + 1) || shownCell(r + 1, c - 1) || shownCell(r + 1, c + 1));
   // v0.021: «Очки» — «сканирует сверху вниз и находит строки из последовательности 1, 1, 11, 111…; найденную ниже больше не
   // ищет; так до последней». Последовательность — ZZ_INITIAL_ROWS (_js/initial-rows.js, 71 строка). Ряд решётки p в строке r —
   // её клетки через одну, как строка треугольника (строки Бирамиды и хаба — ряды чётной решётки). На каждой строке кадра
@@ -333,7 +341,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function updWin() {
     const R = st.vrows > 0 ? Math.min(f.H, st.vrows) : f.H, [lo, hi] = pairOn() ? [-k, k] : MAYATNIK.span(st.mode, k);
     let x0 = Math.max(0, geo.anchor + lo - (R - 1)), x1 = Math.min(f.W - 1, geo.anchor + hi + (R - 1));
-    if (st.noband) { const z = zoneCalc(R); if (z && Math.max(x0, z[0]) <= Math.min(x1, z[1])) { x0 = Math.max(x0, z[0]); x1 = Math.min(x1, z[1]); } }
+    if (st.noband) { const z = zoneCalc(R); if (z && Math.max(x0, z[0] - 2) <= Math.min(x1, z[1] + 2)) { x0 = Math.max(x0, z[0] - 2); x1 = Math.min(x1, z[1] + 2); } }   // ±2 — кромка (v0.023)
     else if (ZL.length) { ZL = new Int32Array(0); ZR = new Int32Array(0); }
     if (x0 === VX && x1 - x0 + 1 === VW && R === VH) return false;
     VX = x0; VW = x1 - x0 + 1; VH = R; return true;
@@ -354,6 +362,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return [i + j + A + p + VX, i - j];   // fx — в клетках окна, ответ — столбец поля
   }
   const HL1 = rgba([255, 214, 70]), HL0 = rgba([150, 86, 30]);   // v0.021: «Очки» — найденные 1 и 0
+  const EDGE = rgba([214, 168, 40]);   // v0.023: кромка срезанных полос
   function drawRomb(px, T, empty, hl) {
     const { W, H, val } = f, K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
@@ -365,7 +374,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         const p = cp[X]; if (p < 0) { px[row + X] = div; continue; }
         const x = cx[X], i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + A + p, r = i - j;
         const v = r >= 0 && r < VH && c >= 0 && c < VW && !outZone(r, c + VX) ? val[r * W + c + VX] : -1;
-        px[row + X] = v < 0 ? empty : hl && hl[r * W + c + VX] ? (v ? HL1 : HL0) : T[v * 3];
+        px[row + X] = v < 0 ? (cutEdge(r, c + VX) ? EDGE : empty) : hl && hl[r * W + c + VX] ? (v ? HL1 : HL0) : T[v * 3];
       }
     }
   }
@@ -558,7 +567,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(rp>=0){   // v0.013: чёткие ромбы видимой части — центр в середине клетки, полудиагональ — клетка; с 10 px — тонкий край, с 14 px — цифры
       const edge=s>=10,halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';   // v0.016: «обе рядом» — две половины
       for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(VH,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(VW,c1-ox+1);x++){
-        if(((x+VX-geo.anchor-p-y)%2+2)%2||outZone(y,x+VX))continue;const v=f.val[y*f.W+x+VX];if(v<0)continue;
+        if(((x+VX-geo.anchor-p-y)%2+2)%2)continue;
+        if(outZone(y,x+VX)){if(!cutEdge(y,x+VX))continue;   // v0.023: срезанный ромб кромки — контуром со своей цифрой
+          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,u=f.val[y*f.W+x+VX];digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
+          digitG.save();digitG.fillStyle='#0d0f16';digitG.fill();digitG.lineWidth=Math.max(1,s*.07);digitG.strokeStyle='#d6a828';digitG.stroke();digitG.restore();
+          if(s>=14){digitG.fillStyle='#d6a828';digitG.fillText(String(u),cx,cy);}continue;}
+        const v=f.val[y*f.W+x+VX];if(v<0)continue;
         const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
         const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=hit?(v?'#ffd646':'#96561e'):v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
         if(hit){digitG.save();digitG.lineWidth=Math.max(1.5,s*.09);digitG.strokeStyle='#ff9a1f';digitG.stroke();digitG.restore();}   // v0.022: найденное «Очками» — ещё и обводкой
