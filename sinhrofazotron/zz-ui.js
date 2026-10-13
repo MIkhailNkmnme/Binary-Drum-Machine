@@ -2066,6 +2066,7 @@ function lasDeps(){
   need(["bSunRow1"], quad || coneSunHalf() || coneSunSlit(), "строка 1 — четверти / полукольцо / ▮ щель, солнце в ней — точка");
   need(["bConeAimL", "bConeAimR"], cut && !r1 && !quad, "в вырезах T−1 строка 1 прозрачна — доводить нечего (включи ▮ щель 1)");
   need(["coneSlit"], zero, "«Без щелей» — ширина щели ни на что не влияет");
+  need(["coneSlit"], sun && cut, "при ☀ в вырезах кольца стоят стык в стык, свет — лучами из центра: ширина щели ни на что не влияет");   // v0.089
   need(["coneVoid"], zero && !cut, "«Без щелей» — свет ловит строка за чертой, пустых колец нет");
   for (const [key, ids] of Object.entries(LAS_KEY)) for (const id of ids) {
     const el = document.getElementById(id); if (!el) continue;
@@ -4431,6 +4432,51 @@ function coneSunCutR(b, N){
    Шаг»: «◌ след.» (Z.lasPeek). Следующий шаг ищется тем же ходом, что ▶| у солнца: фаза кручения мелкими шагами, пока свет не упадёт иначе (до 3000), — на
    копии, фаза возвращается. Итог запоминается по фазе, строкам, накрутке и режимам — пересчёт только когда они сменились. null — шага нет (режим «Всё»,
    не солнце, свет не меняется) */
+/* v0.089, «ширина щели ни на что не влияет же больше? она идеальна?» → «да» (убрать последний допуск): при солнце кольца стоят стык в стык, свет — лучами
+   из центра, важны только углы. Но «шаг ↷», ▶ и «◌ след.» искали смену света перебором шагом в полщели — событие короче шага проскакивало. Теперь
+   события считаются формулой: свет меняется, только когда граница одного кольца ложится на границу другого (или на край доли строки 1; с поправками на
+   ½ и ¼ оборота — для луны: зеркало, «≥180°», крестом), и при «☀/☾ обороте» — когда строка 1 проходит целый оборот. Ход — по точкам: середина
+   промежутка, миг события, середина следующего… — в каждой свет считается как есть (миг касания тоже засчитывается). Ширина щели при солнце в
+   вырезах больше ни на что не влияет — бегунок затемнён (lasDeps) */
+function coneSunExactOk(){ const m = Z.coneSpinMode || "all"; return coneSunOn() && m !== "all" && coneFlat() && !Z.cone3d && !coneLenOn() && !Z.sunSweep && !Z.moonSweep && !coneFanOn(); }
+function coneSunEdgeFams(){   // при нынешней фазе: семейства границ { o — начало в оборотах, P — частей (границы o + j/P) } и поворот строки 1 в оборотах
+  const N = Math.min(Z.rows.length, CONE_MAX), T = coneRingsTotal(N), F = [];
+  for (let b = 1; b < T; b++) { const C = coneSunCutR(b, N); if (C) { F.push({ o: -C.rot / C.P, P: C.P }); continue; } const R = coneRingNR(b); if (!R) break; F.push({ o: -R.rot / R.n, P: R.n }); }
+  const k1 = coneSunTurnOn() ? [] : coneQuadOn() ? coneQuadArcs(true) : coneSunSlit() ? coneSunSlitArc() : coneSunHalf() ? coneSunHalfArc() : [];
+  const E = []; for (const [a, b] of k1) for (const x of [a, b]) E.push(x / TAU2);
+  return { F, E, r1: -coneRotOf(0) / ((Z.rows[0] || "1").length || 1) };
+}
+function coneSunExactNext(ph, sg){   // следующий миг (по ходу sg = ±1) после ph, когда какая-то граница ложится на другую; null — не бывает
+  const p0 = Z.coneSpinPh, dl = 1e-3 * sg;
+  let A, B; try { Z.coneSpinPh = ph; A = coneSunEdgeFams(); Z.coneSpinPh = ph + dl; B = coneSunEdgeFams(); } finally { Z.coneSpinPh = p0; }
+  const gcdI = (a, b) => { while (b) [a, b] = [b, a % b]; return a; }, wrap = (d, P) => d - Math.round(d * P) / P;
+  const fam = A.F.map((f, i) => ({ o: f.o, P: f.P, w: wrap(B.F[i] ? B.F[i].o - f.o : 0, f.P) / dl }));
+  const w1 = wrap(B.r1 - A.r1, 1) / dl;
+  /* края долей строки 1 — у каждого своя скорость (доля — часть кольца из M частей, не бит): мерим сдвиг до ближайшего края; 0 / 1 — шов дуг, не край */
+  const EB = B.E.filter(x => x > 1e-9 && x < 1 - 1e-9);
+  for (const e of A.E) { if (!EB.length) continue; const seam = e <= 1e-9 || e >= 1 - 1e-9; let d = Infinity; for (const x of EB) { const q = wrap(x - e, 1); if (Math.abs(q) < Math.abs(d)) d = q; } if (seam && Math.abs(d) > 5e-3) continue; fam.push({ o: seam ? 0 : e, P: 1, w: d / dl }); }   // на шве — край, только если он сдвинулся с него
+  let best = Infinity;
+  /* сдвиги границ: ¼ оборота — луна крестом; ½ — луны-зеркала (зеркало, «≥180°», за 1, при затмении); иначе — только стык */
+  const shm = Z.moonOff || coneSunTurnOn() || coneSunMoon() || Z.moonAlways ? 1 : Z.moonCross ? 4 : 2;
+  const cross = (D0, u, g) => { if (Math.abs(u) < 1e-12) return; const x = D0 / g, k = u > 0 ? Math.floor(x + 1e-7) + 1 : Math.ceil(x - 1e-7) - 1, dt = (k * g - D0) / u; if (dt > 1e-12 && dt < best) best = dt; };
+  for (let i = 0; i < fam.length; i++) for (let j = i + 1; j < fam.length; j++) {
+    const a = fam[i], b = fam[j], L = a.P / gcdI(a.P, b.P) * b.P; cross(a.o - b.o, (a.w - b.w) * sg, 1 / (shm * L));   // D — разность начал, скорость — по ходу (sg)
+  }
+  if (coneSunTurnOn()) cross(A.r1, w1 * sg, 1);   // ☀/☾ оборот: строка 1 прошла целый оборот
+  return best < Infinity ? ph + sg * best : null;
+}
+function coneSunExactPoints(ph, sg, end, max = 400, visit){   // точки хода после ph: середина промежутка, миг, середина… (до end, если задан); visit(q) → true — стоп
+  const pts = []; let p = ph, e = coneSunExactNext(p, sg);
+  while (pts.length < max && e !== null) {
+    const mid = (p + e) / 2;
+    if (end !== undefined && (mid - end) * sg > 1e-9) break;   // край кадра — с запасом на погрешность счёта: миг на самом краю — в этом кадре, следующий его уже не видит
+    pts.push(mid); if (visit && visit(mid)) break;
+    if (end !== undefined && (e - end) * sg > 1e-9) break;
+    pts.push(e); if (visit && visit(e)) break;
+    p = e; e = coneSunExactNext(e, sg);
+  }
+  return pts;
+}
 let conePeekC = { k: "", S: null };
 function coneSunPeek(){
   const m = Z.coneSpinMode || "all", N = Math.min(Z.rows.length, CONE_MAX); if (!coneSunOn() || m === "all" || !N) return null;
@@ -4440,7 +4486,8 @@ function coneSunPeek(){
   const perUnit = coneBitMode(m) ? coneDegPhMax(N) : 1, d = (Z.coneAutoSp < 0 ? -1 : 1) * tolDeg / perUnit / 2;
   const sig = T => T.hits.join("|") + "/" + T.zhits.join("|");   // v0.075: и луна — как у «шаг ↷»
   const p0 = Z.coneSpinPh || 0, k0 = sig(coneSunTrace()); let S = null;
-  try { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (sig(T) !== k0) { S = T; break; } } }
+  try { if (coneSunExactOk()) { coneSunExactPoints(p0, d < 0 ? -1 : 1, undefined, 3000, (p) => { Z.coneSpinPh = p; const T = coneSunTrace(); if (sig(T) !== k0) { S = T; return true; } return false; }); }   // v0.089: точный ход
+    else { let p = p0; for (let st = 0; st < 3000; st++) { p += d; Z.coneSpinPh = p; const T = coneSunTrace(); if (sig(T) !== k0) { S = T; break; } } } }
   finally { Z.coneSpinPh = p0; }
   conePeekC = { k, S }; return S;
 }
@@ -6086,7 +6133,8 @@ function coneClockSweep(ph0, dph, m){
      узлах; ▶ красил в своих подшагах кадра — другая сетка, и короткие миги (луна накрыла ячейку на долю шага) у шагов были, а у ▶ — нет: 1100 вместо 1000.
      Теперь ▶ при солнце красит ровно в узлах той же сетки (coneSunLat — начало и шаг; после черты — заново от её места, как у шагов), конец кадра — без краски */
   let pts = null;
-  if (coneSunOn() && !q && !coneFanOn() && !Z.coneEdgeStop) {
+  if (coneSunExactOk() && !q && !Z.coneEdgeStop) { pts = coneSunExactPoints(ph0, dph > 0 ? 1 : -1, ph0 + dph, 4000); K = pts.length; }   // v0.089: точный ход — миги и промежутки
+  else if (coneSunOn() && !q && !coneFanOn() && !Z.coneEdgeStop) {
     const dd = tolDeg / (coneBitMode(m) ? coneDegPhMax(N) : 1) / 2, sg = dph > 0 ? 1 : -1;
     if (dd > 0 && isFinite(dd)) {
       if (!coneSunLat || coneSunLat.d !== dd || coneSunLat.n !== N) coneSunLat = { a: ph0, d: dd, n: N };
@@ -8181,6 +8229,8 @@ function setupCone(){
       if (ok && autoRaf) return;   // кручение уже включил сам запуск; если нет (клик по ▶ внутри его же клика браузер не повторяет) — включаем здесь
     }
     if (on && !autoRaf) { coneStartMark(false); balancePauseArmed = !Z.coneBalancePause || !coneBalanceAllEqual(coneBalancePauseData().quarters); }
+    /* v0.089: перед ▶ при солнце — каскад на месте, как у «шага ↷»: готовая строка за чертой уходит в поле, новое кольцо красится в том же положении */
+    if (on && !autoRaf && coneSunExactOk()) { let c = fillAutoCommit(); for (let g = 0; c && g < 64; g++) { coneWallPaint(coneClockTrace()); c = fillAutoCommit(); } }
     if (on && !autoRaf) { tapeRec(); autoT0 = 0; coneClockWas = !!Z.coneClock && coneClockTrace().some(R => R.pass); coneSpinning = true; if (window.zzBallSpinState) window.zzBallSpinState(true); autoRaf = requestAnimationFrame(autoTick); }   // v0.119: стоим на проходе — он уже засчитан
     if (!on && autoRaf) Z.coneRunStop = { pos: posCur() };   // v0.1064: где ход остановился — продолжение отсюда старт не меняет
     if (!on && autoRaf) { cancelAnimationFrame(autoRaf); autoRaf = 0; coneSpinning = false; if (window.zzBallSpinState) window.zzBallSpinState(false); save(); }
@@ -8221,7 +8271,8 @@ function setupCone(){
          не вставали, а при ▶ вставали (1111 вместо 1000 на «☀/☾ оборот + Встр.бит»). */
       const lightKey = () => { const T = coneSunTrace(); return T.hits.join("|") + "/" + T.zhits.join("|"); };
       const k0 = lightKey(), p0 = Z.coneSpinPh || 0; let p = p0, s = 0;
-      for (; s < 3000; s++) { p += d; Z.coneSpinPh = p; if (lightKey() !== k0) break; }
+      if (coneSunExactOk()) { s = 3000; coneSunExactPoints(p0, d < 0 ? -1 : 1, undefined, 6000, (q) => { Z.coneSpinPh = q; if (lightKey() !== k0) { p = q; s = 0; return true; } return false; }); if (s) Z.coneSpinPh = p0; else Z.coneSpinPh = p; }   // v0.089: точный ход — до мига / промежутка, где свет другой
+      else for (; s < 3000; s++) { p += d; Z.coneSpinPh = p; if (lightKey() !== k0) break; }
       if (s >= 3000) { Z.coneSpinPh = p0; say("☀ За 3000 мелких шагов свет не сменился — крути ▶."); return; }
       save(); renderCone(); say((dir > 0 ? "▶ Шаг вперёд" : "◀ Шаг назад") + ": свет упал иначе."); return;
     }
