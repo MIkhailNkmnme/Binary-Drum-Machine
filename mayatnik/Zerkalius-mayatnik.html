@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.017. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.018. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.017</title>
+<title>Zerkalius Маятник — v0.018</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -35,6 +35,7 @@
   v0.015: кнопка «кратный ×2» (по умолчанию вкл) — масштаб только 2^k пикселей монитора на бит: без муара двух решёток при уменьшении.
   v0.016: вид «ромбы · обе рядом» — два Хоррориуса на одном холсте: слева чётная решётка, справа нечётная, между ними вертикаль.
   v0.017: уменьшенную картинку строит страница (present), холст пиксель в пиксель и по пикселям монитора — ничего не «плывёт» под курсором.
+  v0.018: «показ строк» и окно показа: верхние N строк, по ширине — до куда к этому кадру достали конусы; «обе рядом» при малом N — крупно.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -96,7 +97,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.017</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.018</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -135,6 +136,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="romb1" title="Нечётная решётка: её пишут вершины ±1, ±3… Ромбы впритык">ромбы · нечётная</option>
       <option value="romb2" title="Два Хоррориуса рядом: слева чётная решётка (вершины 0, ±2…), справа нечётная (±1, ±3…), между ними — вертикаль">ромбы · обе рядом</option>
     </select></label>
+    <label title="Сколько верхних строк показывать (пусто — все). По ширине показ всегда обрезан до того, куда к этому кадру достали конусы, — при малом числе строк картинка (и обе половины «обе рядом») помещается крупно">показ строк <input id="vrows" type="number" min="0" max="4096" step="1" placeholder="все" style="width:64px"></label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
@@ -164,7 +166,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true, vrows: 0 };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -187,7 +189,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
+    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
   }
 
   // v0.012: «пара сразу» — кадр = пара вершин ±m одним проходом (MAYATNIK.conePair); кадр 0 — только якорь.
@@ -199,6 +201,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
     f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
     if (pairOn()) MAYATNIK.cone(f, geo.anchor, st.rows);
+    updWin();
     // v0.002: опорные кадры для ползунка «кадр» — все кадры не влезут (2024 × 24 МБ), поэтому каждый interval-й,
     // не больше ~200 МБ на всё; нужный кадр досчитывается от ближайшего опорного
     snaps = new Map(); interval = Math.max(1, Math.ceil(total() * f.val.length / 200e6)); snap();   // v0.006: кадр — 1 байт на клетку (цвет не хранится)
@@ -208,7 +211,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.014: «при построении автоскролл на середину, а то чёрный экран»: ось якоря — посередине окна, сверху — вершина
   function centerAnchor() {
     const r = cv.getBoundingClientRect(), w = wrap.getBoundingClientRect();
-    wrap.scrollLeft += r.left + (geo.anchor + .5) * scale() - (w.left + wrap.clientWidth / 2); wrap.scrollTop = 0;
+    wrap.scrollLeft += r.left + (geo.anchor - VX + .5) * scale() - (w.left + wrap.clientWidth / 2); wrap.scrollTop = 0;
   }
   // v0.013: вид «ромбы» — одна решётка ромбами впритык. Кадр — две независимые решётки через клетку: (столбец − строка
   // от якоря) чётное пишут только вершины 0, ±2…, нечётное — только ±1, ±3… («Исследование», раздел 24). Ромбы одной решётки
@@ -218,31 +221,42 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // вертикаль шириной RG клеток (≈ 4 px при «по ширине»). Показ — в клетках: x < W — чётная, x ≥ W + RG — нечётная (x − W − RG).
   const rombP = () => st.view === 'romb0' ? 0 : st.view === 'romb1' ? 1 : st.view === 'romb2' ? 2 : -1;
   let RK = 1, RG = 0;
-  const dispW = () => rombP() === 2 ? 2 * geo.W + RG : geo.W;   // ширина показа в клетках
-  // клетка показа fx → [решётка, столбец поля]; null — вертикаль между Хоррориусами
-  const halfOf = fx => rombP() !== 2 ? [rombP(), fx] : fx < geo.W ? [0, fx] : fx >= geo.W + RG ? [1, fx - geo.W - RG] : null;
+  // v0.018: окно показа — верхние VH строк («показ строк», пусто — все) и столбцы, до которых к этому кадру достали конусы:
+  // [якорь + lo − (VH − 1), якорь + hi + (VH − 1)], lo…hi — размах поставленных вершин. Холст, масштаб, подсказка, цифры и
+  // ромбы считаются в клетках окна (VX — первый столбец поля в окне); само поле f не меняется.
+  let VX = 0, VW = 1, VH = 1;
+  function updWin() {
+    const R = st.vrows > 0 ? Math.min(f.H, st.vrows) : f.H, [lo, hi] = pairOn() ? [-k, k] : MAYATNIK.span(st.mode, k);
+    const x0 = Math.max(0, geo.anchor + lo - (R - 1)), x1 = Math.min(f.W - 1, geo.anchor + hi + (R - 1));
+    if (x0 === VX && x1 - x0 + 1 === VW && R === VH) return false;
+    VX = x0; VW = x1 - x0 + 1; VH = R; return true;
+  }
+  const dispW = () => rombP() === 2 ? 2 * VW + RG : VW;   // ширина показа в клетках
+  // клетка показа fx → [решётка, столбец окна]; null — вертикаль между Хоррориусами
+  const halfOf = fx => rombP() !== 2 ? [rombP(), fx] : fx < VW ? [0, fx] : fx >= VW + RG ? [1, fx - VW - RG] : null;
   function canvasSize() {
     const rp = rombP();
-    RG = rp === 2 ? Math.max(2, Math.min(64, Math.ceil(4 / Math.max(.02, (wrap.clientWidth - 32) / (2 * geo.W))))) : 0;
-    RK = rp < 0 ? 1 : Math.max(1, Math.min(8, Math.floor(Math.sqrt(12e6 / (dispW() * st.rows)))));
+    RG = rp === 2 ? Math.max(2, Math.min(64, Math.ceil(4 / Math.max(.02, (wrap.clientWidth - 32) / (2 * VW))))) : 0;
+    RK = rp < 0 ? 1 : Math.max(1, Math.min(8, Math.floor(Math.sqrt(12e6 / (dispW() * VH)))));
     if (RK > 1) RK -= RK % 2;   // при нечётном RK граничные пиксели делятся неровно — ромбы кривые; 1 и чётные — ровно 2·RK² на ромб
-    img = g.createImageData(dispW() * RK, st.rows * RK);   // v0.017: полная картинка; на холст её кладёт present()
+    img = g.createImageData(dispW() * RK, VH * RK);   // v0.017: полная картинка; на холст её кладёт present()
   }
   // Клетка решётки p под точкой (fx, fy) в клетках: ближайший центр по |dx| + |dy| → [столбец, строка]
   function rombCell(fx, fy, p) {
-    const x = fx - .5 - geo.anchor - p, y = fy - .5, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2);
-    return [i + j + geo.anchor + p, i - j];
+    const A = geo.anchor - VX, x = fx - .5 - A - p, y = fy - .5, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2);
+    return [i + j + A + p + VX, i - j];   // fx — в клетках окна, ответ — столбец поля
   }
   function drawRomb(px, T, empty) {
     const { W, H, val } = f, K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
-    for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - geo.anchor - h[0] : 0; }
+    const A = geo.anchor - VX;   // якорь в клетках окна
+    for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - A - h[0] : 0; }
     for (let Y = 0; Y < CH; Y++) {
       const y = (Y + .5) / K - .5, row = Y * CW;
       for (let X = 0; X < CW; X++) {
         const p = cp[X]; if (p < 0) { px[row + X] = div; continue; }
-        const x = cx[X], i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + geo.anchor + p, r = i - j;
-        const v = r >= 0 && r < H && c >= 0 && c < W ? val[r * W + c] : -1;
+        const x = cx[X], i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + A + p, r = i - j;
+        const v = r >= 0 && r < VH && c >= 0 && c < VW ? val[r * W + c + VX] : -1;
         px[row + X] = v < 0 ? empty : T[v * 3];
       }
     }
@@ -274,17 +288,24 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
   function draw() {
+    const oldVX = VX, oldR = cv.getBoundingClientRect(), oldS = scale();
+    if (updWin()) {   // v0.018: окно выросло (новая вершина, «показ строк») — холст и раскладка заново, якорь на том же месте экрана
+      canvasSize(); cssLayout();
+      if (st.zoom !== 'fit') { const r = cv.getBoundingClientRect(); wrap.scrollLeft += r.left + (geo.anchor - VX + .5) * scale() - (oldR.left + (geo.anchor - oldVX + .5) * oldS); }
+    }
     const rp = rombP(), P = st.view === 'digits' || rp >= 0 ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
     let zero = 0, one = 0;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
-    if (rp >= 0) { for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; } drawRomb(px, T, empty); }
-    else if (st.view === 'bits' || st.view === 'digits') for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; px[i] = v < 0 ? empty : T[v * 3]; }
+    for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; }   // счёт — по всему полю
+    if (rp >= 0) drawRomb(px, T, empty);
+    else if (st.view === 'bits' || st.view === 'digits') for (let r = 0; r < VH; r++) { const row = r * W + VX, out = r * VW;
+      for (let c = 0; c < VW; c++) { const v = val[row + c]; px[out + c] = v < 0 ? empty : T[v * 3]; } }
     else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
       const pr = pairOn(), [lo, hi] = pr ? [0, 0] : MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
-      for (let r = 0; r < H; r++) { const row = r * W;
-        for (let c = 0; c < W; c++) { const v = val[row + c]; if (v === 0) zero++; else if (v === 1) one++;
-          px[row + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
+      for (let r = 0; r < VH; r++) { const row = r * W, out = r * VW - VX;
+        for (let c = VX; c < VX + VW; c++) { const v = val[row + c];
+          px[out + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
     }
     if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
       if (st.outline) outline(px);
@@ -301,11 +322,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const GOLD = rgba([255, 204, 0]);
   function outline(px) {
     const { W, H, val } = f, Z = st.bg === '0' ? 1 : 0, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
-    const dot = (r, c) => { for (let y = r - h; y < r - h + t; y++) if (y >= 0 && y < H)
-      for (let x = c - h; x < c - h + t; x++) if (x >= 0 && x < W) px[y * W + x] = GOLD; };
+    const dot = (r, c) => { for (let y = r - h; y < r - h + t; y++) if (y >= 0 && y < VH)
+      for (let x = c - h; x < c - h + t; x++) if (x >= VX && x < VX + VW) px[y * VW + x - VX] = GOLD; };
     const seg = (r, a, b) => { for (let c = Math.min(a, b); c <= Math.max(a, b); c++) dot(r, c); };
     let pl = -1, pr = -1;
-    for (let r = 0; r < H; r++) {
+    for (let r = 0; r < VH; r++) {
       const row = r * W; let l = -1, rr = -1;
       for (let c = 0; c < W; c++) if (val[row + c] === Z) { l = c; break; }
       if (l < 0) { pl = pr = -1; continue; }
@@ -356,7 +377,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const key = k + '|' + f.W + '|' + f.H;
     if (!symCache || symCache.key !== key) symCache = { key, segs: symFind() };
     const { W, H } = f, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
-    const dot = (y, x, c) => { for (let yy = y - h; yy < y - h + t; yy++) if (yy >= 0 && yy < H) for (let xx = x - h; xx < x - h + t; xx++) if (xx >= 0 && xx < W) px[yy * W + xx] = c; };
+    const dot = (y, x, c) => { for (let yy = y - h; yy < y - h + t; yy++) if (yy >= 0 && yy < VH) for (let xx = x - h; xx < x - h + t; xx++) if (xx >= VX && xx < VX + VW) px[yy * VW + xx - VX] = c; };
     for (const sg of symCache.segs) {
       for (let i = 0; i < sg.w.length; i++) { const y = sg.y0 + i, w = sg.w[i]; if (w > 0) { dot(y, sg.x - w + 1, SYM_CY); dot(y, sg.x + w, SYM_CY); } }
     }
@@ -399,14 +420,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     axisPicking = false; $('bAxisPick').setAttribute('aria-pressed', 'false'); draw(); return true;
   }
   function konusDraw(px) {   // обводка выбранного конуса: два края под 45° от вершины
-    if (!konus) return; const { W, H } = f;
-    for (let i = 0; i < konus.n && konus.top + i < H; i++) { const y = konus.top + i;
-      for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= 0 && x < W) px[y * W + x] = KONUS_COL; }
+    if (!konus) return;
+    for (let i = 0; i < konus.n && konus.top + i < VH; i++) { const y = konus.top + i;
+      for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= VX && x < VX + VW) px[y * VW + x - VX] = KONUS_COL; }
   }
   function imageStats() {
     if (!f) return;
     const r = cv.getBoundingClientRect(), num = n => n.toLocaleString('ru-RU');
-    $('imageSize').textContent = `Картинка ${num(f.W)} × ${num(f.H)} px · на странице ${num(Math.round(r.width))} × ${num(Math.round(r.height))} px`;
+    $('imageSize').textContent = `Картинка ${num(dispW())} × ${num(VH)} px (поле ${num(f.W)} × ${num(f.H)}) · на странице ${num(Math.round(r.width))} × ${num(Math.round(r.height))} px`;
     if (!pictureStats) return;
     const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
@@ -419,19 +440,19 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),s=scale(),ratio=Math.min(2,devicePixelRatio||1),width=wrap.clientWidth,height=wrap.clientHeight;
     digitCanvas.hidden=false;digitCanvas.style.left=host.left+'px';digitCanvas.style.top=host.top+'px';digitCanvas.style.width=width+'px';digitCanvas.style.height=height+'px';
     digitCanvas.width=Math.max(1,Math.round(width*ratio));digitCanvas.height=Math.max(1,Math.round(height*ratio));digitG.setTransform(ratio,0,0,ratio,0,0);digitG.clearRect(0,0,width,height);
-    const x0=r.left-host.left,y0=r.top-host.top,c0=Math.max(0,Math.floor(-x0/s)),c1=Math.min(dispW(),Math.ceil((width-x0)/s)),r0=Math.max(0,Math.floor(-y0/s)),r1=Math.min(f.H,Math.ceil((height-y0)/s));
+    const x0=r.left-host.left,y0=r.top-host.top,c0=Math.max(0,Math.floor(-x0/s)),c1=Math.min(dispW(),Math.ceil((width-x0)/s)),r0=Math.max(0,Math.floor(-y0/s)),r1=Math.min(VH,Math.ceil((height-y0)/s));
     digitG.font=`600 ${s*.8}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;digitG.textAlign='center';digitG.textBaseline='middle';
     if(rp>=0){   // v0.013: чёткие ромбы видимой части — центр в середине клетки, полудиагональ — клетка; с 10 px — тонкий край, с 14 px — цифры
-      const edge=s>=10,halves=rp===2?[[0,0],[1,geo.W+RG]]:[[rp,0]];digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';   // v0.016: «обе рядом» — две половины
-      for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(f.H,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(f.W,c1-ox+1);x++){
-        if(((x-geo.anchor-p-y)%2+2)%2)continue;const v=f.val[y*f.W+x];if(v<0)continue;
+      const edge=s>=10,halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';   // v0.016: «обе рядом» — две половины
+      for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(VH,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(VW,c1-ox+1);x++){
+        if(((x+VX-geo.anchor-p-y)%2+2)%2)continue;const v=f.val[y*f.W+x+VX];if(v<0)continue;
         const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
         digitG.fillStyle=v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
         if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
       }
       return;
     }
-    for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){const v=f.val[y*f.W+x];if(v<0)continue;digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);}
+    for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){const v=f.val[y*f.W+x+VX];if(v<0)continue;digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);}
   }
   function status() {
     $('stat').textContent = (pairOn() ? `пара ${k} / ${total()} (вершин ${2 * k + 1})` : `вершина ${k} / ${total()}`) +
@@ -445,13 +466,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const snap2 = (s, down) => { const e = Math.log2(s * DPR()); return 2 ** (down ? Math.floor(e + 1e-9) : Math.round(e)) / DPR(); };
   const fitScale = () => { const s = Math.max(0.02, (wrap.clientWidth - 32) / dispW()); return st.zsnap ? snap2(s, true) : s; };
   const scale = () => st.zoom === 'fit' ? fitScale() : st.zoom;
-  function layout() {
+  function layout() { cssLayout(); present(); imageStats(); queueDigits(); }
+  function cssLayout() {
     const s = scale();
-    cv.style.width = dispW() * s + 'px'; cv.style.height = st.rows * s + 'px';
+    cv.style.width = dispW() * s + 'px'; cv.style.height = VH * s + 'px';
     const d = st.zsnap ? s * DPR() : s;   // при «кратном» — пикселей монитора на бит
     $('zoomV').textContent = st.zsnap ? (d >= 2 ? Math.round(d) + '×' : String(+(d * 100).toFixed(2)).replace('.', ',') + '%')
       : (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
-    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit')); present(); imageStats(); queueDigits();
+    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit'));
   }
   // v0.017: «синие пиксели под углом перемещаются под курсором». При уменьшении бит для пикселя монитора выбирал браузер;
   // на ровно 50 % середина пикселя ложится на границу двух бит, и выбор решали округления: кусок под подсказкой перерисовывался
@@ -561,6 +583,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.005: 4N — конец ленты: вершина a трогает конус якоря только при |a| ≤ 2(N − 1), крайняя стоит на ±n/2
   $('bFour').onclick = () => { $('steps').value = 4 * clampInt($('rows').value, 8, 4096, 512); $('mode').value = 'pend'; build(); };
   $('third').addEventListener('change', () => { st.third = $('third').checked; save(); });
+  $('vrows').addEventListener('change', () => {   // v0.018: «показ строк» — только показ, поле не пересчитывается
+    st.vrows = clampInt($('vrows').value || 0, 0, 4096, 0); $('vrows').value = st.vrows || ''; save(); if (f) draw();
+  });
   // v0.012: переключатель «по очереди / пара сразу». Пересчёт с того же места: k вершин ↔ (k − 1)/2 пар.
   function pairSync() {
     const on = pairOn();
@@ -644,8 +669,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
     if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
     if (!tap || !f || !(e.shiftKey || axisPicking || st.sym) || rombP() === 2) return;
-    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
-    if (x >= 0 && y >= 0 && x < f.W && y < f.H) { stop(); target = k; konusPick(x, y, !e.shiftKey); }
+    const r = cv.getBoundingClientRect(), x = VX + Math.floor((e.clientX - r.left) / r.width * VW), y = Math.floor((e.clientY - r.top) / r.height * VH);
+    if (x >= VX && y >= 0 && x < VX + VW && y < VH) { stop(); target = k; konusPick(x, y, !e.shiftKey); }
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
   wrap.addEventListener('dblclick', fit);
@@ -660,13 +685,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   cv.addEventListener('pointermove', e => {
     if (!f) return;
-    const r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * dispW(), fy = (e.clientY - r.top) / r.height * f.H;
-    let x = Math.floor(fx), y = Math.floor(fy), lat = '';
+    const r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * dispW(), fy = (e.clientY - r.top) / r.height * VH;
+    let x = VX + Math.floor(fx), y = Math.floor(fy), lat = '';
     if (rombP() >= 0) {   // v0.013: на ромбах — ромб под курсором; v0.016: и в какой он решётке
       const h = halfOf(fx); if (!h) { tip.style.display = 'none'; return; }
       [x, y] = rombCell(h[1], fy, h[0]); lat = h[0] ? 'нечётная · ' : 'чётная · ';
     }
-    if (x < 0 || y < 0 || x >= f.W || y >= f.H) { tip.style.display = 'none'; return; }
+    if (x < 0 || y < 0 || x >= f.W || y >= VH) { tip.style.display = 'none'; return; }
     const v = f.val[y * f.W + x], c = v < 0 ? '' : ['чёрн', 'син', 'красн'][tintAt(y, x - geo.anchor, v)];
     tip.textContent = `${lat}строка ${y + 1} · столбец ${x - geo.anchor >= 0 ? '+' : ''}${x - geo.anchor} · ${v < 0 ? 'пусто' : v + ' ' + c}`;
     tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
