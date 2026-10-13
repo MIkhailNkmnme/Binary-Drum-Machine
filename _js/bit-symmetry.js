@@ -1,9 +1,9 @@
-/* v1: local, exact mirror axes in centered bit rows. Shared by Hub and Zerkalius. */
+/* v2: configurable minimum rows and pairs, both starting at 1. */
 (() => {
   'use strict';
   const palette = ['#ffc76d', '#6fd9ff', '#c5a0ff', '#ff96b4', '#a9ed79', '#ffab79'];
   const cache = new Map();
-  const workerURL = typeof document !== 'undefined' && document.currentScript ? new URL('bit-symmetry-worker.js?v=1', document.currentScript.src).href : null;
+  const workerURL = typeof document !== 'undefined' && document.currentScript ? new URL('bit-symmetry-worker.js?v=2', document.currentScript.src).href : null;
   let worker = null, running = null, workerFailed = false;
   let cacheCells = 0;
   const queued = new Map();
@@ -39,7 +39,7 @@
       function accept(i, pairs, center) {
         if (pairs < minPairs) return;
         const left = i - pairs, right = i + pairs - (center ? 0 : 1), one = ones[i] - ones[left];
-        if (!one || one === pairs) return; // Both 0 and 1 in the matched pairs; solid holes are excluded.
+        if (minPairs > 1 && (!one || one === pairs)) return; // A one-pair minimum also allows plain 00 / 11 matches.
         // x2 is horizontal position in half-bit units. Rows of different lengths share the same center.
         const x2 = 2 * i - (n - 1) - (center ? 0 : 1);
         let s = active.get(x2);
@@ -74,12 +74,18 @@
     return {segments, colors, matched, minPairs, minRows};
   }
 
-  function analyze(rows) {
-    const key = rows.join('\n');
+  function limits(rows, options = {}) {
+    options ||= {};
+    const positive = (value, fallback) => Number.isFinite(value) ? Math.max(1, Math.round(value)) : fallback;
+    return {minPairs:positive(options.minPairs, Math.max(2, Math.min(6, Math.floor(rows.length / 64)))),
+      minRows:positive(options.minRows, Math.max(3, Math.min(8, Math.floor(rows.length / 32))))};
+  }
+  const sourceKey = (rows, options) => options.minPairs + ',' + options.minRows + '|' + rows.join('\n');
+  function analyze(rows, options) {
+    options = limits(rows, options);
+    const key = sourceKey(rows, options);
     if (cache.has(key)) return cache.get(key);
-    // Hub's 128-row triangle is much smaller than the original 512+ row pendulum.
-    // Scale the minimum motif dimensions, while every highlighted pair still matches exactly.
-    const result = find(rows, {minPairs:Math.max(2, Math.min(6, Math.floor(rows.length / 64))), minRows:Math.max(3, Math.min(8, Math.floor(rows.length / 32)))});
+    const result = find(rows, options);
     remember(key, result);
     return result;
   }
@@ -94,22 +100,23 @@
   function sendNext() {
     if (running !== null || !queued.size) return;
     // Prefer the latest frame. Only the exact same source can use its result.
-    const key = [...queued.keys()].pop(), rows = queued.get(key); queued.delete(key);
-    running = key; worker.postMessage({key, rows});
+    const key = [...queued.keys()].pop(), {rows, options} = queued.get(key); queued.delete(key);
+    running = key; worker.postMessage({key, rows, options});
   }
-  function request(rows) {
-    const key = rows.join('\n');
+  function request(rows, options) {
+    options = limits(rows, options);
+    const key = sourceKey(rows, options);
     if (cache.has(key)) return cache.get(key);
-    if (key.length < 120000 || workerFailed || !workerURL || typeof Worker === 'undefined') return analyze(rows);
+    if (key.length < 120000 || workerFailed || !workerURL || typeof Worker === 'undefined') return analyze(rows, options);
     if (!worker) {
       try {
         worker = new Worker(workerURL);
         worker.onmessage = e => { remember(e.data.key, e.data.result); running = null; ready(); sendNext(); };
         worker.onerror = () => { workerFailed = true; worker.terminate(); worker = null; queued.clear(); running = null; ready(); };
-      } catch (_) { workerFailed = true; return analyze(rows); }
+      } catch (_) { workerFailed = true; return analyze(rows, options); }
     }
     if (running !== key && !queued.has(key)) {
-      queued.set(key, rows.slice()); if (queued.size > 4) queued.delete(queued.keys().next().value);
+      queued.set(key, {rows:rows.slice(), options}); if (queued.size > 4) queued.delete(queued.keys().next().value);
       sendNext();
     }
     return null;
@@ -124,7 +131,7 @@
     }
     ctx.restore();
   }
-  const api = {find, analyze, request, colorAt, drawAxes};
+  const api = {find, analyze, request, limits, colorAt, drawAxes};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else globalThis.ZZBitSymmetry = api;
 })();

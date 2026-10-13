@@ -1,15 +1,17 @@
+/* Hub v0.119: saved row and pair minimums, adjustable down to 1. */
 /* Hub v0.118: local mirror axes and matching bits; enabled by default. */
 /* Hub v0.116: complete source survives displacement and reflection before the camera. */
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
+      for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
       state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
@@ -77,6 +79,14 @@
     const sym = document.createElement('button'); sym.type='button'; sym.className='hubRhomb hubBitSymmetry'; sym.textContent='│\nсим.';
     sym.title='Зеркальные оси и парные биты'; sym.setAttribute('aria-label',sym.title); sym.setAttribute('aria-pressed',String(state.bitSymmetry));
     sym.onclick=()=>{state.bitSymmetry=!state.bitSymmetry;sym.setAttribute('aria-pressed',String(state.bitSymmetry));changed();save();}; settings.append(sym);
+    for(const [key,icon,title] of [['minRows','↕','Минимум строк симметрии'],['minPairs','↔','Минимум пар зеркальных битов']]){
+      const box=document.createElement('details'),head=document.createElement('summary'),value=document.createElement('output'),label=document.createElement('label'),number=document.createElement('input');
+      box.className='hubTilt hubSymmetryMinimum';head.title=title;head.append(document.createTextNode(icon),value);value.textContent=state.symmetryMinimums[key];
+      number.type='number';number.min='1';number.step='1';number.inputMode='numeric';number.value=state.symmetryMinimums[key];number.setAttribute('aria-label',title);number.style.width='100%';
+      if(key==='minPairs')number.title='Одна пара включает простые совпадения 00 и 11';
+      number.onchange=()=>{const n=number.valueAsNumber;if(Number.isFinite(n))state.symmetryMinimums[key]=Math.max(1,Math.round(n));number.value=value.textContent=state.symmetryMinimums[key];changed();save();};
+      label.append(document.createTextNode(title),number);box.append(head,label);settings.append(box);
+    }
     const traceLabel = document.createElement('label'), trace = document.createElement('input');
     trace.type = 'checkbox'; trace.checked = state.trace;
     traceLabel.className='hubRhomb';trace.setAttribute('aria-label','След единиц');traceLabel.append(trace, document.createTextNode('↓')); settings.append(traceLabel);
@@ -92,8 +102,7 @@
     }
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
-      state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; });
-      settings.querySelectorAll('output').forEach(el => { el.textContent = '0°'; }); changed(); save();
+      state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
     });
     document.body.append(settings);
     for(const [key,text,title] of [['magnet','🧲','Магнит оси: центр поля и центры битов'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}

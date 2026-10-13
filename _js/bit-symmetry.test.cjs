@@ -88,7 +88,7 @@ test('large requests stay asynchronous and never return another frame\'s result'
     constructor(url) { this.url=url; this.sent=[]; workers.push(this); }
     postMessage(message) { this.sent.push(message); }
     terminate() {}
-    finish() { const {key,rows}=this.sent.at(-1); this.onmessage({data:{key,result:analyze(rows)}}); }
+    finish() { const {key,rows,options}=this.sent.at(-1); this.onmessage({data:{key,result:analyze(rows,options)}}); }
   }
   const context = {Worker,URL,document:{currentScript:{src:'http://localhost:8766/_js/bit-symmetry.js?v=1'}},
     window:{dispatchEvent:e=>events.push(e.type)},Event:class {constructor(type){this.type=type;}}};
@@ -99,14 +99,38 @@ test('large requests stay asynchronous and never return another frame\'s result'
   assert.ok(api.request(A)); assert.equal(api.request(B),null);
   assert.equal(workers[0].sent.length,2); workers[0].finish(); assert.ok(api.request(B));
   assert.deepEqual(events,['bitsymmetryready','bitsymmetryready']);
-  assert.match(workers[0].url,/bit-symmetry-worker\.js\?v=1$/);
+  assert.match(workers[0].url,/bit-symmetry-worker\.js\?v=2$/);
+  const custom={minPairs:1,minRows:1};assert.equal(api.request(A,custom),null);
+  assert.equal(workers[0].sent.at(-1).options.minRows,1);assert.equal(workers[0].sent.at(-1).options.minPairs,1);
+  workers[0].finish();assert.equal(api.request(A,custom).minRows,1);
+  assert.notEqual(api.request(A,custom),api.request(A));
 });
 
 test('hub defaults turn on symmetry and an explicit off setting survives reload', () => {
   const fs = require('node:fs'), vm = require('node:vm');
-  for (const saved of [null,{}, {bitSymmetry:false}]) {
+  for (const saved of [null,{}, {bitSymmetry:false}, {symmetryMinimums:{minRows:1,minPairs:1}}]) {
     const context={window:{},document:{readyState:'loading',addEventListener(){}},localStorage:{getItem:()=>JSON.stringify(saved),setItem(){}}};
     vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),context);
     assert.equal(context.window.HubMirror.state.bitSymmetry,saved?.bitSymmetry !== false);
+    assert.equal(context.window.HubMirror.state.symmetryMinimums.minRows,saved?.symmetryMinimums?.minRows||4);
+    assert.equal(context.window.HubMirror.state.symmetryMinimums.minPairs,saved?.symmetryMinimums?.minPairs||2);
   }
+});
+
+test('one-row motifs are returned at minimum 1 and removed at minimum 2',()=>{
+  const rows=['0110'],single=analyze(rows,{minRows:1,minPairs:2}),two=analyze(rows,{minRows:2,minPairs:2});
+  assert.equal(single.segments.length,1);assert.equal(single.segments[0].y0,0);assert.equal(single.segments[0].y1,0);
+  assert.equal(single.matched,4);assert.equal(two.segments.length,0);
+  assert.equal(analyze(rows,{minRows:1,minPairs:2}),single);
+});
+test('a one-pair minimum really accepts simple 00 and 11 matches',()=>{
+  for(const row of ['00','11']){
+    const data=analyze([row],{minRows:1,minPairs:1});assert.equal(data.segments.length,1);assert.equal(data.matched,2);
+    assert.equal(analyze([row],{minRows:1,minPairs:2}).matched,0);
+  }
+});
+test('invalid minimums are clamped or use defaults',()=>{
+  const {limits}=require('./bit-symmetry.js');
+  assert.deepEqual(limits(Array(128),{minRows:0,minPairs:-1}),{minRows:1,minPairs:1});
+  assert.deepEqual(limits(Array(128),{minRows:NaN,minPairs:Infinity}),{minRows:4,minPairs:2});
 });

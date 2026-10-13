@@ -1,3 +1,4 @@
+/* v0.1144: editable and saved symmetry minimums starting at 1 row / 1 pair. */
 /* v0.1143: exact local mirror axes and matching bit colours, enabled by default. */
 /* v0.1142, «да, сделай магнит по сетке битов»: протяжка за линию магнитит сдвиг отражения так, чтобы его биты легли в узлы сетки неподвижных битов (строки и
    чужие зеркала того же набора) — край к краю без зазора и наезда. Порог — 10 px экрана, Alt — без магнита. */
@@ -94,6 +95,7 @@
   let pendulum=null,pendTarget=null,pendPlaying=false,pendClock=0;
   function pendEngine(){if(!pendulum){pendulum=new ZZMirrorPendulum(pendSettings.depth,pendSettings.limit);pendSettings.depth=pendulum.depth;pendSettings.limit=pendulum.limit;pendTarget=clamp(Number(pendSettings.frame)||0,0,pendulum.limit);}return pendulum;}
   const rows = () => state.source==='pend' ? pendEngine().rows() : state.source==='field' ? Z.rows : state.source==='own' ? state.rows : state.source==='base' ? ZZ_INITIAL_ROWS : serp;
+  state.symmetryMinimums=ZZBitSymmetry.limits(rows(),state.symmetryMinimums);
   const button = (text, title, action, parent) => { const b=document.createElement('button');b.type='button';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.onclick=action;parent.append(b);return b; };
   const changed = (redrawBase=false) => { notice='';if(redrawBase)dirty=true;persist();request(); };
   window.addEventListener('bitsymmetryready',()=>{if(!state.bitSymmetry)return;for(const [key,src] of sourceCache)if(src.symmetry===null)sourceCache.delete(key);request();});
@@ -388,6 +390,7 @@
   zoomValue.title='Двойной щелчок — вернуть 100%';zoomValue.ondblclick=()=>motionStep({},()=>{state.zoom=1;state.pan=[0,0];changed();});
   const worldDelta=(x,y)=>{const a=-state.viewAngle*pi/180,c=Math.cos(a)/state.zoom,s=Math.sin(a)/state.zoom;return [x*c-y*s,x*s+y*c];};
   const netDigitsToggle=button('01\nцифры','Биты в ячейках развёртки: включить / выключить',()=>{state.netDigits=!state.netDigits;changed(true);},viewGroup);diamond(netDigitsToggle,'01\nцифры',viewGroup);netDigitsToggle.style.left='24px';netDigitsToggle.style.top='192px';viewGroup.style.setProperty('--grape-height','264px');compactUpdates.push(()=>{netDigitsToggle.classList.toggle('on',state.netDigits);netDigitsToggle.setAttribute('aria-pressed',String(state.netDigits));});
+  const symmetryEditor=editor([]);symmetryFields(symmetryEditor);const symmetrySettings=editDiamond('↕\nмин.','Минимумы симметрии',symmetryEditor,viewGroup);symmetrySettings.style.left='24px';symmetrySettings.style.top='240px';viewGroup.style.setProperty('--grape-height','288px');
   function motionRateFromStep(step){return step<=0?0:.1*Math.pow(10,(clamp(step,1,401)-1)/100);}
   function motionRateStep(rate){return rate<=0?0:clamp(1+100*Math.log10(rate/.1),1,401);}
   state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,1000);
@@ -544,11 +547,19 @@
     return pendPlaying||pendTarget!==null;
   }
 
+  function symmetryFields(parent){
+    for(const [key,title] of [['minRows','Минимум строк симметрии'],['minPairs','Минимум пар зеркальных битов']]){
+      const input=field(parent,title,'number',state.symmetryMinimums[key]);input.min='1';input.step='1';input.inputMode='numeric';input.dataset.symmetryMinimum=key;
+      if(key==='minPairs')input.title='Одна пара включает простые совпадения 00 и 11';
+      input.onchange=()=>{if(Number.isFinite(input.valueAsNumber))state.symmetryMinimums[key]=Math.max(1,Math.round(input.valueAsNumber));body.querySelectorAll('input[data-symmetry-minimum]').forEach(el=>el.value=state.symmetryMinimums[el.dataset.symmetryMinimum]);changed(true);};
+    }
+  }
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
     button('Грозди на места','Вернуть группы кнопок в исходную раскладку',resetGroups,el);
     const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
     const symmetry=field(el,'Зеркальные оси и парные биты','checkbox',state.bitSymmetry);symmetry.onchange=()=>{state.bitSymmetry=symmetry.checked;changed(true);};
+    symmetryFields(el);
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
     const bitColor=field(el,'Цвет исходных битов','color',state.bitColor);bitColor.oninput=()=>{state.bitColor=bitColor.value;state.palette='custom';changed(true);};
     const palette=field(el,'Цветовая заготовка','',state.palette||'custom',[['custom','Свои цвета'],['classic','Бирюза / золото / коралл'],['ice','Лёд / синий / сиреневый'],['fire','Пламя / оранжевый / фиолетовый'],['forest','Зелень / лайм / янтарь'],['mono','Светлые / серые']]);compactUpdates.push(()=>palette.value=state.palette||'custom');
@@ -650,7 +661,7 @@
 
   function pendulumImage(mode,dw){
     const engine=pendEngine(),{W,H,val}=engine.field,dy=dw,bounds=[-W*dw/2,-dy/2,W*dw/2,(H-.5)*dy],image=document.createElement('canvas');image.width=W;image.height=H;
-    const ctx=image.getContext('2d'),data=ctx.createImageData(W,H),palette=new Map(),pairColors=new Map(),edges=[],symmetry=state.bitSymmetry?ZZBitSymmetry.request(engine.rows()):null;
+    const ctx=image.getContext('2d'),data=ctx.createImageData(W,H),palette=new Map(),pairColors=new Map(),edges=[],symmetry=state.bitSymmetry?ZZBitSymmetry.request(engine.rows(),state.symmetryMinimums):null;
     const cellColor=(r,c)=>{const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)return null;const original=mode&2?W-1-c:c,match=ZZBitSymmetry.colorAt(symmetry,r,original);if(!match)return color;const bit=val[r*W+original]^(mode&1),key=match+bit;let paint=pairColors.get(key);if(!paint){const bright=bit?.85:.4;paint='#'+[1,3,5].map(i=>Math.round(parseInt(match.slice(i,i+2),16)*bright).toString(16).padStart(2,'0')).join('');pairColors.set(key,paint);}return paint;};
     for(let r=0;r<H;r++){let first=-1,last=-1;for(let c=0;c<W;c++){
       const color=cellColor(r,c);if(color===null)continue;
@@ -671,7 +682,7 @@
   }
 
   function sourceImage(R,color,dw,ratio){
-    const dh=dw*Math.sqrt(3), symmetry=state.bitSymmetry?ZZBitSymmetry.request(R):null, shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
+    const dh=dw*Math.sqrt(3), symmetry=state.bitSymmetry?ZZBitSymmetry.request(R,state.symmetryMinimums):null, shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
     const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
     for(let r=0;r<R.length;r++)for(let j=0;j<R[r].length;j++){
       const bit=R[r][j],x=-(R[r].length-1)*dw/2+j*dw,y=r*dh/2,a=state[bit==='0'?'zero':'one']*pi/180,c=Math.cos(a),sn=Math.sin(a);
@@ -710,7 +721,7 @@
     return {P,C:map(u+(edge?1/3:.5),v+(edge?1/3:.5))};
   }
   function netFaces(ctx,model,bits,scale,labels,preview=false,colorMap=c=>c,pixelScale=1){
-    const symmetry=state.bitSymmetry&&!preview?ZZBitSymmetry.request(bits.map(row=>Array.from(row).join(''))):null;
+    const symmetry=state.bitSymmetry&&!preview?ZZBitSymmetry.request(bits.map(row=>Array.from(row).join('')),state.symmetryMinimums):null;
     const alpha=ctx.globalAlpha,R=bits.length,cell=scale/Math.max(1,R),view=visibleWorld(ctx,2/Math.max(1,R));ctx.textAlign='center';ctx.textBaseline='middle';
     for(const f of model.faces){const col=f.up?state.net.up:state.net.down,[A,L,B]=f.P;ctx.fillStyle=colorMap(col);ctx.strokeStyle=colorMap(col);
       if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();if(preview){ctx.globalAlpha=alpha*.1;ctx.fill();}ctx.globalAlpha=alpha;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
@@ -723,7 +734,7 @@
     }ctx.globalAlpha=alpha;
   }
   function netPreview(canvas,preset){const model=netGeometry(preset),b=model.bounds,scale=Math.min(48/(b[2]-b[0]),40/(b[3]-b[1])),ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,56,48);ctx.setTransform(scale,0,0,scale,28-(b[0]+b[2])*scale/2,24-(b[1]+b[3])*scale/2);netFaces(ctx,model,[],scale,false,true);}
-  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);const points=[];for(const f of model.faces){const [A,L,B]=f.P;for(let r=0;r<pattern.length;r++)for(let k=0;k<=r;k++){points.push(netCell(f,r,k,pattern.length).C.map(v=>v*scale));}}return {image,bounds,symmetry:state.bitSymmetry?ZZBitSymmetry.request(sceneMath.faceRows(pattern).map(row=>Array.from(row).join(''))):null,points,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
+  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);const points=[];for(const f of model.faces){const [A,L,B]=f.P;for(let r=0;r<pattern.length;r++)for(let k=0;k<=r;k++){points.push(netCell(f,r,k,pattern.length).C.map(v=>v*scale));}}return {image,bounds,symmetry:state.bitSymmetry?ZZBitSymmetry.request(sceneMath.faceRows(pattern).map(row=>Array.from(row).join('')),state.symmetryMinimums):null,points,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
   function reflectedMode(mask){return state.mirrors.reduce((v,m,j)=>v^((mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);}
   function transferNet(){
     const mask=state.net.copy;if(state.mirrors.some((m,i)=>(mask&(1<<i))&&!m.on)){notify('Включите зеркала выбранного отражения или выберите исходную развёртку');return;}
@@ -736,7 +747,7 @@
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
       const reflected=reflectedCopies();
-      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.bitSymmetry,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
+      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.bitSymmetry,state.symmetryMinimums,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
@@ -746,7 +757,7 @@
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
       const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
-        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitSymmetry,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
+        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;

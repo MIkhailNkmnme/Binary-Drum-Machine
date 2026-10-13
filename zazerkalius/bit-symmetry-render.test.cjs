@@ -48,3 +48,10 @@ test('pendulum symmetry respects empty cells and reverses with the bits',()=>{
   const target=context2d();a.draw(target,2);assert.equal(target.strokes.length,a.symmetry.segments.length);
   assert.deepEqual(engine.field.val,before);
 });
+test('custom row minimum changes actual source painting down to one row',()=>{
+  const {context,contexts,state}=fixture(true);
+  state.symmetryMinimums={minRows:1,minPairs:2};const one=context.sourceImage(['0110'],'#9fffc8',10,1);
+  assert.equal(one.symmetry.segments.length,1);assert.equal(contexts[0].strokes.length,1);
+  state.symmetryMinimums.minRows=2;const two=context.sourceImage(['0110'],'#9fffc8',10,1);
+  assert.equal(two.symmetry.segments.length,0);assert.equal(contexts[1].strokes.length,0);
+});
