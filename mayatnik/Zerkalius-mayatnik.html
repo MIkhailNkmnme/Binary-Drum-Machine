@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.012. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.013. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.012</title>
+<title>Zerkalius Маятник — v0.013</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -29,6 +29,8 @@
   v0.011: выбранная ось → Соляриус; размер, точный счёт 0/1, цифры при приближении, угловатые кнопки Синхрофазотрона.
   v0.012: переключатель «по очереди / пара сразу»: пара вершин ±m одним проходом (MAYATNIK.conePair), кадр = пара, кадр 0 — только якорь;
     цвет перекрытий для пар — MAYATNIK.tintPair. Пара сразу даёт зеркальный на 100 % Хоррориус без шума.
+  v0.013: вид «ромбы · чётная / нечётная» — одна из двух независимых решёток ромбами впритык (раздел 24 «Исследования»);
+    холст — RK пикселей на клетку, при приближении — чёткие ромбы поверх, с 14 px — с цифрами.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -90,7 +92,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.012</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.013</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -125,6 +127,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="col">цвета перекрытий</option>
       <option value="bits">только биты</option>
       <option value="digits">цифры 0/1</option>
+      <option value="romb0" title="Чётная решётка (столбец − строка от якоря чётное): её пишут вершины 0, ±2, ±4… Ромбы впритык">ромбы · чётная (якорь)</option>
+      <option value="romb1" title="Нечётная решётка: её пишут вершины ±1, ±3… Ромбы впритык">ромбы · нечётная</option>
     </select></label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
@@ -194,8 +198,34 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // не больше ~200 МБ на всё; нужный кадр досчитывается от ближайшего опорного
     snaps = new Map(); interval = Math.max(1, Math.ceil(total() * f.val.length / 200e6)); snap();   // v0.006: кадр — 1 байт на клетку (цвет не хранится)
     target = 0; const fr = $('frame'); fr.max = total(); fr.value = 0;
-    cv.width = geo.W; cv.height = st.rows; img = g.createImageData(geo.W, st.rows);
-    pairSync(); layout(); draw();
+    canvasSize(); pairSync(); layout(); draw();
+  }
+  // v0.013: вид «ромбы» — одна решётка ромбами впритык. Кадр — две независимые решётки через клетку: (столбец − строка
+  // от якоря) чётное пишут только вершины 0, ±2…, нечётное — только ±1, ±3… («Исследование», раздел 24). Ромбы одной решётки
+  // покрывают плоскость без щелей, обе сразу — нет, поэтому рисуется одна. Холст — RK пикселей на клетку (поле ≤ ~12 млн
+  // пикселей), ромб — полудиагональ RK с центром в середине клетки; при приближении — чёткие ромбы поверх (drawDigits).
+  const rombP = () => st.view === 'romb0' ? 0 : st.view === 'romb1' ? 1 : -1;
+  let RK = 1;
+  function canvasSize() {
+    RK = rombP() < 0 ? 1 : Math.max(1, Math.min(8, Math.floor(Math.sqrt(12e6 / (geo.W * st.rows)))));
+    if (RK > 1) RK -= RK % 2;   // при нечётном RK граничные пиксели делятся неровно — ромбы кривые; 1 и чётные — ровно 2·RK² на ромб
+    cv.width = geo.W * RK; cv.height = st.rows * RK; img = g.createImageData(cv.width, cv.height);
+  }
+  // Клетка решётки p под точкой (fx, fy) в клетках: ближайший центр по |dx| + |dy| → [столбец, строка]
+  function rombCell(fx, fy, p) {
+    const x = fx - .5 - geo.anchor - p, y = fy - .5, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2);
+    return [i + j + geo.anchor + p, i - j];
+  }
+  function drawRomb(px, T, empty) {
+    const { W, H, val } = f, p = rombP(), K = RK, CW = cv.width, CH = cv.height, A = geo.anchor + p;
+    for (let Y = 0; Y < CH; Y++) {
+      const y = (Y + .5) / K - .5, row = Y * CW;
+      for (let X = 0; X < CW; X++) {
+        const x = (X + .5) / K - .5 - A, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + A, r = i - j;
+        const v = r >= 0 && r < H && c >= 0 && c < W ? val[r * W + c] : -1;
+        px[row + X] = v < 0 ? empty : T[v * 3];
+      }
+    }
   }
   function total() { return st.mode === 'one' ? 1 : pairOn() ? st.steps >> 1 : st.steps; }
   function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice() }); }   // v0.006: только биты — цвет считается
@@ -224,20 +254,23 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
   const rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
   function draw() {
-    const P = st.view === 'digits' ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
+    const rp = rombP(), P = st.view === 'digits' || rp >= 0 ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
     let zero = 0, one = 0;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
-    if (st.view === 'bits' || st.view === 'digits') for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; px[i] = v < 0 ? empty : T[v * 3]; }
+    if (rp >= 0) { for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; } drawRomb(px, T, empty); }
+    else if (st.view === 'bits' || st.view === 'digits') for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; px[i] = v < 0 ? empty : T[v * 3]; }
     else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
       const pr = pairOn(), [lo, hi] = pr ? [0, 0] : MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
       for (let r = 0; r < H; r++) { const row = r * W;
         for (let c = 0; c < W; c++) { const v = val[row + c]; if (v === 0) zero++; else if (v === 1) one++;
           px[row + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
     }
-    if (st.outline) outline(px);
-    if (st.sym && !playing) symmetry(px);
-    konusDraw(px);
+    if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
+      if (st.outline) outline(px);
+      if (st.sym && !playing) symmetry(px);
+      konusDraw(px);
+    }
     g.putImageData(img, 0, 0);
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
@@ -361,12 +394,23 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(drawDigits);}
   function drawDigits() {
     digitsRaf=0;
-    if(!f||st.view!=='digits'||scale()<4){digitCanvas.hidden=true;return;}
+    const rp=rombP();
+    if(!f||(st.view!=='digits'&&rp<0)||scale()<(rp>=0?6:4)){digitCanvas.hidden=true;return;}
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),s=scale(),ratio=Math.min(2,devicePixelRatio||1),width=wrap.clientWidth,height=wrap.clientHeight;
     digitCanvas.hidden=false;digitCanvas.style.left=host.left+'px';digitCanvas.style.top=host.top+'px';digitCanvas.style.width=width+'px';digitCanvas.style.height=height+'px';
     digitCanvas.width=Math.max(1,Math.round(width*ratio));digitCanvas.height=Math.max(1,Math.round(height*ratio));digitG.setTransform(ratio,0,0,ratio,0,0);digitG.clearRect(0,0,width,height);
     const x0=r.left-host.left,y0=r.top-host.top,c0=Math.max(0,Math.floor(-x0/s)),c1=Math.min(f.W,Math.ceil((width-x0)/s)),r0=Math.max(0,Math.floor(-y0/s)),r1=Math.min(f.H,Math.ceil((height-y0)/s));
     digitG.font=`600 ${s*.8}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;digitG.textAlign='center';digitG.textBaseline='middle';
+    if(rp>=0){   // v0.013: чёткие ромбы видимой части — центр в середине клетки, полудиагональ — клетка; с 10 px — тонкий край, с 14 px — цифры
+      const edge=s>=10;digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';
+      for(let y=Math.max(0,r0-1);y<Math.min(f.H,r1+1);y++)for(let x=Math.max(0,c0-1);x<Math.min(f.W,c1+1);x++){
+        if(((x-geo.anchor-rp-y)%2+2)%2)continue;const v=f.val[y*f.W+x];if(v<0)continue;
+        const cx=x0+(x+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
+        digitG.fillStyle=v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
+        if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
+      }
+      return;
+    }
     for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){const v=f.val[y*f.W+x];if(v<0)continue;digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);}
   }
   function status() {
@@ -492,8 +536,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
   const lgSync = () => $('lg').classList.toggle('bits', st.view !== 'col');
-  $('view').addEventListener('change', () => { readUI(); lgSync(); if (st.view === 'digits' && scale() < 4) zoomTo(8); if (f) draw(); });
-  const lgToggle = () => { $('view').value = st.view === 'bits' ? 'col' : 'bits'; readUI(); lgSync(); if (f) draw(); };
+  $('view').addEventListener('change', () => { readUI(); lgSync(); if (f) canvasSize(); if (st.view === 'digits' && scale() < 4) zoomTo(8); if (f) draw(); });   // v0.013: у ромбов свой размер холста
+  const lgToggle = () => { $('view').value = st.view === 'bits' ? 'col' : 'bits'; readUI(); lgSync(); if (f) { canvasSize(); draw(); } };
   $('lg').addEventListener('click', lgToggle);
   $('lg').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lgToggle(); } });
   lgSync();
@@ -548,7 +592,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   cv.addEventListener('pointermove', e => {
     if (!f) return;
-    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
+    const r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * f.W, fy = (e.clientY - r.top) / r.height * f.H;
+    const [x, y] = rombP() >= 0 ? rombCell(fx, fy, rombP()) : [Math.floor(fx), Math.floor(fy)];   // v0.013: на ромбах — ромб под курсором
     if (x < 0 || y < 0 || x >= f.W || y >= f.H) { tip.style.display = 'none'; return; }
     const v = f.val[y * f.W + x], c = v < 0 ? '' : ['чёрн', 'син', 'красн'][tintAt(y, x - geo.anchor, v)];
     tip.textContent = `строка ${y + 1} · столбец ${x - geo.anchor >= 0 ? '+' : ''}${x - geo.anchor} · ${v < 0 ? 'пусто' : v + ' ' + c}`;
