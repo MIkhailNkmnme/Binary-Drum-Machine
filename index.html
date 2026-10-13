@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.117. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
+<!-- Zerkalius Hub (index) — v0.118. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
      v0.115: треугольник по умолчанию — кадр Хоррориуса (узор «Х», _js/horr-rows.js).
      Точка входа: ссылки на все страницы проекта.
      v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
@@ -128,7 +128,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.117</title>
+    <title>Zerkalius Control Hub — v0.118</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -551,6 +551,7 @@
         .hub .menu-btn { box-sizing:border-box; width:100%!important; margin-left:0!important; }
         .hubMirrorSettings { display:grid; grid-template-columns:repeat(3,48px); gap:2px; width:156px; padding:4px; align-items:start; position:relative; overflow:visible; }
         .hubMirrorSettings .hubRhomb, .hubMirrorSettings .hubTilt > summary, #hubRec, #hubPNG { box-sizing:border-box; display:flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; margin:0; border:0; border-radius:0; clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); background:#17372c; color:#9fffc8; font:15px/1.1 system-ui,sans-serif; cursor:pointer; touch-action:manipulation; }
+        .hubMirrorSettings .hubBitSymmetry { white-space:pre-line; font-size:11px; line-height:12px; text-align:center; }
         .hubMirrorSettings .hubRhomb:has(input:checked) { background:#286650; color:#dcffee; }
         .hubMirrorSettings .hubRhomb input[type=checkbox] { position:absolute; opacity:0; width:32px; height:32px; cursor:pointer; }
         .hubMirrorSettings .hubRhomb select { width:48px; height:48px; padding:0; border:0; background:transparent; color:inherit; text-align:center; appearance:none; cursor:pointer; }
@@ -606,7 +607,8 @@
 <script src="_js/hub-perf.js?v=1"></script>
 <script src="_js/initial-rows.js?v=2"></script><script src="_js/horr-rows.js?v=1"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
-<script src="_js/hub-mirror.js?v=116"></script>
+<script src="_js/bit-symmetry.js?v=1"></script>
+<script src="_js/hub-mirror.js?v=118"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
 <script src="_js/hub-view.js?v=116"></script>
@@ -646,7 +648,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.117</div>
+        <div class="ver">v0.118</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1176,7 +1178,7 @@
                    у звучащих бит) — v0.107: фон обновляется только при изменении геометрии, узора или зеркала */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
                 const fieldTools=document.getElementById('hubFieldTools'), fieldTop=Math.min(H*.55,Math.max(8,Math.ceil((fieldTools?.getBoundingClientRect().bottom||0)+(matchMedia('(max-width:1100px)').matches?scrollY:0))+12));
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
                 if (!output) { if (key === sierDraw.k) {
                     if (sierDraw.mirror !== window.HubMirror.revision) { sg.save(); sg.setTransform(1,0,0,1,0,0); sg.clearRect(0,0,canvas.width,canvas.height); sg.drawImage(sierSource,0,0); sg.restore(); window.HubMirror.reflect(canvas); reflectNotes(); noteDraw(performance.now()); return finishSier(canvas, null); }
                     if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase); sierDraw.view = window.HubView.revision; } return true;
@@ -1225,18 +1227,22 @@
                    цифры — только когда ромб не мельче 7 px, иначе их не прочесть */
                 const digits = (side ? dh : dw) * (output ? dpr : 1) >= 7, fs = Math.max(output ? 1 : 6, Math.min(dw, dh) * 0.62);
                 if (digits) { sg.font = `bold ${fs.toFixed(1)}px system-ui, sans-serif`; sg.textAlign = 'center'; sg.textBaseline = 'middle'; }
+                const symmetry = window.HubMirror.state.bitSymmetry ? ZZBitSymmetry.request(PR) : null;
                 for (let r = 0; r < N; r++) { const row = PR[r];
-                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1';
-                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = '#9fffc8'; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
-                        sg.fillStyle = hc || '#9fffc8'; sg.globalAlpha = hc ? 1 : 0.78 * (desk ? 0.5 : 1);
+                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', symColor = ZZBitSymmetry.colorAt(symmetry,r,j);
+                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = symColor || '#9fffc8'; if(symColor)sg.globalAlpha=desk?.25:.35; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
+                        sg.fillStyle = hc || symColor || '#9fffc8'; sg.globalAlpha = hc ? 1 : symColor ? .68 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8 * dpr; }
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, row[j]); }
                         if (hc) sg.shadowBlur = 0;
                         if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); bitDigit(row[j], x, y); } } } }
-                sg.globalAlpha = 1; return finishSource(canvas, output);
+                sg.globalAlpha = 1;
+                for(const place of spots)ZZBitSymmetry.drawAxes(sg,symmetry,(x2,r)=>{const y=Math.max(0,Math.min(N-1,r)),i=Math.floor(y),j=(PR[i].length-1+x2)/2,p=place(i,j),next=place(Math.min(N-1,i+1),(PR[Math.min(N-1,i+1)].length-1+x2)/2);return [p[0]+(next[0]-p[0])*(y-i),p[1]+(next[1]-p[1])*(y-i)];},Math.max(.7/dpr,dw*.12));
+                return finishSource(canvas, output);
             };
             const sierDraw = (...args) => window.hubPerfMeasure ? window.hubPerfMeasure('sierDraw', () => sierDrawCore(...args)) : sierDrawCore(...args);
             window.addEventListener('hubview',()=>{sierDraw();noteDraw(performance.now());});
+            window.addEventListener('bitsymmetryready',()=>{if(window.HubMirror.state.bitSymmetry){sierDraw.k='';sierDraw();}});
             window.addEventListener('hubimage', () => {
                 music.setRows(ROW_PATTERNS[window.HubMirror.state.pattern]); sierDraw.k = ''; sierDraw();
             });

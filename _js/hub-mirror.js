@@ -1,13 +1,15 @@
+/* Hub v0.118: local mirror axes and matching bits; enabled by default. */
 /* Hub v0.116: complete source survives displacement and reflection before the camera. */
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
+      state.bitSymmetry = saved.bitSymmetry !== false;
       state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
@@ -72,6 +74,9 @@
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
     enabled.addEventListener('change', () => { state.on = enabled.checked;if(!state.on){stopSpin();resumeSpin=false;}syncSpin();changed();save(); });
+    const sym = document.createElement('button'); sym.type='button'; sym.className='hubRhomb hubBitSymmetry'; sym.textContent='│\nсим.';
+    sym.title='Зеркальные оси и парные биты'; sym.setAttribute('aria-label',sym.title); sym.setAttribute('aria-pressed',String(state.bitSymmetry));
+    sym.onclick=()=>{state.bitSymmetry=!state.bitSymmetry;sym.setAttribute('aria-pressed',String(state.bitSymmetry));changed();save();}; settings.append(sym);
     const traceLabel = document.createElement('label'), trace = document.createElement('input');
     trace.type = 'checkbox'; trace.checked = state.trace;
     traceLabel.className='hubRhomb';trace.setAttribute('aria-label','След единиц');traceLabel.append(trace, document.createTextNode('↓')); settings.append(traceLabel);

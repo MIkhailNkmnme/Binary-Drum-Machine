@@ -1,3 +1,4 @@
+/* v0.1143: exact local mirror axes and matching bit colours, enabled by default. */
 /* v0.1142, «да, сделай магнит по сетке битов»: протяжка за линию магнитит сдвиг отражения так, чтобы его биты легли в узлы сетки неподвижных битов (строки и
    чужие зеркала того же набора) — край к краю без зазора и наезда. Порог — 10 px экрана, Alt — без магнита. */
 /* v0.1141, «вдоль оси надо проехать отражение — не даёт» (выбор: «едет только рисунок»): протяжка за линию сдвигает только отражения этого зеркала
@@ -38,6 +39,7 @@
   state.one = Number.isFinite(state.one) ? clamp(state.one,-60,60) : 0;
   state.tint = state.tint !== false;
   state.trace = !!state.trace;
+  state.bitSymmetry = state.bitSymmetry !== false;
   state.labels = !!state.labels;
   state.magnet = state.magnet !== false;
   state.zoom=Number.isFinite(state.zoom)?clamp(state.zoom,.2,6):1;
@@ -94,6 +96,7 @@
   const rows = () => state.source==='pend' ? pendEngine().rows() : state.source==='field' ? Z.rows : state.source==='own' ? state.rows : state.source==='base' ? ZZ_INITIAL_ROWS : serp;
   const button = (text, title, action, parent) => { const b=document.createElement('button');b.type='button';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.onclick=action;parent.append(b);return b; };
   const changed = (redrawBase=false) => { notice='';if(redrawBase)dirty=true;persist();request(); };
+  window.addEventListener('bitsymmetryready',()=>{if(!state.bitSymmetry)return;for(const [key,src] of sourceCache)if(src.symmetry===null)sourceCache.delete(key);request();});
   const notify = message => { notice=message;status.textContent=message; };
   const axisPinned=m=>m.magnetPins.some(Boolean);
   const axisLocked=m=>m.magnetPins.every(Boolean);
@@ -365,6 +368,8 @@
   const zenToggle=button('◎\nдзен','Дзен: Зеркалиус на весь экран',()=>window.zenSet?.(true,'w-zerkalius'),viewGroup);diamond(zenToggle,'◎\nдзен',viewGroup);zenToggle.style.left='48px';zenToggle.style.top='48px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   const overlapToggle=button('⋂\nперес.','Пересечения фигур ярко, остальные биты сильно темнее',()=>{state.overlapOnly=!state.overlapOnly;changed();},viewGroup);diamond(overlapToggle,'⋂\nперес.',viewGroup);overlapToggle.style.left='48px';overlapToggle.style.top='96px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{overlapToggle.classList.toggle('on',state.overlapOnly);overlapToggle.setAttribute('aria-pressed',String(state.overlapOnly));});
+  const symmetryToggle=button('│\nсим.','Зеркальные оси и парные биты',()=>{state.bitSymmetry=!state.bitSymmetry;body.querySelector('input[aria-label="Зеркальные оси и парные биты"]').checked=state.bitSymmetry;changed(true);},viewGroup);diamond(symmetryToggle,'│\nсим.',viewGroup);symmetryToggle.style.left='48px';symmetryToggle.style.top='216px';
+  compactUpdates.push(()=>{symmetryToggle.classList.toggle('on',state.bitSymmetry);symmetryToggle.setAttribute('aria-pressed',String(state.bitSymmetry));});
   const zenExit=button('↙','Выйти из дзена Зеркалиуса',()=>window.zenSet?.(false),stage);zenExit.id='zerkZenExit';
   const canvasRotation=splitDiamond('Поворот холста',()=>Math.round(state.viewAngle)+'°',sign=>motionStep({},()=>{state.viewAngle=(state.viewAngle+sign+360)%360;changed();}),viewGroup);canvasRotation.style.left='0px';canvasRotation.style.top='216px';viewGroup.style.setProperty('--grape-height','264px');canvasRotation.oncontextmenu=e=>{e.preventDefault();motionStep({},()=>{state.viewAngle=0;changed();});};canvasRotation.title='Поворот всего холста 0–360°; левая / правая половина — шаг 1°; правый щелчок — 0°';
   canvasRotation.tabIndex=0;canvasRotation.setAttribute('role','slider');canvasRotation.setAttribute('aria-label','Поворот холста на 360 градусов');canvasRotation.setAttribute('aria-valuemin','0');canvasRotation.setAttribute('aria-valuemax','359');compactUpdates.push(()=>canvasRotation.setAttribute('aria-valuenow',String(state.viewAngle)));
@@ -543,6 +548,7 @@
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
     button('Грозди на места','Вернуть группы кнопок в исходную раскладку',resetGroups,el);
     const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
+    const symmetry=field(el,'Зеркальные оси и парные биты','checkbox',state.bitSymmetry);symmetry.onchange=()=>{state.bitSymmetry=symmetry.checked;changed(true);};
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
     const bitColor=field(el,'Цвет исходных битов','color',state.bitColor);bitColor.oninput=()=>{state.bitColor=bitColor.value;state.palette='custom';changed(true);};
     const palette=field(el,'Цветовая заготовка','',state.palette||'custom',[['custom','Свои цвета'],['classic','Бирюза / золото / коралл'],['ice','Лёд / синий / сиреневый'],['fire','Пламя / оранжевый / фиолетовый'],['forest','Зелень / лайм / янтарь'],['mono','Светлые / серые']]);compactUpdates.push(()=>palette.value=state.palette||'custom');
@@ -644,29 +650,32 @@
 
   function pendulumImage(mode,dw){
     const engine=pendEngine(),{W,H,val}=engine.field,dy=dw,bounds=[-W*dw/2,-dy/2,W*dw/2,(H-.5)*dy],image=document.createElement('canvas');image.width=W;image.height=H;
-    const ctx=image.getContext('2d'),data=ctx.createImageData(W,H),palette=new Map(),edges=[];
+    const ctx=image.getContext('2d'),data=ctx.createImageData(W,H),palette=new Map(),pairColors=new Map(),edges=[],symmetry=state.bitSymmetry?ZZBitSymmetry.request(engine.rows()):null;
+    const cellColor=(r,c)=>{const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)return null;const original=mode&2?W-1-c:c,match=ZZBitSymmetry.colorAt(symmetry,r,original);if(!match)return color;const bit=val[r*W+original]^(mode&1),key=match+bit;let paint=pairColors.get(key);if(!paint){const bright=bit?.85:.4;paint='#'+[1,3,5].map(i=>Math.round(parseInt(match.slice(i,i+2),16)*bright).toString(16).padStart(2,'0')).join('');pairColors.set(key,paint);}return paint;};
     for(let r=0;r<H;r++){let first=-1,last=-1;for(let c=0;c<W;c++){
-      const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)continue;
+      const color=cellColor(r,c);if(color===null)continue;
       if(first<0)first=c;last=c;
       let rgb=palette.get(color);if(!rgb){rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));palette.set(color,rgb);}const o=(r*W+c)*4;data.data.set(rgb,o);data.data[o+3]=255;
     }if(first>=0)edges.push([bounds[0]+first*dw,(r-.5)*dy],[bounds[0]+(last+1)*dw,(r+.5)*dy]);}
     ctx.putImageData(data,0,0);
-    return {image,bounds,pixelated:true,lattice:{o:[bounds[0]+dw/2,0],e1:[dw,0],e2:[0,dy]},polygons:edges.length?[figureHull(edges)]:[],points:{*[Symbol.iterator](){for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(data.data[(r*W+c)*4+3])yield [bounds[0]+(c+.5)*dw,r*dy];}},
+    ZZBitSymmetry.drawAxes(ctx,symmetry,(x2,r)=>[(mode&2?-x2:x2)/2+W/2,r+.5],1);
+    return {image,bounds,symmetry,pixelated:true,lattice:{o:[bounds[0]+dw/2,0],e1:[dw,0],e2:[0,dy]},polygons:edges.length?[figureHull(edges)]:[],points:{*[Symbol.iterator](){for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(data.data[(r*W+c)*4+3])yield [bounds[0]+(c+.5)*dw,r*dy];}},
       draw(target,pixelScale=1,colorMap=c=>c){
         const view=visibleWorld(target,dw),c0=clamp(Math.floor((view[0]-bounds[0])/dw),0,W),c1=clamp(Math.ceil((view[2]-bounds[0])/dw),0,W),r0=clamp(Math.floor(view[1]/dy),0,H),r1=clamp(Math.ceil(view[3]/dy)+1,0,H);
         const digits=state.bitsOnly&&dw*pixelScale>=7;target.textAlign='center';target.textBaseline='middle';target.font='bold '+(dw*.72)+'px '+state.font;
-        for(let r=r0;r<r1;r++)for(let c=c0;c<c1;c++){const color=engine.color(r,c,mode,pendSettings.colored!==false);if(color===null)continue;target.fillStyle=colorMap(color);const x=bounds[0]+c*dw,y=(r-.5)*dy;
+        for(let r=r0;r<r1;r++)for(let c=c0;c<c1;c++){const color=cellColor(r,c);if(color===null)continue;target.fillStyle=colorMap(color);const x=bounds[0]+c*dw,y=(r-.5)*dy;
           if(digits){const original=mode&2?W-1-c:c;target.fillText(String(val[r*W+original]^(mode&1)),x+dw/2,r*dy);}else target.fillRect(x,y,dw,dy);
         }
+        ZZBitSymmetry.drawAxes(target,symmetry,(x2,r)=>[(mode&2?-x2:x2)*dw/2,r*dy],Math.max(.7/pixelScale,dw*.12),colorMap);
       }};
   }
 
   function sourceImage(R,color,dw,ratio){
-    const dh=dw*Math.sqrt(3), shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
+    const dh=dw*Math.sqrt(3), symmetry=state.bitSymmetry?ZZBitSymmetry.request(R):null, shapes=[],vertices=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
     const include=(x,y)=>{vertices.push([x,y]);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);};
     for(let r=0;r<R.length;r++)for(let j=0;j<R[r].length;j++){
       const bit=R[r][j],x=-(R[r].length-1)*dw/2+j*dw,y=r*dh/2,a=state[bit==='0'?'zero':'one']*pi/180,c=Math.cos(a),sn=Math.sin(a);
-      shapes.push([bit,x,y,a]);for(const [u,v] of [[0,-dh*.5],[dw*.5,0],[0,dh*.5],[-dw*.5,0]])include(x+u*c-v*sn,y+u*sn+v*c);
+      shapes.push([bit,x,y,a,ZZBitSymmetry.colorAt(symmetry,r,j)]);for(const [u,v] of [[0,-dh*.5],[dw*.5,0],[0,dh*.5],[-dw*.5,0]])include(x+u*c-v*sn,y+u*sn+v*c);
     }
     bounds[0]-=2;bounds[1]-=2;bounds[2]+=2;bounds[3]+=2;
     const image=document.createElement('canvas'),w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h)));
@@ -674,15 +683,16 @@
     const draw=(target,pixelScale=1,colorMap=c=>c)=>{
       const alpha=target.globalAlpha,fs=state.bitsOnly?dw*.72:Math.max(5/Math.max(1,pixelScale),dw*.62),digits=state.bitsOnly||dw*pixelScale>=7,view=visibleWorld(target,Math.max(dh,fs));
       target.font='bold '+fs+'px '+state.font;target.textAlign='center';target.textBaseline='middle';
-      for(const [bit,x,y,a] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
-        target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?.42:.11);target.fillStyle=colorMap(color);
+      for(const [bit,x,y,a,symColor] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
+        target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?(symColor?.68:.42):(symColor?.25:.11));target.fillStyle=colorMap(symColor||color);
         if(!state.bitsOnly){target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}
-        if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(color);target.fillText(bit,0,fs*.06);}
-        else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
-        else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':color);target.fillText(bit,0,fs*.06);}target.restore();
+        if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(symColor||color);target.fillText(bit,0,fs*.06);}
+        else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(symColor||color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
+        else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':symColor||color);target.fillText(bit,0,fs*.06);}target.restore();
       }target.globalAlpha=alpha;
+      ZZBitSymmetry.drawAxes(target,symmetry,(x2,r)=>[x2*dw/2,r*dh/2],Math.max(.7/pixelScale,dw*.12),colorMap);
     };
-    draw(ctx,safe);return {image,bounds,lattice:rowsLattice(R,dw),polygons:[figureHull(vertices)],points:shapes.map(v=>[v[1],v[2]]),draw};
+    draw(ctx,safe);return {image,bounds,symmetry,lattice:rowsLattice(R,dw),polygons:[figureHull(vertices)],points:shapes.map(v=>[v[1],v[2]]),draw};
   }
 
   function netGeometry(preset=state.net.preset){
@@ -700,18 +710,20 @@
     return {P,C:map(u+(edge?1/3:.5),v+(edge?1/3:.5))};
   }
   function netFaces(ctx,model,bits,scale,labels,preview=false,colorMap=c=>c,pixelScale=1){
+    const symmetry=state.bitSymmetry&&!preview?ZZBitSymmetry.request(bits.map(row=>Array.from(row).join(''))):null;
     const alpha=ctx.globalAlpha,R=bits.length,cell=scale/Math.max(1,R),view=visibleWorld(ctx,2/Math.max(1,R));ctx.textAlign='center';ctx.textBaseline='middle';
     for(const f of model.faces){const col=f.up?state.net.up:state.net.down,[A,L,B]=f.P;ctx.fillStyle=colorMap(col);ctx.strokeStyle=colorMap(col);
       if(!state.bitsOnly||preview){ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...L);ctx.lineTo(...B);ctx.closePath();if(preview){ctx.globalAlpha=alpha*.1;ctx.fill();}ctx.globalAlpha=alpha;ctx.lineWidth=(preview?1:1.4)/scale;ctx.stroke();}
-      if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),{P,C:[x,y]}=netCell(f,r,k,R);
+      if(!preview)for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const bit=bits[r][k]^(f.up?0:1),symColor=ZZBitSymmetry.colorAt(symmetry,r,k),{P,C:[x,y]}=netCell(f,r,k,R);
         if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
-        if(!state.bitsOnly){ctx.globalAlpha=alpha*(bit?.42:.11);ctx.fillStyle=colorMap(col);ctx.beginPath();ctx.moveTo(...P[0]);P.slice(1).forEach(p=>ctx.lineTo(...p));ctx.closePath();ctx.fill();}
-        if(state.netDigits){ctx.save();ctx.globalAlpha=alpha*(state.bitsOnly?(bit?1:.7):(bit?1:.7));ctx.fillStyle=colorMap(state.bitsOnly||!bit?col:'#06150d');ctx.translate(x,y);ctx.scale(.6/R/16,.6/R/16);ctx.font='700 16px '+state.font;ctx.fillText(String(bit),0,0);ctx.restore();}}
+        if(!state.bitsOnly){ctx.globalAlpha=alpha*(bit?(symColor?.68:.42):(symColor?.25:.11));ctx.fillStyle=colorMap(symColor||col);ctx.beginPath();ctx.moveTo(...P[0]);P.slice(1).forEach(p=>ctx.lineTo(...p));ctx.closePath();ctx.fill();}
+        if(state.netDigits){ctx.save();ctx.globalAlpha=alpha*(state.bitsOnly?(bit?1:.7):(bit?1:.7));ctx.fillStyle=colorMap(state.bitsOnly||!bit?symColor||col:'#06150d');ctx.translate(x,y);ctx.scale(.6/R/16,.6/R/16);ctx.font='700 16px '+state.font;ctx.fillText(String(bit),0,0);ctx.restore();}}
+      ctx.globalAlpha=alpha;ZZBitSymmetry.drawAxes(ctx,symmetry,(x2,r)=>{r=clamp(r,0,R-1);return netCell(f,r,(r+x2)/2,R).C;},Math.max(.7/pixelScale,.08*cell)/scale,colorMap);
       if(labels&&!preview&&!state.bitsOnly){const x=(A[0]+L[0]+B[0])/3,y=(A[1]+L[1]+B[1])/3;ctx.globalAlpha=alpha;ctx.font='700 '+(12/scale)+'px system-ui';ctx.lineWidth=3/scale;ctx.strokeStyle=colorMap('#000000');ctx.strokeText(f.name,x,y);ctx.fillStyle=colorMap('#ffffff');ctx.fillText(f.name,x,y);}
     }ctx.globalAlpha=alpha;
   }
   function netPreview(canvas,preset){const model=netGeometry(preset),b=model.bounds,scale=Math.min(48/(b[2]-b[0]),40/(b[3]-b[1])),ctx=canvas.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,56,48);ctx.setTransform(scale,0,0,scale,28-(b[0]+b[2])*scale/2,24-(b[1]+b[3])*scale/2);netFaces(ctx,model,[],scale,false,true);}
-  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);const points=[];for(const f of model.faces){const [A,L,B]=f.P;for(let r=0;r<pattern.length;r++)for(let k=0;k<=r;k++){points.push(netCell(f,r,k,pattern.length).C.map(v=>v*scale));}}return {image,bounds,points,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
+  function netImage(pattern,scale,ratio){const model=netGeometry(),b=model.bounds,pad=5/scale,bounds=[(b[0]-pad)*scale,(b[1]-pad)*scale,(b[2]+pad)*scale,(b[3]+pad)*scale],w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h))),image=document.createElement('canvas');image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(scale*safe,0,0,scale*safe,-bounds[0]*safe,-bounds[1]*safe);netFaces(ctx,model,sceneMath.faceRows(pattern),scale,state.net.labels);const points=[];for(const f of model.faces){const [A,L,B]=f.P;for(let r=0;r<pattern.length;r++)for(let k=0;k<=r;k++){points.push(netCell(f,r,k,pattern.length).C.map(v=>v*scale));}}return {image,bounds,symmetry:state.bitSymmetry?ZZBitSymmetry.request(sceneMath.faceRows(pattern).map(row=>Array.from(row).join(''))):null,points,polygons:model.faces.map(f=>f.P.map(p=>p.map(v=>v*scale))),draw(target,pixelScale,colorMap){target.save();target.scale(scale,scale);netFaces(target,model,sceneMath.faceRows(pattern),scale,state.net.labels,false,colorMap,pixelScale);target.restore();}};}
   function reflectedMode(mask){return state.mirrors.reduce((v,m,j)=>v^((mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);}
   function transferNet(){
     const mask=state.net.copy;if(state.mirrors.some((m,i)=>(mask&(1<<i))&&!m.on)){notify('Включите зеркала выбранного отражения или выберите исходную развёртку');return;}
@@ -724,7 +736,7 @@
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
       const reflected=reflectedCopies();
-      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
+      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.bitSymmetry,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
@@ -734,7 +746,7 @@
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
       const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
-        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
+        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitSymmetry,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;
@@ -794,7 +806,7 @@
         if(i>=3){while(placed.some(p=>Math.abs(p.x-n.x)<(p.w+w)/2+3&&Math.abs(p.y-n.y)<h+3))n.y+=h+3;placed.push({x:n.x,y:n.y,w});}
         el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.color=sceneMath.controlColor(n.color);el.classList.toggle('off',!!n.off);});}
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=.2;zoomIn.disabled=state.zoom>=6;
-    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message:message;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
+    const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const symmetrySources=[...new Set(data.items.map(item=>item.src))],symmetryMessage=state.bitSymmetry?' · симметрия: '+(symmetrySources.some(src=>!src.symmetry)?'поиск…':symmetrySources.reduce((sum,src)=>sum+src.symmetry.segments.length,0)+' участков'):'';const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message+symmetryMessage:message+symmetryMessage;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     for(const m of state.mirrors){if(axisLocked(m))m.spin=false;if(axisPinned(m)&&m.path.enabled)stopPath(m);}
