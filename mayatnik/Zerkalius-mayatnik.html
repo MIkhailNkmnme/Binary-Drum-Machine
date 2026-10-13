@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.018. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.019. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.018</title>
+<title>Zerkalius Маятник — v0.019</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -36,6 +36,7 @@
   v0.016: вид «ромбы · обе рядом» — два Хоррориуса на одном холсте: слева чётная решётка, справа нечётная, между ними вертикаль.
   v0.017: уменьшенную картинку строит страница (present), холст пиксель в пиксель и по пикселям монитора — ничего не «плывёт» под курсором.
   v0.018: «показ строк» и окно показа: верхние N строк, по ширине — до куда к этому кадру достали конусы; «обе рядом» при малом N — крупно.
+  v0.019: «Диагонали .txt» — ромбы построчно: правые ↘ и левые ↙ диагонали чётной и нечётной решёток, окно показа текущего кадра.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -78,7 +79,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 .bar #bPlay,.bar #bBuild{--key:#73e4a5}
 .bar #bReset{--key:#ff7373}
 .bar #bAxisPick,.bar #bKonus{--key:#ff87cf}
-.bar #bTxt,.bar #bPng{--key:#ffd166}
+.bar #bTxt,.bar #bDiag,.bar #bPng{--key:#ffd166}
 .bar #bSeq,.bar #bPair{--key:#b9a2ff}   /* v0.012: переключатель «по очереди / пара сразу» */
 #pairSw{gap:0}#pairSw.off{opacity:.45}
 .bar #bPlay{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
@@ -97,7 +98,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.018</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.019</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -145,6 +146,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
+    <button id="bDiag" title="Ромбы построчно: у каждой решётки (чётная — вершины 0, ±2…, нечётная — ±1, ±3…) ромбы стоят рядами по диагоналям. В файле — правые диагонали ↘ и левые ↙ обеих решёток; строка — одна диагональ сверху вниз, диагонали слева направо. Текущий кадр, окно показа">Диагонали .txt</button>
     <a href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
     <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
@@ -614,6 +616,28 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('frame').addEventListener('change', () => goTo(+$('frame').value));
   $('bReset').onclick = reset;
   $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
+  // v0.019: «выгрузить построчно как ромбы — левые и правые диагонали, у обеих сеток», «txt». Ромб касается соседей сторонами
+  // вдоль двух диагоналей: правая ↘ — столбец − строка постоянно, левая ↙ — столбец + строка постоянно. Клетки решётки p —
+  // (столбец − якорь − строка) той же чётности, что p. Строка файла — одна диагональ сверху вниз (непустые клетки идут подряд),
+  // диагонали — слева направо по месту в верхней строке; берётся окно показа текущего кадра.
+  function diagText() {
+    const { W, val } = f, A = geo.anchor, out = [];
+    out.push(`# Маятник: ${st.rows} строк, кадр ${k}${pairOn() ? ' (пара сразу)' : ''}, показ ${VH} строк, столбцы ${VX - A} … ${VX + VW - 1 - A} от якоря`);
+    out.push('# Ромбы построчно: строка — одна диагональ сверху вниз (1 / 0), диагонали — слева направо');
+    for (const p of [0, 1]) for (const [name, dir] of [['правые диагонали ↘ (столбец − строка постоянно)', 1], ['левые диагонали ↙ (столбец + строка постоянно)', -1]]) {
+      out.push('', `# ${p ? 'нечётная решётка (вершины ±1, ±3…)' : 'чётная решётка (вершины 0, ±2…)'} — ${name}`);
+      const lines = new Map();
+      for (let r = 0; r < VH; r++) for (let c = VX; c < VX + VW; c++) {
+        if (((c - A - r - p) % 2 + 2) % 2) continue;
+        const v = val[r * W + c]; if (v < 0) continue;
+        const key = dir > 0 ? c - r : c + r, a = lines.get(key);
+        if (a) a.push(v); else lines.set(key, [v]);
+      }
+      for (const key of [...lines.keys()].sort((x, y) => x - y)) out.push(lines.get(key).join(''));
+    }
+    return out.join('\n') + '\n';
+  }
+  $('bDiag').onclick = () => { if (f) download(fname('txt').replace(/\.txt$/, `-diagonali-kadr${k}.txt`), new Blob([diagText()], { type: 'text/plain' })); };
   $('bPng').onclick = () => {   // v0.017: полная картинка «пиксель = бит», а не уменьшенная с экрана
     if (!f) return; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
     c.getContext('2d').putImageData(img, 0, 0); c.toBlob(b => b && download(fname('png'), b));
