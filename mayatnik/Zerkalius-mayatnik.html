@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.011. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.012. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.011</title>
+<title>Zerkalius Маятник — v0.012</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -27,6 +27,8 @@
   v0.007: флажок «симметрия» — вертикали зеркальной симметрии и края их зон по строкам (расширение «маятником»).
   v0.008: общее ядро с зеркальным маятником Зеркалиуса; математическое правило сохранено.
   v0.011: выбранная ось → Соляриус; размер, точный счёт 0/1, цифры при приближении, угловатые кнопки Синхрофазотрона.
+  v0.012: переключатель «по очереди / пара сразу»: пара вершин ±m одним проходом (MAYATNIK.conePair), кадр = пара, кадр 0 — только якорь;
+    цвет перекрытий для пар — MAYATNIK.tintPair. Пара сразу даёт зеркальный на 100 % Хоррориус без шума.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -70,6 +72,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 .bar #bReset{--key:#ff7373}
 .bar #bAxisPick,.bar #bKonus{--key:#ff87cf}
 .bar #bTxt,.bar #bPng{--key:#ffd166}
+.bar #bSeq,.bar #bPair{--key:#b9a2ff}   /* v0.012: переключатель «по очереди / пара сразу» */
+#pairSw{gap:0}#pairSw.off{opacity:.45}
 .bar #bPlay{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
 .bar input,.bar select{border-radius:0;font:12px var(--mono);min-height:28px}
 .bar input[type=range]{appearance:none;border:0;padding:0;height:32px;background:transparent}
@@ -86,7 +90,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.011</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.012</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -102,6 +106,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="left">влево</option>
       <option value="one">одна вершина</option>
     </select></label>
+    <span class="grp" id="pairSw" title="Как ставить пару вершин −m, +m. «По очереди» — сперва влево, потом вправо (кадр = одна вершина). «Пара сразу» — оба конуса одним проходом (кадр = пара, кадр 0 — только якорь, чистый Серпинский); пара m — вершины ±m, «вершин N» — маятник до ±N/2. Только для хода «лево-право»."><button id="bSeq" aria-pressed="true">по очереди</button><button id="bPair" aria-pressed="false">пара сразу</button></span>
     <label>поле <select id="bg">
       <option value="empty">пустое</option>
       <option value="1">все 1</option>
@@ -143,14 +148,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
 <div id="tip"></div>
 
-<script src="mayatnik-core.js?v=1"></script>
+<script src="mayatnik-core.js?v=2"></script>
 <script>
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -176,27 +181,36 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     $('view').value = st.view; $('speed').value = st.speed; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
   }
 
+  // v0.012: «пара сразу» — кадр = пара вершин ±m одним проходом (MAYATNIK.conePair); кадр 0 — только якорь.
+  // Пар — N/2 от «вершин N» (маятник до ±N/2). Только при ходе «лево-право».
+  const pairOn = () => !!st.pair && st.mode === 'pend';
   function reset() {
     stop(); clearKonus(); readUI();
-    const S = st.mode === 'one' ? 1 : st.steps;
+    const S = st.mode === 'one' ? 1 : pairOn() ? 2 * total() + 1 : st.steps;   // вершин всего
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
     f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
+    if (pairOn()) MAYATNIK.cone(f, geo.anchor, st.rows);
     // v0.002: опорные кадры для ползунка «кадр» — все кадры не влезут (2024 × 24 МБ), поэтому каждый interval-й,
     // не больше ~200 МБ на всё; нужный кадр досчитывается от ближайшего опорного
-    snaps = new Map(); interval = Math.max(1, Math.ceil(S * f.val.length / 200e6)); snap();   // v0.006: кадр — 1 байт на клетку (цвет не хранится)
-    target = 0; const fr = $('frame'); fr.max = S; fr.value = 0;
+    snaps = new Map(); interval = Math.max(1, Math.ceil(total() * f.val.length / 200e6)); snap();   // v0.006: кадр — 1 байт на клетку (цвет не хранится)
+    target = 0; const fr = $('frame'); fr.max = total(); fr.value = 0;
     cv.width = geo.W; cv.height = st.rows; img = g.createImageData(geo.W, st.rows);
-    layout(); draw();
+    pairSync(); layout(); draw();
   }
-  function total() { return st.mode === 'one' ? 1 : st.steps; }
+  function total() { return st.mode === 'one' ? 1 : pairOn() ? st.steps >> 1 : st.steps; }
   function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice() }); }   // v0.006: только биты — цвет считается
   function addOne() {
     if (k >= total()) return false;
     if (konus) clearKonus();
-    MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows); k++;
+    if (pairOn()) MAYATNIK.conePair(f, geo.anchor - k - 1, geo.anchor + k + 1, st.rows);
+    else MAYATNIK.cone(f, geo.anchor + MAYATNIK.offset(st.mode, k), st.rows);
+    k++;
     if (k % interval === 0) snap();
     return true;
   }
+  // Цвет перекрытий клетки (r, c от якоря): по очереди — чётность конусов по span, парой — tintPair
+  const tintAt = (r, c, v) => pairOn() ? MAYATNIK.tintPair(r, c, v, k, st.bg !== 'empty')
+    : (sp => MAYATNIK.tint(r, c, v, sp[0], sp[1], st.bg !== 'empty'))(MAYATNIK.span(st.mode, k));
   // Перейти к кадру t: назад — от ближайшего опорного кадра, вперёд — досчитать
   function goTo(t) {
     stop(); if (konus && t !== k) clearKonus(); if (!f) reset();
@@ -216,9 +230,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
     if (st.view === 'bits' || st.view === 'digits') for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; px[i] = v < 0 ? empty : T[v * 3]; }
     else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
-      const [lo, hi] = MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
+      const pr = pairOn(), [lo, hi] = pr ? [0, 0] : MAYATNIK.span(st.mode, k), filled = st.bg !== 'empty', A = geo.anchor;
       for (let r = 0; r < H; r++) { const row = r * W;
-        for (let c = 0; c < W; c++) { const v = val[row + c]; if (v === 0) zero++; else if (v === 1) one++; px[row + c] = v < 0 ? empty : T[v * 3 + MAYATNIK.tint(r, c - A, v, lo, hi, filled)]; } }
+        for (let c = 0; c < W; c++) { const v = val[row + c]; if (v === 0) zero++; else if (v === 1) one++;
+          px[row + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
     }
     if (st.outline) outline(px);
     if (st.sym && !playing) symmetry(px);
@@ -355,7 +370,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){const v=f.val[y*f.W+x];if(v<0)continue;digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);}
   }
   function status() {
-    $('stat').textContent = `вершина ${k} / ${total()} · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
+    $('stat').textContent = (pairOn() ? `пара ${k} / ${total()} (вершин ${2 * k + 1})` : `вершина ${k} / ${total()}`) +
+      ` · ${geo.W}×${st.rows}` + (k !== target ? ` · считаю кадр ${target}…` : '');
     $('frame').value = k; $('frameV').textContent = k;
   }
   // v0.002: масштаб как в картах. st.zoom — 'fit' (по ширине) или число: экранных пикселей на бит.
@@ -431,7 +447,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
-  const fname = ext => `mayatnik-${st.mode}-${st.rows}x${total()}-${st.bg}.${ext}`;
+  const fname = ext => `mayatnik-${st.mode}${pairOn() ? '-para' : ''}-${st.rows}x${total()}-${st.bg}.${ext}`;
 
   $('bBuild').onclick = build;
   // v0.003: готовые кнопки — строк = вершин = N, ход «лево-право», сразу «Построить»
@@ -444,6 +460,27 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.005: 4N — конец ленты: вершина a трогает конус якоря только при |a| ≤ 2(N − 1), крайняя стоит на ±n/2
   $('bFour').onclick = () => { $('steps').value = 4 * clampInt($('rows').value, 8, 4096, 512); $('mode').value = 'pend'; build(); };
   $('third').addEventListener('change', () => { st.third = $('third').checked; save(); });
+  // v0.012: переключатель «по очереди / пара сразу». Пересчёт с того же места: k вершин ↔ (k − 1)/2 пар.
+  function pairSync() {
+    const on = pairOn();
+    $('bSeq').setAttribute('aria-pressed', String(!on)); $('bPair').setAttribute('aria-pressed', String(on));
+    $('pairSw').classList.toggle('off', st.mode !== 'pend');
+    $('bStep').textContent = on ? '+1 пара' : '+1 вершина';
+    $('bStep').title = on ? 'Одна пара: вершины −m и +m сразу (→)' : 'Одна вершина (→)';
+    $('bPlay').title = on ? 'Анимация: пара за парой (пробел)' : 'Анимация: вершина за вершиной (пробел)';
+    $('frame').parentElement.title = on ? 'Любой кадр: поле после N пар, 0 — только якорь (← → — на кадр назад / вперёд)'
+      : 'Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)';
+  }
+  function pairSet(on) {
+    if (f && st.mode === 'pend' && !!st.pair === on) return;
+    const was = f ? pairOn() : false, kk = k;
+    st.pair = on; $('mode').value = 'pend'; save();
+    reset();
+    const now = pairOn();
+    goTo(was === now ? kk : now ? Math.max(0, (kk - 1) >> 1) : 2 * kk + 1);
+  }
+  $('bSeq').onclick = () => pairSet(false);
+  $('bPair').onclick = () => pairSet(true);
   $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
   $('bStep').onclick = () => goTo(k + 1);
   // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
@@ -513,7 +550,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (!f) return;
     const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * f.W), y = Math.floor((e.clientY - r.top) / r.height * f.H);
     if (x < 0 || y < 0 || x >= f.W || y >= f.H) { tip.style.display = 'none'; return; }
-    const v = f.val[y * f.W + x], sp = MAYATNIK.span(st.mode, k), c = v < 0 ? '' : ['чёрн', 'син', 'красн'][MAYATNIK.tint(y, x - geo.anchor, v, sp[0], sp[1], st.bg !== 'empty')];
+    const v = f.val[y * f.W + x], c = v < 0 ? '' : ['чёрн', 'син', 'красн'][tintAt(y, x - geo.anchor, v)];
     tip.textContent = `строка ${y + 1} · столбец ${x - geo.anchor >= 0 ? '+' : ''}${x - geo.anchor} · ${v < 0 ? 'пусто' : v + ' ' + c}`;
     tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.display = 'block';
   });
