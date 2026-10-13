@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.020. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.021. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.020</title>
+<title>Zerkalius Маятник — v0.021</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -38,6 +38,7 @@
   v0.018: «показ строк» и окно показа: верхние N строк, по ширине — до куда к этому кадру достали конусы; «обе рядом» при малом N — крупно.
   v0.019: «Диагонали .txt» — ромбы построчно: правые ↘ и левые ↙ диагонали чётной и нечётной решёток, окно показа текущего кадра.
   v0.020: галка «без полос» — в виде только зона шума (от крайнего «0» до крайнего «0» в строке), окно обрезается по ней.
+  v0.021: кнопка «👓 Очки» — сверху вниз ищет строки начальной последовательности в рядах решёток; найденное — жёлтым, список под панелью.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -81,6 +82,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 .bar #bReset{--key:#ff7373}
 .bar #bAxisPick,.bar #bKonus{--key:#ff87cf}
 .bar #bTxt,.bar #bDiag,.bar #bPng{--key:#ffd166}
+.bar #bOchki{--key:#ffb347}
 .bar #bSeq,.bar #bPair{--key:#b9a2ff}   /* v0.012: переключатель «по очереди / пара сразу» */
 #pairSw{gap:0}#pairSw.off{opacity:.45}
 .bar #bPlay{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
@@ -92,6 +94,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 .bar input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:0;background:var(--acc);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .bar .zerk-arrow{width:28px;min-width:28px;padding:0;font-size:14px}
 #imageStats{display:flex;flex-wrap:wrap;gap:4px 20px;padding:7px 16px;background:var(--panel);border-bottom:1px solid var(--line);font:12px/1.6 var(--mono);color:var(--fg)}
+#ochkiBox{padding:4px 16px 6px;background:var(--panel);border-bottom:1px solid var(--line);font:12px/1.6 var(--mono);color:var(--fg)}
+#ochkiBox[hidden]{display:none}#ochkiBox summary{cursor:pointer;color:#ffb347}#ochkiList{max-height:180px;overflow:auto;white-space:pre;color:var(--mute)}
 #bitDigits{position:fixed;pointer-events:none;margin:0;background:transparent;image-rendering:auto;z-index:2}
 #bitDigits[hidden]{display:none}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
@@ -99,7 +103,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.020</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.021</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -140,6 +144,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     </select></label>
     <label title="Сколько верхних строк показывать (пусто — все). По ширине показ всегда обрезан до того, куда к этому кадру достали конусы, — при малом числе строк картинка (и обе половины «обе рядом») помещается крупно">показ строк <input id="vrows" type="number" min="0" max="4096" step="1" placeholder="все" style="width:64px"></label>
     <label title="Только в виде: в каждой строке — зона шума от крайнего левого до крайнего правого «0» (та же граница, что у «обводки»); сплошные единицы полос по бокам не рисуются, окно показа обрезается по зоне — картинка крупнее. Поле не меняется"><input id="noband" type="checkbox"> без полос</label>
+    <button id="bOchki" aria-pressed="false" title="Очки: сверху вниз ищут в кадре строки начальной последовательности (1, 1, 11, 111, 1000…) — в рядах решёток, клетки через одну, как строки треугольника. Найденная строка больше ниже не ищется; так до последней. Найденное — жёлтым (1) и коричневым (0), список — под панелью. Только видимое: окно показа и, при «без полос», зона шума">👓 Очки</button>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
@@ -159,18 +164,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <span id="stat"></span>
 </div>
 <div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output></div>
+<details id="ochkiBox" hidden><summary id="ochkiSum"></summary><div id="ochkiList"></div></details>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
 <canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
 <div id="tip"></div>
 
 <script src="mayatnik-core.js?v=2"></script>
+<script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true, vrows: 0, noband: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -193,7 +200,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; $('noband').checked = !!st.noband; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
+    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; $('noband').checked = !!st.noband; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
   }
 
   // v0.012: «пара сразу» — кадр = пара вершин ±m одним проходом (MAYATNIK.conePair); кадр 0 — только якорь.
@@ -250,6 +257,51 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return [mn, mx];
   }
   const outZone = (r, c) => ZL.length > r && (c < ZL[r] || c > ZR[r]);   // клетка (строка, столбец поля) — в полосе
+  // v0.021: «Очки» — «сканирует сверху вниз и находит строки из последовательности 1, 1, 11, 111…; найденную ниже больше не
+  // ищет; так до последней». Последовательность — ZZ_INITIAL_ROWS (_js/initial-rows.js, 71 строка). Ряд решётки p в строке r —
+  // её клетки через одну, как строка треугольника (строки Бирамиды и хаба — ряды чётной решётки). На каждой строке кадра
+  // (сверху вниз, чётная решётка, потом нечётная) проверяются ещё не найденные строки последовательности по порядку; найденная
+  // вычёркивается. Одинаковые строки («1», «1») занимают разные места. Только видимое: окно показа и, при «без полос», зона шума.
+  // Считается, когда кадр стоит (как оси симметрии); кэш — по кадру и окну.
+  let ochki = null;
+  function ochkiGet() {
+    const key = [k, VX, VW, VH, st.noband ? 1 : 0, st.mode, pairOn() ? 1 : 0, f.W, f.H].join('|');
+    if (ochki && ochki.key === key) return ochki;
+    const seq = typeof ZZ_INITIAL_ROWS !== 'undefined' ? ZZ_INITIAL_ROWS : [], { W, val } = f, A = geo.anchor;
+    const left = seq.map((t, i) => i), found = [], used = new Set(), hl = new Uint8Array(W * f.H);
+    for (let r = 0; r < VH && left.length; r++) for (const p of [0, 1]) {
+      let str = ''; const cols = [];
+      for (let c = VX; c < VX + VW; c++) {
+        if (((c - A - r - p) % 2 + 2) % 2) continue;
+        const v = val[r * W + c]; if (v < 0 || outZone(r, c)) continue;
+        str += v; cols.push(c);
+      }
+      if (!str) continue;
+      for (let q = 0; q < left.length; q++) {
+        const i = left[q], t = seq[i]; let at = str.indexOf(t);
+        while (at >= 0 && used.has(r + '|' + p + '|' + at + '|' + t)) at = str.indexOf(t, at + 1);
+        if (at < 0) continue;
+        used.add(r + '|' + p + '|' + at + '|' + t); found.push({ i, r, p, c: cols[at], n: t.length });
+        for (let j = 0; j < t.length; j++) hl[r * W + cols[at + j]] = 1;
+        left.splice(q--, 1);
+      }
+    }
+    ochki = { key, found, hl, total: seq.length };
+    ochkiShow();
+    return ochki;
+  }
+  function ochkiShow() {
+    const box = $('ochkiBox'); box.hidden = !st.ochki || !ochki; if (box.hidden) return;
+    const { found, total } = ochki, A = geo.anchor, seq = typeof ZZ_INITIAL_ROWS !== 'undefined' ? ZZ_INITIAL_ROWS : [];
+    const last = found.reduce((m, x) => x.i > (m ? m.i : -1) ? x : m, null);
+    $('ochkiSum').textContent = `👓 Очки · кадр ${k}: найдено ${found.length} из ${total} строк последовательности` +
+      (last ? ` · самая длинная найденная — №${last.i + 1} (${last.n} бит), строка ${last.r + 1}` : '');
+    const rows = found.slice().sort((a, b) => a.i - b.i).map(x =>
+      `№${String(x.i + 1).padStart(2)}  ${seq[x.i].padEnd(24)} строка ${String(x.r + 1).padStart(4)} · ${x.p ? 'нечётная' : 'чётная  '} · столбец ${x.c - A >= 0 ? '+' : ''}${x.c - A}`);
+    const miss = seq.map((t, i) => i).filter(i => !found.some(x => x.i === i));
+    if (miss.length) rows.push(`не найдены (${miss.length}): №${miss.map(i => i + 1).join(', №')}`);
+    $('ochkiList').textContent = rows.join('\n');
+  }
   function updWin() {
     const R = st.vrows > 0 ? Math.min(f.H, st.vrows) : f.H, [lo, hi] = pairOn() ? [-k, k] : MAYATNIK.span(st.mode, k);
     let x0 = Math.max(0, geo.anchor + lo - (R - 1)), x1 = Math.min(f.W - 1, geo.anchor + hi + (R - 1));
@@ -273,7 +325,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const A = geo.anchor - VX, x = fx - .5 - A - p, y = fy - .5, i = Math.round((x + y) / 2), j = Math.round((x - y) / 2);
     return [i + j + A + p + VX, i - j];   // fx — в клетках окна, ответ — столбец поля
   }
-  function drawRomb(px, T, empty) {
+  const HL1 = rgba([255, 214, 70]), HL0 = rgba([150, 86, 30]);   // v0.021: «Очки» — найденные 1 и 0
+  function drawRomb(px, T, empty, hl) {
     const { W, H, val } = f, K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
     const A = geo.anchor - VX;   // якорь в клетках окна
@@ -284,7 +337,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         const p = cp[X]; if (p < 0) { px[row + X] = div; continue; }
         const x = cx[X], i = Math.round((x + y) / 2), j = Math.round((x - y) / 2), c = i + j + A + p, r = i - j;
         const v = r >= 0 && r < VH && c >= 0 && c < VW && !outZone(r, c + VX) ? val[r * W + c + VX] : -1;
-        px[row + X] = v < 0 ? empty : T[v * 3];
+        px[row + X] = v < 0 ? empty : hl && hl[r * W + c + VX] ? (v ? HL1 : HL0) : T[v * 3];
       }
     }
   }
@@ -325,7 +378,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
     for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; }   // счёт — по всему полю
-    if (rp >= 0) drawRomb(px, T, empty);
+    const och = st.ochki && !playing ? ochkiGet() : null;   // v0.021: «Очки» — когда кадр стоит
+    if (!st.ochki || playing) $('ochkiBox').hidden = true;
+    if (rp >= 0) drawRomb(px, T, empty, och && och.hl);
     else if (st.view === 'bits' || st.view === 'digits') for (let r = 0; r < VH; r++) { const row = r * W + VX, out = r * VW;
       for (let c = 0; c < VW; c++) { const v = outZone(r, c + VX) ? -1 : val[row + c]; px[out + c] = v < 0 ? empty : T[v * 3]; } }
     else {   // v0.006: цвет по формуле — чётность числа конусов над клеткой (MAYATNIK.tint)
@@ -333,6 +388,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       for (let r = 0; r < VH; r++) { const row = r * W, out = r * VW - VX;
         for (let c = VX; c < VX + VW; c++) { const v = outZone(r, c) ? -1 : val[row + c];
           px[out + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
+    }
+    if (och && rp < 0) for (const x of och.found) for (let j = 0; j < x.n; j++) {   // найденное «Очками» — поверх цвета
+      const c = x.c + 2 * j; if (x.r < VH && c >= VX && c < VX + VW) px[x.r * VW + c - VX] = f.val[x.r * f.W + c] ? HL1 : HL0;
     }
     if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
       if (st.outline) outline(px);
@@ -474,7 +532,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(VH,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(VW,c1-ox+1);x++){
         if(((x+VX-geo.anchor-p-y)%2+2)%2||outZone(y,x+VX))continue;const v=f.val[y*f.W+x+VX];if(v<0)continue;
         const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
-        digitG.fillStyle=v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
+        const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=hit?(v?'#ffd646':'#96561e'):v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
         if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
       }
       return;
@@ -611,6 +669,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bFour').onclick = () => { $('steps').value = 4 * clampInt($('rows').value, 8, 4096, 512); $('mode').value = 'pend'; build(); };
   $('third').addEventListener('change', () => { st.third = $('third').checked; save(); });
   $('noband').addEventListener('change', () => { st.noband = $('noband').checked; save(); if (f) draw(); });   // v0.020: «без полос»
+  $('bOchki').onclick = () => { st.ochki = !st.ochki; save(); $('bOchki').setAttribute('aria-pressed', String(st.ochki)); if (f) draw(); };   // v0.021
   $('vrows').addEventListener('change', () => {   // v0.018: «показ строк» — только показ, поле не пересчитывается
     st.vrows = clampInt($('vrows').value || 0, 0, 4096, 0); $('vrows').value = st.vrows || ''; save(); if (f) draw();
   });
