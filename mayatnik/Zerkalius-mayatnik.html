@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.016. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.017. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.016</title>
+<title>Zerkalius Маятник — v0.017</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -34,6 +34,7 @@
   v0.014: при построении (и сбросе, «хорр», переключении пары) поле прокручивается к оси якоря посередине, сверху — вершина.
   v0.015: кнопка «кратный ×2» (по умолчанию вкл) — масштаб только 2^k пикселей монитора на бит: без муара двух решёток при уменьшении.
   v0.016: вид «ромбы · обе рядом» — два Хоррориуса на одном холсте: слева чётная решётка, справа нечётная, между ними вертикаль.
+  v0.017: уменьшенную картинку строит страница (present), холст пиксель в пиксель и по пикселям монитора — ничего не «плывёт» под курсором.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -95,7 +96,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.016</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.017</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -225,7 +226,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     RG = rp === 2 ? Math.max(2, Math.min(64, Math.ceil(4 / Math.max(.02, (wrap.clientWidth - 32) / (2 * geo.W))))) : 0;
     RK = rp < 0 ? 1 : Math.max(1, Math.min(8, Math.floor(Math.sqrt(12e6 / (dispW() * st.rows)))));
     if (RK > 1) RK -= RK % 2;   // при нечётном RK граничные пиксели делятся неровно — ромбы кривые; 1 и чётные — ровно 2·RK² на ромб
-    cv.width = dispW() * RK; cv.height = st.rows * RK; img = g.createImageData(cv.width, cv.height);
+    img = g.createImageData(dispW() * RK, st.rows * RK);   // v0.017: полная картинка; на холст её кладёт present()
   }
   // Клетка решётки p под точкой (fx, fy) в клетках: ближайший центр по |dx| + |dy| → [столбец, строка]
   function rombCell(fx, fy, p) {
@@ -233,7 +234,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return [i + j + geo.anchor + p, i - j];
   }
   function drawRomb(px, T, empty) {
-    const { W, H, val } = f, K = RK, CW = cv.width, CH = cv.height, div = rgba([79, 143, 220]);
+    const { W, H, val } = f, K = RK, CW = img.width, CH = img.height, div = rgba([79, 143, 220]);
     const cp = new Int8Array(CW), cx = new Float64Array(CW);   // по столбцу холста: решётка (−1 — вертикаль) и x от её якоря
     for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - geo.anchor - h[0] : 0; }
     for (let Y = 0; Y < CH; Y++) {
@@ -290,7 +291,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       if (st.sym && !playing) symmetry(px);
       konusDraw(px);
     }
-    g.putImageData(img, 0, 0);
+    present();
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
   }
@@ -450,8 +451,38 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const d = st.zsnap ? s * DPR() : s;   // при «кратном» — пикселей монитора на бит
     $('zoomV').textContent = st.zsnap ? (d >= 2 ? Math.round(d) + '×' : String(+(d * 100).toFixed(2)).replace('.', ',') + '%')
       : (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
-    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit')); imageStats(); queueDigits();
+    $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit')); present(); imageStats(); queueDigits();
   }
+  // v0.017: «синие пиксели под углом перемещаются под курсором». При уменьшении бит для пикселя монитора выбирал браузер;
+  // на ровно 50 % середина пикселя ложится на границу двух бит, и выбор решали округления: кусок под подсказкой перерисовывался
+  // с другим выбором — показывалась другая решётка. Теперь уменьшенную картинку строит страница (всегда бит под серединой
+  // пикселя монитора, шаг 2^k — целый), холст — пиксель в пиксель и выровнен по пикселям монитора: браузеру пересчитывать нечего.
+  let shown = null, alignRaf = 0;
+  function present() {
+    if (!img) return;
+    const d = DPR(), sd = scale() * d / RK;   // пикселей монитора на пиксель картинки
+    if (sd >= 1) {
+      if (cv.width !== img.width || cv.height !== img.height) { cv.width = img.width; cv.height = img.height; }
+      g.putImageData(img, 0, 0);
+    } else {
+      const w = Math.max(1, Math.round(img.width * sd)), h = Math.max(1, Math.round(img.height * sd)), SW = img.width, SH = img.height;
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+      if (!shown || shown.width !== w || shown.height !== h) shown = g.createImageData(w, h);
+      let k = 1 / sd; if (Math.abs(k - Math.round(k)) < 1e-6) k = Math.round(k);
+      const src = new Uint32Array(img.data.buffer), dst = new Uint32Array(shown.data.buffer), xs = new Int32Array(w);
+      for (let X = 0; X < w; X++) xs[X] = Math.min(SW - 1, Math.floor((X + .5) * k));
+      for (let Y = 0; Y < h; Y++) { const sy = Math.min(SH - 1, Math.floor((Y + .5) * k)) * SW, row = Y * w; for (let X = 0; X < w; X++) dst[row + X] = src[sy + xs[X]]; }
+      cv.style.width = w / d + 'px'; cv.style.height = h / d + 'px';
+      g.putImageData(shown, 0, 0);
+    }
+    align();
+  }
+  function align() {   // левый верхний угол холста — на целом пикселе монитора, иначе и 1:1 даёт ничьи
+    cv.style.transform = '';
+    const r = cv.getBoundingClientRect(), d = DPR(), fx = r.left * d - Math.round(r.left * d), fy = r.top * d - Math.round(r.top * d);
+    if (Math.abs(fx) > 1e-3 || Math.abs(fy) > 1e-3) cv.style.transform = `translate(${-fx / d}px, ${-fy / d}px)`;
+  }
+  const queueAlign = () => { if (!alignRaf) alignRaf = requestAnimationFrame(() => { alignRaf = 0; align(); }); };
   // Масштаб s, точка экрана (x, y) остаётся над тем же битом
   function zoomTo(s, x, y) {
     if (!geo) return;
@@ -558,7 +589,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('frame').addEventListener('change', () => goTo(+$('frame').value));
   $('bReset').onclick = reset;
   $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
-  $('bPng').onclick = () => { if (f) cv.toBlob(b => b && download(fname('png'), b)); };
+  $('bPng').onclick = () => {   // v0.017: полная картинка «пиксель = бит», а не уменьшенная с экрана
+    if (!f) return; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    c.getContext('2d').putImageData(img, 0, 0); c.toBlob(b => b && download(fname('png'), b));
+  };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
   const lgSync = () => $('lg').classList.toggle('bits', st.view !== 'col');
@@ -580,7 +614,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('zSnap').onclick = () => { st.zsnap = !st.zsnap; zWant = 0; save(); zSnapSync(); if (!geo) return; if (st.zoom === 'fit') { layout(); thick(); } else zoomTo(st.zoom); };
   zSnapSync();
   addEventListener('resize', () => { if (geo) layout(); });
-  wrap.addEventListener('scroll', queueDigits, {passive:true});
+  wrap.addEventListener('scroll', () => { queueDigits(); queueAlign(); }, {passive:true});
   // Колесо — масштаб к курсору (плавно, тачпад тоже)
   wrap.addEventListener('wheel', e => {
     if (!geo) return; e.preventDefault();
