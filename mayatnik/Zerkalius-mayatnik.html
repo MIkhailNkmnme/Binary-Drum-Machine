@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.014. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.015. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.014</title>
+<title>Zerkalius Маятник — v0.015</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -32,6 +32,7 @@
   v0.013: вид «ромбы · чётная / нечётная» — одна из двух независимых решёток ромбами впритык (раздел 24 «Исследования»);
     холст — RK пикселей на клетку, при приближении — чёткие ромбы поверх, с 14 px — с цифрами.
   v0.014: при построении (и сбросе, «хорр», переключении пары) поле прокручивается к оси якоря посередине, сверху — вершина.
+  v0.015: кнопка «кратный ×2» (по умолчанию вкл) — масштаб только 2^k пикселей монитора на бит: без муара двух решёток при уменьшении.
   Сверено с Excel 2026-10-11: 9 шагов маятника, конусы по 128 строк — 35 968 значений и 2 440 цветов совпали клетка в клетку.
   ═════════════════════════════════════════════════════════════════════
 -->
@@ -93,7 +94,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </head>
 <body>
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.014</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.015</span>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <div class="bar">
@@ -135,7 +136,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
-      <button id="zFit">по ширине</button>
+      <button id="zFit">по ширине</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
@@ -160,7 +161,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -425,12 +426,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     $('frame').value = k; $('frameV').textContent = k;
   }
   // v0.002: масштаб как в картах. st.zoom — 'fit' (по ширине) или число: экранных пикселей на бит.
-  const fitScale = () => Math.max(0.02, (wrap.clientWidth - 32) / geo.W);
+  // v0.015: «кратный ×2» (st.zsnap, по умолчанию вкл) — масштаб только 2^k пикселей МОНИТОРА на бит: при шаге выборки ровно 2, 4…
+  // бита экран не соскальзывает между двумя решётками кадра — нет муара. devicePixelRatio — растяжение экрана Windows (125 %, 150 %).
+  const DPR = () => window.devicePixelRatio || 1;
+  const snap2 = (s, down) => { const e = Math.log2(s * DPR()); return 2 ** (down ? Math.floor(e + 1e-9) : Math.round(e)) / DPR(); };
+  const fitScale = () => { const s = Math.max(0.02, (wrap.clientWidth - 32) / geo.W); return st.zsnap ? snap2(s, true) : s; };
   const scale = () => st.zoom === 'fit' ? fitScale() : st.zoom;
   function layout() {
     const s = scale();
     cv.style.width = geo.W * s + 'px'; cv.style.height = st.rows * s + 'px';
-    $('zoomV').textContent = (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
+    const d = st.zsnap ? s * DPR() : s;   // при «кратном» — пикселей монитора на бит
+    $('zoomV').textContent = st.zsnap ? (d >= 2 ? Math.round(d) + '×' : String(+(d * 100).toFixed(2)).replace('.', ',') + '%')
+      : (s >= 10 ? Math.round(s) + '×' : Math.round(s * 100) + '%');
     $('zFit').setAttribute('aria-pressed', String(st.zoom === 'fit')); imageStats(); queueDigits();
   }
   // Масштаб s, точка экрана (x, y) остаётся над тем же битом
@@ -440,6 +447,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (x === undefined) { const w = wrap.getBoundingClientRect(); x = w.left + w.width / 2; y = w.top + w.height / 2; }
     const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
     s = Math.max(Math.min(fitScale(), 1) / 2, Math.min(40, s));
+    if (st.zsnap) s = snap2(s);
     st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout(); thick();
     const n = cv.getBoundingClientRect();
     wrap.scrollLeft += n.left + fx * n.width - x; wrap.scrollTop += n.top + fy * n.height - y;
@@ -550,16 +558,24 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('outline').addEventListener('change', () => { st.outline = $('outline').checked; save(); if (f) draw(); });
   $('sym').addEventListener('change', () => { st.sym = $('sym').checked; save(); if (f) draw(); });
   $('speed').addEventListener('input', readUI);
-  $('zIn').onclick = () => zoomTo(scale() * 1.5);
-  $('zOut').onclick = () => zoomTo(scale() / 1.5);
-  $('zFit').onclick = fit;
+  // v0.015: шаг кнопок и клавиш: при «кратном» — ×2, иначе ×1,5; колесо копит желаемый масштаб zWant, показ — ближайший 2^k
+  let zWant = 0;
+  const zoomStep = (dir, x, y) => { zWant = 0; zoomTo(scale() * (st.zsnap ? 2 : 1.5) ** dir, x, y); };
+  $('zIn').onclick = () => zoomStep(1);
+  $('zOut').onclick = () => zoomStep(-1);
+  $('zFit').onclick = () => { zWant = 0; fit(); };
+  const zSnapSync = () => $('zSnap').setAttribute('aria-pressed', String(!!st.zsnap));
+  $('zSnap').onclick = () => { st.zsnap = !st.zsnap; zWant = 0; save(); zSnapSync(); if (!geo) return; if (st.zoom === 'fit') { layout(); thick(); } else zoomTo(st.zoom); };
+  zSnapSync();
   addEventListener('resize', () => { if (geo) layout(); });
   wrap.addEventListener('scroll', queueDigits, {passive:true});
   // Колесо — масштаб к курсору (плавно, тачпад тоже)
   wrap.addEventListener('wheel', e => {
     if (!geo) return; e.preventDefault();
     const d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-    zoomTo(scale() * Math.exp(-Math.max(-300, Math.min(300, d)) * 0.0025), e.clientX, e.clientY);
+    const want = (st.zsnap && zWant ? zWant : scale()) * Math.exp(-Math.max(-300, Math.min(300, d)) * 0.0025);
+    zoomTo(want, e.clientX, e.clientY);
+    zWant = st.zsnap ? Math.min(Math.max(want, scale() / 1.42), scale() * 1.42) : 0;   // у предела масштаба не копить дальше
   }, { passive: false });
   // Тянуть — сдвиг; два пальца — масштаб; двойной щелчок — по ширине
   const pts = new Map(); let pan = null, pinch = null;
@@ -568,7 +584,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); wrap.setPointerCapture(e.pointerId);
     if (pts.size === 1) { pan = { x: e.clientX, y: e.clientY, sl: wrap.scrollLeft, st: wrap.scrollTop, moved: false }; wrap.classList.add('drag'); }
-    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale() }; pan = null; }
+    if (pts.size === 2) { zWant = 0; const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale() }; pan = null; }
   });
   wrap.addEventListener('pointermove', e => {
     if (!pts.has(e.pointerId)) return;
@@ -589,8 +605,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   wrap.addEventListener('dblclick', fit);
   addEventListener('keydown', e => {
     if (e.target.closest('input,select')) return;
-    if (e.key === '+' || e.key === '=') { zoomTo(scale() * 1.5); return; }
-    if (e.key === '-' || e.key === '_') { zoomTo(scale() / 1.5); return; }
+    if (e.key === '+' || e.key === '=') { zoomStep(1); return; }
+    if (e.key === '-' || e.key === '_') { zoomStep(-1); return; }
     if (e.key === '0') { fit(); return; }
     if (e.code === 'Space') { e.preventDefault(); play(); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); goTo(k + 1); }
@@ -620,6 +636,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   };
 
 
+  if (st.zsnap && st.zoom !== 'fit') st.zoom = snap2(st.zoom);   // v0.015: сохранённый прежде плавный масштаб — к ближайшему 2^k
   writeUI(); build();
 })();
 </script>
