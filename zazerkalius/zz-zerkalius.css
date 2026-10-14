@@ -222,7 +222,6 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 #zerkMirrors .zerk-mirror .zerk-turn{width:24px;height:24px;top:4px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-size:16px}
 @media(max-width:760px){#zerkMirrors .zerk-mirror .zerk-turn{width:36px;height:36px;top:-2px}}
 /* v0.1157, «у первой кнопки групп, когда раскрыта группа, сделай на заднем плане расширенный ромб»: ромб 96 × 48 за ромбом-заголовком, щелчок по краям — свернуть */
-:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-head-wide{position:absolute;left:-24px;top:0;width:96px;height:48px;z-index:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 30%,var(--bg,#0b0d12));pointer-events:auto;cursor:pointer}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-head-wide{position:absolute;display:block!important;left:-24px;top:0;width:96px;height:48px;z-index:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 30%,var(--bg,#0b0d12));pointer-events:auto;cursor:pointer}
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-head-wide:hover{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 50%,var(--bg,#0b0d12))}
-:is(#zerkStage,#zerkHeaderDock) .zerk-grape.pmin > .zerk-head-wide{display:none}
-:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .smh{z-index:1}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .smh{z-index:1;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,var(--bg,#0b0d12))}   /* v0.1159: и у свёрнутой; заголовок непрозрачный — широкий ромб сквозь него не виден */

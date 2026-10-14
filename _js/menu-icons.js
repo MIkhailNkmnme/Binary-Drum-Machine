@@ -15,8 +15,9 @@
   const hash=s=>{let n=2166136261;for(const c of s)n=Math.imul(n^c.codePointAt(0),16777619);return n>>>0;};
   const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
   const words=s=>norm(s).replace(/^[^\p{L}\p{N}]+/u,'');
-  // Число, градусы, счётчик — значение, а не действие: остаётся текстом.
-  const isValue=el=>{const t=words(el.textContent);return !t||/^[-+−]?\d/.test(t);};
+  // Число, градусы, счётчик — значение, а не действие: остаётся текстом. Число со словом («1 · авто», «0 изнутри», «01 биты») — уже подпись: значок
+  // (v3, «нигде не надо текста в свёрнутых ромбах»).
+  const isValue=el=>{const t=words(el.textContent);return !t||/^[-+−]?\d/.test(t)&&!/\p{L}{2}|\d\p{L}/u.test(t);};
   const grapeOf=el=>el.closest('#ringTbl,.sfz-grape,.zerk-grape,.cgrp,.sol-plate');
   const keyOf=el=>el.id||((el.closest('.lseg')?.dataset.seg||grapeOf(el)?.dataset.g||grapeOf(el)?.id||'grape')+':'+(el.dataset.v??el.dataset.k??words(el.textContent)));
   function labelOf(el){const tip=norm(el.getAttribute('title')||el.dataset.zzTip||el.getAttribute('aria-label')||'').replace(/^[^\p{L}\p{N}]+/u,'').split(/\n| — |\. |;/)[0];return tip||words(el.textContent)||'Действие';}
