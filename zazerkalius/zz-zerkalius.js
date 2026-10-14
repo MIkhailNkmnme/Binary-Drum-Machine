@@ -344,7 +344,7 @@
   });
   const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[24,248]:[stage.clientWidth-112,8]);
   for(const [i,n] of oldView.entries()){
-    if(i<2){const label=['Наклон 0','Наклон 1'][i],el=editor([n]);editDiamond('↶\n'+i,label,el,viewGroup);}
+    if(i<2){const key=['zero','one'][i],label=['Наклон 0','Наклон 1'][i];n.remove();splitDiamond(label,()=>i+' '+state[key]+'°',sign=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=clamp(Number(input.value)+sign,-60,60);input.oninput();},'bitAngle'+i),viewGroup);}   // v0.1170, «наклоны тоже стрелками»: ◂ ▸ прямо в ромбе
     else if(i<4){diamond(n,'',viewGroup);for(const t of [...n.childNodes])if(t.nodeType===3)t.textContent=i===2?'◈\nцвет':'╲ 1\n╱ 0';}
     else diamond(n,'↺\nсброс',viewGroup);
   }
