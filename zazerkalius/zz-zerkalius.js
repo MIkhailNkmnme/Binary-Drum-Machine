@@ -803,10 +803,11 @@
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     const tintMap=mask=>{if(!state.tint||!mask)return c=>c;if(mappers.has(mask))return mappers.get(mask);const cache=new Map(),map=color=>{if(cache.has(color))return cache.get(color);let rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));state.mirrors.forEach((m,i)=>{if(mask&(1<<i))rgb=rgb.map((v,j)=>v*.62+parseInt(m.color.slice(1+j*2,3+j*2),16)*.38);});const result='#'+rgb.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');cache.set(color,result);return result;};mappers.set(mask,map);return map;};
     for(const [index,item] of data.items.entries()){
-      const b=item.bounds,transform=sceneMath.multiply(camera,item.matrix),pixelScale=Math.max(Math.hypot(transform[0],transform[1]),Math.hypot(transform[2],transform[3])),density=Math.min(item.src.image.width/(b[2]-b[0]),item.src.image.height/(b[3]-b[1])),vector=item.src.draw&&pixelScale>density*1.05;
+      const b=item.bounds,transform=sceneMath.multiply(camera,item.matrix),pixelScale=Math.max(Math.hypot(transform[0],transform[1]),Math.hypot(transform[2],transform[3])),density=Math.min(item.src.image.width/(b[2]-b[0]),item.src.image.height/(b[3]-b[1])),vector=item.src.draw&&(pixelScale>density*1.05||!state.digitsMirror&&!item.src.pixelated);
       let image=item.src.image;if(!vector&&state.tint&&item.mask){
         if(lastSrc!==item.src||lastMask!==item.mask){scratch.width=image.width;scratch.height=image.height;sc.drawImage(image,0,0);sc.globalCompositeOperation='source-atop';for(let i=0;i<3;i++)if(item.mask&(1<<i)){sc.globalAlpha=.38;sc.fillStyle=state.mirrors[i].color;sc.fillRect(0,0,scratch.width,scratch.height);}sc.globalAlpha=1;sc.globalCompositeOperation='source-over';lastSrc=item.src;lastMask=item.mask;}image=scratch;
       }
+      // v0.1177: «цифры прямо» — копии всегда рисуются вектором, иначе готовая картинка отражается целиком вместе с цифрами
       const draw=()=>vector?item.src.draw(ctx,pixelScale,tintMap(item.mask)):ctx.drawImage(image,b[0],b[1],b[2]-b[0],b[3]-b[1]);
       ctx.setTransform(...transform);ctx.imageSmoothingEnabled=!item.src.pixelated;ctx.globalAlpha=paths?.06:1;draw();ctx.globalAlpha=1;
       if(paths){const others=new Path2D();paths.forEach((path,j)=>{if(j!==index)others.addPath(path);});ctx.save();ctx.setTransform(...camera);ctx.clip(paths[index]);ctx.clip(others);ctx.setTransform(...transform);draw();ctx.restore();}
