@@ -334,7 +334,7 @@
     const caption=head.querySelector('span');caption.textContent='Зеркало';const number=button(String(i+1),'Включить / выключить ось '+(i+1),()=>{c.on.checked=!m.on;c.on.onchange();},head);number.className='zerk-header-number';
     c.on.closest('label').remove();head.querySelector('.pminbtn').remove();head.parentElement._zerkHeaderAction=()=>number.click();head.removeAttribute('role');head.removeAttribute('tabindex');
     compactUpdates.push(()=>{number.setAttribute('aria-pressed',String(m.on));number.title='Ось '+(i+1)+(m.on?' включена — выключить':' выключена — включить');plateFoldToggle(group.parentElement,!m.on,true);});
-    const swatch=document.createElement('label');swatch.setAttribute('aria-label','Выбор цвета зеркала '+(i+1));const textColor=document.createElement('span');textColor.textContent='●\nцвет';swatch.append(c.color,textColor);diamond(swatch,'',group);
+    const swatch=document.createElement('label');swatch.setAttribute('aria-label','Выбор цвета зеркала '+(i+1));swatch.title='Выбор цвета зеркала '+(i+1);const textColor=document.createElement('span');textColor.textContent='●\nцвет';swatch.append(c.color,textColor);diamond(swatch,'',group);
     const rotate=sign=>{motionStep({mirror:i},()=>{stopPath(m);m.spin=false;turnMirror(m,sign*pi/180);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();});};
     splitDiamond('Угол зеркала '+(i+1),()=>Math.round(norm(m.angle)*180/pi)%180+'°',rotate,group);
     c.spin.remove();
@@ -352,7 +352,7 @@
   const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[24,248]:[stage.clientWidth-112,8]);
   for(const [i,n] of oldView.entries()){
     if(i<2){const key=['zero','one'][i],label=['Наклон 0','Наклон 1'][i];n.remove();splitDiamond(label,()=>i+' '+state[key]+'°',sign=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=clamp(Number(input.value)+sign,-60,60);input.oninput();},'bitAngle'+i),viewGroup,{big:6,reset:()=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=0;input.oninput();},'bitAngle'+i)});}   // v0.1170, «наклоны тоже стрелками»: ◂ ▸ прямо в ромбе
-    else if(i<4){diamond(n,'',viewGroup);for(const t of [...n.childNodes])if(t.nodeType===3)t.textContent=i===2?'◈\nцвет':'╲ 1\n╱ 0';}
+    else if(i<4){diamond(n,'',viewGroup);for(const t of [...n.childNodes])if(t.nodeType===3)t.textContent=i===2?'◈\nцвет':'╲ 1\n╱ 0';n.title=i===2?'Цветные отражения — каждая копия подкрашена цветом своего зеркала':'Отрезки битов — 1 ↘, 0 ↗ вместо ромбов';}
     else diamond(n,'↺\nсброс',viewGroup);
   }
   buildCycleEditor(viewGroup);
