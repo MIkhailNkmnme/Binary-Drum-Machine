@@ -713,7 +713,6 @@
       for(const [bit,x,y,a,symColor] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?(symColor?.68:.42):(symColor?.25:.11));target.fillStyle=colorMap(symColor||color);
         if(!state.bitsOnly){if(state.bitShape==='square'){const q=Math.min(dw,dh/2)*.9;target.fillRect(-q/2,-q/2,q,q);}else{target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}}   // v0.1169: квадрат-бит
-        if(state.bitsOnly||(!state.trace&&digits)){const m=target.getTransform(),k=Math.sqrt(Math.abs(m.a*m.d-m.b*m.c));target.setTransform(k,0,0,k,m.e,m.f);}   // v0.1173, «это общегалактический шрифт?»: цифры 0/1 всегда прямо и не зеркальны — без наклона бита и без отражения копии; наклон и отражение видны по ромбу/квадрату
         if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(symColor||color);target.fillText(bit,0,fs*.06);}
         else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(symColor||color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
         else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':symColor||color);target.fillText(bit,0,fs*.06);}target.restore();
