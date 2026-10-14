@@ -7,6 +7,9 @@
 
 .mi-pop{position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--mi-edge)}
 .mi-pop[hidden]{display:none}
+/* v6: длинная подсказка рядом с кнопкой — на уровне её оси, в цветах кнопки */
+.mi-tip{position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;box-sizing:border-box;max-width:min(320px,calc(100vw - 8px));padding:5px 9px;background:var(--mi-fill);border:1px solid var(--mi-edge);color:var(--mi-ink);font:500 12px/1.35 system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere}
+.mi-tip[hidden]{display:none}
 .mi-pop-fill{position:absolute;inset:2px 3px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--mi-fill);display:flex;align-items:center;justify-content:center}
 .mi-pop-box{width:100%;box-sizing:border-box;padding:0 4px;overflow:hidden;white-space:nowrap;text-align:center;font:700 11px/1.25 system-ui,sans-serif;color:var(--mi-ink)}
 .mi-pop-box:has(> .mi-run){text-align:left}
