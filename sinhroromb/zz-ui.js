@@ -13904,7 +13904,7 @@ function sfzGrapeLayout(box, items, name, up=false){
   const verticalRanges=[];
   const isEditor = item => item.matches("select,input:not([type=checkbox]),textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
   const axis = items.length && isEditor(items[0]) ? (items[0].querySelector('input[type="range"]') ? 48 : 60) : 24;
-  const straight = name === "строка 1", columns = name === "грани" ? 3 : 2;
+  const straight = false /* v0.106, «всё ближе к верху в 3 грозди»: и «строка 1» решёткой */, columns = name === "грани" ? 3 : 2;
   const sliderNames = {cone3H:"Высота",cone3Bw:"Толщина",coneSlit:"Щель",row1Slit:"Щель 1",sndSp:"Темп",sndVol:"Громкость",triS:"Масштаб"};
 
   for (const item of items) {
