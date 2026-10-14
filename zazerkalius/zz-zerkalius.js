@@ -493,7 +493,7 @@
     },el);apply.id='zerkPendApply';
     timeline.oninput=()=>seek(Number(timeline.value));exact.oninput=()=>seek(Number(exact.value));
     const group=grape('zerkPendG','Маятник','#4f9bff',()=>[8,Math.max(120,stage.clientHeight-220)]);
-    let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';diamond(trigger,'↔\nмаят.',parent);
+    let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';trigger.remove();   // v0.1158, «так же»: «↔ маят.» из «Строк» убран — маятник открывает «↔ кадр» в своей группе, узор «Зеркальный маятник» — в «≡ поле»
     const settings=editDiamond('↔\nкадр','Зеркальный маятник',el,group);
     const play=button('▶','Запустить / остановить маятник',()=>{activate();if(pendulum.frame===pendulum.limit)pendTarget=0;pendPlaying=!pendPlaying;play.textContent=pendPlaying?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(pendPlaying));pendClock=0;request();},group);play.id='zerkPendPlay';play.className='zerk-auto';diamond(play,'▶',group);
     const back=button('◂','Предыдущий кадр маятника',()=>seek((pendTarget??pendEngine().frame)-1),group);back.id='zerkPendBack';diamond(back,'◂',group);
