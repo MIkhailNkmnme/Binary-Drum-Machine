@@ -14139,9 +14139,10 @@ function sfzGrapeSync(g){
     const name=sfzGrapeName(g);if(head.textContent!==name)head.textContent=name;
     const tip="«"+name+"» свёрнута: щелчок — развернуть; тянуть — переместить группу";if(head.title!==tip)head.title=tip;head.setAttribute("aria-label",tip);
     head._edge=keep[0];g.classList.add("sfz-fold-headed");
-    sfzGrapeStyle(g,"--sfz-fold-w","96px");sfzGrapeStyle(g,"--sfz-fold-h","48px");
+    const wideHead=document.documentElement.classList.contains("mi-wide"),HH=wideHead?24:48;   // «заголовок тоже таким же»: при ? — 120 × 24
+    sfzGrapeStyle(g,"--sfz-fold-w",wideHead?"120px":"96px");sfzGrapeStyle(g,"--sfz-fold-h",HH+"px");
     const arrow=box.querySelector(":scope > .sfz-fold-arrow");
-    if(arrow){const t=TZC_H/(2*Math.sqrt(3)),down=arrow.dataset.dir==="down";sfzGrapeStyle(arrow,"--fa-x",(48-2*t).toFixed(2)+"px");sfzGrapeStyle(arrow,"--fa-y",(down?48-2*t-4:4).toFixed(2)+"px");}   // «треугольник покажи внутри ромба»: у нижнего или верхнего угла заголовка
+    if(arrow){const t=TZC_H/(2*Math.sqrt(3)),down=arrow.dataset.dir==="down";sfzGrapeStyle(arrow,"--fa-x",((wideHead?60:48)-2*t).toFixed(2)+"px");sfzGrapeStyle(arrow,"--fa-y",(down?HH-2*t-4:4).toFixed(2)+"px");}   // «треугольник покажи внутри ромба»: у нижнего или верхнего угла заголовка
   }else{g.classList.remove("sfz-fold-headed");const h=box.querySelector(":scope > .sfz-fold-head");if(h)h.remove();}
   /* «когда раскрываешь — пусть ромб-заголовок остаётся, первой кнопкой перекроется; на остатки ромба заголовка нажать — тоже сворачивать левой кнопкой»:
      у раскрытой грозди заголовок лежит под первым ромбом (тем, у которого она сворачивается), выглядывают его углы; щелчок по ним — свернуть */
