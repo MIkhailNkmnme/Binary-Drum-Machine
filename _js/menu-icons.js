@@ -130,7 +130,7 @@
     const short=shortOf(el),long=longOf(el);run.textContent=short;run.classList.remove('mi-run');
     /* v8, «в режиме с подсказками не увеличивай ромбы и не показывай в них текст, оставь значок, кроме стрелочных»: при горящем ? ромб остаётся
        как есть, со значком, рядом — только длинная подсказка; у стрелок (◂ ▸ ◀ ▶ …) — прежний увеличенный ромб с подписью */
-    const arrow=/^[\s◂▸◀▶◁▷◃▹←→↑↓▲▼△▽⏴⏵⏶⏷<>«»|]+$/.test(norm(el.dataset.t0||el.textContent||''));pop.hidden=!!(tipsOn()&&long&&!arrow);
+    const arrow=/^[\s◂▸◀▶◁▷◃▹←→↑↓▲▼△▽⏴⏵⏶⏷<>«»|]+$/.test(norm(el.dataset.t0||el.textContent||''));pop.hidden=!arrow;   // v9, «везде отключи расширение и показ текста кнопок, кроме стрелочных, подсказки достаточно»
     tip.style.setProperty('--mi-edge',c.edge);tip.style.setProperty('--mi-fill',c.fill);tip.style.setProperty('--mi-ink',c.ink);
     tip.textContent=long;tip.hidden=!(tipsOn()&&long&&(pop.hidden||long.toLowerCase()!==short.toLowerCase()));place();
     // Подпись шире видимой середины ромба — бегущая строка: от начала до конца и обратно, с остановками на краях.
