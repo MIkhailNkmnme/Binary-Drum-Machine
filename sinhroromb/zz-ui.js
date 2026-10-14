@@ -6413,7 +6413,13 @@ function cone3Aff(cx, cy){   // v0.780: плоскость торов (z = 0) в
 }
 function cone3DDraw(g, o){
   const { W, H, dpr, N, shown, mirMap, c1, c0, cR, cg, cA, cT, cS } = o;
-  const yaw = ((Z.cone3Yaw ?? 30) - (Z.coneSpin || 0)) * Math.PI / 180, el = (Z.cone3El ?? 50) * Math.PI / 180, hk = Z.cone3H ?? 1;
+  /* «◇ ромбы» в 3D (Z.cone3Rmb, группа «3D»), по снимку ромбовой сетки — «кольца в 3d надо так» (вершина — 1 ромб, ниже 2, ниже 3): бит кольца — ромб
+     на поверхности конуса, как ячейка сетки «◇ ромбы». Боковые углы — края бита на своём кольце, верх и низ — середина бита на кольце выше и ниже,
+     поэтому ромбы соседних колец входят друг в друга. Радиус кольца строки i — (i + 1), и бит строки из i + 1 бит шириной 2π; кольца разнесены по
+     высоте так, чтобы ромб был как в сетке — из двух равносторонних треугольников (высота ромба √3 его ширины, ↕ — множитель). С ◎ торами и ◇
+     бипирамидой не действует */
+  const rmb = !!Z.cone3Rmb && !Z.coneTor && !bipyMode(), RMB_HK = Math.sqrt(3 * Math.PI * Math.PI - 1);
+  const yaw = ((Z.cone3Yaw ?? 30) - (Z.coneSpin || 0)) * Math.PI / 180, el = (Z.cone3El ?? 50) * Math.PI / 180, hk = (Z.cone3H ?? 1) * (rmb ? RMB_HK : 1);
   const cyw = Math.cos(yaw), syw = Math.sin(yaw), ce = Math.cos(el), se = Math.sin(el);
   /* v0.776, «да» на «нарисую в 3D на конусе: шар и торы этих размеров вместо плоских колец» (разбор: строка 1 — шар, кольца — торы с круглой трубкой
      толщиной d, вплотную друг к другу): «◎ торы» (Z.coneTor) — всё в одной плоскости (высота конуса не действует): строка 1 — шар радиуса d, кольцо
@@ -6427,15 +6433,24 @@ function cone3DDraw(g, o){
   const Rw = N + 1, span = tor ? Rw : Math.max(Rw, N * hk * ce * (octa ? 1.1 : 0.6) + Rw * se), sc = o.sc || (Math.min(W, H) / 2 - 10 * dpr) / Math.max(1, span) * coneZoom;   // v0.780: o.sc — масштаб плоского вида (☀ / ⌖ на торах)
   const cx = o.cx ?? W / 2 + conePan[0], cy = o.cy ?? H / 2 + conePan[1];
   const P = (x, y, z) => { const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw; return [cx + x1 * sc, cy - (z * ce + y1 * se) * sc, z * se - y1 * ce]; };
-  const ringZ = (i) => tor ? 0 : (octa ? (N - 1 - i) : (N / 2 - i)) * hk, ringR = (i) => tor ? (i ? i + 0.5 : 0) : i + 0.6;   // v0.776: ◎ — плоско, средние линии торов   // при октаэдре основание — на середине
+  const ringZ = (i) => tor ? 0 : (octa ? (N - 1 - i) : (N / 2 - i)) * hk, ringR = (i) => tor ? (i ? i + 0.5 : 0) : rmb ? i + 1 : i + 0.6;   // v0.776: ◎ — плоско, средние линии торов   // при октаэдре основание — на середине
+  // ◇ ромбы: кольца стоят ровно, как ряды сетки, — без разворота «⟂ чёт/неч» (у нечётных колец — на четверть), иначе ромбы соседних колец не сходятся
+  const rotOf = (i) => coneRotOf(i) + (rmb && coneSlitMode() !== "cut" && !(window.zzBallClockOn && window.zzBallClockOn()) ? coneFullOff(i, (Z.rows[i] || "").length || 1) : 0);
   const at = (i, a, r) => { r *= coneRho(i, a); return P(r * Math.cos(a), -r * Math.sin(a), ringZ(i)); };   // как в плоском: угол −π/2 — верх; v0.109: многоугольник
+  const rmbPts = (i, a, step, zf) => {   // ◇ ромбы: контур ромба бита — верх (кольцо выше), правый край, низ (кольцо ниже), левый край; d — сдвиг на кольца
+    const am = a + step / 2, K = Math.max(3, Math.ceil(step / 0.2)), pts = [];
+    const pt = (aa, d) => { d = Math.max(d, -ringR(i)); const r = (ringR(i) + d) * coneRho(i, aa); return P(r * Math.cos(aa), -r * Math.sin(aa), zf(d)); };
+    for (const [a0, d0, a1, d1] of [[am, -1, a + step, 0], [a + step, 0, am, 1], [am, 1, a, 0], [a, 0, am, -1]])
+      for (let q = 0; q < K; q++) pts.push(pt(a0 + (a1 - a0) * q / K, d0 + (d1 - d0) * q / K));
+    return pts;
+  };
   const green = coneCss("--green", "#6ee7a0");
   // сектора к центру своего кольца
   if (Z.coneSect) {
     const secRows = coneFocus().filter(i => i < N && shown(i));
     for (const i of secRows) {
       const s = Z.rows[i], n = s && s.length; if (!n) continue;
-      const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i)), r = ringR(i);
+      const step = 2 * Math.PI / n, rot = rotOf(i), c = P(0, 0, ringZ(i)), r = ringR(i);
       for (const run of coneSectRuns(n, (j) => s[j] === "1")) {   // v0.113: подряд одинаковые биты — один клин, без швов
         const a = -Math.PI / 2 + (run.j - rot) * step, strong = run.c, K = Math.max(6, Math.ceil(run.len * 6));
         g.beginPath();
@@ -6455,7 +6470,7 @@ function cone3DDraw(g, o){
       const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
       const cur = i === Z.cur && !document.body.classList.contains("nocur"), sel = rowSel.has(i);
       if (!i) { const c = P(0, 0, 0), b = s[0]; items.push({ ball: true, pts: [c], pc: c, col: b === "1" ? c1 : c0, a: 1, near: c[2], cur, sel, ch: b, w: 2 * sc, cd: c[2], m: false }); continue; }
-      const PP = cutT ? coneCutP(n) : n, step = 2 * Math.PI / PP, rot = coneRotOf(i) - (cutT ? coneCutOff(i, n) : 0), r = ringR(i), MI = mirMap.get(i);
+      const PP = cutT ? coneCutP(n) : n, step = 2 * Math.PI / PP, rot = rotOf(i) - (cutT ? coneCutOff(i, n) : 0), r = ringR(i), MI = mirMap.get(i);
       const CP = cutT ? cutPrevMode() : "", ps = cutPrevSource(i), cells = [];   // v0.781: ◇ пред. — в вырезе биты предыдущей строки
       for (let j = 0; j < n; j++) cells.push({ p: CP ? cutPrevPos(i, j) : j, j });
       for (const [p, k] of cutPrevCells(i, n)) if (ps[k] !== undefined) cells.push({ p, pv: cpInv(ps[k]) });   // v0.787: инверсия
@@ -6475,7 +6490,7 @@ function cone3DDraw(g, o){
   for (let i = 0; i < (tor ? 0 : N); i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i)) continue;
     const B = bipyCells(i, s), cells = B ? B.c : [...s].map((ch, j) => ({ p: j, ch, j }));   // v0.782: ◇ бипирамида — 2n − 1 ячеек
-    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : coneRotOf(i), r = ringR(i), MI = mirMap.get(i);
+    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : rotOf(i), r = ringR(i), MI = mirMap.get(i);
     const K = Math.max(2, Math.ceil(step / 0.12));
     for (const C of cells) {
       const j = C.j, a = -Math.PI / 2 + (C.p - rot) * step, fix = C.pv ? false : MI ? MI.fix[j] : Z.showFix && fixAt(s, j);
@@ -6485,22 +6500,24 @@ function cone3DDraw(g, o){
       const gap = Math.min(step, Math.PI) * 0.06, tiny = Z.conePoly && n <= 2 && !B;   // v0.573: и у 1 бита — щель (как у 2)   // v0.110: 1 бит — точка, 2 — крест
       if (tiny && n === 1) pts.push(at(i, a, 0));
       else if (tiny) pts.push(at(i, a + step / 4, r), at(i, a, 0), at(i, a + step * 3 / 4, r));   // v0.111: Г углом в центре
+      else if (rmb) pts.push(...rmbPts(i, a, step, (d) => ringZ(i) - d * hk));   // ◇ ромбы
       else for (let q = 0; q <= K; q++) pts.push(at(i, a + gap + (step - 2 * gap) * q / K, r));
-      items.push({ pts, col, dot: tiny && n === 1, a: C.pv ? 0.6 : 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
-        ch: C.ch, pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, ringZ(i))[2], m: false, first: j === 0 && !C.pv });   // v0.243: цифра бита; v0.318: first — бит 0
+      const rw = rmb && !tiny ? (n === 1 ? 2 * r * sc : Math.hypot(...[0, 1].map(k => at(i, a, r)[k] - at(i, a + step, r)[k]))) : 0;
+      items.push({ pts, col, dot: tiny && n === 1, poly: rmb && !tiny, a: C.pv ? 0.6 : 0.95, near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : at(i, a + step / 2, r)[2], cur: i === Z.cur && !document.body.classList.contains("nocur"), sel: rowSel.has(i),   // v0.107
+        ch: C.ch, pc: tiny ? pts[0] : at(i, a + step / 2, r), w: tiny ? 0 : rw || (n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1])), cd: P(0, 0, ringZ(i))[2], m: false, first: j === 0 && !C.pv });   // v0.243: цифра бита; v0.318: first — бит 0
     }
   }
   // v0.090: границы бит в объёме — там, где биты разные: 0→1 сиреневая, 1→0 бирюзовая
   const ticks = [];
   for (let i = 0; i < N; i++) {
-    const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;
+    const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i) || rmb) continue;   // ◇ ромбы — границы видны обводкой ромбов
     const B = bipyCells(i, s);
     if (B) {   // v0.782: ◇ бипирамида — границы между всеми ячейками подряд
       const q = new Array(B.P).fill(""), st = 2 * Math.PI / B.P, r = ringR(i); for (const C of B.c) q[C.p] = C.ch;
       for (let p = 0; p < B.P; p++) { const pv = q[(p - 1 + B.P) % B.P]; if (!pv || !q[p] || pv === q[p]) continue; const a = -Math.PI / 2 + (p - B.rot) * st; ticks.push({ p: at(i, a, r - 0.38), q: at(i, a, r + 0.38), col: pv === "0" ? "#d946ef" : "#14b8a6" }); }
       continue;
     }
-    const step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i);
+    const step = 2 * Math.PI / n, rot = rotOf(i), r = ringR(i);
     for (let j = 0; j < n; j++) { const pv = s[(j - 1 + n) % n]; if (pv === s[j]) continue; const a = -Math.PI / 2 + (j - rot) * step, cr = Z.conePoly && n === 2; ticks.push({ p: at(i, a, cr ? r * 0.6 : r - 0.38), q: at(i, a, cr ? r : r + 0.38), col: pv === "0" ? "#d946ef" : "#14b8a6" }); }
   }
   /* v0.100, «3» — на «зеркало под основанием, как в знаке»: под последним кольцом (общим основанием) — та же пирамида вниз:
@@ -6510,15 +6527,17 @@ function cone3DDraw(g, o){
   if (octa) for (let i = 0; i < N - 1; i++) {
     const s = Z.rows[i], n = s.length; if (!n || !shown(i) || (octaSet && !octaSet.has(i))) continue;
     const B = bipyCells(i, s), cells = B ? B.c : [...s].map((ch, j) => ({ p: j, ch, j }));   // v0.782: ◇ бипирамида — те же 2n − 1 ячеек
-    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : coneRotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = Math.min(step, Math.PI) * 0.06;
+    const step = 2 * Math.PI / (B ? B.P : n), rot = B ? B.rot : rotOf(i), r = ringR(i), zm = -(N - 1 - i) * hk, K = Math.max(2, Math.ceil(step / 0.12)), gap = Math.min(step, Math.PI) * 0.06;
     const atM = (a, rr = r) => { const q = rr * coneRho(i, a); return P(q * Math.cos(a), -q * Math.sin(a), zm); }, tiny = Z.conePoly && n <= 2 && !B;
     for (const C of cells) {
       const j = C.j, a = -Math.PI / 2 + (C.p - rot) * step, inv = C.ch === "1" ? "0" : "1", fix = !C.pv && Z.showFix && fixAt(s, j);
       const col = fix ? (Z.showFix === "ir" ? green : cR) : inv === "1" ? c1 : c0, pts = [];
       if (tiny && n === 1) pts.push(atM(a, 0)); else if (tiny) pts.push(atM(a + step / 4), atM(a, 0), atM(a + step * 3 / 4));
+      else if (rmb) pts.push(...rmbPts(i, a, step, (d) => zm + d * hk));   // ◇ ромбы — и в зеркале
       else for (let q = 0; q <= K; q++) pts.push(atM(a + gap + (step - 2 * gap) * q / K));
-      items.push({ pts, col, dot: tiny && n === 1, a: ((inv === "1" || fix) ? 0.9 : 0.4) * (C.pv ? 0.65 : 1), near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false,
-        ch: inv, pc: tiny ? pts[0] : atM(a + step / 2), w: tiny ? 0 : n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1]), cd: P(0, 0, zm)[2], m: true });   // v0.243: цифра бита
+      const rw = rmb && !tiny ? (n === 1 ? 2 * r * sc : Math.hypot(...[0, 1].map(k => atM(a)[k] - atM(a + step)[k]))) : 0;
+      items.push({ pts, col, dot: tiny && n === 1, poly: rmb && !tiny, a: ((inv === "1" || fix) ? 0.9 : 0.4) * (C.pv ? 0.65 : 1), near: tiny ? (pts[0][2] + pts[pts.length - 1][2]) / 2 : atM(a + step / 2)[2], cur: false, sel: false,
+        ch: inv, pc: tiny ? pts[0] : atM(a + step / 2), w: tiny ? 0 : rw || (n === 1 ? 2 * r * sc : Math.hypot(pts[0][0] - pts[K][0], pts[0][1] - pts[K][1])), cd: P(0, 0, zm)[2], m: true });   // v0.243: цифра бита
     }
   }
   items.sort((p, q) => p.near - q.near);
@@ -6552,6 +6571,13 @@ function cone3DDraw(g, o){
     else { g.moveTo(it.pts[0][0], it.pts[0][1]); for (let q = 1; q < it.pts.length; q++) g.lineTo(it.pts[q][0], it.pts[q][1]); }
     const lit = Z.coneGlow ? 0.45 + 0.55 * (nMax > nMin ? (it.near - nMin) / (nMax - nMin) : 1) : 1;
     if (Z.coneGlow && it.a > 0.8) { g.shadowColor = it.col; g.shadowBlur = Math.max(5 * dpr, Math.min(lw * 1.4, 26 * dpr)); }
+    if (it.poly) {   // ◇ ромбы: ромб залит цветом бита, тёмная тонкая обводка
+      g.closePath(); g.fillStyle = it.col; g.globalAlpha = it.a * lit; g.fill(); if (Z.coneGlow) g.shadowBlur = 0;
+      g.strokeStyle = "#05070b"; g.globalAlpha = 0.6; g.lineWidth = Math.max(1, dpr); g.stroke();
+      if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.9; g.lineWidth = Math.max(1, dpr * 1.5); g.stroke(); }
+      if (Z.coneBit1 && it.first) { g.strokeStyle = cg; g.globalAlpha = 1; g.lineWidth = Math.max(2 * dpr, sc * 0.08); g.stroke(); }
+      continue;
+    }
     g.strokeStyle = it.col; g.globalAlpha = it.a * lit; g.lineWidth = lw; if (it.dot) { g.fillStyle = it.col; g.fill(); } else g.stroke();
     if (Z.coneGlow) g.shadowBlur = 0;
     if (it.cur || it.sel) { g.strokeStyle = it.cur ? cg : cS; g.globalAlpha = 0.9; g.lineWidth = Math.max(1, dpr * 1.2); g.stroke(); }
@@ -6591,7 +6617,7 @@ function cone3DDraw(g, o){
     for (const [i, j, kd] of window.zzSndHeads) {
       g.fillStyle = g.shadowColor = sndHeadCol(kd);   // v0.383: столбцовая — золотом
       if (i >= N || !shown(i)) continue; const n = (Z.rows[i] || "").length; if (!n || j >= n) continue;
-      const q = at(i, -Math.PI / 2 + (j - coneRotOf(i) + 0.5) * 2 * Math.PI / n, ringR(i));
+      const q = at(i, -Math.PI / 2 + (j - rotOf(i) + 0.5) * 2 * Math.PI / n, ringR(i));
       g.beginPath(); g.arc(q[0], q[1], Math.max(3 * dpr, Math.min(sc * 0.18, 9 * dpr)), 0, 2 * Math.PI); g.fill();
     }
     g.shadowBlur = 0;
@@ -6621,7 +6647,7 @@ function cone3DDraw(g, o){
   // оси зеркал колец и хорды — нити через центр своего кольца
   for (const [i, MI] of mirMap) {
     if (!shown(i) || Z.rows[i].length < 2) continue;   // v0.086: у кольца из одного бита лучей нет — только сектор к центру
-    const s = Z.rows[i], n = s.length, step = 2 * Math.PI / n, rot = coneRotOf(i), r = ringR(i), ang = (j) => -Math.PI / 2 + (j - rot + 0.5) * step;
+    const s = Z.rows[i], n = s.length, step = 2 * Math.PI / n, rot = rotOf(i), r = ringR(i), ang = (j) => -Math.PI / 2 + (j - rot + 0.5) * step;
     if (!MI.c180) {
       const aa = -Math.PI / 2 + (MI.m / 2 - rot + 0.5) * step, p1 = at(i, aa, r + 0.5), p2 = at(i, aa + Math.PI, r + 0.5);
       g.save(); g.strokeStyle = cg; g.lineWidth = Math.max(1.5, 1.6 * dpr); g.setLineDash([8 * dpr, 5 * dpr]); g.globalAlpha = 0.9;
@@ -6649,7 +6675,7 @@ function cone3DDraw(g, o){
     const rayRows = rays === "cur" ? coneFocus().filter(i => i < N) : [...Array(N).keys()];   // v0.108: «текущего» — те, что в фокусе
     for (const i of rayRows) {
       const s = Z.rows[i], n = s.length; if (n < 2 || !shown(i)) continue;   // v0.086: у одного бита лучей нет
-      const step = 2 * Math.PI / n, rot = coneRotOf(i), c = P(0, 0, ringZ(i));
+      const step = 2 * Math.PI / n, rot = rotOf(i), c = P(0, 0, ringZ(i));
       for (let j = 0; j < n; j++) { const e = at(i, -Math.PI / 2 + (j - rot + 0.5) * step, ringR(i) + 0.4); g.moveTo(c[0], c[1]); g.lineTo(e[0], e[1]); }   // v0.089: от центров бит
       /* v0.372, по снимку «✳ все» — «проверь — работает для зеркала?» — не работало: лучи были только у верхнего конуса. Теперь и у
          отражённых вниз колец (⧗ зеркало; при «⧗ выдел.» — только у отражённых), на их высоте; основание не повторяется */
@@ -6693,7 +6719,7 @@ function cone3DDraw(g, o){
   g.fillStyle = cT; g.globalAlpha = 0.7; g.font = `${Math.round(11 * dpr)}px system-ui, sans-serif`;
   // v0.064: параметры 3D над горизонтальной осью у видимого левого края.
   const cv3=$("coneCv"), cr3=cv3.getBoundingClientRect(), x3=Math.max(8,8-cr3.left);
-  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(hk).toFixed(1)}`, x3*dpr, Math.max(14*dpr,cy-10*dpr));
+  if (!document.body.classList.contains("zen")) g.fillText(`3D · поворот ${Math.round((Z.cone3Yaw ?? 30) % 360)}° · наклон ${Math.round(Z.cone3El ?? 50)}° · высота ×${(Z.cone3H ?? 1).toFixed(1)}`, x3*dpr, Math.max(14*dpr,cy-10*dpr));
   g.globalAlpha = 1;
   /* v0.778, «расписать бы всё там это и соотношение диаметров»: при ◎ торах (и «Σ расчёт», по умолчанию вкл.) — расчёт на холсте поверх, ничего не двигает:
      шар (диаметр, объём, сколько это частей тора), часть тора (π²d³/4), по каждой строке — частей, диаметры трубки / средней линии / внешний / внутренний,
@@ -9141,7 +9167,7 @@ function setupCone(){
          режим и скорость кручения, замки, оси, Аниматрица); как конус показан и что включено у лазера — не трогает */
       const keys = ["coneSpinMode", "coneAutoSp", "coneMagSp", "animOp", "animSp", "animByPass", "animRowsN", "animSeed", "coneLock", "coneLocks", "coneAxisOff", "coneAxisOffs"];
       for (const k of keys) { if (k in H) Z[k] = JSON.parse(JSON.stringify(H[k])); else delete Z[k]; }
-      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "coneTor", "coneTorBall"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
+      for (const k of ["coneClock", "coneGlow", "conePoly", "coneSect", "coneOnlySel", "cone3d", "coneOcta", "cone3Dig", "cone3Rmb", "coneTor", "coneTorBall"]) { const el = $(k); if (el) el.checked = !!Z[k]; }
       $("coneLock").checked = Z.coneLock !== false; $("coneVoid").checked = Z.coneVoid !== false;
       $("coneRays").value = Z.coneRays || "off"; coneRaysUi(); $("coneMir").value = Z.coneMir || "off"; $("coneSpinMode").value = Z.coneSpinMode || "all";
       { const os = $("coneOctaSel"); if (os) os.value = Z.coneOcta ? (Z.coneOctaSel === "cur" ? "cur" : "all") : "off"; }   // v0.359
@@ -10781,6 +10807,11 @@ function setupCone(){
     $("coneTorBall").onchange = (e) => { Z.coneTorBall = e.target.checked; if (Z.coneTorBall && !Z.coneTor) { Z.coneTor = true; if ($("coneTor")) $("coneTor").checked = true; }
       if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTorBall ? "● = часть: шар радиусом ≈ 0,84d — его объём ровно одна часть тора (π²d³/4); между шаром и тором щель ≈ 0,16d." : "● Шар радиусом d — вплотную к тору, объём ≈ 1,70 части."); }; }
+  if ($("cone3Rmb")) { $("cone3Rmb").checked = !!Z.cone3Rmb;   // ◇ ромбы в 3D — биты ромбами, как сетка «◇ ромбы»; включает 3D, снимает ◎ торы и ◇ бипирамиду
+    $("cone3Rmb").onchange = (e) => { Z.cone3Rmb = e.target.checked;
+      if (Z.cone3Rmb) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; }
+        if (Z.coneBipy) { Z.coneBipy = false; if ($("coneBipySel")) $("coneBipySel").value = "off"; } }
+      save(); renderCone(); say(Z.cone3Rmb ? "◇ Ромбы: в 3D каждый бит — ромб, ромбы соседних колец входят друг в друга (сверху 1, ниже 2, ниже 3…)." : "◇ Ромбы выключены — биты дугами."); }; }
   $("cone3Dig").checked = !!Z.cone3Dig;   // v0.251: цифры бит сбоку / сверху — вкл / выкл, по умолчанию выкл
   $("cone3Dig").onchange = (e) => { Z.cone3Dig = e.target.checked; save(); renderCone();
     say(Z.cone3Dig ? "01 В 3D при наклоне ровно 0° (сбоку) или 90° (сверху) на битах — их цифры." : "01 Цифры бит в 3D — выкл."); };
