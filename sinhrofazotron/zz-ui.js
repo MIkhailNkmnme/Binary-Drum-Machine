@@ -884,8 +884,6 @@ function sfzSettingsInit(){
   rings.title = "Кольца: T, N, 2T−1, 2T, между, симметрия";
   const showRings = () => { Z.coneRingModesHidden = false; ringTblSync(); const el = $("ringTbl"); if (el) { el._reveal = true; el.classList.add("sfz-rings-revealed"); ringTblPlace(el); } save(); };
   rings.onclick = showRings; view.appendChild(rings);
-  const ringTab = document.createElement("button"); ringTab.id = "bSfzRingModes"; ringTab.type = "button"; ringTab.textContent = "T/N";
-  ringTab.title = rings.title; ringTab.setAttribute("aria-label", rings.title); ringTab.onclick = () => { close(); showRings(); }; menus.appendChild(ringTab);
   const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь «Вид»";
   coneView.title = "Показать группу «Вид» целиком на экране";
   coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид"); save(); renderCone(); }; view.appendChild(coneView);
