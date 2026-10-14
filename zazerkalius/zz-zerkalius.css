@@ -141,7 +141,7 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 #zerkStage{cursor:grab}
 #zerkStage.panning{cursor:grabbing}
 .zerk-axis{position:absolute;height:32px;transform-origin:50% 50%;z-index:0;pointer-events:auto;touch-action:none;cursor:grab}
-.zerk-axis:focus-visible{outline:1px solid #fff;background:#ffffff18}
+.zerk-axis:focus,.zerk-axis:focus-visible{outline:none;background:none}   /* «две прямые вдоль оси — не уходит при щелчке, убери»: рамки фокуса у полосы-ручки оси нет */
 .zerk-mirror[hidden],.zerk-axis[hidden]{display:none!important}
 .zerk-mirror{z-index:1}
 .zerk-mirror.grabbing::before{border-top:2px solid var(--control-color,var(--mirror-color));opacity:1}
