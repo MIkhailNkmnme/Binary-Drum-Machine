@@ -231,3 +231,5 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-head-wide:hover{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 50%,var(--bg,#0b0d12))}
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .smh{z-index:1;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 12%,var(--bg,#0b0d12))}   /* v0.1159: и у свёрнутой; заголовок непрозрачный — широкий ромб сквозь него не виден */
 :is(#zerkStage,#zerkHeaderDock,#zerkMotion,#w-zerkalius) :is(.zerk-grape,.zerk-grape *,button,.zerk-diamond),#zerkMotion,#zerkMotion *{-webkit-user-select:none;user-select:none}   /* v0.1164: текст в кнопках не выделяется */
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan{position:absolute;left:24px;top:24px;width:0;height:0;z-index:3;pointer-events:none}   /* v0.1168: ромбы-варианты узора справа от грозди */
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan[hidden]{display:none!important}
