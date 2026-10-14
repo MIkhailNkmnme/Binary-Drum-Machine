@@ -259,20 +259,8 @@
   win.querySelector(':scope > .whead').insertBefore(headerDock,win.querySelector(':scope > .whead .wt').nextSibling);
   headerDock.addEventListener('pointerdown',e=>e.stopPropagation());headerDock.addEventListener('dblclick',e=>e.stopPropagation());
   footerDock.addEventListener('pointerdown',e=>e.stopPropagation());footerDock.addEventListener('dblclick',e=>e.stopPropagation());
-  function grape(id,title,color,home){
-    const el=document.createElement('aside');el.id=id;el.className='zerk-grape sol-plate';el.style.setProperty('--mirror-color',color);
-    const hd=document.createElement('div');hd.className='smh zerk-grape-head';const caption=document.createElement('span');caption.textContent=title;hd.append(caption);
-    const fold=button('−','Свернуть / раскрыть '+title,()=>{},hd);fold.className='pminbtn';el.append(hd);
-    const content=document.createElement('div');content.className='zerk-grape-body';el.append(content);stage.append(el);
-    el._zerkDock=(pinned,x,edge)=>{if(edge)Z[id+'HeadEdge']=edge;const dock=Z[id+'HeadEdge']==='bottom'?footerDock:headerDock;if(pinned){if(Number.isFinite(x)){Z[id+'HeadX']=x;Z[id+'HeadWidth']=dock.clientWidth;}else if(!Number.isFinite(Z[id+'HeadX']))Z[id+'HeadX']=Math.max(0,...[...dock.children].filter(n=>n!==el).map(n=>n.offsetLeft+n.offsetWidth));if(!Number.isFinite(Z[id+'HeadWidth']))Z[id+'HeadWidth']=dock.clientWidth;}Z[id+'Head']=pinned;el.classList.toggle('zerk-docked',pinned);(pinned?dock:stage).append(el);SOL_PLATES[id].place(el);};
-    const place=node=>{if(Z[id+'Head']){const dock=Z[id+'HeadEdge']==='bottom'?footerDock:headerDock;const available=Math.max(0,dock.clientWidth-node.offsetWidth),savedWidth=Z[id+'HeadWidth']||dock.clientWidth,offset=Z[id+'HeadX']||0,x=dock.clientWidth<savedWidth?offset*available/Math.max(1,savedWidth-node.offsetWidth):offset;node.style.left=clamp(x,0,available)+'px';node.style.top='0px';return;}const xy=Z[id+'XY']||(typeof home==='function'?home():home);node.style.left=clamp(xy[0],0,Math.max(0,stage.clientWidth-node.offsetWidth))+'px';node.style.top=clamp(xy[1],0,Math.max(0,stage.clientHeight-node.offsetHeight))+'px';};
-    SOL_PLATES[id]={name:title,min:id+'Min',xy:id+'XY',col:color,place,init:plateSetup};plateInit(el);groups.push(el);
-    hd.addEventListener('click',e=>{if(e.target.closest('button,input,select,textarea,label')||performance.now()<(el._solDragUntil||0))return;(el._zerkHeaderAction||(()=>plateFoldToggle(el)))();});
-    hd.tabIndex=0;hd.setAttribute('role','button');hd.setAttribute('aria-label','Раскрыть / свернуть '+title);hd.onkeydown=e=>{if(e.target===hd&&(e.key==='Enter'||e.key===' ')){e.preventDefault();plateFoldToggle(el);}};
-    el._zerkDock(!!Z[id+'Head']);
-    return content;
-  }
-  function diamond(node,caption,parent){node.classList.add('zerk-diamond');if(node.tagName==='BUTTON')node.textContent=caption;const i=[...parent.children].filter(n=>n!==node).length;node.style.left=(i%2?24:0)+'px';node.style.top=(i*24)+'px';parent.append(node);parent.style.setProperty('--grape-height',(i*24+48)+'px');return node;}
+  function grape(id,title,color,home){return ZerkMenus.createGrape(id,title,color,home,{stage,headerDock,footerDock,button,plateSetup,groups,clamp});}
+  function diamond(node,caption,parent){return ZerkMenus.diamond(node,caption,parent);}
   function editor(nodes){const el=document.createElement('div');el.className='zerk-editor';el.hidden=true;for(const n of nodes)el.append(n);body.append(el);return el;}
   function openEditor(el,caption,anchor){for(const v of body.children)v.hidden=v!==el;tools.hidden=false;tools.querySelector('.smh span').textContent=caption;
     Z.zerkToolsMin=false;plateFoldSync(tools);const close=tools.querySelector('.pminbtn');close.textContent='×';close.setAttribute('aria-label','Закрыть настройку');const r=anchor.getBoundingClientRect(),s=stage.getBoundingClientRect();Z.zerkToolsXY=[r.right-s.left+8,r.top-s.top];plateZig(tools,'#70e0d7');placeTools(tools);}
@@ -281,7 +269,7 @@
   const oldActions=[...actions.children], oldView=[...body.children].filter(n=>n!==sourceLabel&&n!==own&&n!==actions&&!n.classList.contains('zerk-mirror-controls'));
   const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#70e0d7',[8,8]);
   const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
-  compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
+  compactUpdates.push(()=>{ZerkMenus.setCaption(sourceDiamond,({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source]);});
   let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
   for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())diamond(oldActions[i],caption,rowGroup);actions.remove();
   buildSceneEditor(rowGroup);
@@ -311,7 +299,7 @@
     modeNode.classList.add('is-selected');
     compactUpdates.push(()=>{modeNode.setAttribute('aria-label','Режим зеркала '+(i+1)+': '+({direct:'прямой',inv:'инверсия',reverse:'реверс',both:'инверсия и реверс'})[m.mode]);});
     buildPathEditor(m,i,group);c.section.remove();
-    compactUpdates.push(()=>{group.parentElement.style.setProperty('--mirror-color',m.color);group.parentElement.style.setProperty('--control-color',sceneMath.controlColor(m.color));speedSlider.value=m.speed;c.spin.classList.toggle('on',m.spin);c.spin.textContent=m.spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(m.spin));});
+    compactUpdates.push(()=>{group.parentElement.style.setProperty('--mirror-color',m.color);group.parentElement.style.setProperty('--control-color',sceneMath.controlColor(m.color));speedSlider.value=m.speed;c.spin.classList.toggle('on',m.spin);ZerkMenus.setCaption(c.spin,m.spin?'Ⅱ':'▶');c.spin.setAttribute('aria-pressed',String(m.spin));});
   });
   const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[8,248]:[stage.clientWidth-104,8]);
   for(const [i,n] of oldView.entries()){
@@ -363,7 +351,7 @@
   const playAction=motionPlay.onclick;motionPlay.onclick=e=>{if(performance.now()<(motionPlay._dragUntil||0))return;playAction(e);};
   motionPlay.title='Щелчок — общий пуск / пауза; перетаскивание ромба — общая скорость';
   motionPlay.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();e.stopPropagation();motionPlay.setPointerCapture(e.pointerId);const sx=e.clientX,step=motionRateStep(state.motionRate);let moved=false;const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.abs(ev.clientX-sx)>3)moved=true;if(moved){state.motionRate=motionRateFromStep(clamp(step+(ev.clientX-sx)*401/144,0,401));motionPlay._dragUntil=performance.now()+400;changed();}};const end=ev=>{if(ev.pointerId!==e.pointerId)return;motionPlay.removeEventListener('pointermove',move);motionPlay.removeEventListener('pointerup',end);motionPlay.removeEventListener('pointercancel',end);if(motionPlay.hasPointerCapture(e.pointerId))motionPlay.releasePointerCapture(e.pointerId);};motionPlay.addEventListener('pointermove',move);motionPlay.addEventListener('pointerup',end);motionPlay.addEventListener('pointercancel',end);});
-  compactUpdates.push(()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));motionPlay.textContent=active?'Ⅱ':'▶';motionPlay.setAttribute('aria-pressed',String(active));motionPlay.style.left=(8+motionRateStep(state.motionRate)*144/401)+'px';motionValue.textContent='×'+Number(state.motionRate.toPrecision(3));motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-valuetext',motionValue.textContent);});
+  compactUpdates.push(()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));ZerkMenus.setCaption(motionPlay,active?'Ⅱ':'▶');motionPlay.setAttribute('aria-pressed',String(active));motionPlay.style.left=(8+motionRateStep(state.motionRate)*144/401)+'px';motionValue.textContent='×'+Number(state.motionRate.toPrecision(3));motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-valuetext',motionValue.textContent);});
   let pausedMotion=null;
   stage.addEventListener('dblclick',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion,.zerk-turn'))return;e.preventDefault();e.stopPropagation();if(pausedMotion){pausedMotion.forEach((v,i)=>{if(!state.mirrors[i].on)return;if(v.spin)state.mirrors[i].spin=true;if(v.path)state.mirrors[i].path.enabled=true;});pausedMotion=null;}else{const running=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));if(!running.some(v=>v.spin||v.path))return;pausedMotion=running;state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}previous=0;controls.forEach((c,i)=>{c.spin.textContent=state.mirrors[i].spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(state.mirrors[i].spin));});changed();});
   const viewMatrix=()=>{const a=state.viewAngle*pi/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom;return [c,s,-s,c,drawW*(.5+state.pan[0])-c*drawW/2+s*drawH/2,drawH*(.5+state.pan[1])-s*drawW/2-c*drawH/2];};
@@ -564,7 +552,7 @@
     button('◆ В Бирамиду','Перенести выбранную развёртку в Бирамиду',()=>transferNet(),net);
     textBlock(net,'Переносит биты и цвета U/D на 6 или 8 граней. Строки поля остаются прежними. «⇄ строки → грани» в Бирамиде вернёт связь с полем.');
     const show=()=>{axes.hidden=state.build==='net';net.hidden=state.build!=='net';refresh();plateZig(tools,'#70e0d7');placeTools(tools);};build.onchange=()=>{if(state.source==='pend'&&build.value==='net'){build.value='axes';notify('Маятник сохраняет полную решётку с пустыми клетками; здесь используйте зеркала и оси.');return;}state.build=build.value;show();changed(true);};show();
-    const b=editDiamond('✣\nоси','Холст · оси, строки и развёртки',el,parent);compactUpdates.push(()=>b.textContent=state.build==='net'?'✦\n'+(state.net.preset+1):state.layout==='single'?'✣\nоси':(state.layout==='quad'?'2 · 90°':'3 · 60°')+'\n×'+state.mult);
+    const b=editDiamond('✣\nоси','Холст · оси, строки и развёртки',el,parent);compactUpdates.push(()=>ZerkMenus.setCaption(b,state.build==='net'?'✦\n'+(state.net.preset+1):state.layout==='single'?'✣\nоси':(state.layout==='quad'?'2 · 90°':'3 · 60°')+'\n×'+state.mult));
   }
   function buildPngEditor(trigger){
     const el=editor([]),out=state.png;
@@ -605,7 +593,7 @@
     button('Применить и пуск','Запустить движение по кривой'+label,()=>{try{const {next,fn}=read();Object.assign(p,next);pathFns.set(m,fn);anchorPath(m);p.enabled=true;m.spin=false;draw(fn);changed();}catch(e){notify(e.message);}},el);
     const pause=button('Пауза / продолжить','Пауза или продолжение кривой'+label,()=>{if(p.enabled)p.enabled=false;else{try{const fn=sceneMath.compile(p);pathFns.set(m,fn);if(!Number.isFinite(p.anchorX))anchorPath(m);p.enabled=true;m.spin=false;}catch(e){notify(e.message);return;}}changed();},el);
     button('Начало цикла','Вернуть движение'+label+' к началу цикла',()=>{p.elapsed=0;const v=pathValue(m);if(Number.isFinite(p.anchorX)){m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*(p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY);m.angle=norm(p.anchorAngle+v[2]);}changed();},el);
-    const b=editDiamond('∞\nкривая','Циклическое движение'+label,el,parent);b.onclick=()=>{kind.value=p.kind;period.value=p.period;phase.value=p.phase;ax.value=p.ampX*100;ay.value=p.ampY*100;orient.value=p.orient;swing.value=p.swing||30;fx.value=p.fx||'cos(tau*t)';fy.value=p.fy||'sin(tau*t)';fa.value=p.fa||'0';show();try{draw(sceneMath.compile(p));}catch(e){}openEditor(el,'Циклическое движение'+label,b);};compactUpdates.push(()=>{b.classList.toggle('on',p.enabled);b.textContent=p.enabled?'∞\n'+Math.floor((p.elapsed||0)/p.period):'∞\nкривая';pause.setAttribute('aria-pressed',String(p.enabled));});
+    const b=editDiamond('∞\nкривая','Циклическое движение'+label,el,parent);b.onclick=()=>{kind.value=p.kind;period.value=p.period;phase.value=p.phase;ax.value=p.ampX*100;ay.value=p.ampY*100;orient.value=p.orient;swing.value=p.swing||30;fx.value=p.fx||'cos(tau*t)';fy.value=p.fy||'sin(tau*t)';fa.value=p.fa||'0';show();try{draw(sceneMath.compile(p));}catch(e){}openEditor(el,'Циклическое движение'+label,b);};compactUpdates.push(()=>{b.classList.toggle('on',p.enabled);ZerkMenus.setCaption(b,p.enabled?'∞\n'+Math.floor((p.elapsed||0)/p.period):'∞\nкривая');pause.setAttribute('aria-pressed',String(p.enabled));});
   }
   function buildCycleEditor(parent){
     const el=editor([]),period=numberField(el,'Общий период трёх кривых в секундах',12,.25,3600,.25);

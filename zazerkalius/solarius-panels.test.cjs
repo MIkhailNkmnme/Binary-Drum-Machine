@@ -5,10 +5,11 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
-const ui = read('zz-ui.js');
+const menus = read('../_js/menus.js');
+const ui = read('zz-ui.js') + '\n' + menus;
 const ball = read('zz-ball.js');
 const mobile = read('zz-mobile.js');
-const page = read('Zerkalius-zazerkalius.html');
+const page = read('Zerkalius-zazerkalius.html') + '\n' + read('../_js/menus.css');
 
 test('ball panel decoration cannot create a render mutation feedback loop', () => {
   const classes = new Set(['cmin']);
@@ -79,7 +80,9 @@ test('full-width panel bodies cannot feed their own width back into group sizing
   const algoAt = ui.indexOf('v0.1007: правила');
   const algo = ui.slice(algoAt, ui.indexOf('if (!lasDeps._b)', algoAt));
   const lab = declaration(ball, 'function initLab()');
-  for (const source of [sun, rings, algo, lab]) assert.match(source, /cgrp-fill/);
+  for (const source of [sun, algo, lab]) assert.match(source, /cgrp-fill/);
+  assert.match(rings, /el\.className = "ring-mode-list"/);
+  assert.match(declaration(ui, 'function ringTblSync('), /\$\("coneMain"\)\.parentElement/);
 
   const justify = declaration(ui, 'function tzJustify(');
   const minWidth = declaration(ui, 'function tzMinW(');
@@ -113,7 +116,8 @@ test('outline-off styling is inherited from ordinary groups', () => {
 
 test('all three use generic cgrp fold and drag state', () => {
   assert.match(ui, /g\.classList\.add\("cdrag"\)/);
-  assert.match(ui, /Z\.cgrpPos\[g\.dataset\.g\] = \{ x: gr\.left - tr\.left, y: gr\.top - tr\.top \}/);
+  assert.match(menus, /Z\.cgrpPos\[key\]=\{x:x-tr\.left,y:y-tr\.top\}/);
+  assert.match(menus, /nodeSetPos\(g,gr\.left,gr\.top\)/);
   assert.match(ball, /classList\.contains\("cmin"\)/);
   assert.match(mobile, /ballLab\._solFold/);
   assert.doesNotMatch(mobile, /plateFoldToggle\(ballLab/);
@@ -235,12 +239,14 @@ test('axes use the positioned ancestor and stay flush with the first menu strip'
   assert.equal(attrs['aria-pressed'], 'false');
 });
 
-test('canvas artwork cannot swallow the top axes button', () => {
+test('canvas artwork cannot swallow axes or visible menu controls', () => {
   const context = vm.createContext({ document: { getElementById: () => ({
     hidden: false, getBoundingClientRect() { throw new Error('axes must bypass artwork hit testing'); }
   }) } });
   vm.runInContext(declaration(ui, 'function coneArtBlocksButton('), context);
-  context.coneArtBlocksButton({ target: { closest: () => ({ id: 'bC3Axes' }) } });
+  context.coneArtBlocksButton({ target: { closest: () => ({ id: 'bC3Axes', closest: () => null }) } });
+  context.coneArtBlocksButton({ target: { closest: () => ({ id: 'coneTempoToggle', closest: selector => selector === '#w-cone' ? {} : null,
+    classList: { contains: key => key === 'shared-menu-button' } }) } });
 });
 
 test('window tabs keep their widths and positions when the selected tab changes', () => {
@@ -259,11 +265,11 @@ test('window tabs keep their widths and positions when the selected tab changes'
   const context = vm.createContext({ TZC_H: 24, TZ_TIP: [1, 0, 1], TZ_NOTCH: [0, 1, 0], Z: {},
     window: {}, lpTag: {}, lpWin() {}, tzLnBg: () => '', getComputedStyle: () => ({ height: '24px', borderTopColor: '#888' }),
     document: { getElementById: id => id === 'top' ? top : null, createRange: () => ({ selectNodeContents: b => { measured = b; },
-      getBoundingClientRect: () => ({ width: measured.textContent.length * 7 }) }) } });
-  vm.runInContext(declaration(ui, 'function tzGeo(') + declaration(ui, 'function lpTop('), context);
+      getBoundingClientRect: () => ({ width: measured.textContent.length * 7 * (measured.classList.contains('shared-menu-hover') ? 2 : 1) }) }) } });
+  vm.runInContext(declaration(ui, 'function tzGeo(') + declaration(menus, 'function sharedMenuTextWidth(') + declaration(ui, 'function lpTop('), context);
   let baseline;
   for (const selected of [-1, 0, 1, 2, 3, 0]) {
-    buttons.forEach((b, i) => b.classList.toggle('on', i === selected));
+    buttons.forEach((b, i) => { b.classList.toggle('on', i === selected); b.classList.toggle('shared-menu-hover', i === selected); });
     context.lpTop('#888', () => true);
     let x = 0;
     const positions = buttons.map(b => { x += parseFloat(b.style.values['margin-left']) || 0;
@@ -326,8 +332,9 @@ test('double click docks and restores a group while single click unfolds in the 
   const state = { cgrpPos: { [key]: { x: 1200, y: -56 } }, cgrpFld: {}, cgrpMin: {},
     cgrpEdge: { [key]: { id: 'fieldZigOv', row: 0 } }, cgrpPin: {},
     cgrpLink: { child: { to: key, v: 1, dx: 0 } } };
-  const g = { dataset: { g: key }, style: {}, classList: { toggle: (name, on) => on ? folded.add(name) : folded.delete(name) } };
-  const context = vm.createContext({ Z: state, g, foldUi() {}, cgbSnap() {}, sizeApply() {}, cgrpCols() {},
+  const g = { dataset: { g: key }, style: {}, querySelector: () => null, classList: { toggle: (name, on) => on ? folded.add(name) : folded.delete(name) } };
+  const lab = { getBoundingClientRect: () => ({ width: 0 }) };
+  const context = vm.createContext({ Z: state, g, lab, sfzColumnGroup: () => false, foldUi() {}, cgbSnap() {}, sizeApply() {}, cgrpCols() {},
     place() {}, linkSync() {}, save() {}, solHeaderRoom: () => 600,
     nodeUnpin: () => { delete state.cgrpEdge[key]; delete state.cgrpPin[key]; } });
   vm.runInContext(declaration(ui, 'function solLinkCycle(') + declaration(ui, 'const foldToggle = (') +
