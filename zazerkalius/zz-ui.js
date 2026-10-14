@@ -10763,6 +10763,15 @@ function triDotsDraw(g, xy, sc){
    группу, настройка пишется всем её треугольникам. Перекрашенный или стёртый треугольник свои настройки теряет. Соседи: ▲ (r + c чётное) —
    основание вниз (r + 1, c), бока (r, c − 1) и (r, c + 1); ▼ — основание вверх (r − 1, c). Рёбра в порядке вершин [0-1 основание, 0-2, 1-2]. */
 const triNb = (r, c) => [[0, 1, (r + c) % 2 === 0 ? [r + 1, c] : [r - 1, c]], [0, 2, [r, c - 1]], [1, 2, [r, c + 1]]];
+/* v0.1184, «нужна сетка с режимом ромбов ещё вместо треугольников, там же»: «◇ ромбы» (Z.triRmb) — та же сетка треугольников, но ячейка — ромб:
+   ▲ и ▼ под ним (как стоит кнопка). Кисть красит ромб целиком, обводка и бледная сетка — без черты посередине ромба, номера — у ромбов.
+   Хранится всё по-прежнему по треугольникам — сцены, буфер, ☝ сдвиг (сдвиг сохраняет ориентацию, значит и ромбы) работают как были.
+   Половинки у верхнего и нижнего края — треугольником. triMate — вторая половина ромба (или null у края) */
+const triMate = (r, c) => { const m = (r + c) % 2 === 0 ? r + 1 : r - 1; return m >= 0 && m < Z.triR ? [m, c] : null; };
+function triOpen(g, P, r, c){   // контур пустой ячейки: в ◇ ромбах — без основания, если у треугольника есть пара
+  g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[2][0], P[2][1]); g.lineTo(P[1][0], P[1][1]);
+  if (!Z.triRmb || !triMate(r, c)) g.closePath();
+}
 function triModel(d){
   const R = d.R, N = d.N, K = (r, c) => { if (r < 0 || r >= R || c < 0 || c >= N) return 0; const k = d.c[r + "_" + c] | 0; return TRI_COL[k] ? k : 0; };
   const cid = {}, comps = [];
@@ -10792,7 +10801,7 @@ function triEdges(g, M, pts, defLn, bw, sel, selCol){
       const P = pts(r, c);
       for (const [a, b, n] of triNb(r, c)) {
         const same = M.cid[n[0] + "_" + n[1]] === gi;
-        if (same) { if (!inner || n[0] * 1000 + n[1] < r * 1000 + c) continue; I.moveTo(P[a][0], P[a][1]); I.lineTo(P[b][0], P[b][1]); }
+        if (same) { if (!inner || (Z.triRmb && a === 0) || n[0] * 1000 + n[1] < r * 1000 + c) continue; I.moveTo(P[a][0], P[a][1]); I.lineTo(P[b][0], P[b][1]); }
         else { B.moveTo(P[a][0], P[a][1]); B.lineTo(P[b][0], P[b][1]); }
       }
     }
@@ -10823,6 +10832,7 @@ function renderTri(){
   $("bTriNum").classList.toggle("on", Z.triNum !== false);
   $("bTriBold").classList.toggle("on", !!Z.triBold);   // v0.632
   $("bTriOut").classList.toggle("on", Z.triOut !== false);
+  $("bTriRmb").classList.toggle("on", !!Z.triRmb);   // v0.1184
   const pal = $("triPal");
   if (!pal.children.length) pal.innerHTML = `<button data-c="-1" title="☝ Выбрать группу: щелчок по группе — её обводка, сетка внутри и символ (строка «группа»); Ctrl (или Shift) + щелчок — добавить группу к выбранным или снять. Потяни выбранную — все выбранные группы едут по сетке целиком (треугольники не переворачиваются, за край не уходят). Пока ☝ горит, щелчок по цвету палитры перекрашивает выбранные группы. Alt + щелчок — то же любым инструментом">☝</button>`
     + `<button data-c="-2" title="✦ Точка в узел: щелчок у вершины — светящаяся точка диаметром ⌀ (цвет — выбери в палитре, пока ✦ горит); ещё щелчок тем же цветом или правый — убрать">✦</button>`
@@ -10862,14 +10872,20 @@ function renderTri(){
   cv.style.background = Z.triBg || "";
   const tri = (P) => { g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); };
   for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
-    const P = triPts(r, c), k = M.K(r, c); tri(P);
-    if (k) { g.fillStyle = TRI_COL[k][0]; g.fill(); g.strokeStyle = TRI_COL[k][0]; g.lineWidth = 0.6; g.stroke(); }
-    else if (Z.triOut !== false) { g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
+    const P = triPts(r, c), k = M.K(r, c);
+    if (k) { tri(P); g.fillStyle = TRI_COL[k][0]; g.fill(); g.strokeStyle = TRI_COL[k][0]; g.lineWidth = 0.6; g.stroke(); }
+    else if (Z.triOut !== false) { triOpen(g, P, r, c); g.strokeStyle = line; g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; }
   }
   triEdges.more = triSelSet(M); triEdges(g, M, triPts, Z.triLn || line, mode === 2 ? 2 : 1, sel, txt); triEdges.more = null;
   if (num) {
     g.textAlign = "center"; g.textBaseline = "middle"; g.font = `${Math.max(9, Math.min(14, s * 0.26))}px Segoe UI, Arial`;
-    for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+    if (Z.triRmb) {   // v0.1184: ◇ — номер ромба (счёт по рядам с 1, только целые ромбы), посередине, у пустых
+      let n = 0;
+      for (let r = 0; r + 1 < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
+        if ((r + c) % 2) continue; n++; if (M.K(r, c) || M.K(r + 1, c)) continue;
+        const P = triPts(r, c); g.fillStyle = txt; g.globalAlpha = 0.45; g.fillText(n, (P[0][0] + P[1][0]) / 2, P[0][1]); g.globalAlpha = 1;
+      }
+    } else for (let r = 0; r < Z.triR; r++) for (let c = 0; c < Z.triN; c++) {
       const P = triPts(r, c), k = M.K(r, c), gt = k && M.comps[M.cid[r + "_" + c]].tx;
       if (k) continue;   // v0.454, «номера ромбов закрашенных скрывай»: номер — только у пустых
       g.fillStyle = k ? "#0e1116" : txt; g.globalAlpha = gt ? 0.3 : k ? 0.9 : 0.45; g.fillText(r * Z.triN + c + 1, (P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3); g.globalAlpha = 1;
@@ -10877,7 +10893,7 @@ function renderTri(){
   }
   triText(g, M, triPts, "#0e1116", Math.max(9, Math.min(40, s * 0.62)));
   // средняя черта каждой пары рядов (кнопка — два ряда) — пунктиром; v0.436 — только в режиме «каждый»
-  if (mode === 1 && Z.triOut !== false) {
+  if (mode === 1 && Z.triOut !== false && !Z.triRmb) {
     g.strokeStyle = txt; g.globalAlpha = 0.25; g.setLineDash([4, 4]); g.lineWidth = 1;
     for (let r = 1; r < Z.triR; r += 2) { const y = pad + r * hh; g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + (Z.triN + 1) * s / 2, y); g.stroke(); }
     g.setLineDash([]); g.globalAlpha = 1;
@@ -10921,9 +10937,8 @@ function triLive(M){
     const pts = (r, c) => { const x = pad + (c - c0) * t, y0 = pad + (r - r0) * hh, y1 = y0 + hh; return (r + c) % 2 === 0 ? [[x, y1], [x + s, y1], [x + t, y0]] : [[x, y0], [x + s, y0], [x + t, y1]]; };
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
       const k = M.K(r, c), P = pts(r, c);
-      g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath();
-      if (k) { g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke(); }   // шов в цвет — без просветов между треугольниками
-      else if (Z.triOut !== false) { g.strokeStyle = "rgba(216,221,232,.12)"; g.lineWidth = 1; g.stroke(); }
+      if (k) { g.beginPath(); g.moveTo(P[0][0], P[0][1]); g.lineTo(P[1][0], P[1][1]); g.lineTo(P[2][0], P[2][1]); g.closePath(); g.fillStyle = col(k); g.fill(); g.strokeStyle = col(k); g.lineWidth = 0.6; g.stroke(); }   // шов в цвет — без просветов между треугольниками
+      else if (Z.triOut !== false) { triOpen(g, P, r, c); g.strokeStyle = "rgba(216,221,232,.12)"; g.lineWidth = 1; g.stroke(); }
     }
     triEdges(g, M, pts, Z.triLn || "rgba(216,221,232,.2)", 1, -1, "");
     triText(g, M, pts, txt, 12 * z);
@@ -10937,9 +10952,11 @@ if ($("triCv")) {
   const at = (e) => triHit(...rel(e));
   cv.addEventListener("pointermove", (e) => { if (paint < 0 && !line && !mv) { const h = Z.triCol === -1 ? at(e) : null; cv.style.cursor = Z.triCol === -1 ? (h && Z.triCells[h[0] + "_" + h[1]] ? "grab" : "pointer") : Z.triCol < -1 ? "cell" : ""; } });
   const put = (h) => {
-    if (!h) return; const key = h[0] + "_" + h[1]; if ((Z.triCells[key] | 0) === paint) return;
-    if (paint) Z.triCells[key] = paint; else delete Z.triCells[key];
-    delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key];   // v0.437: перекрашенный — не в прежней группе, её настройки не несёт
+    if (!h) return; const L = [h], m = Z.triRmb && triMate(h[0], h[1]); if (m) L.push(m);   // v0.1184: в ◇ ромбах — обе половины
+    if (L.every(q => (Z.triCells[q[0] + "_" + q[1]] | 0) === paint)) return;
+    for (const q of L) { const key = q[0] + "_" + q[1];
+      if (paint) Z.triCells[key] = paint; else delete Z.triCells[key];
+      delete Z.triGLn[key]; delete Z.triGIn[key]; delete Z.triGTx[key]; }   // v0.437: перекрашенный — не в прежней группе, её настройки не несёт
     renderTri();
   };
   const putLine = (key) => {   // v0.437: ╱ — ребро цветной линией (line.set) или стереть
@@ -11038,6 +11055,7 @@ if ($("triCv")) {
   $("triLn").oninput = () => { Z.triLn = $("triLn").value; if (!(Z.triLnMode > 0) && Z.triLnMode != null) Z.triLnMode = 1; save(); renderTri(); };
   $("bTriLn").onclick = () => { const m = Z.triLnMode == null ? 1 : Z.triLnMode; Z.triLnMode = (m + 1) % 3; save(); renderTri(); };
   $("bTriOut").onclick = () => { Z.triOut = Z.triOut === false; save(); renderTri(); };   // v0.437: сетка вне групп
+  $("bTriRmb").onclick = () => { Z.triRmb = !Z.triRmb; save(); renderTri(); };   // v0.1184: ◇ ромбы / ▵ треугольники
   $("bTriLiveDef").onclick = () => { Z.triBg = null; Z.triLn = null; Z.triLnMode = 1; Z.triOut = true; save(); renderTri(); };
   // v0.437: выбранная группа — своя обводка, сетка внутри, символ (пишутся всем её треугольникам)
   const selGr = () => { const M = triModel(triCurData()), i = triSelComp(M); return i < 0 ? null : M.comps[i]; };
