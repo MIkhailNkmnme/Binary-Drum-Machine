@@ -308,7 +308,7 @@
     const close=()=>{fan.hidden=true;main.classList.remove('open');};
     const main=button(options[0][1],title,()=>{fan.hidden=!fan.hidden;main.classList.toggle('open',!fan.hidden);},parent);diamond(main,options[0][1],parent);
     for(const [v,caption,tip,icon] of options){items[v]=diamond(button(caption,tip,()=>{close();pick(v,main);},fan),caption,fan);if(icon)items[v].dataset.miIcon=icon;}
-    parent.parentElement.append(fan);
+    parent.parentElement.append(fan);main._fan=fan;   // общая рейка (grozd.js) показывает главный ромб списком
     document.addEventListener('pointerdown',e=>{if(!fan.hidden&&!fan.contains(e.target)&&!main.contains(e.target))close();},true);
     compactUpdates.push(()=>{const cur=get(),host=main.parentElement?.parentElement;if(host&&fan.parentElement!==host)host.append(fan);   // ромб переложили в другую гроздь — лесенка за ним
       [...fan.children].forEach((n,k)=>{n.style.left=(48+(k%2?24:0))+'px';n.style.top=(parseFloat(main.style.top)+k*24)+'px';});
