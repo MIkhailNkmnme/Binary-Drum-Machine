@@ -840,6 +840,17 @@ function cutGroupBuild(){
 // v0.047: исходные элементы переезжают в три столбца, сохраняя обработчики и значения.
 let SFZ_SETTINGS_DOCK = null;
 function sfzSettingsDockMount(){
+  const dock = SFZ_SETTINGS_DOCK;
+  if (dock && dock._viewTab?.open) {
+    if (dock.parentNode !== document.body) document.body.appendChild(dock);
+    dock.classList.add("sfz-view-popup");
+    const field = $("field").getBoundingClientRect(), tab = dock._viewTab.getBoundingClientRect();
+    dock.style.left = Math.max(8, Math.min(innerWidth - dock.offsetWidth - 8, field.left + 8)) + "px";
+    const y = innerWidth <= 760 ? (tab.bottom + dock.offsetHeight + 16 <= innerHeight ? tab.bottom + 8 : tab.top - dock.offsetHeight - 8) : Math.max(field.top, tab.top);
+    dock.style.top = Math.max(8, Math.min(innerHeight - dock.offsetHeight - 8, y)) + "px";
+    return;
+  }
+  if (dock) { dock.classList.remove("sfz-view-popup"); dock.style.removeProperty("left"); dock.style.removeProperty("top"); }
   const slot = $("sfzSettingsSlot");
   if (slot && SFZ_SETTINGS_DOCK && SFZ_SETTINGS_DOCK.parentNode !== slot) slot.appendChild(SFZ_SETTINGS_DOCK);
 }
@@ -876,8 +887,11 @@ function sfzSettingsInit(){
     for(const id of ["bRowsStartTop","coneLockAll","bConeAllHome"]){const button=$(id);if(button){triOff(button);tzcClean(button);controls.appendChild(button);}}
   }
   const rings = document.createElement("button"); rings.type = "button"; rings.textContent = "Ромбы колец";
-  rings.title = "Показать столбцы видов колец и заполнения";
-  rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
+  rings.title = "Кольца: T, N, 2T−1, 2T, между, симметрия";
+  const showRings = () => { Z.coneRingModesHidden = false; ringTblSync(); const el = $("ringTbl"); if (el) { el._reveal = true; el.classList.add("sfz-rings-revealed"); ringTblPlace(el); } save(); };
+  rings.onclick = showRings; view.appendChild(rings);
+  const ringTab = document.createElement("button"); ringTab.id = "bSfzRingModes"; ringTab.type = "button"; ringTab.textContent = "T/N";
+  ringTab.title = rings.title; ringTab.setAttribute("aria-label", rings.title); ringTab.onclick = () => { close(); showRings(); }; menus.appendChild(ringTab);
   const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь «Вид»";
   coneView.title = "Показать группу «Вид» целиком на экране";
   coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид", true); save(); renderCone(); }; view.appendChild(coneView);
@@ -885,26 +899,30 @@ function sfzSettingsInit(){
   SFZ_SETTINGS_DOCK = document.createElement("div"); SFZ_SETTINGS_DOCK.id = "sfzSettingsDock";
   SFZ_SETTINGS_DOCK.hidden = true; document.body.appendChild(SFZ_SETTINGS_DOCK);
   const columns = [view, rows, build], tabs = [...menus.querySelectorAll("details")];
+  SFZ_SETTINGS_DOCK._viewTab = tabs[0];
   for (const [i, column] of columns.entries()) {
     column.hidden = true; SFZ_SETTINGS_DOCK.appendChild(column);
     tabs[i].querySelector("summary").setAttribute("aria-controls", column.id);
   }
   const icons = {bFieldL:"◀",bFieldHide:"01",bFieldR:"▶",bFieldOnly:"▣",bShowFM:"⇄",bShow01:"0:1",bBrDepth:"( )",bCas:"⛓",bBipyShift:"◇",bOvReset:"↔",bOvOut:"⤓"};
   for (const [id, icon] of Object.entries(icons)) { const button=$(id); if(button) { button.dataset.sfzIcon=icon; button.setAttribute("aria-label",button.title||button.dataset.zzTip||button.textContent); } }
-  rings.dataset.sfzIcon="◈"; rings.setAttribute("aria-label",rings.title);
+  rings.dataset.sfzIcon="T/N"; rings.setAttribute("aria-label",rings.title);
   coneView.dataset.sfzIcon="◉"; coneView.title="Гроздь «Вид»"; coneView.setAttribute("aria-label",coneView.title);
   for (const id of ["cutMask"]) { const input=$(id); if(input && input.parentElement===group) { const label=document.createElement("label"); label.className="sfz-setting-input"; label.title=input.title||"Маска из 0 и 1"; input.before(label); label.appendChild(input); } }
-  const resize = () => SFZ_SETTINGS_DOCK.style.setProperty("--sfz-settings-cols", $("rowList").clientWidth >= 168 ? 3 : 2);
+  const resize = () => { SFZ_SETTINGS_DOCK.style.setProperty("--sfz-settings-cols", $("rowList").clientWidth >= 168 ? 3 : 2); sfzSettingsDockMount(); };
   resize(); if(window.ResizeObserver)new ResizeObserver(resize).observe($("rowList"));
+  addEventListener("resize", resize);
   sfzSettingsDockMount();
   const sync = () => { columns.forEach((column,i)=>column.hidden=!tabs[i].open); SFZ_SETTINGS_DOCK.hidden=!tabs.some(d=>d.open); tabs.forEach(d=>d.querySelector("summary").setAttribute("aria-expanded",String(d.open))); };
   const close = () => { tabs.forEach(d => d.open = false); sync(); };
-  document.addEventListener("pointerdown", e => { if (!menus.contains(e.target) && !SFZ_SETTINGS_DOCK.contains(e.target)) close(); });
+  const dismiss = e => { const control = e.target.closest?.("button,input,select,label,summary"); if (!control || (!menus.contains(control) && !SFZ_SETTINGS_DOCK.contains(control))) close(); };
+  document.addEventListener("pointerdown", dismiss, true);
+  document.addEventListener("click", dismiss, true);
   document.addEventListener("keydown", e => { if (e.key === "Escape") { const active = tabs.find(d=>d.open); close(); if (active) active.querySelector("summary").focus(); } });
   menus.addEventListener("toggle", e => {
     if (e.target.open) menus.querySelectorAll("details[open]").forEach(d => { if (d !== e.target) d.open = false; });
     sync(); sfzSettingsDockMount();
-    if(e.target.open) {
+    if(e.target.open && e.target !== tabs[0]) {
       const list=$("rowList"), lr=list.getBoundingClientRect(), dr=SFZ_SETTINGS_DOCK.getBoundingClientRect();
       if(dr.bottom>lr.bottom) list.scrollTop+=dr.bottom-lr.bottom;
       else if(dr.top<lr.top) list.scrollTop+=dr.top-lr.top;
@@ -2704,6 +2722,12 @@ function ringTblPlace(el){
   const y=magnetic?rawY:Math.max(0,Math.min(Math.max(0,cr.height-el.offsetHeight),rawY));
   el.style.left = (cr.left - hr.left - host.clientLeft + host.scrollLeft + x) + "px";
   el.style.top = (cr.top - hr.top - host.clientTop + host.scrollTop + y) + "px";
+  if (el._reveal) {
+    el.style.setProperty("left", el.style.left, "important"); el.style.setProperty("top", el.style.top, "important");
+    const r = el.getBoundingClientRect(), left = Math.max(cr.left, 8), right = Math.min(cr.right, innerWidth - 8), top = Math.max(cr.top, $("top").getBoundingClientRect().bottom), bottom = Math.min(cr.bottom, innerHeight - 8);
+    el.style.setProperty("left", (parseFloat(el.style.left) + Math.max(left, Math.min(right - r.width, r.left)) - r.left) + "px", "important");
+    el.style.setProperty("top", (parseFloat(el.style.top) + Math.max(top, Math.min(bottom - r.height, r.top)) - r.top) + "px", "important");
+  }
 }
 function ringTblSync(){
   const host = $("coneMain") && $("coneMain").parentElement; if (!host) return;
