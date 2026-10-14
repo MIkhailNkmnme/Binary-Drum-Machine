@@ -879,7 +879,8 @@ function sfzSettingsInit(){
   rings.title = "Показать столбцы видов колец и заполнения";
   rings.onclick = () => { Z.coneRingModesHidden = false; save(); ringTblSync(); }; view.appendChild(rings);
   const coneView = document.createElement("button"); coneView.type = "button"; coneView.textContent = "Гроздь «Вид»";
-  coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид"); save(); renderCone(); }; view.appendChild(coneView);
+  coneView.title = "Показать группу «Вид» целиком на экране";
+  coneView.onclick = () => { Z.coneViewToolsHidden = false; if(window.cgrpShow)window.cgrpShow("вид", true); save(); renderCone(); }; view.appendChild(coneView);
   // v0.066: исходные элементы и их обработчики сохраняются при обновлении строк.
   SFZ_SETTINGS_DOCK = document.createElement("div"); SFZ_SETTINGS_DOCK.id = "sfzSettingsDock";
   SFZ_SETTINGS_DOCK.hidden = true; document.body.appendChild(SFZ_SETTINGS_DOCK);
@@ -12610,11 +12611,21 @@ function cgrpInit(){
      (окно конуса закрыто или свёрнуто) — поставить на левую панель. Закрыть — спрятать. Открыта ли и видна — cgrpShown */
   window.cgrpShown = (k) => { const g = groups.find(c => c.dataset.g === k); return !!g && !Z.cgrpOff[k] && !g.classList.contains("cmin") && g.getClientRects().length > 0; };
   window.cgrpHide = (k) => { const g = groups.find(c => c.dataset.g === k); if (!g) return; Z.cgrpOff[k] = true; g.classList.add("coff"); save(); if (window.palUi) palUi(); cgTabsUi(); };
-  window.cgrpShow = (k) => {
+  window.cgrpShow = (k, bringIntoView = false) => {
     const g = groups.find(c => c.dataset.g === k); if (!g) return;
     delete Z.cgrpOff[k]; g.classList.remove("coff");
     if (Z.cgrpMin[k]) { delete Z.cgrpMin[k]; g.classList.remove("cmin"); g.style.minHeight = ""; }
     cgbSnap(); sizeApply(g); place(g); linkSync();
+    if (bringIntoView && !document.body.classList.contains("sol-mobile") && g.parentElement === tl) {
+      const r = g.getBoundingClientRect(), br = wb.getBoundingClientRect(), tempo = $("coneTransportTempo");
+      const left = Math.max(0, br.left), right = Math.min(innerWidth, br.right), top = Math.max(0, wbTop(r.left, r.width));
+      const bottom = Math.min(innerHeight, br.bottom, tempo?.getClientRects().length ? tempo.getBoundingClientRect().top - 6 : innerHeight);
+      const x = Math.max(left, Math.min(r.left, right - r.width)), y = Math.max(top, Math.min(r.top, bottom - r.height));
+      if (Math.abs(x - r.left) > .5 || Math.abs(y - r.top) > .5) {
+        nodeUnpin(g); delete Z.cgrpFld[k]; delete Z.cgrpLink[k]; delete Z.sfzBookBottom?.[k];
+        nodeSetPos(g, x, y); place(g); linkSync();
+      }
+    }
     if (PANE_DOCK && !g.getClientRects().length && g.parentElement === tl && box && !document.body.classList.contains("pane-icons")) {   /* v0.579: на левую панель — больше нет */ delete Z.cgrpPos[k]; delete Z.cgrpFld[k]; g.classList.remove("cfloat", "cfld"); g.style.left = g.style.top = ""; box.appendChild(g); dockSync(); }
     frontPanel(g); g.classList.remove("cflash"); void g.offsetWidth; g.classList.add("cflash"); setTimeout(() => g.classList.remove("cflash"), 1600);
     try { g.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (err) { /* нет места */ }

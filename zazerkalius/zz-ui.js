@@ -12850,26 +12850,58 @@ function cgrpInit(){
        строки. Стол с окнами при этом не едет. Группы на левой панели — как прежде (листают панель), число или список в фокусе — меняют
        своё значение, Ctrl + колесо — масштаб страницы */
     g.addEventListener("wheel", e => { if (g.parentElement === tl) solPanelWheel(g, e); }, { passive: false });
-    const edgeControl = (button, x, y) => {
-      if (!button || button.disabled || button.matches(".gfold, .gzen, .gon, .gx") || button.closest(".gzen, .gon, .gx")) return false;
-      const r = button.getBoundingClientRect(), edge = 4;
-      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom &&
-        Math.min(x - r.left, r.right - x, y - r.top, r.bottom - y) <= edge;
-    };
-    const clearEdgeCursor = () => { if (g._cgEdgeButton) g._cgEdgeButton.classList.remove("cg-move-edge"); g._cgEdgeButton = null; };
-    g.addEventListener("pointermove", e => {
-      if (e.buttons) return;
-      const b = e.target.closest && e.target.closest("button"), next = edgeControl(b, e.clientX, e.clientY) ? b : null;
-      if (next === g._cgEdgeButton) return;
-      clearEdgeCursor(); if (next) { next.classList.add("cg-move-edge"); g._cgEdgeButton = next; }
+    // v0.1145: pulling any group button moves the group; a stationary press keeps its action.
+    let replayButtonDown = false, cancelButtonGrab = null, deferredMouseDown = null;
+    g.addEventListener("mousedown", e => {
+      if (replayButtonDown || !cancelButtonGrab || e.button !== 0) return;
+      deferredMouseDown = e; e.preventDefault(); e.stopImmediatePropagation();
     }, true);
-    g.addEventListener("pointerleave", clearEdgeCursor);
-    // On a control's narrow outer edge, start the existing group drag; its center remains a normal control click.
+    g.addEventListener("click", e => {
+      if (performance.now() >= (g._solDragUntil || 0)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
     g.addEventListener("pointerdown", e => {
-      const b = e.target.closest && e.target.closest("button");
-      if (e.button !== 0 || !edgeControl(b, e.clientX, e.clientY)) return;
-      e.preventDefault(); e.stopPropagation(); clearEdgeCursor();
-      startGroupDrag({ target: g, button: 0, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey, preventDefault(){} });
+      const button = e.target.closest && e.target.closest('button,[role=button],label:has(input[type=checkbox],input[type=radio])');
+      if (replayButtonDown || e.button !== 0 || !button || button.closest(".cgrp") !== g || button.disabled || button.querySelector("input:disabled") || document.body.classList.contains("cedit")) return;
+      if (cancelButtonGrab) cancelButtonGrab();
+      const focus = button.matches("label") ? button.querySelector("input") : button;
+      if (focus) focus.focus({preventScroll:true});
+      // Defer pointerdown actions too (steppers, hide/zen), so pulling cannot activate them.
+      e.stopImmediatePropagation();
+      const target = e.target, id = e.pointerId, x = e.clientX, y = e.clientY;
+      const clean = () => {
+        document.removeEventListener("pointermove", move, true);
+        document.removeEventListener("pointerup", finish, true);
+        document.removeEventListener("pointercancel", finish, true);
+        window.removeEventListener("blur", clean); cancelButtonGrab = null; deferredMouseDown = null;
+      };
+      const move = ev => {
+        if (ev.pointerId !== id || Math.hypot(ev.clientX-x, ev.clientY-y) < 6) return;
+        clean();
+        const drag = startGroupDrag({target:g,button:0,pointerId:id,clientX:x,clientY:y,shiftKey:e.shiftKey,altKey:e.altKey,preventDefault(){}});
+        if (drag) { ev.preventDefault(); ev.stopImmediatePropagation(); drag(ev); }
+      };
+      const finish = ev => {
+        if (ev.pointerId !== id) return;
+        const mouseDown = deferredMouseDown; clean();
+        if (ev.type !== "pointerup" || !target.isConnected) return;
+        replayButtonDown = true;
+        try {
+          target.dispatchEvent(new PointerEvent("pointerdown", {
+            bubbles:true,cancelable:true,pointerId:id,pointerType:e.pointerType,isPrimary:e.isPrimary,
+            button:0,buttons:1,clientX:x,clientY:y,shiftKey:e.shiftKey,altKey:e.altKey,ctrlKey:e.ctrlKey,metaKey:e.metaKey
+          }));
+          if (mouseDown) target.dispatchEvent(new MouseEvent("mousedown", {
+            bubbles:true,cancelable:true,button:0,buttons:1,clientX:x,clientY:y,
+            shiftKey:e.shiftKey,altKey:e.altKey,ctrlKey:e.ctrlKey,metaKey:e.metaKey
+          }));
+        } finally { replayButtonDown = false; }
+      };
+      cancelButtonGrab = clean;
+      document.addEventListener("pointermove", move, {capture:true,passive:false});
+      document.addEventListener("pointerup", finish, true);
+      document.addEventListener("pointercancel", finish, true);
+      window.addEventListener("blur", clean);
     }, true);
     const startGroupDrag = (e) => {   // v0.315: прежде — только за подпись (lab), теперь за любое пустое место группы
       g._downLab = !!e.target.closest(".glab");   // v0.958: нажали на заголовок — щелчок и двойной щелчок о нём (после захвата указателя их цель — группа)
@@ -12962,6 +12994,7 @@ function cgrpInit(){
         save();
       };
       g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+      return mv;
     };
     g.addEventListener("pointerdown", startGroupDrag);
     // v0.1015: двойной щелчок заголовка — вниз свёрнутой; снизу — обратно раскрытой.
