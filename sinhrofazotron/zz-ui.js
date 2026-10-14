@@ -10715,6 +10715,11 @@ function setupCone(){
     if (Z.conePoly) say("⬡ Этажи-многоугольники: строка из n бит — n-угольник, бит — сторона. 1 бит — точка в центре, 2 — две Г углом в центре (крест), 3 — треугольник, 4 — квадрат."); };
   $("cone3d").checked = !!Z.cone3d;   // v0.082
   $("cone3d").onchange = (e) => { Z.cone3d = e.target.checked; save(); renderCone(); };
+  /* «пусть 3D, когда развёрнута, автоматом включает 3D-вид, а ту кнопку удали»: галка 🧊 3D скрыта, 3D-вид = группа «3D» раскрыта */
+  { const sync = () => { const g = document.querySelector(".cgrp.cg-3d"); if (!g) return; const on = !g.classList.contains("cmin");
+      if (!!Z.cone3d !== on) { Z.cone3d = on; $("cone3d").checked = on; save(); renderCone(); } };
+    const g3 = document.querySelector(".cgrp.cg-3d"); if (g3) new MutationObserver(sync).observe(g3, { attributes: true, attributeFilter: ["class"] });
+    if (document.readyState === "complete") setTimeout(sync, 0); else addEventListener("load", () => setTimeout(sync, 0)); }
   $("coneBit1").checked = !!Z.coneBit1;   // v0.318: ① 1-й бит каждой строки
   $("coneBit1").onchange = (e) => { Z.coneBit1 = e.target.checked; save(); renderCone(); say(Z.coneBit1 ? "① Первый бит каждой строки — в золотой обводке." : "① Первый бит больше не подсвечен."); };
   if ($("coneTor")) { $("coneTor").checked = !!Z.coneTor;   // v0.776: ◎ торы — шар и торы вместо колец (включает 3D)
