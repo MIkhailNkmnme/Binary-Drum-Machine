@@ -224,3 +224,5 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan{position:absolute;left:24px;top:24px;width:0;height:0;z-index:3;pointer-events:none}   /* v0.1168: ромбы-варианты узора справа от грозди */
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan[hidden]{display:none!important}
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape:is(.zsnap,:focus,:focus-visible){outline:none!important;box-shadow:none!important}   /* v0.1171, «синий прямоугольник не показывай»: прямоугольной подсветки прилипания у гроздей нет, они липнут ромб в ромб */
+.zerk-mirror button{opacity:.18;transition:opacity .15s}   /* v0.1172: ромбы оси за битами — бледные */
+.zerk-mirror:is(.hot,.grabbing,:focus-within) button,.zerk-mirror.hot::before{opacity:1}
