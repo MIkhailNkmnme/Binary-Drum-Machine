@@ -7599,12 +7599,14 @@ function tempoTrackSync(){
   // The play diamond follows the actual range position, including keyboard/track changes.
   const rr=r.getBoundingClientRect(), lr=L.getBoundingClientRect(), f=(+r.value-(+r.min||0))/Math.max(1,(+r.max||100)-(+r.min||0));
   const thumbWidth=$("coneTempoToggle")?.offsetWidth || 48;
-  const tx=rr.left-lr.left+thumbWidth/2+f*Math.max(1,rr.width-thumbWidth);
+  // v1 общего пульта (_js/zz-pult.js): корпус, ромб и подпись ставит ZerkPult — у всех трёх страниц одинаково
+  for (const [e, c] of [[L.parentElement, "zz-pult-box"], [L, "zz-pult"], [r, "zz-pult-range"], [$("bC3StepB"), "zz-pult-back"], [$("bC3StepF"), "zz-pult-fwd"], [$("coneTempoToggle"), "zz-pult-play"], [$("coneAutoSpV"), "zz-pult-value"]]) if (e && !e.classList.contains(c)) e.classList.add(c);
+  const tx=window.ZerkPult ? window.ZerkPult.sync(L, f) ?? 0 : rr.left-lr.left+thumbWidth/2+f*Math.max(1,rr.width-thumbWidth);
   const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
   set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
-  tempoContourSync(L, tx);
+  if (!window.ZerkPult) tempoContourSync(L, tx);
   const value = $("coneAutoSpV");
-  if (value) { const vw = value.offsetWidth, right = tx + 78, vx = right + vw <= lw - 10 ? right : tx - 78 - vw;
+  if (value && !window.ZerkPult) { const vw = value.offsetWidth, right = tx + 78, vx = right + vw <= lw - 10 ? right : tx - 78 - vw;
     set("--vx", Math.max(30, Math.min(lw - 30 - vw, vx)).toFixed(1) + "px"); }
   const thumb = $("coneTempoToggle"), on = !!($("bConeAuto") && $("bConeAuto").classList.contains("on"));
   L.classList.toggle("playing", on);
