@@ -203,26 +203,41 @@
     const groupsNow = () => [...document.querySelectorAll(cfg.groups)].filter(g => !g.matches(cfg.skip || '.coff'));
     const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
     function build() {
-      const gs = groupsNow().map(g => ({ g, items: itemsOf(g) })).filter(x => x.items.length);
-      const now = gs.map(x => gid(x.g) + ':' + x.items.map(uid).join(',')).join('|');
+      const isPanel = g => !!cfg.panels && g.matches(cfg.panels);   // панель без кнопок (подсказки, текст): в рейке только шапка, раскрыть — показать саму панель
+      const gs = [...groupsNow(), ...(cfg.panels ? document.querySelectorAll(cfg.panels) : [])].filter((g, k, a) => a.indexOf(g) === k)
+        .map(g => ({ g, items: isPanel(g) ? [] : itemsOf(g), panel: isPanel(g) })).filter(x => x.panel || x.items.length);
+      const now = gs.map(x => gid(x.g) + ':' + (x.panel ? 'p' : x.items.map(uid).join(','))).join('|');
       if (now === sig) return false; sig = now;
       if (cur) cur.destroy();
       for (const g of live) { g.classList.remove('gz-adopted'); g.style.removeProperty('display'); }
       live = gs.map(x => x.g); for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
       cur = make(gs);
+      panelsNow();
       return true;
     }
+    // открытая панель встаёт справа от своей шапки в рейке, а не там, где плавала раньше
+    function showPanel(g, on) {
+      g.classList.toggle('gz-adopted', !on);
+      if (!on) { g.style.setProperty('display', 'none', 'important'); for (const k of ['position', 'left', 'top', 'z-index']) g.style.removeProperty(k); return; }
+      const h = [...dock.querySelectorAll('.gz-group')].find(b => b.dataset.id === gid(g)), r = h && h.querySelector('.gz-head').getBoundingClientRect();
+      g.style.removeProperty('display');
+      if (r) { g.style.setProperty('position', 'fixed', 'important'); g.style.setProperty('left', Math.min(r.right + 6, innerWidth - g.offsetWidth - 4) + 'px', 'important');
+        g.style.setProperty('top', Math.max(4, Math.min(r.top, innerHeight - g.offsetHeight - 4)) + 'px', 'important'); g.style.setProperty('z-index', '2147483641', 'important'); }
+    }
+    const panelsNow = () => { const open = [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id); for (const g of live) if (cfg.panels && g.matches(cfg.panels)) showPanel(g, open.includes(gid(g))); };
     function make(gs) {
-      return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (x && cfg.fold) cfg.fold(x.g, open); },
+      return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (!x) return;
+          if (x.panel) showPanel(x.g, open);
+          if (cfg.fold) cfg.fold(x.g, open); },
         groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g), items: x.items.map(itemOf) })) });
     }
     build();
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
     if (cfg.fold) { const open = cur && [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id)[0]; for (const g of live) cfg.fold(g, gid(g) === open); }
     const help = () => { const b = cfg.helpButton && document.querySelector(cfg.helpButton); document.documentElement.classList.toggle('gz-help', !!b && b.classList.contains('on')); };
-    setInterval(() => { help(); if (!build() && cur) cur.refresh(); }, 400);
+    setInterval(() => { help(); if (!build() && cur) cur.refresh(); panelsNow(); }, 400);
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 2, rail, adopt };
+  window.ZerkGrozd = { version: 3, rail, adopt };
 })();

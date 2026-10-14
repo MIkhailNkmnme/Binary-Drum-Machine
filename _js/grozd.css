@@ -62,7 +62,7 @@
 .gz-mask{display:block;width:14px;height:14px;background:currentColor;-webkit-mask:var(--gz-mask) center/contain no-repeat;mask:var(--gz-mask) center/contain no-repeat}
 
 /* рейка на странице: у левого края окна, своя прокрутка; старые грозди спрятаны */
-.gz-dock{position:absolute;left:38px;top:34px;bottom:44px;z-index:2147483640;overflow-y:auto;overflow-x:visible;scrollbar-width:thin;padding:2px 30px 8px 0}
+.gz-dock{position:absolute;left:14px;top:34px;bottom:44px;z-index:2147483640;overflow-y:auto;overflow-x:visible;scrollbar-width:thin;padding:2px 30px 8px 0}
 .gz-adopted{display:none!important}
 .gz-dot{width:10px;height:10px;border-radius:50%;margin-left:auto;flex:none}
 .gz-color{position:absolute!important;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2!important;border:0;padding:0}
