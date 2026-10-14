@@ -293,9 +293,17 @@
   // Controls remain the same inputs and handlers; diamonds open only the needed editor.
   const oldActions=[...actions.children], oldView=[...body.children].filter(n=>n!==sourceLabel&&n!==own&&n!==actions&&!n.classList.contains('zerk-mirror-controls'));
   const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#a3e635',[24,8]);
-  const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
-  compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
-  let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
+  /* v0.1168, «тут надо в ромбы всё перевести», «эти варианты пусть открываются, когда на неё нажать, на главную»: список «Узор» заменён ромбами.
+     Главный ромб показывает текущий узор; нажатие раскрывает справа от грозди лесенку ромбов-вариантов, выбор или щелчок мимо — сворачивает. */
+  sourceLabel.hidden=true;const sourceDiamonds={},sourceFan=document.createElement('div');sourceFan.className='zerk-source-fan';sourceFan.hidden=true;
+  const sourceMain=button('△\nузор','Узор: выбрать источник строк',()=>{sourceFan.hidden=!sourceFan.hidden;sourceMain.classList.toggle('open',!sourceFan.hidden);},rowGroup);diamond(sourceMain,'△\nузор',rowGroup);
+  const fanClose=()=>{sourceFan.hidden=true;sourceMain.classList.remove('open');};
+  for(const [v,caption,title] of [['serp','△\nСерп.','Узор: Серпинский'],['base','◇\nхаб','Узор: исходный из хаба'],['field','≡\nполе','Узор: строки поля'],['own','↥\nсвои','Узор: свои строки — вставить или загрузить TXT / JSON'],['pend','↔\nмаят.','Узор: зеркальный маятник']]){
+    let d;d=button(caption,title,()=>{fanClose();if(v==='own'){pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',sourceMain);return;}if(state.source!==v){source.value=v;source.onchange();}},sourceFan);sourceDiamonds[v]=diamond(d,caption,sourceFan);}
+  rowGroup.parentElement.append(sourceFan);
+  const fanPlace=()=>[...sourceFan.children].forEach((n,k)=>{n.style.left=(48+(k%2?24:0))+'px';n.style.top=(parseFloat(sourceMain.style.top)+k*24)+'px';});
+  document.addEventListener('pointerdown',e=>{if(!sourceFan.hidden&&!sourceFan.contains(e.target)&&!sourceMain.contains(e.target))fanClose();},true);
+  compactUpdates.push(()=>{fanPlace();sourceMain.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];for(const [v,d] of Object.entries(sourceDiamonds)){const on=state.source===v;d.classList.toggle('on',on);d.setAttribute('aria-pressed',String(on));}});
   for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())if(i>1)diamond(oldActions[i],caption,rowGroup);actions.remove();   // v0.1158, «эту кнопку убери», «эту тоже»: «≡ копия» (строки поля — в свои) и «↦ в поле» (строки узора — в поле) в грозди не показываются
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
