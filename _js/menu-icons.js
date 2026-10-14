@@ -74,7 +74,7 @@
     run.textContent=labelOf(el);run.classList.remove('mi-run');pop.hidden=false;place();
     // Подпись шире видимой середины ромба — бегущая строка: от начала до конца и обратно, с остановками на краях.
     const room=box.clientWidth,need=run.scrollWidth;
-    if(need>room+1){run.style.setProperty('--mi-to',(room-need)+'px');run.style.setProperty('--mi-time',(1.6+(need-room)/30).toFixed(2)+'s');run.classList.add('mi-run');}
+    if(need>room+1){run.style.setProperty('--mi-to',(room-need)+'px');run.style.setProperty('--mi-time',(.8+(need-room)/75).toFixed(2)+'s');run.classList.add('mi-run');}
   }
   function hide(){if(!cur)return;cur=null;if(raf)cancelAnimationFrame(raf);raf=0;if(pop)pop.hidden=true;}
 

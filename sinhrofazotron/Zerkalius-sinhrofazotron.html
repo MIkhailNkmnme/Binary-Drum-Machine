@@ -3238,7 +3238,7 @@ body.pane-icons.dragover #rowsPane{box-shadow:none!important}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape .sfz-fold-head:hover{background:color-mix(in srgb,var(--gc,#22d3ee) 60%,var(--bg))!important}
 :is(#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone#w-cone .tools,#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp#paneGrp) .sfz-grape:not(.cmin) .sfz-fold-head{display:none!important}
 </style>
-<link rel="stylesheet" href="../_js/menu-icons.css?v=1">
+<link rel="stylesheet" href="../_js/menu-icons.css?v=2">
 </head>
 <body>
 <!-- v0.578: «🎨 Гамма» — список вниз под кнопкой шапки, шестигранниками; «Своя» и цвета 1 / 0 / а — первой строкой -->
@@ -3924,7 +3924,7 @@ body.pane-icons.dragover #rowsPane{box-shadow:none!important}
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
-<script src="../_js/menu-icons.js?v=1"></script>
+<script src="../_js/menu-icons.js?v=2"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
 <script src="../_js/recorder.js?v=94" data-bez-knopki></script>
