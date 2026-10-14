@@ -1,4 +1,4 @@
-/* Значки ромбов в гроздях кнопок и подпись при наведении. v1.
+/* Значки ромбов в гроздях кнопок и подпись при наведении. v2.
    Подключается Синхрофазотроном, Синхроромбом и Зазеркалиусом (окно Зеркалиус).
    Трогает только кнопки-ромбы гроздей: .sfz-grape-item, кольца #ringTbl и .zerk-grape .zerk-diamond.
    Верхние и нижние полосы, левая панель и пульты страниц не меняются.
@@ -25,15 +25,14 @@
     const s=(key+' '+text).toLowerCase();
     return /stepb|назад/.test(s)?'back':/stepf|вперёд/.test(s)?'forward':/уменьш|minus/.test(s)?'minus':/увелич|plus/.test(s)?'plus':/пуск|запус|продолж|play/.test(s)?'play':/пауза|pause/.test(s)?'pause':/сброс|старт|снять|reset|clear/.test(s)?'reset':/png|картин|снимок/.test(s)?'image':/копи/.test(s)?'copy':/сохран|запомн|save/.test(s)?'save':/загруз|файл|load/.test(s)?'load':/гамм|цвет|color|pal/.test(s)?'colour':/магнит|mag/.test(s)?'magnet':/оси|ось|axes|axis/.test(s)?'axes':/кривая|кривой|цикл/.test(s)?'curve':/прям|линия|line/.test(s)?'line':/3d|тор|куб|гран|cube/.test(s)?'cube':/шар|ball/.test(s)?'ball':/щел|вырез|slit|cut/.test(s)?'slit':/солн|луч|sun|light/.test(s)?'sun':/лун|moon/.test(s)?'moon':/звук|sound/.test(s)?'sound':/замок|запер|lock/.test(s)?'lock':/цеп|link/.test(s)?'link':/запис|видео|rec/.test(s)?'record':/баланс|balance/.test(s)?'balance':/зеркал|сим|mirror/.test(s)?'mirror':/подсказ|help/.test(s)?'help':/строк|поле|сетка|field|grid/.test(s)?'field':/вид|показ|hide/.test(s)?'eye':/выдел|select/.test(s)?'select':'ring';
   }
-  // Значок: знак семейства в середине, по кругу — метки из хэша ключа, чтобы у разных кнопок одного семейства значки различались.
+  // Значок: только знак семейства действия, без меток по кругу (они выглядели рябью).
   function iconUrl(key,kind){
-    const n=hash(key),bits=[];for(let i=0;i<32;i++)if((n>>>i)&1){const a=i*Math.PI/16,x=Math.cos(a),y=Math.sin(a);bits.push(`M${(12+9.6*x).toFixed(2)} ${(12+9.6*y).toFixed(2)}l${(1.8*x).toFixed(2)} ${(1.8*y).toFixed(2)}`);}
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"><path stroke-width=".8" d="${bits.join(' ')}"/><path stroke-width="1.9" d="${paths[kind]}"/></svg>`;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[kind]}"/></svg>`;
     return 'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
   }
   function decorate(el){
     if(el.matches(SKIP)||isValue(el)||el.querySelector('input[type=range],input[type=text],input[type=number],select,textarea')){if(el.classList.contains('mi-btn'))el.classList.remove('mi-btn');return;}
-    const label=labelOf(el),key=keyOf(el),kind=kindOf(key,words(el.textContent)+' '+label),sig=key+'|'+kind;
+    const label=labelOf(el),key=keyOf(el),kind=kindOf(key,words(el.textContent)+' '+label),sig=kind;
     if(el.dataset.miSig!==sig){el.dataset.miSig=sig;el.style.setProperty('--mi-icon',iconUrl(key,kind));}
     if(!el.classList.contains('mi-btn'))el.classList.add('mi-btn');
   }
