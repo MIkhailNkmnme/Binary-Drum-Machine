@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Витрина кнопок</title>
+<link rel="stylesheet" href="../_js/grozd.css?v=1">
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#0f1526;color:#dfe6f5;font:13px/1.35 "Segoe UI",Roboto,Arial,sans-serif;display:flex;min-height:100vh}
+  #rail{padding:12px 0 12px 12px;flex:none}
+  main{flex:1;position:relative;overflow:hidden}
+  .disk{position:absolute;left:50%;top:50%;width:min(70vh,70vw);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+    background:repeating-radial-gradient(circle,#59627a 0 3px,#0b1020 3px 9px);opacity:.5}
+  .top{position:absolute;right:14px;top:10px;display:flex;gap:8px;align-items:center;color:#8592ad}
+  .top button{background:#121a30;color:#dfe6f5;border:1px solid #3a4666;border-radius:4px;padding:3px 10px;cursor:pointer;font:inherit}
+  .top button.on{border-color:#5aa9ff;box-shadow:0 0 5px #5aa9ff}
+  #log{position:absolute;right:14px;bottom:10px;color:#8592ad}
+</style>
+</head>
+<body>
+<div id="rail"></div>
+<main>
+  <div class="disk"></div>
+  <div class="top">Витрина общих групп (вариант А) <button id="help" title="Длинные подсказки рядом с кнопками">?</button></div>
+  <div id="log"></div>
+</main>
+<script src="../_js/grozd.js?v=1"></script>
+<script>
+  const st = { mnog: true, perv: false, chist: true, odin: false, kmin: false, nepod: false, svet: true, dugi: true, sekt: false, tolko: false,
+    naklon: 42, put: 'spir', d3: false, oktN: 'net', tory: false, grani: true, shar: false, zvuk: false };
+  const log = t => document.getElementById('log').textContent = t;
+  const tg = (k, icon, name, tip) => ({ type: 'toggle', icon, name, tip, on: () => st[k], click: () => { st[k] = !st[k]; log(name + ': ' + (st[k] ? 'вкл' : 'выкл')); } });
+  const R = ZerkGrozd.rail(document.getElementById('rail'), {
+    key: 'vitrina',
+    onToggle: (id, open) => { if (id === 'd3') { st.d3 = open; log('3D-вид ' + (open ? 'включён' : 'выключен')); } },
+    groups: [
+      { id: 'kruch', title: 'Кручение', color: '#7fd1ff', items: [
+        tg('shar', 'M12 4v16M4 12h16', 'Ось'), { type: 'action', icon: '↺', name: 'Снять ↻', tip: 'Снять кручение со всех колец', click: () => log('Снято') } ] },
+      { id: 'vid', title: 'Вид', color: '#5aa9ff', open: true, items: [
+        tg('mnog', '⬡', 'Многоуг.', 'Многоугольники: строка из n бит'),
+        tg('perv', '①', '1-й бит', 'Первый бит каждой строки'),
+        tg('chist', '◯', 'Чистые', 'Чистые кольца: без контура и прорезей'),
+        tg('odin', '≡', 'Одинак.', 'Одинаковые строки одним цветом'),
+        tg('kmin', '◐', 'К мин.', 'Повернуть каждую строку к наименьшему виду'),
+        tg('nepod', '⇄', 'Непод. ⇄', 'Неподвижные при развороте'),
+        tg('svet', '✦', 'Свет', 'Единицы и неподвижные биты светятся своим цветом'),
+        tg('dugi', '◠', 'Дуги', 'Дуги битов на конусе'),
+        tg('sekt', '◫', 'Сектора', 'Сектора к центру у выделенных колец'),
+        tg('tolko', '◉', 'Только выд.', 'Скрыть все кольца, кроме выделенных'),
+        { type: 'value', name: 'Наклон', tip: 'Наклон конуса: ◂ ▸ по 1°, ◂◂ ▸▸ по 5% шкалы, 0 — сброс',
+          get: () => st.naklon + '°', step: d => { st.naklon = Math.max(0, Math.min(90, st.naklon + (Math.abs(d) === 2 ? Math.sign(d) * 5 : d))); }, reset: () => { st.naklon = 0; } },
+        { type: 'list', icon: '☰', name: 'Путь', tip: 'Путь шарика по кольцам', get: () => st.put, set: v => { st.put = v; log('Путь: ' + v); },
+          options: [{ v: 'spir', name: 'спираль', icon: '◎' }, { v: 'krug', name: 'круг', icon: '◯' }, { v: 'vos', name: 'восьмёрка', icon: '∞' }] } ] },
+      { id: 'kolca', title: 'Кольца', color: '#3fd0a0', items: [
+        tg('grani', 'M20 12a8 8 0 11-16 0 8 8 0 0116 0', 'Бит'), tg('tory', '⧉', 'Зерк. кольца'),
+        { type: 'action', icon: '◀', name: 'Назад', click: () => log('Кольца: назад') }, { type: 'action', icon: '▶', name: 'Вперёд', click: () => log('Кольца: вперёд') } ] },
+      { id: 'd3', title: '3D', color: '#a083ff', items: [
+        tg('tory', '◎', 'Торы', 'Торы (3D): строка 1'),
+        { type: 'list', icon: '⧗', name: 'Низ', tip: 'Зеркало вниз (октаэдр)', get: () => st.oktN, set: v => { st.oktN = v; },
+          options: [{ v: 'net', name: 'нет' }, { v: 'vyd', name: 'выдел.' }, { v: 'vse', name: 'все' }] } ] },
+      { id: 'grani', title: 'Грани', color: '#f0b04a', items: [ tg('grani', '◇', 'Грани'), { type: 'action', icon: '⌫', name: 'Стереть', disabled: () => true, tip: 'Сейчас не действует' } ] },
+      { id: 'shariki', title: 'Шарики', color: '#ff7aa8', items: [ tg('shar', '●', 'Шарики') ] },
+      { id: 'zvuk', title: 'Звук', color: '#7fd1ff', items: [ tg('zvuk', '♪', 'Звук') ] },
+    ],
+  });
+  const hb = document.getElementById('help');
+  hb.addEventListener('click', () => { const on = document.documentElement.classList.toggle('gz-help'); hb.classList.toggle('on', on); });
+</script>
+</body>
+</html>
