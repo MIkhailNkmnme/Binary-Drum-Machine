@@ -11929,7 +11929,7 @@ function cgrpInit(){
         // v0.072: без шапок гроздь встаёт за краем предыдущей (с зазором 6 px), а не на шаг шапки.
         let x=r.left+(L.dx||0),y=parent.classList.contains("sfz-grape")?(up?r.top-g.offsetHeight-6:r.bottom+6):r.top+(up?-1:1)*solPanelRowStep(parent);
         nodeSetPos(g,x,y);
-        if(!SOL_PLATES[g.id]){g.classList.add("cfloat");floatPlace(g,x,y);}else nodePlace(g);
+        if(!SOL_PLATES[g.id]){g.classList.add("cfloat");floatPlace(g,x,y);if(g.classList.contains("cmin"))place(g);}else nodePlace(g);
       }
       active.delete(g);done.add(g);
     };
@@ -11999,7 +11999,7 @@ function cgrpInit(){
     g.style.left = (above ? x : x - tr.left).toFixed(2) + "px";
     g.style.top = (above ? y : y - tr.top).toFixed(2) + "px";
   };
-  const place = (g) => {
+  const placeGroup = (g) => {
     if (document.body.classList.contains("sol-mobile")) return;
     if (g.classList.contains("cdrag") || g.classList.contains("pdrag")) return;
     const topPin = Z.cgrpTop && Z.cgrpTop[g.dataset.g];
@@ -12057,12 +12057,33 @@ function cgrpInit(){
        низ заголовка окна (wb — само окно, его верх — это верх заголовка) */
     const x = Math.max(br.left - tr.left, Math.min(p.x, br.right - tr.left - gw));
     const hb = wbTop(tr.left + x, gw);
-    const head=g.querySelector(":scope > .glab"),headOffset=sfzColumnGroup(g)&&head?head.offsetTop:0,keepHeight=sfzColumnGroup(g)&&head?head.offsetHeight:gh;
+    const head=g.querySelector(".sfz-fold-head") || g.querySelector(":scope > .glab"), headRect=head?.getBoundingClientRect();
+    const headOffset=sfzColumnGroup(g)&&headRect?.height?headRect.top-g.getBoundingClientRect().top:0,keepHeight=sfzColumnGroup(g)?(headRect?.height||48):gh;
     let y = Math.max(hb-tr.top-headOffset,Math.min(p.y,br.bottom-tr.top-headOffset-keepHeight));
     /* v0.656, «…чтобы зубцами синхронизировалась группа»: по вертикали группа встаёт на ряды сетки — шагом 24 px от низа полосы вкладок (ряды зубцов
        левой панели выровнены по вкладкам, v0.636); прижатая к меню — ровно под ним */
     if (!sfzColumnGroup(g) && !Z.cgrpLink[g.dataset.g]) { const k = Math.round((tr.top + y - hb) / TZC_H); let y2 = hb - tr.top + k * TZC_H; if (y2 + gh > br.bottom - tr.top + 0.5) y2 -= TZC_H; if (y2 >= hb - tr.top - 0.5) y = y2; }
     floatPlace(g, tr.left + x, tr.top + y);
+  };
+  // Check the visible folded title after every placement, including bottom and axis anchors.
+  let foldRecoverySave = false;
+  const place = g => {
+    placeGroup(g);
+    if(document.body.classList.contains("sol-mobile") || !g.matches(".sfz-grape.cmin.cfloat") || g.matches(".coff,.cdrag,.pdrag") || Z.cgrpFld?.[g.dataset.g]?.z === "head")return;
+    const head=g.querySelector(".sfz-fold-head"), r=head?.getBoundingClientRect();if(!r?.width || !r.height)return;
+    const key=g.dataset.g, f=Z.cgrpFld?.[key], area=f&&solZoneRect(f.z)||wb.getBoundingClientRect();
+    const left=Math.max(0,area.left), right=Math.min(innerWidth,area.right??area.left+area.width), top=Math.max($("top").getBoundingClientRect().bottom,area.top);
+    let bottom=Math.min(innerHeight,area.bottom??area.top+area.height);
+    for(const id of ["coneTransportTempo","sfzBottomGrid","solHeaderDock"]){const bar=$(id),b=bar?.getBoundingClientRect();if(b?.width&&b.height&&r.left<b.right&&r.right>b.left&&b.top>=top+r.height)bottom=Math.min(bottom,b.top);}
+    if(right-left<r.width || bottom-top<r.height)return;
+    const dx=Math.max(left,Math.min(right-r.width,r.left))-r.left,dy=Math.max(top,Math.min(bottom-r.height,r.top))-r.top;
+    if(Math.abs(dx)<.5 && Math.abs(dy)<.5)return;
+    const gr=g.getBoundingClientRect();
+    nodeUnpin(g);delete Z.cgrpLink[key];delete Z.cgrpEdge[key];
+    nodeSetPos(g,gr.left+dx,gr.top+dy);
+    if(f){g.style.left=(parseFloat(g.style.left)+dx)+"px";g.style.top=(parseFloat(g.style.top)+dy)+"px";}
+    else floatPlace(g,gr.left+dx,gr.top+dy);
+    if(!foldRecoverySave){foldRecoverySave=true;queueMicrotask(()=>{foldRecoverySave=false;save();});}
   };
   /* v0.558, по снимку «Аниматрицы» поверх «Вида» — «не давай на друг друга ложить группы»: плавающая группа (поверх холста или на поле строк), налезшая на
      другую больше чем на зубец (9 px — встык и зубцы в зубцы по-прежнему можно), сдвигается на ближайшее место вплотную к ней (справа, слева, снизу или сверху —
@@ -12118,12 +12139,12 @@ function cgrpInit(){
     const fold = document.createElement("button"); fold.type = "button"; fold.className = "gfold"; lab.appendChild(fold);
     const foldUi = () => solFoldButton(fold, !!Z.cgrpMin[g.dataset.g], solPanelName(g));
     const foldToggle = (on = !Z.cgrpMin[g.dataset.g], defer = false) => {
-      const key = g.dataset.g,head=lab.getBoundingClientRect(),free=sfzColumnGroup(g)&&g.parentElement===tl&&!Z.cgrpTop?.[key]&&typeof Z.cgrpPin?.[key]!=="number"&&!Z.cgrpEdge?.[key]&&!Z.cgrpLink?.[key];
+      const key = g.dataset.g,foldHead=g.querySelector(".sfz-fold-head"),anchor=foldHead?._edge||lab,head=(foldHead||lab).getBoundingClientRect(),free=sfzColumnGroup(g)&&g.parentElement===tl&&!Z.cgrpTop?.[key]&&typeof Z.cgrpPin?.[key]!=="number"&&!Z.cgrpEdge?.[key]&&!Z.cgrpLink?.[key];
       if (on) Z.cgrpMin[key] = true; else delete Z.cgrpMin[key];
       g.classList.toggle("cmin", on); g.style.minHeight = ""; foldUi();
       if (defer) return;
       sizeApply(g); cgrpCols();
-      if(free&&head.width){const now=lab.getBoundingClientRect(),r=g.getBoundingClientRect();nodeSetPos(g,r.left+head.left-now.left,r.top+head.top-now.top);}
+      if(free&&head.width){const now=(g.querySelector(".sfz-fold-head")||anchor).getBoundingClientRect(),r=g.getBoundingClientRect();nodeSetPos(g,r.left+head.left-now.left,r.top+head.top-now.top);}
       place(g); linkSync(); save();
     };
     g._solFold = foldToggle;
@@ -12156,7 +12177,7 @@ function cgrpInit(){
     };
     g._sfzBottomPlace = () => {
       const key=g.dataset.g;
-      if(Z.sfzBookUp?.[key] && g.parentElement===tl && !Z.cgrpFld[key] && !Z.cgrpLink[key] && !g.classList.contains("cdrag"))place(g);
+      if(!g._sfzFolding && Z.sfzBookUp?.[key] && g.parentElement===tl && !Z.cgrpFld[key] && !Z.cgrpLink[key] && !g.classList.contains("cdrag"))place(g);
     };
     // v0.068: одиночный и двойной щелчок складывают на месте; переворот — при переносе к полосе. Старый dockToggle оставлен для команд других пультов.
     const dockToggle = () => {
@@ -12435,10 +12456,11 @@ function cgrpInit(){
           anchor = vis.slice().sort((a, b) => (upper ? top(a) - top(b) : bottom(b) - bottom(a)) || px(a, "--grape-x") - px(b, "--grape-x"))[0];
           Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzFoldPair(vis, [sfzGrapeKey(anchor)]).map(sfzGrapeKey);
         } else delete Z.cgrpMin[key];
-        const before = anchor.getBoundingClientRect();
-        g.classList.toggle("cmin", on); g.style.minHeight = "";
-        sfzGrapeSync(g);
-        if (wasFree) { const now = anchor.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
+        const before = (g.querySelector(".sfz-fold-head")||anchor).getBoundingClientRect();
+        g._sfzFolding = true;
+        try { g.classList.toggle("cmin", on); g.style.minHeight = ""; sfzGrapeSync(g); }
+        finally { g._sfzFolding = false; }
+        if (wasFree) { const now = (g.querySelector(".sfz-fold-head")||anchor).getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
         place(g); linkSync(); save();
       }
       g._sfzFoldFlip = foldFlip;   // v0.081: стрелка свёрнутой грозди разворачивает её тем же путём
