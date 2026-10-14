@@ -11816,7 +11816,7 @@ function cgrpInit(){
     if (panel && panel.closest("#w-cone, #paneGrp")) frontPanel(panel);
   };
   document.addEventListener("pointerdown", activatePanel, true);
-  document.addEventListener("mouseover", e => { if (e.target.closest(".sfz-grape-item,.sfz-grape > .glab")) activatePanel(e); }, true);
+  document.addEventListener("mouseover", e => { if (e.target.closest(".sfz-grape-item,.sfz-grape > .glab,.sfz-fold-head")) activatePanel(e); }, true);
   document.addEventListener("focusin", activatePanel, true);
   const onCanvas = g => SOL_PLATES[g.id] ? g.parentElement === wb : g.parentElement === tl;
   const zrec = g => SOL_PLATES[g.id] ? Z[SOL_PLATES[g.id].fld] : Z.cgrpFld[g.dataset.g];   // v0.954: место на площадке (поле строк, левая панель)
@@ -13885,7 +13885,7 @@ function sfzGrapeEdgeTarget(x,y){
   let best=null;
   for(const g of document.querySelectorAll(".sfz-grape")){
     if(!g._sfzStartGroupDrag||g.hidden||g.matches(".coff,.cdrag")||!g.getClientRects().length)continue;
-    for(const item of g.querySelectorAll(".sfz-grape-item")){
+    for(const item of g.querySelectorAll(".sfz-grape-item,.sfz-fold-head")){
       if(!item.getClientRects().length)continue;
       const r=item.getBoundingClientRect();
       if(x<r.left-4||x>r.right+4||y<r.top-4||y>r.bottom+4)continue;
@@ -13903,6 +13903,11 @@ function sfzGrapeEdgeTarget(x,y){
     }
   }
   return best?.g;
+}
+function sfzGrapeName(g){
+  const lab=g.querySelector(":scope > .glab"),own=lab?[...lab.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join("").trim():"";
+  const k=own&&!own.includes(".")?own:(g.getAttribute("aria-label")||g.dataset.g||own);
+  return k.charAt(0).toUpperCase()+k.slice(1);
 }
 let sfzGrapeEdgeReady=false;
 function sfzGrapeEdgeInit(){
@@ -13925,7 +13930,7 @@ function sfzGrapeSync(g){
   const collect = node => {
     const hidden = node.hidden || node.style.display === "none";
     node.classList.toggle("sfz-grape-hidden",hidden);
-    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,.sfz-grape-grip,.sfz-fold-arrow,#coneBallStatus")) return;
+    if (hidden || getComputedStyle(node).display === "none" || node.matches(".tzco,.cgnl,.cgsz,.sfz-grape-icon,.sfz-grape-grip,.sfz-fold-arrow,.sfz-fold-head,#coneBallStatus")) return;
     if (node.matches("button,label,select,textarea,input:not([type=hidden])")) { items.push(node); return; }
     if (node.matches(".glab2") && !node.querySelector("button,label,select,input")) { const empty=!node.textContent.trim(); node.classList.toggle("sfz-grape-empty",empty); if (!empty) { if (!node.classList.contains("sfz-grape-note")) node.classList.add("sfz-grape-note"); items.push(node); } return; }
     if (!node.classList.contains("sfz-grape-wrap")) node.classList.add("sfz-grape-wrap");
@@ -13976,6 +13981,23 @@ function sfzGrapeSync(g){
       }
     }
   }
+  /* Синхрофазотрон v0.093, «группы кнопок — сделай заголовок при свёрнутой группе: один ромб-заголовок, побольше для текста, удлинить в 2 раза»: свёрнутая
+     гроздь — один ромб 96 × 48 с названием группы. Пара крайних ромбов остаётся невидимым якорем под ним (раскрытие держит её на месте, как прежде).
+     Щелчок — развернуть, протяжка — перенести группу, правый щелчок — тоже развернуть; стрелка «куда откроются кнопки» — у заголовка. */
+  if(keep.length&&g.classList.contains("cmin")){
+    let head=box.querySelector(":scope > .sfz-fold-head");
+    if(!head){head=document.createElement("span");head.className="sfz-fold-head";head.setAttribute("role","button");box.appendChild(head);
+      const open=()=>{if(g.classList.contains("cmin")&&g._sfzFoldFlip&&head._edge&&head._edge.isConnected)g._sfzFoldFlip(head._edge);};
+      // [role=button] гроздь сама откладывает нажатие: протяжка — перенос группы, щелчок без сдвига доходит обычным click (после переноса он гасится)
+      head.addEventListener("click",e=>{e.stopPropagation();setTimeout(open,0);});
+      head.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();open();});}
+    const name=sfzGrapeName(g);if(head.textContent!==name)head.textContent=name;
+    const tip="«"+name+"» свёрнута: щелчок — развернуть; тянуть — переместить группу";if(head.title!==tip)head.title=tip;head.setAttribute("aria-label",tip);
+    head._edge=keep[0];g.classList.add("sfz-fold-headed");
+    sfzGrapeStyle(g,"--sfz-fold-w","96px");sfzGrapeStyle(g,"--sfz-fold-h","48px");
+    const arrow=box.querySelector(":scope > .sfz-fold-arrow");
+    if(arrow){const t=TZC_H/(2*Math.sqrt(3)),down=arrow.dataset.dir==="down";sfzGrapeStyle(arrow,"--fa-x",(48-2*t).toFixed(2)+"px");sfzGrapeStyle(arrow,"--fa-y",(down?48+2*t:-4*t).toFixed(2)+"px");}
+  }else{g.classList.remove("sfz-fold-headed");const h=box.querySelector(":scope > .sfz-fold-head");if(h)h.remove();}
   if(!keep.length||!g.classList.contains("cmin")){const a=box.querySelector(":scope > .sfz-fold-arrow");if(a)a.remove();}
   for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
   let cover=g.querySelector(":scope > .sfz-book-cover");
