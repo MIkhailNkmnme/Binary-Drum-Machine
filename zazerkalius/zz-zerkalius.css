@@ -85,13 +85,13 @@
 :is(#zerkStage,#zerkHeaderDock) .zerk-split:hover .zerk-half,:is(#zerkStage,#zerkHeaderDock) .zerk-split:focus-within .zerk-half{opacity:1}
 :is(#zerkStage,#zerkHeaderDock) .zerk-half:hover,:is(#zerkStage,#zerkHeaderDock) .zerk-half:focus-visible{background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 22%,transparent)!important}
 /* Ромб со стрелками при наведении раздвигается вдвое — по ◂ ▸ легче попасть */
-@media(hover:hover){:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:focus-within){width:96px!important;min-width:96px!important;max-width:96px;margin-left:-24px!important;z-index:14;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 26%,var(--bg,#0b0d12))!important}
-:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(.on,.is-selected):is(:hover,:focus-within){background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,var(--bg,#0b0d12))!important}
-:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:focus-within) .zerk-half-minus{padding-left:20px!important}
-:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:focus-within) .zerk-half-plus{padding-right:20px!important}
+@media(hover:hover){:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible)){width:96px!important;min-width:96px!important;max-width:96px;margin-left:-24px!important;z-index:14;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 26%,var(--bg,#0b0d12))!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(.on,.is-selected):is(:hover,:has(:focus-visible)){background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,var(--bg,#0b0d12))!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible)) .zerk-half-minus{padding-left:20px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible)) .zerk-half-plus{padding-right:20px!important}
 /* Раздвинутый ромб: без внутренней рамки и черты между половинками — они накладывались на подпись */
-:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:focus-within)::before{display:none}
-:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:focus-within) .zerk-half-minus{border-right:0!important}}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible))::before{display:none}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible)) .zerk-half-minus{border-right:0!important}}
 #zerkTools fieldset{margin:0;padding:5px;border:1px solid var(--line);min-width:0}
 #zerkTools legend{color:#70e0d7;padding:0 3px}
 #zerkTools .zerk-help{font:10px/1.4 var(--ff,monospace);color:var(--dim);margin:2px 0}
