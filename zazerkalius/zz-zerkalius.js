@@ -223,6 +223,8 @@
     const center=document.createElement('button');center.type='button';center.className='zerk-center';center.textContent=i+1;center.setAttribute('aria-label','Переместить зеркало '+(i+1));
     const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1));
     const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за любое место оси');line.append(center,turn);layer.prepend(axis);layer.append(line);handles.push({line,center,turn,axis});
+    // v0.1172, «у осей кнопки скрывай за битами, но выведи вперёд при наведении на эту ось»: ромбы оси бледные, пока указатель не на её линии или ромбах
+    for(const node of [axis,center,turn]){node.addEventListener('pointerenter',()=>line.classList.add('hot'));node.addEventListener('pointerleave',()=>line.classList.remove('hot'));}
     for(const [node,turning] of [[center,false],[axis,false],[turn,true]]){
       node.title=(turning?'Тяни малую ручку — повернуть зеркало вокруг большого ромба; колесо или стрелки — шаг 5°':'Тяни ромб или линию — перенести зеркало без поворота; щелчок по ромбу — +15°; стрелки — сдвиг')+'; магнит помогает совместить, Alt — без магнита; правый щелчок — включить / выключить';
       node.addEventListener('pointerdown',e=>{
