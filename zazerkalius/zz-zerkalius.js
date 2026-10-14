@@ -81,9 +81,9 @@
   state.png=Object.assign({frame:'scene',width:2048,height:2048,transparent:true},state.png||{});
   function stopPath(m){m.path.enabled=false;delete m.path.anchorX;delete m.path.anchorY;delete m.path.anchorAngle;}
   function preparePath(m){try{pathFns.set(m,sceneMath.compile(m.path));}catch(e){m.path.enabled=false;pathFns.delete(m);}}
-  function pathValue(m){const p=m.path,t=((p.elapsed||0)/p.period+p.phase/360)%1,f=pathFns.get(m);return f?f(t):[0,0,0];}
+  function pathValue(m){const p=m.path,t=(((p.elapsed||0)/p.period+p.phase/360)%1+1)%1,f=pathFns.get(m);return f?f(t):[0,0,0];}
   function anchorPath(m){const p=m.path,v=pathValue(m),ax=p.ampX,ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;p.anchorX=m.x-v[0]*ax;p.anchorY=m.y-v[1]*ay;p.anchorAngle=m.angle-v[2];}
-  for(const m of state.mirrors){const p=m.path;p.period=clamp(Number(p.period)||12,.25,3600);p.phase=clamp(Number(p.phase)||0,0,360);p.ampX=Number.isFinite(p.ampX)?clamp(p.ampX,0,.45):.12;p.ampY=Number.isFinite(p.ampY)?clamp(p.ampY,0,.45):.08;p.elapsed=Math.max(0,Number(p.elapsed)||0);preparePath(m);}
+  for(const m of state.mirrors){const p=m.path;p.period=clamp(Number(p.period)||12,.25,3600);p.phase=clamp(Number(p.phase)||0,0,360);p.ampX=Number.isFinite(p.ampX)?clamp(p.ampX,0,.45):.12;p.ampY=Number.isFinite(p.ampY)?clamp(p.ampY,0,.45):.08;p.elapsed=Number(p.elapsed)||0;preparePath(m);}
 
   let raf = 0, previous = 0, dirty = true, geometry = '', rowsKey = '', drawW = 0, drawH = 0, dpr = 1;
   let persistTimer = 0, notice = '', snapHint = '';
@@ -391,7 +391,7 @@
   const symmetryEditor=editor([]);symmetryFields(symmetryEditor);const symmetrySettings=editDiamond('↕\nмин.','Минимумы симметрии',symmetryEditor,viewGroup);symmetrySettings.style.left='24px';symmetrySettings.style.top='240px';viewGroup.style.setProperty('--grape-height','288px');
   function motionRateFromStep(step){return step<=0?0:.1*Math.pow(10,(clamp(step,1,401)-1)/100);}
   function motionRateStep(rate){return rate<=0?0:clamp(1+100*Math.log10(rate/.1),1,401);}
-  state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,1000);
+  state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,1000);state.motionDir=state.motionDir===-1?-1:1;
   const transport=document.createElement('div');transport.id='zerkMotion';transport.setAttribute('aria-label','Общий пуск включённых осей');stage.append(transport);
   const motionRange=document.createElement('input');motionRange.type='range';motionRange.dataset.zerkArrowed='1';motionRange.min=0;motionRange.max=401;motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-label','Множитель общей скорости включённых осей');transport.append(motionRange);
   const motionPlay=button('▶','Запустить / остановить все включённые оси',()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));if(active){pausedMotion=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}else{state.mirrors.forEach((m,i)=>{if(!m.on)return;if(pausedMotion?.[i]?.path)m.path.enabled=true;else m.spin=true;});pausedMotion=null;}previous=0;changed();},transport);
@@ -402,8 +402,10 @@
   /* v0.1171, «можно ли её одним скриптом тянуть»: вид пульта — общий _js/zz-pult.js / zz-pult.css (образец — Синхрофазотрон), здесь только кнопки и поведение */
   const motionTrack=()=>ZerkPult.trackWidth(transport);
   const motionNudge=d=>{state.motionRate=motionRateFromStep(clamp(Math.round(motionRateStep(state.motionRate))+d,1,401));changed();};
-  const motionBack=button('◀','Медленнее: общая скорость осей ÷1,26',()=>motionNudge(-10),transport);
-  const motionFwd=button('▶','Быстрее: общая скорость осей ×1,26',()=>motionNudge(10),transport);
+  // v0.1180, «кнопку обратного вращения: запоминать и подсвечивать последнюю нажатую стрелку» — как в Синхрофазотроне: ◀ ▶ — направление хода, горит выбранное
+  const motionDirSet=d=>{state.motionDir=d;changed();};
+  const motionBack=button('◀','Обратный ход: все оси крутятся и идут по кривым назад (горит — выбрано)',()=>motionDirSet(-1),transport);
+  const motionFwd=button('▶','Прямой ход: все оси крутятся и идут по кривым вперёд (горит — выбрано)',()=>motionDirSet(1),transport);
   transport.classList.add('zz-pult');motionRange.classList.add('zz-pult-range');motionBack.classList.add('zz-pult-back');motionFwd.classList.add('zz-pult-fwd');motionPlay.classList.add('zz-pult-play');motionValue.classList.add('zz-pult-value');
   function motionLayout(){ZerkPult.sync(transport,motionRateStep(state.motionRate)/401);}
   new ResizeObserver(()=>motionLayout()).observe(transport);
@@ -411,7 +413,7 @@
   const playAction=motionPlay.onclick;motionPlay.onclick=e=>{if(performance.now()<(motionPlay._dragUntil||0))return;playAction(e);};
   motionPlay.title='Щелчок — общий пуск / пауза; перетаскивание ромба — общая скорость';
   motionPlay.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();e.stopPropagation();motionPlay.setPointerCapture(e.pointerId);const sx=e.clientX,step=motionRateStep(state.motionRate);let moved=false;const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.abs(ev.clientX-sx)>3)moved=true;if(moved){state.motionRate=motionRateFromStep(clamp(step+(ev.clientX-sx)*401/motionTrack(),0,401));motionPlay._dragUntil=performance.now()+400;changed();}};const end=ev=>{if(ev.pointerId!==e.pointerId)return;motionPlay.removeEventListener('pointermove',move);motionPlay.removeEventListener('pointerup',end);motionPlay.removeEventListener('pointercancel',end);if(motionPlay.hasPointerCapture(e.pointerId))motionPlay.releasePointerCapture(e.pointerId);};motionPlay.addEventListener('pointermove',move);motionPlay.addEventListener('pointerup',end);motionPlay.addEventListener('pointercancel',end);});
-  compactUpdates.push(()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));motionPlay.textContent=active?'Ⅱ':'▶';motionPlay.setAttribute('aria-pressed',String(active));motionLayout();motionValue.textContent='×'+Number(state.motionRate.toPrecision(3));motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-valuetext',motionValue.textContent);});
+  compactUpdates.push(()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));motionPlay.textContent=active?'Ⅱ':'▶';motionBack.classList.toggle('on',state.motionDir<0);motionFwd.classList.toggle('on',state.motionDir>0);motionBack.setAttribute('aria-pressed',String(state.motionDir<0));motionFwd.setAttribute('aria-pressed',String(state.motionDir>0));motionPlay.setAttribute('aria-pressed',String(active));motionLayout();motionValue.textContent='×'+Number(state.motionRate.toPrecision(3));motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-valuetext',motionValue.textContent);});
   let pausedMotion=null;
   stage.addEventListener('dblclick',e=>{if(e.target.closest('#zerkTools,.zerk-grape,#zerkZoom,#zerkMotion,.zerk-turn'))return;e.preventDefault();e.stopPropagation();if(pausedMotion){pausedMotion.forEach((v,i)=>{if(!state.mirrors[i].on)return;if(v.spin)state.mirrors[i].spin=true;if(v.path)state.mirrors[i].path.enabled=true;});pausedMotion=null;}else{const running=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));if(!running.some(v=>v.spin||v.path))return;pausedMotion=running;state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}previous=0;controls.forEach((c,i)=>{c.spin.textContent=state.mirrors[i].spin?'Ⅱ':'▶';c.spin.setAttribute('aria-pressed',String(state.mirrors[i].spin));});changed();});
   const viewMatrix=()=>{const a=state.viewAngle*pi/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom;return [c,s,-s,c,drawW*(.5+state.pan[0])-c*drawW/2+s*drawH/2,drawH*(.5+state.pan[1])-s*drawW/2-c*drawH/2];};
@@ -841,8 +843,8 @@
   }
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
-      if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1);const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
-      else if(m.spin)turnMirror(m,m.speed*pi/180*dt*(state.motionRate??1));
+      if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1)*state.motionDir;const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
+      else if(m.spin)turnMirror(m,m.speed*pi/180*dt*(state.motionRate??1)*state.motionDir);
     }
     const beforePend=pendulum?.revision,pendMoving=advancePendulum(now);if(spinning||dirty||!pendMoving||beforePend!==pendulum?.revision)render();if(spinning||pendMoving)raf=requestAnimationFrame(tick);else previous=0;
   }
