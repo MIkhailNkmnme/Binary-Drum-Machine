@@ -14106,7 +14106,7 @@ function sfzGrapeSync(g){
       if(!oh){oh=document.createElement("span");oh.className="sfz-unfold-head";oh.setAttribute("role","button");box.prepend(oh);
         oh.addEventListener("click",e=>{e.stopPropagation();setTimeout(()=>{if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);},0);});
         oh.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);});}
-      oh._edge=first;{const nm=sfzGrapeName(g);if(oh.textContent!==nm)oh.textContent=nm;}   /* v0.102: в шапке раскрытой грозди — её название, как «Холст» у Зеркалиуса */const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
+      oh._edge=first;   /* v0.102: в шапке раскрытой грозди — её название, как «Холст» у Зеркалиуса */const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
       sfzGrapeStyle(oh,"--uh-x",Math.min(...pair.map(el=>px(el,"--grape-x")))+"px");   // там же, где стоял у свёрнутой: левый верх пары
       sfzGrapeStyle(oh,"--uh-y",Math.min(...pair.map(el=>px(el,"--grape-y")))-24+"px");   // поднят на полромба: верхняя половина видна над первым ромбом
     }else if(oh)oh.remove();}
@@ -14114,7 +14114,7 @@ function sfzGrapeSync(g){
   for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
   let cover=g.querySelector(":scope > .sfz-book-cover");
   if(!cover){cover=document.createElement("button");cover.type="button";cover.className="sfz-book-cover";cover.textContent="▴";cover.title="Закрыть ромбокнигу: сжать гроздь между крышками";cover.setAttribute("aria-label","Свернуть группу "+g.dataset.g);cover.addEventListener("pointerdown",e=>e.stopPropagation());cover.onclick=e=>{e.stopPropagation();if(g._solFold)g._solFold(true);};g.appendChild(cover);}
-  const mark=up?"▾":"▴";if(cover.textContent!==mark)cover.textContent=mark;
+  const mark=sfzGrapeName(g);if(cover.textContent!==mark)cover.textContent=mark;   // v0.103, «заголовки не встали»: на крышке раскрытой грозди — её название, как «Холст» у Зеркалиуса
   const lab = g.querySelector(":scope > .glab");
   if (lab) {
     let turn=lab.querySelector(":scope > .sfz-book-direction");
