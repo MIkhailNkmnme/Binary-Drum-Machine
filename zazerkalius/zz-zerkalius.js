@@ -283,7 +283,7 @@
   const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
   compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
   let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
-  for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())diamond(oldActions[i],caption,rowGroup);actions.remove();
+  for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())if(i>1)diamond(oldActions[i],caption,rowGroup);actions.remove();   // v0.1158, «эту кнопку убери», «эту тоже»: «≡ копия» (строки поля — в свои) и «↦ в поле» (строки узора — в поле) в грозди не показываются
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
   buildPendulumEditor(rowGroup);
