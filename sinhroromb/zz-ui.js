@@ -13943,7 +13943,7 @@ function sfzGrapeLayout(box, items, name, up=false){
     let x, top;
     if (editor || straight) { x = editor ? axis - w / 2 : axis - 24; top = y; }
     else { let j = lat % 3; const next = items.slice(items.indexOf(item) + 1).find(n => !n.querySelector?.('input[type="range"]')), last = !next || isEditor(next);
-      if (j === 0 && last && lat) j = 2;
+      /* v0.105, «выровняй гроздь»: одинокий последний не сдвигается в середину — встаёт в решётку без дыры */
       x = axis - 24 + [0, 48, 24][j]; top = y + Math.floor(lat / 3) * cell + (j === 2 ? cell / 2 : 0); lat = last ? 0 : lat + 1;
       if (last) y = top + cell; }
 
@@ -14107,8 +14107,8 @@ function sfzGrapeSync(g){
         oh.addEventListener("click",e=>{e.stopPropagation();setTimeout(()=>{if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);},0);});
         oh.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);});}
       oh._edge=first;{const nm=sfzGrapeName(g);if(oh.textContent!==nm)oh.textContent=nm;}   /* v0.104, «вот так надо, как в Зеркалиусе»: широкий ромб-шапка с названием в выемке над двумя верхними ромбами */   /* v0.102: в шапке раскрытой грозди — её название, как «Холст» у Зеркалиуса */const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
-      sfzGrapeStyle(oh,"--uh-x",Math.min(...pair.map(el=>px(el,"--grape-x")))+"px");   // там же, где стоял у свёрнутой: левый верх пары
-      sfzGrapeStyle(oh,"--uh-y",Math.min(...pair.map(el=>px(el,"--grape-y")))-24+"px");   // поднят на полромба: верхняя половина видна над первым ромбом
+      {const cells=vis.filter(el=>!el.classList.contains("sfz-grape-editor"));sfzGrapeStyle(oh,"--uh-x",Math.min(...(cells.length?cells:vis).map(el=>px(el,"--grape-x")))+"px");}   // там же, где стоял у свёрнутой: левый верх пары
+      sfzGrapeStyle(oh,"--uh-y",Math.min(...vis.map(el=>px(el,"--grape-y")))-24+"px");   // поднят на полромба: верхняя половина видна над первым ромбом
     }else if(oh)oh.remove();}
   if(!keep.length||!g.classList.contains("cmin")){const a=box.querySelector(":scope > .sfz-fold-arrow");if(a)a.remove();}
   for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
