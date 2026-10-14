@@ -140,7 +140,6 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 .zerk-mirror .zerk-center:focus,.zerk-mirror .zerk-turn:focus{outline:2px solid #fff;outline-offset:-6px;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 62%,#050806);color:#fff}
 @media(max-width:760px){.zerk-axis{height:40px}}
 .zerk-mirror button{z-index:1}
-.zerk-mirror .zerk-center{display:none!important}
 
 /* Groups may live on the upper window line without replacing their saved canvas positions. */
 #w-zerkalius>.whead{position:relative;overflow:visible;z-index:25}
@@ -209,3 +208,8 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 #zerkFooterDock .zerk-docked .zerk-grape-body{bottom:24px;left:24px;margin:0}
 #zerkFooterDock .zerk-docked .zerk-header-speed{top:22px;transform:rotate(-45deg)}
 @media(max-width:760px){:is(#zerkStage,#zerkHeaderDock) .zerk-speed-group,#zerkHeaderDock .zerk-grape.zerk-docked{width:96px;flex-basis:96px}}
+
+/* v0.1147: one centre diamond and a smaller rotation handle, as in the original mirror. */
+#zerkMirrors .zerk-mirror .zerk-center{display:flex;visibility:visible;pointer-events:auto}
+#zerkMirrors .zerk-mirror .zerk-turn{width:24px;height:24px;top:4px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-size:16px}
+@media(max-width:760px){#zerkMirrors .zerk-mirror .zerk-turn{width:36px;height:36px;top:-2px}}

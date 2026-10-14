@@ -10,7 +10,7 @@ test('shared axis speed supports zero, x1000 and existing saved rates',()=>{
   for(const rate of [0,.1,.5,1,2,10,100,1000])assert(Math.abs(ctx.motionRateFromStep(ctx.motionRateStep(rate))-rate)<1e-9);
   for(let step=1;step<=401;step++)assert(ctx.motionRateFromStep(step)>=ctx.motionRateFromStep(step-1));
 });
-function functions(names){const ctx={sceneMath,drawW:1000,drawH:800,state:{bitsOnly:false,netDigits:true,font:'monospace',net:{up:'#4dd4ff',down:'#e8b64a'}},fieldAxisTargets:()=>[],visibleWorld:()=>[-Infinity,-Infinity,Infinity,Infinity]};vm.createContext(ctx);for(const name of names){const begin=source.indexOf('  function '+name+'('),next=source.indexOf('\n  function ',begin+1),win=source.indexOf('\n  window.',begin+1),end=win>=0&&win<next?win:next;assert(begin>=0);vm.runInContext(source.slice(begin,end),ctx);}return ctx;}
+function functions(names){const ctx={ZZBitSymmetry:require('../_js/bit-symmetry.js'),sceneMath,drawW:1000,drawH:800,state:{bitsOnly:false,netDigits:true,font:'monospace',net:{up:'#4dd4ff',down:'#e8b64a'}},fieldAxisTargets:()=>[],visibleWorld:()=>[-Infinity,-Infinity,Infinity,Infinity]};vm.createContext(ctx);for(const name of names){const begin=source.indexOf('  function '+name+'('),next=source.indexOf('\n  function ',begin+1),win=source.indexOf('\n  window.',begin+1),end=win>=0&&win<next?win:next;assert(begin>=0);vm.runInContext(source.slice(begin,end),ctx);}return ctx;}
 const math=functions(['nearestBit','magneticPosition','netCell','netFaces']);
 
 test('rotation keeps either anchor and square spacing, including signed spans and angle wrap',()=>{
@@ -24,15 +24,21 @@ test('rotation keeps either anchor and square spacing, including signed spans an
   }
 });
 
-test('sliding each mirror carries every attached copy by the same vector',()=>{
-  const geometry=require('../_js/mirror-geometry.js'),ctx=functions(['translateMirror','reflectedCopies']);ctx.ZZMirrorGeometry=geometry;
-  ctx.state.mirrors=[.1,1.1,2.3].map((angle,i)=>({x:.4+i*.06,y:.5,angle,on:true,grip:null,gripAngle:angle,turnGrip:.13,figureOffset:[.01,-.02],copyOffsets:Array.from({length:8},()=>[0,0])}));
-  for(const m of ctx.state.mirrors){const index=ctx.state.mirrors.indexOf(m),before=structuredClone(m),copies=ctx.reflectedCopies(),dx=37*Math.cos(m.angle),dy=37*Math.sin(m.angle);
-    ctx.translateMirror(m,before,m.x+dx/1000,m.y+dy/800);const after=ctx.reflectedCopies();
-    for(let k=0;k<copies.length;k++){const expected=copies[k].mask&(1<<index)?[dx,dy]:[0,0];for(const p of [[0,0],[137,-83]]){const a=sceneMath.point(copies[k].matrix,...p),b=sceneMath.point(after[k].matrix,...p);assert(Math.hypot(...b.map((v,i)=>v-a[i]-expected[i]))<1e-9);}}
-    assert.equal(m.angle,before.angle);assert.equal(m.turnGrip,before.turnGrip);
+test('classic mirror fixes its axis and reflects twice to the original, ignoring old glide offsets',()=>{
+  const ctx=functions(['translateMirror','reflectedCopies']);ctx.ZZMirrorGeometry=require('../_js/mirror-geometry.js');
+  for(const angle of [0,.1,Math.PI/4,Math.PI/2,2.3]){
+    const m={x:.4,y:.5,angle,on:true,figureOffset:[.1,-.2],copyOffsets:Array.from({length:8},()=>[.3,.4])};ctx.state.mirrors=[m];
+    const matrix=ctx.reflectedCopies()[1].matrix;
+    for(const distance of [-200,0,137]){const p=[400+distance*Math.cos(angle),400+distance*Math.sin(angle)],q=sceneMath.point(matrix,...p);assert(Math.hypot(q[0]-p[0],q[1]-p[1])<1e-9);}
+    const p=[123,-87],q=sceneMath.point(matrix,...sceneMath.point(matrix,...p));assert(Math.hypot(q[0]-p[0],q[1]-p[1])<1e-9);
+    const before=structuredClone(m),point=sceneMath.point(matrix,137,-83);
+    ctx.translateMirror(m,before,m.x+37*Math.cos(angle)/1000,m.y+37*Math.sin(angle)/800);
+    const along=sceneMath.point(ctx.reflectedCopies()[1].matrix,137,-83);assert(Math.hypot(along[0]-point[0],along[1]-point[1])<1e-9);
+    const dx=-19*Math.sin(angle),dy=19*Math.cos(angle);ctx.translateMirror(m,before,before.x+dx/1000,before.y+dy/800);
+    const normal=sceneMath.point(ctx.reflectedCopies()[1].matrix,137,-83);assert(Math.hypot(normal[0]-point[0]-2*dx,normal[1]-point[1]-2*dy)<1e-9);assert.equal(m.angle,angle);
   }
 });
+
 test('canvas centre wins over a more distant bit',()=>{const r=math.magneticPosition(500,400,[],1,[[502,406]]);assert.equal(r.label,'центр холста');assert.equal(r.x,500);assert.equal(r.y,400);});
 test('a genuinely closer bit remains magnetic',()=>{const r=math.magneticPosition(507,400,[],1,[[507,401]]);assert.equal(r.label,'центр бита');assert.equal(r.x,507);assert.equal(r.y,401);});
 test('axis restriction skips off-axis bits and finds the next valid bit',()=>{const r=math.magneticPosition(701,600,[],1,[[701,601],[705,600]],{x:700,y:600,angle:0});assert.equal(r.x,705);assert.equal(r.y,600);});
@@ -40,7 +46,7 @@ test('snap threshold remains ten screen pixels while zoomed',()=>{const r=math.m
 test('movable field axes attract a pivot at their intersection',()=>{math.fieldAxisTargets=()=>[{x:.7,y:.6,angle:0},{x:.7,y:.6,angle:Math.PI/2}];const r=math.magneticPosition(704,484,[],1,[]);assert.equal(r.x,700);assert.equal(r.y,480);assert.equal(r.snapped,true);math.fieldAxisTargets=()=>[];});
 test('two axis points keep the opposite anchor exact across angle wrapping',()=>{for(const [p,q] of [[[500,400],[600,500]],[[500,400],[400,300]],[[100,100],[100,500]],[[100,500],[100,100]]]){const a=sceneMath.axisFromPoints(p,q,1000,800),span=a.turnGrip*Math.hypot(1000,800);assert.equal(a.x*1000,p[0]);assert.equal(a.y*800,p[1]);assert(Math.hypot(a.x*1000+span*Math.cos(a.angle)-q[0],a.y*800+span*Math.sin(a.angle)-q[1])<1e-9);}});
 test('coincident axis points do not corrupt the angle',()=>{assert.equal(sceneMath.axisFromPoints([1,1],[1,1],1000,800),null);});
-test('the second square is an exact magnetic target',()=>{const r=math.magneticPosition(700,300,[{x:.5,y:.5,angle:Math.atan2(-100,200),turnGrip:Math.hypot(200,100)/Math.hypot(1000,800)}],1,[]);assert.equal(r.snapped,true);assert.equal(r.label,'точка оси');assert(Math.abs(r.x-700)<1e-9);assert(Math.abs(r.y-300)<1e-9);});
+test('a point on another mirror remains an exact magnetic target',()=>{const r=math.magneticPosition(700,300,[{x:.5,y:.5,angle:Math.atan2(-100,200),turnGrip:Math.hypot(200,100)/Math.hypot(1000,800)}],1,[]);assert.equal(r.snapped,true);assert(Math.abs(r.x-700)<1e-9);assert(Math.abs(r.y-300)<1e-9);});
 test('rhombi and edge triangles tile the entire face',()=>{const f={P:[[0,0],[1,0],[0,1]]},area=p=>Math.abs(p.reduce((a,v,i)=>{const w=p[(i+1)%p.length];return a+v[0]*w[1]-w[0]*v[1]},0))/2;for(const R of [1,2,3,8,64,71]){let sum=0;for(let r=0;r<R;r++)for(let k=0;k<=r;k++){const cell=math.netCell(f,r,k,R);sum+=area(cell.P);assert.equal(cell.P.length,r===R-1?3:4);for(const p of cell.P)assert(p[0]>=0&&p[1]>=0&&p[0]+p[1]<=1+1e-12);}assert(Math.abs(sum-.5)<1e-12);}});
 test('digit switch controls numbers with filled cells and with digits-only view',()=>{const calls=[],ctx={globalAlpha:1,beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fill(){},save(){},restore(){},translate(){},scale(){},fillText(v){calls.push(v);}},model={faces:[{up:true,P:[[0,0],[1,0],[0,1]]}]};for(const bitsOnly of [false,true])for(const digits of [false,true]){math.state.bitsOnly=bitsOnly;math.state.netDigits=digits;calls.length=0;math.netFaces(ctx,model,[[1]],100,false);assert.equal(calls.length,digits?1:0);}});
 test('row lattice holds every bit of triangular and uneven rows',()=>{
