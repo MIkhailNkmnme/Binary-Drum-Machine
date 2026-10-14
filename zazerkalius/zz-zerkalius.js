@@ -134,6 +134,12 @@
   const zerkOverlaps=el=>{   // v0.1166: сравниваются сами ромбы (шапка и видимые ромбы тела), а не прямоугольники — группы можно ставить вплотную ромб к ромбу
     const pts=g=>[g.querySelector(':scope > .smh'),...g.querySelectorAll(':scope > .zerk-grape-body > *')].filter(n=>n&&n.getClientRects().length).map(n=>{const q=n.getBoundingClientRect();return [q.left+q.width/2,q.top+q.height/2,(q.width+q.height)/4];});
     const mine=pts(el);return [...stage.querySelectorAll(':scope > .zerk-grape')].some(g=>g!==el&&g.getClientRects().length&&pts(g).some(([x,y,h])=>mine.some(([a,b,k])=>Math.abs(x-a)+Math.abs(y-b)<h+k-8)));};
+  /* v0.1167, «вот так тоже магнитить»: рядом с другой гроздью ромбы встают в её решётку — ромб в ромб. Центры всех ромбов грозди лежат на сетке 24 px
+     со сдвигом шахматкой, поэтому верхний левый угол грозди ставится в точку чужой решётки (a·24, b·24) с чётной суммой a+b. */
+  const zerkLatticeSnap=(el,x,y)=>{let best=null,bd=13;for(const g of stage.querySelectorAll(':scope > .zerk-grape')){if(g===el||!g.getClientRects().length)continue;const q=g.getBoundingClientRect();
+      if(Math.abs(x-q.left)>200||Math.abs(y-q.top)>280)continue;const fa=(x-q.left)/24,fb=(y-q.top)/24;
+      for(const a of [Math.floor(fa),Math.ceil(fa)])for(const b of [Math.floor(fb),Math.ceil(fb)]){if((a+b)&1)continue;const px=q.left+24*a,py=q.top+24*b,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=[px,py];}}}
+    return best||[x,y];};
   const plateSetup=el=>{
     const c=SOL_PLATES[el.id];
     const hd=el.querySelector('.smh');hd.title='Тяни гроздь правой кнопкой за любой ромб; шапку можно тянуть любой кнопкой. К верхней или нижней полосе — закрепить; обратно на холст — открепить; − / + — свернуть';
@@ -147,7 +153,7 @@
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-start[0],ev.clientY-start[1])<4)return;
         ev.preventDefault();ev.stopPropagation();el._solDragUntil=performance.now()+400;
         if(!moved){moved=true;handle.setPointerCapture(e.pointerId);if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];handle.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
-        const [x,y]=plateSnap(el,r0,ev.clientX-start[0],ev.clientY-start[1]),host=stage.getBoundingClientRect();
+        const [x,y]=zerkLatticeSnap(el,...plateSnap(el,r0,ev.clientX-start[0],ev.clientY-start[1])),host=stage.getBoundingClientRect();
         /* v0.1141, «подтупливает при занесении в верхнюю полоску»: холст режет всё за своим краем, и гроздь, поднесённая к полосе, прижималась к его верху и
            стояла, пока не отпустишь. Теперь над полосой она сразу встаёт в неё и едет за указателем; ушёл с полосы — снова на холсте. */
         const target=el._zerkDock?dockTarget(ev):null;
