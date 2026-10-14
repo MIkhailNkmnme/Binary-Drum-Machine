@@ -15,14 +15,15 @@
    значения и списки — во всю ширину под ними. */
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const isPath = s => /^[Mm][\d\s.,-]/.test(s || '');
   function icon(s) {
     const i = document.createElement('span'); i.className = 'gz-ic';
-    if (isPath(s)) { const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 24 24'); const p = document.createElementNS(NS, 'path'); p.setAttribute('d', s); svg.append(p); i.append(svg); }
+    if (/^url\(/.test(s || '')) { const m = el('span', 'gz-mask'); m.style.setProperty('--gz-mask', s); i.append(m); }
+    else if (isPath(s)) { const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 24 24'); const p = document.createElementNS(NS, 'path'); p.setAttribute('d', s); svg.append(p); i.append(svg); }
     else i.textContent = s || '';
     return i;
   }
-  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 
   let tipEl = null;
@@ -74,7 +75,7 @@
           const a = (cls, t, d) => { const s = el('span', 'gz-a ' + cls, t); s.addEventListener('click', e => { e.stopPropagation(); it.step(d); refresh(); }); return s; };
           const mid = el('span', 'gz-mid'), v = el('span', 'gz-v'), z = el('span', 'gz-z', '0');
           z.title = 'Сбросить'; z.addEventListener('click', e => { e.stopPropagation(); it.reset && it.reset(); refresh(); });
-          mid.append(el('span', 'gz-nm', it.name), v, z);
+          mid.append(el('span', 'gz-nm', it.name), v); if (it.reset) mid.append(z);
           b.append(a('gz-a2', '◂◂', -2), a('', '◂', -1), mid, a('', '▸', 1), a('gz-a2', '▸▸', 2));
           refreshers.push(() => { v.textContent = it.get(); });
           wide.append(b);
@@ -86,17 +87,25 @@
           b.addEventListener('click', () => {
             if (ladder && ladder.owner === b) return closeLadder();
             closeLadder(); ladder = el('div', 'gz-ladder'); ladder.owner = b; ladder.style.setProperty('--c', g.color || '#5aa9ff');
-            const r = b.getBoundingClientRect(), rr = root.getBoundingClientRect();
-            ladder.style.left = (r.right - rr.left + 4) + 'px'; ladder.style.top = (r.top - rr.top) + 'px';
+            const r = b.getBoundingClientRect();
+            ladder.style.left = (r.right + 4) + 'px'; ladder.style.top = Math.max(4, Math.min(innerHeight - it.options.length * 27 - 4, r.top)) + 'px';
             for (const o of it.options) {
               const ob = el('div', 'gz-hx' + (o.v === it.get() ? ' gz-on' : '')); ob.append(icon(o.icon || '·'), el('span', 'gz-nm', o.name));
               ob.addEventListener('click', () => { it.set(o.v); closeLadder(); refresh(); }); ladder.append(ob);
             }
-            root.append(ladder);
+            document.body.append(ladder);
           });
           wide.append(b);
+        } else if (it.type === 'color') {
+          const sw = el('input', 'gz-color'); sw.type = 'color'; sw.title = it.tip || it.name;
+          sw.addEventListener('input', () => { it.set(sw.value); refresh(); });
+          const dot = el('span', 'gz-dot');
+          b.append(icon(it.icon), el('span', 'gz-nm', it.name), dot, sw);
+          refreshers.push(() => { const c = it.get(); if (document.activeElement !== sw) sw.value = c; dot.style.background = c; });
+          cells.push(b); soty.append(b);
         } else {
-          b.append(icon(it.icon), el('span', 'gz-nm', it.name));
+          const nm = el('span', 'gz-nm', it.name); b.append(icon(it.icon), nm);
+          if (it.nameNow) refreshers.push(() => { const n = it.nameNow(); if (nm.textContent !== n) nm.textContent = n; });
           b.addEventListener('click', () => { if (it.disabled && it.disabled()) return; it.click && it.click(); refresh(); });
           if (it.type === 'toggle') refreshers.push(() => b.classList.toggle('gz-on', !!it.on()));
           if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));
@@ -139,8 +148,81 @@
 
     function refresh() { for (const f of refreshers) f(); }
     setOpen(openId);
-    return { el: root, refresh, open: id => setOpen(id), close: () => setOpen(null) };
+    return { el: root, refresh, open: id => setOpen(id), close: () => setOpen(null), destroy: () => { closeLadder(); tipHide(); root.remove(); } };
   }
 
-  window.ZerkGrozd = { version: 1, rail };
+
+  /* Перевод готовой страницы на рейку: рейка рисует свои кнопки, а щелчок передаёт настоящей кнопке страницы,
+     так что вся логика страниц остаётся как была. Старые грозди прячутся (класс gz-adopted).
+     ZerkGrozd.adopt({ host, key, groups, items, title(g), color(g), fold(g, open) }) */
+  const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const longOf = e => norm(e.getAttribute('title') || e.dataset.zzTip || e.dataset.t0 || e.getAttribute('aria-label') || '');
+  const hiddenEl = e => e.hidden || e.classList.contains('sfz-grape-hidden') || e.classList.contains('sfz-grape-empty') || e.style.display === 'none';
+  function nameOf(e) {
+    const mi = window.ZerkMenuIcons; let n = '';
+    try { n = mi && mi.shortOf ? mi.shortOf(e) : ''; } catch {}
+    if (!n || /^действие$/i.test(n)) n = norm(e.textContent).replace(/[◂▸]/g, '');
+    return n.length > 16 ? n.slice(0, 15) + '…' : n;
+  }
+  function iconOf(e) {
+    const m = e.style.getPropertyValue('--mi-icon'); if (m) return m.trim();
+    const t = norm(e.textContent); const lead = t.match(/^[^\p{L}\p{N}\s]+/u); return lead ? lead[0].slice(0, 2) : '';
+  }
+  const uids = new WeakMap(); let uidN = 0; const uid = e => { if (!uids.has(e)) uids.set(e, ++uidN); return uids.get(e); };
+  function fire(inp) { inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true })); }
+  function itemOf(e) {
+    const tip = longOf(e), name = nameOf(e);
+    if (e._fan) { const opts = () => [...e._fan.children];   // главный ромб с лесенкой вариантов (Зеркалиус)
+      return { type: 'list', icon: iconOf(e), name, tip, get: () => opts().findIndex(o => o.matches('.on,[aria-pressed="true"]')), set: v => opts()[v] && opts()[v].click(),
+        options: opts().map((o, k) => ({ v: k, name: nameOf(o), icon: iconOf(o) })) }; }
+    if (e.matches('.zerk-split')) { const h = c => e.querySelector(':scope > .zerk-half-' + c), z = e.querySelector(':scope > .zerk-split-zero');   // ромб ◂ значение ▸
+      return { type: 'value', name, tip, get: () => norm(e.querySelector('.zerk-split-value')?.textContent).replace(/\s+/g, ' '),
+        step: d => { const b = Math.abs(d) === 2 ? h(d < 0 ? 'minus2' : 'plus2') : null; if (b) b.click(); else h(d < 0 ? 'minus' : 'plus')?.click(); },
+        reset: z ? () => z.click() : null }; }
+    const inp = e.matches('input,select') ? e : e.querySelector('input,select');
+    if (inp && inp.tagName === 'SELECT') return { type: 'list', icon: iconOf(e), name, tip, get: () => inp.value, set: v => { inp.value = v; fire(inp); },
+      options: [...inp.options].map(o => ({ v: o.value, name: norm(o.textContent) })) };
+    if (inp && (inp.type === 'range' || inp.type === 'number')) {
+      const st = () => parseFloat(inp.step) || 1, lo = () => inp.min === '' ? -Infinity : +inp.min, hi = () => inp.max === '' ? Infinity : +inp.max;
+      const put = v => { v = Math.max(lo(), Math.min(hi(), v)); const d = (String(inp.step).split('.')[1] || '').length; inp.value = d ? v.toFixed(d) : String(Math.round(v)); fire(inp); };
+      const shown = () => { const t = norm(e.textContent).replace(/[◂▸]/g, ' ').trim(); const m = t.match(/[-−+]?\d[\d.,]*\s*\S*$/); return m && inp.type === 'range' ? m[0] : inp.value; };
+      return { type: 'value', name: name.replace(/[\d.,]+.*$/, '').trim() || name, tip, get: shown,
+        step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .05 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); },
+        reset: () => put(Math.max(lo(), Math.min(hi(), 0))) };
+    }
+    if (inp && inp.type === 'color') return { type: 'color', icon: iconOf(e), name, tip, get: () => inp.value, set: v => { inp.value = v; fire(inp); } };
+    if (inp && inp.type === 'checkbox') return { type: 'toggle', icon: iconOf(e), name, tip, on: () => inp.checked, click: () => inp.click(), disabled: () => inp.disabled };
+    return { type: 'toggle', icon: iconOf(e), name, nameNow: () => nameOf(e), tip,
+      on: () => e.matches('.on,.sel,.act,.active,[aria-pressed="true"]'), click: () => e.click(), disabled: () => !!e.disabled };
+  }
+  function adopt(cfg) {
+    const host = typeof cfg.host === 'string' ? document.querySelector(cfg.host) : cfg.host; if (!host) return null;
+    const gid = g => g.dataset.g || g.id;
+    const dock = el('div', 'gz-dock'); if (cfg.style) Object.assign(dock.style, cfg.style); host.append(dock);
+    let cur = null, sig = '', live = [];
+    const groupsNow = () => [...document.querySelectorAll(cfg.groups)].filter(g => !g.matches(cfg.skip || '.coff'));
+    const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
+    function build() {
+      const gs = groupsNow().map(g => ({ g, items: itemsOf(g) })).filter(x => x.items.length);
+      const now = gs.map(x => gid(x.g) + ':' + x.items.map(uid).join(',')).join('|');
+      if (now === sig) return false; sig = now;
+      if (cur) cur.destroy();
+      for (const g of live) { g.classList.remove('gz-adopted'); g.style.removeProperty('display'); }
+      live = gs.map(x => x.g); for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
+      cur = make(gs);
+      return true;
+    }
+    function make(gs) {
+      return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (x && cfg.fold) cfg.fold(x.g, open); },
+        groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g), items: x.items.map(itemOf) })) });
+    }
+    build();
+    // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
+    if (cfg.fold) { const open = cur && [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id)[0]; for (const g of live) cfg.fold(g, gid(g) === open); }
+    const help = () => { const b = cfg.helpButton && document.querySelector(cfg.helpButton); document.documentElement.classList.toggle('gz-help', !!b && b.classList.contains('on')); };
+    setInterval(() => { help(); if (!build() && cur) cur.refresh(); }, 400);
+    return { dock, rebuild: () => { sig = ''; build(); } };
+  }
+
+  window.ZerkGrozd = { version: 2, rail, adopt };
 })();
