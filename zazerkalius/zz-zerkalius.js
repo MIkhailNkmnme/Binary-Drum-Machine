@@ -130,6 +130,8 @@
     el.style.left=clamp(xy[0],0,Math.max(0,stage.clientWidth-el.offsetWidth))+'px';
     el.style.top=clamp(xy[1],0,Math.max(0,stage.clientHeight-el.offsetHeight))+'px';
   }
+  // v0.1164: гроздь на холсте легла на другую (прямоугольники пересеклись больше чем на 6 px) — после отпускания она возвращается на прежнее место
+  const zerkOverlaps=el=>{const r=el.getBoundingClientRect();return [...stage.querySelectorAll(':scope > .zerk-grape')].some(g=>{if(g===el||!g.getClientRects().length)return false;const q=g.getBoundingClientRect();return Math.min(r.right,q.right)-Math.max(r.left,q.left)>6&&Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top)>6;});};
   const plateSetup=el=>{
     const c=SOL_PLATES[el.id];
     const hd=el.querySelector('.smh');hd.title='Тяни гроздь правой кнопкой за любой ромб; шапку можно тянуть любой кнопкой. К верхней или нижней полосе — закрепить; обратно на холст — открепить; − / + — свернуть';
@@ -139,7 +141,7 @@
       const diamond=e.target.closest('.zerk-diamond,.zerk-header-number'),head=e.target.closest('.smh');   // номер зеркала в шапке — тоже ручка: щелчок без сдвига по-прежнему включает ось
       if(![0,2].includes(e.button)||(!diamond&&!head)||e.target.closest('input[type=range],input[type=number],select,textarea')||(!diamond&&e.target.closest('button,input,label')))return;
       el._solDragUntil=0;const handle=diamond||hd;e.stopPropagation();
-      const start=[e.clientX,e.clientY],r0=el.getBoundingClientRect();let moved=false;
+      const start=[e.clientX,e.clientY],r0=el.getBoundingClientRect();let moved=false;const xy0=Array.isArray(Z[c.xy])?Z[c.xy].slice():null,wasDocked=!!Z[el.id+'Head'];
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(!moved&&Math.hypot(ev.clientX-start[0],ev.clientY-start[1])<4)return;
         ev.preventDefault();ev.stopPropagation();el._solDragUntil=performance.now()+400;
         if(!moved){moved=true;handle.setPointerCapture(e.pointerId);if(el._zerkDock&&Z[el.id+'Head']){el._zerkDock(false);Z[c.xy]=[r0.left-stage.getBoundingClientRect().left,r0.top-stage.getBoundingClientRect().top];handle.setPointerCapture(e.pointerId);}el.classList.add('pdrag');document.body.classList.add('cgdrag');window.zzPanelDragStart?.(el,e.altKey);}
@@ -152,7 +154,7 @@
         else{if(el._zerkDock&&el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');try{handle.setPointerCapture(e.pointerId);}catch(_){}}Z[c.xy]=[x-host.left,y-host.top];c.place(el);}
         window.zzPanelLinkSync?.();if(el._zerkDock){win.querySelector(':scope > .whead').classList.toggle('zerk-dock-target',target==='top');footerDock.classList.toggle('zerk-dock-target',target==='bottom');}};
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',end,true);document.removeEventListener('pointercancel',end,true);if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);
-        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}else if(el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');c.place(el);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
+        if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}else if(el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');c.place(el);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}if(moved&&el.parentElement===stage&&zerkOverlaps(el)){if(wasDocked)el._zerkDock(true);else{if(xy0)Z[c.xy]=xy0;else delete Z[c.xy];c.place(el);}}save();}};   // v0.1164, «не давай группы класть друг на друга — просто верни на старое место»
       document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
     },true);
     el.addEventListener('contextmenu',e=>{if(e.target.closest('.zerk-diamond,.zerk-header-number,.smh')){e.preventDefault();e.stopPropagation();}},true);
