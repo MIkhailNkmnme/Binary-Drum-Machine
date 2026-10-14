@@ -2934,7 +2934,7 @@ function renderCone(){
      (после разбора: в T−1 при сомкнутых кольцах каждая клетка — ровно π по площади, а дырка это ломала): кольца — от самой точки центра всегда, строка 1 — круг */   // v0.732 / v0.733: ◐ — строка 1 — полукруг от самого центра (внутренний край — точка), солнце — точка в центре   // v0.127: и пустые кольца до 256
   coneGeom = { cx, cy, r0, dr, N, dpr, fill: fillOn };
   coneRunStatsSync(cv, R, dpr, cx); coneRunPanelsPaint(g, R, dpr, cT);   // v0.1070: «кольца поверх текста надо» — текст опыта рисуется до колец
-  { const tb = $("coneTapeBox"); if (tb) { tb.classList.toggle("on", coneFlat()); tb.style.left = Math.round(cv.offsetLeft + cx / dpr) + "px"; } }
+  { const tb = $("coneTapeBox"); if (tb) tb.classList.toggle("on", coneFlat()); }   // место ленты — в c3RstPlace (на горизонтальной оси)
   c3RstPlace();   // v0.811: ⌖✕ сброс — за центром конуса по вертикали
   lasAlgoPlace();   // v0.816: строки алгоритма — правый нижний угол холста
   { let o1 = 0, o0 = 0; for (let i = 0; i < N; i++) { const s = Z.rows[i] || ""; for (let j = 0; j < s.length; j++) { if (s.charCodeAt(j) === 49) o1++; else o0++; } }
@@ -7071,34 +7071,41 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const tempoBox = $("coneTransportTempo");
   const G = coneGeom, axis = coneAxisScr(), centre = axis ? axis.x - hr.left + scrollLeft : cr.left - hr.left + scrollLeft + (G && G.dpr ? G.cx / G.dpr : cr.width / 2);
   const rw = b.offsetWidth || 60, rh = b.offsetHeight || 30, gap = 4;
-  const tb = document.getElementById("coneTapeBox"), tapeSpace = tb && tb.offsetHeight ? tb.offsetHeight + 16 : 0;   // v0.1084: место для истории под пультом
-  const bottom = cr.bottom - hr.top + scrollTop - tapeSpace;
+  const bottom = cr.bottom - hr.top + scrollTop - 18;   // лента перемотки теперь на горизонтальной оси — низ холста отдан пульту
+  /* «перемести на ось горизонт»: лента перемотки — на горизонтали через центр конуса, в теле окна (поверх верхнего слоя рисунка) */
+  const tape = document.getElementById("coneTapeBox");
+  if (tape) { if (tape.parentElement !== host) host.appendChild(tape);
+    const ay = axis ? axis.y - hr.top + scrollTop : cr.top - hr.top + scrollTop + (G && G.dpr ? G.cy / G.dpr : cr.height / 2);
+    const l = centre.toFixed(1) + "px", t = (ay - (tape.offsetHeight || 36) / 2).toFixed(1) + "px";
+    if (tape.style.left !== l) tape.style.left = l; if (tape.style.top !== t) tape.style.top = t; if (tape.style.bottom !== "auto") tape.style.bottom = "auto"; }
   const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const x = Math.max(left, Math.min(edge - rw, centre - rw / 2));
-  put(b, x, bottom - rh);
-  let pultTop = bottom - rh, pultLeft = x, pultRight = x + rw;
+  /* «ползунок скорости вращения вниз»: пульт — у самого низа холста, ⌖✕ сброс — над ним */
+  let pultTop = bottom, pultLeft = x, pultRight = x + rw;
   if (tempoBox) {
     const tw = Math.max(0, Math.min(480, edge - left));   // пульт — по оси конуса, не шире 480 и не за краями холста
     tempoBox.style.width = tw.toFixed(1) + "px";
     const th = tempoBox.offsetHeight || 48, X = Math.max(left, Math.min(edge - tw, centre - tw / 2));
-    pultTop = Math.max(cr.top - hr.top + scrollTop + 2, bottom - rh - gap - th); pultLeft = X; pultRight = X + tw;
+    pultTop = Math.max(cr.top - hr.top + scrollTop + 2, bottom - th); pultLeft = X; pultRight = X + tw;
     put(tempoBox, X, pultTop);
     tempoTrackSync();
   }
+  const resetY = pultTop - gap - rh;
+  put(b, x, resetY);
   // v0.931: режимы справа от сброса; не влезают — над пультом.
   const ms = document.getElementById("c3Modes");
   if (ms && ms.parentElement === host) {
     const width = ms.offsetWidth || (ms.classList.contains("spin") ? 292 : 460), mh = ms.offsetHeight || 24;
-    let X = x + rw + 10, Y = bottom - rh / 2 - mh / 2;
-    if (X + width > edge) { X = Math.max(left, Math.min(edge - width, centre - width / 2)); Y = pultTop - mh - gap; }
+    let X = x + rw + 10, Y = resetY + rh / 2 - mh / 2;
+    if (X + width > edge) { X = Math.max(left, Math.min(edge - width, centre - width / 2)); Y = resetY - mh - gap; }
     put(ms, X, Y);
   }
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
     const X = cr.left - hr.left + scrollLeft + 2, available = Math.max(0, x - X - 8);   // подпись цикла — у левого края, левее сброса
     caption.style.maxWidth = available.toFixed(1) + "px";
-    put(caption, X, bottom - caption.offsetHeight - 4);
+    put(caption, X, resetY + rh - caption.offsetHeight);
   }
 }
 /* Внутренние треугольники сходятся под ромбом пуска (запасной вид, если _js/zz-pult.js не загрузился). */
