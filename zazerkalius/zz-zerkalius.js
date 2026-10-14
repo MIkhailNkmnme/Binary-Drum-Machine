@@ -318,10 +318,15 @@
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
   buildPendulumEditor(rowGroup);
-  function splitDiamond(title,get,step,parent){
+  function splitDiamond(title,get,step,parent,opts){
     const node=document.createElement('div');node.className='zerk-split';const value=document.createElement('span');value.className='zerk-split-value';node.append(value);
     const minus=button('◂',title+': уменьшить',()=>step(-1),node),plus=button('▸',title+': увеличить',()=>step(1),node);minus.className='zerk-half zerk-half-minus';plus.className='zerk-half zerk-half-plus';diamond(node,'',parent);
-    node.title=title+' · наведи и нажми левую или правую половину';compactUpdates.push(()=>value.textContent=get());return node;
+    node.title=title+' · наведи и нажми левую или правую половину';compactUpdates.push(()=>value.textContent=get());
+    if(opts){   // v0.1174, по снимку наклона: «между ромб узкий — 0 возвращает в 0, ширина 1/2 от обычного, та же высота; и к стрелкам двойную стрелку — прибавление по 5% от шкалы»
+      node.classList.add('zerk-split-wide');const big=opts.big;
+      const fast=[button('◂◂',title+': уменьшить на '+big,()=>step(-big),node),button('▸▸',title+': увеличить на '+big,()=>step(big),node)];fast[0].className='zerk-half zerk-half-minus2';fast[1].className='zerk-half zerk-half-plus2';
+      const zero=button('',title+': вернуть в 0',opts.reset,node);zero.className='zerk-half zerk-split-zero';compactUpdates.push(()=>zero.textContent=get().replace(' ','\n'));}
+    return node;
   }
   state.mirrors.forEach((m,i)=>{
     const c=controls[i],home=()=>stage.clientWidth>600?[168+136*i,8]:i===0?[168,8]:[24+(i-1)*144,248];
@@ -346,7 +351,7 @@
   });
   const viewGroup=grape('zerkViewG','Вид','#c9a8ff',()=>stage.clientWidth>600?[24,248]:[stage.clientWidth-112,8]);
   for(const [i,n] of oldView.entries()){
-    if(i<2){const key=['zero','one'][i],label=['Наклон 0','Наклон 1'][i];n.remove();splitDiamond(label,()=>i+' '+state[key]+'°',sign=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=clamp(Number(input.value)+sign,-60,60);input.oninput();},'bitAngle'+i),viewGroup);}   // v0.1170, «наклоны тоже стрелками»: ◂ ▸ прямо в ромбе
+    if(i<2){const key=['zero','one'][i],label=['Наклон 0','Наклон 1'][i];n.remove();splitDiamond(label,()=>i+' '+state[key]+'°',sign=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=clamp(Number(input.value)+sign,-60,60);input.oninput();},'bitAngle'+i),viewGroup,{big:6,reset:()=>motionStep({bitAngles:true},()=>{const {input}=bitAngleControls[key];input.value=0;input.oninput();},'bitAngle'+i)});}   // v0.1170, «наклоны тоже стрелками»: ◂ ▸ прямо в ромбе
     else if(i<4){diamond(n,'',viewGroup);for(const t of [...n.childNodes])if(t.nodeType===3)t.textContent=i===2?'◈\nцвет':'╲ 1\n╱ 0';}
     else diamond(n,'↺\nсброс',viewGroup);
   }
@@ -364,7 +369,7 @@
   const symmetryToggle=button('│\nсим.','Зеркальные оси и парные биты',()=>{state.bitSymmetry=!state.bitSymmetry;body.querySelector('input[aria-label="Зеркальные оси и парные биты"]').checked=state.bitSymmetry;changed(true);},viewGroup);diamond(symmetryToggle,'│\nсим.',viewGroup);symmetryToggle.style.left='48px';symmetryToggle.style.top='216px';
   compactUpdates.push(()=>{symmetryToggle.classList.toggle('on',state.bitSymmetry);symmetryToggle.setAttribute('aria-pressed',String(state.bitSymmetry));});
   const zenExit=button('↙','Выйти из дзена Зеркалиуса',()=>window.zenSet?.(false),stage);zenExit.id='zerkZenExit';
-  const canvasRotation=splitDiamond('Поворот холста',()=>Math.round(state.viewAngle)+'°',sign=>motionStep({},()=>{state.viewAngle=(state.viewAngle+sign+360)%360;changed();}),viewGroup);canvasRotation.style.left='0px';canvasRotation.style.top='216px';viewGroup.style.setProperty('--grape-height','264px');canvasRotation.oncontextmenu=e=>{e.preventDefault();motionStep({},()=>{state.viewAngle=0;changed();});};canvasRotation.title='Поворот всего холста 0–360°; левая / правая половина — шаг 1°; правый щелчок — 0°';
+  const canvasRotation=splitDiamond('Поворот холста',()=>Math.round(state.viewAngle)+'°',sign=>motionStep({},()=>{state.viewAngle=(state.viewAngle+sign+360)%360;changed();}),viewGroup,{big:18,reset:()=>motionStep({},()=>{state.viewAngle=0;changed();})});canvasRotation.style.left='0px';canvasRotation.style.top='216px';viewGroup.style.setProperty('--grape-height','264px');canvasRotation.oncontextmenu=e=>{e.preventDefault();motionStep({},()=>{state.viewAngle=0;changed();});};canvasRotation.title='Поворот всего холста 0–360°; ◂ ▸ — шаг 1°, ◂◂ ▸▸ — 18°, узкий ромб посередине или правый щелчок — 0°';
   canvasRotation.tabIndex=0;canvasRotation.setAttribute('role','slider');canvasRotation.setAttribute('aria-label','Поворот холста на 360 градусов');canvasRotation.setAttribute('aria-valuemin','0');canvasRotation.setAttribute('aria-valuemax','359');compactUpdates.push(()=>canvasRotation.setAttribute('aria-valuenow',String(state.viewAngle)));
   const turnCanvas=delta=>motionStep({},()=>{state.viewAngle=(state.viewAngle+delta+360)%360;changed();},'canvas-turn');
   canvasRotation.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();turnCanvas(Math.sign(e.deltaY)*5);},{passive:false});canvasRotation.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();e.stopPropagation();if(e.key==='Home'||e.key==='End')motionStep({},()=>{state.viewAngle=e.key==='Home'?0:359;changed();});else turnCanvas((e.key==='ArrowLeft'?-1:1)*(e.shiftKey?15:1));};
