@@ -390,16 +390,13 @@
   motionRange.oninput=()=>{state.motionRate=motionRateFromStep(Number(motionRange.value));changed();};
   /* v0.1161, «эту ставь везде одинаково» (по снимку пульта темпа Синхрофазотрона): общий пуск — тот же пульт: шестигранник с ◀ ▶ на концах,
      треугольники сходятся к ромбу пуска, ромб едет по скорости, подпись скорости рядом с ним. ◀ ▶ — медленнее / быстрее на 10 шагов (×1,26) */
-  const MB=40,motionTrack=()=>Math.max(60,transport.offsetWidth-2*MB-36);
-  const motionSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');motionSvg.classList.add('zerk-motion-shape');motionSvg.setAttribute('aria-hidden','true');
-  for(const c of ['outer','glass'])motionSvg.append(Object.assign(document.createElementNS('http://www.w3.org/2000/svg','path'),{}));motionSvg.children[0].classList.add('outer');motionSvg.children[1].classList.add('glass');transport.prepend(motionSvg);
+  /* v0.1171, «можно ли её одним скриптом тянуть»: вид пульта — общий _js/zz-pult.js / zz-pult.css (образец — Синхрофазотрон), здесь только кнопки и поведение */
+  const motionTrack=()=>ZerkPult.trackWidth(transport);
   const motionNudge=d=>{state.motionRate=motionRateFromStep(clamp(Math.round(motionRateStep(state.motionRate))+d,1,401));changed();};
-  const motionBack=button('◀','Медленнее: общая скорость осей ÷1,26',()=>motionNudge(-10),transport);motionBack.className='zerk-motion-step back';
-  const motionFwd=button('▶','Быстрее: общая скорость осей ×1,26',()=>motionNudge(10),transport);motionFwd.className='zerk-motion-step fwd';
-  function motionLayout(){const W=transport.offsetWidth||480,H=36,f=motionRateStep(state.motionRate)/401,tx=MB+18+f*motionTrack();
-    motionSvg.setAttribute('viewBox',`0 0 ${W} ${H}`);motionSvg.children[0].setAttribute('d',`M0 18L${MB} .5H${W-MB}L${W} 18L${W-MB} 35.5H${MB}Z`);
-    motionSvg.children[1].setAttribute('d',`M${MB} .5L${tx} 18L${MB} 35.5ZM${W-MB} .5L${tx} 18L${W-MB} 35.5Z`);
-    motionPlay.style.left=tx+'px';const vw=motionValue.offsetWidth||40,vx=tx+30+vw<=W-MB-4?tx+30:tx-30-vw;motionValue.style.left=vx+'px';}
+  const motionBack=button('◀','Медленнее: общая скорость осей ÷1,26',()=>motionNudge(-10),transport);
+  const motionFwd=button('▶','Быстрее: общая скорость осей ×1,26',()=>motionNudge(10),transport);
+  transport.classList.add('zz-pult');motionRange.classList.add('zz-pult-range');motionBack.classList.add('zz-pult-back');motionFwd.classList.add('zz-pult-fwd');motionPlay.classList.add('zz-pult-play');motionValue.classList.add('zz-pult-value');
+  function motionLayout(){ZerkPult.sync(transport,motionRateStep(state.motionRate)/401);}
   new ResizeObserver(()=>motionLayout()).observe(transport);
   motionValue.title='Двойной щелчок — общая скорость ×1';motionValue.ondblclick=()=>{state.motionRate=1;changed();};
   const playAction=motionPlay.onclick;motionPlay.onclick=e=>{if(performance.now()<(motionPlay._dragUntil||0))return;playAction(e);};

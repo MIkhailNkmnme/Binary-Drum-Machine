@@ -160,18 +160,8 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 #zerkFooterDock .zerk-docked .zerk-grape-body{position:absolute;top:auto;bottom:32px;left:0;margin-top:0}
 #zerkFooterDock.zerk-dock-target{box-shadow:inset 0 -2px #70e0d7;background:#203334}
 /* v0.1161: общий пуск — как пульт темпа Синхрофазотрона: шестигранник 480 × 36, ◀ ▶ на концах, треугольники к ромбу пуска */
-#zerkMotion{position:absolute;left:50%;bottom:38px;transform:translateX(-50%);z-index:28;width:min(480px,calc(100% - 24px));height:36px;color:#c9d6e6;touch-action:none}
-#zerkMotion .zerk-motion-shape{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-#zerkMotion .zerk-motion-shape .outer{fill:#0b0d12e6;stroke:#9fb0c8;stroke-width:1}
-#zerkMotion .zerk-motion-shape .glass{fill:#1c2433;stroke:#9fb0c8;stroke-width:1}
-#zerkMotion input{position:absolute;left:40px;right:40px;top:0;width:auto;height:36px;margin:0;opacity:0;cursor:ew-resize}
-#zerkMotion .zerk-motion-step{position:absolute;top:0;width:40px;height:36px;padding:0 0 0 12px;margin:0;border:0;border-radius:0;background:#3a5470;color:#dbe6f5;font:700 14px monospace;cursor:pointer;clip-path:polygon(0 50%,100% 0,100% 100%);text-align:center}
-#zerkMotion .zerk-motion-step.back{left:0}
-#zerkMotion .zerk-motion-step.fwd{right:0;padding:0 12px 0 0;clip-path:polygon(0 0,100% 50%,0 100%)}
-#zerkMotion .zerk-motion-step:hover{background:#4d6d90}
-#zerkMotion > button:not(.zerk-motion-step){position:absolute;top:0;width:36px;height:36px;transform:translateX(-50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;border-radius:0;background:#5a4a86;color:#fff;font:700 15px monospace;cursor:grab;z-index:1}
-#zerkMotion > button[aria-pressed=true]:not(.zerk-motion-step){background:#7a64b6}
-#zerkMotion output{position:absolute;top:0;line-height:36px;font:700 11px/36px monospace;white-space:nowrap;cursor:pointer;color:#dbe6f5;z-index:1}
+#zerkMotion{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);z-index:28;width:min(480px,calc(100% - 24px))}
+/* v0.1171: вид пульта — общий _js/zz-pult.css; здесь только место на холсте */
 #w-zerkalius>.whead.zerk-dock-target{box-shadow:inset 0 -2px #70e0d7;background:#203334}
 :is(#zerkStage,#zerkHeaderDock) .zerk-header-number{font-size:17px;font-weight:900;line-height:16px;text-shadow:0 0 3px currentColor}
 :is(#zerkStage,#zerkHeaderDock) .zerk-speed-group .smh>span:first-child{font-size:10px;line-height:16px}
@@ -233,3 +223,4 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 :is(#zerkStage,#zerkHeaderDock,#zerkMotion,#w-zerkalius) :is(.zerk-grape,.zerk-grape *,button,.zerk-diamond),#zerkMotion,#zerkMotion *{-webkit-user-select:none;user-select:none}   /* v0.1164: текст в кнопках не выделяется */
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan{position:absolute;left:24px;top:24px;width:0;height:0;z-index:3;pointer-events:none}   /* v0.1168: ромбы-варианты узора справа от грозди */
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape > .zerk-source-fan[hidden]{display:none!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-grape:is(.zsnap,:focus,:focus-visible){outline:none!important;box-shadow:none!important}   /* v0.1171, «синий прямоугольник не показывай»: прямоугольной подсветки прилипания у гроздей нет, они липнут ромб в ромб */
