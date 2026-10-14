@@ -237,3 +237,8 @@ body.zen.zerk-zen #zerkZenExit{display:flex;position:absolute;right:8px;top:8px;
 :is(#zerkStage,#zerkHeaderDock) .zerk-grape:is(.zsnap,:focus,:focus-visible){outline:none!important;box-shadow:none!important}   /* v0.1171, «синий прямоугольник не показывай»: прямоугольной подсветки прилипания у гроздей нет, они липнут ромб в ромб */
 .zerk-mirror button{opacity:.18;transition:opacity .15s}   /* v0.1172: ромбы оси за битами — бледные */
 .zerk-mirror:is(.hot,.grabbing,:focus-within) button,.zerk-mirror.hot::before{opacity:1}
+.zerk-mirror .zerk-deg{position:absolute;top:8px;font:600 11px/16px system-ui,sans-serif;color:var(--control-color,var(--mirror-color));text-shadow:0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none;opacity:.6;transition:opacity .15s}   /* v0.1183: угол оси рядом с ↻ */
+.zerk-mirror:is(.hot,.grabbing,:focus-within) .zerk-deg{opacity:1}
+#zerkMotion .zerk-jump{position:absolute;left:calc(100% + 8px);top:0;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#2a3447;color:#e7eef8;font:700 12px/1 system-ui,sans-serif;cursor:pointer}   /* v0.1183: ромб «скачки» справа от пульта */
+#zerkMotion .zerk-jump:hover{background:#4d6d90}
+#zerkMotion .zerk-jump.on{background:#9cc3ec;color:#10202f}
