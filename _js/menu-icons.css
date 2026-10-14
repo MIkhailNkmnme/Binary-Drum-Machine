@@ -17,3 +17,10 @@
 .mi-pop-run.mi-run{animation:mi-run var(--mi-time,4s) linear infinite alternate}
 @keyframes mi-run{0%,20%{transform:translateX(0)}80%,100%{transform:translateX(var(--mi-to))}}
 @media (prefers-reduced-motion:reduce){.mi-pop-run.mi-run{animation-duration:calc(var(--mi-time,4s) * 2)}}
+/* v10, «когда включены подсказки — расширять каждый ромб, чтобы там поместился короткий текст кнопки»: html.mi-wide (горит ?) — ромб шестиугольником
+   вширь (концы — те же углы 24 px, при ширине 48 это прежний ромб), значок у левого угла, короткое имя посередине. Ширину задаёт раскладка страницы. */
+.mi-name{display:none}
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide :is(.mi-btn,.sfz-grape-item:not(.sfz-grape-editor,.sfz-grape-range)){clip-path:polygon(24px 0,calc(100% - 24px) 0,100% 50%,calc(100% - 24px) 100%,24px 100%,0 50%)!important}
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy::after{left:22px!important;width:16px!important;height:16px!important}
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy > .mi-name{display:block!important;visibility:visible!important;position:absolute!important;left:32px!important;right:16px!important;top:50%!important;transform:translateY(-50%)!important;margin:0!important;padding:0!important;font:600 10px/1.15 "Segoe UI",system-ui,sans-serif!important;letter-spacing:0!important;color:inherit;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;clip-path:none!important;background:none!important}
+.mi-name::before{content:attr(data-n)}
