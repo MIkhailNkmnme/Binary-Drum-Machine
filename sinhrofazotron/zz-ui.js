@@ -13972,13 +13972,55 @@ function sfzGrapeEdgeInit(){
     g._sfzStartGroupDrag({target:g,button:e.button,pointerId:e.pointerId,clientX:e.clientX,clientY:e.clientY,shiftKey:e.shiftKey,altKey:e.altKey,preventDefault(){}});
   },{capture:true,passive:false});
 }
+/* v0.109, по снимку «Шариков» (список «Путь» висел плашкой с текстом): выпадающие списки в гроздях — ромбом, как «Узор» у Зеркалиуса.
+   Главный ромб показывает выбранный вариант; щелчок раскрывает справа лесенку ромбов-вариантов, выбор или щелчок мимо — сворачивает.
+   Сам список остаётся (скрыт) — вся логика страницы работает через него, ромбы только ставят value и шлют change. */
+function sfzSelName(src,sel){
+  const own=src!==sel?[...src.childNodes].filter(n=>n.nodeType===3||(n.nodeType===1&&!n.matches("select"))).map(n=>n.textContent).join(" ").replace(/\s+/g," ").trim():"";
+  return own||sel.getAttribute("aria-label")||sel.title||src.title||sel.id;
+}
+function sfzSelSync(main){
+  const sel=main._sfzSel,o=sel.options[sel.selectedIndex],t=(o?o.textContent:"").trim();
+  if(main.textContent!==t)main.textContent=t;
+  const tip=sfzSelName(main._sfzSrc,sel)+": "+t+" — щелчок: выбрать из списка";if(main.title!==tip){main.title=tip;main.setAttribute("aria-label",tip);}
+  main.disabled=sel.disabled;
+  {const src=main._sfzSrc;src.classList.remove("sfz-sel-src");const vis=!src.hidden&&getComputedStyle(src).display!=="none";src.classList.add("sfz-sel-src");if(main.hidden===vis)main.hidden=!vis;}   // список спрятан режимом или заменён кнопками — ромба тоже нет
+}
+let sfzSelFanOpen=null;
+function sfzSelClose(){if(!sfzSelFanOpen)return;sfzSelFanOpen.fan.remove();sfzSelFanOpen.main.classList.remove("open");sfzSelFanOpen=null;}
+function sfzSelOpen(main){
+  const was=sfzSelFanOpen?.main;sfzSelClose();if(was===main)return;
+  const sel=main._sfzSel,r=main.getBoundingClientRect(),g=main.closest(".sfz-grape"),fan=document.createElement("div");fan.className="sfz-sel-fan";
+  if(g)fan.style.setProperty("--gc",getComputedStyle(g).getPropertyValue("--gc"));
+  [...sel.options].forEach((o,k)=>{if(o.hidden||o.disabled)return;const b=document.createElement("button");b.type="button";b.textContent=o.textContent.trim();b.title=sfzSelName(main._sfzSrc,sel)+": "+o.textContent.trim();
+    b.classList.toggle("on",o.selected);b.setAttribute("aria-pressed",String(o.selected));
+    b.style.left=(r.right+(k%2?24:0))+"px";b.style.top=(r.top+k*24)+"px";
+    b.addEventListener("click",e=>{e.stopPropagation();sfzSelClose();if(sel.value!==o.value){sel.value=o.value;sel.dispatchEvent(new Event("input",{bubbles:true}));sel.dispatchEvent(new Event("change",{bubbles:true}));}sfzSelSync(main);});
+    fan.append(b);});
+  document.body.append(fan);main.classList.add("open");sfzSelFanOpen={fan,main};
+  const fr=fan.getBoundingClientRect();if(fr.bottom>innerHeight-4)[...fan.children].forEach(b=>b.style.top=(parseFloat(b.style.top)-(fr.bottom-innerHeight+4))+"px");
+}
+let sfzSelReady=false;
+function sfzSelPrep(box){
+  if(!sfzSelReady){sfzSelReady=true;
+    document.addEventListener("pointerdown",e=>{if(sfzSelFanOpen&&!sfzSelFanOpen.fan.contains(e.target)&&!sfzSelFanOpen.main.contains(e.target))sfzSelClose();},true);
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")sfzSelClose();},true);addEventListener("resize",sfzSelClose);}
+  for(const sel of box.querySelectorAll("select")){
+    let src=sel;const lab=sel.closest("label");if(lab&&box.contains(lab)&&!lab.querySelector("input:not([type=hidden]),textarea")&&lab.querySelectorAll("select").length===1)src=lab;
+    if(src._sfzSelMain){sfzSelSync(src._sfzSelMain);continue;}
+    const main=document.createElement("button");main.type="button";main.className="sfz-sel-main";main._sfzSel=sel;main._sfzSrc=src;src._sfzSelMain=main;src.classList.add("sfz-sel-src");
+    main.addEventListener("click",e=>{e.stopPropagation();sfzSelOpen(main);});
+    sel.addEventListener("change",()=>sfzSelSync(main));
+    src.before(main);sfzSelSync(main);
+  }
+}
 function sfzGrapeSync(g){
   sfzGrapeEdgeInit();
   // v0.070: внизу заголовок над кнопками, наверху треугольная крышка над ними.
   const pin=Z.cgrpTop?.[g.dataset.g],legacyBottom=Z.cgrpFld?.[g.dataset.g]?.z==="head";
   if(pin||legacyBottom){Z.sfzBookUp ||= {};if(pin?pin.side==="bottom":legacyBottom)delete Z.sfzBookUp[g.dataset.g];else Z.sfzBookUp[g.dataset.g]=true;}
   const up=!!Z.sfzBookUp?.[g.dataset.g];g.classList.toggle("sfz-book-up",up);
-  const box = g.querySelector(":scope > .cgb"); if (!box) return;
+  const box = g.querySelector(":scope > .cgb"); if (!box) return; sfzSelPrep(box);
   const items = [];
   const collect = node => {
     const hidden = node.hidden || node.style.display === "none";
