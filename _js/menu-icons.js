@@ -31,7 +31,7 @@
     return 'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
   }
   function decorate(el){
-    if(el.matches(SKIP)||isValue(el)||el.querySelector('input[type=range],input[type=text],input[type=number],select,textarea')){if(el.classList.contains('mi-btn'))el.classList.remove('mi-btn');return;}
+    if(el.matches(SKIP)||el.matches('select,input,textarea,.sfz-grape-editor')||isValue(el)||el.querySelector('input[type=range],input[type=text],input[type=number],select,textarea')){if(el.classList.contains('mi-btn'))el.classList.remove('mi-btn');return;}
     const label=labelOf(el),key=keyOf(el),kind=kindOf(key,words(el.textContent)+' '+label),sig=kind;
     if(el.dataset.miSig!==sig){el.dataset.miSig=sig;el.style.setProperty('--mi-icon',iconUrl(key,kind));}
     if(!el.classList.contains('mi-btn'))el.classList.add('mi-btn');

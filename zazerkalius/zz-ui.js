@@ -9969,8 +9969,8 @@ function setupCone(){
       if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
       save(); renderCone();
       say(Z.coneBipy ? "◇ Бипирамида: кольцо строки n — 2n − 1 ячеек, свои биты и биты строки выше " + (Z.coneBipyM === "blk" ? "блоком" : "через одну (▲▼▲)") + "; снизу — зеркало с инверсией." : "◇ Бипирамида выключена."); }; }
-  if ($("coneTorInfo")) { $("coneTorInfo").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
-    $("coneTorInfo").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
+  if ($("coneTorInfoChk")) { $("coneTorInfoChk").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
+    $("coneTorInfoChk").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
   if ($("coneTorBall")) { $("coneTorBall").checked = !!Z.coneTorBall;   // v0.777: ● = часть — шар объёмом в одну часть тора (включает ◎ торы)
     $("coneTorBall").onchange = (e) => { Z.coneTorBall = e.target.checked; if (Z.coneTorBall && !Z.coneTor) { Z.coneTor = true; if ($("coneTor")) $("coneTor").checked = true; }
       if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();

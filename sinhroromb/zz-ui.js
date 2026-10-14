@@ -10770,8 +10770,8 @@ function setupCone(){
       if (Z.coneBipy) { if (!Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } if (Z.coneTor) { Z.coneTor = false; if ($("coneTor")) $("coneTor").checked = false; } }
       save(); renderCone();
       say(Z.coneBipy ? "◇ Бипирамида: кольцо строки n — 2n − 1 ячеек, свои биты и биты строки выше " + (Z.coneBipyM === "blk" ? "блоком" : "через одну (▲▼▲)") + "; снизу — зеркало с инверсией." : "◇ Бипирамида выключена."); }; }
-  if ($("coneTorInfo")) { $("coneTorInfo").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
-    $("coneTorInfo").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
+  if ($("coneTorInfoChk")) { $("coneTorInfoChk").checked = Z.coneTorInfo !== false;   // v0.778: Σ расчёт у ◎ торов (по умолчанию вкл.)
+    $("coneTorInfoChk").onchange = (e) => { Z.coneTorInfo = e.target.checked; save(); renderCone(); say(Z.coneTorInfo ? "Σ Расчёт торов — на холсте." : "Σ Расчёт торов скрыт."); }; }
   if ($("coneTorBall")) { $("coneTorBall").checked = !!Z.coneTorBall;   // v0.777: ● = часть — шар объёмом в одну часть тора (включает ◎ торы)
     $("coneTorBall").onchange = (e) => { Z.coneTorBall = e.target.checked; if (Z.coneTorBall && !Z.coneTor) { Z.coneTor = true; if ($("coneTor")) $("coneTor").checked = true; }
       if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
@@ -12509,10 +12509,11 @@ function cgrpInit(){
           anchor = vis.slice().sort((a, b) => (upper ? top(a) - top(b) : bottom(b) - bottom(a)) || px(a, "--grape-x") - px(b, "--grape-x"))[0];
           Z.cgrpMin[key] = true; Z.sfzFoldKeep[key] = sfzFoldPair(vis, [sfzGrapeKey(anchor)]).map(sfzGrapeKey);
         } else delete Z.cgrpMin[key];
-        const before = anchor.getBoundingClientRect();
+        const headOf = () => [...g.querySelectorAll(".sfz-fold-head,.sfz-unfold-head")].find(h => h.getClientRects().length) || anchor;   // заголовок свёрнутой или раскрытой — стоит на месте
+        const before = headOf().getBoundingClientRect();
         g.classList.toggle("cmin", on); g.style.minHeight = "";
         sfzGrapeSync(g);
-        if (wasFree) { const now = anchor.getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
+        if (wasFree) { const now = headOf().getBoundingClientRect(); nodeSetPos(g, gr.left + before.left - now.left, gr.top + before.top - now.top); }
         place(g); linkSync(); save();
       }
       g._sfzFoldFlip = foldFlip;   // v0.081: стрелка свёрнутой грозди разворачивает её тем же путём
@@ -14081,8 +14082,22 @@ function sfzGrapeSync(g){
     head._edge=keep[0];g.classList.add("sfz-fold-headed");
     sfzGrapeStyle(g,"--sfz-fold-w","96px");sfzGrapeStyle(g,"--sfz-fold-h","48px");
     const arrow=box.querySelector(":scope > .sfz-fold-arrow");
-    if(arrow){const t=TZC_H/(2*Math.sqrt(3)),down=arrow.dataset.dir==="down";sfzGrapeStyle(arrow,"--fa-x",(48-2*t).toFixed(2)+"px");sfzGrapeStyle(arrow,"--fa-y",(down?48+2*t:-4*t).toFixed(2)+"px");}
+    if(arrow){const t=TZC_H/(2*Math.sqrt(3)),down=arrow.dataset.dir==="down";sfzGrapeStyle(arrow,"--fa-x",(48-2*t).toFixed(2)+"px");sfzGrapeStyle(arrow,"--fa-y",(down?48-2*t-4:4).toFixed(2)+"px");}   // «треугольник покажи внутри ромба»: у нижнего или верхнего угла заголовка
   }else{g.classList.remove("sfz-fold-headed");const h=box.querySelector(":scope > .sfz-fold-head");if(h)h.remove();}
+  /* «когда раскрываешь — пусть ромб-заголовок остаётся, первой кнопкой перекроется; на остатки ромба заголовка нажать — тоже сворачивать левой кнопкой»:
+     у раскрытой грозди заголовок лежит под первым ромбом (тем, у которого она сворачивается), выглядывают его углы; щелчок по ним — свернуть */
+  {let oh=box.querySelector(":scope > .sfz-unfold-head");
+    const px=(el,k)=>parseFloat(el.style.getPropertyValue(k))||0;
+    const vis=g.classList.contains("cmin")?[]:stable.filter(el=>el.classList.contains("sfz-grape-item")&&!el.classList.contains("sfz-grape-hidden")&&!el.classList.contains("sfz-grape-range"));
+    if(vis.length>2){
+      const pair=sfzFoldPair(vis,[].concat(Z.sfzFoldKeep?.[g.dataset.g]||[])),first=pair[0];
+      if(!oh){oh=document.createElement("span");oh.className="sfz-unfold-head";oh.setAttribute("role","button");box.prepend(oh);
+        oh.addEventListener("click",e=>{e.stopPropagation();setTimeout(()=>{if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);},0);});
+        oh.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);});}
+      oh._edge=first;const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
+      sfzGrapeStyle(oh,"--uh-x",Math.min(...pair.map(el=>px(el,"--grape-x")))+"px");   // там же, где стоял у свёрнутой: левый верх пары
+      sfzGrapeStyle(oh,"--uh-y",Math.min(...pair.map(el=>px(el,"--grape-y")))-24+"px");   // поднят на полромба: верхняя половина видна над первым ромбом
+    }else if(oh)oh.remove();}
   if(!keep.length||!g.classList.contains("cmin")){const a=box.querySelector(":scope > .sfz-fold-arrow");if(a)a.remove();}
   for(const el of stable)if(el.classList.contains("sfz-fold-keep")!==keep.includes(el))el.classList.toggle("sfz-fold-keep",keep.includes(el));
   let cover=g.querySelector(":scope > .sfz-book-cover");

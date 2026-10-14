@@ -279,7 +279,7 @@
   function editDiamond(caption,title,el,parent){let b; b=button(caption,title,()=>openEditor(el,title,b),parent);return diamond(b,caption,parent);}
   // Controls remain the same inputs and handlers; diamonds open only the needed editor.
   const oldActions=[...actions.children], oldView=[...body.children].filter(n=>n!==sourceLabel&&n!==own&&n!==actions&&!n.classList.contains('zerk-mirror-controls'));
-  const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#70e0d7',[8,8]);
+  const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#a3e635',[8,8]);
   const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
   compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
   let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
@@ -327,7 +327,6 @@
   compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
   const bitsToggle=button('01\nбиты','Только цифры 0 и 1 без ромбов и заливки',()=>{state.bitsOnly=!state.bitsOnly;body.querySelector('input[aria-label="Только биты 0 / 1"]').checked=state.bitsOnly;changed(true);},viewGroup);diamond(bitsToggle,'01\nбиты',viewGroup);bitsToggle.style.left='48px';bitsToggle.style.top='0px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{bitsToggle.classList.toggle('on',state.bitsOnly);bitsToggle.setAttribute('aria-pressed',String(state.bitsOnly));});
-  const zenToggle=button('◎\nдзен','Дзен: Зеркалиус на весь экран',()=>window.zenSet?.(true,'w-zerkalius'),viewGroup);diamond(zenToggle,'◎\nдзен',viewGroup);zenToggle.style.left='48px';zenToggle.style.top='48px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   const overlapToggle=button('⋂\nперес.','Пересечения фигур ярко, остальные биты сильно темнее',()=>{state.overlapOnly=!state.overlapOnly;changed();},viewGroup);diamond(overlapToggle,'⋂\nперес.',viewGroup);overlapToggle.style.left='48px';overlapToggle.style.top='96px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{overlapToggle.classList.toggle('on',state.overlapOnly);overlapToggle.setAttribute('aria-pressed',String(state.overlapOnly));});
   const symmetryToggle=button('│\nсим.','Зеркальные оси и парные биты',()=>{state.bitSymmetry=!state.bitSymmetry;body.querySelector('input[aria-label="Зеркальные оси и парные биты"]').checked=state.bitSymmetry;changed(true);},viewGroup);diamond(symmetryToggle,'│\nсим.',viewGroup);symmetryToggle.style.left='48px';symmetryToggle.style.top='216px';
@@ -377,6 +376,12 @@
     setBitAngles({zero:0,one:60});const m=state.mirrors[0];stopPath(m);m.spin=false;m.angle=pi/4;m.gripAngle=m.angle;
     changed(true);notify('Старые углы: 0 = 0°, 1 = 60°, зеркало 1 = 45°. Угол можно менять вручную.');
   }),viewGroup);oldAngles.id='zerkOldAngles';diamond(oldAngles,'↺\nстарые',viewGroup);oldAngles.style.left='0px';oldAngles.style.top='264px';viewGroup.style.setProperty('--grape-height','312px');
+  /* «дзен — отдельная кнопка, как везде» (◎ в шапке страницы), «расформируй в 2 группы, там всё намешано»: «Вид» — зеркала (наклоны, цвета, сброс, циклы, магнит, старые углы),
+     «Холст» — что и как рисуется на холсте; ромбы каждой группы — обычной лесенкой по порядку */
+  const canvasGroup=grape('zerkCanvasG','Холст','#ff8fc8',()=>stage.clientWidth>600?[112,248]:[stage.clientWidth-208,8]);canvasGroup.parentElement.classList.add('zerk-view-group');
+  const restack=(g,items)=>{items.forEach((n,k)=>{g.append(n);n.style.left=(k%2?24:0)+'px';n.style.top=(k*24)+'px';});g.style.setProperty('--grape-height',(items.length*24+24)+'px');};
+  restack(canvasGroup,[labelToggle,bitsToggle,netDigitsToggle,overlapToggle,symmetryToggle,symmetrySettings,fieldAxesToggle,canvasRotation]);
+  restack(viewGroup,[...viewGroup.children]);
   compactUpdates.push(()=>{fieldAxesToggle.classList.toggle('on',state.fieldAxes.on);fieldAxesToggle.setAttribute('aria-pressed',String(state.fieldAxes.on));});
   const fieldAxisNodes=[0,1].map(i=>{const node=document.createElement('span');node.className='zerk-axis zerk-field-axis';node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',i?'Вертикальная ось поля':'Горизонтальная ось поля');node.title='Левая протяжка — повернуть крест; правая — перенести центр. Магнит к битам и осям зеркал; Alt — без магнита; двойной щелчок — начальные оси';layer.prepend(node);
     node.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();};node.ondblclick=e=>{e.preventDefault();e.stopPropagation();motionStep({fieldAxes:true},()=>{Object.assign(state.fieldAxes,{x:.5,y:.5,angle:0});changed();});};
