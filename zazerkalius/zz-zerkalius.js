@@ -283,7 +283,7 @@
   const sourceDiamond=editDiamond('△\nузор','Выбрать источник строк',sourceEditor,rowGroup);
   compactUpdates.push(()=>{sourceDiamond.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];});
   let ownDiamond;ownDiamond=button('↥\nсвои','Вставить или загрузить свои строки',()=>{pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',ownDiamond);},rowGroup);diamond(ownDiamond,'↥\nсвои',rowGroup);
-  for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())diamond(oldActions[i],caption,rowGroup);actions.remove();
+  for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())if(i>1)diamond(oldActions[i],caption,rowGroup);actions.remove();   // v0.1158, «эту кнопку убери», «эту тоже»: «≡ копия» (строки поля — в свои) и «↦ в поле» (строки узора — в поле) в грозди не показываются
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
   buildPendulumEditor(rowGroup);
@@ -493,7 +493,7 @@
     },el);apply.id='zerkPendApply';
     timeline.oninput=()=>seek(Number(timeline.value));exact.oninput=()=>seek(Number(exact.value));
     const group=grape('zerkPendG','Маятник','#4f9bff',()=>[8,Math.max(120,stage.clientHeight-220)]);
-    let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';diamond(trigger,'↔\nмаят.',parent);
+    let trigger;trigger=button('↔\nмаят.','Зеркальный маятник · выбрать узор и открыть настройки',()=>{activate();openEditor(el,'Зеркальный маятник',trigger);},parent);trigger.id='zerkPendOpen';trigger.remove();   // v0.1158, «так же»: «↔ маят.» из «Строк» убран — маятник открывает «↔ кадр» в своей группе, узор «Зеркальный маятник» — в «≡ поле»
     const settings=editDiamond('↔\nкадр','Зеркальный маятник',el,group);
     const play=button('▶','Запустить / остановить маятник',()=>{activate();if(pendulum.frame===pendulum.limit)pendTarget=0;pendPlaying=!pendPlaying;play.textContent=pendPlaying?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(pendPlaying));pendClock=0;request();},group);play.id='zerkPendPlay';play.className='zerk-auto';diamond(play,'▶',group);
     const back=button('◂','Предыдущий кадр маятника',()=>seek((pendTarget??pendEngine().frame)-1),group);back.id='zerkPendBack';diamond(back,'◂',group);
