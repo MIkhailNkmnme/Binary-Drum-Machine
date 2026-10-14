@@ -1,4 +1,4 @@
-/* Значки ромбов в гроздях кнопок и подпись при наведении. v3.
+/* Значки ромбов в гроздях кнопок и подпись при наведении. v4.
    Подключается Синхрофазотроном, Синхроромбом и Зазеркалиусом (окно Зеркалиус).
    Трогает только кнопки-ромбы гроздей: .sfz-grape-item, кольца #ringTbl и .zerk-grape .zerk-diamond.
    Верхние и нижние полосы, левая панель и пульты страниц не меняются.
@@ -75,12 +75,12 @@
   const kindLabel=el=>{const t=labelOf(el);return /^сейчас не действует/i.test(t)?norm(el.getAttribute('aria-label')||el.dataset.zzLabel||''):t;};
   function decorate(el,used=new Set(),page=new Map()){
     if(el.matches(SKIP)||el.matches('select,input,textarea,.sfz-grape-editor')||isValue(el)||el.querySelector('input[type=range],input[type=text],input[type=number],select,textarea')){if(el.classList.contains('mi-btn'))el.classList.remove('mi-btn');return;}
-    const key=keyOf(el),label=kindLabel(el)||key,want=kindsOf(key,words(el.textContent)+' '+label),free=k=>!used.has(k)&&(!page.has(k)||page.get(k)===label),kind=want.find(free)||SPARE.find(free)||want.find(k=>!used.has(k))||SPARE.find(k=>!used.has(k))||want[0],sig=kind;used.add(kind);if(!page.has(kind))page.set(kind,label);
+    const key=keyOf(el),label=kindLabel(el)||key,want=kindsOf(key,words(el.textContent)+' '+label),sense=label.toLowerCase().replace(/[\d①-⑳]+/g,'#').replace(/\s+/g,' ').trim(),free=k=>!used.has(k)&&!page.has(k),kind=page.get('='+sense)||want.find(free)||SPARE.find(free)||want.find(k=>!used.has(k))||SPARE.find(k=>!used.has(k))||want[0],sig=kind;used.add(kind);if(!page.has(kind))page.set(kind,sense);page.set('='+sense,kind);
     if(el.dataset.miSig!==sig){el.dataset.miSig=sig;el.style.setProperty('--mi-icon',iconUrl(key,kind));}
     if(!el.classList.contains('mi-btn'))el.classList.add('mi-btn');
   }
   // В одной грозди значки не повторяются: занятый значок уходит следующему по смыслу, затем запасному
-  const sync=()=>{const used=new Map(),page=new Map();   // page: значок → подпись первой кнопки с ним; другая подпись берёт другой значок, пока они есть
+  const sync=()=>{const used=new Map(),page=new Map();   // page: значок → смысл и смысл → значок. Смысл — подпись без номеров («цвет зеркала 1» = «цвет зеркала 3»): один смысл — один значок, разные — разные (v4)
     document.querySelectorAll(ITEMS).forEach(el=>{const g=grapeOf(el)||document.body;if(!used.has(g))used.set(g,new Set());decorate(el,used.get(g),page);});};
 
   /* ---------- Подпись при наведении ---------- */
