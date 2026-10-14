@@ -338,7 +338,7 @@
     compactUpdates.push(()=>{number.setAttribute('aria-pressed',String(m.on));number.title='Ось '+(i+1)+(m.on?' включена — выключить':' выключена — включить');plateFoldToggle(group.parentElement,!m.on,true);});
     const swatch=document.createElement('label');swatch.setAttribute('aria-label','Выбор цвета зеркала '+(i+1));swatch.title='Выбор цвета зеркала '+(i+1);const textColor=document.createElement('span');textColor.textContent='●\nцвет';swatch.append(c.color,textColor);diamond(swatch,'',group);
     const rotate=sign=>{motionStep({mirror:i},()=>{stopPath(m);m.spin=false;turnMirror(m,sign*pi/180);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();});};
-    splitDiamond('Угол зеркала '+(i+1),()=>Math.round(norm(m.angle)*180/pi)%180+'°',rotate,group);
+    splitDiamond('Угол зеркала '+(i+1),()=>Math.round(norm(m.angle)*180/pi)%180+'°',rotate,group,{big:9,reset:()=>motionStep({mirror:i},()=>{stopPath(m);m.spin=false;turnMirror(m,-m.angle);c.spin.textContent='▶';c.spin.setAttribute('aria-pressed','false');changed();})});   // v0.1186, «углы зеркала также — в 0 и двойные стрелки»: ◂◂ ▸▸ по 9° (5% шкалы 0–180°), узкий ромб — в 0°
     c.spin.remove();
     splitDiamond('Скорость зеркала '+(i+1),()=>m.speed+'\n°/с',sign=>{m.speed=clamp(m.speed+sign,-90,90);c.speed.value=m.speed;changed();},group);
     const speedWrap=document.createElement('span');speedWrap.className='zerk-header-speed range-with-arrows';
