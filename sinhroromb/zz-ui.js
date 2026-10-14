@@ -13967,7 +13967,7 @@ function sfzGrapeLayout(box, items, name, up=false){
   const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0, lat = 0;
   /* «когда включены подсказки — расширять каждый ромб, чтобы поместился короткий текст» (menu-icons v10, html.mi-wide): ромб — шестиугольник шириной cellW,
      решётка та же, шаг по горизонтали cellW − 24 (при 48 — прежний ромб) */
-  const cellW = document.documentElement.classList.contains("mi-wide") ? 120 : cell, half = cellW - 24;
+  const cellW = document.documentElement.classList.contains("mi-wide") ? 120 : cell, cellH = cellW > cell ? 24 : cell, half = cellW - cellH / 2;   // «высоту уменьши в 2 раза»: широкий — 120 × 24
   const verticalRanges=[];
   const isEditor = item => item.matches("select,input:not([type=checkbox]),textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
   const axis = items.length && isEditor(items[0]) ? (items[0].querySelector('input[type="range"]') ? 48 : 60) : 24;
@@ -14004,15 +14004,15 @@ function sfzGrapeLayout(box, items, name, up=false){
     // v0.059: редакторы занимают отдельную широкую строку, без пустого ромба и наложения на кнопки.
     if (editor) { y = Math.max(y,bottom + (bottom ? 8 : 0)); side = 0; lat = 0; }
     const dropdown=item.matches("select")||!!item.querySelector("select");
-    const w = editor ? (range ? 96 : dropdown ? 100 : 120) : cellW, h = editor ? (range ? 34 : dropdown ? 26 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
+    const w = editor ? (range ? 96 : dropdown ? 100 : 120) : cellW, h = editor ? (range ? 34 : dropdown ? 26 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cellH;
     /* v0.102, «тут та же раскладка, как у групп Зеркалиуса»: обычные ромбы — решёткой по три, как zerkStack: два рядом, третий ниже между ними;
        одинокий последний — посередине. «строка 1» — прежним столбиком */
     let x, top;
     if (editor || straight) { x = editor ? axis - w / 2 : axis - 24; top = y; }
     else { let j = lat % 3; const next = items.slice(items.indexOf(item) + 1).find(n => !n.querySelector?.('input[type="range"]')), last = !next || isEditor(next);
       /* v0.105, «выровняй гроздь»: одинокий последний не сдвигается в середину — встаёт в решётку без дыры */
-      x = axis - 24 + [0, 2 * half, half][j]; top = y + Math.floor(lat / 3) * cell + (j === 2 ? cell / 2 : 0); lat = last ? 0 : lat + 1;
-      if (last) y = top + cell; }
+      x = axis - 24 + [0, 2 * half, half][j]; top = y + Math.floor(lat / 3) * cellH + (j === 2 ? cellH / 2 : 0); lat = last ? 0 : lat + 1;
+      if (last) y = top + cellH; }
 
     if(item!==box._sfzRDrag)sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
     width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);

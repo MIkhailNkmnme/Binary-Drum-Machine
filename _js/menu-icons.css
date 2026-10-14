@@ -24,3 +24,7 @@
 :is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy::after{left:22px!important;width:16px!important;height:16px!important}
 :is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy > .mi-name{display:block!important;visibility:visible!important;position:absolute!important;left:32px!important;right:16px!important;top:50%!important;transform:translateY(-50%)!important;margin:0!important;padding:0!important;font:600 10px/1.15 "Segoe UI",system-ui,sans-serif!important;letter-spacing:0!important;color:inherit;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;clip-path:none!important;background:none!important}
 .mi-name::before{content:attr(data-n)}
+/* v11, «теперь высоту уменьши в 2 раза»: широкий ромб — 120 × 24, углы по 12 px */
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide :is(.sfz-grape-item:not(.sfz-grape-editor,.sfz-grape-range),.zerk-grape .zerk-diamond){height:24px!important;min-height:24px!important;max-height:24px!important;padding-top:0!important;padding-bottom:0!important;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)!important}
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy::after{left:22px!important;width:14px!important;height:14px!important}
+:is(html,#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi#mi).mi-wide .mi-btn.mi-roomy > .mi-name{left:32px!important;right:12px!important;line-height:1!important}
