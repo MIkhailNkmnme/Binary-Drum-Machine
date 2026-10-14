@@ -15285,10 +15285,12 @@ function paneFoldInit(){
   $("rowsPane").addEventListener("click", (e) => {
     const h = e.target.closest("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)"); if (!h) return;
     if (Z.paneIcons && h.classList.contains("pane-icon-group")) {
-      const key = h.nextElementSibling.id; Z.paneIconOpen ||= {}; Z.paneIconOpen[key] = !Z.paneIconOpen[key];
+      const key = h.nextElementSibling.id; Z.paneIconOpen ||= {}; const op = !Z.paneIconOpen[key]; if (op) Z.paneIconOpen = {}; Z.paneIconOpen[key] = op;   // открыт только один раздел
       paneIconGroups(); save(); return;
     }
     const fold = () => { const k = h.textContent.trim(); Z.paneFold[k] = !Z.paneFold[k]; if (!Z.paneFold[k]) delete Z.paneFold[k];
+      /* «Когда какая-то из вкладок открыта — все остальные сворачивать»: открыл раздел — прочие разделы панели сворачиваются */
+      if (!Z.paneFold[k]) document.querySelectorAll("#rowsPane > .pane-head:is(:not([id]), #paneWinsHead)").forEach(o => { const ok = o.textContent.trim(); if (ok !== k) Z.paneFold[ok] = true; });
       paneFoldApply(); save(); if (typeof packWins === "function") packWins(); };
     /* v0.849: у «Другое» двойной щелчок — все окна списка (window.paneWinsAll); одиночный сворачивает список через 260 мс — иначе список сворачивался
        сразу, панель съезжала, и второй щелчок попадал мимо заголовка */
