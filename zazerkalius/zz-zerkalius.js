@@ -73,7 +73,7 @@
   const fonts=[...document.querySelectorAll('#fontSel option')].map(o=>[o.value,o.textContent]);
   for(const name of ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','Space Mono','VT323','Share Tech Mono','Press Start 2P','Major Mono Display','Orbitron'])if(!fonts.some(([v])=>v.includes(name)))fonts.push(['"'+name+'", monospace',name]);
   state.font=fonts.some(([v])=>v===state.font)?state.font:fonts[0][0];
-  state.bitsOnly=!!state.bitsOnly;state.netDigits=state.netDigits!==false;
+  state.bitsOnly=!!state.bitsOnly;state.bitShape=state.bitsOnly?'digits':state.bitShape==='square'?'square':'diamond';state.netDigits=state.netDigits!==false;
   state.overlapOnly=!!state.overlapOnly;
   state.bitColor=/^#[0-9a-f]{6}$/i.test(state.bitColor)?state.bitColor:'#9fffc8';
   state.mult=[1,2,3].includes(state.mult)?state.mult:1;
@@ -295,15 +295,23 @@
   const sourceEditor=editor([sourceLabel,own]), rowGroup=grape('zerkRowsG','Строки','#a3e635',[24,8]);
   /* v0.1168, «тут надо в ромбы всё перевести», «эти варианты пусть открываются, когда на неё нажать, на главную»: список «Узор» заменён ромбами.
      Главный ромб показывает текущий узор; нажатие раскрывает справа от грозди лесенку ромбов-вариантов, выбор или щелчок мимо — сворачивает. */
-  sourceLabel.hidden=true;const sourceDiamonds={},sourceFan=document.createElement('div');sourceFan.className='zerk-source-fan';sourceFan.hidden=true;
-  const sourceMain=button('△\nузор','Узор: выбрать источник строк',()=>{sourceFan.hidden=!sourceFan.hidden;sourceMain.classList.toggle('open',!sourceFan.hidden);},rowGroup);diamond(sourceMain,'△\nузор',rowGroup);
-  const fanClose=()=>{sourceFan.hidden=true;sourceMain.classList.remove('open');};
-  for(const [v,caption,title] of [['serp','△\nСерп.','Узор: Серпинский'],['base','◇\nхаб','Узор: исходный из хаба'],['field','≡\nполе','Узор: строки поля'],['own','↥\nсвои','Узор: свои строки — вставить или загрузить TXT / JSON'],['pend','↔\nмаят.','Узор: зеркальный маятник']]){
-    let d;d=button(caption,title,()=>{fanClose();if(v==='own'){pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',sourceMain);return;}if(state.source!==v){source.value=v;source.onchange();}},sourceFan);sourceDiamonds[v]=diamond(d,caption,sourceFan);}
-  rowGroup.parentElement.append(sourceFan);
-  const fanPlace=()=>[...sourceFan.children].forEach((n,k)=>{n.style.left=(48+(k%2?24:0))+'px';n.style.top=(parseFloat(sourceMain.style.top)+k*24)+'px';});
-  document.addEventListener('pointerdown',e=>{if(!sourceFan.hidden&&!sourceFan.contains(e.target)&&!sourceMain.contains(e.target))fanClose();},true);
-  compactUpdates.push(()=>{fanPlace();sourceMain.textContent=({serp:'△\nСерп.',base:'◇\nхаб',field:'≡\nполе',own:'↥\nсвои',pend:'↔\nмаят.'})[state.source];for(const [v,d] of Object.entries(sourceDiamonds)){const on=state.source===v;d.classList.toggle('on',on);d.setAttribute('aria-pressed',String(on));}});
+  /* Ромб-выбор: главный ромб показывает текущий вариант (его подпись), нажатие раскрывает справа от грозди лесенку ромбов-вариантов;
+     выбор или щелчок мимо — сворачивает, включённый вариант светится. options: [[значение, подпись, подсказка]]. */
+  function fanDiamond(parent,title,options,get,pick){
+    const fan=document.createElement('div');fan.className='zerk-source-fan';fan.hidden=true;const items={};
+    const close=()=>{fan.hidden=true;main.classList.remove('open');};
+    const main=button(options[0][1],title,()=>{fan.hidden=!fan.hidden;main.classList.toggle('open',!fan.hidden);},parent);diamond(main,options[0][1],parent);
+    for(const [v,caption,tip] of options)items[v]=diamond(button(caption,tip,()=>{close();pick(v,main);},fan),caption,fan);
+    parent.parentElement.append(fan);
+    document.addEventListener('pointerdown',e=>{if(!fan.hidden&&!fan.contains(e.target)&&!main.contains(e.target))close();},true);
+    compactUpdates.push(()=>{const cur=get(),host=main.parentElement?.parentElement;if(host&&fan.parentElement!==host)host.append(fan);   // ромб переложили в другую гроздь — лесенка за ним
+      [...fan.children].forEach((n,k)=>{n.style.left=(48+(k%2?24:0))+'px';n.style.top=(parseFloat(main.style.top)+k*24)+'px';});
+      const o=options.find(o=>o[0]===cur);if(o)main.textContent=o[1];for(const [v,d] of Object.entries(items)){const on=cur===v;d.classList.toggle('on',on);d.setAttribute('aria-pressed',String(on));}});
+    return main;
+  }
+  sourceLabel.hidden=true;
+  fanDiamond(rowGroup,'Узор: выбрать источник строк',[['serp','△\nСерп.','Узор: Серпинский'],['base','◇\nхаб','Узор: исходный из хаба'],['field','≡\nполе','Узор: строки поля'],['own','↥\nсвои','Узор: свои строки — вставить или загрузить TXT / JSON'],['pend','↔\nмаят.','Узор: зеркальный маятник']],()=>state.source,
+    (v,main)=>{if(v==='own'){pendPlaying=false;source.value=state.source='own';own.hidden=false;changed(true);openEditor(sourceEditor,'Свои строки · TXT / JSON',main);return;}if(state.source!==v){source.value=v;source.onchange();}});
   for(const [i,caption] of ['≡\nкопия','↦\nв поле','▣\nPNG'].entries())if(i>1)diamond(oldActions[i],caption,rowGroup);actions.remove();   // v0.1158, «эту кнопку убери», «эту тоже»: «≡ копия» (строки поля — в свои) и «↦ в поле» (строки узора — в поле) в грозди не показываются
   buildSceneEditor(rowGroup);
   buildPngEditor(oldActions[2]);
@@ -346,8 +354,9 @@
   const magnetToggle=button('🧲\nмагн.','Магнит зеркал: центры, середины и половины линий; углы 30°, 45°, 60°, 90°',()=>{state.magnet=!state.magnet;changed();},viewGroup);diamond(magnetToggle,'🧲\nмагн.',viewGroup);
   magnetToggle.style.left='48px';magnetToggle.style.top=labelToggle.style.top;viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');viewGroup.parentElement.classList.add('zerk-view-group');
   compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
-  const bitsToggle=button('01\nбиты','Только цифры 0 и 1 без ромбов и заливки',()=>{state.bitsOnly=!state.bitsOnly;body.querySelector('input[aria-label="Только биты 0 / 1"]').checked=state.bitsOnly;changed(true);},viewGroup);diamond(bitsToggle,'01\nбиты',viewGroup);bitsToggle.style.left='48px';bitsToggle.style.top='0px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
-  compactUpdates.push(()=>{bitsToggle.classList.toggle('on',state.bitsOnly);bitsToggle.setAttribute('aria-pressed',String(state.bitsOnly));});
+  /* v0.1169, «когда из строк берём биты, там тоже нужна возможность показа в ромбах, и добавь ещё квадрат-бит»: «01 биты» — ромб-выбор формы бита */
+  const bitsToggle=fanDiamond(viewGroup,'Форма бита: ромб, квадрат или цифра',[['diamond','◇\nромб','Бит ромбом'],['square','□\nквадр.','Бит квадратом'],['digits','01\nбиты','Бит цифрой 0 / 1 без заливки']],()=>state.bitShape,
+    v=>{state.bitShape=v;state.bitsOnly=v==='digits';body.querySelector('input[aria-label="Только биты 0 / 1"]').checked=state.bitsOnly;changed(true);});
   const overlapToggle=button('⋂\nперес.','Пересечения фигур ярко, остальные биты сильно темнее',()=>{state.overlapOnly=!state.overlapOnly;changed();},viewGroup);diamond(overlapToggle,'⋂\nперес.',viewGroup);overlapToggle.style.left='48px';overlapToggle.style.top='96px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{overlapToggle.classList.toggle('on',state.overlapOnly);overlapToggle.setAttribute('aria-pressed',String(state.overlapOnly));});
   const symmetryToggle=button('│\nсим.','Зеркальные оси и парные биты',()=>{state.bitSymmetry=!state.bitSymmetry;body.querySelector('input[aria-label="Зеркальные оси и парные биты"]').checked=state.bitSymmetry;changed(true);},viewGroup);diamond(symmetryToggle,'│\nсим.',viewGroup);symmetryToggle.style.left='48px';symmetryToggle.style.top='216px';
@@ -560,7 +569,7 @@
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
     button('Грозди на места','Вернуть группы кнопок в исходную раскладку',resetGroups,el);
-    const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;changed(true);};
+    const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;state.bitShape=state.bitsOnly?'digits':'diamond';changed(true);};
     const symmetry=field(el,'Зеркальные оси и парные биты','checkbox',state.bitSymmetry);symmetry.onchange=()=>{state.bitSymmetry=symmetry.checked;changed(true);};
     symmetryFields(el);
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
@@ -699,7 +708,7 @@
       target.font='bold '+fs+'px '+state.font;target.textAlign='center';target.textBaseline='middle';
       for(const [bit,x,y,a,symColor] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?(symColor?.68:.42):(symColor?.25:.11));target.fillStyle=colorMap(symColor||color);
-        if(!state.bitsOnly){target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}
+        if(!state.bitsOnly){if(state.bitShape==='square'){const q=Math.min(dw,dh/2)*.9;target.fillRect(-q/2,-q/2,q,q);}else{target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}}   // v0.1169: квадрат-бит
         if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(symColor||color);target.fillText(bit,0,fs*.06);}
         else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(symColor||color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
         else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':symColor||color);target.fillText(bit,0,fs*.06);}target.restore();
@@ -750,7 +759,7 @@
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
       const reflected=reflectedCopies();
-      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.netDigits,state.bitSymmetry,state.symmetryMinimums,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
+      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.bitShape,state.netDigits,state.bitSymmetry,state.symmetryMinimums,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
@@ -760,7 +769,7 @@
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
       const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
-        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
+        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitShape,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;
