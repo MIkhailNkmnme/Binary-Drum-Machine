@@ -223,7 +223,8 @@
     const line=document.createElement('div');line.className='zerk-mirror';line.dataset.mirror=String(i+1);
     const center=document.createElement('button');center.type='button';center.className='zerk-center';center.textContent=i+1;center.setAttribute('aria-label','Переместить зеркало '+(i+1));
     const turn=document.createElement('button');turn.type='button';turn.className='zerk-turn';turn.textContent='↻';turn.setAttribute('aria-label','Повернуть зеркало '+(i+1));
-    const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за любое место оси');line.append(center,turn);layer.prepend(axis);layer.append(line);handles.push({line,center,turn,axis});
+    const axis=document.createElement('span');axis.className='zerk-axis';axis.tabIndex=0;axis.setAttribute('role','button');axis.setAttribute('aria-label','Переместить зеркало '+(i+1)+' за любое место оси');const deg=document.createElement('span');deg.className='zerk-deg';deg.setAttribute('aria-hidden','true');   // v0.1183, «рядом с осью, где кнопка кручения, покажи градусы текущего»
+    line.append(center,turn,deg);layer.prepend(axis);layer.append(line);handles.push({line,center,turn,axis,deg});
     // v0.1172, «у осей кнопки скрывай за битами, но выведи вперёд при наведении на эту ось»: ромбы оси бледные, пока указатель не на её линии или ромбах
     for(const node of [axis,center,turn]){node.addEventListener('pointerenter',()=>line.classList.add('hot'));node.addEventListener('pointerleave',()=>line.classList.remove('hot'));}
     for(const [node,turning] of [[center,false],[axis,false],[turn,true]]){
@@ -394,6 +395,7 @@
   function motionRateFromStep(step){return step<=0?0:.1*Math.pow(10,(clamp(step,1,401)-1)/100);}
   function motionRateStep(rate){return rate<=0?0:clamp(1+100*Math.log10(rate/.1),1,401);}
   state.motionRate=clamp(Number.isFinite(state.motionRate)?state.motionRate:1,0,1000);state.motionDir=state.motionDir===-1?-1:1;
+  const MOTION_JUMPS=[0,15,22.5,30,36,45,60,72,90,120,180];if(!MOTION_JUMPS.includes(state.motionJump))state.motionJump=0;
   const transport=document.createElement('div');transport.id='zerkMotion';transport.setAttribute('aria-label','Общий пуск включённых осей');stage.append(transport);
   const motionRange=document.createElement('input');motionRange.type='range';motionRange.dataset.zerkArrowed='1';motionRange.min=0;motionRange.max=401;motionRange.value=Math.round(motionRateStep(state.motionRate));motionRange.setAttribute('aria-label','Множитель общей скорости включённых осей');transport.append(motionRange);
   const motionPlay=button('▶','Запустить / остановить все включённые оси',()=>{const active=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));if(active){pausedMotion=state.mirrors.map(m=>({spin:m.on&&m.spin,path:m.on&&m.path.enabled}));state.mirrors.forEach(m=>{m.spin=false;m.path.enabled=false;});}else{state.mirrors.forEach((m,i)=>{if(!m.on)return;if(pausedMotion?.[i]?.path)m.path.enabled=true;else m.spin=true;});pausedMotion=null;}previous=0;changed();},transport);
@@ -408,6 +410,11 @@
   const motionDirSet=d=>{state.motionDir=d;changed();};
   const motionBack=button('◀','Обратный ход: все оси крутятся и идут по кривым назад (горит — выбрано)',()=>motionDirSet(-1),transport);
   const motionFwd=button('▶','Прямой ход: все оси крутятся и идут по кривым вперёд (горит — выбрано)',()=>motionDirSet(1),transport);
+  /* v0.1183, «рядом с плеером кнопку, чтобы крутила скачками через ровные градусы»: ромб справа от пульта. Щелчок — следующий шаг
+     (выкл → 15 → 22,5 → 30 → 36 → 45 → 60 → 72 → 90 → 120 → 180), правый щелчок — назад. Оси с ▶ крутятся рывками и встают на кратные шагу углы */
+  const motionJump=button('↻','Скачки — оси крутятся рывками на ровный шаг и встают на кратные ему углы; щелчок — следующий шаг, правый щелчок — предыдущий',()=>{state.motionJump=MOTION_JUMPS[(MOTION_JUMPS.indexOf(state.motionJump)+1)%MOTION_JUMPS.length];changed();},transport);
+  motionJump.className='zerk-jump';motionJump.oncontextmenu=e=>{e.preventDefault();state.motionJump=MOTION_JUMPS[(MOTION_JUMPS.indexOf(state.motionJump)+MOTION_JUMPS.length-1)%MOTION_JUMPS.length];changed();};
+  compactUpdates.push(()=>{const t=state.motionJump?String(state.motionJump).replace('.',',')+'°':'↻';if(motionJump.textContent!==t)motionJump.textContent=t;motionJump.classList.toggle('on',!!state.motionJump);motionJump.setAttribute('aria-pressed',String(!!state.motionJump));});
   transport.classList.add('zz-pult');motionRange.classList.add('zz-pult-range');motionBack.classList.add('zz-pult-back');motionFwd.classList.add('zz-pult-fwd');motionPlay.classList.add('zz-pult-play');motionValue.classList.add('zz-pult-value');
   function motionLayout(){ZerkPult.sync(transport,motionRateStep(state.motionRate)/401);}
   new ResizeObserver(()=>motionLayout()).observe(transport);
@@ -826,14 +833,15 @@
     paint(g,data,sceneMath.multiply([dpr,0,0,dpr,0,0],viewMatrix()));
     paintFieldAxes(g,sceneMath.multiply([dpr,0,0,dpr,0,0],viewMatrix()));
     fieldAxisNodes.forEach((node,i)=>{const f=state.fieldAxes,p=viewPoint(f.x,f.y),length=(Math.hypot(drawW,drawH)+Math.hypot(...p))*2+40;node.hidden=!f.on;Object.assign(node.style,{width:length+'px',left:(p[0]-length/2)+'px',top:(p[1]-16)+'px',transform:'rotate('+(f.angle+i*pi/2+state.viewAngle*pi/180)+'rad)'});});
-    state.mirrors.forEach((m,i)=>{const {line,center,turn,axis}=handles[i],ctl=controls[i],p=viewPoint(m.x,m.y),screenAngle=m.angle+state.viewAngle*pi/180,length=Math.hypot(drawW,drawH)*2+40;
+    state.mirrors.forEach((m,i)=>{const {line,center,turn,axis,deg:degEl}=handles[i],ctl=controls[i],p=viewPoint(m.x,m.y),screenAngle=m.angle+state.viewAngle*pi/180,length=Math.hypot(drawW,drawH)*2+40;
       line.hidden=axis.hidden=!m.on;
       line.classList.toggle('off',!m.on);line.style.setProperty('--mirror-color',m.color);line.style.setProperty('--control-color',sceneMath.controlColor(m.color));Object.assign(line.style,{width:length+'px',left:(p[0]-length/2)+'px',top:(p[1]-16)+'px',transform:'rotate('+screenAngle+'rad)'});
       Object.assign(axis.style,{width:length+'px',left:line.style.left,top:(p[1]-axis.offsetHeight/2)+'px',transform:line.style.transform});
       if(m.grip!==null&&Math.abs(m.angle-m.gripAngle)>pi/2)m.grip=-m.grip;m.gripAngle=m.angle;
       center.style.left=(length/2-center.offsetWidth/2)+'px';center.style.transform='rotate('+(-screenAngle)+'rad)';
       const arm=Math.max(48,Math.min(160,Math.min(drawW,drawH)*.18*state.zoom));turn.style.left=(length/2-turn.offsetWidth/2+arm)+'px';turn.style.transform='rotate('+(-screenAngle)+'rad)';
-      const deg=Math.round(m.angle*180/pi)%180;ctl.angle.value=deg;ctl.output.textContent=deg+'°';});
+      const deg=Math.round(m.angle*180/pi)%180;ctl.angle.value=deg;ctl.output.textContent=deg+'°';
+      {const t=String(Math.round(m.angle*1800/pi)%1800/10).replace('.',',')+'°';if(degEl.textContent!==t)degEl.textContent=t;degEl.style.left=(length/2+arm+turn.offsetWidth/2+4)+'px';degEl.style.transform='rotate('+(-screenAngle)+'rad)';}});
     annotations.hidden=!state.labels;
     if(state.labels){const distance=Math.min(drawW,drawH)*.18,names=state.mirrors.map((m,i)=>{const p=viewPoint(m.x,m.y),a=m.angle+state.viewAngle*pi/180;return {x:p[0]+Math.cos(a)*distance,y:p[1]+Math.sin(a)*distance+20,text:'Зеркало '+(i+1),color:m.color,off:!m.on};});
       for(const label of data.labels){const p=viewPoint(label.point[0]/drawW,label.point[1]/drawH);names.push({x:p[0],y:p[1],text:label.text,color:label.color});}
@@ -843,10 +851,13 @@
     compactUpdates.forEach(update=>update());groups.forEach(el=>platePlace(el));zoomValue.textContent=Math.round(state.zoom*100)+'%';zoomOut.disabled=state.zoom<=ZOOM_MIN;zoomIn.disabled=state.zoom>=ZOOM_MAX;
     const moving=state.mirrors.filter(m=>m.on&&m.path.enabled).length,mirrorCount=state.mirrors.filter(m=>m.on).length,message=snapHint?'🧲 '+snapHint:notice||data.count+(data.count===1?' набор':' набора')+' · ×'+(data.count===1?1:state.mult)+' · '+mirrorCount+(mirrorCount===1?' зеркало':mirrorCount===0?' зеркал':' зеркала')+(state.overlapOnly?' · пересечения ярко':'')+(moving?' · '+moving+' по кривым':' · колесо — масштаб; нажатие — дзен');const symmetrySources=[...new Set(data.items.map(item=>item.src))],symmetryMessage=state.bitSymmetry?' · симметрия: '+(symmetrySources.some(src=>!src.symmetry)?'поиск…':symmetrySources.reduce((sum,src)=>sum+src.symmetry.segments.length,0)+' участков'):'';const finalMessage=state.source==='pend'?'Зеркальный маятник · кадр '+pendEngine().frame+' / '+pendEngine().limit+' · '+message+symmetryMessage:message+symmetryMessage;if(status.textContent!==finalMessage)status.textContent=finalMessage;platePlace(tools);
   }
+  const jumpAcc=new WeakMap();
   function tick(now){raf=0;if(!visible()){previous=0;return;}const dt=previous?Math.max(0,(now-previous)/1000):0;previous=now;
     const spinning=state.mirrors.some(m=>m.on&&(m.spin||m.path.enabled));for(const m of state.mirrors)if(m.on){
       if(m.path.enabled){try{const p=m.path;if(!Number.isFinite(p.anchorX)||!Number.isFinite(p.anchorY)||!Number.isFinite(p.anchorAngle))anchorPath(m);p.elapsed+=dt*(state.motionRate??1)*state.motionDir;const v=pathValue(m),ay=p.kind==='circle'?p.ampX*drawW/Math.max(1,drawH):p.ampY;m.x=p.anchorX+v[0]*p.ampX;m.y=p.anchorY+v[1]*ay;m.angle=norm(p.anchorAngle+v[2]);}catch(e){stopPath(m);notify('Кривая остановлена: '+e.message);persist();}}
-      else if(m.spin)turnMirror(m,m.speed*pi/180*dt*(state.motionRate??1)*state.motionDir);
+      else if(m.spin){const d=m.speed*pi/180*dt*(state.motionRate??1)*state.motionDir;
+        if(state.motionJump){const st=state.motionJump*pi/180;let acc=(jumpAcc.get(m)||0)+d;while(Math.abs(acc)>=st){const sg=Math.sign(acc);turnMirror(m,Math.round((m.angle+sg*st)/st)*st-m.angle);acc-=sg*st;}jumpAcc.set(m,acc);}   // v0.1183: скачками — копим ход, шаг за шагом встаём на кратные углы
+        else turnMirror(m,d);}
     }
     const beforePend=pendulum?.revision,pendMoving=advancePendulum(now);if(spinning||dirty||!pendMoving||beforePend!==pendulum?.revision)render();if(spinning||pendMoving)raf=requestAnimationFrame(tick);else previous=0;
   }
