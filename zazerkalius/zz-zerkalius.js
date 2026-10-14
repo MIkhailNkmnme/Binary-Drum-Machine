@@ -136,7 +136,7 @@
     el.querySelector('.pminbtn').onclick=e=>{e.stopPropagation();plateFoldToggle(el);};
     el.addEventListener('click',e=>{if(e.detail!==0&&performance.now()<(el._solDragUntil||0)){e.preventDefault();e.stopImmediatePropagation();}},true);
     el.addEventListener('pointerdown',e=>{
-      const diamond=e.target.closest('.zerk-diamond'),head=e.target.closest('.smh');
+      const diamond=e.target.closest('.zerk-diamond,.zerk-header-number'),head=e.target.closest('.smh');   // номер зеркала в шапке — тоже ручка: щелчок без сдвига по-прежнему включает ось
       if(![0,2].includes(e.button)||(!diamond&&!head)||e.target.closest('input[type=range],input[type=number],select,textarea')||(!diamond&&e.target.closest('button,input,label')))return;
       el._solDragUntil=0;const handle=diamond||hd;e.stopPropagation();
       const start=[e.clientX,e.clientY],r0=el.getBoundingClientRect();let moved=false;
@@ -155,7 +155,7 @@
         if(moved){el._solDragUntil=performance.now()+400;el.classList.remove('pdrag');document.body.classList.remove('cgdrag');window.zzPanelDragEnd?.(el);zSnapGlow([]);if(el._zerkDock){const edge=ev.type==='pointerup'&&dockTarget(ev);if(edge){const target=edge==='bottom'?footerDock:headerDock;el._zerkDock(true,r0.left+ev.clientX-start[0]-target.getBoundingClientRect().left,edge);}else if(el.parentElement!==stage){stage.append(el);el.classList.remove('zerk-docked');c.place(el);}win.querySelector(':scope > .whead').classList.remove('zerk-dock-target');footerDock.classList.remove('zerk-dock-target');}save();}};
       document.addEventListener('pointermove',move,true);document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
     },true);
-    el.addEventListener('contextmenu',e=>{if(e.target.closest('.zerk-diamond,.smh')){e.preventDefault();e.stopPropagation();}},true);
+    el.addEventListener('contextmenu',e=>{if(e.target.closest('.zerk-diamond,.zerk-header-number,.smh')){e.preventDefault();e.stopPropagation();}},true);
   };
   SOL_PLATES.zerkTools={name:'Зеркалиус · три зеркала',min:'zerkToolsMin',xy:'zerkToolsXY',col:'#70e0d7',place:placeTools,init:plateSetup};
   plateInit(tools);
