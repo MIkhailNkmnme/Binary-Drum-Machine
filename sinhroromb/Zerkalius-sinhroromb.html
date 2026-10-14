@@ -1,4 +1,4 @@
-<!-- Синхроромб — v0.010. Отдельная страница — копия Синхрофазотрона v0.089 (2026-10-13, слово пользователя: «просто скопируй … и сделай
+<!-- Синхроромб — v0.011. Отдельная страница — копия Синхрофазотрона v0.089 (2026-10-13, слово пользователя: «просто скопируй … и сделай
      отдельную страницу синхо ромб, пока только лок»). Свой код (копии zz-*.js рядом), своя память (sinhroromb_*; при первом запуске
      читает память Синхрофазотрона, ничего в неё не пишет), своя версия v0.NNN; пресеты читает из ../zazerkalius/presety/. -->
 <!DOCTYPE html>
@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Синхроромб — v0.010</title>
+<title>Синхроромб — v0.011</title>
 <!-- Разметка и стили Синхрофазотрона. Математика — zz-core.js; интерфейс — zz-ui.js; шарики — zz-ball.js; грани — zz-faces.js; кольца четвертей — zz-quarters.js; мобильная раскладка — zz-mobile.js. -->
 <style>
 :root{
@@ -3240,7 +3240,7 @@ body.pane-icons.dragover #rowsPane{box-shadow:none!important}
 #sfzSettingsDock.sfz-view-popup{position:fixed!important;z-index:2147483647!important;margin:0!important;padding:4px!important;max-height:calc(100vh - 16px)!important;overflow:auto!important;background:var(--bg)!important}
 #ringTbl#ringTbl#ringTbl#ringTbl#ringTbl#ringTbl.sfz-rings-revealed:not([hidden]){position:absolute!important;display:grid!important;margin:0!important;z-index:2147483647!important}
 </style>
-<link rel="stylesheet" href="../_js/menu-icons.css?v=7">
+<link rel="stylesheet" href="../_js/menu-icons.css?v=8">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=1">
 </head>
 <body>
@@ -3922,21 +3922,21 @@ body.pane-icons.dragover #rowsPane{box-shadow:none!important}
 
 <script src="../_js/initial-rows.js?v=2"></script>
 <script src="../_js/mayatnik-solarius.js?v=1"></script>
-<script src="zz-core.js?v=10"></script>
+<script src="zz-core.js?v=11"></script>
 <script src="../_js/zz-pult.js?v=1"></script>
-<script src="zz-ui.js?v=10"></script>
-<script src="zz-ball.js?v=10"></script>
-<script src="zz-quarters.js?v=10"></script>
-<script src="zz-faces.js?v=10"></script>
-<script src="zz-mobile.js?v=10"></script>
+<script src="zz-ui.js?v=11"></script>
+<script src="zz-ball.js?v=11"></script>
+<script src="zz-quarters.js?v=11"></script>
+<script src="zz-faces.js?v=11"></script>
+<script src="zz-mobile.js?v=11"></script>
 <script src="../_js/hub-link.js?v=1"></script>
 <!-- v0.321: значок ⌂ «в Хаб» — в шапку перед заголовком (модуль ставит его в DOMContentLoaded, этот обработчик — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("zerkHubBtn"), h = document.querySelector("#top h1"); if (a && h) h.before(a); });</script>
 <!-- v0.260, «Звук: кнопки, ползунки — стрелки всем ползункам всегда»: общий модуль сайта — у каждого ползунка ◂ ▸ (щелчок — шаг, держишь — повтор) -->
 <script src="../_js/slider-arrows.js"></script>
-<script src="../_js/menu-icons.js?v=9"></script>
+<script src="../_js/menu-icons.js?v=10"></script>
 <!-- v0.333: число ползунка (соседний span) — внутрь его обёртки ◂ ▸, поверх дорожки (стрелки ставит модуль выше, в DOMContentLoaded; это — следом) -->
 <script>document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".zerk-range-wrap > input[type=range]").forEach((r) => { const w = r.parentElement; let n = w.nextSibling; while (n && n.nodeType === 3 && !n.textContent.trim()) n = n.nextSibling; if (n && n.nodeType === 1 && n.tagName === "SPAN" && !n.querySelector("input, button, select")) { n.classList.add("rv"); w.appendChild(n); return; } /* v0.343, «всем ползункам численное значение»: у кого своего числа нет (♩, 🔊, ↕, ▬, этаж) — оно ставится здесь и следит за ползунком: и за мышью, и за значением, выставленным из кода (загрузка, сброс, пресет) */ const v = document.createElement("span"); v.className = "rv"; w.appendChild(v); const u = r.dataset.unit || "", st = String(r.step || ""), dp = st.includes(".") ? st.split(".")[1].length : 0; const upd = () => { const x = parseFloat(r.value); v.textContent = (isFinite(x) ? x.toFixed(dp) : r.value) + u; }; const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value"); try { Object.defineProperty(r, "value", { configurable: true, get() { return d.get.call(this); }, set(x) { d.set.call(this, x); upd(); } }); } catch (err) { /* не вышло — хватит событий */ } r.addEventListener("input", upd); r.addEventListener("change", upd); upd(); }));</script>
-<script src="../_js/recorder.js?v=10" data-bez-knopki></script>
+<script src="../_js/recorder.js?v=11" data-bez-knopki></script>
 </body>
 </html>

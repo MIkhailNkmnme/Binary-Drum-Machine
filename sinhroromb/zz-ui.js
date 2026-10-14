@@ -246,6 +246,7 @@ document.addEventListener("mouseover", (e) => {
   tipEl = el; el.dataset.zzTip = t; el.removeAttribute("title");
   tipTimer = setTimeout(() => {
     if (Z.tipsOn === false && !near) return;
+    if (el.classList.contains("mi-btn")) return;   // v6 menu-icons: у ромба гроздей подсказка — рядом с кнопкой (_js/menu-icons.js)
     const m=$("msg");clearTimeout(msgTimer);m.textContent=t;
     m.classList.remove("tip-tl","tip-tr","tip-bl","tip-br");m.classList.add("tip","show","tip-near");
     tipPlaceAtPointer();
