@@ -2874,7 +2874,7 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || !button.closest("#w-cone") || button.closest("#coneRecBar") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  if (!button || !button.closest("#w-cone") || button.closest("#coneRecBar,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
@@ -5138,9 +5138,13 @@ function coneMagSp(){ const v = +Z.coneMagSp; return v > 0 ? v : 2; }
 function spinSpUi(){
   const v = Math.abs(Z.coneAutoSp ?? 30), el = $("coneAutoSpV"); if (!el) return;
   const f = x => window.zzBallClockOn && window.zzBallClockOn() ? ZZExact.from(x).text() : x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
+  const detail = window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
     Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  const mult = Z.coneSpinMag ? coneMagSp() / 2 : v / 30;   // подпись пульта — общий множитель ×N (_js/zz-pult.js), точное — в подсказке
+  const text = window.ZerkPult && ZerkPult.label ? ZerkPult.label(mult) : detail; if (el.textContent !== text) el.textContent = text;
+  { const tip = "Скорость " + text + " от обычной: " + detail; if (el.title !== tip) el.title = tip; }
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
+  tempoTrackSync();
 }
 function coneDirUi(){   // v0.136: ползунок — величина скорости, кнопка — направление
   const sp = Z.coneAutoSp ?? 30; if (!sp) Z.coneAutoSp = 30;
@@ -7040,36 +7044,131 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   // v0.1013: абсолютные кнопки привязаны к offsetParent; статическое тело окна давало лишний отступ снизу.
   const host = b.parentElement, anchor = b.offsetParent || host, hr = anchor.getBoundingClientRect(), cr = cv.getBoundingClientRect(); if (!cr.width || !hr.width) return;
   const scrollLeft = anchor.scrollLeft - anchor.clientLeft, scrollTop = anchor.scrollTop - anchor.clientTop;
-  const G = coneGeom, cxp = G && G.dpr ? G.cx / G.dpr : cr.width / 2, w = (document.getElementById("bC3Spin") || b).offsetWidth || 60;   // v0.828: ромб 60 (было 80); v0.858: на телефоне 40 — размер берётся с ▶
-  const stB = document.getElementById("bC3StepB"), stF = document.getElementById("bC3StepF"), st = !!(stB && stB.parentElement === host);   // v0.856: шаги под ▶ — всё выше на полромба
-  const rw = b.offsetWidth || w, rh = b.offsetHeight || w / 2;
+  /* Общий пульт (_js/zz-pult.js), как в Синхрофазотроне: ползунок темпа «Кручения» переезжает в #coneTransportTempo над нижним рядом —
+     ◀ ▶ шага на концах, треугольники сходятся к ромбу пуска (щелчок — ▶ / ⏸, перетаскивание — темп), рядом ×N. Прежний ромб ▶ (#bC3Spin) скрыт;
+     ⌖✕ сброс — под пультом на вертикали через центр конуса. */
+  const speed = $("coneAutoSp"), speedLabel = speed && speed.closest("label");
+  if (speedLabel) {
+    let box = $("coneTransportTempo");
+    if (!box) { box = document.createElement("div"); box.id = "coneTransportTempo"; host.appendChild(box);
+      const ms0 = $("c3Modes");   // режимы кручения всплывают при наведении на пульт (прежде — на ромб ▶)
+      if (ms0 && ms0._show) { box.addEventListener("pointerenter", ms0._show); box.addEventListener("pointerleave", ms0._hide); } }
+    if (box.parentElement !== host) host.appendChild(box);
+    if (speedLabel.parentElement !== box) box.appendChild(speedLabel);
+    if (speedLabel.classList.contains("tz")) triOff(speedLabel);   // без цепочки треугольников группы — у пульта своя форма
+    for (const k of ["--a", "--b", "--c", "--d", "--e", "--f", "--lat", "width", "flex", "margin-left"]) speedLabel.style.removeProperty(k);
+  }
+  const tempoBox = $("coneTransportTempo");
+  const G = coneGeom, axis = coneAxisScr(), centre = axis ? axis.x - hr.left + scrollLeft : cr.left - hr.left + scrollLeft + (G && G.dpr ? G.cx / G.dpr : cr.width / 2);
+  const rw = b.offsetWidth || 60, rh = b.offsetHeight || 30, gap = 4;
   const tb = document.getElementById("coneTapeBox"), tapeSpace = tb && tb.offsetHeight ? tb.offsetHeight + 16 : 0;   // v0.1084: место для истории под пультом
   const bottom = cr.bottom - hr.top + scrollTop - tapeSpace;
-  const x = Math.max(cr.left - hr.left, Math.min(cr.right - hr.left - w, cr.left - hr.left + cxp - w / 2)) + scrollLeft, y = bottom - w;
-  // v0.945: сброс — красный треугольник на самом нижнем краю, между шагами.
-  const sp = document.getElementById("bC3Spin"), ws = w * 7 / 8, d = (w - ws) / 2, sideGap = w / 5;
+  const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
-  if (sp && sp.parentElement === host) put(sp, x, y);
-  put(b, x + (w - rw) / 2, bottom - rh);
-  if (st) { const overlap = ws / 2; put(stB, x - ws + overlap, y); if (stF && stF.parentElement === host) put(stF, x + w - overlap, y); }   // v0.985: сдвинуть шаги внутрь до перекрытия примерно четверти их площади центральным ромбом
-  // v0.931: режимы справа от кручения; копия «На места» убрана из нижнего блока.
+  const x = Math.max(left, Math.min(edge - rw, centre - rw / 2));
+  put(b, x, bottom - rh);
+  let pultTop = bottom - rh, pultLeft = x, pultRight = x + rw;
+  if (tempoBox) {
+    const tw = Math.max(0, Math.min(480, edge - left));   // пульт — по оси конуса, не шире 480 и не за краями холста
+    tempoBox.style.width = tw.toFixed(1) + "px";
+    const th = tempoBox.offsetHeight || 48, X = Math.max(left, Math.min(edge - tw, centre - tw / 2));
+    pultTop = Math.max(cr.top - hr.top + scrollTop + 2, bottom - rh - gap - th); pultLeft = X; pultRight = X + tw;
+    put(tempoBox, X, pultTop);
+    tempoTrackSync();
+  }
+  // v0.931: режимы справа от сброса; не влезают — над пультом.
   const ms = document.getElementById("c3Modes");
-  const right = Math.max(x + w, st ? x + w / 2 + d + sideGap + ws : x + w);
   if (ms && ms.parentElement === host) {
-    let X = right + 10, Y = y + w / 2 - 12;
-    if (ms.classList.contains("spin")) {
-      const width = 292, left = cr.left - hr.left + scrollLeft, edge = cr.right - hr.left + scrollLeft;
-      // A narrow canvas gets the complete speed control above the diamonds.
-      if (X + width > edge - 4) { X = Math.max(left + 4, Math.min(edge - width - 4, x + w / 2 - width / 2)); Y = y - 30; }
-    }
+    const width = ms.offsetWidth || (ms.classList.contains("spin") ? 292 : 460), mh = ms.offsetHeight || 24;
+    let X = x + rw + 10, Y = bottom - rh / 2 - mh / 2;
+    if (X + width > edge) { X = Math.max(left, Math.min(edge - width, centre - width / 2)); Y = pultTop - mh - gap; }
     put(ms, X, Y);
   }
   const caption = document.getElementById("coneVarN");
   if (caption && caption.parentElement === host) {
-    const X = cr.left - hr.left + scrollLeft + 2, groupLeft = st ? x - ws / 2 : x, available = Math.max(0, groupLeft - X - 4);   // v0.985: подпись цикла прижата к левому краю, поля до ромбов сжаты
+    const X = cr.left - hr.left + scrollLeft + 2, available = Math.max(0, x - X - 8);   // подпись цикла — у левого края, левее сброса
     caption.style.maxWidth = available.toFixed(1) + "px";
     put(caption, X, bottom - caption.offsetHeight - 4);
   }
+}
+/* Внутренние треугольники сходятся под ромбом пуска (запасной вид, если _js/zz-pult.js не загрузился). */
+function tempoContourSync(label, tx){
+  const back=$("bC3StepB"), forward=$("bC3StepF"); if(!back || !forward)return;
+  let svg=label.querySelector(":scope > .tempoHourglass");
+  if(!svg){
+    const ns="http://www.w3.org/2000/svg";
+    svg=document.createElementNS(ns,"svg"); svg.classList.add("tempoHourglass");
+    svg.setAttribute("aria-hidden","true"); svg.setAttribute("focusable","false");
+    svg.appendChild(document.createElementNS(ns,"path")); label.appendChild(svg);
+  }
+  const width=label.offsetWidth, height=label.offsetHeight;
+  const viewBox=`0 0 ${width} ${height}`;
+  if(svg.getAttribute("viewBox")!==viewBox)svg.setAttribute("viewBox",viewBox);
+  const left=back.offsetLeft+back.offsetWidth, right=forward.offsetLeft;
+  const top=back.offsetTop+.5, bottom=back.offsetTop+back.offsetHeight-.5, mid=height/2;
+  const d=`M${left} ${top}L${tx} ${mid}L${left} ${bottom}Z M${right} ${top}L${tx} ${mid}L${right} ${bottom}Z`;
+  const path=svg.firstElementChild; if(path.getAttribute("d")!==d)path.setAttribute("d",d);
+}
+function tempoTrackSync(){
+  const r = $("coneAutoSp"), L = r && r.closest("#coneTransportTempo > label"); if (!L || !L.offsetWidth) return;
+  tempoControlsSetup(r, L);
+  if (!r._tempoBound) { r._tempoBound = true; r.addEventListener("input", tempoTrackSync); }
+  const lw = L.offsetWidth;
+  // Ромб пуска идёт за настоящим положением ползунка — и от мыши, и от клавиш, и от кода.
+  const rr=r.getBoundingClientRect(), lr=L.getBoundingClientRect(), f=(+r.value-(+r.min||0))/Math.max(1,(+r.max||100)-(+r.min||0));
+  const thumbWidth=$("coneTempoToggle")?.offsetWidth || 48;
+  // общий пульт (_js/zz-pult.js): корпус, ромб и подпись ставит ZerkPult — у всех страниц одинаково
+  for (const [e, c] of [[L.parentElement, "zz-pult-box"], [L, "zz-pult"], [r, "zz-pult-range"], [$("bC3StepB"), "zz-pult-back"], [$("bC3StepF"), "zz-pult-fwd"], [$("coneTempoToggle"), "zz-pult-play"], [$("coneAutoSpV"), "zz-pult-value"]]) if (e && !e.classList.contains(c)) e.classList.add(c);
+  const tx=window.ZerkPult ? window.ZerkPult.sync(L, f) ?? 0 : rr.left-lr.left+thumbWidth/2+f*Math.max(1,rr.width-thumbWidth);
+  const set = (k, v) => { if (L.style.getPropertyValue(k) !== v) L.style.setProperty(k, v); };
+  set("--tx", tx.toFixed(1) + "px"); set("--ta", (tx - 3).toFixed(1) + "px");
+  if (!window.ZerkPult) tempoContourSync(L, tx);
+  const value = $("coneAutoSpV");
+  if (value && !window.ZerkPult) { const vw = value.offsetWidth, right = tx + 78, vx = right + vw <= lw - 10 ? right : tx - 78 - vw;
+    set("--vx", Math.max(30, Math.min(lw - 30 - vw, vx)).toFixed(1) + "px"); }
+  const thumb = $("coneTempoToggle"), on = !!($("bConeAuto") && $("bConeAuto").classList.contains("on"));
+  L.classList.toggle("playing", on);
+  if (thumb) {
+    thumb.classList.toggle("on", on); thumb.setAttribute("aria-pressed", String(on));
+    let glyph = thumb.querySelector(".tempoPlayGlyph");
+    if (!glyph) { glyph = document.createElement("span"); glyph.className = "tempoPlayGlyph"; thumb.replaceChildren(glyph); }
+    const text = on ? "⏸" : "▶"; if (glyph.textContent !== text) glyph.textContent = text;
+  }
+}
+function tempoControlsSetup(r, L){
+  const wrap = r.closest(".zerk-range-wrap"); if (!wrap) return;
+  wrap.querySelectorAll(".zerk-arrow").forEach(b => b.remove());
+  for (const id of ["bC3StepB", "bC3StepF"]) { const b = $(id); if (b && b.parentElement !== wrap) wrap.appendChild(b); }
+  const value = $("coneAutoSpV"); if (value && value.parentElement !== L) L.appendChild(value);
+  if ($("coneTempoToggle")) return;
+  const thumb = document.createElement("button"); thumb.id = "coneTempoToggle"; thumb.type = "button";
+  thumb.title = "Щелчок — пуск / пауза. Перетаскивание ромба — темп."; thumb.setAttribute("aria-label", "Пуск / пауза; перетаскивание меняет темп");
+  L.appendChild(thumb);
+  let drag = null;
+  thumb.addEventListener("pointerdown", e => {
+    if (e.button !== 0 || drag) return; e.preventDefault(); e.stopPropagation();
+    drag = { id:e.pointerId, x:e.clientX, y:e.clientY, value:+r.value, width:Math.max(1,r.getBoundingClientRect().width - thumb.offsetWidth), moved:false };
+    thumb.setPointerCapture(e.pointerId);
+  });
+  thumb.addEventListener("pointermove", e => {
+    if (!drag || drag.id !== e.pointerId) return; e.preventDefault(); e.stopPropagation();
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    drag.moved = true;
+    const mn = +r.min || 0, mx = +r.max || 100, step = +r.step || 1;
+    r.value = String(Math.max(mn,Math.min(mx,mn + Math.round((drag.value + (e.clientX-drag.x)*(mx-mn)/drag.width - mn)/step)*step)));
+    r.dispatchEvent(new Event("input", {bubbles:true}));
+  });
+  const finish = (e, cancel) => {
+    if (!drag || drag.id !== e.pointerId) return; e.preventDefault(); e.stopPropagation();
+    const moved = drag.moved; drag = null;
+    if (thumb.hasPointerCapture(e.pointerId)) thumb.releasePointerCapture(e.pointerId);
+    if (moved) r.dispatchEvent(new Event("change", {bubbles:true}));
+    else if (!cancel) $("bConeAuto").click();
+  };
+  thumb.addEventListener("pointerup", e => finish(e,false));
+  thumb.addEventListener("pointercancel", e => finish(e,true));
+  thumb.addEventListener("lostpointercapture", () => { if (drag && drag.moved) r.dispatchEvent(new Event("change", {bubbles:true})); drag = null; });
+  thumb.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); if (e.detail === 0) $("bConeAuto").click(); });
 }
 function c3Moved(){   // v0.841: есть ли что вернуть зелёной ⟲ — накрутка колец, поворот всего конуса, фаза кручения, довод строки 1, кольцо за чертой, остановленные кольца
   { const s = posStarP(); if (s) return !posEq(posCur(), s); }   // v0.842: есть начальное ★ — сравнивать с ним
@@ -7650,6 +7749,7 @@ function setupCone(){
     const a3 = $("bC3Auto"); if (a3) { a3.classList.toggle("on", on); a3.textContent = on ? "⏸" : "▶"; }
     { const cm = $("c3Modes"); if (cm) cm.classList.toggle("spin", on); }   // v0.846: крутится — в полоске у ▶ ползунок скорости
     const s3 = $("bC3Spin"); if (s3) { s3.classList.toggle("on", on); s3.innerHTML = on ? "⏸<small>стоп</small>" : "▶"; }   // v0.985: убрать подпись «крутить», оставить крупную стрелку
+    tempoTrackSync();   // ромб пуска общего пульта: ▶ / ⏸
   };
   $("bConeAuto").onclick = () => autoSet(!autoRaf);
   if ($("bConeStartBack")) $("bConeStartBack").onclick = () => {   // v0.1064: ↩ старт — кольца на запомненный старт, для всех режимов
@@ -8460,7 +8560,8 @@ function setupCone(){
       s.onclick = (e) => { if (e.target.closest("#c3PosB")) { posPopOpen($("c3PosB")); return; } const c = e.target.closest("button[data-sm]"); const o = c && document.querySelector('#coneSpinModeB > button[data-sm="' + c.dataset.sm + '"]'); if (o) o.click(); };
       host.appendChild(s); let tm = 0;
       const on = () => { clearTimeout(tm); s.classList.add("show"); }, off = () => { clearTimeout(tm); tm = setTimeout(() => s.classList.remove("show"), 450); };
-      for (const el of [$("bC3Spin"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
+      s._show = on; s._hide = off;   // и для пульта (#coneTransportTempo) — c3RstPlace
+      for (const el of [$("bC3Spin"), $("coneTransportTempo"), s]) if (el) { el.addEventListener("pointerenter", on); el.addEventListener("pointerleave", off); }
       s.appendChild($("c3Speed")); coneSpinModeUi(); spinSpUi(); s.classList.toggle("spin", !!($("bC3Spin") && $("bC3Spin").classList.contains("on"))); }
     /* v0.847: притухание соседних ромбов при наведении — классом .c3hov у тела окна (было :has() на всём теле окна — тормозило загрузку) */
     if (host && !host._c3hov) { host._c3hov = 1; const SEL = "#cone3Pad > button, #cone3Pad .c3top > button, #cone3Pad .c3bot > button, #cone3Pad > .c3grip, #bC3Reset, #bC3Spin, #bC3StepB, #bC3StepF";
