@@ -203,6 +203,7 @@
     const groupsNow = () => [...document.querySelectorAll(cfg.groups)].filter(g => !g.matches(cfg.skip || '.coff'));
     const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
     function build() {
+      if (cfg.hide) for (const g of document.querySelectorAll(cfg.hide)) g.style.setProperty('display', 'none', 'important');   // группы, убранные со страницы совсем
       const isPanel = g => !!cfg.panels && g.matches(cfg.panels);   // панель без кнопок (подсказки, текст): в рейке только шапка, раскрыть — показать саму панель
       const gs = [...groupsNow(), ...(cfg.panels ? document.querySelectorAll(cfg.panels) : [])].filter((g, k, a) => a.indexOf(g) === k)
         .map(g => ({ g, items: isPanel(g) ? [] : itemsOf(g), panel: isPanel(g) })).filter(x => x.panel || x.items.length);
