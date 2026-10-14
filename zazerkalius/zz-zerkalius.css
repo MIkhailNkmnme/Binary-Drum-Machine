@@ -91,6 +91,17 @@
 /* Раздвинутый ромб: без внутренней рамки и черты между половинками — они накладывались на подпись */
 :is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible))::before{display:none}
 :is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-diamond:is(:hover,:has(:focus-visible)) .zerk-half-minus{border-right:0!important}}
+/* v0.1174: наклон бита — ◂◂ ◂ [узкий ромб: значение, щелчок — в 0] ▸ ▸▸; ◂◂ ▸▸ — по 5% шкалы */
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide :is(.zerk-half-minus2,.zerk-half-plus2,.zerk-split-zero){display:none}
+@media(hover:hover){:is(#zerkStage,#zerkHeaderDock) .zerk-split.zerk-split-wide.zerk-diamond:is(:hover,:has(:focus-visible)){width:144px!important;min-width:144px!important;max-width:144px;margin-left:-48px!important}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide:is(:hover,:has(:focus-visible)) .zerk-split-value{visibility:hidden}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide:is(:hover,:has(:focus-visible)) :is(.zerk-half-minus2,.zerk-half-plus2,.zerk-split-zero){display:block}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-half-minus2{left:0;width:22%!important;text-align:right;padding:0 1px 0 0!important;font-size:12px!important;letter-spacing:-3px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-half-plus2{right:0;width:22%!important;text-align:left;padding:0 0 0 1px!important;font-size:12px!important;letter-spacing:-3px}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-half-minus{left:22%;width:19.67%!important;padding:0!important;text-align:center}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-half-plus{right:22%;left:auto;width:19.67%!important;padding:0!important;text-align:center}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-split-zero{left:41.67%;width:16.67%!important;opacity:1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:color-mix(in srgb,var(--control-color,var(--mirror-color)) 45%,var(--bg,#0b0d12))!important;color:var(--fg,#fff)!important;font:700 9px/1.1 monospace!important;white-space:pre-line;text-align:center}
+:is(#zerkStage,#zerkHeaderDock) .zerk-split-wide .zerk-split-zero:hover{background:var(--control-color,var(--mirror-color))!important;color:var(--bg,#0b0d12)!important}}
 #zerkTools fieldset{margin:0;padding:5px;border:1px solid var(--line);min-width:0}
 #zerkTools legend{color:#70e0d7;padding:0 3px}
 #zerkTools .zerk-help{font:10px/1.4 var(--ff,monospace);color:var(--dim);margin:2px 0}
