@@ -73,7 +73,8 @@
   const fonts=[...document.querySelectorAll('#fontSel option')].map(o=>[o.value,o.textContent]);
   for(const name of ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','Space Mono','VT323','Share Tech Mono','Press Start 2P','Major Mono Display','Orbitron'])if(!fonts.some(([v])=>v.includes(name)))fonts.push(['"'+name+'", monospace',name]);
   state.font=fonts.some(([v])=>v===state.font)?state.font:fonts[0][0];
-  state.bitsOnly=!!state.bitsOnly;state.bitShape=state.bitsOnly?'digits':state.bitShape==='square'?'square':'diamond';state.netDigits=state.netDigits!==false;state.digitsMirror=state.digitsMirror!==false;
+  state.bitsOnly=!!state.bitsOnly;   // v0.1182: формы бита — ромб, квадрат, круг; каждая без цифры или с цифрой («…01»); «digits» — одни цифры. Прежние ромб / квадрат показывали цифру — переходят в «…01»
+  {const SHAPES=['diamond','diamond01','square','square01','circle','circle01'];if(!state.bitShape1182){state.bitShape1182=true;if(state.bitShape==='diamond'||state.bitShape==='square'||!state.bitShape)state.bitShape=(state.bitShape||'diamond')+'01';}state.bitShape=state.bitsOnly?'digits':SHAPES.includes(state.bitShape)?state.bitShape:'diamond01';}state.netDigits=state.netDigits!==false;state.digitsMirror=state.digitsMirror!==false;
   state.overlapOnly=!!state.overlapOnly;
   state.bitColor=/^#[0-9a-f]{6}$/i.test(state.bitColor)?state.bitColor:'#9fffc8';
   state.mult=[1,2,3].includes(state.mult)?state.mult:1;
@@ -303,12 +304,12 @@
     const fan=document.createElement('div');fan.className='zerk-source-fan';fan.hidden=true;const items={};
     const close=()=>{fan.hidden=true;main.classList.remove('open');};
     const main=button(options[0][1],title,()=>{fan.hidden=!fan.hidden;main.classList.toggle('open',!fan.hidden);},parent);diamond(main,options[0][1],parent);
-    for(const [v,caption,tip] of options)items[v]=diamond(button(caption,tip,()=>{close();pick(v,main);},fan),caption,fan);
+    for(const [v,caption,tip,icon] of options){items[v]=diamond(button(caption,tip,()=>{close();pick(v,main);},fan),caption,fan);if(icon)items[v].dataset.miIcon=icon;}
     parent.parentElement.append(fan);
     document.addEventListener('pointerdown',e=>{if(!fan.hidden&&!fan.contains(e.target)&&!main.contains(e.target))close();},true);
     compactUpdates.push(()=>{const cur=get(),host=main.parentElement?.parentElement;if(host&&fan.parentElement!==host)host.append(fan);   // ромб переложили в другую гроздь — лесенка за ним
       [...fan.children].forEach((n,k)=>{n.style.left=(48+(k%2?24:0))+'px';n.style.top=(parseFloat(main.style.top)+k*24)+'px';});
-      const o=options.find(o=>o[0]===cur);if(o)main.textContent=o[1];for(const [v,d] of Object.entries(items)){const on=cur===v;d.classList.toggle('on',on);d.setAttribute('aria-pressed',String(on));}});
+      const o=options.find(o=>o[0]===cur);if(o){main.textContent=o[1];if(o[3])main.dataset.miIcon=o[3];}for(const [v,d] of Object.entries(items)){const on=cur===v;d.classList.toggle('on',on);d.setAttribute('aria-pressed',String(on));}});
     return main;
   }
   sourceLabel.hidden=true;
@@ -362,7 +363,8 @@
   magnetToggle.style.left='48px';magnetToggle.style.top=labelToggle.style.top;viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');viewGroup.parentElement.classList.add('zerk-view-group');
   compactUpdates.push(()=>{magnetToggle.classList.toggle('on',state.magnet);magnetToggle.setAttribute('aria-pressed',String(state.magnet));});
   /* v0.1169, «когда из строк берём биты, там тоже нужна возможность показа в ромбах, и добавь ещё квадрат-бит»: «01 биты» — ромб-выбор формы бита */
-  const bitsToggle=fanDiamond(viewGroup,'Форма бита: ромб, квадрат или цифра',[['diamond','◇\nромб','Бит ромбом'],['square','□\nквадр.','Бит квадратом'],['digits','01\nбиты','Бит цифрой 0 / 1 без заливки']],()=>state.bitShape,
+  const bitsToggle=fanDiamond(viewGroup,'Форма бита: ромб, квадрат или цифра',[['diamond','◇\nромб','Бит ромбом','shapeDiamond'],['diamond01','◇1\nромб 01','Бит ромбом с цифрой','shapeDiamond1'],['square','□\nквадр.','Бит квадратом','shapeSquare'],['square01','□1\nкв. 01','Бит квадратом с цифрой','shapeSquare1'],['circle','○\nкруг','Бит кругом','shapeCircle'],['circle01','○1\nкруг 01','Бит кругом с цифрой','shapeCircle1'],['digits','01\nбиты','Бит цифрой 0 / 1 без заливки','shapeDigits']],   // v0.1182, «форма нужна с цифрой и с ромбом, ещё с квадратом, и окружность добавь»
+   ()=>state.bitShape,
     v=>{state.bitShape=v;state.bitsOnly=v==='digits';body.querySelector('input[aria-label="Только биты 0 / 1"]').checked=state.bitsOnly;changed(true);});
   const overlapToggle=button('⋂\nперес.','Пересечения фигур ярко, остальные биты сильно темнее',()=>{state.overlapOnly=!state.overlapOnly;changed();},viewGroup);diamond(overlapToggle,'⋂\nперес.',viewGroup);overlapToggle.style.left='48px';overlapToggle.style.top='96px';viewGroup.style.setProperty('--grape-height',(Number.parseFloat(labelToggle.style.top)+48)+'px');
   compactUpdates.push(()=>{overlapToggle.classList.toggle('on',state.overlapOnly);overlapToggle.setAttribute('aria-pressed',String(state.overlapOnly));});
@@ -577,7 +579,7 @@
   function buildSceneEditor(parent){
     const el=editor([]),build=field(el,'Построение','',state.build,[['axes','Оси и треугольники'],['net','Развёртка']]);
     button('Грозди на места','Вернуть группы кнопок в исходную раскладку',resetGroups,el);
-    const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;state.bitShape=state.bitsOnly?'digits':'diamond';changed(true);};
+    const bitsOnly=field(el,'Только биты 0 / 1','checkbox',state.bitsOnly);bitsOnly.onchange=()=>{state.bitsOnly=bitsOnly.checked;state.bitShape=state.bitsOnly?'digits':'diamond01';changed(true);};
     const symmetry=field(el,'Зеркальные оси и парные биты','checkbox',state.bitSymmetry);symmetry.onchange=()=>{state.bitSymmetry=symmetry.checked;changed(true);};
     symmetryFields(el);
     const font=field(el,'Шрифт битов','',state.font,fonts);font.onchange=()=>{state.font=font.value;changed(true);document.fonts.load('12px '+state.font).then(()=>changed(true));};
@@ -712,11 +714,11 @@
     const image=document.createElement('canvas'),w=bounds[2]-bounds[0],h=bounds[3]-bounds[1],safe=Math.min(ratio,8192/Math.max(w,h),Math.sqrt(16000000/(w*h)));
     image.width=Math.max(1,Math.ceil(w*safe));image.height=Math.max(1,Math.ceil(h*safe));const ctx=image.getContext('2d');ctx.setTransform(safe,0,0,safe,-bounds[0]*safe,-bounds[1]*safe);
     const draw=(target,pixelScale=1,colorMap=c=>c)=>{
-      const alpha=target.globalAlpha,fs=state.bitsOnly?dw*.72:Math.max(5/Math.max(1,pixelScale),dw*.62),digits=state.bitsOnly||dw*pixelScale>=7,view=visibleWorld(target,Math.max(dh,fs));
+      const alpha=target.globalAlpha,fs=state.bitsOnly?dw*.72:Math.max(5/Math.max(1,pixelScale),dw*.62),digits=state.bitsOnly||state.bitShape.endsWith('01')&&dw*pixelScale>=7,view=visibleWorld(target,Math.max(dh,fs));
       target.font='bold '+fs+'px '+state.font;target.textAlign='center';target.textBaseline='middle';
       for(const [bit,x,y,a,symColor] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?(symColor?.68:.42):(symColor?.25:.11));target.fillStyle=colorMap(symColor||color);
-        if(!state.bitsOnly){if(state.bitShape==='square'){const q=Math.min(dw,dh/2)*.9;target.fillRect(-q/2,-q/2,q,q);}else{target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}}   // v0.1169: квадрат-бит
+        if(!state.bitsOnly){if(state.bitShape.startsWith('square')){const q=Math.min(dw,dh/2)*.9;target.fillRect(-q/2,-q/2,q,q);}else if(state.bitShape.startsWith('circle')){target.beginPath();target.arc(0,0,Math.min(dw,dh/2)*.47,0,2*pi);target.fill();}else{target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}}   // v0.1169: квадрат-бит
         if(!state.digitsMirror&&(state.bitsOnly||(!state.trace&&digits))){const m=target.getTransform(),k=Math.sqrt(Math.abs(m.a*m.d-m.b*m.c));target.setTransform(k,0,0,k,m.e,m.f);}   // v0.1176: «цифры прямо» — без наклона и отражения
         if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(symColor||color);target.fillText(bit,0,fs*.06);}
         else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(symColor||color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
