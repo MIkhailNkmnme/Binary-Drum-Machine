@@ -73,7 +73,7 @@
   const fonts=[...document.querySelectorAll('#fontSel option')].map(o=>[o.value,o.textContent]);
   for(const name of ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','Space Mono','VT323','Share Tech Mono','Press Start 2P','Major Mono Display','Orbitron'])if(!fonts.some(([v])=>v.includes(name)))fonts.push(['"'+name+'", monospace',name]);
   state.font=fonts.some(([v])=>v===state.font)?state.font:fonts[0][0];
-  state.bitsOnly=!!state.bitsOnly;state.bitShape=state.bitsOnly?'digits':state.bitShape==='square'?'square':'diamond';state.netDigits=state.netDigits!==false;
+  state.bitsOnly=!!state.bitsOnly;state.bitShape=state.bitsOnly?'digits':state.bitShape==='square'?'square':'diamond';state.netDigits=state.netDigits!==false;state.digitsMirror=state.digitsMirror!==false;
   state.overlapOnly=!!state.overlapOnly;
   state.bitColor=/^#[0-9a-f]{6}$/i.test(state.bitColor)?state.bitColor:'#9fffc8';
   state.mult=[1,2,3].includes(state.mult)?state.mult:1;
@@ -386,6 +386,8 @@
   zoomValue.title='Двойной щелчок — вернуть 100%';zoomValue.ondblclick=()=>motionStep({},()=>{state.zoom=1;state.pan=[0,0];changed();});
   const worldDelta=(x,y)=>{const a=-state.viewAngle*pi/180,c=Math.cos(a)/state.zoom,s=Math.sin(a)/state.zoom;return [x*c-y*s,x*s+y*c];};
   const netDigitsToggle=button('01\nцифры','Биты в ячейках развёртки: включить / выключить',()=>{state.netDigits=!state.netDigits;changed(true);},viewGroup);diamond(netDigitsToggle,'01\nцифры',viewGroup);netDigitsToggle.style.left='24px';netDigitsToggle.style.top='192px';viewGroup.style.setProperty('--grape-height','264px');compactUpdates.push(()=>{netDigitsToggle.classList.toggle('on',state.netDigits);netDigitsToggle.setAttribute('aria-pressed',String(state.netDigits));});
+  // v0.1176, «сделай это в настройках»: цифры битов в зеркале — отражаются вместе с копией (как в зеркале) или всегда стоят прямо
+  const mirrorDigitsToggle=button('','Цифры битов в зеркальных копиях: отражать / ставить прямо',()=>{state.digitsMirror=!state.digitsMirror;changed(true);},viewGroup);diamond(mirrorDigitsToggle,'',viewGroup);compactUpdates.push(()=>{mirrorDigitsToggle.textContent=state.digitsMirror?'Ƨ1\nзеркал.':'01\nпрямо';mirrorDigitsToggle.classList.toggle('on',state.digitsMirror);mirrorDigitsToggle.setAttribute('aria-pressed',String(state.digitsMirror));mirrorDigitsToggle.title=state.digitsMirror?'Цифры битов отражаются в зеркале вместе с копией — щелчок: ставить прямо':'Цифры битов всегда стоят прямо — щелчок: отражать в зеркале';});
   const symmetryEditor=editor([]);symmetryFields(symmetryEditor);const symmetrySettings=editDiamond('↕\nмин.','Минимумы симметрии',symmetryEditor,viewGroup);symmetrySettings.style.left='24px';symmetrySettings.style.top='240px';viewGroup.style.setProperty('--grape-height','288px');
   function motionRateFromStep(step){return step<=0?0:.1*Math.pow(10,(clamp(step,1,401)-1)/100);}
   function motionRateStep(rate){return rate<=0?0:clamp(1+100*Math.log10(rate/.1),1,401);}
@@ -427,7 +429,7 @@
      «Холст» — что и как рисуется на холсте; ромбы каждой группы — обычной лесенкой по порядку */
   const canvasGroup=grape('zerkCanvasG','Холст','#ff8fc8',()=>stage.clientWidth>600?[160,248]:[stage.clientWidth-248,8]);canvasGroup.parentElement.classList.add('zerk-view-group');
   const restack=(g,items)=>{items.forEach((n,k)=>{g.append(n);n.style.left='0px';n.style.top=(k*24)+'px';});zerkStack(g);};
-  restack(canvasGroup,[labelToggle,bitsToggle,netDigitsToggle,overlapToggle,symmetryToggle,symmetrySettings,fieldAxesToggle,canvasRotation]);
+  restack(canvasGroup,[labelToggle,bitsToggle,netDigitsToggle,mirrorDigitsToggle,overlapToggle,symmetryToggle,symmetrySettings,fieldAxesToggle,canvasRotation]);
   restack(viewGroup,[...viewGroup.children]);
   compactUpdates.push(()=>{fieldAxesToggle.classList.toggle('on',state.fieldAxes.on);fieldAxesToggle.setAttribute('aria-pressed',String(state.fieldAxes.on));});
   const fieldAxisNodes=[0,1].map(i=>{const node=document.createElement('span');node.className='zerk-axis zerk-field-axis';node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',i?'Вертикальная ось поля':'Горизонтальная ось поля');node.title='Левая протяжка — повернуть крест; правая — перенести центр. Магнит к битам и осям зеркал; Alt — без магнита; двойной щелчок — начальные оси';layer.prepend(node);
@@ -713,6 +715,7 @@
       for(const [bit,x,y,a,symColor] of shapes){if(x<view[0]||y<view[1]||x>view[2]||y>view[3])continue;
         target.save();target.translate(x,y);target.rotate(a);target.globalAlpha=alpha*(bit==='1'?(symColor?.68:.42):(symColor?.25:.11));target.fillStyle=colorMap(symColor||color);
         if(!state.bitsOnly){if(state.bitShape==='square'){const q=Math.min(dw,dh/2)*.9;target.fillRect(-q/2,-q/2,q,q);}else{target.beginPath();target.moveTo(0,-dh*.5);target.lineTo(dw*.5,0);target.lineTo(0,dh*.5);target.lineTo(-dw*.5,0);target.closePath();target.fill();}}   // v0.1169: квадрат-бит
+        if(!state.digitsMirror&&(state.bitsOnly||(!state.trace&&digits))){const m=target.getTransform(),k=Math.sqrt(Math.abs(m.a*m.d-m.b*m.c));target.setTransform(k,0,0,k,m.e,m.f);}   // v0.1176: «цифры прямо» — без наклона и отражения
         if(state.bitsOnly){target.globalAlpha=alpha*(bit==='1'?1:.6);target.fillStyle=colorMap(symColor||color);target.fillText(bit,0,fs*.06);}
         else if(state.trace){const sign=bit==='1'?1:-1;target.globalAlpha=alpha*(bit==='1'?.95:.55);target.strokeStyle=colorMap(symColor||color);target.lineWidth=Math.max(.65,dw*.08);target.beginPath();target.moveTo(-dw*.22,-sign*dh*.22);target.lineTo(dw*.22,sign*dh*.22);target.stroke();}
         else if(digits){target.globalAlpha=alpha*(bit==='1'?.9:.35);target.fillStyle=colorMap(bit==='1'?'#06150d':symColor||color);target.fillText(bit,0,fs*.06);}target.restore();
@@ -763,7 +766,7 @@
     if(state.build==='net'){
       const model=netGeometry(),b=model.bounds,reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,scale=Math.max(1,Math.min(W*.8/(b[2]-b[0]),drawH*.8/(b[3]-b[1]))),place=sceneMath.placement(reserve+W/2-(b[0]+b[2])*scale/2+state.sourceOffsets[0][0]*drawW,drawH/2-(b[1]+b[3])*scale/2+state.sourceOffsets[0][1]*drawH,0),items=[];
       const reflected=reflectedCopies();
-      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.bitShape,state.netDigits,state.bitSymmetry,state.symmetryMinimums,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
+      for(const c of reflected){const pattern=sceneMath.transformRows(rows(),reflectedMode(c.mask)),key=JSON.stringify(['net',pattern,state.net.nb,state.net.preset,state.net.up,state.net.down,state.net.labels,state.bitsOnly,state.bitShape,state.netDigits,state.digitsMirror,state.bitSymmetry,state.symmetryMinimums,state.font,scale,ratio]);let src=sourceCache.get(key);if(!src){src=netImage(pattern,scale,ratio);sourceCache.set(key,src);}items.push({src,bounds:src.bounds,matrix:sceneMath.multiply(c.matrix,place),mask:c.mask,source:0});}
       return {items,bounds:sceneMath.bounds(items),count:1,labels:[{point:sceneMath.point(place,...model.center.map(v=>v*scale)),text:'Холст · развёртка',color:state.net.up}]};
     }
     const reserve=drawW>650&&!document.body.classList.contains('zerk-zen')?250:0,W=drawW-reserve,cx=reserve+W/2,cy=drawH*.52,count=state.layout==='quad'?2:state.layout==='tri'?3:1,items=[],labels=[];
@@ -773,7 +776,7 @@
       const isPend=state.source==='pend'&&(count===1||state.sets[i].source==='shared');
       const dw=count===1?Math.min(W*.92/max,(drawH-24)/((N+1)*(isPend?1:.866))):Math.min(W,drawH)*.39/Math.max(N*.866,max*.5);
       const variants=new Map();for(const c of reflected){const mode=state.mirrors.reduce((v,m,j)=>v^((c.mask&(1<<j))?({direct:0,inv:1,reverse:2,both:3})[m.mode]:0),0);if(!variants.has(mode)){
-        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitShape,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
+        const pattern=isPend?null:mode?sceneMath.transformRows(R,mode):R,key=JSON.stringify([isPend?['pend',pendEngine().revision,mode,pendSettings.colored]:pattern,color,dw,state.zero,state.one,state.trace,state.bitsOnly,state.bitShape,state.digitsMirror,state.bitSymmetry,state.symmetryMinimums,state.font,ratio]);let src=sourceCache.get(key);if(!src){src=isPend?pendulumImage(mode,dw):sourceImage(pattern,color,dw,ratio);sourceCache.set(key,src);}variants.set(mode,src);
       }}
       for(let k=0;k<(count===1?1:state.mult);k++){
         const angle=(state.layout==='quad'?i*pi/2:i*pi/3)-pi/2+k*2*pi/state.mult;
