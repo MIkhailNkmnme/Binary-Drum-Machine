@@ -13900,7 +13900,7 @@ function sfzWeaveSync(){
 
 function sfzGrapeLayout(box, items, name, up=false){
   const slots=[];
-  const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0;
+  const cell = 48, step = 26; let y = 0, side = 0, width = 74, bottom = 0, lat = 0;
   const verticalRanges=[];
   const isEditor = item => item.matches("select,input:not([type=checkbox]),textarea") || !!item.querySelector('input:not([type="checkbox"]),select,textarea');
   const axis = items.length && isEditor(items[0]) ? (items[0].querySelector('input[type="range"]') ? 48 : 60) : 24;
@@ -13935,15 +13935,22 @@ function sfzGrapeLayout(box, items, name, up=false){
     }
     if(range){verticalRanges.push(item);continue;}
     // v0.059: редакторы занимают отдельную широкую строку, без пустого ромба и наложения на кнопки.
-    if (editor) { y = Math.max(y,bottom + (bottom ? 8 : 0)); side = 0; }
+    if (editor) { y = Math.max(y,bottom + (bottom ? 8 : 0)); side = 0; lat = 0; }
     const dropdown=item.matches("select")||!!item.querySelector("select");
     const w = editor ? (range ? 96 : dropdown ? 100 : 120) : cell, h = editor ? (range ? 34 : dropdown ? 26 : item.matches("textarea") || item.querySelector("textarea") ? 72 : 36) : cell;
-    const x = editor ? axis - w / 2 : axis - 24 + side * step, top = y + (editor ? 0 : (side % 2) * cell / 2);
+    /* v0.102, «тут та же раскладка, как у групп Зеркалиуса»: обычные ромбы — решёткой по три, как zerkStack: два рядом, третий ниже между ними;
+       одинокий последний — посередине. «строка 1» — прежним столбиком */
+    let x, top;
+    if (editor || straight) { x = editor ? axis - w / 2 : axis - 24; top = y; }
+    else { let j = lat % 3; const next = items.slice(items.indexOf(item) + 1).find(n => !n.querySelector?.('input[type="range"]')), last = !next || isEditor(next);
+      if (j === 0 && last && lat) j = 2;
+      x = axis - 24 + [0, 48, 24][j]; top = y + Math.floor(lat / 3) * cell + (j === 2 ? cell / 2 : 0); lat = last ? 0 : lat + 1;
+      if (last) y = top + cell; }
 
     if(item!==box._sfzRDrag)sfzGrapeStyle(item,"--grape-x",x+"px"); slots.push({item,top,h,x,w}); sfzGrapeStyle(item,"--grape-w",w+"px"); sfzGrapeStyle(item,"--grape-h",h+"px");
     width=Math.max(width,x+w); bottom=Math.max(bottom,top+h);
     sfzGrapeIcon(item,name||""); sfzGrapeCaption(item);
-    if (editor) { y=top+h+8; side=0; } else if (straight) { y+=cell; side=0; } else { side=(side+1)%columns; if(!side)y+=cell; }
+    if (editor) { y=top+h+8; side=0; lat=0; } else if (straight) { y+=cell; side=0; }
   }
   // v0.072: места, расставленные правой протяжкой, — поверх раскладки; хранятся в виде «вниз», при перевороте отражаются (верх и низ зеркально).
   const custom=Z.sfzGrapePos?.[name];
@@ -14099,7 +14106,7 @@ function sfzGrapeSync(g){
       if(!oh){oh=document.createElement("span");oh.className="sfz-unfold-head";oh.setAttribute("role","button");box.prepend(oh);
         oh.addEventListener("click",e=>{e.stopPropagation();setTimeout(()=>{if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);},0);});
         oh.addEventListener("contextmenu",e=>{e.preventDefault();e.stopPropagation();if(!g.classList.contains("cmin")&&g._sfzFoldFlip&&oh._edge&&oh._edge.isConnected)g._sfzFoldFlip(oh._edge);});}
-      oh._edge=first;const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
+      oh._edge=first;{const nm=sfzGrapeName(g);if(oh.textContent!==nm)oh.textContent=nm;}   /* v0.102: в шапке раскрытой грозди — её название, как «Холст» у Зеркалиуса */const tip="«"+sfzGrapeName(g)+"»: щелчок — свернуть группу; тянуть — переместить";if(oh.title!==tip)oh.title=tip;oh.setAttribute("aria-label",tip);
       sfzGrapeStyle(oh,"--uh-x",Math.min(...pair.map(el=>px(el,"--grape-x")))+"px");   // там же, где стоял у свёрнутой: левый верх пары
       sfzGrapeStyle(oh,"--uh-y",Math.min(...pair.map(el=>px(el,"--grape-y")))-24+"px");   // поднят на полромба: верхняя половина видна над первым ромбом
     }else if(oh)oh.remove();}
