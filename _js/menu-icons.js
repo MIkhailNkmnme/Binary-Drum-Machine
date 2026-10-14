@@ -116,7 +116,7 @@
   }
   function place(){
     raf=0;if(!cur)return;if(!cur.isConnected||!cur.getClientRects().length){hide();return;}
-    const r=cur.getBoundingClientRect(),w=r.width*2;let x=r.left-r.width/2;x=Math.max(0,Math.min(innerWidth-w,x));
+    const r=cur.getBoundingClientRect(),big=!pop.hidden,w=big?r.width*2:r.width;let x=big?r.left-r.width/2:r.left;if(big)x=Math.max(0,Math.min(innerWidth-w,x));
     pop.style.left=x+'px';pop.style.top=r.top+'px';pop.style.width=w+'px';pop.style.height=r.height+'px';
     if(!tip.hidden){const tw=tip.offsetWidth,th=tip.offsetHeight,cy=r.top+r.height/2,g=4,clampY=y=>Math.max(g,Math.min(innerHeight-th-g,y)),clampX=v=>Math.max(g,Math.min(innerWidth-tw-g,v));let tx,ty;
       if(x+w+g+tw<=innerWidth-g){tx=x+w+g;ty=clampY(cy-th/2);}else if(x-g-tw>=g){tx=x-g-tw;ty=clampY(cy-th/2);}
@@ -127,9 +127,12 @@
   function show(el){
     if(pressed||!el||cur===el)return;hide();if(!pop)build();cur=el;
     const c=colours(el);pop.style.setProperty('--mi-edge',c.edge);pop.style.setProperty('--mi-fill',c.fill);pop.style.setProperty('--mi-ink',c.ink);
-    const short=shortOf(el),long=longOf(el);run.textContent=short;run.classList.remove('mi-run');pop.hidden=false;
+    const short=shortOf(el),long=longOf(el);run.textContent=short;run.classList.remove('mi-run');
+    /* v8, «в режиме с подсказками не увеличивай ромбы и не показывай в них текст, оставь значок, кроме стрелочных»: при горящем ? ромб остаётся
+       как есть, со значком, рядом — только длинная подсказка; у стрелок (◂ ▸ ◀ ▶ …) — прежний увеличенный ромб с подписью */
+    const arrow=/^[\s◂▸◀▶◁▷◃▹←→↑↓▲▼△▽⏴⏵⏶⏷<>«»|]+$/.test(norm(el.dataset.t0||el.textContent||''));pop.hidden=!!(tipsOn()&&long&&!arrow);
     tip.style.setProperty('--mi-edge',c.edge);tip.style.setProperty('--mi-fill',c.fill);tip.style.setProperty('--mi-ink',c.ink);
-    tip.textContent=long;tip.hidden=!(tipsOn()&&long&&long.toLowerCase()!==short.toLowerCase());place();
+    tip.textContent=long;tip.hidden=!(tipsOn()&&long&&(pop.hidden||long.toLowerCase()!==short.toLowerCase()));place();
     // Подпись шире видимой середины ромба — бегущая строка: от начала до конца и обратно, с остановками на краях.
     const room=box.clientWidth,need=run.scrollWidth;
     if(need>room+1){run.style.setProperty('--mi-to',(room-need)+'px');run.style.setProperty('--mi-time',(.8+(need-room)/75).toFixed(2)+'s');run.classList.add('mi-run');}
