@@ -4870,8 +4870,10 @@ function spinSpUi(){
       Z.tempoRef = { k1: "out", out: "r256", r256: "k1" }[tempoRefOf()]; coneDirUi(); save();
       say("Темп — обороты кольца " + { k1: "К1 (внутреннего)", out: "внешнего (за чертой)", r256: "256" }[Z.tempoRef] + ": " + Z.tempoRev + " об/с" + (coneBitMode(Z.coneSpinMode || "all") ? "." : " — во «Встр.стр» и «Всё» все кольца крутятся одинаково, кольцо не важно.")); }); }
   const f = x => window.zzBallClockOn && window.zzBallClockOn() ? ZZExact.from(x).text() : x < 10 ? (Math.round(x * 10) / 10).toString().replace(".", ",") : Math.round(x);
-  el.textContent = exact ? TEMPO_REF[tempoRefOf()] + " · " + Z.tempoRev + " об/с" : window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
-    Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с";
+  const detail = exact ? TEMPO_REF[tempoRefOf()] + " · " + Z.tempoRev + " об/с" : window.zzBallClockOn && window.zzBallClockOn() && !Z.coneSpinMag ? "темп К1 ×" + ZZExact.from(v).div(30).text() :
+    Z.coneSpinMag ? f(coneMagSp()) + " шаг/с" : coneBitMode(Z.coneSpinMode || "all") ? f(v / 10) + " бит/с" : f(v) + "°/с"; const mult = Z.coneSpinMag ? coneMagSp() / 2 : exact ? tempoRevNum(Z.tempoRev) : v / 30;   // v0.100: подпись пульта — общий множитель ×N (_js/zz-pult.js), точное — в подсказке
+  const text = window.ZerkPult && ZerkPult.label ? ZerkPult.label(mult) : detail; if (el.textContent !== text) el.textContent = text;
+  { const tip = "Скорость " + text + " от обычной: " + detail + (exact ? ". Щелчок — от какого кольца считать обороты: К1 → внешнее → 256" : ""); if (el.title !== tip) el.title = tip; }
   { const r3 = $("c3SpR"), m = $("coneAutoSp"), v3 = $("c3SpV"); if (r3 && m && r3.value !== m.value) r3.value = m.value; if (v3 && v3.textContent !== el.textContent) v3.textContent = el.textContent; }   // v0.846: ползунок у ▶
   tempoTrackSync();
 }
