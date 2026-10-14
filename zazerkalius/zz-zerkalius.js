@@ -131,7 +131,9 @@
     el.style.top=clamp(xy[1],0,Math.max(0,stage.clientHeight-el.offsetHeight))+'px';
   }
   // v0.1164: гроздь на холсте легла на другую (прямоугольники пересеклись больше чем на 6 px) — после отпускания она возвращается на прежнее место
-  const zerkOverlaps=el=>{const r=el.getBoundingClientRect();return [...stage.querySelectorAll(':scope > .zerk-grape')].some(g=>{if(g===el||!g.getClientRects().length)return false;const q=g.getBoundingClientRect();return Math.min(r.right+16,q.right+16)-Math.max(r.left-24,q.left-24)>6&&Math.min(r.bottom,q.bottom)-Math.max(r.top,q.top)>6;});};
+  const zerkOverlaps=el=>{   // v0.1166: сравниваются сами ромбы (шапка и видимые ромбы тела), а не прямоугольники — группы можно ставить вплотную ромб к ромбу
+    const pts=g=>[g.querySelector(':scope > .smh'),...g.querySelectorAll(':scope > .zerk-grape-body > *')].filter(n=>n&&n.getClientRects().length).map(n=>{const q=n.getBoundingClientRect();return [q.left+q.width/2,q.top+q.height/2,(q.width+q.height)/4];});
+    const mine=pts(el);return [...stage.querySelectorAll(':scope > .zerk-grape')].some(g=>g!==el&&g.getClientRects().length&&pts(g).some(([x,y,h])=>mine.some(([a,b,k])=>Math.abs(x-a)+Math.abs(y-b)<h+k-8)));};
   const plateSetup=el=>{
     const c=SOL_PLATES[el.id];
     const hd=el.querySelector('.smh');hd.title='Тяни гроздь правой кнопкой за любой ромб; шапку можно тянуть любой кнопкой. К верхней или нижней полосе — закрепить; обратно на холст — открепить; − / + — свернуть';
