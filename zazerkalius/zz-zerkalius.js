@@ -635,7 +635,7 @@
     editDiamond('∞\nциклы','Три зеркала · циклы',el,parent);
   }
   function setRows(i){const set=state.sets[i];return set.source==='field'?Z.rows:set.source==='own'?set.rows:set.source==='serp'?serp:rows();}
-  function fieldRowsExtent(){return Z.rows.concat(hidRows(Z.lane));}
+  function fieldRowsExtent(){return Z.rows;}   // v0.1162, «горизонт поднимаю — и в зеркалах убирать нижние строки»: строки за чертой (hidRows) в Зеркалиус не идут
   function visibleWorld(ctx,pad=0){
     const t=ctx.getTransform(),det=t.a*t.d-t.b*t.c,points=[[0,0],[ctx.canvas.width,0],[ctx.canvas.width,ctx.canvas.height],[0,ctx.canvas.height]].map(([x,y])=>[(t.d*(x-t.e)-t.c*(y-t.f))/det,(-t.b*(x-t.e)+t.a*(y-t.f))/det]);
     return [Math.min(...points.map(p=>p[0]))-pad,Math.min(...points.map(p=>p[1]))-pad,Math.max(...points.map(p=>p[0]))+pad,Math.max(...points.map(p=>p[1]))+pad];
