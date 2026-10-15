@@ -1,4 +1,4 @@
-/* Маятник v0.062: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.063: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -148,10 +148,11 @@
   const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись' };
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     const t = document.createElement('b'); t.className = 'pt-t ' + (k % 2 ? 'dn' : 'up'); t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
-  document.body.append(tools);
+  // v0.063: панель значков — в шапке, рядом с «Что это такое?», а не поверх холста.
+  $('mayAbout').after(tools);
   // v0.051: «Сохранить» и «Цвет» выбранной фигуры — на холсте внизу слева, тоже неподвижно.
   const acts = document.createElement('div'); acts.id = 'canvasActs'; acts.append($('templateActions')); document.body.append(acts);
-  const placeTools = () => { const r = $('wrap').getBoundingClientRect(); tools.style.left = (r.left + 8) + 'px'; tools.style.top = (r.top + 8) + 'px'; tools.hidden = r.width < 60;
+  const placeTools = () => { const r = $('wrap').getBoundingClientRect(); 
     acts.style.left = (r.left + 8) + 'px'; acts.style.top = (r.bottom - 8) + 'px'; acts.hidden = r.width < 60;
     for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();

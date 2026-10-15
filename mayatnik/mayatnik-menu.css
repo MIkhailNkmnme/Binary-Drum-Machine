@@ -136,3 +136,6 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #paintTools .pt-t:empty{display:none}
 #paintTools .pt-cw{display:flex}
 #paintTools{margin-top:7px}
+/* v0.063: панель значков в шапке */
+header #paintTools{position:static;margin:0 0 0 6px;flex-wrap:wrap}
+.mayatnik-menu-ready>header{align-items:center;flex-wrap:wrap}
