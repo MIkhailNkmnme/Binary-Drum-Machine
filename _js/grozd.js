@@ -43,6 +43,7 @@
   function closeLadder() { if (ladder) { ladder.remove(); ladder = null; } }
   document.addEventListener('pointerdown', e => { if (ladder && !e.target.closest('.gz-ladder,.gz-list')) closeLadder(); }, true);
 
+  const PIN = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
   function rail(host, cfg) {
     const key = 'grozd:' + (cfg.key || 'rail');
     const saved = store.get(key) || {};
@@ -50,22 +51,33 @@
     const refreshers = [];
     const byId = new Map();
     let openId = saved.open !== undefined ? saved.open : (cfg.groups.find(g => g.open) || {}).id ?? null;
+    const pinned = new Set(Array.isArray(saved.pin) ? saved.pin : []);   // 15.10: закреплённые группы не сворачиваются при открытии другой
+    let openSet = new Set(), first = true;
     const order = Array.isArray(saved.order) ? saved.order : [];
     const groups = [...cfg.groups].sort((a, b) => { const i = order.indexOf(a.id), j = order.indexOf(b.id); return (i < 0 ? 1e3 : i) - (j < 0 ? 1e3 : j); });
 
-    function save() { store.set(key, { open: openId, order: [...root.children].map(g => g.dataset.id).filter(Boolean) }); }
+    function save() { store.set(key, { open: openId, pin: [...pinned], order: [...root.children].map(g => g.dataset.id).filter(Boolean) }); }
     function setOpen(id) {
-      const prev = openId; openId = id; closeLadder();
-      for (const [gid, g] of byId) { const on = gid === id; g.box.classList.toggle('gz-open', on); g.ar.textContent = on ? '▾' : '▸'; }
-      if (cfg.onToggle) { if (prev != null && prev !== id) cfg.onToggle(prev, false); if (id != null && id !== prev) cfg.onToggle(id, true); }
-      save(); refresh();
+      openId = id; closeLadder();
+      const now = new Set(byId.keys()); for (const gid of now) if (gid !== id && !pinned.has(gid)) now.delete(gid);
+      for (const [gid, g] of byId) { const on = now.has(gid); g.box.classList.toggle('gz-open', on); g.box.classList.toggle('gz-pinned', pinned.has(gid)); g.ar.textContent = on ? '▾' : '▸'; }
+      if (cfg.onToggle && !first) { for (const gid of openSet) if (!now.has(gid)) cfg.onToggle(gid, false); for (const gid of now) if (!openSet.has(gid)) cfg.onToggle(gid, true); }
+      openSet = now; first = false; save(); refresh();
+    }
+    function togglePin(id) {
+      if (pinned.has(id)) pinned.delete(id); else pinned.add(id);
+      setOpen(pinned.has(id) ? id : (openId === id ? null : openId));   // закрепил — группа открыта; открепил — сворачивается, если открыта не она
     }
 
     for (const g of groups) {
       const box = el('div', 'gz-group'); box.dataset.id = g.id; box.style.setProperty('--c', g.color || '#5aa9ff');
       const head = el('button', 'gz-hx gz-head'); head.type = 'button';
       const nm = el('span', 'gz-nm', g.title), ar = el('span', 'gz-ar');
-      head.append(nm, ar); box.append(head); withTip(head, g.tip || '');
+      const pin = el('span', 'gz-pin'); pin.innerHTML = PIN; pin.title = 'Закрепить: не сворачивать при открытии другой группы';
+      pin.addEventListener('pointerdown', e => e.stopPropagation());
+      pin.addEventListener('click', e => { e.stopPropagation(); togglePin(g.id); });
+      const rt = el('span', 'gz-hr'); rt.append(pin, ar);
+      head.append(nm, rt); box.append(head); withTip(head, g.tip || '');
       const soty = el('div', 'gz-soty'), wide = el('div', 'gz-wide');
       const cells = [];
       for (const it of g.items) {
@@ -122,7 +134,7 @@
       if (wide.children.length) box.append(wide);
       root.append(box);
       byId.set(g.id, { box, ar });
-      head.addEventListener('click', () => { if (head.dataset.dragged) { delete head.dataset.dragged; return; } setOpen(openId === g.id ? null : g.id); });
+      head.addEventListener('click', () => { if (head.dataset.dragged) { delete head.dataset.dragged; return; } if (openSet.has(g.id)) { pinned.delete(g.id); setOpen(openId === g.id ? null : openId); } else setOpen(g.id); });
       dragHead(head, box);
     }
 
@@ -249,11 +261,11 @@
     }
     build(); document.documentElement.classList.remove('gz-pre');   // рейка готова — старые грозди уже спрятаны, можно показывать страницу
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
-    if (cfg.fold) { const open = cur && [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id)[0]; for (const g of live) cfg.fold(g, gid(g) === open); }
+    if (cfg.fold) { const open = new Set(cur ? [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id) : []); for (const g of live) cfg.fold(g, open.has(gid(g))); }
     const help = () => { const b = cfg.helpButton && document.querySelector(cfg.helpButton); document.documentElement.classList.toggle('gz-help', !!b && b.classList.contains('on')); };
     setInterval(() => { help(); if (!build() && cur) cur.refresh(); panelsNow(); }, 400);
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 10, rail, adopt };
+  window.ZerkGrozd = { version: 11, rail, adopt };
 })();
