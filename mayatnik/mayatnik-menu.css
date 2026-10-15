@@ -156,3 +156,9 @@ header #paintTools .pt-b i{width:14px;height:14px}
 header #paintTools .pt-t.up{top:-10px}
 header #paintTools .pt-t.dn{bottom:-10px}
 .mayatnik-menu-ready>header{padding-top:4px;padding-bottom:4px}
+/* v0.071: группа «Шаблоны» справа, поверх поля, без фона. */
+#mayatnikRailR{display:none}
+.mayatnik-menu-ready #mayatnikRailR{display:block;grid-column:2;grid-row:4;justify-self:end;align-self:start;position:relative;z-index:4;width:248px;max-height:100%;overflow:auto;padding:8px 16px 8px 0;scrollbar-width:thin;pointer-events:none}
+#mayatnikRailR .gz-rail,#mayatnikRailR .gz-group,#mayatnikRailR .gz-soty,#mayatnikRailR .gz-wide{pointer-events:none}
+#mayatnikRailR .gz-group>:not(.gz-soty):not(.gz-wide),#mayatnikRailR .gz-soty>*,#mayatnikRailR .gz-wide>*{pointer-events:auto}
+@media(max-width:600px){.mayatnik-menu-ready #mayatnikRailR{grid-column:1;grid-row:5}}
