@@ -1,4 +1,4 @@
-/* Маятник v0.113: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.114: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -41,13 +41,12 @@
       button('bBuild', 'field'), button('bReset', 'reset'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       control('rows'), control('steps'), select('mode', 'swap', {pend:'Лево-право',right:'Вправо',left:'Влево',one:'Одна вершина'}),
       select('bg', 'square', {empty:'Пустое','1':'Все 1','0':'Все 0'}) ] },
-    { id: 'presets', title: 'Хорр', color: '#79b9ff', items: [
+    // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»)
+    { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
+      button('bPlay', 'play'), button('bStep', 'forward'), button('bSeq', 'line'),
       ...[...source.querySelectorAll('button.pre')].map(e => ({ type: 'action', name: e.textContent,
         icon: icon(e, 'field'), tip: e.title || `Построить ${e.dataset.n} строк и вершин (или до N/3)`, click: () => e.click() })),
-      check('third', 'tri') ] },
-    { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
-      button('bPlay', 'play'), button('bStep', 'forward'), button('bSeq', 'line'), button('bPair', 'copy'),
-      control('speed'), control('frame') ] },
+      check('third', 'tri'), control('speed'), control('frame') ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
