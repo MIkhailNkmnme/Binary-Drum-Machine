@@ -75,14 +75,20 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #templateLibraryChoices{display:grid;gap:6px;width:100%;min-width:0;font:11px/1.4 var(--mono)}
 .gz-control:has(#templateLibraryChoices){height:auto;clip-path:none;padding:0;background:transparent!important}
 .gz-control:has(#templateLibraryChoices)::before{display:none}
-.template-entry-card{display:grid;gap:2px}
-.template-entry-actions{display:flex;justify-content:flex-end;gap:3px}
-.template-entry-actions .gz-hx{--c:#d9b9ff;--gz-h:25px;--gz-n:7px;--gz-bg:#121a30;width:37px;padding:0;justify-content:center}
-.template-entry-actions .gz-hx:disabled{opacity:.4}
+/* v0.037: шаблон — одна кнопка: миниатюра, имя, маленькие действия внутри справа */
+.template-entry-actions{display:flex;gap:2px;margin-left:auto;flex:none}
+.template-entry-actions button{width:20px;height:20px;padding:0;border:0;border-radius:4px;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.55;color:#d9b9ff}
+.template-entry:hover .template-entry-actions button,.template-entry:focus-within .template-entry-actions button{opacity:1}
+.template-entry-actions button:hover{background:#d9b9ff33}
+.template-entry-actions button:disabled{opacity:.2;cursor:default}
+.template-entry-actions .gz-ic{width:13px;height:13px}
 .template-rename{position:fixed;z-index:2147483647;width:min(240px,calc(100vw - 16px));box-sizing:border-box;padding:6px 8px;border:1px solid #d9b9ff;background:#101725;color:#e8edf5;font:13px 'Segoe UI',sans-serif}
-#templateLibraryChoices .template-entry{width:100%;height:auto;min-height:48px;padding:4px 18px;white-space:normal;text-align:left;--c:#d9b9ff;--gz-n:10px;--gz-bg:#121a30}
-#templateLibraryChoices canvas{flex:none;width:32px;height:40px;margin:0;background:transparent}
+#templateLibraryChoices .template-entry{width:100%;height:auto;min-height:40px;padding:3px 14px 3px 16px;white-space:normal;text-align:left;--c:#d9b9ff;--gz-n:10px;--gz-bg:#121a30}
+#templateLibraryChoices canvas{flex:none;width:26px;height:32px;margin:0;background:transparent}
 #templateLibraryChoices .template-entry>span{overflow-wrap:anywhere;min-width:0}
-#templateLibraryChoices .template-entry:disabled{opacity:.45}
+
 .mayatnik-menu-ready #mayatnikRail,#wrap,#ochkiList{scrollbar-width:none}
 #mayatnikRail::-webkit-scrollbar,#wrap::-webkit-scrollbar,#ochkiList::-webkit-scrollbar{display:none;width:0;height:0}
+
+/* v0.037: логотип в шапке */
+.may-logo{height:40px;width:auto;margin:-6px 0;image-rendering:auto}
