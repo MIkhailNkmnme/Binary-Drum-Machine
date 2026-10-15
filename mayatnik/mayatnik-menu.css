@@ -94,7 +94,7 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 .may-logo{height:40px;width:auto;margin:-6px 0;image-rendering:auto}
 
 /* v0.042: панель раскраски на холсте — неподвижна при сдвиге и масштабе */
-#paintTools{position:fixed;z-index:6;display:flex;gap:3px;padding:3px;border-radius:6px;background:#0d1119cc;border:1px solid #ff9b5055}
+#paintTools{position:fixed;z-index:6;display:flex;gap:12px;padding:2px 6px 3px;border-radius:6px;background:#0d1119cc;border:1px solid #ff9b5055}
 #paintTools[hidden]{display:none}
 #paintTools .pt-b{width:26px;height:26px;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #paintTools .pt-b i{width:15px;height:15px;background:center/contain no-repeat}
@@ -121,3 +121,6 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #mayatnikStatus>*{margin:0}
 #canvasActs{position:fixed;z-index:6;transform:translateY(-100%)}
 #canvasActs[hidden]{display:none}
+#paintTools .pt-g{display:flex;flex-direction:column;gap:1px}
+#paintTools .pt-l{font:9px/1.2 'Segoe UI',sans-serif;color:#ffc08f;letter-spacing:.3px;padding-left:2px}
+#paintTools .pt-r{display:flex;gap:3px;align-items:center}

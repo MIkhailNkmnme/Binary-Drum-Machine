@@ -1,4 +1,4 @@
-/* Маятник v0.053: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.054: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -102,6 +102,14 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
+  // v0.054: значки разбиты на группы с промежутками, над каждой группой — короткая подпись.
+  const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
+    const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = name; const row = document.createElement('div'); row.className = 'pt-r';
+    g.append(l, row); tools.append(g); return row; };
+  const gPaint = ptGroup('Краска'), gEdit = ptGroup('Правка'), gAxis = ptGroup('Оси');
+  for (const id of ['bFill','bAutoVertical','fillMirror']) groupOf[id] = gPaint;
+  for (const id of ['bFillUndo','bFillRedo','bFillClear','bPaintNew']) groupOf[id] = gEdit;
+  for (const id of ['bAxisLine','bAxisMirror','bAxisLinesClear']) groupOf[id] = gAxis;
   for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisLinesClear','cross']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
@@ -110,14 +118,14 @@
     b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
     toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
       b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
-    tools.append(b);
+    groupOf[id].append(b);
   }
   const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
   colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
   toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
-  tools.append(colour);
+  gPaint.append(colour);
   // v0.044: виды поля — значками на холсте, рядом с раскраской.
-  const sep = document.createElement('span'); sep.className = 'pt-sep'; tools.append(sep);
+  const gView = ptGroup('Вид');
   const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
   for (const o of $('view').options) {
     const [kind, title] = viewIcons[o.value] || ['eye', o.textContent], b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
@@ -126,7 +134,7 @@
     if (o.value === 'romb1') { const n = document.createElement('small'); n.textContent = '1'; b.append(n); }
     if (o.value === 'romb0') { const n = document.createElement('small'); n.textContent = '0'; b.append(n); }
     b.title = 'Вид: ' + title; b.onclick = () => { $('view').value = o.value; $('view').dispatchEvent(new Event('change', { bubbles: true })); };
-    toolSync.push(() => b.classList.toggle('on', $('view').value === o.value)); tools.append(b);
+    toolSync.push(() => b.classList.toggle('on', $('view').value === o.value)); gView.append(b);
   }
   document.body.append(tools);
   // v0.051: «Сохранить» и «Цвет» выбранной фигуры — на холсте внизу слева, тоже неподвижно.
