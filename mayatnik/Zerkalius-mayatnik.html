@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.110. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.111. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.110</title>
+<title>Zerkalius Маятник — v0.111</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=103">
+<link rel="stylesheet" href="mayatnik-menu.css?v=111">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.110</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.111</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -161,6 +161,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     </select></label>
     <label title="Цвет единиц в виде «Только цифры»">Цвет 1 <input id="digitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет нулей в виде «Только цифры»">Цвет 0 <input id="digitZeroColour" type="color" value="#7cbcff"></label>
+    <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#e8edf5"></label>
+    <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
+    <label title="Шрифт цифр на клетках">Шрифт <select id="digitFont"><option value="mono">Моноширинный</option><option value="consolas">Consolas</option><option value="courier">Courier</option><option value="sans">Без засечек</option><option value="serif">С засечками</option></select></label>
+    <label title="Размер цифр, % клетки">Размер <input id="digitSize" type="number" min="30" max="100" step="5" value="80"></label>
     <button id="bFoldHorizontal" data-mi-short="СвёрткаГориз" aria-pressed="false" title="СвёрткаГориз: правая часть влево, затем левая вправо, по столбцу к центру через XOR; выключить — исходное поле">СвёрткаГориз</button>
     <label title="Сколько верхних строк показывать (пусто — все). По ширине показ всегда обрезан до того, куда к этому кадру достали конусы, — при малом числе строк картинка (и обе половины «обе рядом») помещается крупно">показ строк <input id="vrows" type="number" min="0" max="4096" step="1" placeholder="все" style="width:64px"></label>
     <label title="Только в виде: в каждой строке — зона шума от крайнего левого до крайнего правого «0» (та же граница, что у «обводки»); в ромбах боковые единицы в жёлтых рамках дополняют фигуру до треугольника. Остальные полосы скрыты — картинка крупнее. Поле не меняется. Щелчок по кругу: с полосами → без полос → до треугольника (боковые единицы видны до прямых сторон треугольника)"><input id="noband" type="checkbox"> без полос</label>
@@ -313,7 +317,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, frozen: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   if(!['sides','corners','diagonal','chess0','bit'].includes(st.fillArea))st.fillArea='sides';
-  for(const [id,fallback]of [['digitOneColour','#e8edf5'],['digitZeroColour','#7cbcff']])if(!/^#[0-9a-f]{6}$/i.test(st[id]||''))st[id]=fallback;
+  for(const [id,fallback]of [['digitOneColour','#e8edf5'],['digitZeroColour','#7cbcff'],['bitOneColour','#e8edf5'],['bitZeroColour','#5b6475']])if(!/^#[0-9a-f]{6}$/i.test(st[id]||''))st[id]=fallback;
+  if(!['mono','consolas','courier','sans','serif'].includes(st.digitFont))st.digitFont='mono';st.digitSize=Math.max(30,Math.min(100,+st.digitSize||80));   // v0.111
   st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
@@ -338,6 +343,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const EMPTY = [0, 0, 0];
   const PAL = { col: [[[91,100,117],[79,155,255],[255,90,79]], [[232,237,245],[79,155,255],[255,90,79]]],
                 bits: [[[91,100,117],[91,100,117],[91,100,117]], [[232,237,245],[232,237,245],[232,237,245]]] };
+  // v0.111: «настройки цветов бит и шрифта» — цвет клеток 1 и 0 (основа всех видов: «Биты», «Цифры», ромбы, «Цвета» без перекрытий) и шрифт цифр
+  const hexRGB=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+  function applyBitColours(){const one=hexRGB(st.bitOneColour),zero=hexRGB(st.bitZeroColour);
+    PAL.bits[0]=[zero,zero,zero];PAL.bits[1]=[one,one,one];PAL.col[0][0]=zero;PAL.col[1][0]=one;}
+  applyBitColours();
+  const DIGIT_FONTS={mono:null,consolas:"Consolas,'Cascadia Mono',monospace",courier:"'Courier New',Courier,monospace",sans:"'Segoe UI',Arial,sans-serif",serif:"Georgia,'Times New Roman',serif"};
+  const digitFamily=()=>DIGIT_FONTS[st.digitFont]||getComputedStyle(document.body).getPropertyValue('--mono');
 
   function clampInt(v, a, b, d) { v = Math.round(Number(v)); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; }
   function readUI() {
@@ -349,6 +361,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function writeUI() {
     $('fillArea').value=st.fillArea;
     $('digitOneColour').value=st.digitOneColour;$('digitZeroColour').value=st.digitZeroColour;
+    $('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
     $('ochkiPattern').value=st.ochkiPattern||'initial';$('ochkiLength').value=st.ochkiLength||5;
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
     $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; st.noband = st.noband === true ? 1 : (+st.noband || 0) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; $('frozen').checked = !!st.frozen; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
@@ -1105,7 +1118,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   // v0.106: свои биты фигуры картинкой: 1 — светлый, 0 — серый (как «Биты»), вне фигуры и пусто — прозрачно
   function templateBitCanvas(part){const m=part.mask,c=document.createElement('canvas');c.width=m.width;c.height=m.height;
-    const im=c.getContext('2d').createImageData(m.width,m.height),u=new Uint32Array(im.data.buffer),one=rgba([232,237,245]),zero=rgba([91,100,117]);
+    const im=c.getContext('2d').createImageData(m.width,m.height),u=new Uint32Array(im.data.buffer),one=rgba(hexRGB(st.bitOneColour)),zero=rgba(hexRGB(st.bitZeroColour));
     for(let i=0;i<u.length;i++){const b=part.bitsData[i];u[i]=b===1?one:b===0?zero:0;}
     c.getContext('2d').putImageData(im,0,0);return c;}
   function drawTemplate(){
@@ -1732,7 +1745,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     digitCanvas.hidden=false;digitCanvas.style.left=host.left+'px';digitCanvas.style.top=host.top+'px';digitCanvas.style.width=width+'px';digitCanvas.style.height=height+'px';
     digitCanvas.width=Math.max(1,Math.round(width*ratio));digitCanvas.height=Math.max(1,Math.round(height*ratio));digitG.setTransform(ratio,0,0,ratio,0,0);digitG.clearRect(0,0,width,height);
     const x0=r.left-host.left,y0=r.top-host.top,c0=Math.max(0,Math.floor(-x0/s)),c1=Math.min(dispW(),Math.ceil((width-x0)/s)),r0=Math.max(0,Math.floor(-y0/s)),r1=Math.min(VH,Math.ceil((height-y0)/s));
-    digitG.font=`600 ${s*.8}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`;digitG.textAlign='center';digitG.textBaseline='middle';
+    digitG.font=`600 ${s*st.digitSize/100}px ${digitFamily()}`;digitG.textAlign='center';digitG.textBaseline='middle';
     if(rp>=0){   // v0.013: чёткие ромбы видимой части — центр в середине клетки, полудиагональ — клетка; с 10 px — тонкий край, с 14 px — цифры
       const edge=s>=10,halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';   // v0.016: «обе рядом» — две половины
       for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(VH,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(VW,c1-ox+1);x++){
@@ -1744,7 +1757,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
           if(s>=14){digitG.fillStyle='#d6a828';digitG.fillText(String(u),cx,cy);}continue;}
         const v=rasterBit(Math.floor((x+(typeof ox==="number"?ox:0)+.5)*RK),Math.floor((y+.5)*RK));if(v<0)continue;
         const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
-        const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=manual||(hit?(v?'#ffd646':'#96561e'):v?'#e8edf5':'#5b6475');digitG.fill();if(edge)digitG.stroke();
+        const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=manual||(hit?(v?'#ffd646':'#96561e'):v?st.bitOneColour:st.bitZeroColour);digitG.fill();if(edge)digitG.stroke();
         if(hit){digitG.save();digitG.lineWidth=Math.max(1.5,s*.09);digitG.strokeStyle='#ff9a1f';digitG.stroke();digitG.restore();}   // v0.022: найденное «Очками» — ещё и обводкой
         if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
       }
@@ -1968,6 +1981,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const lgSync = () => $('lg').classList.toggle('bits', st.view !== 'col');
   $('view').addEventListener('change', () => { readUI(); lgSync(); if (f) { canvasSize(); layout(); } if ((st.view === 'digits'||st.view === 'digitsOnly') && scale() < 4) zoomTo(8); if (f) draw(); });   // v0.013: у ромбов свой размер холста
   for(const id of ['digitOneColour','digitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;save();queueDigits();});
+  // v0.111: цвета клеток — перерисовать поле; шрифт и размер — слой цифр
+  for(const id of ['bitOneColour','bitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;applyBitColours();save();if(f)draw();});
+  $('digitFont').addEventListener('change',()=>{st.digitFont=$('digitFont').value;save();queueDigits();});
+  $('digitSize').addEventListener('change',()=>{st.digitSize=Math.max(30,Math.min(100,+$('digitSize').value||80));$('digitSize').value=st.digitSize;save();queueDigits();});
   const lgToggle = () => { $('view').value = st.view === 'bits' ? 'col' : 'bits'; readUI(); lgSync(); if (f) { canvasSize(); layout(); draw(); } };
   $('lg').addEventListener('click', lgToggle);
   $('lg').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lgToggle(); } });
@@ -2224,7 +2241,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     },
     config(){
       const b=foldSource;if(!b||b.field!==f||b.frame!==k||b.x!==VX||b.w!==VW||b.h!==VH||b.view!==st.view||b.paint!==fillMask||b.bits!==paintBits)return null;
-      return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:getComputedStyle(document.body).getPropertyValue('--mono')};
+      return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily()};
     },
     onClose(){foldSource=null;queueDigits();},
     // v0.109: щелчок в свёртке — заливка / «Столбы» по исходному столбцу клетки, как обычный щелчок по полю
@@ -2254,6 +2271,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=110"></script>
+<script src="mayatnik-menu.js?v=111"></script>
 </body>
 </html>

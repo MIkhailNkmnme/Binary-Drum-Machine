@@ -281,4 +281,6 @@ header #paintTools .pt-view .pt-b.gz-hx:nth-child(even){margin-left:0}
 header #paintTools .pt-view .pt-b.gz-hx i{width:11px;height:11px}
 header #paintTools .pt-view .pt-vx{grid-row:1/4;display:flex;flex-direction:column;justify-content:center;gap:2px;margin-left:4px}
 header #paintTools .pt-view .pt-vx input[type=color]{width:24px;height:14px;padding:0;border:1px solid #33405a;background:none;cursor:pointer}
+header #paintTools .pt-view .pt-vx-row{display:flex;gap:3px}
+header #paintTools .pt-view .pt-vx select{width:96px;height:16px;padding:0 2px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px 'Segoe UI',sans-serif}
 header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:border-box;padding:0 3px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px var(--mono)}

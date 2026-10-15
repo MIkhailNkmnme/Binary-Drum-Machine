@@ -1,4 +1,4 @@
-/* Маятник v0.110: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.111: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -195,7 +195,12 @@
   { const box = document.createElement('span'); box.className = 'pt-vx';
     for (const id of ['digitOneColour', 'digitZeroColour']) { const e = $(id); e.title = tip(e); box.append(e); }
     const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v);
-    gView.append(box); }
+    gView.append(box);
+    // v0.111: цвета клеток 1 / 0, шрифт и размер цифр — вторым столбиком
+    const box2 = document.createElement('span'); box2.className = 'pt-vx'; const pair = document.createElement('span'); pair.className = 'pt-vx-row';
+    for (const id of ['bitOneColour', 'bitZeroColour']) { const e = $(id); e.title = tip(e); pair.append(e); }
+    const fnt = $('digitFont'), sz = $('digitSize'); fnt.title = tip(fnt); sz.title = tip(sz); sz.classList.add('pt-vrows');
+    box2.append(pair, fnt, sz); gView.append(box2); }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
