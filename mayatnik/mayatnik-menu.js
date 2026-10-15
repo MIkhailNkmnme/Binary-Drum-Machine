@@ -1,4 +1,4 @@
-/* Маятник v0.070: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.071: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -73,6 +73,9 @@
   for(const [id,kind]of [['bTemplateQuickSave','save'],['bTemplateColour','colour']]){
     const e=$(id),mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=icon(e,kind);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';e.querySelector('span').prepend(mark);
   }
+  // v0.071: «Шаблоны» — справа, у правого края поля.
+  const railR=document.createElement('div');railR.id='mayatnikRailR';$('mayatnikRail').after(railR);const railRIn=document.createElement('div');railRIn.className='gz-rail';railR.append(railRIn);
+  { const g=[...rail.el.querySelectorAll('.gz-group')].find(g=>g.querySelector('.gz-head .gz-nm')?.textContent.trim()==='Шаблоны'); if(g) railRIn.append(g); }
   const sidebar=document.createElement('aside');sidebar.id='mayatnikSidebar';$('mayatnikRail').before(sidebar);sidebar.append($('mayatnikRail'));
   source.hidden = true;
   document.body.classList.add('mayatnik-menu-ready');
@@ -92,7 +95,7 @@
     menu.setAttribute('aria-expanded', String(!closed)); dispatchEvent(new Event('resize'));
   };
   // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
-  const relayout = () => { for (const soty of rail.el.querySelectorAll('.gz-soty')) {
+  const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty')]) {
     const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
     const key = shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
