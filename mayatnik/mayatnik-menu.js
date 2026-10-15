@@ -1,4 +1,4 @@
-/* Маятник v0.050: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.051: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -67,6 +67,8 @@
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   const status = $('mayatnikStatus');
+  // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
+  status.append($('imageStats'));
   for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'fillInfo','paintCacheInfo','templateInfo','templateActions']) status.append($(id));
   for(const [id,kind]of [['bTemplateQuickSave','save'],['bTemplateColour','colour']]){
     const e=$(id),mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=icon(e,kind);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';e.querySelector('span').prepend(mark);
@@ -127,7 +129,10 @@
     toolSync.push(() => b.classList.toggle('on', $('view').value === o.value)); tools.append(b);
   }
   document.body.append(tools);
+  // v0.051: «Сохранить» и «Цвет» выбранной фигуры — на холсте внизу слева, тоже неподвижно.
+  const acts = document.createElement('div'); acts.id = 'canvasActs'; acts.append($('templateActions')); document.body.append(acts);
   const placeTools = () => { const r = $('wrap').getBoundingClientRect(); tools.style.left = (r.left + 8) + 'px'; tools.style.top = (r.top + 8) + 'px'; tools.hidden = r.width < 60;
+    acts.style.left = (r.left + 8) + 'px'; acts.style.top = (r.bottom - 8) + 'px'; acts.hidden = r.width < 60;
     for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
   // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.
