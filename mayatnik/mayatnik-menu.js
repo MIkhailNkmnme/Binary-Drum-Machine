@@ -1,4 +1,4 @@
-/* Маятник v0.060: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.061: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -59,7 +59,7 @@
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
+    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),button('bAutoAll','steps'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
@@ -107,10 +107,10 @@
     const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = name; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
   const gPaint = ptGroup('Краска'), gEdit = ptGroup('Правка'), gAxis = ptGroup('Оси');
-  for (const id of ['bFill','bAutoVertical','fillMirror']) groupOf[id] = gPaint;
+  for (const id of ['bFill','bAutoVertical','bAutoAll','fillMirror']) groupOf[id] = gPaint;
   for (const id of ['bFillUndo','bFillRedo','bFillClear','bPaintNew']) groupOf[id] = gEdit;
   for (const id of ['bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear']) groupOf[id] = gAxis;
-  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisXor','half'],['bAxisLinesClear','cross']]) {
+  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['bAutoAll','steps'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisXor','half'],['bAxisLinesClear','cross']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
     b.onclick = () => e.click();
@@ -141,7 +141,7 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх' };
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     const t = document.createElement('b'); t.className = 'pt-t ' + (k % 2 ? 'dn' : 'up'); t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
   document.body.append(tools);
