@@ -5,6 +5,7 @@
    v7: «не работает поле, ничего не выбирается, переписывать строки надо» — режим записи (data.write): свёртка не рисует свою картинку
    и не перехватывает мышь, а на каждом шаге отдаёт состояние странице (apply) — та переписывает строки поля, и все инструменты работают
    на свёрнутом поле. Слой свёртки рисует только подсветку центра. Без write (ромбы) — по-старому, картинкой поверх.
+   v8: «центр» — общая кнопка страницы («сделай не только для свёртки, а вообще»), своя галка снята; в режиме записи центр рисует страница.
    v6: галка «центр» — подсветка центрального XOR-столбца золотом с рамкой (по умолчанию выкл., выбор помнится).
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
@@ -42,7 +43,7 @@
   }
   function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply}) {
     const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
-    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><label class="may-fold-pair" title="Подсветить центральный столбец, куда складывается XOR"><input type="checkbox" data-fold="mid"> центр</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
+    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
     const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
@@ -50,8 +51,7 @@
     try{const saved=localStorage.getItem('mayatnik-fold-rate'),n=Number(saved);if(saved!==null&&n>=0&&n<=401)rateStep=n;}catch(_){}
     // v4: «парой» — по умолчанию включено, выбор помнится
     const pairBox=panel.querySelector('[data-fold="pair"]'),pair=()=>pairBox.checked;
-    const midBox=panel.querySelector('[data-fold="mid"]'),midOn=()=>midBox.checked;   // v6
-    try{midBox.checked=localStorage.getItem('mayatnik-fold-mid')==='1';}catch(_){}
+    const midOn=()=>!!config()?.mid;   // v8: общая кнопка «Центр» страницы
     const pairSaved=()=>{try{return localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){return true;}};
     const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
     function sync(){
@@ -75,7 +75,7 @@
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const x0=rect.left-host.left,y0=rect.top-host.top;
       if(state.write){   // v7: строки переписывает страница; здесь — только подсветка центра
         if(state.frame!==applied){applied=state.frame;apply?.(state);}
-        if(midOn()){const s2=config()?.scale||s,r2=canvas.getBoundingClientRect(),cx=r2.left-host.left+state.center*s2,ch=Math.min(h,state.height*s2);
+        if(false&&midOn()){const s2=config()?.scale||s,r2=canvas.getBoundingClientRect(),cx=r2.left-host.left+state.center*s2,ch=Math.min(h,state.height*s2);
           ctx.fillStyle='rgba(255,211,91,.28)';ctx.fillRect(cx,r2.top-host.top,s2,ch);ctx.lineWidth=Math.max(1.5,Math.min(3,s2*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(cx,r2.top-host.top,s2,ch);}
         sync();return;}
       const only=c.view==='digitsOnly',digits=only||c.view==='digits',rp=c.rp,mid=midOn(),css=new Map(),rgb=v=>{let t=css.get(v);if(!t){t=`rgb(${v&255},${v>>>8&255},${v>>>16&255})`;css.set(v,t);}return t;};
@@ -118,7 +118,6 @@
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
     for(const [action,d]of [['back',-1],['next',1]])panel.querySelector(`[data-fold="${action}"]`).onclick=()=>{pause();seek(adv(state.frame,d));};
-    midBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-mid',midBox.checked?'1':'0');}catch(_){}render();};
     pairBox.checked=pairSaved();pairBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-pair',pairBox.checked?'1':'0');}catch(_){}sync();};
     timeline.oninput=()=>{pause();seek(Number(timeline.value));};
     play.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();play.setPointerCapture(e.pointerId);suppressClick=false;const x=e.clientX,start=rateStep;
