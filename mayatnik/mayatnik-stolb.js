@@ -1,4 +1,4 @@
-/* «Проход столба»: столбец закраски «Столбы» ходит от «от» до «до» и обратно, по кругу. v1.
+/* «Проход столба»: столбец закраски «Столбы» ходит от «от» до «до» и обратно, по кругу. v2: галка «линия».
    Модель — только ход (столбцы от якоря); что и как красить, решает страница через show(столбец). */
 (() => {
   'use strict';
@@ -17,12 +17,12 @@
   function mount({button, beforeStart, start, show, onClose}) {
     const panel = document.createElement('section'); panel.id = 'mayStolbPanel'; panel.hidden = true; panel.setAttribute('aria-label', 'Пульт прохода столба');
     panel.innerHTML = '<div class="may-fold-steps"><button type="button" data-stolb="back" title="Столбец назад по ходу">−1</button><output aria-live="off"></output><button type="button" data-stolb="next" title="Столбец вперёд по ходу">+1</button></div>'
-      + '<div class="may-stolb-range"><label title="Левый край хода, столбец от якоря">от <input type="number" data-stolb="lo"></label><label title="Правый край хода, столбец от якоря">до <input type="number" data-stolb="hi"></label></div>'
+      + '<div class="may-stolb-range"><label title="Левый край хода, столбец от якоря">от <input type="number" data-stolb="lo"></label><label title="Правый край хода, столбец от якоря">до <input type="number" data-stolb="hi"></label><label title="Пунктир столбца на поле и в записи"><input type="checkbox" data-stolb="line"> линия</label></div>'
       + '<input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг прохода столба">'
       + '<div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость прохода"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей прохода" title="Пуск / пауза. Для GIF: включи «Запись», затем пуск" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     document.body.append(panel);
     const $p = s => panel.querySelector(s), pult = $p('.zz-pult'), play = $p('.zz-pult-play'), speed = $p('.zz-pult-range'), value = $p('.zz-pult-value'),
-      timeline = $p('.may-fold-frame'), progress = $p('.may-fold-steps output'), loIn = $p('[data-stolb="lo"]'), hiIn = $p('[data-stolb="hi"]');
+      timeline = $p('.may-fold-frame'), progress = $p('.may-fold-steps output'), loIn = $p('[data-stolb="lo"]'), hiIn = $p('[data-stolb="hi"]'), lineIn = $p('[data-stolb="line"]');
     let state = null, running = false, dir = 1, rateStep = 201, timer = 0, last = 0, credit = 0;
     const rate = () => rateStep <= 0 ? 0 : .1 * 10 ** ((rateStep - 1) / 100);   // столбцов в секунду: 201 → 10/с
     try { const n = Number(localStorage.getItem('mayatnik-stolb-rate')); if (localStorage.getItem('mayatnik-stolb-rate') !== null && n >= 0 && n <= 401) rateStep = n; } catch (_) {}
@@ -52,10 +52,13 @@
     for (const [action, d] of [['back', -1], ['next', 1]]) $p(`[data-stolb="${action}"]`).onclick = () => { pause(); state.step(d); render(); };
     timeline.oninput = () => { pause(); state.seek(Number(timeline.value)); render(); };
     for (const inp of [loIn, hiIn]) inp.addEventListener('change', setRange);
+    // v2: пунктир столбца — по выбору, по умолчанию выключен («как этот столб убрать?»: для GIF он мешает)
+    try { lineIn.checked = localStorage.getItem('mayatnik-stolb-line') === '1'; } catch (_) {}
+    lineIn.addEventListener('change', () => { try { localStorage.setItem('mayatnik-stolb-line', lineIn.checked ? '1' : '0'); } catch (_) {} render(); });
     addEventListener('keydown', e => { if (!state || e.target.closest?.('input,select,button,textarea')) return;
       if (['Space', 'ArrowLeft', 'ArrowRight', 'Escape'].includes(e.code)) { e.preventDefault(); e.stopImmediatePropagation();
         if (e.code === 'Escape') close(); else if (e.code === 'Space') togglePlay(); else { pause(); state.step(e.code === 'ArrowRight' ? 1 : -1); render(); } } }, true);
-    return { get active() { return !!state; }, close, render };
+    return { get active() { return !!state; }, get line() { return lineIn.checked; }, close, render };
   }
   const api = { model, mount };
   if (typeof module === 'object' && module.exports) module.exports = api; else window.MayatnikStolb = api;
