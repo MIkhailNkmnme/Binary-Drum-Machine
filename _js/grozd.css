@@ -6,7 +6,7 @@
   font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;color:var(--gz-txt);user-select:none;-webkit-user-select:none}
 .gz-group{--c:#5aa9ff;position:relative}
 .gz-group.gz-drag{opacity:.55}
-.gz-slot{height:16px;border:1px dashed #5a6585;border-radius:4px}
+.gz-slot{height:var(--gz-h);border:1px dashed #5a6585;border-radius:4px}
 
 /* шестиугольник: внешний слой — обводка, ::before — фон внутри */
 .gz-hx{box-sizing:border-box;position:relative;display:flex;align-items:center;gap:5px;height:var(--gz-h);padding:0 11px 0 13px;
@@ -25,10 +25,10 @@
 .gz-nm{overflow:hidden;text-overflow:ellipsis}
 
 /* шапка группы */
-.gz-head{--gz-n:8px;width:var(--gz-w);height:16px;font-size:11px;font-weight:600;justify-content:space-between;padding:0 8px 0 10px;cursor:grab}   /* 15.10: шапка в 1,5 раза ниже кнопки (24 → 16) */
+.gz-head{width:var(--gz-w);height:var(--gz-h);font-weight:600;justify-content:space-between;padding:0 10px 0 14px;cursor:grab}   /* 15.10: шапка высотой с кнопку (24) */
 .gz-head::before{background:color-mix(in srgb,var(--c) 36%,#0f1526)}
 .gz-head:hover::before{background:color-mix(in srgb,var(--c) 50%,#0f1526)}
-.gz-head .gz-ar{font-size:9px;opacity:.8}
+.gz-head .gz-ar{font-size:11px;opacity:.8}
 
 /* соты: 2 столбца, второй сдвинут на полкнопки; позиции ставит grozd.js */
 .gz-soty{position:relative;margin-top:3px}
