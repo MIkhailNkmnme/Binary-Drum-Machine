@@ -118,6 +118,8 @@
         } else {
           const nm = el('span', 'gz-nm', it.name); b.append(icon(it.icon), nm);
           if (it.nameNow) refreshers.push(() => { const n = it.nameNow(); if (nm.textContent !== n) nm.textContent = n; });
+          if (it.modes) { const md = el('span', 'gz-md'); b.append(md);
+            refreshers.push(() => { const { n, i } = it.modes(); if (md.children.length !== n) md.replaceChildren(...Array.from({ length: n }, () => el('i'))); [...md.children].forEach((x, k) => x.classList.toggle('on', k === i)); }); }
           b.addEventListener('click', () => { if (it.disabled && it.disabled()) return; it.click && it.click(); refresh(); });
           if (it.type === 'toggle') refreshers.push(() => b.classList.toggle('gz-on', !!it.on()));
           if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));
@@ -142,17 +144,22 @@
     function dragHead(head, box) {
       head.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
-        const y0 = e.clientY; let slot = null;
+        const y0 = e.clientY; let slot = null, top0 = 0;
         const move = ev => {
           if (!slot && Math.abs(ev.clientY - y0) < 6) return;
-          if (!slot) { slot = el('div', 'gz-slot'); box.after(slot); box.classList.add('gz-drag'); closeLadder(); }
+          if (!slot) {   // 15.10: группа едет за курсором, на её месте — пунктирная щель
+            const r = box.getBoundingClientRect(); top0 = r.top;
+            slot = el('div', 'gz-slot'); box.after(slot); closeLadder(); tipHide();
+            Object.assign(box.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px' }); box.classList.add('gz-drag');
+          }
+          box.style.top = (top0 + ev.clientY - y0) + 'px';
           const after = [...root.querySelectorAll(':scope > .gz-group:not(.gz-drag)')].find(g => { const r = g.getBoundingClientRect(); return ev.clientY < r.top + 15; });
           if (after) after.before(slot); else root.append(slot);
         };
         const up = () => {
           removeEventListener('pointermove', move); removeEventListener('pointerup', up);
           if (!slot) return;
-          slot.replaceWith(box); box.classList.remove('gz-drag'); head.dataset.dragged = '1'; setTimeout(() => delete head.dataset.dragged, 0); save();
+          slot.replaceWith(box); box.classList.remove('gz-drag'); for (const k of ['position', 'left', 'top', 'width']) box.style.removeProperty(k); head.dataset.dragged = '1'; setTimeout(() => delete head.dataset.dragged, 0); save();
         };
         addEventListener('pointermove', move); addEventListener('pointerup', up);
       });
@@ -209,7 +216,9 @@
     if (inp && inp.type === 'checkbox') return { type: 'toggle', icon: iconOf(e), name, tip, on: () => inp.checked, click: () => inp.click(), disabled: () => inp.disabled };
     // кнопка с надписью по кругу (data-labels): в рейке видно текущее положение — её нынешняя надпись без значка
     const cyc = () => { const t = norm(e.textContent).replace(/^[^\p{L}\p{N}]+/u, ''); return t.length > 16 ? t.slice(0, 15) + '…' : t; };
-    if (e.dataset && e.dataset.labels) return { type: 'toggle', icon: iconOf(e), name: cyc() || name, nameNow: () => cyc() || nameOf(e), tip,
+    const labs = e.dataset && e.dataset.labels ? e.dataset.labels.split('|').map(norm) : null;
+    if (labs) return { type: 'toggle', icon: iconOf(e), name: cyc() || name, nameNow: () => cyc() || nameOf(e), tip,
+      modes: () => ({ n: labs.length, i: labs.indexOf(norm(e.textContent)) }),   // 15.10: метки справа — сколько режимов и какой выбран
       on: () => e.matches('.on,.sel,.act,.active,[aria-pressed="true"]'), click: () => e.click(), disabled: () => !!e.disabled };
     return { type: 'toggle', icon: iconOf(e), name, nameNow: () => nameOf(e), tip,
       on: () => e.matches('.on,.sel,.act,.active,[aria-pressed="true"]'), click: () => e.click(), disabled: () => !!e.disabled };
