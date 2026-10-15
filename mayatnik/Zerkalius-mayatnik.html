@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.101. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.102. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.101</title>
+<title>Zerkalius Маятник — v0.102</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.101</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.102</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -227,8 +227,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bMirrorLine" aria-pressed="false" data-mi-short="Линия-зеркало" title="Горизонтальная линия-зеркало на поле. Тяни её мышью по строкам; щелчок по шаблону кладёт его отражение по другую сторону линии">Линия-зеркало</button>
     <button id="bMirrorByLine" data-mi-short="По линии" disabled title="Отразить выбранный шаблон по линии-зеркалу: копия по другую сторону линии">По линии</button>
     <button id="bXor1" data-mi-short="XOR ↓1" disabled title="Xor-NextLevel, шаг 1: единицы под шаблоном XOR-ятся в поле на строку ниже, со сдвигом на столбец влево и вправо">XOR ↓1</button>
-    <button id="bXor2" data-mi-short="Xor-Next" disabled title="Xor-NextLevel: фигура шаблона (как единицы) XOR-ится на k строк ниже со сдвигом на k столбцов влево и вправо; k — число рядом (до высоты фигуры). k=2 — два шага маятника подряд">XOR ↓k</button>
-    <label title="Шаг Xor-Next: на сколько строк вниз и столбцов в стороны, от 1 до высоты фигуры">шаг k <input id="xorStep" type="number" min="1" max="18" step="1" value="2" disabled></label>
+    <button id="bXor2" data-mi-short="Xor-Next" disabled title="Xor-NextLevel: фигура шаблона (как единицы) XOR-ится на k строк ниже со сдвигом на k столбцов влево и вправо; k — число рядом; после нажатия оно само растёт на 1 (2, 3, 4, 5…), каждое нажатие — от исходной фигуры. k=2 — два шага маятника подряд">XOR ↓k</button>
+    <label title="Шаг Xor-Next: на сколько строк вниз и столбцов в стороны, от 1 до высоты поля; после нажатия Xor-Next растёт на 1">шаг k <input id="xorStep" type="number" min="1" max="18" step="1" value="2" disabled></label>
     <button id="bTemplateRemove" disabled title="Убрать только выбранный шаблон с поля. Его запись в библиотеке и оставленная краска сохраняются">Убрать с поля</button>
     <label title="Название своего шаблона">имя <input id="templateName" type="text" maxlength="100" value="Мой шаблон"></label>
     <select id="templateList" hidden aria-label="Сохранённые свои шаблоны"></select>
@@ -1000,10 +1000,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     fillBits=null;templateStatsKey='';$('fillInfo').textContent=`XOR ↓${k}: переключено ${count.toLocaleString('ru-RU')} пикселей`;draw();fillSync();savePaint();
   }
   $('bXor1').onclick=()=>xorNextLevel(1);
-  // v0.041: шаг k — от 1 до высоты фигуры в строках поля (у 12×18 — до 18).
-  const xorMax=()=>colourTemplate?Math.max(1,Math.round(templateRect(colourTemplate.parts[0]).height/RK)):1;
+  // v0.041: шаг k — от 1 до высоты фигуры в строках поля (у 12×18 — до 18). v0.102: до высоты поля — шаг растёт с каждым нажатием.
+  const xorMax=()=>colourTemplate?Math.max(1,VH):1;
   $('xorStep').addEventListener('change',()=>{$('xorStep').value=clampInt($('xorStep').value,1,xorMax(),2);});
-  $('bXor2').onclick=()=>{const k=clampInt($('xorStep').value,1,xorMax(),2);$('xorStep').value=k;xorNextLevel(k);};
+  // v0.102: «шаг растёт: 2, 3, 4, 5» — каждое нажатие XOR-ит исходную фигуру на k, потом k += 1 (число рядом можно поставить руками)
+  $('bXor2').onclick=()=>{const m=xorMax(),k=clampInt($('xorStep').value,1,m,2);$('xorStep').max=m;xorNextLevel(k);$('xorStep').value=Math.min(m,k+1);};
   function mirrorTemplate(edge,copy){
     if(!colourTemplate)return;rememberTemplate();
     const horizontal=edge==='left'||edge==='right',r=templateRect(colourTemplate.parts[0]);
@@ -2217,6 +2218,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=101"></script>
+<script src="mayatnik-menu.js?v=102"></script>
 </body>
 </html>
