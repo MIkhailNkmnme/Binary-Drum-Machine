@@ -16,6 +16,14 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #ochkiBox{grid-column:2;grid-row:3;min-width:0}
 .mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
 .mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:0 10px;align-items:center;min-width:0;padding:1px 50% 1px 4px;border-top:1px solid var(--line);background:var(--panel)}
+/* v0.069: меню без фона — кнопки прямо на поле. Поле тянется под меню; пустые места меню пропускают щелчки к полю. */
+@media(min-width:601px){
+  .mayatnik-menu-ready #mayatnikRail{position:relative;z-index:4;background:transparent;border-right:0;pointer-events:none}
+  .mayatnik-menu-ready #mayatnikRail{grid-row:2/5}
+  .mayatnik-menu-ready #wrap,.mayatnik-menu-ready #mayatnikStatus{grid-column:1/-1}
+  #mayatnikRail .gz-rail,#mayatnikRail .gz-group,#mayatnikRail .gz-soty,#mayatnikRail .gz-wide{pointer-events:none}
+  #mayatnikRail>:not(.gz-rail),#mayatnikRail .gz-rail>:not(.gz-group),#mayatnikRail .gz-group>:not(.gz-soty):not(.gz-wide),#mayatnikRail .gz-soty>*,#mayatnikRail .gz-wide>*{pointer-events:auto}
+}
 .mayatnik-menu-ready #stat{white-space:normal;margin-left:0;font-size:11px}
 .mayatnik-menu-ready #zoomV::before{content:'Масштаб '}
 .mayatnik-menu-ready #konusInfo{font-size:11px}
@@ -139,3 +147,12 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 /* v0.063: панель значков в шапке */
 header #paintTools{position:static;margin:0 0 0 6px;flex-wrap:wrap}
 .mayatnik-menu-ready>header{align-items:center;flex-wrap:wrap}
+/* v0.069: верхняя панель ниже и без лишних отступов: без общей рамки, группы плотнее, кнопки 22 px. */
+header #paintTools{border:0;background:transparent;padding:0;gap:6px;margin:6px 0 0 4px}
+header #paintTools .pt-g{padding:10px 9px 9px}
+header #paintTools .pt-r{gap:4px}
+header #paintTools .pt-b,header #paintTools .pt-c{width:22px;height:22px}
+header #paintTools .pt-b i{width:14px;height:14px}
+header #paintTools .pt-t.up{top:-10px}
+header #paintTools .pt-t.dn{bottom:-10px}
+.mayatnik-menu-ready>header{padding-top:4px;padding-bottom:4px}
