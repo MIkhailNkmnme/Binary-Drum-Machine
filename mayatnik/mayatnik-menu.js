@@ -1,4 +1,4 @@
-/* Маятник v0.076: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.077: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -53,7 +53,7 @@
       select('view', 'eye', {col:'Перекрытия',bits:'Биты',digits:'Цифры 0/1',romb0:'Ромбы чёт.',romb1:'Ромбы нечёт.',romb2:'Ромбы обе'}),
       control('vrows') ] },
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'),
+      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
