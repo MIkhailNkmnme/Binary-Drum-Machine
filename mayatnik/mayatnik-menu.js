@@ -1,4 +1,4 @@
-/* Маятник v0.046: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.047: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -58,7 +58,7 @@
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
-      check('sym', 'mirror'), check('symV', 'line'), check('symH', 'minus'), check('symD', 'cross'), check('symBits', 'colour'), button('bAxisPick', 'select'), button('bClearAxis', 'cross'), button('bKonus', 'ring'),
+      check('sym', 'mirror'), check('symV', 'line'), check('symH', 'minus'), check('symD', 'cross'), check('symBits', 'colour'), button('bAxisLine', 'line'), button('bAxisLinesClear', 'cross'), button('bAxisPick', 'select'), button('bClearAxis', 'cross'), button('bKonus', 'ring'),
       { type: 'action', name: 'Зерк. маятник', icon: icon($('mirrorLink'), 'mirror'),
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
@@ -103,7 +103,7 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
-  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross']]) {
+  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisLinesClear','cross']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
     b.onclick = () => e.click();
