@@ -237,12 +237,15 @@
     const panelsNow = () => { if (!cfg.panels) return; for (const g of document.querySelectorAll(cfg.panels)) {
       const b = shown.has(gid(g)) && dock.querySelector('[data-pan="' + CSS.escape(gid(g)) + '"]');
       showPanel(g, b && b.getClientRects().length ? b : null); } };
+    // у кнопки нет своего значка — значок по смыслу из menu-icons, в группе без повторов
+    const withIcons = els => { const used = new Set(), mi = window.ZerkMenuIcons;
+      return els.map(e => { const it = itemOf(e); if (!it.icon && it.type !== 'value' && mi && mi.iconFor) try { it.icon = mi.iconFor(e, used); } catch {} return it; }); };
     function make(gs, pans) {
       const panItem = g => ({ type: 'toggle', icon: g.dataset.gzIcon || '💬', name: g.dataset.gzName || (cfg.panelName ? cfg.panelName(g) : cfg.title(g)), tip: longOf(g) || cfg.title(g), pan: gid(g),
         on: () => shown.has(gid(g)), click: () => { shown.has(gid(g)) ? shown.delete(gid(g)) : shown.add(gid(g)); store.set('grozd-pan:' + cfg.key, [...shown]); panelsNow(); } });
       return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (x && cfg.fold) cfg.fold(x.g, open); setTimeout(panelsNow); },
         groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g),
-          items: [...x.items.map(itemOf), ...pans.filter(p => p.dataset.gzIn ? x.g.matches(p.dataset.gzIn) : !!cfg.panelIn && x.g.matches(cfg.panelIn)).map(panItem)] })) });   // панель со своим data-gz-in — в своей группе
+          items: [...withIcons(x.items), ...pans.filter(p => p.dataset.gzIn ? x.g.matches(p.dataset.gzIn) : !!cfg.panelIn && x.g.matches(cfg.panelIn)).map(panItem)] })) });   // панель со своим data-gz-in — в своей группе
     }
     build(); document.documentElement.classList.remove('gz-pre');   // рейка готова — старые грозди уже спрятаны, можно показывать страницу
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
@@ -252,5 +255,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 9, rail, adopt };
+  window.ZerkGrozd = { version: 10, rail, adopt };
 })();
