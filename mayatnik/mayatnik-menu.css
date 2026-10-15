@@ -197,9 +197,9 @@ header #paintTools{gap:5px}
 header #paintTools .pt-b.gz-hx{padding:0 7px 0 8px;gap:3px;--gz-n:8px}
 header #paintTools .pt-g.pt-long{padding:9px 4px 5px}
 header #paintTools{gap:4px;margin-left:0}
-/* v0.079: сведения занимают примерно 1/6 экрана и сворачиваются в заголовок. */
-.mayatnik-menu-ready #mayatnikInfoPanel{position:fixed;right:8px;bottom:8px;z-index:8;box-sizing:border-box;width:33.333vw;max-width:calc(100vw - 16px);color:var(--fg);background:var(--panel);border:1px solid var(--line);font:11px/1.4 var(--mono)}
-#mayatnikInfoPanel[open]{height:50dvh;display:flex;flex-direction:column}
+/* v0.079: сведения занимают примерно 1/6 экрана и сворачиваются в заголовок. v0.091: в полбраузера шириной и ниже — четверть высоты. */
+.mayatnik-menu-ready #mayatnikInfoPanel{position:fixed;right:8px;bottom:8px;z-index:8;box-sizing:border-box;width:50vw;max-width:calc(100vw - 16px);color:var(--fg);background:var(--panel);border:1px solid var(--line);font:11px/1.4 var(--mono)}
+#mayatnikInfoPanel[open]{height:25dvh;min-height:150px;display:flex;flex-direction:column}
 #mayatnikInfoPanel>summary{flex:none;cursor:pointer;padding:5px 8px;user-select:none;font:12px/1.4 'Segoe UI',sans-serif}
 #mayatnikInfoPanel>summary::after{content:' · показать';color:var(--muted,#8997ac)}
 #mayatnikInfoPanel[open]>summary::after{content:' · скрыть'}
@@ -208,9 +208,12 @@ header #paintTools{gap:4px;margin-left:0}
 #mayatnikInfoPanel #templateInfo{flex:0 0 auto;white-space:pre-line}
 #mayatnikInfoPanel #templateActions{flex-wrap:wrap}
 #mayatnikInfoPanel .lg{flex-wrap:wrap}
-@media(max-width:600px){.mayatnik-menu-ready #mayatnikInfoPanel{width:calc(50vw - 8px)}#mayatnikInfoPanel[open]{height:33.333dvh}}
+@media(max-width:600px){.mayatnik-menu-ready #mayatnikInfoPanel{width:calc(100vw - 16px)}#mayatnikInfoPanel[open]{height:25dvh}}
+/* v0.091: исходные кнопки фигуры в шапке не видны — вместо них длинные «Сохранить» и «Перекрасить»; поле цвета остаётся здесь. */
+header #paintTools #templateActions{position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none}
+header #paintTools #templateActions>.gz-hx{display:none}
 /* v0.082: общий пульт Зеркалиуса для включённой горизонтальной свёртки. */
-#mayFoldPanel{position:fixed;z-index:9;left:33.333vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(66.666vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
+#mayFoldPanel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
 #mayFoldPanel[hidden],#mayFoldCanvas[hidden]{display:none}
 #mayFoldPanel .zz-pult{position:relative;width:100%}
 #mayFoldPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
