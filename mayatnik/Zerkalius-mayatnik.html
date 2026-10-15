@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.054. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.055. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.054</title>
+<title>Zerkalius Маятник — v0.055</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=54">
+<link rel="stylesheet" href="mayatnik-menu.css?v=55">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.054</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.055</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -173,7 +173,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Максимальная длина непрерывного участка симметрии; пусто или 0 — без верхнего предела. Более длинные участки скрываются.">строк до <input id="symRowsMax" type="number" min="0" max="16384" placeholder="∞"></label>
     <label title="Минимум совпадающих битов с КАЖДОЙ стороны оси, через одну клетку. Бит на самой оси не считается.">бит от <input id="symBitsMin" type="number" min="2" max="16384" value="2"></label>
     <label title="Максимальная зеркальная ширина с каждой стороны в срезе; пусто или 0 — без предела. Более широкие срезы скрываются.">бит до <input id="symBitsMax" type="number" min="0" max="16384" placeholder="∞"></label>
-    <button id="bAxisLine" aria-pressed="false" data-mi-short="Своя ось" title="Своя ось: два щелчка по полю — линия между ними (на каждую ось нажать снова). Тянуть конец — менять ось, тянуть линию — двигать параллельно, правый клик по оси — удалить. Точки цепляются к краям и центрам бит. Delete — удалить выделенную (последнюю) ось, правая кнопка по линии — убрать её, по пустому месту — выйти из режима, Esc — отменить первую точку">Своя ось</button>
+    <button id="bAxisLine" aria-pressed="false" data-mi-short="Своя ось" title="Своя ось: щелчок по полю — горизонтальная ось по верхней границе бита на всю ширину, зеркало вниз включается сразу (на каждую ось нажать снова). Тянуть конец — менять ось, тянуть линию — двигать параллельно, правый клик по оси — удалить. Точки цепляются к краям и центрам бит. Delete — удалить выделенную (последнюю) ось, правая кнопка по линии — убрать её, по пустому месту — выйти из режима, Esc — отменить первую точку">Своя ось</button>
     <button id="bAxisLinesClear" data-mi-short="Стереть оси" disabled title="Убрать все свои оси">Стереть оси</button>
     <button id="bAxisMirror" data-mi-short="Зеркало вниз" disabled aria-pressed="false" title="Зеркало вниз по последней своей оси: всё закрашенное над осью; если краски нет — все биты над осью. Пока нажата — тяни ось мышью, зеркало обновляется сразу">Зеркало вниз</button>
     <button id="bClearAxis" title="Снять выбранную ось и её конус; остальные найденные оси остаются">Снять выбор</button>
@@ -870,8 +870,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(st.userLines.length||axisLineMode){const sc=scale(),ox=r.left-host.left,oy=r.top-host.top,P=([x,y])=>[ox+x*sc,oy+y*sc];
       templateG.save();templateG.strokeStyle='#ffe14d';templateG.fillStyle='#ffe14d';templateG.lineWidth=2;
       st.userLines.forEach((l,i)=>{const a=P(l),b=P(l.slice(2)),sel=axisSelected&&i===st.userLines.length-1;templateG.lineWidth=sel?4:2;templateG.strokeStyle=templateG.fillStyle=sel?'#fff7b0':'#ffe14d';templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();for(const q of [a,b]){templateG.beginPath();templateG.arc(q[0],q[1],sel?4:3,0,7);templateG.fill();}});templateG.lineWidth=2;templateG.strokeStyle=templateG.fillStyle='#ffe14d';
-      if(axisLineMode&&axisLineHover){const h=P(axisLineHover);if(axisLinePending){const a=P(axisLinePending);templateG.setLineDash([5,4]);templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...h);templateG.stroke();templateG.setLineDash([]);templateG.beginPath();templateG.arc(a[0],a[1],3,0,7);templateG.fill();}
-        templateG.strokeStyle='#fff';templateG.lineWidth=1;templateG.beginPath();templateG.arc(h[0],h[1],4,0,7);templateG.stroke();}
+      if(axisLineMode&&axisLineHover){const [a,b]=axisRowLine(axisLineHover[1]).reduce((q,v,i)=>(q[i>>1].push(v),q),[[],[]]).map(P);templateG.setLineDash([5,4]);templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();templateG.setLineDash([]);}
       templateG.restore();}
     if(mirrorLine){const y=Math.round(r.top-host.top+mirrorLineY*scale())+.5,x0=Math.max(0,r.left-host.left),x1=Math.min(w,r.right-host.left);
       templateG.save();templateG.strokeStyle='#5ce1e6';templateG.lineWidth=2;templateG.beginPath();templateG.moveTo(x0,y);templateG.lineTo(x1,y);templateG.stroke();
@@ -1724,12 +1723,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
-  // v0.054: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
-  var axisSelected=false;if(!Array.isArray(st.userLines))st.userLines=[];
+  // v0.055: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
+  var axisSelected=false;
+  function axisRowLine(y){const r=cv.getBoundingClientRect(),w=r.width/scale(),row=Math.max(0,Math.min(VH,Math.floor(y)));return [0,row,w,row];}if(!Array.isArray(st.userLines))st.userLines=[];
   const snapBit=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.round((cx-r.left)/s*2)/2,Math.round((cy-r.top)/s*2)/2];};
   function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
   $('bAxisLine').onclick=()=>{axisLineMode=!axisLineMode;axisLinePending=null;if(axisLineMode){fillMode=false;autoVertical=0;autoSync();fillSync();stop();target=k;}axisLinesSync();queueDigits();};
-  // v0.054: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
+  // v0.055: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
   // нет — отражаются все биты над осью. Берутся точки, чья проекция попадает на отрезок оси.
   // Режим живой: пока кнопка нажата, ось можно тянуть параллельно, и зеркало пересчитывается от исходной картинки
   // (mirrorBase). Любая другая правка выключает режим, получившееся остаётся.
@@ -1772,9 +1772,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(e.button===0&&f&&!axisLinePending&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);if(i>=0){
       const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const r=cv.getBoundingClientRect(),sc=scale(),de=k=>Math.hypot(e.clientX-r.left-l[k]*sc,e.clientY-r.top-l[k+1]*sc),end=de(0)<=8?0:de(2)<=8?2:-1;
       axisDrag={id:e.pointerId,from:snapBit(e.clientX,e.clientY),line:l.slice(),end};wrap.setPointerCapture(e.pointerId);axisLinesSync();e.preventDefault();return;}}
-    if(axisLineMode&&e.button===0&&f){const pt=snapBit(e.clientX,e.clientY);
-      if(!axisLinePending)axisLinePending=pt;else{if(pt[0]!==axisLinePending[0]||pt[1]!==axisLinePending[1]){st.userLines.push([...axisLinePending,...pt]);axisSelected=true;axisLineMode=false;axisLineHover=null;save();}axisLinePending=null;}
-      axisLinesSync();queueDigits();e.preventDefault();return;}
+    if(axisLineMode&&e.button===0&&f){const r=cv.getBoundingClientRect();
+      // v0.055: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
+      if(mirrorLive)mirrorLiveSet(false);st.userLines.push(axisRowLine((e.clientY-r.top)/scale()));axisSelected=true;axisLineMode=false;axisLineHover=null;axisLinePending=null;save();
+      axisLinesSync();stop();target=k;mirrorLiveSet(true);mirrorApply(true);queueDigits();e.preventDefault();return;}
     if(e.button===0&&nearLine(e.clientY)){lineDrag={id:e.pointerId};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}
     if(((!fillMode&&!autoVertical)||e.ctrlKey)&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
       const hit=hitTemplate(x,y),part=hit?.part;if(hit){selectTemplate(hit.item,false);templateMove=true;}
@@ -1894,6 +1895,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=54"></script>
+<script src="mayatnik-menu.js?v=55"></script>
 </body>
 </html>
