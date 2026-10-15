@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.105. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.106. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.105</title>
+<title>Zerkalius Маятник — v0.106</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.105</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.106</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1075,12 +1075,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function paintTemplate(ctx,x0,y0,s){
     if(playing)return;rememberTemplate();
     for(const item of templateItems){if(!item.view.visible)continue;ctx.save();ctx.globalAlpha=item.view.alpha/100;ctx.imageSmoothingEnabled=false;
-    for(const part of item.parts){const r=templateRect(part,false,item);ctx.save();ctx.beginPath();ctx.rect(x0+part.ox*s,y0,VW*s,VH*s);ctx.clip();ctx.drawImage(part.canvas,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);
+    for(const part of item.parts){const r=templateRect(part,false,item);ctx.save();ctx.beginPath();ctx.rect(x0+part.ox*s,y0,VW*s,VH*s);ctx.clip();
+      const own=part.bitsData?(part.bitCanvas||(part.bitCanvas=templateBitCanvas(part))):null;   // v0.106: свои биты — непрозрачно, как вид «Биты»
+      if(own){ctx.save();ctx.globalAlpha=1;ctx.drawImage(own,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);ctx.restore();}
+      else ctx.drawImage(part.canvas,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);
       // Один экранный пиксель: контур остаётся тонким при любом сдвиге и размере.
       const edges=part.edges||(part.edges=MayatnikTemplate.edges(part.mask)),sx=r.width/part.mask.width/RK*s,sy=r.height/part.mask.height/RK*s,dx=x0+r.x/RK*s,dy=y0+r.y/RK*s;
       ctx.beginPath();for(let i=0;i<edges.length;i+=4){ctx.moveTo(dx+edges[i]*sx,dy+edges[i+1]*sy);ctx.lineTo(dx+edges[i+2]*sx,dy+edges[i+3]*sy);}ctx.globalAlpha=1;ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.stroke();ctx.restore();}
     ctx.restore();}
   }
+  // v0.106: свои биты фигуры картинкой: 1 — светлый, 0 — серый (как «Биты»), вне фигуры и пусто — прозрачно
+  function templateBitCanvas(part){const m=part.mask,c=document.createElement('canvas');c.width=m.width;c.height=m.height;
+    const im=c.getContext('2d').createImageData(m.width,m.height),u=new Uint32Array(im.data.buffer),one=rgba([232,237,245]),zero=rgba([91,100,117]);
+    for(let i=0;i<u.length;i++){const b=part.bitsData[i];u[i]=b===1?one:b===0?zero:0;}
+    c.getContext('2d').putImageData(im,0,0);return c;}
   function drawTemplate(){
     rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode)||playing;if(templateCanvas.hidden)return;
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
@@ -1226,14 +1234,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // null у явной копии запрещает снимать заливку исходной фигуры.
     if(!colourTemplate||colourTemplate.lifted||(colourTemplate.paintSource===false&&colourTemplate.lifted===null))return;
     const counts={one:0,zero:0};
-    if(fillMask)for(const part of colourTemplate.parts){const m=part.mask;if(!Number.isInteger(m.x)||!Number.isInteger(m.y))continue;
+    // v0.106: «на месте шаблона из 0 — 1, из 1 — 0, а куда поставлю — его свои биты»: фигура запоминает биты под собой (part.bitsData,
+    // их и рисует дальше), на исходном месте переворачиваются ВСЕ её биты, а не только закрашенные
+    for(const part of colourTemplate.parts){const m=part.mask;if(!Number.isInteger(m.x)||!Number.isInteger(m.y))continue;
+      const own=invert?new Int8Array(m.width*m.height).fill(-1):null;
       for(let y=0;y<m.height;y++)for(let x=0;x<m.width;x++){
         const colour=(part.sourceData||m.data)[y*m.width+x],px=m.x+x,py=m.y+y;
         if(!colour||px<0||py<0||px>=img.width||py>=img.height)continue;
-        const q=py*img.width+px;if(fillMask[q]!==colour)continue;
-        fillMask[q]=0;
-        if(invert){const bit=rasterBit(px,py);if(bit>=0){if(!paintBits)paintBits=new Int8Array(img.width*img.height).fill(-1);paintBits[q]=1-bit;counts[bit?'zero':'one']++;}}
+        const q=py*img.width+px,bit=rasterBit(px,py);if(own)own[y*m.width+x]=bit;
+        if(fillMask?.[q]===colour)fillMask[q]=0;
+        if(invert&&bit>=0){if(!paintBits)paintBits=new Int8Array(img.width*img.height).fill(-1);paintBits[q]=1-bit;counts[bit?'zero':'one']++;}
       }
+      if(own){part.bitsData=own;part.bitCanvas=null;}
     }
     if(fillMask&&!fillMask.some(Boolean))fillMask=null;
     colourTemplate.paintSource=false;colourTemplate.lifted=counts;fillBits=null;templateStatsKey='';draw();fillSync();
@@ -2220,6 +2232,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=105"></script>
+<script src="mayatnik-menu.js?v=106"></script>
 </body>
 </html>
