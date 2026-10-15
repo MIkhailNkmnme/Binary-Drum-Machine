@@ -1,4 +1,4 @@
-/* Маятник v0.041: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.042: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -100,7 +100,25 @@
     shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 + col * 13.5) + 'px'; });
     soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 + (shown.length > 1 ? 13.5 : 0) - 3) + 'px' : '0';
     soty.style.display = shown.length ? '' : 'none'; } };
-  setInterval(() => { rail.refresh(); relayout(); }, 200);
+  // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
+  const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
+  const toolSync = [];
+  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross']]) {
+    const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
+    const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
+    b.onclick = () => e.click();
+    toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
+      b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
+    tools.append(b);
+  }
+  const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
+  colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
+  toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
+  tools.append(colour); document.body.append(tools);
+  const placeTools = () => { const r = $('wrap').getBoundingClientRect(); tools.style.left = (r.left + 8) + 'px'; tools.style.top = (r.top + 8) + 'px'; tools.hidden = r.width < 60;
+    for (const f of toolSync) f(); };
+  addEventListener('resize', placeTools); placeTools();
+  setInterval(() => { rail.refresh(); relayout(); placeTools(); }, 200);
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
 })();

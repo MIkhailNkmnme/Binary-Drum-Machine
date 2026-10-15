@@ -92,3 +92,13 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 
 /* v0.037: логотип в шапке */
 .may-logo{height:40px;width:auto;margin:-6px 0;image-rendering:auto}
+
+/* v0.042: панель раскраски на холсте — неподвижна при сдвиге и масштабе */
+#paintTools{position:fixed;z-index:6;display:flex;gap:3px;padding:3px;border-radius:6px;background:#0d1119cc;border:1px solid #ff9b5055}
+#paintTools[hidden]{display:none}
+#paintTools .pt-b{width:26px;height:26px;padding:0;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#paintTools .pt-b i{width:15px;height:15px;background:center/contain no-repeat}
+#paintTools .pt-b:hover{background:#ff9b5033}
+#paintTools .pt-b.on{background:#ff9b50;border-color:#ffc08f}
+#paintTools .pt-b:disabled{opacity:.3;cursor:default}
+#paintTools .pt-c{width:26px;height:26px;padding:1px;border:0;background:transparent;cursor:pointer}
