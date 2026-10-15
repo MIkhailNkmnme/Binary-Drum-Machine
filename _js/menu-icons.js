@@ -163,6 +163,9 @@
   // v7: у выключенной кнопки подсказка начинается с «⛔ Сейчас не действует: …» — короткое имя берём по её обычной подсказке (data-t0)
   Object.assign(SHORT,{bConeSliceDual:"Два центра",bConeSliceSourceSpin:"К0 ½"});
   const shortOf=el=>{const named=SHORT[el.id]||el.dataset.miShort;if(named)return named;let raw=norm(el.getAttribute('title')||el.getAttribute('aria-label')||el.dataset.zzTip||'');if(/^\W*сейчас не действует/i.test(raw))raw=norm(el.dataset.t0||raw.split(/\n\s*\n/).slice(1).join(' ')||raw);const key=raw.split(/ · наведи| — |\. /)[0].trim().toLowerCase().replace(/\d+/g,'#');const key2=raw.split(/:| · наведи|\. /)[0].trim().toLowerCase().replace(/\d+/g,'#');return SHORT[key2]||SHORT[key]||raw.replace(/^[^\p{L}\p{N}]+/u,'').split(/\n| — |\. |;/)[0]||labelOf(el);};
-  window.ZerkMenuIcons={version:10,sync,labelOf,shortOf};
+  // v11, «всем кнопкам добавь значки, если нету»: значок по смыслу для кнопки рейки (сама кнопка не меняется); used — занятые в группе
+  const iconFor=(el,used=new Set())=>{const key=keyOf(el),label=kindLabel(el)||key,want=kindsOf(key,words(el.textContent)+' '+label);
+    const kind=(paths[el.dataset.miIcon]&&el.dataset.miIcon)||want.find(k=>!used.has(k))||SPARE.find(k=>!used.has(k))||want[0];used.add(kind);return iconUrl(key,kind);};
+  window.ZerkMenuIcons={version:11,sync,labelOf,shortOf,iconFor};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
