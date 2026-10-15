@@ -1,4 +1,4 @@
-/* Маятник v0.032: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.033: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -62,7 +62,7 @@
       { type: 'action', name: 'Зерк. маятник', icon: icon($('mirrorLink'), 'mirror'),
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo'),button('bPng','image')] },
+    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [control('templateActive'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateDown','down'),button('bTemplateUp','up'),button('bTemplateReset','reset'),button('bTemplateReturn','swap'),button('bTemplateMove','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),button('bPng','image'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[button('bTemplatePrev','back'),button('bTemplateNext','forward'),button('bTemplateLoad','copy'),button('bTemplateSave','save'),button('bTemplateImport','folder'),button('bTemplateExport','save'),control('templateLibraryCurrent'),control('templateName')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [

@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.032. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.033. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.032</title>
+<title>Zerkalius Маятник — v0.033</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=32">
+<link rel="stylesheet" href="mayatnik-menu.css?v=33">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.032</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.033</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -216,7 +216,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Высота копии в процентах от исходной фигуры">высота % <input id="templateHeight" type="number" min="1" max="3200" step="10" value="100"></label>
     <label title="Сдвиг по вертикали в строках поля; положительное значение — вниз">вниз, строк <input id="templateDown" type="number" min="-4096" max="4096" step="1" value="0"></label>
     <label title="Непрозрачность копии в процентах">видимость % <input id="templateAlpha" type="number" min="0" max="100" step="5" value="50"></label>
-    <button id="bPaintRestore" title="Вернуть последнюю сохранённую раскраску вместе с её полем и шаблоном">Из памяти</button><span id="paintCacheInfo"></span><span id="templateInfo"></span>
+    <button id="bPaintSave" title="Сохранить раскраску, поле, изменённые биты и шаблоны в файл для продолжения работы">Сохранить раскраску</button>
+    <button id="bPaintOpen" title="Открыть сохранённую раскраску из файла JSON">Открыть раскраску</button>
+    <input id="paintFile" type="file" accept=".json,application/json" hidden>
+    <button id="bPaintNew" title="Начать раскрашивать тот же узор с нуля: убрать заливки, следы и шаблоны с поля. Действие можно отменить">Начать с нуля</button>
+    <button id="bPaintRestore" title="Вернуть сохранённую раскраску или работу перед началом с нуля">Из памяти</button><span id="paintCacheInfo"></span><span id="templateInfo"></span>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
     <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
     <button id="bKonus" disabled title="Сначала выбери ось на поле">◯ в Соляриус</button>
@@ -246,6 +250,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. Повторный щелчок тем же цветом снимает заливку. «Отменить» и «Повторить» работают с заливкой, битами дорожки и шаблонами. «Без краски» убирает краску и изменения битов, оставляя шаблоны на поле; это действие тоже можно отменить. «Области» считает участки текущего изображения. Раскраска автоматически сохраняется в памяти этого браузера и восстанавливается после обновления. «Из памяти» возвращает последнее сохранённое поле вместе с цветами и шаблоном. При смене кадра или вида текущая раскраска скрывается; сохранённая работа остаётся в памяти до следующей раскраски. PNG сохраняет видимый результат отдельным файлом. Обычная цветная заливка не меняет биты; «Инверт-след» меняет рабочие биты дорожки.</p>
   <p><strong>Вертикальная раскраска:</strong> кнопка переключается 1 → 0 → выкл. Наведи на пиксель: от него вниз проводится вертикаль толщиной в один пиксель, и все связные области выбранного бита, которых она касается, подсвечиваются. Щелчок применяет цвет. Пустой фон не закрашивается. «Зеркально» включено по умолчанию: захватывается и отражённая сторона относительно центра поля. Shift также включает зеркальную пару. Повторный щелчок тем же цветом снимает заливку.</p>
   <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. «Двигать» позволяет тянуть копию по вертикали прямо на холсте. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область.</p>
+  <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
   <p><strong>Несколько шаблонов:</strong> «Взять цвет» и кнопка «На поле» в библиотеке добавляют фигуру. Список «На поле» в группе «Шаблон» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
   <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз, с Shift — пропорциональное увеличение от центра (тяни от центра наружу), с Alt — свободный перенос без следа. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
@@ -254,9 +259,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
 <script src="mayatnik-core.js?v=2"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
-<script src="mayatnik-fill.js?v=32"></script>
-<script src="mayatnik-template.js?v=32"></script>
-<script src="mayatnik-paint-cache.js?v=32"></script>
+<script src="mayatnik-fill.js?v=33"></script>
+<script src="mayatnik-template.js?v=33"></script>
+<script src="mayatnik-paint-cache.js?v=33"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -811,18 +816,22 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('bTemplateMove').onclick=()=>{templateMove=!templateMove;if(templateMove){fillMode=false;autoVertical=0;autoSync();fillSync();}templateSync();};
   $('templateTrail').onchange=()=>savePaint();
-  function savePaint(){
-    if(cacheRestoring||templateDragging||!f||!img)return;
+  function paintSnapshot(){
+    if(!f||!img)return null;
     rememberTemplate();
-    const data={schema:2,st:{...st},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
+    return {schema:2,st:{...st},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
       activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
+  }
+  function savePaint(){
+    if(cacheRestoring||templateDragging)return;
+    const data=paintSnapshot();if(!data)return;
     $('paintCacheInfo').textContent='Сохраняю раскраску…';
     cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data)).then(()=>{$('paintCacheInfo').textContent='Раскраска сохранена в браузере';}).catch(()=>{$('paintCacheInfo').textContent='Не удалось сохранить в браузере — сохрани PNG';});
   }
-  async function restorePaint(){
+  async function restorePaint(supplied=null){
     try{
-      await cacheWrites;const data=await MayatnikPaintCache.read();if(!data||![1,2].includes(data.schema))return false;
+      await cacheWrites;const data=supplied||await MayatnikPaintCache.read();if(!data||![1,2].includes(data.schema))return false;
       cacheRestoring=true;Object.assign(st,data.st);writeUI();reset();
       if(!(data.field instanceof Int8Array)||data.field.length!==f.val.length)throw Error('field');
       f.val.set(data.field);k=data.k;target=k;updWin();canvasSize();draw();
@@ -837,7 +846,55 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }catch(e){$('paintCacheInfo').textContent='Память раскраски недоступна — сохраняй PNG';return false;}
     finally{cacheRestoring=false;}
   }
-  $('bPaintRestore').onclick=async()=>{if(!await restorePaint())$('paintCacheInfo').textContent='Сохранённой раскраски пока нет или память недоступна';};
+  $('bPaintRestore').onclick=async()=>{try{await cacheWrites;const data=await MayatnikPaintCache.read('saved');if(!await restorePaint(data))throw Error('missing');}catch(_){$('paintCacheInfo').textContent='Сохранённой раскраски пока нет или память недоступна';}};
+  function keepPaint(data){
+    cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data,'saved')).catch(()=>{$('paintCacheInfo').textContent='Копия в браузере недоступна — используй файл раскраски';});
+  }
+  $('bPaintSave').onclick=()=>{
+    if(cacheRestoring||templateDragging)return;stop();target=k;
+    const data=paintSnapshot();if(!data)return;
+    try{
+      const text=JSON.stringify({format:'mayatnik-paint',version:1,data},(_,v)=>v instanceof Int8Array?{array:'i8',data:Array.from(v)}:v instanceof Uint32Array?{array:'u32',data:Array.from(v)}:v);
+      const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='mayatnik-colouring-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+      keepPaint(data);$('paintCacheInfo').textContent='Файл раскраски передан на скачивание';
+    }catch(_){$('paintCacheInfo').textContent='Не удалось сохранить файл раскраски';}
+  };
+  $('bPaintNew').onclick=()=>{
+    if(cacheRestoring||templateDragging||!img)return;stop();target=k;
+    if(!fillMask&&!paintBits&&!templateItems.length){$('fillInfo').textContent='Узор уже чистый — можно раскрашивать.';return;}
+    const saved=paintSnapshot(),before=editSnapshot();keepPaint(saved);
+    fillMask=null;paintBits=null;fillBits=null;templateItems=[];colourTemplate=null;selectTemplate(null,false);
+    templateMove=false;fillMode=false;autoVertical=0;previewPoint=null;clearFillPreview();autoSync();clearKonus();
+    axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');
+    finishEdit(before);draw();fillSync();templateSync();savePaint();
+    $('fillInfo').textContent='Чистый узор — можно раскрашивать заново. Вернуть: «Отменить».';
+  };
+  $('bPaintOpen').onclick=()=>$('paintFile').click();
+  $('paintFile').onchange=async()=>{
+    const file=$('paintFile').files[0];if(!file)return;
+    let before=null;
+    try{
+      if(file.size>512*1024*1024)throw Error('size');
+      const parsed=JSON.parse(await file.text(),(_,v)=>{
+        if(!v||!['i8','u32'].includes(v.array))return v;
+        if(!Array.isArray(v.data)||v.data.length>100e6||v.data.some(n=>!Number.isInteger(n)||n<(v.array==='i8'?-1:0)||n>(v.array==='i8'?1:0xffffffff)))throw Error('array');
+        return v.array==='i8'?Int8Array.from(v.data):Uint32Array.from(v.data);
+      });
+      const data=parsed.data;
+      if(parsed.format!=='mayatnik-paint'||parsed.version!==1||data?.schema!==2||!data.st||!(data.field instanceof Int8Array)||!Number.isInteger(data.k)||data.k<0)throw Error('format');
+      if(!Number.isInteger(data.st.rows)||data.st.rows<8||data.st.rows>4096||!Number.isInteger(data.st.steps)||data.st.steps<1||data.st.steps>16384||!['pend','left','right','one'].includes(data.st.mode))throw Error('field');
+      const pairs=data.st.pair&&data.st.mode==='pend',frames=data.st.mode==='one'?1:pairs?data.st.steps>>1:data.st.steps,vertices=data.st.mode==='one'?1:pairs?2*frames+1:data.st.steps;
+      if(data.k>frames||data.field.length!==MAYATNIK.geometry(data.st.mode,vertices,data.st.rows).W*data.st.rows)throw Error('field');
+      if(!Number.isInteger(data.width)||!Number.isInteger(data.height)||data.width<1||data.height<1||data.width*data.height>100e6)throw Error('picture');
+      for(const [key,Type]of [['fill',Uint32Array],['paintBits',Int8Array]])if(data[key]!==null&&(!(data[key] instanceof Type)||data[key].length!==data.width*data.height))throw Error(key);
+      if(!/^#[0-9a-f]{6}$/i.test(data.colour)||!Array.isArray(data.templates))throw Error('templates');
+      let pixels=0;for(const t of data.templates){if(!t.view||!Array.isArray(t.parts))throw Error('template');for(const p of t.parts){const m=p.mask;if(!m||!Number.isInteger(m.width)||!Number.isInteger(m.height)||m.width<1||m.height<1||!(m.data instanceof Uint32Array)||m.data.length!==m.width*m.height)throw Error('mask');pixels+=m.data.length;if(pixels>100e6)throw Error('size');}}
+      if(cacheRestoring||templateDragging)throw Error('busy');stop();target=k;before=paintSnapshot();
+      if(!await restorePaint(data))throw Error('restore');
+      if(before)keepPaint(before);savePaint();$('fillInfo').textContent='Раскраска открыта из файла — можно продолжать.';
+    }catch(_){if(before)await restorePaint(before);$('paintCacheInfo').textContent='Не удалось открыть файл раскраски. Текущая работа сохранена.';}
+    finally{$('paintFile').value='';}
+  };
   let templateLibrary=[];
   function librarySelection(){
     const list=$('templateList'),n=list.options.length,i=list.selectedIndex;
@@ -1466,8 +1523,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/menu-icons.js?v=15"></script>
+<script src="../_js/menu-icons.js?v=16"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=32"></script>
+<script src="mayatnik-menu.js?v=33"></script>
 </body>
 </html>
