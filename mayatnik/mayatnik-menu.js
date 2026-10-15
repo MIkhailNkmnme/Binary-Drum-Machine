@@ -1,4 +1,4 @@
-/* Маятник v0.115: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.116: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -44,7 +44,7 @@
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
-      button('bPlay', 'play'), button('bStep', 'forward'),
+      button('bPlay', 'play'), button('bStep', 'forward'), button('bRowRun', 'down'),
       ...[...source.querySelectorAll('button.pre')].map(e => ({ type: 'action', name: e.textContent,
         icon: icon(e, 'field'), tip: e.title || `Построить ${e.dataset.n} строк и вершин (или до N/3)`, click: () => e.click() })),
       check('third', 'tri'), control('speed'), control('frame') ] },
@@ -212,6 +212,9 @@
   infoPanel.append(infoTitle,status);document.body.append(infoPanel);
   try{infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1';}catch(_){}
   infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
+  // v0.116: «сдвинь ширину под шаблоны ровно» — «Сведения» той же ширины и с тем же правым краем, что и панель «Шаблоны» (она по содержимому)
+  toolSync.push(()=>{const r=railRIn.getBoundingClientRect();if(!r.width||innerWidth<=600){infoPanel.style.width=infoPanel.style.right='';return;}
+    const w=Math.max(260,Math.round(r.width))+'px',right=Math.max(0,Math.round(innerWidth-r.right))+'px';if(infoPanel.style.width!==w)infoPanel.style.width=w;if(infoPanel.style.right!==right)infoPanel.style.right=right;});
   // v0.100 (правило кнопок): ползунок без подписи — значение на самой дорожке по центру, по краям шевроны «<» «>»
   // (щелчок — шаг, удержание — подряд), бегунок — ромб цветом группы, дорожка — тонкий пунктир. Как ползунки групп Zazerkalius.
   for (const id of ['frame', 'speed']) {

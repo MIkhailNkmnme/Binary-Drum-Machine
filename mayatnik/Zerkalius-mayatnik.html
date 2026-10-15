@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.115. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.116. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.115</title>
+<title>Zerkalius Маятник — v0.116</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=113">
+<link rel="stylesheet" href="mayatnik-menu.css?v=116">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.115</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.116</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -146,6 +146,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bBuild" class="go" title="Посчитать сразу все вершины">Построить</button>
     <button id="bPlay" aria-pressed="false" title="Анимация: вершина за вершиной (пробел)">▶ Анимация</button>
     <button id="bStep" title="Одна вершина (→)">+1 вершина</button>
+    <button id="bRowRun" aria-pressed="false" title="Построчный прогон: все вершины сразу, поле растёт вниз строка за строкой («скорость» — строк за шаг); ещё раз — стоп">По строкам</button>
     <button id="bReset" title="Очистить поле">Очистить</button>
     <label>скорость <input id="speed" type="range" min="1" max="32" value="4"></label>
   </div>
@@ -1953,6 +1954,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bSeq').onclick = () => pairSet(false);
   $('bPair').onclick = () => pairSet(true);
   $('bPlay').onclick = () => { fast = false; t0 = 0; play(); };
+  // v0.116: «построчный прогон» — все вершины сразу, потом поле растёт вниз строка за строкой (по «скорости» строк за шаг). Строка r зависит
+  // только от строк выше, поэтому верхние r строк полного кадра — это и есть конусы всех вершин, доросшие до строки r. Ход — через «показ строк»,
+  // по окончании (или второму нажатию) прежний «показ строк» возвращается.
+  let rowRun = null;
+  function rowRunEnd() { if (!rowRun) return; clearInterval(rowRun.timer); st.vrows = rowRun.prev; rowRun = null; $('bRowRun').setAttribute('aria-pressed', 'false'); $('vrows').value = st.vrows || ''; if (f) draw(); }
+  $('bRowRun').onclick = () => {
+    if (rowRun) { rowRunEnd(); return; } if (!f) reset();
+    rowRun = { prev: st.vrows || 0, r: 0, timer: 0 }; $('bRowRun').setAttribute('aria-pressed', 'true');
+    if (k < total()) goTo(total());
+    rowRun.timer = setInterval(() => { if (!rowRun || playing) return; if (k < total()) { rowRunEnd(); return; }   // кадр сбросили — стоп
+      rowRun.r = Math.min(f.H, rowRun.r + st.speed); st.vrows = rowRun.r; $('vrows').value = rowRun.r; draw(); if (rowRun.r >= f.H) rowRunEnd(); }, 60);
+  };
   $('bStep').onclick = () => goTo(k + 1);
   // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
   $('frame').addEventListener('input', () => { const t = +$('frame').value; $('frameV').textContent = t; if (f && f.val.length <= 2e6) goTo(t); });
@@ -2284,6 +2297,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=115"></script>
+<script src="mayatnik-menu.js?v=116"></script>
 </body>
 </html>

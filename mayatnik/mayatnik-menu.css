@@ -287,3 +287,6 @@ header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:b
 /* v0.113: «тут убери фон» — пульты свёртки и прохода без своей подложки и рамки, прямо на поле; надписи читаются за счёт тени. */
 #mayFoldPanel,#mayStolbPanel{background:transparent;border:0}
 #mayFoldPanel .may-fold-steps,#mayStolbPanel .may-fold-steps,#mayStolbPanel .may-stolb-range{text-shadow:0 0 3px #000,0 0 3px #000}
+/* v0.116: «дай прокручивать вниз всё это поле без скроллов» — содержимое «Сведений» листается колесом, полосы прокрутки не видно. */
+#mayatnikInfoPanel #mayatnikStatus{scrollbar-width:none;overscroll-behavior:contain}
+#mayatnikInfoPanel #mayatnikStatus::-webkit-scrollbar{display:none}
