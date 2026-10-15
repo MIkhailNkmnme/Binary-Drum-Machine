@@ -284,3 +284,6 @@ header #paintTools .pt-view .pt-vx input[type=color]{width:24px;height:14px;padd
 header #paintTools .pt-view .pt-vx-row{display:flex;gap:3px}
 header #paintTools .pt-view .pt-vx select{width:96px;height:16px;padding:0 2px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px 'Segoe UI',sans-serif}
 header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:border-box;padding:0 3px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px var(--mono)}
+/* v0.113: «тут убери фон» — пульты свёртки и прохода без своей подложки и рамки, прямо на поле; надписи читаются за счёт тени. */
+#mayFoldPanel,#mayStolbPanel{background:transparent;border:0}
+#mayFoldPanel .may-fold-steps,#mayStolbPanel .may-fold-steps,#mayStolbPanel .may-stolb-range{text-shadow:0 0 3px #000,0 0 3px #000}
