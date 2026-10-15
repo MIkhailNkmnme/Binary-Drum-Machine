@@ -1,0 +1,50 @@
+/* Page layout only; button geometry, colours and groups come from grozd.css. */
+#mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout{display:none}
+body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;height:100dvh;overflow:hidden}
+.mayatnik-menu-ready>header{grid-column:1/-1;padding:8px 14px;gap:10px}
+.mayatnik-menu-ready header .sub{display:none}
+.mayatnik-menu-ready #mayMenu,.mayatnik-menu-ready #mayHelp,.mayatnik-menu-ready #mayAbout{display:inline-flex;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
+.mayatnik-menu-ready #mayHelp{margin-left:auto}
+.mayatnik-menu-ready #mayHideAxes:not([hidden]){display:inline-flex;--c:#ff87cf;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
+#mayHideAxes[hidden]{display:none}
+#symAxes{position:fixed;pointer-events:none;margin:0;background:transparent;z-index:3}
+#symAxes[hidden]{display:none}
+#symInfo{color:#9fc5ed;font:11px var(--mono)}
+.mayatnik-menu-ready #mayatnikRail{display:block;grid-column:1;grid-row:2/6;overflow:auto;min-height:0;padding:8px 8px 16px 14px;scrollbar-width:thin;border-right:1px solid var(--line);background:#0d1119}
+.mayatnik-menu-ready .bar{display:none}
+.mayatnik-menu-ready #imageStats{grid-column:2;grid-row:2;font-size:11px;padding:5px 12px;min-width:0;overflow-wrap:anywhere}
+.mayatnik-menu-ready #ochkiBox{grid-column:2;grid-row:3;min-width:0}
+.mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
+.mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:6px 14px;align-items:center;min-width:0;padding:6px 12px;border-top:1px solid var(--line);background:var(--panel)}
+.mayatnik-menu-ready #stat{white-space:normal;margin-left:0;font-size:11px}
+.mayatnik-menu-ready #zoomV::before{content:'Масштаб '}
+.mayatnik-menu-ready #konusInfo{font-size:11px}
+.mayatnik-menu-ready .gz-control input[type=number]{width:70px;flex:0 1 70px;margin-left:auto}
+.mayatnik-menu-ready .gz-control input[type=range]{width:auto!important;max-width:120px}
+.mayatnik-menu-ready .gz-control label{font-size:11px}
+.mayatnik-menu-ready .gz-list .gz-nm{flex-shrink:0}
+.mayatnik-menu-ready .gz-list .gz-v{overflow:hidden;text-overflow:ellipsis}
+body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
+.mayatnik-menu-closed #mayatnikRail{display:none}
+#mayAboutDialog{box-sizing:border-box;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #52688c;border-radius:10px;padding:20px 24px;background:#121a27;color:#dfe6f5;font:14px/1.55 'Segoe UI',sans-serif}
+#mayAboutDialog::backdrop{background:#0009}
+#mayAboutDialog h2{font-size:20px;margin:0 32px 14px 0}
+#mayAboutDialog p{margin:12px 0}
+#mayAboutDialog form{float:right}
+#mayAboutDialog form button{font-size:20px;padding:0 8px;cursor:pointer}
+.may-about-note{color:#9baac3;font-size:12px}
+@media(max-width:600px){
+  body.mayatnik-menu-ready{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(140px,1fr) auto}
+  .mayatnik-menu-ready>header{grid-column:1;padding:6px 8px;gap:6px}
+  .mayatnik-menu-ready h1{font-size:17px}
+  .mayatnik-menu-ready #mayatnikRail{grid-column:1;grid-row:2;max-height:38dvh;border-right:0;border-bottom:1px solid var(--line);padding:6px 12px}
+  .mayatnik-menu-ready #imageStats{grid-column:1;grid-row:3}
+  .mayatnik-menu-ready #ochkiBox{grid-column:1;grid-row:4}
+  .mayatnik-menu-ready #wrap{grid-column:1;grid-row:5;padding:8px}
+  .mayatnik-menu-ready #mayatnikStatus{grid-column:1;grid-row:6}
+  .mayatnik-menu-ready #stat,.mayatnik-menu-ready #konusInfo{font-size:10px}
+}
+
+#wrap.fill-mode,#wrap.fill-mode canvas{cursor:crosshair}
+.gz-control input[type=color]{width:64px;height:28px;padding:2px;margin-left:auto;flex:none}
+#fillInfo{color:#ffb36c;font-size:11px}

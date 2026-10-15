@@ -82,7 +82,11 @@
       const cells = [];
       for (const it of g.items) {
         const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name);
-        if (it.type === 'value') {
+        if (it.type === 'control') {
+          // Existing native fields retain typing, scrubbing, labels and page listeners.
+          b.classList.add('gz-control'); b.removeAttribute('role'); b.removeAttribute('tabindex');
+          b.append(it.node); wide.append(b);
+        } else if (it.type === 'value') {
           b.classList.add('gz-val');
           const a = (cls, t, d) => { const s = el('span', 'gz-a ' + cls, t); s.addEventListener('click', e => { e.stopPropagation(); it.step(d); refresh(); }); return s; };
           const mid = el('span', 'gz-mid'), v = el('span', 'gz-v'), z = el('span', 'gz-z', '0');
@@ -125,7 +129,7 @@
           if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));
           cells.push(b); soty.append(b);
         }
-        b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } });
+        b.addEventListener('keydown', e => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } });
       }
       // соты: столбец k%2, второй сдвинут на полкнопки вниз и заходит в выемку первого
       const s = getComputedStyle(root), W = parseFloat(s.getPropertyValue('--gz-w')) || 120, H = parseFloat(s.getPropertyValue('--gz-h')) || 24, N = parseFloat(s.getPropertyValue('--gz-n')) || 12, DY = H + 3;

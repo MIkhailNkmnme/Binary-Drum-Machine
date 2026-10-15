@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.025. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.028. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.025</title>
+<title>Zerkalius Маятник — v0.028</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -105,12 +105,19 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 #bitDigits[hidden]{display:none}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
+<link rel="stylesheet" href="../_js/grozd.css?v=12">
+<link rel="stylesheet" href="mayatnik-menu.css?v=28">
 </head>
-<body>
+<body data-mi-scope="mayatnik">
 <header>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.025</span>
+  <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.028</span>
+  <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
+  <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
+  <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
+<nav id="mayatnikRail" aria-label="Управление маятником"></nav>
 <div class="bar">
   <div class="grp">
     <label>строк <input id="rows" type="number" min="8" max="4096" step="1" value="512"></label>
@@ -154,7 +161,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
-    <label title="Линии зеркальной симметрии: оранжевые — вертикальные оси (узор зеркален ≥ 6 клеток в обе стороны ≥ 8 строк подряд), голубые — края зеркальной зоны по строкам (расширение «маятником»: смена бита справа, слева; не сошлось — шаг влево, шаг вправо, иначе стоп). Считаются, когда кадр стоит."><input id="sym" type="checkbox"> симметрия</label>
+    <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
+    <label title="Подсвечивать биты найденных осей при увеличении от 3 пикселей на клетку. На малом масштабе — только линии. Перекрывающиеся цвета смешиваются."><input id="symBits" type="checkbox"> биты осей</label>
+    <label title="Минимум последовательных поперечных срезов вдоль оси: строк для вертикальной, столбцов для горизонтальной, диагоналей для наклонной. Пропуски не допускаются.">строк от <input id="symRowsMin" type="number" min="2" max="16384" value="2"></label>
+    <label title="Максимальная длина непрерывного участка симметрии; пусто или 0 — без верхнего предела. Более длинные участки скрываются.">строк до <input id="symRowsMax" type="number" min="0" max="16384" placeholder="∞"></label>
+    <label title="Минимум совпадающих битов с КАЖДОЙ стороны оси, через одну клетку. Бит на самой оси не считается.">бит от <input id="symBitsMin" type="number" min="2" max="16384" value="2"></label>
+    <label title="Максимальная зеркальная ширина с каждой стороны в срезе; пусто или 0 — без предела. Более широкие срезы скрываются.">бит до <input id="symBitsMax" type="number" min="0" max="16384" placeholder="∞"></label>
+    <button id="bClearAxis" title="Снять выбранную ось и её конус; остальные найденные оси остаются">Снять выбор</button>
+    <output id="symInfo" aria-live="polite"></output>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
       <button id="zFit">по ширине</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
@@ -162,7 +176,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <button id="bDiag" title="Ромбы построчно: у каждой решётки (чётная — вершины 0, ±2…, нечётная — ±1, ±3…) ромбы стоят рядами по диагоналям. В файле — правые диагонали ↘ и левые ↙ обеих решёток; строка — одна диагональ сверху вниз, диагонали слева направо. Текущий кадр, окно показа">Диагонали .txt</button>
-    <a href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
+    <a id="mirrorLink" href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
+    <button id="bFill" aria-pressed="false" title="Заливка связной области одинакового цвета по сторонам. Нажми на рисунок; перетаскивание сдвигает холст">Заливка</button>
+    <label title="Цвет заливки">Цвет <input id="fillColour" type="color" value="#ff7f27" aria-label="Цвет заливки"></label>
+    <button id="bFillUndo" disabled title="Отменить последнюю заливку (до 20 действий, до 64 МБ)">Отмена заливки</button>
+    <button id="bFillClear" disabled title="Убрать всю ручную раскраску текущего кадра">Сбросить краску</button>
+    <button id="bRegions" title="Подсчитать связные области точного цвета на текущей картинке, включая чёрный фон">Области</button>
+    <span id="fillInfo"></span>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
     <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
     <button id="bKonus" disabled title="Сначала выбери ось на поле">◯ в Соляриус</button>
@@ -171,13 +191,29 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <div class="lg" id="lg" role="button" tabindex="0" title="Щелчок — цвета перекрытий вкл / выкл (то же, что «вид»)"><span><i style="background:#e8edf5"></i>1</span><span><i style="background:#5b6475"></i>0</span><span class="tc"><i style="background:#4f9bff"></i>стал 1</span><span class="tc"><i style="background:#ff5a4f"></i>стал 0</span></div>
   <span id="stat"></span>
 </div>
+<div id="mayatnikStatus" aria-label="Состояние маятника"></div>
 <div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output></div>
 <details id="ochkiBox" hidden><summary id="ochkiSum"></summary><div id="ochkiList"></div></details>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
 <canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
+<canvas id="symAxes" aria-label="Цветные оси симметрии и их биты" hidden></canvas>
 <div id="tip"></div>
+<dialog id="mayAboutDialog" aria-labelledby="mayAboutTitle">
+  <form method="dialog"><button aria-label="Закрыть объяснение">×</button></form>
+  <h2 id="mayAboutTitle">Что такое маятник?</h2>
+  <p>Это рисунок из нулей и единиц, который строится треугольниками. Каждая новая вершина запускает вниз свой треугольник по правилу 90: значение клетки зависит от двух соседей в строке над ней. Полученный рисунок складывается с уже существующим по XOR — два одинаковых бита дают 0, разные дают 1.</p>
+  <p>В режиме «лево-право» вершины появляются по очереди: в центре, на один шаг влево, на один вправо, на два влево, на два вправо и дальше. Это движение напоминает маятник и даёт странице её название.</p>
+  <p><strong>Цвета:</strong> светлый — 1, серый — 0. Синий показывает клетку, которая стала единицей, красный — которая стала нулём. Чёрное поле — ещё не заполненные клетки. В группе «Вид» можно оставить только биты, показать цифры или ромбы.</p>
+  <p><strong>Как начать:</strong> в группе «Поле» задай число строк и вершин и нажми «Построить». В «Анимации» можно запускать и останавливать построение, делать по одному шагу и двигать ползунок кадра. «По очереди» добавляет одну вершину, «Пара сразу» — сразу левую и правую.</p>
+  <p>«Очки» ищут строки начальной двоичной последовательности. «Зеркала» показывают симметрию и позволяют выбрать ось для переноса в Соляриус. В «Экспорте» сохраняются картинка PNG и текстовые строки.</p>
+  <p><strong>Оси:</strong> вертикальные, горизонтальные и обе диагонали проверяются на двух решётках через бит. Минимум — 2 строки и 2 бита с каждой стороны. Пустое «до» означает без верхней границы. «Биты осей» отдельно подсвечивает совпадения при масштабе от ×3; «Скрыть оси» в шапке убирает линии и выбор.</p>
+  <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. «Отмена» возвращает предыдущую заливку, «Без краски» очищает раскраску. «Области» считает участки текущего изображения. Раскраска хранится до смены кадра, вида или настроек рисунка; сохрани результат через PNG перед изменением или закрытием страницы. Сами биты не меняются.</p>
+  <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
+</dialog>
 
 <script src="mayatnik-core.js?v=2"></script>
+<script src="mayatnik-symmetry.js?v=27"></script>
+<script src="mayatnik-fill.js?v=28"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -185,12 +221,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
+  let fillMode=false,fillMask=null,fillKey='',fillField=null,fillHistory=[],fillHistoryBytes=0;
   let pictureStats = null, digitsRaf = 0;
   const digitCanvas = $('bitDigits'), digitG = digitCanvas.getContext('2d');
   let f = null, geo = null, k = 0, img = null, playing = false, raf = 0, snaps = new Map(), interval = 1, target = 0;
@@ -209,7 +246,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function writeUI() {
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; $('noband').checked = !!st.noband; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym;
+    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; $('noband').checked = !!st.noband; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
+    for (const id of ['symRowsMin','symRowsMax','symBitsMin','symBitsMax']) $(id).value = st[id] || '';
   }
 
   // v0.012: «пара сразу» — кадр = пара вершин ±m одним проходом (MAYATNIK.conePair); кадр 0 — только якорь.
@@ -455,13 +493,53 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
       if (st.outline) outline(px);
-      if (st.sym && !playing) symmetry(px);
       konusDraw(px);
     }
+    applyFill(px);
     present();
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
   }
+  function fillSync(){
+    $('bFillUndo').disabled=!fillHistory.length;$('bFillClear').disabled=!fillMask;
+    $('bFill').setAttribute('aria-pressed',String(fillMode));wrap.classList.toggle('fill-mode',fillMode);
+  }
+  function clearFill(message=''){
+    fillMask=null;fillHistory=[];fillHistoryBytes=0;$('fillInfo').textContent=message;$('fillInfo').title='';delete $('fillInfo').dataset.regions;fillSync();
+  }
+  function applyFill(px){
+    const key=[k,st.view,VX,VW,VH,RK,st.noband,st.outline,st.ochki,st.ochkiMode,st.ochkiInv,st.ochkiRev].join(':');
+    if(fillField!==f||fillKey!==key){const had=!!fillMask;clearFill(had?'Раскраска очищена: изменён рисунок.':'');fillField=f;fillKey=key;}
+    if(fillMask)for(let i=0;i<px.length;i++)if(fillMask[i])px[i]=fillMask[i];
+  }
+  function fillAt(clientX,clientY){
+    if(!img||playing)return;const r=cv.getBoundingClientRect();
+    const x=Math.floor((clientX-r.left)/r.width*img.width),y=Math.floor((clientY-r.top)/r.height*img.height);
+    if(x<0||y<0||x>=img.width||y>=img.height)return;
+    $('fillInfo').title='';delete $('fillInfo').dataset.regions;
+    const hex=$('fillColour').value,colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)));
+    const px=new Uint32Array(img.data.buffer),indices=MayatnikFill.fill(px,img.width,y*img.width+x,colour);
+    if(!indices.length){$('fillInfo').textContent='Эта область уже выбранного цвета.';return;}
+    if(!fillMask)fillMask=new Uint32Array(px.length);
+    const previous=new Uint32Array(indices.length);
+    for(let i=0;i<indices.length;i++){previous[i]=fillMask[indices[i]];fillMask[indices[i]]=colour;}
+    const bytes=indices.byteLength+previous.byteLength;fillHistory.push({indices,previous,bytes});fillHistoryBytes+=bytes;
+    while(fillHistory.length>1&&(fillHistory.length>20||fillHistoryBytes>64*1024*1024))fillHistoryBytes-=fillHistory.shift().bytes;
+    $('fillInfo').textContent=`Залито ${indices.length.toLocaleString('ru-RU')} пикселей · сохрани PNG перед сменой рисунка`;
+    fillSync();present();queueDigits();
+  }
+  $('bFill').onclick=()=>{fillMode=!fillMode;if(fillMode){stop();target=k;axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();draw();}fillSync();};
+  $('bFillUndo').onclick=()=>{const last=fillHistory.pop();if(!last)return;fillHistoryBytes-=last.bytes;
+    for(let i=0;i<last.indices.length;i++)fillMask[last.indices[i]]=last.previous[i];
+    if(!fillMask.some(Boolean))fillMask=null;
+    $('fillInfo').textContent='Последняя заливка отменена.';fillSync();draw();};
+  $('bFillClear').onclick=()=>{clearFill('Раскраска очищена.');draw();};
+  $('bRegions').onclick=()=>{if(!img)return;stop();target=k;
+    const result=MayatnikFill.count(new Uint32Array(img.data.buffer),img.width),black=result.colours.get(rgba(EMPTY))?.regions||0;
+    $('fillInfo').textContent=`Областей: ${result.regions.toLocaleString('ru-RU')} · без чёрных: ${(result.regions-black).toLocaleString('ru-RU')} · цветов: ${result.colours.size}`;
+    $('fillInfo').dataset.regions=String(result.regions);
+    $('fillInfo').title=[...result.colours].map(([c,n])=>`#${[c&255,(c>>>8)&255,(c>>>16)&255].map(v=>v.toString(16).padStart(2,'0')).join('')}: ${n.regions} областей, ${n.pixels} пикселей`).join('\n');
+  };
   // v0.003: обводка «шумной» зоны. Снаружи неё биты все одинаковые (полосы дают только цвета), поэтому край —
   // крайний левый и правый бит, отличный от фона: 0 на пустом поле и на поле «все 1», 1 на поле «все 0».
   // Ступеньки соединяются по строке; толщина — в битах, чтобы линию было видно и при мелком масштабе.
@@ -482,52 +560,92 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       pl = l; pr = rr;
     }
   }
-  // v0.008: линии симметрии (слово пользователя 2026-10-12: «вместо кружков рисуй линии симметрии и обрывай их,
-  // когда симметрия по ней закончится»; расширение — его же способ «как Хорохориус»).
-  // 1) Ось — между любыми соседними столбцами x и x+1. В строке y от оси сравниваются пары x−k и x+1+k, пока совпадают:
-  //    это зеркальная ширина t; засчитывается, если t ≥ 6 и в ней есть и 0, и 1 (не дыра и не полоса).
-  //    Вертикаль — ≥ 8 таких строк подряд на одной оси (одна строка-пропуск допустима). Случайно: ≈ (1/64)^8.
-  // 2) Ширина по строкам «маятником»: расстояния до смен бита справа и слева сравниваются по очереди; совпало — ширина
-  //    растёт; нет — ещё шаг влево, потом вправо; не сошлось — строка остановлена. Зона выходит треугольником под 45°.
-  let symCache = null;
-  const SYM_OR = rgba([255, 150, 30]), SYM_CY = rgba([60, 220, 230]);
-  function symFind() {
-    const { W, H, val } = f, TMIN = 6, HMIN = 8, CAP = 64, segs = [];
-    const tAt = (y, x) => { const row = y * W; if (val[row + x] !== val[row + x + 1] || val[row + x] < 0) return 0;
-      let k = 0, z = 0, o = 0; while (k < CAP && x - k >= 0 && x + 1 + k < W) { const a = val[row + x - k], b = val[row + x + 1 + k]; if (a < 0 || a !== b) break; if (a) o++; else z++; k++; }
-      return (z && o) ? k : 0; };
-    for (let x = 0; x < W - 1; x++) {
-      let y = 0;
-      while (y < H) {
-        if (tAt(y, x) < TMIN) { y++; continue; }
-        const y0 = y; let gap = 0, last = y;
-        while (y < H) { if (tAt(y, x) >= TMIN) { last = y; gap = 0; } else if (++gap > 1) break; y++; }
-        if (last - y0 + 1 >= HMIN) segs.push({ x, y0, y1: last });
-      }
-    }
-    // ширина маятником
-    const edges = (y, x, dir) => { const row = y * W, res = []; const p = dir > 0 ? x + 1 : x, b0 = val[row + p]; if (b0 < 0) return { b0, res };
-      let prev = b0; for (let d = 1; ; d++) { const q = p + dir * d; if (q < 0 || q >= W) break; const v = val[row + q]; if (v < 0) { res.push(d); break; } if (v !== prev) { res.push(d); prev = v; } } return { b0, res }; };
-    for (const sg of segs) {
-      sg.w = [];
-      for (let y = sg.y0; y <= sg.y1; y++) {
-        const R = edges(y, sg.x, 1), L = edges(y, sg.x, -1); let w = 0;
-        if (R.b0 >= 0 && R.b0 === L.b0) { const r = R.res, l = L.res; let i = 0, j = 0;
-          while (i < r.length && j < l.length) { if (r[i] === l[j]) { w = r[i]; i++; j++; } else if (j + 1 < l.length && l[j + 1] === r[i]) j++; else if (i + 1 < r.length && r[i + 1] === l[j]) i++; else break; } }
-        sg.w.push(w);
-      }
-    }
-    return segs;
+  // v0.028: exact four-direction search, independently on both bit lattices.
+  let symCache = null, symField = null, symGeneration = 0, symWorker = null, symPending = '';
+  const symCanvas = $('symAxes'), symG = symCanvas.getContext('2d');
+  function symKey() {
+    if (symField !== f) { symField = f; symGeneration++; }
+    return [symGeneration,k,st.symRowsMin,st.symRowsMax,st.symBitsMin,st.symBitsMax,!!st.symBits].join('|');
   }
-  function symmetry(px) {
-    const key = k + '|' + f.W + '|' + f.H;
-    if (!symCache || symCache.key !== key) symCache = { key, segs: symFind() };
-    const { W, H } = f, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
-    const dot = (y, x, c) => { for (let yy = y - h; yy < y - h + t; yy++) if (yy >= 0 && yy < VH) for (let xx = x - h; xx < x - h + t; xx++) if (xx >= VX && xx < VX + VW) px[yy * VW + xx - VX] = c; };
-    for (const sg of symCache.segs) {
-      for (let i = 0; i < sg.w.length; i++) { const y = sg.y0 + i, w = sg.w[i]; if (w > 0) { dot(y, sg.x - w + 1, SYM_CY); dot(y, sg.x + w, SYM_CY); } }
+  function symGet() {
+    if (!f || !st.sym || playing) return null;
+    const key = symKey();
+    if (symCache && symCache.key === key) return symCache;
+    if (symPending === key) return null;
+    if (symWorker) { symWorker.terminate(); symWorker = null; }
+    symPending = key; $('symInfo').textContent = 'Ищу оси…';
+    const field = {W:f.W,H:f.H,val:f.val.slice()}, opts = {anchor:geo.anchor,
+      minRows:st.symRowsMin,maxRows:st.symRowsMax,minBits:st.symBitsMin,maxBits:st.symBitsMax};
+    const accept = data => {
+      if (symPending !== key) return;
+      if (symWorker) { symWorker.terminate(); symWorker = null; }
+      symPending = '';
+      if (symKey() !== key || !st.sym || playing) return;
+      symCache = {key,...data};
+      const counts = {v:0,h:0,d:0,u:0}; for (const sg of data.segs) counts[sg.dir]++;
+      $('symInfo').textContent = `Участки осей: ${data.segs.length} · ↕ ${counts.v} · ↔ ${counts.h} · ╲ ${counts.d} · ╱ ${counts.u}`;
+      $('symInfo').dataset.count = data.segs.length; $('symInfo').dataset.summary = $('symInfo').textContent;
+      queueDigits();
+    };
+    try {
+      symWorker = MayatnikSymmetry.createWorker();
+      symWorker.onmessage = e => accept(e.data);
+      symWorker.onerror = () => {
+        if (symWorker) symWorker.terminate(); symWorker = null; symPending = '';
+        $('symInfo').textContent = 'Не удалось найти оси. Измените параметры для повторного поиска.';
+        symCache = {key,segs:[],rgba:null};
+      };
+      symWorker.postMessage({field,opts,bits:!!st.symBits},[field.val.buffer]);
+    } catch (e) {
+      // Blob workers may be forbidden by the host; preserve the offline page.
+      const segs = MayatnikSymmetry.find(f,opts);
+      accept({segs,rgba:st.symBits?MayatnikSymmetry.highlights(f,segs,geo.anchor):null});
     }
-    for (const sg of symCache.segs) for (let y = sg.y0; y <= sg.y1; y++) { dot(y, sg.x, SYM_OR); dot(y, sg.x + 1, SYM_OR); }
+    return null;
+  }
+  function paintSymmetry(ctx, data, x0, y0, s, width, height, exportMode=false) {
+    const rp=rombP(), halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];
+    for(const [p,ox] of halves) {
+      ctx.save();ctx.beginPath();ctx.rect(x0+ox*s,y0,VW*s,VH*s);ctx.clip();
+      if(st.symBits&&data.rgba&&(s>=3||exportMode&&scale()>=3)) {
+        const c0=Math.max(VX,Math.floor(-x0/s-ox)+VX-1),c1=Math.min(VX+VW,Math.ceil((width-x0)/s-ox)+VX+1);
+        const r0=Math.max(0,Math.floor(-y0/s)-1),r1=Math.min(VH,Math.ceil((height-y0)/s)+1);
+        for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++) {
+          if(p>=0&&((x-y-geo.anchor)%2+2)%2!==p)continue;
+          if(outZone(y,x))continue;
+          const q=y*f.W+x,b=q*4;if(!data.rgba[b+3]||f.val[q]<0)continue;
+          ctx.fillStyle=`rgba(${data.rgba[b]},${data.rgba[b+1]},${data.rgba[b+2]},${f.val[q]?'.40':'.28'})`;
+          const X=x0+(x-VX+ox+.5)*s,Y=y0+(y+.5)*s;
+          if(p<0)ctx.fillRect(X-s*.42,Y-s*.42,s*.84,s*.84);
+          else {ctx.beginPath();ctx.moveTo(X,Y-s*.9);ctx.lineTo(X+s*.9,Y);ctx.lineTo(X,Y+s*.9);ctx.lineTo(X-s*.9,Y);ctx.closePath();ctx.fill();}
+        }
+      }
+      ctx.lineWidth=exportMode?1:1.1;ctx.globalAlpha=.86;
+      for(const sg of data.segs) {
+        if(p>=0&&sg.p!==p)continue;
+        const a=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t0),b=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t1);
+        if(Math.max(a[0],b[0])<VX||Math.min(a[0],b[0])>=VX+VW||Math.min(a[1],b[1])>=VH)continue;
+        const dx=sg.dir==='v'?0:1,dy=sg.dir==='h'?0:sg.dir==='u'?-1:1;
+        // Lattices sharing an axis retain separate coloured strokes.
+        const offset=p<0?(sg.p? .23:-.23):0;
+        const ax=x0+(a[0]-VX+ox+.5-dx*.4)*s+dy*offset,ay=y0+(a[1]+.5-dy*.4)*s-dx*offset;
+        const bx=x0+(b[0]-VX+ox+.5+dx*.4)*s+dy*offset,by=y0+(b[1]+.5+dy*.4)*s-dx*offset;
+        if(Math.max(ax,bx)<0||Math.min(ax,bx)>width||Math.max(ay,by)<0||Math.min(ay,by)>height)continue;
+        const sel=konus?.segment;const chosen=sel&&sel.dir===sg.dir&&sel.p===sg.p&&sel.axis===sg.axis&&sel.t0===sg.t0&&sel.t1===sg.t1;
+        ctx.lineWidth=chosen?2.8:1.1;ctx.strokeStyle=chosen?'#ff3cc8':`rgb(${sg.colour.join(',')})`;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  function drawSymmetry() {
+    $('mayHideAxes').hidden = !st.sym && !axisPicking && !konus;
+    if(!st.sym||!f||playing){symCanvas.hidden=true;if(!st.sym)$('symInfo').textContent='';else if(playing)$('symInfo').textContent='Оси — после паузы';return;}
+    const data=symGet();if(!data){symCanvas.hidden=true;return;}
+    $('symInfo').textContent=($('symInfo').dataset.summary||'')+(st.symBits&&scale()<3?' · биты видны при масштабе от ×3':'');
+    const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
+    symCanvas.hidden=false;symCanvas.style.left=host.left+'px';symCanvas.style.top=host.top+'px';symCanvas.style.width=w+'px';symCanvas.style.height=h+'px';
+    symCanvas.width=Math.max(1,Math.round(w*d));symCanvas.height=Math.max(1,Math.round(h*d));symG.setTransform(d,0,0,d,0,0);
+    paintSymmetry(symG,data,r.left-host.left,r.top-host.top,scale(),w,h);
   }
   /* v0.011: выбранный отрезок оси → Соляриус. Ряд i содержит i+1 бит из двух зеркальных
      половин, без изменения исходного поля. До 256 колец (предел Соляриуса). Shift позволяет
@@ -541,32 +659,43 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function konusData() {
     if (!konus || konus.frame !== k) return null;
-    const { ax, top, n, from } = konus, { W, val } = f, rows = [];
+    const { ax, top, n, from, lattice, segment } = konus, { W, val } = f, rows = [];
+    if(segment) {
+      for(let i=0;i<n;i++){const a=MayatnikSymmetry.span(segment,i,geo.anchor);let row='';for(let j=0;j<a.n;j++)row+=String(val[(a.y+j*a.dy)*W+a.x+j*a.dx]);rows.push(row);}
+      return {rows,k,N:st.rows,top:top+1,col:ax-geo.anchor,axis:segment.axis,axisDirection:segment.dir,lattice,from,when:new Date().toISOString()};
+    }
     for (let i = 0; i < n; i++) { const row = (top + i) * W; let s = '';
-      for (let j = 0; j <= i; j++) { const c = ax - i + 2 * j + (2 * j > i ? 1 : 0); const v = c >= 0 && c < W ? val[row + c] : -1; s += v === 1 ? '1' : '0'; }
+      const pad = lattice == null ? 0 : ((ax-top-geo.anchor-lattice)%2+2)%2;
+      for (let j = 0; j <= i + pad; j++) { const c = lattice == null ? ax - i + 2*j + (2*j > i ? 1 : 0) : ax-i-pad+2*j; const v = c >= 0 && c < W ? val[row + c] : -1; s += v === 1 ? '1' : '0'; }
       rows.push(s);
     }
-    return { rows, k, N: st.rows, top: top + 1, col: ax - geo.anchor, axis: ax + .5 - geo.anchor, from, when: new Date().toISOString() };
+    return { rows, k, N: st.rows, top: top + 1, col: ax - geo.anchor, axis: ax + (lattice == null ? .5 : 0) - geo.anchor, from, when: new Date().toISOString() };
   }
-  function konusPick(x, y, axisOnly = false) {
+  function konusPick(x, y, axisOnly = false, lattice = rombP()) {
     let ax = x, top = y, from = 'клетка', height = Math.min(256, f.H - y);
+    let selected = null;
     if (st.sym) {
-      const key = k + '|' + f.W + '|' + f.H;
-      if (!symCache || symCache.key !== key) symCache = { key, segs: symFind() };
-      const tol = Math.max(3, Math.ceil(8 / scale())); let best = null;
-      for (const sg of symCache.segs) { const d = Math.abs(x - sg.x - .5); if (d <= tol && y >= sg.y0 - tol && y <= sg.y1 + tol && (!best || d < best.d)) best = { d, sg }; }
-      if (best) { ax = best.sg.x; top = best.sg.y0; height = Math.min(256, best.sg.y1 - top + 1); from = 'ось'; }
+      const data=symGet(), tol=Math.max(2,Math.ceil(8/scale()));let best=null;
+      for(const sg of data?.segs||[]) {
+        if(lattice>=0&&sg.p!==lattice)continue;
+        const a=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t0),b=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t1);
+        const dx=b[0]-a[0],dy=b[1]-a[1],q=((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy);
+        if(q<-.1||q>1.1)continue;
+        const u=Math.max(0,Math.min(1,q)),d=Math.hypot(x-a[0]-u*dx,y-a[1]-u*dy);
+        if(d<=tol&&(!best||d<best.d))best={d,sg};
+      }
+      if(best){selected=best.sg;const a=MayatnikSymmetry.point(selected.dir,selected.axis,selected.t0);ax=a[0];top=a[1];height=Math.min(256,selected.widths.length);from='ось';}
     }
-    if (axisOnly && from !== 'ось') { if (axisPicking) $('konusInfo').textContent = 'Нажми на оранжевую ось симметрии'; return false; }
-    konus = { ax, top, n: height, from, frame: k };
+    if (axisOnly && from !== 'ось') { if (axisPicking) $('konusInfo').textContent = 'Нажми на цветную ось симметрии'; return false; }
+    konus = { ax, top, n: height, from, frame: k, lattice: selected?.p, segment: selected };
     $('bKonus').disabled = false; $('bKonus').classList.add('on');
-    const axis = ax + .5 - geo.anchor;
-    $('konusInfo').textContent = `${from === 'ось' ? 'Ось' : 'Конус'} ${axis >= 0 ? '+' : ''}${axis} · строки ${top + 1}–${top + height} · кадр ${k}`;
+    const axis = selected ? selected.axis : ax + .5 - geo.anchor;
+    $('konusInfo').textContent = selected ? `Ось ${{v:'↕',h:'↔',d:'╲',u:'╱'}[selected.dir]} ${axis} · ${height} срезов · кадр ${k}` : `Конус ${axis >= 0 ? '+' : ''}${axis} · строки ${top + 1}–${top + height} · кадр ${k}`;
     $('bKonus').title = `На кольца Соляриуса: ${height} рядов выбранного конуса, кадр ${k}`;
     axisPicking = false; $('bAxisPick').setAttribute('aria-pressed', 'false'); draw(); return true;
   }
   function konusDraw(px) {   // обводка выбранного конуса: два края под 45° от вершины
-    if (!konus) return;
+    if (!konus || konus.segment) return;
     for (let i = 0; i < konus.n && konus.top + i < VH; i++) { const y = konus.top + i;
       for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= VX && x < VX + VW) px[y * VW + x - VX] = KONUS_COL; }
   }
@@ -578,7 +707,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
   }
-  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(drawDigits);}
+  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();});}
   function drawDigits() {
     digitsRaf=0;
     const rp=rombP();
@@ -592,13 +721,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const edge=s>=10,halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];digitG.lineWidth=Math.max(.5,s*.03);digitG.strokeStyle='#1a1e27';   // v0.016: «обе рядом» — две половины
       for(const[p,ox]of halves)for(let y=Math.max(0,r0-1);y<Math.min(VH,r1+1);y++)for(let x=Math.max(0,c0-ox-1);x<Math.min(VW,c1-ox+1);x++){
         if(((x+VX-geo.anchor-p-y)%2+2)%2)continue;
+        const mq=Math.min(img.height-1,Math.floor((y+.5)*RK))*img.width+Math.min(img.width-1,Math.floor((x+ox+.5)*RK)),mc=fillMask?.[mq],manual=mc?`rgb(${mc&255},${(mc>>>8)&255},${(mc>>>16)&255})`:null;
         if(outZone(y,x+VX)){if(!triangleFill(y,x+VX))continue;   // v0.025: дополнение до треугольника — контуром со своей цифрой
           const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,u=f.val[y*f.W+x+VX];digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
-          digitG.save();digitG.fillStyle='#0d0f16';digitG.fill();digitG.lineWidth=Math.max(1,s*.07);digitG.strokeStyle='#d6a828';digitG.stroke();digitG.restore();
+          digitG.save();digitG.fillStyle=manual||'#0d0f16';digitG.fill();digitG.lineWidth=Math.max(1,s*.07);digitG.strokeStyle='#d6a828';digitG.stroke();digitG.restore();
           if(s>=14){digitG.fillStyle='#d6a828';digitG.fillText(String(u),cx,cy);}continue;}
         const v=f.val[y*f.W+x+VX];if(v<0)continue;
         const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s;digitG.beginPath();digitG.moveTo(cx,cy-s);digitG.lineTo(cx+s,cy);digitG.lineTo(cx,cy+s);digitG.lineTo(cx-s,cy);digitG.closePath();
-        const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=hit?(v?'#ffd646':'#96561e'):v?'#e8edf5':'#5b6475';digitG.fill();if(edge)digitG.stroke();
+        const hit=st.ochki&&ochki&&!playing&&ochki.hl[y*f.W+x+VX];digitG.fillStyle=manual||(hit?(v?'#ffd646':'#96561e'):v?'#e8edf5':'#5b6475');digitG.fill();if(edge)digitG.stroke();
         if(hit){digitG.save();digitG.lineWidth=Math.max(1.5,s*.09);digitG.strokeStyle='#ff9a1f';digitG.stroke();digitG.restore();}   // v0.022: найденное «Очками» — ещё и обводкой
         if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
       }
@@ -794,7 +924,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bDiag').onclick = () => { if (f) download(fname('txt').replace(/\.txt$/, `-diagonali-kadr${k}.txt`), new Blob([diagText()], { type: 'text/plain' })); };
   $('bPng').onclick = () => {   // v0.017: полная картинка «пиксель = бит», а не уменьшенная с экрана
     if (!f) return; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-    c.getContext('2d').putImageData(img, 0, 0); c.toBlob(b => b && download(fname('png'), b));
+    const cg=c.getContext('2d');cg.putImageData(img,0,0);
+    if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,RK,c.width,c.height,true);
+    c.toBlob(b => b && download(fname('png'), b));
   };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
@@ -805,7 +937,19 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('lg').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lgToggle(); } });
   lgSync();
   $('outline').addEventListener('change', () => { st.outline = $('outline').checked; save(); if (f) draw(); });
-  $('sym').addEventListener('change', () => { st.sym = $('sym').checked; save(); if (f) draw(); });
+  function hideAxes() {
+    st.sym=false;$('sym').checked=false;axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();
+    if(symWorker)symWorker.terminate();symWorker=null;symPending='';save();if(f)draw();
+  }
+  $('mayHideAxes').onclick=hideAxes;
+  $('bClearAxis').onclick=()=>{axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();if(f)draw();};
+  $('sym').addEventListener('change', () => { if(!$('sym').checked){hideAxes();return;}st.sym=true;stop();target=k;save();if(f)draw(); });
+  $('symBits').addEventListener('change',()=>{st.symBits=$('symBits').checked;if(st.symBits){st.sym=true;$('sym').checked=true;stop();target=k;}save();if(f)draw();});
+  for(const id of ['symRowsMin','symRowsMax','symBitsMin','symBitsMax'])$(id).addEventListener('change',()=>{
+    st[id]=clampInt($(id).value,id.endsWith('Min')?2:0,16384,id.endsWith('Min')?2:0);
+    for(const prefix of ['symRows','symBits']){const lo=prefix+'Min',hi=prefix+'Max';if(st[hi]&&st[hi]<st[lo]){if(id===hi)st[lo]=Math.max(2,st[hi]);st[hi]=st[lo];}$(lo).value=st[lo];$(hi).value=st[hi]||'';}
+    clearKonus();save();if(f)draw();
+  });
   $('speed').addEventListener('input', readUI);
   // v0.015: шаг кнопок и клавиш: при «кратном» — ×2, иначе ×1,5; колесо копит желаемый масштаб zWant, показ — ближайший 2^k
   let zWant = 0;
@@ -846,14 +990,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
     if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
-    if (!tap || !f || !(e.shiftKey || axisPicking || st.sym) || rombP() === 2) return;
-    const r = cv.getBoundingClientRect(), x = VX + Math.floor((e.clientX - r.left) / r.width * VW), y = Math.floor((e.clientY - r.top) / r.height * VH);
-    if (x >= VX && y >= 0 && x < VX + VW && y < VH) { stop(); target = k; konusPick(x, y, !e.shiftKey); }
+    if(tap&&f&&fillMode){fillAt(e.clientX,e.clientY);return;}
+    if (!tap || !f || !(e.shiftKey || axisPicking || st.sym) ) return;
+    const r = cv.getBoundingClientRect(), half=halfOf((e.clientX-r.left)/r.width*dispW());if(!half)return;
+    const x=VX+Math.floor(half[1]),y=Math.floor((e.clientY-r.top)/r.height*VH);
+    if (x >= VX && y >= 0 && x < VX + VW && y < VH) { stop(); target = k; konusPick(x, y, !e.shiftKey, half[0]); }
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
-  wrap.addEventListener('dblclick', fit);
+  wrap.addEventListener('dblclick', () => {if(!fillMode)fit();});
   addEventListener('keydown', e => {
-    if (e.target.closest('input,select')) return;
+    if (e.defaultPrevented || e.target.closest('input,select,button,a,[role="button"]')) return;
     if (e.key === '+' || e.key === '=') { zoomStep(1); return; }
     if (e.key === '-' || e.key === '_') { zoomStep(-1); return; }
     if (e.key === '0') { fit(); return; }
@@ -876,10 +1022,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   cv.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
   $('bAxisPick').onclick = () => {
-    stop(); target = k; axisPicking = !axisPicking;
+    stop(); target = k; fillMode=false;fillSync();axisPicking = !axisPicking;
     if (axisPicking) { st.sym = true; $('sym').checked = true; save(); }
     $('bAxisPick').setAttribute('aria-pressed', String(axisPicking));
-    $('konusInfo').textContent = axisPicking ? 'Нажми на оранжевую ось симметрии' : konus ? $('konusInfo').textContent : 'Ось не выбрана'; draw();
+    $('konusInfo').textContent = axisPicking ? 'Нажми на цветную ось симметрии' : konus ? $('konusInfo').textContent : 'Ось не выбрана'; draw();
   };
   $('bKonus').onclick = () => {
     const data = konusData(); if (!data) { clearKonus(); return; }
@@ -894,6 +1040,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/slider-arrows.js"></script>
+<script src="../_js/menu-icons.js?v=12"></script>
+<script src="../_js/grozd.js?v=14"></script>
+<script src="mayatnik-menu.js?v=28"></script>
 </body>
 </html>
