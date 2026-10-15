@@ -40,7 +40,7 @@
       if (slice) {
         const offset = slice.rings[k].phaseQ.add(slice.spinQ);
         if (!k) {
-          const gap = Q(Z.coneSliceGap || "1/4"), lo = offset.sub(QUARTER).add(gap.div(2));
+          const gap = slice.sliceMode === "line" ? ZERO : Q(Z.coneSliceGap || "1/4"), lo = offset.sub(QUARTER).add(gap.div(2));
           add(0,lo,ONE.sub(gap));
         } else {
           const cuts = (slice.cuts[k] || []).slice().sort((a,b) => a.cmp(b));
@@ -148,6 +148,7 @@
     return true;
   }
   function observe(){
+    if (window.zzBallSliceDualActive?.()) return false;
     if (!Z.coneFaceOrder || busy) return false;
     busy=true;
     try {
@@ -217,6 +218,7 @@
     } finally { busy=false; }
   }
   function draw(g,o){
+    if (window.zzBallSliceDualActive?.()) return;
     const now=performance.now(); flashes=flashes.filter(f=>now-f.t<600);
     if(!Z.coneFaceView && !flashes.length) return;
     const S=snapshot(false), {cx,cy,r0=0,dr,dpr,band=1}=o;
