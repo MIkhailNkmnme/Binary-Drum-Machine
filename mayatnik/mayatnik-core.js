@@ -1,4 +1,6 @@
-/* XOR-маятник: общее ядро страницы и зеркал. v2: + пара вершин одним проходом (conePair, tintPair). */
+/* XOR-маятник: общее ядро страницы и зеркал. v2: + пара вершин одним проходом (conePair, tintPair).
+   v3: необязательные lastAt, stamp у cone / conePair — в lastAt[i] пишется stamp, когда значение клетки i изменилось (карта застывания);
+   без них расчёт прежний, бит в бит. */
 const MAYATNIK = (() => {
   // val: Int8Array W*H, -1 пусто, 0, 1. v0.006: цвет не хранится — он считается по формуле (tint ниже)
   function field(W, H, bg) {
@@ -6,10 +8,10 @@ const MAYATNIK = (() => {
     return { W, H, val };
   }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
-  function cone(f, a, D) {
+  function cone(f, a, D, lastAt, stamp) {
     const { W, H, val } = f;
     if (a < 0 || a >= W) return;
-    if (val[a] === -1) val[a] = 1;
+    if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; }
     const apex = val[a]; val[a] = 1;             // родитель-вершина всегда 1 (в Excel: parentCell = startCell)
     const last = Math.min(D, H);
     for (let r = 1; r < last; r++) {             // r = step − 1; клетки конуса a−r … a+r через одну
@@ -20,6 +22,7 @@ const MAYATNIK = (() => {
         const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0;
         const i = row + c, old = val[i];
         const nv = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        if (lastAt && nv !== old) lastAt[i] = stamp;
         val[i] = nv;
       }
       if (r === 1) val[a] = apex;
@@ -28,17 +31,18 @@ const MAYATNIK = (() => {
   // v2 (2026-10-13, Маятник v0.012): пара вершин a1, a2 (одной чётности) ОДНИМ проходом — «шаг влево и вправо сразу».
   // Строка за строкой пересчитываются клетки обоих конусов; клетка, попавшая в оба, — один раз: старое ⊕ левый ⊕ правый.
   // По очереди (cone, затем cone) выходит другое: левый конус пишет середину, пока правой вершины ещё нет.
-  function conePair(f, a1, a2, D) {
+  function conePair(f, a1, a2, D, lastAt, stamp) {
     const { W, H, val } = f;
     if (a1 > a2) { const t = a1; a1 = a2; a2 = t; }
     const ap = [];
-    for (const a of [a1, a2]) { if (a < 0 || a >= W) continue; if (val[a] === -1) val[a] = 1; ap.push([a, val[a]]); val[a] = 1; }
+    for (const a of [a1, a2]) { if (a < 0 || a >= W) continue; if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; } ap.push([a, val[a]]); val[a] = 1; }
     const pass = (row, up, from, to) => {
       let c = from;
       if (c < 0) c += ((-c + 1) >> 1) << 1;
       for (; c <= to && c < W; c += 2) {
-        const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0, i = row + c;
-        val[i] = ((val[i] === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0, i = row + c, old = val[i];
+        val[i] = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        if (lastAt && val[i] !== old) lastAt[i] = stamp;
       }
     };
     const last = Math.min(D, H);

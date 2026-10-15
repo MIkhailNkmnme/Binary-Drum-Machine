@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.119. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.120. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.119</title>
+<title>Zerkalius Маятник — v0.120</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=116">
+<link rel="stylesheet" href="mayatnik-menu.css?v=120">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.119</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.120</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -176,7 +176,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Минимальная длина простой серии в битах">от бит <input id="ochkiLength" type="number" min="2" max="4096" value="5"></label>
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
-    <label title="Подсветка битов, которые больше не изменятся: ни один из оставшихся конусов их не накроет. Светло-зелёный — 1, тёмно-зелёный — 0"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
+    <label title="Карта застывания: клетка, чей бит уже окончательный, — цветом кадра, с которого он такой: фиолетовый — до 64, синий — до 128, голубой — до 256, зелёный — до 512, жёлтый — до 1024, оранжевый — до 2048, красный — позже; ярко — 1, тускло — 0. На кадре k видно то, что застыло к нему"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
     <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked> оси ↕</label>
@@ -300,7 +300,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. Все свои шаблоны видны карточками с миниатюрами. Можно включить несколько одновременно и сразу тянуть каждый мышью. У карточки четыре значка: сохранить изменения фигуры на поле, скачать этот шаблон, удалить с подтверждением и изменить цвет. Правая кнопка на карточке или фигуре — переименовать, Enter сохраняет, Esc отменяет. «Скачать все» выгружает библиотеку в JSON, «Загрузить» добавляет шаблоны из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу. Рядом «Сохранить» записывает выбранную фигуру в библиотеку, «Цвет» меняет только цвет этой фигуры; смену цвета можно отменить.</p>
 </dialog>
 
-<script src="mayatnik-core.js?v=2"></script>
+<script src="mayatnik-core.js?v=3"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
 <script src="mayatnik-fill.js?v=37"></script>
 <script src="mayatnik-template.js?v=36"></script>
@@ -568,10 +568,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const A = geo.anchor - VX;   // якорь в клетках окна
     for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - A - h[0] : 0; }
     // v0.024: цвет клетки окна — один раз на кадр (зона, кромка, «Очки»), а не на каждый из миллионов пикселей
-    const cc = new Uint32Array(VW * VH), fzR = st.frozen ? frozenRanges() : null;
+    const cc = new Uint32Array(VW * VH), fzM = st.frozen ? freezeCalc() : null; let fzc = 0;   // v0.120: карта застывания
     for (let r = 0; r < VH; r++) for (let c = 0; c < VW; c++) {
       const q = r * W + c + VX, v = val[q];
-      cc[r * VW + c] = v < 0 ? empty : fzR && !outShow(r, c + VX) && frozenAt(fzR, r, c + VX - geo.anchor) ? (v ? FZ1 : FZ0) : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : hl && hl[q] ? (v ? HL1 : HL0) : T[v * 3];
+      cc[r * VW + c] = v < 0 ? empty : fzM && !outShow(r, c + VX) && (fzc = freezeColour(fzM, q, v)) ? fzc : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : hl && hl[q] ? (v ? HL1 : HL0) : T[v * 3];
     }
     for (let Y = 0; Y < CH; Y++) {
       const y = (Y + .5) / K - .5, row = Y * CW;
@@ -619,6 +619,22 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.077: «Неизменные» — бит больше не изменится, если ни одна из ещё не поставленных вершин его не накроет:
   // конус вершины a переписывает (r, c) при |c − a| ≤ r и a той же чётности, что c + r (c, a — от якоря).
   const FZ1 = rgba([120, 240, 170]), FZ0 = rgba([24, 112, 70]);
+  // v0.120: «не работает — лучше пусть как в исследованиях картинка»: «Неизменные» — карта застывания. Один прогон всех вершин с отметкой ядра
+  // lastAt (кадр последнего изменения клетки); на кадре k клетка с отметкой ≤ k — цветом срока, с которого её бит окончательный (как «Карта
+  // застывания» «Исследования»: до 64, 128, 256, 512, 1024, 2048, позже), 1 — ярко, 0 — тускло. Карта считается один раз на поле и строки/вершины/ход/фон.
+  const FZ_STEPS = [64, 128, 256, 512, 1024, 2048], FZ_COL = [[124, 77, 216], [59, 111, 224], [41, 166, 214], [53, 188, 120], [205, 198, 60], [240, 150, 50], [200, 55, 55]];
+  const FZ_ONE = FZ_COL.map(c => rgba(c)), FZ_ZERO = FZ_COL.map(c => rgba(c.map(x => Math.round(x * .45))));
+  let freezeMap = null;
+  function freezeCalc() {
+    const key = [st.rows, st.steps, st.mode, st.bg, pairOn()].join('|'); if (freezeMap?.key === key) return freezeMap;
+    const T = total(); if (st.rows * st.rows * T > 6e8) { freezeMap = { key, big: true }; $('fillInfo').textContent = 'Карта застывания: поле слишком большое для расчёта в странице'; return freezeMap; }
+    const S = st.mode === 'one' ? 1 : pairOn() ? 2 * T + 1 : st.steps, g = MAYATNIK.geometry(st.mode, S, st.rows), f2 = MAYATNIK.field(g.W, st.rows, st.bg), lastAt = new Int32Array(g.W * st.rows).fill(-1);
+    if (pairOn()) MAYATNIK.cone(f2, g.anchor, st.rows, lastAt, 0);
+    for (let j = 0; j < T; j++) { if (pairOn()) MAYATNIK.conePair(f2, g.anchor - j - 1, g.anchor + j + 1, st.rows, lastAt, j + 1); else MAYATNIK.cone(f2, g.anchor + MAYATNIK.offset(st.mode, j), st.rows, lastAt, j + 1); }
+    freezeMap = { key, lastAt, W: g.W }; return freezeMap;
+  }
+  const fzBucket = t => { let b = 0; while (b < FZ_STEPS.length && t > FZ_STEPS[b]) b++; return b; };
+  function freezeColour(m, q, v) { if (!m || !m.lastAt || m.W !== f.W) return 0; const t = m.lastAt[q]; if (t > k) return 0; const b = fzBucket(Math.max(0, t)); return v ? FZ_ONE[b] : FZ_ZERO[b]; }
   function frozenRanges() {
     const T = total(); if (k >= T) return [];
     if (pairOn()) return [[-T, -(k + 1)], [k + 1, T]];
@@ -655,8 +671,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         for (let c = VX; c < VX + VW; c++) { const v = outShow(r, c) ? -1 : val[row + c];
           px[out + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
     }
-    if (st.frozen && rp < 0) { const fz = frozenRanges(), A = geo.anchor;   // v0.077: «Неизменные»
-      for (let r = 0; r < VH; r++) for (let c = VX; c < VX + VW; c++) { const v = val[r * W + c]; if (v < 0 || outShow(r, c) || !frozenAt(fz, r, c - A)) continue; px[r * VW + c - VX] = v ? FZ1 : FZ0; } }
+    if (st.frozen && rp < 0) { const fzM = freezeCalc();   // v0.077: «Неизменные»; v0.120 — карта застывания
+      for (let r = 0; r < VH; r++) for (let c = VX; c < VX + VW; c++) { const q = r * W + c, v = val[q]; if (v < 0 || outShow(r, c)) continue; const fc = freezeColour(fzM, q, v); if (fc) px[r * VW + c - VX] = fc; } }
     if (och && rp < 0) for(let r=0;r<VH;r++)for(let c=VX;c<VX+VW;c++){const q=r*f.W+c;if(och.hl[q])px[r*VW+c-VX]=f.val[q]?HL1:HL0;}
     if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
       if (st.outline) outline(px);
@@ -2336,6 +2352,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=119"></script>
+<script src="mayatnik-menu.js?v=120"></script>
 </body>
 </html>

@@ -290,3 +290,5 @@ header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:b
 /* v0.116: «дай прокручивать вниз всё это поле без скроллов» — содержимое «Сведений» листается колесом, полосы прокрутки не видно. */
 #mayatnikInfoPanel #mayatnikStatus{scrollbar-width:none;overscroll-behavior:contain}
 #mayatnikInfoPanel #mayatnikStatus::-webkit-scrollbar{display:none}
+/* v0.120: «☰ Меню» на обычном экране не нужна — рейка и так открыта; на телефоне остаётся. */
+@media(min-width:601px){.mayatnik-menu-ready #mayMenu{display:none!important}}

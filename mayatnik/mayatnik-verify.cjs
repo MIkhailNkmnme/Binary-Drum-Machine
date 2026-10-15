@@ -158,5 +158,21 @@ for (let t = 0; t < 40; t++) {
   m.seek(m.max); for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (x !== center && m.bit(x, y) !== -1) { bad(`свёртка: в конце остался столбец ${x}`); y = height; break; }
 }
 console.log(`   случайных полей: ${foldCases}`);
+// ---------- карта застывания (v0.120): отметки lastAt ядра ----------
+console.log('4. Карта застывания: кадр последнего изменения клетки');
+let lastCases = 0;
+for (const mode of ['pend', 'right']) for (const bg of ['empty', '0']) for (const pair of mode === 'pend' ? [false, true] : [false]) for (const [D, steps] of [[24, 30], [48, 64]]) {
+  const T = pair ? steps >> 1 : steps, S = pair ? 2 * T + 1 : steps, geo = M.geometry(mode, S, D), f = M.field(geo.W, D, bg), lastAt = new Int32Array(geo.W * D).fill(-1), frames = [];
+  if (pair) M.cone(f, geo.anchor, D, lastAt, 0);
+  frames.push(f.val.slice());
+  for (let j = 0; j < T; j++) { if (pair) M.conePair(f, geo.anchor - j - 1, geo.anchor + j + 1, D, lastAt, j + 1); else M.cone(f, geo.anchor + M.offset(mode, j), D, lastAt, j + 1); frames.push(f.val.slice()); }
+  lastCases++;
+  for (let i = 0; i < lastAt.length; i++) {
+    const t = lastAt[i];
+    for (let k = Math.max(0, t); k <= T; k++) if (frames[k][i] !== frames[T][i]) { bad(`застывание ${mode}/${bg}/пара=${pair}: клетка ${i} отмечена ${t}, но на кадре ${k} ещё не окончательна`); break; }
+    if (t > 0 && frames[t - 1][i] === frames[t][i]) bad(`застывание ${mode}/${bg}/пара=${pair}: клетка ${i} отмечена ${t}, но на этом кадре не менялась`);
+  }
+}
+console.log(`   полей: ${lastCases}`);
 console.log(fails ? `ИТОГ: расхождений ${fails}` : 'ИТОГ: расхождений нет');
 process.exit(fails ? 1 : 0);
