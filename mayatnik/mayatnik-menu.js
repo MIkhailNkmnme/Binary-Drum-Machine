@@ -1,4 +1,4 @@
-/* Маятник v0.049: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.050: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -104,6 +104,8 @@
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
     b.onclick = () => e.click();
+    // v0.050: правый клик по нажатому значку — выключить его режим.
+    b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
     toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
       b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
     tools.append(b);
