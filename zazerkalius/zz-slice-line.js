@@ -30,5 +30,31 @@ const ZZSliceLine = (() => {
     }
     return true;
   }
-  return {gate, aligned, crossings, cut};
+  // First imprint: one full turn from birth. Later passes: the source cut
+  // meets its own imprint moving with the adjacent outer ring.
+  function selfReturns(seeds, before, after) {
+    let fraction = null, due = [];
+    for (const seed of seeds) {
+      const start = before.rings[seed.k].phaseQ.add(before.spinQ);
+      const delta = after.rings[seed.k].phaseQ.add(after.spinQ).sub(start);
+      let t;
+      if (seed.targetRawQ !== undefined && before.rings[seed.k + 1] && after.rings[seed.k + 1]) {
+        const relative = state => state.rings[seed.k].phaseQ.add(seed.rawQ).add(seed.rayOffsetQ || 0)
+          .sub(state.rings[seed.k + 1].phaseQ).sub(seed.targetRawQ);
+        // Continuous overlap is not a new meeting. Exclude the birth/event
+        // instant so a just-created imprint cannot fire again immediately.
+        t = crossings(relative(before),relative(after),0).next().value;
+        if (t === undefined) continue;
+      } else {
+        if (!delta.sign()) continue;
+        const boundary = seed.basePhaseQ.add(delta.sign());
+        t = boundary.sub(start).div(delta);
+      }
+      if (t.sign() <= 0 || t.cmp(1) > 0) continue;
+      if (fraction === null || t.cmp(fraction) < 0) { fraction = t; due = [seed]; }
+      else if (t.eq(fraction)) due.push(seed);
+    }
+    return fraction === null ? null : {fraction, seeds:due};
+  }
+  return {gate, aligned, crossings, cut, selfReturns};
 })();
