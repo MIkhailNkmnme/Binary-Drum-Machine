@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.038. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.039. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.038</title>
+<title>Zerkalius Маятник — v0.039</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=38">
+<link rel="stylesheet" href="mayatnik-menu.css?v=39">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.038</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.039</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -205,6 +205,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateClone" disabled title="Добавить независимую копию выбранного шаблона">Ещё копия</button>
     <button id="bTemplateFlipH" data-mi-short="Отразить ↔" disabled title="Отразить выбранный шаблон слева направо на месте. Alt + щелчок у края фигуры — зеркальная копия за этот край">Отразить ↔</button>
     <button id="bTemplateFlipV" data-mi-short="Отразить ↕" disabled title="Отразить выбранный шаблон сверху вниз на месте. Alt + щелчок у края фигуры — зеркальная копия за этот край">Отразить ↕</button>
+    <button id="bMirrorLine" aria-pressed="false" data-mi-short="Линия-зеркало" title="Горизонтальная линия-зеркало на поле. Тяни её мышью по строкам; щелчок по шаблону кладёт его отражение по другую сторону линии">Линия-зеркало</button>
+    <button id="bMirrorByLine" data-mi-short="По линии" disabled title="Отразить выбранный шаблон по линии-зеркалу: копия по другую сторону линии">По линии</button>
     <button id="bTemplateRemove" disabled title="Убрать только выбранный шаблон с поля. Его запись в библиотеке и оставленная краска сохраняются">Убрать с поля</button>
     <label title="Название своего шаблона">имя <input id="templateName" type="text" maxlength="100" value="Мой шаблон"></label>
     <select id="templateList" hidden aria-label="Сохранённые свои шаблоны"></select>
@@ -260,7 +262,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Оси:</strong> вертикальные, горизонтальные и обе диагонали проверяются на двух решётках через бит. Минимум — 2 строки и 2 бита с каждой стороны. Пустое «до» означает без верхней границы. «Биты осей» отдельно подсвечивает совпадения при масштабе от ×3; «Скрыть оси» в шапке убирает линии и выбор.</p>
   <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. Повторный щелчок тем же цветом снимает заливку. «Отменить» и «Повторить» работают с заливкой, битами дорожки и шаблонами. «Без краски» убирает краску и изменения битов, оставляя шаблоны на поле; это действие тоже можно отменить. «Области» считает участки текущего изображения. Раскраска автоматически сохраняется в памяти этого браузера и восстанавливается после обновления. «Из памяти» возвращает последнее сохранённое поле вместе с цветами и шаблоном. При смене кадра или вида текущая раскраска скрывается; сохранённая работа остаётся в памяти до следующей раскраски. PNG сохраняет видимый результат отдельным файлом. Обычная цветная заливка не меняет биты; «Инверт-след» меняет рабочие биты дорожки.</p>
   <p><strong>Вертикальная раскраска:</strong> кнопка переключается 1 → 0 → выкл. Наведи на пиксель: от него вниз проводится вертикаль толщиной в один пиксель, и все связные области выбранного бита, которых она касается, подсвечиваются. Щелчок применяет цвет. Пустой фон не закрашивается. «Зеркально» включено по умолчанию: захватывается и отражённая сторона относительно центра поля. Shift также включает зеркальную пару. Повторный щелчок тем же цветом снимает заливку.</p>
-  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. Фигуру можно сразу тянуть мышью прямо на холсте; «Свободная ось» переключает свободное движение и движение только по вертикали. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область. Мышью на поле: тянуть — двигать по битам, Shift — только по одной оси, Ctrl — тянуть копию, Alt + щелчок у края — зеркальная копия за этот край (край подсвечивается), Alt + тянуть — размер. Delete убирает выбранный шаблон, Ctrl+Z / Ctrl+Y — отменить и повторить.</p>
+  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. Фигуру можно сразу тянуть мышью прямо на холсте; «Свободная ось» переключает свободное движение и движение только по вертикали. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область. Мышью на поле: тянуть — двигать по битам, Shift — только по одной оси, Ctrl — тянуть копию, Alt + щелчок у края — зеркальная копия за этот край (край подсвечивается), Alt + тянуть — размер. Delete убирает выбранный шаблон, Ctrl+Z / Ctrl+Y — отменить и повторить. «Линия-зеркало» ставит на поле горизонтальную линию: её тянут мышью, а щелчок по шаблону кладёт его отражение по другую сторону линии.</p>
   <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
   <p><strong>Несколько шаблонов:</strong> «Взять цвет» и нажатие на карточку в «Шаблонах» добавляют фигуру. Включённая карточка показывает её на поле, выключенная скрывает; повторное включение возвращает последнее положение. Активную фигуру выбирают прямо на поле, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; скрытые возвращаются нажатием на карточку в списке. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
@@ -716,6 +718,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       // sourceData — исходная ориентация: по ней снимается заливка с исходного места.
       return {...p,sourceData:p.sourceData||m.data,mask,canvas,edges:null,symmetry:MayatnikTemplate.symmetry(mask)};});
   }
+  // v0.039: горизонтальная линия-зеркало. Её тянут мышью по строкам; щелчок по шаблону (или кнопка) кладёт
+  // его отражение по другую сторону линии. mirrorLineY — номер строки, над которой проходит линия.
+  let mirrorLine=false,mirrorLineY=0,lineDrag=null;
+  function mirrorAcrossLine(){
+    if(!colourTemplate||!mirrorLine)return;rememberTemplate();
+    const r=templateRect(colourTemplate.parts[0]),L=mirrorLineY*RK,dy=Math.round((2*L-(r.y+r.height)-r.y)/RK);
+    const item=duplicateTemplate(0);if(!item)return;flipParts(item,false);
+    $('templateDown').value=Number($('templateDown').value)+dy;templateLastDown=Number($('templateDown').value);item.name=(item.name||item.hex).replace(/ · копия$/,'')+' · отражение';
+    templateStatsKey='';templateSync();queueDigits();savePaint();
+  }
+  $('bMirrorLine').onclick=()=>{mirrorLine=!mirrorLine;
+    if(mirrorLine&&f){const r=colourTemplate&&templateVisible?templateRect(colourTemplate.parts[0]):null;mirrorLineY=r?Math.min(VH,Math.ceil((r.y+r.height)/RK)):Math.round(VH/2);}
+    $('bMirrorLine').setAttribute('aria-pressed',String(mirrorLine));templateSync();queueDigits();};
+  $('bMirrorByLine').onclick=mirrorAcrossLine;
   function mirrorTemplate(edge,copy){
     if(!colourTemplate)return;rememberTemplate();
     const horizontal=edge==='left'||edge==='right',r=templateRect(colourTemplate.parts[0]);
@@ -731,7 +747,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
   function templateSync(){
     rememberTemplate();fieldTemplateList();
-    $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;$('bTemplateFlipH').disabled=!colourTemplate;$('bTemplateFlipV').disabled=!colourTemplate;
+    $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;$('bTemplateFlipH').disabled=!colourTemplate;$('bTemplateFlipV').disabled=!colourTemplate;$('bMirrorByLine').disabled=!colourTemplate||!mirrorLine;
     $('bTemplatePaint').disabled=!colourTemplate||!templateVisible;
     $('bTemplateReturn').disabled=!colourTemplate;$('bTemplateSave').disabled=!colourTemplate;
     for(const id of ['bTemplateShow','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateMove','templateTrail','templateHeight','templateDown','templateAlpha','templateProportional'])$(id).disabled=!colourTemplate;
@@ -793,11 +809,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     ctx.restore();}
   }
   function drawTemplate(){
-    rememberTemplate();templateStatus();templateCanvas.hidden=!templateItems.some(t=>t.view.visible)||playing;if(templateCanvas.hidden)return;
+    rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine)||playing;if(templateCanvas.hidden)return;
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
     paintTemplate(templateG,r.left-host.left,r.top-host.top,scale());
+    if(mirrorLine){const y=Math.round(r.top-host.top+mirrorLineY*scale())+.5,x0=Math.max(0,r.left-host.left),x1=Math.min(w,r.right-host.left);
+      templateG.save();templateG.strokeStyle='#5ce1e6';templateG.lineWidth=2;templateG.beginPath();templateG.moveTo(x0,y);templateG.lineTo(x1,y);templateG.stroke();
+      templateG.fillStyle='#5ce1e6';templateG.font='11px Segoe UI,sans-serif';templateG.fillText('зеркало · строка '+mirrorLineY,x0+6,y-5);templateG.restore();}
     // v0.037: выбранный шаблон — пунктирная рамка; с Alt над фигурой — край, за который ляжет зеркальная копия.
     if(colourTemplate&&templateVisible){const sc=scale(),ox=r.left-host.left,oy=r.top-host.top;templateG.save();templateG.strokeStyle='#ffd35b';templateG.lineWidth=1;templateG.setLineDash([4,3]);
       for(const part of colourTemplate.parts){const b=templateRect(part);templateG.strokeRect(Math.round(ox+b.x/RK*sc)-.5,Math.round(oy+b.y/RK*sc)-.5,Math.round(b.width/RK*sc)+1,Math.round(b.height/RK*sc)+1);}
@@ -1623,6 +1642,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     let next=null,cursor='';
     if(img&&cx!=null&&!templateDragging&&!playing&&((!fillMode&&!autoVertical)||mods.ctrl)){const r=cv.getBoundingClientRect(),x=(cx-r.left)/r.width*img.width,y=(cy-r.top)/r.height*img.height,hit=templateItems.length?hitTemplate(x,y):null;
       if(hit){cursor=mods.alt?'crosshair':mods.ctrl?'copy':'move';next={item:hit.item,part:hit.part,edge:mods.alt?templateEdge(hit,x,y):null};}}
+    if(!cursor&&cx!=null&&nearLine(cy))cursor='ns-resize';
     wrap.style.cursor=cursor;const changed=JSON.stringify([next?.item?.id,next?.edge])!==JSON.stringify([templateHover?.item?.id,templateHover?.edge]);templateHover=next;if(changed)queueDigits();
   }
   let hoverAt=null;
@@ -1636,8 +1656,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       if(entry)renameLibraryItem(entry,name);else{const before=editSnapshot();item.name=name;if(item===colourTemplate)$('templateName').value=name;templateStatsKey='';finishEdit(before);templateSync();queueDigits();savePaint();}
     });
   });
+  const nearLine=cy=>{if(!mirrorLine||!f)return false;const r=cv.getBoundingClientRect();return Math.abs(cy-(r.top+mirrorLineY*scale()))<=5;};
   wrap.addEventListener('pointerdown', e => {
-    if(templateDragging)return;
+    if(templateDragging||lineDrag)return;
+    if(e.button===0&&nearLine(e.clientY)){lineDrag={id:e.pointerId};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}
     if(((!fillMode&&!autoVertical)||e.ctrlKey)&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
       const hit=hitTemplate(x,y),part=hit?.part;if(hit){selectTemplate(hit.item,false);templateMove=true;}
       if(part){const box=templateRect(part),cx=r.left+(box.x+box.width/2)/RK*scale(),cy=r.top+(box.y+box.height/2)/RK*scale();
@@ -1652,6 +1674,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (pts.size === 2) { zWant = 0; const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale() }; pan = null; }
   });
   wrap.addEventListener('pointermove', e => {
+    if(lineDrag?.id===e.pointerId){const r=cv.getBoundingClientRect();mirrorLineY=Math.max(0,Math.min(VH,Math.round((e.clientY-r.top)/scale())));queueDigits();e.preventDefault();return;}
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
       if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
@@ -1677,7 +1700,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     else if (pan) { if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 5) pan.moved = true; if (!pan.moved) return; wrap.scrollLeft = pan.sl - (e.clientX - pan.x); wrap.scrollTop = pan.st - (e.clientY - pan.y); }
   });
   const up = e => {
-    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
+    if(lineDrag?.id===e.pointerId){lineDrag=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
+    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);else if(!drag.moved&&!drag.duplicate&&mirrorLine&&e.type==='pointerup')mirrorAcrossLine();finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
     if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
@@ -1737,7 +1761,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
   if (st.zsnap && st.zoom !== 'fit') st.zoom = snap2(st.zoom);   // v0.015: сохранённый прежде плавный масштаб — к ближайшему 2^k
   // Сохраняем всю протяжку одним действием, отдельные кнопки — одним щелчком.
-  const historyButtons=['bTemplateFlipH','bTemplateFlipV','bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateAxisUnlock','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
+  const historyButtons=['bMirrorByLine','bTemplateFlipH','bTemplateFlipV','bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateAxisUnlock','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
   function captureEdit(){if(img)templateHistoryCapture=editSnapshot(false);}
   function completeEdit(){const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
@@ -1748,6 +1772,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=38"></script>
+<script src="mayatnik-menu.js?v=39"></script>
 </body>
 </html>
