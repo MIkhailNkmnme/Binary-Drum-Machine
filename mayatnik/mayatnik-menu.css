@@ -15,7 +15,7 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #imageStats{grid-column:2;grid-row:2;font-size:11px;padding:5px 12px;min-width:0;overflow-wrap:anywhere}
 .mayatnik-menu-ready #ochkiBox{grid-column:2;grid-row:3;min-width:0}
 .mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
-.mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:6px 14px;align-items:center;min-width:0;padding:6px 12px;border-top:1px solid var(--line);background:var(--panel)}
+.mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:0 10px;align-items:center;min-width:0;padding:1px 50% 1px 4px;border-top:1px solid var(--line);background:var(--panel)}
 .mayatnik-menu-ready #stat{white-space:normal;margin-left:0;font-size:11px}
 .mayatnik-menu-ready #zoomV::before{content:'Масштаб '}
 .mayatnik-menu-ready #konusInfo{font-size:11px}
@@ -114,3 +114,10 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 /* v0.048: копии кнопок, перетащенные с Ctrl на холст */
 .may-pin{position:fixed!important;z-index:7;width:120px;--c:#80aee8;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;color:#dfe6f5;font:12px/1.2 'Segoe UI',sans-serif;box-shadow:0 2px 8px #0008;cursor:pointer}
 .may-pin-ghost{opacity:.75;pointer-events:none}
+
+/* v0.051: подвал — все надписи в левой половине, без отступов; «Картинка/Кадр» тоже здесь */
+.mayatnik-menu-ready #mayatnikStatus #imageStats{display:contents}
+#mayatnikStatus #imageStats output{font:11px/1.4 var(--mono);padding:0}
+#mayatnikStatus>*{margin:0}
+#canvasActs{position:fixed;z-index:6;transform:translateY(-100%)}
+#canvasActs[hidden]{display:none}
