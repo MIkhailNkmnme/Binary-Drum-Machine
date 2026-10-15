@@ -85,7 +85,7 @@ const Z = {
   coneSliceStop5: true,                 // Нарезка: по умолчанию остановиться после полного прохождения вырезов К5
   coneSliceImmediate: false,            // Линия: сразу продолжать нарезку через вырезы наружу до предела
   coneSliceOneRing: false,              // Линия: вырез только в одном кольце, затем автоматический переход к следующему
-  coneSliceDual: false,                 // Необязательное сравнение: По 1 / Встр.Бит с общими настройками
+  coneSliceDual: false,                 // Сравнение всех четырёх режимов кручения с общими настройками
   coneSliceSourceSpin: false,           // К0: линия вращается с половиной угловой скорости К1
   z: 10,
 };
@@ -2695,7 +2695,7 @@ function ringTblBuild(host){
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    x += `<tr data-v="${r.v}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtn2">${r.t}</td></tr>`;
+    x += `<tr data-v="${r.v}" data-mi-short="${r.t}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtn2">${r.t}</td></tr>`;
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
@@ -7665,7 +7665,7 @@ function setupCone(){
   const autoStep = (dt) => {
     const ballBefore = window.zzBallBeforeSpin ? window.zzBallBeforeSpin() : null;
     try {
-    if (ballBefore?.sliceDual) return true;   // Оба центра продвигают свои часы в zzBallAfterSpin.
+    if (ballBefore?.sliceDual) return true;   // Все центры продвигают свои часы в zzBallAfterSpin.
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (Z.coneSpinMag) {
       if (!coneMagAutoStep(dt)) { autoSet(false); say("🧲 Для текущего кольца нет следующего магнита при выбранных настройках."); return false; }
@@ -8274,7 +8274,7 @@ function setupCone(){
   if ($("bConeSliceDual")) $("bConeSliceDual").onclick = () => {
     Z.coneSliceDual = !Z.coneSliceDual; coneSliceChainUi();
     if (window.zzBallSliceDualChanged) window.zzBallSliceDualChanged(); else { save(); renderCone(); }
-    say(Z.coneSliceDual ? "Нарезка: два центра — слева По 1, справа Встр.Бит. Настройки общие, вырезы, биты и таблицы отдельные. Пуск / Пауза управляет обоими." : "Нарезка: одиночный центр и его прежний прогон возвращены.");
+    say(Z.coneSliceDual ? "Нарезка: четыре центра — По 1, Встр.Бит, Всё и Встр.стр. Настройки общие; вырезы, биты и таблицы отдельные. К1 у всех вращается с одинаковой скоростью. Пуск / Пауза управляет всеми центрами." : "Нарезка: одиночный центр и его прежний прогон возвращены.");
   };
   if ($("bConeSliceImmediate")) $("bConeSliceImmediate").onclick = () => {
     Z.coneSliceImmediate = !Z.coneSliceImmediate; if (Z.coneSliceImmediate) Z.coneSliceOneRing = false; coneSliceChainUi();
