@@ -1,6 +1,6 @@
 /* Горизонтальная XOR-свёртка: правая часть влево, левая вправо, к неподвижному центру. v1.
    v2: биты едут со своими цветами картинки (краска, «Цвета», «Очки», «Неизменные» — что было на поле при старте),
-   центральный столбец XOR — золотом. colour / paint — Uint32 RGBA на клетку, 0 — нет. */
+   colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»). */
 (() => {
   'use strict';
   function model({width,height,center,data,colour,paint}) {
@@ -62,19 +62,16 @@
           if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
           const u=new Uint32Array(offImg.data.buffer);
           for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-            u[i]=x===state.center?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
-          off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);
-          ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(x0+(state.center+ox)*s,y0,s,H*s);ctx.restore();continue;}
+            u[i]=state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+          off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);ctx.restore();continue;}
         const xa=Math.max(0,Math.floor(-x0/s-ox)-1),xb=Math.min(state.width,Math.ceil((w-x0)/s-ox)+1),ya=Math.max(0,Math.floor(-y0/s)-1),yb=Math.min(state.height,Math.ceil((h-y0)/s)+1);
         for(let y=ya;y<yb;y++)for(let x=xa;x<xb;x++){
           if(p>=0&&((x+c.origin-c.anchor-p-y)%2+2)%2)continue;const bit=state.bit(x,y);if(bit<0)continue;
-          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,mid=x===state.center,back=only?state.paintAt(x,y):state.colourAt(x,y);
-          if(only&&(back||mid)){ctx.fillStyle=mid?(bit?'#7a5a10':'#4a3608'):rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
-          if(!only){ctx.fillStyle=mid?(bit?'#ffe08a':'#b8860b'):back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
-          if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(mid?(bit?'#ffe08a':'#ffb020'):bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
+          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y);
+          if(only&&back){ctx.fillStyle=rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
+          if(!only){ctx.fillStyle=back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
+          if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
         }
-        // v2: рамка центрального столбца, куда складывается XOR
-        const mx=x0+(state.center+ox)*s;ctx.save();ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(mx,y0,s,state.height*s);ctx.restore();
       }
       sync();
     }
