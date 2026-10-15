@@ -1,4 +1,4 @@
-/* Маятник v0.097: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.098: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -196,6 +196,20 @@
   infoPanel.append(infoTitle,status);document.body.append(infoPanel);
   try{infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1';}catch(_){}
   infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
+  // v0.098: стрелки ◂ ▸ у «кадра» и «скорости» — щелчок на шаг, удержание повторяет. Только у этих двух:
+  // общий _js/slider-arrows.js обернул бы и прозрачные ползунки пультов свёртки и прохода.
+  for (const id of ['frame', 'speed']) {
+    const el = $(id); if (!el) continue;
+    const step = d => { const v = Math.max(+el.min, Math.min(+el.max, +el.value + d)); if (v === +el.value) return;
+      el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
+    const arrow = (txt, d) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-arrow'; b.textContent = txt; b.tabIndex = -1;
+      b.title = d < 0 ? 'Назад на 1 · удержание — подряд' : 'Вперёд на 1 · удержание — подряд'; let hold = 0, rep = 0;
+      const end = () => { clearTimeout(hold); clearInterval(rep); hold = rep = 0; };
+      b.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); step(d); hold = setTimeout(() => { rep = setInterval(() => step(d), 60); }, 350); });
+      for (const t of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) b.addEventListener(t, end);
+      return b; };
+    el.before(arrow('◂', -1)); el.after(arrow('▸', 1));
+  }
   const placeTools = () => { for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
   // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.

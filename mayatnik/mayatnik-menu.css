@@ -259,3 +259,7 @@ body.may-zen #wrap{grid-column:1/-1!important;grid-row:1/-1!important}
 body.may-zen #mayatnikStatus{display:none!important}
 body.mayatnik-menu-ready.may-zen #mayZenOut{display:inline-flex;position:fixed;left:8px;bottom:8px;z-index:10;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif;opacity:.35}
 body.may-zen #mayZenOut:hover{opacity:1}
+/* v0.098: стрелки ◂ ▸ у «кадра» и «скорости». */
+.may-arrow{flex:none;width:18px;height:18px;padding:0;margin:0 1px;border:1px solid #33405a;border-radius:3px;background:#121a30;color:#9fb3d6;font:10px/16px 'Segoe UI',sans-serif;cursor:pointer;user-select:none}
+.may-arrow:hover{color:#fff;border-color:var(--c,#80aee8)}
+.may-arrow:active{background:var(--c,#80aee8);color:#0d1119}
