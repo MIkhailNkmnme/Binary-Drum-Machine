@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.058. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.059. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.058</title>
+<title>Zerkalius Маятник — v0.059</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=58">
+<link rel="stylesheet" href="mayatnik-menu.css?v=59">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.058</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.059</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -181,7 +181,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <output id="symInfo" aria-live="polite"></output>
     <span class="grp" title="Колесо — масштаб к курсору, тянуть мышью — сдвиг, двойной щелчок или 0 — по ширине; на телефоне — двумя пальцами">
       <button id="zOut" aria-label="Отдалить">−</button><output id="zoomV" class="ver" style="min-width:52px;text-align:center">100%</output><button id="zIn" aria-label="Приблизить">+</button>
-      <button id="zFit">по ширине</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
+      <button id="zFit">по ширине</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: при масштабе первая строка остаётся у верхнего края окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
@@ -1517,6 +1517,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     st.zoom = Math.abs(s - fitScale()) < 1e-9 ? 'fit' : s; save(); layout(); thick();
     const n = cv.getBoundingClientRect();
     wrap.scrollLeft += n.left + fx * n.width - x; wrap.scrollTop += n.top + fy * n.height - y;
+    if (st.ztop) wrap.scrollTop = 0;   // v0.059: первая строка прибита к верху
   }
   function fit() { st.zoom = 'fit'; save(); layout(); thick(); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
   let lastT = 0;   // толщина обводки зависит от масштаба — перерисовать, только когда она поменялась
@@ -1682,6 +1683,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const zSnapSync = () => $('zSnap').setAttribute('aria-pressed', String(!!st.zsnap));
   $('zSnap').onclick = () => { st.zsnap = !st.zsnap; zWant = 0; save(); zSnapSync(); if (!geo) return; if (st.zoom === 'fit') { layout(); thick(); } else zoomTo(st.zoom); };
   zSnapSync();
+  const zTopSync = () => $('zTop').setAttribute('aria-pressed', String(!!st.ztop));
+  $('zTop').onclick = () => { st.ztop = !st.ztop; save(); zTopSync(); if (st.ztop) wrap.scrollTop = 0; };
+  zTopSync();
   addEventListener('resize', () => { if (geo) layout(); });
   wrap.addEventListener('scroll', () => { queueDigits(); queueAlign(); }, {passive:true});
   // Колесо — масштаб к курсору (плавно, тачпад тоже)
@@ -1724,9 +1728,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
-  // v0.058: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
+  // v0.059: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
   var axisSelected=false;
-  // v0.058: точки-ручки на концах оси. Если конец за краем видимой части поля, ручка встаёт на край видимой части на той же линии.
+  // v0.059: точки-ручки на концах оси. Если конец за краем видимой части поля, ручка встаёт на край видимой части на той же линии.
   function axisHandles(l){const r=cv.getBoundingClientRect(),s=scale(),h=wrap.getBoundingClientRect(),m=10,ax=r.left+l[0]*s,ay=r.top+l[1]*s,dx=(l[2]-l[0])*s,dy=(l[3]-l[1])*s;
     let t0=0,t1=1;for(const [p,q] of [[-dx,ax-(h.left+m)],[dx,(h.right-m)-ax],[-dy,ay-(h.top+m)],[dy,(h.bottom-m)-ay]]){if(p===0){if(q<0)return null;continue;}const t=q/p;if(p<0)t0=Math.max(t0,t);else t1=Math.min(t1,t);}
     return t0>t1?null:[[ax+t0*dx,ay+t0*dy],[ax+t1*dx,ay+t1*dy]];}
@@ -1735,7 +1739,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const snapBit=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.round((cx-r.left)/s*2)/2,Math.round((cy-r.top)/s*2)/2];};
   function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=$('bAxisXor').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
   $('bAxisLine').onclick=()=>{axisLineMode=!axisLineMode;axisLinePending=null;if(axisLineMode){fillMode=false;autoVertical=0;autoSync();fillSync();stop();target=k;}axisLinesSync();queueDigits();};
-  // v0.058: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
+  // v0.059: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
   // нет — отражаются все биты над осью. Берутся точки, чья проекция попадает на отрезок оси.
   // Режим живой: пока кнопка нажата, ось можно тянуть параллельно, и зеркало пересчитывается от исходной картинки
   // (mirrorBase). Любая другая правка выключает режим, получившееся остаётся.
@@ -1753,7 +1757,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const tx=Math.floor(x+.5-2*d*nx),ty=Math.floor(y+.5-2*d*ny);if(tx<0||ty<0||tx>=W||ty>=H)continue;const q=y*W+x,o=ty*W+tx;
       if(colourMode&&!mirrorXor){if(!src[q]||paintBits?.[q]>=0)continue;fillMask[o]=src[q];count++;continue;}
       if(colourMode&&(!src[q]||paintBits?.[q]>=0))continue;
-      // v0.058 хор-зеркало: бит под осью = его бит XOR отражённый (у краски отражённый — единица).
+      // v0.059 хор-зеркало: бит под осью = его бит XOR отражённый (у краски отражённый — единица).
       let v=colourMode?1:rasterBit(x,y);const orig=rasterBit(tx,ty,true);if(v<0||orig<0)continue;if(mirrorXor){const t=rasterBit(tx,ty);if(t<0)continue;v^=t;}
       if(!paintBits)paintBits=new Int8Array(N).fill(-1);if(!fillMask)fillMask=new Uint32Array(N);
       if(v===orig){paintBits[o]=-1;fillMask[o]=0;}else{paintBits[o]=v;fillMask[o]=v?white:black;}count++;}
@@ -1783,7 +1787,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const end=axisHandleAt(l,e.clientX,e.clientY);
       axisDrag={id:e.pointerId,from:snapBit(e.clientX,e.clientY),line:l.slice(),end};wrap.setPointerCapture(e.pointerId);axisLinesSync();e.preventDefault();return;}}
     if(axisLineMode&&e.button===0&&f){const r=cv.getBoundingClientRect();
-      // v0.058: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
+      // v0.059: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
       if(mirrorLive)mirrorLiveSet(false);st.userLines.push(axisRowLine((e.clientY-r.top)/scale()));axisSelected=true;axisLineMode=false;axisLineHover=null;axisLinePending=null;save();
       axisLinesSync();stop();target=k;mirrorLiveSet(true);mirrorApply(true);queueDigits();e.preventDefault();return;}
     if(e.button===0&&nearLine(e.clientY)){lineDrag={id:e.pointerId};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}
@@ -1905,6 +1909,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=58"></script>
+<script src="mayatnik-menu.js?v=59"></script>
 </body>
 </html>
