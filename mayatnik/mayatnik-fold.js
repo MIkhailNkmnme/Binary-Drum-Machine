@@ -2,6 +2,9 @@
    v2: биты едут со своими цветами картинки (краска, «Цвета», «Очки», «Неизменные» — что было на поле при старте),
    colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»).
    v4: «парой» — шаг сразу правой и левой частью (два хода модели за один, если они с разных сторон).
+   v7: «не работает поле, ничего не выбирается, переписывать строки надо» — режим записи (data.write): свёртка не рисует свою картинку
+   и не перехватывает мышь, а на каждом шаге отдаёт состояние странице (apply) — та переписывает строки поля, и все инструменты работают
+   на свёрнутом поле. Слой свёртки рисует только подсветку центра. Без write (ромбы) — по-старому, картинкой поверх.
    v6: галка «центр» — подсветка центрального XOR-столбца золотом с рамкой (по умолчанию выкл., выбор помнится).
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
@@ -37,7 +40,7 @@
       pairStep(f,d){if(d>0){for(const b of bounds)if(b>f)return b;return moves.length;}for(let i=bounds.length-1;i>=0;i--)if(bounds[i]<f)return bounds[i];return 0;}
     };
   }
-  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap}) {
+  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply}) {
     const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
     panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><label class="may-fold-pair" title="Подсветить центральный столбец, куда складывается XOR"><input type="checkbox" data-fold="mid"> центр</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
@@ -53,7 +56,7 @@
     const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
     function sync(){
       button.setAttribute('aria-pressed',String(!!state));panel.hidden=layer.hidden=!state;
-      document.body.classList.toggle('may-fold-active',!!state);
+      document.body.classList.toggle('may-fold-active',!!state&&!state.write);   // v7: в режиме записи поле видно как есть
       if(!state)return;
       const two=pair()&&state.pairStep(state.frame,1)-state.frame===2;
       timeline.max=state.max;timeline.value=state.frame;progress.textContent=`СвёрткаГориз · ${state.frame}/${state.max} · ${two?'обе →←':state.nextSide()}`;
@@ -70,6 +73,11 @@
       layer.style.left=host.left+'px';layer.style.top=host.top+'px';layer.style.width=w+'px';layer.style.height=h+'px';
       const pw=Math.max(1,Math.round(w*dpr)),ph=Math.max(1,Math.round(h*dpr));if(layer.width!==pw)layer.width=pw;if(layer.height!==ph)layer.height=ph;
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const x0=rect.left-host.left,y0=rect.top-host.top;
+      if(state.write){   // v7: строки переписывает страница; здесь — только подсветка центра
+        if(state.frame!==applied){applied=state.frame;apply?.(state);}
+        if(midOn()){const s2=config()?.scale||s,r2=canvas.getBoundingClientRect(),cx=r2.left-host.left+state.center*s2,ch=Math.min(h,state.height*s2);
+          ctx.fillStyle='rgba(255,211,91,.28)';ctx.fillRect(cx,r2.top-host.top,s2,ch);ctx.lineWidth=Math.max(1.5,Math.min(3,s2*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(cx,r2.top-host.top,s2,ch);}
+        sync();return;}
       const only=c.view==='digitsOnly',digits=only||c.view==='digits',rp=c.rp,mid=midOn(),css=new Map(),rgb=v=>{let t=css.get(v);if(!t){t=`rgb(${v&255},${v>>>8&255},${v>>>16&255})`;css.set(v,t);}return t;};
       ctx.font=`600 ${s*.8}px ${c.font}`;ctx.textAlign='center';ctx.textBaseline='middle';
       const halves=rp===2?[[0,0],[1,state.width+c.gap]]:[[rp,0]];
@@ -95,7 +103,8 @@
       sync();
     }
     function pause(){running=false;cancelAnimationFrame(timer);timer=0;last=0;credit=0;sync();}
-    function close(){pause();state=null;sync();onClose?.();}
+    let applied=-1;
+    function close(){pause();state=null;applied=-1;sync();onClose?.();}
     function seek(n){if(!state)return;state.seek(n);render();}
     function tick(now){if(!running||!state)return;if(last)credit+=Math.min(.25,(now-last)/1000)*rate();last=now;
       const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(adv(state.frame,dir,n));}
@@ -104,7 +113,7 @@
     }
     function togglePlay(){if(!state)return;if(running){pause();return;}if(dir>0&&state.frame===state.max)seek(0);if(dir<0&&state.frame===0)seek(state.max);running=true;last=0;credit=0;sync();timer=requestAnimationFrame(tick);}
     function setRate(n){rateStep=Math.max(0,Math.min(401,Math.round(n)));try{localStorage.setItem('mayatnik-fold-rate',String(rateStep));}catch(_){}sync();}
-    button.onclick=()=>{if(state){close();return;}beforeStart();const data=capture();if(!data)return;state=model(data);sync();render();};
+    button.onclick=()=>{if(state){close();return;}beforeStart();const data=capture();if(!data)return;state=model(data);state.write=!!data.write;applied=-1;sync();render();};
     play.onclick=()=>{if(suppressClick){suppressClick=false;return;}togglePlay();};
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
@@ -119,21 +128,21 @@
     });
     // Панорамирование остаётся доступным; исходная раскраска в просмотре не редактируется.
     let pan=null,pinch=null,down=null;const pointers=new Map();
-    wrap.addEventListener('pointerdown',e=>{if(!state)return;e.stopImmediatePropagation();if(e.button!==0&&e.button!==1)return;
+    wrap.addEventListener('pointerdown',e=>{if(!state||state.write)return;e.stopImmediatePropagation();if(e.button!==0&&e.button!==1)return;
       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pan={id:e.pointerId,x:e.clientX,y:e.clientY,left:wrap.scrollLeft,top:wrap.scrollTop};
       down=pointers.size===1?{id:e.pointerId,x:e.clientX,y:e.clientY,button:e.button,moved:false}:null;
       if(pointers.size===2){const[a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale:config()?.scale||1};pan=null;}
       wrap.setPointerCapture(e.pointerId);e.preventDefault();},true);
-    wrap.addEventListener('pointermove',e=>{if(!state)return;e.stopImmediatePropagation();if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    wrap.addEventListener('pointermove',e=>{if(!state||state.write)return;e.stopImmediatePropagation();if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(down?.id===e.pointerId&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>3)down.moved=true;
       if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];if(pinch.distance>0)zoom?.(pinch.scale*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance,(a.x+b.x)/2,(a.y+b.y)/2);}
       else if(pan?.id===e.pointerId){wrap.scrollLeft=pan.left+pan.x-e.clientX;wrap.scrollTop=pan.top+pan.y-e.clientY;}},true);
-    for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);
+    for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state||state.write)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);
       // v5: щелчок левой без сдвига — покрасить исходный столбец клетки (плоский вид), затем снять цвета заново
       const d=down;down=null;if(type!=='pointerup'||!d||d.id!==e.pointerId||d.moved||d.button!==0||pointers.size||!tap)return;
       const c=config();if(!c||c.rp>=0)return;const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/c.scale),y=Math.floor((e.clientY-r.top)/c.scale),sx=state.srcAt(x);
       if(sx<0||y<0||y>=state.height||!tap(sx,y))return;const cap=capture();if(cap)state.recolour(cap.colour,cap.paint);render();},true);
-    wrap.addEventListener('contextmenu',e=>{if(state){e.preventDefault();e.stopImmediatePropagation();}},true);
+    wrap.addEventListener('contextmenu',e=>{if(state&&!state.write){e.preventDefault();e.stopImmediatePropagation();}},true);
     addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);
     return {get active(){return !!state;},close,render};
