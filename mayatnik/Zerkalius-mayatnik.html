@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.033. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.034. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.033</title>
+<title>Zerkalius Маятник — v0.034</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=33">
+<link rel="stylesheet" href="mayatnik-menu.css?v=34">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.033</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.034</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -195,7 +195,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateDown" disabled title="Сдвинуть шаблон вниз на одну строку по центральной оси">Сдвиг ↓</button>
     <button id="bTemplateUp" disabled title="Сдвинуть шаблон вверх на одну строку по центральной оси">Сдвиг ↑</button>
     <button id="bTemplateReset" disabled title="Вернуть высоту 100%, сдвиг 0 и непрозрачность 50%">Сброс шабл.</button>
-    <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть фигуру: без клавиш — вверх-вниз со следом, если он включён; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
+    <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть фигуру: без клавиш — вверх-вниз, исходное место инвертируется один раз; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
+    <button id="bTemplateTransfer" aria-pressed="false" disabled title="Переносить фигуру свободно без следа: снять её исходную заливку, сохранив биты узора. Shift — изменить размер">Без следа</button>
     <button id="bTemplatePaint" disabled title="Закрасить выбранным цветом только биты внутри цветного силуэта шаблона. Клики чередуют белые 1 и чёрные 0; пустой фон пропускается">Под ним: 1</button>
     <button id="bTemplateReturn" disabled title="Вернуть к исходному месту и размеру; следующий клик — обратно. Работает и когда шаблон за краем. То же, что двойной щелчок по шаблону">Туда / назад</button>
     <label title="Шаблоны, которые сейчас находятся на поле. Выбери тот, которым управляешь">на поле <select id="templateActive"><option value="">Нет шаблонов</option></select></label>
@@ -253,15 +254,15 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
   <p><strong>Несколько шаблонов:</strong> «Взять цвет» и кнопка «На поле» в библиотеке добавляют фигуру. Список «На поле» в группе «Шаблон» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
-  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз, с Shift — пропорциональное увеличение от центра (тяни от центра наружу), с Alt — свободный перенос без следа. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
+  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз: исходная заливка снимается, только на её месте биты один раз заменяются 1↔0. По пути поле не меняется. «Без следа» переносит фигуру свободно и снимает исходную заливку без изменения битов; так же работает Alt при переносе. Shift — пропорциональное увеличение от центра (тяни от центра наружу). «Инверт-след» отдельно включает прежнюю дорожку. Внизу показаны новые чёрные/белые пиксели на исходном месте и изменённые биты под текущей фигурой. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
   <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. «Назад» и «Вперёд» выбирают сохранённую фигуру, «На поле» добавляет её копию. «Скачать» выгружает свои шаблоны в JSON, «Загрузить» добавляет их из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу.</p>
 </dialog>
 
 <script src="mayatnik-core.js?v=2"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
-<script src="mayatnik-fill.js?v=33"></script>
-<script src="mayatnik-template.js?v=33"></script>
-<script src="mayatnik-paint-cache.js?v=33"></script>
+<script src="mayatnik-fill.js?v=34"></script>
+<script src="mayatnik-template.js?v=34"></script>
+<script src="mayatnik-paint-cache.js?v=34"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -281,7 +282,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let fillPreview=null,previewFrame=0,previewPoint=null;
   const previewCanvas=$('fillPreview'),previewG=previewCanvas.getContext('2d');
   let colourTemplate=null,templateVisible=false,templateStatsKey='',templateLastDown=0,templateOffsetX=0,templatePaintBit=1,templateMove=false,templateDragging=null,templateReturn=null;
-  let templateItems=[],templateSerial=0;
+  let templateItems=[],templateSerial=0,templateTransfer=false;
   let paintBits=null,fillRedo=[],templateHistoryCapture=null;
   const templateCanvas=$('colourTemplate'),templateG=templateCanvas.getContext('2d');
   let pictureStats = null, digitsRaf = 0;
@@ -633,7 +634,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function sceneSnapshot(sync=true){if(sync)rememberTemplate();return {active:colourTemplate?.id,items:templateItems.map(t=>({...t,view:{...t.view}}))};}
   function editSnapshot(sync=true){return {scene:sceneSnapshot(sync),paint:fillMask?.slice()||null,bits:paintBits?.slice()||null};}
   function finishEdit(before){
-    if(!before||!img)return;const after=sceneSnapshot(),sig=s=>JSON.stringify([s.active,s.items.map(t=>[t.id,t.name,t.view])]),sceneChanged=sig(before.scene)!==sig(after);
+    if(!before||!img)return;const after=sceneSnapshot(),sig=s=>JSON.stringify([s.active,s.items.map(t=>[t.id,t.name,t.view,t.paintSource,t.lifted])]),sceneChanged=sig(before.scene)!==sig(after);
     const ids=[],previous=[],next=[],bp=[],bn=[];
     if(before.paint||fillMask||before.bits||paintBits)for(let q=0;q<img.width*img.height;q++){const a=before.paint?.[q]||0,b=fillMask?.[q]||0,u=before.bits?.[q]??-1,v=paintBits?.[q]??-1;if(a!==b||u!==v){ids.push(q);previous.push(a);next.push(b);bp.push(u);bn.push(v);}}
     if(!sceneChanged&&!ids.length)return;
@@ -661,7 +662,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   };
   function rememberTemplate(){
     if(!colourTemplate)return;
-    colourTemplate.view={height:Number($('templateHeight').value),down:Number($('templateDown').value),alpha:Number($('templateAlpha').value),proportional:$('templateProportional').checked,trail:$('templateTrail').checked,x:templateOffsetX,visible:templateVisible,paintBit:templatePaintBit,returnTo:templateReturn};
+    colourTemplate.view={height:Number($('templateHeight').value),down:Number($('templateDown').value),alpha:Number($('templateAlpha').value),proportional:$('templateProportional').checked,trail:$('templateTrail').checked,transfer:templateTransfer,x:templateOffsetX,visible:templateVisible,paintBit:templatePaintBit,returnTo:templateReturn};
   }
   function fieldTemplateList(){
     const list=$('templateActive');list.replaceChildren();
@@ -676,7 +677,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function selectTemplate(t,persist=true){
     if(templateDragging)return;
     rememberTemplate();colourTemplate=t||null;
-    const v=t?.view||{};
+    const v=t?.view||{};templateTransfer=!!v.transfer;
     $('templateHeight').value=v.height??100;$('templateDown').value=v.down??0;$('templateAlpha').value=v.alpha??50;$('templateProportional').checked=!!v.proportional;$('templateTrail').checked=!!v.trail;
     templateOffsetX=v.x||0;templateVisible=!!t&&v.visible!==false;templatePaintBit=v.paintBit===0?0:1;templateReturn=v.returnTo||null;templateLastDown=Number($('templateDown').value);
     $('bTemplatePaint').textContent='Под ним: '+templatePaintBit;if(t)$('templateName').value=t.name||t.hex;
@@ -686,7 +687,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('templateName').addEventListener('change',()=>{if(!colourTemplate)return;colourTemplate.name=$('templateName').value.trim()||colourTemplate.hex;templateStatsKey='';fieldTemplateList();queueDigits();savePaint();});
   $('bTemplateClone').onclick=()=>{
     if(!colourTemplate)return;rememberTemplate();const original=colourTemplate;
-    const copy={...original,parts:original.parts.map(p=>({...p})),id:'field:'+Date.now()+':'+(++templateSerial),name:(original.name||original.hex)+' · копия',view:{...original.view,down:original.view.down+2,visible:true,returnTo:null}};
+    const copy={...original,paintSource:false,lifted:null,parts:original.parts.map(p=>({...p})),id:'field:'+Date.now()+':'+(++templateSerial),name:(original.name||original.hex)+' · копия',view:{...original.view,down:original.view.down+2,visible:true,returnTo:null}};
     templateItems.push(copy);selectTemplate(copy);templateMove=true;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();
   };
   $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
@@ -697,6 +698,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     $('bTemplateReturn').disabled=!colourTemplate;$('bTemplateSave').disabled=!colourTemplate;
     for(const id of ['bTemplateShow','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateMove','templateTrail','templateHeight','templateDown','templateAlpha','templateProportional'])$(id).disabled=!colourTemplate;
     $('bTemplateShow').setAttribute('aria-pressed',String(templateVisible));$('bTemplateMove').setAttribute('aria-pressed',String(templateMove));
+    $('bTemplateTransfer').disabled=!colourTemplate;$('bTemplateTransfer').setAttribute('aria-pressed',String(templateTransfer));
   }
   function templateOptions(){return {height:Number($('templateHeight').value)/100,down:Number($('templateDown').value)*RK,alpha:Number($('templateAlpha').value)/100,proportional:$('templateProportional').checked};}
   function templateRect(part,original=false,item=colourTemplate){const v=item?.view,o=item===colourTemplate?templateOptions():{height:(v?.height??100)/100,down:(v?.down??0)*RK,proportional:!!v?.proportional},r=MayatnikTemplate.rect(part.mask,part.axis,original?1:o.height,original?false:o.proportional,original?0:o.down);if(!original)r.x+=(item===colourTemplate?templateOffsetX:v?.x||0)*RK;return r;}
@@ -716,6 +718,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     return counts;
   }
+  function templateAntiBits(){
+    const counts={one:0,zero:0};if(!paintBits)return counts;
+    for(const part of colourTemplate.parts){const r=templateRect(part),x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
+      for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+        const bit=paintBits[y*img.width+x];if(bit<0||!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
+        const original=rasterBit(x,y,true);if(original>=0&&bit!==original)counts[bit?'one':'zero']++;
+      }
+    }
+    return counts;
+  }
   function templateStatus(){
     if(!colourTemplate)return;const o=templateOptions(),key=[colourTemplate.id,colourTemplate.name,templateItems.length,o.height,o.down,templateOffsetX,o.proportional,templateVisible].join(':');
     if(key===templateStatsKey)return;templateStatsKey=key;
@@ -723,7 +735,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const axes=colourTemplate.parts.map(part=>{const a=part.symmetry;return [['v','↕'],['h','↔'],['d','╲'],['u','╱']].filter(([k])=>a[k]).map(([,v])=>v).join(' ')||'нет';}).join(' / ');
     const fmt=v=>Number(v.toFixed(2)).toLocaleString('ru-RU');
     $('templateInfo').textContent=`${templateItems.indexOf(colourTemplate)+1}/${templateItems.length} · ${colourTemplate.name||colourTemplate.hex}${templateVisible?'':' · скрыт'}\nШирина ×${fmt(o.proportional?o.height:1)} · высота ×${fmt(o.height)}\nСдвиг X: ${fmt(templateOffsetX)} · вниз: ${fmt(o.down/RK)}\n${n(colourTemplate.pixels)} пикселей PNG\nИсходные 1: ${n(src.one)} · 0: ${n(src.zero)}\nПусто: ${n(src.empty)} · оси: ${axes}\nПод копией 1: ${n(dst.one)} · 0: ${n(dst.zero)}\nПусто: ${n(dst.empty)}`;
-    $('templateInfo').dataset.source=JSON.stringify(src);$('templateInfo').dataset.target=JSON.stringify(dst);
+    const anti=templateAntiBits(),lifted=colourTemplate.lifted;
+    $('templateInfo').textContent+=` · Антипиксели под фигурой: чёрных 0 — ${n(anti.zero)}, белых 1 — ${n(anti.one)}`;
+    if(lifted)$('templateInfo').textContent+=` · На исходном месте новых: чёрных 0 — ${n(lifted.zero)}, белых 1 — ${n(lifted.one)}`;
+    $('templateInfo').dataset.source=JSON.stringify(src);$('templateInfo').dataset.target=JSON.stringify(dst);$('templateInfo').dataset.anti=JSON.stringify(anti);
   }
   function paintTemplate(ctx,x0,y0,s){
     if(playing)return;rememberTemplate();
@@ -750,8 +765,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       parts.push({mask,canvas,p,ox,axis:mask.x+mask.width/2,symmetry:MayatnikTemplate.symmetry(mask)});
     }
     if(!parts.length){$('templateInfo').textContent='Нет пикселей выбранного цвета. Выбери цвет залитой фигуры в «Раскраске».';return;}
-    rememberTemplate();colourTemplate={parts,hex,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
-    templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`);templateSync();queueDigits();savePaint();
+    rememberTemplate();templateTransfer=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
+    templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`);templateSync();queueDigits();savePaint();
     $('templateName').value=`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`;saveTemplateLibrary(true);
   };
   $('bTemplateShow').onclick=()=>{templateVisible=!templateVisible;templateSync();templateStatus();queueDigits();savePaint();};
@@ -765,7 +780,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function changeTemplate(id,value){
     templateReturn=null;
     const el=$(id),min=Number(el.min),max=Number(el.max);el.value=clampInt(value,min,max,id==='templateHeight'?100:0);
-    if(id==='templateDown'){const next=Number(el.value);if($('templateTrail').checked&&colourTemplate&&next!==templateLastDown&&(!templateDragging||templateDragging.mode==='shift'))traceTemplate(templateLastDown,next);templateLastDown=next;}
+    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&next!==templateLastDown){liftTemplateSource(!templateTransfer&&templateDragging?.mode!=='move');if($('templateTrail').checked&&(!templateDragging||templateDragging.mode==='shift'))traceTemplate(templateLastDown,next);}templateLastDown=next;}
     templateStatsKey='';queueDigits();if(!templateDragging)savePaint();
   }
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!=='')changeTemplate(id,$(id).value);});
@@ -814,13 +829,37 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     if(!templateDragging)trailUndo(before,from);draw();
   }
-  $('bTemplateMove').onclick=()=>{templateMove=!templateMove;if(templateMove){fillMode=false;autoVertical=0;autoSync();fillSync();}templateSync();};
-  $('templateTrail').onchange=()=>savePaint();
+  $('bTemplateMove').onclick=()=>{templateMove=!templateMove;if(templateMove){templateTransfer=false;$('templateTrail').checked=false;fillMode=false;autoVertical=0;autoSync();fillSync();}templateSync();savePaint();};
+  $('templateTrail').onchange=()=>{if($('templateTrail').checked)templateTransfer=false;templateSync();savePaint();};
+  function liftTemplateSource(invert){
+    if(!colourTemplate||colourTemplate.paintSource===false)return;
+    const counts={one:0,zero:0};
+    if(fillMask)for(const part of colourTemplate.parts){const m=part.mask;if(!Number.isInteger(m.x)||!Number.isInteger(m.y))continue;
+      for(let y=0;y<m.height;y++)for(let x=0;x<m.width;x++){
+        const colour=m.data[y*m.width+x],px=m.x+x,py=m.y+y;
+        if(!colour||px<0||py<0||px>=img.width||py>=img.height)continue;
+        const q=py*img.width+px;if(fillMask[q]!==colour)continue;
+        fillMask[q]=0;
+        if(invert){const bit=rasterBit(px,py);if(bit>=0){if(!paintBits)paintBits=new Int8Array(img.width*img.height).fill(-1);paintBits[q]=1-bit;counts[bit?'zero':'one']++;}}
+      }
+    }
+    if(fillMask&&!fillMask.some(Boolean))fillMask=null;
+    colourTemplate.paintSource=false;colourTemplate.lifted=counts;fillBits=null;templateStatsKey='';draw();fillSync();
+  }
+  $('bTemplateTransfer').onclick=()=>{
+    if(!colourTemplate||templateDragging)return;
+    templateTransfer=!templateTransfer;
+    if(templateTransfer){
+      $('templateTrail').checked=false;templateMove=true;templateVisible=true;fillMode=false;autoVertical=0;stop();target=k;
+      liftTemplateSource(false);previewPoint=null;clearFillPreview();axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();
+    }
+    templateStatsKey='';autoSync();fillSync();templateSync();draw();savePaint();
+  };
   function paintSnapshot(){
     if(!f||!img)return null;
     rememberTemplate();
     return {schema:2,st:{...st},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
-      activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
+      activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
@@ -933,7 +972,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const axis=(geo.anchor-VX+ox+.5+(Number(src.center)||0))*RK,mask={x:axis-width/2,y:Math.round((src.y||0)*factor),width,height,data,count},canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
       canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer),width,height),0,0);parts.push({p,ox,axis,mask,canvas,symmetry:MayatnikTemplate.symmetry(mask)});
     }
-    rememberTemplate();colourTemplate={parts,hex:shape.hex,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
+    rememberTemplate();templateTransfer=false;colourTemplate={parts,hex:shape.hex,paintSource:false,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
     $('templateHeight').value=shape.height||100;$('templateDown').value=shape.down||0;$('templateProportional').checked=!!shape.proportional;templateOffsetX=shape.x||0;templateLastDown=Number($('templateDown').value);templateReturn=null;
     templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');fillSync();autoSync();templateStatsKey='';registerTemplate(name);templateSync();queueDigits();finishEdit(editBefore);savePaint();
   }
@@ -1431,7 +1470,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(templateMove&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
       const hit=hitTemplate(x,y),part=hit?.part;if(hit)selectTemplate(hit.item,false);
       if(part){const box=templateRect(part),cx=r.left+(box.x+box.width/2)/RK*scale(),cy=r.top+(box.y+box.height/2)/RK*scale();
-        templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),proportional:$('templateProportional').checked,part,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:e.altKey?'move':e.shiftKey?'scale':'shift',editBefore:editSnapshot()};
+        templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),proportional:$('templateProportional').checked,part,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:e.altKey?'move':e.shiftKey?'scale':templateTransfer?'move':'shift',editBefore:editSnapshot()};
         wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');clearFillPreview();e.preventDefault();return;}}
     if (e.button !== 0 && e.button !== 1) return;
     if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
@@ -1441,7 +1480,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   wrap.addEventListener('pointermove', e => {
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
-      if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;d.moved=true;
+      if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
+      if(!d.moved&&d.mode==='move')liftTemplateSource(false);d.moved=true;
       if(d.mode==='scale'){
         const ratio=Math.max(12,Math.hypot(e.clientX-d.cx,e.clientY-d.cy))/d.radius;
         $('templateProportional').checked=true;changeTemplate('templateHeight',d.height*ratio);
@@ -1514,7 +1554,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
   if (st.zsnap && st.zoom !== 'fit') st.zoom = snap2(st.zoom);   // v0.015: сохранённый прежде плавный масштаб — к ближайшему 2^k
   // Сохраняем всю протяжку одним действием, отдельные кнопки — одним щелчком.
-  const historyButtons=['bTemplateTake','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
+  const historyButtons=['bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
   function captureEdit(){if(img)templateHistoryCapture=editSnapshot(false);}
   function completeEdit(){const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
@@ -1523,8 +1563,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/menu-icons.js?v=16"></script>
+<script src="../_js/menu-icons.js?v=17"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=33"></script>
+<script src="mayatnik-menu.js?v=34"></script>
 </body>
 </html>
