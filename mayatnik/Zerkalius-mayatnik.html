@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.096. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.097. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.096</title>
+<title>Zerkalius Маятник — v0.097</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,19 +107,21 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=92">
+<link rel="stylesheet" href="mayatnik-menu.css?v=97">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.096</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.097</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
+  <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
   <p class="sub">XOR-маятник из Excel (ТРЕУГСЖАТИЯ): каждая вершина пускает вниз конус правила 90, клетка = старое ⊕ левый ⊕ правый родитель. Вершины идут якорь, −1, +1, −2, +2…</p>
 </header>
 <nav id="mayatnikRail" aria-label="Управление маятником"></nav>
+<button id="mayZenOut" class="gz-hx" title="Выйти из дзена (или щелчок колёсиком по полю, Esc)"><span>◎</span></button>
 <div class="bar">
   <div class="grp">
     <label>строк <input id="rows" type="number" min="8" max="4096" step="1" value="512"></label>
@@ -2109,8 +2111,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(lineDrag?.id===e.pointerId){lineDrag=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
     if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);else if(!drag.moved&&!drag.duplicate&&mirrorLine&&e.type==='pointerup')mirrorAcrossLine();finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
+    const midTap = e.type === 'pointerup' && e.button === 1 && pan && !pan.moved && !pinch && pts.size === 1;   // v0.097: щелчок колёсиком без сдвига — дзен
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
     if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
+    if(midTap){zenToggle();return;}
     if(tap&&f&&(fillMode||autoVertical)){fillAt(e.clientX,e.clientY,e.shiftKey);return;}
     if (!tap || !f || !(e.shiftKey || axisPicking || st.sym) ) return;
     const r = cv.getBoundingClientRect(), half=halfOf((e.clientX-r.left)/r.width*dispW());if(!half)return;
@@ -2199,12 +2203,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     show(col){stolbCol=col;if(f)draw();},
     onClose(){stolbCol=null;$('fillInfo').textContent='';if(f)draw();}
   });
+  // v0.097: дзен — на экране только поле (и пульты свёртки / прохода, если включены). Кнопка в шапке, щелчок колёсиком по полю, Esc.
+  function zenToggle(on=!document.body.classList.contains('may-zen')){
+    document.body.classList.toggle('may-zen',on);$('mayZen').setAttribute('aria-pressed',String(on));
+    if(f){canvasSize();layout();draw();}
+  }
+  $('mayZen').onclick=()=>zenToggle();$('mayZenOut').onclick=()=>zenToggle(false);
+  wrap.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});   // колёсико — без автопрокрутки браузера
+  addEventListener('keydown',e=>{if(e.code==='Escape'&&document.body.classList.contains('may-zen')&&!e.target.closest?.('input,select,textarea'))zenToggle(false);});
   writeUI();restorePaint().then(ok=>{if(!ok)build();});
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=92"></script>
+<script src="mayatnik-menu.js?v=97"></script>
 </body>
 </html>
