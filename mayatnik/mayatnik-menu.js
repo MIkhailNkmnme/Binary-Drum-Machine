@@ -1,4 +1,4 @@
-/* Маятник v0.064: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.065: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
