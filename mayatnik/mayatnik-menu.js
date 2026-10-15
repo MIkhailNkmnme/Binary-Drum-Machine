@@ -1,4 +1,4 @@
-/* Маятник v0.061: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.062: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -63,7 +63,7 @@
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
-      button('bPng', 'image'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
+      button('bPng', 'image'), button('bRec', 'record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   const status = $('mayatnikStatus');
@@ -140,8 +140,12 @@
   { const e = $('zTop'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'zTop';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
+  // v0.062: запись видео — на холсте отдельной группой.
+  { const gRec = ptGroup('Видео'), e = $('bRec'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'bRec';
+    const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'record'); b.append(mark); b.onclick = () => e.click();
+    toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись' };
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     const t = document.createElement('b'); t.className = 'pt-t ' + (k % 2 ? 'dn' : 'up'); t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
   document.body.append(tools);
