@@ -1,10 +1,11 @@
-<!-- Zerkalius Маятник — v0.037. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.038. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.037</title>
+<link rel="icon" type="image/png" href="logo-horrohorius.png">
+<title>Zerkalius Маятник — v0.038</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=37">
+<link rel="stylesheet" href="mayatnik-menu.css?v=38">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.037</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.038</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -1036,10 +1037,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const placed=templateItems.filter(t=>t.libraryId===item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=card;card.className='gz-hx template-entry';card.tabIndex=0;card.setAttribute('role','button');card.classList.toggle('gz-off-dis',!img);
       button.setAttribute('aria-pressed',String(visible));if(visible)button.classList.add('gz-on');
       button.title=visible?'Скрыть с поля; правой кнопкой — переименовать':'Показать на поле; правой кнопкой — переименовать';
-      const thumb=document.createElement('canvas'),part=item.shape.parts[0];thumb.width=32;thumb.height=40;thumb.setAttribute('aria-hidden','true');
-      const mask=document.createElement('canvas');mask.width=part.width;mask.height=part.height;const pixels=Uint32Array.from(part.data);mask.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels.buffer),part.width,part.height),0,0);
-      const g=thumb.getContext('2d'),scale=Math.min(32/part.width,40/part.height);g.imageSmoothingEnabled=false;g.drawImage(mask,(32-part.width*scale)/2,(40-part.height*scale)/2,part.width*scale,part.height*scale);
-      const label=document.createElement('span');label.textContent=item.name+(visible?' · на поле':'');button.append(thumb,label);
+      // v0.038: одна строка — номер, имя и кнопки; миниатюры нет, «на поле» показывает подсветка кнопки.
+      const label=document.createElement('span');label.className='gz-nm';label.textContent=`${templateLibrary.indexOf(item)+1}. ${item.name}`;button.title=item.name+' — '+button.title;button.append(label);
       button.onclick=e=>{if(!img||e.target.closest('.template-entry-actions'))return;toggleLibraryTemplate(item);};button.onkeydown=e=>{if(e.target===button&&(e.key==='Enter'||e.key===' ')){e.preventDefault();button.click();}};button.oncontextmenu=e=>{e.preventDefault();renameEditor(item.name,e.clientX,e.clientY,name=>renameLibraryItem(item,name));};
       const actions=document.createElement('div');actions.className='template-entry-actions';
       const action=(kind,title,fallback,run)=>{const b=document.createElement('button');b.type='button';b.title=title;b.setAttribute('aria-label',title);b.dataset.miIcon=kind;
@@ -1749,6 +1748,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=37"></script>
+<script src="mayatnik-menu.js?v=38"></script>
 </body>
 </html>
