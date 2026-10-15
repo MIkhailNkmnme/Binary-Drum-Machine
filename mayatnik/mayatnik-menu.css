@@ -229,6 +229,7 @@ header #paintTools #templateActions>.gz-hx{display:none}
 #mayFoldPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
 #mayFoldPanel .may-fold-steps button{flex:none;padding:3px 8px}
 #mayFoldPanel .may-fold-steps output{text-align:center}
+#mayFoldPanel .may-fold-pair{display:inline-flex;gap:4px;align-items:center;flex:none;white-space:nowrap}   /* v0.101 */
 #mayFoldPanel .may-fold-frame{display:block;box-sizing:border-box;width:100%;margin:4px 0}
 #mayFoldCanvas{position:fixed;z-index:3;pointer-events:none;background:transparent}
 body.may-fold-active #cv{opacity:0!important}

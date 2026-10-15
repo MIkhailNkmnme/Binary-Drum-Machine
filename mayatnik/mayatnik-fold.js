@@ -1,6 +1,7 @@
 /* Горизонтальная XOR-свёртка: правая часть влево, левая вправо, к неподвижному центру. v1.
    v2: биты едут со своими цветами картинки (краска, «Цвета», «Очки», «Неизменные» — что было на поле при старте),
-   colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»). */
+   colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»).
+   v4: «парой» — шаг сразу правой и левой частью (два хода модели за один, если они с разных сторон). */
 (() => {
   'use strict';
   function model({width,height,center,data,colour,paint}) {
@@ -13,6 +14,7 @@
     const parity=new Uint8Array(height),count=new Uint32Array(height);
     for(let y=0;y<height;y++){const v=data[y*width+center];if(v>=0){parity[y]=v;count[y]=1;}}
     let frame=0;
+    const bounds=[0];for(let f=0;f<moves.length;){const side=i=>moves[i]>center;f+=f+1<moves.length&&side(f)!==side(f+1)?2:1;bounds.push(f);}   // v4: концы шагов «парой»
     return {width,height,center,max:moves.length,get frame(){return frame;},
       seek(value){const target=Math.max(0,Math.min(moves.length,Math.round(value)));
         while(frame!==target){const forward=frame<target,col=moves[forward?frame:frame-1];
@@ -25,22 +27,31 @@
       // v2: откуда пришла клетка — её цвет на картинке при старте (центр — свой, золотой)
       colourAt(x,y){if(x===center||!colour)return 0;const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?0:colour[y*width+sx];},
       paintAt(x,y){if(x===center||!paint)return 0;const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?0:paint[y*width+sx];},
-      nextSide(){return frame<moves.length?(moves[frame]>center?'правая ←':'левая →'):'свёрнуто';}
+      nextSide(){return frame<moves.length?(moves[frame]>center?'правая ←':'левая →'):'свёрнуто';},
+      // v4: ход парой из кадра f в сторону d: два соседних хода с разных сторон — за один шаг; сторона кончилась — по одному
+      // границы пар считаются один раз от начала — назад идём по тем же парам, что и вперёд
+      pairStep(f,d){if(d>0){for(const b of bounds)if(b>f)return b;return moves.length;}for(let i=bounds.length-1;i>=0;i--)if(bounds[i]<f)return bounds[i];return 0;}
     };
   }
   function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom}) {
     const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
-    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
+    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
     const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
     const rate=()=>rateStep<=0?0:.1*10**((rateStep-1)/100);
     try{const saved=localStorage.getItem('mayatnik-fold-rate'),n=Number(saved);if(saved!==null&&n>=0&&n<=401)rateStep=n;}catch(_){}
+    // v4: «парой» — по умолчанию включено, выбор помнится
+    const pairBox=panel.querySelector('[data-fold="pair"]'),pair=()=>pairBox.checked;
+    const pairSaved=()=>{try{return localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){return true;}};
+    const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
     function sync(){
       button.setAttribute('aria-pressed',String(!!state));panel.hidden=layer.hidden=!state;
       document.body.classList.toggle('may-fold-active',!!state);
       if(!state)return;
-      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`СвёрткаГориз · ${state.frame}/${state.max} · ${state.nextSide()}`;
+      const two=pair()&&state.pairStep(state.frame,1)-state.frame===2;
+      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`СвёрткаГориз · ${state.frame}/${state.max} · ${two?'обе →←':state.nextSide()}`;
+      panel.querySelector('[data-fold="back"]').textContent=pair()?'−2':'−1';panel.querySelector('[data-fold="next"]').textContent=pair()?'+2':'+1';
       panel.querySelector('[data-fold="back"]').disabled=state.frame===0;panel.querySelector('[data-fold="next"]').disabled=state.frame===state.max;
       play.textContent=running?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(running));speed.value=rateStep;
       for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]]){const b=pult.querySelector(cls);b.classList.toggle('on',dir===d);b.setAttribute('aria-pressed',String(dir===d));}
@@ -79,7 +90,7 @@
     function close(){pause();state=null;sync();onClose?.();}
     function seek(n){if(!state)return;state.seek(n);render();}
     function tick(now){if(!running||!state)return;if(last)credit+=Math.min(.25,(now-last)/1000)*rate();last=now;
-      const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(state.frame+dir*n);}
+      const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(adv(state.frame,dir,n));}
       if((dir>0&&state.frame===state.max)||(dir<0&&state.frame===0)){pause();return;}
       timer=requestAnimationFrame(tick);
     }
@@ -89,7 +100,8 @@
     play.onclick=()=>{if(suppressClick){suppressClick=false;return;}togglePlay();};
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
-    for(const [action,d]of [['back',-1],['next',1]])panel.querySelector(`[data-fold="${action}"]`).onclick=()=>{pause();seek(state.frame+d);};
+    for(const [action,d]of [['back',-1],['next',1]])panel.querySelector(`[data-fold="${action}"]`).onclick=()=>{pause();seek(adv(state.frame,d));};
+    pairBox.checked=pairSaved();pairBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-pair',pairBox.checked?'1':'0');}catch(_){}sync();};
     timeline.oninput=()=>{pause();seek(Number(timeline.value));};
     play.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();play.setPointerCapture(e.pointerId);suppressClick=false;const x=e.clientX,start=rateStep;
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.abs(ev.clientX-x)>3)suppressClick=true;if(suppressClick)setRate(start+(ev.clientX-x)*401/ZerkPult.trackWidth(pult));};
@@ -107,7 +119,7 @@
       else if(pan?.id===e.pointerId){wrap.scrollLeft=pan.left+pan.x-e.clientX;wrap.scrollTop=pan.top+pan.y-e.clientY;}},true);
     for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);},true);
     wrap.addEventListener('contextmenu',e=>{if(state){e.preventDefault();e.stopImmediatePropagation();}},true);
-    addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(state.frame+(e.code==='ArrowRight'?1:-1));}}},true);
+    addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);
     return {get active(){return !!state;},close,render};
   }
