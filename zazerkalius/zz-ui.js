@@ -27,7 +27,7 @@ const ZZ_BG = (() => { try { const bg = new URLSearchParams(location.search).get
 const ZZ_PRESET_FULL = !!ZZ_PRESET && !ZZ_BG;   // v0.1055: Solo + bg=0 — рабочие кнопки и раскладка пресета
 if (window.ZZ_LINK_DECODE && !ZZ_PRESET) zzLinkOpen(window.ZZ_LINK_DECODE);   // v0.650: ссылка #z=… — раскрыть и открыть заново (zzLinkOpen)
 window.addEventListener("hashchange", () => { if (location.hash.indexOf("#z=") === 0) location.reload(); });   // ссылку вставили в адрес этой же вкладки — браузер страницу не грузит, грузим сами
-const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "rowsFolded", "rowsWRestore", "ctw", "cgrpPos", "cgrpSize", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "padFreePos", "padViewportPos", "tpl", "tplRef", "pins", "coneBtns"];   // v0.995: свёрнутая ширина поля — часть раскладки; конусу одному (?solo=cone) — ни к чему
+const ZZ_PRESET_LAYOUT = ["home", "win", "dockOrder", "z", "layoutVer", "rowsH", "rowsW", "rowsFolded", "rowsWRestore", "ctw", "cgrpPos", "cgrpSize", "coneSliceTableHeight", "cgrpDock", "cgrpMove", "paneW", "paneWUser", "padPos", "padFreePos", "padViewportPos", "tpl", "tplRef", "pins", "coneBtns"];   // v0.995: свёрнутая ширина поля — часть раскладки; конусу одному (?solo=cone) — ни к чему
 /* v0.564, «индекс тоже — тормозит он на мобиле»: фон хаба — этот конус в невидимом iframe (visibility: hidden — звук нот играет в нём). Пока его не видно,
    конус не рисуется (кручение и звук идут), окна, которых нет на странице, не считаются, служебные таймеры групп не крутятся */
 const zzBgHidden = () => { if (!ZZ_BG) return false; try { const f = window.frameElement; return !!f && getComputedStyle(f).visibility === "hidden"; } catch (e) { return false; } };
@@ -82,6 +82,11 @@ const Z = {
   win: {},          // id → { x, y, w, h, collapsed, hint }
   helpOn: true,                         // совместимость: окно «Подсказки» теперь обычное окно из списка
   tipsOn: true,                         // v0.1009: ? в верхнем меню включает / отключает всплывающие подсказки
+  coneSliceStop5: true,                 // Нарезка: по умолчанию остановиться после полного прохождения вырезов К5
+  coneSliceImmediate: false,            // Линия: сразу продолжать нарезку через вырезы наружу до предела
+  coneSliceOneRing: false,              // Линия: вырез только в одном кольце, затем автоматический переход к следующему
+  coneSliceDual: false,                 // Необязательное сравнение: По 1 / Встр.Бит с общими настройками
+  coneSliceSourceSpin: false,           // К0: линия вращается с половиной угловой скорости К1
   z: 10,
 };
 const ZZ_ROWS0 = Z.rows.slice();   // v0.123: начальный столбик — до того, как load() положит сохранённый
@@ -1259,6 +1264,7 @@ function rowsLockAllPlace(){   // v0.169: общий замок — кнопко
    меняет этот бит 0 ↔ 1 в самой строке (↩ вернёт; замок строк ⛔ не пускает). Бит — по углу с учётом поворота всего конуса и кольца. */
 let coneBitHover = null;
 function coneBitAt(e){
+  if (Z.coneBallArm === "slice" && window.zzBallSliceBitAt) return window.zzBallSliceBitAt(e);
   if (Z.cone3d || !coneGeom) return null;
   const h = coneRing(e); if (h === -1 || h.fill !== undefined) return null;
   if (h.i === 0 && coneSunHalf()) return null;   // v0.736, «при наведении на 1 бит, когда он полукруг, всё остальное пропадает — убери этот эффект»: полукруг строки 1 наведением не берётся
@@ -1283,7 +1289,7 @@ function coneFillHoverAt(e){
 function rowBitMark(){
   if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
   CSS.highlights.delete("conebit");
-  const b = coneBitHover; if (!b) return;
+  const b = coneBitHover; if (!b || b.scope?.mode === "obit") return;
   const bx = $("rowList").querySelector('.rw[data-r="' + b.i + '"] .bx'); if (!bx) return;
   const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
   while ((nd = w.nextNode())) {
@@ -1295,6 +1301,7 @@ function rowBitMark(){
   }
 }
 function coneBitFlip(b){
+  if (b.scope && window.zzBallSliceBitFlip) { window.zzBallSliceBitFlip(b); return; }
   const s = Z.rows[b.i]; if (!s || b.j >= s.length) return;
   try { snapshot(); } catch (err) { if (err.message === "ZZ_LOCK") return; throw err; }
   const v = s[b.j] === "1" ? "0" : "1";
@@ -7071,17 +7078,18 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
   const tempoBox = $("coneTransportTempo");
   const G = coneGeom, axis = coneAxisScr(), centre = axis ? axis.x - hr.left + scrollLeft : cr.left - hr.left + scrollLeft + (G && G.dpr ? G.cx / G.dpr : cr.width / 2);
   const rw = b.offsetWidth || 60, rh = b.offsetHeight || 30, gap = 4;
-  const bottom = cr.bottom - hr.top + scrollTop - 18;   // лента перемотки теперь на горизонтальной оси — низ холста отдан пульту
-  /* «перемести на ось горизонт»: лента перемотки — на горизонтали через центр конуса, в теле окна (поверх верхнего слоя рисунка) */
+  const resetY = cr.bottom - hr.top + scrollTop - rh - 2;
+  const bottom = resetY - gap;   // v0.1194: сброс — у самого низа, под пультом скорости
+  const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
+  /* v0.1193: лента перемотки — у правого края холста, на горизонтали через центр конуса */
   const tape = document.getElementById("coneTapeBox");
   if (tape) { if (tape.parentElement !== host) host.appendChild(tape);
     const ay = axis ? axis.y - hr.top + scrollTop : cr.top - hr.top + scrollTop + (G && G.dpr ? G.cy / G.dpr : cr.height / 2);
-    const l = centre.toFixed(1) + "px", t = (ay - (tape.offsetHeight || 36) / 2).toFixed(1) + "px";
+    const l = Math.max(left, edge - tape.offsetWidth).toFixed(1) + "px", t = (ay - (tape.offsetHeight || 36) / 2).toFixed(1) + "px";
     if (tape.style.left !== l) tape.style.left = l; if (tape.style.top !== t) tape.style.top = t; if (tape.style.bottom !== "auto") tape.style.bottom = "auto"; }
-  const left = cr.left - hr.left + scrollLeft + 4, edge = cr.right - hr.left + scrollLeft - 4;
   const put = (e, X, Y) => { const l = X.toFixed(1) + "px", t = Y.toFixed(1) + "px"; if (e.style.left !== l) e.style.left = l; if (e.style.top !== t) e.style.top = t; };
   const x = Math.max(left, Math.min(edge - rw, centre - rw / 2));
-  /* «ползунок скорости вращения вниз»: пульт — у самого низа холста, ⌖✕ сброс — над ним */
+  /* Пульт скорости — над сбросом, весь блок остаётся у нижнего края холста. */
   let pultTop = bottom, pultLeft = x, pultRight = x + rw;
   if (tempoBox) {
     const tw = Math.max(0, Math.min(480, edge - left));   // пульт — по оси конуса, не шире 480 и не за краями холста
@@ -7091,7 +7099,6 @@ function c3RstPlace(){   // v0.811: ⌖✕ сброс — на вертикал�
     put(tempoBox, X, pultTop);
     tempoTrackSync();
   }
-  const resetY = pultTop - gap - rh;
   put(b, x, resetY);
   // v0.931: режимы справа от сброса; не влезают — над пультом.
   const ms = document.getElementById("c3Modes");
@@ -7373,6 +7380,7 @@ function setupCone(){
      над конусом не всплывает. Ctrl + щелчок — выделить кольцо, как было */
   cv.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.button !== 2) return;
+    if (e.button === 2 && Z.coneBallArm === "slice") { coneRDown = [e.clientX,e.clientY]; e.preventDefault(); return; }
     const rb = e.button === 2; if (rb) coneRDown = [e.clientX, e.clientY];
     if (Z.cone3d) {   // v0.082: в объёме — тянешь: вращать (с Ctrl — сдвиг)
       e.preventDefault(); cv.setPointerCapture(e.pointerId); cv.style.cursor = e.ctrlKey || rb ? "move" : "grabbing";
@@ -7499,8 +7507,9 @@ function setupCone(){
   cv.addEventListener("pointermove", (e) => {
     if (!coneDrag) {   // наведение: обвести кольцо и его строку в поле
       const h = coneRing(e), i = h === -1 || h.fill !== undefined || Z.coneNoPick || h.i === 0 ? -1 : h.i;   /* v0.749, «убери эффект, когда на первое кольцо навожу — всё остальное пропадает»: кольцо строки 1 наведением не берётся вовсе (ни обводки, ни рамки бита, ни сканера) */   // v0.736: и полукруг строки 1 — без обводки   // v0.281: 🚫 выбор — и без обводки при наведении
-      const b0 = coneBitAt(e), b = (b0 && b0.i === 0 ? null : b0) || coneFillHoverAt(e), bc = (b ? b.i + ":" + b.j : "") !== (coneBitHover ? coneBitHover.i + ":" + coneBitHover.j : "");   // v0.173
-      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · правой кнопкой (или Ctrl) тянуть — крутить кольцо` : ""; }
+      const b0 = coneBitAt(e), b = (b0 && b0.i === 0 && Z.coneBallArm !== "slice" ? null : b0) || coneFillHoverAt(e);
+      const bitKey = bit => bit ? (bit.scope?.mode || "single") + ":" + bit.i + ":" + bit.j + ":" + (bit.value ?? "") : "", bc = bitKey(b) !== bitKey(coneBitHover);
+      if (bc) { coneBitHover = b; rowBitMark(); cv.title = b && b.fill ? `За чертой, ячейка ${b.j + 1}` : b ? Z.coneBallArm === "slice" ? `${b.label || "Нарезка"} · кольцо ${b.i + 1}, бит ${b.j + 1}: ${b.value ?? Z.rows[b.i]?.[b.j]} · правый щелчок — 0 → 1 → 0` : `Строка ${b.i + 1}, бит ${b.j + 1}: ${Z.rows[b.i][b.j]} · Shift + щелчок — сменить · Ctrl + щелчок — выделить кольцо · правой кнопкой (или Ctrl) тянуть — крутить кольцо` : ""; }
       if (i !== coneHover) { coneHover = i; coneHoverRow(i); renderCone(); } else if (bc) renderCone();
       return;
     }
@@ -7654,6 +7663,7 @@ function setupCone(){
   const autoStep = (dt) => {
     const ballBefore = window.zzBallBeforeSpin ? window.zzBallBeforeSpin() : null;
     try {
+    if (ballBefore?.sliceDual) return true;   // Оба центра продвигают свои часы в zzBallAfterSpin.
     const sp = Z.coneAutoSp ?? 30, m = Z.coneSpinMode || "all";   // v0.104: режимы кручения
     if (Z.coneSpinMag) {
       if (!coneMagAutoStep(dt)) { autoSet(false); say("🧲 Для текущего кольца нет следующего магнита при выбранных настройках."); return false; }
@@ -7855,7 +7865,7 @@ function setupCone(){
      а в историю идут все шаги: «шаг ↷», «½ шаг», |◀ ▶| и нажатие, которое только опускает черту (lasRec). Только в памяти страницы, до 500 шагов */
   const lasHist = [];
   const lasSnap = () => JSON.stringify({ rows: Z.rows.slice(), hid: hidRows(Z.lane).slice(), cur: Z.cur | 0, ph: Z.coneSpinPh || 0, spin: Z.coneSpin || 0, aim: Z.coneAimRot || 0, rot: coneRot.slice(),
-    exact:posCopy(Z.motionExact),ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null, faces:window.zzFaceState ? window.zzFaceState() : null });
+    exact:posCopy(Z.motionExact),ft: Z.coneFillTurn || 0, vh: Z.voidHits || null, fill: Z.fillCells ?? null, ff: Z.fillFree ?? null, log: Z.coneLog || null, n: Z.coneClockN || 0, wall: coneWallWas === undefined ? "__u" : coneWallWas, wm: coneWallWasM || {}, sun: coneSunWas ? [...coneSunWas] : null, faces:window.zzFaceState ? window.zzFaceState() : null,slice:window.zzBallSliceTapeState ? window.zzBallSliceTapeState() : null });
   const lasKey = () => JSON.stringify([Z.rows, Z.coneSpinPh || 0, Z.coneSpin || 0, Z.coneFillTurn || 0, Z.voidHits || null, Z.fillCells ?? null, Z.fillFree ?? null]);
   function lasRec(fn){ tapeRec(); const b = lasSnap(), k0 = lasKey(); coneAutoDepth++; try { fn(); } finally { coneAutoDepth--; } if (lasKey() !== k0) { lasHist.push(b); if (lasHist.length > 500) lasHist.shift(); } tapeRec(); }
   /* v0.720, «крутить, когда с солнцем T−1, — например, надо ползунок показать внизу в середине, длинный, и на нём чтобы можно было перемещать взад-вперёд,
@@ -7866,28 +7876,30 @@ function setupCone(){
   const tape = [], tapeSt = []; let tapeHead = -1, tapeKey = "", tapeAt = -1;
   // v0.1084: история обычного кручения тоже доступна, независимо от солнца и вида щелей.
   const tapeOn = () => coneFlat();
-  const tapeK = () => JSON.stringify([Z.rows.length, Z.rows[Z.rows.length - 1], Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0, window.zzFaceState ? window.zzFaceState() : null]);
+  const tapeK = () => JSON.stringify([Z.rows, Z.fillCells ?? null, Z.fillFree ?? null, Z.voidHits || null, Z.coneFillTurn || 0, coneRot.join(","), Z.coneAimRot || 0, window.zzFaceState ? window.zzFaceState() : null,window.zzBallSliceTapeKey ? window.zzBallSliceTapeKey() : null]);
   function tapeUi(){
     const box = $("coneTapeBox"), el = $("coneTape"); if (!box || !el) return;
     box.classList.toggle("on", tapeOn());
     el.disabled = tape.length < 2; el.max = Math.max(0, tape.length - 1); el.value = Math.max(0, tapeHead);
   }
   function tapeClear(){ tape.length = 0; tapeSt.length = 0; tapeHead = -1; tapeKey = ""; tapeAt = -1; tapeUi(); }
+  window.zzConeTapeClear = tapeClear;
   function tapeRec(){
     if (!tapeOn()) return;
     if (tapeHead >= 0 && tapeHead < tape.length - 1) { tape.length = tapeHead + 1; tapeSt.length = tape[tapeHead].s + 1; }   // отмотали и крутят дальше — впереди стереть
     const k = tapeK();
     if (k !== tapeKey || !tapeSt.length) { tapeSt.push(lasSnap()); tapeKey = k; }
-    const si = tapeSt.length - 1, ph = Z.coneSpinPh || 0, sp = Z.coneSpin || 0, L = tape[tape.length - 1];
-    if (!L || L.ph !== ph || L.sp !== sp || L.s !== si) { tape.push({ph,sp,s:si,phaseExact:coneMotionClock().phase.text(),degreesExact:coneMotionClock().degrees.text()}); if (tape.length > 60000) { tape.splice(0, 20000); } }
+    const si = tapeSt.length - 1, ph = Z.coneSpinPh || 0, sp = Z.coneSpin || 0, L = tape[tape.length - 1], sliceFrame = JSON.stringify(window.zzBallSliceTapeFrame ? window.zzBallSliceTapeFrame() : null);
+    if (!L || L.ph !== ph || L.sp !== sp || L.s !== si || L.sliceFrame !== sliceFrame) tape.push({ph,sp,s:si,phaseExact:coneMotionClock().phase.text(),degreesExact:coneMotionClock().degrees.text(),sliceFrame});
     tapeHead = tape.length - 1; tapeAt = si;
     const el = $("coneTape"); if (el && $("coneTapeBox").classList.contains("on")) { el.disabled = tape.length < 2; el.max = tape.length - 1; el.value = tapeHead; } else tapeUi();
   }
+  window.zzConeTapeRecord = tapeRec;
   function tapeGo(i){
     i = Math.max(0, Math.min(tape.length - 1, i | 0)); const T = tape[i]; if (!T) return;
-    let heavy = false, faceState;
+    const S = JSON.parse(tapeSt[T.s]);
+    let heavy = false, faceState = S.faces;
     if (T.s !== tapeAt) {   // состояние — как в тот миг (так же, как ↶ откат)
-      const S = JSON.parse(tapeSt[T.s]); faceState=S.faces;
       if (S.rows.join(",") !== Z.rows.join(",")) {
         Z.lanes[Z.lane] = S.rows.slice(); Z.rows = Z.lanes[Z.lane]; if (Array.isArray(Z.lanesHid)) Z.lanesHid[Z.lane] = S.hid.slice();
         Z.cur = Math.max(0, Math.min(Z.rows.length - 1, S.cur)); for (const k of [...rowSel]) if (k >= Z.rows.length) rowSel.delete(k);
@@ -7899,15 +7911,17 @@ function setupCone(){
       if (S.exact) Z.motionExact = posCopy(S.exact); else delete Z.motionExact;
       tapeAt = T.s; heavy = true;
     }
-    if (T.phaseExact !== undefined) coneMotionSetClock(T.phaseExact,T.degreesExact); else { Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; } tapeHead = i; tapeKey = tapeK();
+    if (window.zzBallSliceTapeRestore) window.zzBallSliceTapeRestore(S.slice,T.sliceFrame ? JSON.parse(T.sliceFrame) : null);
+    if (T.phaseExact !== undefined) coneMotionSetClock(T.phaseExact,T.degreesExact); else { Z.coneSpinPh = T.ph; Z.coneSpin = T.sp; } tapeHead = i;
     if (window.zzFaceRestore) window.zzFaceRestore(faceState);
+    tapeKey = tapeK();
     coneSunWas = new Set(coneSunTrace().hits);   // что светит сейчас — уже учтено: показ ленты ничего не красит
     if (heavy) { renderAll(); coneLogRender(); } else renderCone();
   }
   { const main = $("coneMain");
     if (main && !$("coneTapeBox")) {
       const box = document.createElement("div"); box.id = "coneTapeBox";
-      box.innerHTML = '<input type="range" id="coneTape" min="0" max="0" step="1" value="0" disabled aria-label="История кручения" title="⏪ История кручения: тяни назад — кольца, краска и строки возвращаются к выбранному моменту, вперёд — до конца записи. Крутить дальше с отмотанного места — запись впереди стирается и идёт заново">';
+      box.innerHTML = '<input type="range" id="coneTape" min="0" max="0" step="1" value="0" disabled aria-label="История кручения" title="⏪ История кручения: тяни назад — кольца, биты, вырезы, таблицы и шарики Нарезки (оба центра) возвращаются к выбранному моменту, вперёд — до конца записи. Начало ленты хранится до сброса или закрытия страницы. Крутить дальше с отмотанного места — запись впереди стирается и идёт заново">';
       main.appendChild(box);
       const el = box.querySelector("input");
       el.addEventListener("input", () => { if (autoRaf) autoSet(false); tapeGo(+el.value); });
@@ -8068,7 +8082,7 @@ function setupCone(){
     else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
     else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
     coneBallArmUi(); save(); renderCone();
-    say(Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Все шарики стартуют из центра. Если пока есть только К1, К2 появляется при выходе первого шарика из К1. Без «Цепочки» движется один шарик. С «Цепочкой» следующий стартует из центра и идёт наружу с той же скоростью: после прохода следующего кольца, при открытии нового кольца или при достижении любого края кольца (уже К1→К2) — по выбранной кнопке. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. Шарик продолжает без остановки." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+    say(Z.coneBallArm === "slice" && Z.coneSliceMode === "line" ? "Нарезка линией выбрана — ▶ пуск. Линия мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1." : Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Все шарики стартуют из центра. Если пока есть только К1, К2 появляется при выходе первого шарика из К1. Без «Цепочки» движется один шарик. С «Цепочкой» следующий стартует из центра и идёт наружу с той же скоростью: после прохода следующего кольца, при открытии нового кольца или при достижении любого края кольца (уже К1→К2) — по выбранной кнопке. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. При включённой кнопке «До 5 строки» после полного прохождения пяти вырезов К5 — стоп; выключи её и нажми «пуск», чтобы идти дальше." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
   }
   coneBallArmUi();
   function coneBallOutLaunch(){
@@ -8204,20 +8218,83 @@ function setupCone(){
       say(Z.coneBallLoss ? "✕ Дуга: скорость первого вылета подбирается сама и дальше постоянная; на стыке шарик проходит, только если щель следующего кольца лежит ровно на его прямой (без допусков) или под ним открытый вырез; упёршись в дугу бита — застревает или отскакивает (кнопка «удар»)." : "✕ Дуга выключена: шарик подстраивает скорость на каждом отрезке и в дугу не упирается."); };
   }
   function coneSliceChainUi(){
+    const line = Z.coneSliceMode === "line";
+    const dual = $("bConeSliceDual");
+    if (dual) { dual.classList.toggle("on",!!Z.coneSliceDual); dual.setAttribute("aria-pressed",String(!!Z.coneSliceDual)); }
+    const sourceSpin = $("bConeSliceSourceSpin");
+    if (sourceSpin) { sourceSpin.disabled = !line; sourceSpin.classList.toggle("on",line && !!Z.coneSliceSourceSpin); sourceSpin.setAttribute("aria-pressed",String(line && !!Z.coneSliceSourceSpin)); }
+    if ($("sliceCutSingle")) $("sliceCutSingle").hidden = !!Z.coneSliceDual;
+    if ($("sliceCutDual")) $("sliceCutDual").hidden = !Z.coneSliceDual;
+    const stop5 = $("bConeSliceStop5");
+    if (stop5) { const on = Z.coneSliceStop5 !== false; stop5.classList.toggle("on",on); stop5.setAttribute("aria-pressed",String(on)); }
+    const immediate = $("bConeSliceImmediate");
+    if (immediate) { immediate.disabled = !line; immediate.classList.toggle("on",line && !!Z.coneSliceImmediate); immediate.setAttribute("aria-pressed",String(line && !!Z.coneSliceImmediate)); }
+    const oneRing = $("bConeSliceOneRing");
+    if (oneRing) { oneRing.disabled = !line; oneRing.classList.toggle("on",line && !!Z.coneSliceOneRing); oneRing.setAttribute("aria-pressed",String(line && !!Z.coneSliceOneRing)); }
+    const arm = $("bConeBallSlice");
+    if (arm) {
+      arm._sliceBallHelp ||= arm.dataset.zzTip || arm.title;
+      const help = line ? "Нарезка без шариков: идеальная линия из центра мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1. При запуске направление совпадает с разрезом К1. К0 " + (Z.coneSliceSourceSpin ? "вращается с 1/2 угловой скорости К1." : "неподвижен; кнопка «К0 ↻½» включает вращение с 1/2 скорости К1.") + " ▶ пуск / пауза — начать, остановить и продолжить движение." : arm._sliceBallHelp;
+      if (arm.dataset.zzTip !== undefined) arm.dataset.zzTip = help; else arm.title = help;
+    }
+    document.querySelectorAll("[data-slice-mode]").forEach(button => {
+      const active = button.dataset.sliceMode === (line ? "line" : "ball");
+      button.classList.toggle("on",active); button.setAttribute("aria-pressed",String(active));
+    });
+    if ($("ballSliceSpeed")) $("ballSliceSpeed").disabled = line;
+    if ($("ballSliceSpeedBox")) $("ballSliceSpeedBox").classList.toggle("inactive",line);
     for (const button of document.querySelectorAll("[data-slice-next]")) {
-      button.hidden = Z.coneBallArm !== "slice";
-      const active = !!Z.coneBallChain && button.dataset.sliceNext === (Z.coneSliceNext || "pass");
+      button.disabled = line;
+      const active = !line && !!Z.coneBallChain && button.dataset.sliceNext === (Z.coneSliceNext || "pass");
       button.classList.toggle("on",active); button.setAttribute("aria-pressed",String(active));
     }
     const rebound = $("bConeSliceRebound");
     if (rebound) {
-      rebound.hidden = Z.coneBallArm !== "slice";
-      rebound.classList.toggle("on",!!Z.coneSliceRebound); rebound.setAttribute("aria-pressed",String(!!Z.coneSliceRebound));
+      rebound.disabled = line;
+      rebound.classList.toggle("on",!line && !!Z.coneSliceRebound); rebound.setAttribute("aria-pressed",String(!line && !!Z.coneSliceRebound));
     }
-    const button = $("bConeBallChain");
-    if (button) { button.classList.toggle("on",!!Z.coneBallChain); button.setAttribute("aria-pressed",String(!!Z.coneBallChain)); }
+    for (const id of ["bConeBallChain", "bConeSliceChain"]) {
+      const button = $(id);
+      if (button) { const inactive = line && id === "bConeSliceChain"; button.disabled = inactive; button.classList.toggle("on",!inactive && !!Z.coneBallChain); button.setAttribute("aria-pressed",String(!inactive && !!Z.coneBallChain)); }
+    }
   }
   window.zzBallSliceControls = coneSliceChainUi;
+  window.zzBallSliceTapeUi = () => {
+    coneBallArmUi(); coneSliceChainUi();
+    if ($("coneSpinMode")) $("coneSpinMode").value = Z.coneSpinMode || "all";
+    coneSpinModeUi(); spinSpUi();
+  };
+  if ($("bConeSliceSourceSpin")) $("bConeSliceSourceSpin").onclick = () => {
+    Z.coneSliceSourceSpin = !Z.coneSliceSourceSpin; coneSliceChainUi();
+    if (window.zzBallSliceSourceChanged) window.zzBallSliceSourceChanged(); else { save(); renderCone(); }
+    say(Z.coneSliceSourceSpin ? "Нарезка: К0 вращается в направлении К1 с 1/2 его угловой скорости. Режет только при точном совпадении; повторные попадания записываются в таблицу с прежним номером выреза." : "Нарезка: К0 остановлен в текущем направлении. Вырезы и история сохранены.");
+  };
+  if ($("bConeSliceDual")) $("bConeSliceDual").onclick = () => {
+    Z.coneSliceDual = !Z.coneSliceDual; coneSliceChainUi();
+    if (window.zzBallSliceDualChanged) window.zzBallSliceDualChanged(); else { save(); renderCone(); }
+    say(Z.coneSliceDual ? "Нарезка: два центра — слева По 1, справа Встр.Бит. Настройки общие, вырезы, биты и таблицы отдельные. Пуск / Пауза управляет обоими." : "Нарезка: одиночный центр и его прежний прогон возвращены.");
+  };
+  if ($("bConeSliceImmediate")) $("bConeSliceImmediate").onclick = () => {
+    Z.coneSliceImmediate = !Z.coneSliceImmediate; if (Z.coneSliceImmediate) Z.coneSliceOneRing = false; coneSliceChainUi();
+    if (window.zzBallSliceGrowthChanged) window.zzBallSliceGrowthChanged(); else { save(); renderCone(); }
+    say(Z.coneSliceImmediate ? "Нарезка линией: совпадение с разрезом К1 пропускает линию наружу; через каждый вырез сразу создаётся и режется следующее кольцо, цепочкой до предела. До 5 строки включительно — К5 нарезается полностью, затем стоп без К6." : "Нарезка линией: следующее кольцо открывается после полной нарезки текущего.");
+  };
+  if ($("bConeSliceOneRing")) $("bConeSliceOneRing").onclick = () => {
+    Z.coneSliceOneRing = !Z.coneSliceOneRing; if (Z.coneSliceOneRing) Z.coneSliceImmediate = false; coneSliceChainUi();
+    if (window.zzBallSliceGrowthChanged) window.zzBallSliceGrowthChanged(); else { save(); renderCone(); }
+    say(Z.coneSliceOneRing ? "Нарезка линией: за одно совпадение — вырез только в толщине одного кольца. После полной нарезки переход к следующему автоматический; его первый вырез появится при следующем совпадении." : "Нарезка линией: один проход может резать все следующие кольца.");
+  };
+  if ($("bConeSliceStop5")) $("bConeSliceStop5").onclick = () => {
+    Z.coneSliceStop5 = Z.coneSliceStop5 === false; coneSliceChainUi();
+    if (window.zzBallSliceLimitChanged) window.zzBallSliceLimitChanged(); else { save(); renderCone(); }
+    say(Z.coneSliceStop5 ? "Нарезка: до 5 строки включительно. После полного прохождения пяти разных вырезов К5 — стоп. К6 не создаётся." : "Нарезка: ограничение до 5 строки снято. После остановки нажми «пуск».");
+  };
+  document.querySelectorAll("[data-slice-mode]").forEach(button => { button.onclick = () => {
+    const mode = button.dataset.sliceMode; if ((Z.coneSliceMode || "ball") === mode) return;
+    autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+    Z.coneSliceMode = mode; coneSliceChainUi(); if (window.zzBallSliceModeChanged) window.zzBallSliceModeChanged(); save(); renderCone();
+    say(mode === "line" ? "Нарезка линией без шариков: при запуске направление совпадает с разрезом К1. К0 " + (Z.coneSliceSourceSpin ? "вращается с 1/2 угловой скорости К1." : "стоит; «К0 ↻½» включает вращение.") + " Только точное совпадение с разрезом К1 пропускает линию дальше; следующие кольца она режет мгновенно. Разрез К1 — нулевой ширины." : "Нарезка шариками: постоянная скорость, цепочка и отскоки.");
+  }; });
   if ($("bConeSliceRebound")) $("bConeSliceRebound").onclick = () => {
     Z.coneSliceRebound = !Z.coneSliceRebound; coneSliceChainUi(); save(); renderCone();
     say(Z.coneSliceRebound ? "Нарезка: вышел из кольца — при возвращении отскакивает от него наружу, даже при попадании в щель или грань. Скорость сохраняется." : "Нарезка: возврат в пройденные кольца разрешён.");
@@ -8226,9 +8303,9 @@ function setupCone(){
     Z.coneSliceNext = button.dataset.sliceNext; Z.coneBallChain = true; coneSliceChainUi(); save(); renderCone();
     say("Нарезка: Цепочка включена · " + button.textContent + ". Следующий появляется в центре и идёт наружу с той же скоростью.");
   }; });
-  if ($("bConeBallChain")) {
-    coneSliceChainUi(); $("bConeBallChain").onclick = () => { Z.coneBallChain = !Z.coneBallChain; coneSliceChainUi(); save(); renderCone();
-      say(Z.coneBallArm === "slice" ? (Z.coneBallChain ? "Нарезка: цепочка включена — следующий появляется в центре по выбранному событию и идёт наружу с той же скоростью (до 64)." : "Нарезка: цепочка выключена — новые шарики не выпускаются; уже выпущенные продолжают движение.") : Z.coneBallChain ? "⛓ Цепочка: «● вылет» пускает шарики один за другим — следующий стартует из центра, как только предыдущий вышел из кольца 1 (до 64)." : "⛓ Цепочка выключена: «● вылет» — один шарик."); };
+  for (const id of ["bConeBallChain", "bConeSliceChain"]) if ($(id)) {
+    coneSliceChainUi(); $(id).onclick = () => { Z.coneBallChain = !Z.coneBallChain; coneSliceChainUi(); save(); renderCone();
+      say(id === "bConeSliceChain" || Z.coneBallArm === "slice" ? (Z.coneBallChain ? "Нарезка: цепочка включена — следующий появляется в центре по выбранному событию и идёт наружу с той же скоростью (до 64)." : "Нарезка: цепочка выключена — новые шарики не выпускаются; уже выпущенные продолжают движение.") : Z.coneBallChain ? "⛓ Цепочка: «● вылет» пускает шарики один за другим — следующий стартует из центра, как только предыдущий вышел из кольца 1 (до 64)." : "⛓ Цепочка выключена: «● вылет» — один шарик."); };
   }
   if ($("bConeRay")) {   // v0.1058: «⚡ луч» — мгновенный проход по сквозной прямой граней, «1» под лучом, закрытие стартового кольца
     $("bConeRay").onclick = () => { Z.coneRay = !Z.coneRay; save(); renderCone();
@@ -10263,6 +10340,7 @@ function setupCone(){
   // все кольца разом — свои замки колец стираются (прежде кольцо со своим замком общий не слушал и было в золотой рамке)
   $("coneLock").onchange = (e) => { Z.coneLock = e.target.checked; Z.coneLocks = {}; save(); renderRows(); renderCone(); say(Z.coneLock ? "🔒 Все кольца заперты: крутятся только на вид, строки не сдвигаются." : "🔓 Все кольца открыты: тянешь кольцо (с Ctrl) — крутится и сама строка в поле."); };
   cv.addEventListener("contextmenu", (e) => { e.preventDefault(); const D = coneRDown; coneRDown = null; if (D && Math.abs(e.clientX - D[0]) + Math.abs(e.clientY - D[1]) > 4) return;   // v0.735: тянули правой — не стирать, меню не нужно
+    if (Z.coneBallArm === "slice" && window.zzBallSliceBitFlip) { window.zzBallSliceBitFlip(e); return; }
     const h = coneRing(e); if (h !== -1 && h.fill !== undefined) fillReset(); });   // v0.118: правый щелчок по кольцу для заполнения — заново
   $("coneRays").value = Z.coneRays || "off";
   $("coneRays").onchange = (e) => { Z.coneRays = e.target.value; coneRaysUi(); save(); renderCone(); };
@@ -12602,6 +12680,10 @@ function cgrpInit(){
      не уже самой широкой кнопки и не ниже, чем нужно её кнопкам при этой ширине. Сохранённый размер не переписывается — меньший просто
      показывается нужным, а запоминается то, что видно, когда уголок отпустили. */
   const sizeApply = (g) => {
+    if (g.id === "sliceTblGrp") {
+      if (Number.isFinite(Z.coneSliceTableHeight) && Z.coneSliceTableHeight > 0) g.style.setProperty("--sliceTableH",Math.max(72,Z.coneSliceTableHeight) + "px");
+      else g.style.removeProperty("--sliceTableH");
+    }
     if (document.body.classList.contains("sol-mobile")) { tzcOff(g); return; }
     { const s0 = Z.cgrpSize[g.dataset.g]; if (s0 && s0.w > Math.max(screen.availWidth || 0, window.innerWidth, 800)) { delete Z.cgrpSize[g.dataset.g]; save(); } }   // v0.505: шире экрана — сбой (см. ручку), размер снят
     const s = !g.classList.contains("cmin") && Z.cgrpSize[g.dataset.g]; g.classList.toggle("csz", !!s);
@@ -12617,7 +12699,7 @@ function cgrpInit(){
     for (const c of b.children) { if (c.classList.contains("cgnl")) continue; const r = c.getBoundingClientRect(); if (r.width) right = Math.max(right, r.right); }   // v0.825: перенос строки (во всю ширину) — не кнопка: с ним ширина росла сама
     const extra = Math.floor(br.right - right - 1); if (right > br.left && extra > 0) g.style.width = (parseFloat(g.style.width) - extra) + "px";
   };
-  const NOGRAB = "button, [role=button], input, select, textarea, label, a, canvas, .gzen, .cgsz";   // v0.1016: строки выбора вида колец — кнопки, их щелчок не захватывает перенос группы
+  const NOGRAB = "button, [role=button], input, select, textarea, label, a, canvas, #sliceCutTable, .gzen, .cgsz";   // таблица вырезов прокручивается и выделяется, не перетаскивая группу
   const wb = tl.parentElement; let zTop = 500;
   const groups = [...tl.querySelectorAll(":scope > .cgrp")];
   wb.closest(".win")._solFoldLayout = changed => {
@@ -12998,19 +13080,30 @@ function cgrpInit(){
     lab.title = (lab.title ? lab.title + "\n\n" : "") + "Тяни за заголовок или пустое место — перенести. Магнит к краям, полю строк, левой панели и другим панелям; бока сцепляются зубцами, верх и низ — рамка на рамку. Правая едет за левой, нижняя за верхней; потяни ведомую — отцепить. Верхний край у горизонтальной оси — прищепка к конусу и его масштабу; панели раздвигаются от центра без наложения, могут уходить за экран. Один щелчок по заголовку — свернуть / развернуть на месте; двойной — свернуть и перенести вниз; если группа уже внизу — вернуть раскрытой на прежнее место. «− / +» — свернуть до заголовка / развернуть на месте. Правый щелчок по заголовку — снять сцепку и прищепку, вернуть на полосу. Колесо — масштаб конуса" + "; над полем строк — прокрутка строк; группа целиком над полем строк или левой панелью — остаётся на них" + (g.classList.contains("cg-lx") && g.dataset.g !== "алгоритм" ? ". Shift + тянуть — блок групп лазера; Alt + тянуть — одна группа, соседи остаются" : "");
     g.classList.toggle("cmin", !!Z.cgrpMin[g.dataset.g]);
     g.style.minHeight = Z.cgrpMin[g.dataset.g] > 0 ? Z.cgrpMin[g.dataset.g] + "px" : "";   // v0.207: свёрнутая — прежней высоты
-    { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
+    { const sz = document.createElement("span"); sz.className = "cgsz"; sz.title = g.id === "sliceTblGrp" ? "Тяни ромб — ширина и высота таблицы Нарезки. Двойной щелчок — автоматический размер." : "Тяни ромб — ширина группы и перенос кнопок; высота подстраивается под содержимое. Кнопки не обрезаются. Двойной щелчок — автоматический размер"; g.appendChild(sz);
       sz.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
         e.preventDefault(); e.stopPropagation(); try { sz.setPointerCapture(e.pointerId); } catch (err) { /* уже отпущен */ }
-        const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let moved = false;
-        const mv = (ev) => { moved = true; Z.cgrpSize[g.dataset.g] = { w: Math.max(60, Math.round(r.width + ev.clientX - x0)), h: Math.max(24, Math.round(r.height + ev.clientY - y0)) }; sizeApply(g); };
+        const r = g.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY, tableH = g.id === "sliceTblGrp" ? $("sliceCutTable").getBoundingClientRect().height : 0; let moved = false;
+        const mv = (ev) => { moved = true; if (tableH) Z.coneSliceTableHeight = Math.max(72,Math.round(tableH + ev.clientY - y0)); Z.cgrpSize[g.dataset.g] = { w: Math.max(60, Math.round(r.width + ev.clientX - x0)), h: Math.max(24, Math.round(r.height + ev.clientY - y0)) }; sizeApply(g); };
         const up = () => { sz.removeEventListener("pointermove", mv); sz.removeEventListener("pointerup", up); sz.removeEventListener("pointercancel", up);
           if (moved) { const q = Z.cgrpSize[g.dataset.g]; Z.cgrpSize[g.dataset.g] = { w: Math.min(q ? q.w : 1e9, g.offsetWidth), h: g.offsetHeight }; place(g); save(); } };   // v0.332: помнится то, что видно
           /* v0.505, по снимку «Вида» в одну строку — «ширина съехала» (в настройках — 3922 px): запоминалась видимая ширина, а группа конструктора бывает шире
              заданной (перенос рисунка) — каждое касание ромба прибавляло. Теперь — не больше того, что задано ручкой */
         sz.addEventListener("pointermove", mv); sz.addEventListener("pointerup", up); sz.addEventListener("pointercancel", up);
       });
-      sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g]) return; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); place(g); save(); });
+      sz.addEventListener("dblclick", (e) => { e.preventDefault(); e.stopPropagation(); if (!Z.cgrpSize[g.dataset.g] && g.id !== "sliceTblGrp") return; if (g.id === "sliceTblGrp") delete Z.coneSliceTableHeight; delete Z.cgrpSize[g.dataset.g]; sizeApply(g); if (g.id === "sliceTblGrp") { tzgFrame(g); tzHandle(g); } place(g); save(); });
+    }
+    if (g.id === "sliceTblGrp") {
+      const sy = document.createElement("span"); sy.className = "cgsz cgsz-y"; sy.title = "Тяни нижний край — высота таблицы Нарезки. Двойной щелчок — автоматическая высота."; g.appendChild(sy);
+      sy.addEventListener("pointerdown", e => {
+        if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); sy.setPointerCapture(e.pointerId);
+        const y0 = e.clientY, h0 = $("sliceCutTable").getBoundingClientRect().height; let moved = false;
+        const move = ev => { if (ev.pointerId !== e.pointerId) return; moved = true; Z.coneSliceTableHeight = Math.max(72,Math.round(h0 + ev.clientY - y0)); g.style.setProperty("--sliceTableH",Z.coneSliceTableHeight + "px"); tzgFrame(g); tzHandle(g); };
+        const finish = ev => { if (ev.pointerId !== e.pointerId) return; sy.removeEventListener("pointermove",move); sy.removeEventListener("pointerup",finish); sy.removeEventListener("pointercancel",finish); if (moved) { place(g); linkSync(); save(); } };
+        sy.addEventListener("pointermove",move); sy.addEventListener("pointerup",finish); sy.addEventListener("pointercancel",finish);
+      });
+      sy.addEventListener("dblclick", e => { e.preventDefault(); e.stopPropagation(); delete Z.coneSliceTableHeight; g.style.removeProperty("--sliceTableH"); tzgFrame(g); tzHandle(g); place(g); linkSync(); save(); });
     }
     sizeApply(g);
     /* v0.354, «прокрутка на группе кнопок — в Конусе например — так же, как на поле конуса, а не скролл панелей надо»: колесо над группой

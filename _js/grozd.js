@@ -190,6 +190,8 @@
         step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .05 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); },
         reset: () => put(Math.max(lo(), Math.min(hi(), 0))) };
     }
+    if (inp && inp.type === 'text') return { type: 'toggle', icon: iconOf(e), name, nameNow: () => name + ' ' + inp.value, tip,   // поле дроби (скорость Нарезки): щелчок — спросить новое значение
+      on: () => false, disabled: () => inp.disabled, click: () => { const v = prompt(longOf(inp) || name, inp.value); if (v != null) { inp.value = v.trim(); fire(inp); } } };
     if (inp && inp.type === 'color') return { type: 'color', icon: iconOf(e), name, tip, get: () => inp.value, set: v => { inp.value = v; fire(inp); } };
     if (inp && inp.type === 'checkbox') return { type: 'toggle', icon: iconOf(e), name, tip, on: () => inp.checked, click: () => inp.click(), disabled: () => inp.disabled };
     return { type: 'toggle', icon: iconOf(e), name, nameNow: () => nameOf(e), tip,
@@ -230,11 +232,11 @@
       const b = shown.has(gid(g)) && dock.querySelector('[data-pan="' + CSS.escape(gid(g)) + '"]');
       showPanel(g, b && b.getClientRects().length ? b : null); } };
     function make(gs, pans) {
-      const panItem = g => ({ type: 'toggle', icon: '💬', name: cfg.panelName ? cfg.panelName(g) : cfg.title(g), tip: cfg.title(g), pan: gid(g),
+      const panItem = g => ({ type: 'toggle', icon: g.dataset.gzIcon || '💬', name: g.dataset.gzName || (cfg.panelName ? cfg.panelName(g) : cfg.title(g)), tip: longOf(g) || cfg.title(g), pan: gid(g),
         on: () => shown.has(gid(g)), click: () => { shown.has(gid(g)) ? shown.delete(gid(g)) : shown.add(gid(g)); store.set('grozd-pan:' + cfg.key, [...shown]); panelsNow(); } });
       return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (x && cfg.fold) cfg.fold(x.g, open); setTimeout(panelsNow); },
         groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g),
-          items: [...x.items.map(itemOf), ...(cfg.panelIn && x.g.matches(cfg.panelIn) ? pans.map(panItem) : [])] })) });
+          items: [...x.items.map(itemOf), ...pans.filter(p => p.dataset.gzIn ? x.g.matches(p.dataset.gzIn) : !!cfg.panelIn && x.g.matches(cfg.panelIn)).map(panItem)] })) });   // панель со своим data-gz-in — в своей группе
     }
     build();
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
@@ -244,5 +246,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 4, rail, adopt };
+  window.ZerkGrozd = { version: 5, rail, adopt };
 })();
