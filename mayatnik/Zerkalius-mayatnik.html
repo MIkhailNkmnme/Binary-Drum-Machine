@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.111. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.112. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.111</title>
+<title>Zerkalius Маятник — v0.112</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.111</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.112</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -967,6 +967,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     list.value=colourTemplate?.id||'';list.disabled=!templateItems.length;
     syncLibraryChoices();
   }
+  // v0.112: «в шаблоны помещай только те, что переместил в поле за треугольником, — те, что там побывали какой-то частью своей». Фигура «за
+  // треугольником», если хоть одна её точка — на пустом месте поля (исходный бит пуст) или за краем картинки. Проверка — по сетке не больше ~4000 точек.
+  function templateOutside(t){
+    if(!t||!img)return false;
+    for(const part of t.parts){const r=templateRect(part,false,t),step=Math.max(1,Math.ceil(Math.sqrt(r.width*r.height/4000)));
+      for(let y=Math.floor(r.y);y<r.y+r.height;y+=step)for(let x=Math.floor(r.x);x<r.x+r.width;x+=step){
+        if(!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
+        if(x<0||y<0||x>=img.width||y>=img.height||rasterBit(x,y,true)<0)return true;}}
+    return false;
+  }
+  function libraryIfOutside(wasOut){if(colourTemplate&&!colourTemplate.libraryId&&(wasOut||templateOutside(colourTemplate)))saveTemplateLibrary(true);}
   function registerTemplate(name){
     colourTemplate.id='field:'+Date.now()+':'+(++templateSerial);colourTemplate.name=name||colourTemplate.hex;
     templateItems.push(colourTemplate);$('templateName').value=colourTemplate.name;rememberTemplate();
@@ -1156,7 +1167,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(!parts.length){$('templateInfo').textContent='Нет пикселей выбранного цвета. Выбери цвет залитой фигуры в «Раскраске».';return;}
     rememberTemplate();templateTransfer=false;templateAxisUnlocked=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`);templateSync();queueDigits();savePaint();
-    $('templateName').value=`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`;saveTemplateLibrary(true);
+    $('templateName').value=`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`;   // v0.112: в «Шаблоны» — только побывавшие за треугольником
   };
   // Правый щелчок берёт одну связную область любого цвета, включая исходные 0/1.
   function takeColourAt(cx,cy){
@@ -1181,7 +1192,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     colourTemplate={parts:[{mask,canvas,p,ox,axis:x0+width/2,symmetry:MayatnikTemplate.symmetry(mask)}],hex,paintSource:true,pixels:ids.length};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;
     autoSync();fillSync();axisLinesSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';
-    const name=`${hex} · ${width}×${height}`;registerTemplate(name);$('templateName').value=name;templateSync();queueDigits();finishEdit(before);savePaint();saveTemplateLibrary(true);return true;
+    const name=`${hex} · ${width}×${height}`;registerTemplate(name);$('templateName').value=name;templateSync();queueDigits();finishEdit(before);savePaint();return true;   // v0.112: в список — при выносе за треугольник
   }
   $('bTemplateShow').onclick=()=>{templateVisible=!templateVisible;templateSync();templateStatus();queueDigits();savePaint();};
   function returnTemplate(){
@@ -2136,7 +2147,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
       if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
-      if(!d.moved&&d.mode!=='scale')liftTemplateSource(!d.pure);d.moved=true;   // v0.105: снова как до v0.104 — на исходном месте инверт-отпечаток, по пути следа нет («Отпечаток на месте»)
+      if(!d.moved&&d.mode!=='scale')liftTemplateSource(!d.pure);d.moved=true;if(!d.wasOut&&!colourTemplate?.libraryId&&templateOutside(colourTemplate))d.wasOut=true;   // v0.112   // v0.105: снова как до v0.104 — на исходном месте инверт-отпечаток, по пути следа нет («Отпечаток на месте»)
       if(d.mode==='scale'){
         const ratio=Math.max(12,Math.hypot(e.clientX-d.cx,e.clientY-d.cy))/d.radius;
         $('templateProportional').checked=true;changeTemplate('templateHeight',d.height*ratio);
@@ -2160,7 +2171,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const up = e => {
     if(axisDrag?.id===e.pointerId){axisDrag=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);save();if(mirrorLive){cancelAnimationFrame(mirrorFrame);mirrorFrame=0;mirrorApply(true);}return;}
     if(lineDrag?.id===e.pointerId){lineDrag=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
-    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);else if(!drag.moved&&!drag.duplicate&&mirrorLine&&e.type==='pointerup')mirrorAcrossLine();finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
+    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.moved)libraryIfOutside(drag.wasOut);   // v0.112
+    if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);else if(!drag.moved&&!drag.duplicate&&mirrorLine&&e.type==='pointerup')mirrorAcrossLine();finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     const midTap = e.type === 'pointerup' && e.button === 1 && pan && !pan.moved && !pinch && pts.size === 1;   // v0.097: щелчок колёсиком без сдвига — дзен
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
@@ -2271,6 +2283,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=111"></script>
+<script src="mayatnik-menu.js?v=112"></script>
 </body>
 </html>
