@@ -1,4 +1,4 @@
-/* Маятник v0.043: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.044: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -114,7 +114,20 @@
   const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
   colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
   toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
-  tools.append(colour); document.body.append(tools);
+  tools.append(colour);
+  // v0.044: виды поля — значками на холсте, рядом с раскраской.
+  const sep = document.createElement('span'); sep.className = 'pt-sep'; tools.append(sep);
+  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
+  for (const o of $('view').options) {
+    const [kind, title] = viewIcons[o.value] || ['eye', o.textContent], b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
+    const probe = document.createElement('button'); probe.title = title; probe.textContent = title;
+    const mark = document.createElement('i'); mark.style.backgroundImage = icon(probe, kind); b.append(mark);
+    if (o.value === 'romb1') { const n = document.createElement('small'); n.textContent = '1'; b.append(n); }
+    if (o.value === 'romb0') { const n = document.createElement('small'); n.textContent = '0'; b.append(n); }
+    b.title = 'Вид: ' + title; b.onclick = () => { $('view').value = o.value; $('view').dispatchEvent(new Event('change', { bubbles: true })); };
+    toolSync.push(() => b.classList.toggle('on', $('view').value === o.value)); tools.append(b);
+  }
+  document.body.append(tools);
   const placeTools = () => { const r = $('wrap').getBoundingClientRect(); tools.style.left = (r.left + 8) + 'px'; tools.style.top = (r.top + 8) + 'px'; tools.hidden = r.width < 60;
     for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
