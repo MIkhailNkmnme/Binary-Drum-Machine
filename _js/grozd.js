@@ -213,12 +213,13 @@
       if (cfg.hide) for (const g of document.querySelectorAll(cfg.hide)) g.style.setProperty('display', 'none', 'important');   // группы, убранные со страницы совсем
       // панели без кнопок (подсказки, текст) — кнопкой в группе cfg.panelIn: включил — панель встаёт справа от кнопки
       const pans = cfg.panels ? [...document.querySelectorAll(cfg.panels)] : [];
-      const gs = groupsNow().filter(g => !pans.includes(g)).map(g => ({ g, items: itemsOf(g) })).filter(x => x.items.length);
-      const now = gs.map(x => gid(x.g) + ':' + x.items.map(uid).join(',')).join('|') + '|p:' + pans.map(uid).join(',');
+      const all = groupsNow().filter(g => !pans.includes(g)), gs = all.map(g => ({ g, items: itemsOf(g) })).filter(x => x.items.length);
+      const now = gs.map(x => gid(x.g) + ':' + x.items.map(uid).join(',')).join('|') + '|a:' + all.map(uid).join(',') + '|p:' + pans.map(uid).join(',');
       if (now === sig) return false; sig = now;
       if (cur) cur.destroy();
       for (const g of live) { g.classList.remove('gz-adopted'); g.style.removeProperty('display'); }
-      live = [...gs.map(x => x.g), ...pans]; for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
+      live = [...all, ...pans]; for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
+      // группа, где сейчас ничего не действует, в рейке не видна, но и на холсте спрятана
       cur = make(gs, pans);
       panelsNow();
       return true;
@@ -243,7 +244,7 @@
         groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g),
           items: [...x.items.map(itemOf), ...pans.filter(p => p.dataset.gzIn ? x.g.matches(p.dataset.gzIn) : !!cfg.panelIn && x.g.matches(cfg.panelIn)).map(panItem)] })) });   // панель со своим data-gz-in — в своей группе
     }
-    build();
+    build(); document.documentElement.classList.remove('gz-pre');   // рейка готова — старые грозди уже спрятаны, можно показывать страницу
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
     if (cfg.fold) { const open = cur && [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id)[0]; for (const g of live) cfg.fold(g, gid(g) === open); }
     const help = () => { const b = cfg.helpButton && document.querySelector(cfg.helpButton); document.documentElement.classList.toggle('gz-help', !!b && b.classList.contains('on')); };
@@ -251,5 +252,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 8, rail, adopt };
+  window.ZerkGrozd = { version: 9, rail, adopt };
 })();
