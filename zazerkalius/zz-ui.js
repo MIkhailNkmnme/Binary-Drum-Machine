@@ -2881,7 +2881,8 @@ function coneTopArtSync(cv, R, W, H, dpr, cx, cy, rMax, axisCol, bgCol){
 }
 function coneArtBlocksButton(e){
   const button = e.target && e.target.closest && e.target.closest("button"), layer = document.getElementById("coneTopArt");
-  if (!button || !button.closest("#w-cone") || button.closest("#coneRecBar,#coneTransportTempo") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
+  // 15.10: рейка групп (.gz-dock) лежит поверх картинки конуса — её шапки и закрепы картинка не перехватывает
+  if (!button || !button.closest("#w-cone") || button.closest("#coneRecBar,#coneTransportTempo,.gz-dock") || button.id === "bC3Axes" || button.id === "bC3Reset" || button.classList.contains("c3zoom") || !layer || layer.hidden) return;
   const r = layer.getBoundingClientRect(); if (!r.width || !r.height || e.clientX < r.left || e.clientX >= r.right || e.clientY < r.top || e.clientY >= r.bottom) return;
   const x = Math.max(0, Math.min(layer.width - 1, Math.floor((e.clientX - r.left) * layer.width / r.width))), y = Math.max(0, Math.min(layer.height - 1, Math.floor((e.clientY - r.top) * layer.height / r.height)));
   try { if (layer.getContext("2d").getImageData(x, y, 1, 1).data[3] < 24) return; }
