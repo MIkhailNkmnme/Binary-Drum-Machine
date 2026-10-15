@@ -1,4 +1,4 @@
-/* Маятник v0.048: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.049: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -58,10 +58,7 @@
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
-      check('sym', 'mirror'), check('symV', 'line'), check('symH', 'minus'), check('symD', 'cross'), check('symBits', 'colour'), button('bAxisLine', 'line'), button('bAxisLinesClear', 'cross'), button('bAxisPick', 'select'), button('bClearAxis', 'cross'), button('bKonus', 'ring'),
-      { type: 'action', name: 'Зерк. маятник', icon: icon($('mirrorLink'), 'mirror'),
-        tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
-      control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
+      button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
@@ -103,7 +100,7 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
-  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisLinesClear','cross']]) {
+  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisLinesClear','cross']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
     b.onclick = () => e.click();
