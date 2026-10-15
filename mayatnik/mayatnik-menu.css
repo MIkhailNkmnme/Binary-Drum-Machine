@@ -274,3 +274,11 @@ label.may-slide>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
 label.may-slide>input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:0;background:var(--c,#b48cff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 label.may-slide>input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
 label.may-slide>.may-slide-v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff;font:11px/1 var(--mono);text-shadow:0 0 3px #000,0 0 3px #000}
+/* v0.103: «Вид» в шапке — всё сюда из рейки, компактно: три ряда, ниже кнопки, мельче шрифт. */
+header #paintTools .pt-view .pt-r{grid-template-rows:repeat(3,18px)!important;gap:1px 0}
+header #paintTools .pt-view .pt-b.gz-hx{height:18px;--gz-h:18px;--gz-n:7px;padding:0 6px 0 7px;gap:3px;font-size:10px}
+header #paintTools .pt-view .pt-b.gz-hx:nth-child(even){margin-left:0}
+header #paintTools .pt-view .pt-b.gz-hx i{width:11px;height:11px}
+header #paintTools .pt-view .pt-vx{grid-row:1/4;display:flex;flex-direction:column;justify-content:center;gap:2px;margin-left:4px}
+header #paintTools .pt-view .pt-vx input[type=color]{width:24px;height:14px;padding:0;border:1px solid #33405a;background:none;cursor:pointer}
+header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:border-box;padding:0 3px;border:1px solid #33405a;background:#121a30;color:#dfe6f5;font:10px var(--mono)}

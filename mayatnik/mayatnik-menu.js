@@ -1,4 +1,4 @@
-/* Маятник v0.102: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.103: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -48,10 +48,7 @@
     { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
       button('bPlay', 'play'), button('bStep', 'forward'), button('bSeq', 'line'), button('bPair', 'copy'),
       control('speed'), control('frame') ] },
-    { id: 'view', title: 'Вид', color: '#80aee8', items: [
-      check('noband', 'half'), check('outline', 'corners'),button('bFoldHorizontal','swap'),
-      select('view', 'eye', {col:'Перекрытия',bits:'Биты',digits:'Цифры 0/1',digitsOnly:'Только цифры',romb0:'Ромбы чёт.',romb1:'Ромбы нечёт.',romb2:'Ромбы обе'}),
-      control('digitOneColour'),control('digitZeroColour'),control('vrows') ] },
+    // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
@@ -159,6 +156,14 @@
   { const e = $('zTop'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'zTop';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
+  // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
+  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners']]) {
+    const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
+    const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark); b.onclick = () => e.click();
+    toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.checked);
+      if (id === 'noband') { const nm = b.querySelector('.gz-nm'); if (nm) nm.textContent = ['Полосы', 'Без полос', 'До треуг.'][+e.dataset.mode || 0]; } });
+    gView.append(b); }
+  gView.append(gView.querySelector('[data-n="bFoldHorizontal"]'));
   // v0.075: Xor-Next — в верхней панели, виден всегда; без шаблона бледный.
   { const g = ptGroup('Шаблон'), e = $('bXor2'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'bXor2';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'steps'); b.append(mark); b.onclick = () => e.click();
@@ -173,7 +178,7 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'record'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', bFoldHorizontal:'СвёрткаГориз', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', bFoldHorizontal:'Свёртка', noband:'Без полос', outline:'Обводка', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
@@ -185,6 +190,12 @@
     const t = document.createElement('b'); t.className = 'pt-t up'; t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
   // v0.063: панель значков — в шапке, рядом с «Что это такое?», а не поверх холста.
   tools.insertBefore(gHistory.parentElement,gView.parentElement);
+  // v0.103: «Вид» в шапке — компактно, в три ряда; цвета цифр и «показ строк» — сами поля, столбиком в конце группы
+  gView.parentElement.classList.add('pt-view');
+  { const box = document.createElement('span'); box.className = 'pt-vx';
+    for (const id of ['digitOneColour', 'digitZeroColour']) { const e = $(id); e.title = tip(e); box.append(e); }
+    const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v);
+    gView.append(box); }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
