@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.109. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.110. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.109</title>
+<title>Zerkalius Маятник — v0.110</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.109</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.110</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -848,8 +848,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     stolbPaint=null;if(stolbCol==null||!stolbHeat||!img||stolbHeat.length!==px.length)return;
     if(!autoVertical){setTimeout(()=>stolbTransport?.close(),0);return;}
     const hex=$('fillColour').value,[R,G,B]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+    const kv=255/Math.max(R,G,B,1),r=R*kv,gg=G*kv,b=B*kv;   // v0.110: «только подсветку видно, без цвета» — цвет заливки во всю яркость, без примеси белого
     for(let i=0;i<px.length;i++){const h=stolbHeat[i];if(h<.03)continue;
-      const a=.35+.65*h,w=.45*h,r=R+(255-R)*w,gg=G+(255-G)*w,b=B+(255-B)*w,o=px[i];   // ярче к белому по накалу
+      const a=.55+.45*h,o=px[i];
       px[i]=(255<<24|Math.round((o>>>16&255)*(1-a)+b*a)<<16|Math.round((o>>>8&255)*(1-a)+gg*a)<<8|Math.round((o&255)*(1-a)+r*a))>>>0;}
     stolbPaint={heat:stolbHeat,colour:rgba([R,G,B])};   // v0.094: и для слоя цифр — в «Только цифрах» холст прозрачный
     $('fillInfo').textContent=`Проход от центра · ±${stolbCol}`;
@@ -862,8 +863,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(stolbHeat&&stolbHeat.length===img.width*img.height){
       if(!stolbGlow||stolbGlow.width!==img.width||stolbGlow.height!==img.height){stolbGlow=document.createElement('canvas');stolbGlow.width=img.width;stolbGlow.height=img.height;}
       const gc=stolbGlow.getContext('2d'),im=gc.createImageData(img.width,img.height),u=new Uint32Array(im.data.buffer),hex=$('fillColour').value,[R,G,B]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),base=B<<16|G<<8|R;
-      for(let i=0;i<u.length;i++){const h=stolbHeat[i];if(h>=.03)u[i]=(Math.round(h*230)<<24|base)>>>0;}
-      gc.putImageData(im,0,0);g.save();g.globalCompositeOperation='lighter';g.filter=`blur(${Math.max(2,Math.min(8,3*sx))}px)`;g.imageSmoothingEnabled=true;g.drawImage(stolbGlow,0,0,cv.width,cv.height);g.restore();
+      for(let i=0;i<u.length;i++){const h=stolbHeat[i];if(h>=.03)u[i]=(Math.round(h*h*120)<<24|base)>>>0;}   // v0.110: слабее, только у горячих — не забивает цвет
+      gc.putImageData(im,0,0);g.save();g.globalCompositeOperation='lighter';g.filter=`blur(${Math.max(2,Math.min(5,2*sx))}px)`;g.imageSmoothingEnabled=true;g.drawImage(stolbGlow,0,0,cv.width,cv.height);g.restore();
     }
     if(!stolbTransport?.line)return;   // v0.095: линия — по галке в пульте
     const Y0=Math.max(0,stolbRow)*sy,lw=Math.max(2,Math.round(sx));
@@ -2232,9 +2233,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.092: «Проход столба» — пульт в mayatnik-stolb.js; здесь — откуда начать и как показать столбец.
   stolbTransport=MayatnikStolb.mount({button:$('bStolb'),
     beforeStart(){stop();target=k;autoStop();foldTransport?.close();tip.style.display='none';clearFillPreview();if(!autoVertical){autoVertical=1;autoSync();}},
-    start(){   // v0.108: из центра (столб якоря); докуда — ±N/3, не дальше окна. Строка начала — где наводили столб
+    start(){   // v0.108: из центра (столб якоря). v0.110: «пусть всё поле проходит по умолчанию» — до дальнего края окна. Строка начала — где наводили столб
       if(!f||!img||!geo)return null;const a=geo.anchor-VX;stolbRow=stolbLast?stolbLast[1]:0;stolbHeat=null;
-      return {span:Math.max(1,Math.min(Math.floor(VH/3),Math.max(a,VW-1-a))),t:0};
+      return {span:Math.max(1,a,VW-1-a),t:0};
     },
     show(t,moved,span){stolbCol=t;if(t==null)stolbHeat=null;else if(moved)stolbStep(t,moved,span);if(f)draw();},
     onClose(){stolbCol=null;stolbHeat=null;$('fillInfo').textContent='';if(f)draw();}
@@ -2253,6 +2254,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=109"></script>
+<script src="mayatnik-menu.js?v=110"></script>
 </body>
 </html>
