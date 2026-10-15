@@ -196,19 +196,24 @@
   infoPanel.append(infoTitle,status);document.body.append(infoPanel);
   try{infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1';}catch(_){}
   infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
-  // v0.098: стрелки ◂ ▸ у «кадра» и «скорости» — щелчок на шаг, удержание повторяет. Только у этих двух:
-  // общий _js/slider-arrows.js обернул бы и прозрачные ползунки пультов свёртки и прохода.
+  // v0.100 (правило кнопок): ползунок без подписи — значение на самой дорожке по центру, по краям шевроны «<» «>»
+  // (щелчок — шаг, удержание — подряд), бегунок — ромб цветом группы, дорожка — тонкий пунктир. Как ползунки групп Zazerkalius.
   for (const id of ['frame', 'speed']) {
-    const el = $(id); if (!el) continue;
+    const el = $(id), label = el?.closest('label'); if (!label) continue;
+    const name = [...label.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
+    for (const n of [...label.childNodes]) if (n.nodeType === 3) n.remove();   // подпись — только в подсказке
+    if (!label.title) label.title = name; label.classList.add('may-slide');
+    const out = label.querySelector('output'); if (out) out.classList.add('may-slide-v');
     const step = d => { const v = Math.max(+el.min, Math.min(+el.max, +el.value + d)); if (v === +el.value) return;
       el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
-    const arrow = (txt, d) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-arrow'; b.textContent = txt; b.tabIndex = -1;
-      b.title = d < 0 ? 'Назад на 1 · удержание — подряд' : 'Вперёд на 1 · удержание — подряд'; let hold = 0, rep = 0;
+    const chev = (side, d) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'may-chev ' + side; b.tabIndex = -1;
+      b.setAttribute('aria-label', d < 0 ? 'Назад на 1' : 'Вперёд на 1'); b.title = (d < 0 ? 'Назад' : 'Вперёд') + ' на 1 · удержание — подряд'; let hold = 0, rep = 0;
       const end = () => { clearTimeout(hold); clearInterval(rep); hold = rep = 0; };
       b.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); step(d); hold = setTimeout(() => { rep = setInterval(() => step(d), 60); }, 350); });
       for (const t of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) b.addEventListener(t, end);
+      b.addEventListener('click', e => e.preventDefault());   // щелчок по кнопке внутри label не должен уводить фокус в ползунок
       return b; };
-    el.before(arrow('◂', -1)); el.after(arrow('▸', 1));
+    label.prepend(chev('l', -1)); label.append(chev('r', 1));
   }
   const placeTools = () => { for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();

@@ -259,7 +259,17 @@ body.may-zen #wrap{grid-column:1/-1!important;grid-row:1/-1!important}
 body.may-zen #mayatnikStatus{display:none!important}
 body.mayatnik-menu-ready.may-zen #mayZenOut{display:inline-flex;position:fixed;left:8px;bottom:8px;z-index:10;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif;opacity:.35}
 body.may-zen #mayZenOut:hover{opacity:1}
-/* v0.098: стрелки ◂ ▸ у «кадра» и «скорости». */
-.may-arrow{flex:none;width:18px;height:18px;padding:0;margin:0 1px;border:1px solid #33405a;border-radius:3px;background:#121a30;color:#9fb3d6;font:10px/16px 'Segoe UI',sans-serif;cursor:pointer;user-select:none}
-.may-arrow:hover{color:#fff;border-color:var(--c,#80aee8)}
-.may-arrow:active{background:var(--c,#80aee8);color:#0d1119}
+/* v0.100 (правило кнопок): ползунок — шевроны «<» «>» по краям, ромб-бегунок цветом группы, пунктир-дорожка, значение по центру, без подписи. */
+.mayatnik-menu-ready label.may-slide{position:relative;gap:0!important;padding:0!important;--t:calc(12px / 1.7320508)}
+label.may-slide>.may-chev{flex:none;align-self:stretch;width:calc(3 * var(--t));min-height:22px;padding:0;margin:0;border:0;border-radius:0;background:#d6a838;cursor:pointer}
+label.may-slide>.may-chev.l{clip-path:polygon(var(--t) 0,calc(3 * var(--t)) 0,calc(2 * var(--t)) 50%,calc(3 * var(--t)) 100%,var(--t) 100%,0 50%)}
+label.may-slide>.may-chev.r{clip-path:polygon(0 0,calc(2 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(2 * var(--t)) 100%,0 100%,var(--t) 50%)}
+label.may-slide>.may-chev:hover{filter:brightness(1.25)}
+label.may-slide>.may-chev:active{filter:brightness(.8)}
+.mayatnik-menu-ready label.may-slide>input[type=range]{-webkit-appearance:none;appearance:none;flex:1 1 0;width:auto!important;max-width:none!important;min-width:0;height:22px;margin:0 2px;padding:0;background:transparent;cursor:pointer}
+label.may-slide>input[type=range]::-webkit-slider-runnable-track{height:1px;border:0;background:repeating-linear-gradient(90deg,var(--c,#b48cff) 0 6px,transparent 6px 10px)}
+label.may-slide>input[type=range]::-moz-range-track{height:1px;border:0;background:repeating-linear-gradient(90deg,var(--c,#b48cff) 0 6px,transparent 6px 10px)}
+label.may-slide>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-9.5px;border:0;border-radius:0;background:var(--c,#b48cff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+label.may-slide>input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:0;background:var(--c,#b48cff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+label.may-slide>input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
+label.may-slide>.may-slide-v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff;font:11px/1 var(--mono);text-shadow:0 0 3px #000,0 0 3px #000}
