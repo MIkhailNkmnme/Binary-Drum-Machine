@@ -3375,7 +3375,8 @@ function renderCone(){
   }
   if (Z.coneAxes) {   // v0.734, «нужна кнопка: ось из центра — вертикаль и горизонталь»: «✛ оси» — две черты через центр конуса во весь холст;
                       // v0.818, по снимку — «оси за кнопки и текст»: рисуются раньше лучей, света и подписей долей (☀ 1/2 …) — те ложатся поверх осей
-    g.save(); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
+    // v0.1216, по снимку — «лишние оси помимо основных»: оси — экранные, без поворота всего конуса (spin2d), иначе рядом вставала повёрнутая копия
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.strokeStyle = cA; g.globalAlpha = 0.7; g.lineWidth = Math.max(1, dpr); g.setLineDash([6 * dpr, 4 * dpr]); g.beginPath();
     g.moveTo(cx, 0); g.lineTo(cx, H); g.moveTo(0, cy); g.lineTo(W, cy); g.stroke(); g.restore();
   }
   // v0.055: лучи к центру от границ бит — текущего кольца или всех
