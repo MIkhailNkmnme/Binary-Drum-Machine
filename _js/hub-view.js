@@ -24,13 +24,15 @@
   function rotate(delta){state.angle=((state.angle+delta)%360+360)%360;changed();}
   window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,apply,sourceShift,place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
     // Source displacement is applied together with the final camera, without clipping a temporary image.
-  },paint(canvas,view=null,cached=null){
+  },paint(canvas,view=null,cached=null,vector=null){
+    // vector: {base,draw} — redraw shapes under the final transform instead of resampling the bitmap (sharp mirror copy).
     let copy=cached||buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}
     if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}
     const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(),shift=sourceShift(),reflection=window.HubMirror?.matrix?.(canvas,view);
     g.save();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,canvas.width,canvas.height);g.globalAlpha=1;g.shadowBlur=0;
-    g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.drawImage(copy,shift[0]*k,shift[1]*k);
-    if(reflection){g.transform(...reflection);g.drawImage(copy,shift[0]*k,shift[1]*k);}g.restore();
+    const layer=()=>{if(!vector){g.drawImage(copy,shift[0]*k,shift[1]*k);return;}g.save();g.translate(shift[0]*k,shift[1]*k);g.transform(...vector.base);vector.draw(g);g.restore();};
+    g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);const tx=(e+(a-1)*left)*k+shift[0]*k,ty=(f+b*left)*k+shift[1]*k;if(!vector||(a===1&&b===0&&c===0&&d===1&&Math.abs(tx-Math.round(tx))<1e-6&&Math.abs(ty-Math.round(ty))<1e-6))g.drawImage(copy,shift[0]*k,shift[1]*k);else layer();
+    if(reflection){g.transform(...reflection);layer();}g.restore();
   }};
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};

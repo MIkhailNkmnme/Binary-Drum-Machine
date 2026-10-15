@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.119. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
+<!-- Zerkalius Hub (index) — v0.120. v0.120: зеркальная копия треугольника снова чёткая — рисуется ромбами под зеркалом, а не растягивается из картинки. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
      v0.115: треугольник по умолчанию — кадр Хоррориуса (узор «Х», _js/horr-rows.js).
      Точка входа: ссылки на все страницы проекта.
      v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
@@ -128,7 +128,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.119</title>
+    <title>Zerkalius Control Hub — v0.120</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -611,7 +611,7 @@
 <script src="_js/hub-mirror.js?v=119"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
-<script src="_js/hub-view.js?v=116"></script>
+<script src="_js/hub-view.js?v=120"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -648,7 +648,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.119</div>
+        <div class="ver">v0.120</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1150,22 +1150,23 @@
                 document.querySelectorAll('.hubNoteCell[data-note=apex],.hubNoteCell[data-note=apex-mirror]').forEach(b=>b.setAttribute('aria-pressed',String(!!d.zerkSndOn)));noteDraw(performance.now());noteKick();
             });
             const sierBase = document.createElement('canvas'), sierSource = document.createElement('canvas');
-            const finishSier = (canvas, output) => {
+            const finishSier = (canvas, output, vector = sierDraw.vector) => {
                 if (!output) {
                     if (sierBase.width !== canvas.width || sierBase.height !== canvas.height) { sierBase.width = canvas.width; sierBase.height = canvas.height; }
                     const g = sierBase.getContext('2d'); g.clearRect(0, 0, sierBase.width, sierBase.height); g.drawImage(canvas, 0, 0);
                     sierDraw.view = window.HubView.revision;
                     sierDraw.mirror = window.HubMirror.revision;
                 }
-                window.HubView.paint(canvas, output ? { left: output.left, scale: output.scale } : null, output ? null : sierBase); return true;
+                window.HubView.paint(canvas, output ? { left: output.left, scale: output.scale } : null, output ? null : sierBase, vector); return true;
             };
-            const finishSource = (canvas, output) => {
+            const finishSource = (canvas, output, vector) => {
+                if (!output) sierDraw.vector = vector;   // v0.120: зеркальная копия рисуется заново ромбами, а не растягивается из картинки — без размытия
                 window.HubView.source(canvas, output ? { left: output.left, scale: output.scale } : null);
                 if (!output) {
                     if (sierSource.width !== canvas.width || sierSource.height !== canvas.height) { sierSource.width = canvas.width; sierSource.height = canvas.height; }
                     const g = sierSource.getContext('2d'); g.clearRect(0, 0, sierSource.width, sierSource.height); g.drawImage(canvas, 0, 0);
                 }
-                window.HubMirror.reflect(canvas, output ? { left: output.left, scale: output.scale } : null); return finishSier(canvas, output);
+                window.HubMirror.reflect(canvas, output ? { left: output.left, scale: output.scale } : null); return finishSier(canvas, output, vector);
             };
             const sierDrawCore = (output = null) => {
                 if (!sier || getComputedStyle(sier).display === "none") return false;
@@ -1181,7 +1182,7 @@
                 const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry,window.HubMirror.state.symmetryMinimums.minRows,window.HubMirror.state.symmetryMinimums.minPairs].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
                 if (!output) { if (key === sierDraw.k) {
                     if (sierDraw.mirror !== window.HubMirror.revision) { sg.save(); sg.setTransform(1,0,0,1,0,0); sg.clearRect(0,0,canvas.width,canvas.height); sg.drawImage(sierSource,0,0); sg.restore(); window.HubMirror.reflect(canvas); reflectNotes(); noteDraw(performance.now()); return finishSier(canvas, null); }
-                    if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase); sierDraw.view = window.HubView.revision; } return true;
+                    if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase, sierDraw.vector); sierDraw.view = window.HubView.revision; } return true;
                 } sierDraw.k = key; }
                 if (!output && (sier.width !== Math.round(W * dpr) || sier.height !== Math.round(H * dpr))) { sier.width = Math.round(W * dpr); sier.height = Math.round(H * dpr); }
                 sg.setTransform(dpr, 0, 0, dpr, -left * dpr, 0); sg.clearRect(0, 0, W, H);
@@ -1190,8 +1191,8 @@
                 if (!output) window.HubMirror.place(desk ? 300 : 0, desk ? W - 300 : W, H);
                 if (window.HubImage.active) {
                     if (!output) { NOTES.g.clearRect(0, 0, NOTES.cv.width, NOTES.cv.height); document.querySelectorAll('.hubNoteCell').forEach(b => b.remove()); NOTES.key = ''; }
-                    window.HubImage.draw(sg, desk ? 300 : 0, desk ? W - 300 : W, H);
-                    return finishSource(canvas, output);
+                    const paintImage = sg => window.HubImage.draw(sg, desk ? 300 : 0, desk ? W - 300 : W, H);
+                    paintImage(sg); return finishSource(canvas, output, { base: [dpr, 0, 0, dpr, -left * dpr, 0], draw: paintImage });
                 }
                 const N = PR.length, land = false; if (land) allOff();   // v0.081: лёжа — ноты, как прежде, между двумя треугольниками
                 const bw = sndBox.getBoundingClientRect().width;
@@ -1213,6 +1214,7 @@
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw]]; }
                 if(!output)window.HubMirror.setBitCenters(PR.flatMap((row,r)=>[...row].flatMap((_,j)=>spots.map(f=>{const [x,y]=f(r,j);return [left+x,y];}))));
+                const paintBits = sg => {
                 const rhomb = (x, y, k, bit) => {
                     const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2, angle = window.HubMirror.bitAngle(bit);
                     const co = Math.cos(angle), si = Math.sin(angle), point = (dx, dy) => [x + dx * co - dy * si, y + dx * si + dy * co];
@@ -1238,7 +1240,8 @@
                         if (digits) { sg.globalAlpha = hc ? 1 : (desk ? 0.75 : 0.95); sg.fillStyle = '#06150d'; for (const f of spots) { const [x, y] = f(r, j); bitDigit(row[j], x, y); } } } }
                 sg.globalAlpha = 1;
                 for(const place of spots)ZZBitSymmetry.drawAxes(sg,symmetry,(x2,r)=>{const y=Math.max(0,Math.min(N-1,r)),i=Math.floor(y),j=(PR[i].length-1+x2)/2,p=place(i,j),next=place(Math.min(N-1,i+1),(PR[Math.min(N-1,i+1)].length-1+x2)/2);return [p[0]+(next[0]-p[0])*(y-i),p[1]+(next[1]-p[1])*(y-i)];},Math.max(.7/dpr,dw*.12));
-                return finishSource(canvas, output);
+                };
+                paintBits(sg); return finishSource(canvas, output, { base: [dpr, 0, 0, dpr, -left * dpr, 0], draw: paintBits });
             };
             const sierDraw = (...args) => window.hubPerfMeasure ? window.hubPerfMeasure('sierDraw', () => sierDrawCore(...args)) : sierDrawCore(...args);
             window.addEventListener('hubview',()=>{sierDraw();noteDraw(performance.now());});
