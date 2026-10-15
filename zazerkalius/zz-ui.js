@@ -2695,7 +2695,7 @@ function ringTblBuild(host){
   RINGTBL.forEach((r, i) => {
     const tip = (LAS_SEG.find(s => s.id === "bConeSlits") || { t: [], v: [] });
     const tt = String(tip.t[tip.v.indexOf(r.v)] || r.t).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    x += `<tr data-v="${r.v}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtn2">${r.t}</td></tr>`;
+    x += `<tr data-v="${r.v}" data-mi-short="${r.t}" title="${tt}" tabindex="0" role="button" aria-pressed="false"><td class="rtp">${ringTblSvg(r.v, 2)}</td><td class="rtn2">${r.t}</td></tr>`;
   });
   el.innerHTML = x + "</tbody></table>"; host.appendChild(el);
   el.addEventListener("click", (e) => {
