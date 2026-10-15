@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.056. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.057. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.056</title>
+<title>Zerkalius Маятник — v0.057</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=56">
+<link rel="stylesheet" href="mayatnik-menu.css?v=57">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.056</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.057</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -869,7 +869,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     paintTemplate(templateG,r.left-host.left,r.top-host.top,scale());
     if(st.userLines.length||axisLineMode){const sc=scale(),ox=r.left-host.left,oy=r.top-host.top,P=([x,y])=>[ox+x*sc,oy+y*sc];
       templateG.save();templateG.strokeStyle='#ffe14d';templateG.fillStyle='#ffe14d';templateG.lineWidth=2;
-      st.userLines.forEach((l,i)=>{const a=P(l),b=P(l.slice(2)),sel=axisSelected&&i===st.userLines.length-1;templateG.lineWidth=sel?4:2;templateG.strokeStyle=templateG.fillStyle=sel?'#fff7b0':'#ffe14d';templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();for(const q of [a,b]){templateG.beginPath();templateG.arc(q[0],q[1],sel?4:3,0,7);templateG.fill();}});templateG.lineWidth=2;templateG.strokeStyle=templateG.fillStyle='#ffe14d';
+      st.userLines.forEach((l,i)=>{const a=P(l),b=P(l.slice(2)),sel=axisSelected&&i===st.userLines.length-1;templateG.lineWidth=sel?4:2;templateG.strokeStyle=templateG.fillStyle=sel?'#fff7b0':'#ffe14d';{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,k=(r.width+r.height)/L*2;templateG.save();templateG.globalAlpha=.45;templateG.lineWidth=1;templateG.setLineDash([4,5]);templateG.beginPath();templateG.moveTo(a[0]-dx*k,a[1]-dy*k);templateG.lineTo(b[0]+dx*k,b[1]+dy*k);templateG.stroke();templateG.restore();}templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();const hs=axisHandles(l);if(hs)for(const q of hs){const x=q[0]-host.left,y=q[1]-host.top;templateG.beginPath();templateG.arc(x,y,7,0,7);templateG.fillStyle='#0d1119';templateG.fill();templateG.lineWidth=2.5;templateG.stroke();templateG.beginPath();templateG.arc(x,y,2.5,0,7);templateG.fillStyle=templateG.strokeStyle;templateG.fill();}});templateG.lineWidth=2;templateG.strokeStyle=templateG.fillStyle='#ffe14d';
       if(axisLineMode&&axisLineHover){const [a,b]=axisRowLine(axisLineHover[1]).reduce((q,v,i)=>(q[i>>1].push(v),q),[[],[]]).map(P);templateG.setLineDash([5,4]);templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();templateG.setLineDash([]);}
       templateG.restore();}
     if(mirrorLine){const y=Math.round(r.top-host.top+mirrorLineY*scale())+.5,x0=Math.max(0,r.left-host.left),x1=Math.min(w,r.right-host.left);
@@ -1708,7 +1708,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     wrap.style.cursor=cursor;const changed=JSON.stringify([next?.item?.id,next?.edge])!==JSON.stringify([templateHover?.item?.id,templateHover?.edge]);templateHover=next;if(changed)queueDigits();
   }
   let hoverAt=null;
-  wrap.addEventListener('pointermove',e=>{if(!axisDrag&&f&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);let c='';if(i>=0){const l=st.userLines[i],r=cv.getBoundingClientRect(),sc=scale();c=[0,2].some(k=>Math.hypot(e.clientX-r.left-l[k]*sc,e.clientY-r.top-l[k+1]*sc)<=8)?'crosshair':'move';}wrap.style.cursor=c;}if(axisLineMode&&f){axisLineHover=snapBit(e.clientX,e.clientY);queueDigits();}hoverAt=[e.clientX,e.clientY];if(!templateDragging)hoverTemplate(e.clientX,e.clientY,{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});});
+  wrap.addEventListener('pointermove',e=>{if(!axisDrag&&f&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);let c='';if(i>=0){const l=st.userLines[i],r=cv.getBoundingClientRect(),sc=scale();c=axisHandleAt(l,e.clientX,e.clientY)>=0?'crosshair':'move';}wrap.style.cursor=c;}if(axisLineMode&&f){axisLineHover=snapBit(e.clientX,e.clientY);queueDigits();}hoverAt=[e.clientX,e.clientY];if(!templateDragging)hoverTemplate(e.clientX,e.clientY,{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});});
   wrap.addEventListener('pointerleave',()=>{hoverAt=null;hoverTemplate(null,null,{});});
   for(const ev of ['keydown','keyup'])addEventListener(ev,e=>{if(['Alt','Control','Meta'].includes(e.key)){if(e.key==='Alt'&&templateHover)e.preventDefault();if(hoverAt)hoverTemplate(hoverAt[0],hoverAt[1],{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});}});
   wrap.addEventListener('contextmenu',e=>{
@@ -1723,13 +1723,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
-  // v0.056: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
+  // v0.057: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
   var axisSelected=false;
+  // v0.057: точки-ручки на концах оси. Если конец за краем видимой части поля, ручка встаёт на край видимой части на той же линии.
+  function axisHandles(l){const r=cv.getBoundingClientRect(),s=scale(),h=wrap.getBoundingClientRect(),m=10,ax=r.left+l[0]*s,ay=r.top+l[1]*s,dx=(l[2]-l[0])*s,dy=(l[3]-l[1])*s;
+    let t0=0,t1=1;for(const [p,q] of [[-dx,ax-(h.left+m)],[dx,(h.right-m)-ax],[-dy,ay-(h.top+m)],[dy,(h.bottom-m)-ay]]){if(p===0){if(q<0)return null;continue;}const t=q/p;if(p<0)t0=Math.max(t0,t);else t1=Math.min(t1,t);}
+    return t0>t1?null:[[ax+t0*dx,ay+t0*dy],[ax+t1*dx,ay+t1*dy]];}
+  function axisHandleAt(l,cx,cy){const hs=axisHandles(l);if(!hs)return -1;return Math.hypot(cx-hs[0][0],cy-hs[0][1])<=10?0:Math.hypot(cx-hs[1][0],cy-hs[1][1])<=10?2:-1;}
   function axisRowLine(y){const r=cv.getBoundingClientRect(),w=r.width/scale(),row=Math.max(0,Math.min(VH,Math.floor(y)));return [0,row,w,row];}if(!Array.isArray(st.userLines))st.userLines=[];
   const snapBit=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.round((cx-r.left)/s*2)/2,Math.round((cy-r.top)/s*2)/2];};
   function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
   $('bAxisLine').onclick=()=>{axisLineMode=!axisLineMode;axisLinePending=null;if(axisLineMode){fillMode=false;autoVertical=0;autoSync();fillSync();stop();target=k;}axisLinesSync();queueDigits();};
-  // v0.056: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
+  // v0.057: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
   // нет — отражаются все биты над осью. Берутся точки, чья проекция попадает на отрезок оси.
   // Режим живой: пока кнопка нажата, ось можно тянуть параллельно, и зеркало пересчитывается от исходной картинки
   // (mirrorBase). Любая другая правка выключает режим, получившееся остаётся.
@@ -1770,10 +1775,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(templateDragging||lineDrag)return;
     if(axisSelected&&e.button===0&&!axisLineMode&&nearestUserLine(e.clientX,e.clientY)<0){axisSelected=false;queueDigits();}
     if(e.button===0&&f&&!axisLinePending&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);if(i>=0){
-      const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const r=cv.getBoundingClientRect(),sc=scale(),de=k=>Math.hypot(e.clientX-r.left-l[k]*sc,e.clientY-r.top-l[k+1]*sc),end=de(0)<=8?0:de(2)<=8?2:-1;
+      const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const end=axisHandleAt(l,e.clientX,e.clientY);
       axisDrag={id:e.pointerId,from:snapBit(e.clientX,e.clientY),line:l.slice(),end};wrap.setPointerCapture(e.pointerId);axisLinesSync();e.preventDefault();return;}}
     if(axisLineMode&&e.button===0&&f){const r=cv.getBoundingClientRect();
-      // v0.056: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
+      // v0.057: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
       if(mirrorLive)mirrorLiveSet(false);st.userLines.push(axisRowLine((e.clientY-r.top)/scale()));axisSelected=true;axisLineMode=false;axisLineHover=null;axisLinePending=null;save();
       axisLinesSync();stop();target=k;mirrorLiveSet(true);mirrorApply(true);queueDigits();e.preventDefault();return;}
     if(e.button===0&&nearLine(e.clientY)){lineDrag={id:e.pointerId};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}
@@ -1895,6 +1900,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=56"></script>
+<script src="mayatnik-menu.js?v=57"></script>
 </body>
 </html>
