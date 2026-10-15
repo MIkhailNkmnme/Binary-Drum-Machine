@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.034. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.035. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.034</title>
+<title>Zerkalius Маятник — v0.035</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=34">
+<link rel="stylesheet" href="mayatnik-menu.css?v=35">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.034</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.035</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -254,15 +254,15 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
   <p><strong>Несколько шаблонов:</strong> «Взять цвет» и кнопка «На поле» в библиотеке добавляют фигуру. Список «На поле» в группе «Шаблон» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
-  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз: исходная заливка снимается, только на её месте биты один раз заменяются 1↔0. По пути поле не меняется. «Без следа» переносит фигуру свободно и снимает исходную заливку без изменения битов; так же работает Alt при переносе. Shift — пропорциональное увеличение от центра (тяни от центра наружу). «Инверт-след» отдельно включает прежнюю дорожку. Внизу показаны новые чёрные/белые пиксели на исходном месте и изменённые биты под текущей фигурой. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
+  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз: исходная заливка снимается, только на её месте биты один раз заменяются 1↔0. По пути поле не меняется. «Без следа» переносит фигуру свободно и снимает исходную заливку без изменения битов; так же работает Alt при переносе. Shift — пропорциональное увеличение от центра (тяни от центра наружу). «Инверт-след» отдельно включает прежнюю дорожку. Внизу первым показано пересечение: сколько пикселей силуэта накрыло чёрные 0, белые 1 и пустоту, а также сдвиг X/Y в пикселях рисунка. Счётчик учитывает текущие изменённые биты, не зависит от экранного увеличения и считает только часть фигуры на поле. Далее показаны новые чёрные/белые пиксели на исходном месте и изменённые биты под текущей фигурой. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
   <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. «Назад» и «Вперёд» выбирают сохранённую фигуру, «На поле» добавляет её копию. «Скачать» выгружает свои шаблоны в JSON, «Загрузить» добавляет их из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу.</p>
 </dialog>
 
 <script src="mayatnik-core.js?v=2"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
-<script src="mayatnik-fill.js?v=34"></script>
-<script src="mayatnik-template.js?v=34"></script>
-<script src="mayatnik-paint-cache.js?v=34"></script>
+<script src="mayatnik-fill.js?v=35"></script>
+<script src="mayatnik-template.js?v=35"></script>
+<script src="mayatnik-paint-cache.js?v=35"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -718,12 +718,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     return counts;
   }
-  function templateAntiBits(){
-    const counts={one:0,zero:0};if(!paintBits)return counts;
+  function templateRasterCounts(){
+    const counts={one:0,zero:0,empty:0,anti:{one:0,zero:0}};
     for(const part of colourTemplate.parts){const r=templateRect(part),x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
       for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
-        const bit=paintBits[y*img.width+x];if(bit<0||!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
-        const original=rasterBit(x,y,true);if(original>=0&&bit!==original)counts[bit?'one':'zero']++;
+        if(!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
+        const bit=rasterBit(x,y);counts[bit===1?'one':bit===0?'zero':'empty']++;
+        if((paintBits?.[y*img.width+x]??-1)<0)continue;
+        const original=rasterBit(x,y,true);if(original>=0&&bit!==original)counts.anti[bit?'one':'zero']++;
       }
     }
     return counts;
@@ -735,10 +737,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const axes=colourTemplate.parts.map(part=>{const a=part.symmetry;return [['v','↕'],['h','↔'],['d','╲'],['u','╱']].filter(([k])=>a[k]).map(([,v])=>v).join(' ')||'нет';}).join(' / ');
     const fmt=v=>Number(v.toFixed(2)).toLocaleString('ru-RU');
     $('templateInfo').textContent=`${templateItems.indexOf(colourTemplate)+1}/${templateItems.length} · ${colourTemplate.name||colourTemplate.hex}${templateVisible?'':' · скрыт'}\nШирина ×${fmt(o.proportional?o.height:1)} · высота ×${fmt(o.height)}\nСдвиг X: ${fmt(templateOffsetX)} · вниз: ${fmt(o.down/RK)}\n${n(colourTemplate.pixels)} пикселей PNG\nИсходные 1: ${n(src.one)} · 0: ${n(src.zero)}\nПусто: ${n(src.empty)} · оси: ${axes}\nПод копией 1: ${n(dst.one)} · 0: ${n(dst.zero)}\nПусто: ${n(dst.empty)}`;
-    const anti=templateAntiBits(),lifted=colourTemplate.lifted;
+    const overlap=templateRasterCounts(),anti=overlap.anti,lifted=colourTemplate.lifted;
+    $('templateInfo').textContent=`Пересечение: чёрные (0) — ${n(overlap.zero)} пикс. · белые (1) — ${n(overlap.one)} пикс. · пусто — ${n(overlap.empty)} пикс. · Сдвиг X ${fmt(templateOffsetX*RK)}, Y ${fmt(o.down)} пикс. рисунка · `+$('templateInfo').textContent;
     $('templateInfo').textContent+=` · Антипиксели под фигурой: чёрных 0 — ${n(anti.zero)}, белых 1 — ${n(anti.one)}`;
     if(lifted)$('templateInfo').textContent+=` · На исходном месте новых: чёрных 0 — ${n(lifted.zero)}, белых 1 — ${n(lifted.one)}`;
-    $('templateInfo').dataset.source=JSON.stringify(src);$('templateInfo').dataset.target=JSON.stringify(dst);$('templateInfo').dataset.anti=JSON.stringify(anti);
+    $('templateInfo').dataset.source=JSON.stringify(src);$('templateInfo').dataset.target=JSON.stringify(dst);$('templateInfo').dataset.anti=JSON.stringify(anti);$('templateInfo').dataset.overlap=JSON.stringify({one:overlap.one,zero:overlap.zero,empty:overlap.empty});
   }
   function paintTemplate(ctx,x0,y0,s){
     if(playing)return;rememberTemplate();
@@ -1565,6 +1568,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=17"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=34"></script>
+<script src="mayatnik-menu.js?v=35"></script>
 </body>
 </html>
