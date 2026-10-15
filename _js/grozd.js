@@ -157,7 +157,8 @@
      ZerkGrozd.adopt({ host, key, groups, items, title(g), color(g), fold(g, open) }) */
   const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
   const longOf = e => norm(e.getAttribute('title') || e.dataset.zzTip || e.dataset.t0 || e.getAttribute('aria-label') || '');
-  const hiddenEl = e => e.hidden || e.classList.contains('sfz-grape-hidden') || e.classList.contains('sfz-grape-empty') || e.style.display === 'none';
+  const hiddenEl = e => e.hidden || e.classList.contains('sfz-grape-hidden') || e.classList.contains('sfz-grape-empty') || e.style.display === 'none'
+    || e.disabled || (e.tagName === 'LABEL' && !!e.querySelector('input:disabled,select:disabled'));   // 15.10: неактивные кнопки в рейке не показываются вовсе
   function nameOf(e) {
     const mi = window.ZerkMenuIcons; let n = '';
     try { n = mi && mi.shortOf ? mi.shortOf(e) : ''; } catch {}
@@ -250,5 +251,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 6, rail, adopt };
+  window.ZerkGrozd = { version: 7, rail, adopt };
 })();
