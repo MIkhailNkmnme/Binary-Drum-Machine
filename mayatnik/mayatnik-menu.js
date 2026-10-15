@@ -1,4 +1,4 @@
-/* Маятник v0.035: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.036: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -28,7 +28,7 @@
       set: v => { e.value = v; e.dispatchEvent(new Event('change', { bubbles: true })); } };
   };
   const control = id => {
-    const e = $(id), node = e.closest('label');
+    const e = $(id), node = e.closest('label') || e;
     if (id === 'speed') {
       const out = document.createElement('output'); out.htmlFor = id;
       const sync = () => { out.textContent = '×' + e.value; };
@@ -63,14 +63,17 @@
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [control('templateActive'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateDown','down'),button('bTemplateUp','up'),button('bTemplateReset','reset'),button('bTemplateReturn','swap'),button('bTemplateMove','move'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),button('bPng','image'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
-    { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[button('bTemplatePrev','back'),button('bTemplateNext','forward'),button('bTemplateLoad','copy'),button('bTemplateSave','save'),button('bTemplateImport','folder'),button('bTemplateExport','save'),control('templateLibraryCurrent'),control('templateName')] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateDown','down'),button('bTemplateUp','up'),button('bTemplateAxisUnlock','lock'),button('bTemplateReset','reset'),button('bTemplateReturn','swap'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),button('bPng','image'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
+    { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bPng', 'image'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   const status = $('mayatnikStatus');
-  for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'fillInfo','paintCacheInfo','templateInfo']) status.append($(id));
+  for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'fillInfo','paintCacheInfo','templateInfo','templateActions']) status.append($(id));
+  for(const [id,kind]of [['bTemplateQuickSave','save'],['bTemplateColour','colour']]){
+    const e=$(id),mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=icon(e,kind);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';e.querySelector('span').prepend(mark);
+  }
   const sidebar=document.createElement('aside');sidebar.id='mayatnikSidebar';$('mayatnikRail').before(sidebar);sidebar.append($('mayatnikRail'));
   source.hidden = true;
   document.body.classList.add('mayatnik-menu-ready');

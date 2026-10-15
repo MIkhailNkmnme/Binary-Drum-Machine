@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.035. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.036. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.035</title>
+<title>Zerkalius Маятник — v0.036</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=35">
+<link rel="stylesheet" href="mayatnik-menu.css?v=36">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.035</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.036</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -194,6 +194,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateShorter" disabled title="Уменьшить высоту шаблона на 10 процентов от исходной">Ниже −</button>
     <button id="bTemplateDown" disabled title="Сдвинуть шаблон вниз на одну строку по центральной оси">Сдвиг ↓</button>
     <button id="bTemplateUp" disabled title="Сдвинуть шаблон вверх на одну строку по центральной оси">Сдвиг ↑</button>
+    <button id="bTemplateAxisUnlock" disabled aria-pressed="false" title="Разблокировать ось: мышью двигать свободно влево-вправо и вверх-вниз. Выключено — двигать только вдоль видимой вертикальной оси">Свободная ось</button>
     <button id="bTemplateReset" disabled title="Вернуть высоту 100%, сдвиг 0 и непрозрачность 50%">Сброс шабл.</button>
     <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть фигуру: без клавиш — вверх-вниз, исходное место инвертируется один раз; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
     <button id="bTemplateTransfer" aria-pressed="false" disabled title="Переносить фигуру свободно без следа: снять её исходную заливку, сохранив биты узора. Shift — изменить размер">Без следа</button>
@@ -205,6 +206,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Название своего шаблона">имя <input id="templateName" type="text" maxlength="100" value="Мой шаблон"></label>
     <select id="templateList" hidden aria-label="Сохранённые свои шаблоны"></select>
     <label class="template-library-current" title="Выбранный свой шаблон"><output id="templateLibraryCurrent" aria-live="polite">Своих шаблонов пока нет</output></label>
+    <div id="templateLibraryChoices" aria-label="Свои шаблоны: нажми, чтобы добавить на поле"></div>
     <button id="bTemplatePrev" disabled title="Предыдущий свой шаблон">Назад</button>
     <button id="bTemplateNext" disabled title="Следующий свой шаблон">Вперёд</button>
     <button id="bTemplateLoad" disabled title="Добавить выбранный свой шаблон на поле">На поле</button>
@@ -222,6 +224,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <input id="paintFile" type="file" accept=".json,application/json" hidden>
     <button id="bPaintNew" title="Начать раскрашивать тот же узор с нуля: убрать заливки, следы и шаблоны с поля. Действие можно отменить">Начать с нуля</button>
     <button id="bPaintRestore" title="Вернуть сохранённую раскраску или работу перед началом с нуля">Из памяти</button><span id="paintCacheInfo"></span><span id="templateInfo"></span>
+    <span id="templateActions" hidden>
+      <button id="bTemplateQuickSave" class="gz-hx" disabled title="Сохранить выбранную фигуру в свои шаблоны"><span>Сохранить</span></button>
+      <button id="bTemplateColour" class="gz-hx" disabled title="Изменить цвет выбранной фигуры"><span>Цвет</span></button>
+      <input id="templateColour" type="color" value="#ff7f27" aria-label="Цвет выбранного шаблона" tabindex="-1">
+    </span>
     <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
     <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
     <button id="bKonus" disabled title="Сначала выбери ось на поле">◯ в Соляриус</button>
@@ -250,19 +257,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Оси:</strong> вертикальные, горизонтальные и обе диагонали проверяются на двух решётках через бит. Минимум — 2 строки и 2 бита с каждой стороны. Пустое «до» означает без верхней границы. «Биты осей» отдельно подсвечивает совпадения при масштабе от ×3; «Скрыть оси» в шапке убирает линии и выбор.</p>
   <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. Повторный щелчок тем же цветом снимает заливку. «Отменить» и «Повторить» работают с заливкой, битами дорожки и шаблонами. «Без краски» убирает краску и изменения битов, оставляя шаблоны на поле; это действие тоже можно отменить. «Области» считает участки текущего изображения. Раскраска автоматически сохраняется в памяти этого браузера и восстанавливается после обновления. «Из памяти» возвращает последнее сохранённое поле вместе с цветами и шаблоном. При смене кадра или вида текущая раскраска скрывается; сохранённая работа остаётся в памяти до следующей раскраски. PNG сохраняет видимый результат отдельным файлом. Обычная цветная заливка не меняет биты; «Инверт-след» меняет рабочие биты дорожки.</p>
   <p><strong>Вертикальная раскраска:</strong> кнопка переключается 1 → 0 → выкл. Наведи на пиксель: от него вниз проводится вертикаль толщиной в один пиксель, и все связные области выбранного бита, которых она касается, подсвечиваются. Щелчок применяет цвет. Пустой фон не закрашивается. «Зеркально» включено по умолчанию: захватывается и отражённая сторона относительно центра поля. Shift также включает зеркальную пару. Повторный щелчок тем же цветом снимает заливку.</p>
-  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. «Двигать» позволяет тянуть копию по вертикали прямо на холсте. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область.</p>
+  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. Фигуру можно сразу тянуть мышью прямо на холсте; «Свободная ось» переключает свободное движение и движение только по вертикали. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область.</p>
   <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
-  <p><strong>Несколько шаблонов:</strong> «Взять цвет» и кнопка «На поле» в библиотеке добавляют фигуру. Список «На поле» в группе «Шаблон» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
+  <p><strong>Несколько шаблонов:</strong> «Взять цвет» и нажатие на карточку в «Шаблонах» добавляют фигуру. Включённая карточка показывает её на поле, выключенная скрывает; повторное включение возвращает последнее положение. Активную фигуру выбирают прямо на поле, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; скрытые возвращаются нажатием на карточку в списке. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
-  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз: исходная заливка снимается, только на её месте биты один раз заменяются 1↔0. По пути поле не меняется. «Без следа» переносит фигуру свободно и снимает исходную заливку без изменения битов; так же работает Alt при переносе. Shift — пропорциональное увеличение от центра (тяни от центра наружу). «Инверт-след» отдельно включает прежнюю дорожку. Внизу первым показано пересечение: сколько пикселей силуэта накрыло чёрные 0, белые 1 и пустоту, а также сдвиг X/Y в пикселях рисунка. Счётчик учитывает текущие изменённые биты, не зависит от экранного увеличения и считает только часть фигуры на поле. Далее показаны новые чёрные/белые пиксели на исходном месте и изменённые биты под текущей фигурой. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
-  <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. «Назад» и «Вперёд» выбирают сохранённую фигуру, «На поле» добавляет её копию. «Скачать» выгружает свои шаблоны в JSON, «Загрузить» добавляет их из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу.</p>
+  <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз: исходная заливка снимается, только на её месте биты один раз заменяются 1↔0. По пути поле не меняется. «Без следа» переносит фигуру свободно и снимает исходную заливку без изменения битов; так же работает Alt при переносе. Shift — пропорциональное увеличение от центра (тяни от центра наружу). Ctrl + перетаскивание создаёт независимую копию и двигает её свободно; исходная фигура остаётся на месте. Копия появляется только при протяжке, не при одиночном щелчке. «Свободная ось» разрешает движение мышью влево-вправо и вверх-вниз. Когда кнопка выключена, движение идёт только по видимой пунктирной вертикальной оси; в PNG эта вспомогательная линия не входит. «Инверт-след» отдельно включает прежнюю дорожку. Внизу первым показано пересечение: сколько пикселей силуэта накрыло чёрные 0, белые 1 и пустоту, а также сдвиг X/Y в пикселях рисунка. Счётчик учитывает текущие изменённые биты, не зависит от экранного увеличения и считает только часть фигуры на поле. Далее показаны новые чёрные/белые пиксели на исходном месте и изменённые биты под текущей фигурой. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
+  <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. Все свои шаблоны видны карточками с миниатюрами. Можно включить несколько одновременно и сразу тянуть каждый мышью. У карточки четыре значка: сохранить изменения фигуры на поле, скачать этот шаблон, удалить с подтверждением и изменить цвет. Правая кнопка на карточке или фигуре — переименовать, Enter сохраняет, Esc отменяет. «Скачать все» выгружает библиотеку в JSON, «Загрузить» добавляет шаблоны из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу. Рядом «Сохранить» записывает выбранную фигуру в библиотеку, «Цвет» меняет только цвет этой фигуры; смену цвета можно отменить.</p>
 </dialog>
 
 <script src="mayatnik-core.js?v=2"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
-<script src="mayatnik-fill.js?v=35"></script>
-<script src="mayatnik-template.js?v=35"></script>
-<script src="mayatnik-paint-cache.js?v=35"></script>
+<script src="mayatnik-fill.js?v=36"></script>
+<script src="mayatnik-template.js?v=36"></script>
+<script src="mayatnik-paint-cache.js?v=36"></script>
+<script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -282,7 +290,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let fillPreview=null,previewFrame=0,previewPoint=null;
   const previewCanvas=$('fillPreview'),previewG=previewCanvas.getContext('2d');
   let colourTemplate=null,templateVisible=false,templateStatsKey='',templateLastDown=0,templateOffsetX=0,templatePaintBit=1,templateMove=false,templateDragging=null,templateReturn=null;
-  let templateItems=[],templateSerial=0,templateTransfer=false;
+  let templateItems=[],templateSerial=0,templateTransfer=false,templateAxisUnlocked=false;
   let paintBits=null,fillRedo=[],templateHistoryCapture=null;
   const templateCanvas=$('colourTemplate'),templateG=templateCanvas.getContext('2d');
   let pictureStats = null, digitsRaf = 0;
@@ -634,7 +642,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function sceneSnapshot(sync=true){if(sync)rememberTemplate();return {active:colourTemplate?.id,items:templateItems.map(t=>({...t,view:{...t.view}}))};}
   function editSnapshot(sync=true){return {scene:sceneSnapshot(sync),paint:fillMask?.slice()||null,bits:paintBits?.slice()||null};}
   function finishEdit(before){
-    if(!before||!img)return;const after=sceneSnapshot(),sig=s=>JSON.stringify([s.active,s.items.map(t=>[t.id,t.name,t.view,t.paintSource,t.lifted])]),sceneChanged=sig(before.scene)!==sig(after);
+    if(!before||!img)return;const after=sceneSnapshot(),sig=s=>JSON.stringify([s.active,s.items.map(t=>[t.id,t.name,t.hex,t.view,t.paintSource,t.lifted])]),sceneChanged=sig(before.scene)!==sig(after);
     const ids=[],previous=[],next=[],bp=[],bn=[];
     if(before.paint||fillMask||before.bits||paintBits)for(let q=0;q<img.width*img.height;q++){const a=before.paint?.[q]||0,b=fillMask?.[q]||0,u=before.bits?.[q]??-1,v=paintBits?.[q]??-1;if(a!==b||u!==v){ids.push(q);previous.push(a);next.push(b);bp.push(u);bn.push(v);}}
     if(!sceneChanged&&!ids.length)return;
@@ -662,22 +670,23 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   };
   function rememberTemplate(){
     if(!colourTemplate)return;
-    colourTemplate.view={height:Number($('templateHeight').value),down:Number($('templateDown').value),alpha:Number($('templateAlpha').value),proportional:$('templateProportional').checked,trail:$('templateTrail').checked,transfer:templateTransfer,x:templateOffsetX,visible:templateVisible,paintBit:templatePaintBit,returnTo:templateReturn};
+    colourTemplate.view={height:Number($('templateHeight').value),down:Number($('templateDown').value),alpha:Number($('templateAlpha').value),proportional:$('templateProportional').checked,trail:$('templateTrail').checked,transfer:templateTransfer,axisUnlocked:templateAxisUnlocked,x:templateOffsetX,visible:templateVisible,paintBit:templatePaintBit,returnTo:templateReturn};
   }
   function fieldTemplateList(){
     const list=$('templateActive');list.replaceChildren();
     for(let i=0;i<templateItems.length;i++){const t=templateItems[i];list.add(new Option(`${i+1}. ${t.name||t.hex}${t.view?.visible===false?' · скрыт':''}`,t.id));}
     if(!templateItems.length)list.add(new Option('Нет шаблонов',''));
     list.value=colourTemplate?.id||'';list.disabled=!templateItems.length;
+    syncLibraryChoices();
   }
   function registerTemplate(name){
     colourTemplate.id='field:'+Date.now()+':'+(++templateSerial);colourTemplate.name=name||colourTemplate.hex;
     templateItems.push(colourTemplate);$('templateName').value=colourTemplate.name;rememberTemplate();
   }
-  function selectTemplate(t,persist=true){
-    if(templateDragging)return;
+  function selectTemplate(t,persist=true,duringDrag=false){
+    if(templateDragging&&!duringDrag)return;
     rememberTemplate();colourTemplate=t||null;
-    const v=t?.view||{};templateTransfer=!!v.transfer;
+    const v=t?.view||{};templateTransfer=!!v.transfer;templateAxisUnlocked=!!(v.axisUnlocked??v.transfer);
     $('templateHeight').value=v.height??100;$('templateDown').value=v.down??0;$('templateAlpha').value=v.alpha??50;$('templateProportional').checked=!!v.proportional;$('templateTrail').checked=!!v.trail;
     templateOffsetX=v.x||0;templateVisible=!!t&&v.visible!==false;templatePaintBit=v.paintBit===0?0:1;templateReturn=v.returnTo||null;templateLastDown=Number($('templateDown').value);
     $('bTemplatePaint').textContent='Под ним: '+templatePaintBit;if(t)$('templateName').value=t.name||t.hex;
@@ -685,11 +694,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('templateActive').onchange=()=>{selectTemplate(templateItems.find(t=>t.id===$('templateActive').value));templateMove=!!colourTemplate;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();};
   $('templateName').addEventListener('change',()=>{if(!colourTemplate)return;colourTemplate.name=$('templateName').value.trim()||colourTemplate.hex;templateStatsKey='';fieldTemplateList();queueDigits();savePaint();});
-  $('bTemplateClone').onclick=()=>{
+  function duplicateTemplate(downShift=2,duringDrag=false){
     if(!colourTemplate)return;rememberTemplate();const original=colourTemplate;
-    const copy={...original,paintSource:false,lifted:null,parts:original.parts.map(p=>({...p})),id:'field:'+Date.now()+':'+(++templateSerial),name:(original.name||original.hex)+' · копия',view:{...original.view,down:original.view.down+2,visible:true,returnTo:null}};
-    templateItems.push(copy);selectTemplate(copy);templateMove=true;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();
-  };
+    const copy={...original,paintSource:false,lifted:null,parts:original.parts.map(p=>({...p})),id:'field:'+Date.now()+':'+(++templateSerial),name:(original.name||original.hex)+' · копия',view:{...original.view,down:original.view.down+downShift,visible:true,returnTo:null,trail:duringDrag?false:original.view.trail}};
+    templateItems.push(copy);selectTemplate(copy,!duringDrag,duringDrag);templateMove=true;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();return copy;
+  }
+  $('bTemplateClone').onclick=()=>duplicateTemplate();
   $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
   function templateSync(){
     rememberTemplate();fieldTemplateList();
@@ -699,6 +709,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(const id of ['bTemplateShow','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateMove','templateTrail','templateHeight','templateDown','templateAlpha','templateProportional'])$(id).disabled=!colourTemplate;
     $('bTemplateShow').setAttribute('aria-pressed',String(templateVisible));$('bTemplateMove').setAttribute('aria-pressed',String(templateMove));
     $('bTemplateTransfer').disabled=!colourTemplate;$('bTemplateTransfer').setAttribute('aria-pressed',String(templateTransfer));
+    $('bTemplateAxisUnlock').disabled=!colourTemplate;$('bTemplateAxisUnlock').setAttribute('aria-pressed',String(templateAxisUnlocked));
+    $('templateActions').hidden=!colourTemplate;$('bTemplateQuickSave').disabled=!colourTemplate;$('bTemplateColour').disabled=!colourTemplate;
   }
   function templateOptions(){return {height:Number($('templateHeight').value)/100,down:Number($('templateDown').value)*RK,alpha:Number($('templateAlpha').value)/100,proportional:$('templateProportional').checked};}
   function templateRect(part,original=false,item=colourTemplate){const v=item?.view,o=item===colourTemplate?templateOptions():{height:(v?.height??100)/100,down:(v?.down??0)*RK,proportional:!!v?.proportional},r=MayatnikTemplate.rect(part.mask,part.axis,original?1:o.height,original?false:o.proportional,original?0:o.down);if(!original)r.x+=(item===colourTemplate?templateOffsetX:v?.x||0)*RK;return r;}
@@ -757,7 +769,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
-    paintTemplate(templateG,r.left-host.left,r.top-host.top,scale());templateStatus();
+    paintTemplate(templateG,r.left-host.left,r.top-host.top,scale());
+    if(colourTemplate&&templateVisible&&templateMove&&!templateAxisUnlocked&&templateDragging?.mode!=='move'){
+      templateG.save();templateG.strokeStyle='#ffd35b';templateG.lineWidth=1;templateG.setLineDash([4,4]);
+      for(const part of colourTemplate.parts){const box=templateRect(part),x=r.left-host.left+(box.x+box.width/2)/RK*scale();
+        templateG.beginPath();templateG.moveTo(x,Math.max(0,r.top-host.top));templateG.lineTo(x,Math.min(h,r.bottom-host.top));templateG.stroke();}
+      templateG.restore();
+    }
+    templateStatus();
   }
   $('bTemplateTake').onclick=()=>{
     if(!img)return;stop();target=k;const hex=$('fillColour').value,colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),pixels=new Uint32Array(img.data.buffer),rp=rombP();
@@ -768,7 +787,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       parts.push({mask,canvas,p,ox,axis:mask.x+mask.width/2,symmetry:MayatnikTemplate.symmetry(mask)});
     }
     if(!parts.length){$('templateInfo').textContent='Нет пикселей выбранного цвета. Выбери цвет залитой фигуры в «Раскраске».';return;}
-    rememberTemplate();templateTransfer=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
+    rememberTemplate();templateTransfer=false;templateAxisUnlocked=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`);templateSync();queueDigits();savePaint();
     $('templateName').value=`${hex} · ${parts[0].mask.width}×${parts[0].mask.height}`;saveTemplateLibrary(true);
   };
@@ -783,7 +802,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function changeTemplate(id,value){
     templateReturn=null;
     const el=$(id),min=Number(el.min),max=Number(el.max);el.value=clampInt(value,min,max,id==='templateHeight'?100:0);
-    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&next!==templateLastDown){liftTemplateSource(!templateTransfer&&templateDragging?.mode!=='move');if($('templateTrail').checked&&(!templateDragging||templateDragging.mode==='shift'))traceTemplate(templateLastDown,next);}templateLastDown=next;}
+    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&next!==templateLastDown){liftTemplateSource(!templateTransfer&&!templateDragging?.pure);if($('templateTrail').checked&&(!templateDragging||templateDragging.mode==='shift'))traceTemplate(templateLastDown,next);}templateLastDown=next;}
     templateStatsKey='';queueDigits();if(!templateDragging)savePaint();
   }
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!=='')changeTemplate(id,$(id).value);});
@@ -832,14 +851,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     if(!templateDragging)trailUndo(before,from);draw();
   }
-  $('bTemplateMove').onclick=()=>{templateMove=!templateMove;if(templateMove){templateTransfer=false;$('templateTrail').checked=false;fillMode=false;autoVertical=0;autoSync();fillSync();}templateSync();savePaint();};
+  $('bTemplateMove').onclick=()=>{templateMove=!templateMove;if(templateMove){templateTransfer=false;$('templateTrail').checked=false;fillMode=false;autoVertical=0;autoSync();fillSync();}templateSync();queueDigits();savePaint();};
+  $('bTemplateAxisUnlock').onclick=()=>{if(!colourTemplate)return;templateAxisUnlocked=!templateAxisUnlocked;templateMove=true;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();queueDigits();savePaint();};
   $('templateTrail').onchange=()=>{if($('templateTrail').checked)templateTransfer=false;templateSync();savePaint();};
   function liftTemplateSource(invert){
-    if(!colourTemplate||colourTemplate.paintSource===false)return;
+    // Старые библиотечные фигуры имели paintSource:false, хотя на поле могла
+    // оставаться их исходная заливка. lifted отличает уже снятую заливку;
+    // null у явной копии запрещает снимать заливку исходной фигуры.
+    if(!colourTemplate||colourTemplate.lifted||(colourTemplate.paintSource===false&&colourTemplate.lifted===null))return;
     const counts={one:0,zero:0};
     if(fillMask)for(const part of colourTemplate.parts){const m=part.mask;if(!Number.isInteger(m.x)||!Number.isInteger(m.y))continue;
       for(let y=0;y<m.height;y++)for(let x=0;x<m.width;x++){
-        const colour=m.data[y*m.width+x],px=m.x+x,py=m.y+y;
+        const colour=(part.sourceData||m.data)[y*m.width+x],px=m.x+x,py=m.y+y;
         if(!colour||px<0||py<0||px>=img.width||py>=img.height)continue;
         const q=py*img.width+px;if(fillMask[q]!==colour)continue;
         fillMask[q]=0;
@@ -853,7 +876,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(!colourTemplate||templateDragging)return;
     templateTransfer=!templateTransfer;
     if(templateTransfer){
-      $('templateTrail').checked=false;templateMove=true;templateVisible=true;fillMode=false;autoVertical=0;stop();target=k;
+      $('templateTrail').checked=false;templateMove=true;templateAxisUnlocked=true;templateVisible=true;fillMode=false;autoVertical=0;stop();target=k;
       liftTemplateSource(false);previewPoint=null;clearFillPreview();axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();
     }
     templateStatsKey='';autoSync();fillSync();templateSync();draw();savePaint();
@@ -862,7 +885,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(!f||!img)return null;
     rememberTemplate();
     return {schema:2,st:{...st},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
-      activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
+      activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
@@ -937,7 +960,72 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }catch(_){if(before)await restorePaint(before);$('paintCacheInfo').textContent='Не удалось открыть файл раскраски. Текущая работа сохранена.';}
     finally{$('paintFile').value='';}
   };
-  let templateLibrary=[];
+  let templateLibrary=[],libraryChoicesKey='',removedTemplateIds=new Set(),libraryColourTarget=null;
+  function persistLibrary(){
+    libraryList();
+    return MayatnikPaintCache.write(templateLibrary,'templates').catch(()=>{$('paintCacheInfo').textContent='Не удалось сохранить список в браузере — скачай файл';});
+  }
+  function toggleLibraryTemplate(item){
+    const placed=templateItems.filter(t=>t.libraryId===item.id);
+    $('templateList').value=item.id;librarySelection();
+    if(!placed.length){useLibraryTemplate(item.shape,item.name,item.id);return;}
+    const before=editSnapshot(),show=!placed.some(t=>t.view?.visible!==false),wasActive=placed.includes(colourTemplate);
+    if(wasActive)colourTemplate=null;
+    for(const t of placed)t.view={...t.view,visible:show};
+    if(show){const selected=placed[0];templateItems.splice(templateItems.indexOf(selected),1);templateItems.push(selected);selectTemplate(selected,false);templateMove=true;fillMode=false;autoVertical=0;}
+    else if(wasActive)selectTemplate(templateItems.find(t=>t.view?.visible!==false)||null,false);
+    autoSync();fillSync();templateSync();finishEdit(before);queueDigits();savePaint();
+  }
+  function renameEditor(name,x,y,commit){
+    const input=document.createElement('input');input.className='template-rename';input.value=name;input.maxLength=100;input.setAttribute('aria-label','Имя шаблона');input.title='Enter — сохранить, Esc — отменить';
+    input.style.left=Math.max(8,Math.min(x,innerWidth-248))+'px';input.style.top=Math.max(8,Math.min(y,innerHeight-40))+'px';document.body.append(input);
+    let done=false;const finish=save=>{if(done)return;done=true;const value=input.value.trim();input.remove();if(save&&value&&value!==name)commit(value);};
+    input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();finish(true);}if(e.key==='Escape'){e.preventDefault();finish(false);}};input.onblur=()=>finish(true);input.focus();input.select();
+  }
+  function renameLibraryItem(item,name){
+    const old=item.name;item.name=name;
+    for(const t of templateItems)if(t.libraryId===item.id&&t.name===old)t.name=name;
+    if(colourTemplate)$('templateName').value=colourTemplate.name;templateStatsKey='';persistLibrary();templateSync();queueDigits();savePaint();
+  }
+  function downloadTemplate(item){
+    const blob=new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[item]})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mayatnik-template.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }
+  async function deleteLibraryItem(item){
+    if(!confirm(`Удалить «${item.name}» из списка и убрать его копии с поля?`))return;
+    const before=editSnapshot(),wasActive=colourTemplate?.libraryId===item.id;
+    if(wasActive)colourTemplate=null;templateItems=templateItems.filter(t=>t.libraryId!==item.id);if(wasActive)selectTemplate(templateItems.find(t=>t.view?.visible!==false)||null,false);
+    templateLibrary=templateLibrary.filter(t=>t.id!==item.id);removedTemplateIds.add(item.id);persistLibrary();
+    finishEdit(before);templateSync();queueDigits();savePaint();
+    try{await MayatnikPaintCache.write([...removedTemplateIds],'template-hidden');}catch(_) {$('paintCacheInfo').textContent='Удалено в этом окне; память браузера недоступна';}
+  }
+  function syncLibraryChoices(){
+    const host=$('templateLibraryChoices');
+    const key=JSON.stringify([!!img,!!window.ZerkMenuIcons,colourTemplate?.id,templateLibrary.map(t=>[t.id,t.name]),templateItems.map(t=>[t.id,t.libraryId,t.view?.visible])]);
+    if(key===libraryChoicesKey)return;libraryChoicesKey=key;host.replaceChildren();
+    if(!templateLibrary.length){host.textContent='Свои шаблоны появятся здесь после сохранения или загрузки файла.';return;}
+    for(const item of templateLibrary){
+      const placed=templateItems.filter(t=>t.libraryId===item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=document.createElement('button');card.className='template-entry-card';button.type='button';button.className='gz-hx template-entry';button.disabled=!img;
+      button.setAttribute('aria-pressed',String(visible));if(visible)button.classList.add('gz-on');
+      button.title=visible?'Скрыть с поля; правой кнопкой — переименовать':'Показать на поле; правой кнопкой — переименовать';
+      const thumb=document.createElement('canvas'),part=item.shape.parts[0];thumb.width=32;thumb.height=40;thumb.setAttribute('aria-hidden','true');
+      const mask=document.createElement('canvas');mask.width=part.width;mask.height=part.height;const pixels=Uint32Array.from(part.data);mask.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels.buffer),part.width,part.height),0,0);
+      const g=thumb.getContext('2d'),scale=Math.min(32/part.width,40/part.height);g.imageSmoothingEnabled=false;g.drawImage(mask,(32-part.width*scale)/2,(40-part.height*scale)/2,part.width*scale,part.height*scale);
+      const label=document.createElement('span');label.textContent=item.name+(visible?' · на поле':'');button.append(thumb,label);
+      button.onclick=()=>toggleLibraryTemplate(item);button.oncontextmenu=e=>{e.preventDefault();renameEditor(item.name,e.clientX,e.clientY,name=>renameLibraryItem(item,name));};
+      const actions=document.createElement('div');actions.className='template-entry-actions';
+      const action=(kind,title,fallback,run)=>{const b=document.createElement('button');b.type='button';b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.dataset.miIcon=kind;
+        if(window.ZerkMenuIcons){const mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=ZerkMenuIcons.iconFor(b);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';b.append(mark);}else b.textContent=fallback;
+        b.onclick=run;actions.append(b);return b;};
+      action('save','Сохранить изменения фигуры на поле в этот шаблон','💾',()=>{
+        const t=colourTemplate?.libraryId===item.id?colourTemplate:placed[0];if(!t)return;
+        selectTemplate(t,false);item.shape=templateSnapshot();item.name=t.name;persistLibrary();$('paintCacheInfo').textContent='Шаблон сохранён: '+item.name;
+      }).disabled=!placed.length;
+      action('down','Скачать этот шаблон файлом','↓',()=>downloadTemplate(item));
+      action('cross','Удалить шаблон с подтверждением','×',()=>deleteLibraryItem(item));
+      action('colour','Изменить цвет этого шаблона','●',()=>{libraryColourTarget=item.id;recolourTarget=null;$('templateColour').value=item.shape.hex;$('templateColour').click();});
+      card.append(button,actions);host.append(card);
+    }
+  }
   function librarySelection(){
     const list=$('templateList'),n=list.options.length,i=list.selectedIndex;
     $('templateLibraryCurrent').textContent=n?`${i+1} / ${n} · ${list.options[i].textContent}`:'Своих шаблонов пока нет';
@@ -949,21 +1037,29 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(const item of templateLibrary)list.add(new Option(item.name,item.id));
     if(previous&&[...list.options].some(o=>o.value===previous))list.value=previous;
     librarySelection();
+    libraryChoicesKey='';syncLibraryChoices();
   }
   for(const [id,step]of [['bTemplatePrev',-1],['bTemplateNext',1]])$(id).onclick=()=>{const list=$('templateList');if(!list.options.length)return;list.selectedIndex=Math.max(0,Math.min(list.options.length-1,list.selectedIndex+step));librarySelection();};
-  const libraryReady=MayatnikPaintCache.read('templates').then(items=>{templateLibrary=Array.isArray(items)?items.filter(t=>!String(t.id).startsWith('standard:')):[];libraryList();}).catch(()=>libraryList());
+  function loadUserLibrary(items){
+    const local=Array.isArray(items)?items.filter(t=>!String(t.id).startsWith('standard:')&&!removedTemplateIds.has(t.id)):[],bundled=(window.MayatnikUserTemplates||[]).filter(t=>!removedTemplateIds.has(t.id));
+    // Сохранённая пользователем версия с тем же id имеет приоритет.
+    const ids=new Set(bundled.map(t=>t.id));
+    templateLibrary=[...bundled.map(t=>local.find(item=>item.id===t.id)||structuredClone(t)),...local.filter(t=>!ids.has(t.id))];
+    libraryList();
+  }
+  const libraryReady=Promise.allSettled([MayatnikPaintCache.read('templates'),MayatnikPaintCache.read('template-hidden')]).then(([items,removed])=>{removedTemplateIds=new Set(removed.status==='fulfilled'&&Array.isArray(removed.value)?removed.value:[]);loadUserLibrary(items.status==='fulfilled'?items.value:[]);});
   function templateSnapshot(){
     return {hex:colourTemplate.hex,rk:RK,parts:colourTemplate.parts.map(p=>({width:p.mask.width,height:p.mask.height,y:p.mask.y,center:p.axis/RK-p.ox-(geo.anchor-VX+.5),data:Array.from(p.mask.data)})),height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked};
   }
   async function saveTemplateLibrary(fresh=false){
-    if(!colourTemplate)return;const shape=templateSnapshot(),name=$('templateName').value.trim()||'Мой шаблон',selected=$('templateList').value;
+    if(!colourTemplate)return;const instance=colourTemplate,shape=templateSnapshot(),name=$('templateName').value.trim()||'Мой шаблон',selected=instance.libraryId||$('templateList').value;
     await libraryReady;
     const old=!fresh&&templateLibrary.find(t=>t.id===selected&&t.name===name),id=old?.id||('saved:'+Date.now()+':'+Math.random().toString(36).slice(2,8));
-    const entry={id,name,shape};if(old)templateLibrary[templateLibrary.indexOf(old)]=entry;else templateLibrary.push(entry);libraryList(id);
+    const entry={id,name,shape};if(old)templateLibrary[templateLibrary.indexOf(old)]=entry;else templateLibrary.push(entry);if(templateItems.includes(instance))instance.libraryId=id;libraryList(id);savePaint();
     try{await MayatnikPaintCache.write(templateLibrary,'templates');$('paintCacheInfo').textContent='Шаблон сохранён отдельно: '+name;}
     catch(_){$('paintCacheInfo').textContent='Библиотека в этом окне — нажми «Скачать» для сохранения';}
   }
-  function useLibraryTemplate(shape,name){
+  function useLibraryTemplate(shape,name,libraryId){
     if(!img||!f)return;stop();target=k;
     const editBefore=editSnapshot();
     const rp=rombP(),parts=[],factor=RK/(shape.rk||1),halves=rp===2?[[0,0],[1,VW+RG]]:[[rp,0]];
@@ -975,13 +1071,38 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const axis=(geo.anchor-VX+ox+.5+(Number(src.center)||0))*RK,mask={x:axis-width/2,y:Math.round((src.y||0)*factor),width,height,data,count},canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
       canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer),width,height),0,0);parts.push({p,ox,axis,mask,canvas,symmetry:MayatnikTemplate.symmetry(mask)});
     }
-    rememberTemplate();templateTransfer=false;colourTemplate={parts,hex:shape.hex,paintSource:false,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
+    rememberTemplate();templateTransfer=false;templateAxisUnlocked=true;colourTemplate={parts,hex:shape.hex,libraryId,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
     $('templateHeight').value=shape.height||100;$('templateDown').value=shape.down||0;$('templateProportional').checked=!!shape.proportional;templateOffsetX=shape.x||0;templateLastDown=Number($('templateDown').value);templateReturn=null;
     templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');fillSync();autoSync();templateStatsKey='';registerTemplate(name);templateSync();queueDigits();finishEdit(editBefore);savePaint();
   }
   $('bTemplateSave').onclick=()=>saveTemplateLibrary();
+  $('bTemplateQuickSave').onclick=()=>$('bTemplateSave').click();
+  let recolourTarget=null;
+  $('bTemplateColour').onclick=()=>{if(!colourTemplate)return;libraryColourTarget=null;recolourTarget=colourTemplate.id;$('templateColour').value=colourTemplate.hex;$('templateColour').click();};
+  function recolourTemplate(item,hex){
+    const colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)));
+    item.parts=item.parts.map(p=>{
+      const data=Uint32Array.from(p.mask.data,v=>v?colour:0),mask={...p.mask,data},canvas=document.createElement('canvas');canvas.width=mask.width;canvas.height=mask.height;
+      canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer),mask.width,mask.height),0,0);
+      return {...p,sourceData:p.sourceData||p.mask.data,mask,canvas};
+    });
+    if(item.name?.startsWith(item.hex+' ·'))item.name=hex+item.name.slice(item.hex.length);
+    item.hex=hex;if(item===colourTemplate)$('templateName').value=item.name||hex;
+  }
+  $('templateColour').onchange=()=>{
+    if(templateDragging)return;const hex=$('templateColour').value,before=editSnapshot();
+    if(libraryColourTarget){
+      const entry=templateLibrary.find(t=>t.id===libraryColourTarget);if(!entry||entry.shape.hex===hex)return;
+      const colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),old=entry.shape.hex;
+      entry.shape={...entry.shape,hex,parts:entry.shape.parts.map(p=>({...p,data:p.data.map(v=>v?colour:0)}))};
+      if(entry.name.startsWith(old+' ·'))entry.name=hex+entry.name.slice(old.length);
+      for(const t of templateItems)if(t.libraryId===entry.id)recolourTemplate(t,hex);
+      persistLibrary();
+    }else{const item=templateItems.find(t=>t.id===recolourTarget);if(!item||item.hex===hex)return;recolourTemplate(item,hex);}
+    templateStatsKey='';finishEdit(before);templateSync();queueDigits();savePaint();
+  };
   $('bTemplateLoad').onclick=async()=>{await libraryReady;const id=$('templateList').value;
-    try{const item=templateLibrary.find(t=>t.id===id);if(item)useLibraryTemplate(item.shape,item.name);}
+    try{const item=templateLibrary.find(t=>t.id===id);if(item)useLibraryTemplate(item.shape,item.name,item.id);}
     catch(_){$('paintCacheInfo').textContent='Не удалось открыть шаблон';}
   };
   $('bTemplateExport').onclick=async()=>{await libraryReady;
@@ -1468,12 +1589,19 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const part=item.parts.find(p=>x>=p.ox*RK&&x<(p.ox+VW)*RK&&MayatnikTemplate.contains(p.mask,templateRect(p,false,item),x,y));if(part)return {item,part};}
     return null;
   }
+  wrap.addEventListener('contextmenu',e=>{
+    if(!img||templateDragging)return;const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(!hit)return;
+    e.preventDefault();const item=hit.item;renameEditor(item.name||item.hex,e.clientX,e.clientY,name=>{
+      if(!templateItems.includes(item))return;const entry=templateLibrary.find(t=>t.id===item.libraryId);
+      if(entry)renameLibraryItem(entry,name);else{const before=editSnapshot();item.name=name;if(item===colourTemplate)$('templateName').value=name;templateStatsKey='';finishEdit(before);templateSync();queueDigits();savePaint();}
+    });
+  });
   wrap.addEventListener('pointerdown', e => {
     if(templateDragging)return;
-    if(templateMove&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
-      const hit=hitTemplate(x,y),part=hit?.part;if(hit)selectTemplate(hit.item,false);
+    if(((!fillMode&&!autoVertical)||e.ctrlKey)&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
+      const hit=hitTemplate(x,y),part=hit?.part;if(hit){selectTemplate(hit.item,false);templateMove=true;}
       if(part){const box=templateRect(part),cx=r.left+(box.x+box.width/2)/RK*scale(),cy=r.top+(box.y+box.height/2)/RK*scale();
-        templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),proportional:$('templateProportional').checked,part,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:e.altKey?'move':e.shiftKey?'scale':templateTransfer?'move':'shift',editBefore:editSnapshot()};
+        templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),proportional:$('templateProportional').checked,part,partIndex:hit.item.parts.indexOf(part),duplicate:e.ctrlKey,pure:e.altKey||templateTransfer||e.ctrlKey,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:e.altKey?'move':e.shiftKey?'scale':(templateAxisUnlocked||e.ctrlKey)?'move':'shift',editBefore:editSnapshot()};
         wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');clearFillPreview();e.preventDefault();return;}}
     if (e.button !== 0 && e.button !== 1) return;
     if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
@@ -1484,7 +1612,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   wrap.addEventListener('pointermove', e => {
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
-      if(!d.moved&&d.mode==='move')liftTemplateSource(false);d.moved=true;
+      if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
+      if(!d.moved&&d.mode==='move')liftTemplateSource(!d.pure);d.moved=true;
       if(d.mode==='scale'){
         const ratio=Math.max(12,Math.hypot(e.clientX-d.cx,e.clientY-d.cy))/d.radius;
         $('templateProportional').checked=true;changeTemplate('templateHeight',d.height*ratio);
@@ -1557,7 +1686,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
   if (st.zsnap && st.zoom !== 'fit') st.zoom = snap2(st.zoom);   // v0.015: сохранённый прежде плавный масштаб — к ближайшему 2^k
   // Сохраняем всю протяжку одним действием, отдельные кнопки — одним щелчком.
-  const historyButtons=['bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
+  const historyButtons=['bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateAxisUnlock','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
   function captureEdit(){if(img)templateHistoryCapture=editSnapshot(false);}
   function completeEdit(){const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
@@ -1566,8 +1695,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/menu-icons.js?v=17"></script>
+<script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=35"></script>
+<script src="mayatnik-menu.js?v=36"></script>
 </body>
 </html>
