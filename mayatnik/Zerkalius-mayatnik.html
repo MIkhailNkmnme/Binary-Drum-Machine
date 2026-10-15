@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.091. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.092. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.091</title>
+<title>Zerkalius Маятник — v0.092</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=91">
+<link rel="stylesheet" href="mayatnik-menu.css?v=92">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.091</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.092</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -199,6 +199,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Как соединять биты при ручной заливке и взятии области в шаблон. Один бит игнорирует зеркальную пару.">Область <select id="fillArea" data-mi-short="Область"><option value="sides">По сторонам</option><option value="corners">Стороны + углы</option><option value="diagonal">Только углы</option><option value="chess0">Шахматки 0</option><option value="bit">Один бит</option></select></label>
     <button id="bAutoAll" data-mi-short="Авто" aria-pressed="false" title="Автопокраска по шагам от столбца вершины: шаг 1 — слева белые, справа чёрные, шаг 2 — наоборот, и так по очереди. Каждый столбец красит не закрашенные области, которых касается, следующим цветом. Видно, как идёт; второй щелчок — стоп. Отменяется ↩. В режиме области «Шахматки 0» — включает и выключает живой слой: каждая область нулей своим цветом, держится при шагах и пересчитывается на каждом кадре">Авто</button>
     <button id="bAutoVertical" aria-pressed="false" title="По кругу: области битов 1 → битов 0 → выключено. Наведи на пиксель: все области, касающиеся вертикали от него вниз, подсветятся. Щелчок применяет цвет.">Вертикаль выкл</button>
+    <button id="bStolb" data-mi-short="Проход" aria-pressed="false" title="Проход столба: столбец «Столбов» идёт от «от» до «до» и обратно, области пересчитываются на каждом шаге; краска и история не меняются. Начало — где последний раз наводил столб. Для GIF — «Запись» и пуск. Esc — выход">Проход столба</button>
     <label title="Красить и зеркальную область относительно центра поля; Shift также включает зеркальную пару"><input id="fillMirror" type="checkbox" checked>Зеркально</label>
     <button id="bFillUndo" disabled title="Отменить последнее действие с краской, битами или шаблонами">Отменить</button>
     <button id="bFillRedo" disabled title="Повторить отменённое действие">Повторить</button>
@@ -299,6 +300,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/zz-pult.js?v=2"></script>
 <script src="mayatnik-fold.js?v=1"></script>
+<script src="mayatnik-stolb.js?v=1"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -326,6 +328,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const templateCanvas=$('colourTemplate'),templateG=templateCanvas.getContext('2d');
   let pictureStats = null, digitsRaf = 0;
   let foldTransport=null,foldSource=null;
+  let stolbTransport=null,stolbCol=null,stolbRow=0,stolbLast=null;   // v0.092: «Проход столба» — столбец от якоря, строка начала, последнее наведение
   const digitCanvas = $('bitDigits'), digitG = digitCanvas.getContext('2d');
   let f = null, geo = null, k = 0, img = null, playing = false, raf = 0, snaps = new Map(), interval = 1, target = 0;
 
@@ -640,7 +643,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     clearFillPreview();
     fillBase=px.slice();fillBits=null;
-    applyFill(px);chessLiveApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
+    applyFill(px);chessLiveApply(px);stolbApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
     present();
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
@@ -827,6 +830,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         if(L.RK===1){for(let x=0;x<IW;x++){const v=of[ids[row+x]];if(v&&!(mask&&mask[o+x]))px[o+x]=v;}}
         else for(let x=0;x<IW;x++){const v=of[ids[row+((x/L.RK)|0)]];if(v&&!(mask&&mask[o+x]))px[o+x]=v;}}}
     else{const layer=L.layer;for(let i=0;i<px.length;i++){const v=of[layer[i]];if(v&&!(mask&&mask[i]))px[i]=v;}}
+  }
+  // v0.092: «Проход столба» — выбор «Столбов» для столбца stolbCol поверх кадра, прямо в холст (его и пишет «Запись»);
+  // краска и история не меняются. Тот же выбор, что у щелчка: paintSelection со строки начала stolbRow.
+  function stolbApply(px){
+    if(stolbCol==null||!img||!f||!geo)return;
+    if(!autoVertical){setTimeout(()=>stolbTransport?.close(),0);return;}
+    const w=img.width,h=img.height,x=Math.floor((geo.anchor-VX+stolbCol+.5)*RK);if(x<0||x>=w)return;
+    const y=Math.max(0,Math.min(h-1,stolbRow)),hex=$('fillColour').value,colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),white=rgba([255,255,255]);
+    const ids=paintSelection(x,y,$('fillMirror').checked).indices;
+    for(const q of ids)px[q]=colour;
+    for(let yy=y;yy<h;yy++)if((yy-y)%6<3)px[yy*w+x]=white;   // пунктир столбца, как у наведения
+    $('fillInfo').textContent=`Проход столба · столбец ${stolbCol} · ${ids.length.toLocaleString('ru-RU')} пикселей`;
   }
   function autoPaintAll(){
     if(autoRun){autoStop();return;}if(chessLive){chessLiveSet(false);return;}if(!img||!f||!geo)return;if(st.fillArea==='chess0'){chessLiveSet(true);return;}stop();target=k;const w=img.width,h=img.height,n=w*h;
@@ -1464,6 +1479,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     previewFrame=0;if((!fillMode&&!autoVertical)||!img||playing||!previewPoint){clearFillPreview();return;}
     const r=cv.getBoundingClientRect(),x=Math.floor((previewPoint[0]-r.left)/r.width*img.width),y=Math.floor((previewPoint[1]-r.top)/r.height*img.height);
     if(x<0||y<0||x>=img.width||y>=img.height){clearFillPreview();return;}
+    if(autoVertical)stolbLast=[x,y];   // v0.092: отсюда начнётся «Проход столба»
     const q=y*img.width+x,hex=$('fillColour').value,mirror=$('fillMirror').checked||previewPoint[2];
     if(fillPreview?.hex===hex&&fillPreview.q===q&&fillPreview.mode===autoVertical&&fillPreview.mirror===mirror&&fillPreview.area===st.fillArea){drawFillPreview();return;}
     const selected=paintSelection(x,y,mirror),ids=selected.indices,members=selected.members;if(!ids.length){clearFillPreview();return;}
@@ -2136,7 +2152,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
   for(const id of ['templateHeight','templateDown','templateAlpha','templateName'])for(const ev of ['input','change']){$(id).addEventListener(ev,captureEdit,true);$(id).addEventListener(ev,completeEdit);}
   foldTransport=MayatnikFold.mount({button:$('bFoldHorizontal'),wrap,canvas:cv,zoom:zoomTo,
-    beforeStart(){stop();autoStop();tip.style.display='none';clearFillPreview();},
+    beforeStart(){stop();autoStop();stolbTransport?.close();tip.style.display='none';clearFillPreview();},
     capture(){
       if(!f||!img)return null;
       const data=new Int8Array(VW*VH).fill(-1),rp=rombP();
@@ -2155,12 +2171,23 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     },
     onClose(){foldSource=null;queueDigits();}
   });
+  // v0.092: «Проход столба» — пульт в mayatnik-stolb.js; здесь — откуда начать и как показать столбец.
+  stolbTransport=MayatnikStolb.mount({button:$('bStolb'),
+    beforeStart(){stop();target=k;autoStop();foldTransport?.close();tip.style.display='none';clearFillPreview();if(!autoVertical){autoVertical=1;autoSync();}},
+    start(){
+      if(!f||!img||!geo)return null;const a=geo.anchor-VX,half=Math.max(1,Math.floor(VH/3));
+      const col=stolbLast?Math.floor(stolbLast[0]/RK)-a:0;stolbRow=stolbLast?stolbLast[1]:0;
+      return {lo:Math.max(-a,Math.min(col,-half)),hi:Math.min(VW-1-a,Math.max(col,half)),col};
+    },
+    show(col){stolbCol=col;if(f)draw();},
+    onClose(){stolbCol=null;$('fillInfo').textContent='';if(f)draw();}
+  });
   writeUI();restorePaint().then(ok=>{if(!ok)build();});
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=91"></script>
+<script src="mayatnik-menu.js?v=92"></script>
 </body>
 </html>

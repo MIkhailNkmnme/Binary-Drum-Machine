@@ -215,6 +215,16 @@ header #paintTools #templateActions>.gz-hx{display:none}
 /* v0.082: общий пульт Зеркалиуса для включённой горизонтальной свёртки. */
 #mayFoldPanel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
 #mayFoldPanel[hidden],#mayFoldCanvas[hidden]{display:none}
+/* v0.092: пульт «Прохода столба» — как у свёртки, на том же месте (вместе не бывают). */
+#mayStolbPanel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
+#mayStolbPanel[hidden]{display:none}
+#mayStolbPanel .zz-pult{position:relative;width:100%}
+#mayStolbPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
+#mayStolbPanel .may-fold-steps button{flex:none;padding:3px 8px}
+#mayStolbPanel .may-fold-frame{display:block;box-sizing:border-box;width:100%;margin:4px 0}
+#mayStolbPanel .may-stolb-range{display:flex;gap:10px;align-items:center;margin-top:4px;font:11px/1.4 var(--mono)}
+#mayStolbPanel .may-stolb-range input{width:64px}
+@media(max-width:600px){#mayStolbPanel{left:8px;bottom:calc(33.333dvh + 16px);transform:none;width:calc(100vw - 16px)}}
 #mayFoldPanel .zz-pult{position:relative;width:100%}
 #mayFoldPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
 #mayFoldPanel .may-fold-steps button{flex:none;padding:3px 8px}
