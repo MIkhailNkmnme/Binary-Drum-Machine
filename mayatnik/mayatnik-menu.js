@@ -1,4 +1,4 @@
-/* Маятник v0.045: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.046: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -58,7 +58,7 @@
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
-      check('sym', 'mirror'), check('symBits', 'colour'), button('bAxisPick', 'select'), button('bClearAxis', 'cross'), button('bKonus', 'ring'),
+      check('sym', 'mirror'), check('symV', 'line'), check('symH', 'minus'), check('symD', 'cross'), check('symBits', 'colour'), button('bAxisPick', 'select'), button('bClearAxis', 'cross'), button('bKonus', 'ring'),
       { type: 'action', name: 'Зерк. маятник', icon: icon($('mirrorLink'), 'mirror'),
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
