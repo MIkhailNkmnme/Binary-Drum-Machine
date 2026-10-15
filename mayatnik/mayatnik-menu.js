@@ -1,4 +1,4 @@
-/* Маятник v0.114: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.115: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -41,9 +41,10 @@
       button('bBuild', 'field'), button('bReset', 'reset'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       control('rows'), control('steps'), select('mode', 'swap', {pend:'Лево-право',right:'Вправо',left:'Влево',one:'Одна вершина'}),
       select('bg', 'square', {empty:'Пустое','1':'Все 1','0':'Все 0'}) ] },
-    // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»)
+    // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
+    // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
-      button('bPlay', 'play'), button('bStep', 'forward'), button('bSeq', 'line'),
+      button('bPlay', 'play'), button('bStep', 'forward'),
       ...[...source.querySelectorAll('button.pre')].map(e => ({ type: 'action', name: e.textContent,
         icon: icon(e, 'field'), tip: e.title || `Построить ${e.dataset.n} строк и вершин (или до N/3)`, click: () => e.click() })),
       check('third', 'tri'), control('speed'), control('frame') ] },
