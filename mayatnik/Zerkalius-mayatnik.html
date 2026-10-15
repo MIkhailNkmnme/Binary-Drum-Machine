@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.057. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.058. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.057</title>
+<title>Zerkalius Маятник — v0.058</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=57">
+<link rel="stylesheet" href="mayatnik-menu.css?v=58">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.057</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.058</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -175,6 +175,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Максимальная зеркальная ширина с каждой стороны в срезе; пусто или 0 — без предела. Более широкие срезы скрываются.">бит до <input id="symBitsMax" type="number" min="0" max="16384" placeholder="∞"></label>
     <button id="bAxisLine" aria-pressed="false" data-mi-short="Своя ось" title="Своя ось: щелчок по полю — горизонтальная ось по верхней границе бита на всю ширину, зеркало вниз включается сразу (на каждую ось нажать снова). Тянуть конец — менять ось, тянуть линию — двигать параллельно, правый клик по оси — удалить. Точки цепляются к краям и центрам бит. Delete — удалить выделенную (последнюю) ось, правая кнопка по линии — убрать её, по пустому месту — выйти из режима, Esc — отменить первую точку">Своя ось</button>
     <button id="bAxisLinesClear" data-mi-short="Стереть оси" disabled title="Убрать все свои оси">Стереть оси</button>
+    <button id="bAxisXor" data-mi-short="Хор-зеркало" disabled aria-pressed="false" title="Хор-зеркало по последней своей оси: отражение не кладётся поверх, а XOR-ится с битами под осью. Есть краска — её силуэт как единицы, нет — все биты над осью. Пока нажата — ось тянется, всё пересчитывается сразу">Хор-зеркало</button>
     <button id="bAxisMirror" data-mi-short="Зеркало вниз" disabled aria-pressed="false" title="Зеркало вниз по последней своей оси: всё закрашенное над осью; если краски нет — все биты над осью. Пока нажата — тяни ось мышью, зеркало обновляется сразу">Зеркало вниз</button>
     <button id="bClearAxis" title="Снять выбранную ось и её конус; остальные найденные оси остаются">Снять выбор</button>
     <output id="symInfo" aria-live="polite"></output>
@@ -1723,22 +1724,22 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
-  // v0.057: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
+  // v0.058: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
   var axisSelected=false;
-  // v0.057: точки-ручки на концах оси. Если конец за краем видимой части поля, ручка встаёт на край видимой части на той же линии.
+  // v0.058: точки-ручки на концах оси. Если конец за краем видимой части поля, ручка встаёт на край видимой части на той же линии.
   function axisHandles(l){const r=cv.getBoundingClientRect(),s=scale(),h=wrap.getBoundingClientRect(),m=10,ax=r.left+l[0]*s,ay=r.top+l[1]*s,dx=(l[2]-l[0])*s,dy=(l[3]-l[1])*s;
     let t0=0,t1=1;for(const [p,q] of [[-dx,ax-(h.left+m)],[dx,(h.right-m)-ax],[-dy,ay-(h.top+m)],[dy,(h.bottom-m)-ay]]){if(p===0){if(q<0)return null;continue;}const t=q/p;if(p<0)t0=Math.max(t0,t);else t1=Math.min(t1,t);}
     return t0>t1?null:[[ax+t0*dx,ay+t0*dy],[ax+t1*dx,ay+t1*dy]];}
   function axisHandleAt(l,cx,cy){const hs=axisHandles(l);if(!hs)return -1;return Math.hypot(cx-hs[0][0],cy-hs[0][1])<=10?0:Math.hypot(cx-hs[1][0],cy-hs[1][1])<=10?2:-1;}
   function axisRowLine(y){const r=cv.getBoundingClientRect(),w=r.width/scale(),row=Math.max(0,Math.min(VH,Math.floor(y)));return [0,row,w,row];}if(!Array.isArray(st.userLines))st.userLines=[];
   const snapBit=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.round((cx-r.left)/s*2)/2,Math.round((cy-r.top)/s*2)/2];};
-  function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
+  function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=$('bAxisXor').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
   $('bAxisLine').onclick=()=>{axisLineMode=!axisLineMode;axisLinePending=null;if(axisLineMode){fillMode=false;autoVertical=0;autoSync();fillSync();stop();target=k;}axisLinesSync();queueDigits();};
-  // v0.057: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
+  // v0.058: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
   // нет — отражаются все биты над осью. Берутся точки, чья проекция попадает на отрезок оси.
   // Режим живой: пока кнопка нажата, ось можно тянуть параллельно, и зеркало пересчитывается от исходной картинки
   // (mirrorBase). Любая другая правка выключает режим, получившееся остаётся.
-  let mirrorLive=false,mirrorBase=null,mirrorApplying=false,mirrorFrame=0;
+  let mirrorXor=false,mirrorLive=false,mirrorBase=null,mirrorApplying=false,mirrorFrame=0;
   function mirrorDownAxis(){
     const l=st.userLines[st.userLines.length-1];if(!l||!img||!f)return 0;
     const r=cv.getBoundingClientRect(),kx=scale()*img.width/r.width,ky=scale()*img.height/r.height;
@@ -1750,12 +1751,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(let y=0;y<H;y++)for(let x=0;x<W;x++){const px=x+.5-ax,py=y+.5-ay,d=px*nx+py*ny;if(d>=0)continue;
       const t=(px*dx+py*dy)/(len*len);if(t<0||t>1)continue;
       const tx=Math.floor(x+.5-2*d*nx),ty=Math.floor(y+.5-2*d*ny);if(tx<0||ty<0||tx>=W||ty>=H)continue;const q=y*W+x,o=ty*W+tx;
-      if(colourMode){if(!src[q]||paintBits?.[q]>=0)continue;fillMask[o]=src[q];count++;continue;}
-      const v=rasterBit(x,y),orig=rasterBit(tx,ty,true);if(v<0||orig<0)continue;
+      if(colourMode&&!mirrorXor){if(!src[q]||paintBits?.[q]>=0)continue;fillMask[o]=src[q];count++;continue;}
+      if(colourMode&&(!src[q]||paintBits?.[q]>=0))continue;
+      // v0.058 хор-зеркало: бит под осью = его бит XOR отражённый (у краски отражённый — единица).
+      let v=colourMode?1:rasterBit(x,y);const orig=rasterBit(tx,ty,true);if(v<0||orig<0)continue;if(mirrorXor){const t=rasterBit(tx,ty);if(t<0)continue;v^=t;}
       if(!paintBits)paintBits=new Int8Array(N).fill(-1);if(!fillMask)fillMask=new Uint32Array(N);
       if(v===orig){paintBits[o]=-1;fillMask[o]=0;}else{paintBits[o]=v;fillMask[o]=v?white:black;}count++;}
     if(fillMask&&!fillMask.some(Boolean))fillMask=null;if(paintBits&&!paintBits.some(v=>v>=0))paintBits=null;
-    $('fillInfo').textContent=`Зеркало вниз (${colourMode?'краска':'биты'}): ${count.toLocaleString('ru-RU')} пикселей`;return count;
+    $('fillInfo').textContent=`${mirrorXor?'Хор-зеркало':'Зеркало вниз'} (${colourMode?'краска':'биты'}): ${count.toLocaleString('ru-RU')} пикселей`;return count;
   }
   function mirrorApply(commit){
     if(!mirrorLive||!mirrorBase)return;const before=commit?editSnapshot():null;
@@ -1763,8 +1766,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(commit){mirrorApplying=true;finishEdit(before);mirrorApplying=false;savePaint();}draw();fillSync();
   }
   function mirrorQueue(){if(!mirrorFrame)mirrorFrame=requestAnimationFrame(()=>{mirrorFrame=0;mirrorApply(false);});}
-  function mirrorLiveSet(on){mirrorLive=on&&st.userLines.length>0;mirrorBase=mirrorLive?editSnapshot():null;$('bAxisMirror').setAttribute('aria-pressed',String(mirrorLive));}
-  $('bAxisMirror').onclick=()=>{if(mirrorLive){mirrorLiveSet(false);return;}stop();target=k;mirrorLiveSet(true);mirrorApply(true);};
+  function mirrorLiveSet(on){mirrorLive=on&&st.userLines.length>0;mirrorBase=mirrorLive?editSnapshot():null;$('bAxisMirror').setAttribute('aria-pressed',String(mirrorLive&&!mirrorXor));$('bAxisXor').setAttribute('aria-pressed',String(mirrorLive&&mirrorXor));}
+  // Зеркало и хор-зеркало — два вида одного живого режима; переключение пересчитывает от того же снимка.
+  function mirrorMode(xor){if(mirrorLive&&mirrorXor===xor){mirrorLiveSet(false);return;}mirrorXor=xor;if(mirrorLive){$('bAxisMirror').setAttribute('aria-pressed',String(!xor));$('bAxisXor').setAttribute('aria-pressed',String(xor));mirrorApply(true);return;}stop();target=k;mirrorLiveSet(true);mirrorApply(true);}
+  $('bAxisMirror').onclick=()=>mirrorMode(false);$('bAxisXor').onclick=()=>mirrorMode(true);
   $('bAxisLinesClear').onclick=()=>{st.userLines=[];axisLinePending=null;save();axisLinesSync();queueDigits();};
   function nearestUserLine(cx,cy){const r=cv.getBoundingClientRect(),s=scale();let best=-1,bd=6;
     st.userLines.forEach(([x1,y1,x2,y2],i)=>{const ax=r.left+x1*s,ay=r.top+y1*s,bx=r.left+x2*s,by=r.top+y2*s,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((cx-ax)*dx+(cy-ay)*dy)/(dx*dx+dy*dy||1))),d=Math.hypot(cx-ax-t*dx,cy-ay-t*dy);if(d<bd){bd=d;best=i;}});return best;}
@@ -1778,7 +1783,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const end=axisHandleAt(l,e.clientX,e.clientY);
       axisDrag={id:e.pointerId,from:snapBit(e.clientX,e.clientY),line:l.slice(),end};wrap.setPointerCapture(e.pointerId);axisLinesSync();e.preventDefault();return;}}
     if(axisLineMode&&e.button===0&&f){const r=cv.getBoundingClientRect();
-      // v0.057: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
+      // v0.058: один щелчок — горизонтальная ось по верхней границе бита под курсором, на всю ширину; зеркало включается сразу.
       if(mirrorLive)mirrorLiveSet(false);st.userLines.push(axisRowLine((e.clientY-r.top)/scale()));axisSelected=true;axisLineMode=false;axisLineHover=null;axisLinePending=null;save();
       axisLinesSync();stop();target=k;mirrorLiveSet(true);mirrorApply(true);queueDigits();e.preventDefault();return;}
     if(e.button===0&&nearLine(e.clientY)){lineDrag={id:e.pointerId};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}
@@ -1900,6 +1905,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=57"></script>
+<script src="mayatnik-menu.js?v=58"></script>
 </body>
 </html>
