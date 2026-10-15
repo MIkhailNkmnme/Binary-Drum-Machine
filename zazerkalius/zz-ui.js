@@ -82,7 +82,9 @@ const Z = {
   win: {},          // id → { x, y, w, h, collapsed, hint }
   helpOn: true,                         // совместимость: окно «Подсказки» теперь обычное окно из списка
   tipsOn: true,                         // v0.1009: ? в верхнем меню включает / отключает всплывающие подсказки
-  coneSliceStop5: true,                 // Нарезка: по умолчанию остановиться после полного прохождения вырезов К5
+  coneSliceStop5: true,                 // Включённый предел числа колец; имя сохранено для совместимости
+  coneSliceRingCount: 5,               // Конечное число колец для Нарезки
+  coneSliceFirstThrough: false,        // После оборота К1 первый луч режет все заданные кольца
   coneSliceFractions: false,            // Доля полного кольца для каждого фактически нарезанного сектора
   coneSliceCutNumbers: true,            // Номера вырезов на кольцах Нарезки
   coneSliceHandRays: true,              // Лучи к центру и магнитные привязки при ручном вращении Нарезки
@@ -8099,7 +8101,7 @@ function setupCone(){
     else if (Z.coneBallArm === "out") { Z.coneBallRoute = "out"; Z.coneBallBatch = false; Z.coneBallStart = "center"; }
     else if (Z.coneBallArm === "slice") { Z.coneBallRoute = "slice"; Z.coneBallBatch = false; Z.coneBallStart = "center"; Z.coneClock = false; Z.coneRay = false; Z.coneNotch = false; }
     coneBallArmUi(); save(); renderCone();
-    say(Z.coneBallArm === "slice" && Z.coneSliceMode === "line" ? "Нарезка линией выбрана — ▶ пуск. Линия мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1." : Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Все шарики стартуют из центра. Если пока есть только К1, К2 появляется при выходе первого шарика из К1. Без «Цепочки» движется один шарик. С «Цепочкой» следующий стартует из центра и идёт наружу с той же скоростью: после прохода следующего кольца, при открытии нового кольца или при достижении любого края кольца (уже К1→К2) — по выбранной кнопке. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. При включённой кнопке «До 5 строки» после полного прохождения пяти вырезов К5 — стоп; выключи её и нажми «пуск», чтобы идти дальше." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
+    say(Z.coneBallArm === "slice" && Z.coneSliceMode === "line" ? "Нарезка линией выбрана — ▶ пуск. Линия мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1." : Z.coneBallArm === "slice" ? "✂ Нарезка выбрана — ▶ пуск. Все шарики стартуют из центра. Если пока есть только К1, К2 появляется при выходе первого шарика из К1. Без «Цепочки» движется один шарик. С «Цепочкой» следующий стартует из центра и идёт наружу с той же скоростью: после прохода следующего кольца, при открытии нового кольца или при достижении любого края кольца (уже К1→К2) — по выбранной кнопке. Шарики прорезают кольца и едут с ними; от внешнего края К2 — отскок и возврат; в центре шарик отражается и снова идёт наружу. После полного прохода двух разных щелей К2 сразу появляется К3; после трёх щелей К3 — К4, и так далее. При включённом пределе после полного прохождения вырезов последнего заданного кольца — стоп; выключи предел и нажми «пуск», чтобы идти дальше." : Z.coneBallArm === "in" ? "● В центр выбран — запуск: ▶ пуск в «Кручении». Шарики стартуют из всех щелей внешнего кольца." : Z.coneBallArm === "out" ? "● Вылет выбран — запуск: ▶ пуск в «Кручении». Шарик из центра через щель кольца 1." : "● Опыт с шариками не выбран — ▶ пуск просто крутит кольца.");
   }
   coneBallArmUi();
   function coneBallOutLaunch(){
@@ -8250,12 +8252,25 @@ function setupCone(){
     if (oldSpeed) { oldSpeed.classList.toggle("on",!!Z.coneSliceOldSpeed); oldSpeed.setAttribute("aria-pressed",String(!!Z.coneSliceOldSpeed)); }
     const dual = $("bConeSliceDual");
     if (dual) { dual.classList.toggle("on",!!Z.coneSliceDual); dual.setAttribute("aria-pressed",String(!!Z.coneSliceDual)); }
-    const sourceSpin = $("bConeSliceSourceSpin");
-    if (sourceSpin) { sourceSpin.disabled = !line || selfReturn; sourceSpin.classList.toggle("on",line && !selfReturn && !!Z.coneSliceSourceSpin); sourceSpin.setAttribute("aria-pressed",String(line && !selfReturn && !!Z.coneSliceSourceSpin)); }
     if ($("sliceCutSingle")) $("sliceCutSingle").hidden = !!Z.coneSliceDual;
     if ($("sliceCutDual")) $("sliceCutDual").hidden = !Z.coneSliceDual;
     const stop5 = $("bConeSliceStop5");
-    if (stop5) { const on = Z.coneSliceStop5 !== false; stop5.classList.toggle("on",on); stop5.setAttribute("aria-pressed",String(on)); }
+    const ringCount = Math.max(1,Math.min(CONE_MAX,Math.trunc(Number(Z.coneSliceRingCount) || 5)));
+    const through = selfReturn && !!Z.coneSliceFirstThrough;
+    if (stop5) {
+      const on = through || Z.coneSliceStop5 !== false;
+      stop5.disabled = through; stop5.classList.toggle("on",on); stop5.setAttribute("aria-pressed",String(on));
+      const label = "До К" + ringCount;
+      stop5.dataset.miShort = label; if (stop5.textContent !== label) stop5.textContent = label;
+      stop5.title = through ? "Число колец фиксировано: " + ringCount + ". После первого сквозного разреза нарезка продолжается внутри них."
+        : "Предел К" + ringCount + ": в режиме Свой вырез остановка при первом вырезе последнего кольца; в обычной нарезке после его полного прохождения. Выключи, чтобы продолжить рост.";
+    }
+    const countButton = $("bConeSliceRingCount");
+    if (countButton) { const label = "Колец: " + ringCount; countButton.dataset.miShort = label; if (countButton.textContent !== label) countButton.textContent = label; }
+    document.querySelectorAll("[data-slice-first]").forEach(button => {
+      const on = selfReturn && (button.dataset.sliceFirst === "through") === !!Z.coneSliceFirstThrough;
+      button.classList.toggle("on",on); button.setAttribute("aria-pressed",String(on));
+    });
     const immediate = $("bConeSliceImmediate");
     if (immediate) { immediate.disabled = !line || selfReturn; immediate.classList.toggle("on",line && !selfReturn && !!Z.coneSliceImmediate); immediate.setAttribute("aria-pressed",String(line && !selfReturn && !!Z.coneSliceImmediate)); }
     const oneRing = $("bConeSliceOneRing");
@@ -8263,7 +8278,7 @@ function setupCone(){
     const arm = $("bConeBallSlice");
     if (arm) {
       arm._sliceBallHelp ||= arm.dataset.zzTip || arm.title;
-      const help = selfReturn ? "Свой вырез: сначала в кольце стоит неподвижный пунктир. Вырез возвращается к нему после полного оборота и режет наружу. Пунктир продолжает вырез источника и вращается вместе с ним. При следующей точной встрече со своим следом на соседнем кольце луч проходит через уже существующие вырезы дальше наружу до первого нового разреза. Кнопка «Зеркало встречи» отражает предыдущее направление луча относительно направления встречи со своим следом: новый угол = 2 × угол встречи − предыдущий угол. После первого разреза, до повторной встречи со следом, отражения нет. Выключена — луч без отражения. Кольца и вырезы остаются на своих местах. Следующая встреча рассчитывается уже для развёрнутого луча. Каждый новый вырез начинает такой же процесс для своего соседа. Постоянное совпадение не считается новой встречей. До 5 строки — стоп после первого выреза К5. К0, Одно кольцо и Сразу дальше относятся к обычной линии." : line ? "Нарезка без шариков: идеальная линия из центра мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1. При запуске направление совпадает с разрезом К1. К0 " + (Z.coneSliceSourceSpin ? "вращается с 1/2 угловой скорости К1." : "неподвижен; кнопка «К0 ↻½» включает вращение с 1/2 скорости К1.") + " ▶ пуск / пауза — начать, остановить и продолжить движение." : arm._sliceBallHelp;
+      const help = selfReturn ? "Свой вырез: сначала в кольце стоит неподвижный пунктир. Вырез возвращается к нему после полного оборота и режет наружу. Пунктир продолжает вырез источника и вращается вместе с ним. При следующей точной встрече со своим следом на соседнем кольце луч проходит через уже существующие вырезы дальше наружу до первого нового разреза. Кнопка «Зеркало встречи» отражает предыдущее направление луча относительно направления встречи со своим следом: новый угол = 2 × угол встречи − предыдущий угол. После первого разреза, до повторной встречи со следом, отражения нет. Выключена — луч без отражения. Кольца и вырезы остаются на своих местах. Следующая встреча рассчитывается уже для развёрнутого луча. Каждый новый вырез начинает такой же процесс для своего соседа. Постоянное совпадение не считается новой встречей. Число колец задаётся кнопкой «Колец». «По очереди» сохраняет прежний рост и остановку на пределе. «Луч насквозь»: все кольца появляются заранее; после оборота К1 первый луч режет все, затем нарезка продолжается внутри них. Одно кольцо и Сразу дальше относятся к обычной линии." : line ? "Нарезка без шариков: идеальная линия из центра мгновенно режет следующие кольца только при точном совпадении с нулевым разрезом К1. При запуске направление совпадает с разрезом К1. К0 " + "неподвижен." + " ▶ пуск / пауза — начать, остановить и продолжить движение." : arm._sliceBallHelp;
       if (arm.dataset.zzTip !== undefined) arm.dataset.zzTip = help; else arm.title = help;
     }
     document.querySelectorAll("[data-slice-mode]").forEach(button => {
@@ -8325,12 +8340,7 @@ function setupCone(){
     autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
     Z.coneSliceSelfReturn = on; Z.coneSliceMode = "line";
     coneSliceChainUi(); if (window.zzBallSliceModeChanged) window.zzBallSliceModeChanged(); save(); renderCone();
-    say(on ? "Свой оборот включён — новый прогон: ▶ пуск. К1 после полного оборота режет К2; каждый новый вырез после своего оборота режет следующее кольцо. До 5 строки — остановка при первом вырезе К5." : "Свой оборот выключен. Обычная нарезка линией с прежними настройками — ▶ пуск.");
-  };
-  if ($("bConeSliceSourceSpin")) $("bConeSliceSourceSpin").onclick = () => {
-    Z.coneSliceSourceSpin = !Z.coneSliceSourceSpin; coneSliceChainUi();
-    if (window.zzBallSliceSourceChanged) window.zzBallSliceSourceChanged(); else { save(); renderCone(); }
-    say(Z.coneSliceSourceSpin ? "Нарезка: К0 вращается в направлении К1 с 1/2 его угловой скорости. Режет только при точном совпадении; повторные попадания записываются в таблицу с прежним номером выреза." : "Нарезка: К0 остановлен в текущем направлении. Вырезы и история сохранены.");
+    say(on ? "Свой оборот включён — новый прогон: ▶ пуск. К1 после полного оборота режет К2; каждый новый вырез после своего оборота режет следующее кольцо. Предел задаётся кнопкой «Колец». Режим первого луча выбирается отдельно." : "Свой оборот выключен. Обычная нарезка линией с прежними настройками — ▶ пуск.");
   };
   if ($("bConeSliceDual")) $("bConeSliceDual").onclick = () => {
     Z.coneSliceDual = !Z.coneSliceDual; coneSliceChainUi();
@@ -8340,23 +8350,48 @@ function setupCone(){
   if ($("bConeSliceImmediate")) $("bConeSliceImmediate").onclick = () => {
     Z.coneSliceImmediate = !Z.coneSliceImmediate; if (Z.coneSliceImmediate) Z.coneSliceOneRing = false; coneSliceChainUi();
     if (window.zzBallSliceGrowthChanged) window.zzBallSliceGrowthChanged(); else { save(); renderCone(); }
-    say(Z.coneSliceImmediate ? "Нарезка линией: совпадение с разрезом К1 пропускает линию наружу; через каждый вырез сразу создаётся и режется следующее кольцо, цепочкой до предела. До 5 строки включительно — К5 нарезается полностью, затем стоп без К6." : "Нарезка линией: следующее кольцо открывается после полной нарезки текущего.");
+    say(Z.coneSliceImmediate ? "Нарезка линией: совпадение с разрезом К1 пропускает линию наружу; через каждый вырез сразу создаётся и режется следующее кольцо, цепочкой до предела. При включённом пределе последнее заданное кольцо нарезается полностью, затем стоп." : "Нарезка линией: следующее кольцо открывается после полной нарезки текущего.");
   };
   if ($("bConeSliceOneRing")) $("bConeSliceOneRing").onclick = () => {
     Z.coneSliceOneRing = !Z.coneSliceOneRing; if (Z.coneSliceOneRing) Z.coneSliceImmediate = false; coneSliceChainUi();
     if (window.zzBallSliceGrowthChanged) window.zzBallSliceGrowthChanged(); else { save(); renderCone(); }
     say(Z.coneSliceOneRing ? "Нарезка линией: за одно совпадение — вырез только в толщине одного кольца. После полной нарезки переход к следующему автоматический; его первый вырез появится при следующем совпадении." : "Нарезка линией: один проход может резать все следующие кольца.");
   };
+  const sliceSetupRestart = () => {
+    autoSet(false);
+    if (Z.coneBallArm === "slice" && window.zzBallToStart) window.zzBallToStart();
+    else if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
+    coneSliceChainUi(); save(); renderCone();
+  };
+  if ($("bConeSliceRingCount")) $("bConeSliceRingCount").onclick = () => {
+    const value = prompt("Конечное число колец (1–" + CONE_MAX + "). Изменение начнёт новый прогон с нуля.",String(Z.coneSliceRingCount || 5));
+    if (value === null) return;
+    const n = Number(value.trim());
+    if (!value.trim() || !Number.isInteger(n) || n < 1 || n > CONE_MAX) { say("Укажи целое число колец от 1 до " + CONE_MAX + "."); return; }
+    if (n === Z.coneSliceRingCount && Z.coneSliceStop5 !== false) return;
+    Z.coneSliceRingCount = n; Z.coneSliceStop5 = true; sliceSetupRestart();
+    say("Задано колец: " + n + ". Новый прогон подготовлен — ▶ пуск.");
+  };
+  document.querySelectorAll("[data-slice-first]").forEach(button => { button.onclick = () => {
+    const through = button.dataset.sliceFirst === "through";
+    if (Z.coneSliceMode === "line" && Z.coneSliceSelfReturn && !!Z.coneSliceFirstThrough === through) return;
+    Z.coneSliceMode = "line"; Z.coneSliceSelfReturn = true; Z.coneSliceFirstThrough = through;
+    if (through) Z.coneSliceStop5 = true;
+    sliceSetupRestart();
+    say(through ? "Все заданные кольца готовы. После полного оборота К1 первый луч прорежет их насквозь. Затем каждый вырез встречает свой след на соседнем кольце; нарезка продолжается в пределах заданного числа колец. ▶ пуск."
+      : "По очереди: К1 после своего оборота режет К2; далее действует прежнее правило встреч со своим следом. ▶ пуск.");
+  }; });
   if ($("bConeSliceStop5")) $("bConeSliceStop5").onclick = () => {
+    if (Z.coneSliceMode === "line" && Z.coneSliceSelfReturn && Z.coneSliceFirstThrough) return;
     Z.coneSliceStop5 = Z.coneSliceStop5 === false; coneSliceChainUi();
     if (window.zzBallSliceLimitChanged) window.zzBallSliceLimitChanged(); else { save(); renderCone(); }
-    say(Z.coneSliceStop5 && Z.coneSliceSelfReturn && Z.coneSliceMode === "line" ? "Свой оборот: остановка при первом вырезе К5, без создания К6." : Z.coneSliceStop5 ? "Нарезка: до 5 строки включительно. После полного прохождения пяти разных вырезов К5 — стоп. К6 не создаётся." : "Нарезка: ограничение до 5 строки снято. После остановки нажми «пуск».");
+    say(Z.coneSliceStop5 ? "Предел включён: К" + (Z.coneSliceRingCount || 5) + "." : "Предел снят. После остановки нажми «пуск».");
   };
   document.querySelectorAll("[data-slice-mode]").forEach(button => { button.onclick = () => {
     const mode = button.dataset.sliceMode; if ((Z.coneSliceMode || "ball") === mode) return;
     autoSet(false); if (window.zzBallClearRun) window.zzBallClearRun({keepCenter:true});
     Z.coneSliceMode = mode; coneSliceChainUi(); if (window.zzBallSliceModeChanged) window.zzBallSliceModeChanged(); save(); renderCone();
-    say(mode === "line" ? "Нарезка линией без шариков: при запуске направление совпадает с разрезом К1. К0 " + (Z.coneSliceSourceSpin ? "вращается с 1/2 угловой скорости К1." : "стоит; «К0 ↻½» включает вращение.") + " Только точное совпадение с разрезом К1 пропускает линию дальше; следующие кольца она режет мгновенно. Разрез К1 — нулевой ширины." : "Нарезка шариками: постоянная скорость, цепочка и отскоки.");
+    say(mode === "line" ? "Нарезка линией без шариков: при запуске направление совпадает с разрезом К1. К0 " + "стоит." + " Только точное совпадение с разрезом К1 пропускает линию дальше; следующие кольца она режет мгновенно. Разрез К1 — нулевой ширины." : "Нарезка шариками: постоянная скорость, цепочка и отскоки.");
   }; });
   if ($("bConeSliceRebound")) $("bConeSliceRebound").onclick = () => {
     Z.coneSliceRebound = !Z.coneSliceRebound; coneSliceChainUi(); save(); renderCone();

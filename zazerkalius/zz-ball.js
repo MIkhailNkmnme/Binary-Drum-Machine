@@ -145,7 +145,7 @@
           if (slicing.rowLimit !== sliceRowLimit()) window.zzBallSliceLimitChanged();
           if (slicing.kind === "line") {
             if (slicing.oneRing !== !!Z.coneSliceOneRing || slicing.immediate !== (!Z.coneSliceOneRing && !!Z.coneSliceImmediate)) window.zzBallSliceGrowthChanged();
-            if (!slicing.sourceRateQ.eq(Z.coneSliceSourceSpin ? HALF : ZERO)) window.zzBallSliceSourceChanged();
+            if (!slicing.sourceRateQ.eq(ZERO)) window.zzBallSliceSourceChanged();
           }
         }
       }
@@ -156,8 +156,8 @@
   };
   // Heavy tape entries keep the cut history once per event. Frame entries
   // keep exact positions and clocks without duplicating that growing table.
-  const sliceTapeSettings = ["coneBallArm","coneBallOn","coneBallRoute","coneSpinMode","coneAutoSp","coneSliceMode","coneSliceSelfReturn","coneSliceRayFlip","coneSliceOldSpeed","coneSliceDual","coneSliceSourceSpin","coneSliceOneRing","coneSliceImmediate","coneSliceStop5","coneSliceNext","coneSliceRebound","coneBallChain","coneSliceSpeed","coneSliceGap","coneSlits","cutAlign","cutMem","cutPrev","cutRow1Slit","row1Whole","sunHalf","laserQuad","row1Parts","ringPhOff","coneHold","coneHoldOff"];
-  const sliceTapeRunKey = data => data ? [data.kind,data.selfReturn,data.returnSeeds,data.count,data.rowLimit,data.done,data.stoppedAt,data.stoppedReason,data.cycleWatch,data.cutHistoryRevision,data.paths.length,data.moving.map(ball => [ball.id,ball.k,ball.move,ball.launchK,ball.exitedK]),data.linePasses,data.lineCutRing,data.oneRing,data.activeRing,data.immediate,data.lineBaseAngleQ,data.lineBaseGateQ,data.sourceRateQ,data.outerBounces,data.innerBounces,data.centerBounces,data.returned] : null;
+  const sliceTapeSettings = ["coneBallArm","coneBallOn","coneBallRoute","coneSpinMode","coneAutoSp","coneSliceMode","coneSliceSelfReturn","coneSliceRayFlip","coneSliceOldSpeed","coneSliceDual","coneSliceSourceSpin","coneSliceOneRing","coneSliceImmediate","coneSliceStop5","coneSliceRingCount","coneSliceFirstThrough","coneSliceNext","coneSliceRebound","coneBallChain","coneSliceSpeed","coneSliceGap","coneSlits","cutAlign","cutMem","cutPrev","cutRow1Slit","row1Whole","sunHalf","laserQuad","row1Parts","ringPhOff","coneHold","coneHoldOff"];
+  const sliceTapeRunKey = data => data ? [data.kind,data.selfReturn,data.firstThrough,data.initialThroughDone,data.returnSeeds,data.count,data.rowLimit,data.done,data.stoppedAt,data.stoppedReason,data.cycleWatch,data.cutHistoryRevision,data.paths.length,data.moving.map(ball => [ball.id,ball.k,ball.move,ball.launchK,ball.exitedK]),data.linePasses,data.lineCutRing,data.oneRing,data.activeRing,data.immediate,data.lineBaseAngleQ,data.lineBaseGateQ,data.sourceRateQ,data.outerBounces,data.innerBounces,data.centerBounces,data.returned] : null;
   window.zzBallSliceTapeKey = () => slicingOn() ? JSON.stringify([
     sliceTapeSettings.map(key => Z[key]),Z.coneSliceBitMarks,Z.coneSliceSectorBits,Z.coneSliceTurns,
     sliceDualOn() ? sliceDuos.map(scope => [scope.mode,scope.props.rows,scope.rot,scope.props.coneSliceBitMarks,scope.props.coneSliceSectorBits,scope.props.coneSliceTurns,scope.faces,sliceTapeRunKey(scope.data)]) : sliceTapeRunKey(slicing)
@@ -231,7 +231,17 @@
     if (window.zzBallSliceTapeUi) window.zzBallSliceTapeUi();
     if (slicingOn()) sliceStatus();
   };
-  const sliceRowLimit = () => Z.coneSliceStop5 !== false ? 5 : CONE_MAX;
+  const sliceConfiguredCount = () => Math.max(1,Math.min(CONE_MAX,Math.trunc(Number(Z.coneSliceRingCount) || 5)));
+  const sliceThroughOn = () => sliceLineOn() && !!Z.coneSliceSelfReturn && !!Z.coneSliceFirstThrough;
+  const sliceRowLimit = () => sliceThroughOn() || Z.coneSliceStop5 !== false ? sliceConfiguredCount() : CONE_MAX;
+  function slicePrepareThroughRings(){
+    if (!sliceThroughOn()) return;
+    const n = sliceConfiguredCount();
+    Z.rows = Array.from({length:n},(_,k) => Z.rows[k] || "0".repeat(k+1));
+    coneRot = Array.from({length:n},(_,k) => coneRot[k] || 0); Z.coneRot = coneRot.slice();
+    Z.coneSliceTurns = Array.from({length:n},(_,k) => Z.coneSliceTurns?.[k] || "0");
+    Z.cur = Math.min(Z.cur || 0,n-1); Z.fillCells = null;
+  }
   function sliceFinishAtLimit(){
     slicing.done = true; slicing.stoppedAt = slicing.rowLimit; paused = true; pauseRotation();
   }
@@ -266,7 +276,7 @@
     if (!slicing || slicing.done || !S) return false;
     // Observe only exact event boundaries. A repeated mechanical state with
     // unchanged cuts/completions has the same future, however long its period.
-    const progress = JSON.stringify([slicing.kind,slicing.selfReturn,slicing.count,slicing.rowLimit,
+    const progress = JSON.stringify([slicing.kind,slicing.selfReturn,slicing.firstThrough,slicing.initialThroughDone,slicing.count,slicing.rowLimit,
       slicing.cuts,slicing.completedCuts,slicing.returned,Z.rows,Z.coneSliceSectorBits,
       (slicing.returnSeeds || []).map(seed => [seed.k,seed.rawQ,seed.targetRawQ]),
       slicing.oneRing,slicing.immediate,slicing.activeRing,slicing.sourceRateQ,
@@ -292,6 +302,7 @@
     return true;
   }
   function sliceLimitComplete(){
+    if (slicing.selfReturn && slicing.firstThrough) return false;
     return slicing.count >= slicing.rowLimit && (slicing.completedCuts[slicing.rowLimit - 1] || []).length >= (slicing.selfReturn ? 1 : slicing.rowLimit);
   }
   function sliceFirstPendingRing(){
@@ -306,8 +317,8 @@
       slicing.oneRing = !!Z.coneSliceOneRing;
       slicing.immediate = !slicing.oneRing && !!Z.coneSliceImmediate;
       if (slicing.oneRing) slicing.activeRing = sliceFirstPendingRing();
-      if (slicing.stoppedAt === 5 && !sliceLimitComplete()) { slicing.done = false; slicing.stoppedAt = null; }
-      if (slicing.rowLimit === 5 && sliceLimitComplete()) sliceFinishAtLimit();
+      if (slicing.stoppedAt != null && !sliceLimitComplete()) { slicing.done = false; slicing.stoppedAt = null; }
+      if (sliceLimitComplete()) sliceFinishAtLimit();
     }
     if (slicingOn()) sliceStatus(); save(); renderCone();
     if (!sliceScope && window.zzConeTapeRecord) window.zzConeTapeRecord();
@@ -317,8 +328,8 @@
     if (slicing) {
       sliceCycleReset();
       slicing.rowLimit = sliceRowLimit(); slicing.RQ = Q(Math.min(slicing.count,slicing.rowLimit));
-      if (slicing.stoppedAt === 5 && slicing.rowLimit > 5) { slicing.done = false; slicing.stoppedAt = null; }
-      if (slicing.rowLimit === 5 && (sliceLimitComplete() || slicing.moving.some(ball => ball.k >= 5 || ball.rQ.cmp(slicing.RQ) > 0))) sliceFinishAtLimit();
+      if (slicing.stoppedAt != null && slicing.rowLimit > slicing.stoppedAt) { slicing.done = false; slicing.stoppedAt = null; }
+      if (!slicing.firstThrough && (sliceLimitComplete() || slicing.moving.some(ball => ball.k >= slicing.rowLimit || ball.rQ.cmp(slicing.RQ) > 0))) sliceFinishAtLimit();
     }
     if (slicingOn()) sliceStatus();
     save(); renderCone();
@@ -334,7 +345,7 @@
     if (slicing?.kind === "line") {
       sliceCycleReset();
       const S = snapshot();
-      if (S) { slicing.lineAngleQ = sliceLineAngleAt(S); slicing.lineBaseAngleQ = slicing.lineAngleQ; slicing.lineBaseGateQ = ZZSliceLine.gate(S); slicing.sourceRateQ = Z.coneSliceSourceSpin ? HALF : ZERO; }
+      if (S) { slicing.lineAngleQ = sliceLineAngleAt(S); slicing.lineBaseAngleQ = slicing.lineAngleQ; slicing.lineBaseGateQ = ZZSliceLine.gate(S); slicing.sourceRateQ = ZERO; }
     }
     if (slicingOn()) sliceStatus(); save(); renderCone();
     if (!sliceScope && window.zzConeTapeRecord) window.zzConeTapeRecord();
@@ -440,9 +451,9 @@
     sliceCutTableRender();
     if ($("ballLabTime")) labControls();
     const speed = sliceLineOn() ? null : slicing?.speedQ || Q(Z.coneSliceSpeed || "2/3");
-    const stopped = slicing?.stoppedReason === "cycle" ? "стоп: цикл без новых вырезов" : slicing?.stoppedAt === 5 ? "до 5 строки · стоп" : "предел колец · стоп";
+    const stopped = slicing?.stoppedReason === "cycle" ? "стоп: цикл без новых вырезов" : slicing?.stoppedAt != null ? "до К" + slicing.stoppedAt + " · стоп" : "предел колец · стоп";
     if (sliceLineOn()) status("Нарезка · " + (Z.coneSliceSelfReturn ? "свой вырез" : "линия без шариков") + " · " + (slicing ? slicing.done ? stopped : paused ? "пауза" : "движение" : "▶ пуск") +
-      (Z.coneSliceSelfReturn ? " · первый разрез после оборота, затем встречи со своим следом" : " · К0 " + (Z.coneSliceSourceSpin ? "вращается: 1/2 К1" : "стоит")) + " · проходов " + (slicing?.linePasses || 0) + " · " + (slicing?.elapsedQ.text() || "0") + " оборота К1 · разрез К1: 0 · мгновенно");
+      (Z.coneSliceSelfReturn ? (Z.coneSliceFirstThrough ? " · первый луч через все " + sliceConfiguredCount() + " колец после оборота К1, затем встречи со следами" : " · первый разрез после оборота, затем встречи со своим следом") : " · К0 стоит") + " · проходов " + (slicing?.linePasses || 0) + " · " + (slicing?.elapsedQ.text() || "0") + " оборота К1 · разрез К1: 0 · мгновенно");
     else status("Нарезка · " + (slicing ? slicing.done ? stopped : paused ? "пауза" : "движение" : "▶ пуск") +
       " · " + (slicing ? slicing.elapsedQ.text() : "0") + " оборота К1 · шариков " + (slicing ? slicing.moving.length : 1) + " · скорость " + speed.text() + " толщины/оборот К1 · внешний отскок " +
       (slicing?.outerBounces || 0) + " · внутренний отскок " + (slicing?.innerBounces || 0) + " · в центре " + (slicing?.centerBounces || 0) + (Z.coneBallChain ? " · цепочка: " + ({pass:"проход кольца",open:"открытие кольца",edge:"край кольца"}[Z.coneSliceNext] || "проход кольца") : ""));
@@ -460,6 +471,7 @@
   function sliceLaunch(){
     if (!sliceScope && window.zzConeTapeRecord) window.zzConeTapeRecord();
     if (sliceDualOn()) return sliceDualLaunch();
+    slicePrepareThroughRings();
     const S = snapshot(); if (!S) { status(hint()); return false; }
     if (sliceLineOn()) return sliceLineLaunch(S);
     let speed; try { speed = Q(Z.coneSliceSpeed || "2/3"); } catch { status("Нарезка: укажи скорость положительной дробью"); return false; }
@@ -516,13 +528,14 @@
     enabled = true; Z.coneBallOn = true; F = null; balls = []; resting = []; run = null; clearCenter();
     coneViewRemember();
     slicing = {kind:"line",oneRing:!!Z.coneSliceOneRing,activeRing:0,immediate:!Z.coneSliceOneRing && !!Z.coneSliceImmediate,count:S.rings.length,rowLimit:sliceRowLimit(),RQ:Q(Math.min(S.rings.length,sliceRowLimit())),elapsedQ:ZERO,done:false,moving:[],cuts:{},completedCuts:{},returned:{},paths:[],
-      lineAngleQ:ZZSliceLine.gate(S),lineBaseAngleQ:ZZSliceLine.gate(S),lineBaseGateQ:ZZSliceLine.gate(S),sourceRateQ:Z.coneSliceSourceSpin ? HALF : ZERO,linePasses:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
+      lineAngleQ:ZZSliceLine.gate(S),lineBaseAngleQ:ZZSliceLine.gate(S),lineBaseGateQ:ZZSliceLine.gate(S),sourceRateQ:ZERO,linePasses:0,startClock:coneMotionClock(),startRows:Z.rows.slice(),startRot:coneRot.slice(),startView:{...Z.coneViewPose,pan:Z.coneViewPose.pan.slice()}};
     slicing.selfReturn = !!Z.coneSliceSelfReturn;
+    slicing.firstThrough = sliceThroughOn(); slicing.initialThroughDone = false;
     if (slicing.selfReturn) {
       slicing.oneRing = false; slicing.immediate = false; slicing.returnSeeds = [];
       sliceSelfReturnCut(0,QUARTER.neg().mod(),S,null,[]);
     } else sliceLineCut(S);
-    sliceCycleObserve(snapshot()); sliceStatus(); save(); renderCone(); return true;
+    sliceCycleObserve(snapshot()); sliceStatus(); renderRows(); save(); renderCone(); return true;
   }
   function sliceSelfReturnCut(k,raw,S,motion,sources,details){
     const cuts = slicing.cuts[k] ||= [];
@@ -554,6 +567,7 @@
       const sources = sliceBallCutSources(k,seed.rawQ);
       const angle = seed.basePhaseQ.add(seed.rawQ).add(seed.rayOffsetQ || ZERO);
       let passedOutward = false;
+      const initialThrough = slicing.firstThrough && !slicing.initialThroughDone && k === 0;
       for (let next = k + 1; next < slicing.rowLimit; next++) {
         if (next === slicing.count) { sliceGrow(); S = snapshot(); }
         if (!S.rings[next]) break;
@@ -564,7 +578,7 @@
           sourceRing:k,sourceCut:sliceCutNumber(k,seed.rawQ),sourceTravel:sourceTravel.text(),
           previousRay:angle.sub(sourceTravel).mod().text(),meetingRay:angle.mod().text(),
           reflection:reflection.text(),outgoingRay:angle.add(reflection).mod().text(),
-          cause:firstPass ? "Первый оборот" : "Встреча со своим следом",
+          cause:initialThrough ? "Первый сквозной луч после оборота К1" : firstPass ? "Первый оборот" : "Встреча со своим следом",
           mirror:Z.coneSliceRayFlip !== false,
           result:alreadyCut ? next+1 < slicing.rowLimit ? "Проход наружу" : "Повтор у предела" : "Новый вырез"
         });
@@ -574,8 +588,18 @@
         // this pass reaches a more distant ring through existing cuts.
         if (next === k + 1) seed.targetRawQ = raw;
         slicing.linePasses++;
-        if (!alreadyCut) break;
+        if (!alreadyCut && !initialThrough) break;
         sources.push({k:next,number:sliceCutNumber(next,raw)});
+      }
+      if (initialThrough) {
+        slicing.initialThroughDone = true;
+        // Each new cut continues toward its own imprint on the next ring.
+        // They all share the first ray, but subsequently rotate with their rings.
+        for (const born of slicing.returnSeeds) {
+          if (born.k + 1 >= slicing.count) continue;
+          born.targetRawQ = angle.sub(S.rings[born.k+1].phaseQ).sub(S.spinQ).mod();
+          born.rayReach = slicing.count;
+        }
       }
       // Apply the reflection once after the complete outward pass. The source
       // cut, its imprint and both ring rotations stay at their actual angles.
@@ -983,7 +1007,7 @@
   };
   function sliceDualDraw(g,o){
     sliceEnsureDuos();
-    const W = g.canvas.width, H = g.canvas.height, total = sliceDuos.length, spacing = 24*o.dpr, titleH = 24*o.dpr;
+    const W = g.canvas.width, H = g.canvas.height, total = sliceDuos.length, spacing = 24*o.dpr, titleH = 42*o.dpr;
     let cols = 1, baseRadius = 0;
     for (let c = 1; c <= total; c++) {
       const r = Math.ceil(total/c), size = Math.min((W/c-spacing)/2,(H/r-spacing-titleH)/2);
@@ -998,10 +1022,10 @@
     g.beginPath(); g.moveTo(0,o.cy); g.lineTo(W,o.cy); g.stroke();
     sliceDuos.forEach((scope,i) => {
       const row = Math.floor(i/cols), rowCount = Math.min(cols,total-row*cols);
-      const layout = {...o,cx:o.cx+(i%cols-(rowCount-1)/2)*gapX,cy:o.cy+(row-(rows-1)/2)*gapY+titleH/2,dr}; scope.layout = layout;
+      const layout = {...o,cx:o.cx+(i%cols-(rowCount-1)/2)*gapX,cy:o.cy+(row-(rows-1)/2)*gapY+titleH/2,dr,sliceHeaderRadius:radius}; scope.layout = layout;
       sliceWithScope(scope,() => { sliceDraw(g,layout); if (window.zzFaceDraw) window.zzFaceDraw(g,{...layout,r0:0,band:1,shown:()=>true}); });
       g.setLineDash([]); g.font = "bold " + 13*o.dpr + "px Consolas, monospace"; g.textAlign = "center"; g.textBaseline = "bottom"; g.fillStyle = "#ffd166";
-      g.fillText(scope.label,layout.cx,layout.cy-radius-8*o.dpr);
+      g.fillText(scope.label,layout.cx,layout.cy-radius-25*o.dpr);
     });
     g.restore(); sliceStatus();
   }
@@ -1010,6 +1034,15 @@
     g.save(); g.setLineDash([]); g.globalAlpha = 1; g.shadowBlur = 0;
     g.font = "bold " + Math.max(8*dpr,Math.min(11*dpr,dr*.3)) + "px Consolas, monospace";
     g.textAlign = "center"; g.textBaseline = "middle";
+    const speed = Q(Z.coneAutoSp ?? 30).abs();
+    if (!Z.coneSliceOldSpeed || S.rings.length === 1 || !speed.sign()) {
+      g.font = "bold " + 11*dpr + "px Consolas, monospace";
+      g.fillStyle = "#79e7e1";
+      const text = "Скорость у всех: " + speed.text() + "°/с" + (sliceOpposite() ? " · ↻↺" : "");
+      const radius = o.sliceHeaderRadius || S.rings.length*dr;
+      g.fillText(text,cx,Math.max(12*dpr,cy-radius-10*dpr),Math.max(1,Math.min(g.canvas.width-12*dpr,Math.max(2*radius,210*dpr))));
+      g.restore(); return;
+    }
     for (let k = 0; k < S.rings.length; k++) {
       const rate = sliceRate(k), direction = rate.sign()*Q(Z.coneAutoSp ?? 30).sign();
       const text = (direction > 0 ? "↻" : direction < 0 ? "↺" : "•") + " ×" + (direction ? rate.abs().text() : "0");
@@ -1084,7 +1117,7 @@
       const radius = (oneRing ? cutRing + 1 : open ? Math.min(count,slicing?.rowLimit || sliceRowLimit()) : 1) * dr, inner = cutRing * dr;
       g.strokeStyle = open ? "#26bdb4" : "#e58b21"; g.lineWidth = dpr;
       if (!oneRing || open) { g.beginPath(); g.moveTo(cx + inner * Math.cos(a),cy + inner * Math.sin(a)); g.lineTo(cx + radius * Math.cos(a),cy + radius * Math.sin(a)); g.stroke(); }
-      if (oneRing && Z.coneSliceSourceSpin) { g.setLineDash([3*dpr,3*dpr]); g.strokeStyle = "#26bdb4"; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx + dr*.7*Math.cos(a),cy + dr*.7*Math.sin(a)); g.stroke(); g.setLineDash([]); }
+      if (oneRing && slicing?.sourceRateQ?.sign()) { g.setLineDash([3*dpr,3*dpr]); g.strokeStyle = "#26bdb4"; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx + dr*.7*Math.cos(a),cy + dr*.7*Math.sin(a)); g.stroke(); g.setLineDash([]); }
       const seam = radians(ZZSliceLine.gate(S)); g.strokeStyle = "#e58b21";
       g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx + dr * Math.cos(seam),cy + dr * Math.sin(seam)); g.stroke();
       sliceCutNumbersDraw(g,S,o); sliceSpeedsDraw(g,S,o);
@@ -2224,6 +2257,7 @@
       Z.fillCells = null; Z.fillFree = null; Z.motionExact = {}; delete Z.coneFree;
       delete Z.coneSliceBitMarks; delete Z.coneSliceSectorBits; delete Z.coneSliceRightRows; delete Z.coneSliceRightMarks; delete Z.coneSliceCenters;
       coneMotionSetClock(ZERO,ZERO);
+      slicePrepareThroughRings();
       window.zzBallClearRun(); markers = []; drawn = null; lastPoints = "";
       Z.coneTurns = []; Z.coneFillTurns = 0; Z.coneRunStop = null;
       if (window.zzFaceReset) window.zzFaceReset();
