@@ -69,7 +69,7 @@
       const soty = el('div', 'gz-soty'), wide = el('div', 'gz-wide');
       const cells = [];
       for (const it of g.items) {
-        const b = el('div', 'gz-hx'); b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name);
+        const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name);
         if (it.type === 'value') {
           b.classList.add('gz-val');
           const a = (cls, t, d) => { const s = el('span', 'gz-a ' + cls, t); s.addEventListener('click', e => { e.stopPropagation(); it.step(d); refresh(); }); return s; };
@@ -204,33 +204,37 @@
     const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
     function build() {
       if (cfg.hide) for (const g of document.querySelectorAll(cfg.hide)) g.style.setProperty('display', 'none', 'important');   // группы, убранные со страницы совсем
-      const isPanel = g => !!cfg.panels && g.matches(cfg.panels);   // панель без кнопок (подсказки, текст): в рейке только шапка, раскрыть — показать саму панель
-      const gs = [...groupsNow(), ...(cfg.panels ? document.querySelectorAll(cfg.panels) : [])].filter((g, k, a) => a.indexOf(g) === k)
-        .map(g => ({ g, items: isPanel(g) ? [] : itemsOf(g), panel: isPanel(g) })).filter(x => x.panel || x.items.length);
-      const now = gs.map(x => gid(x.g) + ':' + (x.panel ? 'p' : x.items.map(uid).join(','))).join('|');
+      // панели без кнопок (подсказки, текст) — кнопкой в группе cfg.panelIn: включил — панель встаёт справа от кнопки
+      const pans = cfg.panels ? [...document.querySelectorAll(cfg.panels)] : [];
+      const gs = groupsNow().filter(g => !pans.includes(g)).map(g => ({ g, items: itemsOf(g) })).filter(x => x.items.length);
+      const now = gs.map(x => gid(x.g) + ':' + x.items.map(uid).join(',')).join('|') + '|p:' + pans.map(uid).join(',');
       if (now === sig) return false; sig = now;
       if (cur) cur.destroy();
       for (const g of live) { g.classList.remove('gz-adopted'); g.style.removeProperty('display'); }
-      live = gs.map(x => x.g); for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
-      cur = make(gs);
+      live = [...gs.map(x => x.g), ...pans]; for (const g of live) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); }
+      cur = make(gs, pans);
       panelsNow();
       return true;
     }
-    // открытая панель встаёт справа от своей шапки в рейке, а не там, где плавала раньше
-    function showPanel(g, on) {
-      g.classList.toggle('gz-adopted', !on);
-      if (!on) { g.style.setProperty('display', 'none', 'important'); for (const k of ['position', 'left', 'top', 'z-index']) g.style.removeProperty(k); return; }
-      const h = [...dock.querySelectorAll('.gz-group')].find(b => b.dataset.id === gid(g)), r = h && h.querySelector('.gz-head').getBoundingClientRect();
-      g.style.removeProperty('display');
-      if (r) { g.style.setProperty('position', 'fixed', 'important'); g.style.setProperty('left', Math.min(r.right + 6, innerWidth - g.offsetWidth - 4) + 'px', 'important');
-        g.style.setProperty('top', Math.max(4, Math.min(r.top, innerHeight - g.offsetHeight - 4)) + 'px', 'important'); g.style.setProperty('z-index', '2147483641', 'important'); }
+    const shown = new Set(store.get('grozd-pan:' + cfg.key) || []);
+    function showPanel(g, at) {
+      if (!at) { g.classList.add('gz-adopted'); g.style.setProperty('display', 'none', 'important'); return; }
+      const r = at.getBoundingClientRect();
+      g.classList.remove('gz-adopted'); g.style.removeProperty('display'); if (cfg.fold && g.classList.contains('cmin')) cfg.fold(g, true);
+      g.style.setProperty('position', 'fixed', 'important'); g.style.setProperty('z-index', '2147483641', 'important');
+      g.style.setProperty('left', Math.max(4, Math.min(Math.max(r.right, ...[...(at.closest('.gz-group') || at).querySelectorAll('.gz-hx')].map(e => e.getBoundingClientRect().right)) + 6, innerWidth - g.offsetWidth - 4)) + 'px', 'important');
+      const up = r.top > innerHeight / 2;   // в нижней половине экрана панель растёт вверх от кнопки (не ложится на пульт)
+      g.style.setProperty('top', Math.max(4, Math.min(up ? r.bottom - g.offsetHeight : r.top, innerHeight - g.offsetHeight - 4)) + 'px', 'important');
     }
-    const panelsNow = () => { const open = [...dock.querySelectorAll('.gz-group.gz-open')].map(b => b.dataset.id); for (const g of live) if (cfg.panels && g.matches(cfg.panels)) showPanel(g, open.includes(gid(g))); };
-    function make(gs) {
-      return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (!x) return;
-          if (x.panel) showPanel(x.g, open);
-          if (cfg.fold) cfg.fold(x.g, open); },
-        groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g), items: x.items.map(itemOf) })) });
+    const panelsNow = () => { if (!cfg.panels) return; for (const g of document.querySelectorAll(cfg.panels)) {
+      const b = shown.has(gid(g)) && dock.querySelector('[data-pan="' + CSS.escape(gid(g)) + '"]');
+      showPanel(g, b && b.getClientRects().length ? b : null); } };
+    function make(gs, pans) {
+      const panItem = g => ({ type: 'toggle', icon: '💬', name: cfg.panelName ? cfg.panelName(g) : cfg.title(g), tip: cfg.title(g), pan: gid(g),
+        on: () => shown.has(gid(g)), click: () => { shown.has(gid(g)) ? shown.delete(gid(g)) : shown.add(gid(g)); store.set('grozd-pan:' + cfg.key, [...shown]); panelsNow(); } });
+      return rail(dock, { key: cfg.key, onToggle: (id, open) => { const x = gs.find(x => gid(x.g) === id); if (x && cfg.fold) cfg.fold(x.g, open); setTimeout(panelsNow); },
+        groups: gs.map(x => ({ id: gid(x.g), title: cfg.title(x.g), color: cfg.color(x.g),
+          items: [...x.items.map(itemOf), ...(cfg.panelIn && x.g.matches(cfg.panelIn) ? pans.map(panItem) : [])] })) });
     }
     build();
     // свернуть все группы страницы, кроме открытой в рейке (3D-вид следует за группой «3D»)
@@ -240,5 +244,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 3, rail, adopt };
+  window.ZerkGrozd = { version: 4, rail, adopt };
 })();
