@@ -2,6 +2,7 @@
    v2: биты едут со своими цветами картинки (краска, «Цвета», «Очки», «Неизменные» — что было на поле при старте),
    colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»).
    v4: «парой» — шаг сразу правой и левой частью (два хода модели за один, если они с разных сторон).
+   v6: галка «центр» — подсветка центрального XOR-столбца золотом с рамкой (по умолчанию выкл., выбор помнится).
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
   'use strict';
@@ -38,7 +39,7 @@
   }
   function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap}) {
     const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
-    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
+    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><label class="may-fold-pair" title="Подсветить центральный столбец, куда складывается XOR"><input type="checkbox" data-fold="mid"> центр</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
     const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
@@ -46,6 +47,8 @@
     try{const saved=localStorage.getItem('mayatnik-fold-rate'),n=Number(saved);if(saved!==null&&n>=0&&n<=401)rateStep=n;}catch(_){}
     // v4: «парой» — по умолчанию включено, выбор помнится
     const pairBox=panel.querySelector('[data-fold="pair"]'),pair=()=>pairBox.checked;
+    const midBox=panel.querySelector('[data-fold="mid"]'),midOn=()=>midBox.checked;   // v6
+    try{midBox.checked=localStorage.getItem('mayatnik-fold-mid')==='1';}catch(_){}
     const pairSaved=()=>{try{return localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){return true;}};
     const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
     function sync(){
@@ -67,7 +70,7 @@
       layer.style.left=host.left+'px';layer.style.top=host.top+'px';layer.style.width=w+'px';layer.style.height=h+'px';
       const pw=Math.max(1,Math.round(w*dpr)),ph=Math.max(1,Math.round(h*dpr));if(layer.width!==pw)layer.width=pw;if(layer.height!==ph)layer.height=ph;
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const x0=rect.left-host.left,y0=rect.top-host.top;
-      const only=c.view==='digitsOnly',digits=only||c.view==='digits',rp=c.rp,css=new Map(),rgb=v=>{let t=css.get(v);if(!t){t=`rgb(${v&255},${v>>>8&255},${v>>>16&255})`;css.set(v,t);}return t;};
+      const only=c.view==='digitsOnly',digits=only||c.view==='digits',rp=c.rp,mid=midOn(),css=new Map(),rgb=v=>{let t=css.get(v);if(!t){t=`rgb(${v&255},${v>>>8&255},${v>>>16&255})`;css.set(v,t);}return t;};
       ctx.font=`600 ${s*.8}px ${c.font}`;ctx.textAlign='center';ctx.textBaseline='middle';
       const halves=rp===2?[[0,0],[1,state.width+c.gap]]:[[rp,0]];
       for(const[p,ox]of halves){
@@ -76,16 +79,18 @@
           if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
           const u=new Uint32Array(offImg.data.buffer);
           for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-            u[i]=state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
-          off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);ctx.restore();continue;}
+            u[i]=mid&&x===state.center?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+          off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);
+          if(mid){ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(x0+(state.center+ox)*s,y0,s,H*s);}ctx.restore();continue;}
         const xa=Math.max(0,Math.floor(-x0/s-ox)-1),xb=Math.min(state.width,Math.ceil((w-x0)/s-ox)+1),ya=Math.max(0,Math.floor(-y0/s)-1),yb=Math.min(state.height,Math.ceil((h-y0)/s)+1);
         for(let y=ya;y<yb;y++)for(let x=xa;x<xb;x++){
           if(p>=0&&((x+c.origin-c.anchor-p-y)%2+2)%2)continue;const bit=state.bit(x,y);if(bit<0)continue;
-          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y);
-          if(only&&back){ctx.fillStyle=rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
-          if(!only){ctx.fillStyle=back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
-          if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
+          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y),gold=mid&&x===state.center;
+          if(only&&(back||gold)){ctx.fillStyle=gold?(bit?'#7a5a10':'#4a3608'):rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
+          if(!only){ctx.fillStyle=gold?(bit?'#ffe08a':'#b8860b'):back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
+          if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(gold?(bit?'#ffe08a':'#ffb020'):bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
         }
+        if(mid){ctx.save();ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(x0+(state.center+ox)*s,y0,s,state.height*s);ctx.restore();}
       }
       sync();
     }
@@ -104,6 +109,7 @@
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
     for(const [action,d]of [['back',-1],['next',1]])panel.querySelector(`[data-fold="${action}"]`).onclick=()=>{pause();seek(adv(state.frame,d));};
+    midBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-mid',midBox.checked?'1':'0');}catch(_){}render();};
     pairBox.checked=pairSaved();pairBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-pair',pairBox.checked?'1':'0');}catch(_){}sync();};
     timeline.oninput=()=>{pause();seek(Number(timeline.value));};
     play.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();play.setPointerCapture(e.pointerId);suppressClick=false;const x=e.clientX,start=rateStep;
