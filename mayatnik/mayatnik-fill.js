@@ -1,16 +1,17 @@
 /* Exact raster flood fill: equal RGBA colours, four neighbours, no diagonal joins. */
 (function(root){
   'use strict';
-  function neighbours(q,w,n,visit){
+  function neighbours(q,w,n,visit,diagonal=false){
     if(q%w)visit(q-1);if(q%w<w-1)visit(q+1);
     if(q>=w)visit(q-w);if(q+w<n)visit(q+w);
+    if(diagonal){if(q>=w){if(q%w)visit(q-w-1);if(q%w<w-1)visit(q-w+1);}if(q+w<n){if(q%w)visit(q+w-1);if(q%w<w-1)visit(q+w+1);}}
   }
-  function fill(pixels,w,start,colour){
+  function fill(pixels,w,start,colour,diagonal=false){
     if(start<0||start>=pixels.length||pixels[start]===colour)return new Uint32Array();
     const old=pixels[start],queue=new Uint32Array(pixels.length);let head=0,tail=1;
     queue[0]=start;pixels[start]=colour;
     const visit=q=>{if(pixels[q]===old){pixels[q]=colour;queue[tail++]=q;}};
-    while(head<tail)neighbours(queue[head++],w,pixels.length,visit);
+    while(head<tail)neighbours(queue[head++],w,pixels.length,visit,diagonal);
     return queue.slice(0,tail);
   }
   function count(pixels,w){

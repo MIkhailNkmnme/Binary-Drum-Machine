@@ -197,3 +197,44 @@ header #paintTools{gap:5px}
 header #paintTools .pt-b.gz-hx{padding:0 7px 0 8px;gap:3px;--gz-n:8px}
 header #paintTools .pt-g.pt-long{padding:9px 4px 5px}
 header #paintTools{gap:4px;margin-left:0}
+/* v0.079: сведения занимают примерно 1/6 экрана и сворачиваются в заголовок. */
+.mayatnik-menu-ready #mayatnikInfoPanel{position:fixed;right:8px;bottom:8px;z-index:8;box-sizing:border-box;width:33.333vw;max-width:calc(100vw - 16px);color:var(--fg);background:var(--panel);border:1px solid var(--line);font:11px/1.4 var(--mono)}
+#mayatnikInfoPanel[open]{height:50dvh;display:flex;flex-direction:column}
+#mayatnikInfoPanel>summary{flex:none;cursor:pointer;padding:5px 8px;user-select:none;font:12px/1.4 'Segoe UI',sans-serif}
+#mayatnikInfoPanel>summary::after{content:' · показать';color:var(--muted,#8997ac)}
+#mayatnikInfoPanel[open]>summary::after{content:' · скрыть'}
+.mayatnik-menu-ready #mayatnikInfoPanel #mayatnikStatus{display:flex;flex:1;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:6px;padding:8px;min-height:0;overflow:auto;border-top:1px solid var(--line);background:transparent}
+#mayatnikInfoPanel:not([open]) #mayatnikStatus{display:none}
+#mayatnikInfoPanel #templateInfo{flex:0 0 auto;white-space:pre-line}
+#mayatnikInfoPanel #templateActions{flex-wrap:wrap}
+#mayatnikInfoPanel .lg{flex-wrap:wrap}
+@media(max-width:600px){.mayatnik-menu-ready #mayatnikInfoPanel{width:calc(50vw - 8px)}#mayatnikInfoPanel[open]{height:33.333dvh}}
+/* v0.082: общий пульт Зеркалиуса для включённой горизонтальной свёртки. */
+#mayFoldPanel{position:fixed;z-index:9;left:33.333vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(66.666vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
+#mayFoldPanel[hidden],#mayFoldCanvas[hidden]{display:none}
+#mayFoldPanel .zz-pult{position:relative;width:100%}
+#mayFoldPanel .may-fold-steps{display:flex;gap:6px;align-items:center;justify-content:space-between;font:11px/1.4 var(--mono)}
+#mayFoldPanel .may-fold-steps button{flex:none;padding:3px 8px}
+#mayFoldPanel .may-fold-steps output{text-align:center}
+#mayFoldPanel .may-fold-frame{display:block;box-sizing:border-box;width:100%;margin:4px 0}
+#mayFoldCanvas{position:fixed;z-index:3;pointer-events:none;background:transparent}
+body.may-fold-active #cv{opacity:0!important}
+body.may-fold-active :is(#bitDigits,#colourTemplate,#fillPreview,#symAxes){display:none!important}
+@media(max-width:600px){#mayFoldPanel{left:8px;bottom:calc(33.333dvh + 16px);transform:none;width:calc(100vw - 16px)}}
+/* v0.084: все группы в обычном потоке; история в середине, без отдельного ряда и отступа сверху. */
+header #paintTools{position:static;flex:0 1 auto;width:auto;max-width:100%;padding:0;box-sizing:border-box;flex-wrap:wrap}
+/* Список шаблонов всегда раскрыт, шапка и строки одной ширины. */
+.mayatnik-menu-ready #mayatnikRailR{width:min(460px,calc(100vw - 16px));max-width:100%;box-sizing:border-box;padding:8px 8px 8px 0}
+#mayatnikRailR .gz-rail{width:100%;align-items:stretch}
+#mayatnikRailR .gz-group{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;gap:3px 0}
+#mayatnikRailR .gz-group>.gz-head{width:100%;min-width:0;cursor:default}
+#mayatnikRailR .gz-head .gz-hr{display:none}
+#mayatnikRailR .gz-group>.gz-soty{display:flex!important;grid-column:2;justify-self:end}
+#mayatnikRailR .gz-group>.gz-wide{display:flex!important;grid-column:1/-1;width:100%;margin:0}
+#mayatnikRailR .gz-wide>.gz-control{width:100%;box-sizing:border-box}
+/* Точный контрастный прицел: точка попадания в центре, цифра остаётся видна. */
+#wrap.fill-mode,#wrap.fill-mode canvas{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'%3E%3Cpath d='M12 1V8M12 16V23M1 12H8M16 12H23' stroke='black' stroke-width='3'/%3E%3Cpath d='M12 1V8M12 16V23M1 12H8M16 12H23' stroke='white'/%3E%3Ccircle cx='12' cy='12' r='1' fill='white' stroke='black' stroke-width='.7'/%3E%3C/svg%3E") 12 12,crosshair}
+/* v0.085: «Правка» — «Отмена» и «Повтор» рядом в одну строку, между ними вертикальная черта; ряд по центру рамки. */
+header #paintTools .pt-history{justify-content:center}
+header #paintTools .pt-history .pt-r{grid-template-rows:22px}
+header #paintTools .pt-history .pt-sep{align-self:stretch;width:1px;margin:2px 5px;background:#ffffff55}

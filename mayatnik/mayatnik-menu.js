@@ -1,4 +1,4 @@
-/* Маятник v0.077: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.090: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -49,9 +49,9 @@
       button('bPlay', 'play'), button('bStep', 'forward'), button('bSeq', 'line'), button('bPair', 'copy'),
       control('speed'), control('frame') ] },
     { id: 'view', title: 'Вид', color: '#80aee8', items: [
-      check('noband', 'half'), check('outline', 'corners'),
-      select('view', 'eye', {col:'Перекрытия',bits:'Биты',digits:'Цифры 0/1',romb0:'Ромбы чёт.',romb1:'Ромбы нечёт.',romb2:'Ромбы обе'}),
-      control('vrows') ] },
+      check('noband', 'half'), check('outline', 'corners'),button('bFoldHorizontal','swap'),
+      select('view', 'eye', {col:'Перекрытия',bits:'Биты',digits:'Цифры 0/1',digitsOnly:'Только цифры',romb0:'Ромбы чёт.',romb1:'Ромбы нечёт.',romb2:'Ромбы обе'}),
+      control('digitOneColour'),control('digitZeroColour'),control('vrows') ] },
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
@@ -59,7 +59,7 @@
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),button('bAutoAll','steps'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
+    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),button('bAutoAll','steps'),check('fillMirror','mirror'),control('fillColour'),select('fillArea','grid4'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
     { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
@@ -78,6 +78,8 @@
   { const g=[...rail.el.querySelectorAll('.gz-group')].find(g=>g.querySelector('.gz-head .gz-nm')?.textContent.trim()==='Шаблоны'); if(g) railRIn.append(g); }
   // v0.074: шапку «Шаблонов» не тянуть — перетаскивание шапки переставляет группы в левой рейке и уносило группу туда.
   railR.addEventListener('pointerdown',e=>{if(e.target.closest('.gz-head'))e.stopPropagation();},true);
+  railR.addEventListener('click',e=>{if(e.target.closest('.gz-head')){e.preventDefault();e.stopImmediatePropagation();}},true);
+  for(const head of railR.querySelectorAll('.gz-head')){head.tabIndex=-1;head.setAttribute('aria-expanded','true');head.title='Шаблоны — список всегда открыт';}
   const sidebar=document.createElement('aside');sidebar.id='mayatnikSidebar';$('mayatnikRail').before(sidebar);sidebar.append($('mayatnikRail'));
   source.hidden = true;
   document.body.classList.add('mayatnik-menu-ready');
@@ -114,9 +116,11 @@
   const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
     const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = name; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
-  const gPaint = ptGroup('Краска'), gEdit = ptGroup('Правка'), gAxis = ptGroup('Оси');
+  const gPaint = ptGroup('Краска'), gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка');
+  gHistory.parentElement.classList.add('pt-history');
   for (const id of ['bFill','bAutoVertical','bAutoAll','fillMirror']) groupOf[id] = gPaint;
-  for (const id of ['bFillUndo','bFillRedo','bFillClear','bPaintNew']) groupOf[id] = gEdit;
+  for (const id of ['bFillUndo','bFillRedo']) groupOf[id] = gHistory;
+  for (const id of ['bFillClear','bPaintNew']) groupOf[id] = gEdit;
   for (const id of ['bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear']) groupOf[id] = gAxis;
   for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['bAutoAll','steps'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisXor','half'],['bAxisLinesClear','cross']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
@@ -132,9 +136,16 @@
   colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
   toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
   const colourBox = document.createElement('span'); colourBox.className = 'pt-cw'; colourBox.append(colour); gPaint.append(colourBox);
+  {const source=$('fillArea'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='fillArea';
+    const mark=document.createElement('i');mark.style.backgroundImage=icon(source,'grid4');b.append(mark);gPaint.append(b);
+    b.onclick=()=>{source.selectedIndex=(source.selectedIndex+1)%source.options.length;source.dispatchEvent(new Event('change',{bubbles:true}));};
+    toolSync.push(()=>{b.title='Область заливки: '+source.selectedOptions[0].textContent+' · щелчок — следующий режим';const label=b.querySelector('.gz-nm');if(label)label.textContent=source.selectedOptions[0].textContent;});}
   // v0.044: виды поля — значками на холсте, рядом с раскраской.
   const gView = ptGroup('Вид');
-  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
+  {const e=$('bFoldHorizontal'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldHorizontal';b.title=e.title;
+    const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'swap');b.append(mark);b.onclick=()=>e.click();gView.append(b);
+    toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
+  const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
   for (const o of $('view').options) {
     const [kind, title] = viewIcons[o.value] || ['eye', o.textContent], b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = o.value;
     const probe = document.createElement('button'); probe.title = title; probe.textContent = title;
@@ -157,10 +168,10 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'record'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', bFoldHorizontal:'СвёрткаГориз', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
-  const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
+  const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
   for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
@@ -168,12 +179,18 @@
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
     const t = document.createElement('b'); t.className = 'pt-t up'; t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
   // v0.063: панель значков — в шапке, рядом с «Что это такое?», а не поверх холста.
+  tools.insertBefore(gHistory.parentElement,gView.parentElement);
+  // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
+  { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
-  // v0.051: «Сохранить» и «Цвет» выбранной фигуры — на холсте внизу слева, тоже неподвижно.
-  const acts = document.createElement('div'); acts.id = 'canvasActs'; acts.append($('templateActions')); document.body.append(acts);
-  const placeTools = () => { const r = $('wrap').getBoundingClientRect(); 
-    acts.style.left = (r.left + 8) + 'px'; acts.style.top = (r.bottom - 8) + 'px'; acts.hidden = r.width < 60;
-    for (const f of toolSync) f(); };
+  // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
+  const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
+  const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
+  status.prepend($('templateActions'));
+  infoPanel.append(infoTitle,status);document.body.append(infoPanel);
+  try{infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1';}catch(_){}
+  infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
+  const placeTools = () => { for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
   // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.
   // Копия нажимает настоящую кнопку; тянуть копию — переставить, правая кнопка — убрать.
