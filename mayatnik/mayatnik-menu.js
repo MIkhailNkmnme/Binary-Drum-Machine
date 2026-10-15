@@ -1,4 +1,4 @@
-/* Маятник v0.072: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.073: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -151,8 +151,15 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Назад', bFillRedo:'Вперёд', bFillClear:'Стереть', bPaintNew:'С нуля', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись' };
+  // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
+  // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
+  const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff' };
+  for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
-    const t = document.createElement('b'); t.className = 'pt-t ' + (k % 2 ? 'dn' : 'up'); t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
+    if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
+      b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
+      const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
+    const t = document.createElement('b'); t.className = 'pt-t up'; t.textContent = b.dataset.n ? (ptNames[b.dataset.n] || '') : 'Цвет'; b.append(t); });
   // v0.063: панель значков — в шапке, рядом с «Что это такое?», а не поверх холста.
   $('mayAbout').after(tools);
   // v0.051: «Сохранить» и «Цвет» выбранной фигуры — на холсте внизу слева, тоже неподвижно.

@@ -165,3 +165,16 @@ header #paintTools .pt-t.dn{bottom:-10px}
 /* v0.072: справа без полосы прокрутки вбок; подпись «Свои шаблоны появятся…» переносится. */
 .mayatnik-menu-ready #mayatnikRailR{overflow-x:hidden}
 #mayatnikRailR #templateLibraryChoices,#mayatnikRailR .gz-control:has(#templateLibraryChoices){white-space:normal;overflow-wrap:anywhere;max-width:100%}
+/* v0.073: в верхней панели — длинные кнопки, как в меню (значок + название), две строки в группе. */
+header #paintTools .pt-long .pt-r{display:grid;grid-template-rows:repeat(2,22px);grid-auto-flow:column;gap:2px 0;align-items:center}
+header #paintTools .pt-long .pt-g,header #paintTools .pt-g.pt-long{padding:9px 6px 5px}
+header #paintTools .pt-b.gz-hx{width:auto;height:22px;--gz-h:22px;--gz-n:9px;--gz-bg:#121a30;padding:0 10px 0 11px;border:0;border-radius:0;font:11px 'Segoe UI',sans-serif;color:#dfe6f5;justify-content:flex-start}
+header #paintTools .pt-b.gz-hx:nth-child(even){margin-left:-6px}
+header #paintTools .pt-b.gz-hx i{width:13px;height:13px;background-color:transparent}
+header #paintTools .pt-b.gz-hx.on{background:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
+header #paintTools .pt-b.gz-hx.on::before{background:color-mix(in srgb,var(--c) 45%,#121a30)}
+header #paintTools .pt-b.gz-hx.on i{filter:brightness(0) invert(1)}
+header #paintTools .pt-b.gz-hx:hover{background:color-mix(in srgb,var(--c) 70%,#000)}
+header #paintTools .pt-b.gz-hx:disabled{opacity:.35}
+header #paintTools .pt-b.gz-hx small{display:none}
+header #paintTools .pt-cw{grid-row:1/3;align-self:center;margin-left:4px}
