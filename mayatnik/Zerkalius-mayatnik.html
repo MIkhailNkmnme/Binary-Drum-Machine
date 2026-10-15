@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.104. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.105. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.104</title>
+<title>Zerkalius Маятник — v0.105</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.104</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.105</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1153,7 +1153,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function changeTemplate(id,value,fromX=templateOffsetX){
     templateReturn=null;
     const el=$(id),min=Number(el.min),max=Number(el.max);el.value=clampInt(value,min,max,id==='templateHeight'?100:0);
-    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&(next!==templateLastDown||fromX!==templateOffsetX)){liftTemplateSource($('templateTrail').checked&&!templateTransfer&&!templateDragging?.pure);if($('templateTrail').checked&&!templateDragging?.pure&&templateDragging?.mode!=='scale')traceTemplate(templateLastDown,next,fromX,templateOffsetX);}templateLastDown=next;}
+    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&(next!==templateLastDown||fromX!==templateOffsetX)){liftTemplateSource(!templateTransfer&&!templateDragging?.pure);if($('templateTrail').checked&&!templateDragging?.pure&&templateDragging?.mode!=='scale')traceTemplate(templateLastDown,next,fromX,templateOffsetX);}templateLastDown=next;}
     templateStatsKey='';queueDigits();if(!templateDragging)savePaint();
   }
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!=='')changeTemplate(id,$(id).value);});
@@ -2086,7 +2086,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
       if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
-      if(!d.moved&&d.mode!=='scale')liftTemplateSource($('templateTrail').checked&&!d.pure);d.moved=true;   // v0.104: по умолчанию — без следа, на месте ничего не остаётся
+      if(!d.moved&&d.mode!=='scale')liftTemplateSource(!d.pure);d.moved=true;   // v0.105: снова как до v0.104 — на исходном месте инверт-отпечаток, по пути следа нет («Отпечаток на месте»)
       if(d.mode==='scale'){
         const ratio=Math.max(12,Math.hypot(e.clientX-d.cx,e.clientY-d.cy))/d.radius;
         $('templateProportional').checked=true;changeTemplate('templateHeight',d.height*ratio);
@@ -2220,6 +2220,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=104"></script>
+<script src="mayatnik-menu.js?v=105"></script>
 </body>
 </html>
