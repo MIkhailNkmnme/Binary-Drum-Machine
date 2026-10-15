@@ -154,11 +154,11 @@
 
   /* Перевод готовой страницы на рейку: рейка рисует свои кнопки, а щелчок передаёт настоящей кнопке страницы,
      так что вся логика страниц остаётся как была. Старые грозди прячутся (класс gz-adopted).
-     ZerkGrozd.adopt({ host, key, groups, items, title(g), color(g), fold(g, open) }) */
+     ZerkGrozd.adopt({ host, key, groups, items, title(g), color(g), fold(g, open), off(e) }) — off: кнопка сейчас не действует (скрыть) */
   const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
   const longOf = e => norm(e.getAttribute('title') || e.dataset.zzTip || e.dataset.t0 || e.getAttribute('aria-label') || '');
   const hiddenEl = e => e.hidden || e.classList.contains('sfz-grape-hidden') || e.classList.contains('sfz-grape-empty') || e.style.display === 'none'
-    || e.disabled || (e.tagName === 'LABEL' && !!e.querySelector('input:disabled,select:disabled'));   // 15.10: неактивные кнопки в рейке не показываются вовсе
+    || e.disabled || e.classList.contains('ldim') || (e.tagName === 'LABEL' && !!e.querySelector('input:disabled,select:disabled'));   // 15.10: неактивные («не действует») кнопки в рейке не показываются вовсе
   function nameOf(e) {
     const mi = window.ZerkMenuIcons; let n = '';
     try { n = mi && mi.shortOf ? mi.shortOf(e) : ''; } catch {}
@@ -208,7 +208,7 @@
     const dock = el('div', 'gz-dock'); if (cfg.style) Object.assign(dock.style, cfg.style); host.append(dock);
     let cur = null, sig = '', live = [];
     const groupsNow = () => [...document.querySelectorAll(cfg.groups)].filter(g => !g.matches(cfg.skip || '.coff'));
-    const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
+    const itemsOf = g => [...g.querySelectorAll(cfg.items)].filter(e => !hiddenEl(e) && !(cfg.off && cfg.off(e)) && !e.closest('.gz-dock,.zerk-source-fan') && !(e.parentElement && e.parentElement.closest(cfg.items)));
     function build() {
       if (cfg.hide) for (const g of document.querySelectorAll(cfg.hide)) g.style.setProperty('display', 'none', 'important');   // группы, убранные со страницы совсем
       // панели без кнопок (подсказки, текст) — кнопкой в группе cfg.panelIn: включил — панель встаёт справа от кнопки
@@ -251,5 +251,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 7, rail, adopt };
+  window.ZerkGrozd = { version: 8, rail, adopt };
 })();
