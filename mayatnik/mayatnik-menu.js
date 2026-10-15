@@ -1,4 +1,4 @@
-/* Маятник v0.075: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.076: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -18,7 +18,7 @@
   const check = (id, kind) => {
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
-      nameNow: () => id === 'sym' ? (e.checked ? 'Скрыть оси' : 'Показать оси') : name(e),
+      nameNow: () => id === 'sym' ? (e.checked ? 'Скрыть оси' : 'Показать оси') : id === 'noband' ? ['С полосами', 'Без полос', 'До треугольника'][+e.dataset.mode || 0] : name(e),
       on: () => e.checked, disabled: () => e.disabled, click: () => e.click() };
   };
   const select = (id, kind, names) => {
