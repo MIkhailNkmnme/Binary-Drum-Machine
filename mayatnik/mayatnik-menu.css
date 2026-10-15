@@ -162,3 +162,6 @@ header #paintTools .pt-t.dn{bottom:-10px}
 #mayatnikRailR .gz-rail,#mayatnikRailR .gz-group,#mayatnikRailR .gz-soty,#mayatnikRailR .gz-wide{pointer-events:none}
 #mayatnikRailR .gz-group>:not(.gz-soty):not(.gz-wide),#mayatnikRailR .gz-soty>*,#mayatnikRailR .gz-wide>*{pointer-events:auto}
 @media(max-width:600px){.mayatnik-menu-ready #mayatnikRailR{grid-column:1;grid-row:5}}
+/* v0.072: справа без полосы прокрутки вбок; подпись «Свои шаблоны появятся…» переносится. */
+.mayatnik-menu-ready #mayatnikRailR{overflow-x:hidden}
+#mayatnikRailR #templateLibraryChoices,#mayatnikRailR .gz-control:has(#templateLibraryChoices){white-space:normal;overflow-wrap:anywhere;max-width:100%}

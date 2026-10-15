@@ -1,4 +1,4 @@
-/* Маятник v0.071: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.072: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -99,8 +99,10 @@
     const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
     const key = shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
-    shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 + col * 13.5) + 'px'; });
-    soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 + (shown.length > 1 ? 13.5 : 0) - 3) + 'px' : '0';
+    // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
+    const flat = railR.contains(soty), st = flat ? 0 : 13.5;
+    shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 + col * st) + 'px'; });
+    soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 + (shown.length > 1 ? st : 0) - 3) + 'px' : '0';
     soty.style.display = shown.length ? '' : 'none'; } };
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
