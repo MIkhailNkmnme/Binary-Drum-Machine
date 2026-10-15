@@ -1,4 +1,4 @@
-/* Маятник v0.047: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.048: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -131,7 +131,47 @@
   const placeTools = () => { const r = $('wrap').getBoundingClientRect(); tools.style.left = (r.left + 8) + 'px'; tools.style.top = (r.top + 8) + 'px'; tools.hidden = r.width < 60;
     for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
-  setInterval(() => { rail.refresh(); relayout(); placeTools(); }, 200);
+  // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.
+  // Копия нажимает настоящую кнопку; тянуть копию — переставить, правая кнопка — убрать.
+  const PIN_KEY = 'mayatnik-pins';
+  let pins = []; try { pins = JSON.parse(localStorage.getItem(PIN_KEY) || '[]'); } catch (_) {}
+  const savePins = () => { try { localStorage.setItem(PIN_KEY, JSON.stringify(pins.map(({ g, i, x, y }) => ({ g, i, x, y })))); } catch (_) {} };
+  const cellOf = (g, i) => rail.el.querySelectorAll(`.gz-group[data-id="${g}"] .gz-soty > .gz-hx`)[i] || null;
+  function makePin(pin) {
+    const src = cellOf(pin.g, pin.i); if (!src) return null;
+    const el = src.cloneNode(true); el.classList.add('may-pin'); el.style.display = ''; el.removeAttribute('tabindex'); el.title = (src.title || '') + ' · тянуть — переставить, правая кнопка — убрать';
+    document.body.append(el); pin.el = el; pin.src = src;
+    el.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return; e.preventDefault(); el.setPointerCapture(e.pointerId);
+      const x0 = e.clientX, y0 = e.clientY, px = pin.x, py = pin.y; let moved = false;
+      const mv = ev => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 3) moved = true; if (moved) { pin.x = px + ev.clientX - x0; pin.y = py + ev.clientY - y0; placePins(); } };
+      const upv = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', upv); if (moved) savePins(); else src.click(); };
+      el.addEventListener('pointermove', mv); el.addEventListener('pointerup', upv);
+    });
+    el.addEventListener('contextmenu', e => { e.preventDefault(); el.remove(); pins = pins.filter(p => p !== pin); savePins(); });
+    return el;
+  }
+  function placePins() { const r = $('wrap').getBoundingClientRect();
+    for (const p of pins) { if (!p.el) continue; p.el.style.left = (r.left + p.x) + 'px'; p.el.style.top = (r.top + p.y) + 'px';
+      if (p.src) { p.el.classList.toggle('gz-on', p.src.classList.contains('gz-on')); p.el.classList.toggle('gz-off-dis', p.src.classList.contains('gz-off-dis'));
+        const n = p.src.querySelector('.gz-nm'), m = p.el.querySelector('.gz-nm'); if (n && m && m.textContent !== n.textContent) m.textContent = n.textContent; } } }
+  pins = pins.filter(p => makePin(p)); placePins();
+  let suppressClick = false;
+  rail.el.addEventListener('click', e => { if (suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
+  rail.el.addEventListener('pointerdown', e => {
+    const cell = e.target.closest('.gz-soty > .gz-hx'); if (!cell || !(e.ctrlKey || e.metaKey) || e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    const g = cell.closest('.gz-group').dataset.id, i = [...cell.parentElement.children].indexOf(cell), r0 = cell.getBoundingClientRect();
+    const ghost = cell.cloneNode(true); ghost.classList.add('may-pin', 'may-pin-ghost'); document.body.append(ghost);
+    const dx = e.clientX - r0.left, dy = e.clientY - r0.top;
+    const mv = ev => { ghost.style.left = (ev.clientX - dx) + 'px'; ghost.style.top = (ev.clientY - dy) + 'px'; }; mv(e);
+    const upv = ev => { removeEventListener('pointermove', mv); removeEventListener('pointerup', upv); ghost.remove(); suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+      const r = $('wrap').getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
+        const pin = { g, i, x: ev.clientX - dx - r.left, y: ev.clientY - dy - r.top }; if (makePin(pin)) { pins.push(pin); savePins(); placePins(); } } };
+    addEventListener('pointermove', mv); addEventListener('pointerup', upv);
+  }, true);
+  setInterval(() => { rail.refresh(); relayout(); placeTools(); placePins(); }, 200);
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
 })();
