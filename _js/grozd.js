@@ -194,6 +194,10 @@
       on: () => false, disabled: () => inp.disabled, click: () => { const v = prompt(longOf(inp) || name, inp.value); if (v != null) { inp.value = v.trim(); fire(inp); } } };
     if (inp && inp.type === 'color') return { type: 'color', icon: iconOf(e), name, tip, get: () => inp.value, set: v => { inp.value = v; fire(inp); } };
     if (inp && inp.type === 'checkbox') return { type: 'toggle', icon: iconOf(e), name, tip, on: () => inp.checked, click: () => inp.click(), disabled: () => inp.disabled };
+    // кнопка с надписью по кругу (data-labels): в рейке видно текущее положение — её нынешняя надпись без значка
+    const cyc = () => { const t = norm(e.textContent).replace(/^[^\p{L}\p{N}]+/u, ''); return t.length > 16 ? t.slice(0, 15) + '…' : t; };
+    if (e.dataset && e.dataset.labels) return { type: 'toggle', icon: iconOf(e), name: cyc() || name, nameNow: () => cyc() || nameOf(e), tip,
+      on: () => e.matches('.on,.sel,.act,.active,[aria-pressed="true"]'), click: () => e.click(), disabled: () => !!e.disabled };
     return { type: 'toggle', icon: iconOf(e), name, nameNow: () => nameOf(e), tip,
       on: () => e.matches('.on,.sel,.act,.active,[aria-pressed="true"]'), click: () => e.click(), disabled: () => !!e.disabled };
   }
@@ -246,5 +250,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 5, rail, adopt };
+  window.ZerkGrozd = { version: 6, rail, adopt };
 })();
