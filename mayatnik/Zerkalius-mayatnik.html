@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.036. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.037. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.036</title>
+<title>Zerkalius Маятник — v0.037</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=36">
+<link rel="stylesheet" href="mayatnik-menu.css?v=37">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.036</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.037</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -202,6 +202,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateReturn" disabled title="Вернуть к исходному месту и размеру; следующий клик — обратно. Работает и когда шаблон за краем. То же, что двойной щелчок по шаблону">Туда / назад</button>
     <label title="Шаблоны, которые сейчас находятся на поле. Выбери тот, которым управляешь">на поле <select id="templateActive"><option value="">Нет шаблонов</option></select></label>
     <button id="bTemplateClone" disabled title="Добавить независимую копию выбранного шаблона">Ещё копия</button>
+    <button id="bTemplateFlipH" data-mi-short="Отразить ↔" disabled title="Отразить выбранный шаблон слева направо на месте. Alt + щелчок у края фигуры — зеркальная копия за этот край">Отразить ↔</button>
+    <button id="bTemplateFlipV" data-mi-short="Отразить ↕" disabled title="Отразить выбранный шаблон сверху вниз на месте. Alt + щелчок у края фигуры — зеркальная копия за этот край">Отразить ↕</button>
     <button id="bTemplateRemove" disabled title="Убрать только выбранный шаблон с поля. Его запись в библиотеке и оставленная краска сохраняются">Убрать с поля</button>
     <label title="Название своего шаблона">имя <input id="templateName" type="text" maxlength="100" value="Мой шаблон"></label>
     <select id="templateList" hidden aria-label="Сохранённые свои шаблоны"></select>
@@ -257,7 +259,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Оси:</strong> вертикальные, горизонтальные и обе диагонали проверяются на двух решётках через бит. Минимум — 2 строки и 2 бита с каждой стороны. Пустое «до» означает без верхней границы. «Биты осей» отдельно подсвечивает совпадения при масштабе от ×3; «Скрыть оси» в шапке убирает линии и выбор.</p>
   <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. Повторный щелчок тем же цветом снимает заливку. «Отменить» и «Повторить» работают с заливкой, битами дорожки и шаблонами. «Без краски» убирает краску и изменения битов, оставляя шаблоны на поле; это действие тоже можно отменить. «Области» считает участки текущего изображения. Раскраска автоматически сохраняется в памяти этого браузера и восстанавливается после обновления. «Из памяти» возвращает последнее сохранённое поле вместе с цветами и шаблоном. При смене кадра или вида текущая раскраска скрывается; сохранённая работа остаётся в памяти до следующей раскраски. PNG сохраняет видимый результат отдельным файлом. Обычная цветная заливка не меняет биты; «Инверт-след» меняет рабочие биты дорожки.</p>
   <p><strong>Вертикальная раскраска:</strong> кнопка переключается 1 → 0 → выкл. Наведи на пиксель: от него вниз проводится вертикаль толщиной в один пиксель, и все связные области выбранного бита, которых она касается, подсвечиваются. Щелчок применяет цвет. Пустой фон не закрашивается. «Зеркально» включено по умолчанию: захватывается и отражённая сторона относительно центра поля. Shift также включает зеркальную пару. Повторный щелчок тем же цветом снимает заливку.</p>
-  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. Фигуру можно сразу тянуть мышью прямо на холсте; «Свободная ось» переключает свободное движение и движение только по вертикали. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область.</p>
+  <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. Фигуру можно сразу тянуть мышью прямо на холсте; «Свободная ось» переключает свободное движение и движение только по вертикали. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область. Мышью на поле: тянуть — двигать по битам, Shift — только по одной оси, Ctrl — тянуть копию, Alt + щелчок у края — зеркальная копия за этот край (край подсвечивается), Alt + тянуть — размер. Delete убирает выбранный шаблон, Ctrl+Z / Ctrl+Y — отменить и повторить.</p>
   <p><strong>Сохранить и начать заново:</strong> в «Раскраске» кнопка «Сохранить» скачивает файл JSON с полем, краской, изменёнными битами и всеми шаблонами. «Открыть» возвращает эту работу для продолжения; PNG сохраняет картинку. «С нуля» убирает краску, следы и шаблоны с текущего узора, сохраняя библиотеку своих шаблонов. Очистку можно отменить; отдельная копия до неё остаётся в браузере и доступна через «Из памяти».</p>
   <p><strong>Несколько шаблонов:</strong> «Взять цвет» и нажатие на карточку в «Шаблонах» добавляют фигуру. Включённая карточка показывает её на поле, выключенная скрывает; повторное включение возвращает последнее положение. Активную фигуру выбирают прямо на поле, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; скрытые возвращаются нажатием на карточку в списке. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
@@ -290,7 +292,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let fillPreview=null,previewFrame=0,previewPoint=null;
   const previewCanvas=$('fillPreview'),previewG=previewCanvas.getContext('2d');
   let colourTemplate=null,templateVisible=false,templateStatsKey='',templateLastDown=0,templateOffsetX=0,templatePaintBit=1,templateMove=false,templateDragging=null,templateReturn=null;
-  let templateItems=[],templateSerial=0,templateTransfer=false,templateAxisUnlocked=false;
+  let templateItems=[],templateSerial=0,templateTransfer=false,templateAxisUnlocked=false,templateHover=null;
   let paintBits=null,fillRedo=[],templateHistoryCapture=null;
   const templateCanvas=$('colourTemplate'),templateG=templateCanvas.getContext('2d');
   let pictureStats = null, digitsRaf = 0;
@@ -700,10 +702,35 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     templateItems.push(copy);selectTemplate(copy,!duringDrag,duringDrag);templateMove=true;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();return copy;
   }
   $('bTemplateClone').onclick=()=>duplicateTemplate();
+  // v0.037: зеркало. Край — ближайший к точке щелчка (в долях ширины/высоты фигуры).
+  function templateEdge(hit,x,y){
+    const r=templateRect(hit.part,false,hit.item),u=(x-r.x)/r.width,v=(y-r.y)/r.height;
+    return [['left',u],['right',1-u],['top',v],['bottom',1-v]].sort((a,b)=>a[1]-b[1])[0][0];
+  }
+  function flipParts(item,horizontal){
+    item.parts=item.parts.map(p=>{const m=p.mask,w=m.width,h=m.height,src=m.data,data=new Uint32Array(w*h);
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++)data[y*w+x]=horizontal?src[y*w+w-1-x]:src[(h-1-y)*w+x];
+      const mask={...m,data},canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer),w,h),0,0);
+      // sourceData — исходная ориентация: по ней снимается заливка с исходного места.
+      return {...p,sourceData:p.sourceData||m.data,mask,canvas,edges:null,symmetry:MayatnikTemplate.symmetry(mask)};});
+  }
+  function mirrorTemplate(edge,copy){
+    if(!colourTemplate)return;rememberTemplate();
+    const horizontal=edge==='left'||edge==='right',r=templateRect(colourTemplate.parts[0]);
+    const item=copy?duplicateTemplate(0):colourTemplate;if(!item)return;
+    flipParts(item,horizontal);
+    if(copy){let dx=edge==='right'?r.width/RK:edge==='left'?-r.width/RK:0,dy=edge==='bottom'?r.height/RK:edge==='top'?-r.height/RK:0;
+      dx=Math.round(dx);dy=Math.round(dy);if(rombP()>=0&&(dx+dy)%2){if(dx)dx+=Math.sign(dx);else dy+=Math.sign(dy);}
+      templateOffsetX+=dx;$('templateDown').value=Number($('templateDown').value)+dy;templateLastDown=Number($('templateDown').value);item.name=(item.name||item.hex).replace(/ · копия$/,'')+' · зеркало';}
+    templateStatsKey='';templateSync();queueDigits();savePaint();
+  }
+  $('bTemplateFlipH').onclick=()=>mirrorTemplate('right',false);
+  $('bTemplateFlipV').onclick=()=>mirrorTemplate('bottom',false);
   $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
   function templateSync(){
     rememberTemplate();fieldTemplateList();
-    $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;
+    $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;$('bTemplateFlipH').disabled=!colourTemplate;$('bTemplateFlipV').disabled=!colourTemplate;
     $('bTemplatePaint').disabled=!colourTemplate||!templateVisible;
     $('bTemplateReturn').disabled=!colourTemplate;$('bTemplateSave').disabled=!colourTemplate;
     for(const id of ['bTemplateShow','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateMove','templateTrail','templateHeight','templateDown','templateAlpha','templateProportional'])$(id).disabled=!colourTemplate;
@@ -770,12 +797,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
     paintTemplate(templateG,r.left-host.left,r.top-host.top,scale());
-    if(colourTemplate&&templateVisible&&templateMove&&!templateAxisUnlocked&&templateDragging?.mode!=='move'){
-      templateG.save();templateG.strokeStyle='#ffd35b';templateG.lineWidth=1;templateG.setLineDash([4,4]);
-      for(const part of colourTemplate.parts){const box=templateRect(part),x=r.left-host.left+(box.x+box.width/2)/RK*scale();
-        templateG.beginPath();templateG.moveTo(x,Math.max(0,r.top-host.top));templateG.lineTo(x,Math.min(h,r.bottom-host.top));templateG.stroke();}
-      templateG.restore();
-    }
+    // v0.037: выбранный шаблон — пунктирная рамка; с Alt над фигурой — край, за который ляжет зеркальная копия.
+    if(colourTemplate&&templateVisible){const sc=scale(),ox=r.left-host.left,oy=r.top-host.top;templateG.save();templateG.strokeStyle='#ffd35b';templateG.lineWidth=1;templateG.setLineDash([4,3]);
+      for(const part of colourTemplate.parts){const b=templateRect(part);templateG.strokeRect(Math.round(ox+b.x/RK*sc)-.5,Math.round(oy+b.y/RK*sc)-.5,Math.round(b.width/RK*sc)+1,Math.round(b.height/RK*sc)+1);}
+      templateG.restore();}
+    if(templateHover?.edge){const {item,part,edge}=templateHover,b=templateRect(part,false,item),sc=scale(),x0=r.left-host.left+b.x/RK*sc,y0=r.top-host.top+b.y/RK*sc,x1=x0+b.width/RK*sc,y1=y0+b.height/RK*sc;
+      templateG.save();templateG.strokeStyle='#ff87cf';templateG.lineWidth=3;templateG.beginPath();
+      if(edge==='left'){templateG.moveTo(x0,y0);templateG.lineTo(x0,y1);}else if(edge==='right'){templateG.moveTo(x1,y0);templateG.lineTo(x1,y1);}else if(edge==='top'){templateG.moveTo(x0,y0);templateG.lineTo(x1,y0);}else{templateG.moveTo(x0,y1);templateG.lineTo(x1,y1);}
+      templateG.stroke();templateG.restore();}
     templateStatus();
   }
   $('bTemplateTake').onclick=()=>{
@@ -1004,16 +1033,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(key===libraryChoicesKey)return;libraryChoicesKey=key;host.replaceChildren();
     if(!templateLibrary.length){host.textContent='Свои шаблоны появятся здесь после сохранения или загрузки файла.';return;}
     for(const item of templateLibrary){
-      const placed=templateItems.filter(t=>t.libraryId===item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=document.createElement('button');card.className='template-entry-card';button.type='button';button.className='gz-hx template-entry';button.disabled=!img;
+      const placed=templateItems.filter(t=>t.libraryId===item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=card;card.className='gz-hx template-entry';card.tabIndex=0;card.setAttribute('role','button');card.classList.toggle('gz-off-dis',!img);
       button.setAttribute('aria-pressed',String(visible));if(visible)button.classList.add('gz-on');
       button.title=visible?'Скрыть с поля; правой кнопкой — переименовать':'Показать на поле; правой кнопкой — переименовать';
       const thumb=document.createElement('canvas'),part=item.shape.parts[0];thumb.width=32;thumb.height=40;thumb.setAttribute('aria-hidden','true');
       const mask=document.createElement('canvas');mask.width=part.width;mask.height=part.height;const pixels=Uint32Array.from(part.data);mask.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels.buffer),part.width,part.height),0,0);
       const g=thumb.getContext('2d'),scale=Math.min(32/part.width,40/part.height);g.imageSmoothingEnabled=false;g.drawImage(mask,(32-part.width*scale)/2,(40-part.height*scale)/2,part.width*scale,part.height*scale);
       const label=document.createElement('span');label.textContent=item.name+(visible?' · на поле':'');button.append(thumb,label);
-      button.onclick=()=>toggleLibraryTemplate(item);button.oncontextmenu=e=>{e.preventDefault();renameEditor(item.name,e.clientX,e.clientY,name=>renameLibraryItem(item,name));};
+      button.onclick=e=>{if(!img||e.target.closest('.template-entry-actions'))return;toggleLibraryTemplate(item);};button.onkeydown=e=>{if(e.target===button&&(e.key==='Enter'||e.key===' ')){e.preventDefault();button.click();}};button.oncontextmenu=e=>{e.preventDefault();renameEditor(item.name,e.clientX,e.clientY,name=>renameLibraryItem(item,name));};
       const actions=document.createElement('div');actions.className='template-entry-actions';
-      const action=(kind,title,fallback,run)=>{const b=document.createElement('button');b.type='button';b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.dataset.miIcon=kind;
+      const action=(kind,title,fallback,run)=>{const b=document.createElement('button');b.type='button';b.title=title;b.setAttribute('aria-label',title);b.dataset.miIcon=kind;
         if(window.ZerkMenuIcons){const mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=ZerkMenuIcons.iconFor(b);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';b.append(mark);}else b.textContent=fallback;
         b.onclick=run;actions.append(b);return b;};
       action('save','Сохранить изменения фигуры на поле в этот шаблон','💾',()=>{
@@ -1021,9 +1050,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         selectTemplate(t,false);item.shape=templateSnapshot();item.name=t.name;persistLibrary();$('paintCacheInfo').textContent='Шаблон сохранён: '+item.name;
       }).disabled=!placed.length;
       action('down','Скачать этот шаблон файлом','↓',()=>downloadTemplate(item));
-      action('cross','Удалить шаблон с подтверждением','×',()=>deleteLibraryItem(item));
       action('colour','Изменить цвет этого шаблона','●',()=>{libraryColourTarget=item.id;recolourTarget=null;$('templateColour').value=item.shape.hex;$('templateColour').click();});
-      card.append(button,actions);host.append(card);
+      action('cross','Удалить шаблон с подтверждением','×',()=>deleteLibraryItem(item));
+      // v0.037: одна кнопка-карточка: миниатюра, имя и маленькие действия внутри неё.
+      card.append(actions);host.append(card);
     }
   }
   function librarySelection(){
@@ -1589,6 +1619,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const part=item.parts.find(p=>x>=p.ox*RK&&x<(p.ox+VW)*RK&&MayatnikTemplate.contains(p.mask,templateRect(p,false,item),x,y));if(part)return {item,part};}
     return null;
   }
+  // v0.037: курсор подсказывает действие: над фигурой — двигать, Ctrl — копия, Alt — край зеркала.
+  function hoverTemplate(cx,cy,mods){
+    let next=null,cursor='';
+    if(img&&cx!=null&&!templateDragging&&!playing&&((!fillMode&&!autoVertical)||mods.ctrl)){const r=cv.getBoundingClientRect(),x=(cx-r.left)/r.width*img.width,y=(cy-r.top)/r.height*img.height,hit=templateItems.length?hitTemplate(x,y):null;
+      if(hit){cursor=mods.alt?'crosshair':mods.ctrl?'copy':'move';next={item:hit.item,part:hit.part,edge:mods.alt?templateEdge(hit,x,y):null};}}
+    wrap.style.cursor=cursor;const changed=JSON.stringify([next?.item?.id,next?.edge])!==JSON.stringify([templateHover?.item?.id,templateHover?.edge]);templateHover=next;if(changed)queueDigits();
+  }
+  let hoverAt=null;
+  wrap.addEventListener('pointermove',e=>{hoverAt=[e.clientX,e.clientY];if(!templateDragging)hoverTemplate(e.clientX,e.clientY,{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});});
+  wrap.addEventListener('pointerleave',()=>{hoverAt=null;hoverTemplate(null,null,{});});
+  for(const ev of ['keydown','keyup'])addEventListener(ev,e=>{if(['Alt','Control','Meta'].includes(e.key)){if(e.key==='Alt'&&templateHover)e.preventDefault();if(hoverAt)hoverTemplate(hoverAt[0],hoverAt[1],{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});}});
   wrap.addEventListener('contextmenu',e=>{
     if(!img||templateDragging)return;const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(!hit)return;
     e.preventDefault();const item=hit.item;renameEditor(item.name||item.hex,e.clientX,e.clientY,name=>{
@@ -1601,7 +1642,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(((!fillMode&&!autoVertical)||e.ctrlKey)&&templateItems.length&&e.button===0){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
       const hit=hitTemplate(x,y),part=hit?.part;if(hit){selectTemplate(hit.item,false);templateMove=true;}
       if(part){const box=templateRect(part),cx=r.left+(box.x+box.width/2)/RK*scale(),cy=r.top+(box.y+box.height/2)/RK*scale();
-        templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),proportional:$('templateProportional').checked,part,partIndex:hit.item.parts.indexOf(part),duplicate:e.ctrlKey,pure:e.altKey||templateTransfer||e.ctrlKey,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:e.altKey?'move':e.shiftKey?'scale':(templateAxisUnlocked||e.ctrlKey)?'move':'shift',editBefore:editSnapshot()};
+        // v0.037: тянуть — по битам; Shift — одна ось; Ctrl — копия; Alt — щелчок у края: зеркальная копия, тянуть: размер.
+        if(e.altKey){const edge=templateEdge(hit,x,y);templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),mirrorEdge:edge,pure:true,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:'scale',editBefore:editSnapshot()};}
+        else templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),duplicate:e.ctrlKey||e.metaKey,pure:e.ctrlKey||e.metaKey||templateTransfer,cx,cy,mode:'move',editBefore:editSnapshot()};
         wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');clearFillPreview();e.preventDefault();return;}}
     if (e.button !== 0 && e.button !== 1) return;
     if (e.target === wrap && (e.offsetX >= wrap.clientWidth || e.offsetY >= wrap.clientHeight)) return;   // полоса прокрутки
@@ -1613,13 +1656,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
       if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
-      if(!d.moved&&d.mode==='move')liftTemplateSource(!d.pure);d.moved=true;
+      if(!d.moved&&d.mode!=='scale')liftTemplateSource(!d.pure);d.moved=true;
       if(d.mode==='scale'){
         const ratio=Math.max(12,Math.hypot(e.clientX-d.cx,e.clientY-d.cy))/d.radius;
         $('templateProportional').checked=true;changeTemplate('templateHeight',d.height*ratio);
         // Середина фигуры остаётся на месте по обеим координатам.
         $('templateDown').value=d.down+(d.height-Number($('templateHeight').value))/100*d.part.mask.height/RK/2;templateLastDown=Number($('templateDown').value);
-      }else{if(d.mode==='move')templateOffsetX=d.offsetX+(e.clientX-d.x)/scale();changeTemplate('templateDown',d.down+(e.clientY-d.y)/scale());}
+      }else{
+        // Дискретно по битам: целые столбцы и строки; на ромбах — только по своей решётке (dx+dy чётно).
+        let rx=(e.clientX-d.x)/scale(),ry=(e.clientY-d.y)/scale();
+        if(e.shiftKey){if(Math.abs(rx)>Math.abs(ry))ry=0;else rx=0;}
+        const fx=d.offsetX+rx,fy=d.down+ry;let nx=Math.round(fx),ny=Math.round(fy);
+        if(rombP()>=0&&(nx+ny-Math.round(d.offsetX)-Math.round(d.down))%2){if(rx&&(!ry||Math.abs(fx-nx)>Math.abs(fy-ny)))nx+=fx>nx?1:-1;else ny+=fy>ny?1:-1;}
+        d.mode=e.shiftKey&&!rx?'shift':'move';templateOffsetX=nx;changeTemplate('templateDown',ny);
+      }
       templateStatsKey='';queueDigits();e.preventDefault();return;}
     if (!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1628,7 +1678,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     else if (pan) { if (Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 5) pan.moved = true; if (!pan.moved) return; wrap.scrollLeft = pan.sl - (e.clientX - pan.x); wrap.scrollTop = pan.st - (e.clientY - pan.y); }
   });
   const up = e => {
-    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
+    if(templateDragging?.id===e.pointerId){const drag=templateDragging;templateDragging=null;if(drag.mirrorEdge&&!drag.moved)mirrorTemplate(drag.mirrorEdge,true);finishEdit(drag.editBefore);wrap.classList.remove('drag');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);savePaint();return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { pan = null; wrap.classList.remove('drag'); }
     if (wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId);
@@ -1649,6 +1699,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   });
   addEventListener('keydown', e => {
     if (e.defaultPrevented || e.target.closest('input,select,button,a,[role="button"]')) return;
+    if ((e.ctrlKey||e.metaKey) && (e.code === 'KeyZ' || e.code === 'KeyY')) { e.preventDefault(); historyStep(e.code === 'KeyY' || e.shiftKey); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && colourTemplate) { e.preventDefault(); $('bTemplateRemove').click(); return; }
     if (e.key === '+' || e.key === '=') { zoomStep(1); return; }
     if (e.key === '-' || e.key === '_') { zoomStep(-1); return; }
     if (e.key === '0') { fit(); return; }
@@ -1686,7 +1738,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
   if (st.zsnap && st.zoom !== 'fit') st.zoom = snap2(st.zoom);   // v0.015: сохранённый прежде плавный масштаб — к ближайшему 2^k
   // Сохраняем всю протяжку одним действием, отдельные кнопки — одним щелчком.
-  const historyButtons=['bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateAxisUnlock','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
+  const historyButtons=['bTemplateFlipH','bTemplateFlipV','bTemplateTake','bTemplateTransfer','bTemplateMove','bTemplateAxisUnlock','bTemplateShow','bTemplateReturn','bTemplateTaller','bTemplateShorter','bTemplateDown','bTemplateUp','bTemplateReset','bTemplateClone','bTemplateRemove','bTemplatePaint','templateProportional','templateTrail'];
   function captureEdit(){if(img)templateHistoryCapture=editSnapshot(false);}
   function completeEdit(){const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
@@ -1697,6 +1749,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=36"></script>
+<script src="mayatnik-menu.js?v=37"></script>
 </body>
 </html>

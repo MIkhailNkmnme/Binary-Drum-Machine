@@ -1,4 +1,4 @@
-/* Маятник v0.036: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.037: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -63,7 +63,7 @@
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateDown','down'),button('bTemplateUp','up'),button('bTemplateAxisUnlock','lock'),button('bTemplateReset','reset'),button('bTemplateReturn','swap'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),button('bPng','image'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bPng', 'image'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
@@ -92,7 +92,15 @@
     const closed = document.body.classList.toggle('mayatnik-menu-closed');
     menu.setAttribute('aria-expanded', String(!closed)); dispatchEvent(new Event('resize'));
   };
-  setInterval(() => rail.refresh(), 200);
+  // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
+  const relayout = () => { for (const soty of rail.el.querySelectorAll('.gz-soty')) {
+    const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
+    const key = shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;
+    cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
+    shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 + col * 13.5) + 'px'; });
+    soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 + (shown.length > 1 ? 13.5 : 0) - 3) + 'px' : '0';
+    soty.style.display = shown.length ? '' : 'none'; } };
+  setInterval(() => { rail.refresh(); relayout(); }, 200);
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
 })();
