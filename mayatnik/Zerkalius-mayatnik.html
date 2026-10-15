@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник — v0.031. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.032. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник — v0.031</title>
+<title>Zerkalius Маятник — v0.032</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -106,12 +106,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=31">
+<link rel="stylesheet" href="mayatnik-menu.css?v=32">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><span class="ver">v0.031</span>
+  <h1 id="appTitle">Маятник</h1><span class="ver">v0.032</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -202,11 +202,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateClone" disabled title="Добавить независимую копию выбранного шаблона">Ещё копия</button>
     <button id="bTemplateRemove" disabled title="Убрать только выбранный шаблон с поля. Его запись в библиотеке и оставленная краска сохраняются">Убрать с поля</button>
     <label title="Название своего шаблона">имя <input id="templateName" type="text" maxlength="100" value="Мой шаблон"></label>
-    <label title="Отдельная библиотека стандартных и своих шаблонов">список <select id="templateList"><option value="standard:triangle">△ Треугольник</option><option value="standard:diamond">◇ Ромб</option><option value="standard:square">□ Квадрат</option><option value="standard:cross">+ Крест</option></select></label>
-    <button id="bTemplateLoad" title="Взять выбранный шаблон из отдельного списка">Взять из списка</button>
-    <button id="bTemplateSave" title="Сохранить текущую фигуру под указанным именем отдельно от раскраски">В список</button>
-    <button id="bTemplateExport" title="Сохранить все свои и стандартные шаблоны в файл JSON">Список в файл</button>
-    <button id="bTemplateImport" title="Добавить шаблоны из файла в список, сохранив существующие">Из файла</button>
+    <select id="templateList" hidden aria-label="Сохранённые свои шаблоны"></select>
+    <label class="template-library-current" title="Выбранный свой шаблон"><output id="templateLibraryCurrent" aria-live="polite">Своих шаблонов пока нет</output></label>
+    <button id="bTemplatePrev" disabled title="Предыдущий свой шаблон">Назад</button>
+    <button id="bTemplateNext" disabled title="Следующий свой шаблон">Вперёд</button>
+    <button id="bTemplateLoad" disabled title="Добавить выбранный свой шаблон на поле">На поле</button>
+    <button id="bTemplateSave" title="Сохранить выбранную фигуру с указанным именем в свои шаблоны">Сохранить</button>
+    <button id="bTemplateExport" disabled title="Скачать свои шаблоны одним файлом JSON">Скачать</button>
+    <button id="bTemplateImport" title="Загрузить свои шаблоны из файла JSON, дополнив список">Загрузить</button>
     <input id="templateFile" type="file" accept=".json,application/json" hidden>
     <label title="При движении оставлять позади шаблона противоположный цвет бита: 1 → чёрный, 0 → белый"><input id="templateTrail" type="checkbox">Инверт-след</label>
     <label title="Увеличивать ширину вместе с высотой поровну в обе стороны от центра самой фигуры"><input id="templateProportional" type="checkbox">Пропорции</label>
@@ -243,17 +246,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Заливка:</strong> выбери цвет в группе «Раскраска», включи «Заливку» и нажми на область. Соединяются пиксели одного цвета по сторонам, касание уголками не соединяет их. Повторный щелчок тем же цветом снимает заливку. «Отменить» и «Повторить» работают с заливкой, битами дорожки и шаблонами. «Без краски» убирает краску и изменения битов, оставляя шаблоны на поле; это действие тоже можно отменить. «Области» считает участки текущего изображения. Раскраска автоматически сохраняется в памяти этого браузера и восстанавливается после обновления. «Из памяти» возвращает последнее сохранённое поле вместе с цветами и шаблоном. При смене кадра или вида текущая раскраска скрывается; сохранённая работа остаётся в памяти до следующей раскраски. PNG сохраняет видимый результат отдельным файлом. Обычная цветная заливка не меняет биты; «Инверт-след» меняет рабочие биты дорожки.</p>
   <p><strong>Вертикальная раскраска:</strong> кнопка переключается 1 → 0 → выкл. Наведи на пиксель: от него вниз проводится вертикаль толщиной в один пиксель, и все связные области выбранного бита, которых она касается, подсвечиваются. Щелчок применяет цвет. Пустой фон не закрашивается. «Зеркально» включено по умолчанию: захватывается и отражённая сторона относительно центра поля. Shift также включает зеркальную пару. Повторный щелчок тем же цветом снимает заливку.</p>
   <p><strong>Шаблон цвета:</strong> в «Раскраске» выбери цвет, затем в группе «Шаблон» нажми «Взять цвет». «Выше +» увеличивает высоту, «Сдвиг ↓» опускает копию по центру; значения можно вводить числами. «Пропорции» увеличивает и ширину поровну от центра цветной фигуры, не сдвигая её в сторону. «Двигать» позволяет тянуть копию по вертикали прямо на холсте. «Инверт-след» меняет рабочие биты на пройденных местах: 1 становится чёрным 0, а 0 — белой 1. Пустое поле пропускается; в пределах одной протяжки каждый пройденный пиксель инвертируется один раз. Новые биты используются в цифрах, подсказке, вертикальной раскраске и окраске под шаблоном. След входит в раскраску и PNG, его можно отменить. Копия полупрозрачна, включается в PNG. Статус показывает исходные пиксели PNG, уникальные биты 1/0, точные оси силуэта и биты под видимой частью копии. Оси фигуры проверяются точно по расположению центров выбранных битов в её собственной рамке, чтобы ступеньки отрисовки ромбов не ломали симметрию. Изменение кадра или вида убирает текущий шаблон; «Из памяти» возвращает сохранённую работу. Изменение заливки не меняет уже взятую копию. Наведение в режиме заливки заранее подсвечивает всю будущую область.</p>
-  <p><strong>Несколько шаблонов:</strong> «Взять цвет» и «Взять из списка» добавляют фигуру на поле. «На поле» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
+  <p><strong>Несколько шаблонов:</strong> «Взять цвет» и кнопка «На поле» в библиотеке добавляют фигуру. Список «На поле» в группе «Шаблон» выбирает активную, «Ещё копия» создаёт независимый дубликат, «Убрать с поля» удаляет только выбранную фигуру. Видимость, размер, смещение, прозрачность, след, возврат и цикл окраски у каждой свои. Щелчок по фигуре выбирает её для протяжки; перекрытые и скрытые доступны через список. PNG и память браузера сохраняют все видимые фигуры. «Отменить / Повторить» доступны и в «Раскраске», и в «Шаблоне»; одна протяжка — одно действие. История действует в пределах текущего поля и сеанса.</p>
   <p class="may-about-note">Исходный алгоритм перенесён из Excel, модуль «ТРЕУГСЖАТИЯ». Кнопка «?» в углу включает отдельные подсказки к командам.</p>
   <p><strong>Перетаскивание шаблона:</strong> после «Взять цвет» управление включено сразу. Без клавиш — сдвиг вверх-вниз, с Shift — пропорциональное увеличение от центра (тяни от центра наружу), с Alt — свободный перенос без следа. Тонкий чёрный контур виден при всех преобразованиях. Двойной щелчок или «Туда / назад» возвращает исходное положение и размер; повторный — прежнее преобразование, без дополнительного следа. «Под ним: 1 / 0» по очереди красит только выбранные биты внутри силуэта текущим цветом.</p>
-  <p><strong>Библиотека «Шаблоны»:</strong> каждый взятый цвет автоматически добавляется в отдельный список. «В список» сохраняет текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. Доступны стандартные треугольник, ромб, квадрат и крест; их можно сохранить под своим именем. «Список в файл» выгружает свои и стандартные формы в JSON, «Из файла» добавляет формы к существующим. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны слева крупнее.</p>
+  <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. «Назад» и «Вперёд» выбирают сохранённую фигуру, «На поле» добавляет её копию. «Скачать» выгружает свои шаблоны в JSON, «Загрузить» добавляет их из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу.</p>
 </dialog>
 
 <script src="mayatnik-core.js?v=2"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
-<script src="mayatnik-fill.js?v=31"></script>
-<script src="mayatnik-template.js?v=31"></script>
-<script src="mayatnik-paint-cache.js?v=31"></script>
+<script src="mayatnik-fill.js?v=32"></script>
+<script src="mayatnik-template.js?v=32"></script>
+<script src="mayatnik-paint-cache.js?v=32"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
 (() => {
@@ -836,14 +839,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('bPaintRestore').onclick=async()=>{if(!await restorePaint())$('paintCacheInfo').textContent='Сохранённой раскраски пока нет или память недоступна';};
   let templateLibrary=[];
-  const standardNames={triangle:'Треугольник',diamond:'Ромб',square:'Квадрат',cross:'Крест'};
-  function libraryList(selected){
-    const list=$('templateList');list.replaceChildren();
-    for(const [id,name]of Object.entries(standardNames))list.add(new Option('Стандарт · '+name,'standard:'+id));
-    for(const item of templateLibrary)list.add(new Option(item.name,item.id));
-    if(selected&&[...list.options].some(o=>o.value===selected))list.value=selected;
+  function librarySelection(){
+    const list=$('templateList'),n=list.options.length,i=list.selectedIndex;
+    $('templateLibraryCurrent').textContent=n?`${i+1} / ${n} · ${list.options[i].textContent}`:'Своих шаблонов пока нет';
+    $('bTemplatePrev').disabled=n<2||i<=0;$('bTemplateNext').disabled=n<2||i>=n-1;
+    $('bTemplateLoad').disabled=!n;$('bTemplateExport').disabled=!n;
   }
-  const libraryReady=MayatnikPaintCache.read('templates').then(items=>{templateLibrary=Array.isArray(items)?items:[];libraryList();}).catch(()=>{});
+  function libraryList(selected){
+    const list=$('templateList'),previous=selected||list.value;list.replaceChildren();
+    for(const item of templateLibrary)list.add(new Option(item.name,item.id));
+    if(previous&&[...list.options].some(o=>o.value===previous))list.value=previous;
+    librarySelection();
+  }
+  for(const [id,step]of [['bTemplatePrev',-1],['bTemplateNext',1]])$(id).onclick=()=>{const list=$('templateList');if(!list.options.length)return;list.selectedIndex=Math.max(0,Math.min(list.options.length-1,list.selectedIndex+step));librarySelection();};
+  const libraryReady=MayatnikPaintCache.read('templates').then(items=>{templateLibrary=Array.isArray(items)?items.filter(t=>!String(t.id).startsWith('standard:')):[];libraryList();}).catch(()=>libraryList());
   function templateSnapshot(){
     return {hex:colourTemplate.hex,rk:RK,parts:colourTemplate.parts.map(p=>({width:p.mask.width,height:p.mask.height,y:p.mask.y,center:p.axis/RK-p.ox-(geo.anchor-VX+.5),data:Array.from(p.mask.data)})),height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked};
   }
@@ -853,15 +862,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const old=!fresh&&templateLibrary.find(t=>t.id===selected&&t.name===name),id=old?.id||('saved:'+Date.now()+':'+Math.random().toString(36).slice(2,8));
     const entry={id,name,shape};if(old)templateLibrary[templateLibrary.indexOf(old)]=entry;else templateLibrary.push(entry);libraryList(id);
     try{await MayatnikPaintCache.write(templateLibrary,'templates');$('paintCacheInfo').textContent='Шаблон сохранён отдельно: '+name;}
-    catch(_){$('paintCacheInfo').textContent='Библиотека в этом окне — сохрани «Список в файл»';}
-  }
-  function standardTemplate(kind){
-    const w=17,h=17,hex=$('fillColour').value,colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),data=new Array(w*h).fill(0);
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-      const on=kind==='triangle'?Math.abs(x-8)<=y/2:kind==='diamond'?Math.abs(x-8)+Math.abs(y-8)<=8:kind==='cross'?Math.abs(x-8)<=1||Math.abs(y-8)<=1:true;
-      if(on)data[y*w+x]=colour;
-    }
-    return {hex,rk:1,parts:[{width:w,height:h,y:0,data}],height:100,down:0,x:0,proportional:false};
+    catch(_){$('paintCacheInfo').textContent='Библиотека в этом окне — нажми «Скачать» для сохранения';}
   }
   function useLibraryTemplate(shape,name){
     if(!img||!f)return;stop();target=k;
@@ -881,18 +882,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('bTemplateSave').onclick=()=>saveTemplateLibrary();
   $('bTemplateLoad').onclick=async()=>{await libraryReady;const id=$('templateList').value;
-    try{if(id.startsWith('standard:')){const kind=id.slice(9);useLibraryTemplate(standardTemplate(kind),standardNames[kind]);}
-      else{const item=templateLibrary.find(t=>t.id===id);if(item)useLibraryTemplate(item.shape,item.name);}}
+    try{const item=templateLibrary.find(t=>t.id===id);if(item)useLibraryTemplate(item.shape,item.name);}
     catch(_){$('paintCacheInfo').textContent='Не удалось открыть шаблон';}
   };
   $('bTemplateExport').onclick=async()=>{await libraryReady;
-    const standards=Object.entries(standardNames).map(([id,name])=>({id:'standard:'+id,name,shape:standardTemplate(id)}));
-    const blob=new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:[...standards,...templateLibrary]})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mayatnik-templates.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(!templateLibrary.length)return;
+    const blob=new Blob([JSON.stringify({format:'mayatnik-templates',version:1,templates:templateLibrary})],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mayatnik-templates.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
   };
   $('bTemplateImport').onclick=()=>$('templateFile').click();
   $('templateFile').onchange=async()=>{const file=$('templateFile').files[0];if(!file)return;
     try{if(file.size>64*1024*1024)throw Error('size');const parsed=JSON.parse(await file.text());if(parsed.format!=='mayatnik-templates'||parsed.version!==1||!Array.isArray(parsed.templates))throw Error('format');
-      let pixels=0;const added=parsed.templates.map((item,i)=>{const s=item.shape;
+      let pixels=0;const added=parsed.templates.filter(item=>!String(item.id).startsWith('standard:')).map((item,i)=>{const s=item.shape;
         if(!s||!/^#[0-9a-f]{6}$/i.test(s.hex)||!Array.isArray(s.parts)||!s.parts.length||s.parts.length>2||!Number.isFinite(s.rk)||s.rk<1||s.rk>8)throw Error('shape');
         for(const p of s.parts){if(!Number.isInteger(p.width)||!Number.isInteger(p.height)||p.width<1||p.height<1||p.width>32768||p.height>32768||!Array.isArray(p.data)||p.data.length!==p.width*p.height)throw Error('mask');pixels+=p.data.length;if(pixels>12e6||p.data.some(v=>!Number.isInteger(v)||v<0||v>0xffffffff))throw Error('pixels');p.y=clampInt(p.y,0,32768,0);}
         s.height=clampInt(s.height,1,3200,100);s.down=clampInt(s.down,-4096,4096,0);s.x=clampInt(s.x,-32768,32768,0);s.proportional=!!s.proportional;
@@ -1466,8 +1466,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 })();
 </script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/menu-icons.js?v=14"></script>
+<script src="../_js/menu-icons.js?v=15"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=31"></script>
+<script src="mayatnik-menu.js?v=32"></script>
 </body>
 </html>
