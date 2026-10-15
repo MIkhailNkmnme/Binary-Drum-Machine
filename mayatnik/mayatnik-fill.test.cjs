@@ -1,9 +1,15 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {fill,count}=require('./mayatnik-fill.js');
+const {fill,count,down}=require('./mayatnik-fill.js');
 test('fill joins sides, never corners or opposite row edges',()=>{
  const p=Uint32Array.from([1,0,1,0,1,0,1,0,1]);
  assert.deepEqual([...fill(p,3,0,7)],[0]);assert.equal(count(p,3).regions,9);
  const edge=Uint32Array.from([0,0,1,1,0,0]);assert.equal(fill(edge,3,2,8).length,1);
+});
+test('one selected pixel column downward selects whole touching regions only',()=>{
+ const p=Uint32Array.from([7,7,0,0,0,0,0,7,7,7,0,0]);
+ const result=down(p,3,4,[7]);
+ assert.deepEqual([...result.indices].sort((a,b)=>a-b),[7,8]);assert.equal(result.regions,1);
+ assert.equal(p[7],7);assert.equal(down(p,3,4,[8]).indices.length,0);
 });
 test('fill covers an enclosed connected area, leaves boundary, equal colour is a no-op',()=>{
  const p=Uint32Array.from([0,0,0,0,0,0,1,1,1,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0]);

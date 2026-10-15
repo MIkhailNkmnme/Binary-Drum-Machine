@@ -23,5 +23,15 @@
     }
     return {regions,colours};
   }
-  const api={fill,count};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikFill=api;
+  function down(pixels,w,start,allowed){
+    const seen=new Uint8Array(pixels.length),queue=new Uint32Array(pixels.length),all=new Uint32Array(pixels.length);let size=0,regions=0;
+    for(let seed=start;seed<pixels.length;seed+=w){
+      const colour=pixels[seed];if(seen[seed]||!allowed.includes(colour))continue;
+      let head=0,tail=1;queue[0]=seed;seen[seed]=1;regions++;
+      const visit=q=>{if(!seen[q]&&pixels[q]===colour){seen[q]=1;queue[tail++]=q;}};
+      while(head<tail){const q=queue[head++];all[size++]=q;neighbours(q,w,pixels.length,visit);}
+    }
+    return {indices:all.slice(0,size),regions};
+  }
+  const api={fill,count,down};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikFill=api;
 })(typeof window==='object'?window:globalThis);

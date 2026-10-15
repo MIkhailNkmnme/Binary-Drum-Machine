@@ -1,4 +1,4 @@
-/* Маятник v0.028: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.030: page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -11,7 +11,7 @@
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'bPlay' ? (e.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Анимация')
-        : id === 'bStep' ? e.textContent.trim() : name(e),
+        : id === 'bAutoVertical'||id === 'bTemplatePaint' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
       on: () => e.matches('[aria-pressed="true"],.on'), disabled: () => e.disabled,
       click: () => e.click() };
   };
@@ -54,7 +54,7 @@
       control('vrows') ] },
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'),
-      select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}) ] },
+      select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
@@ -62,13 +62,16 @@
       { type: 'action', name: 'Зерк. маятник', icon: icon($('mirrorLink'), 'mirror'),
         tip: 'Открыть зеркальный маятник в Зазеркалиусе', click: () => $('mirrorLink').click() },
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax') ] },
-    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bFill','colour'),control('fillColour'),button('bFillUndo','undo'),button('bFillClear','cross'),button('bRegions','grid4')] },
+    { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bFill','colour'),button('bAutoVertical','line'),check('fillMirror','mirror'),control('fillColour'),button('bFillUndo','undo'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo'),button('bPng','image')] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateDown','down'),button('bTemplateUp','up'),button('bTemplateReset','reset'),button('bTemplateReturn','swap'),button('bTemplateMove','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),button('bPng','image'),check('templateProportional','corners'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
+    { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateList'),button('bTemplateLoad','copy'),control('templateName'),button('bTemplateSave','save'),button('bTemplateExport','save'),button('bTemplateImport','folder')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bPng', 'image'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   const status = $('mayatnikStatus');
-  for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'fillInfo']) status.append($(id));
+  for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'fillInfo','paintCacheInfo']) status.append($(id));
+  const sidebar=document.createElement('aside');sidebar.id='mayatnikSidebar';$('mayatnikRail').before(sidebar);sidebar.append($('mayatnikRail'),$('templateInfo'));
   source.hidden = true;
   document.body.classList.add('mayatnik-menu-ready');
   const help = $('mayHelp'), menu = $('mayMenu');
