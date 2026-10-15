@@ -1,7 +1,8 @@
 /* Горизонтальная XOR-свёртка: правая часть влево, левая вправо, к неподвижному центру. v1.
    v2: биты едут со своими цветами картинки (краска, «Цвета», «Очки», «Неизменные» — что было на поле при старте),
    colour / paint — Uint32 RGBA на клетку, 0 — нет. v3: золотой центральный столбец снят («как этот столб убрать?»).
-   v4: «парой» — шаг сразу правой и левой частью (два хода модели за один, если они с разных сторон). */
+   v4: «парой» — шаг сразу правой и левой частью (два хода модели за один, если они с разных сторон).
+   v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
   'use strict';
   function model({width,height,center,data,colour,paint}) {
@@ -26,6 +27,8 @@
         const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?-1:data[y*width+sx];},
       // v2: откуда пришла клетка — её цвет на картинке при старте (центр — свой, золотой)
       colourAt(x,y){if(x===center||!colour)return 0;const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?0:colour[y*width+sx];},
+      srcAt(x){if(x===center)return -1;const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?-1:sx;},   // v5: исходный столбец клетки; центр (XOR) — -1
+      recolour(c,p){colour=c;paint=p;},
       paintAt(x,y){if(x===center||!paint)return 0;const sx=x<center?x-left[frame]:x+right[frame];return sx<0||sx>=width?0:paint[y*width+sx];},
       nextSide(){return frame<moves.length?(moves[frame]>center?'правая ←':'левая →'):'свёрнуто';},
       // v4: ход парой из кадра f в сторону d: два соседних хода с разных сторон — за один шаг; сторона кончилась — по одному
@@ -33,7 +36,7 @@
       pairStep(f,d){if(d>0){for(const b of bounds)if(b>f)return b;return moves.length;}for(let i=bounds.length-1;i>=0;i--)if(bounds[i]<f)return bounds[i];return 0;}
     };
   }
-  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom}) {
+  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap}) {
     const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
     panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
     const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
@@ -109,15 +112,21 @@
       play.addEventListener('pointermove',move);play.addEventListener('pointerup',end);play.addEventListener('pointercancel',end);
     });
     // Панорамирование остаётся доступным; исходная раскраска в просмотре не редактируется.
-    let pan=null,pinch=null;const pointers=new Map();
+    let pan=null,pinch=null,down=null;const pointers=new Map();
     wrap.addEventListener('pointerdown',e=>{if(!state)return;e.stopImmediatePropagation();if(e.button!==0&&e.button!==1)return;
       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pan={id:e.pointerId,x:e.clientX,y:e.clientY,left:wrap.scrollLeft,top:wrap.scrollTop};
+      down=pointers.size===1?{id:e.pointerId,x:e.clientX,y:e.clientY,button:e.button,moved:false}:null;
       if(pointers.size===2){const[a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale:config()?.scale||1};pan=null;}
       wrap.setPointerCapture(e.pointerId);e.preventDefault();},true);
     wrap.addEventListener('pointermove',e=>{if(!state)return;e.stopImmediatePropagation();if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(down?.id===e.pointerId&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>3)down.moved=true;
       if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];if(pinch.distance>0)zoom?.(pinch.scale*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance,(a.x+b.x)/2,(a.y+b.y)/2);}
       else if(pan?.id===e.pointerId){wrap.scrollLeft=pan.left+pan.x-e.clientX;wrap.scrollTop=pan.top+pan.y-e.clientY;}},true);
-    for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);},true);
+    for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);
+      // v5: щелчок левой без сдвига — покрасить исходный столбец клетки (плоский вид), затем снять цвета заново
+      const d=down;down=null;if(type!=='pointerup'||!d||d.id!==e.pointerId||d.moved||d.button!==0||pointers.size||!tap)return;
+      const c=config();if(!c||c.rp>=0)return;const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/c.scale),y=Math.floor((e.clientY-r.top)/c.scale),sx=state.srcAt(x);
+      if(sx<0||y<0||y>=state.height||!tap(sx,y))return;const cap=capture();if(cap)state.recolour(cap.colour,cap.paint);render();},true);
     wrap.addEventListener('contextmenu',e=>{if(state){e.preventDefault();e.stopImmediatePropagation();}},true);
     addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);

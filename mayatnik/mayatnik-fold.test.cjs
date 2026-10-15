@@ -22,3 +22,12 @@ test('парой: середина кадра после пары — XOR обо
   m.seek(m.pairStep(0, 1));   // правая 3 и левая 1
   assert.equal(m.bit(2, 0), 1 ^ 1 ^ 0);
 });
+
+test('srcAt: клетка свёртки знает свой исходный столбец, центр — нет', () => {
+  const m = model({width: 7, height: 1, center: 3, data: new Int8Array(7).fill(1)});
+  assert.equal(m.srcAt(3), -1);
+  assert.deepEqual([0, 1, 2, 4, 5, 6].map(x => m.srcAt(x)), [0, 1, 2, 4, 5, 6]);
+  m.seek(2);   // правая на 1 влево, левая на 1 вправо
+  assert.deepEqual([1, 2, 4, 5].map(x => m.srcAt(x)), [0, 1, 5, 6]);
+  assert.equal(m.srcAt(0), -1);   // слева уехало за край
+});
