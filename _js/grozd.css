@@ -20,6 +20,8 @@
 .gz-hx:focus-visible{outline:none;background:color-mix(in srgb,var(--c) 80%,#fff)}
 .gz-hx.gz-on{background:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
 .gz-hx.gz-off-dis{opacity:.45;cursor:default}
+.gz-hx:not(.gz-on):not(.gz-head){background:color-mix(in srgb,var(--c) 20%,#000)}
+.gz-hx:not(.gz-on):not(.gz-head)::before{inset:1px}
 .gz-ic{flex:none;width:15px;height:15px;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;color:color-mix(in srgb,var(--c) 70%,#fff)}
 .gz-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .gz-nm{overflow:hidden;text-overflow:ellipsis}
