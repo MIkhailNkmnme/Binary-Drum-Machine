@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.076. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.077. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.076</title>
+<title>Zerkalius Маятник — v0.077</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,12 +107,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=76">
+<link rel="stylesheet" href="mayatnik-menu.css?v=77">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.076</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.077</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayHelp" class="gz-hx" aria-pressed="false" title="Подсказки к кнопкам"><span>?</span></button>
@@ -163,6 +163,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Минимальная длина простой серии в битах">от бит <input id="ochkiLength" type="number" min="2" max="4096" value="5"></label>
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
+    <label title="Подсветка битов, которые больше не изменятся: ни один из оставшихся конусов их не накроет. Светло-зелёный — 1, тёмно-зелёный — 0"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
     <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked> оси ↕</label>
@@ -295,7 +296,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
   const KEY = 'zerk_mayatnik';
-  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
+  let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, frozen: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
@@ -329,7 +330,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function writeUI() {
     $('ochkiPattern').value=st.ochkiPattern||'initial';$('ochkiLength').value=st.ochkiLength||5;
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
-    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; st.noband = st.noband === true ? 1 : (+st.noband || 0) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
+    $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; st.noband = st.noband === true ? 1 : (+st.noband || 0) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; $('frozen').checked = !!st.frozen; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
     for (const id of ['symRowsMin','symRowsMax','symBitsMin','symBitsMax']) $(id).value = st[id] || '';
   }
 
@@ -529,10 +530,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const A = geo.anchor - VX;   // якорь в клетках окна
     for (let X = 0; X < CW; X++) { const h = halfOf((X + .5) / K); cp[X] = h ? h[0] : -1; cx[X] = h ? h[1] - .5 - A - h[0] : 0; }
     // v0.024: цвет клетки окна — один раз на кадр (зона, кромка, «Очки»), а не на каждый из миллионов пикселей
-    const cc = new Uint32Array(VW * VH);
+    const cc = new Uint32Array(VW * VH), fzR = st.frozen ? frozenRanges() : null;
     for (let r = 0; r < VH; r++) for (let c = 0; c < VW; c++) {
       const q = r * W + c + VX, v = val[q];
-      cc[r * VW + c] = v < 0 ? empty : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : hl && hl[q] ? (v ? HL1 : HL0) : T[v * 3];
+      cc[r * VW + c] = v < 0 ? empty : fzR && !outShow(r, c + VX) && frozenAt(fzR, r, c + VX - geo.anchor) ? (v ? FZ1 : FZ0) : outZone(r, c + VX) ? (triangleFill(r, c + VX) ? (st.noband === 2 ? T[v * 3] : EDGE) : empty) : hl && hl[q] ? (v ? HL1 : HL0) : T[v * 3];
     }
     for (let Y = 0; Y < CH; Y++) {
       const y = (Y + .5) / K - .5, row = Y * CW;
@@ -572,6 +573,22 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.024: цвета «Очков» и кромки — ПОСЛЕ rgba: объявленные выше (v0.021–v0.023), они роняли страницу при загрузке
   // («Cannot access 'rgba' before initialization» — const ещё не задан). Новые цвета через rgba — только ниже этой строки.
   const HL1 = rgba([255, 214, 70]), HL0 = rgba([150, 86, 30]);   // v0.021: «Очки» — найденные 1 и 0
+  // v0.077: «Неизменные» — бит больше не изменится, если ни одна из ещё не поставленных вершин его не накроет:
+  // конус вершины a переписывает (r, c) при |c − a| ≤ r и a той же чётности, что c + r (c, a — от якоря).
+  const FZ1 = rgba([120, 240, 170]), FZ0 = rgba([24, 112, 70]);
+  function frozenRanges() {
+    const T = total(); if (k >= T) return [];
+    if (pairOn()) return [[-T, -(k + 1)], [k + 1, T]];
+    if (st.mode === 'one') return k ? [] : [[0, 0]];
+    const [lo, hi] = MAYATNIK.span(st.mode, k), [L, H] = MAYATNIK.span(st.mode, T), out = [];
+    if (k === 0) return [[L, H]];
+    if (L < lo) out.push([L, lo - 1]); if (H > hi) out.push([hi + 1, H]); return out;
+  }
+  function frozenAt(ranges, r, c) {
+    for (const [a, b] of ranges) { const a0 = Math.max(a, c - r), a1 = Math.min(b, c + r); if (a0 > a1) continue;
+      const first = a0 + (((c + r - a0) % 2) + 2) % 2; if (first <= a1) return false; }
+    return true;
+  }
   const EDGE = rgba([214, 168, 40]);   // v0.023: кромка срезанных полос
   function draw() {
     const oldVX = VX, oldR = cv.getBoundingClientRect(), oldS = scale();
@@ -595,6 +612,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         for (let c = VX; c < VX + VW; c++) { const v = outShow(r, c) ? -1 : val[row + c];
           px[out + c] = v < 0 ? empty : T[v * 3 + (pr ? MAYATNIK.tintPair(r, c - A, v, k, filled) : MAYATNIK.tint(r, c - A, v, lo, hi, filled))]; } }
     }
+    if (st.frozen && rp < 0) { const fz = frozenRanges(), A = geo.anchor;   // v0.077: «Неизменные»
+      for (let r = 0; r < VH; r++) for (let c = VX; c < VX + VW; c++) { const v = val[r * W + c]; if (v < 0 || outShow(r, c) || !frozenAt(fz, r, c - A)) continue; px[r * VW + c - VX] = v ? FZ1 : FZ0; } }
     if (och && rp < 0) for(let r=0;r<VH;r++)for(let c=VX;c<VX+VW;c++){const q=r*f.W+c;if(och.hl[q])px[r*VW+c-VX]=f.val[q]?HL1:HL0;}
     if (rp < 0) {   // обводка, оси и конус — в клетках «пиксель = бит», на ромбах не рисуются
       if (st.outline) outline(px);
@@ -1634,6 +1653,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.005: 4N — конец ленты: вершина a трогает конус якоря только при |a| ≤ 2(N − 1), крайняя стоит на ±n/2
   $('bFour').onclick = () => { $('steps').value = 4 * clampInt($('rows').value, 8, 4096, 512); $('mode').value = 'pend'; build(); };
   $('third').addEventListener('change', () => { st.third = $('third').checked; save(); });
+  $('frozen').addEventListener('change', () => { st.frozen = $('frozen').checked; save(); if (f) draw(); });   // v0.077
   $('noband').addEventListener('change', () => { st.noband = ((+st.noband || 0) + 1) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; save(); if (f) draw(); });   // v0.076: по кругу — полосы / без полос / до треугольника   // v0.020: «без полос»
   $('ochkiMode').addEventListener('change', () => { st.ochkiMode = $('ochkiMode').value; save(); ochki = null; if (f) draw(); });   // v0.022
   $('ochkiPattern').addEventListener('change',()=>{st.ochkiPattern=$('ochkiPattern').value;st.ochki=true;$('bOchki').setAttribute('aria-pressed','true');save();ochki=null;if(f)draw();});
@@ -1965,6 +1985,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=76"></script>
+<script src="mayatnik-menu.js?v=77"></script>
 </body>
 </html>
