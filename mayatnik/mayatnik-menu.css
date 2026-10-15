@@ -178,3 +178,22 @@ header #paintTools .pt-b.gz-hx:hover{background:color-mix(in srgb,var(--c) 70%,#
 header #paintTools .pt-b.gz-hx:disabled{opacity:.35}
 header #paintTools .pt-b.gz-hx small{display:none}
 header #paintTools .pt-cw{grid-row:1/3;align-self:center;margin-left:4px}
+/* v0.075: справа шапка «Шаблоны» и кнопки в одну строку, список — ниже на всю ширину. */
+#mayatnikRailR .gz-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:3px 0}
+#mayatnikRailR .gz-soty{display:flex;margin:0;position:static}
+#mayatnikRailR .gz-soty>.gz-hx{position:static;width:auto;margin-left:-6px}
+#mayatnikRailR .gz-wide{flex-basis:100%}
+#mayatnikRailR #templateLibraryChoices:empty{display:none}
+#mayatnikRailR .gz-control:has(#templateLibraryChoices:empty){display:none}
+.mayatnik-menu-ready #mayatnikRailR{width:auto;max-width:460px}
+#mayatnikRailR .gz-rail{width:auto;align-items:flex-end}
+#mayatnikRailR .gz-group{flex-wrap:nowrap;flex-direction:row}
+#mayatnikRailR .gz-group:has(.gz-wide:not(:empty) #templateLibraryChoices:not(:empty)){flex-wrap:wrap}
+header #paintTools .pt-b.gz-hx:disabled{cursor:default}
+header #paintTools .pt-b.gz-hx{padding:0 8px 0 9px;gap:4px}
+header #paintTools .pt-g.pt-long{padding:9px 5px 5px}
+header #paintTools{gap:5px}
+.mayatnik-menu-ready>header{gap:8px}
+header #paintTools .pt-b.gz-hx{padding:0 7px 0 8px;gap:3px;--gz-n:8px}
+header #paintTools .pt-g.pt-long{padding:9px 4px 5px}
+header #paintTools{gap:4px;margin-left:0}
