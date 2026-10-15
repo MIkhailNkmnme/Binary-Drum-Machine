@@ -124,3 +124,15 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #paintTools .pt-g{display:flex;flex-direction:column;gap:1px}
 #paintTools .pt-l{font:9px/1.2 'Segoe UI',sans-serif;color:#ffc08f;letter-spacing:.3px;padding-left:2px}
 #paintTools .pt-r{display:flex;gap:3px;align-items:center}
+/* v0.056: группы в рамках, подписи значков через один — сверху и снизу */
+#paintTools{gap:8px;padding:4px 6px;align-items:stretch}
+#paintTools .pt-g{position:relative;border:1px solid #ff9b5066;border-radius:6px;padding:13px 12px 13px;background:#ffffff08}
+#paintTools .pt-l{position:absolute;top:-7px;left:6px;padding:0 4px;background:#0d1119;border-radius:3px;font-weight:600}
+#paintTools .pt-r{gap:6px}
+#paintTools .pt-r>*{position:relative}
+#paintTools .pt-t{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font:500 9px/1 'Segoe UI',sans-serif;color:#c9d3e3;pointer-events:none}
+#paintTools .pt-t.up{top:-11px}
+#paintTools .pt-t.dn{bottom:-11px}
+#paintTools .pt-t:empty{display:none}
+#paintTools .pt-cw{display:flex}
+#paintTools{margin-top:7px}
