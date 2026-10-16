@@ -7,7 +7,7 @@ function fixture(saved = {}) {
   const raf=new Map();let nextRaf=0;
   const elements = [], listeners = {}, windowListeners = {}, storage = new Map([['zerk_hub_view', JSON.stringify(saved)]]);
   const element = () => {
-    const e = {style:{},dataset:{},children:[],offsetLeft:0,offsetTop:0,attributes:{},classList:{add(){},toggle(){}},
+    const e = {style:{},dataset:{},children:[],offsetLeft:0,offsetTop:0,attributes:{},classList:{add(){},toggle(name,value){this[name]=value;}},
       append(...items){this.children.push(...items);},setAttribute(k,v){this.attributes[k]=v;},addEventListener(){}};
     elements.push(e); return e;
   };
@@ -23,7 +23,7 @@ function fixture(saved = {}) {
     matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{const id=++nextRaf;raf.set(id,fn);return id;},cancelAnimationFrame:id=>raf.delete(id),Event:class{constructor(type){this.type=type;}},
     CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}}});
   listeners.DOMContentLoaded.forEach(fn=>fn()); window.HubView.place(300,900,800);
-  return {window,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
+  return {window,bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
     homes:()=>mirrorHomes,wheel(overMenu=false){const event={target:{closest:()=>overMenu},clientX:750,clientY:400,deltaY:-120,preventDefault(){this.prevented=true;}};listeners.wheel.forEach(fn=>fn(event));return event;}};
 }
 
@@ -83,7 +83,7 @@ test('axis rotation turns original around its fixed pivot with reflection on or 
  for(const on of [false,true]) {
   const f=fixture({zoom:1.7,angle:23,pan:[47,-31],sourcePan:[.1,.1]}),mirror=realMirror(f),view=f.window.HubView;
   mirror.state.on=on;mirror.state.x=.37;mirror.state.y=.62;
-  const pivot=[300+900*.37,800*.62],before=screenPoint(view,...pivot),point=screenPoint(view,pivot[0]+70,pivot[1]-45);
+  const pivot=on?[300+900*.37,800*.62]:Array.from(view.originalCenter()),before=screenPoint(view,...pivot),point=screenPoint(view,pivot[0]+70,pivot[1]-45);
   const inverse=view.captureInverse(),local=Array.from(inverse(...point));
   mirror.rotateBy(Math.PI/2);
   near(screenPoint(view,...pivot),before);
@@ -92,8 +92,8 @@ test('axis rotation turns original around its fixed pivot with reflection on or 
   assert.equal(f.state().angle,113);assert.equal(mirror.state.on,on);
  }
 });
-test('moving the axis carries the original by the same clamped displacement even with reflection off',()=>{
- const f=fixture(),mirror=realMirror(f);mirror.state.on=false;
+test('moving the enabled mirror axis carries the original by the same clamped displacement',()=>{
+ const f=fixture(),mirror=realMirror(f);
  const start=mirror.position();mirror.moveFrom(start,90,-80);
  near(Array.from(f.window.HubView.sourceShift()),[90,-80]);
  mirror.moveFrom(start,9000,-8000);
@@ -131,4 +131,29 @@ test('dragging overlapping original and reflection moves the source once',()=>{
   f.emit('pointermove',{pointerId:1,clientX:790,clientY:420});
   assert.ok(Math.abs(f.state().sourcePan[0]-40/900)<1e-10);
   assert.ok(Math.abs(f.state().sourcePan[1]-20/800)<1e-10);
+});
+
+
+test('disabled mirror axis stays at source centroid and ignores translation',()=>{
+ const f=fixture({sourcePan:[.1,.2],angle:25,pan:[42,17]}),mirror=realMirror(f),view=f.window.HubView;
+ view.setSourceCenter(680,480);const before=screenPoint(view,770,640);
+ mirror.state.on=false;mirror.syncCenter();
+ near([300+900*mirror.state.x,800*mirror.state.y],[770,640]);
+ near(screenPoint(view,770,640),before);
+ mirror.moveFrom(mirror.position(),200,-100);
+ near(Array.from(view.sourceShift()),[90,160]);
+ near([300+900*mirror.state.x,800*mirror.state.y],[770,640]);
+ view.shiftSourceBy(25,30);
+ near([300+900*mirror.state.x,800*mirror.state.y],[795,670]);
+ view.setSourceCenter(700,500);
+ near([300+900*mirror.state.x,800*mirror.state.y],[815,690]);
+});
+
+test('automatic rotation hides axis until stopped or reset',()=>{
+ const f=fixture(),auto=f.button('Автокручение треугольника');
+ assert.equal(f.bodyClass('hubAutoTurning'),false);
+ auto.onclick();assert.equal(f.bodyClass('hubAutoTurning'),true);
+ auto.onclick();assert.equal(f.bodyClass('hubAutoTurning'),false);
+ auto.onclick();f.button('Вернуть весь рисунок в поле').onclick();
+ assert.equal(f.bodyClass('hubAutoTurning'),false);
 });

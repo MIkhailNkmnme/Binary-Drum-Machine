@@ -1,3 +1,4 @@
+/* Hub v0.146: без отражения ось закреплена в центре оригинала; автокручение скрывает ось. */
 /* Hub v0.145: ось управляет оригиналом и при отключённом отражении. */
 /* Hub v0.144: the colour rhombus moves under the zoom cross, equilateral, colour buttons are filled rhombs. */
 /* Hub v0.141: own preset (★) with four colours, alphas for bits / fold / symmetry; colour controls grouped in a translucent rhombus. */
@@ -51,6 +52,7 @@
   let colorGroup = null, frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false;
   function syncSpin(){
+    document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
     if(!spinButton)return;
     spinButton.textContent='↻\n'+(spinRunning?'Ⅱ':'▶');
     spinButton.setAttribute('aria-pressed',String(spinRunning));spinButton.disabled=false;
@@ -67,7 +69,9 @@
   const buffers = new WeakMap(),liveSources=new Set();
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
+  function lockCenter(){if(state.on||!frame)return;const p=window.HubView?.originalCenter?.()||[frame.left+frame.width/2,frame.height/2];state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}
   const update = () => {
+    lockCenter();
     if (!root || !frame) return;
     const length = Math.hypot(frame.width, frame.height) * 2 + 40, mobile = matchMedia('(max-width: 1100px)').matches;
     root.classList.toggle('off', !state.on);
@@ -77,13 +81,14 @@
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = (length / 2 + Math.min(frame.width, frame.height) * .22) + 'px';
     window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
-    handle.title = 'Ось: тяни линию вместе с оригиналом; круглая точка поворачивает поле. ◇ включает только отражение';
+    handle.title = state.on?'Ось: тяни линию вместе с оригиналом; круглая точка поворачивает поле':'Ось закреплена в центре оригинала: только поворот';
+    line.setAttribute('aria-label',state.on?'Переместить ось вместе с оригиналом':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
     turn.title = 'Повернуть ось вместе с оригиналом: тяни ручку или крути колесо';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
-  function turnField(delta){if(frame&&window.HubView?.rotateAround)window.HubView.rotateAround(delta,...center());else state.angle=turnAngle(state.angle+delta);}
-  function moveAxis(x,y){const ox=state.x,oy=state.y;state.x=clamp(x);state.y=clamp(y);if(frame)window.HubView?.shiftSourceBy?.((state.x-ox)*frame.width,(state.y-oy)*frame.height);}
+  function turnField(delta){lockCenter();if(frame&&window.HubView?.rotateAround)window.HubView.rotateAround(delta,...center());else state.angle=turnAngle(state.angle+delta);}
+  function moveAxis(x,y){if(!state.on){lockCenter();return;}const ox=state.x,oy=state.y;state.x=clamp(x);state.y=clamp(y);if(frame)window.HubView?.shiftSourceBy?.((state.x-ox)*frame.width,(state.y-oy)*frame.height);}
   const rotate = delta => { resumeSpin=false;stopSpin();turnField(delta);changed();save(); };
   function init() {
     root = document.createElement('div'); root.id = 'hubMirror';
@@ -118,8 +123,8 @@
     }
     const traceLabel = document.createElement('label'), trace = document.createElement('input');
     trace.type = 'checkbox'; trace.checked = state.trace;
-    traceLabel.className='hubRhomb';trace.setAttribute('aria-label','След единиц');traceLabel.append(trace, document.createTextNode('↓')); settings.append(traceLabel);
-    traceLabel.title = 'Две световые дорожки вниз через 0 и 1; исходные биты не меняются';
+    traceLabel.className='hubRhomb';trace.setAttribute('aria-label','Семь световых дорожек — До Ре Ми Фа Соль Ля Си');traceLabel.append(trace, document.createTextNode('♪')); settings.append(traceLabel);
+    traceLabel.title = 'Семь световых дорожек: исходные ноты До, Ре, Ми, Фа, Соль, Ля, Си; включить / выключить';
     trace.addEventListener('change', () => { state.trace = trace.checked; changed(); save(); });
     for (const [key, bit] of [['zero', '0'], ['one', '1']]) {
       const label = document.createElement('label'), range = document.createElement('input'), value = document.createElement('output');
@@ -182,7 +187,7 @@
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved: false, handle: e.target === handle, turn: e.target === turn||state.axisRotate };
+        moved: false, handle: e.target === handle, turn: !state.on||e.target === turn||state.axisRotate };
       drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       root.setPointerCapture(e.pointerId);
     });
@@ -217,13 +222,14 @@
       const delta = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] })[e.key];
       if (!delta) return;
       e.preventDefault(); e.stopPropagation(); const step = e.shiftKey ? 20 : 4;
+      if(!state.on){rotate((delta[0]||delta[1])*(e.shiftKey?15:5)*Math.PI/180);return;}
       moveAxis(state.x+delta[0]*step/frame.width,state.y+delta[1]*step/frame.height);
       changed(); save();
     });
     update();
   }
   const api = window.HubMirror = {
-    state, rotateBy:rotate, get revision() { return revision; },
+    state, syncCenter:update, rotateBy:rotate, get revision() { return revision; },
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
