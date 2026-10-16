@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.124. v0.124: кружок поворота оси — розовый, не сливается с битами. v0.123: отдельная страница «Матрёшки» рядом с Маятником в Черновиках. v0.122: панель кнопок под треугольником (◇, сим., минимумы, наклоны, магнит, 4K, ползунки зеркала, поворота и 3D, подпись PNG) убрана с экрана — скрыта, логика на месте. v0.121: перетаскивание за пустое место сдвигает все биты вместе с зеркалом и без 🔓. v0.120: зеркальная копия треугольника снова чёткая — рисуется ромбами под зеркалом, а не растягивается из картинки. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
+<!-- Zerkalius Hub (index) — v0.125. v0.125: золотая подсветка областей, симметричных относительно оси (✦); выписка расположения ?raspolozhenie. v0.124: кружок поворота оси — розовый, не сливается с битами. v0.123: отдельная страница «Матрёшки» рядом с Маятником в Черновиках. v0.122: панель кнопок под треугольником (◇, сим., минимумы, наклоны, магнит, 4K, ползунки зеркала, поворота и 3D, подпись PNG) убрана с экрана — скрыта, логика на месте. v0.121: перетаскивание за пустое место сдвигает все биты вместе с зеркалом и без 🔓. v0.120: зеркальная копия треугольника снова чёткая — рисуется ромбами под зеркалом, а не растягивается из картинки. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
      v0.115: треугольник по умолчанию — кадр Хоррориуса (узор «Х», _js/horr-rows.js).
      Точка входа: ссылки на все страницы проекта.
      v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
@@ -128,7 +128,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.124</title>
+    <title>Zerkalius Control Hub — v0.125</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -609,7 +609,7 @@
 <script src="_js/initial-rows.js?v=2"></script><script src="_js/horr-rows.js?v=1"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
 <script src="_js/bit-symmetry.js?v=2"></script>
-<script src="_js/hub-mirror.js?v=119"></script>
+<script src="_js/hub-mirror.js?v=125"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
 <script src="_js/hub-view.js?v=121"></script>
@@ -649,7 +649,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.124</div>
+        <div class="ver">v0.125</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1181,7 +1181,7 @@
                    у звучащих бит) — v0.107: фон обновляется только при изменении геометрии, узора или зеркала */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
                 const fieldTools=document.getElementById('hubFieldTools'), fieldTop=Math.min(H*.55,Math.max(8,Math.ceil((fieldTools?.getBoundingClientRect().bottom||0)+(matchMedia('(max-width:1100px)').matches?scrollY:0))+12));
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry,window.HubMirror.state.symmetryMinimums.minRows,window.HubMirror.state.symmetryMinimums.minPairs].join(',') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry,window.HubMirror.state.symmetryMinimums.minRows,window.HubMirror.state.symmetryMinimums.minPairs].join(',') + '|' + (window.HubMirror.state.gold !== false && window.HubMirror.state.on ? ['g', window.HubMirror.state.x, window.HubMirror.state.y, window.HubMirror.state.angle].join(',') : '') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
                 if (!output) { if (key === sierDraw.k) {
                     if (sierDraw.mirror !== window.HubMirror.revision) { sg.save(); sg.setTransform(1,0,0,1,0,0); sg.clearRect(0,0,canvas.width,canvas.height); sg.drawImage(sierSource,0,0); sg.restore(); window.HubMirror.reflect(canvas); reflectNotes(); noteDraw(performance.now()); return finishSier(canvas, null); }
                     if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase, sierDraw.vector); sierDraw.view = window.HubView.revision; } return true;
@@ -1215,6 +1215,15 @@
                     dw = Math.min(H * 0.9 / N, Math.max(2, (W - bw - 40) / 2 / ((N + 1) * 0.866))); dh = dw * 1.732; side = true;
                     const m = 6, cy = H / 2, xl = m + dh / 2, xr = xl + Math.floor((W - m - dh / 2 - xl) / dh) * dh;   // оба треугольника на одной решётке
                     spots = [(r, j) => [xl + r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw], (r, j) => [xr - r * dh / 2, cy - (PR[r].length - 1) * dw / 2 + j * dw]]; }
+                /* v0.125, «по оси симметрии сделать подсветку областей золотым»: бит, чьё отражение через ось ложится на бит того же значения
+                   исходного рисунка, — золотой (единицы ярко, нули бледно). Так видно, какие области симметричны относительно оси. */
+                let gold = null;
+                if (window.HubMirror.state.gold !== false && window.HubMirror.state.on && !side && N > 1) {
+                    const P0 = spots[0], yA = P0(0, 0)[1], yS = P0(1, 0)[1] - yA, sh = window.HubView?.sourceShift() || [0, 0]; gold = new Set();
+                    for (let r = 0; r < N; r++) for (let j = 0; j < PR[r].length; j++) { const [x, y] = P0(r, j), R = window.HubMirror.point(x, y); if (!R) continue;
+                        const sx = R[0] - sh[0], sy = R[1] - sh[1], rr = Math.round((sy - yA) / yS); if (rr < 0 || rr >= N) continue;
+                        const jj = Math.round((sx - P0(rr, 0)[0]) / dw); if (jj < 0 || jj >= PR[rr].length) continue;
+                        const [qx, qy] = P0(rr, jj); if (Math.hypot(qx - sx, qy - sy) <= dw * .5 && PR[rr][jj] === PR[r][j]) gold.add(r * 65536 + j); } }
                 if(!output)window.HubMirror.setBitCenters(PR.flatMap((row,r)=>[...row].flatMap((_,j)=>spots.map(f=>{const [x,y]=f(r,j);return [left+x,y];}))));
                 const paintBits = sg => {
                 const rhomb = (x, y, k, bit) => {
@@ -1233,9 +1242,9 @@
                 if (digits) { sg.font = `bold ${fs.toFixed(1)}px system-ui, sans-serif`; sg.textAlign = 'center'; sg.textBaseline = 'middle'; }
                 const symmetry = window.HubMirror.state.bitSymmetry ? ZZBitSymmetry.request(PR,window.HubMirror.state.symmetryMinimums) : null;
                 for (let r = 0; r < N; r++) { const row = PR[r];
-                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', symColor = ZZBitSymmetry.colorAt(symmetry,r,j);
-                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = symColor || '#9fffc8'; if(symColor)sg.globalAlpha=desk?.25:.35; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
-                        sg.fillStyle = hc || symColor || '#9fffc8'; sg.globalAlpha = hc ? 1 : symColor ? .68 : 0.78 * (desk ? 0.5 : 1);
+                    for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', symColor = ZZBitSymmetry.colorAt(symmetry,r,j), au = gold && gold.has(r * 65536 + j);
+                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = au ? '#ffd166' : symColor || '#9fffc8'; if(au)sg.globalAlpha=desk?.3:.42;else if(symColor)sg.globalAlpha=desk?.25:.35; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
+                        sg.fillStyle = hc || (au ? '#ffd166' : symColor || '#9fffc8'); sg.globalAlpha = hc ? 1 : au ? .95 : symColor ? .68 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8 * dpr; }
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, row[j]); }
                         if (hc) sg.shadowBlur = 0;
@@ -1387,6 +1396,18 @@
   }
   requestAnimationFrame(tick);
 })();
+</script>
+<script>
+/* v0.125: 1001100.online/?raspolozhenie — выписка текущего расположения (ось зеркала и вид), чтобы прислать его и сделать начальным.
+   Показывается только по этому адресу; на обычном хабе ничего нет. */
+(() => { if (!new URLSearchParams(location.search).has('raspolozhenie')) return;
+  let text = ''; try { text = JSON.stringify({ mirror: JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null'), view: JSON.parse(localStorage.getItem('zerk_hub_view') || 'null'), w: innerWidth, h: innerHeight }); } catch (e) { text = String(e); }
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;z-index:99999;left:8px;right:8px;top:8px;padding:10px;background:#07120e;border:1px solid #70e0d7;color:#9fffc8;font:13px system-ui,sans-serif';
+  const area = document.createElement('textarea'); area.value = text; area.readOnly = true; area.style.cssText = 'width:100%;height:120px;box-sizing:border-box;background:#0a2019;color:#9fffc8;border:1px solid #385449;font:11px monospace';
+  const copy = document.createElement('button'); copy.textContent = 'Копировать'; copy.style.cssText = 'margin-top:8px;padding:8px 14px;font:inherit;color:#07120e;background:#70e0d7;border:0';
+  copy.onclick = async () => { area.select(); try { await navigator.clipboard.writeText(text); copy.textContent = 'Скопировано'; } catch (_) { document.execCommand('copy'); copy.textContent = 'Скопировано'; } };
+  const close = document.createElement('button'); close.textContent = '×'; close.style.cssText = 'float:right;background:none;border:0;color:#9fffc8;font-size:20px';
+  close.onclick = () => box.remove(); box.append(close, document.createTextNode('Расположение хаба — скопируй и пришли:'), area, copy); document.body.append(box); })();
 </script>
 </body>
 </html>

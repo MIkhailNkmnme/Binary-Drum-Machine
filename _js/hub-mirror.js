@@ -1,10 +1,11 @@
+/* Hub v0.125: gold — bits whose reflection across the axis lands on the same bit; ✦ toggles it. */
 /* Hub v0.119: saved row and pair minimums, adjustable down to 1. */
 /* Hub v0.118: local mirror axes and matching bits; enabled by default. */
 /* Hub v0.116: complete source survives displacement and reflection before the camera. */
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -12,7 +13,7 @@
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
-      state.magnet=saved.magnet!==false;state.axisRotate=!!saved.axisRotate;
+      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -105,7 +106,7 @@
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
     });
     document.body.append(settings);
-    for(const [key,text,title] of [['magnet','🧲','Магнит оси: центр поля и центры битов'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
+    for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['magnet','🧲','Магнит оси: центр поля и центры битов'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
     spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать линию зеркала вокруг её центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать зеркало вокруг центра');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else startSpin();save();};spinControl.append(spinButton);
     const spinLabel=document.createElement('label'),spinHead=document.createElement('span');spinLabel.className='hubMirrorSpeedControl';spinHead.append(document.createTextNode('Зеркало · '));spinValue=document.createElement('output');spinHead.append(spinValue);spinLabel.append(spinHead);
