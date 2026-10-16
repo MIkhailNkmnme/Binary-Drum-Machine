@@ -1,3 +1,4 @@
+/* Hub v0.134: preset «Мята · всё одно» — bits, reflection and fold-in all one colour (last, so saved choices keep their index). */
 /* Hub v0.133: reflection has the same colour as the bits in every preset. */
 /* Hub v0.132: ⚙ opens the field tools panel (mirror, ✦, ⤵, 🎨 …) — it was hidden since v0.122, on phones too. */
 /* Hub v0.128: 🎨 — ten colour presets: bits / reflection / fold-in. */
@@ -19,7 +20,8 @@
     ['Небо · трава', '#6ac8ff', '#6ac8ff', '#ff6bd5'], ['Чёрно-белая', '#ffffff', '#ffffff', '#cfcfcf'],
     // v0.131: «цвета в стиле кибернейро» — неон на тёмном
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a'],
-    ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066']];   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
+    ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066'],
+    ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
   const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
