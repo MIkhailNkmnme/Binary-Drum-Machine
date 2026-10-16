@@ -197,10 +197,10 @@
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
     const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка']];
-    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
-    for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
+    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;document.querySelectorAll('button[data-view]').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
+    for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();if(viewBox.dataset.groupPinned!=='true')viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
-    viewBox.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')viewBox.open=false;});
+    viewBox.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&viewBox.dataset.groupPinned!=='true')viewBox.open=false;});
     viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();
     const packing=document.createElement('button');packing.id='hubBitPacking';packing.type='button';packing.textContent='↔\nвстык';packing.setAttribute('aria-label','Биты без отступов');packing.title='Увеличить знаки до соприкосновения, сохранив центры битов';
     const syncPacking=()=>packing.setAttribute('aria-pressed',String(!!state.packedBits));
@@ -263,8 +263,8 @@
       b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};colorGroup.append(b);
     }
     syncColors();settings.append(colorGroup);
-    document.addEventListener('pointerdown',e=>{document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.contains(e.target))box.open=false;});},true);
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.hubTilt[open]').forEach(box=>box.open=false);});
+    document.addEventListener('pointerdown',e=>{document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.contains(e.target)&&!box.closest('[data-group-pinned=true]'))box.open=false;});},true);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.closest('[data-group-pinned=true]'))box.open=false;});});
     // v0.144: «этот ромб под кнопки масштаба, равносторонний» — переезжает в #hubZoom (его строит hub-view.js чуть позже)
     { let tries=0;const move=()=>{const z=document.getElementById('hubZoom');if(z){z.append(colorGroup);return;}if(++tries<40)setTimeout(move,100);};setTimeout(move,0); }
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
