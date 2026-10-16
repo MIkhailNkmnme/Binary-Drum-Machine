@@ -1,4 +1,4 @@
-/* Матрёшки v0.002. Отображение, общий пульт, слои и адреса исходных битов. */
+/* Матрёшки v0.003. Отображение, общий пульт, слои и адреса исходных битов. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), KEY = 'matryoshki_v1';
@@ -46,7 +46,7 @@
       if (data.progress != null) { $('activity').textContent = `Построение: ${data.progress} / ${data.target}`; return; }
       const priorRows = source?.rows; source = data.snapshot; state.rows = source.rows; state.frame = source.frame; busy = false;
       $('activity').textContent = ''; if (priorRows && priorRows !== source.rows) { zoom = 1; panX = panY = 0; }
-      picked = null; $('inspection').textContent = 'Нажмите на бит — покажу исходный адрес. Вершина (0, 0) неподвижна.';
+      picked = null; $('inspection').textContent = 'Нажмите на бит — покажу исходный адрес. Свёрнутые строки находятся внутри цветного контура.';
       rebuild(); save(); refresh();
     }
   });
@@ -59,7 +59,7 @@
       { type: 'action', icon: '+', name: 'Ещё строки', tip: 'Удвоить глубину и восстановить тот же такт в большем поле.', click() { pause(); request(state.frame, state.rows * 2); } }
     ] },
     { id: 'view', title: 'Слои и вид', color: '#68d6bc', items: [
-      toggle('spread', '▥', 'Рядом', 'Разнести уровни для сравнения; выключено — вложить их с общей вершиной.'),
+      toggle('spread', '▥', 'Рядом', 'Разнести уровни для сравнения; выключено — показать выбранную матрёшку с содержимым внутри.'),
       toggle('cooling', '◈', 'Остывание', 'Зелёные биты уже недостижимы для будущих конусов, золотые ещё могут измениться.'),
       toggle('digits', '01', 'Цифры', 'Показывать значения битов при достаточном масштабе.'),
       { type: 'action', icon: '⤢', name: 'Вписать', tip: 'Вместить все показанные слои в окно.', click() { zoom = 1; panX = panY = 0; draw(); } }
@@ -75,7 +75,7 @@
       b.setAttribute('aria-pressed', String(index === selected)); b.addEventListener('click', () => { selected = index; picked = null; rebuild(); }); host.append(b);
     });
     const indices = [...new Set([0, Math.max(0, selected - 2), Math.max(0, selected - 1), selected])];
-    projected = indices.map(i => ({ index: i, layer: Matryoshki.project(source, caps[i]) })); draw();
+    projected = indices.map(i => ({ index: i, node: MatryoshkiPacking.pack(Matryoshki.project(source, caps[i])) })); draw();
   }
   function draw() {
     if (!source) return;
@@ -83,43 +83,62 @@
     if (!width || !height) return;
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height); ctx.imageSmoothingEnabled = false;
     hitRegions = [];
-    const count = projected.length, columns = state.spread ? Math.min(count, width < 650 ? 1 : 2) : 1, lines = state.spread ? Math.ceil(count / columns) : 1;
-    const cell = Math.max(.05, Math.min((width / columns - 28) / source.width, (height / lines - 46) / source.rows)) * zoom;
+    const shown = state.spread ? projected : projected.filter(p => p.index === selected);
+    const count = shown.length, columns = state.spread ? Math.min(count, width < 650 ? 1 : 2) : 1, lines = Math.ceil(count / columns);
     for (let p = 0; p < count; p++) {
-      const { layer, index } = projected[p], active = index === selected, col = state.spread ? p % columns : 0, line = state.spread ? Math.floor(p / columns) : 0;
-      const x0 = (col + .5) * width / columns + panX, y0 = line * height / lines + 30 + panY, tint = colors[p % colors.length];
-      ctx.globalAlpha = state.spread || active ? 1 : .5;
-      const boundary = [];
-      for (let r = 0; r < layer.rows; r++) {
-        const L = -r + layer.left[r], R = r - layer.right[r], y = y0 + r * cell;
-        if (y > height || y + cell < 0) continue;
-        ctx.fillStyle = '#0d1119'; ctx.fillRect(x0 + (L - .5) * cell, y, (R - L + 1) * cell, cell);
-        for (let c = L; c <= R; c++) {
-          const i = r * layer.width + layer.center + c, bit = layer.bits[i]; if (bit < 0) continue;
-          const x = x0 + (c - .5) * cell; if (x > width || x + cell < 0) continue;
-          ctx.fillStyle = state.cooling ? (layer.frozen[i] ? (bit ? '#80e2b0' : '#245b49') : (bit ? '#ffd166' : '#765629')) : (bit ? '#e8edf5' : '#46546c');
-          ctx.fillRect(x, y, cell, cell);
-          if (state.digits && cell >= 10) { ctx.fillStyle = bit ? '#0d1119' : '#fff'; ctx.font = `${Math.min(18, cell * .7)}px Consolas`; ctx.textAlign = 'center'; ctx.fillText(String(bit), x + cell / 2, y + cell * .77); }
-        }
-        boundary.push([x0 + (L - .5) * cell, y, x0 + (R + .5) * cell]);
-      }
-      ctx.globalAlpha = 1; ctx.strokeStyle = tint; ctx.lineWidth = active ? 1.5 : 1;
-      if (boundary.length) { ctx.beginPath(); boundary.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)); [...boundary].reverse().forEach(([,y,x]) => ctx.lineTo(x,y+cell)); ctx.closePath(); ctx.stroke(); }
-      if (state.spread || active) {
-        ctx.fillStyle = tint; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center'; ctx.fillText(caps[index] === 0 ? 'Исходный' : caps[index] === Infinity ? 'Вся готовая свёртка' : `Глубина до ${caps[index]}`, x0, y0 - 12);
-        ctx.strokeStyle = '#9baac360'; ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0,y0+source.rows*cell); ctx.stroke();
-      }
-      hitRegions.push({ x0, y0, cell, layer, index });
+      const { node, index } = shown[p], col = p % columns, line = Math.floor(p / columns);
+      const cell = Math.max(.05, Math.min((width / columns - 28) / source.width, (height / lines - 46) / node.height)) * zoom;
+      const x0 = (col + .5) * width / columns + panX, y0 = line * height / lines + 30 + panY;
+      ctx.fillStyle = colors[0]; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+      ctx.fillText(caps[index] === 0 ? 'Исходный' : caps[index] === Infinity ? 'Вся готовая свёртка' : `Глубина до ${caps[index]}`, x0, y0 - 12);
+      drawNode(node, x0, y0, cell, index, 0);
     }
-    if (picked) { const h = hitRegions.find(h => h.index === picked.index); if (h) { ctx.strokeStyle = '#ff87cf'; ctx.lineWidth = 2; ctx.strokeRect(h.x0+(picked.c-.5)*h.cell,h.y0+picked.r*h.cell,h.cell,h.cell); } }
+    if (picked) {
+      const h = hitRegions.find(h => h.key === picked.key);
+      if (h) { ctx.strokeStyle = '#ff87cf'; ctx.lineWidth = 2; ctx.strokeRect(h.x0+(picked.c-.5)*h.cell,h.y0+picked.y*h.cell,h.cell,h.cell); }
+    }
     rail?.refresh();
+  }
+  function drawNode(node, x0, y0, cell, index, depth) {
+    const { layer } = node, tint = colors[depth % colors.length];
+    // Сначала непрозрачная оболочка: за внутренним узором не просвечивают биты внешнего.
+    ctx.beginPath();
+    for (let y = 0; y < node.height; y++) {
+      const x = x0+(node.left[y]-.5)*cell, top = y0+y*cell;
+      if (y === 0) ctx.moveTo(x,top); else ctx.lineTo(x,top);
+      ctx.lineTo(x,top+cell);
+    }
+    for (let y = node.height-1; y >= 0; y--) {
+      const x = x0+(node.right[y]+.5)*cell, top = y0+y*cell;
+      ctx.lineTo(x,top+cell); ctx.lineTo(x,top);
+    }
+    ctx.closePath(); ctx.fillStyle = '#0d1119'; ctx.fill();
+    ctx.save(); ctx.clip();
+    for (let y = 0; y < node.height; y++) {
+      const r = node.rows[y], py = y0+y*cell;
+      if (py > view.clientHeight || py+cell < 0) continue;
+      for (let c = node.left[y]; c <= node.right[y]; c++) {
+        const i = r*layer.width+layer.center+c, bit = layer.bits[i]; if (bit < 0) continue;
+        const x = x0+(c-.5)*cell; if (x > view.clientWidth || x+cell < 0) continue;
+        ctx.fillStyle = state.cooling ? (layer.frozen[i] ? (bit ? '#80e2b0' : '#245b49') : (bit ? '#ffd166' : '#765629')) : (bit ? '#e8edf5' : '#46546c');
+        ctx.fillRect(x,py,cell,cell);
+        if (state.digits && cell >= 10) { ctx.fillStyle = bit ? '#0d1119' : '#fff'; ctx.font = `${Math.min(18,cell*.7)}px Consolas`; ctx.textAlign = 'center'; ctx.fillText(String(bit),x+cell/2,py+cell*.77); }
+      }
+    }
+    ctx.restore(); ctx.strokeStyle = tint; ctx.lineWidth = depth ? 2 : 1; ctx.stroke();
+    hitRegions.push({ x0, y0, cell, node, index, depth, key: `${index}:${depth}` });
+    if (node.child) {
+      const f = node.placement;
+      drawNode(node.child,x0+f.x*cell,y0+f.y*cell,cell*f.scale,index,depth+1);
+    }
   }
   function inspect(x, y) {
     for (const h of [...hitRegions].reverse()) {
-      const r = Math.floor((y-h.y0)/h.cell), c = Math.floor((x-h.x0)/h.cell+.5), origin = Matryoshki.origin(h.layer,r,c); if (!origin) continue;
-      picked = { index:h.index,r,c }; const bit = h.layer.bits[r*h.layer.width+h.layer.center+c];
+      const row = Math.floor((y-h.y0)/h.cell), c = Math.floor((x-h.x0)/h.cell+.5), origin = MatryoshkiPacking.origin(h.node,row,c); if (!origin) continue;
+      const r = origin.row, layer = h.node.layer;
+      picked = { key:h.key,y:row,c }; const bit = layer.bits[r*layer.width+layer.center+c];
       const coordinates = origin.folded && origin.from !== origin.to ? `XOR исходных столбцов ${origin.from}…${origin.to}` : `исходный столбец ${origin.from}`;
-      $('inspection').textContent = `Такт ${source.frame} · строка ${r} · бит ${bit} · ${coordinates}. Свёрнуто: слева ${h.layer.left[r]}, справа ${h.layer.right[r]}.`;
+      $('inspection').textContent = `Такт ${source.frame} · ${h.depth ? `внутри, уровень ${h.depth}` : 'внешний уровень'} · исходная строка ${r} · бит ${bit} · ${coordinates}. Свёрнуто: слева ${layer.left[r]}, справа ${layer.right[r]}.`;
       draw(); return;
     }
   }

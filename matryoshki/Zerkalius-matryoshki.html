@@ -1,13 +1,13 @@
-<!-- Zerkalius Матрёшки — v0.002. Последовательный Хоррориус и свёртка по границе будущего влияния. -->
+<!-- Zerkalius Матрёшки — v0.003. Последовательный Хоррориус и свёртка по границе будущего влияния. -->
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Матрёшки — v0.002</title>
+<title>Zerkalius Матрёшки — v0.003</title>
 <link rel="icon" href="../mayatnik/logo-horrorius.png">
 <link rel="stylesheet" href="../_js/grozd.css?v=1"><link rel="stylesheet" href="../_js/zz-pult.css?v=2">
-<link rel="stylesheet" href="matryoshki.css?v=002"></head>
+<link rel="stylesheet" href="matryoshki.css?v=003"></head>
 <body>
-<header><a href="../index.html" aria-label="На главную">⌂ Хаб</a><h1>Матрёшки</h1><span class="ver">v0.002</span><a href="../mayatnik/Zerkalius-mayatnik.html" target="_blank" rel="noopener">↗ Маятник</a><button id="help" class="hex" type="button">? Справка</button></header>
-<aside><div id="rail"></div><p class="hint">Одна вершина. Общая ось.<br>Каждая сторона — в свой такт.</p><p id="activity" role="status"></p></aside>
+<header><a href="../index.html" aria-label="На главную">⌂ Хаб</a><h1>Матрёшки</h1><span class="ver">v0.003</span><a href="../mayatnik/Zerkalius-mayatnik.html" target="_blank" rel="noopener">↗ Маятник</a><button id="help" class="hex" type="button">? Справка</button></header>
+<aside><div id="rail"></div><p class="hint">Свёрнутое — внутри.<br>Каждая сторона — в свой такт.</p><p id="activity" role="status"></p></aside>
 <main>
   <div id="layers" aria-label="Выбор слоя"></div>
   <div id="view"><canvas id="field" aria-label="Вложенные слои Хоррориуса. Выберите клетку, чтобы увидеть её исходные координаты."></canvas></div>
@@ -20,12 +20,13 @@
 <dialog id="about"><form method="dialog"><button class="hex">✕ Закрыть</button></form><h2>Матрёшки · первый опыт</h2>
 <p>Маятник строится по очереди: вершина, −1, +1, −2, +2… Исходное поле остаётся в своих координатах. Здесь показывается конус первой вершины, обе битовые решётки.</p>
 <p>Свёртка начинается с оси. В строке r бит на расстоянии d слева включается после такта 2(r+d), справа — после 2(r+d)+1. Это гарантированный срок: будущие конусы уже не достанут до клетки. Некоторые биты могут остыть раньше — эта версия следует строгому ритму.</p>
-<p>Слои ограничивают глубину свёртки: 1, 2, 4, 8… столбцов с каждой стороны. «Вся готовая» показывает всю свёртку, разрешённую текущим тактом. Это уровни одного исходного поля, а не независимые копии генератора. Свернувшиеся биты объединяются XOR на оси; исходники доступны по нажатию.</p>
-<p>В режиме «Вложены» вершины совпадают. «Рядом» раскрывает выбранный и предыдущие уровни для сравнения. Колесо — масштаб, перетаскивание — сдвиг. «Вписать» возвращает общий вид.</p>
+<p>Слои ограничивают глубину свёртки: 1, 2, 4, 8… столбцов с каждой стороны. «Вся готовая» показывает всю свёртку, разрешённую текущим тактом. Это уровни одного исходного поля, а не независимые копии генератора. Частично свёрнутые строки содержат XOR на оси; полностью свёрнутые строки раскрываются внутри следующим уровнем. Исходники доступны по нажатию.</p>
+<p>Полностью свёрнутые верхние строки уходят во внутреннюю матрёшку с предыдущей степенью свёртки. Оставшиеся строки поднимаются к вершине, поэтому столба над фигурой нет. Цветные контуры отделяют уровни; внутренние рисунки уменьшены, но их исходные адреса сохраняются. Если весь участок свернулся, показывается его содержимое. «Рядом» раскрывает выбранный и предыдущие уровни для сравнения. Колесо — масштаб, перетаскивание — сдвиг. «Вписать» возвращает общий вид.</p>
 <p>Страницу можно открывать с диска: без фонового потока расчёт выполняется короткими порциями с паузами для интерфейса. На сайте используется Worker; при его отказе включается тот же локальный расчёт.</p>
 <p>«Рост» увеличивает глубину участка по мере продвижения. Новый участок пересчитывается тем же ядром с начала, сохраняя прежние верхние строки. При нехватке памяти рост остановится с сообщением; бесконечность относится к модели, не к объёму памяти браузера.</p>
 </dialog>
-<script src="../mayatnik/mayatnik-core.js?v=3"></script><script src="matryoshki-core.js?v=002"></script>
-<script src="matryoshki-runtime.js?v=002"></script>
-<script src="../_js/grozd.js?v=1"></script><script src="../_js/zz-pult.js?v=2"></script><script src="matryoshki-ui.js?v=002"></script>
+<script src="../mayatnik/mayatnik-core.js?v=3"></script><script src="matryoshki-core.js?v=003"></script>
+<script src="matryoshki-packing.js?v=003"></script>
+<script src="matryoshki-runtime.js?v=003"></script>
+<script src="../_js/grozd.js?v=1"></script><script src="../_js/zz-pult.js?v=2"></script><script src="matryoshki-ui.js?v=003"></script>
 </body></html>

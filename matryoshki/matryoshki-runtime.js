@@ -1,4 +1,4 @@
-/* Матрёшки v0.002. Общая очередь расчёта для Worker и открытия HTML с диска. */
+/* Матрёшки v0.003. Общая очередь расчёта для Worker и открытия HTML с диска. */
 (function (root, factory) {
   const api = factory(typeof module === 'object' ? require('./matryoshki-core.js') : root.Matryoshki);
   if (typeof module === 'object') module.exports = api; else root.MatryoshkiRuntime = api;
@@ -22,7 +22,7 @@
     }
     return runner;
   }
-  function createClient({ protocol = globalThis.location?.protocol, makeWorker = () => new Worker('matryoshki-worker.js?v=002'), onmessage } = {}) {
+  function createClient({ protocol = globalThis.location?.protocol, makeWorker = () => new Worker('matryoshki-worker.js?v=003'), onmessage } = {}) {
     let backend, latest = null, local = false, stopped = false;
     const receive = event => { if (!stopped) onmessage?.(event); };
     function fallback() {
