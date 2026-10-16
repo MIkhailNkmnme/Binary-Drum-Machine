@@ -54,6 +54,13 @@
     mirror.selectRotationBit((reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null));
   }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
+  function centerTriangleAtAxis(x,y){
+    const m=window.HubMirror,bit=m?.centerBit?.(),axis=m?.rotationCenter?.();if(!bit||!axis)return false;
+    const reflected=inverse(x,y,true),source=inverse(x,y);
+    const hit=(reflected.every(Number.isFinite)?m.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?m.pickBit(...source):null);
+    if(!hit||hit.index!==bit.index)return false;
+    const from=originalCenter();shiftSourceBy(axis[0]-from[0],axis[1]-from[1]);m.clearRotationBit?.();return true;
+  }
   // The axis anchor is unchanged by the 3D flip about itself, even edge-on.
   function screenCenterAnchor(){const [cx,cy]=center(),a=state.angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),x=innerWidth/2-cx-state.pan[0],y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0)-cy-state.pan[1];return [cx+(c*x+s*y)/state.zoom,cy+(-s*x+c*y)/state.zoom];}
   function axisInverse(x,y){return inverseWith(matrix(false,true),x,y);}
@@ -136,6 +143,22 @@
       g.save();g.setTransform(k,0,0,k,0,0);g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);window.HubMirror.drawRotationGuides(g,mirror);g.restore();
     }
   }};
+  // The same local bit geometry is projected into the screen-space flow grid.
+  let flowVector=null;
+  const paintField=window.HubView.paint;
+  window.HubView.paint=function(canvas,view=null,cached=null,vector=null){
+    if(!view&&(canvas.id==='hubSier'||vector?.obstacles)){flowVector=vector;window.HubFlow?.invalidate();}
+    return paintField.call(this,canvas,view,cached,vector);
+  };
+  window.HubView.drawFlowObstacles=function(g){
+    if(!flowVector?.obstacles||window.HubImage?.active)return false;
+    for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
+      const p=this.projectBit(0,0,mirror),x=this.projectBit(1,0,mirror),y=this.projectBit(0,1,mirror);if(!p)continue;
+      g.save();g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);flowVector.obstacles(g);g.restore();
+    }
+    if(flowVector.foldObstacles){g.save();g.transform(...matrix());flowVector.foldObstacles(g);g.restore();}
+    return true;
+  };
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};
     unlock=button('🔒','Разрешить перетаскивание холста',()=>{state.unlocked=!state.unlocked;changed();});
@@ -248,7 +271,7 @@
       return true;
     };window.HubView.grabBits=beginDrag;document.addEventListener('pointerdown',e=>beginDrag(e));
     window.addEventListener('hubview',()=>rotation.value=state.angle);window.addEventListener('hubmirror',()=>{if(state.flip||state.mirrorFlip)changed(false);});changed();
-    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubNoteCell,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<frame.left||y>frame.height)return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
+    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<frame.left||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
   }
   document.addEventListener('DOMContentLoaded',init,{once:true});
 })();

@@ -11,7 +11,7 @@
     const items = [...toolbar.children];
     const groups = [
       ['bits', '01', 'Биты'], ['symmetry', '∥', 'Симм.'],
-      ['axis', '↗', 'Ось'], ['space', '3D', 'Объём'], ['file', '▧', 'Файл']
+      ['axis', '↗', 'Ось'], ['space', '3D', 'Объём'], ['file', '▧', 'Файл'], ['flow', '↓', 'Поток']
     ].map(([key, icon, name]) => {
       const box = document.createElement('details'); box.className = 'hubFieldGroup'; box.dataset.group = key;
       const head = document.createElement('summary'); head.className = 'hubRhomb';
@@ -31,14 +31,15 @@
     for (const item of items) {
       const label = item.getAttribute('aria-label') || item.title || '';
       let key = 'bits';
-      if (item.matches('.hubBitSymmetry,.hubSymmetryMinimum') || label.includes('Симметрия параллельно')) key = 'symmetry';
+      if (item.matches('.hubFlowControls')) key = 'flow';
+      else if (item.matches('.hubBitSymmetry,.hubSymmetryMinimum') || label.includes('Симметрия параллельно')) key = 'symmetry';
       else if (item.matches('.hubImageTools')) key = 'file';
       else if (item.matches('.hubFlipControl,.hubFlipPlanes')) key = 'space';
       else if (item.matches('.hubMirrorSpinControl,.hubAxisScreenPin') || /Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label)) key = 'axis';
       body(key).append(item);
     }
     // Composite wrappers keep their event handlers; their buttons join the same grid.
-    toolbar.querySelectorAll('.hubFlipPlanes,.hubImageTools').forEach(el => el.classList.add('hubFieldContents'));
+    toolbar.querySelectorAll('.hubFlipPlanes,.hubImageTools,.hubFlowControls').forEach(el => el.classList.add('hubFieldContents'));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') groups.forEach(g => { g.box.open = false; }); });
     document.addEventListener('pointerdown', e => { if (!toolbar.contains(e.target)) groups.forEach(g => { g.box.open = false; }); }, true);
   }

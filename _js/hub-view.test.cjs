@@ -348,6 +348,23 @@ test('direct symbol layers render in screen and export without a prepainted bitm
  assert.deepEqual(passes,['source','source']);assert.equal(copies,0);
 });
 
+test('flow geometry survives note painting, matches both projected layers and ignores exports',()=>{
+ const f=fixture({zoom:1.7,angle:30,sourcePan:[.1,-.05],flip:28,mirrorFlip:55});realMirror(f);f.window.HubMirror.state.on=true;
+ const mult=(a,b)=>[a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]];
+ let current=[1,0,0,1,0,0];const stack=[],points=[];
+ const g={save(){stack.push(current.slice());},restore(){current=stack.pop();},clearRect(){},drawImage(){},setTransform(...m){current=m;},transform(...m){current=mult(current,m);},translate(x,y){this.transform(1,0,0,1,x,y);}};
+ const vector={direct:true,base:[1,0,0,1,0,0],draw(){},obstacles(){points.push([current[0]*600+current[2]*300+current[4],current[1]*600+current[3]*300+current[5]]);}};
+ const canvas={id:'hubSier',width:1200,height:800,getContext:()=>g};
+ f.window.HubView.paint(canvas,null,{},vector);
+ f.window.HubView.paint({...canvas,id:'notes'},null,{});
+ f.window.HubView.paint(canvas,{scale:2,left:0},{},{...vector,obstacles(){throw Error('export leaked');}});
+ g.setTransform(1,0,0,1,0,0);assert.equal(f.window.HubView.drawFlowObstacles(g),true);assert.equal(points.length,2);
+ const m=f.window.HubView.symmetryCamera();for(const [i,mirror] of [false,true].entries()){
+   const p=f.window.HubView.projectBit(600,300,mirror),q=[m[0]*p[0]+m[2]*p[1]+m[4],m[1]*p[0]+m[3]*p[1]+m[5]];
+   assert.ok(Math.hypot(points[i][0]-q[0],points[i][1]-q[1])<1e-7);
+ }
+});
+
 test('wheel rotation about the axis endpoint preserves that screen pivot',()=>{
  const f=fixture({zoom:2,angle:14,pan:[20,10],sourcePan:[.1,.15]}),axis=Array.from(f.window.HubView.axisInverse(600,400));
  f.window.HubView.rotateBy(5,axis);
@@ -489,6 +506,26 @@ test('hover centre follows the camera, reuses its bitmap and hides over controls
  f.emit('pointermove',{clientX:x,clientY:y,target});assert.equal(marker.hidden,false);
  f.emit('pointerout',{relatedTarget:null});assert.equal(marker.hidden,true);
  f.emit('pointermove',{clientX:1100,clientY:10,target});assert.equal(marker.hidden,true);
+});
+
+test('double click on either central bit moves the whole triangle to the axis without rotating or pausing',()=>{
+ for(const mirrored of [false,true])for(const pinned of [false,true]){
+  const f=fixture({zoom:1.3,angle:20,pan:[10,20],sourcePan:[.04,-.03],flip:17,mirrorFlip:28}),m=realMirror(f),v=f.window.HubView;
+  m.state.on=true;m.state.screenPin=pinned;m.state.x=.5;m.state.y=.55;m.state.angle=Math.PI/2;
+  v.setSourceCenter(830,300);m.setBitCenters([[830,300,'1'],[830,250,'0']],{width:20,height:30});
+  const axis=Array.from(m.rotationCenter()),before=f.state(),p=v.projectBit(830,300,mirrored),camera=v.symmetryCamera();
+  const event={target:{closest:()=>null},clientX:camera[0]*p[0]+camera[2]*p[1]+camera[4],clientY:camera[1]*p[0]+camera[3]*p[1]+camera[5],preventDefault(){this.prevented=true;},stopPropagation(){}};
+  let paused=0;f.window.addEventListener('hubmotionpause',()=>paused++);f.emit('dblclick',event);
+  near(Array.from(v.originalCenter()),axis);near(Array.from(m.rotationCenter()),axis);assert.equal(event.prevented,true);assert.equal(paused,0);
+  const after=f.state();for(const key of ['zoom','angle','flip','mirrorFlip'])assert.equal(after[key],before[key]);assert.deepEqual(after.pan,before.pan);
+ }
+});
+
+test('double click on another bit keeps ordinary field pause and does not recenter',()=>{
+ const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.on=true;m.state.angle=Math.PI/2;v.setSourceCenter(830,300);m.setBitCenters([[830,300,'1'],[830,250,'0']],{width:20,height:30});
+ const before=Array.from(v.originalCenter());let paused=0;f.window.addEventListener('hubmotionpause',()=>paused++);
+ f.emit('dblclick',{target:{closest:()=>null},clientX:830,clientY:250,preventDefault(){},stopPropagation(){}});
+ near(Array.from(v.originalCenter()),before);assert.equal(paused,1);
 });
 
 

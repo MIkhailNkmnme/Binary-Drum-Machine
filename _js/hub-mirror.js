@@ -404,7 +404,7 @@
       if(!bitCell||window.HubImage?.active)return null;
       const c=window.HubView?.originalCenter?.();if(!c)return null;
       const sh=window.HubView?.sourceShift()||[0,0],x=c[0]-sh[0],y=c[1]-sh[1];let best=null,distance=Infinity;
-      for(const [px,py,bit] of bitCenters){if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,width:bitCell.width,height:bitCell.height};}}
+      for(let index=0;index<bitCenters.length;index++){const [px,py,bit]=bitCenters[index];if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,index,width:bitCell.width,height:bitCell.height};}}
       return best;
     },
     drawCenterBit(g,p){
