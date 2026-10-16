@@ -34,7 +34,7 @@
       for(const group of groups){
         const entries=[...records.values()].filter(r=>r.group===group),plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id)});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
-        for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn=String(p.column+1);const top=r.id===group.key||promoted.has(r.id);r.wrap.style.gridRow=String(p.row+1+(!top||p.column>0?1:0));r.wrap.dataset.header=String(top&&p.column===0&&p.row===0);r.wrap.style.setProperty('--tree-x',String(p.column*52));}r.node.dataset.controlPinned=String(promoted.has(r.id));}
+        for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn=String(p.column+1);const top=r.id===group.key||promoted.has(r.id);r.wrap.style.gridRow=String(p.row+1);r.wrap.dataset.header=String(top&&p.column===0&&p.row===0);r.wrap.style.setProperty('--tree-x',String(p.column*52));}r.node.dataset.controlPinned=String(promoted.has(r.id));}
         group.slot.style.setProperty('--tree-columns',String(plan.columns));group.root.node.dataset.groupPinned=String(pins.has(group.key));
       }
       toolbar.dataset.hasPins=String(pins.size+promoted.size>0);
