@@ -207,6 +207,8 @@
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
+  // v0.124: «Дзен» и «?» — столбиком, одна над другой, у правого края шапки.
+  { const col = document.createElement('div'); col.id = 'mayCorner'; $('mayZen').before(col); col.append($('mayZen'), $('mayHelp')); }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
