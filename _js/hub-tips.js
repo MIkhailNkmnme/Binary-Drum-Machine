@@ -19,12 +19,15 @@
     const text = tipOf(el); if (!text) { hide(); return; }
     if (cur !== el) giveBack(cur);
     cur = el; box.textContent = text; box.hidden = false;
-    const a = area(el), q = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
-    let x = a.r + 10; if (x + w > innerWidth - 8) x = a.l - 10 - w;
-    if (x < 8) { x = Math.max(8, Math.min(innerWidth - w - 8, q.left)); }
-    let y = q.top + q.height / 2 - h / 2;
-    if (x === Math.max(8, Math.min(innerWidth - w - 8, q.left))) y = a.b + 8;
-    box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(Math.max(4, Math.min(innerHeight - h - 4, y))) + 'px';
+    // v0.225: «подсказка скрывает кнопки» — под всей раскрытой группой; место пересчитывается, когда группа уже раскрылась.
+    place(); requestAnimationFrame(() => requestAnimationFrame(place)); setTimeout(place, 250);
+  }
+  function place() {
+    if (!cur) return;
+    const a = area(cur), q = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    const x = Math.max(8, Math.min(innerWidth - w - 8, q.left + q.width / 2 - w / 2));
+    let y = a.b + 8; if (y + h > innerHeight - 4) y = Math.max(4, a.t - h - 8);
+    box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
   }
   function hide() { giveBack(cur); cur = null; box.hidden = true; }
   document.addEventListener('pointerover', e => {

@@ -63,7 +63,7 @@
     function leaf(group,node){
       const id=group.key+'|'+labelOf(node);if(records.has(id))return records.get(id);
       node.dataset.pinControl=id;const tip=node.matches('details')?node.querySelector('summary'):node;
-      tip.title+=(tip.title?' · ':'')+'ПКМ — поднять / вернуть';
+      tip.title+=(tip.title?' · ':'')+'ПКМ — поднять / вернуть · зажать ПКМ и вести — переставить';
       const record={id,node,group};records.set(id,record);return record;
     }
     const roots=[['bits','01','Биты'],['symmetry','∥','Симм.'],['axis','↗','Ось'],['space','3D','Объём'],['file','▧','Файл'],['flow','↓','Поток']];
@@ -131,7 +131,7 @@
       const swatches=[...palette.querySelectorAll('.hubPaletteList button[data-i]')];
       for(const b of swatches){b.style.left=b.style.top='';b.classList.add('hubSwatch');}
       const slots=[...palette.querySelectorAll('label.hubColorSlot')].filter(n=>!symSlots.includes(n));slots.forEach(n=>n.classList.add('hubTreeColor'));
-      const items=[...slots,...palette.querySelectorAll('.hubDigitToggle'),...swatches].map(n=>leaf(colour,n));
+      const items=[...palette.querySelectorAll('.hubDigitToggle'),...slots,...swatches].map(n=>leaf(colour,n));
       colour.root=createBranch(colour,'colour','🎨','Цвет',items);colour.grow=true;
     }
     // v0.217: «Точно» — пока включено, обычное колесо крутит биты шагом до точных линий (как Shift + колесо).
@@ -186,6 +186,15 @@
     const lockHead=locks.root.node.querySelector('summary');lockHead.setAttribute('role','button');lockHead.title='Замкнуть всё / снять все замки · Наведение / → — отдельные замки';
     const syncLocks=()=>{for(const r of lockItems)r.node.setAttribute('aria-pressed',String(window.HubLocks.has(r.lockKey)));lockHead.setAttribute('aria-pressed',window.HubLocks.all?'true':window.HubLocks.any?'mixed':'false');};
     window.addEventListener('hublocks',()=>{render();syncLocks();});syncLocks();
+    // v0.225: «Сброс» — первым прямо под головой своей группы (3D, Поток) или своей ветки (наклон битов).
+    for(const [pre,to] of [['space|Сбросить только 3D','space'],['flow|Очистить свет','flow'],['bits|Сброс наклона',null]]){
+      const r=[...records.values()].find(x=>x.id.startsWith(pre));if(!r)continue;
+      const from=[...records.values()].find(x=>x.children?.includes(r));const dest=to?records.get(to):from;if(!from||!dest)continue;
+      from.children.splice(from.children.indexOf(r),1);dest.children.unshift(r);
+    }
+    // v0.225: порядок кнопок внутри групп — правой кнопкой мыши перетаскивают (zerk_hub_order: {родитель: [дети]}).
+    let order={};try{order=JSON.parse(localStorage.getItem('zerk_hub_order')||'{}')||{};}catch(_){}
+    for(const r of records.values())if(r.children&&Array.isArray(order[r.id])){const at=new Map(order[r.id].map((id,i)=>[id,i])),was=new Map(r.children.map((c,i)=>[c,i]));r.children.sort((a,b)=>(at.has(a.id)?at.get(a.id):1e3+was.get(a))-(at.has(b.id)?at.get(b.id):1e3+was.get(b)));}
     for(const group of groups){
       const slot=document.createElement('div');slot.className='hubFieldSlot hubTreeGrid';slot.dataset.group=group.key;slot.setAttribute('role','group');slot.setAttribute('aria-label',group.name);group.slot=slot;toolbar.append(slot);
       const mount=(r,parent)=>{r.parent=parent;const wrap=document.createElement('div');wrap.className='hubTreeItem';wrap.dataset.treeKey=r.id;wrap.append(r.node);slot.append(wrap);r.wrap=wrap;r.children?.forEach(c=>mount(c,r));};mount(group.root,null);
@@ -193,11 +202,28 @@
     }
     if(view){view.querySelector('.hubBitViewOptions')?.remove();view.querySelector('.hubBitViewArrows')?.remove();}
     for(const id of [...promoted])if(!records.has(id))promoted.delete(id);
+    // Правая кнопка: щелчок — закрепить / поднять (как было), зажать и вести — переставить кнопку среди соседей.
+    let rdrag=null,rdragEnd=0;
+    const pinToggle=r=>{if(r.id===r.group.key){if(pins.has(r.id))pins.delete(r.id);else{pins.add(r.id);r.node.open=true;}}else if(promoted.has(r.id))promoted.delete(r.id);else promoted.add(r.id);persist();render();};
+    const recAt=(x,y)=>{const n=document.elementFromPoint(x,y)?.closest?.('#hubFieldTools [data-tree-key]');return n?records.get(n.dataset.treeKey):null;};
+    toolbar.addEventListener('pointerdown',e=>{
+      if(e.button!==2||e.pointerType==='touch')return;const r=recAt(e.clientX,e.clientY);if(!r)return;
+      rdrag={r,x:e.clientX,y:e.clientY,moved:false,pending:null,over:null};
+      const mv=ev=>{if(!rdrag)return;if(!rdrag.moved&&Math.hypot(ev.clientX-rdrag.x,ev.clientY-rdrag.y)<8)return;
+        if(!rdrag.moved){if(!rdrag.r.parent){rdrag=null;return;}rdrag.moved=true;rdrag.r.wrap.classList.add('hubReorderSrc');document.body.classList.add('hubReordering');}
+        const t=recAt(ev.clientX,ev.clientY),ok=t&&t!==rdrag.r&&t.parent===rdrag.r.parent?t:null;
+        if(rdrag.over!==ok){rdrag.over?.wrap.classList.remove('hubReorderOver');ok?.wrap.classList.add('hubReorderOver');rdrag.over=ok;}};
+      const up=ev=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true);
+        const d=rdrag;rdrag=null;if(!d)return;document.body.classList.remove('hubReordering');d.r.wrap.classList.remove('hubReorderSrc');d.over?.wrap.classList.remove('hubReorderOver');
+        if(d.moved){rdragEnd=Date.now();if(d.over&&ev.type==='pointerup'){const list=d.r.parent.children,to=list.indexOf(d.over);list.splice(list.indexOf(d.r),1);list.splice(to,0,d.r);
+          order[d.r.parent.id]=list.map(c=>c.id);try{localStorage.setItem('zerk_hub_order',JSON.stringify(order));}catch(_){}renderStamp='';render();}}
+        else if(d.pending)pinToggle(d.pending);};
+      document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
+    });
     toolbar.addEventListener('contextmenu',e=>{
       const wrap=e.target.closest('[data-tree-key]'),r=records.get(wrap?.dataset.treeKey);if(!r)return;e.preventDefault();e.stopPropagation();
-      if(r.id===r.group.key){if(pins.has(r.id))pins.delete(r.id);else{pins.add(r.id);r.node.open=true;}}
-      else if(promoted.has(r.id))promoted.delete(r.id);else promoted.add(r.id);
-      persist();render();
+      if(rdrag){if(!rdrag.moved)rdrag.pending=r;return;}if(Date.now()-rdragEnd<400)return;
+      pinToggle(r);
     });
     toolbar.addEventListener('toggle',e=>{if(e.target.matches('.hubTilt')&&e.target.open){toolbar.querySelectorAll('.hubTilt[open]').forEach(n=>{if(n!==e.target)n.open=false;});render();}},true);
     const close=()=>{for(const r of records.values())if(r.children&&!pins.has(r.group.key))r.node.open=false;render();};

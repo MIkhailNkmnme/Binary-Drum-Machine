@@ -1,0 +1,45 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Кнопки страниц — витрина</title><style>
+:root{--bit:#8fd3ff;--acc:#ff9a5a;--bg:color-mix(in srgb,var(--bit) 13%,#050505)}
+body{margin:0;padding:16px;background:#050a0d;color:var(--bit);font:13px system-ui}
+h1{font:600 16px system-ui;margin:0 0 4px}h2{font:600 14px system-ui;margin:26px 0 4px;color:#fff}p{margin:0 0 12px;color:#7c8a96;max-width:780px}
+.wrap{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.col{width:300px}
+.sec{font:600 10px system-ui;letter-spacing:3px;color:#9fb3c0;margin:14px 0 6px}
+/* А — компактные параллелограммы, два столбца */
+.pa{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.pa a,.pa1 a{display:flex;align-items:center;gap:6px;height:30px;padding:0 14px;background:var(--bg);color:var(--bit);text-decoration:none;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);font:12px system-ui;white-space:nowrap;overflow:hidden}
+.pa1{display:grid;gap:4px}.pa1 a{height:40px;font-size:14px;justify-content:center}
+.pa a:hover,.pa1 a:hover{background:color-mix(in srgb,var(--acc) 30%,var(--bg))}
+svg.i{flex:none;width:15px;height:15px;fill:none;stroke:var(--acc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* Б, В — ромбы решёткой */
+.tri{position:relative}
+.r{position:absolute;width:48px;height:48px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--bg);color:var(--bit);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-decoration:none;font:8.5px/9px system-ui}
+.r.big{width:96px;height:96px;font-size:12px;line-height:13px}.r.big svg.i{width:26px;height:26px}
+.r:hover{background:color-mix(in srgb,var(--acc) 35%,var(--bg))}
+.r.head{background:color-mix(in srgb,var(--acc) 22%,var(--bg))}
+.bar{display:flex;gap:4px;margin-bottom:6px}
+</style></head><body>
+<h1>Кнопки страниц — три варианта</h1>
+<p>Сейчас 24 страницы стоят длинным столбцом широких полос. Ниже — как их можно собрать. Значки из того же набора, что у кнопок поля; подписи — до 6 букв, полное имя — в подсказке. Назовите вариант буквой.</p>
+<div class="wrap">
+<div class="col"><h2>А — компактные полосы</h2><p>Тот же вид, что сейчас, но вдвое ниже и в два столбца, со значком. Меню втрое короче, места под холст больше не становится.</p><div id="A"></div></div>
+<div class="col" style="width:330px"><h2>Б — ромбы треугольниками</h2><p>Как группы поля: две главные — крупными ромбами, разделы — треугольниками из ромбов встык (ряды 1, 2, 3…). Левое меню становится узким.</p><div id="B"></div></div>
+<div class="col" style="width:360px"><h2>В — группа «Страницы» в полосе поля</h2><p>Левого меню нет совсем, холст на всю ширину. В верхней полосе — ещё один ромб «Страницы»; наведение раскрывает его, как остальные группы: две главные, под ними «Знак» и «Черновики» своими ветками. На телефоне — в виде «Кнопки».</p><div id="C"></div></div>
+</div>
+<script>
+const P={"record": "M18 12a6 6 0 11-12 0 6 6 0 0112 0", "colour": "M12 3c12 0 12 14 6 14h-4l-2 4C0 21 0 3 12 3M7 8h.1M12 6h.1M17 8h.1M6 13h.1", "axes": "M12 3v18M3 12h18M9 6l3-3 3 3M18 9l3 3-3 3", "bars": "M6 18V10M12 18V6M18 18v-5", "bolt": "M13 3L5 14h6l-1 7 8-11h-6z", "corners": "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5", "cube": "M12 3l8 4v10l-8 4-8-4V7zM4 7l8 5 8-5M12 12v9", "curve": "M4 12c3-7 6-7 8 0s5 7 8 0", "dots": "M6 12h1M11.5 12h1M17 12h1", "drop": "M12 3c4 6 6 9 6 12a6 6 0 01-12 0c0-3 2-6 6-12", "eye": "M3 12q9-12 18 0-9 12-18 0M15 12a3 3 0 11-6 0 3 3 0 016 0", "grid4": "M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z", "half": "M20 12a8 8 0 11-16 0 8 8 0 0116 0M12 4v16", "image": "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.1", "line": "M4 12h13M13 8l4 4-4 4M20 5v14", "load": "M5 8h6l2 3h7l-3 8H5zM12 3v9M9 9l3 3 3-3", "lock": "M7 10V7a5 5 0 0110 0v3M5 10h14v11H5zM12 14v3", "loop": "M7 16a4 4 0 010-8h10a4 4 0 010 8H7", "magnet": "M6 5v9a6 6 0 0012 0V5M6 9h3M15 9h3", "mirror": "M12 3v18M4 7l5 5-5 5zM20 7l-5 5 5 5z", "nest": "M12 4l8 8-8 8-8-8zM12 9l3 3-3 3-3-3z", "pin": "M12 21s-6-6-6-11a6 6 0 0112 0c0 5-6 11-6 11M14 10a2 2 0 11-4 0 2 2 0 014 0", "play": "M9 6l9 6-9 6z", "plusRing": "M20 12a8 8 0 11-16 0 8 8 0 0116 0M12 8v8M8 12h8", "reset": "M18 8a7 7 0 10.5 7M18 4v5h-5", "save": "M6 5h12v14H6zM9 5v5h6V5M9 15h6v4", "sound": "M5 9h4l5-4v14l-5-4H5zM17 8q5 4 0 8", "spiral": "M12 12a2 2 0 012 2 4 4 0 01-4 4 6 6 0 01-6-6 8 8 0 018-8", "square": "M6 6h12v12H6z", "star": "M12 3l2.6 6 6.4.5-4.9 4.2 1.5 6.3L12 16.6 6.4 20l1.5-6.3L3 9.5l6.4-.5z", "steps": "M4 20v-5h5v-5h5V5h6", "sun": "M16 12a4 4 0 11-8 0 4 4 0 018 0M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2", "swap": "M4 9h14l-3-3M20 15H6l3 3", "target": "M12 3v4M12 17v4M3 12h4M17 12h4M15 12a3 3 0 11-6 0 3 3 0 016 0", "tri": "M12 4l8 15H4z", "wave": "M3 12q3-6 6 0t6 0 6 0"},G=[["main", [["Треугольник", "Треуг.", "tri"], ["Зазеркалиус", "Зазерк.", "mirror"]]], ["Знак и записи", [["Борт-журнал", "Журнал", "load"], ["Обои", "Обои", "image"], ["Исследование", "Исслед.", "target"], ["Сравнение", "Сравн.", "swap"], ["Битмультфильмы", "Мульт.", "play"], ["Просмотр GIF", "GIF", "eye"]]], ["Черновики", [["Код", "Код", "bars"], ["Зеркалиус", "Зерк.", "axes"], ["Генезис", "Генез.", "spiral"], ["Ядро GPU + синт", "GPU", "bolt"], ["Модуль сетки", "Сетка", "grid4"], ["Кубиты", "Кубиты", "cube"], ["Слои сгиба", "Слои", "nest"], ["ASCII-арт", "ASCII", "dots"], ["Бирамида", "Бирам.", "half"], ["Обои Lively", "Lively", "sun"], ["Хаб с конусом", "Конус", "curve"], ["Пирамида", "Пирам.", "steps"], ["Синхрофазотрон", "Синхр.", "loop"], ["Маятник", "Маятн.", "wave"], ["Матрёшки", "Матр.", "square"], ["Синхроромб", "Ромб", "star"]]]];
+const ic=k=>'<svg class="i" viewBox="0 0 24 24"><path d="'+(P[k]||'')+'"/></svg>';
+// А
+{const A=document.getElementById('A');for(const [s,list] of G){if(s!=='main')A.insertAdjacentHTML('beforeend','<div class="sec">◇ '+s.toUpperCase()+'</div>');const d=document.createElement('div');d.className=s==='main'?'pa1':'pa';for(const [n,,k] of list)d.insertAdjacentHTML('beforeend','<a href="#" title="'+n+'">'+ic(k)+n+'</a>');A.append(d);}}
+// решётка-треугольник: ряд k (с 0) — k+1 ромбов, центры через 48, ряды через 24
+function tri(list,first=1){const box=document.createElement('div');box.className='tri';let i=0,r=0,k=first,W=0,rows=[];while(i<list.length){rows.push(list.slice(i,i+k));i+=k;k++;}
+ const n=Math.max(...rows.map(x=>x.length));W=n*48;rows.forEach((row,ri)=>row.forEach(([nm,sh,ic2],j)=>{const x=W/2+(j-(row.length-1)/2)*48-24,y=ri*24;box.insertAdjacentHTML('beforeend','<a class="r" href="#" title="'+nm+'" style="left:'+x+'px;top:'+y+'px">'+ic(ic2)+sh+'</a>');}));
+ box.style.width=W+'px';box.style.height=((rows.length-1)*24+48)+'px';return box;}
+{const B=document.getElementById('B');const m=document.createElement('div');m.className='bar';for(const [n,sh,k] of G[0][1])m.insertAdjacentHTML('beforeend','<a class="r big" style="position:relative" href="#" title="'+n+'">'+ic(k)+sh+'</a>');B.append(m);
+ for(const [s,list] of G.slice(1)){B.insertAdjacentHTML('beforeend','<div class="sec">◇ '+s.toUpperCase()+'</div>');B.append(tri(list));}}
+// В — вершина «Страницы», под ней две главные и две ветки, ветка «Черновики» раскрыта
+{const C=document.getElementById('C');const tree=[["Страницы","Стран.","nest"],...G[0][1],["Знак и записи","Знак","star"],["Черновики","Черн.","tri"]];
+ const t=tri([tree[0]],1),t2=document.createElement('div');t2.style.position='relative';
+ const all=[tree[0],tree[1],tree[2],tree[3],tree[4],...G[2][1]];C.append(tri(all));
+ C.insertAdjacentHTML('beforeend','<p style="margin-top:10px">Сверху вниз: «Страницы» → Треугольник, Зазеркалиус → «Знак», «Черновики» → раскрытые черновики (ряды 4, 5…). «Знак» раскрывается так же.</p>');}
+</script></body></html>
