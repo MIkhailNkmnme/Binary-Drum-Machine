@@ -1,0 +1,40 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ползунки Хаба — витрина</title><style>
+:root{--bit:#8fd3ff;--acc:#ff9a5a;--bg:color-mix(in srgb,var(--bit) 13%,#050505)}
+body{margin:0;padding:16px;background:#050a0d;color:var(--bit);font:13px system-ui}
+h1{font:600 16px system-ui;margin:0 0 4px}p{margin:0 0 14px;color:#7c8a96;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 18px;max-width:1000px}
+.it small{display:block;color:#7c8a96;font-size:11px;margin-top:3px}
+.sl{position:relative;display:flex;align-items:stretch;height:24px;width:204px;background:var(--bg)}
+.sl button{flex:none;width:14px;padding:0;border:0;background:transparent;cursor:pointer}
+.sl button svg{display:block;width:14px;height:24px;fill:none;stroke:var(--acc);stroke-width:1.5;stroke-linejoin:round}
+.sl button:hover svg{stroke:#fff}
+.tr{position:relative;flex:1}
+.tr::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed color-mix(in srgb,var(--bit) 55%,transparent)}
+.tr input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.th{position:absolute;top:50%;width:16px;height:16px;transform:translate(-50%,-50%) rotate(45deg);background:var(--acc);pointer-events:none}
+.val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--bit);font:600 11px/1 system-ui;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}
+.pal{margin:0 0 14px}.pal button{margin-right:6px;background:#111;color:#ccc;border:1px solid #333;padding:3px 8px;cursor:pointer}
+</style></head><body>
+<h1>Ползунки Хаба в одном виде — предложение</h1>
+<p>Как в правиле кнопок: подписи слева нет, значение — на дорожке по центру, по краям шевроны «‹» «›» во всю высоту (щелчок — шаг, удержание — подряд), бегунок — ромб, дорожка — пунктир. Бегунок и шевроны — цветом симметрии заготовки, цифры — цветом битов. Название — только во всплывающей подсказке. Под каждым — что за ползунок (на странице этой строки не будет).</p>
+<div class="pal">Заготовка: <button data-b="#8fd3ff" data-a="#ff9a5a">Лёд · огонь</button><button data-b="#7fffd4" data-a="#ff6b9a">Мята · роза</button><button data-b="#ffd166" data-a="#6aa8ff">Золото · синь</button></div>
+<div class="grid" id="g"></div>
+<script>
+const L=[['Строки','Количество отображаемых строк',1,128,1,128,''],['Наклон 0','Наклон ромбов 0',-180,180,1,0,'°'],['Наклон 1','Наклон ромбов 1',-180,180,1,0,'°'],
+['Скорость оси','Множитель скорости вращения зеркала',-100,300,1,100,'%'],['Время зума','Время хода автозума, секунды',1,60,1,8,' с'],['Скорость 3D','Множитель скорости 3D-переворота',-100,300,1,100,'%'],
+['Скорость света','Множитель скорости света',0,4,.1,1,'×'],['Размер света','Размер битов света, пиксели',4,64,1,16,' px'],['Радиус солнца','Радиус солнца, пиксели',0,1600,1,200,' px'],
+['Скорость снега','Множитель скорости снега',0,4,.1,1,'×'],['Скорость воды','Множитель скорости воды',0,4,.1,1,'×'],['Автокручение','Шкала скорости автокручения (крест масштаба)',0,601,1,0,'']];
+const ch=d=>'<svg viewBox="0 0 14 24"><path d="'+(d<0?'M11 1L3 12l8 11':'M3 1l8 11-8 11')+'"/></svg>';
+const g=document.getElementById('g');
+for(const [n,t,mn,mx,st,v,u] of L){
+ const it=document.createElement('div');it.className='it';
+ it.innerHTML='<div class="sl" title="'+t+'"><button aria-label="меньше">'+ch(-1)+'</button><div class="tr"><input type="range" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+v+'" aria-label="'+t+'"><span class="th"></span><span class="val"></span></div><button aria-label="больше">'+ch(1)+'</button></div><small>'+n+'</small>';
+ g.append(it);const r=it.querySelector('input'),th=it.querySelector('.th'),val=it.querySelector('.val');
+ const upd=()=>{const k=(r.value-mn)/(mx-mn);th.style.left=(8+k*(r.parentElement.clientWidth-16))+'px';val.textContent=(u==='×'?'×'+(+r.value).toFixed(1):r.value+u);};
+ r.oninput=upd;requestAnimationFrame(upd);
+ it.querySelectorAll('button').forEach((b,i)=>{let tm;const step=()=>{r.value=+r.value+(i?1:-1)*st;upd();};
+  b.onpointerdown=()=>{step();tm=setTimeout(function rep(){step();tm=setTimeout(rep,60);},400);};b.onpointerup=b.onpointerleave=()=>clearTimeout(tm);});
+}
+document.querySelectorAll('.pal button').forEach(b=>b.onclick=()=>{document.documentElement.style.setProperty('--bit',b.dataset.b);document.documentElement.style.setProperty('--acc',b.dataset.a);});
+</script></body></html>
