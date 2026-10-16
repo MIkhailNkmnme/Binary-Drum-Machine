@@ -164,11 +164,11 @@
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
     const views=[['rhombs','◇01','Ромбы с цифрами'],['digits','01','Только цифры'],['brackets',')()','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['stars','*·','Звезда и точка']];
-    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';viewOptions.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===state.bitView)));};
+    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;b.setAttribute('aria-pressed',String(selected));});};
     for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
     viewBox.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')viewBox.open=false;});
-    viewBox.append(viewHead,viewArrows,viewOptions);settings.append(viewBox);syncView();
+    viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
