@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.132. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.133. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.132</title>
+<title>Zerkalius Маятник — v0.133</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=132">
+<link rel="stylesheet" href="mayatnik-menu.css?v=133">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.132</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.133</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -182,10 +182,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Карта застывания: клетка, чей бит уже окончательный, — цветом кадра, с которого он такой: фиолетовый — до 64, синий — до 128, голубой — до 256, зелёный — до 512, жёлтый — до 1024, оранжевый — до 2048, красный — позже; ярко — 1, тускло — 0. На кадре k видно то, что застыло к нему"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
-    <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked> оси ↕</label>
-    <label title="Искать и показывать горизонтальные оси ↔"><input id="symH" type="checkbox" checked> оси ↔</label>
-    <label title="Искать и показывать диагональные оси ╲ ╱ (их много — по умолчанию выключены)"><input id="symD" type="checkbox"> оси ╲╱</label>
-    <label title="Подсвечивать биты найденных осей при увеличении от 3 пикселей на клетку. На малом масштабе — только линии. Перекрывающиеся цвета смешиваются."><input id="symBits" type="checkbox"> биты осей</label>
+    <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked data-mi-short="Оси ↕"> оси ↕</label>
+    <label title="Искать и показывать горизонтальные оси ↔"><input id="symH" type="checkbox" checked data-mi-short="Оси ↔"> оси ↔</label>
+    <label title="Искать и показывать диагональные оси ╲ ╱ (их много — по умолчанию выключены)"><input id="symD" type="checkbox" data-mi-short="Оси ╲╱"> оси ╲╱</label>
+    <label title="Подсвечивать биты найденных осей при увеличении от 3 пикселей на клетку. На малом масштабе — только линии. Перекрывающиеся цвета смешиваются."><input id="symBits" type="checkbox" data-mi-short="Биты осей"> биты осей</label>
     <label title="Минимум последовательных поперечных срезов вдоль оси: строк для вертикальной, столбцов для горизонтальной, диагоналей для наклонной. Пропуски не допускаются.">строк от <input id="symRowsMin" type="number" min="2" max="16384" value="2"></label>
     <label title="Максимальная длина непрерывного участка симметрии; пусто или 0 — без верхнего предела. Более длинные участки скрываются.">строк до <input id="symRowsMax" type="number" min="0" max="16384" placeholder="∞"></label>
     <label title="Минимум совпадающих битов с КАЖДОЙ стороны оси, через одну клетку. Бит на самой оси не считается.">бит от <input id="symBitsMin" type="number" min="2" max="16384" value="2"></label>
@@ -2431,6 +2431,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=132"></script>
+<script src="mayatnik-menu.js?v=133"></script>
 </body>
 </html>
