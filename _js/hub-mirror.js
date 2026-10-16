@@ -1,3 +1,4 @@
+/* Hub v0.159: радиальный жест проходит через центр и разворачивает луч на 180°. */
 /* Hub v0.158: в режиме центр линия переносит исходник и отражение зеркально, ручка вращает. */
 /* Hub v0.157: прямое управление ручкой в экранной плоскости при любом 3D-наклоне. */
 /* Hub v0.155: ромбическая палитра; закрытие всплывающих окон по клику снаружи. */
@@ -44,7 +45,7 @@
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(.02,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','stars'].includes(saved.bitView))state.bitView=saved.bitView;
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
@@ -105,7 +106,7 @@
     handle.title = state.screenPin?'Тяни линию — зеркальный перенос пары; круглую ручку — поворот оси':state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.screenPin?'Сдвинуть оригинал и отражение зеркально относительно неподвижной оси':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
-    turn.title = state.screenPin?'Начни вдоль оси — радиус; поперёк — поворот. Один жест — одно действие':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
+    turn.title = state.screenPin?'Вдоль оси — радиус, через центр — разворот луча; поперёк — поворот. Один жест — одно действие':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
@@ -231,7 +232,7 @@
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
         moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&e.target===turn,handle:e.target===handle,turn:!source&&(!state.on||e.target===turn||state.axisRotate) };
-      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
+      drag.startAngle = drag.radius0<12?drag.angle:Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
@@ -241,9 +242,9 @@
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       if (!drag.moved && Math.hypot(dx, dy) < 3) return;
       drag.moved = true;
-      if(drag.radius){const radial=dx*Math.cos(drag.startAngle)+dy*Math.sin(drag.startAngle),tangent=-dx*Math.sin(drag.startAngle)+dy*Math.cos(drag.startAngle);
-        if(!drag.mode)drag.mode=Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
-        if(drag.mode==='radius'){state.orbitRadius=Math.max(.02,Math.min(4,(drag.radius0+radial)/Math.min(frame.width,frame.height)));changed();return;}
+      if(drag.radius){const radial=dx*Math.cos(drag.angle)+dy*Math.sin(drag.angle),tangent=-dx*Math.sin(drag.angle)+dy*Math.cos(drag.angle);
+        if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
+        if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.angle+(signed<0?Math.PI:0));changed();return;}
       }
       if(drag.source){window.HubView?.shiftSourceBy(dx-drag.sourceX,dy-drag.sourceY);drag.sourceX=dx;drag.sourceY=dy;}
       else if (drag.turn) {
