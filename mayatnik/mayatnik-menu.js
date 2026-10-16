@@ -40,7 +40,7 @@
     { id: 'build', title: 'Поле', color: '#73e4a5', open: true, items: [
       button('bBuild', 'field'), button('bReset', 'reset'), button('bThird', 'tri'), button('bFour', 'plusRing'),
       control('rows'), control('steps'), select('mode', 'swap', {pend:'Лево-право',right:'Вправо',left:'Влево',one:'Одна вершина'}),
-      select('bg', 'square', {empty:'Пустое','1':'Все 1','0':'Все 0'}) ] },
+      select('bg', 'square', {empty:'Пустое','1':'Все 1','0':'Все 0',chess:'1 шахматкой'}) ] },
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [

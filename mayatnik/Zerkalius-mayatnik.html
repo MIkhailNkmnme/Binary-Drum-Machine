@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.122. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.123. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.122</title>
+<title>Zerkalius Маятник — v0.123</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=122">
+<link rel="stylesheet" href="mayatnik-menu.css?v=123">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.122</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.123</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -140,6 +140,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <option value="empty">пустое</option>
       <option value="1">все 1</option>
       <option value="0">все 0</option>
+      <option value="chess" title="1 на решётке якоря, 0 на соседней — шахматка">1 шахматкой</option>
     </select></label>
   </div>
   <div class="grp">
@@ -300,7 +301,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <p><strong>Библиотека «Шаблоны»:</strong> здесь только свои фигуры. Каждый взятый цвет автоматически добавляется в отдельный список. «Сохранить» записывает текущую фигуру и преобразование с указанным именем. Изменение имени создаёт отдельную запись. Все свои шаблоны видны карточками с миниатюрами. Можно включить несколько одновременно и сразу тянуть каждый мышью. У карточки четыре значка: сохранить изменения фигуры на поле, скачать этот шаблон, удалить с подтверждением и изменить цвет. Правая кнопка на карточке или фигуре — переименовать, Enter сохраняет, Esc отменяет. «Скачать все» выгружает библиотеку в JSON, «Загрузить» добавляет шаблоны из файла. Библиотека не очищается при перестроении поля. Сведения о размере, сдвиге, битах и симметрии показаны мелким текстом внизу. Рядом «Сохранить» записывает выбранную фигуру в библиотеку, «Цвет» меняет только цвет этой фигуры; смену цвета можно отменить.</p>
 </dialog>
 
-<script src="mayatnik-core.js?v=3"></script>
+<script src="mayatnik-core.js?v=4"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
 <script src="mayatnik-fill.js?v=37"></script>
 <script src="mayatnik-template.js?v=36"></script>
@@ -379,7 +380,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     stop(); clearKonus(); readUI();
     const S = st.mode === 'one' ? 1 : pairOn() ? 2 * total() + 1 : st.steps;   // вершин всего
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
-    f = MAYATNIK.field(geo.W, st.rows, st.bg); k = 0;
+    f = MAYATNIK.field(geo.W, st.rows, st.bg, geo.anchor); k = 0;
     if (pairOn()) MAYATNIK.cone(f, geo.anchor, st.rows);
     updWin();
     // v0.002: опорные кадры для ползунка «кадр» — все кадры не влезут (2024 × 24 МБ), поэтому каждый interval-й,
@@ -409,16 +410,18 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // правого «0» (на поле «все 0» — «1»), как у «обводки». ZL / ZR — её края по строкам окна (столбцы поля); строки без «0»
   // над первой такой берут её края, ниже — края строки выше. Окно обрезается по зоне.
   let ZL = new Int32Array(0), ZR = new Int32Array(0), triangleSides = [];
+  // v0.123: значение «не фона» в клетке (r, c); у «1 шахматкой» фон — 1 на решётке якоря и 0 на соседней.
+  const bgNoise = () => st.bg === 'chess' ? (A => (r, c) => (c - A - r) & 1 ? 1 : 0)(geo.anchor) : (Z => () => Z)(st.bg === '0' ? 1 : 0);
   function zoneCalc(R) {
-    const { W, val } = f, Z = st.bg === '0' ? 1 : 0;
+    const { W, val } = f, Zc = bgNoise();
     triangleSides = [];
     ZL = new Int32Array(R).fill(-1); ZR = new Int32Array(R).fill(-1);
     let first = -1, mn = Infinity, mx = -Infinity;
     for (let r = 0; r < R; r++) {
       const row = r * W;
-      for (let c = 0; c < W; c++) if (val[row + c] === Z) { ZL[r] = c; break; }
+      for (let c = 0; c < W; c++) if (val[row + c] === Zc(r, c)) { ZL[r] = c; break; }
       if (ZL[r] < 0) continue;
-      for (let c = W - 1; c >= ZL[r]; c--) if (val[row + c] === Z) { ZR[r] = c; break; }
+      for (let c = W - 1; c >= ZL[r]; c--) if (val[row + c] === Zc(r, c)) { ZR[r] = c; break; }
       if (first < 0) first = r;
       if (ZL[r] < mn) mn = ZL[r]; if (ZR[r] > mx) mx = ZR[r];
     }
@@ -628,7 +631,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function freezeCalc() {
     const key = [st.rows, st.steps, st.mode, st.bg, pairOn()].join('|'); if (freezeMap?.key === key) return freezeMap;
     const T = total(); if (st.rows * st.rows * T > 6e8) { freezeMap = { key, big: true }; $('fillInfo').textContent = 'Карта застывания: поле слишком большое для расчёта в странице'; return freezeMap; }
-    const S = st.mode === 'one' ? 1 : pairOn() ? 2 * T + 1 : st.steps, g = MAYATNIK.geometry(st.mode, S, st.rows), f2 = MAYATNIK.field(g.W, st.rows, st.bg), lastAt = new Int32Array(g.W * st.rows).fill(-1);
+    const S = st.mode === 'one' ? 1 : pairOn() ? 2 * T + 1 : st.steps, g = MAYATNIK.geometry(st.mode, S, st.rows), f2 = MAYATNIK.field(g.W, st.rows, st.bg, g.anchor), lastAt = new Int32Array(g.W * st.rows).fill(-1);
     if (pairOn()) MAYATNIK.cone(f2, g.anchor, st.rows, lastAt, 0);
     for (let j = 0; j < T; j++) { if (pairOn()) MAYATNIK.conePair(f2, g.anchor - j - 1, g.anchor + j + 1, st.rows, lastAt, j + 1); else MAYATNIK.cone(f2, g.anchor + MAYATNIK.offset(st.mode, j), st.rows, lastAt, j + 1); }
     freezeMap = { key, lastAt, W: g.W }; return freezeMap;
@@ -1602,16 +1605,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // Ступеньки соединяются по строке; толщина — в битах, чтобы линию было видно и при мелком масштабе.
   const GOLD = rgba([255, 204, 0]);
   function outline(px) {
-    const { W, H, val } = f, Z = st.bg === '0' ? 1 : 0, t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
+    const { W, H, val } = f, Zc = bgNoise(), t = Math.max(1, Math.ceil(1.5 / scale())), h = t >> 1;
     const dot = (r, c) => { for (let y = r - h; y < r - h + t; y++) if (y >= 0 && y < VH)
       for (let x = c - h; x < c - h + t; x++) if (x >= VX && x < VX + VW) px[y * VW + x - VX] = GOLD; };
     const seg = (r, a, b) => { for (let c = Math.min(a, b); c <= Math.max(a, b); c++) dot(r, c); };
     let pl = -1, pr = -1;
     for (let r = 0; r < VH; r++) {
       const row = r * W; let l = -1, rr = -1;
-      for (let c = 0; c < W; c++) if (val[row + c] === Z) { l = c; break; }
+      for (let c = 0; c < W; c++) if (val[row + c] === Zc(r, c)) { l = c; break; }
       if (l < 0) { pl = pr = -1; continue; }
-      for (let c = W - 1; c >= l; c--) if (val[row + c] === Z) { rr = c; break; }
+      for (let c = W - 1; c >= l; c--) if (val[row + c] === Zc(r, c)) { rr = c; break; }
       if (pl < 0) seg(r, l, rr);                       // верхний край зоны
       else { seg(r, pl, l); seg(r, pr, rr); }          // ступеньки слева и справа
       pl = l; pr = rr;
@@ -2352,6 +2355,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=122"></script>
+<script src="mayatnik-menu.js?v=123"></script>
 </body>
 </html>

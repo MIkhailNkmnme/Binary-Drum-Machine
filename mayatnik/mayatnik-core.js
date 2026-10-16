@@ -3,8 +3,10 @@
    без них расчёт прежний, бит в бит. */
 const MAYATNIK = (() => {
   // val: Int8Array W*H, -1 пусто, 0, 1. v0.006: цвет не хранится — он считается по формуле (tint ниже)
-  function field(W, H, bg) {
+  // v4: bg 'chess' — «1 шахматкой»: 1 на решётке якоря (c − anchor − r чётное), 0 на соседней.
+  function field(W, H, bg, anchor = 0) {
     const val = new Int8Array(W * H).fill(bg === '1' ? 1 : bg === '0' ? 0 : -1);
+    if (bg === 'chess') for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) val[r * W + c] = (c - anchor - r) & 1 ? 0 : 1;
     return { W, H, val };
   }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
