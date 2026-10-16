@@ -30,12 +30,15 @@
       record.node.open=on;render();
     }
     function render(){
-      for(const r of records.values())if(r.active){const value=r.active();if(value!==null)r.node.querySelector('summary').setAttribute('aria-pressed',String(value));}
-      const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
+      for(const r of records.values())if(r.active){const value=r.active();if(value!==null){const h=r.node.querySelector('summary');if(h.getAttribute('aria-pressed')!==String(value))h.setAttribute('aria-pressed',String(value));}}
+      // v0.226: «все включённые сразу вверх и не скрывать» — включённая кнопка встаёт первой в своей ветке.
+      const on=n=>n.getAttribute('aria-pressed')==='true'||!!n.querySelector?.(':scope > input[type=checkbox]:checked');
+      const lead=[...records.values()].filter(r=>r.children?(r.action&&r.active?.()===true):on(r.node)).map(r=>r.id);
+      const stamp=JSON.stringify([lead,[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
         const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
-        const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
+        const plan=HubMenuTree.layout(group.root,{lead,grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
         group.slot.dataset.lo=String(plan.span[0]*24);group.slot.dataset.hi=String(plan.span[1]*24);group.slot.style.setProperty('--tree-columns','1');group.root.node.dataset.groupPinned=String(pins.has(group.key));
@@ -185,7 +188,9 @@
     locks.root=createBranch(locks,'locks','🔒','Замок',lockItems);locks.root.action=()=>window.HubLocks.toggleAll();locks.root.active=()=>window.HubLocks.all?true:window.HubLocks.any?'mixed':false;locks.root.node.dataset.hasAction='true';
     const lockHead=locks.root.node.querySelector('summary');lockHead.setAttribute('role','button');lockHead.title='Замкнуть всё / снять все замки · Наведение / → — отдельные замки';
     const syncLocks=()=>{for(const r of lockItems)r.node.setAttribute('aria-pressed',String(window.HubLocks.has(r.lockKey)));lockHead.setAttribute('aria-pressed',window.HubLocks.all?'true':window.HubLocks.any?'mixed':'false');};
-    window.addEventListener('hublocks',()=>{render();syncLocks();});syncLocks();
+    window.addEventListener('hublocks',()=>{syncLocks();render();});syncLocks();
+    // v0.226: кнопка включилась / выключилась — сразу пересобрать порядок (включённые первыми).
+    {let q=0;new MutationObserver(()=>{if(!q)q=requestAnimationFrame(()=>{q=0;render();});}).observe(toolbar,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});toolbar.addEventListener('change',()=>requestAnimationFrame(render),true);}
     // v0.225: «Сброс» — первым прямо под головой своей группы (3D, Поток) или своей ветки (наклон битов).
     for(const [pre,to] of [['space|Сбросить только 3D','space'],['flow|Очистить свет','flow'],['bits|Сброс наклона',null]]){
       const r=[...records.values()].find(x=>x.id.startsWith(pre));if(!r)continue;
