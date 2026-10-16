@@ -41,7 +41,7 @@
     const hit=(reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null),bit=hit&&mirror.centerBit();
     if(!bit){hide();return;}
     if(!centerMarker){centerMarker=document.createElement('canvas');centerMarker.className='hubCenterBit';centerMarker.setAttribute('aria-hidden','true');document.body.append(centerMarker);}
-    const side=Math.ceil(Math.max(bit.width,bit.height)*1.5+6),key=JSON.stringify([bit,mirror.state.bitView,mirror.bitAngle(bit.bit),mirror.digitVisible(bit.bit),mirror.colors()]);
+    const side=Math.ceil(Math.max(bit.width,bit.height)*1.5+6),key=JSON.stringify([bit,mirror.state.bitView,mirror.state.packedBits,mirror.bitAngle(bit.bit),mirror.digitVisible(bit.bit),mirror.colors()]);
     if(key!==centerMarkerKey){centerMarkerKey=key;centerMarker.width=centerMarker.height=side*2;centerMarker.style.width=centerMarker.style.height=side+'px';const g=centerMarker.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,bit);}
     const camera=matrix(false,true),project=(x,y)=>{const p=window.HubView.projectBit(x,y,hit.mirror);return [camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]];};
     const p=project(bit.x,bit.y),x=project(bit.x+1,bit.y),q=project(bit.x,bit.y+1);

@@ -40,13 +40,13 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', packedBits:false, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
       state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','stars'].includes(saved.bitView))state.bitView=saved.bitView;
-      state.trace = saved.trace === true;
+      state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
@@ -100,6 +100,12 @@
   function glyphOffset(g,text,size){
     const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
     if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
+  }
+  function packedScale(g,text,size,width,height){
+    if(!state.packedBits||state.bitView==='rhombs')return [1,1];
+    const key=g.font+'|'+text+'|ink';let bounds=glyphMetrics.get(key);
+    if(!bounds){const m=g.measureText(text);bounds=[(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight??m.width),(m.actualBoundingBoxAscent??size*.7)+(m.actualBoundingBoxDescent||0)];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,bounds);}
+    return [width/Math.max(.01,bounds[0]),height/Math.max(.01,bounds[1])];
   }
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
@@ -186,6 +192,9 @@
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
     viewBox.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')viewBox.open=false;});
     viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();
+    const packing=document.createElement('button');packing.id='hubBitPacking';packing.type='button';packing.textContent='↔\nвстык';packing.setAttribute('aria-label','Биты без отступов');packing.title='Увеличить знаки до соприкосновения, сохранив центры битов';
+    const syncPacking=()=>packing.setAttribute('aria-pressed',String(!!state.packedBits));
+    packing.onclick=()=>{state.packedBits=!state.packedBits;syncPacking();changed();save();};syncPacking();document.body.append(packing);
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
@@ -401,10 +410,10 @@
       return best;
     },
     drawCenterBit(g,p){
-      const size=Math.min(p.width,p.height)*.62,a=p.width*.45,b=p.height*.45;
+      const size=Math.min(p.width,p.height)*.62,a=p.width*(state.packedBits?.5:.45),b=p.height*(state.packedBits?.5:.45);
       g.fillStyle=this.colors().sym;g.globalAlpha=1;
       if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));g.beginPath();g.moveTo(0,-b);g.lineTo(a,0);g.lineTo(0,b);g.lineTo(-a,0);g.closePath();g.fill();g.restore();}
-      if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size);}
+      if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);}
     },
     selectRotationBit(hit){rotationBit=hit;rotationGuide=false;},
     clearRotationBit(){const visible=rotationGuide;rotationBit=null;rotationGuide=false;if(visible)changed();},
@@ -413,10 +422,10 @@
       const arcs=state.bitView==='brackets'||state.bitView==='parentheses';
       if(!arcs&&rotationBit.mirror!==mirror)return;
       const chosen=rotationBit.bit,points=arcs?bitCenters.filter(p=>p[2]===chosen):[bitCenters[rotationBit.index]];
-      const a=bitCell.width*.45,b=bitCell.height*.45,size=Math.min(bitCell.width,bitCell.height)*.62,length=Math.max(a,b)*6;
+      const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=Math.max(a,b)*6;
       g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.3;g.shadowBlur=0;g.lineWidth=.7/Math.max(.2,window.HubView?.scale||1);
       for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen));g.beginPath();
-        if(arcs){const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
+        if(arcs){if(state.packedBits){const text=state.bitView==='brackets'&&chosen==='0'?'()':chosen==='1'?')':'(';g.font=`bold ${size}px monospace`;g.scale(...packedScale(g,text,size,bitCell.width,bitCell.height));}const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
         else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
         else{const vertices=[[0,-b],[a,0],[0,b],[-a,0]];for(let i=0;i<4;i++){const p=vertices[i],q=vertices[(i+1)%4],d=Math.hypot(q[0]-p[0],q[1]-p[1]),x=(q[0]-p[0])/d*length,y=(q[1]-p[1])/d*length;g.moveTo(...p);g.lineTo(p[0]-x,p[1]-y);g.moveTo(...q);g.lineTo(q[0]+x,q[1]+y);}}
         g.stroke();g.restore();
@@ -457,26 +466,29 @@
       }
       g.save();g.translate(x,y);g.rotate(angle);g.shadowBlur=0;g.drawImage(sprite.canvas,-sprite.w/2,-sprite.h/2,sprite.w,sprite.h);g.restore();return true;
     },
-    drawSymbol(g,bit,x,y,size){
+    drawSymbol(g,bit,x,y,size,width=size/.62,height=width*Math.sqrt(3)){
       if(!this.digitVisible(bit))return;
       g.save();g.translate(x,y);g.rotate(this.bitAngle(bit));
       if(state.bitView==='stars'){
-        if(bit==='0'){g.beginPath();g.arc(0,0,Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
+        if(state.packedBits)size=width;
+        if(bit==='0'){g.beginPath();g.arc(0,0,state.packedBits?width/2:Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
         else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
       }else{
         const text=state.bitView==='brackets'?(bit==='1'?')':'()'):state.bitView==='parentheses'?(bit==='1'?')':'('):bit;
         g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';
         const offset=glyphOffset(g,text,size);
+        if(state.packedBits&&this.symbolsOnly())g.scale(...packedScale(g,text,size,width,height));
         g.fillText(text,...offset);
       }
       g.restore();
     },
-    drawSymbolBatch(g,bit,points,size,color,alpha){
+    drawSymbolBatch(g,bit,points,size,color,alpha,width=size/.62,height=width*Math.sqrt(3)){
       if(!this.digitVisible(bit)||!points.length)return;
       const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=state.bitView==='brackets'?(bit==='1'?')':'()'):state.bitView==='parentheses'?(bit==='1'?')':'('):bit;
       g.save();g.rotate(angle);g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';g.fillStyle=color;g.globalAlpha=alpha;
       const [ox,oy]=glyphOffset(g,text,size);
-      for(const [x,y] of points)g.fillText(text,x*co+y*si+ox,-x*si+y*co+oy);
+      const [sx,sy]=packedScale(g,text,size,width,height);if(state.packedBits&&this.symbolsOnly())g.scale(sx,sy);
+      for(const [x,y] of points)g.fillText(text,(x*co+y*si)/sx+ox,(-x*si+y*co)/sy+oy);
       g.restore();
     },
     digitVisible(bit){return !(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},

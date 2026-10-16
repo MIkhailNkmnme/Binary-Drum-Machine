@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
 function mirror(saved={},window={}){window.dispatchEvent??=()=>{};const c={window,Event:class{},document:{readyState:'loading',addEventListener(){},querySelector(){return null;}},localStorage:{getItem:()=>JSON.stringify(saved),setItem(){}}};vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),c);return c.window.HubMirror;}
-function canvas(){const calls=[];const g={fillStyle:'#8fd3ff',save(){},restore(){},translate(...v){calls.push(['translate',...v]);},rotate(...v){calls.push(['rotate',...v]);},measureText(){return {width:12,actualBoundingBoxLeft:1,actualBoundingBoxRight:9,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2};},fillText(...v){calls.push(['text',...v]);},beginPath(){},arc(...v){calls.push(['arc',...v]);},moveTo(...v){calls.push(['move',...v]);},lineTo(...v){calls.push(['line',...v]);},fill(){},stroke(){}};return {g,calls};}
+function canvas(){const calls=[];const g={fillStyle:'#8fd3ff',save(){},restore(){},translate(...v){calls.push(['translate',...v]);},rotate(...v){calls.push(['rotate',...v]);},scale(...v){calls.push(['scale',...v]);},measureText(){return {width:12,actualBoundingBoxLeft:1,actualBoundingBoxRight:9,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2};},fillText(...v){calls.push(['text',...v]);},beginPath(){},arc(...v){calls.push(['arc',...v]);},moveTo(...v){calls.push(['move',...v]);},lineTo(...v){calls.push(['line',...v]);},fill(){},stroke(){}};return {g,calls};}
 test('view selection survives reload and invalid values fall back to rhombs',()=>{for(const mode of ['rhombs','digits','brackets','parentheses','stars']){const m=mirror({bitView:mode});assert.equal(m.state.bitView,mode);assert.equal(m.symbolsOnly(),mode!=='rhombs');}assert.equal(mirror({bitView:'invalid'}).state.bitView,'rhombs');});
 test('digits and bracket ink are centered and use the bit rotation',()=>{for(const [mode,bit,text] of [['digits','0','0'],['digits','1','1'],['brackets','0','()'],['brackets','1',')'],['parentheses','0','('],['parentheses','1',')']]){const m=mirror({bitView:mode,zero:30,one:-45}),{g,calls}=canvas();m.drawSymbol(g,bit,100,200,14);assert.deepEqual(calls[0],['translate',100,200]);assert.ok(Math.abs(calls[1][1]-(bit==='0'?Math.PI/6:-Math.PI/4))<1e-12);assert.deepEqual(calls[2],['text',text,-4,3]);}});
 test('star and dot share the exact origin; hidden symbols emit no geometry',()=>{const m=mirror({bitView:'stars'}),star=canvas(),dot=canvas();m.drawSymbol(star.g,'1',37,82,10);m.drawSymbol(dot.g,'0',37,82,10);assert.deepEqual(star.calls[0],dot.calls[0]);assert.deepEqual(dot.calls[2].slice(0,3),['arc',0,0]);const rays=star.calls.filter(c=>c[0]==='move'||c[0]==='line');assert.equal(rays.length,6);for(let i=0;i<6;i+=2){assert.ok(Math.abs(rays[i][1]+rays[i+1][1])<1e-12);assert.ok(Math.abs(rays[i][2]+rays[i+1][2])<1e-12);}m.state.hideOneDigit=true;const hidden=canvas();m.drawSymbol(hidden.g,'1',37,82,10);assert.equal(hidden.calls.length,0);});
@@ -76,4 +76,20 @@ test('hover centre chooses a real bit nearest the geometric centroid, before sou
  m.setBitCenters([[100,200,'.'],[95,202,'0'],[110,200,'1'],[100,180,'1']],{width:20,height:30});
  const c=m.centerBit();assert.equal(c.x,95);assert.equal(c.y,202);assert.equal(c.bit,'0');assert.equal(c.width,20);
  m.setBitCenters([],{width:20,height:30});assert.equal(m.centerBit(),null);
+});
+
+
+test('packed symbols fill the cell ink bounds without moving their centres, in single and batched drawing',()=>{
+ for(const mode of ['digits','brackets','parentheses'])for(const bit of ['0','1']){
+  const m=mirror({bitView:mode,packedBits:true,zero:30,one:-45}),single=canvas(),batch=canvas(),size=12,width=20,height=34,points=[[100,200],[130,217]];
+  assert.equal(m.state.packedBits,true);
+  m.drawSymbol(single.g,bit,...points[0],size,width,height);m.drawSymbolBatch(batch.g,bit,points,size,'#abc',1,width,height);
+  const scale=single.calls.find(c=>c[0]==='scale'),text=single.calls.find(c=>c[0]==='text'),texts=batch.calls.filter(c=>c[0]==='text');
+  assert.deepEqual(scale,['scale',2,3.4]);assert.deepEqual(batch.calls.find(c=>c[0]==='scale'),scale);
+  const angle=m.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle);
+  for(let i=0;i<points.length;i++){const [x,y]=points[i],lx=texts[i][2]*scale[1],ly=texts[i][3]*scale[2];assert.ok(Math.abs(lx*co-ly*si-(x+text[2]*scale[1]*co-text[3]*scale[2]*si))<1e-9);assert.ok(Math.abs(lx*si+ly*co-(y+text[2]*scale[1]*si+text[3]*scale[2]*co))<1e-9);}
+ }
+ const m=mirror({bitView:'stars',packedBits:true}),star=canvas(),dot=canvas();m.drawSymbol(star.g,'1',100,200,12,20,34);m.drawSymbol(dot.g,'0',100,200,12,20,34);
+ assert.equal(dot.calls.find(c=>c[0]==='arc')[3],10);assert.equal(star.g.lineWidth,2);assert.equal(star.calls.find(c=>c[0]==='line')[1],9);
+ assert.equal(mirror().state.packedBits,false);
 });
