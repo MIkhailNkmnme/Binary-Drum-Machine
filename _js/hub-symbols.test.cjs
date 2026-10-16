@@ -108,3 +108,5 @@ test('free bit rotation crosses old stops and wraps full turns in either directi
  assert.equal(mirror({...m.state}).state.bitFreeRotation,false);
  m.setBitFreeRotation(true);m.tiltBit('1',5);assert.equal(m.state.one,65);
 });
+
+test('axis defaults to the screen centre and ignores the old unpinned preference',()=>{assert.equal(mirror().state.screenPin,true);assert.equal(mirror({screenPin:false}).state.screenPin,true);});

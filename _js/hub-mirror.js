@@ -40,12 +40,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.on = saved.on !== false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -119,7 +119,7 @@
   }
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
-  function lockCenter(){if(!frame)return;if(state.screenPin){const p=window.HubView?.screenCenterAnchor?.();if(p?.every(Number.isFinite)){state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}return;}if(state.on)return;const p=window.HubView?.originalCenter?.()||[frame.left+frame.width/2,frame.height/2];state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}
+  function lockCenter(){if(!frame)return;if(state.screenPin){const p=window.HubView?.screenCenterAnchor?.();if(p?.every(Number.isFinite)){state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}return;}if(state.on||window.HubView?.centerBitPinned)return;const p=window.HubView?.originalCenter?.()||[frame.left+frame.width/2,frame.height/2];state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}
   function axisTailLength(){
     if(!frame||!bitCell?.width||!bitCell?.height||window.HubImage?.active)return 0;
     const [cx,cy]=center(),shift=window.HubView?.sourceShift()||[0,0],dx=-Math.cos(state.angle),dy=-Math.sin(state.angle),hw=bitCell.width/2,hh=bitCell.height/2;
@@ -140,6 +140,7 @@
   }
   const update = () => {
     lockCenter();
+    if(frame)window.HubView?.enforceCenterBitPin?.(center());
     if (!root || !frame) return;
     const px=frame.width*state.x, py=frame.height*state.y, radius=Math.min(frame.width,frame.height)*state.orbitRadius;
     const mobile = matchMedia('(max-width: 1100px)').matches;
@@ -273,7 +274,7 @@
     });
     document.body.append(settings);
     settings.classList.add('open'); // v0.188: группы всегда видимы.
-    for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центры битов и рядов, середины промежутков'],['screenPin','◎\nцентр','Конец оси в центре экрана'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;if(key==='screenPin')b.classList.add('hubAxisScreenPin');b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet){turnField(snapAngle(visibleAngle())-visibleAngle());snapAxisPosition();}}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
+    for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центры битов и рядов, середины промежутков'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet){turnField(snapAngle(visibleAngle())-visibleAngle());snapAxisPosition();}}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     { const g=settings.querySelector('[aria-label^="Золото"]');if(g&&colorGroup){g.style.gridArea='gold';colorGroup.append(g);} }   // v0.141: ✦ — в группе «Цвета»
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
     spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать зеркало; без зеркала — оригинал вокруг центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать ось: зеркало или оригинал');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else startSpin();save();};spinControl.append(spinButton);
@@ -389,7 +390,7 @@
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter||state.screenPin)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
-    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
+    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(window.HubView?.centerBitPinned)update();if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
     bitAt(x,y,mirror=false){return this.pickBit(x,y,mirror)?.bit??null;},

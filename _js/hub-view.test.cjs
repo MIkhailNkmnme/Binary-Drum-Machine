@@ -71,7 +71,8 @@ function realMirror(f) {
   const document={readyState:'loading',addEventListener(){}};
   vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),{window:f.window,document,
     localStorage:{getItem:()=>null,setItem(){}},cancelAnimationFrame(){},Event:class{constructor(type){this.type=type;}}});
-  f.window.HubMirror.place(300,900,800);return f.window.HubMirror;
+  // Legacy unpinned cases remain explicit; live defaults now always pin the axis.
+  f.window.HubMirror.state.screenPin=false;f.window.HubMirror.place(300,900,800);return f.window.HubMirror;
 }
 function screenPoint(view,x,y) {
   const el={id:'hubMirror',dataset:{},offsetLeft:0,offsetTop:0,style:{}};view.apply(el);
@@ -544,4 +545,23 @@ test('successive clicks on zero and one accumulate both wheel targets in either 
   f.emit('pointerdown',{target:{closest:()=>true},button:0});click('1');wheel(120);assert.equal(m.state.zero,5);assert.equal(m.state.one,10);
   down('0');f.emit('pointermove',{pointerId:10,clientX:808,clientY:200});f.emit('pointerup',{type:'pointerup',pointerId:10});wheel(120);assert.equal(m.state.zero,5);assert.equal(m.state.one,10);
  }
+});
+
+test('centre bit pin aligns the actual bit to the axis and follows movement, zoom, rotation and 3D',()=>{
+ for(const on of [false,true])for(const screenPin of [false,true]){
+  const f=fixture({zoom:1.7,angle:31,flip:90,mirrorFlip:28}),m=realMirror(f),v=f.window.HubView;
+  m.state.on=on;m.state.screenPin=screenPin;m.state.x=.6;m.state.y=.4;m.state.autoCenter=false;
+  v.setSourceCenter(830,300);m.setBitCenters([[826,304,'1'],[860,330,'0']],{width:20,height:30});
+  const check=()=>{const bit=m.centerBit(),axis=Array.from(m.rotationCenter());for(const reflected of on?[false,true]:[false])near(Array.from(v.projectBit(bit.x,bit.y,reflected)),axis);};
+  f.button('Закрепить центральный бит треугольника в центре оси').onclick();check();assert.equal(f.state().centerBitPin,true);
+  assert.notDeepEqual(Array.from(v.originalCenter()),Array.from(m.rotationCenter()),'pin the bit, not the nearby geometric centroid');
+  m.moveFrom(m.position(),40,25);check();v.rotateBy(15);check();f.button('Увеличить масштаб холста').onclick();check();v.shiftSourceBy(30,-25);check();
+  v.setSourceCenter(750,450);m.setBitCenters([[747,453,'0'],[790,480,'1']],{width:20,height:30});check();
+  f.button('Закрепить центральный бит треугольника в центре оси').onclick();assert.equal(f.state().centerBitPin,false);const before=Array.from(v.sourceShift());v.shiftSourceBy(30,-25);near(Array.from(v.sourceShift()),[before[0]+30,before[1]-25]);
+ }
+});
+test('saved centre bit pin waits for actual bit geometry and remains enabled after reload',()=>{
+ const f=fixture({centerBitPin:true}),m=realMirror(f),v=f.window.HubView;
+ assert.equal(v.centerBitPinned,true);assert.equal(f.button('Закрепить центральный бит треугольника в центре оси').attributes['aria-pressed'],'true');
+ v.setSourceCenter(830,300);m.setBitCenters([[826,304,'1']],{width:20,height:30});near(Array.from(v.projectBit(826,304)),Array.from(m.rotationCenter()));
 });

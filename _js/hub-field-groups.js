@@ -68,7 +68,7 @@
       else if (item.matches('.hubBitSymmetry,.hubSymmetryMinimum') || label.includes('Симметрия параллельно')) key = 'symmetry';
       else if (item.matches('.hubImageTools')) key = 'file';
       else if (item.matches('.hubFlipControl,.hubFlipPlanes')) key = 'space';
-      else if (item.matches('.hubMirrorSpinControl,.hubAxisScreenPin') || /Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label)) key = 'axis';
+      else if (item.matches('.hubMirrorSpinControl,.hubAxisScreenPin,.hubCenterBitPin') || /Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label)) key = 'axis';
       body(key).append(item);
     }
     // Composite wrappers keep their event handlers; their buttons join the same grid.
