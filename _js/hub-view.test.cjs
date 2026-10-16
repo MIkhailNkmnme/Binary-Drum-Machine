@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 function fixture(saved = {}) {
   const raf=new Map();let nextRaf=0;
-  const elements = [], listeners = {}, windowListeners = {}, storage = new Map([['zerk_hub_view', JSON.stringify(saved)]]);
+  const elements = [], listeners = {}, windowListeners = {}, storage = new Map([['zerk_hub_view', JSON.stringify({frameLocked:false,...saved})]]);
   const element = () => {
     const e = {style:{},dataset:{},children:[],offsetLeft:0,offsetTop:0,attributes:{},classList:{add(){},toggle(name,value){this[name]=value;}},
       append(...items){this.children.push(...items);},setAttribute(k,v){this.attributes[k]=v;},addEventListener(){}};
@@ -250,10 +250,10 @@ test('screen-pinned axis stays at viewport center through camera changes, includ
 });
 
 
-test('pinned empty drag rotates the whole field and axis around viewport center',()=>{
+test('middle-button pinned empty drag rotates the whole field and axis around viewport center',()=>{
  const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.screenPin=true;m.syncCenter();m.hit=()=>({source:false,mirror:false});
  const p=screenPoint(v,800,400),axis=m.state.angle+v.rotation;
- f.emit('pointerdown',{target:{closest:()=>null},button:0,pointerId:4,clientX:800,clientY:400,stopPropagation(){}});
+ f.emit('pointerdown',{target:{closest:()=>null},button:1,pointerId:4,clientX:800,clientY:400,preventDefault(){},stopPropagation(){}});
  f.emit('pointermove',{pointerId:4,clientX:600,clientY:600});
  near(screenPoint(v,800,400),[600-(p[1]-400),400+(p[0]-600)]);
  assert.ok(Math.abs(m.state.angle+v.rotation-axis-Math.PI/2)<1e-10);
@@ -413,4 +413,23 @@ test('axis continues backward only to the last intersected bit, including bit ro
  m.state.zero=90;assert.ok(Math.abs(m.axisTailLength()-105)<1e-8);
  f.window.HubView.shiftSourceBy(30,0);assert.ok(Math.abs(m.axisTailLength()-75)<1e-8);
  m.setBitCenters([[400,500,'1']],{width:20,height:10});assert.equal(m.axisTailLength(),0);
+});
+
+
+test('frame lock defaults on and advances by the actual fraction on each callback regardless of time or magnet',()=>{
+ const f=fixture({frameLocked:undefined}),v=f.window.HubView,input=f.button('Скорость автокручения в оборотах за кадр'),mode=f.button('Точный шаг вращения на каждый кадр');
+ assert.equal(mode.attributes['aria-pressed'],'true');assert.equal(input.disabled,false);
+ input.value='1/2';input.onchange();assert.equal(f.state().frameStep,.5);
+ f.tick(0);assert.equal(v.rotation,Math.PI);f.tick(16);assert.equal(v.rotation,0);f.tick(1600);assert.equal(v.rotation,Math.PI);
+ f.button('Автокручение треугольника').onclick();f.tick(2000);assert.equal(v.rotation,Math.PI);
+ f.button('Вернуть весь рисунок в поле').onclick();f.window.HubMirror.state.magnet=true;
+ input.value='1/3';input.onchange();f.tick(3000);assert.ok(Math.abs(v.rotation-2*Math.PI/3)<1e-10);f.tick(3001);assert.ok(Math.abs(v.rotation-4*Math.PI/3)<1e-10);f.tick(6000);assert.ok(Math.abs(v.rotation)<1e-10);
+ mode.onclick();assert.equal(f.state().frameLocked,false);mode.onclick();assert.equal(f.state().frameLocked,true);assert.equal(f.state().frameStep,1/3);
+ input.value='1/0';input.onchange();assert.equal(f.state().frameStep,1/3);
+});
+
+test('left drag outside bits delegates to the axis, while middle drag keeps camera rotation',()=>{
+ const f=fixture(),m=realMirror(f);m.state.screenPin=true;let grabbed=null;m.grabAxis=e=>{grabbed=e;return true;};
+ const e={target:{closest:()=>null},button:0,pointerId:5,clientX:800,clientY:400,stopPropagation(){}};
+ f.emit('pointerdown',e);assert.equal(grabbed,e);assert.equal(f.window.HubView.rotation,0);
 });

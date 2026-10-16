@@ -262,22 +262,25 @@
       dragHint.hidden=false;dragHint.dataset.motion=motion;
       Object.assign(dragHint.style,{left:(cx+t*co)+'px',top:(cy+t*si)+'px',transform:'translate(-50%,-50%) rotate('+a+'rad)'});
     }
-    const hoverAxisHint=e=>{if(drag)return;if((e.target===line||e.target===turn)&&e.pointerType!=='touch')showAxisHint(e);else if(dragHint)dragHint.hidden=true;};
+    const hoverAxisHint=e=>{if(drag)return;if((e.target===line||e.target===tail||e.target===turn)&&e.pointerType!=='touch')showAxisHint(e);else if(dragHint)dragHint.hidden=true;};
     root.addEventListener('pointerover',hoverAxisHint);
     root.addEventListener('pointerleave',()=>{if(!drag&&dragHint)dragHint.hidden=true;});
-    root.addEventListener('pointerdown', e => {
-      if (e.button !== 0 || !frame) return;
+    const beginAxisDrag = (e,fromBackground=false) => {
+      if (e.button !== 0 || !frame) return false;
+      const target=fromBackground?line:e.target;
       e.preventDefault(); e.stopPropagation();
-      const source=state.screenPin&&e.target!==turn,ey=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
+      const source=state.screenPin&&target!==turn,ey=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
       let inverse=(source?window.HubView?.captureInverse?.():window.HubView?.captureAxisInverse?.())||window.HubView?.captureInverse?.(),p=inverse?inverse(e.clientX,ey):[e.clientX,ey];
       if(!p.every(Number.isFinite)){inverse=window.HubView?.captureAxisInverse?.();p=inverse?inverse(e.clientX,ey):p;}
       const [mx,my]=p;if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&e.target===turn,handle:e.target===handle,turn:!source&&(!state.on||e.target===turn||state.axisRotate) };
+        moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&target===turn,handle:target===handle,turn:!source&&(!state.on||target===turn||state.axisRotate) };
       drag.lastX=mx;drag.lastY=my;drag.captureRotation=window.HubView?.rotation||0;drag.axisAngle=state.angle;drag.startAngle=drag.angle;drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
-      resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
-    });
+      resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();return true;
+    };
+    window.HubMirror.grabAxis=e=>beginAxisDrag(e,true);
+    root.addEventListener('pointerdown',e=>beginAxisDrag(e));
     root.addEventListener('pointermove', e => {
       if(!drag){hoverAxisHint(e);return;}
       if(drag.id !== e.pointerId)return;
@@ -318,7 +321,7 @@
     });
     const finish = e => {
       if (!drag || drag.id !== e.pointerId) return;
-      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&[line,turn].includes(document.elementFromPoint?.(e.clientX,e.clientY)))showAxisHint(e);
+      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&[line,tail,turn].includes(document.elementFromPoint?.(e.clientX,e.clientY)))showAxisHint(e);
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
       if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };
