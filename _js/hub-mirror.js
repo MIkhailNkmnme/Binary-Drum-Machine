@@ -1,3 +1,4 @@
+/* Hub v0.152: палитра поля задаёт цвета кнопок; по умолчанию Лёд · огонь. */
 /* Hub v0.151: магнит ограничивает ручное и автоматическое вращение шагами 15°. */
 /* Hub v0.150: независимые переключатели прозрачных цифр 0 и 1. */
 /* Hub v0.149: ось-луч от опорной точки; пунктирная орбита при ручном повороте. */
@@ -33,7 +34,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -94,6 +95,7 @@
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = radius + 'px';
     Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
+    orbit.querySelector('polygon').setAttribute('transform','rotate('+(-(window.HubView?.rotation||0)*180/Math.PI)+')');
     window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
     handle.title = state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
@@ -112,6 +114,9 @@
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
     orbit=document.createElement('div');orbit.className='hubMirrorOrbit';orbit.setAttribute('aria-hidden','true');
+    const polygonPoints=(n,r)=>Array.from({length:n},(_,i)=>{const a=i*2*Math.PI/n;return (r*Math.cos(a)).toFixed(5)+','+(r*Math.sin(a)).toFixed(5);}).join(' ');
+    orbit.innerHTML='<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="100"/><polygon points="'+polygonPoints(24,100)+'"/></svg>';
+    turn.innerHTML='<svg class="hubMirrorTurnMagnet" viewBox="-14 -14 28 28" aria-hidden="true"><polygon points="'+polygonPoints(6,11)+'"/><polygon points="'+polygonPoints(6,7)+'"/></svg>';
     line.append(handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
@@ -160,7 +165,9 @@
     const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`,palBox=document.createElement('details'),palHead=document.createElement('summary'),palList=document.createElement('label');
     palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';
     const inputs={};
-    const syncColors=()=>{const c=api.colors();palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
+    const syncColors=()=>{const c=api.colors();
+      document.documentElement.style.setProperty('--hub-theme-bit',c.bit);document.documentElement.style.setProperty('--hub-theme-accent',c.sym);
+      palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
       for(const k in inputs){if(document.activeElement!==inputs[k])inputs[k].value=c[k];inputs[k].parentElement.style.setProperty('--slot',c[k]);}};
     [...PALETTES.map((p,i)=>[i,p[0],p[1],p[4]]),[-1,'★ Свой',null,null]].forEach(([i,name,a,b])=>{const btn=document.createElement('button');btn.type='button';btn.dataset.i=i;btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);
       if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
@@ -260,7 +267,7 @@
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
-    colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
+    colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
     digitVisible(bit){return !(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
