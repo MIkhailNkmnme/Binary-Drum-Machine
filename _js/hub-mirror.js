@@ -1,3 +1,4 @@
+/* Hub v0.126: default axis tilted 110° through the middle of the triangle (autoCenter); right click / long press no longer switches the mirror off. */
 /* Hub v0.125: gold — bits whose reflection across the axis lands on the same bit; ✦ toggles it. */
 /* Hub v0.119: saved row and pair minimums, adjustable down to 1. */
 /* Hub v0.118: local mirror axes and matching bits; enabled by default. */
@@ -5,10 +6,12 @@
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const state = { on: true, angle: Math.PI / 2, x: .5, y: .5, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const AX0 = 110 * Math.PI / 180;   // v0.126: начальный наклон оси — как на снимке пользователя
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
+      state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
@@ -148,7 +151,7 @@
     root.addEventListener('pointerup', finish); root.addEventListener('pointercancel', finish);
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null; save(); } });
     root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
-    root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); state.on = !state.on;if(!state.on){stopSpin();resumeSpin=false;}syncSpin();changed();save(); });
+    root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
     turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); rotate(Math.sign(e.deltaY) * Math.PI / 36); }, { passive: false });
     root.addEventListener('keydown', e => {
       if (!frame) return;
@@ -162,7 +165,9 @@
   }
   window.HubMirror = {
     state, get revision() { return revision; },
-    home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:Math.PI/2});changed();save();},
+    home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:AX0,autoCenter:true});changed();save();},
+    // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
+    centerOn(x,y){if(!frame||!state.autoCenter)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
     setBitCenters(points){bitCenters=points;},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
