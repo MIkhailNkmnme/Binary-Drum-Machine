@@ -34,8 +34,6 @@
 /* v0.219: образцы и цвета — ромбами в решётке группы «Цвет». */
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;transform:none;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer}
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch:hover{filter:brightness(1.25)}
-/* v0.221: выбранная — тёмный ромб с белой и чёрной каймой посередине, видно на любом цвете. */
-#hubFieldTools[data-nested] .hubTreeItem>.hubSwatch[aria-pressed=true]::after{content:'';position:absolute;inset:13px;background:#000;border:3px solid #fff;box-shadow:0 0 0 2px #000;transform:rotate(45deg);pointer-events:none}
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch.hubPaletteOwn{background:var(--hub-theme-bg);color:#ffd166;font:16px/1 system-ui,sans-serif}
 #hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor{position:relative;width:48px;height:48px;margin:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--slot,var(--hub-theme-bg))}
 #hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor b{font-size:14px}
