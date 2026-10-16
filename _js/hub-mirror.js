@@ -1,3 +1,4 @@
+/* Hub v0.141: own preset (★) with four colours, alphas for bits / fold / symmetry; colour controls grouped in a translucent rhombus. */
 /* Hub v0.140: opacity of the axis-symmetry highlight (symAlpha, slider next to ✦). */
 /* Hub v0.139: each preset has its own colour for the axis-symmetry highlight (5th entry, was always gold). */
 /* Hub v0.137: defaults ✦ on, 🧲 magnet off (applied once to saved settings, defaultsRevision 2). */
@@ -25,7 +26,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2,symAlpha:.95 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -34,7 +35,9 @@
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
-      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённыхstate.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(.1,Math.min(1,saved.symAlpha));if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
+      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённыхstate.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(.1,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(.1,Math.min(1.3,saved[k]));
+      if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(Object.keys(c).length===4)state.custom=c;}
+      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -43,7 +46,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
+  let colorGroup = null, frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false;
   function syncSpin(){
     if(!spinButton)return;
@@ -122,18 +125,31 @@
       range.addEventListener('input', () => { state[key] = Number(range.value); value.textContent = state[key] + '°'; changed(); });
       range.addEventListener('change', save);
     }
-    { // v0.128: 🎨 — десять заготовок цвета: биты оригинала и отражённые (и заворот)
-      const box=document.createElement('details'),head=document.createElement('summary'),panel=document.createElement('label');box.className='hubTilt hubPalette';head.title='Цвета: биты и отражение — заготовки';head.textContent='🎨';
-      panel.className='hubPaletteList';const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`;
-      PALETTES.forEach(([name,a,,,b],i)=>{const btn=document.createElement('button');btn.type='button';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);btn.style.background=sw(a,b);btn.setAttribute('aria-pressed',String(state.palette===i));
-        btn.onclick=e=>{e.preventDefault();state.palette=i;panel.querySelectorAll('button').forEach((x,k)=>x.setAttribute('aria-pressed',String(k===i)));head.style.background=sw(a,b);changed();save();};panel.append(btn);});
-      head.style.background=sw(PALETTES[state.palette][1],PALETTES[state.palette][4]);box.append(head,panel);settings.append(box);}
-    { // v0.140: «попробовать прозрачность у симметрии от оси» — ползунок рядом с ✦ (единицы; нули — в той же пропорции)
+    // v0.141: «свой пресет — цвета, прозрачности и все настройки цвета; кнопки в группу, в общем полупрозрачном ромбе».
+    // Группа «Цвета»: 🎨 заготовки (последний образец ★ — свой), 4 цвета (биты, отражение, заворот, симметрия), ✦ вкл / выкл и прозрачности
+    // (биты, заворот, симметрия). Любой цвет поменял — выбран «★ свой» (копия текущей заготовки + правка), он помнится.
+    colorGroup=document.createElement('div');colorGroup.className='hubColorGroup';colorGroup.setAttribute('role','group');colorGroup.setAttribute('aria-label','Цвета');
+    const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`,palBox=document.createElement('details'),palHead=document.createElement('summary'),palList=document.createElement('label');
+    palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';
+    const inputs={};
+    const syncColors=()=>{const c=api.colors();palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
+      for(const k in inputs)if(document.activeElement!==inputs[k])inputs[k].value=c[k];};
+    [...PALETTES.map((p,i)=>[i,p[0],p[1],p[4]]),[-1,'★ Свой',null,null]].forEach(([i,name,a,b])=>{const btn=document.createElement('button');btn.type='button';btn.dataset.i=i;btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);
+      if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
+      btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();};palList.append(btn);});
+    palBox.append(palHead,palList);colorGroup.append(palBox);
+    for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
+      const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot';wrap.style.gridArea=area;wrap.title=title;
+      input.type='color';input.setAttribute('aria-label',title);m.textContent=mark;wrap.append(input,m);inputs[key]=input;
+      input.addEventListener('input',()=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=input.value;syncColors();changed();});input.addEventListener('change',save);
+      colorGroup.append(wrap);}
+    for(const [key,area,mark,title,min,max] of [['symAlpha','sa','✦','Прозрачность подсветки симметрии по оси',10,100],['bitAlpha','ab','1','Прозрачность битов оригинала и отражения',10,130],['foldAlpha','af','⤵','Прозрачность заворота',10,130]]){
       const box=document.createElement('details'),head=document.createElement('summary'),value=document.createElement('output'),label=document.createElement('label'),range=document.createElement('input');
-      box.className='hubTilt';head.title='Прозрачность подсветки симметрии по оси';head.append(document.createTextNode('✦ '),value);
-      range.type='range';range.min='10';range.max='100';range.step='5';range.value=Math.round(state.symAlpha*100);range.setAttribute('aria-label',head.title);value.textContent=range.value+'%';
-      range.addEventListener('input',()=>{state.symAlpha=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
-      label.append(range);box.append(head,label);settings.append(box);}
+      box.className='hubTilt hubAlpha';box.style.gridArea=area;head.title=title;head.append(document.createTextNode(mark+' '),value);
+      range.type='range';range.min=String(min);range.max=String(max);range.step='5';range.value=Math.round(state[key]*100);range.setAttribute('aria-label',title);value.textContent=range.value+'%';
+      range.addEventListener('input',()=>{state[key]=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
+      label.append(range);box.append(head,label);colorGroup.append(box);}
+    syncColors();settings.append(colorGroup);
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
@@ -145,6 +161,7 @@
       let on=false;try{on=localStorage.getItem('zerk_hub_tools')==='1';}catch(_){}set(on);
       open.addEventListener('click',e=>{e.stopPropagation();set(!settings.classList.contains('open'));});document.body.append(open);}
     for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центр поля и центры битов'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
+    { const g=settings.querySelector('[aria-label^="Золото"]');if(g&&colorGroup){g.style.gridArea='gold';colorGroup.append(g);} }   // v0.141: ✦ — в группе «Цвета»
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
     spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать линию зеркала вокруг её центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать зеркало вокруг центра');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else startSpin();save();};spinControl.append(spinButton);
     const spinLabel=document.createElement('label'),spinHead=document.createElement('span');spinLabel.className='hubMirrorSpeedControl';spinHead.append(document.createTextNode('Зеркало · '));spinValue=document.createElement('output');spinHead.append(spinValue);spinLabel.append(spinHead);
@@ -198,7 +215,7 @@
     });
     update();
   }
-  window.HubMirror = {
+  const api = window.HubMirror = {
     state, get revision() { return revision; },
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
@@ -207,7 +224,7 @@
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
-    colors(){const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
+    colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
