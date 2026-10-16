@@ -28,3 +28,12 @@ test('rhombs and custom images do not inherit invisible glyph-cell hit targets',
   assert.equal(m.hit(50,50).source,false);
  }
 });
+
+test('batched glyphs preserve ink positions under bit rotation',()=>{
+ for(const mode of ['digits','brackets'])for(const bit of ['0','1']){
+  const m=mirror({bitView:mode,zero:30,one:-45}),single=canvas(),batch=canvas(),points=[[100,200],[135,224]],angle=m.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle);
+  m.drawSymbol(single.g,bit,...points[0],14);m.drawSymbolBatch(batch.g,bit,points,14,'#abcdef',.35);
+  const one=single.calls.find(v=>v[0]==='text'),many=batch.calls.filter(v=>v[0]==='text');assert.equal(many.length,2);
+  for(let i=0;i<2;i++){const [x,y]=points[i];assert.equal(many[i][1],one[1]);assert.ok(Math.abs(many[i][2]*co-many[i][3]*si-(x+one[2]*co-one[3]*si))<1e-10);assert.ok(Math.abs(many[i][2]*si+many[i][3]*co-(y+one[2]*si+one[3]*co))<1e-10);}
+ }
+});

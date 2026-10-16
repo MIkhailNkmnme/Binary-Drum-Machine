@@ -5,7 +5,7 @@
   const draws = {}, frames = [], tasks = []; let last = 0;
   window.hubPerfMeasure = (name, run) => {
     const start = performance.now();
-    try { return run(); } finally { (draws[name] ||= []).push(performance.now() - start); }
+    try { return run(); } finally { const elapsed=performance.now()-start;(draws[name] ||= []).push(elapsed);if(elapsed>2)document.getElementById('hubPerf')?.setAttribute('data-last-'+name.toLowerCase(),elapsed.toFixed(2)); }
   };
   const tick = now => { if (last) frames.push(now-last); last=now; requestAnimationFrame(tick); };
   requestAnimationFrame(tick);

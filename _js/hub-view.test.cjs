@@ -322,3 +322,25 @@ test('axis handle maps pointer directly through the screen plane at any 3D tilt,
   }
  }
 });
+
+test('wheel by axis endpoint rotates the axis instead of zooming, elsewhere zooms',()=>{
+ const f=fixture(),calls=[];f.window.HubMirror.wheelAt=(...v)=>{calls.push(v);return true;};
+ assert.equal(f.wheel().prevented,true);assert.equal(f.window.HubView.scale,1);assert.deepEqual(calls,[[750,400,-120]]);
+ f.window.HubMirror.wheelAt=()=>false;f.wheel();assert.ok(f.window.HubView.scale>1);
+});
+
+test('wheel on axis line shifts bits without zoom and endpoint takes precedence',()=>{
+ const f=fixture(),calls=[];f.window.HubMirror.wheelAt=()=>false;f.window.HubMirror.wheelAlong=d=>{calls.push(d);return true;};
+ const event={target:{closest:s=>s==='.hubMirrorLine'},clientX:800,clientY:400,deltaY:120,preventDefault(){this.prevented=true;}};
+ f.emit('wheel',event);assert.equal(event.prevented,true);assert.equal(f.window.HubView.scale,1);assert.deepEqual(calls,[120]);
+ f.window.HubMirror.wheelAt=()=>true;f.emit('wheel',event);assert.deepEqual(calls,[120]);
+});
+
+test('direct symbol layers render in screen and export without a prepainted bitmap',()=>{
+ const f=fixture(),passes=[];let copies=0;
+ const g={save(){},restore(){},setTransform(){},clearRect(){},translate(){},transform(){},drawImage(){copies++;}};
+ f.window.HubMirror.matrix=()=>null;
+ const vector={direct:true,base:[1,0,0,1,0,0],draw:()=>passes.push('source')},canvas={width:1200,height:800,getContext:()=>g};
+ f.window.HubView.paint(canvas,null,{},vector);f.window.HubView.paint(canvas,{scale:2,left:300},{},vector);
+ assert.deepEqual(passes,['source','source']);assert.equal(copies,0);
+});

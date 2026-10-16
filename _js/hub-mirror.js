@@ -79,7 +79,11 @@
   }
   function startSpin(){if(spinRunning)return;spinRemainder=0;spinRunning=true;spinTime=0;spinRaf=requestAnimationFrame(spinTick);syncSpin();}
   function magneticPoint(x,y){let best=[x,y],distance=10/Math.max(.2,window.HubView?.scale||1);const shift=window.HubView?.sourceShift()||[0,0];for(const p of [[frame.left+frame.width/2,frame.height/2],...bitCenters.map(p=>[p[0]+shift[0],p[1]+shift[1]])]){const d=Math.hypot(x-p[0],y-p[1]);if(d<=distance){distance=d;best=p;}}return best;}
-  const buffers = new WeakMap(),liveSources=new Set();
+  const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map();
+  function glyphOffset(g,text,size){
+    const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
+    if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
+  }
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
   function lockCenter(){if(!frame)return;if(state.screenPin){const p=window.HubView?.screenCenterAnchor?.();if(p?.every(Number.isFinite)){state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}return;}if(state.on)return;const p=window.HubView?.originalCenter?.()||[frame.left+frame.width/2,frame.height/2];state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}
@@ -106,7 +110,9 @@
     handle.title = state.screenPin?'Тяни линию — зеркальный перенос пары; круглую ручку — поворот оси':state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.screenPin?'Сдвинуть оригинал и отражение зеркально относительно неподвижной оси':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
-    turn.title = state.screenPin?'Вдоль оси — радиус, через центр — разворот луча; поперёк — поворот. Один жест — одно действие':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
+    line.title='Колесо у точки — поворот оси; над линией — сдвиг битов вдоль оси';
+    turn.title = state.screenPin?'Вдоль оси — радиус, через центр — разворот луча; поперёк — поворот. Новое направление переключает действие без отпускания':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку';
+    turn.title+='; колесо рядом — вращать рисунок вокруг центра треугольника';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
@@ -192,6 +198,8 @@
       box.className='hubTilt hubAlpha';box.style.gridArea=area;head.title=title;head.append(document.createTextNode(mark+' '),value);
       range.type='range';range.min=String(min);range.max=String(max);range.step='5';range.value=Math.round(state[key]*100);range.setAttribute('aria-label',title);value.textContent=range.value+'%';
       range.addEventListener('input',()=>{state[key]=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
+      const colorKey={bitAlpha:'bit',foldAlpha:'fold',symAlpha:'sym'}[key],picker=inputs[colorKey],oldSlot=picker.parentElement;
+      head.classList.add('hubColorAlpha');picker.classList.add('hubColorFrame');picker.title=picker.getAttribute('aria-label')+' — рамка';picker.addEventListener('click',e=>e.stopPropagation());head.append(picker);oldSlot.remove();
       label.append(range);box.append(head,label);colorGroup.append(box);}
     for(const [key,bit,area] of [['hideZeroDigit','0','d0'],['hideOneDigit','1','d1']]){
       const b=document.createElement('button');b.type='button';b.className='hubRhomb hubDigitToggle';b.style.gridArea=area;b.textContent=bit;b.title='Прозрачные цифры '+bit+' — ромбы остаются';b.setAttribute('aria-label','Прозрачные цифры '+bit);b.setAttribute('aria-pressed',String(state[key]));
@@ -232,27 +240,43 @@
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
         moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&e.target===turn,handle:e.target===handle,turn:!source&&(!state.on||e.target===turn||state.axisRotate) };
-      drag.startAngle = drag.radius0<12?drag.angle:Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
+      drag.lastX=mx;drag.lastY=my;drag.captureRotation=window.HubView?.rotation||0;drag.axisAngle=state.angle;drag.startAngle=drag.angle;drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
       if (!drag || drag.id !== e.pointerId) return;
       e.preventDefault(); e.stopPropagation();
-      const [mx,my]=drag.inverse?drag.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY],dx=mx-drag.x,dy=my-drag.y;
+      let [mx,my]=drag.inverse?drag.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY],dx=mx-drag.x,dy=my-drag.y;
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
-      if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+      if (!drag.moved && Math.hypot(dx, dy)*(window.HubView?.scale||1) < 3) return;
       drag.moved = true;
-      if(drag.radius){const radial=dx*Math.cos(drag.angle)+dy*Math.sin(drag.angle),tangent=-dx*Math.sin(drag.angle)+dy*Math.cos(drag.angle);
-        if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
-        if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.angle+(signed<0?Math.PI:0));changed();return;}
+      if(drag.radius||drag.source||!drag.turn){
+        const angle=state.angle+(drag.source?0:(window.HubView?.rotation||0)-drag.captureRotation),co=Math.cos(angle),si=Math.sin(angle);
+        const sx=mx-drag.lastX,sy=my-drag.lastY,along=sx*co+sy*si,across=-sx*si+sy*co;
+        const next=Math.abs(along)>Math.abs(across)*1.5?'radius':Math.abs(across)>Math.abs(along)*1.5?'angle':null;
+        if(drag.mode&&next&&next!==drag.mode){
+          if(drag.candidate!==next){drag.candidate=next;drag.candidateX=drag.lastX;drag.candidateY=drag.lastY;}
+          const distance=Math.hypot(mx-drag.candidateX,my-drag.candidateY)*(window.HubView?.scale||1);
+          if(distance>=6){
+            drag.mode=next;drag.x=drag.candidateX;drag.y=drag.candidateY;drag.angle=angle;drag.axisAngle=state.angle;
+            drag.radius0=Math.min(frame.width,frame.height)*state.orbitRadius;drag.startAngle=angle;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);drag.applied=0;drag.sourceX=drag.sourceY=0;drag.px=state.x;drag.py=state.y;drag.candidate=null;
+          }
+        }else if(!next||next===drag.mode)drag.candidate=null;
+        drag.lastX=mx;drag.lastY=my;
+        if(!drag.mode)drag.mode=next||(Math.abs(along)>Math.abs(across)?'radius':'angle');
       }
-      if(drag.source){window.HubView?.shiftSourceBy(dx-drag.sourceX,dy-drag.sourceY);drag.sourceX=dx;drag.sourceY=dy;}
+      const segmentX=mx-drag.x,segmentY=my-drag.y;
+      if(drag.radius){const radial=segmentX*Math.cos(drag.angle)+segmentY*Math.sin(drag.angle),tangent=-segmentX*Math.sin(drag.angle)+segmentY*Math.cos(drag.angle);
+        if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
+        if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.axisAngle+(signed<0?Math.PI:0));changed();return;}
+      }
+      if(drag.source){const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si,tx=distance*co,ty=distance*si;window.HubView?.shiftSourceBy(tx-drag.sourceX,ty-drag.sourceY);drag.sourceX=tx;drag.sourceY=ty;}
       else if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
         let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
         if(state.magnet)delta=snapAngle(drag.visibleAngle+delta)-drag.visibleAngle;
         turnField(delta-drag.applied);drag.applied=delta;
-      } else {let x=frame.left+drag.px*frame.width+dx,y=drag.py*frame.height+dy;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
+      } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
       changed();
     });
     const finish = e => {
@@ -265,7 +289,7 @@
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null; update(); save(); } });
     root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
     root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
-    turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); rotate(Math.sign(e.deltaY) * Math.PI / 36); }, { passive: false });
+    turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); window.HubView?.rotateBy?.(Math.sign(e.deltaY)*5); }, { passive: false });
     root.addEventListener('keydown', e => {
       if (!frame) return;
       const delta = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] })[e.key];
@@ -280,7 +304,16 @@
     update();
   }
   const api = window.HubMirror = {
-    state, syncCenter:update, rotateBy:rotate, stopRotation:stopSpin, counterRotateView(delta){state.angle=turnAngle(state.angle-delta);save();}, get revision() { return revision; },
+    state, syncCenter:update, rotateBy:rotate,
+    wheelAlong(delta){if(!frame||!window.HubView?.shiftSourceBy)return false;const step=Math.sign(delta)*24/(window.HubView.scale||1);window.HubView.shiftSourceBy(step*Math.cos(state.angle),step*Math.sin(state.angle));return true;},
+    wheelAt(x,y,delta){
+      if(!frame||!handle||document.body.classList.contains('hubAutoTurning')||document.body.classList.contains('hubMirrorSpinning'))return false;
+      const near=el=>{const r=el.getBoundingClientRect();return r.width&&Math.hypot(x-r.x-r.width/2,y-r.y-r.height/2)<=28;};
+      const p=window.HubView?.axisInverse?.(x,y+(matchMedia('(max-width:1100px)').matches?scrollY:0)),c=center();
+      if(p&&Math.hypot(p[0]-c[0],p[1]-c[1])*(window.HubView.scale||1)<=28){rotate(Math.sign(delta)*Math.PI/36);return true;}
+      if(near(turn)){window.HubView?.rotateBy?.(Math.sign(delta)*5);return true;}
+      return false;
+    }, stopRotation:stopSpin, counterRotateView(delta){state.angle=turnAngle(state.angle-delta);save();}, get revision() { return revision; },
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter||state.screenPin)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
@@ -311,9 +344,17 @@
       }else{
         const text=state.bitView==='brackets'?(bit==='1'?')':'()'):bit;
         g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';
-        const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;
-        g.fillText(text,(l-r)/2,(a-d)/2);
+        const offset=glyphOffset(g,text,size);
+        g.fillText(text,...offset);
       }
+      g.restore();
+    },
+    drawSymbolBatch(g,bit,points,size,color,alpha){
+      if(!this.digitVisible(bit)||!points.length)return;
+      const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=state.bitView==='brackets'?(bit==='1'?')':'()'):bit;
+      g.save();g.rotate(angle);g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';g.fillStyle=color;g.globalAlpha=alpha;
+      const [ox,oy]=glyphOffset(g,text,size);
+      for(const [x,y] of points)g.fillText(text,x*co+y*si+ox,-x*si+y*co+oy);
       g.restore();
     },
     digitVisible(bit){return !(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},

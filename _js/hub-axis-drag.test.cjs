@@ -9,17 +9,27 @@ function fixture(){
  const emit=(type,x,y,target=turn)=>events[type]({type,pointerId:1,button:0,target,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});
  return {state,turn,handle,shift,emit};
 }
-test('radial gesture cannot turn the axis even after later sideways pointer motion',()=>{
- const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,403);f.emit('pointermove',950,480);
- assert.equal(f.state.angle,0);assert.equal(f.state.orbitRadius,.25);f.emit('pointerup',950,480);
+test('handle can switch radius to angle in one hold, without mixing actions',()=>{
+ const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,403);
+ assert.equal(f.state.angle,0);assert.equal(f.state.orbitRadius,.25);
+ f.emit('pointermove',950,480);assert.equal(f.state.orbitRadius,.25);assert.ok(Math.abs(f.state.angle-Math.atan2(80,200))<1e-10);
 });
-test('angular gesture cannot change radius even after later radial pointer motion',()=>{
- const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',926,420);f.emit('pointermove',1100,500);
- assert.equal(f.state.orbitRadius,.22);assert.ok(Math.abs(f.state.angle-Math.atan2(100,350))<1e-10);
+test('handle can switch angle to radius in one hold and keeps the angle',()=>{
+ const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',926,420);
+ const angle=f.state.angle;assert.equal(f.state.orbitRadius,.22);
+ f.emit('pointermove',1100,500);assert.ok(Math.abs(f.state.angle-angle)<1e-10);assert.ok(f.state.orbitRadius>.4);
 });
-test('line gesture translates source incrementally without moving or rotating pinned axis',()=>{
- const f=fixture(),line={};f.emit('pointerdown',850,400,line);f.emit('pointermove',900,430,line);f.emit('pointermove',910,450,line);
- assert.deepEqual(f.shift,[60,50]);assert.deepEqual([f.state.x,f.state.y,f.state.angle,f.state.orbitRadius],[.5,.5,0,.22]);
+test('line changes between along and across strokes without moving pinned axis',()=>{
+ const f=fixture(),line={};f.emit('pointerdown',850,400,line);f.emit('pointermove',900,430,line);
+ assert.deepEqual(f.shift,[50,0]);f.emit('pointermove',910,450,line);
+ assert.ok(Math.abs(f.shift[0]-50)<1e-10);assert.ok(Math.abs(f.shift[1]-20)<1e-10);
+ assert.deepEqual([f.state.x,f.state.y,f.state.angle,f.state.orbitRadius],[.5,.5,0,.22]);
+ f.emit('pointermove',950,450,line);assert.ok(Math.abs(f.shift[0]-90)<1e-10);assert.ok(Math.abs(f.shift[1]-20)<1e-10);
+});
+test('small transverse jitter does not switch the active radial stroke',()=>{
+ const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,400);f.emit('pointermove',950,403);f.emit('pointermove',950,405);
+ assert.equal(f.state.angle,0);assert.equal(f.state.orbitRadius,.25);
+ f.emit('pointermove',950,408);assert.ok(f.state.angle>0);assert.equal(f.state.orbitRadius,.25);
 });
 test('releasing handle lets the next gesture choose another operation',()=>{
  const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,400);f.emit('pointerup',950,400);
@@ -39,4 +49,13 @@ test('a handle released at the center can be pulled out on the opposite side',()
  const f=fixture();f.state.orbitRadius=0;f.state.angle=Math.PI/2;
  f.emit('pointerdown',750,400);f.emit('pointermove',751,300);
  assert.ok(Math.abs(f.state.orbitRadius-.125)<1e-10);assert.equal(f.state.angle,3*Math.PI/2);
+});
+
+test('wheel zones use the visible endpoint even when its old button is hidden',()=>{
+ const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf('wheelAlong(delta)'),end=source.indexOf(', stopRotation:',start),axis=[],field=[],shift=[];
+ const context={frame:{},handle:{},turn:{getBoundingClientRect:()=>({x:250,y:200,width:14,height:14})},state:{angle:Math.PI/2},center:()=>[100,100],matchMedia:()=>({matches:false}),document:{body:{classList:{contains:()=>false}}},window:{HubView:{scale:2,axisInverse:(x,y)=>[x/2,y/2],rotateBy:d=>field.push(d),shiftSourceBy:(x,y)=>shift.push([x,y])}},rotate:d=>axis.push(d)};
+ const api=vm.runInNewContext('({'+source.slice(start,end)+'})',context);
+ assert.equal(api.wheelAt(220,200,120),true);assert.ok(Math.abs(axis[0]-Math.PI/36)<1e-12);assert.equal(field.length,0);
+ assert.equal(api.wheelAt(257,207,-120),true);assert.deepEqual(field,[-5]);
+ assert.equal(api.wheelAt(400,400,120),false);api.wheelAlong(120);assert.ok(Math.abs(shift[0][0])<1e-12);assert.equal(shift[0][1],12);
 });
