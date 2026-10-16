@@ -1,0 +1,37 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Обводка кнопок — витрина</title><style>
+:root{--bit:#8fd3ff;--acc:#ff9a5a;--bg:color-mix(in srgb,var(--bit) 13%,#050505)}
+body{margin:0;padding:16px;background:#050a0d;color:var(--bit);font:13px system-ui}
+h1{font:600 16px system-ui;margin:0 0 4px}p{margin:0 0 14px;color:#7c8a96;max-width:760px}
+table{border-collapse:collapse}th{font:600 12px system-ui;color:#7c8a96;padding:6px 10px;text-align:center}
+td{padding:8px 10px;text-align:center;vertical-align:top}td small{display:block;color:#7c8a96;font-size:11px;margin-top:4px}
+.row{display:flex;gap:6px;justify-content:center}
+.b{position:relative;width:48px;height:48px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--bg);color:var(--bit);display:flex;flex-direction:column;align-items:center;justify-content:center;font:10px/1.05 system-ui}
+.b i{font-style:normal;font-size:14px;color:var(--acc)}
+.b.off{color:color-mix(in srgb,var(--bit) 50%,transparent)}.b.off i{opacity:.55}
+.b.sw{background:linear-gradient(90deg,#f6f1e4 0 50%,#ffd166 50% 100%)}
+.b.sw2{background:linear-gradient(90deg,#8ff0ff 0 50%,#ff5fb0 50% 100%)}
+.b .k,.b .w{position:absolute;inset:0;pointer-events:none}.b .k{background:#000}.b .w{background:#fff}
+.big .b{width:96px;height:96px;font-size:20px}.big .b i{font-size:28px}
+</style></head><body>
+<h1>Внутренняя обводка включённой кнопки</h1>
+<p>Варианты: столбцы — толщина белой обводки, строки — отступ от края ромба. Снаружи и внутри белой — по 1 px чёрного, чтобы её было видно и на светлом. В каждой ячейке: выключенная кнопка, включённая кнопка, включённая на светлой заготовке, включённая на яркой. Назовите вариант буквой и цифрой, например «Б2».</p>
+<table id="t"></table>
+<h1 style="margin-top:22px">Крупно (×2), вариант выбирается щелчком по ячейке выше</h1>
+<div class="row big" id="big"></div>
+<script>
+const T=[1,2,3,4],O=[0,2,4,6],L='АБВГ',S=Math.SQRT2;
+// Ромб |x-c|+|y-c| <= R; кольцо между R1 и R2 — evenodd из двух ромбов (в px от размера n).
+const ring=(n,a,b)=>{const c=n/2,p=r=>`${c}px ${c-r}px,${c+r}px ${c}px,${c}px ${c+r}px,${c-r}px ${c}px,${c}px ${c-r}px`;return `polygon(evenodd,${p(a)},${p(b)})`;};
+function btn(n,t,o,cls){const d=document.createElement('div');d.className='b '+cls;d.innerHTML='<i>◇</i>Зерк.';
+  if(!cls.includes('off')){const c=n/2,s=n/48,r1=c-o*s*S,r2=r1-t*s*S,k=document.createElement('span'),w=document.createElement('span');
+    k.className='k';k.style.clipPath=ring(n,r1,Math.max(0,r2-S*s));w.className='w';w.style.clipPath=ring(n,r1-S*s,Math.max(0,r2));d.append(k,w);}
+  return d;}
+const t=document.getElementById('t'),hr=t.insertRow();hr.append(Object.assign(document.createElement('th'),{textContent:'отступ \\ толщина'}));
+T.forEach((x,j)=>hr.append(Object.assign(document.createElement('th'),{textContent:L[j]+' — '+x+' px'})));
+const show=(t1,o1)=>{const g=document.getElementById('big');g.innerHTML='';for(const c of ['off','','sw','sw2'])g.append(btn(96,t1,o1,c));};
+O.forEach((o,i)=>{const r=t.insertRow();r.append(Object.assign(document.createElement('th'),{textContent:(i+1)+' — '+o+' px'}));
+  T.forEach((x,j)=>{const td=r.insertCell(),row=document.createElement('div');row.className='row';for(const c of ['off','','sw','sw2'])row.append(btn(48,x,o,c));
+    td.append(row);td.insertAdjacentHTML('beforeend','<small>'+L[j]+(i+1)+'</small>');td.style.cursor='pointer';td.onclick=()=>show(x,o);});});
+show(2,2);
+</script></body></html>
