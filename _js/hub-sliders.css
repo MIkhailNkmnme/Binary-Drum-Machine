@@ -1,0 +1,13 @@
+/* Hub v0.210: ползунки поля — шевроны, ромб-бегунок, пунктир, значение по центру. */
+#hubFieldTools .hubSlHost{font-size:0!important;gap:0!important}
+#hubFieldTools .hubSlHost>output,#hubFieldTools .hubSlHost>span:not(.hubSl){display:none!important}
+#hubFieldTools .hubSl{position:relative;display:flex;align-items:stretch;width:164px;height:24px;background:var(--hub-theme-bg)}
+#hubFieldTools .hubSlA{flex:none;width:14px;height:24px;padding:0;margin:0;border:0;background:transparent!important;clip-path:none;cursor:pointer}
+#hubFieldTools .hubSlA::after{display:none}
+#hubFieldTools .hubSlA svg{display:block;width:14px;height:24px;fill:none;stroke:var(--hub-theme-accent);stroke-width:1.5;stroke-linejoin:round}
+#hubFieldTools .hubSlA:hover svg{stroke:#fff}
+#hubFieldTools .hubSlTr{position:relative;flex:1;min-width:0}
+#hubFieldTools .hubSlTr::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed color-mix(in srgb,var(--hub-theme-bit) 55%,transparent)}
+#hubFieldTools .hubSlTr input[type=range]{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0;opacity:0;cursor:pointer}
+#hubFieldTools .hubSlTh{position:absolute;top:50%;width:16px;height:16px;transform:translate(-50%,-50%) rotate(45deg);background:var(--hub-theme-accent);pointer-events:none}
+#hubFieldTools .hubSlV{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--hub-theme-bit);font:600 11px/1 system-ui,sans-serif;white-space:nowrap;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}
