@@ -231,7 +231,7 @@
     colorGroup=document.createElement('div');colorGroup.className='hubColorGroup';colorGroup.setAttribute('role','group');colorGroup.setAttribute('aria-label','Цвета');
     const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`,palBox=document.createElement('details'),palHead=document.createElement('summary'),palList=document.createElement('div');
     palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';palList.setAttribute('role','group');palList.setAttribute('aria-label','Пресеты цветов');
-    const inputs={},alphaControls={};
+    const inputs={};
     const syncColors=()=>{const c=api.colors();
       document.documentElement.style.setProperty('--hub-theme-bit',c.bit);document.documentElement.style.setProperty('--hub-theme-accent',c.sym);
       palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
@@ -241,20 +241,12 @@
       btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();palBox.open=false;};palList.append(btn);});
     palBox.append(palHead,palList);colorGroup.append(palBox);
     for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
-      const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot';wrap.style.gridArea=area;wrap.title=title;
+      const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot hubColorAlpha';wrap.style.gridArea=area;wrap.title=title;
       input.type='color';input.setAttribute('aria-label',title);
-      const edit=e=>{e.preventDefault();e.stopPropagation();const alphaKey={bit:'bitAlpha',mirror:'bitAlpha',fold:'foldAlpha',sym:'symAlpha'}[key];window.HubColorPicker.open({trigger:input,title,color:api.colors()[key],opacity:state[alphaKey],maxOpacity:key==='sym'?1:1.3,onChange:(color,opacity)=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=color;state[alphaKey]=opacity;const control=alphaControls[alphaKey];if(control){control.range.value=Math.round(opacity*100);control.value.textContent=Math.round(opacity*100)+'%';}syncColors();changed();save();}});};
+      const edit=e=>{e.preventDefault();e.stopPropagation();const alphaKey={bit:'bitAlpha',mirror:'bitAlpha',fold:'foldAlpha',sym:'symAlpha'}[key];window.HubColorPicker.open({trigger:input,title,color:api.colors()[key],opacity:state[alphaKey],maxOpacity:key==='sym'?1:1.3,onChange:(color,opacity)=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=color;state[alphaKey]=opacity;syncColors();changed();save();}});};
       input.addEventListener('click',edit);input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')edit(e);});m.textContent=mark;wrap.append(input,m);inputs[key]=input;
       input.addEventListener('input',()=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=input.value;syncColors();changed();});input.addEventListener('change',save);
       colorGroup.append(wrap);}
-    for(const [key,area,mark,title,min,max] of [['symAlpha','sa','✦','Прозрачность подсветки симметрии по оси',0,100],['bitAlpha','ab','1','Прозрачность битов оригинала и отражения',0,130],['foldAlpha','af','⤵','Прозрачность заворота',0,130]]){
-      const box=document.createElement('details'),head=document.createElement('summary'),value=document.createElement('output'),label=document.createElement('label'),range=document.createElement('input');
-      box.className='hubTilt hubAlpha';box.style.gridArea=area;head.title=title;head.append(document.createTextNode(mark+' '),value);
-      range.type='range';range.min=String(min);range.max=String(max);range.step='5';range.value=Math.round(state[key]*100);range.setAttribute('aria-label',title);value.textContent=range.value+'%';alphaControls[key]={range,value};
-      range.addEventListener('input',()=>{state[key]=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
-      const colorKey={bitAlpha:'bit',foldAlpha:'fold',symAlpha:'sym'}[key],picker=inputs[colorKey],oldSlot=picker.parentElement;
-      head.classList.add('hubColorAlpha');picker.classList.add('hubColorFrame');picker.title=picker.getAttribute('aria-label')+' — рамка';picker.addEventListener('click',e=>e.stopPropagation());head.append(picker);oldSlot.remove();
-      label.append(range);box.append(head,label);colorGroup.append(box);}
     for(const [key,bit,area] of [['hideZeroDigit','0','d0'],['hideOneDigit','1','d1']]){
       const b=document.createElement('button');b.type='button';b.className='hubRhomb hubDigitToggle';b.style.gridArea=area;b.textContent=bit;b.title='Прозрачный вырез '+bit+' в ромбах';b.setAttribute('aria-label','Прозрачные цифры '+bit);b.setAttribute('aria-pressed',String(state[key]));
       b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};colorGroup.append(b);
