@@ -54,26 +54,33 @@
       recolour:(c,p)=>m.recolour(flip(c,width,height),flip(p,width,height)),nextSide:()=>side[m.nextSide()]||m.nextSide(),pairStep:(f,d)=>m.pairStep(f,d)};
   }
   const model=o=>o.axis==='v'?modelV(o):modelH(o);
-  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply,axis='h'}) {
-    const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной';
-    const panel=document.createElement('section');panel.id=V?'mayFoldPanelV':'mayFoldPanel';panel.className='may-fold-panel';panel.hidden=true;panel.setAttribute('aria-label','Пульт '+WORD+' свёртки');
+  // v11: «свёртки в отдельных построениях показать» — свёртка рисуется в своём окне рядом с полем, поле не трогается.
+  // Окна ↔ и ↕ открываются вместе; заголовок — перетащить, правый нижний угол — размер, место и размер помнятся.
+  // capture() даёт снимок поля; open(frame) собирает заново на том же шаге (страница зовёт на каждом шаге построения).
+  function mount({button,capture,config,beforeStart,onClose,axis='h'}) {
+    const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной',KEY='mayatnik-fold-win-'+axis;
+    const win=document.createElement('section');win.className='may-fold-win';win.id=V?'mayFoldWinV':'mayFoldWin';win.hidden=true;win.setAttribute('aria-label','Окно '+WORD+' свёртки');
+    win.innerHTML=`<header class="may-fold-head"><b>${V?'Свёртка ↕':'Свёртка ↔'}</b><button type="button" class="may-fold-x" title="Закрыть свёртку">×</button></header><canvas class="may-fold-view"></canvas>`;
+    const panel=document.createElement('div');panel.className='may-fold-panel';
     panel.innerHTML=`<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Только застывшие биты — те, что оставшиеся вершины уже не изменят; выкл — все биты, свёртка пересчитывается на каждом шаге построения"><input type="checkbox" data-fold="frozen"> застывшие</label><label class="may-fold-pair" title="${V?'Шаг — нижняя и верхняя часть сразу':'Шаг — правая и левая часть сразу'}"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг ${WORD} свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>`;
-    const layer=document.createElement('canvas');layer.id=V?'mayFoldCanvasV':'mayFoldCanvas';layer.className='may-fold-canvas';layer.hidden=true;layer.setAttribute('aria-label','Поле '+WORD+' свёртки');document.body.append(layer,panel);
-    const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
+    win.append(panel);document.body.append(win);
+    const view=win.querySelector('canvas'),ctx=view.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
     const rate=()=>rateStep<=0?0:.1*10**((rateStep-1)/100);
     try{const saved=localStorage.getItem('mayatnik-fold-rate'),n=Number(saved);if(saved!==null&&n>=0&&n<=401)rateStep=n;}catch(_){}
-    // v4: «парой» — по умолчанию включено, выбор помнится
-    const pairBox=panel.querySelector('[data-fold="pair"]'),pair=()=>pairBox.checked;
-    const midOn=()=>!!config()?.mid;   // v8: общая кнопка «Центр» страницы
-    const pairSaved=()=>{try{return localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){return true;}};
+    const pairBox=panel.querySelector('[data-fold="pair"]'),pair=()=>pairBox.checked,frozenBox=panel.querySelector('[data-fold="frozen"]');
+    const midOn=()=>!!config?.()?.mid;
     const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
+    // место окна: по умолчанию у правого края, ↔ сверху, ↕ под ним
+    const place=()=>{let p=null;try{p=JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){}
+      const w=Math.min(innerWidth-16,p?.w||460),h=Math.min(innerHeight-16,p?.h||300);
+      const x=Math.max(0,Math.min(innerWidth-60,p?.x??innerWidth-w-12)),y=Math.max(0,Math.min(innerHeight-40,p?.y??(V?110+300+12:110)));
+      Object.assign(win.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});};
+    const keep=()=>{try{localStorage.setItem(KEY,JSON.stringify({x:win.offsetLeft,y:win.offsetTop,w:win.offsetWidth,h:win.offsetHeight}));}catch(_){}};
     function sync(){
-      button.setAttribute('aria-pressed',String(!!state));panel.hidden=layer.hidden=!state;
-      document.body.classList.toggle('may-fold-active',!!state&&!state.write);   // v7: в режиме записи поле видно как есть
-      if(!state)return;
+      button.setAttribute('aria-pressed',String(!!state));win.hidden=!state;if(!state)return;
       const two=pair()&&state.pairStep(state.frame,1)-state.frame===2;
-      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`${NAME} · ${state.frame}/${state.max} · ${two?(V?'обе ↓↑':'обе →←'):state.nextSide()}`;
+      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`${state.frame}/${state.max} · ${two?(V?'обе ↓↑':'обе →←'):state.nextSide()}`;
       panel.querySelector('[data-fold="back"]').textContent=pair()?'−2':'−1';panel.querySelector('[data-fold="next"]').textContent=pair()?'+2':'+1';
       panel.querySelector('[data-fold="back"]').disabled=state.frame===0;panel.querySelector('[data-fold="next"]').disabled=state.frame===state.max;
       play.textContent=running?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(running));speed.value=rateStep;
@@ -81,89 +88,60 @@
       value.textContent=ZerkPult.label(rate());value.title=`${Number(rate().toPrecision(3))} шагов/с · двойной щелчок — ×1`;
       ZerkPult.sync(pult,rateStep/401);
     }
+    // картинка «пиксель = бит» на весь холст окна, без сглаживания; бит везёт свой цвет с поля, центр — золотом
     function render(){
-      if(!state)return;const c=config();if(!c){close();return;}
-      const host=wrap.getBoundingClientRect(),rect=canvas.getBoundingClientRect(),s=c.scale,dpr=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
-      layer.style.left=host.left+'px';layer.style.top=host.top+'px';layer.style.width=w+'px';layer.style.height=h+'px';
-      const pw=Math.max(1,Math.round(w*dpr)),ph=Math.max(1,Math.round(h*dpr));if(layer.width!==pw)layer.width=pw;if(layer.height!==ph)layer.height=ph;
-      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const x0=rect.left-host.left,y0=rect.top-host.top;
-      if(state.write){   // v7: строки переписывает страница; здесь — только подсветка центра
-        if(state.frame!==applied){applied=state.frame;apply?.(state);}
-        if(false&&midOn()){const s2=config()?.scale||s,r2=canvas.getBoundingClientRect(),cx=r2.left-host.left+state.center*s2,ch=Math.min(h,state.height*s2);
-          ctx.fillStyle='rgba(255,211,91,.28)';ctx.fillRect(cx,r2.top-host.top,s2,ch);ctx.lineWidth=Math.max(1.5,Math.min(3,s2*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(cx,r2.top-host.top,s2,ch);}
-        sync();return;}
-      const only=c.view==='digitsOnly',digits=only||c.view==='digits',rp=c.rp,mid=midOn(),css=new Map(),rgb=v=>{let t=css.get(v);if(!t){t=`rgb(${v&255},${v>>>8&255},${v>>>16&255})`;css.set(v,t);}return t;};
-      ctx.font=`600 ${s*.8}px ${c.font}`;ctx.textAlign='center';ctx.textBaseline='middle';
-      const halves=rp===2?[[0,0],[1,state.width+c.gap]]:[[rp,0]];
-      for(const[p,ox]of halves){
-        // v2: плоско и без цифр — одна картинка «пиксель = бит», увеличенная без сглаживания (по клетке было ~0,7 с на кадр 1534×512)
-        if(p<0&&!only&&!(digits&&s>=4)){const W=state.width,H=state.height;
-          if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
-          const u=new Uint32Array(offImg.data.buffer);
-          for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-            u[i]=mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
-          off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);
-          if(mid){ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';midRect(x0+ox*s,y0,s);}ctx.restore();continue;}
-        const xa=Math.max(0,Math.floor(-x0/s-ox)-1),xb=Math.min(state.width,Math.ceil((w-x0)/s-ox)+1),ya=Math.max(0,Math.floor(-y0/s)-1),yb=Math.min(state.height,Math.ceil((h-y0)/s)+1);
-        for(let y=ya;y<yb;y++)for(let x=xa;x<xb;x++){
-          if(p>=0&&((x+c.origin-c.anchor-p-y)%2+2)%2)continue;const bit=state.bit(x,y);if(bit<0)continue;
-          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y),gold=mid&&state.isMid(x,y);
-          if(only&&(back||gold)){ctx.fillStyle=gold?(bit?'#7a5a10':'#4a3608'):rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
-          if(!only){ctx.fillStyle=gold?(bit?'#ffe08a':'#b8860b'):back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
-          if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(gold?(bit?'#ffe08a':'#ffb020'):bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
-        }
-        if(mid){ctx.save();ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';midRect(x0+ox*s,y0,s);ctx.restore();}
-      }
+      if(!state)return;const W=state.width,H=state.height,mid=midOn();
+      if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
+      const u=new Uint32Array(offImg.data.buffer);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
+        u[i]=mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+      off.getContext('2d').putImageData(offImg,0,0);
+      const dpr=Math.min(2,devicePixelRatio||1),cw=Math.max(1,view.clientWidth),ch=Math.max(1,view.clientHeight),pw=Math.round(cw*dpr),ph=Math.round(ch*dpr);
+      if(view.width!==pw)view.width=pw;if(view.height!==ph)view.height=ph;
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cw,ch);
+      let s=Math.min(cw/W,ch/H);if(s>=1)s=Math.floor(s);const dw=W*s,dh=H*s,x0=Math.round((cw-dw)/2),y0=Math.round((ch-dh)/2);
+      ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0,y0,dw,dh);
+      if(mid){ctx.lineWidth=1;ctx.strokeStyle='#ffd35b';if(V)ctx.strokeRect(x0,y0+state.center*s,dw,s);else ctx.strokeRect(x0+state.center*s,y0,s,dh);}
       sync();
     }
-    function midRect(x,y,s){if(V)ctx.strokeRect(x,y+state.center*s,state.width*s,s);else ctx.strokeRect(x+state.center*s,y,s,state.height*s);}
     function pause(){running=false;cancelAnimationFrame(timer);timer=0;last=0;credit=0;sync();}
-    let applied=-1;
-    function close(){pause();if(!state)return;state=null;applied=-1;sync();onClose?.();}
+    function close(){pause();if(!state)return;state=null;sync();onClose?.();}
     function seek(n){if(!state)return;state.seek(n);render();}
     function tick(now){if(!running||!state)return;if(last)credit+=Math.min(.25,(now-last)/1000)*rate();last=now;
       const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(adv(state.frame,dir,n));}
       if((dir>0&&state.frame===state.max)||(dir<0&&state.frame===0)){pause();return;}
-      timer=requestAnimationFrame(tick);
-    }
+      timer=requestAnimationFrame(tick);}
     function togglePlay(){if(!state)return;if(running){pause();return;}if(dir>0&&state.frame===state.max)seek(0);if(dir<0&&state.frame===0)seek(state.max);running=true;last=0;credit=0;sync();timer=requestAnimationFrame(tick);}
     function setRate(n){rateStep=Math.max(0,Math.min(401,Math.round(n)));try{localStorage.setItem('mayatnik-fold-rate',String(rateStep));}catch(_){}sync();}
-    const frozenBox=panel.querySelector('[data-fold="frozen"]');
     try{frozenBox.checked=localStorage.getItem('mayatnik-fold-frozen')!=='0';}catch(_){frozenBox.checked=true;}
-    function open(frame=0){const data=capture({frozenOnly:frozenBox.checked});if(!data)return false;state=model({...data,axis});state.write=!!data.write;applied=-1;
-      if(frame)state.seek(Math.min(frame,state.max));sync();render();return true;}
-    button.onclick=()=>{if(state){close();return;}beforeStart();open();};
-    frozenBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-frozen',frozenBox.checked?'1':'0');}catch(_){}if(state){const fr=state.frame;close();open(fr);}};
+    try{pairBox.checked=localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){pairBox.checked=true;}
+    function open(frame=0){const was=!!state,data=capture({frozenOnly:frozenBox.checked});if(!data)return false;
+      state=model({...data,axis});if(frame)state.seek(Math.min(frame,state.max));if(!was)place();sync();render();return true;}
+    button.onclick=()=>{if(state){close();return;}beforeStart?.();open();};
+    win.querySelector('.may-fold-x').onclick=close;
+    frozenBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-frozen',frozenBox.checked?'1':'0');}catch(_){}if(state)open(state.frame);};
+    pairBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-pair',pairBox.checked?'1':'0');}catch(_){}sync();};
     play.onclick=()=>{if(suppressClick){suppressClick=false;return;}togglePlay();};
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
     for(const [action,d]of [['back',-1],['next',1]])panel.querySelector(`[data-fold="${action}"]`).onclick=()=>{pause();seek(adv(state.frame,d));};
-    pairBox.checked=pairSaved();pairBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-pair',pairBox.checked?'1':'0');}catch(_){}sync();};
     timeline.oninput=()=>{pause();seek(Number(timeline.value));};
     play.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();play.setPointerCapture(e.pointerId);suppressClick=false;const x=e.clientX,start=rateStep;
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.abs(ev.clientX-x)>3)suppressClick=true;if(suppressClick)setRate(start+(ev.clientX-x)*401/ZerkPult.trackWidth(pult));};
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;play.removeEventListener('pointermove',move);play.removeEventListener('pointerup',end);play.removeEventListener('pointercancel',end);if(play.hasPointerCapture(e.pointerId))play.releasePointerCapture(e.pointerId);};
-      play.addEventListener('pointermove',move);play.addEventListener('pointerup',end);play.addEventListener('pointercancel',end);
-    });
-    // Панорамирование остаётся доступным; исходная раскраска в просмотре не редактируется.
-    let pan=null,pinch=null,down=null;const pointers=new Map();
-    wrap.addEventListener('pointerdown',e=>{if(!state||state.write)return;e.stopImmediatePropagation();if(e.button!==0&&e.button!==1)return;
-      pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pan={id:e.pointerId,x:e.clientX,y:e.clientY,left:wrap.scrollLeft,top:wrap.scrollTop};
-      down=pointers.size===1?{id:e.pointerId,x:e.clientX,y:e.clientY,button:e.button,moved:false}:null;
-      if(pointers.size===2){const[a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),scale:config()?.scale||1};pan=null;}
-      wrap.setPointerCapture(e.pointerId);e.preventDefault();},true);
-    wrap.addEventListener('pointermove',e=>{if(!state||state.write)return;e.stopImmediatePropagation();if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-      if(down?.id===e.pointerId&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>3)down.moved=true;
-      if(pinch&&pointers.size===2){const[a,b]=[...pointers.values()];if(pinch.distance>0)zoom?.(pinch.scale*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance,(a.x+b.x)/2,(a.y+b.y)/2);}
-      else if(pan?.id===e.pointerId){wrap.scrollLeft=pan.left+pan.x-e.clientX;wrap.scrollTop=pan.top+pan.y-e.clientY;}},true);
-    for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state||state.write)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);
-      // v5: щелчок левой без сдвига — покрасить исходный столбец клетки (плоский вид), затем снять цвета заново
-      const d=down;down=null;if(type!=='pointerup'||!d||d.id!==e.pointerId||d.moved||d.button!==0||pointers.size||!tap)return;
-      const c=config();if(!c||c.rp>=0)return;const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/c.scale),y=Math.floor((e.clientY-r.top)/c.scale);
-      if(V){const sy=state.srcAt(y);if(sy<0||x<0||x>=state.width||!tap(x,sy))return;}else{const sx=state.srcAt(x);if(sx<0||y<0||y>=state.height||!tap(sx,y))return;}const cap=capture();if(cap)state.recolour(cap.colour,cap.paint);render();},true);
-    wrap.addEventListener('contextmenu',e=>{if(state&&!state.write){e.preventDefault();e.stopImmediatePropagation();}},true);
-    addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)&&!panel.hidden){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
-    wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);
+      play.addEventListener('pointermove',move);play.addEventListener('pointerup',end);play.addEventListener('pointercancel',end);});
+    // перетаскивание за заголовок
+    const head=win.querySelector('.may-fold-head');
+    head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;e.preventDefault();head.setPointerCapture(e.pointerId);
+      const x=e.clientX-win.offsetLeft,y=e.clientY-win.offsetTop;
+      const move=ev=>{win.style.left=Math.max(0,Math.min(innerWidth-60,ev.clientX-x))+'px';win.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-y))+'px';};
+      const end=()=>{head.removeEventListener('pointermove',move);head.removeEventListener('pointerup',end);keep();};
+      head.addEventListener('pointermove',move);head.addEventListener('pointerup',end);});
+    // размер — за угол (CSS resize); холст перерисовывается
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(state){render();keep();}}).observe(win);
+    // клавиши — только когда мышь над окном или фокус в нём
+    addEventListener('keydown',e=>{if(!state||e.target.closest?.('input,select,button,textarea'))return;if(!win.matches(':hover')&&!win.contains(document.activeElement))return;
+      if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     return {get active(){return !!state;},get frame(){return state?state.frame:0;},close,render,open};
   }
   window.MayatnikFold={model,mount};

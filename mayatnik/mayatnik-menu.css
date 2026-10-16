@@ -216,6 +216,12 @@ header #paintTools{gap:4px;margin-left:0}
 header #paintTools #templateActions{position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none}
 header #paintTools #templateActions>.gz-hx{display:none}
 /* v0.082: общий пульт Зеркалиуса для включённой горизонтальной свёртки. */
+.may-fold-win{position:fixed;z-index:9;display:flex;flex-direction:column;box-sizing:border-box;min-width:240px;min-height:180px;background:#0d1119f2;border:1px solid #80aee8;border-radius:6px;overflow:hidden;resize:both;box-shadow:0 4px 18px #0009}
+.may-fold-win[hidden]{display:none}
+.may-fold-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 8px;background:#121a30;color:#cfe0ff;font:12px 'Segoe UI',sans-serif;cursor:move;user-select:none;touch-action:none}
+.may-fold-x{border:0;background:transparent;color:#cfe0ff;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
+.may-fold-view{flex:1;min-height:0;width:100%;display:block;background:#05070b}
+.may-fold-win .may-fold-panel{position:static!important;transform:none!important;width:auto!important;left:auto;bottom:auto;padding:4px 6px}
 .may-fold-panel{position:fixed;z-index:9;left:25vw;bottom:8px;transform:translateX(-50%);width:min(480px,calc(50vw - 24px));box-sizing:border-box;background:var(--panel);border:1px solid var(--line);padding:5px 8px;color:var(--fg)}
 .may-fold-panel[hidden],.may-fold-canvas[hidden]{display:none}
 /* v0.092: пульт «Прохода столба» — как у свёртки, на том же месте (вместе не бывают). */
