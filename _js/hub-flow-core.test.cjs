@@ -156,3 +156,28 @@ test('corner mode can displace a moving-wall drop diagonally but never upwards',
  const mask=f.solid.slice();for(const off of [0,-1,1,12])mask[i+off]=1;
  f.setMask(mask);assert.equal(sum(f.water.slice(0,6*12)),0);assert.equal(sum(f.water.slice(6*12,7*12)),1);assert.equal(f.drained,0);
 });
+
+
+test('each optical side can transmit, reflect or absorb independently for either bit',()=>{
+ for(const bit of [0,1])for(const vy of [-1,1])for(const pass of [0,1,2,3])for(const reflect of [0,1,2,3]){
+  const f=new Field(20,30);f.lightTypes=new Uint8Array(600);for(let x=0;x<20;x++){f.solid[15*20+x]=1;f.lightTypes[15*20+x]=1<<bit;}
+  f.lightRules=[{pass:0,reflect:0},{pass:0,reflect:0}];f.lightRules[bit]={pass,reflect};f.reflectionLoss=false;
+  const ray={x:10.5,y:vy>0?10:20,vx:0,vy},forks=[];f.advanceRay(ray,8,forks);
+  const side=vy>0?1:2,p=!!(pass&side),r=!!(reflect&side);
+  assert.equal(forks.length,p&&r?1:0);assert.equal(ray.bounces||0,r?1:0);
+  if(!p&&!r)assert.equal(ray.dead,true);
+  if(p&&!r){assert.equal(ray.dead,undefined);assert.equal(ray.vy,vy);}
+  if(r)assert.equal(ray.vy,-vy);
+ }
+});
+test('split light halves both branches, applies optional loss only to reflection and passes a thick bit once',()=>{
+ for(const loss of [true,false]){
+  const f=new Field(30,40);f.lightTypes=new Uint8Array(1200);f.lightRules=[{pass:3,reflect:3},{pass:3,reflect:3}];f.reflectionLoss=loss;
+  for(let y=15;y<20;y++)for(let x=0;x<30;x++){f.solid[y*30+x]=1;f.lightTypes[y*30+x]=1;}
+  const ray={x:15.5,y:10,vx:0,vy:1},forks=[];f.advanceRay(ray,14,forks);
+  assert.equal(forks.length,1);assert.equal(ray.intensity,loss?.25:.5);
+  const child=forks[0].ray,more=[];f.advanceRay(child,forks[0].remaining,more);
+  assert.equal(more.length,0);assert.ok(child.y>20);assert.equal(child.intensity,.5);
+  const beams=f.topBeams();assert.ok(beams.some(s=>s.alpha===.5&&s.b[1]>20));assert.ok(beams.some(s=>s.alpha===(loss?.25:.5)&&s.b[1]<s.a[1]));
+ }
+});

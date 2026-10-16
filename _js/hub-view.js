@@ -16,6 +16,7 @@
 /* Hub v0.114: always available zoom and one-click recovery of the whole drawing. */
 (() => {
   'use strict';
+  const locked=key=>window.HubLocks?.has(key)===true;
   const state={centerBitPin:false,unlocked:false,zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,flipRate:1,pan:[0,0],sourcePan:[0,0],spinRate:.25,frameLocked:true,frameStep:.01,spinDirection:1},buffers=new WeakMap();let frame=null,revision=0,centerBitPinButton,scaleText,angleText,rotationValue,minus,plus,flipButton,flipQuick,flipQuickShown=false,perpendicularButton,freezeButton,flipRateRange,flipRateValue,flipRunning=false,flipRaf=0,flipTime=0;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(saved){state.unlocked=!!saved.unlocked;state.centerBitPin=saved.centerBitPin===true;for(const key of ['zoom','angle','flipRate'])if(Number.isFinite(saved[key]))state[key]=saved[key];if(Array.isArray(saved.pan)&&saved.pan.length===2&&saved.pan.every(Number.isFinite))state.pan=saved.pan;}}catch(_){}
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Array.isArray(saved?.sourcePan)&&saved.sourcePan.length===2&&saved.sourcePan.every(Number.isFinite))state.sourcePan=saved.sourcePan;}catch(_){}
@@ -62,6 +63,7 @@
   }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
   function centerTriangleAtAxis(x,y){
+    if(locked('pan'))return false;
     const m=window.HubMirror,axis=m?.rotationCenter?.();if(!axis)return false;
     const reflected=inverse(x,y,true),source=inverse(x,y);
     const hit=(reflected.every(Number.isFinite)?m.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?m.pickBit(...source):null);
@@ -71,7 +73,7 @@
     const sh=sourceShift();shiftSourceBy(axis[0]-bit.x-sh[0],axis[1]-bit.y-sh[1]);m.clearRotationBit?.();return true;
   }
   function enforceCenterBitPin(axis){
-    if(!state.centerBitPin||!frame||!axis?.every(Number.isFinite))return false;
+    if(locked('pan')||!state.centerBitPin||!frame||!axis?.every(Number.isFinite))return false;
     const bit=window.HubMirror?.centerBit?.();if(!bit)return false;
     const next=[(axis[0]-bit.x)/frame.width,(axis[1]-bit.y)/frame.height];
     if(Math.hypot((next[0]-state.sourcePan[0])*frame.width,(next[1]-state.sourcePan[1])*frame.height)<1e-8)return false;
@@ -85,15 +87,15 @@
   function axisInverse(x,y){return inverseWith(matrix(false,true),x,y);}
   function captureAxisInverse(){const m=matrix(false,true);return (x,y)=>inverseWith(m,x,y);}
   function captureInverse(){const m=matrix();return (x,y)=>inverseWith(m,x,y);}
-  function rotateAround(delta,x,y,persist=true){if(!Number.isFinite(delta))return;const before=matrix(),px=before[0]*x+before[2]*y+before[4],py=before[1]*x+before[3]*y+before[5];state.angle=((state.angle+delta*180/Math.PI)%360+360)%360;const after=matrix();state.pan[0]+=px-(after[0]*x+after[2]*y+after[4]);state.pan[1]+=py-(after[1]*x+after[3]*y+after[5]);changed(persist);}
-  function shiftSourceBy(dx,dy){if(!frame)return;state.sourcePan[0]+=dx/frame.width;state.sourcePan[1]+=dy/frame.height;changed();}
+  function rotateAround(delta,x,y,persist=true){if(locked('turn'))return;if(!Number.isFinite(delta))return;const before=matrix(),px=before[0]*x+before[2]*y+before[4],py=before[1]*x+before[3]*y+before[5];state.angle=((state.angle+delta*180/Math.PI)%360+360)%360;const after=matrix();state.pan[0]+=px-(after[0]*x+after[2]*y+after[4]);state.pan[1]+=py-(after[1]*x+after[3]*y+after[5]);changed(persist);}
+  function shiftSourceBy(dx,dy){if(locked('pan'))return;if(!frame)return;state.sourcePan[0]+=dx/frame.width;state.sourcePan[1]+=dy/frame.height;changed();}
   const sourceShift=()=>frame?[state.sourcePan[0]*frame.width,state.sourcePan[1]*frame.height]:[0,0];
   function apply(el){if(!el)return;const [a,b,c,d,e,f]=matrix(!!el.dataset.note?.includes('-mirror')),x=el.offsetLeft,y=el.offsetTop,[sx,sy]=el.id==='hubMirror'||el.dataset.note?.includes('-mirror')?[0,0]:sourceShift();el.style.transformOrigin='0 0';el.style.transform=`matrix(${a},${b},${c},${d},${e+a*(x+sx)+c*(y+sy)-x},${f+b*(x+sx)+d*(y+sy)-y})`;}
   function sync(){if(!scaleText)return;scaleText.textContent=Math.round(state.zoom*100)+'%';angleText.textContent=Number(state.angle.toFixed(1))+'°';rotationValue.textContent=angleText.textContent;minus.disabled=state.zoom<=.2;plus.disabled=state.zoom>=6;document.body.classList.toggle('hubCanvasUnlocked',state.unlocked);syncAuto();}
   function changed(persist=true){window.HubMirror?.syncCenter?.();revision++;sync();if(perpendicularButton)perpendicularButton.setAttribute('aria-pressed',String(Math.abs(Math.cos((state.mirrorFlip-state.flip)*Math.PI/180))<1e-8));if(freezeButton)freezeButton.setAttribute('aria-pressed',String(state.freezeOriginal));if(flipButton){flipButton.textContent='3D\n'+(flipRunning?'Ⅱ':'▶');flipButton.setAttribute('aria-pressed',String(flipRunning));flipButton.title='3D: оригинал '+Math.round(state.flip)+'°, зеркало '+Math.round(state.mirrorFlip)+'°. Щелчок — пуск / пауза, колесо — шаг 5°, двойной щелчок — 0°';}if(flipQuick){if(flipRunning||state.flip||state.mirrorFlip||state.freezeOriginal)flipQuickShown=true;flipQuick.hidden=!flipQuickShown;flipQuick.textContent='3D\n'+(flipRunning?'Ⅱ':'▶');flipQuick.setAttribute('aria-pressed',String(flipRunning));flipQuick.title=flipRunning?'Остановить 3D-вращение':'Продолжить 3D-вращение';}document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);if(persist)save();window.dispatchEvent(new Event('hubview'));}
   function flipTick(time){flipRaf=0;if(!flipRunning)return;if(flipTime&&!document.hidden)advanceFlip(Math.min(100,time-flipTime)*.03*state.flipRate);flipTime=time;changed(false);flipRaf=requestAnimationFrame(flipTick);}
-  function resetFlip(){flipQuickShown=false;stopFlip();resumeFlip=false;state.flip=state.mirrorFlip=0;state.freezeOriginal=false;changed();}
-  function advanceFlip(delta){if(!state.freezeOriginal)state.flip=(state.flip+delta+360)%360;state.mirrorFlip=(state.mirrorFlip+delta+360)%360;}
+  function resetFlip(){if(locked('depth'))return;flipQuickShown=false;stopFlip();resumeFlip=false;state.flip=state.mirrorFlip=0;state.freezeOriginal=false;changed();}
+  function advanceFlip(delta){if(locked('depth'))return;if(!state.freezeOriginal)state.flip=(state.flip+delta+360)%360;state.mirrorFlip=(state.mirrorFlip+delta+360)%360;}
   function stopFlip(){flipRunning=false;flipTime=0;cancelAnimationFrame(flipRaf);flipRaf=0;}
   let fieldPaused=false,resumeFlip=false;
   let zoomRunning=false,zoomRaf=0,zoomTime=null,zoomPhase=0,resumeZoom=false,zoomPlay,zoomMode;
@@ -102,7 +104,7 @@
   function stopAutoZoom(){const wasRunning=zoomRunning;zoomRunning=false;zoomTime=null;cancelAnimationFrame(zoomRaf);zoomRaf=0;syncAutoZoom();if(wasRunning)save();}
   function autoZoomTick(time){
     zoomRaf=0;if(!zoomRunning)return;
-    if(document.hidden)zoomTime=null;
+    if(document.hidden||locked('zoom'))zoomTime=null;
     else{
       if(zoomTime!==null){zoomPhase=(zoomPhase+Math.max(0,time-zoomTime)/1000/state.zoomSeconds)%(state.zoomCycle==='reset'?1:2);const t=state.zoomCycle==='reset'?zoomPhase:(1-Math.cos(Math.PI*zoomPhase))/2,next=.2*30**t;zoom(next/state.zoom,innerWidth/2,innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0),false);}
       zoomTime=time;
@@ -110,8 +112,8 @@
     zoomRaf=requestAnimationFrame(autoZoomTick);
   }
   function startAutoZoom(){if(zoomRunning)return;zoomRunning=true;zoomTime=null;syncAutoZoom();zoomRaf=requestAnimationFrame(autoZoomTick);}
-  function zoom(factor,x,y,persist=true){if(persist){resumeZoom=false;stopAutoZoom();}const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor));if(next===before)return;if(window.HubMirror?.state.screenPin){x=innerWidth/2;y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0);}const ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed(persist);}
-  function home(){flipQuickShown=false;autoZero=true;stopAuto();stopFlip();stopAutoZoom();fieldPaused=false;resumeZoom=resumeFlip=resumeAuto=false;Object.assign(state,{zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
+  function zoom(factor,x,y,persist=true){if(locked('zoom'))return;if(persist){resumeZoom=false;stopAutoZoom();}const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor));if(next===before)return;if(window.HubMirror?.state.screenPin){x=innerWidth/2;y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0);}const ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed(persist);}
+  function home(){flipQuickShown=false;autoZero=true;stopAuto();stopFlip();stopAutoZoom();fieldPaused=false;resumeZoom=resumeFlip=resumeAuto=false;if(!locked('zoom'))state.zoom=1;if(!locked('turn'))state.angle=0;if(!locked('depth'))Object.assign(state,{flip:0,mirrorFlip:0,freezeOriginal:false});if(!locked('pan'))Object.assign(state,{pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
   function originalCenter(){const c=sourceCenter||center(),sh=sourceShift();return [c[0]+sh[0],c[1]+sh[1]];}
   const activeRate=()=>state.frameLocked?state.frameStep:state.spinRate;
   const ratePosition=rate=>rate>0?(state.frameLocked?1+60*(Math.log10(Math.max(.000001,rate))+6):1+100*(Math.log10(Math.max(.01,rate))+2)):0;
@@ -145,11 +147,11 @@
 
   const magnetic=()=>window.HubMirror?.state.magnet===true;
   const snappedRotation=a=>{const offset=(window.HubMirror?.state.angle||0)*180/Math.PI;return Math.round((a+offset)/15)*15-offset;};
-  function autoTick(time){autoRaf=0;if(!autoRunning)return;if(!document.hidden&&(state.frameLocked||autoTime!==null)){const turns=(state.frameLocked?state.frameStep:Math.max(0,time-autoTime)/1000*state.spinRate)%1;let delta=state.spinDirection*turns*360;if(!state.frameLocked&&magnetic()){autoRemainder+=delta;delta=snappedRotation(state.angle+autoRemainder)-state.angle;autoRemainder-=delta;}else autoRemainder=0;if(Math.abs(delta)>1e-10)rotateAround(delta*Math.PI/180,...originalCenter(),false);}autoTime=time;autoRaf=requestAnimationFrame(autoTick);}
+  function autoTick(time){autoRaf=0;if(!autoRunning)return;if(!locked('turn')&&!document.hidden&&(state.frameLocked||autoTime!==null)){const turns=(state.frameLocked?state.frameStep:Math.max(0,time-autoTime)/1000*state.spinRate)%1;let delta=state.spinDirection*turns*360;if(!state.frameLocked&&magnetic()){autoRemainder+=delta;delta=snappedRotation(state.angle+autoRemainder)-state.angle;autoRemainder-=delta;}else autoRemainder=0;if(Math.abs(delta)>1e-10)rotateAround(delta*Math.PI/180,...originalCenter(),false);}autoTime=time;autoRaf=requestAnimationFrame(autoTick);}
   function startAuto(){autoZero=false;if(autoRunning)return;autoRemainder=0;if(state.spinRate<=0)state.spinRate=.25;autoRunning=true;autoTime=null;autoRaf=requestAnimationFrame(autoTick);syncAuto();}
   function stopAuto(){autoRemainder=0;autoRunning=false;autoTime=null;cancelAnimationFrame(autoRaf);autoRaf=0;syncAuto();save();}
   function setAutoRate(value){if(!Number.isFinite(value))return;if(value<=0){autoZero=true;stopAuto();rotateAround(-state.angle*Math.PI/180,...originalCenter());return;}autoZero=false;if(state.frameLocked)state.frameStep=Math.max(.000001,Math.min(10000,value));else state.spinRate=Math.max(.01,Math.min(10000,value));autoRemainder=0;autoTime=null;startAuto();syncAuto();save();}
-  function rotate(delta,pivot=originalCenter(),fixedAxis=false){if(delta)state.spinDirection=Math.sign(delta);autoTime=null;autoRemainder=0;if(magnetic()&&delta){delta=Math.sign(delta)*Math.max(15,Math.round(Math.abs(delta)/15)*15);if(!fixedAxis)delta=snappedRotation(state.angle+delta)-state.angle;}const radians=delta*Math.PI/180;if(fixedAxis)window.HubMirror?.counterRotateView?.(radians);rotateAround(radians,...pivot);}
+  function rotate(delta,pivot=originalCenter(),fixedAxis=false){if(locked('turn'))return;if(delta)state.spinDirection=Math.sign(delta);autoTime=null;autoRemainder=0;if(magnetic()&&delta){delta=Math.sign(delta)*Math.max(15,Math.round(Math.abs(delta)/15)*15);if(!fixedAxis)delta=snappedRotation(state.angle+delta)-state.angle;}const radians=delta*Math.PI/180;if(fixedAxis)window.HubMirror?.counterRotateView?.(radians);rotateAround(radians,...pivot);}
   window.HubView={get centerBitPinned(){return state.centerBitPin;},enforceCenterBitPin,setCenterBitPin,get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},rotateBy:rotate,repeatScrollRotation,rotateBitsBy:(delta,pivot)=>{lastScrollRotation=delta;rotate(delta,pivot,true);},inverse,axisInverse,captureAxisInverse,hitScreen,screenCenterAnchor,apply,sourceShift,captureInverse,rotateAround,shiftSourceBy,originalCenter,setSourceCenter(x,y){sourceCenter=Number.isFinite(x)&&Number.isFinite(y)?[x,y]:null;window.HubMirror?.syncCenter?.();},get rotation(){return state.angle*Math.PI/180;},
     // v0.142: рисовать поверх в координатах поля (со сдвигом рисунка, без зеркала), под камерой
     overlay(canvas,view,fn,mirror=false){const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(mirror);g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(k,0,0,k,-left*k,0);fn(g);g.restore();},place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
@@ -212,7 +214,7 @@
     const flipLabel=document.createElement('label'),flipHead=document.createElement('span');flipLabel.className='hubMirrorSpeedControl';flipHead.append(document.createTextNode('3D · '));flipRateValue=document.createElement('output');flipHead.append(flipRateValue);flipLabel.append(flipHead);
     flipRateRange=document.createElement('input');flipRateRange.type='range';flipRateRange.min=-100;flipRateRange.max=300;flipRateRange.step=1;flipRateRange.className='hubMirrorSpeed';flipRateRange.setAttribute('aria-label','Множитель скорости 3D-переворота');
     const syncRate=()=>{flipRateRange.value=Math.round(100*Math.log10(state.flipRate));flipRateValue.textContent='×'+Number(state.flipRate.toPrecision(3));flipRateRange.setAttribute('aria-valuetext',flipRateValue.textContent);};flipRateRange.oninput=()=>{state.flipRate=Math.pow(10,Number(flipRateRange.value)/100);syncRate();};flipRateRange.onchange=save;flipRateValue.title='Двойной щелчок — скорость ×1';flipRateValue.ondblclick=()=>{state.flipRate=1;syncRate();save();};syncRate();flipLabel.append(flipRateRange);flipControl.append(flipLabel);settings.append(flipControl);
-    perpendicularButton=button('⊥\n90°','Оригинал и зеркало под прямым углом',()=>{const perpendicular=Math.abs(Math.cos((state.mirrorFlip-state.flip)*Math.PI/180))<1e-8;state.mirrorFlip=(state.flip+(perpendicular?0:90))%360;changed();});
+    perpendicularButton=button('⊥\n90°','Оригинал и зеркало под прямым углом',()=>{if(locked('depth'))return;const perpendicular=Math.abs(Math.cos((state.mirrorFlip-state.flip)*Math.PI/180))<1e-8;state.mirrorFlip=(state.flip+(perpendicular?0:90))%360;changed();});
     freezeButton=button('❄\nориг.','Заморозить 3D-наклон оригинала; зеркало продолжает вращаться',()=>{state.freezeOriginal=!state.freezeOriginal;changed();});
     const planes=document.createElement('div');planes.className='hubFlipPlanes';const reset3d=button('3D\n0°','Сбросить только 3D: остановить, снять заморозку, вернуть обе плоскости',resetFlip);planes.append(perpendicularButton,freezeButton,reset3d);settings.append(planes);
     flipButton.ondblclick=e=>{e.preventDefault();resetFlip();};window.addEventListener('pagehide',()=>{stopFlip();save();});
@@ -291,7 +293,7 @@
       let moved=false,lastAngle=Math.atan2(sy-cy,x-cx),travel=0,applied=0;
       // The reflection is painted above the original: in an overlap it receives the drag.
       const direction=pinned&&onBits&&hit.mirror?-1:1;
-      const move=ev=>{if(ev.pointerId!==e.pointerId)return;
+      const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(locked(pinned&&e.button!==1?'turn':'pan'))return;
         if(!moved&&Math.hypot(ev.clientX-x,ev.clientY-sy)>3){moved=true;if(pinned){stopAuto();window.HubMirror.stopRotation?.();}}
         if(!moved)return;
         if(pinned&&e.button!==1){
@@ -313,5 +315,16 @@
     window.addEventListener('hubview',()=>rotation.value=state.angle);window.addEventListener('hubmirror',()=>{if(state.flip||state.mirrorFlip)changed(false);});changed();
     document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<0||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
   }
+  window.HubView.snapshot=()=>({state:JSON.parse(JSON.stringify(state)),autoRunning,flipRunning,zoomRunning,zoomPhase,fieldPaused,resumeAuto,resumeFlip,resumeZoom,lastScrollRotation,autoRemainder,autoZero,flipQuickShown});
+  window.HubView.restore=s=>{
+    stopAuto();stopFlip();stopAutoZoom();window.HubPresetCore.applyKnown(state,s.state);
+    fieldPaused=!!s.fieldPaused;resumeAuto=!!s.resumeAuto;resumeFlip=!!s.resumeFlip;resumeZoom=!!s.resumeZoom;
+    zoomPhase=s.zoomPhase||0;lastScrollRotation=s.lastScrollRotation||5;autoZero=!!s.autoZero;flipQuickShown=!!s.flipQuickShown;
+    if(s.autoRunning)startAuto();autoRemainder=s.autoRemainder||0;
+    if(s.flipRunning){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}
+    if(s.zoomRunning)startAutoZoom();changed();
+    // Other modules restore their own pause/resume flags; broadcasting a new
+    // pause here would overwrite the saved intent to resume those animations.
+  };
   document.addEventListener('DOMContentLoaded',init,{once:true});
 })();

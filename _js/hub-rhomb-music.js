@@ -54,6 +54,8 @@
     };
     const start = () => { stop(); row = 0; front = [[0, 0]]; tone(0); timer = setTimeout(step, 1000 / speed); publish(); };
     return {
+      snapshot:()=>({rows:field.map(r=>r.join('')),front:front.map(p=>p.slice()),row,speed,paused,running:on()}),
+      restore(s){stop();field.splice(0,field.length,...s.rows.map(r=>r.split('')));speed=Math.max(1,Math.min(8,s.speed||1));row=Math.max(-1,Math.min(field.length-1,s.row|0));front=(s.front||[]).filter(p=>Array.isArray(p)&&Number.isInteger(p[0])&&Number.isInteger(p[1])&&field[p[0]]?.[p[1]]).map(p=>p.slice(0,2));paused=!!s.paused;if(s.running&&front.length&&!paused){audio();timer=setTimeout(step,1000/speed);}publish();},
       setRows(rows) { stop(); field.splice(0, field.length, ...rows.map(r => r.split(''))); publish(); },
       send(message) {
         audio();

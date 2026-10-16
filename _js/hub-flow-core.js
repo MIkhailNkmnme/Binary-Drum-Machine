@@ -7,13 +7,20 @@
       this.water=new Float32Array(width*height);this.tick=0;this.drained=0;
     }
     blocked(x,y){x=Math.floor(x);y=Math.floor(y);return x>=0&&y>=0&&x<this.width&&y<this.height&&!!this.solid[y*this.width+x];}
-    lightBlocked(x,y,vy){
-      if(!this.blocked(x,y))return false;
-      const type=this.lightTypes?.[Math.floor(y)*this.width+Math.floor(x)];
-      if(!type)return true;
-      // Screen-space direction: zero passes downward, one passes upward.
-      return !!((type&1)&&vy<=1e-9 || (type&2)&&vy>=-1e-9);
+    lightType(x,y){return this.blocked(x,y)?this.lightTypes?.[Math.floor(y)*this.width+Math.floor(x)]||4:0;}
+    lightResponse(type,vy){
+      if(!type)return {pass:true,reflect:false};
+      if(type&4)return {pass:false,reflect:true};
+      const side=vy>1e-9?1:vy< -1e-9?2:3,defaults=[{pass:1,reflect:2},{pass:2,reflect:1}];
+      let pass=true,reflect=false;
+      for(let bit=0;bit<2;bit++)if(type&(1<<bit)){
+        const rule=this.lightRules?.[bit]||defaults[bit];
+        pass=pass&&((rule.pass&side)===side);reflect=reflect||!!(rule.reflect&side);
+      }
+      return {pass,reflect};
     }
+    lightBlocked(x,y,vy){return !this.lightResponse(this.lightType(x,y),vy).pass;}
+    rayAlpha(ray){return Number.isFinite(ray.intensity)?ray.intensity:(this.reflectionLoss===false?1:2**-(ray.bounces||0));}
     addWater(x,y,amount=1){
       x=Math.floor(x);y=Math.floor(y);if(x<0||y<0||x>=this.width||y>=this.height)return 0;
       const i=y*this.width+x;if(this.solid[i])return 0;
@@ -49,7 +56,7 @@
       let nx=0,ny=0;const r=3;
       for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
         const px=Math.floor(x)+dx+.5,py=Math.floor(y)+dy+.5;
-        if(!this.lightBlocked(px,py,vy))continue;
+        const response=this.lightResponse(this.lightType(px,py),vy);if(response.pass&&!response.reflect)continue;
         const d=Math.hypot(x-px,y-py);if(d>r+.5)continue;
         const weight=(r+1-d)/Math.max(.2,d);nx+=(x-px)*weight;ny+=(y-py)*weight;
       }
@@ -59,33 +66,48 @@
     topBeams(){
       const beams=[],distance=12*Math.hypot(this.width,this.height);
       for(let x=0;x<this.width;x++){
-        const ray={x:x+.5,y:0,vx:0,vy:1,bounces:0};
-        const path=this.advanceRay(ray,distance);let travelled=0;
-        for(let i=1;i<path.length;i++){
-          const a=path[i-1],b=path[i],length=Math.hypot(b[0]-a[0],b[1]-a[1]);
-          if(length>0)beams.push({a,b,alpha:a[2],start:travelled,length});
-          travelled+=length;
+        const pending=[{ray:{x:x+.5,y:0,vx:0,vy:1,bounces:0},remaining:distance,start:0}];
+        for(let n=0;n<pending.length&&n<32;n++){
+          const current=pending[n],forks=[],path=this.advanceRay(current.ray,current.remaining,forks);let travelled=current.start;
+          for(let i=1;i<path.length;i++){
+            const a=path[i-1],b=path[i],length=Math.hypot(b[0]-a[0],b[1]-a[1]);
+            if(length>0)beams.push({a,b,alpha:a[2],start:travelled,length});
+            travelled+=length;
+          }
+          for(const fork of forks)if(pending.length<32)pending.push({...fork,start:current.start+fork.travelled});
         }
       }
       return beams;
     }
-    advanceRay(ray,distance){
-      const path=[[ray.x,ray.y,2**-(ray.bounces||0)]];let remaining=Math.max(0,distance);
-      if(this.lightBlocked(ray.x,ray.y,ray.vy)){ray.dead=true;return path;}
+    advanceRay(ray,distance,forks=[]){
+      const path=[[ray.x,ray.y,this.rayAlpha(ray)]];let remaining=Math.max(0,distance);
+      const initial=this.lightType(ray.x,ray.y);
+      if(initial!==ray.medium&&this.lightBlocked(ray.x,ray.y,ray.vy)){ray.dead=true;return path;}
       while(remaining>1e-7&&!ray.dead){
         const step=Math.min(.4,remaining),x=ray.x+ray.vx*step,y=ray.y+ray.vy*step;remaining-=step;
         if(x<0||y<0||x>=this.width||y>=this.height){ray.dead=true;break;}
-        if(this.lightBlocked(x,y,ray.vy)){
-          path.push([ray.x,ray.y,2**-(ray.bounces||0)]);const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy),dot=ray.vx*nx+ray.vy*ny;
+        const type=this.lightType(x,y),response=this.lightResponse(type&~(ray.medium||0),ray.vy);
+        if(response.reflect||!response.pass){
+          path.push([ray.x,ray.y,this.rayAlpha(ray)]);
+          if(!response.reflect){ray.dead=true;break;}
+          let alpha=this.rayAlpha(ray);
+          if(response.pass){
+            alpha*=.5;
+            if(alpha>=.002&& (ray.splits||0)<12)forks.push({ray:{...ray,x,y,intensity:alpha,medium:type,splits:(ray.splits||0)+1,trail:[]},remaining,travelled:distance-remaining});
+            ray.splits=(ray.splits||0)+1;
+          }
+          const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy),dot=ray.vx*nx+ray.vy*ny;
           ray.vx-=2*dot*nx;ray.vy-=2*dot*ny;ray.bounces=(ray.bounces||0)+1;
-          path.push([ray.x,ray.y,2**-ray.bounces]);
+          ray.intensity=alpha*(this.reflectionLoss===false?1:.5);
+          path.push([ray.x,ray.y,ray.intensity]);
           // Retain the last free position. No jump across a thin neighbouring wall.
-          if(ray.bounces>=12)ray.dead=true;
-        }else{ray.x=x;ray.y=y;}
+          if(ray.bounces>=12||ray.intensity<.002)ray.dead=true;
+        }else{ray.x=x;ray.y=y;ray.medium=type;}
       }
-      path.push([ray.x,ray.y,2**-(ray.bounces||0)]);return path;
+      path.push([ray.x,ray.y,this.rayAlpha(ray)]);return path;
     }
   }
+
   // Hydrostatic relaxation along each supported horizontal span. Unlike the local
   // snow-like solver, a pool levels across its full width before its next fall.
   class WaterField extends Field {

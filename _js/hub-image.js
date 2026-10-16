@@ -10,6 +10,8 @@
   };
   const clear = () => { pending++; picture = null; changed(); if (status) status.textContent = 'Треугольник'; };
   window.HubImage = {
+    snapshot(){if(!picture)return null;const c=document.createElement('canvas');c.width=picture.naturalWidth;c.height=picture.naturalHeight;c.getContext('2d').drawImage(picture,0,0);return c.toDataURL('image/png');},
+    async restore(data){if(!data){clear();return;}const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=data;});picture=image;changed();},
     get active() { return !!picture; },
     get revision() { return revision; },
     draw(g, left, width, height) {

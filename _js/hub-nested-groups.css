@@ -1,0 +1,26 @@
+/* Each depth adds columns; each column contains at most five diamond buttons. */
+#hubFieldTools.hubMirrorSettings[data-nested]{display:flex!important;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#hubFieldTools[data-nested] .hubTreeGrid{display:grid;grid-template-columns:repeat(var(--tree-columns,1),48px);grid-auto-rows:48px;gap:4px;position:relative;flex:none;width:48px;height:48px;max-width:none;align-items:start;pointer-events:none}
+#hubFieldTools[data-nested] .hubTreeItem{position:relative;width:48px;height:48px;pointer-events:auto}
+#hubFieldTools[data-nested] .hubTreeItem[hidden]{display:none!important}
+#hubFieldTools[data-nested] .hubTreeItem>.hubRhomb,#hubFieldTools[data-nested] .hubTreeItem>details,#hubFieldTools[data-nested] .hubTreeItem>details>summary{position:relative;inset:auto;margin:0;width:48px;height:48px;min-width:0;white-space:pre-line;text-align:center}
+#hubFieldTools[data-nested] .hubTreeBranch{display:block;padding:0}
+#hubFieldTools[data-nested] .hubTreeItem>.hubRhomb,#hubFieldTools[data-nested] .hubTilt>summary{display:flex;align-items:center;justify-content:center;padding:0;font:11px/1.1 system-ui,sans-serif}
+#hubFieldTools[data-nested] .hubTreeBranch>summary{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;list-style:none;background:var(--hub-theme-bg);color:var(--hub-theme-bit)}
+#hubFieldTools[data-nested] .hubTreeBranch>summary b{font-size:16px}
+#hubFieldTools[data-nested] .hubTreeBranch>summary small{font:9px system-ui}
+#hubFieldTools[data-nested] .hubTreeBranch[open]>summary{background:var(--hub-theme-active)!important}
+#hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=false]{background:var(--hub-theme-bg)!important;color:color-mix(in srgb,var(--hub-theme-bit) 60%,transparent)}
+#hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=true]{background:var(--hub-theme-active)!important;color:var(--hub-theme-accent)}
+#hubFieldTools[data-nested] .hubTreeItem:has(details[open]){z-index:45}
+#hubFieldTools[data-nested] .hubTilt>label{position:absolute;left:var(--menu-left,0px);right:auto;top:48px;width:180px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;padding:8px;background:var(--hub-theme-bg)!important;color:var(--hub-theme-bit);z-index:46;white-space:normal}
+#hubFieldTools[data-nested] .hubTilt:not([open])>label{display:none}
+#hubFieldTools[data-nested] .hubTilt>label input{width:100%;min-width:0;box-sizing:border-box}
+#hubFieldTools[data-nested] [data-control-pinned=true][hidden]{display:flex!important}
+#hubFieldTools[data-nested] details[data-control-pinned=true][hidden]{display:block!important}
+#hubFieldTools[data-nested] [data-group-pinned=true]>summary::after,#hubFieldTools[data-nested] [data-control-pinned=true]:not(details)::after,#hubFieldTools[data-nested] [data-control-pinned=true]>summary::after{border:3px double var(--hub-theme-accent);opacity:1}
+#hubFieldTools[data-nested] #hubMenuSources{display:none!important}
+#hubFieldTools[data-nested] #hubBitPacking{position:relative;inset:auto}
+@media(max-width:550px){#hubFieldTools.hubMirrorSettings[data-nested]{right:8px;left:8px;justify-content:flex-start;max-width:calc(100vw - 16px)}}
+
+#hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=mixed]{background:linear-gradient(135deg,var(--hub-theme-active) 50%,var(--hub-theme-bg) 50%)!important;color:var(--hub-theme-accent)}

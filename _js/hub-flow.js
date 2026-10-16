@@ -1,4 +1,4 @@
-/* Hub v0.204 — independent light, snow and water speeds. */
+/* Hub v0.205 — snapshots, directional optics and independent stream speeds. */
 (() => {
   'use strict';
   let canvas,ctx,maskCanvas,maskCtx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,liquid,pixels,liquidPixels,cell=2;
@@ -11,7 +11,9 @@
   try{waterCorners=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').waterCorners!==false;}catch(_){}
   const speeds={light:1,snow:1,water:1};
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,speeds}));}catch(_){}};
+  const lightRules=[{pass:1,reflect:2},{pass:2,reflect:1}];let reflectionLoss=true;
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');reflectionLoss=saved.reflectionLoss!==false;for(let bit=0;bit<2;bit++)for(const key of ['pass','reflect']){const value=saved.lightRules?.[bit]?.[key];if(Number.isInteger(value)&&value>=0&&value<=3)lightRules[bit][key]=value;}}catch(_){}
+  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,speeds,lightRules,reflectionLoss}));}catch(_){}};
   let spriteKey='',sprites=[];
   function lightSprites(){
     const mirror=window.HubMirror;if(!mirror)return [];
@@ -29,7 +31,7 @@
     const cols=Math.ceil(w/cell),rows=Math.ceil(h/cell);
     if(field&&field.width===cols&&field.height===rows&&canvas.width===w&&canvas.height===h)return;
     canvas.width=maskCanvas.width=liquidCanvas.width=w;canvas.height=maskCanvas.height=liquidCanvas.height=h;waterCanvas.width=cols;waterCanvas.height=rows;
-    field=new HubFlowCore.Field(cols,rows);liquid=new HubFlowCore.WaterField(w,h);liquid.cornerPass=waterCorners;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(w,h);rays=[];dirty=true;
+    field=new HubFlowCore.Field(cols,rows);field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;liquid=new HubFlowCore.WaterField(w,h);liquid.cornerPass=waterCorners;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(w,h);rays=[];dirty=true;
     beams=null;canvas.dataset.waterCell='1';
   }
   function rebuild(time){
@@ -106,13 +108,16 @@
     }
     ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
     const glyphs=lightBits?lightSprites():[];
-    for(const ray of rays){
-      ray.age+=dt*speeds.light;const path=field.advanceRay(ray,dt*speeds.light*420/cell);
+    const pending=rays.map(ray=>({ray,distance:dt*speeds.light*420/cell}));
+    for(let ri=0;ri<pending.length&&ri<350;ri++){
+      const {ray,distance}=pending[ri],forks=[];
+      ray.age+=dt*speeds.light;const path=dt*speeds.light>0?field.advanceRay(ray,distance,forks):[];
+      for(const fork of forks)if(rays.length<350){fork.ray.age=ray.age-dt*speeds.light;pending.push({ray:fork.ray,distance:fork.remaining});rays.push(fork.ray);}
       ray.trail=ray.trail||[];for(const p of path)ray.trail.push([p[0],p[1],ray.age,p[2]]);
       ray.trail=ray.trail.filter(p=>ray.age-p[2]<.32);
       if(lightBits&&glyphs.length){
         const glyph=glyphs[Number(ray.bit)],side=glyph.width/2;
-        ctx.globalAlpha=2**-ray.bounces;ctx.shadowBlur=0;ctx.drawImage(glyph,ray.x*cell-side/2,ray.y*cell-side/2,side,side);
+        ctx.globalAlpha=field.rayAlpha(ray);ctx.shadowBlur=0;ctx.drawImage(glyph,ray.x*cell-side/2,ray.y*cell-side/2,side,side);
       }else{
         // Keep the incident segment bright; only the reflected segment loses half its light.
         const trail=ray.trail;ctx.shadowBlur=5;ctx.beginPath();let alpha=null;
@@ -122,6 +127,7 @@
     }
     rays=rays.filter(r=>!r.dead&&r.age<8);ctx.globalAlpha=1;ctx.shadowBlur=0;
     for(const key of Object.keys(speeds))canvas.dataset[key+'Speed']=String(speeds[key]);
+    canvas.dataset.lightRules=JSON.stringify(lightRules);canvas.dataset.reflectionLoss=String(reflectionLoss);
     canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.waterCorners=String(waterCorners);canvas.dataset.dense=String(dense);canvas.dataset.lightStyle=dense?'continuous':lightBits?'bits':'rays';canvas.dataset.beams=String(beams?.length||0);canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY='0';canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
   }
   function frame(time){
@@ -135,7 +141,7 @@
     if(light||snow||water||rays.length||Number(canvas.dataset.snow)>0||Number(canvas.dataset.water)>0)raf=requestAnimationFrame(frame);else lastTime=0;
   }
   function wake(){if(!raf&&!document.hidden&&!paused)raf=requestAnimationFrame(frame);}
-  function sync(){lightButton.setAttribute('aria-pressed',String(light));snowButton.setAttribute('aria-pressed',String(snow));waterButton.setAttribute('aria-pressed',String(water));dirty=true;lastMask=-Infinity;wake();}
+  function sync(){lightButton.setAttribute('aria-pressed',String(light));snowButton.setAttribute('aria-pressed',String(snow));waterButton.setAttribute('aria-pressed',String(water));dirty=true;lastMask=-Infinity;wake();window.dispatchEvent?.(new Event('hubflowstate'));}
   function init(){
     const tools=document.getElementById('hubFieldTools');if(!tools)return;
     const wrap=document.createElement('div');wrap.className='hubFlowControls';
@@ -153,6 +159,13 @@
       range.oninput=()=>{speeds[key]=Number(range.value);if(key==='water')accumulator=0;if(key==='snow')snowAccumulator=0;update();saveStyle();wake();};
       update();label.append(range,output);control.append(head,label);wrap.append(control);
     }
+    const opticalChange=()=>{rays=[];beams=null;beamDistance=0;if(field){field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;}saveStyle();wake();};
+    const sides=['Нет','Сверху','Снизу','Обе'],marks=['×','↓','↑','↕'];
+    for(let bit=0;bit<2;bit++)for(const [key,name,short] of [['pass','пропускание','Пропуск'],['reflect','отражение','Отраж.']]){
+      const b=button('','Свет '+bit+': '+name,()=>{lightRules[bit][key]=(lightRules[bit][key]+1)%4;update();opticalChange();});b.id='hubLightRule-'+bit+'-'+key;
+      const update=()=>{const v=lightRules[bit][key];b.textContent=marks[v]+'\n'+short;b.title='Бит '+bit+' · '+name+': '+sides[v]+' · Клик: нет → сверху → снизу → обе стороны. Стороны относительно экрана; оба действия — разделение 50/50.';b.setAttribute('aria-pressed',String(v!==0));b.setAttribute('aria-description',sides[v]);};update();
+    }
+    const loss=button('−50%\nОтраж.','Ослаблять отражённый свет на 50%',()=>{reflectionLoss=!reflectionLoss;loss.setAttribute('aria-pressed',String(reflectionLoss));opticalChange();});loss.id='hubLightLoss';loss.setAttribute('aria-pressed',String(reflectionLoss));
     cornersButton=button('↘\nУглы','Вода: стороны и углы — проход через шахматные стыки',()=>{waterCorners=!waterCorners;if(liquid)liquid.cornerPass=waterCorners;cornersButton.setAttribute('aria-pressed',String(waterCorners));saveStyle();wake();});cornersButton.setAttribute('aria-pressed',String(waterCorners));
     button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
     denseButton=button('▤\nПлотно','Сплошной поток света и воды сверху',()=>{dense=!dense;if(dense)sun=false;sunButton.setAttribute('aria-pressed',String(sun));denseButton.setAttribute('aria-pressed',String(dense));rays=[];beams=null;beamDistance=0;saveStyle();sync();});
@@ -183,6 +196,17 @@
     window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);raf=0;lastTime=0;});
     window.addEventListener('pageshow',()=>{if(light||snow||water)wake();});
   }
-  window.HubFlow={invalidate};
+  window.HubFlow={invalidate,
+    get playing(){return !paused&&(light||snow||water);},
+    togglePause(){paused=!paused;lastTime=0;if(!paused)wake();window.dispatchEvent?.(new Event('hubflowstate'));},
+    snapshot(){return {light,snow,water,paused,rays:JSON.parse(JSON.stringify(rays)),emission,snowEmission,waterEmission,sample,beamDistance,accumulator,snowAccumulator,snowGrid:window.HubPresetCore.pack(field),waterGrid:window.HubPresetCore.pack(liquid)};},
+    restore(s){
+      size();reset();light=!!s.light;snow=!!s.snow;water=!!s.water;paused=!!s.paused;
+      dirty=true;lastMask=-Infinity;rebuild(performance.now());
+      window.HubPresetCore.restoreGrid(field,s.snowGrid);window.HubPresetCore.restoreGrid(liquid,s.waterGrid);
+      rays=s.rays||[];emission=s.emission||0;snowEmission=s.snowEmission||0;waterEmission=s.waterEmission||0;sample=s.sample||0;beamDistance=s.beamDistance||0;accumulator=s.accumulator||0;snowAccumulator=s.snowAccumulator||0;
+      sync();draw(0);lastTime=0;wake();
+    }
+  };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

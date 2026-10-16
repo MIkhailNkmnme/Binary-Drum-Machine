@@ -16,7 +16,7 @@ function fixture(saved = {}) {
   const document = {hidden:false,body:element(),createElement:element,createTextNode:text=>({textContent:text}),
     querySelector:s=>s==='.hubMirrorSettings'?settings:null,querySelectorAll:()=>[],
     addEventListener:(name,fn)=>(listeners[name] ||= []).push(fn),removeEventListener:(name,fn)=>{listeners[name]=(listeners[name]||[]).filter(f=>f!==fn);}};
-  const window = {HubMirror:{state:{},home(){mirrorHomes++;}},addEventListener:(name,fn)=>(windowListeners[name] ||= []).push(fn),
+  const window = {HubPresetCore:require('./hub-presets-core.js'),HubMirror:{state:{},home(){mirrorHomes++;}},addEventListener:(name,fn)=>(windowListeners[name] ||= []).push(fn),
     dispatchEvent:e=>(windowListeners[e.type]||[]).forEach(fn=>fn(e))};
   vm.runInNewContext(fs.readFileSync(__dirname+'/hub-view.js','utf8'),{document,window,
     localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},innerWidth:1200,innerHeight:800,scrollY:0,
@@ -26,6 +26,15 @@ function fixture(saved = {}) {
   return {window,centerMarkers:()=>elements.filter(e=>e.className==='hubCenterBit'),centerMarker:()=>elements.find(e=>e.className==='hubCenterBit'),bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
     homes:()=>mirrorHomes,wheel(overMenu=false){const event={target:{closest:()=>overMenu},clientX:750,clientY:400,deltaY:-120,preventDefault(){this.prevented=true;}};listeners.wheel.forEach(fn=>fn(event));return event;}};
 }
+
+test('preset restores camera, separate 3D angles, autozoom phase and running state',()=>{
+  const f=fixture({zoom:2.3,angle:77,flip:42,mirrorFlip:137,pan:[81,-27],sourcePan:[-11,34],zoomCycle:'reset'});
+  const saved=JSON.parse(JSON.stringify(f.window.HubView.snapshot()));saved.zoomRunning=true;saved.zoomPhase=.73;saved.resumeAuto=true;saved.lastScrollRotation=-15;
+  f.button('Вернуть весь рисунок в поле').onclick();f.window.HubView.restore(saved);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.window.HubView.snapshot())),saved);
+  saved.zoomRunning=false;saved.fieldPaused=true;saved.resumeZoom=true;f.window.HubView.restore(saved);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.window.HubView.snapshot())),saved);
+});
 
 test('closed drag lock permits wheel and both zoom buttons',()=>{
   const f=fixture({unlocked:false});
@@ -609,4 +618,23 @@ test('saved centre bit pin waits for actual bit geometry and remains enabled aft
  const f=fixture({centerBitPin:true}),m=realMirror(f),v=f.window.HubView;
  assert.equal(v.centerBitPinned,true);assert.equal(f.button('Закрепить центральный бит треугольника в центре оси').attributes['aria-pressed'],'true');
  v.setSourceCenter(830,300);m.setBitCenters([[826,304,'1']],{width:20,height:30});near(Array.from(v.projectBit(826,304)),Array.from(m.rotationCenter()));
+});
+
+
+test('independent locks hold geometry, allow other dimensions and release without auto-zoom catchup',()=>{
+ const f=fixture({angle:20,zoom:1.5,sourcePan:[.1,.2]}),v=f.window.HubView,locks=new Set(['zoom','turn','pan','depth']);f.window.HubLocks={has:k=>locks.has(k)};
+ const before=JSON.stringify(v.snapshot().state);
+ f.button('Увеличить масштаб холста').onclick();v.rotateBy(15);v.shiftSourceBy(80,40);f.button('Оригинал и зеркало под прямым углом').onclick();
+ assert.equal(JSON.stringify(v.snapshot().state),before);
+ f.button('Автозум от центра — пуск / пауза').onclick();f.tick(1000);f.tick(6000);assert.equal(v.scale,1.5);
+ locks.delete('zoom');f.tick(7000);assert.equal(v.scale,1.5);f.tick(7100);assert.notEqual(v.scale,1.5);
+ locks.delete('turn');v.rotateBy(15);assert.equal(f.state().angle,35);
+ locks.delete('pan');v.shiftSourceBy(90,80);near(Array.from(v.sourceShift()),[180,240]);
+});
+test('zero and one locks are independent and the axis lock survives home',()=>{
+ const f=fixture(),m=realMirror(f),locks=new Set(['zero','axis']);f.window.HubLocks={has:k=>locks.has(k)};
+ m.state.zero=25;m.state.one=-10;m.state.x=.3;m.state.angle=.8;
+ assert.equal(m.tiltBit('0',15),false);m.tiltBit('1',15);assert.equal(m.state.zero,25);assert.equal(m.state.one,5);
+ m.rotateBy(1);m.home();assert.equal(m.state.angle,.8);assert.equal(m.state.x,.3);
+ locks.delete('zero');m.tiltBit('0',15);assert.equal(m.state.zero,40);
 });
