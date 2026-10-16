@@ -1,3 +1,4 @@
+/* Hub v0.144: the colour rhombus moves under the zoom cross, equilateral, colour buttons are filled rhombs. */
 /* Hub v0.141: own preset (★) with four colours, alphas for bits / fold / symmetry; colour controls grouped in a translucent rhombus. */
 /* Hub v0.140: opacity of the axis-symmetry highlight (symAlpha, slider next to ✦). */
 /* Hub v0.139: each preset has its own colour for the axis-symmetry highlight (5th entry, was always gold). */
@@ -133,7 +134,7 @@
     palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';
     const inputs={};
     const syncColors=()=>{const c=api.colors();palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
-      for(const k in inputs)if(document.activeElement!==inputs[k])inputs[k].value=c[k];};
+      for(const k in inputs){if(document.activeElement!==inputs[k])inputs[k].value=c[k];inputs[k].parentElement.style.setProperty('--slot',c[k]);}};
     [...PALETTES.map((p,i)=>[i,p[0],p[1],p[4]]),[-1,'★ Свой',null,null]].forEach(([i,name,a,b])=>{const btn=document.createElement('button');btn.type='button';btn.dataset.i=i;btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);
       if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
       btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();};palList.append(btn);});
@@ -150,6 +151,8 @@
       range.addEventListener('input',()=>{state[key]=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
       label.append(range);box.append(head,label);colorGroup.append(box);}
     syncColors();settings.append(colorGroup);
+    // v0.144: «этот ромб под кнопки масштаба, равносторонний» — переезжает в #hubZoom (его строит hub-view.js чуть позже)
+    { let tries=0;const move=()=>{const z=document.getElementById('hubZoom');if(z){z.append(colorGroup);return;}if(++tries<40)setTimeout(move,100);};setTimeout(move,0); }
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
