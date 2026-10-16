@@ -1,4 +1,4 @@
-/* Матрёшки v0.001. Исходное поле не сдвигается; слои — обратимые проекции его адресов. */
+/* Матрёшки v0.002. Исходное поле не сдвигается; слои — обратимые проекции его адресов. */
 (function (root, factory) {
   const api = factory(typeof module === 'object' ? require('../mayatnik/mayatnik-core.js') : (typeof MAYATNIK !== 'undefined' ? MAYATNIK : root.MAYATNIK));
   if (typeof module === 'object') module.exports = api; else root.Matryoshki = api;

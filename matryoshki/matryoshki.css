@@ -1,4 +1,4 @@
-/* Матрёшки v0.001; группы и пульт — общие компоненты проекта. */
+/* Матрёшки v0.002; группы и пульт — общие компоненты проекта. */
 :root{color-scheme:dark;--bg:#0d1119;--panel:#121a27;--fg:#e8edf5;--dim:#9baac3;--line:#2b3850;--mono:Consolas,monospace}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:13px 'Segoe UI',sans-serif;display:grid;grid-template-columns:252px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;height:100dvh;overflow:hidden}
 header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}h1{margin:0;font-size:20px;font-weight:500}.ver,.hint{color:var(--dim)}a{color:#9fc5ed;text-decoration:none}header #help{margin-left:auto}

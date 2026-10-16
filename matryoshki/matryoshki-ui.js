@@ -1,4 +1,4 @@
-/* Матрёшки v0.001. Отображение, общий пульт, слои и адреса исходных битов. */
+/* Матрёшки v0.002. Отображение, общий пульт, слои и адреса исходных битов. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), KEY = 'matryoshki_v1';
@@ -39,9 +39,8 @@
     if (delta > 0 && state.grow && frame > rows * 2) rows *= 2;
     request(frame, rows);
   }
-  try {
-    worker = new Worker('matryoshki-worker.js?v=001');
-    worker.onmessage = ({ data }) => {
+  worker = MatryoshkiRuntime.createClient({
+    onmessage: ({ data }) => {
       if (data.id !== id) return;
       if (data.error) { busy = false; pause(); $('activity').textContent = data.error; return; }
       if (data.progress != null) { $('activity').textContent = `Построение: ${data.progress} / ${data.target}`; return; }
@@ -49,9 +48,8 @@
       $('activity').textContent = ''; if (priorRows && priorRows !== source.rows) { zoom = 1; panX = panY = 0; }
       picked = null; $('inspection').textContent = 'Нажмите на бит — покажу исходный адрес. Вершина (0, 0) неподвижна.';
       rebuild(); save(); refresh();
-    };
-    worker.onerror = () => { busy = false; pause(); $('activity').textContent = 'Не удалось запустить расчёт. Откройте страницу через локальный HTTP-сервер или сайт, затем обновите.'; };
-  } catch { $('activity').textContent = 'Для расчёта откройте страницу через HTTP-сервер, а не file://.'; }
+    }
+  });
   const toggle = (key, icon, name, tip) => ({ type: 'toggle', icon, name, tip, on: () => state[key], click() { state[key] = !state[key]; save(); draw(); } });
   rail = ZerkGrozd.rail($('rail'), { key: 'matryoshki_v1', groups: [
     { id: 'build', title: 'Построение', color: '#80aee8', open: true, items: [
