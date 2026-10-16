@@ -37,3 +37,18 @@ test('batched glyphs preserve ink positions under bit rotation',()=>{
   for(let i=0;i<2;i++){const [x,y]=points[i];assert.equal(many[i][1],one[1]);assert.ok(Math.abs(many[i][2]*co-many[i][3]*si-(x+one[2]*co-one[3]*si))<1e-10);assert.ok(Math.abs(many[i][2]*si+many[i][3]*co-(y+one[2]*si+one[3]*co))<1e-10);}
  }
 });
+
+test('transparent glyph erases only an isolated tile and preserves destination layers',()=>{
+ const events=[],spriteContext={fillStyle:'',setTransform(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){events.push(['tile',this.globalCompositeOperation||'source-over']);},measureText:()=>({width:8,actualBoundingBoxLeft:0,actualBoundingBoxRight:8,actualBoundingBoxAscent:10,actualBoundingBoxDescent:0}),fillText(bit){events.push(['glyph',bit,this.globalCompositeOperation]);}};
+ const tile={getContext:()=>spriteContext},c={window:{},document:{readyState:'loading',addEventListener(){},createElement:()=>tile},localStorage:{getItem:()=>JSON.stringify({hideZeroDigit:true,zero:30}),setItem(){}}};
+ vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),c);const m=c.window.HubMirror;
+ const g={fillStyle:'#ff8800',globalCompositeOperation:'source-over',getTransform:()=>({a:2,b:0,c:0,d:2}),save(){},restore(){},translate(){},rotate:a=>events.push(['rotate',a]),drawImage:()=>events.push(['destination',g.globalCompositeOperation])};
+ assert.equal(m.fillCutoutRhomb(g,'1',100,100,10,18,12),false);
+ assert.equal(m.fillCutoutRhomb(g,'0',100,100,10,18,12),true);assert.deepEqual(events.slice(0,2),[['tile','source-over'],['glyph','0','destination-out']]);assert.deepEqual(events.at(-1),['destination','source-over']);assert.ok(Math.abs(events[2][1]-Math.PI/6)<1e-12);
+ m.fillCutoutRhomb(g,'0',120,100,10,18,12);assert.equal(events.filter(e=>e[0]==='tile').length,1);
+});
+test('zero opacity and fold setting survive reload',()=>{const m=mirror({symAlpha:0,bitAlpha:0,foldAlpha:.42,foldIn:true});assert.equal(m.state.symAlpha,0);assert.equal(m.state.bitAlpha,0);assert.equal(m.state.foldAlpha,.42);assert.equal(m.state.foldIn,true);});
+
+test('bit identification includes transparent glyph centers and distinguishes reflected zero and one',()=>{
+ const m=mirror({bitView:'rhombs',hideZeroDigit:true,hideOneDigit:true,on:true,angle:Math.PI/2,x:.5,y:.5});m.place(0,200,200);m.setBitCenters([[50,50,'0'],[50,90,'1']],{width:20,height:40});assert.equal(m.bitAt(50,50),'0');assert.equal(m.bitAt(50,90),'1');assert.equal(m.bitAt(150,50,true),'0');assert.equal(m.bitAt(150,90,true),'1');assert.equal(m.bitAt(100,30),null);
+});

@@ -15,7 +15,7 @@ function fixture(saved = {}) {
   let mirrorHomes = 0;
   const document = {hidden:false,body:element(),createElement:element,createTextNode:text=>({textContent:text}),
     querySelector:s=>s==='.hubMirrorSettings'?settings:null,querySelectorAll:()=>[],
-    addEventListener:(name,fn)=>(listeners[name] ||= []).push(fn)};
+    addEventListener:(name,fn)=>(listeners[name] ||= []).push(fn),removeEventListener:(name,fn)=>{listeners[name]=(listeners[name]||[]).filter(f=>f!==fn);}};
   const window = {HubMirror:{state:{},home(){mirrorHomes++;}},addEventListener:(name,fn)=>(windowListeners[name] ||= []).push(fn),
     dispatchEvent:e=>(windowListeners[e.type]||[]).forEach(fn=>fn(e))};
   vm.runInNewContext(fs.readFileSync(__dirname+'/hub-view.js','utf8'),{document,window,
@@ -432,4 +432,20 @@ test('left drag outside bits delegates to the axis, while middle drag keeps came
  const f=fixture(),m=realMirror(f);m.state.screenPin=true;let grabbed=null;m.grabAxis=e=>{grabbed=e;return true;};
  const e={target:{closest:()=>null},button:0,pointerId:5,clientX:800,clientY:400,stopPropagation(){}};
  f.emit('pointerdown',e);assert.equal(grabbed,e);assert.equal(f.window.HubView.rotation,0);
+});
+
+test('middle click repeats last wheel rotation, preserves axis and ignores cancelled clicks',()=>{
+ for(const cancel of [false,true]){const f=fixture({angle:73}),m=realMirror(f),v=f.window.HubView;m.state.screenPin=true;m.state.magnet=false;m.syncCenter();m.hit=()=>({source:false,mirror:false});const axis=m.state.angle+v.rotation;
+ v.rotateBitsBy(-5,m.rotationCenter());
+ f.emit('pointerdown',{target:{closest:()=>null},button:1,pointerId:4,clientX:800,clientY:400,preventDefault(){},stopPropagation(){}});
+ const type=cancel?'pointercancel':'pointerup';f.emit(type,{type,pointerId:4});assert.ok(Math.abs(v.rotation-(cancel?68:63)*Math.PI/180)<1e-10);assert.ok(Math.abs(m.state.angle+v.rotation-axis)<1e-10);}
+});
+
+test('wheel and middle click on zero/one tilt only that bit type, without camera zoom or rotation',()=>{
+ const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.on=false;m.setBitCenters([[800,200,'0'],[840,200,'1']],{width:20,height:40});const target={closest:()=>null};
+ for(const [x,key,delta,expected] of [[800,'zero',120,10],[840,'one',-120,-10]]){
+  f.emit('wheel',{target,clientX:x,clientY:200,deltaY:delta,preventDefault(){}});
+  f.emit('pointerdown',{target,button:1,pointerId:9,clientX:x,clientY:200,preventDefault(){},stopPropagation(){}});f.emit('pointerup',{type:'pointerup',pointerId:9});assert.equal(m.state[key],expected);
+ }
+ assert.equal(m.state.zero,10);assert.equal(m.state.one,-10);assert.equal(v.scale,1);assert.equal(v.rotation,0);
 });

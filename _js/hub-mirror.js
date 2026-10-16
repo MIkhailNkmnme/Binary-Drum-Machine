@@ -49,7 +49,8 @@
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
-      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённыхstate.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(.1,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(.1,Math.min(1.3,saved[k]));
+      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
+      state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(Object.keys(c).length===4)state.custom=c;}
       if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
@@ -79,7 +80,7 @@
   }
   function startSpin(){if(spinRunning)return;spinRemainder=0;spinRunning=true;spinTime=0;spinRaf=requestAnimationFrame(spinTick);syncSpin();}
   function magneticPoint(x,y){let best=[x,y],distance=10/Math.max(.2,window.HubView?.scale||1);const shift=window.HubView?.sourceShift()||[0,0];for(const p of [[frame.left+frame.width/2,frame.height/2],...bitCenters.map(p=>[p[0]+shift[0],p[1]+shift[1]])]){const d=Math.hypot(x-p[0],y-p[1]);if(d<=distance){distance=d;best=p;}}return best;}
-  const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map();
+  const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map(),cutoutSprites=new Map(),lastBitScroll={0:5,1:5};
   function glyphOffset(g,text,size){
     const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
     if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
@@ -163,7 +164,7 @@
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
-    const views=[['rhombs','◇01','Ромбы с цифрами'],['digits','01','Только цифры'],['brackets',')()','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['stars','*·','Звезда и точка']];
+    const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')','Скобки: 1 = ), 0 = ('],['stars','*','Звезда и точка']];
     const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;b.setAttribute('aria-pressed',String(selected));});};
     for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
@@ -205,7 +206,7 @@
     colorGroup=document.createElement('div');colorGroup.className='hubColorGroup';colorGroup.setAttribute('role','group');colorGroup.setAttribute('aria-label','Цвета');
     const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`,palBox=document.createElement('details'),palHead=document.createElement('summary'),palList=document.createElement('div');
     palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';palList.setAttribute('role','group');palList.setAttribute('aria-label','Пресеты цветов');
-    const inputs={};
+    const inputs={},alphaControls={};
     const syncColors=()=>{const c=api.colors();
       document.documentElement.style.setProperty('--hub-theme-bit',c.bit);document.documentElement.style.setProperty('--hub-theme-accent',c.sym);
       palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
@@ -216,19 +217,21 @@
     palBox.append(palHead,palList);colorGroup.append(palBox);
     for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
       const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot';wrap.style.gridArea=area;wrap.title=title;
-      input.type='color';input.setAttribute('aria-label',title);m.textContent=mark;wrap.append(input,m);inputs[key]=input;
+      input.type='color';input.setAttribute('aria-label',title);
+      const edit=e=>{e.preventDefault();e.stopPropagation();const alphaKey={bit:'bitAlpha',mirror:'bitAlpha',fold:'foldAlpha',sym:'symAlpha'}[key];window.HubColorPicker.open({trigger:input,title,color:api.colors()[key],opacity:state[alphaKey],maxOpacity:key==='sym'?1:1.3,onChange:(color,opacity)=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=color;state[alphaKey]=opacity;const control=alphaControls[alphaKey];if(control){control.range.value=Math.round(opacity*100);control.value.textContent=Math.round(opacity*100)+'%';}syncColors();changed();save();}});};
+      input.addEventListener('click',edit);input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')edit(e);});m.textContent=mark;wrap.append(input,m);inputs[key]=input;
       input.addEventListener('input',()=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=input.value;syncColors();changed();});input.addEventListener('change',save);
       colorGroup.append(wrap);}
-    for(const [key,area,mark,title,min,max] of [['symAlpha','sa','✦','Прозрачность подсветки симметрии по оси',10,100],['bitAlpha','ab','1','Прозрачность битов оригинала и отражения',10,130],['foldAlpha','af','⤵','Прозрачность заворота',10,130]]){
+    for(const [key,area,mark,title,min,max] of [['symAlpha','sa','✦','Прозрачность подсветки симметрии по оси',0,100],['bitAlpha','ab','1','Прозрачность битов оригинала и отражения',0,130],['foldAlpha','af','⤵','Прозрачность заворота',0,130]]){
       const box=document.createElement('details'),head=document.createElement('summary'),value=document.createElement('output'),label=document.createElement('label'),range=document.createElement('input');
       box.className='hubTilt hubAlpha';box.style.gridArea=area;head.title=title;head.append(document.createTextNode(mark+' '),value);
-      range.type='range';range.min=String(min);range.max=String(max);range.step='5';range.value=Math.round(state[key]*100);range.setAttribute('aria-label',title);value.textContent=range.value+'%';
+      range.type='range';range.min=String(min);range.max=String(max);range.step='5';range.value=Math.round(state[key]*100);range.setAttribute('aria-label',title);value.textContent=range.value+'%';alphaControls[key]={range,value};
       range.addEventListener('input',()=>{state[key]=Number(range.value)/100;value.textContent=range.value+'%';changed();});range.addEventListener('change',save);
       const colorKey={bitAlpha:'bit',foldAlpha:'fold',symAlpha:'sym'}[key],picker=inputs[colorKey],oldSlot=picker.parentElement;
       head.classList.add('hubColorAlpha');picker.classList.add('hubColorFrame');picker.title=picker.getAttribute('aria-label')+' — рамка';picker.addEventListener('click',e=>e.stopPropagation());head.append(picker);oldSlot.remove();
       label.append(range);box.append(head,label);colorGroup.append(box);}
     for(const [key,bit,area] of [['hideZeroDigit','0','d0'],['hideOneDigit','1','d1']]){
-      const b=document.createElement('button');b.type='button';b.className='hubRhomb hubDigitToggle';b.style.gridArea=area;b.textContent=bit;b.title='Прозрачные цифры '+bit+' — ромбы остаются';b.setAttribute('aria-label','Прозрачные цифры '+bit);b.setAttribute('aria-pressed',String(state[key]));
+      const b=document.createElement('button');b.type='button';b.className='hubRhomb hubDigitToggle';b.style.gridArea=area;b.textContent=bit;b.title='Прозрачный вырез '+bit+' в ромбах';b.setAttribute('aria-label','Прозрачные цифры '+bit);b.setAttribute('aria-pressed',String(state[key]));
       b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};colorGroup.append(b);
     }
     syncColors();settings.append(colorGroup);
@@ -266,6 +269,7 @@
     root.addEventListener('pointerover',hoverAxisHint);
     root.addEventListener('pointerleave',()=>{if(!drag&&dragHint)dragHint.hidden=true;});
     const beginAxisDrag = (e,fromBackground=false) => {
+      if(e.button===1&&e.target===turn){e.preventDefault();e.stopPropagation();return false;}
       if (e.button !== 0 || !frame) return false;
       const target=fromBackground?line:e.target;
       e.preventDefault(); e.stopPropagation();
@@ -329,6 +333,7 @@
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null;if(dragHint)dragHint.hidden=true; update(); save(); } });
     root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
     root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
+    turn.addEventListener('auxclick',e=>{if(e.button===1){e.preventDefault();e.stopPropagation();window.HubView?.repeatScrollRotation?.();}});
     turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); window.HubView?.rotateBitsBy?.(Math.sign(e.deltaY)*5,center()); }, { passive: false });
     root.addEventListener('keydown', e => {
       if (!frame) return;
@@ -360,6 +365,18 @@
     setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
+    bitAt(x,y,mirror=false){
+      if(!frame||!bitCell||window.HubImage?.active)return null;
+      if(mirror){if(!state.on)return null;const p=this.point(x,y,false);if(!p)return null;[x,y]=p;}
+      const shift=window.HubView?.sourceShift()||[0,0];x-=shift[0];y-=shift[1];
+      for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return bit;}
+      return null;
+    },
+    tiltBit(bit,delta=null){
+      if(bit!=='0'&&bit!=='1')return false;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
+      const key=bit==='0'?'zero':'one';state[key]=Math.max(-60,Math.min(60,state[key]+lastBitScroll[bit]));
+      const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}changed();save();return true;
+    },
     hit(x,y){
       if(!frame)return {source:false,mirror:false};
       const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];
@@ -373,8 +390,23 @@
       for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}
       return {source:original,mirror};
     },
+    rotationCenter(){return frame?center():null;},
     colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
     symbolsOnly(){return state.bitView!=='rhombs';},
+    fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
+      if(this.symbolsOnly()||this.digitVisible(bit)||size<=0)return false;
+      const m=g.getTransform(),scale=Math.max(2,Math.min(8,Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d))));
+      const key=[bit,a,b,size,g.fillStyle,scale].join('|');let sprite=cutoutSprites.get(key);
+      if(!sprite){
+        const canvas=document.createElement('canvas'),w=Math.ceil(a*2*scale)+4,h=Math.ceil(b*2*scale)+4;canvas.width=w;canvas.height=h;
+        const c=canvas.getContext('2d');c.setTransform(scale,0,0,scale,w/2,h/2);c.fillStyle=g.fillStyle;
+        c.beginPath();c.moveTo(0,-b);c.lineTo(a,0);c.lineTo(0,b);c.lineTo(-a,0);c.closePath();c.fill();
+        // Cut only this tile; destination layers remain untouched through the glyph.
+        c.globalCompositeOperation='destination-out';c.fillStyle='#000';c.font=`bold ${size}px monospace`;c.textAlign='left';c.textBaseline='alphabetic';c.fillText(bit,...glyphOffset(c,bit,size));
+        sprite={canvas,w:w/scale,h:h/scale};if(cutoutSprites.size>=96)cutoutSprites.clear();cutoutSprites.set(key,sprite);
+      }
+      g.save();g.translate(x,y);g.rotate(angle);g.shadowBlur=0;g.drawImage(sprite.canvas,-sprite.w/2,-sprite.h/2,sprite.w,sprite.h);g.restore();return true;
+    },
     drawSymbol(g,bit,x,y,size){
       if(!this.digitVisible(bit))return;
       g.save();g.translate(x,y);g.rotate(this.bitAngle(bit));
