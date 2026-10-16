@@ -404,3 +404,13 @@ test('frame fractions show simple ratios and preserve the approximation marker',
   rate.valueAsNumber=value;rate.onchange();assert.equal(slider.attributes['aria-valuetext'],text+' об/кадр');
  }
 });
+
+
+test('axis continues backward only to the last intersected bit, including bit rotation and displacement',()=>{
+ const f=fixture(),m=realMirror(f);m.state.angle=0;m.state.x=.5;m.state.y=.5;
+ m.setBitCenters([[700,400,'1'],[650,400,'0'],[400,500,'1'],[850,400,'1']],{width:20,height:10});
+ assert.equal(m.axisTailLength(),110);
+ m.state.zero=90;assert.ok(Math.abs(m.axisTailLength()-105)<1e-8);
+ f.window.HubView.shiftSourceBy(30,0);assert.ok(Math.abs(m.axisTailLength()-75)<1e-8);
+ m.setBitCenters([[400,500,'1']],{width:20,height:10});assert.equal(m.axisTailLength(),0);
+});

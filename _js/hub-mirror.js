@@ -60,7 +60,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, viewport = null, line = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null;
+  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -87,6 +87,24 @@
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
   function lockCenter(){if(!frame)return;if(state.screenPin){const p=window.HubView?.screenCenterAnchor?.();if(p?.every(Number.isFinite)){state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}return;}if(state.on)return;const p=window.HubView?.originalCenter?.()||[frame.left+frame.width/2,frame.height/2];state.x=(p[0]-frame.left)/frame.width;state.y=p[1]/frame.height;}
+  function axisTailLength(){
+    if(!frame||!bitCell?.width||!bitCell?.height||window.HubImage?.active)return 0;
+    const [cx,cy]=center(),shift=window.HubView?.sourceShift()||[0,0],dx=-Math.cos(state.angle),dy=-Math.sin(state.angle),hw=bitCell.width/2,hh=bitCell.height/2;
+    const rotations=[state.zero,state.one].map(a=>[Math.cos(a*Math.PI/180),Math.sin(a*Math.PI/180)]);
+    let far=0;
+    for(const [x,y,bit] of bitCenters){
+      const [co,si]=rotations[bit==='0'?0:1],ox=cx-x-shift[0],oy=cy-y-shift[1],u=(ox*co+oy*si)/hw,v=(-ox*si+oy*co)/hh,du=(dx*co+dy*si)/hw,dv=(-dx*si+dy*co)/hh;
+      let lo=0,hi=Infinity;
+      for(const [a,b] of [[1,1],[1,-1],[-1,1],[-1,-1]]){
+        const slope=a*du+b*dv,room=1-a*u-b*v;
+        if(Math.abs(slope)<1e-12){if(room<0){hi=-1;break;}}
+        else if(slope>0)hi=Math.min(hi,room/slope);else lo=Math.max(lo,room/slope);
+        if(hi<lo)break;
+      }
+      if(hi>=lo&&Number.isFinite(hi))far=Math.max(far,hi);
+    }
+    return far;
+  }
   const update = () => {
     lockCenter();
     if (!root || !frame) return;
@@ -102,6 +120,7 @@
     if (enabled) enabled.checked = state.on;
     Object.assign(root.style, { position: mobile ? 'absolute' : 'fixed', left: frame.left + 'px', top: '0px', width: frame.width + 'px', height: frame.height + 'px' });
     Object.assign(line.style, { left: px + 'px', top: (py - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
+    if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = radius + 'px';
     Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
@@ -123,13 +142,14 @@
     viewport=document.createElement('div');viewport.id='hubMirrorViewport';
     root = document.createElement('div'); root.id = 'hubMirror';
     line = document.createElement('div'); line.className = 'hubMirrorLine';line.tabIndex=0;line.setAttribute('role','button');line.setAttribute('aria-label','Переместить зеркало относительно оригинала');
+    tail=document.createElement('span');tail.className='hubMirrorTail';tail.setAttribute('aria-hidden','true');
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
     orbit=document.createElement('div');orbit.className='hubMirrorOrbit';orbit.setAttribute('aria-hidden','true');
     const polygonPoints=(n,r)=>Array.from({length:n},(_,i)=>{const a=i*2*Math.PI/n;return (r*Math.cos(a)).toFixed(5)+','+(r*Math.sin(a)).toFixed(5);}).join(' ');
     orbit.innerHTML='<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="100"/><polygon points="'+polygonPoints(24,100)+'"/></svg>';
     turn.innerHTML='<svg class="hubMirrorTurnMagnet" viewBox="-14 -14 28 28" aria-hidden="true"><polygon points="'+polygonPoints(6,11)+'"/><polygon points="'+polygonPoints(6,7)+'"/></svg>';
-    line.append(handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
+    line.append(tail,handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
     dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.innerHTML='<svg viewBox="-32 -32 64 64"><g class="along"><path d="M-14 -14H14M9 -19L14 -14 9 -9"/><path d="M14 14H-14M-9 9L-14 14 -9 19"/></g><g class="across"><path d="M0 -4V-28M-5 -23L0 -28 5 -23"/><path d="M0 4V28M-5 23L0 28 5 23"/></g></svg>';document.body.append(dragHint);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
@@ -321,7 +341,7 @@
     update();
   }
   const api = window.HubMirror = {
-    state, syncCenter:update, rotateBy:rotate,
+    state, syncCenter:update, rotateBy:rotate,axisTailLength,
     wheelAlong(delta){if(!frame||!window.HubView?.shiftSourceBy)return false;const step=Math.sign(delta)*24/(window.HubView.scale||1);window.HubView.shiftSourceBy(step*Math.cos(state.angle),step*Math.sin(state.angle));return true;},
     wheelAt(x,y,delta){
       if(!frame||!handle||document.body.classList.contains('hubAutoTurning')||document.body.classList.contains('hubMirrorSpinning'))return false;
@@ -334,7 +354,7 @@
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter||state.screenPin)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
-    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;},
+    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
     hit(x,y){
