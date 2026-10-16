@@ -279,7 +279,7 @@
       const [mx,my]=p;if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&target===turn,handle:target===handle,turn:!source&&(!state.on||target===turn||state.axisRotate) };
+        moved:false,knob:target===turn,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&target===turn,handle:target===handle,turn:!source&&(!state.on||target===turn||state.axisRotate) };
       drag.lastX=mx;drag.lastY=my;drag.captureRotation=window.HubView?.rotation||0;drag.axisAngle=state.angle;drag.startAngle=drag.angle;drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();return true;
     };
@@ -327,11 +327,12 @@
       if (!drag || drag.id !== e.pointerId) return;
       const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&[line,tail,turn].includes(document.elementFromPoint?.(e.clientX,e.clientY)))showAxisHint(e);
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
-      if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
+      if(e.type==='pointerup'&&!done.moved&&done.knob)window.HubView?.repeatScrollRotation?.();
+      else if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };
     root.addEventListener('pointerup', finish); root.addEventListener('pointercancel', finish);
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null;if(dragHint)dragHint.hidden=true; update(); save(); } });
-    root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
+    root.addEventListener('click', e => { e.stopPropagation(); if(e.detail===0&&e.target===turn)window.HubView?.repeatScrollRotation?.();else if(e.detail===0&&e.target===handle)rotate(Math.PI/12); });
     root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
     turn.addEventListener('auxclick',e=>{if(e.button===1){e.preventDefault();e.stopPropagation();window.HubView?.repeatScrollRotation?.();}});
     root.addEventListener('keydown', e => {

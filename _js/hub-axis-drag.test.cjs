@@ -3,7 +3,7 @@ function fixture(){
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf("function showAxisHint("),end=source.indexOf("root.addEventListener('contextmenu'",start),events={};
  const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={getBoundingClientRect:()=>({x:840,y:390,width:20,height:20})},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
  const context={state,turn,handle,root,line:{},tail:{},document:{},frame:{left:300,width:900,height:800},drag:null,dragHint:{hidden:true,dataset:{},style:{}},resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
- window:{HubMirror:{},HubView:{captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
+ window:{HubMirror:{},HubView:{captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,repeatScrollRotation:()=>shift.push("repeat"),shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
  stopSpin(){},update(){},changed(){},save(){},rotate(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
  vm.runInNewContext(source.slice(start,end),context);
  const emit=(type,x,y,target=turn)=>events[type]({type,pointerId:1,button:0,target,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});
@@ -77,4 +77,10 @@ test('background drag shares line constraints and projects its arrows onto the a
 test('backward line extension shows the same hover arrows and starts a line drag',()=>{
  const f=fixture();f.emit('pointerover',500,400,f.tail);assert.equal(f.hint.hidden,false);assert.equal(f.hint.dataset.motion,'all');assert.equal(f.hint.style.left,'500px');
  f.emit('pointerdown',500,400,f.tail);f.emit('pointermove',540,400,f.tail);assert.deepEqual(f.shift,[40,0]);assert.equal(f.hint.dataset.motion,'along');
+});
+
+test('primary handle click repeats wheel rotation once; drag and cancellation do not',()=>{
+ const f=fixture();f.emit('pointerdown',926,400);f.emit('pointerup',926,400);assert.deepEqual(f.shift,[0,0,'repeat']);
+ f.emit('pointerdown',926,400);f.emit('pointermove',950,400);f.emit('pointerup',950,400);assert.deepEqual(f.shift,[0,0,'repeat']);
+ f.emit('pointerdown',950,400);f.emit('pointercancel',950,400);assert.deepEqual(f.shift,[0,0,'repeat']);
 });
