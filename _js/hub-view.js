@@ -261,7 +261,7 @@
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
-      if(!e.deltaY)return;
+      if(!e.deltaY&&!(e.shiftKey&&e.deltaX))return;   // v0.214: Shift + колесо часто приходит как deltaX
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0),mirror=window.HubMirror;
       if(!wheelAction){
         if(e.target===angleText)wheelAction=ev=>{rotate(Math.sign(ev.deltaY)*5);rotation.value=state.angle;};
@@ -272,7 +272,7 @@
           if(zone)wheelAction=ev=>mirror.wheelStep(zone,ev.deltaY);
           else if(e.target.closest('.hubMirrorLine')&&mirror?.wheelAlong)wheelAction=ev=>mirror.wheelAlong(ev.deltaY);
           else{const bit=bitScreen(e.clientX,y);
-            if(bit!==null&&wheelBits.size){const selected=[...wheelBits];wheelAction=ev=>{for(const chosen of selected)mirror.tiltBit(chosen,Math.sign(ev.deltaY)*5);};}
+            if(bit!==null&&wheelBits.size){const selected=[...wheelBits];wheelAction=ev=>{const d=Math.sign(ev.deltaY||ev.deltaX);if(!d)return;for(const chosen of selected){if(ev.shiftKey&&mirror.tiltBitExact)mirror.tiltBitExact(chosen,d);else mirror.tiltBit(chosen,d*5);}};}
             else{if(frame&&(e.clientX<frame.left||y>frame.height))return;
               wheelAction=ev=>zoom(Math.exp(-Math.max(-120,Math.min(120,ev.deltaY))*.002),ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0));}
           }

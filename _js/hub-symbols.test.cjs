@@ -117,3 +117,15 @@ test('free bit rotation crosses old stops and wraps full turns in either directi
 });
 
 test('axis defaults to the screen centre and ignores the old unpinned preference',()=>{assert.equal(mirror().state.screenPin,true);assert.equal(mirror({screenPin:false}).state.screenPin,true);});
+test('star rays hit bit centres only exactly, on the row lattice or a star-to-bit line',()=>{
+ const m=mirror({bitView:'stars',on:false,one:0,bitFreeRotation:true});m.place(0,400,400);
+ const rows=['1','11','101','1111','11011'],dw=10,dh=dw*Math.sqrt(3),pts=[];
+ rows.forEach((row,r)=>[...row].forEach((b,j)=>pts.push([200-(row.length-1)*dw/2+j*dw,20+r*dh/2,b,2*j-(row.length-1),r,0])));
+ m.setBitCenters(pts,{width:dw,height:dh});m.selectRotationBit({index:0,bit:'1',mirror:false});
+ const total=lines=>lines.reduce((n,h)=>n+h.length,0);
+ assert.equal(total(m.starLines(pts[0],'1')),8,'0°: both sides of the triangle, four bits each');
+ m.state.one=5;assert.equal(m.starLines(pts[0],'1').length,0,'5° never lies on the lattice');
+ m.state.one=30;const l30=m.starLines(pts[0],'1');assert.ok(l30.some(h=>h.length===2),'90° line: row 2 centre and row 4 centre');
+ m.state.one=0;m.tiltBitExact('1',1);const deg=m.state.one;assert.ok(deg>0&&deg<30);
+ const lines=m.starLines(pts[0],'1');assert.ok(lines.length>0);for(const h of lines)for(const q of h){const a=Math.atan2(q[1]-20,q[0]-200)*180/Math.PI;assert.ok(Math.abs((((a-deg)%60)+60)%60%60)<1e-9||Math.abs((((a-deg)%60)+60)%60-60)<1e-9);}
+});

@@ -63,7 +63,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false;
+  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -459,9 +459,9 @@
       for(let index=0;index<bitCenters.length;index++){const [px,py,bit]=bitCenters[index];if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,index,width:bitCell.width,height:bitCell.height};}}
       return best;
     },
-    drawCenterBit(g,p){
+    drawCenterBit(g,p,color=null){
       const size=Math.min(p.width,p.height)*.62,a=p.width*(state.packedBits?.5:.45),b=p.height*(state.packedBits?.5:.45);
-      g.fillStyle=this.colors().sym;g.globalAlpha=1;
+      g.fillStyle=color||this.colors().sym;g.globalAlpha=1;
       if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));g.beginPath();g.moveTo(0,-b);g.lineTo(a,0);g.lineTo(0,b);g.lineTo(-a,0);g.closePath();g.fill();g.restore();}
       if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);}
     },
@@ -479,26 +479,46 @@
         else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
         else{const vertices=[[0,-b],[a,0],[0,b],[-a,0]];for(let i=0;i<4;i++){const p=vertices[i],q=vertices[(i+1)%4],d=Math.hypot(q[0]-p[0],q[1]-p[1]),x=(q[0]-p[0])/d*length,y=(q[1]-p[1])/d*length;g.moveTo(...p);g.lineTo(p[0]-x,p[1]-y);g.moveTo(...q);g.lineTo(q[0]+x,q[1]+y);}}
         g.stroke();g.restore();
-        if(state.bitView==='stars')this.drawStarHits(g,p,chosen,size);
+        if(state.bitView==='stars')this.drawStarHits(g,p,chosen);
       }g.restore();
     },
-    // v0.210: лучи звезды до края поля; бит, через центр которого луч проходит (точно, допуск — только округление чисел), подсвечен вместе с лучом
-    starHits(p,bit,size){
-      const angle=this.bitAngle(bit),eps=size*1e-4,out=[];
-      for(let i=0;i<3;i++){
-        const ux=Math.cos(angle+i*Math.PI/3),uy=Math.sin(angle+i*Math.PI/3);
-        for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1'))continue;const dx=q[0]-p[0],dy=q[1]-p[1];if(dx*dx+dy*dy<1e-9)continue;if(Math.abs(dx*uy-dy*ux)<=eps)out.push({q,ux,uy});}
-      }
-      return out;
+    // v0.210: лучи звезды до края поля. v0.214: попадание в центр — только точное, целыми числами по решётке ряда (u = 2j − (длина − 1), v = номер ряда, s — сторона:
+    // 0 стоя, 1 / −1 лёжа слева / справа). Луч ложится на решётку лишь при наклоне, кратном 30°, или на прямой «звезда — бит», куда ставит Shift + колесо (pairLock)
+    latticeBase(k,s){k=((k%6)+6)%6;return (s?[[0,2],[2*s,2],[6*s,2],[2,0],[-6*s,2],[-2*s,2]]:[[2,0],[6,2],[2,2],[0,2],[-2,2],[-6,2]])[k];},
+    latticeRot60([u,v],s){return s?[(3*s*v+u)/2,(v-s*u)/2]:[(u-3*v)/2,(u+v)/2];},
+    starLines(p,bit){
+      if(!Number.isInteger(p?.[3])||!Number.isInteger(p?.[4]))return [];
+      const deg=state[bit==='0'?'zero':'one'],s=p[5]||0,lock=pairLock;let d=null;
+      if(lock&&lock.bit===bit&&lock.deg===deg&&bitCenters[lock.p]===p&&bitCenters[lock.q]){const q=bitCenters[lock.q];d=[q[3]-p[3],q[4]-p[4]];}
+      else if(Number.isInteger(deg/30))d=this.latticeBase(deg/30,s);
+      if(!d)return [];
+      const dirs=[d,this.latticeRot60(d,s)];dirs.push(this.latticeRot60(dirs[1],s));
+      return dirs.map(([du,dv])=>{const hits=[];for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1')||(q[5]||0)!==s||!Number.isInteger(q[3]))continue;const eu=q[3]-p[3],ev=q[4]-p[4];if((eu||ev)&&du*ev-dv*eu===0)hits.push(q);}return hits;}).filter(h=>h.length);
     },
-    drawStarHits(g,p,bit,size){
-      const hits=this.starHits(p,bit,size);if(!hits.length)return;
-      const col=this.colors().sym,w=bitCell.width,h=bitCell.height,scale=Math.max(.2,window.HubView?.scale||1),lines=new Set();
-      g.save();g.strokeStyle=col;g.globalAlpha=.85;g.lineWidth=1.2/scale;g.shadowColor=col;g.shadowBlur=6;g.beginPath();
-      for(const {ux,uy} of hits){const key=ux.toFixed(6)+','+uy.toFixed(6);if(lines.has(key))continue;lines.add(key);g.moveTo(p[0]-ux*1e5,p[1]-uy*1e5);g.lineTo(p[0]+ux*1e5,p[1]+uy*1e5);}
-      g.stroke();g.shadowBlur=10;
-      for(const {q} of hits){g.save();g.translate(q[0],q[1]);this.drawCenterBit(g,{bit:q[2],width:w,height:h});g.restore();}
+    drawStarHits(g,p,bit){
+      const lines=this.starLines(p,bit);if(!lines.length)return;
+      const c=this.colors(),many=c.sym,two=c.fold!==c.sym&&c.fold!==c.bit?c.fold:'#00e5ff',w=bitCell.width,h=bitCell.height,scale=Math.max(.2,window.HubView?.scale||1);
+      g.save();g.globalAlpha=.85;g.lineWidth=1.2/scale;
+      for(const hits of lines){
+        // v0.214: линия соединяет ровно два бита (звезду и ещё один) — своим цветом, три и больше — цветом симметрии
+        const col=hits.length===1?two:many,q=hits[0],dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l;
+        g.strokeStyle=col;g.shadowColor=col;g.shadowBlur=6;g.beginPath();g.moveTo(p[0]-ux*1e5,p[1]-uy*1e5);g.lineTo(p[0]+ux*1e5,p[1]+uy*1e5);g.stroke();
+        g.shadowBlur=10;for(const t of hits){g.save();g.translate(t[0],t[1]);this.drawCenterBit(g,{bit:t[2],width:w,height:h},col);g.restore();}
+      }
       g.restore();
+    },
+    // v0.214: Shift + колесо по выбранной звезде — поворот до ближайшей прямой, на которой луч точно проходит через центр другого бита
+    tiltBitExact(bit,dir){
+      const key=bit==='0'?'zero':'one',p=rotationBit&&rotationBit.bit===bit?bitCenters[rotationBit.index]:null;
+      if(state.bitView!=='stars'||!p||!Number.isInteger(p[3])||locked(key))return this.tiltBit(bit,dir*5);
+      const cur=state[key],s=p[5]||0;let best=Infinity,bestQ=-1;
+      for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1')||(q[5]||0)!==s||!Number.isInteger(q[3]))continue;
+        const a=Math.atan2(q[1]-p[1],q[0]-p[0])*180/Math.PI,dl=(((dir>0?a-cur:cur-a)%60)+60)%60;if(dl>1e-9&&dl<best){best=dl;bestQ=j;}}
+      if(bestQ<0)return this.tiltBit(bit,dir*5);
+      let deg=cur+(dir>0?best:-best);const k=Math.round(deg/30);if(Math.abs(deg-30*k)<1e-9)deg=30*k;
+      deg=bitRotation(deg);if(!state.bitFreeRotation&&Math.abs(deg-cur)<1e-12)return false;
+      state[key]=deg;pairLock={bit,deg,p:rotationBit.index,q:bestQ};rotationGuide=true;
+      const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=deg;range.closest('.hubTilt').querySelector('output').textContent=(Number.isInteger(deg)?deg:deg.toFixed(2))+'°';}changed();save();return true;
     },
     setBitFreeRotation(on){
       if(locked('zero')||locked('one'))return;
