@@ -1,86 +1,147 @@
-/* Hub v0.191 — А: reflected light; Б: water flowing around the visible bit shapes. */
+/* Hub v0.196 — directional light transmission through zero and one shapes. */
 (() => {
   'use strict';
-  let canvas,ctx,maskCanvas,maskCtx,waterCanvas,waterCtx,field,pixels,cell=2;
-  let dirty=true,lastMask=-Infinity,lastTime=0,accumulator=0,raf=0,paused=false,light=false,water=false;
-  let bounds=null,rays=[],emission=0,waterEmission=0,sample=0,lightButton,waterButton,status;
-  const invalidate=()=>{dirty=true;if(light||water)wake();};
-  function reset(){rays=[];emission=waterEmission=accumulator=0;if(field){field.water.fill(0);field.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
+  let canvas,ctx,maskCanvas,maskCtx,waterCanvas,waterCtx,field,liquid,pixels,cell=2;
+  let dirty=true,lastMask=-Infinity,lastTime=0,accumulator=0,raf=0,paused=false,light=false,snow=false,water=false;
+  let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,lightButton,snowButton,waterButton,status;
+  let lightBits=false,lightSize=16,shapeButton,sizeOutput,sun=false,sunRadius=40,sunButton,radiusRange,radiusOutput;
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
+  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius}));}catch(_){}};
+  let spriteKey='',sprites=[];
+  function lightSprites(){
+    const mirror=window.HubMirror;if(!mirror)return [];
+    const st=mirror.state,key=JSON.stringify([lightSize,st.bitView,st.packedBits,st.zero,st.one,st.hideZeroDigit,st.hideOneDigit,mirror.colors().sym]);
+    if(key!==spriteKey){spriteKey=key;sprites=['0','1'].map(bit=>{const c=document.createElement('canvas'),side=Math.ceil(lightSize*2+6);c.width=c.height=side*2;const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,{bit,width:lightSize,height:lightSize*Math.sqrt(3)});return c;});}
+    return sprites;
+  }
+  const invalidate=()=>{dirty=true;if(light||snow||water)wake();};
+  function reset(){rays=[];emission=snowEmission=waterEmission=accumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
+  function sunSource(){const left=matchMedia('(max-width:1100px)').matches?0:300;return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
   function size(){
     const w=innerWidth,h=innerHeight;
+    if(radiusRange){radiusRange.max=String(w);sunRadius=Math.min(sunRadius,w);radiusRange.value=String(sunRadius);radiusOutput.textContent=sunRadius+'px';}
     cell=Math.max(1.5,Math.sqrt(w*h/320000));
     const cols=Math.ceil(w/cell),rows=Math.ceil(h/cell);
     if(field&&field.width===cols&&field.height===rows&&canvas.width===w&&canvas.height===h)return;
     canvas.width=w;canvas.height=h;maskCanvas.width=waterCanvas.width=cols;maskCanvas.height=waterCanvas.height=rows;
-    field=new HubFlowCore.Field(cols,rows);pixels=waterCtx.createImageData(cols,rows);rays=[];dirty=true;
+    field=new HubFlowCore.Field(cols,rows);liquid=new HubFlowCore.WaterField(cols,rows);pixels=waterCtx.createImageData(cols,rows);rays=[];dirty=true;
   }
   function rebuild(time){
     if(!dirty||time-lastMask<100)return;
-    dirty=false;lastMask=time;maskCtx.setTransform(1/cell,0,0,1/cell,0,0);maskCtx.clearRect(0,0,canvas.width,canvas.height);
-    maskCtx.save();maskCtx.translate(0,-(matchMedia('(max-width:1100px)').matches?scrollY:0));
-    const ready=window.HubView?.drawFlowObstacles?.(maskCtx);maskCtx.restore();
-    const {width:w,height:h}=field,rgba=maskCtx.getImageData(0,0,w,h).data,solid=new Uint8Array(w*h);
+    dirty=false;lastMask=time;
+    const {width:w,height:h}=field,solid=new Uint8Array(w*h),types=new Uint8Array(w*h);
     const left=matchMedia('(max-width:1100px)').matches?0:300;
-    let minX=w,maxX=0,minY=h,count=0;
-    for(let y=0;y<h;y++)for(let x=Math.ceil(left/cell);x<w;x++){
-      const i=y*w+x;if(ready&&rgba[i*4+3]>=32){solid[i]=1;count++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);}
+    let minX=w,maxX=0,count=0,zero=0,one=0;
+    // Keep both types at an overlap: either reflecting layer must still stop the ray.
+    for(const bit of ['0','1']){
+      maskCtx.setTransform(1/cell,0,0,1/cell,0,0);maskCtx.clearRect(0,0,canvas.width,canvas.height);
+      maskCtx.save();maskCtx.translate(0,-(matchMedia('(max-width:1100px)').matches?scrollY:0));
+      const ready=window.HubView?.drawFlowObstacles?.(maskCtx,bit);maskCtx.restore();
+      const rgba=maskCtx.getImageData(0,0,w,h).data;
+      for(let y=0;y<h;y++)for(let x=Math.ceil(left/cell);x<w;x++){
+        const i=y*w+x;if(ready&&rgba[i*4+3]>=32){if(!solid[i])count++;solid[i]=1;types[i]|=bit==='0'?1:2;minX=Math.min(minX,x);maxX=Math.max(maxX,x);if(bit==='0')zero++;else one++;}
+      }
     }
-    field.setMask(solid);bounds=count?{minX,maxX,y:Math.max(0,minY-Math.ceil(55/cell))}:null;
-    status.textContent=!light&&!water?'Потоки выключены':window.HubImage?.active?'Выберите биты вместо картинки':bounds?'Сверху вниз · '+(light?'свет ':'')+(water?'вода':''):'Биты за пределами поля';
+    field.setMask(solid);field.lightTypes=types;liquid.setMask(solid);bounds=count?{minX,maxX,y:0}:null;
+    canvas.dataset.zeroObstacles=String(zero);canvas.dataset.oneObstacles=String(one);
+    status.textContent=!light&&!snow&&!water?'Потоки выключены':window.HubImage?.active?'Выберите биты вместо картинки':bounds||sun&&light?(sun&&light?'Солнце · ':'Сверху вниз · ')+(light?'свет ':'')+(snow?'снег ':'')+(water?'вода':''):'Биты за пределами поля';
     canvas.dataset.obstacles=String(count);
   }
   function emit(dt){
-    if(!bounds)return;
-    const span=bounds.maxX-bounds.minX+1;
+    if(!bounds&&!(light&&sun))return;
+    const span=bounds?bounds.maxX-bounds.minX+1:innerWidth/cell;
     const nextX=()=>bounds.minX+((++sample*.6180339887498949)%1)*span;
-    if(light){emission+=dt*Math.min(100,Math.max(24,span*cell/12));while(emission>=1){emission--;const x=nextX();if(!field.blocked(x,bounds.y)&&rays.length<350)rays.push({x,y:bounds.y,vx:0,vy:1,bounces:0,age:0});}}
-    if(water){waterEmission+=dt*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;field.addWater(nextX(),bounds.y,1);}}
+    if(light){
+      emission+=dt*(sun?100:Math.min(100,Math.max(24,span*cell/12)));
+      while(emission>=1){
+        emission--;let x,y=0,vx=0,vy=1;
+        if(sun){const origin=sunSource(),angle=(++sample*.6180339887498949%1)*Math.PI*2;vx=Math.cos(angle);vy=Math.sin(angle);x=(origin.x+vx*origin.radius)/cell;y=(origin.y+vy*origin.radius)/cell;}
+        else x=nextX();
+        if(x>=0&&x<field.width&&y>=0&&y<field.height&&!field.lightBlocked(x,y,vy)&&rays.length<350)rays.push({x,y,vx,vy,bounces:0,age:0,bit:String(sample%2)});
+      }
+    }
+    if(snow&&bounds){snowEmission+=dt*Math.min(1800,Math.max(160,span*2));while(snowEmission>=1){snowEmission--;field.addWater(nextX(),bounds.y,1);}}
+    if(water&&bounds){waterEmission+=dt*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;liquid.addWater(nextX(),bounds.y,1);}}
   }
   function draw(dt){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     const palette=window.HubMirror?.colors?.()||{bit:'#8fd3ff',sym:'#ff9a5a'};
     // Canvas normalizes all supported CSS colours for the low-resolution water image.
     ctx.fillStyle=palette.bit;ctx.fillRect(0,0,1,1);const rgb=ctx.getImageData(0,0,1,1).data;ctx.clearRect(0,0,1,1);
-    const data=pixels.data;let volume=0;
-    for(let i=0;i<field.water.length;i++){const mass=field.water[i];volume+=mass;data[i*4]=rgb[0];data[i*4+1]=rgb[1];data[i*4+2]=rgb[2];data[i*4+3]=mass>.01?Math.round(Math.min(1,Math.sqrt(mass))*210):0;}
+    const data=pixels.data;let snowVolume=0,volume=0;
+    for(let i=0;i<field.water.length;i++){const mass=field.water[i],wet=liquid.water[i];snowVolume+=mass;volume+=wet;data[i*4]=rgb[0];data[i*4+1]=rgb[1];data[i*4+2]=rgb[2];data[i*4+3]=Math.max(mass>.01?Math.round(Math.min(1,Math.sqrt(mass))*210):0,wet>.002?Math.round(100+wet*70):0);}
     waterCtx.putImageData(pixels,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(waterCanvas,0,0,field.width*cell,field.height*cell);
+    // The top of each liquid cell is a height, not a pile-shaped opacity gradient.
+    ctx.strokeStyle=palette.bit;ctx.lineWidth=.8;ctx.beginPath();
+    for(let y=0;y<liquid.height;y++)for(let x=0;x<liquid.width;x++){
+      const i=y*liquid.width+x,m=liquid.water[i];
+      if(m>.002&&(y===0||liquid.water[i-liquid.width]<.002)&& (y===liquid.height-1||liquid.solid[i+liquid.width]||liquid.water[i+liquid.width]>.999)){
+        const top=(y+1-m)*cell;ctx.moveTo(x*cell,top);ctx.lineTo((x+1)*cell,top);
+      }
+    }ctx.stroke();
+    if(sun&&light){const origin=sunSource();ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.globalAlpha=.22;ctx.beginPath();ctx.arc(origin.x,origin.y,Math.max(1,origin.radius),0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.stroke();ctx.restore();}
     ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
+    const glyphs=lightBits?lightSprites():[];
     for(const ray of rays){
       ray.age+=dt;const path=field.advanceRay(ray,dt*420/cell);
-      ray.trail=ray.trail||[];for(const p of path)ray.trail.push([...p,ray.age]);
+      ray.trail=ray.trail||[];for(const p of path)ray.trail.push([p[0],p[1],ray.age,p[2]]);
       ray.trail=ray.trail.filter(p=>ray.age-p[2]<.32);
-      ctx.globalAlpha=Math.max(.25,1-ray.bounces*.065);ctx.beginPath();ray.trail.forEach((p,i)=>ctx[i?'lineTo':'moveTo'](p[0]*cell,p[1]*cell));ctx.stroke();
+      if(lightBits&&glyphs.length){
+        const glyph=glyphs[Number(ray.bit)],side=glyph.width/2;
+        ctx.globalAlpha=2**-ray.bounces;ctx.shadowBlur=0;ctx.drawImage(glyph,ray.x*cell-side/2,ray.y*cell-side/2,side,side);
+      }else{
+        // Keep the incident segment bright; only the reflected segment loses half its light.
+        const trail=ray.trail;ctx.shadowBlur=5;ctx.beginPath();let alpha=null;
+        for(let i=1;i<trail.length;i++){const p=trail[i-1],q=trail[i];if(alpha!==p[3]){if(alpha!==null)ctx.stroke();alpha=p[3];ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(p[0]*cell,p[1]*cell);}ctx.lineTo(q[0]*cell,q[1]*cell);}
+        ctx.stroke();
+      }
     }
     rays=rays.filter(r=>!r.dead&&r.age<8);ctx.globalAlpha=1;ctx.shadowBlur=0;
-    canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);
+    canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.lightStyle=lightBits?'bits':'rays';canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY='0';canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
   }
   function frame(time){
     raf=0;if(document.hidden||paused){lastTime=0;return;}
     size();rebuild(time);const dt=lastTime?Math.min(.05,(time-lastTime)/1000):1/60;lastTime=time;
     emit(dt);accumulator+=dt;
     // Fixed physical step independent of display refresh rate; at most six steps after a stall.
-    const step=cell/150;let steps=0;while(accumulator>=step&&steps++<6){if(water||Number(canvas.dataset.water)>0)field.stepWater();accumulator-=step;}
+    const step=cell/150;let steps=0;while(accumulator>=step&&steps++<6){if(snow||Number(canvas.dataset.snow)>0)field.stepWater();if(water||Number(canvas.dataset.water)>0)liquid.stepWater();accumulator-=step;}
     draw(dt);
-    if(light||water||rays.length||Number(canvas.dataset.water)>0)raf=requestAnimationFrame(frame);else lastTime=0;
+    if(light||snow||water||rays.length||Number(canvas.dataset.snow)>0||Number(canvas.dataset.water)>0)raf=requestAnimationFrame(frame);else lastTime=0;
   }
   function wake(){if(!raf&&!document.hidden&&!paused)raf=requestAnimationFrame(frame);}
-  function sync(){lightButton.setAttribute('aria-pressed',String(light));waterButton.setAttribute('aria-pressed',String(water));dirty=true;lastMask=-Infinity;wake();}
+  function sync(){lightButton.setAttribute('aria-pressed',String(light));snowButton.setAttribute('aria-pressed',String(snow));waterButton.setAttribute('aria-pressed',String(water));dirty=true;lastMask=-Infinity;wake();}
   function init(){
     const tools=document.getElementById('hubFieldTools');if(!tools)return;
     const wrap=document.createElement('div');wrap.className='hubFlowControls';
     const button=(text,label,fn)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=fn;wrap.append(b);return b;};
-    lightButton=button('А\nСвет','А — свет сверху: включить / выключить',()=>{light=!light;sync();});
-    waterButton=button('Б\nВода','Б — вода сверху: включить / выключить',()=>{water=!water;sync();});
-    button('↺\nСброс','Очистить свет и воду, остановить потоки',()=>{light=water=false;reset();sync();});
-    status=document.createElement('small');status.className='hubFlowStatus';status.textContent='Свет отражается · вода стекает и копится';wrap.append(status);tools.append(wrap);
+    lightButton=button('А\nСвет','А — свет: включить / выключить',()=>{light=!light;sync();});
+    snowButton=button('Б\nСнег','Б — мокрый снег сверху: включить / выключить',()=>{snow=!snow;sync();});
+    waterButton=button('В\nВода','В — вода: горизонтальный уровень и сток',()=>{water=!water;sync();});
+    button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
+    shapeButton=button('01\nСвет','Свет в виде выбранных битов 0 и 1',()=>{lightBits=!lightBits;shapeButton.setAttribute('aria-pressed',String(lightBits));saveStyle();wake();});
+    shapeButton.setAttribute('aria-pressed',String(lightBits));
+    const sizeControl=document.createElement('details');sizeControl.className='hubTilt';
+    const sizeHead=document.createElement('summary');sizeHead.textContent='↔\nСвет';sizeHead.title='Размер битов света';sizeHead.setAttribute('aria-label','Размер битов света');
+    const label=document.createElement('label');label.append('Размер света');
+    const range=document.createElement('input');range.type='range';range.min='4';range.max='64';range.step='1';range.value=lightSize;range.setAttribute('aria-label','Размер битов света, пиксели');
+    sizeOutput=document.createElement('output');sizeOutput.textContent=lightSize+'px';range.oninput=()=>{lightSize=Number(range.value);sizeOutput.textContent=lightSize+'px';saveStyle();wake();};
+    label.append(range,sizeOutput);sizeControl.append(sizeHead,label);wrap.append(sizeControl);
+    sunButton=button('☀\nСолнце','Свет из солнца: круговой источник',()=>{sun=!sun;sunButton.setAttribute('aria-pressed',String(sun));rays=[];saveStyle();sync();});sunButton.setAttribute('aria-pressed',String(sun));
+    const radiusControl=document.createElement('details');radiusControl.className='hubTilt';
+    const radiusHead=document.createElement('summary');radiusHead.textContent='☀\nРадиус';radiusHead.title='Радиус солнца';radiusHead.setAttribute('aria-label','Радиус солнца');
+    const radiusLabel=document.createElement('label');radiusLabel.append('Радиус солнца');
+    radiusRange=document.createElement('input');radiusRange.type='range';radiusRange.min='0';radiusRange.max=String(innerWidth);radiusRange.step='1';radiusRange.value=sunRadius;radiusRange.setAttribute('aria-label','Радиус солнца, пиксели');
+    radiusOutput=document.createElement('output');radiusOutput.textContent=sunRadius+'px';radiusRange.oninput=()=>{sunRadius=Number(radiusRange.value);radiusOutput.textContent=sunRadius+'px';saveStyle();wake();};
+    radiusLabel.append(radiusRange,radiusOutput);radiusControl.append(radiusHead,radiusLabel);wrap.append(radiusControl);
+    status=document.createElement('small');status.className='hubFlowStatus';status.textContent='Свет · мокрый снег · вода с ровным уровнем';wrap.append(status);tools.append(wrap);
     canvas=document.createElement('canvas');canvas.id='hubFlow';canvas.setAttribute('aria-hidden','true');document.body.append(canvas);ctx=canvas.getContext('2d');
     maskCanvas=document.createElement('canvas');maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true});waterCanvas=document.createElement('canvas');waterCtx=waterCanvas.getContext('2d');
-    lightButton.setAttribute('aria-pressed','false');waterButton.setAttribute('aria-pressed','false');
+    lightButton.setAttribute('aria-pressed','false');snowButton.setAttribute('aria-pressed','false');waterButton.setAttribute('aria-pressed','false');
     for(const event of ['hubview','hubmirror','hubimage','resize','scroll'])window.addEventListener(event,invalidate,{passive:true});
-    document.addEventListener('visibilitychange',()=>{lastTime=0;if(!document.hidden&&(light||water))wake();});
+    document.addEventListener('visibilitychange',()=>{lastTime=0;if(!document.hidden&&(light||snow||water))wake();});
     window.addEventListener('hubmotionpause',e=>{paused=!!e.detail.paused;lastTime=0;if(!paused)wake();});
     window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);raf=0;lastTime=0;});
-    window.addEventListener('pageshow',()=>{if(light||water)wake();});
+    window.addEventListener('pageshow',()=>{if(light||snow||water)wake();});
   }
   window.HubFlow={invalidate};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();

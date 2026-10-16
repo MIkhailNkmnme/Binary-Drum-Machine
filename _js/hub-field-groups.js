@@ -11,7 +11,12 @@
     const items = [...toolbar.children];
     let saved = {};try { saved = JSON.parse(localStorage.getItem('zerk_hub_pins') || '{}') || {}; } catch (_) {}
     const pinnedGroups = new Set(Array.isArray(saved.groups) ? saved.groups : []);
-    const pinnedControls = new Set(Array.isArray(saved.controls) ? saved.controls : []);
+    const renamedPins = {
+      'flow|А — свет сверху: включить / выключить':'flow|А — свет: включить / выключить',
+      'flow|Б — вода сверху: включить / выключить':'flow|Б — мокрый снег сверху: включить / выключить',
+      'flow|Очистить свет и воду, остановить потоки':'flow|Очистить свет, снег и воду, остановить потоки'
+    };
+    const pinnedControls = new Set((Array.isArray(saved.controls) ? saved.controls : []).map(key=>renamedPins[key]||key));
     const records = new Map();
     const persist = () => {try { localStorage.setItem('zerk_hub_pins', JSON.stringify({groups:[...pinnedGroups],controls:[...pinnedControls]})); } catch (_) {}};
     const closeOthers = except => {

@@ -3,10 +3,17 @@
   'use strict';
   class Field {
     constructor(width,height,solid=new Uint8Array(width*height)){
-      this.width=width;this.height=height;this.solid=solid;
+      this.width=width;this.height=height;this.solid=solid;this.lightTypes=null;
       this.water=new Float32Array(width*height);this.tick=0;this.drained=0;
     }
     blocked(x,y){x=Math.floor(x);y=Math.floor(y);return x>=0&&y>=0&&x<this.width&&y<this.height&&!!this.solid[y*this.width+x];}
+    lightBlocked(x,y,vy){
+      if(!this.blocked(x,y))return false;
+      const type=this.lightTypes?.[Math.floor(y)*this.width+Math.floor(x)];
+      if(!type)return true;
+      // Screen-space direction: zero passes downward, one passes upward.
+      return !!((type&1)&&vy<=1e-9 || (type&2)&&vy>=-1e-9);
+    }
     addWater(x,y,amount=1){
       x=Math.floor(x);y=Math.floor(y);if(x<0||y<0||x>=this.width||y>=this.height)return 0;
       const i=y*this.width+x;if(this.solid[i])return 0;
@@ -42,7 +49,7 @@
       let nx=0,ny=0;const r=3;
       for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
         const px=Math.floor(x)+dx+.5,py=Math.floor(y)+dy+.5;
-        if(!this.blocked(px,py))continue;
+        if(!this.lightBlocked(px,py,vy))continue;
         const d=Math.hypot(x-px,y-py);if(d>r+.5)continue;
         const weight=(r+1-d)/Math.max(.2,d);nx+=(x-px)*weight;ny+=(y-py)*weight;
       }
@@ -50,20 +57,50 @@
       nx/=len;ny/=len;if(nx*vx+ny*vy>0){nx=-nx;ny=-ny;}return [nx,ny];
     }
     advanceRay(ray,distance){
-      const path=[[ray.x,ray.y]];let remaining=Math.max(0,distance);
-      if(this.blocked(ray.x,ray.y)){ray.dead=true;return path;}
+      const path=[[ray.x,ray.y,2**-(ray.bounces||0)]];let remaining=Math.max(0,distance);
+      if(this.lightBlocked(ray.x,ray.y,ray.vy)){ray.dead=true;return path;}
       while(remaining>1e-7&&!ray.dead){
         const step=Math.min(.4,remaining),x=ray.x+ray.vx*step,y=ray.y+ray.vy*step;remaining-=step;
         if(x<0||y<0||x>=this.width||y>=this.height){ray.dead=true;break;}
-        if(this.blocked(x,y)){
-          path.push([ray.x,ray.y]);const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy),dot=ray.vx*nx+ray.vy*ny;
+        if(this.lightBlocked(x,y,ray.vy)){
+          path.push([ray.x,ray.y,2**-(ray.bounces||0)]);const [nx,ny]=this.normal(ray.x,ray.y,ray.vx,ray.vy),dot=ray.vx*nx+ray.vy*ny;
           ray.vx-=2*dot*nx;ray.vy-=2*dot*ny;ray.bounces=(ray.bounces||0)+1;
+          path.push([ray.x,ray.y,2**-ray.bounces]);
           // Retain the last free position. No jump across a thin neighbouring wall.
           if(ray.bounces>=12)ray.dead=true;
         }else{ray.x=x;ray.y=y;}
       }
-      path.push([ray.x,ray.y]);return path;
+      path.push([ray.x,ray.y,2**-(ray.bounces||0)]);return path;
     }
   }
-  if(typeof module==='object'&&module.exports)module.exports={Field};else root.HubFlowCore={Field};
+  // Hydrostatic relaxation along each supported horizontal span. Unlike the local
+  // snow-like solver, a pool levels across its full width before its next fall.
+  class WaterField extends Field {
+    stepWater(){
+      const {width:w,height:h,solid:s,water:m}=this;
+      const move=(i,j)=>{if(s[j])return;const q=Math.min(m[i],1-m[j]);if(q>0){m[i]-=q;m[j]+=q;}};
+      for(let y=h-1;y>=0;y--)for(let x=0;x<w;x++){
+        const i=y*w+x;if(!m[i]||s[i])continue;
+        if(y===h-1||x===0||x===w-1){this.drained+=m[i];m[i]=0;}
+        else move(i,i+w);
+      }
+      const supported=i=>!s[i]&&(s[i+w]||m[i+w]>=.99999);
+      for(let y=h-2;y>=0;y--){
+        for(let x=0;x<w;){
+          const start=x;if(!supported(y*w+x)){x++;continue;}
+          let total=0;while(x<w&&supported(y*w+x)){total+=m[y*w+x];x++;}
+          const end=x;if(total<=0)continue;
+          // A span may spill only through its adjacent free ends, never through a wall.
+          const outlets=[];
+          for(const edge of [start-1,end])if(edge>=0&&edge<w&&!s[y*w+edge])outlets.push(y*w+edge);
+          const share=outlets.length?Math.min(1,total/outlets.length):0;
+          for(const i of outlets){const q=Math.min(share,1-m[i]);m[i]+=q;total-=q;}
+          const level=total/(end-start);
+          for(let xx=start;xx<end;xx++)m[y*w+xx]=level;
+        }
+      }
+      this.tick++;
+    }
+  }
+  if(typeof module==='object'&&module.exports)module.exports={Field,WaterField};else root.HubFlowCore={Field,WaterField};
 })(typeof window==='object'?window:globalThis);

@@ -150,13 +150,13 @@
     if(!view&&(canvas.id==='hubSier'||vector?.obstacles)){flowVector=vector;window.HubFlow?.invalidate();}
     return paintField.call(this,canvas,view,cached,vector);
   };
-  window.HubView.drawFlowObstacles=function(g){
+  window.HubView.drawFlowObstacles=function(g,bit=null){
     if(!flowVector?.obstacles||window.HubImage?.active)return false;
     for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
       const p=this.projectBit(0,0,mirror),x=this.projectBit(1,0,mirror),y=this.projectBit(0,1,mirror);if(!p)continue;
-      g.save();g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);flowVector.obstacles(g);g.restore();
+      g.save();g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);flowVector.obstacles(g,bit);g.restore();
     }
-    if(flowVector.foldObstacles){g.save();g.transform(...matrix());flowVector.foldObstacles(g);g.restore();}
+    if(flowVector.foldObstacles){g.save();g.transform(...matrix());flowVector.foldObstacles(g,bit);g.restore();}
     return true;
   };
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;

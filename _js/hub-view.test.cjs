@@ -363,6 +363,9 @@ test('flow geometry survives note painting, matches both projected layers and ig
    const p=f.window.HubView.projectBit(600,300,mirror),q=[m[0]*p[0]+m[2]*p[1]+m[4],m[1]*p[0]+m[3]*p[1]+m[5]];
    assert.ok(Math.hypot(points[i][0]-q[0],points[i][1]-q[1])<1e-7);
  }
+ const filters=[];vector.obstacles=(g,bit)=>filters.push(['layer',bit]);vector.foldObstacles=(g,bit)=>filters.push(['fold',bit]);
+ for(const bit of ['0','1'])f.window.HubView.drawFlowObstacles(g,bit);
+ assert.deepEqual(filters,[['layer','0'],['layer','0'],['fold','0'],['layer','1'],['layer','1'],['fold','1']]);
 });
 
 test('wheel rotation about the axis endpoint preserves that screen pivot',()=>{
