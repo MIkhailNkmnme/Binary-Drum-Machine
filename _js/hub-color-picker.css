@@ -1,0 +1,16 @@
+/* Hub v0.226: «ромбовид всего поля кнопки и в центр экрана» — окно цвета целиком ромбом 420 × 420 посередине экрана.
+   Внутри: подпись — в верхнем углу, ромб насыщенности с тоном и непрозрачностью — в центре, × — в правом углу,
+   непрозрачность числом — в левом, образец и HEX — в нижнем. */
+.hubColorEditor{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:420px!important;height:420px;max-height:none!important;padding:0!important;border:0!important;
+  overflow:visible!important;box-shadow:none!important;background:var(--hub-theme-bit)!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);isolation:isolate;filter:drop-shadow(0 4px 18px #000c)}
+.hubColorEditor::before{content:'';position:absolute;inset:1.5px;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg)}
+.hubColorEditor header{position:absolute;left:145px;top:58px;width:130px;height:40px;margin:0!important;justify-content:center;text-align:center}
+.hubColorEditor header b{font:600 10px/1.2 system-ui,sans-serif}
+.hubColorEditor header button{position:fixed;left:350px;top:192px;width:36px;height:36px;padding:0;font-size:24px!important;line-height:36px}
+.hubColorEditor .hubColorDiamond{position:absolute!important;left:100px;top:100px;width:220px!important;margin:0!important}
+.hubColorEditor .hubColorRow{position:absolute;left:135px;top:334px;width:150px;margin:0!important;gap:6px!important}
+.hubColorEditor .hubColorRow .preview{width:26px!important;height:24px!important;flex:none}
+.hubColorEditor .hubColorRow .hex{padding:3px 5px!important;font-size:12px!important}
+.hubColorEditor small{position:absolute;left:22px;top:200px;width:64px;margin:0!important;text-align:center;font-size:0!important}
+.hubColorEditor small output{float:none!important;font:600 13px/20px system-ui,sans-serif}
+@media(max-width:460px){.hubColorEditor{zoom:.85}}
