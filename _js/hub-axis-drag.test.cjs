@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 function fixture(){
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf("root.addEventListener('pointerdown'"),end=source.indexOf("root.addEventListener('contextmenu'",start),events={};
- const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
+ const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={getBoundingClientRect:()=>({x:840,y:390,width:20,height:20})},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
  const context={state,turn,handle,root,frame:{left:300,width:900,height:800},drag:null,dragHint:{hidden:true,dataset:{},style:{}},resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
  window:{HubView:{captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
  stopSpin(){},update(){},changed(){},save(){},rotate(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
@@ -53,7 +53,7 @@ test('a handle released at the center can be pulled out on the opposite side',()
 
 test('wheel zones use the visible endpoint even when its old button is hidden',()=>{
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf('wheelAlong(delta)'),end=source.indexOf(', stopRotation:',start),axis=[],field=[],shift=[];
- const context={frame:{},handle:{},turn:{getBoundingClientRect:()=>({x:250,y:200,width:14,height:14})},state:{angle:Math.PI/2},center:()=>[100,100],matchMedia:()=>({matches:false}),document:{body:{classList:{contains:()=>false}}},window:{HubView:{scale:2,axisInverse:(x,y)=>[x/2,y/2],rotateBy:d=>field.push(d),shiftSourceBy:(x,y)=>shift.push([x,y])}},rotate:d=>axis.push(d)};
+ const context={frame:{},handle:{},turn:{getBoundingClientRect:()=>({x:250,y:200,width:14,height:14})},state:{angle:Math.PI/2},center:()=>[100,100],matchMedia:()=>({matches:false}),document:{body:{classList:{contains:()=>false}}},window:{HubView:{scale:2,axisInverse:(x,y)=>[x/2,y/2],rotateBitsBy:d=>field.push(d),shiftSourceBy:(x,y)=>shift.push([x,y])}},rotate:d=>axis.push(d)};
  const api=vm.runInNewContext('({'+source.slice(start,end)+'})',context);
  assert.equal(api.wheelAt(220,200,120),true);assert.ok(Math.abs(axis[0]-Math.PI/36)<1e-12);assert.equal(field.length,0);
  assert.equal(api.wheelAt(257,207,-120),true);assert.deepEqual(field,[-5]);
@@ -63,6 +63,6 @@ test('wheel zones use the visible endpoint even when its old button is hidden',(
 test('line drag hint follows the active stroke and disappears on release',()=>{
  const f=fixture(),line={};f.emit('pointerdown',850,400,line);assert.equal(f.hint.hidden,true);
  f.emit('pointermove',900,400,line);assert.equal(f.hint.hidden,false);assert.equal(f.hint.dataset.motion,'along');
- f.emit('pointermove',900,440,line);assert.equal(f.hint.dataset.motion,'across');assert.ok(f.hint.style.transform.includes(String(Math.PI/2)));
+ f.emit('pointermove',900,440,line);assert.equal(f.hint.dataset.motion,'across');assert.ok(f.hint.style.transform.includes('rotate(0rad)'));assert.equal(f.hint.style.top,'400px');
  f.emit('pointerup',900,440,line);assert.equal(f.hint.hidden,true);
 });

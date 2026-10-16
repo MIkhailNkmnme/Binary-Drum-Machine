@@ -112,7 +112,7 @@
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
     line.title='Колесо у точки — поворот оси; над линией — сдвиг битов вдоль оси';
     turn.title = state.screenPin?'Вдоль оси — радиус, через центр — разворот луча; поперёк — поворот. Новое направление переключает действие без отпускания':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку';
-    turn.title+='; колесо рядом — вращать рисунок вокруг конца оси';
+    turn.title+='; колесо рядом — вращать только биты вокруг конца оси; ось неподвижна';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
@@ -130,7 +130,7 @@
     orbit.innerHTML='<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="100"/><polygon points="'+polygonPoints(24,100)+'"/></svg>';
     turn.innerHTML='<svg class="hubMirrorTurnMagnet" viewBox="-14 -14 28 28" aria-hidden="true"><polygon points="'+polygonPoints(6,11)+'"/><polygon points="'+polygonPoints(6,7)+'"/></svg>';
     line.append(handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
-    dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.textContent='↔';document.body.append(dragHint);
+    dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.innerHTML='<svg viewBox="-32 -32 64 64"><g class="along"><path d="M-14 -14H14M9 -19L14 -14 9 -9"/><path d="M14 14H-14M-9 9L-14 14 -9 19"/></g><g class="across"><path d="M0 -7V-29M-5 -24L0 -29 5 -24"/><path d="M0 7V29M-5 24L0 29 5 24"/></g></svg>';document.body.append(dragHint);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
     settings.addEventListener('click', e => e.stopPropagation());
@@ -271,7 +271,6 @@
         drag.lastX=mx;drag.lastY=my;
         if(!drag.mode)drag.mode=next||(Math.abs(along)>Math.abs(across)?'radius':'angle');
       }
-      if(dragHint&&(drag.source||!drag.turn)&&drag.mode){dragHint.hidden=false;dragHint.dataset.motion=drag.mode==='radius'?'along':'across';Object.assign(dragHint.style,{left:(e.clientX+22)+'px',top:(e.clientY+22)+'px',transform:'translate(-50%,-50%) rotate('+(state.angle+(window.HubView?.rotation||0)+(drag.mode==='angle'?Math.PI/2:0))+'rad)'});}
       const segmentX=mx-drag.x,segmentY=my-drag.y;
       if(drag.radius){const radial=segmentX*Math.cos(drag.angle)+segmentY*Math.sin(drag.angle),tangent=-segmentX*Math.sin(drag.angle)+segmentY*Math.cos(drag.angle);
         if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
@@ -285,6 +284,11 @@
         turnField(delta-drag.applied);drag.applied=delta;
       } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
       changed();
+      if(dragHint&&(drag.source||!drag.turn)&&drag.mode){
+        const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.clientX-cx)*co+(e.clientY-cy)*si;
+        dragHint.hidden=false;dragHint.dataset.motion=drag.mode==='radius'?'along':'across';
+        Object.assign(dragHint.style,{left:(cx+t*co)+'px',top:(cy+t*si)+'px',transform:'translate(-50%,-50%) rotate('+a+'rad)'});
+      }
     });
     const finish = e => {
       if (!drag || drag.id !== e.pointerId) return;
@@ -296,7 +300,7 @@
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null;if(dragHint)dragHint.hidden=true; update(); save(); } });
     root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
     root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
-    turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); window.HubView?.rotateBy?.(Math.sign(e.deltaY)*5,center()); }, { passive: false });
+    turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); window.HubView?.rotateBitsBy?.(Math.sign(e.deltaY)*5,center()); }, { passive: false });
     root.addEventListener('keydown', e => {
       if (!frame) return;
       const delta = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] })[e.key];
@@ -318,7 +322,7 @@
       const near=el=>{const r=el.getBoundingClientRect();return r.width&&Math.hypot(x-r.x-r.width/2,y-r.y-r.height/2)<=28;};
       const p=window.HubView?.axisInverse?.(x,y+(matchMedia('(max-width:1100px)').matches?scrollY:0)),c=center();
       if(p&&Math.hypot(p[0]-c[0],p[1]-c[1])*(window.HubView.scale||1)<=28){rotate(Math.sign(delta)*Math.PI/36);return true;}
-      if(near(turn)){window.HubView?.rotateBy?.(Math.sign(delta)*5,center());return true;}
+      if(near(turn)){window.HubView?.rotateBitsBy?.(Math.sign(delta)*5,center());return true;}
       return false;
     }, stopRotation:stopSpin, counterRotateView(delta){state.angle=turnAngle(state.angle-delta);save();}, get revision() { return revision; },
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},

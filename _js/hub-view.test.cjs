@@ -350,3 +350,16 @@ test('wheel rotation about the axis endpoint preserves that screen pivot',()=>{
  f.window.HubView.rotateBy(5,axis);
  const after=Array.from(f.window.HubView.axisInverse(600,400));assert.ok(Math.hypot(after[0]-axis[0],after[1]-axis[1])<1e-8);assert.equal(f.state().angle,19);
 });
+
+test('wheel rotates bits and their reflection oppositely while the axis and endpoint stay fixed',()=>{
+ for(const pinned of [false,true])for(const magnetic of [false,true]){
+  const f=fixture({zoom:1.6,angle:27,pan:[70,-40]}),m=realMirror(f),v=f.window.HubView;
+  m.state.screenPin=pinned;m.state.magnet=magnetic;m.syncCenter();
+  const pivot=[300+900*m.state.x,800*m.state.y],center=screenPoint(v,...pivot),point=[800,420],original=screenPoint(v,...point),copy=screenPoint(v,...m.point(...point,false)),axis=m.state.angle+v.rotation;
+  v.rotateBitsBy(5,pivot);const a=(magnetic?15:5)*Math.PI/180;
+  const rotated=(p,d)=>{const x=p[0]-center[0],y=p[1]-center[1];return [center[0]+x*Math.cos(d)-y*Math.sin(d),center[1]+x*Math.sin(d)+y*Math.cos(d)];};
+  near(screenPoint(v,...point),rotated(original,a));near(screenPoint(v,...m.point(...point,false)),rotated(copy,-a));
+  near(screenPoint(v,300+900*m.state.x,800*m.state.y),center);assert.ok(Math.abs(Math.sin(m.state.angle+v.rotation-axis))<1e-10);
+  v.rotateBitsBy(5,pivot);near(screenPoint(v,...point),rotated(original,2*a));assert.ok(Math.abs(Math.sin(m.state.angle+v.rotation-axis))<1e-10);
+ }
+});
