@@ -8,6 +8,8 @@
    v8: «центр» — общая кнопка страницы («сделай не только для свёртки, а вообще»), своя галка снята; в режиме записи центр рисует страница.
    v6: галка «центр» — подсветка центрального XOR-столбца золотом с рамкой (по умолчанию выкл., выбор помнится).
    v9: «СвёрткаВерт» — строки к центральной строке: та же модель на транспонированном поле (model({axis:'v'}), modelV); mount({axis:'v'}) — свой пульт.
+   v10: два варианта — галка «застывшие» на пульте: только биты, которые построение уже не изменит, или все (capture({frozenOnly}));
+   open(frame) — собрать заново и встать на тот же шаг: страница зовёт её на каждом шаге построения (свёртка пересчитывается).
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
   'use strict';
@@ -55,7 +57,7 @@
   function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply,axis='h'}) {
     const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной';
     const panel=document.createElement('section');panel.id=V?'mayFoldPanelV':'mayFoldPanel';panel.className='may-fold-panel';panel.hidden=true;panel.setAttribute('aria-label','Пульт '+WORD+' свёртки');
-    panel.innerHTML=`<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="${V?'Шаг — нижняя и верхняя часть сразу':'Шаг — правая и левая часть сразу'}"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг ${WORD} свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>`;
+    panel.innerHTML=`<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Только застывшие биты — те, что оставшиеся вершины уже не изменят; выкл — все биты, свёртка пересчитывается на каждом шаге построения"><input type="checkbox" data-fold="frozen"> застывшие</label><label class="may-fold-pair" title="${V?'Шаг — нижняя и верхняя часть сразу':'Шаг — правая и левая часть сразу'}"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг ${WORD} свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>`;
     const layer=document.createElement('canvas');layer.id=V?'mayFoldCanvasV':'mayFoldCanvas';layer.className='may-fold-canvas';layer.hidden=true;layer.setAttribute('aria-label','Поле '+WORD+' свёртки');document.body.append(layer,panel);
     const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
@@ -126,7 +128,12 @@
     }
     function togglePlay(){if(!state)return;if(running){pause();return;}if(dir>0&&state.frame===state.max)seek(0);if(dir<0&&state.frame===0)seek(state.max);running=true;last=0;credit=0;sync();timer=requestAnimationFrame(tick);}
     function setRate(n){rateStep=Math.max(0,Math.min(401,Math.round(n)));try{localStorage.setItem('mayatnik-fold-rate',String(rateStep));}catch(_){}sync();}
-    button.onclick=()=>{if(state){close();return;}beforeStart();const data=capture();if(!data)return;state=model({...data,axis});state.write=!!data.write;applied=-1;sync();render();};
+    const frozenBox=panel.querySelector('[data-fold="frozen"]');
+    try{frozenBox.checked=localStorage.getItem('mayatnik-fold-frozen')!=='0';}catch(_){frozenBox.checked=true;}
+    function open(frame=0){const data=capture({frozenOnly:frozenBox.checked});if(!data)return false;state=model({...data,axis});state.write=!!data.write;applied=-1;
+      if(frame)state.seek(Math.min(frame,state.max));sync();render();return true;}
+    button.onclick=()=>{if(state){close();return;}beforeStart();open();};
+    frozenBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-frozen',frozenBox.checked?'1':'0');}catch(_){}if(state){const fr=state.frame;close();open(fr);}};
     play.onclick=()=>{if(suppressClick){suppressClick=false;return;}togglePlay();};
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
@@ -157,7 +164,7 @@
     wrap.addEventListener('contextmenu',e=>{if(state&&!state.write){e.preventDefault();e.stopImmediatePropagation();}},true);
     addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)&&!panel.hidden){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);
-    return {get active(){return !!state;},close,render};
+    return {get active(){return !!state;},get frame(){return state?state.frame:0;},close,render,open};
   }
   window.MayatnikFold={model,mount};
 })();
