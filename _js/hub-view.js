@@ -1,3 +1,4 @@
+/* Hub v0.142: overlay() — draw over the field in field coordinates under the camera only. */
 /* Hub v0.138: ↺ 0° ↻ moved next to + and − — a cross at the right edge. */
 /* Hub v0.130: a displaced source is always redrawn as vector — the cached bitmap had lost what was off-screen. */
 /* Hub v0.116: compose displacement, mirror and camera before clipping to the viewport. */
@@ -24,7 +25,9 @@
   function zoom(factor,x,y){const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor)),ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed();}
   function home(){stopFlip();fieldPaused=false;resumeFlip=false;Object.assign(state,{zoom:1,angle:0,flip:0,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
   function rotate(delta){state.angle=((state.angle+delta)%360+360)%360;changed();}
-  window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,apply,sourceShift,place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
+  window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,apply,sourceShift,
+    // v0.142: рисовать поверх в координатах поля (со сдвигом рисунка, без зеркала), под камерой
+    overlay(canvas,view,fn){const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix();g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(k,0,0,k,-left*k,0);fn(g);g.restore();},place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
     // Source displacement is applied together with the final camera, without clipping a temporary image.
   },paint(canvas,view=null,cached=null,vector=null){
     // vector: {base,draw} — redraw shapes under the final transform instead of resampling the bitmap (sharp mirror copy).
