@@ -270,3 +270,42 @@ test('pinned drag of either copy rotates it under the pointer and its twin oppos
   near(screenPoint(v,300+900*m.state.x,800*m.state.y),[600,400]);
  }
 });
+
+
+test('3D right-angle preset keeps the axis shared and the two projected planes distinct',()=>{
+ const f=fixture({flip:30,angle:17,zoom:1.4,pan:[21,-9]}),v=f.window.HubView;
+ f.button('Оригинал и зеркало под прямым углом').onclick();
+ assert.equal(f.state().flip,30);assert.equal(f.state().mirrorFlip,120);
+ const project=(mirror,x,y)=>{const e={id:'note',dataset:{note:mirror?'apex-mirror':'apex'},offsetLeft:0,offsetTop:0,style:{}};v.apply(e);const m=e.style.transform.slice(7,-1).split(',').map(Number);return [m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];};
+ near(project(false,750,200),project(true,750,200));
+ assert.notDeepEqual(project(false,850,400),project(true,850,400));
+ for(const mirrored of [false,true])near(Array.from(v.inverse(...project(mirrored,850,400),mirrored)),[850,400]);
+ f.button('Переворот вокруг оси зеркала в 3D').onclick();f.tick(1);f.tick(101);f.button('Переворот вокруг оси зеркала в 3D').onclick();
+ assert.equal(f.state().mirrorFlip-f.state().flip,90);
+});
+
+test('freezing original allows mirror 3D motion; reset clears only 3D and prevents deferred resume',()=>{
+ const f=fixture({flip:30,mirrorFlip:120,zoom:1.7,angle:42,pan:[21,32]}),before=f.state();
+ f.button('Заморозить 3D-наклон оригинала; зеркало продолжает вращаться').onclick();
+ f.button('Переворот вокруг оси зеркала в 3D').onclick();f.tick(1);f.tick(101);f.button('Переворот вокруг оси зеркала в 3D').onclick();
+ assert.equal(f.state().flip,30);assert.equal(f.state().mirrorFlip,123);assert.equal(f.state().freezeOriginal,true);
+ f.button('Сбросить только 3D: остановить, снять заморозку, вернуть обе плоскости').onclick();
+ const after=f.state();assert.deepEqual([after.flip,after.mirrorFlip,after.freezeOriginal],[0,0,false]);
+ assert.deepEqual([after.zoom,after.angle,after.pan],[before.zoom,before.angle,before.pan]);f.tick(201);assert.equal(f.state().mirrorFlip,0);
+});
+
+test('legacy saved 3D angle initializes both planes, and screen hit uses each plane independently',()=>{
+ const f=fixture({flip:90,mirrorFlip:0});let calls=[];
+ f.window.HubMirror.hit=(x,y)=>{calls.push([x,y]);return {source:true,mirror:true};};
+ const hit=f.window.HubView.hitScreen(850,400);assert.equal(hit.source,false);assert.equal(hit.mirror,true);near(calls[0],[850,400]);
+ const old=fixture({flip:35});assert.equal(old.state().mirrorFlip,35);
+});
+
+
+test('canvas reflection and export use the mirror plane even when original is edge-on',()=>{
+ const f=fixture({flip:90,mirrorFlip:0}),draws=[],raw={width:2400,height:1600};
+ let current=[];const g={save(){},restore(){},clearRect(){},setTransform(...m){current=m;},transform(a,b,c,d,e,h){const m=current;current=[m[0]*a+m[2]*b,m[1]*a+m[3]*b,m[0]*c+m[2]*d,m[1]*c+m[3]*d,m[0]*e+m[2]*h+m[4],m[1]*e+m[3]*h+m[5]];},drawImage(){const x=1700,y=800;draws.push([current[0]*x+current[2]*y+current[4],current[1]*x+current[3]*y+current[5]]);}};
+ f.window.HubMirror.matrix=()=>[-1,0,0,1,3000,0];
+ f.window.HubView.paint({width:2400,height:1600,getContext:()=>g},{left:0,scale:2},raw);
+ near(draws[0],[1500,800]);near(draws[1],[1300,800]);
+});
