@@ -387,20 +387,27 @@ function rowChgInfo(){
 /* v0.1245, «нужен режим: выделяю строку — сразу подсчитывается, сколько 1 и 0 в ней и выше, а внизу подсвечиваются ближайшие такие же и столько же»:
    «Σ 0·1» (Z.rowCmp). У текущей строки — нули и единицы в ней и суммой по строкам 1…N (в сведениях под полем и в подсказке номера).
    v0.1246, по снимку «выделил строку 111 — ниже надо выделить биты рядом, самые первые три единицы»: ищется не строка целиком, а её биты
-   подряд внутри строк ниже. Все места — подсветкой бит (Highlight «zcmp»), места в ближайшей строке, где они есть, — ярче («zcmpn») */
+   подряд внутри строк ниже. Все места — подсветкой бит (Highlight «zcmp»), места в ближайшей строке, где они есть, — ярче («zcmpn»).
+   v0.1247, «нет — число бит, без разницы порядок»: ищется отрезок подряд той же длины с тем же числом единиц (значит, и нулей), биты в любом порядке.
+   В каждой строке ниже — один отрезок, ближайший к середине строки (под выбранной); ближайшая такая строка — золотом, остальные — голубым */
 function rowCmpInfo(){
   if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
   const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const hits = []; let near = -1, nearAt = -1, nRows = 0;
-  for (let i = a + 1; i < R.length && hits.length < 4000; i++) {
-    let j = R[i].indexOf(s), any = false;
-    while (j >= 0 && hits.length < 4000) { hits.push({ i, a: j, b: j + s.length, n: near < 0 || near === i }); if (near < 0) { near = i; nearAt = j; } any = true; j = R[i].indexOf(s, j + 1); }
-    if (any) nRows++;
+  const L = s.length, hits = []; let near = -1, nearAt = -1;
+  for (let i = a + 1; i < R.length; i++) {
+    const t = R[i], n = t.length; if (n < L) continue;
+    let c = 0, best = -1, bd = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (t[j] === "1") c++;
+      if (j >= L && t[j - L] === "1") c--;
+      if (j >= L - 1 && c === k) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; } }
+    }
+    if (best >= 0) { hits.push({ i, a: best, b: best + L, n: near < 0 }); if (near < 0) { near = i; nearAt = best; } }
   }
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    (near < 0 ? ` · ниже «${s.length > 12 ? s.slice(0, 12) + "…" : s}» нет` : ` · ниже ближайшее: строка ${near + 1}, с бита ${nearAt + 1} · всего мест ${hits.length}${hits.length >= 4000 ? "+" : ""} в ${nRows} стр.`);
+    (near < 0 ? ` · ниже ${L} бит подряд с ${k} единицами нет` : ` · ниже ${L} бит с ${k} ед.: ближайшая строка ${near + 1}, с бита ${nearAt + 1} · всего строк ${hits.length}`);
   return { a, hits, near, txt };
 }
 function rowCmpMark(cmp){   // v0.1246: места строки в строках ниже — подсветкой бит, строки не перерисовываются
