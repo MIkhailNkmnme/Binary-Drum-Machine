@@ -485,6 +485,7 @@
     // v0.210: лучи звезды до края поля. v0.214: попадание в центр — только точное, целыми числами по решётке ряда (u = 2j − (длина − 1), v = номер ряда, s — сторона:
     // 0 стоя, 1 / −1 лёжа слева / справа). Луч ложится на решётку лишь при наклоне, кратном 30°, или на прямой «звезда — бит», куда ставит Shift + колесо (pairLock)
     latticeBase(k,s){k=((k%6)+6)%6;return (s?[[0,2],[2*s,2],[6*s,2],[2,0],[-6*s,2],[-2*s,2]]:[[2,0],[6,2],[2,2],[0,2],[-2,2],[-6,2]])[k];},
+    latticeGap([u,v]){const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);let g=gcd(Math.abs(u),Math.abs(v));if(((u/g)+(v/g))%2)g/=2;u/=g;v/=g;return u*u+3*v*v!==4;},
     latticeRot60([u,v],s){return s?[(3*s*v+u)/2,(v-s*u)/2]:[(u-3*v)/2,(u+v)/2];},
     starLines(p,bit){
       if(!Number.isInteger(p?.[3])||!Number.isInteger(p?.[4]))return [];
@@ -493,15 +494,16 @@
       else if(Number.isInteger(deg/30))d=this.latticeBase(deg/30,s);
       if(!d)return [];
       const dirs=[d,this.latticeRot60(d,s)];dirs.push(this.latticeRot60(dirs[1],s));
-      return dirs.map(([du,dv])=>{const hits=[];for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1')||(q[5]||0)!==s||!Number.isInteger(q[3]))continue;const eu=q[3]-p[3],ev=q[4]-p[4];if((eu||ev)&&du*ev-dv*eu===0)hits.push(q);}return hits;}).filter(h=>h.length);
+      return dirs.map(([du,dv])=>{const hits=[];for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1')||(q[5]||0)!==s||!Number.isInteger(q[3]))continue;const eu=q[3]-p[3],ev=q[4]-p[4];if((eu||ev)&&du*ev-dv*eu===0)hits.push(q);}hits.d=[du,dv];return hits;}).filter(h=>h.length);
     },
     drawStarHits(g,p,bit){
       const lines=this.starLines(p,bit);if(!lines.length)return;
       const c=this.colors(),many=c.sym,two=c.fold!==c.sym&&c.fold!==c.bit?c.fold:'#00e5ff',w=bitCell.width,h=bitCell.height,scale=Math.max(.2,window.HubView?.scale||1);
       g.save();g.globalAlpha=.85;g.lineWidth=1.2/scale;
       for(const hits of lines){
-        // v0.214: линия соединяет ровно два бита (звезду и ещё один) — своим цветом, три и больше — цветом симметрии
-        const col=hits.length===1?two:many,q=hits[0],dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l;
+        // v0.215: по линии есть промежутки без точек (шаг решётки вдоль неё длиннее соседнего бита: 30°, 90°, прямые «звезда — бит») — своим цветом;
+        // сплошная цепочка соседей (0°, 60°, 120°) — цветом симметрии. Шаг — вектор линии, делённый на НОД; соседний — u² + 3v² = 4
+        const col=this.latticeGap(hits.d)?two:many,q=hits[0],dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l;
         g.strokeStyle=col;g.shadowColor=col;g.shadowBlur=6;g.beginPath();g.moveTo(p[0]-ux*1e5,p[1]-uy*1e5);g.lineTo(p[0]+ux*1e5,p[1]+uy*1e5);g.stroke();
         g.shadowBlur=10;for(const t of hits){g.save();g.translate(t[0],t[1]);this.drawCenterBit(g,{bit:t[2],width:w,height:h},col);g.restore();}
       }

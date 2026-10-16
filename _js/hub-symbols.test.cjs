@@ -129,3 +129,8 @@ test('star rays hit bit centres only exactly, on the row lattice or a star-to-bi
  m.state.one=0;m.tiltBitExact('1',1);const deg=m.state.one;assert.ok(deg>0&&deg<30);
  const lines=m.starLines(pts[0],'1');assert.ok(lines.length>0);for(const h of lines)for(const q of h){const a=Math.atan2(q[1]-20,q[0]-200)*180/Math.PI;assert.ok(Math.abs((((a-deg)%60)+60)%60%60)<1e-9||Math.abs((((a-deg)%60)+60)%60-60)<1e-9);}
 });
+test('lines with empty lattice gaps are told apart from solid neighbour chains',()=>{
+ const m=mirror({bitView:'stars'});
+ for(const d of [[2,0],[1,1],[-1,1],[4,4],[-6,0]])assert.equal(m.latticeGap(d),false,String(d));
+ for(const d of [[3,1],[0,2],[6,2],[-3,1],[5,1],[1,3]])assert.equal(m.latticeGap(d),true,String(d));
+});
