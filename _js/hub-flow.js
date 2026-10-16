@@ -1,4 +1,4 @@
-/* Hub v0.199 — full-width flows; white snow and separate one-pixel blue water. */
+/* Hub v0.202 — continuous full-width light and one-pixel water sources. */
 (() => {
   'use strict';
   let canvas,ctx,maskCanvas,maskCtx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,liquid,pixels,liquidPixels,cell=2;
@@ -6,7 +6,9 @@
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,lightButton,snowButton,waterButton,status;
   let lightBits=false,lightSize=16,shapeButton,sizeOutput,sun=false,sunRadius=40,sunButton,radiusRange,radiusOutput;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius}));}catch(_){}};
+  let dense=false,denseButton,beams=null,beamDistance=0;
+  try{dense=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').dense===true;if(dense)sun=false;}catch(_){}
+  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius,dense}));}catch(_){}};
   let spriteKey='',sprites=[];
   function lightSprites(){
     const mirror=window.HubMirror;if(!mirror)return [];
@@ -15,7 +17,7 @@
     return sprites;
   }
   const invalidate=()=>{dirty=true;if(light||snow||water)wake();};
-  function reset(){rays=[];emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
+  function reset(){rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
   function sunSource(){const left=matchMedia('(max-width:1100px)').matches?0:300;return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
   function size(){
     const w=innerWidth,h=innerHeight;
@@ -25,7 +27,7 @@
     if(field&&field.width===cols&&field.height===rows&&canvas.width===w&&canvas.height===h)return;
     canvas.width=maskCanvas.width=liquidCanvas.width=w;canvas.height=maskCanvas.height=liquidCanvas.height=h;waterCanvas.width=cols;waterCanvas.height=rows;
     field=new HubFlowCore.Field(cols,rows);liquid=new HubFlowCore.WaterField(w,h);pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(w,h);rays=[];dirty=true;
-    canvas.dataset.waterCell='1';
+    beams=null;canvas.dataset.waterCell='1';
   }
   function rebuild(time){
     if(!dirty||time-lastMask<100)return;
@@ -45,7 +47,7 @@
         const i=y*w+x;if(ready&&rgba[i*4+3]>=32){if(!solid[i])count++;solid[i]=1;types[i]|=bit==='0'?1:2;if(bit==='0')zero++;else one++;}
       }
     }
-    field.setMask(solid);field.lightTypes=types;liquid.setMask(liquidSolid);bounds={minX:0,maxX:canvas.width/cell-1,y:0};
+    field.setMask(solid);field.lightTypes=types;liquid.setMask(liquidSolid);beams=null;bounds={minX:0,maxX:canvas.width/cell-1,y:0};
     canvas.dataset.sourceLeft='0';canvas.dataset.sourceRight=String(canvas.width);
     canvas.dataset.zeroObstacles=String(zero);canvas.dataset.oneObstacles=String(one);
     status.textContent=!light&&!snow&&!water?'Потоки выключены':window.HubImage?.active?'Выберите биты вместо картинки':bounds||sun&&light?(sun&&light?'Солнце · ':'Сверху вниз · ')+(light?'свет ':'')+(snow?'снег ':'')+(water?'вода':''):'Биты за пределами поля';
@@ -55,7 +57,7 @@
     if(!bounds&&!(light&&sun))return;
     const span=bounds?bounds.maxX-bounds.minX+1:innerWidth/cell;
     const nextX=()=>bounds.minX+((++sample*.6180339887498949)%1)*span;
-    if(light){
+    if(light&&!dense){
       emission+=dt*(sun?100:Math.min(100,Math.max(24,span*cell/12)));
       while(emission>=1){
         emission--;let x,y=0,vx=0,vy=1;
@@ -65,7 +67,7 @@
       }
     }
     if(snow&&bounds){snowEmission+=dt*Math.min(1800,Math.max(160,span*2));while(snowEmission>=1){snowEmission--;field.addWater(nextX(),bounds.y,1);}}
-    if(water&&bounds){waterEmission+=dt*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;liquid.addWater(nextX()*cell,0,1);}}
+    if(water&&bounds&&!dense){waterEmission+=dt*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;liquid.addWater(nextX()*cell,0,1);}}
   }
   function draw(dt){
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -88,6 +90,17 @@
       }
     }ctx.stroke();
     if(sun&&light){const origin=sunSource();ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.globalAlpha=.22;ctx.beginPath();ctx.arc(origin.x,origin.y,Math.max(1,origin.radius),0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.stroke();ctx.restore();}
+    if(light&&dense){
+      if(!beams)beams=field.topBeams();beamDistance+=dt*420/cell;
+      ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=cell+1;ctx.lineCap='butt';
+      // Adjacent strips meet without gaps; each reflected segment loses half its light.
+      for(const segment of beams){
+        const fraction=Math.min(1,(beamDistance-segment.start)/segment.length);if(fraction<=0)continue;
+        const {a,b}=segment;ctx.globalAlpha=segment.alpha;ctx.beginPath();ctx.moveTo(a[0]*cell,a[1]*cell);
+        ctx.lineTo((a[0]+(b[0]-a[0])*fraction)*cell,(a[1]+(b[1]-a[1])*fraction)*cell);ctx.stroke();
+      }
+      ctx.restore();
+    }
     ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
     const glyphs=lightBits?lightSprites():[];
     for(const ray of rays){
@@ -105,14 +118,14 @@
       }
     }
     rays=rays.filter(r=>!r.dead&&r.age<8);ctx.globalAlpha=1;ctx.shadowBlur=0;
-    canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.lightStyle=lightBits?'bits':'rays';canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY='0';canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
+    canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.dense=String(dense);canvas.dataset.lightStyle=dense?'continuous':lightBits?'bits':'rays';canvas.dataset.beams=String(beams?.length||0);canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY='0';canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
   }
   function frame(time){
     raf=0;if(document.hidden||paused){lastTime=0;return;}
     size();rebuild(time);const dt=lastTime?Math.min(.05,(time-lastTime)/1000):1/60;lastTime=time;
-    emit(dt);accumulator+=dt;
-    // Fixed physical step independent of display refresh rate; at most six steps after a stall.
-    const step=1/150;let steps=0;while(accumulator>=step&&steps++<6){if(water||Number(canvas.dataset.water)>0)liquid.stepWater();accumulator-=step;}
+    emit(dt);accumulator=Math.min(accumulator+dt,.04);
+    // Bound catch-up work so a dense one-pixel field cannot starve input and recording.
+    const step=1/150,deadline=performance.now()+8;let steps=0;while(accumulator>=step&&steps++<6){if(water||Number(canvas.dataset.water)>0)liquid.stepWater();if(water&&dense)liquid.fillTop();accumulator-=step;if(performance.now()>=deadline)break;}
     snowAccumulator+=dt;steps=0;while(snowAccumulator>=cell/150&&steps++<6){if(snow||Number(canvas.dataset.snow)>0)field.stepWater();snowAccumulator-=cell/150;}
     draw(dt);
     if(light||snow||water||rays.length||Number(canvas.dataset.snow)>0||Number(canvas.dataset.water)>0)raf=requestAnimationFrame(frame);else lastTime=0;
@@ -123,10 +136,12 @@
     const tools=document.getElementById('hubFieldTools');if(!tools)return;
     const wrap=document.createElement('div');wrap.className='hubFlowControls';
     const button=(text,label,fn)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=fn;wrap.append(b);return b;};
-    lightButton=button('А\nСвет','А — свет: включить / выключить',()=>{light=!light;sync();});
+    lightButton=button('А\nСвет','А — свет: включить / выключить',()=>{light=!light;beamDistance=0;sync();});
     snowButton=button('Б\nСнег','Б — мокрый снег сверху: включить / выключить',()=>{snow=!snow;sync();});
     waterButton=button('В\nВода','В — вода: горизонтальный уровень и сток',()=>{water=!water;sync();});
     button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
+    denseButton=button('▤\nПлотно','Сплошной поток света и воды сверху',()=>{dense=!dense;if(dense)sun=false;sunButton.setAttribute('aria-pressed',String(sun));denseButton.setAttribute('aria-pressed',String(dense));rays=[];beams=null;beamDistance=0;saveStyle();sync();});
+    denseButton.setAttribute('aria-pressed',String(dense));
     shapeButton=button('01\nСвет','Свет в виде выбранных битов 0 и 1',()=>{lightBits=!lightBits;shapeButton.setAttribute('aria-pressed',String(lightBits));saveStyle();wake();});
     shapeButton.setAttribute('aria-pressed',String(lightBits));
     const sizeControl=document.createElement('details');sizeControl.className='hubTilt';
@@ -135,7 +150,7 @@
     const range=document.createElement('input');range.type='range';range.min='4';range.max='64';range.step='1';range.value=lightSize;range.setAttribute('aria-label','Размер битов света, пиксели');
     sizeOutput=document.createElement('output');sizeOutput.textContent=lightSize+'px';range.oninput=()=>{lightSize=Number(range.value);sizeOutput.textContent=lightSize+'px';saveStyle();wake();};
     label.append(range,sizeOutput);sizeControl.append(sizeHead,label);wrap.append(sizeControl);
-    sunButton=button('☀\nСолнце','Свет из солнца: круговой источник',()=>{sun=!sun;sunButton.setAttribute('aria-pressed',String(sun));rays=[];saveStyle();sync();});sunButton.setAttribute('aria-pressed',String(sun));
+    sunButton=button('☀\nСолнце','Свет из солнца: круговой источник',()=>{sun=!sun;if(sun){dense=false;denseButton.setAttribute('aria-pressed','false');}sunButton.setAttribute('aria-pressed',String(sun));rays=[];saveStyle();sync();});sunButton.setAttribute('aria-pressed',String(sun));
     const radiusControl=document.createElement('details');radiusControl.className='hubTilt';
     const radiusHead=document.createElement('summary');radiusHead.textContent='☀\nРадиус';radiusHead.title='Радиус солнца';radiusHead.setAttribute('aria-label','Радиус солнца');
     const radiusLabel=document.createElement('label');radiusLabel.append('Радиус солнца');

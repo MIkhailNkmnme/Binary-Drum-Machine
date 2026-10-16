@@ -21,6 +21,8 @@
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Array.isArray(saved?.sourcePan)&&saved.sourcePan.length===2&&saved.sourcePan.every(Number.isFinite))state.sourcePan=saved.sourcePan;}catch(_){}
   state.zoom=Math.max(.2,Math.min(6,state.zoom));state.angle=state.angle===360?360:((state.angle%360)+360)%360;
   state.flipRate=Math.max(.1,Math.min(1000,state.flipRate));
+  state.zoomCycle='swing';state.zoomSeconds=8;
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(saved?.zoomCycle==='reset')state.zoomCycle='reset';if(Number.isFinite(saved?.zoomSeconds))state.zoomSeconds=Math.max(1,Math.min(60,saved.zoomSeconds));}catch(_){}
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Number.isFinite(saved?.flip))state.flip=((saved.flip%360)+360)%360;state.mirrorFlip=Number.isFinite(saved?.mirrorFlip)?((saved.mirrorFlip%360)+360)%360:state.flip;state.freezeOriginal=!!saved?.freezeOriginal;}catch(_){}
   let lastScrollRotation=5,sourceCenter=null,autoRunning=false,autoRaf=0,autoTime=null,autoButton,autoRange,autoNumber,autoValue,autoTrack,autoHz,frameButton,turnLeft,turnRight,autoDrag=false,autoZero=true,resumeAuto=false,autoRemainder=0;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Number.isFinite(saved?.spinRate))state.spinRate=Math.max(.01,Math.min(10000,saved.spinRate));if(saved?.spinDirection===-1)state.spinDirection=-1;}catch(_){}
@@ -94,8 +96,22 @@
   function advanceFlip(delta){if(!state.freezeOriginal)state.flip=(state.flip+delta+360)%360;state.mirrorFlip=(state.mirrorFlip+delta+360)%360;}
   function stopFlip(){flipRunning=false;flipTime=0;cancelAnimationFrame(flipRaf);flipRaf=0;}
   let fieldPaused=false,resumeFlip=false;
-  function zoom(factor,x,y){const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor));if(next===before)return;if(window.HubMirror?.state.screenPin){x=innerWidth/2;y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0);}const ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed();}
-  function home(){flipQuickShown=false;autoZero=true;stopAuto();stopFlip();fieldPaused=false;resumeFlip=resumeAuto=false;Object.assign(state,{zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
+  let zoomRunning=false,zoomRaf=0,zoomTime=null,zoomPhase=0,resumeZoom=false,zoomPlay,zoomMode;
+  function syncAutoZoom(){if(zoomPlay){zoomPlay.textContent='⊙\nЗум '+(zoomRunning?'Ⅱ':'▶');zoomPlay.setAttribute('aria-pressed',String(zoomRunning));}if(zoomMode){zoomMode.textContent=state.zoomCycle==='reset'?'↗\nСброс':'↔\nМаятник';zoomMode.dataset.zoomMode=state.zoomCycle;zoomMode.title=state.zoomCycle==='reset'?'Автозум: минимум → максимум → сброс к минимуму':'Автозум: минимум ↔ максимум';}}
+  function syncZoomPhase(){const descending=zoomPhase>1,t=Math.max(0,Math.min(1,Math.log(state.zoom/.2)/Math.log(30)));const phase=Math.acos(1-2*t)/Math.PI;zoomPhase=state.zoomCycle==='reset'?t:descending?2-phase:phase;zoomTime=null;}
+  function stopAutoZoom(){const wasRunning=zoomRunning;zoomRunning=false;zoomTime=null;cancelAnimationFrame(zoomRaf);zoomRaf=0;syncAutoZoom();if(wasRunning)save();}
+  function autoZoomTick(time){
+    zoomRaf=0;if(!zoomRunning)return;
+    if(document.hidden)zoomTime=null;
+    else{
+      if(zoomTime!==null){zoomPhase=(zoomPhase+Math.max(0,time-zoomTime)/1000/state.zoomSeconds)%(state.zoomCycle==='reset'?1:2);const t=state.zoomCycle==='reset'?zoomPhase:(1-Math.cos(Math.PI*zoomPhase))/2,next=.2*30**t;zoom(next/state.zoom,innerWidth/2,innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0),false);}
+      zoomTime=time;
+    }
+    zoomRaf=requestAnimationFrame(autoZoomTick);
+  }
+  function startAutoZoom(){if(zoomRunning)return;zoomRunning=true;zoomTime=null;syncAutoZoom();zoomRaf=requestAnimationFrame(autoZoomTick);}
+  function zoom(factor,x,y,persist=true){if(persist){resumeZoom=false;stopAutoZoom();}const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor));if(next===before)return;if(window.HubMirror?.state.screenPin){x=innerWidth/2;y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0);}const ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed(persist);}
+  function home(){flipQuickShown=false;autoZero=true;stopAuto();stopFlip();stopAutoZoom();fieldPaused=false;resumeZoom=resumeFlip=resumeAuto=false;Object.assign(state,{zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
   function originalCenter(){const c=sourceCenter||center(),sh=sourceShift();return [c[0]+sh[0],c[1]+sh[1]];}
   const activeRate=()=>state.frameLocked?state.frameStep:state.spinRate;
   const ratePosition=rate=>rate>0?(state.frameLocked?1+60*(Math.log10(Math.max(.000001,rate))+6):1+100*(Math.log10(Math.max(.01,rate))+2)):0;
@@ -155,9 +171,9 @@
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
     if(vector?.screen){g.save();g.setTransform(k,0,0,k,-left*k,0);vector.screen(g);g.restore();}
     if(!view)updateCenterMarker();
-    if(!view&&window.HubMirror?.drawRotationGuides)for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
+    if(window.HubMirror?.drawRotationGuides)for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
       const p=this.projectBit(0,0,mirror),x=this.projectBit(1,0,mirror),y=this.projectBit(0,1,mirror);if(!p)continue;
-      g.save();g.setTransform(k,0,0,k,0,0);g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);window.HubMirror.drawRotationGuides(g,mirror);g.restore();
+      g.save();g.setTransform(k,0,0,k,-left*k,0);g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);window.HubMirror.drawRotationGuides(g,mirror);g.restore();
     }
   }};
   // The same local bit geometry is projected into the screen-space flow grid.
@@ -179,6 +195,13 @@
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};
     centerBitPinButton=button('⊙\nБит','Закрепить центральный бит треугольника в центре оси',()=>setCenterBitPin(!state.centerBitPin));centerBitPinButton.classList.add('hubCenterBitPin');centerBitPinButton.setAttribute('aria-pressed',String(state.centerBitPin));
+    zoomPlay=button('⊙\nЗум ▶','Автозум от центра — пуск / пауза',()=>{resumeZoom=false;if(zoomRunning)stopAutoZoom();else{syncZoomPhase();startAutoZoom();}});zoomPlay.classList.add('hubAutoZoomControl');
+    zoomMode=button('','Режим автозума: маятник или сброс',()=>{state.zoomCycle=state.zoomCycle==='reset'?'swing':'reset';syncZoomPhase();syncAutoZoom();save();});zoomMode.classList.add('hubAutoZoomControl');
+    const zoomSpeed=document.createElement('details');zoomSpeed.className='hubTilt hubAutoZoomControl';const zoomSpeedHead=document.createElement('summary');zoomSpeedHead.textContent='◷\nЗум';zoomSpeedHead.title='Время одного хода автозума';zoomSpeedHead.setAttribute('aria-label',zoomSpeedHead.title);
+    const zoomSpeedLabel=document.createElement('label');zoomSpeedLabel.append('От минимума до максимума');const zoomSpeedRange=document.createElement('input');zoomSpeedRange.type='range';zoomSpeedRange.min='1';zoomSpeedRange.max='60';zoomSpeedRange.step='1';zoomSpeedRange.value=state.zoomSeconds;zoomSpeedRange.setAttribute('aria-label','Время хода автозума, секунды');const zoomSpeedOutput=document.createElement('output');zoomSpeedOutput.textContent=state.zoomSeconds+' с';
+    zoomSpeedRange.oninput=()=>{state.zoomSeconds=Number(zoomSpeedRange.value);zoomTime=null;zoomSpeedOutput.textContent=state.zoomSeconds+' с';save();};zoomSpeedLabel.append(zoomSpeedRange,zoomSpeedOutput);zoomSpeed.append(zoomSpeedHead,zoomSpeedLabel);settings.append(zoomSpeed);syncZoomPhase();syncAutoZoom();
+    document.addEventListener('visibilitychange',()=>{zoomTime=null;});window.addEventListener('pagehide',stopAutoZoom);
+    window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeZoom=zoomRunning;stopAutoZoom();}else{if(resumeZoom)startAutoZoom();resumeZoom=false;}});
     const rotL=turnLeft=button('↺','Повернуть поле на −15°',()=>autoRunning?setAutoRate(activeRate()/1.1):rotate(-15));angleText=button('0°','Сбросить поворот поля в 0°',()=>{stopAuto();rotateAround(-state.angle*Math.PI/180,...originalCenter());});const rotR=turnRight=button('↻','Повернуть поле на +15°',()=>autoRunning?setAutoRate(activeRate()*1.1):rotate(15));
     const rotationLabel=document.createElement('label');rotationLabel.className='hubViewRotationControl';const rotationHead=document.createElement('span');rotationHead.append(document.createTextNode('Поворот поля · '));rotationValue=document.createElement('output');rotationHead.append(rotationValue);rotationLabel.append(rotationHead);
     const rotation=document.createElement('input');rotation.type='range';rotation.min=0;rotation.max=360;rotation.step=1;rotation.value=state.angle;rotation.setAttribute('aria-label','Поворот поля на 360 градусов');rotation.className='hubViewRotation';rotationLabel.append(rotation);settings.append(rotationLabel);rotation.oninput=()=>{autoRemainder=0;autoTime=null;const a=Number(rotation.value);rotateAround(((magnetic()?snappedRotation(a):a)-state.angle)*Math.PI/180,...originalCenter(),false);};rotation.onchange=save;

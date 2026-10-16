@@ -91,7 +91,7 @@
       if (item.matches('.hubFlowControls')) key = 'flow';
       else if (item.matches('.hubBitSymmetry,.hubSymmetryMinimum') || label.includes('Симметрия параллельно')) key = 'symmetry';
       else if (item.matches('.hubImageTools')) key = 'file';
-      else if (item.matches('.hubFlipControl,.hubFlipPlanes')) key = 'space';
+      else if (item.matches('.hubFlipControl,.hubFlipPlanes,.hubAutoZoomControl')) key = 'space';
       else if (item.matches('.hubMirrorSpinControl,.hubAxisScreenPin,.hubCenterBitPin') || /Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label)) key = 'axis';
       body(key).append(item);
     }

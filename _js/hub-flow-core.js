@@ -56,6 +56,19 @@
       const len=Math.hypot(nx,ny);if(len<1e-7)return [-vx,-vy];
       nx/=len;ny/=len;if(nx*vx+ny*vy>0){nx=-nx;ny=-ny;}return [nx,ny];
     }
+    topBeams(){
+      const beams=[],distance=12*Math.hypot(this.width,this.height);
+      for(let x=0;x<this.width;x++){
+        const ray={x:x+.5,y:0,vx:0,vy:1,bounces:0};
+        const path=this.advanceRay(ray,distance);let travelled=0;
+        for(let i=1;i<path.length;i++){
+          const a=path[i-1],b=path[i],length=Math.hypot(b[0]-a[0],b[1]-a[1]);
+          if(length>0)beams.push({a,b,alpha:a[2],start:travelled,length});
+          travelled+=length;
+        }
+      }
+      return beams;
+    }
     advanceRay(ray,distance){
       const path=[[ray.x,ray.y,2**-(ray.bounces||0)]];let remaining=Math.max(0,distance);
       if(this.lightBlocked(ray.x,ray.y,ray.vy)){ray.dead=true;return path;}
@@ -78,6 +91,7 @@
   class WaterField extends Field {
     constructor(...args){super(...args);this.activeRows=new Set();}
     addWater(x,y,amount=1){const added=super.addWater(x,y,amount);if(added>0)this.activeRows.add(Math.floor(y));return added;}
+    fillTop(){let added=0;for(let x=0;x<this.width;x++)added+=this.addWater(x,0);return added;}
     setMask(mask){
       this.solid=mask;
       // Moving bits may push liquid sideways or down, never lift it above its row.
@@ -96,20 +110,32 @@
     }
     stepWater(){
       const {width:w,height:h,solid:s,water:m}=this;
-      const active=new Set(this.activeRows),reverse=!!(this.tick%2);
+      const active=new Set(this.activeRows),reverse=!!(this.tick%2),directions=reverse?[1,-1]:[-1,1];
       const move=(i,j)=>{if(s[j])return;const q=Math.min(m[i],1-m[j]);if(q>0){m[i]-=q;m[j]+=q;active.add(Math.floor(j/w));}};
-      for(const y of [...this.activeRows].sort((a,b)=>b-a))for(let n=0;n<w;n++){
-        const x=reverse?w-1-n:n;
-        const i=y*w+x;if(!m[i]||s[i])continue;
-        if(y===h-1||x===0||x===w-1){this.drained+=m[i];m[i]=0;}
-        else{
-          move(i,i+w);
-          for(const dx of reverse?[1,-1]:[-1,1])if(!s[i+dx])move(i,i+w+dx);
+      for(const y of [...this.activeRows].sort((a,b)=>b-a)){
+        // Translate an unobstructed row in bulk (dense sheets otherwise cost millions of transfers).
+        if(y<h-1){
+          const below=(y+1)*w;let clear=true;
+          for(let i=below;i<below+w;i++)if(s[i]||m[i]){clear=false;break;}
+          if(clear){m.copyWithin(below,y*w,below);m.fill(0,y*w,below);active.add(y+1);continue;}
+        }
+        for(let n=0;n<w;n++){
+          const x=reverse?w-1-n:n;
+          const i=y*w+x;if(!m[i]||s[i])continue;
+          if(y===h-1){this.drained+=m[i];m[i]=0;}
+          else{
+            move(i,i+w);
+            if(!m[i])continue;
+            for(const dx of directions)if(x+dx>=0&&x+dx<w&&!s[i+dx])move(i,i+w+dx);
+            if(x===0||x===w-1){this.drained+=m[i];m[i]=0;}
+          }
         }
       }
       const supported=i=>!s[i]&&(s[i+w]||m[i+w]>=.99999);
       for(const y of [...active].sort((a,b)=>b-a)){
         if(y===h-1)continue;
+        let full=true;for(let i=y*w;i<(y+1)*w;i++)if(!s[i]&&m[i]!==1){full=false;break;}
+        if(full)continue;
         for(let x=0;x<w;){
           const start=x;if(!supported(y*w+x)){x++;continue;}
           let total=0;while(x<w&&supported(y*w+x)){total+=m[y*w+x];x++;}

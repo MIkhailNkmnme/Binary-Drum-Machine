@@ -116,3 +116,27 @@ test('a transmissive bit does not kill light starting inside; mixed overlaps ref
   const ray={x:20.5,y:20,vx:0,vy:1};f.advanceRay(ray,5);assert.ok(!ray.dead);assert.ok(ray.y>22);
   for(const vy of [-1,1]){f.lightTypes.fill(3);const r={x:20.5,y:vy>0?10:30,vx:0,vy};f.advanceRay(r,15);assert.equal(r.bounces,1);assert.equal(Math.sign(r.vy),-vy);}
 });
+
+test('dense water source fills every top pixel and descends as a continuous sheet',()=>{
+  const f=new WaterField(24,20);let added=f.fillTop();
+  for(let t=0;t<8;t++){f.stepWater();added+=f.fillTop();}
+  for(let y=0;y<=8;y++)for(let x=0;x<24;x++)assert.equal(f.water[y*24+x],1);
+  assert.equal(sum(f.water.slice(9*24)),0,'no instantaneous fill ahead of the front');
+  assert.equal(sum(f.water)+f.drained,added);
+  for(let t=0;t<30;t++)f.stepWater();assert.equal(sum(f.water),0);assert.equal(f.drained,added);
+});
+test('dense source never injects through a blocked inlet and never overfills',()=>{
+  const f=new WaterField(12,12);f.solid[4]=1;
+  assert.equal(f.fillTop(),11);assert.equal(f.fillTop(),0);assert.equal(f.water[4],0);
+  f.stepWater();f.fillTop();assert.equal(f.water[4],0);assert.ok(f.water.every(m=>m<=1));
+});
+test('continuous light covers every inlet and preserves directional reflection and half brightness',()=>{
+  const f=new Field(24,30);let beams=f.topBeams();
+  assert.equal(beams.length,24);assert.ok(beams.every(b=>b.start===0&&b.a[1]===0&&b.b[1]>29&&b.alpha===1));
+  f.lightTypes=new Uint8Array(720);
+  for(let x=0;x<24;x++){f.solid[15*24+x]=1;f.lightTypes[15*24+x]=x<12?1:2;}
+  beams=f.topBeams();
+  for(let x=0;x<12;x++)assert.ok(beams.some(b=>b.a[0]===x+.5&&b.b[1]>29&&b.alpha===1));
+  const reflected=beams.filter(b=>b.alpha===.5);assert.ok(reflected.length>=10);
+  assert.ok(reflected.every(b=>b.start>0&&b.b[1]<b.a[1]));
+});

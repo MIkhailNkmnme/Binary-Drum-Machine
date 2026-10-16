@@ -40,6 +40,29 @@ test('closed drag lock permits wheel and both zoom buttons',()=>{
   assert.equal(f.window.HubView.unlocked,false);
 });
 
+test('auto zoom swings between existing limits about the viewport centre without anchor drift',()=>{
+ const f=fixture({zoom:.2,angle:21,pan:[15,-20]}),v=f.window.HubView,play=f.button('Автозум от центра — пуск / пауза');const anchor=Array.from(v.inverse(600,400));
+ play.onclick();f.tick(0);f.tick(4000);assert.ok(Math.abs(v.scale-Math.sqrt(1.2))<1e-9);near(Array.from(v.inverse(600,400)),anchor);
+ f.tick(8000);assert.equal(v.scale,6);f.tick(12000);assert.ok(Math.abs(v.scale-Math.sqrt(1.2))<1e-9);f.tick(16000);assert.equal(v.scale,.2);near(Array.from(v.inverse(600,400)),anchor);
+ assert.equal(play.attributes['aria-pressed'],'true');
+});
+
+test('auto zoom reset cycle jumps from maximum to minimum and keeps repeating',()=>{
+ const f=fixture({zoom:.2,zoomCycle:'reset',zoomSeconds:8}),v=f.window.HubView;f.button('Автозум от центра — пуск / пауза').onclick();f.tick(0);f.tick(7900);assert.ok(v.scale>5.7);f.tick(8000);assert.equal(v.scale,.2);f.tick(12000);assert.ok(Math.abs(v.scale-Math.sqrt(1.2))<1e-9);f.tick(16000);assert.equal(v.scale,.2);
+});
+
+test('auto zoom pause preserves its descending phase; manual zoom and home stop it',()=>{
+ const f=fixture({zoom:.2}),v=f.window.HubView,play=f.button('Автозум от центра — пуск / пауза');play.onclick();f.tick(0);f.tick(10000);const paused=v.scale;play.onclick();f.tick(20000);assert.equal(v.scale,paused);play.onclick();f.tick(21000);f.tick(22000);assert.ok(v.scale<paused);
+ f.button('Увеличить масштаб холста').onclick();const manual=v.scale;f.tick(30000);assert.equal(v.scale,manual);assert.equal(play.attributes['aria-pressed'],'false');
+ play.onclick();f.button('Вернуть весь рисунок в поле').onclick();f.tick(40000);assert.equal(v.scale,1);assert.equal(play.attributes['aria-pressed'],'false');
+});
+
+test('field pause suspends auto zoom and resumes without catching up elapsed time',()=>{
+ const f=fixture({zoom:.2}),v=f.window.HubView;f.button('Автозум от центра — пуск / пауза').onclick();f.tick(0);f.tick(2000);const before=v.scale;
+ f.window.dispatchEvent({type:'hubmotionpause',detail:{paused:true}});f.tick(50000);assert.equal(v.scale,before);
+ f.window.dispatchEvent({type:'hubmotionpause',detail:{paused:false}});f.tick(51000);assert.equal(v.scale,before);f.tick(52000);assert.ok(v.scale>before);
+});
+
 test('menu wheel remains scrolling rather than changing the field',()=>{
   const f=fixture();assert.equal(f.wheel(true).prevented,undefined);assert.equal(f.window.HubView.scale,1);
 });
