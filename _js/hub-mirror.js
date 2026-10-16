@@ -40,12 +40,13 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', packedBits:false, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
       state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
@@ -57,7 +58,7 @@
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
       for (const k of ['x', 'y']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = clamp(saved[k]);
-      for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = Math.max(-60, Math.min(60, saved[k]));
+      for (const k of ['zero', 'one']) if (typeof saved[k] === 'number' && Number.isFinite(saved[k])) state[k] = bitRotation(saved[k]);
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
@@ -106,6 +107,11 @@
     const key=g.font+'|'+text+'|ink';let bounds=glyphMetrics.get(key);
     if(!bounds){const m=g.measureText(text);bounds=[(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight??m.width),(m.actualBoundingBoxAscent??size*.7)+(m.actualBoundingBoxDescent||0)];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,bounds);}
     return [width/Math.max(.01,bounds[0]),height/Math.max(.01,bounds[1])];
+  }
+  function bitRotation(angle){return state.bitFreeRotation?((angle+180)%360+360)%360-180:Math.max(-60,Math.min(60,angle));}
+  function syncBitRotation(){
+    for(const [key,bit] of [['zero','0'],['one','1']]){const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.min=state.bitFreeRotation?'-180':'-60';range.max=state.bitFreeRotation?'180':'60';range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}}
+    document.querySelector?.('#hubBitFreeRotation')?.setAttribute('aria-pressed',String(state.bitFreeRotation));
   }
   const save = () => { try { localStorage.setItem('zerk_hub_mirror', JSON.stringify(state)); } catch (_) {} };
   const center = () => [frame.left + frame.width * state.x, frame.height * state.y];
@@ -217,12 +223,13 @@
     traceLabel.className='hubRhomb';trace.setAttribute('aria-label','Семь световых дорожек — До Ре Ми Фа Соль Ля Си');traceLabel.append(trace, document.createTextNode('♪')); settings.append(traceLabel);
     traceLabel.title = 'Семь световых дорожек: исходные ноты До, Ре, Ми, Фа, Соль, Ля, Си; включить / выключить';
     trace.addEventListener('change', () => { state.trace = trace.checked; changed(); save(); });
+    const freeRotation=document.createElement('button');freeRotation.type='button';freeRotation.id='hubBitFreeRotation';freeRotation.className='hubRhomb';freeRotation.textContent='↻\n360°';freeRotation.title='Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°';freeRotation.setAttribute('aria-label','Поворот битов без ограничителя');freeRotation.setAttribute('aria-pressed',String(state.bitFreeRotation));freeRotation.onclick=()=>api.setBitFreeRotation(!state.bitFreeRotation);settings.append(freeRotation);
     for (const [key, bit] of [['zero', '0'], ['one', '1']]) {
       const label = document.createElement('label'), range = document.createElement('input'), value = document.createElement('output');
-      range.type = 'range'; range.min = '-60'; range.max = '60'; range.step = '1'; range.value = state[key];
+      range.type = 'range'; range.min = state.bitFreeRotation?'-180':'-60'; range.max = state.bitFreeRotation?'180':'60'; range.step = '1'; range.value = state[key];
       range.setAttribute('aria-label', 'Наклон ромбов ' + bit); value.textContent = state[key] + '°';
       const tilt=document.createElement('details'),summary=document.createElement('summary');tilt.className='hubTilt';summary.title='Наклон ромбов '+bit;summary.append(document.createTextNode(bit+' · '),value);label.append(range);tilt.append(summary,label);settings.append(tilt);
-      range.addEventListener('input', () => { state[key] = Number(range.value); value.textContent = state[key] + '°'; changed(); });
+      range.addEventListener('input', () => { state[key] = bitRotation(Number(range.value)); range.value=state[key]; value.textContent = state[key] + '°'; changed(); });
       range.addEventListener('change', save);
     }
     // v0.141: «свой пресет — цвета, прозрачности и все настройки цвета; кнопки в группу, в общем полупрозрачном ромбе».
@@ -423,9 +430,14 @@
         g.stroke();g.restore();
       }g.restore();
     },
+    setBitFreeRotation(on){
+      state.bitFreeRotation=!!on;
+      for(const key of ['zero','one']){const signed=((state[key]+180)%360+360)%360-180;state[key]=bitRotation(state.bitFreeRotation?state[key]:signed);}
+      syncBitRotation();changed();save();
+    },
     tiltBit(bit,delta=null){
       if(bit!=='0'&&bit!=='1')return false;rotationGuide=rotationBit?.bit===bit;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
-      const key=bit==='0'?'zero':'one';state[key]=Math.max(-60,Math.min(60,state[key]+lastBitScroll[bit]));
+      const key=bit==='0'?'zero':'one';state[key]=bitRotation(state[key]+lastBitScroll[bit]);
       const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}changed();save();return true;
     },
     hit(x,y){

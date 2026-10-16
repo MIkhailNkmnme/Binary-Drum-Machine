@@ -93,3 +93,18 @@ test('packed symbols fill the cell ink bounds without moving their centres, in s
  assert.equal(dot.calls.find(c=>c[0]==='arc')[3],10);assert.equal(star.g.lineWidth,2);assert.equal(star.calls.find(c=>c[0]==='line')[1],9);
  assert.equal(mirror().state.packedBits,false);
 });
+
+
+test('free bit rotation crosses old stops and wraps full turns in either direction; limit is reversible and persisted',()=>{
+ const m=mirror({zero:55,one:-55});assert.equal(m.state.bitFreeRotation,true);
+ m.tiltBit('0',10);m.tiltBit('1',-10);assert.equal(m.state.zero,65);assert.equal(m.state.one,-65);
+ m.tiltBit('0',110);m.tiltBit('0',10);assert.equal(m.state.zero,-175);
+ m.tiltBit('0');assert.equal(m.state.zero,-165);
+ m.tiltBit('1',-110);m.tiltBit('1',-10);assert.equal(m.state.one,175);
+ m.tiltBit('1',-360*8);assert.equal(m.state.one,175);
+ const saved=mirror({...m.state});assert.equal(saved.state.zero,-165);assert.equal(saved.state.one,175);
+ m.setBitFreeRotation(false);assert.equal(m.state.zero,-60);assert.equal(m.state.one,60);
+ m.tiltBit('0',-5);m.tiltBit('1',5);assert.equal(m.state.zero,-60);assert.equal(m.state.one,60);
+ assert.equal(mirror({...m.state}).state.bitFreeRotation,false);
+ m.setBitFreeRotation(true);m.tiltBit('1',5);assert.equal(m.state.one,65);
+});
