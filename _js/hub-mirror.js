@@ -1,3 +1,4 @@
+/* Hub v0.133: reflection has the same colour as the bits in every preset. */
 /* Hub v0.132: ⚙ opens the field tools panel (mirror, ✦, ⤵, 🎨 …) — it was hidden since v0.122, on phones too. */
 /* Hub v0.128: 🎨 — ten colour presets: bits / reflection / fold-in. */
 /* Hub v0.127: foldIn — mirror bits outside the original triangle are also reflected back inside across its sides (⤵). */
@@ -10,15 +11,15 @@
 (() => {
   'use strict';
   const AX0 = 110 * Math.PI / 180;
-  // v0.128: заготовки цвета — биты оригинала / отражения / заворота
+  // v0.128: заготовки цвета — биты оригинала / отражения / заворота. v0.133: отражение — того же цвета, что оригинал, во всех заготовках
   const PALETTES = [
-    ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff'], ['Мята · роза', '#9fffc8', '#ff8fd0', '#ffd166'], ['Лёд · огонь', '#8fd3ff', '#ff9a5a', '#c9a2ff'],
-    ['Золото · синь', '#ffd166', '#6aa8ff', '#ff6b9a'], ['Лайм · фиалка', '#c6ff6b', '#b98cf0', '#5ce1e6'], ['Белый · красный', '#f2f4f8', '#ff5a5a', '#ffd166'],
-    ['Бирюза · янтарь', '#5ce1e6', '#ffb347', '#ff8fd0'], ['Коралл · мята', '#ff7f6b', '#73e4a5', '#8fd3ff'], ['Сирень · лимон', '#c9a2ff', '#fff36b', '#6bffb8'],
-    ['Небо · трава', '#6ac8ff', '#8ee86b', '#ff6bd5'], ['Чёрно-белая', '#ffffff', '#8a8a8a', '#cfcfcf'],
+    ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff'], ['Мята · роза', '#9fffc8', '#9fffc8', '#ffd166'], ['Лёд · огонь', '#8fd3ff', '#8fd3ff', '#c9a2ff'],
+    ['Золото · синь', '#ffd166', '#ffd166', '#ff6b9a'], ['Лайм · фиалка', '#c6ff6b', '#c6ff6b', '#5ce1e6'], ['Белый · красный', '#f2f4f8', '#f2f4f8', '#ffd166'],
+    ['Бирюза · янтарь', '#5ce1e6', '#5ce1e6', '#ff8fd0'], ['Коралл · мята', '#ff7f6b', '#ff7f6b', '#8fd3ff'], ['Сирень · лимон', '#c9a2ff', '#c9a2ff', '#6bffb8'],
+    ['Небо · трава', '#6ac8ff', '#6ac8ff', '#ff6bd5'], ['Чёрно-белая', '#ffffff', '#ffffff', '#cfcfcf'],
     // v0.131: «цвета в стиле кибернейро» — неон на тёмном
-    ['Кибер · неон', '#00f0ff', '#ff2bd6', '#fff200'], ['Кибер · синапс', '#39ff14', '#b026ff', '#00e5ff'], ['Кибер · нейросеть', '#7df9ff', '#ff3d7f', '#a0ff4a'],
-    ['Кибер · плазма', '#00ffa3', '#ff00e5', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#00f5d4', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#3df5ff', '#ffe066']];   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
+    ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a'],
+    ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066']];   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
   const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
