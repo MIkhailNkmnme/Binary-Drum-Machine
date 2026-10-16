@@ -1,6 +1,7 @@
 /* Hub v0.222: «вместо смены фона сделай так всем кнопкам» — включённая кнопка не перекрашивается,
    а несёт обводку внутри ромба: вариант В3 витрины knopki/hub-obvodka.html — белая 3 px с отступом 4 px от края
-   (при 48 px), по 1 px чёрного с обеих сторон. Текст и значок — поверх обводки (isolation + z-index:-1). */
+   (при 48 px), по 1 px чёрного с обеих сторон.
+   v0.228: «нижнюю часть рамки — диагонали вниз до края кнопки и по краю к нижнему углу» — снизу рамка идёт по краю ромба, подпись помещается внутри. Текст и значок — поверх обводки (isolation + z-index:-1). */
 #hubFieldTools .hubRhomb[aria-pressed=true],#hubFieldTools .hubRhomb:has(input:checked),
 #hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=true],
 #hubFieldTools .hubFlowControls [aria-pressed=true],#hubFieldTools .hubFloodControl[aria-pressed=true],
@@ -16,7 +17,7 @@
 #hubRombGrid .hubRgCell.full[aria-pressed=true]::after,#hubRombGrid .hubRgCell.full[aria-pressed=mixed]::after,#hubFieldTools .hubTreeItem>.hubSwatch[aria-pressed=true]::after{
   content:'';position:absolute;inset:0;margin:0;border:0;opacity:1;transform:none;pointer-events:none;z-index:-2;
   background:#000;
-  clip-path:polygon(evenodd,50% 11.8%,88.2% 50%,50% 88.2%,11.8% 50%,50% 11.8%,50% 23.6%,23.6% 50%,50% 76.4%,76.4% 50%,50% 23.6%)}
+  clip-path:polygon(evenodd,50% 11.8%,93.6% 55.4%,50% 99%,6.4% 55.4%,50% 11.8%,50% 23.6%,81.8% 55.4%,50% 87.2%,18.2% 55.4%,50% 23.6%)}
 #hubFieldTools .hubRhomb[aria-pressed=true]::before,#hubFieldTools .hubRhomb:has(input:checked)::before,
 #hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=true]::before,
 #hubFieldTools .hubFlowControls [aria-pressed=true]::before,#hubFieldTools .hubFloodControl[aria-pressed=true]::before,
@@ -25,6 +26,6 @@
 #hubRombGrid .hubRgCell.full[aria-pressed=true]::before,#hubRombGrid .hubRgCell.full[aria-pressed=mixed]::before,#hubFieldTools .hubTreeItem>.hubSwatch[aria-pressed=true]::before{
   content:'';position:absolute;inset:0;margin:0;border:0;opacity:1;transform:none;pointer-events:none;z-index:-1;
   background:#fff;
-  clip-path:polygon(evenodd,50% 14.7%,85.3% 50%,50% 85.3%,14.7% 50%,50% 14.7%,50% 20.6%,20.6% 50%,50% 79.4%,79.4% 50%,50% 20.6%)}
+  clip-path:polygon(evenodd,50% 14.7%,90.7% 55.4%,50% 96.1%,9.3% 55.4%,50% 14.7%,50% 20.6%,84.8% 55.4%,50% 90.2%,15.2% 55.4%,50% 20.6%)}
 #hubRombGrid .hubRgCell.full[aria-pressed=mixed]::before{background:#ffd166}
 #hubFieldTools .hubTreeItem>.hubSwatch[aria-pressed=true]{isolation:isolate}
