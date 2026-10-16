@@ -7,10 +7,11 @@
    на свёрнутом поле. Слой свёртки рисует только подсветку центра. Без write (ромбы) — по-старому, картинкой поверх.
    v8: «центр» — общая кнопка страницы («сделай не только для свёртки, а вообще»), своя галка снята; в режиме записи центр рисует страница.
    v6: галка «центр» — подсветка центрального XOR-столбца золотом с рамкой (по умолчанию выкл., выбор помнится).
+   v9: «СвёрткаВерт» — строки к центральной строке: та же модель на транспонированном поле (model({axis:'v'}), modelV); mount({axis:'v'}) — свой пульт.
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
   'use strict';
-  function model({width,height,center,data,colour,paint}) {
+  function modelH({width,height,center,data,colour,paint}) {
     const moves=[],left=[0],right=[0];let l=0,r=0,side=1;
     while(l<center||r<width-center-1){
       if((side===1&&r<width-center-1)||l===center){r++;moves.push(center+r);}
@@ -21,7 +22,7 @@
     for(let y=0;y<height;y++){const v=data[y*width+center];if(v>=0){parity[y]=v;count[y]=1;}}
     let frame=0;
     const bounds=[0];for(let f=0;f<moves.length;){const side=i=>moves[i]>center;f+=f+1<moves.length&&side(f)!==side(f+1)?2:1;bounds.push(f);}   // v4: концы шагов «парой»
-    return {width,height,center,max:moves.length,get frame(){return frame;},
+    return {width,height,center,max:moves.length,get frame(){return frame;},isMid(x){return x===center;},
       seek(value){const target=Math.max(0,Math.min(moves.length,Math.round(value)));
         while(frame!==target){const forward=frame<target,col=moves[forward?frame:frame-1];
           for(let y=0;y<height;y++){const v=data[y*width+col];if(v>=0){parity[y]^=v;count[y]+=forward?1:-1;}}
@@ -41,10 +42,21 @@
       pairStep(f,d){if(d>0){for(const b of bounds)if(b>f)return b;return moves.length;}for(let i=bounds.length-1;i>=0;i--)if(bounds[i]<f)return bounds[i];return 0;}
     };
   }
-  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply}) {
-    const panel=document.createElement('section');panel.id='mayFoldPanel';panel.hidden=true;panel.setAttribute('aria-label','Пульт горизонтальной свёртки');
-    panel.innerHTML='<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="Шаг — правая и левая часть сразу"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг горизонтальной свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>';
-    const layer=document.createElement('canvas');layer.id='mayFoldCanvas';layer.hidden=true;layer.setAttribute('aria-label','Поле горизонтальной свёртки');document.body.append(layer,panel);
+  // v9: вертикальная — строки сверху и снизу едут к центральной строке; снаружи координаты прежние (x — столбец, y — строка), srcAt(y) — исходная строка
+  const flip=(a,W,H)=>{if(!a)return a;const t=new a.constructor(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)t[x*H+y]=a[y*W+x];return t;};
+  function modelV({width,height,center,data,colour,paint}) {
+    const m=modelH({width:height,height:width,center,data:flip(data,width,height),colour:flip(colour,width,height),paint:flip(paint,width,height)});
+    const side={'правая ←':'нижняя ↑','левая →':'верхняя ↓'};
+    return {axis:'v',width,height,center,max:m.max,get frame(){return m.frame;},isMid:(x,y)=>y===center,seek:v=>m.seek(v),
+      bit:(x,y)=>m.bit(y,x),colourAt:(x,y)=>m.colourAt(y,x),paintAt:(x,y)=>m.paintAt(y,x),srcAt:y=>m.srcAt(y),
+      recolour:(c,p)=>m.recolour(flip(c,width,height),flip(p,width,height)),nextSide:()=>side[m.nextSide()]||m.nextSide(),pairStep:(f,d)=>m.pairStep(f,d)};
+  }
+  const model=o=>o.axis==='v'?modelV(o):modelH(o);
+  function mount({button,wrap,canvas,capture,config,beforeStart,onClose,zoom,tap,apply,axis='h'}) {
+    const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной';
+    const panel=document.createElement('section');panel.id=V?'mayFoldPanelV':'mayFoldPanel';panel.className='may-fold-panel';panel.hidden=true;panel.setAttribute('aria-label','Пульт '+WORD+' свёртки');
+    panel.innerHTML=`<div class="may-fold-steps"><button type="button" data-fold="back" title="Предыдущий шаг">−1</button><output aria-live="off"></output><label class="may-fold-pair" title="${V?'Шаг — нижняя и верхняя часть сразу':'Шаг — правая и левая часть сразу'}"><input type="checkbox" data-fold="pair"> парой</label><button type="button" data-fold="next" title="Следующий шаг">+1</button></div><input class="may-fold-frame" type="range" min="0" value="0" step="1" aria-label="Шаг ${WORD} свёртки"><div class="zz-pult"><input class="zz-pult-range" type="range" min="0" max="401" value="101" aria-label="Скорость свёртки"><button type="button" class="zz-pult-back" title="Обратный ход">◀</button><button type="button" class="zz-pult-fwd" title="Прямой ход">▶</button><button type="button" class="zz-pult-play" aria-label="Автоплей свёртки" aria-pressed="false">▶</button><output class="zz-pult-value"></output></div>`;
+    const layer=document.createElement('canvas');layer.id=V?'mayFoldCanvasV':'mayFoldCanvas';layer.className='may-fold-canvas';layer.hidden=true;layer.setAttribute('aria-label','Поле '+WORD+' свёртки');document.body.append(layer,panel);
     const ctx=layer.getContext('2d'),pult=panel.querySelector('.zz-pult'),play=pult.querySelector('.zz-pult-play'),speed=pult.querySelector('input'),value=pult.querySelector('output'),timeline=panel.querySelector('.may-fold-frame'),progress=panel.querySelector('.may-fold-steps output');
     let state=null,running=false,dir=1,rateStep=101,timer=0,last=0,credit=0,suppressClick=false,off=null,offImg=null;
     const rate=()=>rateStep<=0?0:.1*10**((rateStep-1)/100);
@@ -59,7 +71,7 @@
       document.body.classList.toggle('may-fold-active',!!state&&!state.write);   // v7: в режиме записи поле видно как есть
       if(!state)return;
       const two=pair()&&state.pairStep(state.frame,1)-state.frame===2;
-      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`СвёрткаГориз · ${state.frame}/${state.max} · ${two?'обе →←':state.nextSide()}`;
+      timeline.max=state.max;timeline.value=state.frame;progress.textContent=`${NAME} · ${state.frame}/${state.max} · ${two?(V?'обе ↓↑':'обе →←'):state.nextSide()}`;
       panel.querySelector('[data-fold="back"]').textContent=pair()?'−2':'−1';panel.querySelector('[data-fold="next"]').textContent=pair()?'+2':'+1';
       panel.querySelector('[data-fold="back"]').disabled=state.frame===0;panel.querySelector('[data-fold="next"]').disabled=state.frame===state.max;
       play.textContent=running?'Ⅱ':'▶';play.setAttribute('aria-pressed',String(running));speed.value=rateStep;
@@ -87,24 +99,25 @@
           if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
           const u=new Uint32Array(offImg.data.buffer);
           for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-            u[i]=mid&&x===state.center?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+            u[i]=mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
           off.getContext('2d').putImageData(offImg,0,0);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(off,x0+ox*s,y0,W*s,H*s);
-          if(mid){ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(x0+(state.center+ox)*s,y0,s,H*s);}ctx.restore();continue;}
+          if(mid){ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';midRect(x0+ox*s,y0,s);}ctx.restore();continue;}
         const xa=Math.max(0,Math.floor(-x0/s-ox)-1),xb=Math.min(state.width,Math.ceil((w-x0)/s-ox)+1),ya=Math.max(0,Math.floor(-y0/s)-1),yb=Math.min(state.height,Math.ceil((h-y0)/s)+1);
         for(let y=ya;y<yb;y++)for(let x=xa;x<xb;x++){
           if(p>=0&&((x+c.origin-c.anchor-p-y)%2+2)%2)continue;const bit=state.bit(x,y);if(bit<0)continue;
-          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y),gold=mid&&x===state.center;
+          const cx=x0+(x+ox+.5)*s,cy=y0+(y+.5)*s,back=only?state.paintAt(x,y):state.colourAt(x,y),gold=mid&&state.isMid(x,y);
           if(only&&(back||gold)){ctx.fillStyle=gold?(bit?'#7a5a10':'#4a3608'):rgb(back);ctx.fillRect(cx-s/2,cy-s/2,s,s);}
           if(!only){ctx.fillStyle=gold?(bit?'#ffe08a':'#b8860b'):back?rgb(back):bit?'#e8edf5':'#5b6475';if(p<0)ctx.fillRect(cx-s/2,cy-s/2,s,s);else{ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx+s,cy);ctx.lineTo(cx,cy+s);ctx.lineTo(cx-s,cy);ctx.closePath();ctx.fill();}}
           if((digits&&(only||s>=4))||(p>=0&&s>=14)){ctx.fillStyle=only?(gold?(bit?'#ffe08a':'#ffb020'):bit?c.one:c.zero):(bit?'#07111d':'#ffffff');ctx.fillText(String(bit),cx,cy);}
         }
-        if(mid){ctx.save();ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';ctx.strokeRect(x0+(state.center+ox)*s,y0,s,state.height*s);ctx.restore();}
+        if(mid){ctx.save();ctx.lineWidth=Math.max(1.5,Math.min(3,s*.2));ctx.strokeStyle='#ffd35b';midRect(x0+ox*s,y0,s);ctx.restore();}
       }
       sync();
     }
+    function midRect(x,y,s){if(V)ctx.strokeRect(x,y+state.center*s,state.width*s,s);else ctx.strokeRect(x+state.center*s,y,s,state.height*s);}
     function pause(){running=false;cancelAnimationFrame(timer);timer=0;last=0;credit=0;sync();}
     let applied=-1;
-    function close(){pause();state=null;applied=-1;sync();onClose?.();}
+    function close(){pause();if(!state)return;state=null;applied=-1;sync();onClose?.();}
     function seek(n){if(!state)return;state.seek(n);render();}
     function tick(now){if(!running||!state)return;if(last)credit+=Math.min(.25,(now-last)/1000)*rate();last=now;
       const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(adv(state.frame,dir,n));}
@@ -113,7 +126,7 @@
     }
     function togglePlay(){if(!state)return;if(running){pause();return;}if(dir>0&&state.frame===state.max)seek(0);if(dir<0&&state.frame===0)seek(state.max);running=true;last=0;credit=0;sync();timer=requestAnimationFrame(tick);}
     function setRate(n){rateStep=Math.max(0,Math.min(401,Math.round(n)));try{localStorage.setItem('mayatnik-fold-rate',String(rateStep));}catch(_){}sync();}
-    button.onclick=()=>{if(state){close();return;}beforeStart();const data=capture();if(!data)return;state=model(data);state.write=!!data.write;applied=-1;sync();render();};
+    button.onclick=()=>{if(state){close();return;}beforeStart();const data=capture();if(!data)return;state=model({...data,axis});state.write=!!data.write;applied=-1;sync();render();};
     play.onclick=()=>{if(suppressClick){suppressClick=false;return;}togglePlay();};
     speed.oninput=()=>setRate(Number(speed.value));value.ondblclick=()=>setRate(101);
     for(const [cls,d]of [['.zz-pult-back',-1],['.zz-pult-fwd',1]])pult.querySelector(cls).onclick=()=>{dir=d;last=0;credit=0;sync();};
@@ -139,10 +152,10 @@
     for(const type of ['pointerup','pointercancel'])wrap.addEventListener(type,e=>{if(!state||state.write)return;e.stopImmediatePropagation();pointers.delete(e.pointerId);pan=null;if(pointers.size<2)pinch=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);
       // v5: щелчок левой без сдвига — покрасить исходный столбец клетки (плоский вид), затем снять цвета заново
       const d=down;down=null;if(type!=='pointerup'||!d||d.id!==e.pointerId||d.moved||d.button!==0||pointers.size||!tap)return;
-      const c=config();if(!c||c.rp>=0)return;const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/c.scale),y=Math.floor((e.clientY-r.top)/c.scale),sx=state.srcAt(x);
-      if(sx<0||y<0||y>=state.height||!tap(sx,y))return;const cap=capture();if(cap)state.recolour(cap.colour,cap.paint);render();},true);
+      const c=config();if(!c||c.rp>=0)return;const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/c.scale),y=Math.floor((e.clientY-r.top)/c.scale);
+      if(V){const sy=state.srcAt(y);if(sy<0||x<0||x>=state.width||!tap(x,sy))return;}else{const sx=state.srcAt(x);if(sx<0||y<0||y>=state.height||!tap(sx,y))return;}const cap=capture();if(cap)state.recolour(cap.colour,cap.paint);render();},true);
     wrap.addEventListener('contextmenu',e=>{if(state&&!state.write){e.preventDefault();e.stopImmediatePropagation();}},true);
-    addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
+    addEventListener('keydown',e=>{if(!state||e.target.closest('input,select,button,textarea'))return;if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)&&!panel.hidden){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
     wrap.addEventListener('scroll',render,{passive:true});addEventListener('resize',render);
     return {get active(){return !!state;},close,render};
   }

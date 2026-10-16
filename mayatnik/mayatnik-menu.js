@@ -145,6 +145,10 @@
   {const e=$('bFoldHorizontal'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldHorizontal';b.title=e.title;
     const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'swap');b.append(mark);b.onclick=()=>e.click();gView.append(b);
     toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
+  // v0.125: «СвёрткаВерт» — рядом с горизонтальной
+  {const e=$('bFoldVertical'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldVertical';b.title=e.title;
+    const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'down');b.append(mark);b.onclick=()=>e.click();gView.append(b);
+    toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
   const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
   for (const o of $('view').options) {
     const [kind, title] = viewIcons[o.value] || ['eye', o.textContent], b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = o.value;
@@ -160,13 +164,13 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
-  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['midCol', 'line']]) {   // v0.119: и «Центр»
+  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['midCol', 'line'], ['fixLines', 'corners']]) {   // v0.119: и «Центр»
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.checked);
       if (id === 'noband') { const nm = b.querySelector('.gz-nm'); if (nm) nm.textContent = ['Полосы', 'Без полос', 'До треуг.'][+e.dataset.mode || 0]; } });
     gView.append(b); }
-  gView.append(gView.querySelector('[data-n="bFoldHorizontal"]'));
+  gView.append(gView.querySelector('[data-n="bFoldHorizontal"]'),gView.querySelector('[data-n="bFoldVertical"]'));
   // v0.075: Xor-Next — в верхней панели, виден всегда; без шаблона бледный.
   { const g = ptGroup('Шаблон'), e = $('bXor2'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'bXor2';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'steps'); b.append(mark); b.onclick = () => e.click();
@@ -181,7 +185,7 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'record'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', bFoldHorizontal:'Свёртка', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', fixLines:'Застыло', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
@@ -208,7 +212,8 @@
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
   // v0.124: «Дзен» и «?» — столбиком, одна над другой, у правого края шапки.
-  { const col = document.createElement('div'); col.id = 'mayCorner'; $('mayZen').before(col); col.append($('mayZen'), $('mayHelp')); }
+  // v0.125: столбик «Дзен» / «?» — в той же верхней полосе меню, последним.
+  { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';

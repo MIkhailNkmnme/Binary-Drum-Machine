@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.124. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.125. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.124</title>
+<title>Zerkalius Маятник — v0.125</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=124">
+<link rel="stylesheet" href="mayatnik-menu.css?v=125">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.124</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.125</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -164,11 +164,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Цвет единиц в виде «Только цифры»">Цвет 1 <input id="digitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет нулей в виде «Только цифры»">Цвет 0 <input id="digitZeroColour" type="color" value="#7cbcff"></label>
     <label title="Подсветить центральный столбец (столб якоря) — на поле, в любом кадре и в свёртке"><input id="midCol" type="checkbox" data-mi-short="Центр"> центр</label>
+    <label title="Тонкие линии: между ними — часть поля, которую оставшиеся вершины уже не изменят (от ближайших будущих вершин вниз под 45°)"><input id="fixLines" type="checkbox" data-mi-short="Застыло"> застыло</label>
     <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
     <label title="Шрифт цифр на клетках">Шрифт <select id="digitFont"><option value="mono">Моноширинный</option><option value="consolas">Consolas</option><option value="courier">Courier</option><option value="sans">Без засечек</option><option value="serif">С засечками</option></select></label>
     <label title="Размер цифр, % клетки">Размер <input id="digitSize" type="number" min="30" max="100" step="5" value="80"></label>
     <button id="bFoldHorizontal" data-mi-short="СвёрткаГориз" aria-pressed="false" title="СвёрткаГориз: правая часть влево, затем левая вправо, по столбцу к центру через XOR; выключить — исходное поле">СвёрткаГориз</button>
+    <button id="bFoldVertical" data-mi-short="СвёрткаВерт" aria-pressed="false" title="СвёрткаВерт: нижняя часть вверх, затем верхняя вниз, по строке к центральной строке через XOR; выключить — исходное поле">СвёрткаВерт</button>
     <label title="Сколько верхних строк показывать (пусто — все). По ширине показ всегда обрезан до того, куда к этому кадру достали конусы, — при малом числе строк картинка (и обе половины «обе рядом») помещается крупно">показ строк <input id="vrows" type="number" min="0" max="4096" step="1" placeholder="все" style="width:64px"></label>
     <label title="Только в виде: в каждой строке — зона шума от крайнего левого до крайнего правого «0» (та же граница, что у «обводки»); в ромбах боковые единицы в жёлтых рамках дополняют фигуру до треугольника. Остальные полосы скрыты — картинка крупнее. Поле не меняется. Щелчок по кругу: с полосами → без полос → до треугольника (боковые единицы видны до прямых сторон треугольника)"><input id="noband" type="checkbox"> без полос</label>
     <button id="bOchki" aria-pressed="false" title="Очки: сверху вниз ищут в кадре строки начальной последовательности (1, 1, 11, 111, 1000…) — в рядах решёток, клетки через одну, как строки треугольника. Найденная строка больше ниже не ищется; так до последней. Найденное — жёлтым (1) и коричневым (0), список — под панелью. Только видимое: окно показа и, при «без полос», зона шума">👓 Очки</button>
@@ -308,7 +310,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-paint-cache.js?v=36"></script>
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/zz-pult.js?v=2"></script>
-<script src="mayatnik-fold.js?v=9"></script>
+<script src="mayatnik-fold.js?v=10"></script>
 <script src="mayatnik-stolb.js?v=3"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
@@ -338,7 +340,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let paintBits=null,fillRedo=[],templateHistoryCapture=null;
   const templateCanvas=$('colourTemplate'),templateG=templateCanvas.getContext('2d');
   let pictureStats = null, digitsRaf = 0;
-  let foldTransport=null,foldSource=null,foldBack=null;   // v0.118: foldBack — поле и краска до свёртки, пока она переписывает строки
+  let foldTransport=null,foldTransportV=null,foldSource=null,foldBack=null;
+  const foldCloseAll=()=>{foldTransport?.close();foldTransportV?.close();};   // v0.125: свёрток две — горизонтальная и вертикальная   // v0.118: foldBack — поле и краска до свёртки, пока она переписывает строки
   let stolbTransport=null,stolbCol=null,stolbRow=0,stolbLast=null,stolbPaint=null,stolbHeat=null,stolbGlow=null;   // v0.108: stolbCol — расстояние от центра, stolbHeat — накал пикселя 0…1   // v0.092: «Проход столба» — столбец от якоря, строка начала, последнее наведение
   const digitCanvas = $('bitDigits'), digitG = digitCanvas.getContext('2d');
   let f = null, geo = null, k = 0, img = null, playing = false, raf = 0, snaps = new Map(), interval = 1, target = 0;
@@ -365,7 +368,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function writeUI() {
     $('fillArea').value=st.fillArea;
     $('digitOneColour').value=st.digitOneColour;$('digitZeroColour').value=st.digitZeroColour;
-    $('midCol').checked=!!st.midCol;$('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
+    $('midCol').checked=!!st.midCol;$('fixLines').checked=st.fixLines!==false;$('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
     $('ochkiPattern').value=st.ochkiPattern||'initial';$('ochkiLength').value=st.ochkiLength||5;
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
     $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; st.noband = st.noband === true ? 1 : (+st.noband || 0) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; $('frozen').checked = !!st.frozen; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
@@ -376,7 +379,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // Пар — N/2 от «вершин N» (маятник до ±N/2). Только при ходе «лево-право».
   const pairOn = () => !!st.pair && st.mode === 'pend';
   function reset() {
-    if (foldBack) foldTransport.close();   // v0.118
+    if (foldBack) foldCloseAll();   // v0.118
     stop(); clearKonus(); readUI();
     const S = st.mode === 'one' ? 1 : pairOn() ? 2 * total() + 1 : st.steps;   // вершин всего
     geo = MAYATNIK.geometry(st.mode, S, st.rows);
@@ -588,7 +591,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function total() { return st.mode === 'one' ? 1 : pairOn() ? st.steps >> 1 : st.steps; }
   function snap() { if (!snaps.has(k)) snaps.set(k, { val: f.val.slice() }); }   // v0.006: только биты — цвет считается
   function addOne() {
-    if (foldBack) foldTransport.close();   // v0.118: свёртка переписала строки — сперва вернуть поле
+    if (foldBack) foldCloseAll();   // v0.118: свёртка переписала строки — сперва вернуть поле
     if (k >= total()) return false;
     if (konus) clearKonus();
     if (pairOn()) MAYATNIK.conePair(f, geo.anchor - k - 1, geo.anchor + k + 1, st.rows);
@@ -605,7 +608,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     : (sp => MAYATNIK.tint(r, c, v, sp[0], sp[1], st.bg !== 'empty'))(coneSpan());
   // Перейти к кадру t: назад — от ближайшего опорного кадра, вперёд — досчитать
   function goTo(t) {
-    if (foldBack) foldTransport.close();   // v0.118
+    if (foldBack) foldCloseAll();   // v0.118
     stop(); if (konus && t !== k) clearKonus(); if (!f) reset();
     t = Math.max(0, Math.min(total(), t | 0));
     if (t < k) { let s = 0; for (const key of snaps.keys()) if (key <= t && key > s) s = key;
@@ -1771,7 +1774,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
   }
-  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();foldTransport?.render();});}
+  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();foldTransport?.render();foldTransportV?.render();});}
   function drawDigits() {
     digitsRaf=0;
     const rp=rombP(),only=st.view==='digitsOnly';
@@ -1797,7 +1800,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         if(hit){digitG.save();digitG.lineWidth=Math.max(1.5,s*.09);digitG.strokeStyle='#ff9a1f';digitG.stroke();digitG.restore();}   // v0.022: найденное «Очками» — ещё и обводкой
         if(s>=14){digitG.fillStyle=v?'#07111d':'#ffffff';digitG.fillText(String(v),cx,cy);}
       }
-      stolbDigitLine(x0,y0,s);midDigitLine(x0,y0,s);return;
+      stolbDigitLine(x0,y0,s);midDigitLine(x0,y0,s);fixDigitLines(x0,y0,s);return;
     }
     for(let y=r0;y<r1;y++)for(let x=c0;x<c1;x++){
       if(outShow(y,x+VX))continue;const px=Math.floor((x+.5)*RK),py=Math.floor((y+.5)*RK),v=rasterBit(px,py);if(v<0)continue;
@@ -1805,13 +1808,33 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       if(paint){digitG.fillStyle=`rgb(${paint&255},${paint>>>8&255},${paint>>>16&255})`;digitG.fillRect(x0+x*s,y0+y*s,s,s);}
       digitG.fillStyle=only?(v?st.digitOneColour:st.digitZeroColour):(v?'#07111d':'#ffffff');digitG.fillText(String(v),x0+(x+.5)*s,y0+(y+.5)*s);
     }
-    stolbDigitLine(x0,y0,s);midDigitLine(x0,y0,s);
+    stolbDigitLine(x0,y0,s);midDigitLine(x0,y0,s);fixDigitLines(x0,y0,s);
   }
   // v0.119: «кнопка подсветки центрального столба — не только для свёртки, а вообще»: «Центр» в «Виде» — столб якоря полупрозрачным золотом
   // с золотой рамкой, поверх картинки (холст после present) и в слое цифр; в свёртке — её центр. В ромбах — только в свёртке (её слой).
   function midColLine(){if(!st.midCol||!img||!geo||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;
     const sx=cv.width/img.width,X=a*RK*sx,w=Math.max(2,RK*sx);g.save();g.fillStyle='rgba(255,211,91,.28)';g.fillRect(X,0,w,cv.height);
     g.lineWidth=Math.max(1.5,Math.min(3,w*.2));g.strokeStyle='#ffd35b';g.strokeRect(X,0,w,cv.height);g.restore();}
+  // v0.125: «показывать часть, которая уже неменяема при текущем построении — тонкими линиями, и отключать». Клетку (r, c) меняет
+  // будущая вершина p, только если |c − p| ≤ r. Будущие вершины идут сплошными рядами; от края ряда, за которым уже стоят прошлые
+  // вершины, вниз под 45° — линия c = p ± r до встречи с линией от соседнего ряда. Между линиями поле застыло. Отрезки — в клетках окна.
+  function fixSegments(){
+    if(st.fixLines===false||!geo||!f||rombP()>=0||st.mode==='one')return [];
+    const T=total();if(k<=0||k>=T)return [];
+    const past=[],fut=[];
+    if(pairOn()){past.push(0);for(let j=0;j<T;j++)(j<k?past:fut).push(-j-1,j+1);}
+    else for(let j=0;j<T;j++)(j<k?past:fut).push(MAYATNIK.offset(st.mode,j));
+    const P=new Set(fut),lo=Math.min(...past),hi=Math.max(...past),sorted=[...P].sort((a,b)=>a-b),segs=[],H=Math.min(VH,st.rows);
+    for(const p of sorted){
+      if(!P.has(p+1)&&hi>p){const q=sorted.find(v=>v>p),R=Math.min(H-1,q==null?H-1:Math.floor((q-p)/2));segs.push([geo.anchor+p-VX,0,geo.anchor+p+R-VX,R]);}
+      if(!P.has(p-1)&&lo<p){let q=null;for(const v of sorted)if(v<p)q=v;const R=Math.min(H-1,q==null?H-1:Math.floor((p-q)/2));segs.push([geo.anchor+p-VX,0,geo.anchor+p-R-VX,R]);}
+    }
+    return segs;
+  }
+  function fixColLines(){if(!img)return;const segs=fixSegments();if(!segs.length)return;const sx=cv.width/img.width,c=RK*sx;
+    g.save();g.strokeStyle='#ff3b3b';g.lineWidth=1;g.beginPath();for(const[a,b,x,y]of segs){g.moveTo((a+.5)*c,(b+.5)*c);g.lineTo((x+.5)*c,(y+.5)*c);}g.stroke();g.restore();}
+  function fixDigitLines(x0,y0,s){const segs=fixSegments();if(!segs.length)return;
+    digitG.save();digitG.strokeStyle='#ff3b3b';digitG.lineWidth=1;digitG.beginPath();for(const[a,b,x,y]of segs){digitG.moveTo(x0+(a+.5)*s,y0+(b+.5)*s);digitG.lineTo(x0+(x+.5)*s,y0+(y+.5)*s);}digitG.stroke();digitG.restore();}
   function midDigitLine(x0,y0,s){if(!st.midCol||!geo||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;
     digitG.save();digitG.fillStyle='rgba(255,211,91,.28)';digitG.fillRect(x0+a*s,y0,s,VH*s);digitG.lineWidth=Math.max(1.5,Math.min(3,s*.2));digitG.strokeStyle='#ffd35b';digitG.strokeRect(x0+a*s,y0,s,VH*s);digitG.restore();}
   // v0.094: линия «Прохода столба» и в слое цифр — он закрывает холст («Только цифры», ромбы крупно); v0.108 — у обоих столбцов
@@ -1866,6 +1889,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     stolbLine();   // v0.093: линия «Прохода столба» поверх уменьшенной картинки
     midColLine();   // v0.119: подсветка центрального столбца
+    fixColLines();   // v0.125: граница застывшей части
     align();
   }
   function align() {   // левый верхний угол холста — на целом пикселе монитора, иначе и 1:1 даёт ничьи
@@ -1896,7 +1920,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // «▶ Анимация» по-прежнему показывает каждый кадр (скорость 1 = вершина на кадр).
   let fast = false, t0 = 0, lastDraw = 0;
   function build() {
-    if (foldBack) foldTransport.close();   // v0.118
+    if (foldBack) foldCloseAll();   // v0.118
     reset(); fast = true; t0 = performance.now(); play();
   }
   const more = () => k < target && addOne();
@@ -2040,6 +2064,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   for(const id of ['digitOneColour','digitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;save();queueDigits();});
   // v0.111: цвета клеток — перерисовать поле; шрифт и размер — слой цифр
   for(const id of ['bitOneColour','bitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;applyBitColours();save();if(f)draw();});
+  $('fixLines').addEventListener('change',()=>{st.fixLines=$('fixLines').checked;save();if(f)draw();});   // v0.125
   $('midCol').addEventListener('change',()=>{st.midCol=$('midCol').checked;save();if(f)draw();});   // v0.119
   $('digitFont').addEventListener('change',()=>{st.digitFont=$('digitFont').value;save();queueDigits();});
   $('digitSize').addEventListener('change',()=>{st.digitSize=Math.max(30,Math.min(100,+$('digitSize').value||80));$('digitSize').value=st.digitSize;save();queueDigits();});
@@ -2107,7 +2132,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   wrap.addEventListener('contextmenu',e=>{
     e.preventDefault();if(!templateDragging)takeColourAt(e.clientX,e.clientY);
   });
-  wrap.addEventListener('dblclick',e=>{if(e.button!==0||!img||templateDragging||foldTransport?.active)return;e.preventDefault();eraseFillAt(e.clientX,e.clientY);});
+  wrap.addEventListener('dblclick',e=>{if(e.button!==0||!img||templateDragging||foldTransport?.active||foldTransportV?.active)return;e.preventDefault();eraseFillAt(e.clientX,e.clientY);});
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
   // v0.052: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
@@ -2283,8 +2308,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function completeEdit(){const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
   for(const id of ['templateHeight','templateDown','templateAlpha','templateName'])for(const ev of ['input','change']){$(id).addEventListener(ev,captureEdit,true);$(id).addEventListener(ev,completeEdit);}
-  foldTransport=MayatnikFold.mount({button:$('bFoldHorizontal'),wrap,canvas:cv,zoom:zoomTo,
-    beforeStart(){stop();autoStop();stolbTransport?.close();tip.style.display='none';clearFillPreview();},
+  // v0.125: те же настройки для обеих свёрток; axis 'v' — строки к центральной строке окна
+  const foldOpts=(axis,button)=>({button,axis,wrap,canvas:cv,zoom:zoomTo,
+    beforeStart(){stop();autoStop();stolbTransport?.close();foldCloseAll();tip.style.display='none';clearFillPreview();},
     capture(){
       if(!f||!img)return null;
       const data=new Int8Array(VW*VH).fill(-1),rp=rombP(),colour=new Uint32Array(VW*VH),paint=new Uint32Array(VW*VH),pix=new Uint32Array(img.data.buffer);   // v0.096: и цвета картинки
@@ -2297,8 +2323,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       }
       foldSource={field:f,frame:k,x:VX,w:VW,h:VH,view:st.view,paint:fillMask,bits:paintBits};
       // v0.118: плоский вид — свёртка переписывает строки поля (foldApply), правленые биты уже в data; ромбы — по-старому, картинкой
-      const centre=Math.max(0,Math.min(VW-1,geo.anchor-VX)),write=rp<0;
-      if(write)foldBack={f,k,view:st.view,val:f.val.slice(),mask:fillMask?fillMask.slice():null,bits:paintBits?paintBits.slice():null,map:Int32Array.from({length:VW},(_,x)=>x),centre};
+      const centre=axis==='v'?(VH-1)>>1:Math.max(0,Math.min(VW-1,geo.anchor-VX)),write=rp<0;
+      if(write)foldBack={axis,f,k,view:st.view,val:f.val.slice(),mask:fillMask?fillMask.slice():null,bits:paintBits?paintBits.slice():null,map:Int32Array.from({length:axis==='v'?VH:VW},(_,x)=>x),centre};
       return {width:VW,height:VH,center:centre,data,colour,paint,write};
     },
     config(){
@@ -2307,14 +2333,15 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const b=foldSource;if(!b||b.field!==f||b.frame!==k||b.x!==VX||b.w!==VW||b.h!==VH||b.view!==st.view||b.paint!==fillMask||b.bits!==paintBits)return null;
       return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol};
     },
-    onClose(){foldSource=null;foldRestore();queueDigits();},
+    onClose(){if(foldBack&&foldBack.axis!==axis)return;foldSource=null;foldRestore();queueDigits();},
     apply(state){foldApply(state);},
     // v0.109: щелчок в свёртке — заливка / «Столбы» по исходному столбцу клетки, как обычный щелчок по полю
     tap(sx,y){if(!(fillMode||autoVertical)||!img)return false;const r=cv.getBoundingClientRect(),s=scale();fillAt(r.left+(sx+.5)*s,r.top+(y+.5)*s,false);return true;}
   });
+  foldTransport=MayatnikFold.mount(foldOpts('h',$('bFoldHorizontal')));foldTransportV=MayatnikFold.mount(foldOpts('v',$('bFoldVertical')));
   // v0.092: «Проход столба» — пульт в mayatnik-stolb.js; здесь — откуда начать и как показать столбец.
   stolbTransport=MayatnikStolb.mount({button:$('bStolb'),
-    beforeStart(){stop();target=k;autoStop();foldTransport?.close();tip.style.display='none';clearFillPreview();if(!autoVertical){autoVertical=1;autoSync();}},
+    beforeStart(){stop();target=k;autoStop();foldCloseAll();tip.style.display='none';clearFillPreview();if(!autoVertical){autoVertical=1;autoSync();}},
     start(){   // v0.108: из центра (столб якоря). v0.110: «пусть всё поле проходит по умолчанию» — до дальнего края окна. Строка начала — где наводили столб
       if(!f||!img||!geo)return null;const a=geo.anchor-VX;stolbRow=stolbLast?stolbLast[1]:0;stolbHeat=null;
       return {span:Math.max(1,a,VW-1-a),t:0};
@@ -2327,15 +2354,27 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // до свёртки, плюс то, что накрасили на ней (в исходных столбцах). Правки битов на время свёртки сняты (они уже в её данных) и возвращаются.
   function foldUnshift(){const b=foldBack;if(!b||!fillMask||!img||fillMask.length!==img.width*img.height)return;const IW=img.width,IH=img.height,R=RK;
     if(!b.mask||b.mask.length!==IW*IH)b.mask=new Uint32Array(IW*IH);
+    if(b.axis==='v'){for(let y=0;y<VH;y++){const sy=b.map[y];if(sy<0)continue;for(let d=0;d<R;d++)if((y*R+d)<IH)b.mask.set(fillMask.subarray((y*R+d)*IW,(y*R+d+1)*IW),(sy*R+d)*IW);}return;}   // v0.125: строки
     for(let x=0;x<VW;x++){const sx=b.map[x];if(sx<0)continue;for(let y=0;y<IH;y++){const row=y*IW;for(let d=0;d<R;d++)b.mask[row+sx*R+d]=fillMask[row+x*R+d];}}}
   function foldApply(state){
     const b=foldBack;if(!b||f!==b.f||k!==b.k||!img)return;foldUnshift();
+    if(b.axis==='v'){foldApplyV(state,b);return;}
     const W=f.W,map=new Int32Array(VW);for(let x=0;x<VW;x++)map[x]=x===b.centre?x:state.srcAt(x);
     for(let y=0;y<VH;y++)for(let x=0;x<VW;x++)f.val[y*W+VX+x]=state.bit(x,y);
     b.map=map;paintBits=null;fillBits=null;
     if(b.mask){const IW=img.width,IH=img.height,R=RK,m=new Uint32Array(IW*IH);let any=false;
       for(let x=0;x<VW;x++){const sx=map[x];if(sx<0)continue;for(let y=0;y<IH;y++){const row=y*IW;for(let d=0;d<R;d++){const v=b.mask[row+sx*R+d];if(v){m[row+x*R+d]=v;any=true;}}}}
       fillMask=any?m:null;}
+    draw();
+  }
+  // v0.125: вертикальная — то же по строкам: строка окна y берёт биты свёртки, краска — из исходной строки map[y]
+  function foldApplyV(state,b){
+    const W=f.W,map=new Int32Array(VH);for(let y=0;y<VH;y++)map[y]=y===b.centre?y:state.srcAt(y);
+    for(let y=0;y<VH;y++)for(let x=0;x<VW;x++)f.val[y*W+VX+x]=state.bit(x,y);
+    b.map=map;paintBits=null;fillBits=null;
+    if(b.mask){const IW=img.width,IH=img.height,R=RK,m=new Uint32Array(IW*IH);
+      for(let y=0;y<VH;y++){const sy=map[y];if(sy<0)continue;for(let d=0;d<R;d++)if((y*R+d)<IH&&(sy*R+d)<IH)m.set(b.mask.subarray((sy*R+d)*IW,(sy*R+d+1)*IW),(y*R+d)*IW);}
+      fillMask=m.some(Boolean)?m:null;}
     draw();
   }
   function foldRestore(){const b=foldBack;if(!b)return;
@@ -2355,6 +2394,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=124"></script>
+<script src="mayatnik-menu.js?v=125"></script>
 </body>
 </html>

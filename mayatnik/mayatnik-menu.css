@@ -5,7 +5,7 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready header .sub{display:none}
 .mayatnik-menu-ready #mayMenu,.mayatnik-menu-ready #mayHelp,.mayatnik-menu-ready #mayAbout,.mayatnik-menu-ready #mayZen{display:inline-flex;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
 .mayatnik-menu-ready #mayZen{margin-left:auto}
-#mayCorner{display:flex;flex-direction:column;align-items:stretch;gap:2px;margin-left:auto;align-self:flex-start}
+#mayCorner{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:2px}
 #mayCorner #mayZen{margin-left:0}
 #mayCorner #mayHelp{justify-content:center}
 .mayatnik-menu-ready #mayHideAxes:not([hidden]){display:inline-flex;--c:#ff87cf;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
