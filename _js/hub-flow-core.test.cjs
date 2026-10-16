@@ -140,3 +140,19 @@ test('continuous light covers every inlet and preserves directional reflection a
   const reflected=beams.filter(b=>b.alpha===.5);assert.ok(reflected.length>=10);
   assert.ok(reflected.every(b=>b.start>0&&b.b[1]<b.a[1]));
 });
+
+test('water corner mode follows checkerboard gaps downward without entering solid pixels',()=>{
+ const f=new WaterField(14,14);
+ for(let y=0;y<14;y++)for(let x=0;x<14;x++)f.solid[y*14+x]=(x+y)%2;
+ f.addWater(6,2);f.stepWater();assert.equal(f.water[2*14+6],1,'closed corner holds the drop');
+ f.cornerPass=true;f.stepWater();
+ assert.equal(sum(f.water.slice(0,3*14)),0);assert.equal(sum(f.water.slice(3*14,4*14)),1);
+ for(let t=0;t<20;t++)f.stepWater();
+ assert.equal(sum(f.water),0);assert.equal(f.drained,1);
+ assert.ok(f.water.every((m,i)=>!f.solid[i]||m===0));
+});
+test('corner mode can displace a moving-wall drop diagonally but never upwards',()=>{
+ const f=new WaterField(12,12),i=5*12+6;f.cornerPass=true;f.addWater(6,5);
+ const mask=f.solid.slice();for(const off of [0,-1,1,12])mask[i+off]=1;
+ f.setMask(mask);assert.equal(sum(f.water.slice(0,6*12)),0);assert.equal(sum(f.water.slice(6*12,7*12)),1);assert.equal(f.drained,0);
+});

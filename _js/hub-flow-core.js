@@ -89,7 +89,7 @@
   // Hydrostatic relaxation along each supported horizontal span. Unlike the local
   // snow-like solver, a pool levels across its full width before its next fall.
   class WaterField extends Field {
-    constructor(...args){super(...args);this.activeRows=new Set();}
+    constructor(...args){super(...args);this.activeRows=new Set();this.cornerPass=false;}
     addWater(x,y,amount=1){const added=super.addWater(x,y,amount);if(added>0)this.activeRows.add(Math.floor(y));return added;}
     fillTop(){let added=0;for(let x=0;x<this.width;x++)added+=this.addWater(x,0);return added;}
     setMask(mask){
@@ -102,7 +102,7 @@
         for(const [dx,dy] of [[0,1],[-1,1],[1,1],[-1,0],[1,0]]){
           const xx=x+dx,yy=y+dy;if(xx<0||xx>=w||yy>=h)continue;
           // A diagonal cannot squeeze through two touching solid corners.
-          if(dx&&dy&&mask[i+dx]&&mask[i+w])continue;
+          if(!this.cornerPass&&dx&&dy&&mask[i+dx]&&mask[i+w])continue;
           mass-=this.addWater(xx,yy,mass);if(mass<=0)break;
         }
         this.drained+=mass;
@@ -126,7 +126,7 @@
           else{
             move(i,i+w);
             if(!m[i])continue;
-            for(const dx of directions)if(x+dx>=0&&x+dx<w&&!s[i+dx])move(i,i+w+dx);
+            for(const dx of directions)if(x+dx>=0&&x+dx<w&&(this.cornerPass||!s[i+dx]))move(i,i+w+dx);
             if(x===0||x===w-1){this.drained+=m[i];m[i]=0;}
           }
         }
