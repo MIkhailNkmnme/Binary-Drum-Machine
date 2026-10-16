@@ -325,16 +325,16 @@ test('axis handle maps pointer directly through the screen plane at any 3D tilt,
 });
 
 test('wheel by axis endpoint rotates the axis instead of zooming, elsewhere zooms',()=>{
- const f=fixture(),calls=[];f.window.HubMirror.wheelAt=(...v)=>{calls.push(v);return true;};
- assert.equal(f.wheel().prevented,true);assert.equal(f.window.HubView.scale,1);assert.deepEqual(calls,[[750,400,-120]]);
- f.window.HubMirror.wheelAt=()=>false;f.wheel();assert.ok(f.window.HubView.scale>1);
+ const f=fixture(),calls=[];f.window.HubMirror.wheelZoneAt=()=> 'axis';f.window.HubMirror.wheelStep=(...v)=>{calls.push(v);return true;};
+ assert.equal(f.wheel().prevented,true);assert.equal(f.window.HubView.scale,1);assert.deepEqual(calls,[['axis',-120]]);
+ f.window.HubMirror.wheelZoneAt=()=>false;f.emit('click',{});f.wheel();assert.ok(f.window.HubView.scale>1);
 });
 
 test('wheel on axis line shifts bits without zoom and endpoint takes precedence',()=>{
- const f=fixture(),calls=[];f.window.HubMirror.wheelAt=()=>false;f.window.HubMirror.wheelAlong=d=>{calls.push(d);return true;};
+ const f=fixture(),calls=[];f.window.HubMirror.wheelZoneAt=()=>false;f.window.HubMirror.wheelAlong=d=>{calls.push(d);return true;};
  const event={target:{closest:s=>s==='.hubMirrorLine'},clientX:800,clientY:400,deltaY:120,preventDefault(){this.prevented=true;}};
  f.emit('wheel',event);assert.equal(event.prevented,true);assert.equal(f.window.HubView.scale,1);assert.deepEqual(calls,[120]);
- f.window.HubMirror.wheelAt=()=>true;f.emit('wheel',event);assert.deepEqual(calls,[120]);
+ f.window.HubMirror.wheelZoneAt=()=> 'axis';f.window.HubMirror.wheelStep=()=>true;f.emit('click',{});f.emit('wheel',event);assert.deepEqual(calls,[120]);
 });
 
 test('direct symbol layers render in screen and export without a prepainted bitmap',()=>{
@@ -448,4 +448,17 @@ test('wheel and middle click on zero/one tilt only that bit type, without camera
   f.emit('pointerdown',{target,button:1,pointerId:9,clientX:x,clientY:200,preventDefault(){},stopPropagation(){}});f.emit('pointerup',{type:'pointerup',pointerId:9});assert.equal(m.state[key],expected);
  }
  assert.equal(m.state.zero,10);assert.equal(m.state.one,-10);assert.equal(v.scale,1);assert.equal(v.rotation,0);
+});
+
+test('zoom remains zoom over arriving bits or axis, including after a pause, until a click',()=>{
+ const f=fixture(),m=f.window.HubMirror;let bit=null,zone=false,tilts=0,steps=0;
+ m.bitAt=()=>bit;m.wheelZoneAt=()=>zone;m.wheelStep=()=>steps++;m.tiltBit=()=>tilts++;
+ f.wheel();const first=f.window.HubView.scale;bit='1';zone='bits';f.tick(60000);f.wheel();assert.ok(f.window.HubView.scale>first);assert.equal(steps,0);assert.equal(tilts,0);
+ f.emit('click',{});const scale=f.window.HubView.scale;f.wheel();assert.equal(steps,1);assert.equal(f.window.HubView.scale,scale);
+ zone=false;bit=null;f.wheel();assert.equal(steps,2);assert.equal(f.window.HubView.scale,scale);
+});
+test('wheel keeps the initially selected bit type and resets even on a control pointerdown',()=>{
+ const f=fixture(),m=f.window.HubMirror,calls=[];let bit='0';m.bitAt=()=>bit;m.wheelZoneAt=()=>false;m.tiltBit=(...args)=>calls.push(args);
+ f.wheel();bit='1';f.wheel();assert.deepEqual(calls,[['0',-5],['0',-5]]);
+ f.emit('pointerdown',{target:{closest:()=>true},button:0});f.wheel();assert.deepEqual(calls.at(-1),['1',-5]);
 });

@@ -121,8 +121,7 @@
     perpendicularButton=button('⊥\n90°','Оригинал и зеркало под прямым углом',()=>{const perpendicular=Math.abs(Math.cos((state.mirrorFlip-state.flip)*Math.PI/180))<1e-8;state.mirrorFlip=(state.flip+(perpendicular?0:90))%360;changed();});
     freezeButton=button('❄\nориг.','Заморозить 3D-наклон оригинала; зеркало продолжает вращаться',()=>{state.freezeOriginal=!state.freezeOriginal;changed();});
     const planes=document.createElement('div');planes.className='hubFlipPlanes';const reset3d=button('3D\n0°','Сбросить только 3D: остановить, снять заморозку, вернуть обе плоскости',resetFlip);planes.append(perpendicularButton,freezeButton,reset3d);settings.append(planes);
-    flipButton.ondblclick=e=>{e.preventDefault();resetFlip();};flipButton.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();stopFlip();advanceFlip(Math.sign(e.deltaY)*5);changed();},{passive:false});window.addEventListener('pagehide',()=>{stopFlip();save();});
-    angleText.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();rotate(Math.sign(e.deltaY)*5);rotation.value=state.angle;},{passive:false});
+    flipButton.ondblclick=e=>{e.preventDefault();resetFlip();};window.addEventListener('pagehide',()=>{stopFlip();save();});
     const zoomBox=document.createElement('div');zoomBox.id='hubZoom';const [cx,cy]=center();
     const homeButton=button('⌂','Вернуть весь рисунок в поле',home);homeButton.title='Вернуть рисунок и ось в центр: масштаб 100%, повороты 0°, остановить вращение';zoomBox.append(homeButton);
     minus=button('−','Уменьшить масштаб холста',()=>zoom(1/1.15,...center()));minus.classList.add('hub-zoom-minus');zoomBox.append(minus);
@@ -145,7 +144,31 @@
     autoTrack.append(autoRange,autoButton,exact,angleText);rotL.className='hub-turn-half hub-turn-left';rotR.className='hub-turn-half hub-turn-right';for(const b of [rotL,rotR])b.innerHTML='<svg viewBox="0 0 20 40" aria-hidden="true"><path class="hub-step-angle" d="M19 20L10 11 1 20 10 29"/><path class="hub-step-speed" d="M19 2L1 20 19 38"/></svg>';autoSpeed.append(rotL,autoTrack,rotR);zoomBox.append(autoSpeed);syncAuto();
     frameRaf=requestAnimationFrame(measureFrames);document.addEventListener('visibilitychange',()=>{frameStamp=null;frameElapsed=frameCount=0;});window.addEventListener('pagehide',()=>{stopAuto();cancelAnimationFrame(frameRaf);});window.addEventListener('pageshow',()=>{cancelAnimationFrame(frameRaf);frameStamp=null;frameRaf=requestAnimationFrame(measureFrames);});
     document.body.append(zoomBox);
-    document.addEventListener('wheel',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoCv,#hubLogoBox'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(window.HubMirror?.wheelAt?.(e.clientX,e.clientY,e.deltaY)){e.preventDefault();return;}if(e.target.closest('.hubMirrorLine')&&window.HubMirror?.wheelAlong?.(e.deltaY)){e.preventDefault();return;}const bit=bitScreen(e.clientX,y);if(bit!==null){e.preventDefault();window.HubMirror.tiltBit(bit,Math.sign(e.deltaY)*5);return;}if(frame&&(e.clientX<frame.left||y>frame.height))return;e.preventDefault();zoom(Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.002),e.clientX,y);},{passive:false});
+    // A click starts a new wheel interaction; moving geometry must not select another tool.
+    let wheelAction=null;
+    document.addEventListener('pointerdown',()=>{wheelAction=null;},true);
+    document.addEventListener('click',()=>{wheelAction=null;},true);
+    document.addEventListener('wheel',e=>{
+      if(!e.deltaY)return;
+      const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0),mirror=window.HubMirror;
+      if(!wheelAction){
+        if(e.target===angleText)wheelAction=ev=>{rotate(Math.sign(ev.deltaY)*5);rotation.value=state.angle;};
+        else if(e.target===flipButton)wheelAction=ev=>{stopFlip();advanceFlip(Math.sign(ev.deltaY)*5);changed();};
+        else{
+          if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoCv,#hubLogoBox'))return;
+          const zone=mirror?.wheelZoneAt?.(e.clientX,e.clientY);
+          if(zone)wheelAction=ev=>mirror.wheelStep(zone,ev.deltaY);
+          else if(e.target.closest('.hubMirrorLine')&&mirror?.wheelAlong)wheelAction=ev=>mirror.wheelAlong(ev.deltaY);
+          else{const bit=bitScreen(e.clientX,y);
+            if(bit!==null)wheelAction=ev=>mirror.tiltBit(bit,Math.sign(ev.deltaY)*5);
+            else{if(frame&&(e.clientX<frame.left||y>frame.height))return;
+              wheelAction=ev=>zoom(Math.exp(-Math.max(-120,Math.min(120,ev.deltaY))*.002),ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0));}
+          }
+        }
+      }
+      e.preventDefault();e.stopPropagation?.();wheelAction(e);
+    },{passive:false,capture:true});
+
     const beginDrag=(e,requireHit=false)=>{
       const pinned=window.HubMirror?.state.screenPin===true;
       if((requireHit&&!state.unlocked&&!pinned)||(e.button!==0&&e.button!==1)||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG,#hub3DQuick')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
