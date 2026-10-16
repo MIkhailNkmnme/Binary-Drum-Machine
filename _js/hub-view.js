@@ -32,21 +32,26 @@
   function inverse(x,y,mirror=false){return inverseWith(matrix(mirror),x,y);}
   function hitScreen(x,y){const original=inverse(x,y),reflected=inverse(x,y,true),hit=window.HubMirror.hit;return {source:original.every(Number.isFinite)&&hit.call(window.HubMirror,...original).source,mirror:reflected.every(Number.isFinite)&&hit.call(window.HubMirror,...reflected).mirror};}
   function bitScreen(x,y){const mirror=window.HubMirror;if(!mirror?.bitAt)return null;const reflected=inverse(x,y,true),source=inverse(x,y);return (reflected.every(Number.isFinite)?mirror.bitAt(...reflected,true):null)??(source.every(Number.isFinite)?mirror.bitAt(...source):null);}
-  let centerHover=null,centerMarker=null,centerMarkerKey='';
+  let centerHover=null;const centerMarkers=[];
   function updateCenterMarker(){
-    const hide=()=>{if(centerMarker)centerMarker.hidden=true;};
+    const hide=()=>{for(const marker of centerMarkers)marker.node.hidden=true;};
     const mirror=window.HubMirror;if(!centerHover||!mirror?.pickBit||document.hidden){hide();return;}
     const scroll=matchMedia('(max-width:1100px)').matches?scrollY:0,[px,py]=centerHover,y=py+scroll;
     const reflected=inverse(px,y,true),source=inverse(px,y);
     const hit=(reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null),bit=hit&&mirror.centerBit();
     if(!bit){hide();return;}
-    if(!centerMarker){centerMarker=document.createElement('canvas');centerMarker.className='hubCenterBit';centerMarker.setAttribute('aria-hidden','true');document.body.append(centerMarker);}
-    const side=Math.ceil(Math.max(bit.width,bit.height)*1.5+6),key=JSON.stringify([bit,mirror.state.bitView,mirror.state.packedBits,mirror.bitAngle(bit.bit),mirror.digitVisible(bit.bit),mirror.colors()]);
-    if(key!==centerMarkerKey){centerMarkerKey=key;centerMarker.width=centerMarker.height=side*2;centerMarker.style.width=centerMarker.style.height=side+'px';const g=centerMarker.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,bit);}
-    const camera=matrix(false,true),project=(x,y)=>{const p=window.HubView.projectBit(x,y,hit.mirror);return [camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]];};
-    const p=project(bit.x,bit.y),x=project(bit.x+1,bit.y),q=project(bit.x,bit.y+1);
-    centerMarker.style.transform=`matrix(${x[0]-p[0]},${x[1]-p[1]},${q[0]-p[0]},${q[1]-p[1]},${p[0]},${p[1]-scroll}) translate(-50%,-50%)`;
-    centerMarker.dataset.layer=hit.mirror?'mirror':'source';centerMarker.hidden=false;
+    const points=[...new Map([bit,...(mirror.vertexBits?.()||[])].map(p=>[p.index,p])).values()],camera=matrix(false,true);let slot=0;
+    for(const reflected of mirror.state.on?[false,true]:[false])for(const point of points){
+      let marker=centerMarkers[slot++];
+      if(!marker){const node=document.createElement('canvas');node.className='hubCenterBit';node.setAttribute('aria-hidden','true');document.body.append(node);marker={node,key:''};centerMarkers.push(marker);}
+      const node=marker.node,side=Math.ceil(Math.max(point.width,point.height)*1.5+6),key=JSON.stringify([point,mirror.state.bitView,mirror.state.packedBits,mirror.bitAngle(point.bit),mirror.digitVisible(point.bit),mirror.colors()]);
+      if(key!==marker.key){marker.key=key;node.width=node.height=side*2;node.style.width=node.style.height=side+'px';const g=node.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,point);}
+      const project=(x,y)=>{const p=window.HubView.projectBit(x,y,reflected);return [camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]];};
+      const p=project(point.x,point.y),x=project(point.x+1,point.y),q=project(point.x,point.y+1);
+      node.style.transform=`matrix(${x[0]-p[0]},${x[1]-p[1]},${q[0]-p[0]},${q[1]-p[1]},${p[0]},${p[1]-scroll}) translate(-50%,-50%)`;
+      node.dataset.layer=reflected?'mirror':'source';node.dataset.kind=point.index===bit.index?'center':'vertex';node.dataset.bitIndex=String(point.index);node.hidden=false;
+    }
+    for(;slot<centerMarkers.length;slot++)centerMarkers[slot].node.hidden=true;
   }
   function selectBitScreen(x,y){
     const mirror=window.HubMirror;if(!mirror?.pickBit)return;
@@ -55,11 +60,13 @@
   }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
   function centerTriangleAtAxis(x,y){
-    const m=window.HubMirror,bit=m?.centerBit?.(),axis=m?.rotationCenter?.();if(!bit||!axis)return false;
+    const m=window.HubMirror,axis=m?.rotationCenter?.();if(!axis)return false;
     const reflected=inverse(x,y,true),source=inverse(x,y);
     const hit=(reflected.every(Number.isFinite)?m.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?m.pickBit(...source):null);
-    if(!hit||hit.index!==bit.index)return false;
-    const from=originalCenter();shiftSourceBy(axis[0]-from[0],axis[1]-from[1]);m.clearRotationBit?.();return true;
+    const bit=hit&&m.bitCenter?.(hit.index);if(!bit)return false;
+    // A direct choice of another bit takes precedence over the central-bit lock.
+    if(state.centerBitPin&&hit.index!==m.centerBit()?.index)setCenterBitPin(false);
+    const sh=sourceShift();shiftSourceBy(axis[0]-bit.x-sh[0],axis[1]-bit.y-sh[1]);m.clearRotationBit?.();return true;
   }
   function enforceCenterBitPin(axis){
     if(!state.centerBitPin||!frame||!axis?.every(Number.isFinite))return false;
@@ -135,7 +142,7 @@
     if(mirror){const p=window.HubMirror.point(x,y);if(!p)return null;[x,y]=p;}else{const sh=sourceShift();x+=sh[0];y+=sh[1];}
     const ms=window.HubMirror?.state,axis=ms?.angle??Math.PI/2,u=Math.cos(axis),v=Math.sin(axis),k=Math.cos((mirror?state.mirrorFlip:state.flip)*Math.PI/180),[cx,cy]=center(),mx=frame?frame.left+frame.width*(ms?.x??.5):cx,my=frame?frame.height*(ms?.y??.5):cy;
     const aa=u*u+k*v*v,ab=(1-k)*u*v,bb=v*v+k*u*u;return [mx+aa*(x-mx)+ab*(y-my),my+ab*(x-mx)+bb*(y-my)];
-  },symmetryCamera:()=>matrix(false,true),paint(canvas,view=null,cached=null,vector=null){
+  },axisCamera:()=>matrix(),symmetryCamera:()=>matrix(false,true),paint(canvas,view=null,cached=null,vector=null){
     // vector: {base,draw} — redraw shapes under the final transform instead of resampling the bitmap (sharp mirror copy).
     let copy=cached||buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}
     if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}
@@ -281,7 +288,7 @@
       return true;
     };window.HubView.grabBits=beginDrag;document.addEventListener('pointerdown',e=>beginDrag(e));
     window.addEventListener('hubview',()=>rotation.value=state.angle);window.addEventListener('hubmirror',()=>{if(state.flip||state.mirrorFlip)changed(false);});changed();
-    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<frame.left||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
+    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<0||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
   }
   document.addEventListener('DOMContentLoaded',init,{once:true});
 })();

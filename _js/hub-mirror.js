@@ -138,6 +138,8 @@
     }
     return far;
   }
+  let orbitPointer=null;
+  const refreshOrbitHover=()=>{if(root)root.classList.toggle('orbitHover',!!orbitPointer&&window.HubMirror.orbitNear(orbitPointer[0],orbitPointer[1]+(matchMedia('(max-width:1100px)').matches?scrollY:0)));};
   const update = () => {
     lockCenter();
     if(frame)window.HubView?.enforceCenterBitPin?.(center());
@@ -159,7 +161,7 @@
     turn.style.left = radius + 'px';
     Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
     orbit.querySelector('polygon').setAttribute('transform','rotate('+(-(window.HubView?.rotation||0)*180/Math.PI)+')');
-    window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
+    window.HubView?.apply(root);refreshOrbitHover();handle.textContent = state.on ? '◇' : '×';
     handle.title = state.screenPin?'Тяни линию — зеркальный перенос пары; круглую ручку — поворот оси':state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.screenPin?'Сдвинуть оригинал и отражение зеркально относительно неподвижной оси':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
@@ -283,6 +285,11 @@
     spinRange=document.createElement('input');spinRange.type='range';spinRange.min=-100;spinRange.max=300;spinRange.step=1;spinRange.className='hubMirrorSpeed';spinRange.setAttribute('aria-label','Множитель скорости вращения зеркала');spinRange.oninput=()=>{state.spinSpeed=30*Math.pow(10,Number(spinRange.value)/100);syncSpin();};spinRange.onchange=save;spinLabel.append(spinRange);spinControl.append(spinLabel);settings.append(spinControl);syncSpin();
     window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeSpin=spinRunning;stopSpin();save();}else{if(resumeSpin)startSpin();resumeSpin=false;}});
     window.addEventListener('pagehide',()=>{stopSpin();save();});
+    document.addEventListener('pointermove',e=>{
+      orbitPointer=e.pointerType==='touch'||e.target?.closest?.('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button:not(.hubMirrorTurn):not(.hubNoteCell),#hubZoom,#hubLogoBox')?null:[e.clientX,e.clientY];refreshOrbitHover();
+    },{passive:true});
+    const clearOrbitHover=()=>{orbitPointer=null;refreshOrbitHover();};
+    document.addEventListener('pointerout',e=>{if(!e.relatedTarget)clearOrbitHover();});window.addEventListener('blur',clearOrbitHover);window.addEventListener('scroll',refreshOrbitHover,{passive:true});
     function showAxisHint(e,motion='all'){
       if(!dragHint)return;
       const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.target===turn||drag?.turn)?0:(e.clientX-cx)*co+(e.clientY-cy)*si;
@@ -386,11 +393,23 @@
       return false;
     },
     wheelStep(zone,delta){if(zone==='axis'){rotate(Math.sign(delta)*Math.PI/36);return true;}if(zone==='bits'){window.HubView?.rotateBitsBy?.(Math.sign(delta)*5,center());return true;}return false;},
+    orbitNear(x,y,tolerance=8){
+      if(!frame)return false;
+      const radius=Math.min(frame.width,frame.height)*state.orbitRadius;if(radius<=0)return false;
+      const [cx,cy]=center(),camera=window.HubView?.axisCamera?.()||[1,0,0,1,0,0],steps=state.magnet?24:96,offset=state.magnet?-(window.HubView?.rotation||0):0;
+      const point=i=>{const a=offset+i*Math.PI*2/steps,px=cx+radius*Math.cos(a),py=cy+radius*Math.sin(a);return [camera[0]*px+camera[2]*py+camera[4],camera[1]*px+camera[3]*py+camera[5]];};
+      let p=point(0);
+      for(let i=1;i<=steps;i++){
+        const q=point(i),dx=q[0]-p[0],dy=q[1]-p[1],len=dx*dx+dy*dy,t=len?Math.max(0,Math.min(1,((x-p[0])*dx+(y-p[1])*dy)/len)):0;
+        if(Math.hypot(x-p[0]-t*dx,y-p[1]-t*dy)<=tolerance)return true;p=q;
+      }
+      return false;
+    },
     wheelAt(x,y,delta){return this.wheelStep(this.wheelZoneAt(x,y),delta);}, stopRotation:stopSpin, counterRotateView(delta){state.angle=turnAngle(state.angle-delta);save();}, get revision() { return revision; },
     home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter||state.screenPin)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
-    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(window.HubView?.centerBitPinned)update();if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
+    setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;this.vertexCache=null;if(window.HubView?.centerBitPinned)update();if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
     bitAt(x,y,mirror=false){return this.pickBit(x,y,mirror)?.bit??null;},
@@ -400,6 +419,22 @@
       const shift=window.HubView?.sourceShift()||[0,0];x-=shift[0];y-=shift[1];
       for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return {bit,index:i,mirror};}
       return null;
+    },
+    bitCenter(index){
+      const p=bitCenters[index];if(!p||!bitCell||window.HubImage?.active||!['0','1'].includes(p[2]))return null;
+      return {x:p[0],y:p[1],bit:p[2],index,width:bitCell.width,height:bitCell.height};
+    },
+    vertexBits(){
+      if(window.HubImage?.active||!bitCell)return [];
+      if(this.vertexCache)return this.vertexCache;
+      let top=null,left=null,right=null;
+      for(let index=0;index<bitCenters.length;index++){
+        const p=this.bitCenter(index);if(!p)continue;
+        if(!top||p.y<top.y)top=p;
+        if(!left||p.y>left.y||p.y===left.y&&p.x<left.x)left=p;
+        if(!right||p.y>right.y||p.y===right.y&&p.x>right.x)right=p;
+      }
+      return this.vertexCache=[...new Map([top,left,right].filter(Boolean).map(p=>[p.index,p])).values()];
     },
     centerBit(){
       if(!bitCell||window.HubImage?.active)return null;

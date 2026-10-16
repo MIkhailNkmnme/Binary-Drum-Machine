@@ -23,7 +23,7 @@ function fixture(saved = {}) {
     matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{const id=++nextRaf;raf.set(id,fn);return id;},cancelAnimationFrame:id=>raf.delete(id),Event:class{constructor(type){this.type=type;}},
     CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}}});
   listeners.DOMContentLoaded.forEach(fn=>fn()); window.HubView.place(300,900,800);
-  return {window,centerMarker:()=>elements.find(e=>e.className==='hubCenterBit'),bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
+  return {window,centerMarkers:()=>elements.filter(e=>e.className==='hubCenterBit'),centerMarker:()=>elements.find(e=>e.className==='hubCenterBit'),bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
     homes:()=>mirrorHomes,wheel(overMenu=false){const event={target:{closest:()=>overMenu},clientX:750,clientY:400,deltaY:-120,preventDefault(){this.prevented=true;}};listeners.wheel.forEach(fn=>fn(event));return event;}};
 }
 
@@ -504,8 +504,8 @@ test('combined symmetry projection includes displacement and separate 3D planes 
 test('hover centre follows the camera, reuses its bitmap and hides over controls or outside bits',()=>{
  const f=fixture({zoom:2,angle:35}),m=realMirror(f),v=f.window.HubView;m.state.on=false;v.setSourceCenter(750,400);m.setBitCenters([[750,400,'1'],[760,410,'0']],{width:20,height:30});let paints=0;m.drawCenterBit=()=>paints++;
  const [x,y]=screenPoint(v,750,400),target={closest:()=>null};f.emit('pointermove',{clientX:x,clientY:y,target,pointerType:'mouse'});
- const marker=f.centerMarker();assert.equal(marker.hidden,false);assert.equal(marker.dataset.layer,'source');assert.ok(marker.style.transform.includes('matrix('));assert.equal(paints,1);
- f.emit('pointermove',{clientX:x+1,clientY:y,target});assert.equal(paints,1);
+ const marker=f.centerMarker();assert.equal(marker.hidden,false);assert.equal(marker.dataset.layer,'source');assert.ok(marker.style.transform.includes('matrix('));assert.equal(paints,2);
+ f.emit('pointermove',{clientX:x+1,clientY:y,target});assert.equal(paints,2);
  f.emit('pointermove',{clientX:x,clientY:y,target:{closest:()=>true}});assert.equal(marker.hidden,true);
  f.emit('pointermove',{clientX:x,clientY:y,target});assert.equal(marker.hidden,false);
  f.emit('pointerout',{relatedTarget:null});assert.equal(marker.hidden,true);
@@ -525,11 +525,33 @@ test('double click on either central bit moves the whole triangle to the axis wi
  }
 });
 
-test('double click on another bit keeps ordinary field pause and does not recenter',()=>{
- const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.on=true;m.state.angle=Math.PI/2;v.setSourceCenter(830,300);m.setBitCenters([[830,300,'1'],[830,250,'0']],{width:20,height:30});
- const before=Array.from(v.originalCenter());let paused=0;f.window.addEventListener('hubmotionpause',()=>paused++);
- f.emit('dblclick',{target:{closest:()=>null},clientX:830,clientY:250,preventDefault(){},stopPropagation(){}});
- near(Array.from(v.originalCenter()),before);assert.equal(paused,1);
+test('double click on any original or reflected bit centres that bit and releases a conflicting centre pin',()=>{
+ for(const reflected of [false,true])for(const pinned of [false,true]){
+  const f=fixture({centerBitPin:pinned,zoom:1.3,angle:20,flip:17,mirrorFlip:35}),m=realMirror(f),v=f.window.HubView;
+  m.state.on=true;m.state.angle=Math.PI/2;v.setSourceCenter(830,300);m.setBitCenters([[830,300,'1'],[830,250,'0']],{width:20,height:30});
+  const bit=m.bitCenter(1),axis=Array.from(m.rotationCenter()),p=v.projectBit(bit.x,bit.y,reflected),camera=v.symmetryCamera();let paused=0;f.window.addEventListener('hubmotionpause',()=>paused++);
+  f.emit('dblclick',{target:{closest:()=>null},clientX:camera[0]*p[0]+camera[2]*p[1]+camera[4],clientY:camera[1]*p[0]+camera[3]*p[1]+camera[5],preventDefault(){},stopPropagation(){}});
+  for(const layer of [false,true])near(Array.from(v.projectBit(bit.x,bit.y,layer)),axis);
+  assert.equal(paused,0);assert.equal(v.centerBitPinned,false);
+ }
+});
+
+test('hover highlights the centre and three vertices of both separately tilted layers',()=>{
+ const f=fixture({zoom:1.3,angle:23,flip:17,mirrorFlip:45}),m=realMirror(f),v=f.window.HubView;m.state.on=true;v.setSourceCenter(800,300);
+ m.setBitCenters([[800,200,'1'],[800,300,'0'],[700,400,'1'],[900,400,'0']],{width:20,height:30});m.drawCenterBit=()=>{};
+ const p=v.projectBit(800,300),camera=v.symmetryCamera(),target={closest:()=>null};f.emit('pointermove',{clientX:camera[0]*p[0]+camera[2]*p[1]+camera[4],clientY:camera[1]*p[0]+camera[3]*p[1]+camera[5],target});
+ const markers=f.centerMarkers();assert.equal(markers.length,8);assert.equal(markers.filter(n=>n.dataset.kind==='vertex').length,6);
+ for(const marker of markers){const bit=m.bitCenter(Number(marker.dataset.bitIndex)),p=v.projectBit(bit.x,bit.y,marker.dataset.layer==='mirror'),a=marker.style.transform.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number);near(a.slice(4),[camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]]);}
+ f.emit('pointerout',{relatedTarget:null});assert.ok(markers.every(n=>n.hidden));
+});
+
+test('hidden orbit can be found away from the handle, including zoom and edge-on 3D',()=>{
+ for(const flip of [0,60,90])for(const magnet of [false,true]){
+  const f=fixture({zoom:2,angle:31,flip}),m=realMirror(f),v=f.window.HubView;m.state.magnet=magnet;m.state.orbitRadius=.22;
+  const c=Array.from(m.rotationCenter()),camera=v.axisCamera(),project=(x,y)=>[camera[0]*x+camera[2]*y+camera[4],camera[1]*x+camera[3]*y+camera[5]],offset=magnet?-v.rotation:0;
+  for(const i of [3,7,15,21]){const a=offset+i*Math.PI/12,p=project(c[0]+176*Math.cos(a),c[1]+176*Math.sin(a));assert.equal(m.orbitNear(...p),true);}
+  assert.equal(m.orbitNear(-10000,-10000),false);m.state.orbitRadius=0;assert.equal(m.orbitNear(...project(...c)),false);
+ }
 });
 
 

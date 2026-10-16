@@ -78,6 +78,13 @@ test('hover centre chooses a real bit nearest the geometric centroid, before sou
  m.setBitCenters([],{width:20,height:30});assert.equal(m.centerBit(),null);
 });
 
+test('vertex markers are actual corner bits, cached and deduplicated for a one-row triangle',()=>{
+ const m=mirror();m.setBitCenters([[100,20,'1'],[90,40,'0'],[110,40,'1'],[80,60,'0'],[100,60,'1'],[120,60,'0']],{width:20,height:30});
+ assert.deepEqual(Array.from(m.vertexBits(),p=>p.index),[0,3,5]);assert.equal(m.vertexBits(),m.vertexBits());
+ m.setBitCenters([[100,20,'0']],{width:20,height:30});assert.deepEqual(Array.from(m.vertexBits(),p=>p.index),[0]);
+ m.setBitCenters([]);assert.equal(m.vertexBits().length,0);
+});
+
 
 test('packed symbols fill the cell ink bounds without moving their centres, in single and batched drawing',()=>{
  for(const mode of ['digits','brackets','parentheses','slashes','angles'])for(const bit of ['0','1']){
