@@ -472,14 +472,33 @@
       const arcs=state.bitView==='brackets'||state.bitView==='parentheses';
       if(!arcs&&rotationBit.mirror!==mirror)return;
       const chosen=rotationBit.bit,points=arcs?bitCenters.filter(p=>p[2]===chosen):[bitCenters[rotationBit.index]];
-      const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=Math.max(a,b)*6;
+      const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=state.bitView==='stars'?1e5:Math.max(a,b)*6;   // v0.210: у звезды — до края поля
       g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.3;g.shadowBlur=0;g.lineWidth=.7/Math.max(.2,window.HubView?.scale||1);
       for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen));g.beginPath();
         if(arcs){if(state.packedBits){const text=state.bitView==='brackets'&&chosen==='0'?'()':chosen==='1'?')':'(';g.font=`bold ${size}px monospace`;g.scale(...packedScale(g,text,size,bitCell.width,bitCell.height));}const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
         else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
         else{const vertices=[[0,-b],[a,0],[0,b],[-a,0]];for(let i=0;i<4;i++){const p=vertices[i],q=vertices[(i+1)%4],d=Math.hypot(q[0]-p[0],q[1]-p[1]),x=(q[0]-p[0])/d*length,y=(q[1]-p[1])/d*length;g.moveTo(...p);g.lineTo(p[0]-x,p[1]-y);g.moveTo(...q);g.lineTo(q[0]+x,q[1]+y);}}
         g.stroke();g.restore();
+        if(state.bitView==='stars')this.drawStarHits(g,p,chosen,size);
       }g.restore();
+    },
+    // v0.210: лучи звезды до края поля; бит, через центр которого луч проходит (точно, допуск — только округление чисел), подсвечен вместе с лучом
+    starHits(p,bit,size){
+      const angle=this.bitAngle(bit),eps=size*1e-4,out=[];
+      for(let i=0;i<3;i++){
+        const ux=Math.cos(angle+i*Math.PI/3),uy=Math.sin(angle+i*Math.PI/3);
+        for(let j=0;j<bitCenters.length;j++){const q=bitCenters[j];if(q===p||(q[2]!=='0'&&q[2]!=='1'))continue;const dx=q[0]-p[0],dy=q[1]-p[1];if(dx*dx+dy*dy<1e-9)continue;if(Math.abs(dx*uy-dy*ux)<=eps)out.push({q,ux,uy});}
+      }
+      return out;
+    },
+    drawStarHits(g,p,bit,size){
+      const hits=this.starHits(p,bit,size);if(!hits.length)return;
+      const col=this.colors().sym,w=bitCell.width,h=bitCell.height,scale=Math.max(.2,window.HubView?.scale||1),lines=new Set();
+      g.save();g.strokeStyle=col;g.globalAlpha=.85;g.lineWidth=1.2/scale;g.shadowColor=col;g.shadowBlur=6;g.beginPath();
+      for(const {ux,uy} of hits){const key=ux.toFixed(6)+','+uy.toFixed(6);if(lines.has(key))continue;lines.add(key);g.moveTo(p[0]-ux*1e5,p[1]-uy*1e5);g.lineTo(p[0]+ux*1e5,p[1]+uy*1e5);}
+      g.stroke();g.shadowBlur=10;
+      for(const {q} of hits){g.save();g.translate(q[0],q[1]);this.drawCenterBit(g,{bit:q[2],width:w,height:h});g.restore();}
+      g.restore();
     },
     setBitFreeRotation(on){
       if(locked('zero')||locked('one'))return;
