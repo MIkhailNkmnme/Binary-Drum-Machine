@@ -73,7 +73,7 @@ const Z = {
   paneIcons: false,                      // v0.035: левая панель — значками в один столбик
   rowsH: 0,                              // v0.026: высота поля строк, когда под ним окна (0 — половина колонки)
   tplRef: null,   // v0.037: номер своего шаблона-эталона (⚑) — с ним сравниваются строки; null — ещё не выбран
-  showFM: false, show01: false, showFix: false,   // v0.036: числа у номеров; красные неподвижные биты
+  showFM: false, show01: false, showFix: false, rowCmp: false,   // v0.036: числа у номеров; красные неподвижные биты
   rowsAlign: "center", rowsW: 0, rowsFolded: false, rowsWRestore: 0, tpl: [], layoutVer: 0,   // v0.995: щелчок по зубцам сужает поле до столбца кручений; ширина восстанавливается повторным щелчком
   maskStr: "10", maskN: 16, maskMode: "pascal",   // v0.011: треугольник по маске (v0.012: и от строки)
   sigMsg: "1101", sigBase: "10", sigDev: "inv", sigShape: "tri", sigLen: 8, sigNoise: 0,   // v0.013: сигнал по базе
@@ -383,6 +383,25 @@ function rowChgInfo(){
   let n = 0; for (let i = 0; i < Z.rows.length; i++) if (i >= R.length || Z.rows[i] !== R[i]) n++;
   const gone = Math.max(0, R.length - Z.rows.length);
   return ` · против «${Z.tpl[Z.tplRef].name}»: ` + (n || gone ? `изменено ${n} стр.` + (gone ? `, недостаёт ${gone}` : "") : "без изменений");
+}
+/* v0.1245, «нужен режим: выделяю строку — сразу подсчитывается, сколько 1 и 0 в ней и выше, а внизу подсвечиваются ближайшие такие же и столько же»:
+   «Σ 0·1» (Z.rowCmp). У текущей строки — нули и единицы в ней и суммой по строкам 1…N (в сведениях под полем и в подсказке номера).
+   Ниже неё: такая же строка (те же биты) — .cmpe, строка с тем же числом нулей и единиц — .cmpm; ближайшая каждого вида — ещё и .cmpn */
+function rowCmpInfo(){
+  if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
+  const a = Z.cur, R = Z.rows, s = R[a]; if (s === undefined) return null;
+  const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
+  for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
+  const eq = new Map(); let ne = -1, nm = -1;
+  for (let i = a + 1; i < R.length; i++) {
+    const t = R[i]; if (t.length !== s.length) continue;
+    if (t === s) { eq.set(i, ne < 0 ? "cmpe cmpn" : "cmpe"); if (ne < 0) ne = i; }
+    else if (zzOnes(t) === k) { eq.set(i, nm < 0 ? "cmpm cmpn" : "cmpm"); if (nm < 0) nm = i; }
+  }
+  const nE = [...eq.values()].filter(c => c.startsWith("cmpe")).length, nM = eq.size - nE;
+  const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
+    ` · ниже такие же: ${nE ? nE + " (ближ. " + (ne + 1) + ")" : "нет"} · столько же 0 и 1: ${nM ? nM + " (ближ. " + (nm + 1) + ")" : "нет"}`;
+  return { a, cls: eq, txt };
 }
 function rowCounts(s){
   if (s === undefined || (!Z.showFM && !Z.show01)) return "";
@@ -1375,9 +1394,10 @@ function renderRows(){
     h += "</div>";
   }
   const brCh = Z.brDepth ? brStream(Z.rows).chapters : new Set();   // v0.1113: главы — строки с пустым стеком на конце
+  const cmp = rowCmpInfo();   // v0.1245: Σ 0·1 — счёт текущей строки и подсветка таких же ниже
   const head = h, rowHtml = []; h = "";
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + (brCh.has(i) ? " brch" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + (brCh.has(i) ? " brch" : "") + (cmp && cmp.cls.has(i) ? " " + cmp.cls.get(i) : "") + (cmp && cmp.a === i ? " cmpa" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (cmp && cmp.a === i ? " · " + cmp.txt : "") + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
@@ -1404,7 +1424,7 @@ function renderRows(){
   }
   rowsDomPatch(L, head, rowHtml, h + '<div id="voidRows"></div></div>'); cutPanelMount(); voidRowsFill(true); rowNumDigits();   // v0.1018: обновляем только изменившиеся строки
   const tot = Z.rows.reduce((a, s) => a + s.length, 0);
-  const infoText = (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
+  const infoText = (cmp ? cmp.txt + " · " : "") + (N > 1 ? `поле ${Z.lane + 1} из ${N} · ` : "") + `${Z.rows.length} стр. · ${tot} бит · текущая ${Z.cur + 1} (${cur().length} бит)` + (hidCount() ? ` · за границей ${hidCount()} стр.` : "") + rowMetr() + rowChgInfo();
   if ($("fieldInfo").textContent !== infoText) $("fieldInfo").textContent = infoText;
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
@@ -16432,7 +16452,7 @@ function init(){
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
   const fmLabel = () => {
-    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", !!Z.rowCmp); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
   };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
@@ -16443,6 +16463,7 @@ function init(){
     say(Z.tri90 ? (ovControls() ? "◸ 90° включится, когда поля не наложением." : `◸ 90°: межсимвольный ${Z.tri90Ls} px — стороны треугольника под 45°, угол при вершине прямой. Сменишь шрифт или размер — подберётся заново.`) : "◸ 90° выключен — обычный интервал.");
   };
   $("bShow01").onclick = () => { Z.show01 = !Z.show01; fmLabel(); renderRows(); save(); };
+  $("bRowCmp").onclick = () => { Z.rowCmp = !Z.rowCmp; fmLabel(); renderRows(); save(); const c = rowCmpInfo(); say(Z.rowCmp ? (c ? c.txt : "Σ 0·1: выбери строку — посчитаю её нули и единицы и подсвечу такие же ниже.") : "Σ 0·1 выключен."); };   // v0.1245
   const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
