@@ -41,8 +41,6 @@
     toolbar.querySelectorAll('.hubFlipPlanes,.hubImageTools').forEach(el => el.classList.add('hubFieldContents'));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') groups.forEach(g => { g.box.open = false; }); });
     document.addEventListener('pointerdown', e => { if (!toolbar.contains(e.target)) groups.forEach(g => { g.box.open = false; }); }, true);
-    const toggle = document.getElementById('hubTools');
-    if (toggle) { toggle.title = 'Группы настроек поля'; toggle.setAttribute('aria-label', toggle.title); }
   }
   // Existing modules populate the toolbar during DOMContentLoaded.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0), { once: true });

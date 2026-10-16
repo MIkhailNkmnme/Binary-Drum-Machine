@@ -268,12 +268,7 @@
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
     });
     document.body.append(settings);
-    { // v0.132: «не вижу кнопки управления зеркалом и цветами на мобильном» — панель поля открывается кнопкой ⚙ (у PNG), состояние помнится
-      const open=document.createElement('button');open.type='button';open.id='hubTools';open.textContent='⚙';open.title='Кнопки поля: зеркало, золото, заворот, цвета…';open.setAttribute('aria-label',open.title);
-      const set=on=>{settings.classList.toggle('open',on);open.setAttribute('aria-pressed',String(on));try{localStorage.setItem('zerk_hub_tools',on?'1':'0');}catch(_){}};
-      let on=false;try{on=localStorage.getItem('zerk_hub_tools')==='1';}catch(_){}set(on);
-      document.addEventListener('pointerdown',e=>{if(!settings.contains(e.target)&&!open.contains(e.target))set(false);},true);
-      open.addEventListener('click',e=>{e.stopPropagation();set(!settings.classList.contains('open'));});document.body.append(open);}
+    settings.classList.add('open'); // v0.188: группы всегда видимы.
     for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центры битов и рядов, середины промежутков'],['screenPin','◎\nцентр','Конец оси в центре экрана'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;if(key==='screenPin')b.classList.add('hubAxisScreenPin');b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet){turnField(snapAngle(visibleAngle())-visibleAngle());snapAxisPosition();}}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     { const g=settings.querySelector('[aria-label^="Золото"]');if(g&&colorGroup){g.style.gridArea='gold';colorGroup.append(g);} }   // v0.141: ✦ — в группе «Цвета»
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
