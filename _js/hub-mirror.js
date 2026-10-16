@@ -393,6 +393,19 @@
       for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return {bit,index:i,mirror};}
       return null;
     },
+    centerBit(){
+      if(!bitCell||window.HubImage?.active)return null;
+      const c=window.HubView?.originalCenter?.();if(!c)return null;
+      const sh=window.HubView?.sourceShift()||[0,0],x=c[0]-sh[0],y=c[1]-sh[1];let best=null,distance=Infinity;
+      for(const [px,py,bit] of bitCenters){if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,width:bitCell.width,height:bitCell.height};}}
+      return best;
+    },
+    drawCenterBit(g,p){
+      const size=Math.min(p.width,p.height)*.62,a=p.width*.45,b=p.height*.45;
+      g.fillStyle=this.colors().sym;g.globalAlpha=1;
+      if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));g.beginPath();g.moveTo(0,-b);g.lineTo(a,0);g.lineTo(0,b);g.lineTo(-a,0);g.closePath();g.fill();g.restore();}
+      if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size);}
+    },
     selectRotationBit(hit){rotationBit=hit;rotationGuide=false;},
     clearRotationBit(){const visible=rotationGuide;rotationBit=null;rotationGuide=false;if(visible)changed();},
     drawRotationGuides(g,mirror=false){

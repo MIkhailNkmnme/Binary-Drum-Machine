@@ -8,7 +8,7 @@ function fixture(saved = {}) {
   const elements = [], listeners = {}, windowListeners = {}, storage = new Map([['zerk_hub_view', JSON.stringify({frameLocked:false,...saved})]]);
   const element = () => {
     const e = {style:{},dataset:{},children:[],offsetLeft:0,offsetTop:0,attributes:{},classList:{add(){},toggle(name,value){this[name]=value;}},
-      append(...items){this.children.push(...items);},setAttribute(k,v){this.attributes[k]=v;},addEventListener(){}};
+      getContext:()=>({setTransform(){}}),append(...items){this.children.push(...items);},setAttribute(k,v){this.attributes[k]=v;},addEventListener(){}};
     elements.push(e); return e;
   };
   const settings = element();
@@ -23,7 +23,7 @@ function fixture(saved = {}) {
     matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{const id=++nextRaf;raf.set(id,fn);return id;},cancelAnimationFrame:id=>raf.delete(id),Event:class{constructor(type){this.type=type;}},
     CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}}});
   listeners.DOMContentLoaded.forEach(fn=>fn()); window.HubView.place(300,900,800);
-  return {window,bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
+  return {window,centerMarker:()=>elements.find(e=>e.className==='hubCenterBit'),bodyClass:name=>document.body.classList[name]===true,emit(name,event){for(const fn of listeners[name]||[])fn(event);},tick(time){const pending=[...raf.values()];raf.clear();pending.forEach(fn=>fn(time));},button:label=>elements.find(e=>e.attributes['aria-label']===label),state:()=>JSON.parse(storage.get('zerk_hub_view')),
     homes:()=>mirrorHomes,wheel(overMenu=false){const event={target:{closest:()=>overMenu},clientX:750,clientY:400,deltaY:-120,preventDefault(){this.prevented=true;}};listeners.wheel.forEach(fn=>fn(event));return event;}};
 }
 
@@ -476,4 +476,15 @@ test('combined symmetry projection includes displacement and separate 3D planes 
  const a=Array.from(f.window.HubView.projectBit(700,300)),b=Array.from(f.window.HubView.projectBit(700,300,true));
  assert.deepEqual(a,[700+sh[0],300+sh[1]]);assert.ok(Math.abs(b[0]-(750+(50-sh[0])*.5))<1e-8);assert.equal(b[1],300+sh[1]);
  f.window.HubView.rotateBy(15);assert.deepEqual(Array.from(f.window.HubView.projectBit(700,300)),a);
+});
+
+test('hover centre follows the camera, reuses its bitmap and hides over controls or outside bits',()=>{
+ const f=fixture({zoom:2,angle:35}),m=realMirror(f),v=f.window.HubView;m.state.on=false;v.setSourceCenter(750,400);m.setBitCenters([[750,400,'1'],[760,410,'0']],{width:20,height:30});let paints=0;m.drawCenterBit=()=>paints++;
+ const [x,y]=screenPoint(v,750,400),target={closest:()=>null};f.emit('pointermove',{clientX:x,clientY:y,target,pointerType:'mouse'});
+ const marker=f.centerMarker();assert.equal(marker.hidden,false);assert.equal(marker.dataset.layer,'source');assert.ok(marker.style.transform.includes('matrix('));assert.equal(paints,1);
+ f.emit('pointermove',{clientX:x+1,clientY:y,target});assert.equal(paints,1);
+ f.emit('pointermove',{clientX:x,clientY:y,target:{closest:()=>true}});assert.equal(marker.hidden,true);
+ f.emit('pointermove',{clientX:x,clientY:y,target});assert.equal(marker.hidden,false);
+ f.emit('pointerout',{relatedTarget:null});assert.equal(marker.hidden,true);
+ f.emit('pointermove',{clientX:1100,clientY:10,target});assert.equal(marker.hidden,true);
 });

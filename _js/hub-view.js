@@ -32,6 +32,22 @@
   function inverse(x,y,mirror=false){return inverseWith(matrix(mirror),x,y);}
   function hitScreen(x,y){const original=inverse(x,y),reflected=inverse(x,y,true),hit=window.HubMirror.hit;return {source:original.every(Number.isFinite)&&hit.call(window.HubMirror,...original).source,mirror:reflected.every(Number.isFinite)&&hit.call(window.HubMirror,...reflected).mirror};}
   function bitScreen(x,y){const mirror=window.HubMirror;if(!mirror?.bitAt)return null;const reflected=inverse(x,y,true),source=inverse(x,y);return (reflected.every(Number.isFinite)?mirror.bitAt(...reflected,true):null)??(source.every(Number.isFinite)?mirror.bitAt(...source):null);}
+  let centerHover=null,centerMarker=null,centerMarkerKey='';
+  function updateCenterMarker(){
+    const hide=()=>{if(centerMarker)centerMarker.hidden=true;};
+    const mirror=window.HubMirror;if(!centerHover||!mirror?.pickBit||document.hidden){hide();return;}
+    const scroll=matchMedia('(max-width:1100px)').matches?scrollY:0,[px,py]=centerHover,y=py+scroll;
+    const reflected=inverse(px,y,true),source=inverse(px,y);
+    const hit=(reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null),bit=hit&&mirror.centerBit();
+    if(!bit){hide();return;}
+    if(!centerMarker){centerMarker=document.createElement('canvas');centerMarker.className='hubCenterBit';centerMarker.setAttribute('aria-hidden','true');document.body.append(centerMarker);}
+    const side=Math.ceil(Math.max(bit.width,bit.height)*1.5+6),key=JSON.stringify([bit,mirror.state.bitView,mirror.bitAngle(bit.bit),mirror.digitVisible(bit.bit),mirror.colors()]);
+    if(key!==centerMarkerKey){centerMarkerKey=key;centerMarker.width=centerMarker.height=side*2;centerMarker.style.width=centerMarker.style.height=side+'px';const g=centerMarker.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,bit);}
+    const camera=matrix(false,true),project=(x,y)=>{const p=window.HubView.projectBit(x,y,hit.mirror);return [camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]];};
+    const p=project(bit.x,bit.y),x=project(bit.x+1,bit.y),q=project(bit.x,bit.y+1);
+    centerMarker.style.transform=`matrix(${x[0]-p[0]},${x[1]-p[1]},${q[0]-p[0]},${q[1]-p[1]},${p[0]},${p[1]-scroll}) translate(-50%,-50%)`;
+    centerMarker.dataset.layer=hit.mirror?'mirror':'source';centerMarker.hidden=false;
+  }
   function selectBitScreen(x,y){
     const mirror=window.HubMirror;if(!mirror?.pickBit)return;
     const reflected=inverse(x,y,true),source=inverse(x,y);
@@ -114,6 +130,7 @@
     // v0.127: vector.extra — слой поверх в координатах поля (после сдвига и зеркала), только под камерой: «заворот» внутрь треугольника
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
     if(vector?.screen){g.save();g.setTransform(k,0,0,k,-left*k,0);vector.screen(g);g.restore();}
+    if(!view)updateCenterMarker();
     if(!view&&window.HubMirror?.drawRotationGuides)for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
       const p=this.projectBit(0,0,mirror),x=this.projectBit(1,0,mirror),y=this.projectBit(0,1,mirror);if(!p)continue;
       g.save();g.setTransform(k,0,0,k,0,0);g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);window.HubMirror.drawRotationGuides(g,mirror);g.restore();
@@ -158,6 +175,13 @@
     autoTrack.append(autoRange,autoButton,exact,angleText);rotL.className='hub-turn-half hub-turn-left';rotR.className='hub-turn-half hub-turn-right';for(const b of [rotL,rotR])b.innerHTML='<svg viewBox="0 0 20 40" aria-hidden="true"><path class="hub-step-angle" d="M19 20L10 11 1 20 10 29"/><path class="hub-step-speed" d="M19 2L1 20 19 38"/></svg>';autoSpeed.append(rotL,autoTrack,rotR);zoomBox.append(autoSpeed);syncAuto();
     frameRaf=requestAnimationFrame(measureFrames);document.addEventListener('visibilitychange',()=>{frameStamp=null;frameElapsed=frameCount=0;});window.addEventListener('pagehide',()=>{stopAuto();cancelAnimationFrame(frameRaf);});window.addEventListener('pageshow',()=>{cancelAnimationFrame(frameRaf);frameStamp=null;frameRaf=requestAnimationFrame(measureFrames);});
     document.body.append(zoomBox);
+    document.addEventListener('pointermove',e=>{
+      centerHover=e.pointerType==='touch'||!e.target?.closest||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button:not(.hubNoteCell),#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox')?null:[e.clientX,e.clientY];updateCenterMarker();
+    },true);
+    const clearCenterHover=()=>{centerHover=null;updateCenterMarker();};
+    document.addEventListener('pointerout',e=>{if(!e.relatedTarget)clearCenterHover();},true);
+    window.addEventListener('blur',clearCenterHover);window.addEventListener('scroll',updateCenterMarker,{passive:true});
+    document.addEventListener('visibilitychange',clearCenterHover);
     // A click starts a new wheel interaction; moving geometry must not select another tool.
     let wheelAction=null,wheelBit=null,bitClick=null;
     document.addEventListener('pointerdown',e=>{

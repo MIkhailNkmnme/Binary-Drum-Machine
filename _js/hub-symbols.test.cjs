@@ -70,3 +70,10 @@ test('bracket guides complete circles for all bits of the selected type',()=>{
   const out=canvas();m.drawRotationGuides(out.g,false);assert.equal(out.calls.filter(c=>c[0]==='translate').length,2);assert.equal(out.calls.filter(c=>c[0]==='arc').length,mode==='brackets'?4:2);
  }
 });
+
+test('hover centre chooses a real bit nearest the geometric centroid, before source shift',()=>{
+ const m=mirror({}, {HubView:{originalCenter:()=>[130,240],sourceShift:()=>[30,40],place(){}}});
+ m.setBitCenters([[100,200,'.'],[95,202,'0'],[110,200,'1'],[100,180,'1']],{width:20,height:30});
+ const c=m.centerBit();assert.equal(c.x,95);assert.equal(c.y,202);assert.equal(c.bit,'0');assert.equal(c.width,20);
+ m.setBitCenters([],{width:20,height:30});assert.equal(m.centerBit(),null);
+});
