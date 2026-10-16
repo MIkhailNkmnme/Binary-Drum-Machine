@@ -40,7 +40,7 @@
     const settings=Object.fromEntries(C.keys.map(key=>[key,localStorage.getItem(key)]));
     const state={view:HubView.snapshot(),mirror:HubMirror.snapshot(),scene:HubScene.snapshot(),flow:HubFlow.snapshot(),image:HubImage.snapshot(),ui:{zen:HubZen.snapshot(),scroll:[scrollX,scrollY],open:[...document.querySelectorAll('#hubFieldTools details[open]')].map(controlKey).filter(Boolean),png:document.querySelector('[aria-label="Разрешение PNG по длинной стороне"]')?.value}};
     settings.zerk_hub_view=JSON.stringify(state.view.state);settings.zerk_hub_mirror=JSON.stringify(state.mirror.state);settings.zerk_hub_visible_rows=String(state.scene.rowLimit);
-    state.ui.menu=window.HubMenuLayout?.snapshot();
+    state.ui.menu=window.HubMenuLayout?.snapshot();state.ui.romb=window.HubRombGrid?.snapshot();
     if(state.ui.menu)settings.zerk_hub_pins=JSON.stringify({groups:state.ui.menu.groups,controls:state.ui.menu.controls});
     return C.clone({format:'zerkalius-hub',version:1,name:'',createdAt:new Date().toISOString(),settings,state});
   }
@@ -89,7 +89,7 @@
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       HubFlow.restore(s.flow);
       for(const node of document.querySelectorAll('#hubFieldTools details'))if((s.ui?.open||[]).includes(controlKey(node)))node.open=true;
-      window.HubMenuLayout?.restore(s.ui?.menu);
+      window.HubMenuLayout?.restore(s.ui?.menu);if(s.ui?.romb)window.HubRombGrid?.restore(s.ui.romb);
       sessionStorage.removeItem(PENDING);await transaction(['meta'],'readwrite',tx=>tx.objectStore('meta').delete(boot.key));
       message('Открыт: '+record.name);document.body.dataset.presetRestored=String(record.id);
     });

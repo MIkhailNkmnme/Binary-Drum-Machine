@@ -1,0 +1,15 @@
+/* Hub v0.206: ромбосетка-треугольник для своих кнопок. */
+#hubRombGrid{position:fixed;z-index:27;pointer-events:none}
+#hubRombGrid .hubRgCell{position:absolute;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);pointer-events:auto;cursor:grab;background:color-mix(in srgb,var(--hub-theme-bg) 80%,transparent);color:var(--hub-theme-bit);font:11px/1.05 system-ui,sans-serif;white-space:pre-line;text-align:center;text-shadow:0 1px 2px #000}
+#hubRombGrid .hubRgCell::after{content:'';position:absolute;inset:7.5px;border:1px dashed currentColor;transform:rotate(45deg);pointer-events:none;opacity:.7}
+#hubRombGrid .hubRgCell.full{background:var(--rg-bg,var(--hub-theme-bg));cursor:pointer}
+#hubRombGrid .hubRgCell.full::after{border-style:solid;opacity:.55}
+#hubRombGrid .hubRgCell.full[aria-pressed=false]{color:color-mix(in srgb,var(--hub-theme-bit) 50%,transparent)}
+#hubRombGrid .hubRgCell.full[aria-pressed=true],#hubRombGrid .hubRgCell.full[aria-pressed=mixed]{background:var(--hub-theme-active);color:#fff}
+#hubRombGrid .hubRgCell.lost{opacity:.4}
+#hubRombGrid .hubRgCell:hover,#hubRombGrid .hubRgCell.over{background:var(--hub-theme-active);color:var(--hub-theme-accent)}
+#hubRgGhost[hidden]{display:none}
+#hubRgGhost{position:fixed;z-index:2147483000;width:40px;height:40px;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-active);color:#fff;font:10px/1.05 system-ui,sans-serif;white-space:pre-line;text-align:center;pointer-events:none;opacity:.85}
+body.hubRgDragging,body.hubRgDragging *{user-select:none!important;cursor:grabbing!important}
+body.hubZen #hubRombGrid{visibility:hidden;pointer-events:none}
+body.hubZen #hubRombGrid .hubRgCell{pointer-events:none}
