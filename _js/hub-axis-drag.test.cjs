@@ -2,12 +2,12 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 function fixture(){
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf("root.addEventListener('pointerdown'"),end=source.indexOf("root.addEventListener('contextmenu'",start),events={};
  const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
- const context={state,turn,handle,root,frame:{left:300,width:900,height:800},drag:null,resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
+ const context={state,turn,handle,root,frame:{left:300,width:900,height:800},drag:null,dragHint:{hidden:true,dataset:{},style:{}},resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
  window:{HubView:{captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
  stopSpin(){},update(){},changed(){},save(){},rotate(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
  vm.runInNewContext(source.slice(start,end),context);
  const emit=(type,x,y,target=turn)=>events[type]({type,pointerId:1,button:0,target,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});
- return {state,turn,handle,shift,emit};
+ return {state,turn,handle,shift,emit,hint:context.dragHint};
 }
 test('handle can switch radius to angle in one hold, without mixing actions',()=>{
  const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,403);
@@ -58,4 +58,11 @@ test('wheel zones use the visible endpoint even when its old button is hidden',(
  assert.equal(api.wheelAt(220,200,120),true);assert.ok(Math.abs(axis[0]-Math.PI/36)<1e-12);assert.equal(field.length,0);
  assert.equal(api.wheelAt(257,207,-120),true);assert.deepEqual(field,[-5]);
  assert.equal(api.wheelAt(400,400,120),false);api.wheelAlong(120);assert.ok(Math.abs(shift[0][0])<1e-12);assert.equal(shift[0][1],12);
+});
+
+test('line drag hint follows the active stroke and disappears on release',()=>{
+ const f=fixture(),line={};f.emit('pointerdown',850,400,line);assert.equal(f.hint.hidden,true);
+ f.emit('pointermove',900,400,line);assert.equal(f.hint.hidden,false);assert.equal(f.hint.dataset.motion,'along');
+ f.emit('pointermove',900,440,line);assert.equal(f.hint.dataset.motion,'across');assert.ok(f.hint.style.transform.includes(String(Math.PI/2)));
+ f.emit('pointerup',900,440,line);assert.equal(f.hint.hidden,true);
 });

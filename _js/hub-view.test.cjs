@@ -344,3 +344,9 @@ test('direct symbol layers render in screen and export without a prepainted bitm
  f.window.HubView.paint(canvas,null,{},vector);f.window.HubView.paint(canvas,{scale:2,left:300},{},vector);
  assert.deepEqual(passes,['source','source']);assert.equal(copies,0);
 });
+
+test('wheel rotation about the axis endpoint preserves that screen pivot',()=>{
+ const f=fixture({zoom:2,angle:14,pan:[20,10],sourcePan:[.1,.15]}),axis=Array.from(f.window.HubView.axisInverse(600,400));
+ f.window.HubView.rotateBy(5,axis);
+ const after=Array.from(f.window.HubView.axisInverse(600,400));assert.ok(Math.hypot(after[0]-axis[0],after[1]-axis[1])<1e-8);assert.equal(f.state().angle,19);
+});
