@@ -278,7 +278,7 @@
       b.onclick=()=>{state[key]=!state[key];b.setAttribute('aria-pressed',String(state[key]));changed();save();};colorGroup.append(b);
     }
     syncColors();settings.append(colorGroup);
-    document.addEventListener('pointerdown',e=>{document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.contains(e.target)&&!box.closest('[data-group-pinned=true]'))box.open=false;});},true);
+    document.addEventListener('pointerdown',e=>{if(e.target.closest?.('.hubTilt > summary'))return;document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.contains(e.target)&&!box.closest('[data-group-pinned=true]'))box.open=false;});},true);
     document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.hubTilt[open]').forEach(box=>{if(!box.closest('[data-group-pinned=true]'))box.open=false;});});
     // v0.144: «этот ромб под кнопки масштаба, равносторонний» — переезжает в #hubZoom (его строит hub-view.js чуть позже)
     { let tries=0;const move=()=>{const z=document.getElementById('hubZoom');if(z){z.append(colorGroup);return;}if(++tries<40)setTimeout(move,100);};setTimeout(move,0); }

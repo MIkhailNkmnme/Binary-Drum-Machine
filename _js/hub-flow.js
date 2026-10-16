@@ -1,4 +1,4 @@
-/* Hub v0.203 — water can pass through diagonal checkerboard joints. */
+/* Hub v0.204 — independent light, snow and water speeds. */
 (() => {
   'use strict';
   let canvas,ctx,maskCanvas,maskCtx,waterCanvas,waterCtx,liquidCanvas,liquidCtx,field,liquid,pixels,liquidPixels,cell=2;
@@ -9,7 +9,9 @@
   let dense=false,denseButton,beams=null,beamDistance=0,waterCorners=true,cornersButton;
   try{dense=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').dense===true;if(dense)sun=false;}catch(_){}
   try{waterCorners=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').waterCorners!==false;}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners}));}catch(_){}};
+  const speeds={light:1,snow:1,water:1};
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
+  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,speeds}));}catch(_){}};
   let spriteKey='',sprites=[];
   function lightSprites(){
     const mirror=window.HubMirror;if(!mirror)return [];
@@ -59,7 +61,7 @@
     const span=bounds?bounds.maxX-bounds.minX+1:innerWidth/cell;
     const nextX=()=>bounds.minX+((++sample*.6180339887498949)%1)*span;
     if(light&&!dense){
-      emission+=dt*(sun?100:Math.min(100,Math.max(24,span*cell/12)));
+      emission+=dt*speeds.light*(sun?100:Math.min(100,Math.max(24,span*cell/12)));
       while(emission>=1){
         emission--;let x,y=0,vx=0,vy=1;
         if(sun){const origin=sunSource(),angle=(++sample*.6180339887498949%1)*Math.PI*2;vx=Math.cos(angle);vy=Math.sin(angle);x=(origin.x+vx*origin.radius)/cell;y=(origin.y+vy*origin.radius)/cell;}
@@ -67,8 +69,8 @@
         if(x>=0&&x<field.width&&y>=0&&y<field.height&&!field.lightBlocked(x,y,vy)&&rays.length<350)rays.push({x,y,vx,vy,bounces:0,age:0,bit:String(sample%2)});
       }
     }
-    if(snow&&bounds){snowEmission+=dt*Math.min(1800,Math.max(160,span*2));while(snowEmission>=1){snowEmission--;field.addWater(nextX(),bounds.y,1);}}
-    if(water&&bounds&&!dense){waterEmission+=dt*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;liquid.addWater(nextX()*cell,0,1);}}
+    if(snow&&bounds){snowEmission+=dt*speeds.snow*Math.min(1800,Math.max(160,span*2));while(snowEmission>=1){snowEmission--;field.addWater(nextX(),bounds.y,1);}}
+    if(water&&bounds&&!dense){waterEmission+=dt*speeds.water*Math.min(1800,Math.max(160,span*2));while(waterEmission>=1){waterEmission--;liquid.addWater(nextX()*cell,0,1);}}
   }
   function draw(dt){
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -92,7 +94,7 @@
     }ctx.stroke();
     if(sun&&light){const origin=sunSource();ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.globalAlpha=.22;ctx.beginPath();ctx.arc(origin.x,origin.y,Math.max(1,origin.radius),0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.stroke();ctx.restore();}
     if(light&&dense){
-      if(!beams)beams=field.topBeams();beamDistance+=dt*420/cell;
+      if(!beams)beams=field.topBeams();beamDistance+=dt*speeds.light*420/cell;
       ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=cell+1;ctx.lineCap='butt';
       // Adjacent strips meet without gaps; each reflected segment loses half its light.
       for(const segment of beams){
@@ -105,7 +107,7 @@
     ctx.strokeStyle=palette.sym;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.shadowColor=palette.sym;ctx.shadowBlur=5;
     const glyphs=lightBits?lightSprites():[];
     for(const ray of rays){
-      ray.age+=dt;const path=field.advanceRay(ray,dt*420/cell);
+      ray.age+=dt*speeds.light;const path=field.advanceRay(ray,dt*speeds.light*420/cell);
       ray.trail=ray.trail||[];for(const p of path)ray.trail.push([p[0],p[1],ray.age,p[2]]);
       ray.trail=ray.trail.filter(p=>ray.age-p[2]<.32);
       if(lightBits&&glyphs.length){
@@ -119,15 +121,16 @@
       }
     }
     rays=rays.filter(r=>!r.dead&&r.age<8);ctx.globalAlpha=1;ctx.shadowBlur=0;
+    for(const key of Object.keys(speeds))canvas.dataset[key+'Speed']=String(speeds[key]);
     canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.waterCorners=String(waterCorners);canvas.dataset.dense=String(dense);canvas.dataset.lightStyle=dense?'continuous':lightBits?'bits':'rays';canvas.dataset.beams=String(beams?.length||0);canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY='0';canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
   }
   function frame(time){
     raf=0;if(document.hidden||paused){lastTime=0;return;}
     size();rebuild(time);const dt=lastTime?Math.min(.05,(time-lastTime)/1000):1/60;lastTime=time;
-    emit(dt);accumulator=Math.min(accumulator+dt,.04);
+    emit(dt);accumulator=Math.min(accumulator+dt*speeds.water,.16);
     // Bound catch-up work so a dense one-pixel field cannot starve input and recording.
-    const step=1/150,deadline=performance.now()+8;let steps=0;while(accumulator>=step&&steps++<6){if(water||Number(canvas.dataset.water)>0)liquid.stepWater();if(water&&dense)liquid.fillTop();accumulator-=step;if(performance.now()>=deadline)break;}
-    snowAccumulator+=dt;steps=0;while(snowAccumulator>=cell/150&&steps++<6){if(snow||Number(canvas.dataset.snow)>0)field.stepWater();snowAccumulator-=cell/150;}
+    const step=1/150,deadline=performance.now()+8;let steps=0;while(accumulator>=step&&steps++<24){if(water||Number(canvas.dataset.water)>0)liquid.stepWater();if(water&&dense)liquid.fillTop();accumulator-=step;if(performance.now()>=deadline)break;}
+    snowAccumulator=Math.min(snowAccumulator+dt*speeds.snow,.16);steps=0;while(snowAccumulator>=cell/150&&steps++<24){if(snow||Number(canvas.dataset.snow)>0)field.stepWater();snowAccumulator-=cell/150;}
     draw(dt);
     if(light||snow||water||rays.length||Number(canvas.dataset.snow)>0||Number(canvas.dataset.water)>0)raf=requestAnimationFrame(frame);else lastTime=0;
   }
@@ -140,6 +143,16 @@
     lightButton=button('А\nСвет','А — свет: включить / выключить',()=>{light=!light;beamDistance=0;sync();});
     snowButton=button('Б\nСнег','Б — мокрый снег сверху: включить / выключить',()=>{snow=!snow;sync();});
     waterButton=button('В\nВода','В — вода: горизонтальный уровень и сток',()=>{water=!water;sync();});
+    for(const [key,name,short] of [['light','света','А'],['snow','снега','Б'],['water','воды','В']]){
+      const control=document.createElement('details');control.className='hubTilt';
+      const head=document.createElement('summary');head.setAttribute('aria-label','Скорость '+name);head.title='Скорость '+name+' · 0 — пауза';
+      const label=document.createElement('label');label.append('Скорость '+name);
+      const range=document.createElement('input');range.type='range';range.min='0';range.max='4';range.step='.1';range.value=String(speeds[key]);range.setAttribute('aria-label','Множитель скорости '+name);
+      const output=document.createElement('output');
+      const update=()=>{const text='×'+Number(speeds[key].toFixed(1));output.textContent=text;head.textContent=short+'\n'+text;range.setAttribute('aria-valuetext',speeds[key]===0?'Пауза':text);};
+      range.oninput=()=>{speeds[key]=Number(range.value);if(key==='water')accumulator=0;if(key==='snow')snowAccumulator=0;update();saveStyle();wake();};
+      update();label.append(range,output);control.append(head,label);wrap.append(control);
+    }
     cornersButton=button('↘\nУглы','Вода: стороны и углы — проход через шахматные стыки',()=>{waterCorners=!waterCorners;if(liquid)liquid.cornerPass=waterCorners;cornersButton.setAttribute('aria-pressed',String(waterCorners));saveStyle();wake();});cornersButton.setAttribute('aria-pressed',String(waterCorners));
     button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
     denseButton=button('▤\nПлотно','Сплошной поток света и воды сверху',()=>{dense=!dense;if(dense)sun=false;sunButton.setAttribute('aria-pressed',String(sun));denseButton.setAttribute('aria-pressed',String(dense));rays=[];beams=null;beamDistance=0;saveStyle();sync();});
