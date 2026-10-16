@@ -1,0 +1,10 @@
+/* Hub v0.208: значки кнопок поля — значок цветом симметрии, подпись цветом битов. */
+.hubIcd{font-size:0!important;line-height:0!important}
+.hubIcd>b,.hubIcd>small{display:none!important}
+.hubIc{transform:translateY(-1px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-style:normal;pointer-events:none}
+.hubIc svg{width:15px;height:15px;fill:none;stroke:var(--hub-theme-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hubIc svg path{stroke:var(--hub-theme-accent)}
+.hubIcG{color:var(--hub-theme-accent);font:700 14px/16px system-ui,sans-serif}
+.hubIc span{color:var(--hub-theme-bit);font:8.5px/9px system-ui,sans-serif;letter-spacing:-.2px;white-space:nowrap}
+.hubIcd[aria-pressed=false] .hubIc,label.hubIcd:has(input[type=checkbox]:not(:checked)) .hubIc{opacity:.55}
+.hubIcd[aria-pressed=true] .hubIc span,label.hubIcd:has(input:checked) .hubIc span{color:#fff}
