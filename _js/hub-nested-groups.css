@@ -35,3 +35,6 @@
 #hubFieldTools .hubPaletteList button{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:0;border:0;cursor:pointer}
 /* v0.211: верхний ряд ромбов прижат к верху экрана, заходит за край на четверть ромба. */
 @media(min-width:1101px){#hubFieldTools.hubMirrorSettings[data-nested]{top:-12px}}
+/* v0.213: пирамида закреплённых — ромбы перекрывают квадраты соседей, мышь ловит только сам ромб. */
+#hubFieldTools[data-nested] .hubTreeItem{pointer-events:none}
+#hubFieldTools[data-nested] .hubTreeItem>*{pointer-events:auto}
