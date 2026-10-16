@@ -1,3 +1,4 @@
+/* Hub v0.137: defaults ✦ on, 🧲 magnet off (applied once to saved settings, defaultsRevision 2). */
 /* Hub v0.134: preset «Мята · всё одно» — bits, reflection and fold-in all one colour (last, so saved choices keep their index). */
 /* Hub v0.133: reflection has the same colour as the bits in every preset. */
 /* Hub v0.132: ⚙ opens the field tools panel (mirror, ✦, ⤵, 🎨 …) — it was hidden since v0.122, on phones too. */
@@ -22,7 +23,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -31,7 +32,7 @@
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
-      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;state.foldIn=saved.foldIn===true;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
+      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённыхstate.foldIn=saved.foldIn===true;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
