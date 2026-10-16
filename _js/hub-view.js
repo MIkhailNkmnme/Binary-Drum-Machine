@@ -1,3 +1,4 @@
+/* Hub v0.138: ↺ 0° ↻ moved next to + and − — a cross at the right edge. */
 /* Hub v0.130: a displaced source is always redrawn as vector — the cached bitmap had lost what was off-screen. */
 /* Hub v0.116: compose displacement, mirror and camera before clipping to the viewport. */
 /* Hub v0.114: always available zoom and one-click recovery of the whole drawing. */
@@ -40,7 +41,7 @@
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};
     unlock=button('🔒','Разрешить перетаскивание холста',()=>{state.unlocked=!state.unlocked;changed();});
-    button('↺','Повернуть поле на −15°',()=>rotate(-15));angleText=button('0°','Сбросить поворот поля в 0°',()=>{state.angle=0;changed();});button('↻','Повернуть поле на +15°',()=>rotate(15));
+    const rotL=button('↺','Повернуть поле на −15°',()=>rotate(-15));angleText=button('0°','Сбросить поворот поля в 0°',()=>{state.angle=0;changed();});const rotR=button('↻','Повернуть поле на +15°',()=>rotate(15));
     const rotationLabel=document.createElement('label');rotationLabel.className='hubViewRotationControl';const rotationHead=document.createElement('span');rotationHead.append(document.createTextNode('Поворот поля · '));rotationValue=document.createElement('output');rotationHead.append(rotationValue);rotationLabel.append(rotationHead);
     const rotation=document.createElement('input');rotation.type='range';rotation.min=0;rotation.max=360;rotation.step=1;rotation.value=state.angle;rotation.setAttribute('aria-label','Поворот поля на 360 градусов');rotation.className='hubViewRotation';rotationLabel.append(rotation);settings.append(rotationLabel);rotation.oninput=()=>{state.angle=Number(rotation.value);changed(false);};rotation.onchange=save;
     flipButton=button('3D\n▶','Переворот вокруг оси зеркала в 3D',()=>{if(flipRunning)stopFlip();else{flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}changed();});flipButton.classList.add('hubFlip');flipButton.setAttribute('aria-pressed','false');
@@ -54,7 +55,11 @@
     const homeButton=button('⌂','Вернуть весь рисунок в поле',home);homeButton.title='Вернуть рисунок и ось в центр: масштаб 100%, повороты 0°, остановить вращение';zoomBox.append(homeButton);
     minus=button('−','Уменьшить масштаб холста',()=>zoom(1/1.15,...center()));minus.classList.add('hub-zoom-minus');zoomBox.append(minus);
     scaleText=document.createElement('output');scaleText.setAttribute('aria-label','Масштаб холста');scaleText.title='Двойной щелчок — вернуть весь рисунок в поле';zoomBox.append(scaleText);scaleText.ondblclick=home;
-    plus=button('+','Увеличить масштаб холста',()=>zoom(1.15,...center()));plus.classList.add('hub-zoom-plus');zoomBox.append(plus);document.body.append(zoomBox);
+    plus=button('+','Увеличить масштаб холста',()=>zoom(1.15,...center()));plus.classList.add('hub-zoom-plus');zoomBox.append(plus);
+    // v0.138: «↺ 0° ↻ вывести рядом с + и −, крестом»: сверху ⌂ и +, посередине ↺ 0° ↻, снизу − и масштаб
+    for(const b of [rotL,angleText,rotR])b.className='hub-zoom-turn';
+    for(const [el,area] of [[homeButton,'home'],[plus,'plus'],[rotL,'rl'],[angleText,'ang'],[rotR,'rr'],[minus,'minus'],[scaleText,'scale']]){el.style.gridArea=area;zoomBox.append(el);}
+    document.body.append(zoomBox);
     document.addEventListener('wheel',e=>{if(e.target.closest('.hub,.hubMirrorSettings,#hubZoom,#hubRec,#hubPNG,#hubLogoCv,#hubLogoBox'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return;e.preventDefault();zoom(Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.002),e.clientX,y);},{passive:false});
     const beginDrag=(e,requireHit=false)=>{if((requireHit&&!state.unlocked)||e.button!==0||e.target.closest('.hub,.hubMirrorSettings,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return false;const cursor=inverse(e.clientX,y);if(!cursor.every(Number.isFinite))return false;const hit=window.HubMirror.hit(...cursor);if(!state.unlocked&&(hit.source||hit.mirror||e.target.closest('.hubNoteCell')))return false;if(requireHit&&!hit.source&&!hit.mirror)return false;e.stopPropagation();const start=state.pan.slice(),source=state.sourcePan.slice(),mirror=window.HubMirror.position(),x=e.clientX,sy=e.clientY,world=inverse(x,y);let moved=false;
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.hypot(ev.clientX-x,ev.clientY-sy)>3)moved=true;if(moved){const p=inverse(ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)),dx=p[0]-world[0],dy=p[1]-world[1];if(!p.every(Number.isFinite))return;if(hit.source)state.sourcePan=[source[0]+dx/frame.width,source[1]+dy/frame.height];if(hit.mirror)window.HubMirror.moveFrom(mirror,dx,dy);if(!hit.source&&!hit.mirror)state.pan=[start[0]+ev.clientX-x,start[1]+ev.clientY-sy];changed();}};
