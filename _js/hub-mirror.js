@@ -45,7 +45,7 @@
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -98,6 +98,10 @@
   }
 
   const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map(),cutoutSprites=new Map(),lastBitScroll={0:5,1:5};
+  function bitGlyph(bit){
+    const glyphs={brackets:['()',')'],parentheses:['(',')'],slashes:['\\','/'],angles:['<','>']};
+    return glyphs[state.bitView]?.[bit==='1'?1:0]??bit;
+  }
   function glyphOffset(g,text,size){
     const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
     if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
@@ -192,7 +196,7 @@
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
-    const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['stars','*','Звезда и точка']];
+    const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка']];
     const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
     for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
@@ -473,7 +477,7 @@
         if(bit==='0'){g.beginPath();g.arc(0,0,state.packedBits?width/2:Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
         else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
       }else{
-        const text=state.bitView==='brackets'?(bit==='1'?')':'()'):state.bitView==='parentheses'?(bit==='1'?')':'('):bit;
+        const text=bitGlyph(bit);
         g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';
         const offset=glyphOffset(g,text,size);
         if(state.packedBits&&this.symbolsOnly())g.scale(...packedScale(g,text,size,width,height));
@@ -483,7 +487,7 @@
     },
     drawSymbolBatch(g,bit,points,size,color,alpha,width=size/.62,height=width*Math.sqrt(3)){
       if(!this.digitVisible(bit)||!points.length)return;
-      const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=state.bitView==='brackets'?(bit==='1'?')':'()'):state.bitView==='parentheses'?(bit==='1'?')':'('):bit;
+      const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=bitGlyph(bit);
       g.save();g.rotate(angle);g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';g.fillStyle=color;g.globalAlpha=alpha;
       const [ox,oy]=glyphOffset(g,text,size);
       const [sx,sy]=packedScale(g,text,size,width,height);if(state.packedBits&&this.symbolsOnly())g.scale(sx,sy);
