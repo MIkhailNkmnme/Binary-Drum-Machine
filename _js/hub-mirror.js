@@ -1,3 +1,4 @@
+/* Hub v0.139: each preset has its own colour for the axis-symmetry highlight (5th entry, was always gold). */
 /* Hub v0.137: defaults ✦ on, 🧲 magnet off (applied once to saved settings, defaultsRevision 2). */
 /* Hub v0.134: preset «Мята · всё одно» — bits, reflection and fold-in all one colour (last, so saved choices keep their index). */
 /* Hub v0.133: reflection has the same colour as the bits in every preset. */
@@ -13,16 +14,16 @@
 (() => {
   'use strict';
   const AX0 = 110 * Math.PI / 180;
-  // v0.128: заготовки цвета — биты оригинала / отражения / заворота. v0.133: отражение — того же цвета, что оригинал, во всех заготовках
+  // v0.128: заготовки цвета — биты оригинала / отражения / заворота / (v0.139) подсветки симметрии по оси. v0.133: отражение — того же цвета, что оригинал, во всех заготовках
   const PALETTES = [
-    ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff'], ['Мята · роза', '#9fffc8', '#9fffc8', '#ffd166'], ['Лёд · огонь', '#8fd3ff', '#8fd3ff', '#c9a2ff'],
-    ['Золото · синь', '#ffd166', '#ffd166', '#ff6b9a'], ['Лайм · фиалка', '#c6ff6b', '#c6ff6b', '#5ce1e6'], ['Белый · красный', '#f2f4f8', '#f2f4f8', '#ffd166'],
-    ['Бирюза · янтарь', '#5ce1e6', '#5ce1e6', '#ff8fd0'], ['Коралл · мята', '#ff7f6b', '#ff7f6b', '#8fd3ff'], ['Сирень · лимон', '#c9a2ff', '#c9a2ff', '#6bffb8'],
-    ['Небо · трава', '#6ac8ff', '#6ac8ff', '#ff6bd5'], ['Чёрно-белая', '#ffffff', '#ffffff', '#cfcfcf'],
+    ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff', '#ffd166'], ['Мята · роза', '#9fffc8', '#9fffc8', '#ffd166', '#ff8fd0'], ['Лёд · огонь', '#8fd3ff', '#8fd3ff', '#c9a2ff', '#ff9a5a'],
+    ['Золото · синь', '#ffd166', '#ffd166', '#ff6b9a', '#6aa8ff'], ['Лайм · фиалка', '#c6ff6b', '#c6ff6b', '#5ce1e6', '#b98cf0'], ['Белый · красный', '#f2f4f8', '#f2f4f8', '#ffd166', '#ff5a5a'],
+    ['Бирюза · янтарь', '#5ce1e6', '#5ce1e6', '#ff8fd0', '#ffb347'], ['Коралл · мята', '#ff7f6b', '#ff7f6b', '#8fd3ff', '#73e4a5'], ['Сирень · лимон', '#c9a2ff', '#c9a2ff', '#6bffb8', '#fff36b'],
+    ['Небо · трава', '#6ac8ff', '#6ac8ff', '#ff6bd5', '#8ee86b'], ['Чёрно-белая', '#ffffff', '#ffffff', '#cfcfcf', '#8a8a8a'],
     // v0.131: «цвета в стиле кибернейро» — неон на тёмном
-    ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a'],
-    ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066'],
-    ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
+    ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
+    ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
+    ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
   const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
@@ -123,9 +124,9 @@
     { // v0.128: 🎨 — десять заготовок цвета: биты оригинала и отражённые (и заворот)
       const box=document.createElement('details'),head=document.createElement('summary'),panel=document.createElement('label');box.className='hubTilt hubPalette';head.title='Цвета: биты и отражение — заготовки';head.textContent='🎨';
       panel.className='hubPaletteList';const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`;
-      PALETTES.forEach(([name,a,b],i)=>{const btn=document.createElement('button');btn.type='button';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);btn.style.background=sw(a,b);btn.setAttribute('aria-pressed',String(state.palette===i));
+      PALETTES.forEach(([name,a,,,b],i)=>{const btn=document.createElement('button');btn.type='button';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);btn.style.background=sw(a,b);btn.setAttribute('aria-pressed',String(state.palette===i));
         btn.onclick=e=>{e.preventDefault();state.palette=i;panel.querySelectorAll('button').forEach((x,k)=>x.setAttribute('aria-pressed',String(k===i)));head.style.background=sw(a,b);changed();save();};panel.append(btn);});
-      head.style.background=sw(PALETTES[state.palette][1],PALETTES[state.palette][2]);box.append(head,panel);settings.append(box);}
+      head.style.background=sw(PALETTES[state.palette][1],PALETTES[state.palette][4]);box.append(head,panel);settings.append(box);}
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
@@ -199,7 +200,7 @@
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
-    colors(){const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3]};},
+    colors(){const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
