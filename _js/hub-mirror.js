@@ -1,3 +1,4 @@
+/* Hub v0.128: 🎨 — ten colour presets: bits / reflection / fold-in. */
 /* Hub v0.127: foldIn — mirror bits outside the original triangle are also reflected back inside across its sides (⤵). */
 /* Hub v0.126: default axis tilted 110° through the middle of the triangle (autoCenter); right click / long press no longer switches the mirror off. */
 /* Hub v0.125: gold — bits whose reflection across the axis lands on the same bit; ✦ toggles it. */
@@ -7,8 +8,14 @@
 /* Hub v0.115: узор «Х» — кадр Хоррориуса (_js/horr-rows.js), по умолчанию. v0.114: recover the mirror axis along with the drawing. */
 (() => {
   'use strict';
-  const AX0 = 110 * Math.PI / 180;   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const AX0 = 110 * Math.PI / 180;
+  // v0.128: заготовки цвета — биты оригинала / отражения / заворота
+  const PALETTES = [
+    ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff'], ['Мята · роза', '#9fffc8', '#ff8fd0', '#ffd166'], ['Лёд · огонь', '#8fd3ff', '#ff9a5a', '#c9a2ff'],
+    ['Золото · синь', '#ffd166', '#6aa8ff', '#ff6b9a'], ['Лайм · фиалка', '#c6ff6b', '#b98cf0', '#5ce1e6'], ['Белый · красный', '#f2f4f8', '#ff5a5a', '#ffd166'],
+    ['Бирюза · янтарь', '#5ce1e6', '#ffb347', '#ff8fd0'], ['Коралл · мята', '#ff7f6b', '#73e4a5', '#8fd3ff'], ['Сирень · лимон', '#c9a2ff', '#fff36b', '#6bffb8'],
+    ['Небо · трава', '#6ac8ff', '#8ee86b', '#ff6bd5']];   // v0.126: начальный наклон оси — как на снимке пользователя
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -17,7 +24,7 @@
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
-      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;state.foldIn=saved.foldIn===true;state.axisRotate=!!saved.axisRotate;
+      state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;state.foldIn=saved.foldIn===true;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -105,6 +112,12 @@
       range.addEventListener('input', () => { state[key] = Number(range.value); value.textContent = state[key] + '°'; changed(); });
       range.addEventListener('change', save);
     }
+    { // v0.128: 🎨 — десять заготовок цвета: биты оригинала и отражённые (и заворот)
+      const box=document.createElement('details'),head=document.createElement('summary'),panel=document.createElement('label');box.className='hubTilt hubPalette';head.title='Цвета: биты и отражение — заготовки';head.textContent='🎨';
+      panel.className='hubPaletteList';const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`;
+      PALETTES.forEach(([name,a,b],i)=>{const btn=document.createElement('button');btn.type='button';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);btn.style.background=sw(a,b);btn.setAttribute('aria-pressed',String(state.palette===i));
+        btn.onclick=e=>{e.preventDefault();state.palette=i;panel.querySelectorAll('button').forEach((x,k)=>x.setAttribute('aria-pressed',String(k===i)));head.style.background=sw(a,b);changed();save();};panel.append(btn);});
+      head.style.background=sw(PALETTES[state.palette][1],PALETTES[state.palette][2]);box.append(head,panel);settings.append(box);}
     const reset = document.createElement('button'); reset.type = 'button'; reset.className='hubRhomb';reset.textContent='↺';reset.title='Сброс наклона битов';reset.setAttribute('aria-label',reset.title); settings.append(reset);
     reset.addEventListener('click', () => {
       state.zero = 0; state.one = 0; settings.querySelectorAll('input[aria-label^="Наклон ромбов"]').forEach(el => { el.value = '0'; el.closest('.hubTilt').querySelector('output').textContent='0°'; }); changed(); save();
@@ -173,6 +186,7 @@
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;state.x=clamp(start.x+dx/frame.width);state.y=clamp(start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
+    colors(){const p=PALETTES[state.palette]||PALETTES[0];return {bit:p[1],mirror:p[2],fold:p[3]};},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {

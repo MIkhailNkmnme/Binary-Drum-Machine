@@ -1,5 +1,5 @@
 <!-- === МАРКЕР: CSS СТИЛИ НАЧАЛО === -->
-<!-- Zerkalius Hub (index) — v0.127. v0.127: кнопка «⤵ заворот» — части отражения вне треугольника ещё и отражаются от его сторон внутрь. v0.126: начальная ось наклонена на 110° и проходит через середину треугольника; правая кнопка зеркало не выключает. v0.125: золотая подсветка областей, симметричных относительно оси (✦); выписка расположения ?raspolozhenie. v0.124: кружок поворота оси — розовый, не сливается с битами. v0.123: отдельная страница «Матрёшки» рядом с Маятником в Черновиках. v0.122: панель кнопок под треугольником (◇, сим., минимумы, наклоны, магнит, 4K, ползунки зеркала, поворота и 3D, подпись PNG) убрана с экрана — скрыта, логика на месте. v0.121: перетаскивание за пустое место сдвигает все биты вместе с зеркалом и без 🔓. v0.120: зеркальная копия треугольника снова чёткая — рисуется ромбами под зеркалом, а не растягивается из картинки. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
+<!-- Zerkalius Hub (index) — v0.128. v0.128: 🎨 — десять заготовок цвета битов и отражения. v0.127: кнопка «⤵ заворот» — части отражения вне треугольника ещё и отражаются от его сторон внутрь. v0.126: начальная ось наклонена на 110° и проходит через середину треугольника; правая кнопка зеркало не выключает. v0.125: золотая подсветка областей, симметричных относительно оси (✦); выписка расположения ?raspolozhenie. v0.124: кружок поворота оси — розовый, не сливается с битами. v0.123: отдельная страница «Матрёшки» рядом с Маятником в Черновиках. v0.122: панель кнопок под треугольником (◇, сим., минимумы, наклоны, магнит, 4K, ползунки зеркала, поворота и 3D, подпись PNG) убрана с экрана — скрыта, логика на месте. v0.121: перетаскивание за пустое место сдвигает все биты вместе с зеркалом и без 🔓. v0.120: зеркальная копия треугольника снова чёткая — рисуется ромбами под зеркалом, а не растягивается из картинки. v0.119: настройка минимумов симметрии от 1 строки и 1 пары битов. v0.118: зеркальные оси и подсветка парных битов, включены по умолчанию. v0.117: кнопка «Синхроромб» (sinhroromb/, 2026-10-13) — последней в Черновиках, битовая надпись как у Синхрофазотрона.
      v0.115: треугольник по умолчанию — кадр Хоррориуса (узор «Х», _js/horr-rows.js).
      Точка входа: ссылки на все страницы проекта.
      v0.114: масштаб доступен всегда; ⌂ возвращает рисунок и ось; биты запускаются из верхней полосы.
@@ -128,7 +128,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- v0.061: без неё телефон рисовал хаб шириной 980 px, уменьшенным — ноты мелкие, правила узкого экрана не срабатывали -->
-    <title>Zerkalius Control Hub — v0.127</title>
+    <title>Zerkalius Control Hub — v0.128</title>
     <!-- v0.041, «oktaedr — лого на сайт»: знак Zerkalius — значком вкладки; на остальных страницах его ставит _js/hub-link.js -->
     <link rel="icon" type="image/svg+xml" href="oktaedr/zerkalius-mark.svg">
     <style>
@@ -562,6 +562,10 @@
         .hubTilt > summary::-webkit-details-marker { display:none; }
         .hubTilt > summary output { width:auto; text-align:center; pointer-events:none; }
         .hubTilt:first-of-type > label { left:0; }
+        .hubPaletteList { display:grid!important; grid-template-columns:repeat(5,22px); gap:4px; width:auto!important; }
+        .hubPaletteList button { width:22px; height:22px; padding:0; border:1px solid #385449; cursor:pointer; }
+        .hubPaletteList button[aria-pressed=true] { outline:2px solid #fff; outline-offset:1px; }
+        .hubTilt > summary { background-clip:padding-box; }
         .hubTilt > label { position:absolute; top:50px; left:-52px; width:148px; margin:0; padding:8px; box-sizing:border-box; background:#0a2019; border:1px solid #385449; z-index:15; }
         .hubImageTools { display:contents; }
         .hubMirrorSettings [hidden] { display:none!important; }
@@ -609,10 +613,10 @@
 <script src="_js/initial-rows.js?v=2"></script><script src="_js/horr-rows.js?v=1"></script>
 <script src="_js/hub-menu-grid.js?v=100"></script>
 <script src="_js/bit-symmetry.js?v=2"></script>
-<script src="_js/hub-mirror.js?v=127"></script>
+<script src="_js/hub-mirror.js?v=128"></script>
 <script src="_js/hub-rhomb-music.js?v=6"></script>
 <script src="_js/hub-image.js?v=2"></script>
-<script src="_js/hub-view.js?v=127"></script>
+<script src="_js/hub-view.js?v=128"></script>
 </head>
 <body>
     <!-- Живой фон: обои Zerkalius (папка oboi\, заведено 2026-09-21) -->
@@ -649,7 +653,7 @@
 
     <div class="hub">
         <h1>Zerkalius Hub</h1>
-        <div class="ver">v0.127</div>
+        <div class="ver">v0.128</div>
 
         <!-- v0.030: Треугольник — вторая главная кнопка, под Code (слово пользователя «треугольник в хаб»);
              v0.033: Code ушёл в Черновики — Треугольник первый (слово пользователя «перенеси в черновики первым») -->
@@ -1181,7 +1185,7 @@
                    у звучащих бит) — v0.107: фон обновляется только при изменении геометрии, узора или зеркала */
                 const lgEl = document.getElementById('hubLogoCv'), lgB = lgEl ? Math.round(lgEl.getBoundingClientRect().bottom + window.scrollY) : 0, mrT = mainRow ? Math.round(mainRow.getBoundingClientRect().top) : 0;   // v0.083
                 const fieldTools=document.getElementById('hubFieldTools'), fieldTop=Math.min(H*.55,Math.max(8,Math.ceil((fieldTools?.getBoundingClientRect().bottom||0)+(matchMedia('(max-width:1100px)').matches?scrollY:0))+12));
-                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry,window.HubMirror.state.symmetryMinimums.minRows,window.HubMirror.state.symmetryMinimums.minPairs].join(',') + '|' + ((window.HubMirror.state.gold !== false || window.HubMirror.state.foldIn) && window.HubMirror.state.on ? [window.HubMirror.state.foldIn ? 'gf' : 'g', window.HubMirror.state.x, window.HubMirror.state.y, window.HubMirror.state.angle].join(',') : '') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
+                const key = W + 'x' + H + '@' + dpr + '|' + PR.length + '|' + lgB + '|' + mrT + '|' + fieldTop + '|' + [window.HubMirror.state.pattern,window.HubMirror.state.zero,window.HubMirror.state.one,window.HubMirror.state.bitSymmetry,window.HubMirror.state.symmetryMinimums.minRows,window.HubMirror.state.symmetryMinimums.minPairs,window.HubMirror.state.palette].join(',') + '|' + ((window.HubMirror.state.gold !== false || window.HubMirror.state.foldIn) && window.HubMirror.state.on ? [window.HubMirror.state.foldIn ? 'gf' : 'g', window.HubMirror.state.x, window.HubMirror.state.y, window.HubMirror.state.angle].join(',') : '') + '|' + window.HubImage.revision + '|' + window.HubView.sourceShift().join(',');
                 if (!output) { if (key === sierDraw.k) {
                     if (sierDraw.mirror !== window.HubMirror.revision) { sg.save(); sg.setTransform(1,0,0,1,0,0); sg.clearRect(0,0,canvas.width,canvas.height); sg.drawImage(sierSource,0,0); sg.restore(); window.HubMirror.reflect(canvas); reflectNotes(); noteDraw(performance.now()); return finishSier(canvas, null); }
                     if (sierDraw.view !== window.HubView.revision) { window.HubView.paint(canvas, null, sierBase, sierDraw.vector); sierDraw.view = window.HubView.revision; } return true;
@@ -1242,11 +1246,12 @@
                         let [fx, fy] = R, o = out(fx, fy); if (!o) continue;   // внутри оригинала — наложение, не заворачиваем
                         for (let t = 0; t < 3 && o; t++) { const [e, d] = o; fx -= 2 * d * e.nx; fy -= 2 * d * e.ny; o = out(fx, fy); }
                         if (!o) folded.push([fx, fy, PR[r][j]]); } }
-                const paintFold = folded && folded.length ? sg => { sg.save(); sg.fillStyle = '#c9a2ff';
+                const paintFold = folded && folded.length ? sg => { sg.save(); sg.fillStyle = PAL.fold;
                     for (const [x, y, bit] of folded) { sg.globalAlpha = bit === '1' ? .85 : .25; const a = dw * .45, b = dh * .45; sg.beginPath(); sg.moveTo(x, y - b); sg.lineTo(x + a, y); sg.lineTo(x, y + b); sg.lineTo(x - a, y); sg.closePath(); sg.fill(); }
                     sg.restore(); } : null;
                 if(!output)window.HubMirror.setBitCenters(PR.flatMap((row,r)=>[...row].flatMap((_,j)=>spots.map(f=>{const [x,y]=f(r,j);return [left+x,y];}))));
-                const paintBits = sg => {
+                const PAL = window.HubMirror.colors?.() || { bit: '#9fffc8', mirror: '#9fffc8', fold: '#c9a2ff' };   // v0.128: 🎨 заготовки
+                const paintBits = (sg, pass) => { const base = pass === 'mirror' ? PAL.mirror : PAL.bit;
                 const rhomb = (x, y, k, bit) => {
                     const a = (side ? dh : dw) * k / 2, b = (side ? dw : dh) * k / 2, angle = window.HubMirror.bitAngle(bit);
                     const co = Math.cos(angle), si = Math.sin(angle), point = (dx, dy) => [x + dx * co - dy * si, y + dx * si + dy * co];
@@ -1264,8 +1269,8 @@
                 const symmetry = window.HubMirror.state.bitSymmetry ? ZZBitSymmetry.request(PR,window.HubMirror.state.symmetryMinimums) : null;
                 for (let r = 0; r < N; r++) { const row = PR[r];
                     for (let j = 0; j < row.length; j++) { const hc = heads.get(r + ':' + j), on = row[j] === '1', symColor = ZZBitSymmetry.colorAt(symmetry,r,j), au = gold && gold.has(r * 65536 + j);
-                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = au ? '#ffd166' : symColor || '#9fffc8'; if(au)sg.globalAlpha=desk?.3:.42;else if(symColor)sg.globalAlpha=desk?.25:.35; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
-                        sg.fillStyle = hc || (au ? '#ffd166' : symColor || '#9fffc8'); sg.globalAlpha = hc ? 1 : au ? .95 : symColor ? .68 : 0.78 * (desk ? 0.5 : 1);
+                        if (!hc && !on) { sg.globalAlpha = desk ? 0.11 : 0.18; sg.fillStyle = au ? '#ffd166' : symColor || base; if(au)sg.globalAlpha=desk?.3:.42;else if(symColor)sg.globalAlpha=desk?.25:.35; for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, '0'); } if (digits) { sg.globalAlpha = desk ? 0.35 : 0.5; for (const f of spots) { const [x, y] = f(r, j); bitDigit('0', x, y); } } continue; }
+                        sg.fillStyle = hc || (au ? '#ffd166' : symColor || base); sg.globalAlpha = hc ? 1 : au ? .95 : symColor ? .68 : 0.78 * (desk ? 0.5 : 1);
                         if (hc) { sg.shadowColor = hc; sg.shadowBlur = 8 * dpr; }
                         for (const f of spots) { const [x, y] = f(r, j); rhomb(x, y, 0.9, row[j]); }
                         if (hc) sg.shadowBlur = 0;
