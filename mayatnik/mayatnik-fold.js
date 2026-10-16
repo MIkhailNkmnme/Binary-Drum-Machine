@@ -57,8 +57,8 @@
   // v11: «свёртки в отдельных построениях показать» — свёртка рисуется в своём окне рядом с полем, поле не трогается.
   // Окна ↔ и ↕ открываются вместе; заголовок — перетащить, правый нижний угол — размер, место и размер помнятся.
   // capture() даёт снимок поля; open(frame) собирает заново на том же шаге (страница зовёт на каждом шаге построения).
-  function mount({button,capture,config,beforeStart,onClose,axis='h'}) {
-    const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной',KEY='mayatnik-fold-win-'+axis;
+  function mount({button,capture,config,beforeStart,onClose,axis='h',canvas}) {
+    const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной',KEY='mayatnik-fold-win2-'+axis;   // v13: прежние места у правого края забыты
     const win=document.createElement('section');win.className='may-fold-win';win.id=V?'mayFoldWinV':'mayFoldWin';win.hidden=true;win.setAttribute('aria-label','Окно '+WORD+' свёртки');
     win.innerHTML=`<header class="may-fold-head"><b>${V?'Свёртка ↕':'Свёртка ↔'}</b><button type="button" class="may-fold-x" title="Закрыть свёртку">×</button></header><canvas class="may-fold-view"></canvas>`;
     const panel=document.createElement('div');panel.className='may-fold-panel';
@@ -72,11 +72,18 @@
     const midOn=()=>!!config?.()?.mid;
     const adv=(f,d,n=1)=>{if(!pair())return f+d*n;for(let i=0;i<n;i++)f=state.pairStep(f,d);return f;};
     // место окна: по умолчанию у правого края, ↔ сверху, ↕ под ним
-    const place=()=>{let p=null;try{p=JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){}
-      const w=Math.min(innerWidth-16,p?.w||460),h=Math.min(innerHeight-16,p?.h||300);
-      const x=Math.max(0,Math.min(innerWidth-60,p?.x??innerWidth-w-12)),y=Math.max(0,Math.min(innerHeight-40,p?.y??(V?110+300+12:110)));
-      Object.assign(win.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'});};
-    const keep=()=>{try{localStorage.setItem(KEY,JSON.stringify({x:win.offsetLeft,y:win.offsetTop,w:win.offsetWidth,h:win.offsetHeight}));}catch(_){}};
+    // v13: «свёртки лучше переместить вниз, под друг за другом» — по умолчанию окна стоят под полем шириной с поле: ↔ сразу под ним,
+    // ↕ под ↔; пока окно не трогали руками, оно идёт за полем (масштаб, сдвиг). Перетащил или растянул — стоит, где поставил;
+    // двойной щелчок по заголовку — снова под поле.
+    let saved=null,lastSet=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){}
+    const setBox=(x,y,w,h)=>{x=Math.round(x);y=Math.round(y);w=Math.round(w);h=Math.round(h);lastSet={w,h};
+      if(win.style.left!==x+'px')win.style.left=x+'px';if(win.style.top!==y+'px')win.style.top=y+'px';
+      if(win.style.width!==w+'px')win.style.width=w+'px';if(win.style.height!==h+'px')win.style.height=h+'px';};
+    function dock(){if(!state||!canvas)return;const r=canvas.getBoundingClientRect(),w=Math.max(240,Math.min(innerWidth-8,r.width));
+      const tot=Math.max(180,(win.querySelector('.may-fold-head').offsetHeight||24)+(panel.offsetHeight||96)+Math.round(w*state.height/state.width)+2);
+      const x=Math.max(4,Math.min(innerWidth-w-4,r.left)),y=r.bottom+8+(V?tot+8:0);setBox(x,Math.min(Math.max(0,innerHeight-60),y),w,tot);}
+    const place=()=>{if(saved)setBox(Math.max(0,Math.min(innerWidth-60,saved.x)),Math.max(0,Math.min(innerHeight-40,saved.y)),Math.min(innerWidth-16,saved.w),Math.min(innerHeight-16,saved.h));else dock();};
+    const keep=()=>{saved={x:win.offsetLeft,y:win.offsetTop,w:win.offsetWidth,h:win.offsetHeight};try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(_){}};
     function sync(){
       button.setAttribute('aria-pressed',String(!!state));win.hidden=!state;if(!state)return;
       const two=pair()&&state.pairStep(state.frame,1)-state.frame===2;
@@ -90,7 +97,7 @@
     }
     // картинка «пиксель = бит» на весь холст окна, без сглаживания; бит везёт свой цвет с поля, центр — золотом
     function render(){
-      if(!state)return;const W=state.width,H=state.height,mid=midOn(),mp=V?0:config?.()?.midPaint||0;   // v12: «Центр краской» — XOR-столбец ↔ цветом заливки
+      if(!state)return;if(!saved)dock();const W=state.width,H=state.height,mid=midOn(),mp=V?0:config?.()?.midPaint||0;   // v12: «Центр краской» — XOR-столбец ↔ цветом заливки
       if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
       const u=new Uint32Array(offImg.data.buffer);
       for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
@@ -133,12 +140,15 @@
     // перетаскивание за заголовок
     const head=win.querySelector('.may-fold-head');
     head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;e.preventDefault();head.setPointerCapture(e.pointerId);
-      const x=e.clientX-win.offsetLeft,y=e.clientY-win.offsetTop;
-      const move=ev=>{win.style.left=Math.max(0,Math.min(innerWidth-60,ev.clientX-x))+'px';win.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-y))+'px';};
-      const end=()=>{head.removeEventListener('pointermove',move);head.removeEventListener('pointerup',end);keep();};
+      const x=e.clientX-win.offsetLeft,y=e.clientY-win.offsetTop,x0=e.clientX,y0=e.clientY;let moved=false;
+      const move=ev=>{if(!moved&&Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)return;moved=true;win.style.left=Math.max(0,Math.min(innerWidth-60,ev.clientX-x))+'px';win.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-y))+'px';};
+      const end=()=>{head.removeEventListener('pointermove',move);head.removeEventListener('pointerup',end);if(moved)keep();};
       head.addEventListener('pointermove',move);head.addEventListener('pointerup',end);});
     // размер — за угол (CSS resize); холст перерисовывается
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(state){render();keep();}}).observe(win);
+    head.addEventListener('dblclick',e=>{if(e.target.closest('button'))return;saved=null;try{localStorage.removeItem(KEY);}catch(_){}render();});
+    // растянул за угол сам (размер не тот, что ставили) — окно остаётся там, где есть
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(!state)return;if(lastSet&&(Math.abs(win.offsetWidth-lastSet.w)>2||Math.abs(win.offsetHeight-lastSet.h)>2))keep();render();}).observe(win);
+    addEventListener('resize',()=>{if(state)render();});addEventListener('scroll',()=>{if(state&&!saved)dock();},true);
     // клавиши — только когда мышь над окном или фокус в нём
     addEventListener('keydown',e=>{if(!state||e.target.closest?.('input,select,button,textarea'))return;if(!win.matches(':hover')&&!win.contains(document.activeElement))return;
       if(['Space','ArrowLeft','ArrowRight','Escape'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();if(e.code==='Escape')close();else if(e.code==='Space')togglePlay();else{pause();seek(adv(state.frame,e.code==='ArrowRight'?1:-1));}}},true);
