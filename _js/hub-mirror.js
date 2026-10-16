@@ -1,3 +1,4 @@
+/* Hub v0.158: в режиме центр линия переносит исходник и отражение зеркально, ручка вращает. */
 /* Hub v0.157: прямое управление ручкой в экранной плоскости при любом 3D-наклоне. */
 /* Hub v0.155: ромбическая палитра; закрытие всплывающих окон по клику снаружи. */
 /* Hub v0.154: ромбы, цифры, скобки и центрированные звёздочки/точки. */
@@ -101,10 +102,10 @@
     Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
     orbit.querySelector('polygon').setAttribute('transform','rotate('+(-(window.HubView?.rotation||0)*180/Math.PI)+')');
     window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
-    handle.title = state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
-    line.setAttribute('aria-label',state.screenPin?'Повернуть ось вокруг центра экрана':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
+    handle.title = state.screenPin?'Тяни линию — зеркальный перенос пары; круглую ручку — поворот оси':state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
+    line.setAttribute('aria-label',state.screenPin?'Сдвинуть оригинал и отражение зеркально относительно неподвижной оси':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
-    turn.title = state.screenPin?'Тяни вокруг центра — поворот оси; к центру или от него — радиус ручки':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
+    turn.title = state.screenPin?'Начни вдоль оси — радиус; поперёк — поворот. Один жест — одно действие':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
@@ -223,12 +224,14 @@
     root.addEventListener('pointerdown', e => {
       if (e.button !== 0 || !frame) return;
       e.preventDefault(); e.stopPropagation();
-      const [mx,my]=window.HubView?(window.HubView.axisInverse||window.HubView.inverse)(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY];
-      if(!Number.isFinite(mx)||!Number.isFinite(my))return;
+      const source=state.screenPin&&e.target!==turn,ey=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
+      let inverse=(source?window.HubView?.captureInverse?.():window.HubView?.captureAxisInverse?.())||window.HubView?.captureInverse?.(),p=inverse?inverse(e.clientX,ey):[e.clientX,ey];
+      if(!p.every(Number.isFinite)){inverse=window.HubView?.captureAxisInverse?.();p=inverse?inverse(e.clientX,ey):p;}
+      const [mx,my]=p;if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved: false, radius:state.screenPin&&e.target===turn, handle: e.target === handle, turn: state.screenPin||!state.on||e.target === turn||state.axisRotate };
-      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureAxisInverse?.()||window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
+        moved:false,source,sourceX:0,sourceY:0,mode:null,radius0:Math.min(frame.width,frame.height)*state.orbitRadius,radius:state.screenPin&&e.target===turn,handle:e.target===handle,turn:!source&&(!state.on||e.target===turn||state.axisRotate) };
+      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=inverse;drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
@@ -238,8 +241,12 @@
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       if (!drag.moved && Math.hypot(dx, dy) < 3) return;
       drag.moved = true;
-      if(drag.radius)state.orbitRadius=Math.max(.02,Math.min(4,Math.hypot(mx-drag.cx,my-drag.cy)/Math.min(frame.width,frame.height)));
-      if (drag.turn) {
+      if(drag.radius){const radial=dx*Math.cos(drag.startAngle)+dy*Math.sin(drag.startAngle),tangent=-dx*Math.sin(drag.startAngle)+dy*Math.cos(drag.startAngle);
+        if(!drag.mode)drag.mode=Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
+        if(drag.mode==='radius'){state.orbitRadius=Math.max(.02,Math.min(4,(drag.radius0+radial)/Math.min(frame.width,frame.height)));changed();return;}
+      }
+      if(drag.source){window.HubView?.shiftSourceBy(dx-drag.sourceX,dy-drag.sourceY);drag.sourceX=dx;drag.sourceY=dy;}
+      else if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
         let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
         if(state.magnet)delta=snapAngle(drag.visibleAngle+delta)-drag.visibleAngle;
@@ -251,7 +258,7 @@
       if (!drag || drag.id !== e.pointerId) return;
       const done = drag; drag = null;update();
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
-      if (e.type === 'pointerup' && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
+      if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };
     root.addEventListener('pointerup', finish); root.addEventListener('pointercancel', finish);
     root.addEventListener('lostpointercapture', () => { if (drag) { drag = null; update(); save(); } });

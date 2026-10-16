@@ -1,3 +1,4 @@
+/* Hub v0.158: разрыв линии под прозрачным бегунком. */
 /* Hub v0.157: ручка оси использует экранную плоскость, без обратного растяжения 3D. */
 /* Hub v0.156: доступная вне панели мигающая кнопка пуска/паузы 3D. */
 /* Hub v0.155: отдельные 3D-фазы оригинала и отражения, прямой угол и заморозка оригинала. */
@@ -50,7 +51,7 @@
   function originalCenter(){const c=sourceCenter||center(),sh=sourceShift();return [c[0]+sh[0],c[1]+sh[1]];}
   const ratePosition=rate=>rate>0?1+100*(Math.log10(Math.max(.01,rate))+2):0;
   const positionRate=pos=>pos<=0?0:Number((10**((pos-1)/100-2)).toPrecision(5));
-  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate);autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+rate+' об/с; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';autoButton.style.left=(12+(78-24)*pos/601)+'px';autoRange.value=pos;autoRange.setAttribute('aria-valuetext',rate+' об/с');if(document.activeElement!==autoNumber)autoNumber.value=rate;autoValue.textContent=rate+' об/с';for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
+  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate);autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+rate+' об/с; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';const thumbX=(12+(78-24)*pos/601)+'px';autoButton.style.left=thumbX;autoTrack.style.setProperty?.('--thumb-x',thumbX);autoRange.value=pos;autoRange.setAttribute('aria-valuetext',rate+' об/с');if(document.activeElement!==autoNumber)autoNumber.value=rate;autoValue.textContent=rate+' об/с';for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
 
   const magnetic=()=>window.HubMirror?.state.magnet===true;
   const snappedRotation=a=>{const offset=(window.HubMirror?.state.angle||0)*180/Math.PI;return Math.round((a+offset)/15)*15-offset;};
