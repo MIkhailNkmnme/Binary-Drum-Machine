@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.133. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.134. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.133</title>
+<title>Zerkalius Маятник — v0.134</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=133">
+<link rel="stylesheet" href="mayatnik-menu.css?v=134">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.133</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.134</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1845,7 +1845,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // будущая вершина p, только если |c − p| ≤ r. Будущие вершины идут сплошными рядами; от края ряда, за которым уже стоят прошлые
   // вершины, вниз под 45° — линия c = p ± r до встречи с линией от соседнего ряда. Между линиями поле застыло. Отрезки — в клетках окна.
   // v0.127: вершины построения — прошлые (уже поставлены) и будущие, сдвигом от якоря
-  function fixApexes(){const T=total(),past=[],fut=[];
+  function fixApexes(extra=0){const T=total()+extra,past=[],fut=[];   // extra — вершины после конца построения (для линий)
     if(pairOn()){past.push(0);for(let j=0;j<T;j++)(j<k?past:fut).push(-j-1,j+1);}
     else for(let j=0;j<T;j++)(j<k?past:fut).push(MAYATNIK.offset(st.mode,j));
     return {past,fut};}
@@ -1856,8 +1856,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return (r,c)=>{const d=c-geo.anchor;for(const[a,b]of runs){const dist=d<a?a-d:d>b?d-b:0;if(dist<=r)return false;}return true;};}
   function fixSegments(){
     if(st.fixLines===false||!geo||!f||rombP()>=0||st.mode==='one')return [];
-    const T=total();if(k<=0||k>=T)return [];
-    const {past,fut}=fixApexes();
+    const T=total();if(k<=0)return [];
+    const {past,fut}=fixApexes(k>=T?2:0);   // v0.134: построение закончено — линии от следующих вершин, как если бы оно шло дальше
     const P=new Set(fut),lo=Math.min(...past),hi=Math.max(...past),sorted=[...P].sort((a,b)=>a-b),segs=[],H=Math.min(VH,st.rows);
     for(const p of sorted){
       if(!P.has(p+1)&&hi>p){const q=sorted.find(v=>v>p),R=Math.min(H-1,q==null?H-1:Math.floor((q-p)/2));segs.push([geo.anchor+p-VX,0,geo.anchor+p+R-VX,R]);}
@@ -2431,6 +2431,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=133"></script>
+<script src="mayatnik-menu.js?v=134"></script>
 </body>
 </html>
