@@ -1,3 +1,4 @@
+/* Hub v0.154: при закреплённом центре пустота вращает поле, биты — фигуру относительно оси. */
 /* Hub v0.153: координата неподвижного экранного центра для тестовой оси. */
 /* Hub v0.151: дискретное вращение с магнитом без потери дробной фазы. */
 /* Hub v0.149: угол под скоростью; пауза сохраняет бегунок, ноль сбрасывает угол. */
@@ -101,8 +102,32 @@
     window.addEventListener('pagehide',stopAuto);
     document.body.append(zoomBox);
     document.addEventListener('wheel',e=>{if(e.target.closest('.hub,.hubMirrorSettings,#hubZoom,#hubRec,#hubPNG,#hubLogoCv,#hubLogoBox'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return;e.preventDefault();zoom(Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.002),e.clientX,y);},{passive:false});
-    const beginDrag=(e,requireHit=false)=>{if((requireHit&&!state.unlocked)||e.button!==0||e.target.closest('.hub,.hubMirrorSettings,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return false;const cursor=inverse(e.clientX,y);if(!cursor.every(Number.isFinite))return false;const hit=window.HubMirror.hit(...cursor);if(!state.unlocked&&(hit.source||hit.mirror||e.target.closest('.hubNoteCell')))return false;if(requireHit&&!hit.source&&!hit.mirror)return false;e.stopPropagation();const start=state.pan.slice(),x=e.clientX,sy=e.clientY;let moved=false;
-      const move=ev=>{if(ev.pointerId!==e.pointerId)return;if(Math.hypot(ev.clientX-x,ev.clientY-sy)>3)moved=true;if(moved){state.pan=[start[0]+ev.clientX-x,start[1]+ev.clientY-sy];changed();}};
+    const beginDrag=(e,requireHit=false)=>{
+      const pinned=window.HubMirror?.state.screenPin===true;
+      if((requireHit&&!state.unlocked&&!pinned)||e.button!==0||e.target.closest('.hub,.hubMirrorSettings,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
+      const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return false;
+      const cursor=inverse(e.clientX,y);if(!cursor.every(Number.isFinite))return false;
+      const hit=window.HubMirror.hit(...cursor),onBits=hit.source||hit.mirror;
+      if(!pinned&&!state.unlocked&&(onBits||e.target.closest('.hubNoteCell')))return false;if(requireHit&&!onBits)return false;
+      e.stopPropagation();const start=state.pan.slice(),x=e.clientX,sy=e.clientY,cx=innerWidth/2,cy=innerHeight/2;
+      let moved=false,lastAngle=Math.atan2(sy-cy,x-cx),travel=0,applied=0;
+      // The reflection is painted above the original: in an overlap it receives the drag.
+      const direction=pinned&&onBits&&hit.mirror?-1:1;
+      const move=ev=>{if(ev.pointerId!==e.pointerId)return;
+        if(!moved&&Math.hypot(ev.clientX-x,ev.clientY-sy)>3){moved=true;if(pinned){stopAuto();window.HubMirror.stopRotation?.();}}
+        if(!moved)return;
+        if(pinned){
+          if(Math.hypot(ev.clientX-cx,ev.clientY-cy)<12)return;
+          const angle=Math.atan2(ev.clientY-cy,ev.clientX-cx);let step=angle-lastAngle;
+          if(step>Math.PI)step-=2*Math.PI;else if(step<-Math.PI)step+=2*Math.PI;
+          lastAngle=angle;travel+=step;
+          const wanted=direction*(magnetic()?Math.round(travel/(Math.PI/12))*(Math.PI/12):travel),delta=wanted-applied;
+          if(Math.abs(delta)<1e-12)return;
+          const pivot=screenCenterAnchor();
+          if(onBits)window.HubMirror.counterRotateView(delta);
+          rotateAround(delta,...pivot);applied=wanted;
+        }else{state.pan=[start[0]+ev.clientX-x,start[1]+ev.clientY-sy];changed();}
+      };
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);if(moved){document.addEventListener('click',swallow,{capture:true,once:true});}};
       const swallow=ev=>{ev.preventDefault();ev.stopImmediatePropagation();};document.addEventListener('pointermove',move);document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
       return true;

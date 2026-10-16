@@ -247,3 +247,26 @@ test('screen-pinned axis stays at viewport center through camera changes, includ
   assert.notDeepEqual(m.position(),before);
  }
 });
+
+
+test('pinned empty drag rotates the whole field and axis around viewport center',()=>{
+ const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.screenPin=true;m.syncCenter();m.hit=()=>({source:false,mirror:false});
+ const p=screenPoint(v,800,400),axis=m.state.angle+v.rotation;
+ f.emit('pointerdown',{target:{closest:()=>null},button:0,pointerId:4,clientX:800,clientY:400,stopPropagation(){}});
+ f.emit('pointermove',{pointerId:4,clientX:600,clientY:600});
+ near(screenPoint(v,800,400),[600-(p[1]-400),400+(p[0]-600)]);
+ assert.ok(Math.abs(m.state.angle+v.rotation-axis-Math.PI/2)<1e-10);
+ near(screenPoint(v,300+900*m.state.x,800*m.state.y),[600,400]);
+});
+test('pinned drag of either copy rotates it under the pointer and its twin oppositely with axis fixed',()=>{
+ for(const reflected of [false,true])for(const magnetic of [false,true]){
+  const f=fixture({zoom:1.6,angle:30,pan:[70,-40]}),m=realMirror(f),v=f.window.HubView;m.state.screenPin=true;m.state.magnet=magnetic;m.syncCenter();m.hit=()=>({source:!reflected,mirror:reflected});
+  const p=[800,420],orig=screenPoint(v,...p),copy=screenPoint(v,...m.point(...p,false)),axis=m.state.angle+v.rotation;
+  assert.equal(v.grabBits({target:{closest:()=>null},button:0,pointerId:1,clientX:800,clientY:400,stopPropagation(){}},true),true);
+  f.emit('pointermove',{pointerId:1,clientX:600,clientY:600});
+  const direction=reflected?-1:1,rot=(p,d)=>[600-d*(p[1]-400),400+d*(p[0]-600)];
+  near(screenPoint(v,...p),rot(orig,direction));near(screenPoint(v,...m.point(...p,false)),rot(copy,-direction));
+  assert.ok(Math.abs(Math.sin(m.state.angle+v.rotation-axis))<1e-10);
+  near(screenPoint(v,300+900*m.state.x,800*m.state.y),[600,400]);
+ }
+});

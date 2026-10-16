@@ -1,3 +1,4 @@
+/* Hub v0.154: ромбы, цифры, скобки и центрированные звёздочки/точки. */
 /* Hub v0.153: тестовая фиксация конца оси в центре экрана. */
 /* Hub v0.152: палитра поля задаёт цвета кнопок; по умолчанию Лёд · огонь. */
 /* Hub v0.151: магнит ограничивает ручное и автоматическое вращение шагами 15°. */
@@ -35,12 +36,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:false, orbitRadius:.22, bitView:'rhombs', zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;
+      state.on = saved.on !== false;state.screenPin=saved.screenPin===true;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(.02,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','stars'].includes(saved.bitView))state.bitView=saved.bitView;
       state.trace = saved.trace === true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
@@ -81,7 +82,7 @@
   const update = () => {
     lockCenter();
     if (!root || !frame) return;
-    const px=frame.width*state.x, py=frame.height*state.y, radius=Math.min(frame.width,frame.height)*.22;
+    const px=frame.width*state.x, py=frame.height*state.y, radius=Math.min(frame.width,frame.height)*state.orbitRadius;
     const mobile = matchMedia('(max-width: 1100px)').matches;
     const corners=[[0,0],[frame.left+frame.width,0],[0,frame.height],[frame.left+frame.width,frame.height]].map(p=>window.HubView?.inverse(...p)||p).filter(p=>p.every(Number.isFinite));
     const length=Math.max(Math.hypot(frame.width,frame.height),...corners.map(p=>Math.hypot(p[0]-frame.left-px,p[1]-py)))+40;
@@ -101,7 +102,7 @@
     handle.title = state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.screenPin?'Повернуть ось вокруг центра экрана':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
-    turn.title = state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
+    turn.title = state.screenPin?'Тяни вокруг центра — поворот оси; к центру или от него — радиус ручки':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку или крути колесо';
   };
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
@@ -129,6 +130,9 @@
     }
     pattern.value = state.pattern; patternLabel.className='hubRhomb';patternLabel.title='Узор: Хоррориус (кадр маятника) / исходный / Серпинский';patternLabel.append(pattern); settings.append(patternLabel);
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
+    const viewLabel=document.createElement('label'),bitView=document.createElement('select');viewLabel.className='hubRhomb hubBitView';viewLabel.title='Вид битов: ромбы с цифрами / только цифры / скобки / звёздочки и точки';bitView.setAttribute('aria-label','Вид битов');
+    for(const [value,text] of [['rhombs','◇01'],['digits','01'],['brackets',')()'],['stars','*·']]){const option=document.createElement('option');option.value=value;option.textContent=text;bitView.append(option);}
+    bitView.value=state.bitView;bitView.onchange=()=>{state.bitView=bitView.value;changed();save();};viewLabel.append(bitView);settings.append(viewLabel);
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
@@ -218,7 +222,7 @@
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
-        moved: false, handle: e.target === handle, turn: state.screenPin||!state.on||e.target === turn||state.axisRotate };
+        moved: false, radius:state.screenPin&&e.target===turn, handle: e.target === handle, turn: state.screenPin||!state.on||e.target === turn||state.axisRotate };
       drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
       root.setPointerCapture(e.pointerId);update();
     });
@@ -229,6 +233,7 @@
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       if (!drag.moved && Math.hypot(dx, dy) < 3) return;
       drag.moved = true;
+      if(drag.radius)state.orbitRadius=Math.max(.02,Math.min(4,Math.hypot(mx-drag.cx,my-drag.cy)/Math.min(frame.width,frame.height)));
       if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
         resumeSpin=false;stopSpin();let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
@@ -262,8 +267,8 @@
     update();
   }
   const api = window.HubMirror = {
-    state, syncCenter:update, rotateBy:rotate, get revision() { return revision; },
-    home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
+    state, syncCenter:update, rotateBy:rotate, stopRotation:stopSpin, counterRotateView(delta){state.angle=turnAngle(state.angle-delta);save();}, get revision() { return revision; },
+    home(){stopSpin();resumeSpin=false;Object.assign(state,{x:.5,y:.5,orbitRadius:.22,angle:state.magnet?snapAngle(AX0):AX0,autoCenter:true});changed();save();},
     // v0.126: ось по умолчанию — через середину треугольника (зовёт отрисовка хаба, когда знает, где он)
     centerOn(x,y){if(!frame||!state.autoCenter||state.screenPin)return;state.x=clamp((x-frame.left)/frame.width);state.y=clamp(y/frame.height);state.autoCenter=false;save();requestAnimationFrame(changed);},
     setBitCenters(points){bitCenters=points;},
@@ -271,6 +276,21 @@
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
     hit(x,y){let original=false,mirror=false;const read=(canvas,px,py)=>{const sx=canvas.width/(frame.left+frame.width),sy=canvas.height/frame.height,ix=Math.floor(px*sx),iy=Math.floor(py*sy);return ix>=0&&iy>=0&&ix<canvas.width&&iy<canvas.height&&canvas.getContext('2d').getImageData(ix,iy,1,1).data[3]>2;};if(!frame)return {source:false,mirror:false};const reflected=this.point(x,y,false),shift=window.HubView?.sourceShift()||[0,0];for(const canvas of liveSources){const image=buffers.get(canvas);if(!image)continue;original||=read(image,x-shift[0],y-shift[1]);if(reflected)mirror||=read(image,reflected[0]-shift[0],reflected[1]-shift[1]);}return {source:original,mirror};},
     colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
+    symbolsOnly(){return state.bitView!=='rhombs';},
+    drawSymbol(g,bit,x,y,size){
+      if(!this.digitVisible(bit))return;
+      g.save();g.translate(x,y);g.rotate(this.bitAngle(bit));
+      if(state.bitView==='stars'){
+        if(bit==='0'){g.beginPath();g.arc(0,0,Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
+        else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
+      }else{
+        const text=state.bitView==='brackets'?(bit==='1'?')':'()'):bit;
+        g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';
+        const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;
+        g.fillText(text,(l-r)/2,(a-d)/2);
+      }
+      g.restore();
+    },
     digitVisible(bit){return !(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
