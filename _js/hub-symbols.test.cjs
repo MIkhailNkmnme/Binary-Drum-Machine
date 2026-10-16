@@ -1,7 +1,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-function mirror(saved={},window={}){const c={window,document:{readyState:'loading',addEventListener(){}},localStorage:{getItem:()=>JSON.stringify(saved),setItem(){}}};vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),c);return c.window.HubMirror;}
+function mirror(saved={},window={}){window.dispatchEvent??=()=>{};const c={window,Event:class{},document:{readyState:'loading',addEventListener(){},querySelector(){return null;}},localStorage:{getItem:()=>JSON.stringify(saved),setItem(){}}};vm.runInNewContext(fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),c);return c.window.HubMirror;}
 function canvas(){const calls=[];const g={fillStyle:'#8fd3ff',save(){},restore(){},translate(...v){calls.push(['translate',...v]);},rotate(...v){calls.push(['rotate',...v]);},measureText(){return {width:12,actualBoundingBoxLeft:1,actualBoundingBoxRight:9,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2};},fillText(...v){calls.push(['text',...v]);},beginPath(){},arc(...v){calls.push(['arc',...v]);},moveTo(...v){calls.push(['move',...v]);},lineTo(...v){calls.push(['line',...v]);},fill(){},stroke(){}};return {g,calls};}
 test('view selection survives reload and invalid values fall back to rhombs',()=>{for(const mode of ['rhombs','digits','brackets','parentheses','stars']){const m=mirror({bitView:mode});assert.equal(m.state.bitView,mode);assert.equal(m.symbolsOnly(),mode!=='rhombs');}assert.equal(mirror({bitView:'invalid'}).state.bitView,'rhombs');});
 test('digits and bracket ink are centered and use the bit rotation',()=>{for(const [mode,bit,text] of [['digits','0','0'],['digits','1','1'],['brackets','0','()'],['brackets','1',')'],['parentheses','0','('],['parentheses','1',')']]){const m=mirror({bitView:mode,zero:30,one:-45}),{g,calls}=canvas();m.drawSymbol(g,bit,100,200,14);assert.deepEqual(calls[0],['translate',100,200]);assert.ok(Math.abs(calls[1][1]-(bit==='0'?Math.PI/6:-Math.PI/4))<1e-12);assert.deepEqual(calls[2],['text',text,-4,3]);}});
@@ -51,4 +51,22 @@ test('zero opacity and fold setting survive reload',()=>{const m=mirror({symAlph
 
 test('bit identification includes transparent glyph centers and distinguishes reflected zero and one',()=>{
  const m=mirror({bitView:'rhombs',hideZeroDigit:true,hideOneDigit:true,on:true,angle:Math.PI/2,x:.5,y:.5});m.place(0,200,200);m.setBitCenters([[50,50,'0'],[50,90,'1']],{width:20,height:40});assert.equal(m.bitAt(50,50),'0');assert.equal(m.bitAt(50,90),'1');assert.equal(m.bitAt(150,50,true),'0');assert.equal(m.bitAt(150,90,true),'1');assert.equal(m.bitAt(100,30),null);
+});
+
+test('rotation rays follow only the clicked bit and its selected plane',()=>{
+ for(const mode of ['stars','rhombs']){
+  const m=mirror({bitView:mode,on:true,angle:Math.PI/2}),out=canvas(),other=canvas();m.place(0,200,200);m.setBitCenters([[50,50,'1'],[60,70,'1'],[40,80,'0']],{width:20,height:32});
+  const hit=m.pickBit(150,50,true);assert.equal(hit.index,0);assert.equal(hit.mirror,true);m.selectRotationBit(hit);
+  m.drawRotationGuides(out.g,true);assert.equal(out.calls.length,0,'click alone does not show rotation rays');
+  m.tiltBit('1',5);m.drawRotationGuides(out.g,true);m.drawRotationGuides(other.g,false);
+  assert.equal(other.calls.length,0);assert.equal(out.calls.filter(c=>c[0]==='translate').length,1);
+  assert.equal(out.calls.filter(c=>c[0]==='line').length,mode==='stars'?6:8);assert.equal(out.g.globalAlpha,.3);assert.equal(out.g.lineWidth,.7);
+  m.clearRotationBit();const cleared=canvas();m.drawRotationGuides(cleared.g,true);assert.equal(cleared.calls.length,0);
+ }
+});
+test('bracket guides complete circles for all bits of the selected type',()=>{
+ for(const mode of ['brackets','parentheses']){
+  const m=mirror({bitView:mode,on:false});m.place(0,200,200);m.setBitCenters([[50,50,'0'],[60,70,'0'],[40,80,'1']],{width:20,height:32});m.selectRotationBit(m.pickBit(50,50));m.tiltBit('0',5);
+  const out=canvas();m.drawRotationGuides(out.g,false);assert.equal(out.calls.filter(c=>c[0]==='translate').length,2);assert.equal(out.calls.filter(c=>c[0]==='arc').length,mode==='brackets'?4:2);
+ }
 });

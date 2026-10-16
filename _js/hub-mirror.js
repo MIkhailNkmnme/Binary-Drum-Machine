@@ -61,7 +61,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null;
+  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -75,11 +75,27 @@
     spinRaf=0;if(!spinRunning){stopSpin();return;}
     if(spinTime&&!document.hidden){let delta=Math.max(0,time-spinTime)*state.spinSpeed*Math.PI/180/1000;
       if(state.magnet){const a=visibleAngle();spinRemainder+=delta;delta=snapAngle(a+spinRemainder)-a;spinRemainder-=delta;}else spinRemainder=0;
-      if(Math.abs(delta)>1e-12){turnField(delta);changed();}}
+      if(Math.abs(delta)>1e-12){turnField(delta);snapAxisPosition();changed();}}
     spinTime=time;spinRaf=requestAnimationFrame(spinTick);
   }
   function startSpin(){if(spinRunning)return;spinRemainder=0;spinRunning=true;spinTime=0;spinRaf=requestAnimationFrame(spinTick);syncSpin();}
-  function magneticPoint(x,y){let best=[x,y],distance=10/Math.max(.2,window.HubView?.scale||1);const shift=window.HubView?.sourceShift()||[0,0];for(const p of [[frame.left+frame.width/2,frame.height/2],...bitCenters.map(p=>[p[0]+shift[0],p[1]+shift[1]])]){const d=Math.hypot(x-p[0],y-p[1]);if(d<=distance){distance=d;best=p;}}return best;}
+  // Rows are projections in the direction of the current stroke. Snap to a
+  // bit/row coordinate or halfway between its two neighbouring coordinates.
+  function magneticPoint(x,y,direction=state.angle+Math.PI/2){
+    const co=Math.cos(direction),si=Math.sin(direction),u=x*co+y*si,shift=window.HubView?.sourceShift()||[0,0];
+    let lo=-Infinity,hi=Infinity;
+    for(const [px,py,bit] of bitCenters){if(bit!=='0'&&bit!=='1')continue;const v=(px+shift[0])*co+(py+shift[1])*si;if(v<=u)lo=Math.max(lo,v);if(v>=u)hi=Math.min(hi,v);}
+    let target=u,distance=10/Math.max(.2,window.HubView?.scale||1);
+    for(const v of [lo,hi,(lo+hi)/2])if(Number.isFinite(v)&&Math.abs(v-u)<=distance){distance=Math.abs(v-u);target=v;}
+    return [x+(target-u)*co,y+(target-u)*si];
+  }
+  function snapAxisPosition(){
+    if(!state.magnet||!frame||!state.on)return;
+    const c=center(),p=magneticPoint(...c);
+    if(state.screenPin)window.HubView?.shiftSourceBy(c[0]-p[0],c[1]-p[1]);
+    else moveAxis((p[0]-frame.left)/frame.width,p[1]/frame.height);
+  }
+
   const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map(),cutoutSprites=new Map(),lastBitScroll={0:5,1:5};
   function glyphOffset(g,text,size){
     const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
@@ -138,7 +154,7 @@
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
   function turnField(delta){if(state.on){state.angle=turnAngle(state.angle+delta);return;}lockCenter();if(frame&&window.HubView?.rotateAround)window.HubView.rotateAround(delta,...center());else state.angle=turnAngle(state.angle+delta);}
   function moveAxis(x,y){if(state.screenPin||!state.on){lockCenter();return;}state.x=clamp(x);state.y=clamp(y);}
-  const rotate = delta => { resumeSpin=false;stopSpin();if(state.magnet&&delta){delta=Math.sign(delta)*Math.max(Math.PI/12,Math.round(Math.abs(delta)/(Math.PI/12))*(Math.PI/12));delta=snapAngle(visibleAngle()+delta)-visibleAngle();}turnField(delta);changed();save(); };
+  const rotate = delta => { resumeSpin=false;stopSpin();if(state.magnet&&delta){delta=Math.sign(delta)*Math.max(Math.PI/12,Math.round(Math.abs(delta)/(Math.PI/12))*(Math.PI/12));delta=snapAngle(visibleAngle()+delta)-visibleAngle();}turnField(delta);snapAxisPosition();changed();save(); };
   function init() {
     viewport=document.createElement('div');viewport.id='hubMirrorViewport';
     root = document.createElement('div'); root.id = 'hubMirror';
@@ -250,7 +266,7 @@
       let on=false;try{on=localStorage.getItem('zerk_hub_tools')==='1';}catch(_){}set(on);
       document.addEventListener('pointerdown',e=>{if(!settings.contains(e.target)&&!open.contains(e.target))set(false);},true);
       open.addEventListener('click',e=>{e.stopPropagation();set(!settings.classList.contains('open'));});document.body.append(open);}
-    for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центр поля и центры битов'],['screenPin','◎\nцентр','Конец оси в центре экрана'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;if(key==='screenPin')b.classList.add('hubAxisScreenPin');b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet)turnField(snapAngle(visibleAngle())-visibleAngle());}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
+    for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центры битов и рядов, середины промежутков'],['screenPin','◎\nцентр','Конец оси в центре экрана'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;if(key==='screenPin')b.classList.add('hubAxisScreenPin');b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet){turnField(snapAngle(visibleAngle())-visibleAngle());snapAxisPosition();}}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     { const g=settings.querySelector('[aria-label^="Золото"]');if(g&&colorGroup){g.style.gridArea='gold';colorGroup.append(g);} }   // v0.141: ✦ — в группе «Цвета»
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
     spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать зеркало; без зеркала — оригинал вокруг центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать ось: зеркало или оригинал');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else startSpin();save();};spinControl.append(spinButton);
@@ -313,13 +329,15 @@
         if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
         if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.axisAngle+(signed<0?Math.PI:0));changed();showAxisHint(e,'along');return;}
       }
-      if(drag.source){const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si,tx=distance*co,ty=distance*si;window.HubView?.shiftSourceBy(tx-drag.sourceX,ty-drag.sourceY);drag.sourceX=tx;drag.sourceY=ty;}
+      if(drag.source){const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let dx=distance*co-drag.sourceX,dy=distance*si-drag.sourceY;
+        if(state.magnet&&!e.altKey){const c=center(),p=magneticPoint(c[0]-dx,c[1]-dy,a);dx=c[0]-p[0];dy=c[1]-p[1];}
+        window.HubView?.shiftSourceBy(dx,dy);drag.sourceX+=dx;drag.sourceY+=dy;}
       else if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
         let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
-        if(state.magnet)delta=snapAngle(drag.visibleAngle+delta)-drag.visibleAngle;
-        turnField(delta-drag.applied);drag.applied=delta;
-      } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
+        if(state.magnet&&!e.altKey)delta=snapAngle(drag.visibleAngle+delta)-drag.visibleAngle;
+        turnField(delta-drag.applied);drag.applied=delta;if(!e.altKey)snapAxisPosition();
+      } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y,a);moveAxis((x-frame.left)/frame.width,y/frame.height);}
       changed();
       if(drag.mode||drag.turn)showAxisHint(e,drag.mode==='radius'?'along':'across');
     });
@@ -367,15 +385,32 @@
     setBitCenters(points,cell=null){bitCenters=points;bitCell=cell;if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}},
     position(){return {x:state.x,y:state.y};},
     moveFrom(start,dx,dy){if(!frame)return;moveAxis(start.x+dx/frame.width,start.y+dy/frame.height);changed();save();},
-    bitAt(x,y,mirror=false){
+    bitAt(x,y,mirror=false){return this.pickBit(x,y,mirror)?.bit??null;},
+    pickBit(x,y,mirror=false){
       if(!frame||!bitCell||window.HubImage?.active)return null;
       if(mirror){if(!state.on)return null;const p=this.point(x,y,false);if(!p)return null;[x,y]=p;}
       const shift=window.HubView?.sourceShift()||[0,0];x-=shift[0];y-=shift[1];
-      for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return bit;}
+      for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return {bit,index:i,mirror};}
       return null;
     },
+    selectRotationBit(hit){rotationBit=hit;rotationGuide=false;},
+    clearRotationBit(){const visible=rotationGuide;rotationBit=null;rotationGuide=false;if(visible)changed();},
+    drawRotationGuides(g,mirror=false){
+      if(!rotationGuide||!rotationBit||!bitCell)return;
+      const arcs=state.bitView==='brackets'||state.bitView==='parentheses';
+      if(!arcs&&rotationBit.mirror!==mirror)return;
+      const chosen=rotationBit.bit,points=arcs?bitCenters.filter(p=>p[2]===chosen):[bitCenters[rotationBit.index]];
+      const a=bitCell.width*.45,b=bitCell.height*.45,size=Math.min(bitCell.width,bitCell.height)*.62,length=Math.max(a,b)*6;
+      g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.3;g.shadowBlur=0;g.lineWidth=.7/Math.max(.2,window.HubView?.scale||1);
+      for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen));g.beginPath();
+        if(arcs){const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
+        else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
+        else{const vertices=[[0,-b],[a,0],[0,b],[-a,0]];for(let i=0;i<4;i++){const p=vertices[i],q=vertices[(i+1)%4],d=Math.hypot(q[0]-p[0],q[1]-p[1]),x=(q[0]-p[0])/d*length,y=(q[1]-p[1])/d*length;g.moveTo(...p);g.lineTo(p[0]-x,p[1]-y);g.moveTo(...q);g.lineTo(q[0]+x,q[1]+y);}}
+        g.stroke();g.restore();
+      }g.restore();
+    },
     tiltBit(bit,delta=null){
-      if(bit!=='0'&&bit!=='1')return false;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
+      if(bit!=='0'&&bit!=='1')return false;rotationGuide=rotationBit?.bit===bit;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
       const key=bit==='0'?'zero':'one';state[key]=Math.max(-60,Math.min(60,state[key]+lastBitScroll[bit]));
       const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}changed();save();return true;
     },

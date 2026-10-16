@@ -32,6 +32,11 @@
   function inverse(x,y,mirror=false){return inverseWith(matrix(mirror),x,y);}
   function hitScreen(x,y){const original=inverse(x,y),reflected=inverse(x,y,true),hit=window.HubMirror.hit;return {source:original.every(Number.isFinite)&&hit.call(window.HubMirror,...original).source,mirror:reflected.every(Number.isFinite)&&hit.call(window.HubMirror,...reflected).mirror};}
   function bitScreen(x,y){const mirror=window.HubMirror;if(!mirror?.bitAt)return null;const reflected=inverse(x,y,true),source=inverse(x,y);return (reflected.every(Number.isFinite)?mirror.bitAt(...reflected,true):null)??(source.every(Number.isFinite)?mirror.bitAt(...source):null);}
+  function selectBitScreen(x,y){
+    const mirror=window.HubMirror;if(!mirror?.pickBit)return;
+    const reflected=inverse(x,y,true),source=inverse(x,y);
+    mirror.selectRotationBit((reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null));
+  }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
   // The axis anchor is unchanged by the 3D flip about itself, even edge-on.
   function screenCenterAnchor(){const [cx,cy]=center(),a=state.angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),x=innerWidth/2-cx-state.pan[0],y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0)-cy-state.pan[1];return [cx+(c*x+s*y)/state.zoom,cy+(-s*x+c*y)/state.zoom];}
@@ -109,6 +114,10 @@
     // v0.127: vector.extra — слой поверх в координатах поля (после сдвига и зеркала), только под камерой: «заворот» внутрь треугольника
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
     if(vector?.screen){g.save();g.setTransform(k,0,0,k,-left*k,0);vector.screen(g);g.restore();}
+    if(!view&&window.HubMirror?.drawRotationGuides)for(const mirror of window.HubMirror.state.on?[false,true]:[false]){
+      const p=this.projectBit(0,0,mirror),x=this.projectBit(1,0,mirror),y=this.projectBit(0,1,mirror);if(!p)continue;
+      g.save();g.setTransform(k,0,0,k,0,0);g.transform(...this.symmetryCamera());g.transform(x[0]-p[0],x[1]-p[1],y[0]-p[0],y[1]-p[1],p[0],p[1]);window.HubMirror.drawRotationGuides(g,mirror);g.restore();
+    }
   }};
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};
@@ -152,14 +161,14 @@
     // A click starts a new wheel interaction; moving geometry must not select another tool.
     let wheelAction=null,wheelBit=null,bitClick=null;
     document.addEventListener('pointerdown',e=>{
-      wheelAction=null;wheelBit=null;bitClick=null;
+      wheelAction=null;wheelBit=null;bitClick=null;window.HubMirror?.clearRotationBit?.();
       if(e.button!==0||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button,#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox'))return;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
       if(frame&&(e.clientX<frame.left||y>frame.height))return;
       const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
     },true);
     document.addEventListener('pointermove',e=>{if(bitClick&&bitClick.id===e.pointerId&&Math.hypot(e.clientX-bitClick.x,e.clientY-bitClick.y)>3)bitClick.moved=true;},true);
-    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved)wheelBit=bitClick.bit;bitClick=null;}},true);
+    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBit=bitClick.bit;selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0));}bitClick=null;}},true);
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBit=null;},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
@@ -210,7 +219,7 @@
           rotateAround(delta,...pivot);applied=wanted;
         }else{state.pan=[start[0]+ev.clientX-x,start[1]+ev.clientY-sy];changed();}
       };
-      const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);if(!moved&&e.button===1&&ev.type==='pointerup'){if(selectedBit!==null)window.HubMirror.tiltBit(selectedBit);else repeatScrollRotation();}if(moved){document.addEventListener('click',swallow,{capture:true,once:true});}};
+      const end=ev=>{if(ev.pointerId!==e.pointerId)return;document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);if(!moved&&e.button===1&&ev.type==='pointerup'){if(selectedBit!==null){selectBitScreen(e.clientX,y);window.HubMirror.tiltBit(selectedBit);}else repeatScrollRotation();}if(moved){document.addEventListener('click',swallow,{capture:true,once:true});}};
       const swallow=ev=>{ev.preventDefault();ev.stopImmediatePropagation();};document.addEventListener('pointermove',move);document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
       return true;
     };window.HubView.grabBits=beginDrag;document.addEventListener('pointerdown',e=>beginDrag(e));

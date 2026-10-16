@@ -28,3 +28,20 @@ test('worker queue keeps only newest geometry and never returns a stale result',
  workers[0].onmessage({data:{key:'a',result:{segments:['old']}}});assert.equal(sent[1].key,'c');assert.equal(api.request('c',[],{},{}),null);
  workers[0].onmessage({data:{key:'c',result:{segments:['new']}}});assert.equal(api.request('c',[],{},{}).segments[0],'new');assert.equal(events.length,2);
 });
+test('projected rows outside a local motif do not interrupt its consecutive rows',()=>{
+ const points=[];for(let y=0;y<4;y++)for(const x of [-2,-1,1,2])points.push([x,y,String(Math.abs(x)%2)]);
+ const extra=[[10,.5,'0'],[10,1.5,'0'],[10,2.5,'0']];
+ for(const a of [0,.37,1.12]){
+  const rotate=([x,y,b])=>[x*Math.cos(a)-y*Math.sin(a)+17,x*Math.sin(a)+y*Math.cos(a)-9,b];
+  const result=analyze([...points,...extra].map(rotate),{angles:[Math.PI/2+a],minPairs:2,minRows:4});
+  assert.equal(result.segments.length,1);assert.equal(result.segments[0].rows,4);assert.equal(result.matched.length,16);
+  assert.equal(analyze([...points,...extra,[1,.5,'1']].map(rotate),{angles:[Math.PI/2+a],minPairs:2,minRows:4}).segments.length,0,'an unmatched bit inside the motif must still interrupt it');
+ }
+});
+test('combined matched colours retain the addresses of both source layers',()=>{
+ const rows=Array(4).fill('0110'),g={origin:[0,0],dw:1,dh:2,transforms:[[1,0,0,1,0,0],reflection(Math.PI/2)],axis:Math.PI/2,parallel:true};
+ const r=compute(rows,g,{minRows:4,minPairs:2});assert.equal(r.matched,16);
+ assert.deepEqual(r.colors[0],r.colors[1]);assert.ok(r.colors[0].every(row=>row.every(Boolean)));
+ g.transforms[0]=[0,0,0,0,0,0];const edge=compute(rows,g,{minRows:4,minPairs:2});
+ assert.ok(edge.segments.length);assert.ok(edge.colors[0].every(row=>row.every(c=>c===null)));assert.ok(edge.colors[1].every(row=>row.every(Boolean)));
+});

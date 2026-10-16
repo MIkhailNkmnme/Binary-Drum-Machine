@@ -1,13 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-function fixture(){
+function fixture(points=[]){
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf("function showAxisHint("),end=source.indexOf("root.addEventListener('contextmenu'",start),events={};
  const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={getBoundingClientRect:()=>({x:840,y:390,width:20,height:20})},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
  const context={state,turn,handle,root,line:{},tail:{},document:{},frame:{left:300,width:900,height:800},drag:null,dragHint:{hidden:true,dataset:{},style:{}},resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
- window:{HubMirror:{},HubView:{captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,repeatScrollRotation:()=>shift.push("repeat"),shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
- stopSpin(){},update(){},changed(){},save(){},rotate(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
+ bitCenters:points,center:()=>[300+900*state.x,800*state.y],moveAxis:(x,y)=>{state.x=x;state.y=y;},window:{HubMirror:{},HubView:{scale:1,sourceShift:()=>shift,captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,repeatScrollRotation:()=>shift.push("repeat"),shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
+ stopSpin(){},update(){},changed(){},save(){},rotate(){},snapAxisPosition(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
+ vm.runInNewContext(source.slice(source.indexOf('  function magneticPoint('),source.indexOf('  const buffers')),context);
  vm.runInNewContext(source.slice(start,end),context);
- const emit=(type,x,y,target=turn)=>events[type]({type,pointerId:1,button:0,target,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});
- return {state,turn,handle,line:context.line,tail:context.tail,grab:context.window.HubMirror.grabAxis,shift,emit,hint:context.dragHint};
+ const emit=(type,x,y,target=turn,extra={})=>events[type]({...extra,type,pointerId:1,button:0,target,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});
+ return {state,turn,handle,line:context.line,tail:context.tail,grab:context.window.HubMirror.grabAxis,shift,emit,hint:context.dragHint,snap:context.magneticPoint};
 }
 test('handle can switch radius to angle in one hold, without mixing actions',()=>{
  const f=fixture();f.emit('pointerdown',926,400);f.emit('pointermove',950,403);
@@ -84,4 +85,26 @@ test('primary handle click repeats wheel rotation once; drag and cancellation do
  const f=fixture();f.emit('pointerdown',926,400);f.emit('pointerup',926,400);assert.deepEqual(f.shift,[0,0,'repeat']);
  f.emit('pointerdown',926,400);f.emit('pointermove',950,400);f.emit('pointerup',950,400);assert.deepEqual(f.shift,[0,0,'repeat']);
  f.emit('pointerdown',950,400);f.emit('pointercancel',950,400);assert.deepEqual(f.shift,[0,0,'repeat']);
+});
+
+test('magnetic axis snaps to rows and half gaps without changing the along coordinate',()=>{
+ const f=fixture([370,390,410,430].map(y=>[750,y,'1']));f.state.screenPin=false;f.state.magnet=true;
+ f.emit('pointerdown',850,400,f.line);f.emit('pointermove',850,407,f.line);
+ assert.ok(Math.abs(f.state.y*800-410)<1e-10);assert.equal(f.state.x*900+300,750);
+ f.emit('pointermove',850,417,f.line);assert.ok(Math.abs(f.state.y*800-420)<1e-10);
+ f.emit('pointermove',850,424,f.line,{altKey:true});assert.ok(Math.abs(f.state.y*800-424)<1e-10);
+});
+test('pinned magnetic drag moves rows through and halfway across the fixed axis',()=>{
+ const f=fixture([370,390,410,430].map(y=>[750,y,'1']));f.state.magnet=true;
+ f.emit('pointerdown',850,400,f.line);f.emit('pointermove',850,407,f.line);assert.deepEqual(f.shift,[0,10]);
+ f.emit('pointermove',850,417,f.line);assert.deepEqual(f.shift,[0,20]);
+ assert.deepEqual([f.state.x,f.state.y],[.5,.5]);
+ f.emit('pointermove',850,424,f.line,{altKey:true});assert.ok(Math.abs(f.shift[0])<1e-10);assert.equal(f.shift[1],24);
+});
+test('magnet uses projected rows after rotation and leaves distant points alone',()=>{
+ const a=.71,co=Math.cos(a),si=Math.sin(a),p=u=>[u*co-17*si,u*si+17*co,'0'];
+ const f=fixture([p(0),p(20),p(40)]);
+ for(const [u,want] of [[8,10],[18,20],[31,30],[65,65]]){
+  const got=f.snap(...p(u).slice(0,2),a);assert.ok(Math.abs(got[0]-(want*co-17*si))<1e-10);assert.ok(Math.abs(got[1]-(want*si+17*co))<1e-10);
+ }
 });
