@@ -380,3 +380,18 @@ test('frame rate display and exact input use measured cadence without changing s
   assert.equal(Number(rate.value),1.25*hz/30);assert.equal(f.state().spinRate,1.25*hz);
  }
 });
+
+
+test('pinned zoom scales both figures toward the axis endpoint down to the minimum without separating them',()=>{
+ for(const flip of [0,67,90]){
+  const f=fixture({zoom:1.7,angle:123,pan:[47,-31],sourcePan:[.1,.2],flip}),m=realMirror(f),v=f.window.HubView;
+  m.state.screenPin=true;m.syncCenter();
+  const p=[730,510],original=screenPoint(v,...p),copy=screenPoint(v,...m.point(...p,false)),z=v.scale;
+  for(let i=0;i<25;i++){
+   f.button('Уменьшить масштаб холста').onclick();const k=v.scale/z;
+   near(screenPoint(v,...p),[600+(original[0]-600)*k,400+(original[1]-400)*k]);
+   near(screenPoint(v,...m.point(...p,false)),[600+(copy[0]-600)*k,400+(copy[1]-400)*k]);
+  }
+  assert.equal(v.scale,.2);const before=f.state();f.button('Уменьшить масштаб холста').onclick();assert.deepEqual(f.state(),before);
+ }
+});

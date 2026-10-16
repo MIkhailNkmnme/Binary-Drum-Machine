@@ -46,7 +46,7 @@
   function advanceFlip(delta){if(!state.freezeOriginal)state.flip=(state.flip+delta+360)%360;state.mirrorFlip=(state.mirrorFlip+delta+360)%360;}
   function stopFlip(){flipRunning=false;flipTime=0;cancelAnimationFrame(flipRaf);flipRaf=0;}
   let fieldPaused=false,resumeFlip=false;
-  function zoom(factor,x,y){const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor)),ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed();}
+  function zoom(factor,x,y){const before=state.zoom,next=Math.max(.2,Math.min(6,before*factor));if(next===before)return;if(window.HubMirror?.state.screenPin){x=innerWidth/2;y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0);}const ratio=next/before,[cx,cy]=center();state.pan=[x-cx-(x-cx-state.pan[0])*ratio,y-cy-(y-cy-state.pan[1])*ratio];state.zoom=next;changed();}
   function home(){flipQuickShown=false;autoZero=true;stopAuto();stopFlip();fieldPaused=false;resumeFlip=resumeAuto=false;Object.assign(state,{zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,pan:[0,0],sourcePan:[0,0]});window.HubMirror.home();changed();}
   function originalCenter(){const c=sourceCenter||center(),sh=sourceShift();return [c[0]+sh[0],c[1]+sh[1]];}
   const ratePosition=rate=>rate>0?1+100*(Math.log10(Math.max(.01,rate))+2):0;
