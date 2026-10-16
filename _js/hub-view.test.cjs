@@ -125,15 +125,14 @@ test('thousands of revolutions use elapsed time and fractional phase, not thousa
 });
 
 
-test('dragging overlapping original and reflection moves only the mirror',()=>{
+test('dragging overlapping original and reflection moves the complete field with its axis',()=>{
   const f=fixture({unlocked:true});realMirror(f);
   f.window.HubMirror.hit=()=>({source:true,mirror:true});
   const event={target:{closest:()=>null},button:0,pointerId:1,clientX:750,clientY:400,stopPropagation(){}};
   assert.equal(f.window.HubView.grabBits(event,true),true);
   f.emit('pointermove',{pointerId:1,clientX:790,clientY:420});
   assert.deepEqual(f.state().sourcePan,[0,0]);
-  assert.ok(Math.abs(f.window.HubMirror.state.x-(.5+40/900))<1e-10);
-  assert.ok(Math.abs(f.window.HubMirror.state.y-(.5+20/800))<1e-10);
+  assert.deepEqual(f.state().pan,[40,20]);assert.equal(f.window.HubMirror.state.x,.5);assert.equal(f.window.HubMirror.state.y,.5);
 });
 
 
@@ -182,4 +181,54 @@ test('pause preserves selected speed and angle, resume continues from that angle
  f.tick(1000);assert.equal(f.state().angle,90);
  toggle.onclick();f.tick(1100);f.tick(1350);assert.equal(f.window.HubView.rotation*180/Math.PI,180);
  range.value=0;range.oninput();assert.equal(f.state().angle,0);assert.equal(Number(range.value),0);
+});
+
+
+test('magnetic auto rotation accumulates substeps and keeps the source centroid fixed',()=>{
+ const f=fixture({spinRate:.01,sourcePan:[.1,.2]}),view=f.window.HubView;
+ f.window.HubMirror.state={magnet:true,angle:0};view.setSourceCenter(680,480);
+ const before=screenPoint(view,770,640);f.button('Автокручение треугольника').onclick();
+ f.tick(0);for(let time=16;time<=1000;time+=16){f.tick(time);assert.equal(view.rotation,0);}
+ f.tick(2200);assert.ok(Math.abs(view.rotation*180/Math.PI-15)<1e-8);near(screenPoint(view,770,640),before);
+ f.window.HubMirror.state.magnet=false;f.tick(2300);assert.ok(view.rotation*180/Math.PI>15&&view.rotation*180/Math.PI<16);
+});
+test('magnetic field rotation uses the visible manual axis grid, including high speed',()=>{
+ const f=fixture({spinRate:10000}),v=f.window.HubView;f.window.HubMirror.state={magnet:true,angle:Math.PI/6};
+ f.button('Повернуть поле на −15°').onclick();assert.equal(v.rotation*180/Math.PI,345);
+ f.button('Автокручение треугольника').onclick();f.tick(0);
+ for(const time of [16.025,32.037,48.099,64.101]){f.tick(time);const degrees=v.rotation*180/Math.PI+30;assert.ok(Math.abs(degrees/15-Math.round(degrees/15))<1e-8);}
+});
+test('magnetic mirror wheel steps and automatic phase work with and without reflection',()=>{
+ for(const on of [true,false]){
+  const f=fixture();let tick;
+  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8').replace('const api = window.HubMirror = {','window.testStartSpin=startSpin; const api = window.HubMirror = {');
+  vm.runInNewContext(source,{window:f.window,document:{readyState:'loading',addEventListener(){},hidden:false},localStorage:{getItem:()=>null,setItem(){}},requestAnimationFrame:fn=>{tick=fn;return 1;},cancelAnimationFrame(){},Event:class{constructor(type){this.type=type;}}});
+  const m=f.window.HubMirror;m.place(300,900,800);m.state.on=on;m.state.magnet=true;m.state.angle=0;
+  m.rotateBy(Math.PI/36);assert.ok(Math.abs((m.state.angle+f.window.HubView.rotation)*180/Math.PI-15)<1e-8);
+  m.state.spinSpeed=3;f.window.testStartSpin();tick(1);for(let time=17;time<1000;time+=16)tick(time);
+  assert.ok(Math.abs((m.state.angle+f.window.HubView.rotation)*180/Math.PI-15)<1e-8);
+  tick(2601);assert.ok(Math.abs((m.state.angle+f.window.HubView.rotation)*180/Math.PI-30)<1e-8);
+ }
+});
+
+
+test('dragging either copy keeps original, reflection and axis aligned at any zoom',()=>{
+ for(const hit of [{source:true,mirror:false},{source:false,mirror:true}]){
+  const f=fixture({unlocked:true,zoom:2,angle:25,sourcePan:[.1,.2]}),m=realMirror(f),v=f.window.HubView;
+  m.hit=()=>hit;const pivot=screenPoint(v,750,400),original=screenPoint(v,800,420),reflected=screenPoint(v,...m.point(800,420));
+  assert.equal(v.grabBits({target:{closest:()=>null},button:0,pointerId:1,clientX:750,clientY:400,stopPropagation(){}},true),true);
+  f.emit('pointermove',{pointerId:1,clientX:810,clientY:430});
+  near(screenPoint(v,750,400),[pivot[0]+60,pivot[1]+30]);near(screenPoint(v,800,420),[original[0]+60,original[1]+30]);
+  near(screenPoint(v,...m.point(800,420)),[reflected[0]+60,reflected[1]+30]);assert.deepEqual(f.state().sourcePan,[.1,.2]);
+ }
+});
+
+
+test('arrows change speed during playback without changing angle or direction; pause restores angle steps',()=>{
+ const f=fixture(),auto=f.button('Автокручение треугольника');
+ f.button('Повернуть поле на −15°').onclick();auto.onclick();f.tick(0);f.tick(100);
+ const angle=f.window.HubView.rotation;f.button('Увеличить скорость вращения').onclick();
+ assert.equal(f.state().spinDirection,-1);assert.ok(Math.abs(f.state().spinRate-.275)<1e-10);assert.equal(f.window.HubView.rotation,angle);
+ f.button('Уменьшить скорость вращения').onclick();assert.ok(Math.abs(f.state().spinRate-.25)<1e-10);assert.equal(f.window.HubView.rotation,angle);
+ auto.onclick();f.button('Повернуть поле на +15°').onclick();assert.equal(f.state().spinDirection,1);assert.ok(Math.abs(f.window.HubView.rotation-angle-Math.PI/12)<1e-10);
 });
