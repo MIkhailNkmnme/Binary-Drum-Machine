@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.121. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.122. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.121</title>
+<title>Zerkalius Маятник — v0.122</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=121">
+<link rel="stylesheet" href="mayatnik-menu.css?v=122">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.121</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.122</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1143,7 +1143,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(const part of item.parts){const r=templateRect(part,false,item);ctx.save();ctx.beginPath();ctx.rect(x0+part.ox*s,y0,VW*s,VH*s);ctx.clip();
       const own=part.bitsData?(part.bitCanvas||(part.bitCanvas=templateBitCanvas(part))):null;   // v0.106: свои биты — непрозрачно, как вид «Биты»
       if(own){ctx.save();ctx.globalAlpha=1;ctx.drawImage(own,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);ctx.restore();}
-      else ctx.drawImage(part.canvas,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);
+      else if(item===colourTemplate)ctx.drawImage(part.canvas,x0+r.x/RK*s,y0+r.y/RK*s,r.width/RK*s,r.height/RK*s);   // v0.122: цветом — только выбранный шаблон, у остальных один контур
       // Один экранный пиксель: контур остаётся тонким при любом сдвиге и размере.
       const edges=part.edges||(part.edges=MayatnikTemplate.edges(part.mask)),sx=r.width/part.mask.width/RK*s,sy=r.height/part.mask.height/RK*s,dx=x0+r.x/RK*s,dy=y0+r.y/RK*s;
       ctx.beginPath();for(let i=0;i<edges.length;i+=4){ctx.moveTo(dx+edges[i]*sx,dy+edges[i+1]*sy);ctx.lineTo(dx+edges[i+2]*sx,dy+edges[i+3]*sy);}ctx.globalAlpha=1;ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.stroke();ctx.restore();}
@@ -2352,6 +2352,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=121"></script>
+<script src="mayatnik-menu.js?v=122"></script>
 </body>
 </html>
