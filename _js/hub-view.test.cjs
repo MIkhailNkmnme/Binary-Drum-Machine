@@ -79,25 +79,27 @@ function screenPoint(view,x,y) {
   return [m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];
 }
 const near=(a,b)=>a.forEach((v,i)=>assert.ok(Math.abs(v-b[i])<1e-7,`${a} != ${b}`));
-test('axis rotation turns original around its fixed pivot with reflection on or off',()=>{
- for(const on of [false,true]) {
-  const f=fixture({zoom:1.7,angle:23,pan:[47,-31],sourcePan:[.1,.1]}),mirror=realMirror(f),view=f.window.HubView;
-  mirror.state.on=on;mirror.state.x=.37;mirror.state.y=.62;
-  const pivot=on?[300+900*.37,800*.62]:Array.from(view.originalCenter()),before=screenPoint(view,...pivot),point=screenPoint(view,pivot[0]+70,pivot[1]-45);
-  const inverse=view.captureInverse(),local=Array.from(inverse(...point));
-  mirror.rotateBy(Math.PI/2);
-  near(screenPoint(view,...pivot),before);
-  near(screenPoint(view,pivot[0]+70,pivot[1]-45),[before[0]-(point[1]-before[1]),before[1]+point[0]-before[0]]);
-  near(Array.from(inverse(...point)),local);
-  assert.equal(f.state().angle,113);assert.equal(mirror.state.on,on);
- }
+test('disabled axis rotates original around its centroid',()=>{
+ const f=fixture({zoom:1.7,angle:23,pan:[47,-31],sourcePan:[.1,.1]}),mirror=realMirror(f),view=f.window.HubView;
+ mirror.state.on=false;const pivot=Array.from(view.originalCenter()),before=screenPoint(view,...pivot),point=screenPoint(view,pivot[0]+70,pivot[1]-45);
+ const inverse=view.captureInverse(),local=Array.from(inverse(...point));
+ mirror.rotateBy(Math.PI/2);
+ near(screenPoint(view,...pivot),before);
+ near(screenPoint(view,pivot[0]+70,pivot[1]-45),[before[0]-(point[1]-before[1]),before[1]+point[0]-before[0]]);
+ near(Array.from(inverse(...point)),local);assert.equal(f.state().angle,113);
 });
-test('moving the enabled mirror axis carries the original by the same clamped displacement',()=>{
- const f=fixture(),mirror=realMirror(f);
- const start=mirror.position();mirror.moveFrom(start,90,-80);
- near(Array.from(f.window.HubView.sourceShift()),[90,-80]);
- mirror.moveFrom(start,9000,-8000);
- near(Array.from(f.window.HubView.sourceShift()),[(.99-start.x)*900,(.01-start.y)*800]);
+
+test('enabled axis moves and rotates reflection while original remains fixed',()=>{
+ const f=fixture({zoom:1.7,angle:23,pan:[47,-31],sourcePan:[.1,.1]}),mirror=realMirror(f),view=f.window.HubView;
+ mirror.state.angle=Math.PI/2;const start=mirror.position(),original=screenPoint(view,840,480),reflected=Array.from(mirror.point(750,400));
+ mirror.moveFrom(start,90,-80);
+ near(Array.from(view.sourceShift()),[90,80]);near(screenPoint(view,840,480),original);
+ near(Array.from(mirror.point(750,400)),[reflected[0]+180,reflected[1]]);
+ mirror.rotateBy(Math.PI/2);
+ near(screenPoint(view,840,480),original);near(Array.from(view.sourceShift()),[90,80]);
+ assert.notDeepEqual(Array.from(mirror.point(750,400)),[reflected[0]+180,reflected[1]]);
+ mirror.moveFrom(start,9000,-8000);assert.equal(mirror.state.x,.99);assert.equal(mirror.state.y,.01);
+ near(screenPoint(view,840,480),original);
 });
 
 test('auto rotation follows last step direction and keeps the shifted triangle centroid stationary',()=>{
@@ -123,14 +125,15 @@ test('thousands of revolutions use elapsed time and fractional phase, not thousa
 });
 
 
-test('dragging overlapping original and reflection moves the source once',()=>{
+test('dragging overlapping original and reflection moves only the mirror',()=>{
   const f=fixture({unlocked:true});realMirror(f);
   f.window.HubMirror.hit=()=>({source:true,mirror:true});
   const event={target:{closest:()=>null},button:0,pointerId:1,clientX:750,clientY:400,stopPropagation(){}};
   assert.equal(f.window.HubView.grabBits(event,true),true);
   f.emit('pointermove',{pointerId:1,clientX:790,clientY:420});
-  assert.ok(Math.abs(f.state().sourcePan[0]-40/900)<1e-10);
-  assert.ok(Math.abs(f.state().sourcePan[1]-20/800)<1e-10);
+  assert.deepEqual(f.state().sourcePan,[0,0]);
+  assert.ok(Math.abs(f.window.HubMirror.state.x-(.5+40/900))<1e-10);
+  assert.ok(Math.abs(f.window.HubMirror.state.y-(.5+20/800))<1e-10);
 });
 
 
