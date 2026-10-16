@@ -232,3 +232,18 @@ test('arrows change speed during playback without changing angle or direction; p
  f.button('Уменьшить скорость вращения').onclick();assert.ok(Math.abs(f.state().spinRate-.25)<1e-10);assert.equal(f.window.HubView.rotation,angle);
  auto.onclick();f.button('Повернуть поле на +15°').onclick();assert.equal(f.state().spinDirection,1);assert.ok(Math.abs(f.window.HubView.rotation-angle-Math.PI/12)<1e-10);
 });
+
+
+test('screen-pinned axis stays at viewport center through camera changes, including edge-on 3D',()=>{
+ for(const on of [true,false])for(const flip of [0,67,90,180]){
+  const f=fixture({zoom:2.4,angle:123,pan:[390,-210],flip}),m=realMirror(f),v=f.window.HubView;
+  m.state.on=on;m.state.screenPin=true;m.syncCenter();
+  const check=()=>near(screenPoint(v,300+900*m.state.x,800*m.state.y),[600,400]);
+  check();m.moveFrom(m.position(),500,-300);check();
+  m.rotateBy(Math.PI/12);check();
+  f.button('Увеличить масштаб холста').onclick();check();
+  f.button('Повернуть поле на +15°').onclick();check();
+  m.state.screenPin=false;m.state.on=true;const before=m.position();m.moveFrom(before,40,20);
+  assert.notDeepEqual(m.position(),before);
+ }
+});
