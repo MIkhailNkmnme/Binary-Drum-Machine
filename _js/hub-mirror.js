@@ -130,7 +130,7 @@
     orbit.innerHTML='<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="100"/><polygon points="'+polygonPoints(24,100)+'"/></svg>';
     turn.innerHTML='<svg class="hubMirrorTurnMagnet" viewBox="-14 -14 28 28" aria-hidden="true"><polygon points="'+polygonPoints(6,11)+'"/><polygon points="'+polygonPoints(6,7)+'"/></svg>';
     line.append(handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
-    dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.innerHTML='<svg viewBox="-32 -32 64 64"><g class="along"><path d="M-14 -14H14M9 -19L14 -14 9 -9"/><path d="M14 14H-14M-9 9L-14 14 -9 19"/></g><g class="across"><path d="M0 -7V-29M-5 -24L0 -29 5 -24"/><path d="M0 7V29M-5 24L0 29 5 24"/></g></svg>';document.body.append(dragHint);
+    dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.innerHTML='<svg viewBox="-32 -32 64 64"><g class="along"><path d="M-14 -14H14M9 -19L14 -14 9 -9"/><path d="M14 14H-14M-9 9L-14 14 -9 19"/></g><g class="across"><path d="M0 -4V-28M-5 -23L0 -28 5 -23"/><path d="M0 4V28M-5 23L0 28 5 23"/></g></svg>';document.body.append(dragHint);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
     settings.addEventListener('click', e => e.stopPropagation());
@@ -236,6 +236,15 @@
     spinRange=document.createElement('input');spinRange.type='range';spinRange.min=-100;spinRange.max=300;spinRange.step=1;spinRange.className='hubMirrorSpeed';spinRange.setAttribute('aria-label','Множитель скорости вращения зеркала');spinRange.oninput=()=>{state.spinSpeed=30*Math.pow(10,Number(spinRange.value)/100);syncSpin();};spinRange.onchange=save;spinLabel.append(spinRange);spinControl.append(spinLabel);settings.append(spinControl);syncSpin();
     window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeSpin=spinRunning;stopSpin();save();}else{if(resumeSpin)startSpin();resumeSpin=false;}});
     window.addEventListener('pagehide',()=>{stopSpin();save();});
+    function showAxisHint(e,motion='all'){
+      if(!dragHint)return;
+      const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.clientX-cx)*co+(e.clientY-cy)*si;
+      dragHint.hidden=false;dragHint.dataset.motion=motion;
+      Object.assign(dragHint.style,{left:(cx+t*co)+'px',top:(cy+t*si)+'px',transform:'translate(-50%,-50%) rotate('+a+'rad)'});
+    }
+    const hoverAxisHint=e=>{if(drag)return;if(e.target===line&&e.pointerType!=='touch')showAxisHint(e);else if(dragHint)dragHint.hidden=true;};
+    root.addEventListener('pointerover',hoverAxisHint);
+    root.addEventListener('pointerleave',()=>{if(!drag&&dragHint)dragHint.hidden=true;});
     root.addEventListener('pointerdown', e => {
       if (e.button !== 0 || !frame) return;
       e.preventDefault(); e.stopPropagation();
@@ -250,7 +259,8 @@
       resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
-      if (!drag || drag.id !== e.pointerId) return;
+      if(!drag){hoverAxisHint(e);return;}
+      if(drag.id !== e.pointerId)return;
       e.preventDefault(); e.stopPropagation();
       let [mx,my]=drag.inverse?drag.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY],dx=mx-drag.x,dy=my-drag.y;
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
@@ -284,15 +294,11 @@
         turnField(delta-drag.applied);drag.applied=delta;
       } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
       changed();
-      if(dragHint&&(drag.source||!drag.turn)&&drag.mode){
-        const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.clientX-cx)*co+(e.clientY-cy)*si;
-        dragHint.hidden=false;dragHint.dataset.motion=drag.mode==='radius'?'along':'across';
-        Object.assign(dragHint.style,{left:(cx+t*co)+'px',top:(cy+t*si)+'px',transform:'translate(-50%,-50%) rotate('+a+'rad)'});
-      }
+      if((drag.source||!drag.turn)&&drag.mode)showAxisHint(e,drag.mode==='radius'?'along':'across');
     });
     const finish = e => {
       if (!drag || drag.id !== e.pointerId) return;
-      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();
+      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&document.elementFromPoint?.(e.clientX,e.clientY)===line)showAxisHint(e);
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
       if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };
