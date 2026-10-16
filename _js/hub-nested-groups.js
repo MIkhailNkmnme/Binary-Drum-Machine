@@ -19,7 +19,9 @@
       head.title=name+' · ПКМ — '+(id===group.key?'закрепить группу':'поднять / вернуть');
       const record={id,node,children,group};records.set(id,record);
       head.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(record.action){record.action();if(e.pointerType!=='mouse')openBranch(record,true);render();}else openBranch(record,!node.open);});
-      head.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')openBranch(record,true);});
+      head.addEventListener('pointerenter',e=>{if(e.pointerType==='touch')return;
+        // v0.229: наведение на ветку без видимых кнопок (выключена или пустая) не закрывает уже раскрытую соседку.
+        if(record.gate&&record.active?.()===false)return;if(!record.children.some(c=>c.children||!c.node.hidden))return;openBranch(record,true);});
       head.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();openBranch(record,e.key==='ArrowRight');}});
       node.addEventListener('toggle',()=>{if(id===group.key&&pins.has(id))node.open=true;render();});
       return record;
