@@ -468,7 +468,9 @@
       if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));g.beginPath();g.moveTo(0,-b);g.lineTo(a,0);g.lineTo(0,b);g.lineTo(-a,0);g.closePath();g.fill();g.restore();}
       if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);}
     },
-    selectRotationBit(hit){rotationBit=hit;rotationGuide=false;},
+    // v0.222: лучи были видны — щелчок по другому биту сразу переносит их на него
+    selectRotationBit(hit,show=false){rotationBit=hit;rotationGuide=!!(show&&hit);if(rotationGuide)changed();},
+    guidesShown(){return !!(rotationGuide&&rotationBit);},
     clearRotationBit(){const visible=rotationGuide;rotationBit=null;rotationGuide=false;if(visible)changed();},
     drawRotationGuides(g,mirror=false){
       if(!rotationGuide||!rotationBit||!bitCell)return;

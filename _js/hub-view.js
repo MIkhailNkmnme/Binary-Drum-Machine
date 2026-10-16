@@ -56,10 +56,10 @@
     }
     for(;slot<centerMarkers.length;slot++)centerMarkers[slot].node.hidden=true;
   }
-  function selectBitScreen(x,y){
+  function selectBitScreen(x,y,rays=false){   // v0.222: rays — лучи были видны, у нового бита показать сразу
     const mirror=window.HubMirror;if(!mirror?.pickBit)return;
     const reflected=inverse(x,y,true),source=inverse(x,y);
-    mirror.selectRotationBit((reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null));
+    mirror.selectRotationBit((reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null),rays);
   }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
   function centerTriangleAtAxis(x,y){
@@ -250,14 +250,14 @@
     // A click starts a new wheel interaction; moving geometry must not select another tool.
     let wheelAction=null,wheelBits=new Set(),bitClick=null;
     document.addEventListener('pointerdown',e=>{
-      const previous=new Set(wheelBits);wheelAction=null;wheelBits.clear();bitClick=null;window.HubMirror?.clearRotationBit?.();
+      const previous=new Set(wheelBits),rays=!!window.HubMirror?.guidesShown?.();wheelAction=null;wheelBits.clear();bitClick=null;window.HubMirror?.clearRotationBit?.();
       if(e.button!==0||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button,#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox'))return;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
       if(frame&&(e.clientX<frame.left||y>frame.height))return;
-      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,previous,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,previous,rays,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
     },true);
     document.addEventListener('pointermove',e=>{if(bitClick&&bitClick.id===e.pointerId&&Math.hypot(e.clientX-bitClick.x,e.clientY-bitClick.y)>3)bitClick.moved=true;},true);
-    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0));}bitClick=null;}},true);
+    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0),bitClick.rays);}bitClick=null;}},true);
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
