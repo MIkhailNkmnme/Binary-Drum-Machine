@@ -93,7 +93,11 @@
     // v0.142: рисовать поверх в координатах поля (со сдвигом рисунка, без зеркала), под камерой
     overlay(canvas,view,fn,mirror=false){const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(mirror);g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(k,0,0,k,-left*k,0);fn(g);g.restore();},place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
     // Source displacement is applied together with the final camera, without clipping a temporary image.
-  },paint(canvas,view=null,cached=null,vector=null){
+  },projectBit(x,y,mirror=false){
+    if(mirror){const p=window.HubMirror.point(x,y);if(!p)return null;[x,y]=p;}else{const sh=sourceShift();x+=sh[0];y+=sh[1];}
+    const ms=window.HubMirror?.state,axis=ms?.angle??Math.PI/2,u=Math.cos(axis),v=Math.sin(axis),k=Math.cos((mirror?state.mirrorFlip:state.flip)*Math.PI/180),[cx,cy]=center(),mx=frame?frame.left+frame.width*(ms?.x??.5):cx,my=frame?frame.height*(ms?.y??.5):cy;
+    const aa=u*u+k*v*v,ab=(1-k)*u*v,bb=v*v+k*u*u;return [mx+aa*(x-mx)+ab*(y-my),my+ab*(x-mx)+bb*(y-my)];
+  },symmetryCamera:()=>matrix(false,true),paint(canvas,view=null,cached=null,vector=null){
     // vector: {base,draw} — redraw shapes under the final transform instead of resampling the bitmap (sharp mirror copy).
     let copy=cached||buffers.get(canvas);if(!copy){copy=document.createElement('canvas');buffers.set(canvas,copy);}
     if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}
@@ -104,6 +108,7 @@
     if(reflection){const [ma,mb,mc,md,me,mf]=matrix(true);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...reflection);layer('mirror');}g.restore();
     // v0.127: vector.extra — слой поверх в координатах поля (после сдвига и зеркала), только под камерой: «заворот» внутрь треугольника
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
+    if(vector?.screen){g.save();g.setTransform(k,0,0,k,-left*k,0);vector.screen(g);g.restore();}
   }};
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};

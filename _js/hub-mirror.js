@@ -165,7 +165,7 @@
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
     const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['stars','*','Звезда и точка']];
-    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;b.setAttribute('aria-pressed',String(selected));});};
+    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;viewOptions.querySelectorAll('button').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=selected;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
     for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
     viewBox.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')viewBox.open=false;});
@@ -353,10 +353,10 @@
     wheelAlong(delta){if(!frame||!window.HubView?.shiftSourceBy)return false;const step=Math.sign(delta)*24/(window.HubView.scale||1);window.HubView.shiftSourceBy(step*Math.cos(state.angle),step*Math.sin(state.angle));return true;},
     wheelZoneAt(x,y){
       if(!frame||!handle||document.body.classList.contains('hubAutoTurning')||document.body.classList.contains('hubMirrorSpinning'))return false;
-      const near=el=>{const r=el.getBoundingClientRect();return r.width&&Math.hypot(x-r.x-r.width/2,y-r.y-r.height/2)<=28;};
+      const near=el=>{const r=el.getBoundingClientRect();return r.width&&Math.hypot(x-r.x-r.width/2,y-r.y-r.height/2)<=42;};
       const p=window.HubView?.axisInverse?.(x,y+(matchMedia('(max-width:1100px)').matches?scrollY:0)),c=center();
-      if(p&&Math.hypot(p[0]-c[0],p[1]-c[1])*(window.HubView.scale||1)<=28)return 'axis';
       if(near(turn))return 'bits';
+      if(p&&Math.hypot(p[0]-c[0],p[1]-c[1])*(window.HubView.scale||1)<=28)return 'axis';
       return false;
     },
     wheelStep(zone,delta){if(zone==='axis'){rotate(Math.sign(delta)*Math.PI/36);return true;}if(zone==='bits'){window.HubView?.rotateBitsBy?.(Math.sign(delta)*5,center());return true;}return false;},

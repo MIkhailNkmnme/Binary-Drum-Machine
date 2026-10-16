@@ -462,3 +462,11 @@ test('wheel keeps the initially selected bit type and resets even on a control p
  f.wheel();bit='1';f.wheel();assert.deepEqual(calls,[['0',-5],['0',-5]]);
  f.emit('pointerdown',{target:{closest:()=>true},button:0});f.wheel();assert.deepEqual(calls.at(-1),['1',-5]);
 });
+
+test('combined symmetry projection includes displacement and separate 3D planes but excludes common camera motion',()=>{
+ const f=fixture({sourcePan:[.1,.2],angle:40,zoom:3,flip:0,mirrorFlip:60});f.window.HubMirror.state={angle:Math.PI/2,x:.5,y:.5};
+ const sh=f.window.HubView.sourceShift();f.window.HubMirror.point=(x,y)=>[1500-x-sh[0],y+sh[1]];
+ const a=Array.from(f.window.HubView.projectBit(700,300)),b=Array.from(f.window.HubView.projectBit(700,300,true));
+ assert.deepEqual(a,[700+sh[0],300+sh[1]]);assert.ok(Math.abs(b[0]-(750+(50-sh[0])*.5))<1e-8);assert.equal(b[1],300+sh[1]);
+ f.window.HubView.rotateBy(15);assert.deepEqual(Array.from(f.window.HubView.projectBit(700,300)),a);
+});

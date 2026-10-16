@@ -55,8 +55,9 @@ test('wheel zones use the visible endpoint even when its old button is hidden',(
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf('wheelAlong(delta)'),end=source.indexOf(', stopRotation:',start),axis=[],field=[],shift=[];
  const context={frame:{},handle:{},turn:{getBoundingClientRect:()=>({x:250,y:200,width:14,height:14})},state:{angle:Math.PI/2},center:()=>[100,100],matchMedia:()=>({matches:false}),document:{body:{classList:{contains:()=>false}}},window:{HubMirror:{},HubView:{scale:2,axisInverse:(x,y)=>[x/2,y/2],rotateBitsBy:d=>field.push(d),shiftSourceBy:(x,y)=>shift.push([x,y])}},rotate:d=>axis.push(d)};
  const api=vm.runInNewContext('({'+source.slice(start,end)+'})',context);
- assert.equal(api.wheelAt(220,200,120),true);assert.ok(Math.abs(axis[0]-Math.PI/36)<1e-12);assert.equal(field.length,0);
+ assert.equal(api.wheelAt(200,200,120),true);assert.ok(Math.abs(axis[0]-Math.PI/36)<1e-12);assert.equal(field.length,0);
  assert.equal(api.wheelAt(257,207,-120),true);assert.deepEqual(field,[-5]);
+ assert.equal(api.wheelZoneAt(220,200),'bits');assert.equal(api.wheelZoneAt(299,207),'bits');assert.equal(api.wheelZoneAt(300,207),false);
  assert.equal(api.wheelAt(400,400,120),false);api.wheelAlong(120);assert.ok(Math.abs(shift[0][0])<1e-12);assert.equal(shift[0][1],12);
 });
 
