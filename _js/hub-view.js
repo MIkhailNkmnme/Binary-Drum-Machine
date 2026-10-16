@@ -63,7 +63,19 @@
     frameRaf=requestAnimationFrame(measureFrames);
   }
   function setFrameRate(value){if(frameHz&&Number.isFinite(value))setAutoRate(value*(inputHz||frameHz));}
-  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate),perFrame=frameHz?rate/frameHz:null,labelRate=perFrame===null?'…':String(Number(perFrame.toPrecision(4))),hzLabel=frameHz?'≈'+frameHz+' Гц кадров':'Измерение частоты кадров…';autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+labelRate+' об/кадр; '+hzLabel+'; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';const thumbX=(12+(78-24)*pos/601)+'px';autoButton.style.left=thumbX;autoTrack.style.setProperty?.('--thumb-x',thumbX);autoRange.value=pos;autoRange.setAttribute('aria-valuetext',labelRate+' об/кадр');autoNumber.disabled=!frameHz;if(frameHz){autoNumber.max=10000/frameHz;if(document.activeElement!==autoNumber)autoNumber.value=Number((rate/frameHz).toPrecision(8));}autoValue.textContent=labelRate+' об/кадр';autoValue.title=hzLabel;autoHz.textContent=hzLabel;for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
+  function frameFraction(value){
+    if(value===0)return '0';
+    let x=value,p0=0,p1=1,q0=1,q1=0;
+    for(let i=0;i<24;i++){
+      const a=Math.floor(x),p=a*p1+p0,q=a*q1+q0;
+      if(q>1000000)break;
+      [p0,p1,q0,q1]=[p1,p,q1,q];
+      if(Math.abs(value-p/q)<=Math.max(1e-10,value*1e-4)||x===a)break;
+      x=1/(x-a);
+    }
+    return '≈'+(q1===1?String(p1):p1+'/'+q1);
+  }
+  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate),perFrame=frameHz?rate/frameHz:null,labelRate=perFrame===null?'…':frameFraction(perFrame),hzLabel=frameHz?'≈'+frameHz+' Гц кадров':'Измерение частоты кадров…';autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+labelRate+' об/кадр; '+hzLabel+'; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';const thumbX=(12+(78-24)*pos/601)+'px';autoButton.style.left=thumbX;autoTrack.style.setProperty?.('--thumb-x',thumbX);autoRange.value=pos;autoRange.setAttribute('aria-valuetext',labelRate+' об/кадр');autoNumber.disabled=!frameHz;if(frameHz){autoNumber.max=10000/frameHz;if(document.activeElement!==autoNumber)autoNumber.value=Number((rate/frameHz).toPrecision(8));}autoValue.textContent=labelRate+' об/кадр';autoValue.title=hzLabel;autoHz.textContent=hzLabel;for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
 
   const magnetic=()=>window.HubMirror?.state.magnet===true;
   const snappedRotation=a=>{const offset=(window.HubMirror?.state.angle||0)*180/Math.PI;return Math.round((a+offset)/15)*15-offset;};

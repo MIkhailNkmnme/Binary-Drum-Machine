@@ -238,11 +238,11 @@
     window.addEventListener('pagehide',()=>{stopSpin();save();});
     function showAxisHint(e,motion='all'){
       if(!dragHint)return;
-      const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.clientX-cx)*co+(e.clientY-cy)*si;
+      const a=state.angle+(window.HubView?.rotation||0),co=Math.cos(a),si=Math.sin(a),r=turn.getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2,t=(e.target===turn||drag?.turn)?0:(e.clientX-cx)*co+(e.clientY-cy)*si;
       dragHint.hidden=false;dragHint.dataset.motion=motion;
       Object.assign(dragHint.style,{left:(cx+t*co)+'px',top:(cy+t*si)+'px',transform:'translate(-50%,-50%) rotate('+a+'rad)'});
     }
-    const hoverAxisHint=e=>{if(drag)return;if(e.target===line&&e.pointerType!=='touch')showAxisHint(e);else if(dragHint)dragHint.hidden=true;};
+    const hoverAxisHint=e=>{if(drag)return;if((e.target===line||e.target===turn)&&e.pointerType!=='touch')showAxisHint(e);else if(dragHint)dragHint.hidden=true;};
     root.addEventListener('pointerover',hoverAxisHint);
     root.addEventListener('pointerleave',()=>{if(!drag&&dragHint)dragHint.hidden=true;});
     root.addEventListener('pointerdown', e => {
@@ -284,7 +284,7 @@
       const segmentX=mx-drag.x,segmentY=my-drag.y;
       if(drag.radius){const radial=segmentX*Math.cos(drag.angle)+segmentY*Math.sin(drag.angle),tangent=-segmentX*Math.sin(drag.angle)+segmentY*Math.cos(drag.angle);
         if(!drag.mode)drag.mode=drag.radius0<12||Math.abs(radial)>Math.abs(tangent)?'radius':'angle';
-        if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.axisAngle+(signed<0?Math.PI:0));changed();return;}
+        if(drag.mode==='radius'){const signed=drag.radius0+radial;state.orbitRadius=Math.min(4,Math.abs(signed)/Math.min(frame.width,frame.height));state.angle=turnAngle(drag.axisAngle+(signed<0?Math.PI:0));changed();showAxisHint(e,'along');return;}
       }
       if(drag.source){const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si,tx=distance*co,ty=distance*si;window.HubView?.shiftSourceBy(tx-drag.sourceX,ty-drag.sourceY);drag.sourceX=tx;drag.sourceY=ty;}
       else if (drag.turn) {
@@ -294,11 +294,11 @@
         turnField(delta-drag.applied);drag.applied=delta;
       } else {const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let x=frame.left+drag.px*frame.width+distance*co,y=drag.py*frame.height+distance*si;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}
       changed();
-      if((drag.source||!drag.turn)&&drag.mode)showAxisHint(e,drag.mode==='radius'?'along':'across');
+      if(drag.mode||drag.turn)showAxisHint(e,drag.mode==='radius'?'along':'across');
     });
     const finish = e => {
       if (!drag || drag.id !== e.pointerId) return;
-      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&document.elementFromPoint?.(e.clientX,e.clientY)===line)showAxisHint(e);
+      const done = drag; drag = null;if(dragHint)dragHint.hidden=true;update();if(e.type==='pointerup'&&[line,turn].includes(document.elementFromPoint?.(e.clientX,e.clientY)))showAxisHint(e);
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
       if (e.type === 'pointerup' && !done.source && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };

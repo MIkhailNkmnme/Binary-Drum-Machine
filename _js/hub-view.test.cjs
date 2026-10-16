@@ -372,10 +372,10 @@ test('frame rate display and exact input use measured cadence without changing s
   assert.equal(rate.disabled,true);assert.equal(slider.attributes['aria-valuetext'],'… об/кадр');
   for(let i=0;i<=hz;i++)f.tick(i*1000/hz);
   assert.equal(rate.disabled,false);rate.onfocus();rate.valueAsNumber=1.25;rate.onchange();
-  assert.equal(f.state().spinRate,1.25*hz);assert.equal(slider.attributes['aria-valuetext'],'1.25 об/кадр');
+  assert.equal(f.state().spinRate,1.25*hz);assert.equal(slider.attributes['aria-valuetext'],'≈5/4 об/кадр');
   f.button('Автокручение треугольника').onclick();
   f.tick(10000);for(let i=1;i<=hz;i++)f.tick(10000+i*1000/hz);
-  assert.equal(slider.attributes['aria-valuetext'],'1.25 об/кадр');assert.equal(f.state().spinRate,1.25*hz);
+  assert.equal(slider.attributes['aria-valuetext'],'≈5/4 об/кадр');assert.equal(f.state().spinRate,1.25*hz);
   rate.onblur();for(let i=1;i<=120;i++)f.tick(11000+i*1000/30);
   assert.equal(Number(rate.value),1.25*hz/30);assert.equal(f.state().spinRate,1.25*hz);
  }
@@ -393,5 +393,14 @@ test('pinned zoom scales both figures toward the axis endpoint down to the minim
    near(screenPoint(v,...m.point(...p,false)),[600+(copy[0]-600)*k,400+(copy[1]-400)*k]);
   }
   assert.equal(v.scale,.2);const before=f.state();f.button('Уменьшить масштаб холста').onclick();assert.deepEqual(f.state(),before);
+ }
+});
+
+
+test('frame fractions show simple ratios and preserve the approximation marker',()=>{
+ const f=fixture(),rate=f.button('Скорость автокручения в оборотах за кадр'),slider=f.button('Шкала скорости автокручения');
+ for(let i=0;i<=60;i++)f.tick(i*1000/60);
+ for(const [value,text] of [[1/2,'≈1/2'],[1/3,'≈1/3'],[5/4,'≈5/4'],[2,'≈2'],[0,'0']]){
+  rate.valueAsNumber=value;rate.onchange();assert.equal(slider.attributes['aria-valuetext'],text+' об/кадр');
  }
 });
