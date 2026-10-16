@@ -84,8 +84,20 @@
   // bit/row coordinate or halfway between its two neighbouring coordinates.
   function magneticPoint(x,y,direction=state.angle+Math.PI/2){
     const co=Math.cos(direction),si=Math.sin(direction),u=x*co+y*si,shift=window.HubView?.sourceShift()||[0,0];
-    let lo=-Infinity,hi=Infinity;
-    for(const [px,py,bit] of bitCenters){if(bit!=='0'&&bit!=='1')continue;const v=(px+shift[0])*co+(py+shift[1])*si;if(v<=u)lo=Math.max(lo,v);if(v>=u)hi=Math.min(hi,v);}
+    let lo=-Infinity,hi=Infinity,min=Infinity,nextMin=Infinity,max=-Infinity,nextMax=-Infinity;const epsilon=1e-7;
+    for(const [px,py,bit] of bitCenters){
+      if(bit!=='0'&&bit!=='1')continue;const v=(px+shift[0])*co+(py+shift[1])*si;
+      if(v<=u)lo=Math.max(lo,v);if(v>=u)hi=Math.min(hi,v);
+      if(v<min-epsilon){nextMin=min;min=v;}else if(v>min+epsilon)nextMin=Math.min(nextMin,v);
+      if(v>max+epsilon){nextMax=max;max=v;}else if(v<max-epsilon)nextMax=Math.max(nextMax,v);
+    }
+    if(Number.isFinite(min)&&(u<min-epsilon||u>max+epsilon)){
+      const edge=u<min?min:max;let pitch=u<min?nextMin-min:max-nextMax;
+      // Continue the outer row spacing indefinitely, including halfway positions.
+      // A single visible row/bit still has the underlying rhomb lattice pitch.
+      if(!Number.isFinite(pitch)&&bitCell){const w=bitCell.width,h=bitCell.height;pitch=Math.min(...[w*co,(w*co+h*si)/2,(w*co-h*si)/2].map(Math.abs).filter(v=>v>epsilon));}
+      if(Number.isFinite(pitch)&&pitch>epsilon){const step=pitch/2,target=edge+Math.round((u-edge)/step)*step;return [x+(target-u)*co,y+(target-u)*si];}
+    }
     let target=u,distance=10/Math.max(.2,window.HubView?.scale||1);
     for(const v of [lo,hi,(lo+hi)/2])if(Number.isFinite(v)&&Math.abs(v-u)<=distance){distance=Math.abs(v-u);target=v;}
     return [x+(target-u)*co,y+(target-u)*si];

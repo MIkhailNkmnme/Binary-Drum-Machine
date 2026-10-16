@@ -1,9 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-function fixture(points=[]){
+function fixture(points=[],cell=null){
  const source=fs.readFileSync(__dirname+'/hub-mirror.js','utf8'),start=source.indexOf("function showAxisHint("),end=source.indexOf("root.addEventListener('contextmenu'",start),events={};
  const state={screenPin:true,on:true,x:.5,y:.5,angle:0,orbitRadius:.22},turn={getBoundingClientRect:()=>({x:840,y:390,width:20,height:20})},handle={},shift=[0,0],root={addEventListener:(k,fn)=>events[k]=fn,setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}};
  const context={state,turn,handle,root,line:{},tail:{},document:{},frame:{left:300,width:900,height:800},drag:null,dragHint:{hidden:true,dataset:{},style:{}},resumeSpin:false,matchMedia:()=>({matches:false}),scrollY:0,
- bitCenters:points,center:()=>[300+900*state.x,800*state.y],moveAxis:(x,y)=>{state.x=x;state.y=y;},window:{HubMirror:{},HubView:{scale:1,sourceShift:()=>shift,captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,repeatScrollRotation:()=>shift.push("repeat"),shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
+ bitCenters:points,bitCell:cell,center:()=>[300+900*state.x,800*state.y],moveAxis:(x,y)=>{state.x=x;state.y=y;},window:{HubMirror:{},HubView:{scale:1,sourceShift:()=>shift,captureInverse:()=>((x,y)=>[x,y]),captureAxisInverse:()=>((x,y)=>[x,y]),rotation:0,repeatScrollRotation:()=>shift.push("repeat"),shiftSourceBy:(x,y)=>{shift[0]+=x;shift[1]+=y;}}},
  stopSpin(){},update(){},changed(){},save(){},rotate(){},snapAxisPosition(){},turnField:d=>state.angle+=d,turnAngle:a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI),snapAngle:a=>Math.round(a/(Math.PI/12))*Math.PI/12};
  vm.runInNewContext(source.slice(source.indexOf('  function magneticPoint('),source.indexOf('  const buffers')),context);
  vm.runInNewContext(source.slice(start,end),context);
@@ -101,10 +101,24 @@ test('pinned magnetic drag moves rows through and halfway across the fixed axis'
  assert.deepEqual([f.state.x,f.state.y],[.5,.5]);
  f.emit('pointermove',850,424,f.line,{altKey:true});assert.ok(Math.abs(f.shift[0])<1e-10);assert.equal(f.shift[1],24);
 });
-test('magnet uses projected rows after rotation and leaves distant points alone',()=>{
+test('magnet continues projected rows and half gaps beyond both edges after rotation',()=>{
  const a=.71,co=Math.cos(a),si=Math.sin(a),p=u=>[u*co-17*si,u*si+17*co,'0'];
  const f=fixture([p(0),p(20),p(40)]);
- for(const [u,want] of [[8,10],[18,20],[31,30],[65,65]]){
+ for(const [u,want] of [[8,10],[18,20],[31,30],[67,70],[-67,-70],[10003,10000]]){
   const got=f.snap(...p(u).slice(0,2),a);assert.ok(Math.abs(got[0]-(want*co-17*si))<1e-10);assert.ok(Math.abs(got[1]-(want*si+17*co))<1e-10);
  }
+});
+
+test('pinned magnetic drag keeps discrete steps outside the triangle; Alt still releases snapping',()=>{
+ const f=fixture([370,390,410,430].flatMap(y=>[[740,y,'0'],[760,y,'1']]));f.state.magnet=true;
+ f.emit('pointerdown',850,400,f.line);f.emit('pointermove',850,667,f.line);assert.deepEqual(f.shift,[0,270]);
+ f.emit('pointermove',850,679,f.line);assert.ok(Math.abs(f.shift[0])<1e-9&&Math.abs(f.shift[1]-280)<1e-9);
+ f.emit('pointermove',850,683,f.line,{altKey:true});assert.ok(Math.abs(f.shift[0])<1e-9&&Math.abs(f.shift[1]-283)<1e-9);
+ assert.deepEqual([f.state.x,f.state.y],[.5,.5]);
+});
+
+test('one visible bit extends its lattice, while an empty field has no invented snapping',()=>{
+ const f=fixture([[100,200,'1']],{width:20,height:40});
+ const p=f.snap(100,247,Math.PI/2);assert.ok(Math.abs(p[0]-100)<1e-9);assert.equal(p[1],250);
+ assert.deepEqual(Array.from(fixture().snap(100,247,Math.PI/2)),[100,247]);
 });
