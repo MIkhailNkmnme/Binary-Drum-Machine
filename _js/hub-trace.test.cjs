@@ -12,6 +12,10 @@ test('seven trails start with all seven notes and keep moving inside the triangl
   ctx.step(0);
   assert.deepEqual(Array.from(ctx.trace.balls,b=>b.t),[0,1,2,3,4,5,6]);
   const start=ctx.trace.balls.map(b=>[b.x,b.y]);
+  const cells=Array.from(ctx.trace.balls,b=>{const r=Math.round((b.y-20)/8.66);return [r,Math.round((b.x-(400-r*5))/10)];});
+  const [r0,j0]=cells[0];assert.deepEqual(cells.map(([r,j])=>[r-r0,j-j0]),[[0,0],[1,0],[1,1],[2,0],[2,1],[2,2],[3,2]]);
+  assert.ok(Math.abs(r0-2*63/3)<=2);
+
   for(let t=50;t<=20000;t+=50)ctx.step(t);
   assert.equal(ctx.trace.balls.length,7);
   ctx.trace.balls.forEach((b,i)=>{

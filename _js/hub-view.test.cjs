@@ -116,11 +116,11 @@ test('auto rotation follows last step direction and keeps the shifted triangle c
 test('thousands of revolutions use elapsed time and fractional phase, not thousands of render steps',()=>{
  const f=fixture(),v=f.window.HubView;v.setSourceCenter(670,510);
  const rate=f.button('Скорость автокручения в оборотах в секунду');rate.valueAsNumber=1000.25;rate.onchange();
- f.button('Автокручение треугольника').onclick();f.tick(0);f.tick(1000);f.button('Автокручение треугольника').onclick();
+ f.tick(0);f.tick(1000);f.button('Автокручение треугольника').onclick();
  assert.ok(Math.abs(f.state().angle-90)<1e-7);assert.equal(f.state().spinRate,1000.25);
  const before=screenPoint(v,730,510);f.tick(2000);near(screenPoint(v,730,510),before);
  rate.valueAsNumber=50000;rate.onchange();assert.equal(f.state().spinRate,10000);
- f.button('Автокручение треугольника').onclick();f.tick(3000);f.tick(3016.025);f.button('Автокручение треугольника').onclick();
+ f.tick(3000);f.tick(3016.025);f.button('Автокручение треугольника').onclick();
  assert.ok(Math.abs(f.state().angle-180)<1e-6);
 });
 
@@ -159,4 +159,16 @@ test('automatic rotation hides axis until stopped or reset',()=>{
  auto.onclick();assert.equal(f.bodyClass('hubAutoTurning'),false);
  auto.onclick();f.button('Вернуть весь рисунок в поле').onclick();
  assert.equal(f.bodyClass('hubAutoTurning'),false);
+});
+
+
+test('slider starts rotation above zero and zero stops without losing the last speed',()=>{
+ const f=fixture(),range=f.button('Шкала скорости автокручения'),toggle=f.button('Автокручение треугольника');
+ assert.equal(Number(range.value),0);range.value=201;range.oninput();
+ assert.equal(f.bodyClass('hubAutoTurning'),true);assert.equal(f.state().spinRate,1);
+ f.tick(0);f.tick(250);range.value=0;range.oninput();
+ assert.equal(f.bodyClass('hubAutoTurning'),false);assert.equal(Number(range.value),0);assert.equal(f.state().angle,90);
+ f.tick(1000);assert.equal(f.state().angle,90);
+ toggle.onclick();assert.equal(f.bodyClass('hubAutoTurning'),true);assert.equal(f.state().spinRate,1);
+ range.value=601;range.oninput();assert.equal(f.state().spinRate,10000);
 });
