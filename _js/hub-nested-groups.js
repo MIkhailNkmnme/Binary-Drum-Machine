@@ -34,7 +34,7 @@
       const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
-        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
+        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
         const plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
@@ -51,9 +51,9 @@
           const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
           const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=0;
           const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
-          for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom)offset=box.bottom-rect.top-24+4;
+          for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
           for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head?0:offset);cell.style.transform='translate('+px+'px,'+py+'px)';}
-          if(height)occupied.push({left,right,bottom:rect.top+height+offset});
+          if(height&&!group.fixed)occupied.push({left,right,top:rect.top+24+offset,bottom:rect.top+height+offset});
         }
         for(const r of records.values())if(!r.children&&r.node.matches('details[open]')){
           const x=r.wrap.getBoundingClientRect().left;r.node.style.setProperty('--menu-left',Math.max(8-x,Math.min(0,innerWidth-188-x))+'px');
@@ -73,9 +73,10 @@
       const label=item.getAttribute('aria-label')||item.title||'';let key='bits';
       if(item.matches('.hubFlowControls'))key='flow';
       else if(item.matches('.hubBitSymmetry,.hubSymmetryMinimum')||label.includes('Симметрия параллельно'))key='symmetry';
+      else if(label==='Зеркало')key='symmetry';
       else if(item.matches('.hubImageTools,.hubPresetControls'))key='file';
       else if(item.matches('.hubFlipControl,.hubFlipPlanes,.hubAutoZoomControl'))key='space';
-      else if(item.matches('.hubMirrorSpinControl,.hubAxisScreenPin,.hubCenterBitPin')||/Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label))key='axis';
+      else if(item.matches('.hubMirrorSpinControl,.hubAxisScreenPin,.hubCenterBitPin,#hubAxisShow')||/Зеркало|Заворот|Магнит оси|Вращать ось|перетаскивание холста/.test(label))key='axis';
       const group=owner(key),selector='button.hubRhomb,label.hubRhomb,details.hubTilt';
       const nodes=item.matches(selector)?[item]:[...item.querySelectorAll(selector)];
       for(const node of nodes){if(node.closest('details.hubTilt')&&node.closest('details.hubTilt')!==node)continue;group.leaves.push(leaf(group,node));}
@@ -89,8 +90,8 @@
       const take=pattern=>{const found=g.leaves.filter(r=>pattern.test(r.id));g.leaves=g.leaves.filter(r=>!found.includes(r));return found;};
       let children=[];
       if(g.key==='bits')children=[sub(g,'pattern','△','Рисунок',take(/Узор|hubRowCount/)),sub(g,'turn','↻','Поворот',take(/Наклон|Сброс наклона|hubBitFreeRotation/)),sub(g,'music','♪','Движение',take(/./))];
-      if(g.key==='symmetry')children=[sub(g,'search','∥','Поиск',take(/Зеркальные оси|Симметрия параллельно/)),sub(g,'limits','≡','Минимумы',take(/./))];
-      if(g.key==='axis')children=[sub(g,'position','⊙','Положение',take(/Зеркало$|hubCenterBitPin|Магнит оси/)),sub(g,'turn','↻','Вращение',take(/Вращать ось|hubAxisSpeed/)),...take(/./)];
+      if(g.key==='symmetry')children=[...take(/\|Зеркало$/),sub(g,'search','∥','Поиск',take(/Зеркальные оси|Симметрия параллельно/)),sub(g,'limits','≡','Минимумы',take(/./))];
+      if(g.key==='axis')children=[sub(g,'position','⊙','Положение',take(/hubCenterBitPin|Магнит оси/)),sub(g,'turn','↻','Вращение',take(/Вращать ось|hubAxisSpeed/)),...take(/./)];
       if(g.key==='space')children=[sub(g,'zoom','⊙','Автозум',take(/автозума|Автозум/)),sub(g,'planes','3D','Плоскости',take(/./))];
       if(g.key==='file')children=[sub(g,'presets','▤','Состояния',take(/hubSaveState|hubPresetList/)),sub(g,'image','▧','Картинка',take(/./))];
       if(g.key==='flow'){
@@ -154,7 +155,7 @@
     };
     bindAction('bits',id=>id.endsWith('|Пуск / пауза битов'),'Биты — пуск / пауза');
     bindAction('symmetry',id=>id.endsWith('|Зеркальные оси и парные биты'),'Симметрия — включить / выключить');
-    bindAction('axis',id=>id.endsWith('|Зеркало'),'Ось зеркала — включить / выключить');
+    bindAction('axis',id=>id.endsWith('|hubAxisShow'),'Ось — показать / спрятать');
     bindAction('space',id=>id.endsWith('|Переворот вокруг оси зеркала в 3D'),'3D-вращение — пуск / пауза');
     bindAction('file',id=>id.endsWith('|hubPresetList'),'Открыть список шаблонов');
     bindAction('flow|branch:light',id=>id.includes('|А — свет:'),'Свет — включить / выключить');
@@ -165,6 +166,7 @@
     for(const id of ['symmetry','axis','space','flow|branch:light','flow|branch:snow','flow|branch:water','motion|branch:3d'])if(records.get(id))records.get(id).gate=true;
     // v0.212: вращение оси в пульте видно, только пока ось (зеркало) включена.
     if(records.get('axis|branch:turn'))records.get('axis|branch:turn').dep=records.get('axis');
+    if(records.get('symmetry|Зеркало'))records.get('symmetry|Зеркало').free=true;
     const flow=owner('flow').root;flow.action=()=>window.HubFlow.togglePause();flow.active=()=>window.HubFlow.playing;flow.node.dataset.hasAction='true';flow.node.querySelector('summary').setAttribute('role','button');flow.node.querySelector('summary').title='Потоки — общая пауза / продолжение · Наведение / → — настройки';
     const locks={key:'locks',name:'Замок'};groups.push(locks);
     const lockItems=[['zoom','⊙','Масштаб'],['turn','↻','Треуг.'],['zero','0','Биты 0'],['one','1','Биты 1'],['pan','✥','Сдвиг'],['axis','↗','Ось'],['depth','3D','Наклон']].map(([key,icon,name])=>{

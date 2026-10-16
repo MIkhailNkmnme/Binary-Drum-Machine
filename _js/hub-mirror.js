@@ -41,12 +41,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -63,7 +63,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
+  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,axisShow = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -163,6 +163,7 @@
     const length=Math.max(Math.hypot(frame.width,frame.height),...corners.map(p=>Math.hypot(p[0]-frame.left-px,p[1]-py)))+40;
     Object.assign(viewport.style,{position:mobile?'absolute':'fixed',height:(state.screenPin&&mobile?Math.max(frame.height,scrollY+innerHeight):frame.height)+'px'});
     root.classList.toggle('off', !state.on);
+    root.classList.toggle('noaxis', !state.axisShown);if(axisShow)axisShow.setAttribute('aria-pressed',String(state.axisShown));
     root.classList.toggle('turning', !!drag?.turn);
     root.classList.toggle('magnetic',state.magnet);
     root.style.setProperty('--hubAxisMarkerScale',String(1/(window.HubView?.scale||1)));
@@ -225,6 +226,8 @@
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
     enabled.addEventListener('change', () => { state.on = enabled.checked;syncSpin();changed();save(); });
+    // v0.218: «Ось» только показывает / прячет линию оси с ручками; зеркало включается отдельно (◇ в «Симм.»).
+    axisShow=document.createElement('button');axisShow.type='button';axisShow.id='hubAxisShow';axisShow.className='hubRhomb';axisShow.textContent='↗\nОсь';axisShow.title='Ось — показать / спрятать линию и ручки';axisShow.setAttribute('aria-label',axisShow.title);axisShow.setAttribute('aria-pressed',String(state.axisShown));axisShow.onclick=()=>{state.axisShown=!state.axisShown;changed();save();};settings.append(axisShow);
     const sym = document.createElement('button'); sym.type='button'; sym.className='hubRhomb hubBitSymmetry'; sym.textContent='│\nсим.';
     sym.title='Зеркальные оси и парные биты'; sym.setAttribute('aria-label',sym.title); sym.setAttribute('aria-pressed',String(state.bitSymmetry));
     const parallel=document.createElement('button');parallel.type='button';parallel.className='hubRhomb';parallel.textContent='∥';parallel.title='Искать симметричные пары параллельно ручной оси (точное совпадение центров битов)';parallel.setAttribute('aria-label','Симметрия параллельно ручной оси');
