@@ -14,7 +14,7 @@
     ['Мята', '#9fffc8', '#9fffc8', '#c9a2ff'], ['Мята · роза', '#9fffc8', '#ff8fd0', '#ffd166'], ['Лёд · огонь', '#8fd3ff', '#ff9a5a', '#c9a2ff'],
     ['Золото · синь', '#ffd166', '#6aa8ff', '#ff6b9a'], ['Лайм · фиалка', '#c6ff6b', '#b98cf0', '#5ce1e6'], ['Белый · красный', '#f2f4f8', '#ff5a5a', '#ffd166'],
     ['Бирюза · янтарь', '#5ce1e6', '#ffb347', '#ff8fd0'], ['Коралл · мята', '#ff7f6b', '#73e4a5', '#8fd3ff'], ['Сирень · лимон', '#c9a2ff', '#fff36b', '#6bffb8'],
-    ['Небо · трава', '#6ac8ff', '#8ee86b', '#ff6bd5']];   // v0.126: начальный наклон оси — как на снимке пользователя
+    ['Небо · трава', '#6ac8ff', '#8ee86b', '#ff6bd5'], ['Чёрно-белая', '#ffffff', '#8a8a8a', '#cfcfcf']];   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
   const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:true,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0 }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
