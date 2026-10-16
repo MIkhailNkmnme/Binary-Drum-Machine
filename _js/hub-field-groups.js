@@ -21,7 +21,7 @@
       const body = document.createElement('div'); body.className = 'hubFieldGroupBody';
       body.setAttribute('role', 'group'); body.setAttribute('aria-label', name);
       box.append(head, body); toolbar.append(box);
-      const open = () => { for (const other of toolbar.querySelectorAll('.hubFieldGroup')) if (other !== box) other.open = false; box.open = true; };
+      const open = () => { for (const other of toolbar.querySelectorAll('.hubFieldGroup,.hubBitView')) if (other !== box) other.open = false; box.open = true; };
       box.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') open(); });
       box.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch' && !box.contains(document.activeElement)) box.open = false; });
       head.addEventListener('click', e => { if (e.pointerType === 'mouse') { e.preventDefault(); open(); } else for (const other of toolbar.querySelectorAll('.hubFieldGroup')) if (other !== box) other.open = false; });
@@ -40,6 +40,12 @@
     }
     // Composite wrappers keep their event handlers; their buttons join the same grid.
     toolbar.querySelectorAll('.hubFlipPlanes,.hubImageTools,.hubFlowControls').forEach(el => el.classList.add('hubFieldContents'));
+    // All eight top diamonds share one evenly spaced row, including the bit view and packing.
+    const view = document.querySelector('.hubBitView'), packing = document.getElementById('hubBitPacking');
+    for (const control of [view, packing]) if (control) {
+      toolbar.append(control);
+      control.addEventListener('pointerenter', () => groups.forEach(g => { g.box.open = false; }));
+    }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') groups.forEach(g => { g.box.open = false; }); });
     document.addEventListener('pointerdown', e => { if (!toolbar.contains(e.target)) groups.forEach(g => { g.box.open = false; }); }, true);
   }

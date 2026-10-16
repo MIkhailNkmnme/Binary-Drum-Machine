@@ -1,15 +1,18 @@
 /* v0.185 — transparent themed diamond groups. */
 #hubFieldTools.hubMirrorSettings.open{background:transparent!important;box-shadow:none;border:0;padding:0}
-#hubFieldTools.hubMirrorSettings[data-grouped]{width:max-content;max-width:calc(100vw - 16px);gap:6px;flex-wrap:nowrap;pointer-events:none;overflow:visible}
+#hubFieldTools.hubMirrorSettings[data-grouped]{right:158px;width:auto;max-width:none;gap:0;justify-content:space-between;flex-wrap:nowrap;pointer-events:none;overflow:visible}
+#hubFieldTools>.hubBitView,#hubFieldTools>#hubBitPacking{position:relative;inset:auto;flex:none;width:48px;margin:0;pointer-events:auto}
+#hubFieldTools>.hubBitView>summary{background:var(--hub-theme-active)!important;color:var(--hub-theme-accent)!important}
+#hubFieldTools>.hubBitView .hubBitViewOptions .hubRhomb{background:var(--hub-theme-bg)!important;color:var(--hub-theme-accent)!important}
 #hubFieldTools .hubFieldGroup{position:relative;flex:none;width:48px;pointer-events:auto}
 #hubFieldTools .hubFieldGroup>summary{flex-direction:column;list-style:none;gap:2px;font:12px/1.1 system-ui,sans-serif}
 #hubFieldTools .hubFieldGroup>summary::-webkit-details-marker{display:none}
 #hubFieldTools .hubFieldGroup>summary b{font-size:16px}
 #hubFieldTools .hubFieldGroup>summary small{font-size:9px}
-#hubFieldTools .hubFieldGroup[open]{z-index:2}
+#hubFieldTools .hubFieldGroup[open]{z-index:40}
 #hubFieldTools .hubFieldGroup[open]>summary{background:var(--hub-theme-active)!important}
 #hubFieldTools .hubFieldGroupBody{position:absolute;left:0;top:48px;display:grid;grid-template-columns:repeat(4,48px);align-items:start;gap:4px;width:204px;padding:4px 0 0;background:transparent;color:var(--hub-theme-bit);text-shadow:0 1px 2px #000}
-#hubFieldTools .hubFieldGroup:nth-last-child(-n+2) .hubFieldGroupBody{left:auto;right:0}
+#hubFieldTools .hubFieldGroup[data-group=file] .hubFieldGroupBody,#hubFieldTools .hubFieldGroup[data-group=flow] .hubFieldGroupBody{left:auto;right:0}
 #hubFieldTools .hubFieldContents{display:contents}
 #hubFieldTools .hubFieldGroupBody .hubRhomb,#hubFieldTools .hubFieldGroupBody .hubTilt>summary{position:relative;flex:none;width:48px;height:48px;white-space:pre-line;text-align:center}
 #hubFieldTools .hubRhomb,#hubFieldTools .hubTilt>summary{position:relative}
@@ -22,12 +25,16 @@
 #hubFieldTools .hubMirrorSpeed{width:152px}
 #hubFieldTools .hubImageStatus{grid-column:1/-1;order:0;color:var(--hub-theme-bit);font-size:10px;text-shadow:0 1px 2px #000}
 #hubFieldTools .hubRhomb:focus-visible,#hubFieldTools .hubTilt>summary:focus-visible{background:var(--hub-theme-active)!important}
-@media(max-width:1100px){#hubFieldTools.hubMirrorSettings[data-grouped]{left:8px;top:60px;max-height:none}}
+@media(max-width:1100px){#hubFieldTools.hubMirrorSettings[data-grouped]{left:8px;right:8px;top:60px;max-height:none}}
+@media(max-width:550px){
+  #hubFieldTools.hubMirrorSettings[data-grouped]{display:grid;grid-template-columns:repeat(4,48px);row-gap:6px}
+  #hubFieldTools .hubFieldGroup .hubFieldGroupBody{left:0;right:auto}
+  #hubFieldTools .hubFieldGroup:nth-child(4n+3) .hubFieldGroupBody,#hubFieldTools .hubFieldGroup:nth-child(4n) .hubFieldGroupBody{left:auto;right:0}
+}
 #hubBitPacking{position:fixed;right:158px;top:6px;z-index:26;display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:12px/1.15 system-ui,sans-serif;white-space:pre-line;cursor:pointer;touch-action:manipulation}
 #hubBitPacking::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
 #hubBitPacking[aria-pressed=true],#hubBitPacking:hover,#hubBitPacking:focus-visible{background:var(--hub-theme-active);color:var(--hub-theme-accent)}
 #hubFlow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:6;clip-path:inset(0 0 0 300px)}
 @media(max-width:1100px){#hubFlow{clip-path:none}}
-@media(max-width:350px){#hubFieldTools.hubMirrorSettings[data-grouped]{gap:2px}#hubFieldTools .hubFieldGroup,#hubFieldTools .hubFieldGroup>summary{width:44px}}
 #hubFieldTools .hubFlowStatus{grid-column:1/-1;font:10px/1.4 system-ui,sans-serif;color:var(--hub-theme-bit)}
 #hubFieldTools .hubFlowControls [aria-pressed=true]{color:var(--hub-theme-accent)!important;background:var(--hub-theme-active)!important}
