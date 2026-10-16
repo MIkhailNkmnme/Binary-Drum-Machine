@@ -76,16 +76,40 @@
   // Hydrostatic relaxation along each supported horizontal span. Unlike the local
   // snow-like solver, a pool levels across its full width before its next fall.
   class WaterField extends Field {
+    constructor(...args){super(...args);this.activeRows=new Set();}
+    addWater(x,y,amount=1){const added=super.addWater(x,y,amount);if(added>0)this.activeRows.add(Math.floor(y));return added;}
+    setMask(mask){
+      this.solid=mask;
+      // Moving bits may push liquid sideways or down, never lift it above its row.
+      const {width:w,height:h,water:m}=this;
+      for(const y of [...this.activeRows].sort((a,b)=>b-a))for(let x=0;x<w;x++){
+        const i=y*w+x;if(!mask[i]||!m[i])continue;
+        let mass=m[i];m[i]=0;
+        for(const [dx,dy] of [[0,1],[-1,1],[1,1],[-1,0],[1,0]]){
+          const xx=x+dx,yy=y+dy;if(xx<0||xx>=w||yy>=h)continue;
+          // A diagonal cannot squeeze through two touching solid corners.
+          if(dx&&dy&&mask[i+dx]&&mask[i+w])continue;
+          mass-=this.addWater(xx,yy,mass);if(mass<=0)break;
+        }
+        this.drained+=mass;
+      }
+    }
     stepWater(){
       const {width:w,height:h,solid:s,water:m}=this;
-      const move=(i,j)=>{if(s[j])return;const q=Math.min(m[i],1-m[j]);if(q>0){m[i]-=q;m[j]+=q;}};
-      for(let y=h-1;y>=0;y--)for(let x=0;x<w;x++){
+      const active=new Set(this.activeRows),reverse=!!(this.tick%2);
+      const move=(i,j)=>{if(s[j])return;const q=Math.min(m[i],1-m[j]);if(q>0){m[i]-=q;m[j]+=q;active.add(Math.floor(j/w));}};
+      for(const y of [...this.activeRows].sort((a,b)=>b-a))for(let n=0;n<w;n++){
+        const x=reverse?w-1-n:n;
         const i=y*w+x;if(!m[i]||s[i])continue;
         if(y===h-1||x===0||x===w-1){this.drained+=m[i];m[i]=0;}
-        else move(i,i+w);
+        else{
+          move(i,i+w);
+          for(const dx of reverse?[1,-1]:[-1,1])if(!s[i+dx])move(i,i+w+dx);
+        }
       }
       const supported=i=>!s[i]&&(s[i+w]||m[i+w]>=.99999);
-      for(let y=h-2;y>=0;y--){
+      for(const y of [...active].sort((a,b)=>b-a)){
+        if(y===h-1)continue;
         for(let x=0;x<w;){
           const start=x;if(!supported(y*w+x)){x++;continue;}
           let total=0;while(x<w&&supported(y*w+x)){total+=m[y*w+x];x++;}
@@ -99,6 +123,7 @@
           for(let xx=start;xx<end;xx++)m[y*w+xx]=level;
         }
       }
+      this.activeRows=new Set([...active].filter(y=>m.subarray(y*w,(y+1)*w).some(q=>q>0)));
       this.tick++;
     }
   }

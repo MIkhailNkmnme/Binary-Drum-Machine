@@ -20,6 +20,7 @@
 #hubFieldTools .hubFieldGroupBody .hubTilt[open]{grid-column:1/-1;width:204px;display:flex;align-items:center;gap:4px}
 #hubFieldTools .hubFieldGroupBody .hubTilt>label{position:static;left:auto;right:auto;top:auto;width:152px;min-width:0;box-sizing:border-box;padding:4px;margin:0;flex-direction:column;white-space:normal;background:transparent!important;border:0;color:var(--hub-theme-bit)}
 #hubFieldTools .hubFieldGroupBody .hubTilt>label input{width:100%;box-sizing:border-box}
+#hubFieldTools #hubRowCount output{width:auto;min-width:7ch;white-space:nowrap;text-align:center}
 #hubFieldTools .hubMirrorSpinControl,#hubFieldTools .hubFlipControl{grid-column:1/-1;order:0;gap:4px;width:204px;flex:none}
 #hubFieldTools .hubMirrorSpeedControl{width:152px;text-align:center}
 #hubFieldTools .hubMirrorSpeed{width:152px}
@@ -34,8 +35,7 @@
 #hubBitPacking{position:fixed;right:158px;top:6px;z-index:26;display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:12px/1.15 system-ui,sans-serif;white-space:pre-line;cursor:pointer;touch-action:manipulation}
 #hubBitPacking::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
 #hubBitPacking[aria-pressed=true],#hubBitPacking:hover,#hubBitPacking:focus-visible{background:var(--hub-theme-active);color:var(--hub-theme-accent)}
-#hubFlow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:25;clip-path:inset(0 0 0 300px)}
-@media(max-width:1100px){#hubFlow{clip-path:none}}
+#hubFlow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:6}
 #hubFieldTools .hubFlowStatus{grid-column:1/-1;font:10px/1.4 system-ui,sans-serif;color:var(--hub-theme-bit)}
 #hubFieldTools .hubFlowControls [aria-pressed=true]{color:var(--hub-theme-accent)!important;background:var(--hub-theme-active)!important}
 
@@ -54,3 +54,24 @@
 #hubFieldTools .hubBitView[data-group-pinned=true]>.hubBitViewOptions{position:relative;top:0;margin-bottom:24px}
 #hubFieldTools[data-has-pins=true]{display:flex!important;column-gap:6px}
 #hubFieldTools .hubFieldGroup:not([data-group-pinned=true])>.hubFieldGroupBody,#hubFieldTools .hubPinnedControl>details>label{left:var(--menu-left,0px);right:auto}
+
+/* The desktop navigation slides left, leaving an accessible narrow handle. */
+#hubSidebarToggle{display:none}
+@media(min-width:1101px){
+  .hub,#hubLogo{transition:transform .25s ease,visibility .25s}
+  #hubSidebarToggle{display:flex;position:fixed;z-index:50;left:286px;top:10px;bottom:32px;width:14px;padding:0;align-items:center;justify-content:center;border:0;border-left:1px solid color-mix(in srgb,var(--hub-theme-bit) 45%,transparent);border-right:1px solid color-mix(in srgb,var(--hub-theme-bit) 45%,transparent);border-radius:0;background:color-mix(in srgb,var(--hub-theme-bg) 60%,transparent);color:var(--hub-theme-bit);font:18px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;transition:left .25s ease}
+  #hubSidebarToggle:hover,#hubSidebarToggle:focus-visible{background:var(--hub-theme-active);color:var(--hub-theme-accent);outline:1px solid currentColor;outline-offset:-1px}
+  body.hubSidebarCollapsed .hub,body.hubSidebarCollapsed #hubLogo{transform:translateX(calc(-100% - 20px));visibility:hidden;pointer-events:none}
+  body.hubSidebarCollapsed #hubSidebarToggle{left:0}
+}
+@media(prefers-reduced-motion:reduce){.hub,#hubLogo,#hubSidebarToggle{transition:none!important}}
+
+/* Flows continue behind navigation; zen only changes interface visibility. */
+.hub{z-index:8}
+#hubZenToggle{position:fixed;right:12px;bottom:12px;z-index:60;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:12px/1.15 system-ui,sans-serif;white-space:pre-line;text-align:center;cursor:pointer;touch-action:manipulation}
+#hubZenToggle::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
+#hubZenToggle:hover,#hubZenToggle:focus-visible{color:var(--hub-theme-accent);background:var(--hub-theme-active)}
+body.hubZen .hub,body.hubZen #hubLogo,body.hubZen #hubSidebarToggle,body.hubZen #hubFieldTools,body.hubZen #hubZoom,body.hubZen #hubRec,body.hubZen #hubPNG,body.hubZen #hubDown,body.hubZen #hubMirrorViewport,body.hubZen #hub3DQuick,body.hubZen .hubColorEditor,body.hubZen .hubCenterBit,body.hubZen .hubAxisDragHint{visibility:hidden!important;pointer-events:none!important}
+body.hubZen{overflow:hidden}
+body.hubZen #hubZenToggle{opacity:.18}
+body.hubZen #hubZenToggle:hover,body.hubZen #hubZenToggle:focus-visible{opacity:1}

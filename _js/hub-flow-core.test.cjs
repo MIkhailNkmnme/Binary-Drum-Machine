@@ -73,6 +73,24 @@ test('liquid spills over the rim but cannot equalize across a solid divider',()=
   assert.ok(f.drained>40);assert.ok(Math.abs(f.drained+sum(f.water)-added)<.002);
 });
 
+test('liquid descends diagonally beside a ledge but never crosses sealed corners',()=>{
+  const f=new WaterField(12,12),i=5*12+6;f.solid[i+12]=1;f.addWater(6,5);f.stepWater();
+  assert.equal(f.water[i],0);assert.equal(sum(f.water.slice(6*12,7*12)),1);assert.equal(sum(f.water.slice(0,5*12)),0);
+  const sealed=new WaterField(12,12);sealed.solid[i+12]=sealed.solid[i-1]=sealed.solid[i+1]=1;sealed.addWater(6,5);sealed.stepWater();
+  assert.equal(sealed.water[i],1);assert.equal(sum(sealed.water.slice(6*12)),0);
+});
+
+test('moving obstacles displace liquid only sideways or down; a closed pocket does not lift it',()=>{
+  for(const closed of [false,true]){
+    const f=new WaterField(12,12),i=5*12+6;f.addWater(6,5);const mask=f.solid.slice();mask[i]=1;
+    if(closed)for(const offset of [-1,1,11,12,13])mask[i+offset]=1;
+    f.setMask(mask);
+    assert.equal(sum(f.water.slice(0,5*12)),0);assert.equal(f.water[i],0);
+    assert.ok(Math.abs(sum(f.water)+f.drained-1)<1e-6);
+    if(closed)assert.equal(f.drained,1);else assert.equal(f.water[i+12],1);
+  }
+});
+
 test('each reflection halves light only after the contact, including multiple bounces in one step',()=>{
   const f=new Field(40,40);for(let x=0;x<40;x++){f.solid[10*40+x]=1;f.solid[30*40+x]=1;}
   const ray={x:20.5,y:20,vx:0,vy:1};const path=f.advanceRay(ray,42);
