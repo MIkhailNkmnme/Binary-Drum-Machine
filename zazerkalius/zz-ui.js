@@ -386,22 +386,43 @@ function rowChgInfo(){
 }
 /* v0.1245, «нужен режим: выделяю строку — сразу подсчитывается, сколько 1 и 0 в ней и выше, а внизу подсвечиваются ближайшие такие же и столько же»:
    «Σ 0·1» (Z.rowCmp). У текущей строки — нули и единицы в ней и суммой по строкам 1…N (в сведениях под полем и в подсказке номера).
-   Ниже неё: такая же строка (те же биты) — .cmpe, строка с тем же числом нулей и единиц — .cmpm; ближайшая каждого вида — ещё и .cmpn */
+   v0.1246, по снимку «выделил строку 111 — ниже надо выделить биты рядом, самые первые три единицы»: ищется не строка целиком, а её биты
+   подряд внутри строк ниже. Все места — подсветкой бит (Highlight «zcmp»), места в ближайшей строке, где они есть, — ярче («zcmpn») */
 function rowCmpInfo(){
   if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
-  const a = Z.cur, R = Z.rows, s = R[a]; if (s === undefined) return null;
+  const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const eq = new Map(); let ne = -1, nm = -1;
-  for (let i = a + 1; i < R.length; i++) {
-    const t = R[i]; if (t.length !== s.length) continue;
-    if (t === s) { eq.set(i, ne < 0 ? "cmpe cmpn" : "cmpe"); if (ne < 0) ne = i; }
-    else if (zzOnes(t) === k) { eq.set(i, nm < 0 ? "cmpm cmpn" : "cmpm"); if (nm < 0) nm = i; }
+  const hits = []; let near = -1, nearAt = -1, nRows = 0;
+  for (let i = a + 1; i < R.length && hits.length < 4000; i++) {
+    let j = R[i].indexOf(s), any = false;
+    while (j >= 0 && hits.length < 4000) { hits.push({ i, a: j, b: j + s.length, n: near < 0 || near === i }); if (near < 0) { near = i; nearAt = j; } any = true; j = R[i].indexOf(s, j + 1); }
+    if (any) nRows++;
   }
-  const nE = [...eq.values()].filter(c => c.startsWith("cmpe")).length, nM = eq.size - nE;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    ` · ниже такие же: ${nE ? nE + " (ближ. " + (ne + 1) + ")" : "нет"} · столько же 0 и 1: ${nM ? nM + " (ближ. " + (nm + 1) + ")" : "нет"}`;
-  return { a, cls: eq, txt };
+    (near < 0 ? ` · ниже «${s.length > 12 ? s.slice(0, 12) + "…" : s}» нет` : ` · ниже ближайшее: строка ${near + 1}, с бита ${nearAt + 1} · всего мест ${hits.length}${hits.length >= 4000 ? "+" : ""} в ${nRows} стр.`);
+  return { a, hits, near, txt };
+}
+function rowCmpMark(cmp){   // v0.1246: места строки в строках ниже — подсветкой бит, строки не перерисовываются
+  if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
+  const L = $("rowList"), all = [], nr = [];
+  if (cmp && L) {
+    const bxOf = {};
+    for (const h of cmp.hits) {
+      const bx = bxOf[h.i] || (bxOf[h.i] = L.querySelector('.rw[data-r="' + h.i + '"] .bx')); if (!bx) continue;
+      const at = (j) => { const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd, last = null;
+        while ((nd = w.nextNode())) { const n = nd.textContent.length; last = nd; if (c + n > j) return [nd, j - c]; c += n; }
+        return last ? [last, last.textContent.length] : null; };
+      const p = at(h.a), q = at(h.b); if (!p || !q) continue;
+      const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); if (!rg.collapsed) (h.n ? nr : all).push(rg); } catch (e) { /* место за показанной частью строки */ }
+    }
+  }
+  if (all.length) CSS.highlights.set("zcmp", new Highlight(...all)); else CSS.highlights.delete("zcmp");
+  if (nr.length) CSS.highlights.set("zcmpn", new Highlight(...nr)); else CSS.highlights.delete("zcmpn");
+  if (cmp && cmp.near >= 0 && rowCmpMark._a !== cmp.a + ":" + Z.rows[cmp.a]) {   // новая строка выбрана — ближайшее место в вид
+    rowCmpMark._a = cmp.a + ":" + Z.rows[cmp.a];
+    const r = L.querySelector('.rw[data-r="' + cmp.near + '"]'); if (r) requestAnimationFrame(() => scrollNear(r, { block: "nearest", inline: "nearest" }));
+  }
 }
 function rowCounts(s){
   if (s === undefined || (!Z.showFM && !Z.show01)) return "";
@@ -1397,7 +1418,7 @@ function renderRows(){
   const cmp = rowCmpInfo();   // v0.1245: Σ 0·1 — счёт текущей строки и подсветка таких же ниже
   const head = h, rowHtml = []; h = "";
   for (let i = 0; i < H; i++) {
-    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + (brCh.has(i) ? " brch" : "") + (cmp && cmp.cls.has(i) ? " " + cmp.cls.get(i) : "") + (cmp && cmp.a === i ? " cmpa" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (cmp && cmp.a === i ? " · " + cmp.txt : "") + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
+    h += '<div class="rw' + (i === Z.cur ? " cur" : "") + (rowSel.has(i) ? " sel" : "") + (qrh(i) ? " qrh" : "") + (brCh.has(i) ? " brch" : "") + (cmp && cmp.near === i ? " cmpn" : "") + '" data-r="' + i + '"><span class="no' + (rowChanged(i) ? " chg" : "") + '" title="строка ' + (i + 1) + (cmp && cmp.a === i ? " · " + cmp.txt : "") + (rowChanged(i) ? rowChgTip() : "") + ' · щелчок — выделить, правый — править">' + '<span class="rn">' + (i + 1) + '</span>' + rowLockBadge(i) + rowCounts(Z.rows[i]) + rowTurnsBadge(i) + rowBallLostBadge(i) + "</span>";   // v0.867: обороты — последним столбиком
     for (let l = 0; l < N; l++) {
       const s = lanes[l][i], act = l === Z.lane;
       if (s === undefined) { h += '<span class="bits' + (act ? " la" : "") + '" data-l="' + l + '"></span>'; continue; }
@@ -1429,7 +1450,7 @@ function renderRows(){
   $("fieldInfo").title = $("fieldInfo").textContent + ROW_METR_TIP;   // v0.077: целиком — в подсказке
   fieldInfoFit();   // v0.209
   $("rowList").classList.toggle("dimsel", rowSel.size > 0); $("rowList").classList.toggle("dimcur", !rowSel.size && !document.body.classList.contains("nocur"));   // v0.213 / v0.221: выделение (или выбранная строка) — остальные строки гаснут
-  rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark();   // v0.153, v0.167, v0.173; v0.347 — стенка
+  rowsFit(); rowsLockAllPlace(); rowBitMark(); wallMark(); rowCmpMark(cmp);   // v0.1246: места выбранной строки ниже; v0.153, v0.167, v0.173; v0.347 — стенка
   if (rg) { const H = rgStep(); L.style.setProperty("--rgh", H + "px"); L.style.setProperty("--rgw", (H / Math.sqrt(3)).toFixed(3) + "px"); }   // v0.885
   if (qv && !rg) {   // v0.456: размеры фигур — символ и шаг рядов, как их поставил rowsFit
     const q = L.querySelector(".rw[data-r] i.q"), rw = L.querySelectorAll(".rl-inner > .rw[data-r] > .bits");
