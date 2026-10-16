@@ -35,7 +35,7 @@
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
         const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
-        const plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
+        const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
         group.slot.dataset.lo=String(plan.span[0]*24);group.slot.dataset.hi=String(plan.span[1]*24);group.slot.style.setProperty('--tree-columns','1');group.root.node.dataset.groupPinned=String(pins.has(group.key));
@@ -122,8 +122,16 @@
     const palette=document.querySelector('.hubColorGroup');
     if(palette){
       const colour={key:'colour',name:'Цвет'};groups.splice(groups.indexOf(sym),0,colour);
-      palette.id=palette.id||'hubColorPanel';const r=leaf(colour,palette);r.wide=true;
-      colour.root=createBranch(colour,'colour','🎨','Цвет',[r]);
+      // v0.219: «сразу все пресеты показывает без отдельного скрытия, всё треугольником из ромбов» — каждый образец и цвет своим ромбом;
+      // цвет подсветки симметрии — в «Симм.».
+      palette.id=palette.id||'hubColorPanel';palette.hidden=true;
+      const symSlot=palette.querySelector('input[aria-label^="Цвет подсветки симметрии"]')?.closest('label');
+      if(symSlot){symSlot.classList.add('hubTreeColor');sym.root.children.splice(1,0,leaf(sym,symSlot));}
+      const swatches=[...palette.querySelectorAll('.hubPaletteList button[data-i]')];
+      for(const b of swatches){b.style.left=b.style.top='';b.classList.add('hubSwatch');}
+      const slots=[...palette.querySelectorAll('label.hubColorSlot')].filter(n=>n!==symSlot);slots.forEach(n=>n.classList.add('hubTreeColor'));
+      const items=[...slots,...palette.querySelectorAll('.hubDigitToggle'),...swatches].map(n=>leaf(colour,n));
+      colour.root=createBranch(colour,'colour','🎨','Цвет',items);colour.grow=true;
     }
     // v0.217: «Точно» — пока включено, обычное колесо крутит биты шагом до точных линий (как Shift + колесо).
     {const b=document.createElement('button');b.type='button';b.id='hubExactTilt';b.className='hubRhomb';b.textContent='⟋\nТочно';

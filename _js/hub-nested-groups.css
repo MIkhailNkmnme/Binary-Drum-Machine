@@ -30,6 +30,14 @@
 #hubFieldTools[data-nested] .hubFieldSlot[data-group=motion]{position:fixed;z-index:26}
 #hubFieldTools[data-nested] .hubTreeItem>#hubPNG,#hubFieldTools[data-nested] .hubTreeItem>#hubRec{position:relative;inset:auto;top:auto;right:auto;z-index:auto}
 #hubFieldTools[data-nested] .hubTreeItem>.hubColorGroup{position:absolute;left:-42px;top:0;z-index:46}
+.hubColorGroup[hidden]{display:none!important}
+/* v0.219: образцы и цвета — ромбами в решётке группы «Цвет». */
+#hubFieldTools[data-nested] .hubTreeItem>.hubSwatch{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;transform:none;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer}
+#hubFieldTools[data-nested] .hubTreeItem>.hubSwatch:hover{filter:brightness(1.25)}
+#hubFieldTools[data-nested] .hubTreeItem>.hubSwatch[aria-pressed=true]::after{content:'';position:absolute;inset:9px;border:2px solid #fff;transform:rotate(45deg);pointer-events:none}
+#hubFieldTools[data-nested] .hubTreeItem>.hubSwatch.hubPaletteOwn{background:var(--hub-theme-bg);color:#ffd166;font:16px/1 system-ui,sans-serif}
+#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor{position:relative;width:48px;height:48px;margin:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--slot,var(--hub-theme-bg))}
+#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor b{font-size:14px}
 #hubFieldTools .hubColorGroup button.hubRhomb{width:40px;height:40px;font:12px/1.05 system-ui,sans-serif}
 #hubFieldTools .hubColorGroup .hubPaletteList{right:auto;left:-24px;top:44px}
 #hubFieldTools .hubPaletteList button{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:0;border:0;cursor:pointer}

@@ -261,14 +261,14 @@
     colorGroup=document.createElement('div');colorGroup.className='hubColorGroup';colorGroup.setAttribute('role','group');colorGroup.setAttribute('aria-label','Цвета');
     const sw=(a,b)=>`linear-gradient(90deg,${a} 0 50%,${b} 50% 100%)`,palBox=document.createElement('details'),palHead=document.createElement('summary'),palList=document.createElement('div');
     palBox.className='hubTilt hubPalette';palBox.style.gridArea='pal';palHead.title='Цвета: заготовки; ★ — свой';palHead.textContent='🎨';palList.className='hubPaletteList';palList.setAttribute('role','group');palList.setAttribute('aria-label','Пресеты цветов');
-    const inputs={};
+    const inputs={},palBtns=[];
     const syncColors=()=>{const c=api.colors();
       document.documentElement.style.setProperty('--hub-theme-bit',c.bit);document.documentElement.style.setProperty('--hub-theme-accent',c.sym);
-      palHead.style.background=sw(c.bit,c.sym);palList.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
+      palHead.style.background=sw(c.bit,c.sym);palBtns.forEach(x=>x.setAttribute('aria-pressed',String(Number(x.dataset.i)===state.palette)));
       for(const k in inputs){if(document.activeElement!==inputs[k])inputs[k].value=c[k];inputs[k].parentElement.style.setProperty('--slot',c[k]);}};
     [...PALETTES.map((p,i)=>[i,p[0],p[1],p[4]]),[-1,'★ Свой',null,null]].forEach(([i,name,a,b])=>{const btn=document.createElement('button');btn.type='button';btn.dataset.i=i;const slot=i<0?PALETTES.length:i;const row=Math.floor(slot/5),col=slot%5;btn.style.left=(90+(col-row-.5)*20)+'px';btn.style.top=(90+(col+row-3.5)*20)+'px';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);
       if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
-      btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();palBox.open=false;};palList.append(btn);});
+      btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();palBox.open=false;};palList.append(btn);palBtns.push(btn);});
     palBox.append(palHead,palList);colorGroup.append(palBox);
     for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
       const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot hubColorAlpha';wrap.style.gridArea=area;wrap.title=title;
