@@ -49,7 +49,7 @@
           const rect=group.slot.getBoundingClientRect(),lo=Number(group.slot.dataset.lo)||0,hi=Number(group.slot.dataset.hi)||0;
           let dx=0;if(rect.left+hi+48>innerWidth-8)dx=-Math.ceil((rect.left+hi+48-innerWidth+8)/48)*48;if(rect.left+lo+dx<8)dx+=Math.ceil((8-rect.left-lo-dx)/48)*48;
           const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
-          const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=0;
+          const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=document.body.classList.contains('hubMobButtons')?24:0;   // v0.223: на телефоне группы стоят вплотную — дерево ниже ряда корней
           const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
           for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
           for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head?0:offset);cell.style.transform='translate('+px+'px,'+py+'px)';}

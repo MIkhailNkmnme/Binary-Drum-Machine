@@ -1,0 +1,18 @@
+/* Hub v0.223: телефон — «Холст» и «Кнопки» отдельно; пульт у креста всегда с холстом. */
+#hubMobShade,#hubMobSwitch{display:none}
+@media(max-width:1100px){
+  #hubMobSwitch{display:flex;flex-direction:column;align-items:center;justify-content:center;position:fixed;right:10px;top:8px;z-index:60;width:48px;height:48px;padding:0;border:0;
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:9px/1 system-ui,sans-serif;cursor:pointer}
+  #hubMobSwitch i{font-style:normal;font-size:15px;line-height:16px;color:var(--hub-theme-accent)}
+  /* Холст: группы поля спрятаны, остаются пульт (крест и «Вращ.») и корзина. */
+  body.hubMobCanvas #hubFieldTools .hubFieldSlot:not([data-group=motion]),body.hubMobCanvas #hubBitPacking{display:none!important}
+  /* Кнопки: сплошной фон поверх холста, группы на весь экран; пульта, корзины и оси не видно. */
+  body.hubMobButtons #hubMobShade{display:block;position:fixed;inset:0;z-index:23;background:var(--hub-theme-bg)}
+  /* все восемь групп — одним рядом во всю ширину, деревья раскрываются вниз на весь экран */
+  body.hubMobButtons #hubFieldTools.hubMirrorSettings{left:0;width:100%;max-height:none;height:calc(100dvh - 68px);overflow:visible;flex-wrap:nowrap;align-content:flex-start;justify-content:space-between;gap:0}
+  body.hubMobButtons #hubFieldTools .hubFieldSlot{flex:0 0 auto;min-width:0}
+  body.hubMobButtons #hubMobSwitch{background:color-mix(in srgb,var(--hub-theme-accent) 30%,var(--hub-theme-bg))}
+  body.hubMobButtons #hubFieldTools .hubFieldSlot[data-group=motion],body.hubMobButtons #hubZoom,body.hubMobButtons #hubRombGrid,body.hubMobButtons #hubMirror{display:none!important}
+  body.hubMobButtons{overflow:hidden}
+  body.hubZen #hubMobSwitch{display:none}
+}
