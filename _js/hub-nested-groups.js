@@ -124,6 +124,13 @@
       palette.id=palette.id||'hubColorPanel';const r=leaf(colour,palette);r.wide=true;
       colour.root=createBranch(colour,'colour','🎨','Цвет',[r]);
     }
+    // v0.217: «Точно» — пока включено, обычное колесо крутит биты шагом до точных линий (как Shift + колесо).
+    {const b=document.createElement('button');b.type='button';b.id='hubExactTilt';b.className='hubRhomb';b.textContent='⟋\nТочно';
+      let on=false;try{on=localStorage.getItem('zerk_hub_exact_tilt')==='true';}catch(_){}
+      window.HubExactTilt={get on(){return on;},set(v){on=!!v;b.setAttribute('aria-pressed',String(on));try{localStorage.setItem('zerk_hub_exact_tilt',String(on));}catch(_){}}};
+      b.title='Точный шаг колеса: колесо крутит биты до ближайшей точной линии, как Shift + колесо';b.setAttribute('aria-label',b.title);
+      b.onclick=()=>window.HubExactTilt.set(!on);window.HubExactTilt.set(on);
+      const turn=records.get('bits|branch:turn');if(turn)turn.children.push(leaf(bits,b));}
     // Пульт движений (крест справа): все вращения — битов, оси, 3D и автозум.
     const motion={key:'motion',name:'Пульт движений'},moving=['bits|branch:turn','axis|branch:turn','space|branch:zoom'].map(id=>records.get(id)).filter(Boolean);
     moving.forEach(r=>{detach(r);regroup(r,motion);});
