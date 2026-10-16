@@ -1,3 +1,4 @@
+/* Hub v0.149: ось-луч от опорной точки; пунктирная орбита при ручном повороте. */
 /* Hub v0.147: включённая ось меняет отражение независимо от оригинала. */
 /* Hub v0.146: без отражения ось закреплена в центре оригинала; автокручение скрывает ось. */
 /* Hub v0.145: ось управляет оригиналом и при отключённом отражении. */
@@ -30,14 +31,14 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, angle: AX0, x: .5, y: .5, autoCenter: true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:0,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
       state.on = saved.on !== false;
       state.trace = saved.trace === true;
-      state.bitSymmetry = saved.bitSymmetry !== false;
+      state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённыхstate.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(.1,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(.1,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(Object.keys(c).length===4)state.custom=c;}
@@ -50,7 +51,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, line = null, handle = null, turn = null, drag = null, revision = 0, enabled = null,bitCenters=[];
+  let colorGroup = null, frame = null, root = null, line = null, handle = null, turn = null, orbit = null, drag = null, revision = 0, enabled = null,bitCenters=[];
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -74,13 +75,16 @@
   const update = () => {
     lockCenter();
     if (!root || !frame) return;
-    const length = Math.hypot(frame.width, frame.height) * 2 + 40, mobile = matchMedia('(max-width: 1100px)').matches;
+    const px=frame.width*state.x, py=frame.height*state.y, radius=Math.min(frame.width,frame.height)*.22;
+    const length = Math.hypot(Math.max(Math.abs(px),Math.abs(frame.width-px)),Math.max(Math.abs(py),Math.abs(frame.height-py)))+40, mobile = matchMedia('(max-width: 1100px)').matches;
     root.classList.toggle('off', !state.on);
+    root.classList.toggle('turning', !!drag?.turn);
     if (enabled) enabled.checked = state.on;
     Object.assign(root.style, { position: mobile ? 'absolute' : 'fixed', left: frame.left + 'px', top: '0px', width: frame.width + 'px', height: frame.height + 'px' });
-    Object.assign(line.style, { left: (frame.width * state.x - length / 2) + 'px', top: (frame.height * state.y - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
+    Object.assign(line.style, { left: px + 'px', top: (py - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
-    turn.style.left = (length / 2 + Math.min(frame.width, frame.height) * .22) + 'px';
+    turn.style.left = radius + 'px';
+    Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
     window.HubView?.apply(root);handle.textContent = state.on ? '◇' : '×';
     handle.title = state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
@@ -96,7 +100,8 @@
     line = document.createElement('div'); line.className = 'hubMirrorLine';line.tabIndex=0;line.setAttribute('role','button');line.setAttribute('aria-label','Переместить зеркало относительно оригинала');
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
-    line.append(handle, turn); root.append(line); document.body.append(root);
+    orbit=document.createElement('div');orbit.className='hubMirrorOrbit';orbit.setAttribute('aria-hidden','true');
+    line.append(handle, turn); root.append(orbit,line); document.body.append(root);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
     settings.addEventListener('click', e => e.stopPropagation());
@@ -113,7 +118,9 @@
     enabled.addEventListener('change', () => { state.on = enabled.checked;syncSpin();changed();save(); });
     const sym = document.createElement('button'); sym.type='button'; sym.className='hubRhomb hubBitSymmetry'; sym.textContent='│\nсим.';
     sym.title='Зеркальные оси и парные биты'; sym.setAttribute('aria-label',sym.title); sym.setAttribute('aria-pressed',String(state.bitSymmetry));
-    sym.onclick=()=>{state.bitSymmetry=!state.bitSymmetry;sym.setAttribute('aria-pressed',String(state.bitSymmetry));changed();save();}; settings.append(sym);
+    const parallel=document.createElement('button');parallel.type='button';parallel.className='hubRhomb';parallel.textContent='∥';parallel.title='Искать симметричные пары параллельно ручной оси (точное совпадение центров битов)';parallel.setAttribute('aria-label','Симметрия параллельно ручной оси');
+    const syncSymmetry=()=>{sym.setAttribute('aria-pressed',String(state.bitSymmetry));parallel.hidden=!state.bitSymmetry;parallel.setAttribute('aria-pressed',String(state.parallelSymmetry));};
+    sym.onclick=()=>{state.bitSymmetry=!state.bitSymmetry;syncSymmetry();changed();save();};parallel.onclick=()=>{state.parallelSymmetry=!state.parallelSymmetry;syncSymmetry();changed();save();};settings.append(sym,parallel);syncSymmetry();
     for(const [key,icon,title] of [['minRows','↕','Минимум строк симметрии'],['minPairs','↔','Минимум пар зеркальных битов']]){
       const box=document.createElement('details'),head=document.createElement('summary'),value=document.createElement('output'),label=document.createElement('label'),number=document.createElement('input');
       box.className='hubTilt hubSymmetryMinimum';head.title=title;head.append(document.createTextNode(icon),value);value.textContent=state.symmetryMinimums[key];
@@ -190,7 +197,7 @@
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
         moved: false, handle: e.target === handle, turn: !state.on||e.target === turn||state.axisRotate };
       drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
-      root.setPointerCapture(e.pointerId);
+      root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
       if (!drag || drag.id !== e.pointerId) return;
@@ -209,12 +216,12 @@
     });
     const finish = e => {
       if (!drag || drag.id !== e.pointerId) return;
-      const done = drag; drag = null;
+      const done = drag; drag = null;update();
       if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
       if (e.type === 'pointerup' && !done.moved && (done.handle || done.turn)) rotate(Math.PI / 12); else save();
     };
     root.addEventListener('pointerup', finish); root.addEventListener('pointercancel', finish);
-    root.addEventListener('lostpointercapture', () => { if (drag) { drag = null; save(); } });
+    root.addEventListener('lostpointercapture', () => { if (drag) { drag = null; update(); save(); } });
     root.addEventListener('click', e => { e.stopPropagation(); if (e.detail === 0 && (e.target === handle || e.target === turn)) rotate(Math.PI / 12); });
     root.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });   // v0.126: правая кнопка / долгое нажатие зеркало не выключают
     turn.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); rotate(Math.sign(e.deltaY) * Math.PI / 36); }, { passive: false });

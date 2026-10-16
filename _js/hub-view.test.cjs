@@ -167,8 +167,19 @@ test('slider starts rotation above zero and zero stops without losing the last s
  assert.equal(Number(range.value),0);range.value=201;range.oninput();
  assert.equal(f.bodyClass('hubAutoTurning'),true);assert.equal(f.state().spinRate,1);
  f.tick(0);f.tick(250);range.value=0;range.oninput();
- assert.equal(f.bodyClass('hubAutoTurning'),false);assert.equal(Number(range.value),0);assert.equal(f.state().angle,90);
- f.tick(1000);assert.equal(f.state().angle,90);
+ assert.equal(f.bodyClass('hubAutoTurning'),false);assert.equal(Number(range.value),0);assert.equal(f.state().angle,0);
+ f.tick(1000);assert.equal(f.state().angle,0);
  toggle.onclick();assert.equal(f.bodyClass('hubAutoTurning'),true);assert.equal(f.state().spinRate,1);
  range.value=601;range.oninput();assert.equal(f.state().spinRate,10000);
+});
+
+
+test('pause preserves selected speed and angle, resume continues from that angle',()=>{
+ const f=fixture(),range=f.button('Шкала скорости автокручения'),toggle=f.button('Автокручение треугольника');
+ range.value=201;range.oninput();f.tick(0);f.tick(250);toggle.onclick();
+ assert.equal(f.bodyClass('hubAutoTurning'),false);assert.equal(Number(range.value),201);
+ assert.equal(f.state().angle,90);assert.equal(toggle.textContent,'');
+ f.tick(1000);assert.equal(f.state().angle,90);
+ toggle.onclick();f.tick(1100);f.tick(1350);assert.equal(f.window.HubView.rotation*180/Math.PI,180);
+ range.value=0;range.oninput();assert.equal(f.state().angle,0);assert.equal(Number(range.value),0);
 });
