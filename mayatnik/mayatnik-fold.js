@@ -99,12 +99,17 @@
     function render(){
       if(!state)return;if(!saved)dock();const W=state.width,H=state.height,mid=midOn(),mf=config?.()?.midFill;
       // v14: «Центр краской» — та же заливка «Столбов» по центральному столбцу, но по картинке свёртки (в ↔ — её XOR-столбец)
-      let fillM=null;if(mf&&window.MayatnikFill){const col=V?mf.col:state.center;if(col>=0&&col<W){const fb=new Uint8Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)fb[y*W+x]=state.bit(x,y)+1;
-        fillM=new Uint8Array(W*H);for(const q of MayatnikFill.down(fb,W,col,[mf.bit+1]).indices)fillM[q]=1;}}
+      // v15: свои цвета у 1 и у 0 (оба — если оба заданы) и 2-й уровень — пары равных битов слева и справа от столбца, прозрачнее
+      let fillM=null,wideM=null,fb=null;const col=mf?(V?mf.col:state.center):-1;
+      if(mf&&window.MayatnikFill&&col>=0&&col<W&&(mf.one||mf.zero)){fb=new Uint8Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)fb[y*W+x]=state.bit(x,y)+1;
+        fillM=new Uint32Array(W*H);for(const [b,c] of [[1,mf.one],[0,mf.zero]])if(c)for(const q of MayatnikFill.down(fb,W,col,[b+1]).indices)if(!fillM[q])fillM[q]=c;
+        if(mf.wide){wideM=new Uint32Array(W*H);for(let y=0;y<H;y++)for(let d=1;col-d>=0&&col+d<W;d++){const l=y*W+col-d,r=y*W+col+d,b=fb[l];if(!b||b!==fb[r])break;const c=b===2?mf.one:mf.zero;if(c){wideM[l]=c;wideM[r]=c;}}}}
+      const mixPx=(c,b,a)=>{const ch=s=>Math.round(((c>>>s)&255)*a+((b>>>s)&255)*(1-a));return (255<<24|ch(16)<<16|ch(8)<<8|ch(0))>>>0;};
       if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
       const u=new Uint32Array(offImg.data.buffer);
       for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-        u[i]=fillM&&fillM[i]?mf.colour:mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+        u[i]=fillM&&fillM[i]?fillM[i]:mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);
+        if(wideM&&wideM[i]&&!(fillM&&fillM[i]))u[i]=mixPx(wideM[i],u[i],mf.alpha);}
       off.getContext('2d').putImageData(offImg,0,0);
       const dpr=Math.min(2,devicePixelRatio||1),cw=Math.max(1,view.clientWidth),ch=Math.max(1,view.clientHeight),pw=Math.round(cw*dpr),ph=Math.round(ch*dpr);
       if(view.width!==pw)view.width=pw;if(view.height!==ph)view.height=ph;

@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.134. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.135. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.134</title>
+<title>Zerkalius Маятник — v0.135</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=134">
+<link rel="stylesheet" href="mayatnik-menu.css?v=135">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.134</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.135</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -209,6 +209,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Цвет заливки">Цвет <input id="fillColour" type="color" value="#ff7f27" aria-label="Цвет заливки"></label>
     <label title="Как соединять биты при ручной заливке и взятии области в шаблон. Один бит игнорирует зеркальную пару.">Область <select id="fillArea" data-mi-short="Область"><option value="sides">По сторонам</option><option value="corners">Стороны + углы</option><option value="diagonal">Только углы</option><option value="chess0">Шахматки 0</option><option value="bit">Один бит</option></select></label>
     <button id="bPaintMid" data-mi-short="Центр краской" aria-pressed="false" title="Центр краской: заливка по центральному столбцу, как «Столбы» от его верха — области единиц (или нулей), касающиеся столбца якоря, цветом заливки; сама обновляется при построении и в окнах свёрток. По кругу: выкл → по 1 → по 0">Центр краской</button>
+    <label title="Центр краской: заливать области 1 этим цветом"><input id="midOneOn" type="checkbox" checked data-mi-short="Центр 1"> центр 1 <input id="midOneColour" type="color" value="#ff7f27"></label>
+    <label title="Центр краской: заливать области 0 этим цветом (вместе с 1 — красятся оба)"><input id="midZeroOn" type="checkbox" data-mi-short="Центр 0"> центр 0 <input id="midZeroColour" type="color" value="#4f9bff"></label>
+    <label title="2-й уровень — расширенная ось: в каждой строке от центрального столбца в обе стороны, пока бит слева равен биту справа, оба красятся цветом своего бита, прозрачнее"><input id="midWide" type="checkbox" checked data-mi-short="Ось 2"> ось 2</label>
     <button id="bAutoAll" data-mi-short="Авто" aria-pressed="false" title="Автопокраска по шагам от столбца вершины: шаг 1 — слева белые, справа чёрные, шаг 2 — наоборот, и так по очереди. Каждый столбец красит не закрашенные области, которых касается, следующим цветом. Видно, как идёт; второй щелчок — стоп. Отменяется ↩. В режиме области «Шахматки 0» — включает и выключает живой слой: каждая область нулей своим цветом, держится при шагах и пересчитывается на каждом кадре">Авто</button>
     <button id="bAutoVertical" aria-pressed="false" title="По кругу: области битов 1 → битов 0 → выключено. Наведи на пиксель: все области, касающиеся вертикали от него вниз, подсветятся. Щелчок применяет цвет.">Вертикаль выкл</button>
     <button id="bStolb" data-mi-short="Проход" aria-pressed="false" title="Проход столба: столбец «Столбов» идёт от «от» до «до» и обратно, области пересчитываются на каждом шаге; краска и история не меняются. Начало — где последний раз наводил столб. Для GIF — «Запись» и пуск. Esc — выход">Проход столба</button>
@@ -311,7 +314,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-paint-cache.js?v=36"></script>
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/zz-pult.js?v=2"></script>
-<script src="mayatnik-fold.js?v=15"></script>
+<script src="mayatnik-fold.js?v=16"></script>
 <script src="mayatnik-stolb.js?v=3"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
@@ -375,7 +378,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     $('fillArea').value=st.fillArea;
     $('digitOneColour').value=st.digitOneColour;$('digitZeroColour').value=st.digitZeroColour;
     st.midCol=false;$('midCol').checked=false;   // v0.132: подсветка «Центр» снята со страницы
-    st.paintMid=st.paintMid===true?1:+st.paintMid||0;midSync();$('fixLines').checked=st.fixLines!==false;$('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
+    {const old=st.paintMid;st.paintMid=!!old;if(st.midOneOn===undefined){st.midOneOn=old!==2;st.midZeroOn=old===2;}}   // v0.135: было выкл / по 1 / по 0
+    $('midOneOn').checked=st.midOneOn!==false;$('midZeroOn').checked=!!st.midZeroOn;$('midWide').checked=st.midWide!==false;$('midOneColour').value=st.midOneColour||'#ff7f27';$('midZeroColour').value=st.midZeroColour||'#4f9bff';midSync();$('fixLines').checked=st.fixLines!==false;$('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
     $('ochkiPattern').value=st.ochkiPattern||'initial';$('ochkiLength').value=st.ochkiLength||5;
     $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('bg').value = st.bg;
     $('view').value = st.view; $('speed').value = st.speed; $('vrows').value = st.vrows || ''; st.noband = st.noband === true ? 1 : (+st.noband || 0) % 3; $('noband').checked = st.noband > 0; $('noband').dataset.mode = st.noband; $('frozen').checked = !!st.frozen; $('bOchki').setAttribute('aria-pressed', String(!!st.ochki)); $('ochkiMode').value = st.ochkiMode === 'row' ? 'row' : 'diag'; $('ochkiInv').checked = !!st.ochkiInv; $('ochkiRev').checked = !!st.ochkiRev; $('outline').checked = !!st.outline; $('third').checked = !!st.third; $('sym').checked = !!st.sym; $('symBits').checked = !!st.symBits;
@@ -701,22 +705,31 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     status();
   }
   // v0.130 → v0.132: «имел в виду не столбец, а покраска по столбцу заливкой». «Центр краской» — заливка «Столбов» от верха
-  // центрального столбца (столб якоря): области единиц (или нулей), которые касаются столбца, цветом заливки. Делается заново
-  // в каждой отрисовке — при построении, по кадрам; прежняя такая заливка снимается. Своя краска не перекрывается (красятся только
-  // пустые пиксели). Кнопка по кругу: выкл → по 1 → по 0. Плоские виды; в окнах свёрток — та же заливка по их картинке.
-  const midColour=()=>rgba(hexRGB($('fillColour').value)),MID_NAMES=['Центр краской','Центр: по 1','Центр: по 0'];
-  let midAuto=null;   // {colour, idx, mark, n}: пиксели прошлой автозаливки
-  function midUnpaint(){if(midAuto&&fillMask&&fillMask.length===midAuto.n){for(const q of midAuto.idx)if(fillMask[q]===midAuto.colour)fillMask[q]=0;if(!fillMask.some(Boolean))fillMask=null;}midAuto=null;}
+  // центрального столбца (столб якоря): области, которые касаются столбца. Делается заново в каждой отрисовке — при построении,
+  // по кадрам; прежняя такая заливка снимается. Своя краска не перекрывается (красятся только пустые пиксели). Плоские виды.
+  // v0.135: «отдельная цветовая настройка для центр столба и для 0 и 1, если 2 цвета указаны — красит оба» — у 1 и у 0 свой цвет
+  // и своя галка; «2 уровень отдельных зеркальных бит от центра, как бы расширенная ось — такие же цвета, только прозрачнее»: в каждой
+  // строке от столба якоря в обе стороны, пока бит слева = биту справа, оба красятся цветом своего бита на MID_WIDE_A поверх картинки.
+  const MID_WIDE_A=.45,mixPx=(c,b,a)=>{const ch=s=>Math.round(((c>>>s)&255)*a+((b>>>s)&255)*(1-a));return (255<<24|ch(16)<<16|ch(8)<<8|ch(0))>>>0;};
+  const midCfg=()=>({one:$('midOneOn').checked?rgba(hexRGB($('midOneColour').value)):0,zero:$('midZeroOn').checked?rgba(hexRGB($('midZeroColour').value)):0,wide:$('midWide').checked,alpha:MID_WIDE_A});
+  let midAuto=null;   // {idx, cols, mark, n}: пиксели прошлой автозаливки и что в них положено
+  function midUnpaint(){if(midAuto&&fillMask&&fillMask.length===midAuto.n){const {idx,cols}=midAuto;for(let i=0;i<idx.length;i++)if(fillMask[idx[i]]===cols[i])fillMask[idx[i]]=0;if(!fillMask.some(Boolean))fillMask=null;}midAuto=null;}
   function paintMid(){
-    midUnpaint();const mode=+st.paintMid||0;if(!mode||!img||!geo||!f||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;
-    const IW=img.width,n=IW*img.height,fb=new Uint8Array(n);for(let y=0;y<img.height;y++)for(let x=0;x<IW;x++)fb[y*IW+x]=rasterBit(x,y)+1;
-    const bit=mode===2?0:1,found=MayatnikFill.down(fb,IW,a*RK+(RK>>1),[bit+1]);if(!found.indices.length)return;
+    midUnpaint();if(!st.paintMid||!img||!geo||!f||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;const C=midCfg();if(!C.one&&!C.zero)return;
+    const IW=img.width,IH=img.height,n=IW*IH,fb=new Uint8Array(n);for(let y=0;y<IH;y++)for(let x=0;x<IW;x++)fb[y*IW+x]=rasterBit(x,y)+1;
     if(!fillMask)fillMask=new Uint32Array(n);if(fillMask.length!==n)return;
-    const c=midColour(),idx=[],mark=new Uint8Array(n);for(const q of found.indices)if(!fillMask[q]){fillMask[q]=c;idx.push(q);mark[q]=1;}
-    midAuto={colour:c,idx:Uint32Array.from(idx),mark,n};
+    const idx=[],cols=[],mark=new Uint8Array(n),put=(q,c)=>{if(fillMask[q]||mark[q])return;fillMask[q]=c;idx.push(q);cols.push(c);mark[q]=1;};
+    for(const [bit,c] of [[1,C.one],[0,C.zero]])if(c)for(const q of MayatnikFill.down(fb,IW,a*RK+(RK>>1),[bit+1]).indices)put(q,c);
+    if(C.wide&&RK===1)for(let y=0;y<IH;y++)for(let d=1;a-d>=0&&a+d<IW;d++){const l=y*IW+a-d,r=y*IW+a+d,b=fb[l];if(!b||b!==fb[r])break;
+      const c=b===2?C.one:C.zero;if(!c)continue;put(l,mixPx(c,fillBase?.[l]||0,C.alpha));put(r,mixPx(c,fillBase?.[r]||0,C.alpha));}
+    if(!idx.length){if(!fillMask.some(Boolean))fillMask=null;return;}
+    midAuto={idx:Uint32Array.from(idx),cols:Uint32Array.from(cols),mark,n};
   }
-  function midSync(){const m=+st.paintMid||0;$('bPaintMid').textContent=MID_NAMES[m];$('bPaintMid').setAttribute('aria-pressed',String(!!m));}
-  $('bPaintMid').onclick=()=>{st.paintMid=((+st.paintMid||0)+1)%3;midSync();save();if(f){draw();fillSync();}foldTransport?.render();foldTransportV?.render();};
+  function midSync(){$('bPaintMid').textContent='Центр краской';$('bPaintMid').setAttribute('aria-pressed',String(!!st.paintMid));}
+  const midRedraw=()=>{save();if(f){draw();fillSync();}foldTransport?.render();foldTransportV?.render();};
+  $('bPaintMid').onclick=()=>{st.paintMid=!st.paintMid;midSync();midRedraw();};
+  for(const id of ['midOneOn','midZeroOn','midWide'])$(id).addEventListener('change',()=>{st[id]=$(id).checked;midRedraw();});
+  for(const id of ['midOneColour','midZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;midRedraw();});
   function fillSync(){
     $('bFillUndo').disabled=!fillHistory.length;if($('bFillRedo'))$('bFillRedo').disabled=!fillRedo.length;$('bFillClear').disabled=!fillMask&&!paintBits;
     $('bFill').setAttribute('aria-pressed',String(fillMode));wrap.classList.toggle('fill-mode',fillMode||!!autoVertical);if(!fillMode&&!autoVertical)clearFillPreview();
@@ -2364,7 +2377,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       return {width:VW,height:VH,center:centre,data,colour,paint,write};
     },
     config(){
-      if(!foldBack&&f&&geo)return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,midFill:+st.paintMid?{bit:+st.paintMid===2?0:1,colour:midColour(),col:geo.anchor-VX}:null};   // v0.129: окну проверки снимка не нужны
+      if(!foldBack&&f&&geo)return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,midFill:st.paintMid?{...midCfg(),col:geo.anchor-VX}:null};   // v0.129: окну проверки снимка не нужны
       if(foldBack){const b=foldBack;if(b.f!==f||b.k!==k||b.view!==st.view)return null;   // v0.118: в режиме записи краска и биты меняются — не повод закрывать
         return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol};}
       const b=foldSource;if(!b||b.field!==f||b.frame!==k||b.x!==VX||b.w!==VW||b.h!==VH||b.view!==st.view||b.paint!==fillMask||b.bits!==paintBits)return null;
@@ -2431,6 +2444,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=134"></script>
+<script src="mayatnik-menu.js?v=135"></script>
 </body>
 </html>
