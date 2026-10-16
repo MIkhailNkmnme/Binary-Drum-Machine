@@ -125,11 +125,12 @@
       // v0.219: «сразу все пресеты показывает без отдельного скрытия, всё треугольником из ромбов» — каждый образец и цвет своим ромбом;
       // цвет подсветки симметрии — в «Симм.».
       palette.id=palette.id||'hubColorPanel';palette.hidden=true;
-      const symSlot=palette.querySelector('input[aria-label^="Цвет подсветки симметрии"]')?.closest('label');
-      if(symSlot){symSlot.classList.add('hubTreeColor');sym.root.children.splice(1,0,leaf(sym,symSlot));}
+      // v0.220: «отражённ и заворот тоже к симметр» — цвета отражения, заворота и подсветки симметрии — в «Симм.»; первые два видны и без симметрии.
+      const symSlots=['Цвет отражённых','Цвет заворота','Цвет подсветки симметрии'].map(t=>palette.querySelector('input[aria-label^="'+t+'"]')?.closest('label')).filter(Boolean);
+      symSlots.forEach((n,i)=>{n.classList.add('hubTreeColor');const r=leaf(sym,n);if(i<2)r.free=true;sym.root.children.splice(1+i,0,r);});
       const swatches=[...palette.querySelectorAll('.hubPaletteList button[data-i]')];
       for(const b of swatches){b.style.left=b.style.top='';b.classList.add('hubSwatch');}
-      const slots=[...palette.querySelectorAll('label.hubColorSlot')].filter(n=>n!==symSlot);slots.forEach(n=>n.classList.add('hubTreeColor'));
+      const slots=[...palette.querySelectorAll('label.hubColorSlot')].filter(n=>!symSlots.includes(n));slots.forEach(n=>n.classList.add('hubTreeColor'));
       const items=[...slots,...palette.querySelectorAll('.hubDigitToggle'),...swatches].map(n=>leaf(colour,n));
       colour.root=createBranch(colour,'colour','🎨','Цвет',items);colour.grow=true;
     }
