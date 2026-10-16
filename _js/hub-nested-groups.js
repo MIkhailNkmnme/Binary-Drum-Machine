@@ -37,20 +37,22 @@
         const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
         const plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
-        for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn=String(p.column+1);const top=r.id===group.key||promoted.has(r.id);r.wrap.style.gridRow=String(p.row+1);r.wrap.dataset.header=String(!!p.head);r.wrap.style.setProperty('--tree-x',String(p.column*52));r.wrap.dataset.pyrX=p.pyr?String(p.pyr[0]*24):'';r.wrap.dataset.pyrY=p.pyr?String(p.pyr[1]*24):'';}r.node.dataset.controlPinned=String(promoted.has(r.id));}
-        group.slot.style.setProperty('--tree-columns',String(plan.columns));group.root.node.dataset.groupPinned=String(pins.has(group.key));
+        for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
+        group.slot.dataset.lo=String(plan.span[0]*24);group.slot.dataset.hi=String(plan.span[1]*24);group.slot.style.setProperty('--tree-columns','1');group.root.node.dataset.groupPinned=String(pins.has(group.key));
       }
       toolbar.dataset.hasPins=String(pins.size+promoted.size>0);
       requestAnimationFrame(()=>{
         const occupied=[];
         for(const group of groups)if(group.fixed){const z=document.getElementById('hubZoom')?.getBoundingClientRect();if(z){group.slot.style.left=Math.round(z.left+(z.width-48)/2)+'px';group.slot.style.top=Math.round(z.bottom-132+42)+'px';}}
         for(const group of groups){
-          const rect=group.slot.getBoundingClientRect(),width=Number(group.slot.style.getPropertyValue('--tree-columns'))*52-4,reverse=rect.left+width>innerWidth-8;
-          const left=reverse?rect.left-width+48:rect.left,right=left+width;
+          // v0.214: все ряды — одна ромбическая решётка от вершины; не влезает в экран — ряды сдвигаются целыми ромбами.
+          const rect=group.slot.getBoundingClientRect(),lo=Number(group.slot.dataset.lo)||0,hi=Number(group.slot.dataset.hi)||0;
+          let dx=0;if(rect.left+hi+48>innerWidth-8)dx=-Math.ceil((rect.left+hi+48-innerWidth+8)/48)*48;if(rect.left+lo+dx<8)dx+=Math.ceil((8-rect.left-lo-dx)/48)*48;
+          const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
           const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=0;
-          const height=cells.length?Math.max(...cells.map(n=>(Number(n.style.gridRow)-1)*52+48+(Number(n.dataset.pyrY)||0))):0;
-          for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+52+offset<box.bottom)offset=box.bottom-rect.top-52+8;
-          for(const cell of group.slot.children){const x=Number(cell.style.getPropertyValue('--tree-x'))||0;const px=Number(cell.dataset.pyrX)||0,py=Number(cell.dataset.pyrY)||0;cell.style.transform='translate('+(-2*x*(reverse?1:0)+px)+'px,'+((cell.dataset.header==='true'?0:offset)+py)+'px)';}
+          const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
+          for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom)offset=box.bottom-rect.top-24+4;
+          for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head?0:offset);cell.style.transform='translate('+px+'px,'+py+'px)';}
           if(height)occupied.push({left,right,bottom:rect.top+height+offset});
         }
         for(const r of records.values())if(!r.children&&r.node.matches('details[open]')){

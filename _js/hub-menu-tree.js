@@ -1,25 +1,23 @@
-/* Layout only: one root on top, each nested level a row of up to five below. */
+/* Layout only: one root on top, pinned buttons as a pyramid 1, 2, 3…, then each opened level a row of up to five.
+   Hub v0.214: every row sits in one diamond lattice — next row half a diamond lower, shifted half a diamond, so edges touch
+   and nothing leaves a gap. pyr = [dx, dy] in half-diamonds from the apex. */
 (function(root){
   'use strict';
   function layout(tree,{promoted=[],open=[],hidden=[],rows=5}={}){
     const index=new Map(),lifted=new Set(promoted),opened=new Set(open),invisible=new Set(hidden);
     const visit=n=>{index.set(n.id,n);n.children?.forEach(visit);};visit(tree);
     const available=n=>!invisible.has(n.id)&&(!n.children||n.action||n.children.some(c=>!lifted.has(c.id)&&available(c)));
-    // Hub v0.207: уровни идут вниз рядами — сверху одна кнопка, под ней ряд до пяти, дальше следующий уровень.
     const top=available(tree)?[tree]:[],lift=promoted.map(id=>index.get(id)).filter(n=>n&&n!==tree&&available(n));
-    const cells=[];let row=0,columns=1;
-    const put=list=>{list.forEach((node,i)=>cells.push({id:node.id,column:i%rows,row:row+Math.floor(i/rows)}));if(list.length){row+=Math.ceil(list.length/rows);columns=Math.max(columns,Math.min(rows,list.length));}};
-    // Hub v0.213: корень и закреплённые — пирамидой 1, 2, 3… ромбы гранями впритык (шаг полромба).
-    // pyr = [dx, dy] в полуромбах от вершины; следующий уровень начинается под пирамидой.
-    const apex=[...top,...lift];let pr=0,pj=0;
-    apex.forEach((node,i)=>{cells.push({id:node.id,column:0,row:0,head:i===0,pyr:[2*pj-pr,pr]});if(++pj>pr){pr++;pj=0;}});
-    if(apex.length){const rowsUsed=pj?pr+1:pr;row=Math.ceil((24*(rowsUsed-1)+52)/52);}
-    let level=[...top,...lift];
+    const cells=[];let r=0,lo=0,hi=0;
+    const row=list=>{const n=list.length,shift=((n-1)&1)!==(r&1)?1:0;list.forEach((node,j)=>{const dx=2*j-(n-1)+shift;lo=Math.min(lo,dx);hi=Math.max(hi,dx);cells.push({id:node.id,head:cells.length===0,pyr:[dx,r]});});r++;};
+    const apex=[...top,...lift];
+    for(let i=0,k=1;i<apex.length;i+=k,k++)row(apex.slice(i,i+k));
+    let level=apex;
     while(level.length){
       level=level.flatMap(n=>opened.has(n.id)?(n.children||[]).filter(c=>!lifted.has(c.id)&&available(c)):[]);
-      put(level);
+      for(let i=0;i<level.length;i+=rows)row(level.slice(i,i+rows));
     }
-    return {cells,columns};
+    return {cells,rows:r,span:[lo,hi]};
   }
   if(typeof module!=='undefined')module.exports={layout};else root.HubMenuTree={layout};
 })(typeof window!=='undefined'?window:globalThis);
