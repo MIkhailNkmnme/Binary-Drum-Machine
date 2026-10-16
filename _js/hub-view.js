@@ -183,17 +183,17 @@
     window.addEventListener('blur',clearCenterHover);window.addEventListener('scroll',updateCenterMarker,{passive:true});
     document.addEventListener('visibilitychange',clearCenterHover);
     // A click starts a new wheel interaction; moving geometry must not select another tool.
-    let wheelAction=null,wheelBit=null,bitClick=null;
+    let wheelAction=null,wheelBits=new Set(),bitClick=null;
     document.addEventListener('pointerdown',e=>{
-      wheelAction=null;wheelBit=null;bitClick=null;window.HubMirror?.clearRotationBit?.();
+      const previous=new Set(wheelBits);wheelAction=null;wheelBits.clear();bitClick=null;window.HubMirror?.clearRotationBit?.();
       if(e.button!==0||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button,#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox'))return;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
       if(frame&&(e.clientX<frame.left||y>frame.height))return;
-      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,previous,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
     },true);
     document.addEventListener('pointermove',e=>{if(bitClick&&bitClick.id===e.pointerId&&Math.hypot(e.clientX-bitClick.x,e.clientY-bitClick.y)>3)bitClick.moved=true;},true);
-    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBit=bitClick.bit;selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0));}bitClick=null;}},true);
-    document.addEventListener('pointercancel',()=>{bitClick=null;wheelBit=null;},true);
+    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0));}bitClick=null;}},true);
+    document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
       if(!e.deltaY)return;
@@ -207,7 +207,7 @@
           if(zone)wheelAction=ev=>mirror.wheelStep(zone,ev.deltaY);
           else if(e.target.closest('.hubMirrorLine')&&mirror?.wheelAlong)wheelAction=ev=>mirror.wheelAlong(ev.deltaY);
           else{const bit=bitScreen(e.clientX,y);
-            if(bit!==null&&wheelBit!==null){const selected=wheelBit;wheelAction=ev=>mirror.tiltBit(selected,Math.sign(ev.deltaY)*5);}
+            if(bit!==null&&wheelBits.size){const selected=[...wheelBits];wheelAction=ev=>{for(const chosen of selected)mirror.tiltBit(chosen,Math.sign(ev.deltaY)*5);};}
             else{if(frame&&(e.clientX<frame.left||y>frame.height))return;
               wheelAction=ev=>zoom(Math.exp(-Math.max(-120,Math.min(120,ev.deltaY))*.002),ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0));}
           }
@@ -218,7 +218,7 @@
 
     const beginDrag=(e,requireHit=false)=>{
       const pinned=window.HubMirror?.state.screenPin===true;
-      if((requireHit&&!state.unlocked&&!pinned)||(e.button!==0&&e.button!==1)||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG,#hub3DQuick')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
+      if((requireHit&&e.button!==1&&!state.unlocked&&!pinned)||(e.button!==0&&e.button!==1)||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG,#hub3DQuick')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return false;
       const hit=hitScreen(e.clientX,y),selectedBit=e.button===1?bitScreen(e.clientX,y):null,onBits=hit.source||hit.mirror||selectedBit!==null;
       if(e.button===0&&!pinned&&!state.unlocked&&(onBits||e.target.closest('.hubNoteCell')))return false;if(requireHit&&!onBits)return false;
@@ -231,7 +231,7 @@
       const move=ev=>{if(ev.pointerId!==e.pointerId)return;
         if(!moved&&Math.hypot(ev.clientX-x,ev.clientY-sy)>3){moved=true;if(pinned){stopAuto();window.HubMirror.stopRotation?.();}}
         if(!moved)return;
-        if(pinned){
+        if(pinned&&e.button!==1){
           if(Math.hypot(ev.clientX-cx,ev.clientY-cy)<12)return;
           const angle=Math.atan2(ev.clientY-cy,ev.clientX-cx);let step=angle-lastAngle;
           if(step>Math.PI)step-=2*Math.PI;else if(step<-Math.PI)step+=2*Math.PI;

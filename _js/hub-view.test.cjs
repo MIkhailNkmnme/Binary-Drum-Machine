@@ -250,14 +250,16 @@ test('screen-pinned axis stays at viewport center through camera changes, includ
 });
 
 
-test('middle-button pinned empty drag rotates the whole field and axis around viewport center',()=>{
- const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.screenPin=true;m.syncCenter();m.hit=()=>({source:false,mirror:false});
- const p=screenPoint(v,800,400),axis=m.state.angle+v.rotation;
- f.emit('pointerdown',{target:{closest:()=>null},button:1,pointerId:4,clientX:800,clientY:400,preventDefault(){},stopPropagation(){}});
- f.emit('pointermove',{pointerId:4,clientX:600,clientY:600});
- near(screenPoint(v,800,400),[600-(p[1]-400),400+(p[0]-600)]);
- assert.ok(Math.abs(m.state.angle+v.rotation-axis-Math.PI/2)<1e-10);
- near(screenPoint(v,300+900*m.state.x,800*m.state.y),[600,400]);
+test('middle-button drag pans from bits or empty canvas even with the drag lock and pinned axis',()=>{
+ for(const pinned of [false,true])for(const reflected of [false,true,null]){
+  const f=fixture({zoom:1.6,angle:30,pan:[70,-40]}),m=realMirror(f),v=f.window.HubView;m.state.screenPin=pinned;m.syncCenter();m.hit=()=>({source:reflected===false,mirror:reflected===true});
+  const p=screenPoint(v,800,400),axis=m.state.angle,rotation=v.rotation;
+  const event={target:{closest:()=>null},button:1,pointerId:4,clientX:800,clientY:400,preventDefault(){},stopPropagation(){}};
+  if(reflected===null)f.emit('pointerdown',event);else assert.equal(v.grabBits(event,true),true);
+  f.emit('pointermove',{pointerId:4,clientX:600,clientY:600});
+  near(screenPoint(v,800,400),[p[0]-200,p[1]+200]);near(f.state().pan,[-130,160]);assert.equal(v.rotation,rotation);assert.equal(m.state.angle,axis);
+  f.emit('pointerup',{type:'pointerup',pointerId:4});assert.equal(v.rotation,rotation);
+ }
 });
 test('pinned drag of either copy rotates it under the pointer and its twin oppositely with axis fixed',()=>{
  for(const reflected of [false,true])for(const magnetic of [false,true]){
@@ -428,7 +430,7 @@ test('frame lock defaults on and advances by the actual fraction on each callbac
  input.value='1/0';input.onchange();assert.equal(f.state().frameStep,1/3);
 });
 
-test('left drag outside bits delegates to the axis, while middle drag keeps camera rotation',()=>{
+test('left drag outside bits delegates to the axis',()=>{
  const f=fixture(),m=realMirror(f);m.state.screenPin=true;let grabbed=null;m.grabAxis=e=>{grabbed=e;return true;};
  const e={target:{closest:()=>null},button:0,pointerId:5,clientX:800,clientY:400,stopPropagation(){}};
  f.emit('pointerdown',e);assert.equal(grabbed,e);assert.equal(f.window.HubView.rotation,0);
@@ -487,4 +489,19 @@ test('hover centre follows the camera, reuses its bitmap and hides over controls
  f.emit('pointermove',{clientX:x,clientY:y,target});assert.equal(marker.hidden,false);
  f.emit('pointerout',{relatedTarget:null});assert.equal(marker.hidden,true);
  f.emit('pointermove',{clientX:1100,clientY:10,target});assert.equal(marker.hidden,true);
+});
+
+
+test('successive clicks on zero and one accumulate both wheel targets in either order; drag or outside press clears them',()=>{
+ for(const order of [['0','1'],['1','0']]){
+  const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.on=false;m.setBitCenters([[800,200,'0'],[840,200,'1']],{width:20,height:40});const target={closest:()=>null};
+  const down=bit=>f.emit('pointerdown',{target,button:0,pointerId:10,clientX:bit==='0'?800:840,clientY:200,preventDefault(){},stopPropagation(){}});
+  const click=bit=>{down(bit);f.emit('pointerup',{type:'pointerup',pointerId:10});f.emit('click',{});};
+  const wheel=deltaY=>f.emit('wheel',{target,clientX:840,clientY:200,deltaY,preventDefault(){}});
+  click(order[0]);click(order[1]);wheel(120);assert.equal(m.state.zero,5);assert.equal(m.state.one,5);
+  click(order[0]);wheel(120);assert.equal(m.state.zero,10);assert.equal(m.state.one,10,'same type is not added twice');
+  wheel(-120);assert.equal(m.state.zero,5);assert.equal(m.state.one,5);assert.equal(v.scale,1);assert.equal(v.rotation,0);
+  f.emit('pointerdown',{target:{closest:()=>true},button:0});click('1');wheel(120);assert.equal(m.state.zero,5);assert.equal(m.state.one,10);
+  down('0');f.emit('pointermove',{pointerId:10,clientX:808,clientY:200});f.emit('pointerup',{type:'pointerup',pointerId:10});wheel(120);assert.equal(m.state.zero,5);assert.equal(m.state.one,10);
+ }
 });
