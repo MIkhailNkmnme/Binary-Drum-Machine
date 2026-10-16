@@ -1,3 +1,4 @@
+/* Hub v0.157: прямое управление ручкой в экранной плоскости при любом 3D-наклоне. */
 /* Hub v0.155: ромбическая палитра; закрытие всплывающих окон по клику снаружи. */
 /* Hub v0.154: ромбы, цифры, скобки и центрированные звёздочки/точки. */
 /* Hub v0.153: тестовая фиксация конца оси в центре экрана. */
@@ -222,13 +223,13 @@
     root.addEventListener('pointerdown', e => {
       if (e.button !== 0 || !frame) return;
       e.preventDefault(); e.stopPropagation();
-      const [mx,my]=window.HubView?window.HubView.inverse(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY];
+      const [mx,my]=window.HubView?(window.HubView.axisInverse||window.HubView.inverse)(e.clientX,e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0)):[e.clientX,e.clientY];
       if(!Number.isFinite(mx)||!Number.isFinite(my))return;
       drag = { id: e.pointerId, x: mx, y: my, px: state.x, py: state.y, angle: state.angle,
         cx: frame.left + frame.width * state.x, cy: frame.height * state.y,
         moved: false, radius:state.screenPin&&e.target===turn, handle: e.target === handle, turn: state.screenPin||!state.on||e.target === turn||state.axisRotate };
-      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
-      root.setPointerCapture(e.pointerId);update();
+      drag.startAngle = Math.atan2(my - drag.cy, mx - drag.cx);drag.inverse=window.HubView?.captureAxisInverse?.()||window.HubView?.captureInverse?.();drag.applied=0;drag.visibleAngle=state.angle+(window.HubView?.rotation||0);
+      resumeSpin=false;stopSpin();root.setPointerCapture(e.pointerId);update();
     });
     root.addEventListener('pointermove', e => {
       if (!drag || drag.id !== e.pointerId) return;
@@ -240,7 +241,7 @@
       if(drag.radius)state.orbitRadius=Math.max(.02,Math.min(4,Math.hypot(mx-drag.cx,my-drag.cy)/Math.min(frame.width,frame.height)));
       if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
-        resumeSpin=false;stopSpin();let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
+        let delta=Math.atan2(my-drag.cy,mx-drag.cx)-drag.startAngle;
         if(state.magnet)delta=snapAngle(drag.visibleAngle+delta)-drag.visibleAngle;
         turnField(delta-drag.applied);drag.applied=delta;
       } else {let x=frame.left+drag.px*frame.width+dx,y=drag.py*frame.height+dy;if(state.magnet&&!e.altKey)[x,y]=magneticPoint(x,y);moveAxis((x-frame.left)/frame.width,y/frame.height);}

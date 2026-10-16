@@ -1,3 +1,4 @@
+/* Hub v0.157: ручка оси использует экранную плоскость, без обратного растяжения 3D. */
 /* Hub v0.156: доступная вне панели мигающая кнопка пуска/паузы 3D. */
 /* Hub v0.155: отдельные 3D-фазы оригинала и отражения, прямой угол и заморозка оригинала. */
 /* Hub v0.154: при закреплённом центре пустота вращает поле, биты — фигуру относительно оси. */
@@ -24,12 +25,14 @@
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Number.isFinite(saved?.spinRate))state.spinRate=Math.max(.01,Math.min(10000,saved.spinRate));if(saved?.spinDirection===-1)state.spinDirection=-1;}catch(_){}
   const save=()=>{try{localStorage.setItem('zerk_hub_view',JSON.stringify(state));}catch(_){}};
   const center=()=>frame?[frame.left+frame.width/2,frame.height/2]:[innerWidth/2,innerHeight/2];
-  function matrix(mirror=false){const [x,y]=center(),a=state.angle*Math.PI/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom,m=window.HubMirror?.state,axis=m?.angle??Math.PI/2,u=Math.cos(axis),v=Math.sin(axis),k=Math.cos((mirror?state.mirrorFlip:state.flip)*Math.PI/180),aa=u*u+k*v*v,ab=(1-k)*u*v,bb=v*v+k*u*u,mx=frame?frame.left+frame.width*(m?.x??.5):x,my=frame?frame.height*(m?.y??.5):y,tx=mx-aa*mx-ab*my,ty=my-ab*mx-bb*my;return [c*aa-s*ab,s*aa+c*ab,c*ab-s*bb,s*ab+c*bb,x+state.pan[0]-c*x+s*y+c*tx-s*ty,y+state.pan[1]-s*x-c*y+s*tx+c*ty];}
+  function matrix(mirror=false,flat=false){const [x,y]=center(),a=state.angle*Math.PI/180,c=Math.cos(a)*state.zoom,s=Math.sin(a)*state.zoom,m=window.HubMirror?.state,axis=m?.angle??Math.PI/2,u=Math.cos(axis),v=Math.sin(axis),k=flat?1:Math.cos((mirror?state.mirrorFlip:state.flip)*Math.PI/180),aa=u*u+k*v*v,ab=(1-k)*u*v,bb=v*v+k*u*u,mx=frame?frame.left+frame.width*(m?.x??.5):x,my=frame?frame.height*(m?.y??.5):y,tx=mx-aa*mx-ab*my,ty=my-ab*mx-bb*my;return [c*aa-s*ab,s*aa+c*ab,c*ab-s*bb,s*ab+c*bb,x+state.pan[0]-c*x+s*y+c*tx-s*ty,y+state.pan[1]-s*x-c*y+s*tx+c*ty];}
   function inverseWith(m,x,y){const [a,b,c,d,e,f]=m,det=a*d-b*c;if(Math.abs(det)<1e-8)return [NaN,NaN];return [(d*(x-e)-c*(y-f))/det,(-b*(x-e)+a*(y-f))/det];}
   function inverse(x,y,mirror=false){return inverseWith(matrix(mirror),x,y);}
   function hitScreen(x,y){const original=inverse(x,y),reflected=inverse(x,y,true),hit=window.HubMirror.hit;return {source:original.every(Number.isFinite)&&hit.call(window.HubMirror,...original).source,mirror:reflected.every(Number.isFinite)&&hit.call(window.HubMirror,...reflected).mirror};}
   // The axis anchor is unchanged by the 3D flip about itself, even edge-on.
   function screenCenterAnchor(){const [cx,cy]=center(),a=state.angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),x=innerWidth/2-cx-state.pan[0],y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0)-cy-state.pan[1];return [cx+(c*x+s*y)/state.zoom,cy+(-s*x+c*y)/state.zoom];}
+  function axisInverse(x,y){return inverseWith(matrix(false,true),x,y);}
+  function captureAxisInverse(){const m=matrix(false,true);return (x,y)=>inverseWith(m,x,y);}
   function captureInverse(){const m=matrix();return (x,y)=>inverseWith(m,x,y);}
   function rotateAround(delta,x,y,persist=true){if(!Number.isFinite(delta))return;const before=matrix(),px=before[0]*x+before[2]*y+before[4],py=before[1]*x+before[3]*y+before[5];state.angle=((state.angle+delta*180/Math.PI)%360+360)%360;const after=matrix();state.pan[0]+=px-(after[0]*x+after[2]*y+after[4]);state.pan[1]+=py-(after[1]*x+after[3]*y+after[5]);changed(persist);}
   function shiftSourceBy(dx,dy){if(!frame)return;state.sourcePan[0]+=dx/frame.width;state.sourcePan[1]+=dy/frame.height;changed();}
@@ -56,7 +59,7 @@
   function stopAuto(){autoRemainder=0;autoRunning=false;autoTime=null;cancelAnimationFrame(autoRaf);autoRaf=0;syncAuto();save();}
   function setAutoRate(value){if(!Number.isFinite(value))return;if(value<=0){autoZero=true;stopAuto();rotateAround(-state.angle*Math.PI/180,...originalCenter());return;}autoZero=false;state.spinRate=Math.max(.01,Math.min(10000,value));autoRemainder=0;autoTime=null;startAuto();syncAuto();save();}
   function rotate(delta){if(delta)state.spinDirection=Math.sign(delta);autoTime=null;autoRemainder=0;if(magnetic()&&delta){delta=Math.sign(delta)*Math.max(15,Math.round(Math.abs(delta)/15)*15);delta=snappedRotation(state.angle+delta)-state.angle;}rotateAround(delta*Math.PI/180,...originalCenter());}
-  window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,hitScreen,screenCenterAnchor,apply,sourceShift,captureInverse,rotateAround,shiftSourceBy,originalCenter,setSourceCenter(x,y){sourceCenter=Number.isFinite(x)&&Number.isFinite(y)?[x,y]:null;window.HubMirror?.syncCenter?.();},get rotation(){return state.angle*Math.PI/180;},
+  window.HubView={get revision(){return revision;},get scale(){return state.zoom;},get unlocked(){return state.unlocked;},inverse,axisInverse,captureAxisInverse,hitScreen,screenCenterAnchor,apply,sourceShift,captureInverse,rotateAround,shiftSourceBy,originalCenter,setSourceCenter(x,y){sourceCenter=Number.isFinite(x)&&Number.isFinite(y)?[x,y]:null;window.HubMirror?.syncCenter?.();},get rotation(){return state.angle*Math.PI/180;},
     // v0.142: рисовать поверх в координатах поля (со сдвигом рисунка, без зеркала), под камерой
     overlay(canvas,view,fn,mirror=false){const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(mirror);g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(k,0,0,k,-left*k,0);fn(g);g.restore();},place(left,width,height){frame={left,width,height};document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);},source(canvas,view=null){
     // Source displacement is applied together with the final camera, without clipping a temporary image.

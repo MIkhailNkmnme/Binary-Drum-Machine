@@ -309,3 +309,16 @@ test('canvas reflection and export use the mirror plane even when original is ed
  f.window.HubView.paint({width:2400,height:1600,getContext:()=>g},{left:0,scale:2},raw);
  near(draws[0],[1500,800]);near(draws[1],[1300,800]);
 });
+
+
+test('axis handle maps pointer directly through the screen plane at any 3D tilt, including edge-on',()=>{
+ for(const flip of [0,45,89.9,90,120,270]){
+  const f=fixture({flip,zoom:1.7,angle:37,pan:[43,-29]}),v=f.window.HubView,m=realMirror(f);
+  m.state.x=.4;m.state.y=.55;const cx=660,cy=440,radius=155;
+  const axisInverse=v.captureAxisInverse();
+  for(const angle of [.3,1.4,3.8,5.9]){
+   m.state.angle=angle;const x=cx+radius*Math.cos(angle),y=cy+radius*Math.sin(angle),screen=screenPoint(v,x,y);
+   near(Array.from(v.axisInverse(...screen)),[x,y]);near(Array.from(axisInverse(...screen)),[x,y]);
+  }
+ }
+});
