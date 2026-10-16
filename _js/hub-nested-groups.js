@@ -31,10 +31,10 @@
     }
     function render(){
       for(const r of records.values())if(r.active){const value=r.active();if(value!==null)r.node.querySelector('summary').setAttribute('aria-pressed',String(value));}
-      const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0])]);if(stamp===renderStamp)return;renderStamp=stamp;
+      const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
-        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
+        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
         const plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn=String(p.column+1);const top=r.id===group.key||promoted.has(r.id);r.wrap.style.gridRow=String(p.row+1);r.wrap.dataset.header=String(top&&p.column===0&&p.row===0);r.wrap.style.setProperty('--tree-x',String(p.column*52));}r.node.dataset.controlPinned=String(promoted.has(r.id));}
@@ -128,7 +128,9 @@
     const flipSpeed=[...records.values()].find(r=>r.id==='space|hubFlipSpeed');if(flipSpeed)detach(flipSpeed);
     groups.push(motion);
     const turn3d=createBranch(motion,'motion|branch:3d','3D','3D',flipSpeed?[flipSpeed]:[]);if(flipSpeed)regroup(flipSpeed,motion);
-    motion.root=createBranch(motion,'motion','↻','Вращ.',[...moving.slice(0,2),turn3d,...moving.slice(2)]);
+    // v0.212: магнит оси (шаги 15° при вращении) — тоже в пульте.
+    const magnet=[...records.values()].find(r=>!r.children&&r.id.startsWith('axis|Магнит оси'));if(magnet){detach(magnet);regroup(magnet,motion);}
+    motion.root=createBranch(motion,'motion','↻','Вращ.',[...moving.slice(0,2),turn3d,...moving.slice(2),...(magnet?[magnet]:[])]);
     motion.fixed=true;
     // A first diamond performs the main action as well as opening its children.
     // Reuse the actual original controls; do not duplicate handlers or state.
@@ -152,6 +154,8 @@
     const space3d=records.get('space');if(space3d&&space3d.action){turn3d.action=space3d.action;turn3d.active=space3d.active;turn3d.node.dataset.hasAction='true';const h=turn3d.node.querySelector('summary');h.setAttribute('role','button');h.title='3D-вращение — пуск / пауза · Наведение / → — скорость';}
     // Пока выключено — зависимые кнопки скрыты.
     for(const id of ['symmetry','axis','space','flow|branch:light','flow|branch:snow','flow|branch:water','motion|branch:3d'])if(records.get(id))records.get(id).gate=true;
+    // v0.212: вращение оси в пульте видно, только пока ось (зеркало) включена.
+    if(records.get('axis|branch:turn'))records.get('axis|branch:turn').dep=records.get('axis');
     const flow=owner('flow').root;flow.action=()=>window.HubFlow.togglePause();flow.active=()=>window.HubFlow.playing;flow.node.dataset.hasAction='true';flow.node.querySelector('summary').setAttribute('role','button');flow.node.querySelector('summary').title='Потоки — общая пауза / продолжение · Наведение / → — настройки';
     const locks={key:'locks',name:'Замок'};groups.push(locks);
     const lockItems=[['zoom','⊙','Масштаб'],['turn','↻','Треуг.'],['zero','0','Биты 0'],['one','1','Биты 1'],['pan','✥','Сдвиг'],['axis','↗','Ось'],['depth','3D','Наклон']].map(([key,icon,name])=>{
