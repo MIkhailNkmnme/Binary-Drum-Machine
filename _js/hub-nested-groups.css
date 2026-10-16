@@ -24,3 +24,12 @@
 @media(max-width:550px){#hubFieldTools.hubMirrorSettings[data-nested]{right:8px;left:8px;justify-content:flex-start;max-width:calc(100vw - 16px)}}
 
 #hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=mixed]{background:linear-gradient(135deg,var(--hub-theme-active) 50%,var(--hub-theme-bg) 50%)!important;color:var(--hub-theme-accent)}
+
+/* v0.209: пульт движений у креста, цвета наверху, PNG и видео в «Файле». */
+#hubZoom{pointer-events:none}#hubZoom>*{pointer-events:auto}
+#hubFieldTools[data-nested] .hubFieldSlot[data-group=motion]{position:fixed;z-index:26}
+#hubFieldTools[data-nested] .hubTreeItem>#hubPNG,#hubFieldTools[data-nested] .hubTreeItem>#hubRec{position:relative;inset:auto;top:auto;right:auto;z-index:auto}
+#hubFieldTools[data-nested] .hubTreeItem>.hubColorGroup{position:absolute;left:-42px;top:0;z-index:46}
+#hubFieldTools .hubColorGroup button.hubRhomb{width:40px;height:40px;font:12px/1.05 system-ui,sans-serif}
+#hubFieldTools .hubColorGroup .hubPaletteList{right:auto;left:-24px;top:44px}
+#hubFieldTools .hubPaletteList button{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:0;border:0;cursor:pointer}

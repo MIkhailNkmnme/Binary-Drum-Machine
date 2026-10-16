@@ -1,4 +1,5 @@
-/* Hub v0.205: nested diamond menus; promotion keeps the original control node. */
+/* Hub v0.209: nested diamond menus by theme; promotion keeps the original control node.
+   Pult (cross on the right) holds all rotations; colours moved to the top bar; settings of a switched-off branch are hidden. */
 (() => {
   'use strict';
   window.HubNestedGroups={init(){
@@ -30,9 +31,11 @@
     }
     function render(){
       for(const r of records.values())if(r.active){const value=r.active();if(value!==null)r.node.querySelector('summary').setAttribute('aria-pressed',String(value));}
-      const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden])]);if(stamp===renderStamp)return;renderStamp=stamp;
+      const stamp=JSON.stringify([[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0])]);if(stamp===renderStamp)return;renderStamp=stamp;
+      for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
-        const entries=[...records.values()].filter(r=>r.group===group),plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id)});
+        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
+        const plan=HubMenuTree.layout(group.root,{promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn=String(p.column+1);const top=r.id===group.key||promoted.has(r.id);r.wrap.style.gridRow=String(p.row+1);r.wrap.dataset.header=String(top&&p.column===0&&p.row===0);r.wrap.style.setProperty('--tree-x',String(p.column*52));}r.node.dataset.controlPinned=String(promoted.has(r.id));}
         group.slot.style.setProperty('--tree-columns',String(plan.columns));group.root.node.dataset.groupPinned=String(pins.has(group.key));
@@ -40,6 +43,7 @@
       toolbar.dataset.hasPins=String(pins.size+promoted.size>0);
       requestAnimationFrame(()=>{
         const occupied=[];
+        for(const group of groups)if(group.fixed){const z=document.getElementById('hubZoom')?.getBoundingClientRect();if(z){group.slot.style.left=Math.round(z.left+(z.width-48)/2)+'px';group.slot.style.top=Math.round(z.bottom-132+42)+'px';}}
         for(const group of groups){
           const rect=group.slot.getBoundingClientRect(),width=Number(group.slot.style.getPropertyValue('--tree-columns'))*52-4,reverse=rect.left+width>innerWidth-8;
           const left=reverse?rect.left-width+48:rect.left,right=left+width;
@@ -98,11 +102,34 @@
       g.root=createBranch(g,g.key,g.icon,g.name,children.filter(Boolean));
     }
     const view=document.querySelector('.hubBitView'),packing=document.getElementById('hubBitPacking');
+    const bits=owner('bits'),detach=r=>{for(const g of groups){const walk=n=>{if(n?.children){n.children=n.children.filter(c=>c!==r);n.children.forEach(walk);}};walk(g.root);}};
+    const regroup=(r,g)=>{r.group=g;r.children?.forEach(c=>regroup(c,g));};
+    // Вид битов, «встык» и прозрачные 0 / 1 — подгруппа «Битов».
     if(view){
-      const group={key:'view',name:'Вид битов'};groups.push(group);
-      const options=[...view.querySelectorAll('button[data-view]')].map(n=>leaf(group,n));
-      group.root=createBranch(group,'view','','Вид битов',options,view);
+      const options=[...view.querySelectorAll('button[data-view]')].map(n=>leaf(bits,n));
+      if(packing)options.push(leaf(bits,packing));
+      bits.root.children.splice(1,0,createBranch(bits,'view','','Вид битов',options,view));
     }
+    // ✦ — в «Симметрию»; PNG и видео — в «Файл».
+    const gold=document.querySelector('.hubColorGroup [aria-label^="Золото"]'),sym=owner('symmetry');
+    if(gold){const r=leaf(sym,gold),search=records.get('symmetry|branch:search');(search||sym.root).children.unshift(r);}
+    const file=owner('file'),img=records.get('file|branch:image');
+    for(const id of ['hubPNG','hubRec']){const n=document.getElementById(id);if(n)(img||file.root).children.push(leaf(file,n));}
+    // Цвета — своя группа наверху, весь ромб цветов одной кнопкой.
+    const palette=document.querySelector('.hubColorGroup');
+    if(palette){
+      const colour={key:'colour',name:'Цвет'};groups.splice(groups.indexOf(sym),0,colour);
+      palette.id=palette.id||'hubColorPanel';const r=leaf(colour,palette);r.wide=true;
+      colour.root=createBranch(colour,'colour','🎨','Цвет',[r]);
+    }
+    // Пульт движений (крест справа): все вращения — битов, оси, 3D и автозум.
+    const motion={key:'motion',name:'Пульт движений'},moving=['bits|branch:turn','axis|branch:turn','space|branch:zoom'].map(id=>records.get(id)).filter(Boolean);
+    moving.forEach(r=>{detach(r);regroup(r,motion);});
+    const flipSpeed=[...records.values()].find(r=>r.id==='space|hubFlipSpeed');if(flipSpeed)detach(flipSpeed);
+    groups.push(motion);
+    const turn3d=createBranch(motion,'motion|branch:3d','3D','3D',flipSpeed?[flipSpeed]:[]);if(flipSpeed)regroup(flipSpeed,motion);
+    motion.root=createBranch(motion,'motion','↻','Вращ.',[...moving.slice(0,2),turn3d,...moving.slice(2)]);
+    motion.fixed=true;
     // A first diamond performs the main action as well as opening its children.
     // Reuse the actual original controls; do not duplicate handlers or state.
     const bindAction=(id,find,description)=>{
@@ -122,6 +149,9 @@
     bindAction('flow|branch:light',id=>id.includes('|А — свет:'),'Свет — включить / выключить');
     bindAction('flow|branch:snow',id=>id.includes('|Б — мокрый снег'),'Снег — включить / выключить');
     bindAction('flow|branch:water',id=>id.includes('|В — вода:'),'Вода — включить / выключить');
+    const space3d=records.get('space');if(space3d&&space3d.action){turn3d.action=space3d.action;turn3d.active=space3d.active;turn3d.node.dataset.hasAction='true';const h=turn3d.node.querySelector('summary');h.setAttribute('role','button');h.title='3D-вращение — пуск / пауза · Наведение / → — скорость';}
+    // Пока выключено — зависимые кнопки скрыты.
+    for(const id of ['symmetry','axis','space','flow|branch:light','flow|branch:snow','flow|branch:water','motion|branch:3d'])if(records.get(id))records.get(id).gate=true;
     const flow=owner('flow').root;flow.action=()=>window.HubFlow.togglePause();flow.active=()=>window.HubFlow.playing;flow.node.dataset.hasAction='true';flow.node.querySelector('summary').setAttribute('role','button');flow.node.querySelector('summary').title='Потоки — общая пауза / продолжение · Наведение / → — настройки';
     const locks={key:'locks',name:'Замок'};groups.push(locks);
     const lockItems=[['zoom','⊙','Масштаб'],['turn','↻','Треуг.'],['zero','0','Биты 0'],['one','1','Биты 1'],['pan','✥','Сдвиг'],['axis','↗','Ось'],['depth','3D','Наклон']].map(([key,icon,name])=>{
@@ -138,7 +168,6 @@
       group.root.node.dataset.group=group.key;if(pins.has(group.key))group.root.node.open=true;
     }
     if(view){view.querySelector('.hubBitViewOptions')?.remove();view.querySelector('.hubBitViewArrows')?.remove();}
-    if(packing)toolbar.append(packing);
     for(const id of [...promoted])if(!records.has(id))promoted.delete(id);
     toolbar.addEventListener('contextmenu',e=>{
       const wrap=e.target.closest('[data-tree-key]'),r=records.get(wrap?.dataset.treeKey);if(!r)return;e.preventDefault();e.stopPropagation();
