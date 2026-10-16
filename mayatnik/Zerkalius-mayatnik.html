@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.126. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.127. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" href="logo-horrohorius.png">
-<title>Zerkalius Маятник — v0.126</title>
+<title>Zerkalius Маятник — v0.127</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=126">
+<link rel="stylesheet" href="mayatnik-menu.css?v=127">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.126</span>
+  <h1 id="appTitle">Маятник</h1><img class="may-logo" src="logo-horrohorius.png" alt="Хоррохориус" title="Хоррохориус" width="41" height="40"><span class="ver">v0.127</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1818,12 +1818,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.125: «показывать часть, которая уже неменяема при текущем построении — тонкими линиями, и отключать». Клетку (r, c) меняет
   // будущая вершина p, только если |c − p| ≤ r. Будущие вершины идут сплошными рядами; от края ряда, за которым уже стоят прошлые
   // вершины, вниз под 45° — линия c = p ± r до встречи с линией от соседнего ряда. Между линиями поле застыло. Отрезки — в клетках окна.
+  // v0.127: вершины построения — прошлые (уже поставлены) и будущие, сдвигом от якоря
+  function fixApexes(){const T=total(),past=[],fut=[];
+    if(pairOn()){past.push(0);for(let j=0;j<T;j++)(j<k?past:fut).push(-j-1,j+1);}
+    else for(let j=0;j<T;j++)(j<k?past:fut).push(MAYATNIK.offset(st.mode,j));
+    return {past,fut};}
+  // v0.127: «нельзя сворачивать биты, которые ещё не стали постоянными»: застыла ли клетка (r, c) — c в столбцах поля.
+  // Клетку меняет будущая вершина p, только если |c − якорь − p| ≤ r; будущих нет — застыло всё (null).
+  function fixFrozen(){if(!geo||!f)return null;const {fut}=fixApexes();if(!fut.length)return null;
+    const s=[...new Set(fut)].sort((a,b)=>a-b),runs=[];for(const p of s){const r=runs[runs.length-1];if(r&&p===r[1]+1)r[1]=p;else runs.push([p,p]);}
+    return (r,c)=>{const d=c-geo.anchor;for(const[a,b]of runs){const dist=d<a?a-d:d>b?d-b:0;if(dist<=r)return false;}return true;};}
   function fixSegments(){
     if(st.fixLines===false||!geo||!f||rombP()>=0||st.mode==='one')return [];
     const T=total();if(k<=0||k>=T)return [];
-    const past=[],fut=[];
-    if(pairOn()){past.push(0);for(let j=0;j<T;j++)(j<k?past:fut).push(-j-1,j+1);}
-    else for(let j=0;j<T;j++)(j<k?past:fut).push(MAYATNIK.offset(st.mode,j));
+    const {past,fut}=fixApexes();
     const P=new Set(fut),lo=Math.min(...past),hi=Math.max(...past),sorted=[...P].sort((a,b)=>a-b),segs=[],H=Math.min(VH,st.rows);
     for(const p of sorted){
       if(!P.has(p+1)&&hi>p){const q=sorted.find(v=>v>p),R=Math.min(H-1,q==null?H-1:Math.floor((q-p)/2));segs.push([geo.anchor+p-VX,0,geo.anchor+p+R-VX,R]);}
@@ -2313,15 +2321,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     beforeStart(){stop();autoStop();stolbTransport?.close();foldCloseAll();tip.style.display='none';clearFillPreview();},
     capture(){
       if(!f||!img)return null;
+      const frozen=fixFrozen();let moving=0;   // v0.127
       const data=new Int8Array(VW*VH).fill(-1),rp=rombP(),colour=new Uint32Array(VW*VH),paint=new Uint32Array(VW*VH),pix=new Uint32Array(img.data.buffer);   // v0.096: и цвета картинки
       for(let y=0;y<VH;y++)for(let x=0;x<VW;x++){
-        if(outShow(y,x+VX))continue;let v=f.val[y*f.W+x+VX];
+        if(outShow(y,x+VX))continue;if(frozen&&!frozen(y,x+VX)){moving++;continue;}let v=f.val[y*f.W+x+VX];   // v0.127: незастывшие — не сворачиваются
         const parity=((x+VX-geo.anchor-y)%2+2)%2,ox=rp===2&&parity?VW+RG:0;
         if(rp<0||rp===2||rp===parity){const q=Math.floor((y+.5)*RK)*img.width+Math.floor((x+ox+.5)*RK),edited=paintBits?.[q];if(edited>=0)v=edited;
           colour[y*VW+x]=pix[q];paint[y*VW+x]=fillMask?.[q]||0;}   // v0.096: цвет клетки со всей подсветкой — свёртка везёт его с битом
         data[y*VW+x]=v;
       }
       foldSource={field:f,frame:k,x:VX,w:VW,h:VH,view:st.view,paint:fillMask,bits:paintBits};
+      $('fillInfo').textContent=moving?`Свёртка — только застывшие биты; ещё меняются и не сворачиваются: ${moving.toLocaleString('ru-RU')}`:'';
       // v0.118: плоский вид — свёртка переписывает строки поля (foldApply), правленые биты уже в data; ромбы — по-старому, картинкой
       const centre=axis==='v'?(VH-1)>>1:Math.max(0,Math.min(VW-1,geo.anchor-VX)),write=rp<0;
       if(write)foldBack={axis,f,k,view:st.view,val:f.val.slice(),mask:fillMask?fillMask.slice():null,bits:paintBits?paintBits.slice():null,map:Int32Array.from({length:axis==='v'?VH:VW},(_,x)=>x),centre};
@@ -2394,6 +2404,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=126"></script>
+<script src="mayatnik-menu.js?v=127"></script>
 </body>
 </html>
