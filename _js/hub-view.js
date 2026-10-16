@@ -150,8 +150,17 @@
     frameRaf=requestAnimationFrame(measureFrames);document.addEventListener('visibilitychange',()=>{frameStamp=null;frameElapsed=frameCount=0;});window.addEventListener('pagehide',()=>{stopAuto();cancelAnimationFrame(frameRaf);});window.addEventListener('pageshow',()=>{cancelAnimationFrame(frameRaf);frameStamp=null;frameRaf=requestAnimationFrame(measureFrames);});
     document.body.append(zoomBox);
     // A click starts a new wheel interaction; moving geometry must not select another tool.
-    let wheelAction=null;
-    document.addEventListener('pointerdown',()=>{wheelAction=null;},true);
+    let wheelAction=null,wheelBit=null,bitClick=null;
+    document.addEventListener('pointerdown',e=>{
+      wheelAction=null;wheelBit=null;bitClick=null;
+      if(e.button!==0||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button,#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox'))return;
+      const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
+      if(frame&&(e.clientX<frame.left||y>frame.height))return;
+      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+    },true);
+    document.addEventListener('pointermove',e=>{if(bitClick&&bitClick.id===e.pointerId&&Math.hypot(e.clientX-bitClick.x,e.clientY-bitClick.y)>3)bitClick.moved=true;},true);
+    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved)wheelBit=bitClick.bit;bitClick=null;}},true);
+    document.addEventListener('pointercancel',()=>{bitClick=null;wheelBit=null;},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
       if(!e.deltaY)return;
@@ -165,7 +174,7 @@
           if(zone)wheelAction=ev=>mirror.wheelStep(zone,ev.deltaY);
           else if(e.target.closest('.hubMirrorLine')&&mirror?.wheelAlong)wheelAction=ev=>mirror.wheelAlong(ev.deltaY);
           else{const bit=bitScreen(e.clientX,y);
-            if(bit!==null)wheelAction=ev=>mirror.tiltBit(bit,Math.sign(ev.deltaY)*5);
+            if(bit!==null&&wheelBit!==null){const selected=wheelBit;wheelAction=ev=>mirror.tiltBit(selected,Math.sign(ev.deltaY)*5);}
             else{if(frame&&(e.clientX<frame.left||y>frame.height))return;
               wheelAction=ev=>zoom(Math.exp(-Math.max(-120,Math.min(120,ev.deltaY))*.002),ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0));}
           }

@@ -444,6 +444,7 @@ test('middle click repeats last wheel rotation, preserves axis and ignores cance
 test('wheel and middle click on zero/one tilt only that bit type, without camera zoom or rotation',()=>{
  const f=fixture(),m=realMirror(f),v=f.window.HubView;m.state.on=false;m.setBitCenters([[800,200,'0'],[840,200,'1']],{width:20,height:40});const target={closest:()=>null};
  for(const [x,key,delta,expected] of [[800,'zero',120,10],[840,'one',-120,-10]]){
+  f.emit('pointerdown',{target,button:0,pointerId:8,clientX:x,clientY:200,preventDefault(){},stopPropagation(){}});f.emit('pointerup',{type:'pointerup',pointerId:8});f.emit('click',{});
   f.emit('wheel',{target,clientX:x,clientY:200,deltaY:delta,preventDefault(){}});
   f.emit('pointerdown',{target,button:1,pointerId:9,clientX:x,clientY:200,preventDefault(){},stopPropagation(){}});f.emit('pointerup',{type:'pointerup',pointerId:9});assert.equal(m.state[key],expected);
  }
@@ -457,10 +458,16 @@ test('zoom remains zoom over arriving bits or axis, including after a pause, unt
  f.emit('click',{});const scale=f.window.HubView.scale;f.wheel();assert.equal(steps,1);assert.equal(f.window.HubView.scale,scale);
  zone=false;bit=null;f.wheel();assert.equal(steps,2);assert.equal(f.window.HubView.scale,scale);
 });
-test('wheel keeps the initially selected bit type and resets even on a control pointerdown',()=>{
- const f=fixture(),m=f.window.HubMirror,calls=[];let bit='0';m.bitAt=()=>bit;m.wheelZoneAt=()=>false;m.tiltBit=(...args)=>calls.push(args);
- f.wheel();bit='1';f.wheel();assert.deepEqual(calls,[['0',-5],['0',-5]]);
- f.emit('pointerdown',{target:{closest:()=>true},button:0});f.wheel();assert.deepEqual(calls.at(-1),['1',-5]);
+test('bit wheel requires a completed click, keeps its type and clears on another press',()=>{
+ const f=fixture(),m=f.window.HubMirror,calls=[];let bit='0';m.bitAt=()=>bit;m.wheelZoneAt=()=>false;m.tiltBit=(...args)=>calls.push(args);m.hit=()=>({source:true,mirror:false});
+ const target={closest:()=>null},down=()=>f.emit('pointerdown',{target,button:0,pointerId:1,clientX:750,clientY:400,preventDefault(){},stopPropagation(){}}),up=()=>f.emit('pointerup',{type:'pointerup',pointerId:1});
+ f.wheel();assert.equal(calls.length,0);assert.ok(f.window.HubView.scale>1);
+ down();up();f.emit('click',{});f.wheel();bit='1';f.wheel();assert.deepEqual(calls,[['0',-5],['0',-5]]);
+ f.emit('pointerdown',{target:{closest:()=>true},button:0});f.wheel();assert.equal(calls.length,2);
+ down();up();f.emit('click',{});f.wheel();assert.deepEqual(calls.at(-1),['1',-5]);
+ down();f.emit('pointermove',{pointerId:1,clientX:760,clientY:400});up();f.emit('click',{});f.wheel();assert.equal(calls.length,3);
+ down();f.emit('pointercancel',{pointerId:1});f.emit('click',{});f.wheel();assert.equal(calls.length,3);
+ bit=null;down();up();f.wheel();assert.equal(calls.length,3);
 });
 
 test('combined symmetry projection includes displacement and separate 3D planes but excludes common camera motion',()=>{

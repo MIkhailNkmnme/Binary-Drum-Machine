@@ -102,7 +102,7 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #mayatnikRail::-webkit-scrollbar,#wrap::-webkit-scrollbar,#ochkiList::-webkit-scrollbar{display:none;width:0;height:0}
 
 /* v0.037: логотип в шапке */
-.may-logo{height:40px;width:auto;margin:-6px 0;image-rendering:auto}
+.may-logo{display:inline-block;width:26px;height:26px;flex:0 0 26px;margin:0;vertical-align:middle;border-radius:50%;image-rendering:auto}
 
 /* v0.042: панель раскраски на холсте — неподвижна при сдвиге и масштабе */
 #paintTools{position:fixed;z-index:6;display:flex;gap:12px;padding:2px 6px 3px;border-radius:6px;background:#0d1119cc;border:1px solid #ff9b5055}
