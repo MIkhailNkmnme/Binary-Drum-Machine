@@ -115,7 +115,8 @@ test('auto rotation follows last step direction and keeps the shifted triangle c
 });
 test('thousands of revolutions use elapsed time and fractional phase, not thousands of render steps',()=>{
  const f=fixture(),v=f.window.HubView;v.setSourceCenter(670,510);
- const rate=f.button('Скорость автокручения в оборотах в секунду');rate.valueAsNumber=1000.25;rate.onchange();
+ for(let i=0;i<=60;i++)f.tick(-2000+i*1000/60);
+ const rate=f.button('Скорость автокручения в оборотах за кадр');rate.valueAsNumber=1000.25/60;rate.onchange();
  f.tick(0);f.tick(1000);f.button('Автокручение треугольника').onclick();
  assert.ok(Math.abs(f.state().angle-90)<1e-7);assert.equal(f.state().spinRate,1000.25);
  const before=screenPoint(v,730,510);f.tick(2000);near(screenPoint(v,730,510),before);
@@ -361,5 +362,21 @@ test('wheel rotates bits and their reflection oppositely while the axis and endp
   near(screenPoint(v,...point),rotated(original,a));near(screenPoint(v,...m.point(...point,false)),rotated(copy,-a));
   near(screenPoint(v,300+900*m.state.x,800*m.state.y),center);assert.ok(Math.abs(Math.sin(m.state.angle+v.rotation-axis))<1e-10);
   v.rotateBitsBy(5,pivot);near(screenPoint(v,...point),rotated(original,2*a));assert.ok(Math.abs(Math.sin(m.state.angle+v.rotation-axis))<1e-10);
+ }
+});
+
+
+test('frame rate display and exact input use measured cadence without changing stored speed',()=>{
+ for(const hz of [60,120]){
+  const f=fixture(),rate=f.button('Скорость автокручения в оборотах за кадр'),slider=f.button('Шкала скорости автокручения');
+  assert.equal(rate.disabled,true);assert.equal(slider.attributes['aria-valuetext'],'… об/кадр');
+  for(let i=0;i<=hz;i++)f.tick(i*1000/hz);
+  assert.equal(rate.disabled,false);rate.onfocus();rate.valueAsNumber=1.25;rate.onchange();
+  assert.equal(f.state().spinRate,1.25*hz);assert.equal(slider.attributes['aria-valuetext'],'1.25 об/кадр');
+  f.button('Автокручение треугольника').onclick();
+  f.tick(10000);for(let i=1;i<=hz;i++)f.tick(10000+i*1000/hz);
+  assert.equal(slider.attributes['aria-valuetext'],'1.25 об/кадр');assert.equal(f.state().spinRate,1.25*hz);
+  rate.onblur();for(let i=1;i<=120;i++)f.tick(11000+i*1000/30);
+  assert.equal(Number(rate.value),1.25*hz/30);assert.equal(f.state().spinRate,1.25*hz);
  }
 });

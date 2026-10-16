@@ -22,7 +22,7 @@
   state.zoom=Math.max(.2,Math.min(6,state.zoom));state.angle=state.angle===360?360:((state.angle%360)+360)%360;
   state.flipRate=Math.max(.1,Math.min(1000,state.flipRate));
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Number.isFinite(saved?.flip))state.flip=((saved.flip%360)+360)%360;state.mirrorFlip=Number.isFinite(saved?.mirrorFlip)?((saved.mirrorFlip%360)+360)%360:state.flip;state.freezeOriginal=!!saved?.freezeOriginal;}catch(_){}
-  let sourceCenter=null,autoRunning=false,autoRaf=0,autoTime=null,autoButton,autoRange,autoNumber,autoValue,autoTrack,turnLeft,turnRight,autoDrag=false,autoZero=true,resumeAuto=false,autoRemainder=0;
+  let sourceCenter=null,autoRunning=false,autoRaf=0,autoTime=null,autoButton,autoRange,autoNumber,autoValue,autoTrack,autoHz,turnLeft,turnRight,autoDrag=false,autoZero=true,resumeAuto=false,autoRemainder=0;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Number.isFinite(saved?.spinRate))state.spinRate=Math.max(.01,Math.min(10000,saved.spinRate));if(saved?.spinDirection===-1)state.spinDirection=-1;}catch(_){}
   const save=()=>{try{localStorage.setItem('zerk_hub_view',JSON.stringify(state));}catch(_){}};
   const center=()=>frame?[frame.left+frame.width/2,frame.height/2]:[innerWidth/2,innerHeight/2];
@@ -51,7 +51,19 @@
   function originalCenter(){const c=sourceCenter||center(),sh=sourceShift();return [c[0]+sh[0],c[1]+sh[1]];}
   const ratePosition=rate=>rate>0?1+100*(Math.log10(Math.max(.01,rate))+2):0;
   const positionRate=pos=>pos<=0?0:Number((10**((pos-1)/100-2)).toPrecision(5));
-  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate);autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+rate+' об/с; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';const thumbX=(12+(78-24)*pos/601)+'px';autoButton.style.left=thumbX;autoTrack.style.setProperty?.('--thumb-x',thumbX);autoRange.value=pos;autoRange.setAttribute('aria-valuetext',rate+' об/с');if(document.activeElement!==autoNumber)autoNumber.value=rate;autoValue.textContent=rate+' об/с';for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
+  let frameHz=null,frameStamp=null,frameElapsed=0,frameCount=0,frameRaf=0,inputHz=null;
+  function measureFrames(time){
+    frameRaf=0;
+    if(document.hidden){frameStamp=null;frameElapsed=frameCount=0;}
+    else{
+      if(frameStamp!==null){const dt=time-frameStamp;if(dt>0&&dt<250){frameElapsed+=dt;frameCount++;}else{frameElapsed=frameCount=0;}}
+      frameStamp=time;
+      if(frameCount>=24&&frameElapsed>=500){frameHz=Math.round(10000*frameCount/frameElapsed)/10;frameElapsed=frameCount=0;syncAuto();}
+    }
+    frameRaf=requestAnimationFrame(measureFrames);
+  }
+  function setFrameRate(value){if(frameHz&&Number.isFinite(value))setAutoRate(value*(inputHz||frameHz));}
+  function syncAuto(){document.body.classList.toggle('hubAutoTurning',autoRunning);if(!autoButton)return;const rate=autoZero?0:state.spinRate,pos=ratePosition(rate),perFrame=frameHz?rate/frameHz:null,labelRate=perFrame===null?'…':String(Number(perFrame.toPrecision(4))),hzLabel=frameHz?'≈'+frameHz+' Гц кадров':'Измерение частоты кадров…';autoButton.textContent='';autoButton.setAttribute('aria-pressed',String(autoRunning));autoButton.title='Автокручение: '+labelRate+' об/кадр; '+hzLabel+'; '+(autoRunning?'вращается':'пауза')+'; тяни ромб, 0 — стоп и угол 0°; щелчок — пуск / пауза';const thumbX=(12+(78-24)*pos/601)+'px';autoButton.style.left=thumbX;autoTrack.style.setProperty?.('--thumb-x',thumbX);autoRange.value=pos;autoRange.setAttribute('aria-valuetext',labelRate+' об/кадр');autoNumber.disabled=!frameHz;if(frameHz){autoNumber.max=10000/frameHz;if(document.activeElement!==autoNumber)autoNumber.value=Number((rate/frameHz).toPrecision(8));}autoValue.textContent=labelRate+' об/кадр';autoValue.title=hzLabel;autoHz.textContent=hzLabel;for(const [b,d] of [[turnLeft,-1],[turnRight,1]]){if(!b)continue;const label=autoRunning?(d<0?'Уменьшить скорость вращения':'Увеличить скорость вращения'):(d<0?'Повернуть поле на −15°':'Повернуть поле на +15°');b.setAttribute('aria-label',label);b.title=autoRunning?label+' (×'+(d<0?'1/1,1':'1,1')+')':label;}}
 
   const magnetic=()=>window.HubMirror?.state.magnet===true;
   const snappedRotation=a=>{const offset=(window.HubMirror?.state.angle||0)*180/Math.PI;return Math.round((a+offset)/15)*15-offset;};
@@ -101,7 +113,7 @@
     plus=button('+','Увеличить масштаб холста',()=>zoom(1.15,...center()));plus.classList.add('hub-zoom-plus');zoomBox.append(plus);
     angleText.className='hubAutoAngle';
     for(const [el,area] of [[homeButton,'home'],[plus,'plus'],[minus,'minus'],[scaleText,'scale']]){el.style.gridArea=area;zoomBox.append(el);}
-    const autoSpeed=document.createElement('div');autoSpeed.className='hubAutoSpeed';autoSpeed.style.gridArea='speed';autoSpeed.title='Скорость автокручения: 0–10000 оборотов в секунду';
+    const autoSpeed=document.createElement('div');autoSpeed.className='hubAutoSpeed';autoSpeed.style.gridArea='speed';autoSpeed.title='Скорость автокручения в оборотах за кадр браузера';
     autoTrack=document.createElement('div');autoTrack.className='hubAutoTrack';
     autoRange=document.createElement('input');autoRange.type='range';autoRange.min=0;autoRange.max=601;autoRange.step=1;autoRange.setAttribute('aria-label','Шкала скорости автокручения');autoRange.oninput=()=>setAutoRate(positionRate(Number(autoRange.value)));
     autoButton=button('','Автокручение треугольника',()=>{if(autoDrag){autoDrag=false;return;}if(autoRunning)stopAuto();else startAuto();});autoButton.className='hub-auto-turn';
@@ -110,10 +122,10 @@
       const end=ev=>{if(ev.pointerId!==e.pointerId)return;autoButton.removeEventListener('pointermove',move);autoButton.removeEventListener('pointerup',end);autoButton.removeEventListener('pointercancel',end);if(autoButton.hasPointerCapture(e.pointerId))autoButton.releasePointerCapture(e.pointerId);setTimeout(()=>{autoDrag=false;},0);};
       autoButton.addEventListener('pointermove',move);autoButton.addEventListener('pointerup',end);autoButton.addEventListener('pointercancel',end);
     });
-    const exact=document.createElement('details'),head=document.createElement('summary');exact.className='hubAutoExact';autoValue=document.createElement('output');head.append(autoValue);head.title='Точная скорость в оборотах в секунду';
-    autoNumber=document.createElement('input');autoNumber.type='number';autoNumber.min='0';autoNumber.max='10000';autoNumber.step='.01';autoNumber.setAttribute('aria-label','Скорость автокручения в оборотах в секунду');autoNumber.oninput=()=>setAutoRate(autoNumber.valueAsNumber);autoNumber.onchange=()=>{setAutoRate(autoNumber.valueAsNumber);autoNumber.value=autoZero?0:state.spinRate;};exact.append(head,autoNumber);
+    const exact=document.createElement('details'),head=document.createElement('summary');exact.className='hubAutoExact';autoValue=document.createElement('output');head.append(autoValue);head.title='Точная скорость в оборотах за кадр';
+    autoNumber=document.createElement('input');autoNumber.type='number';autoNumber.min='0';autoNumber.step='0.0001';autoNumber.setAttribute('aria-label','Скорость автокручения в оборотах за кадр');autoNumber.onfocus=()=>{inputHz=frameHz;};autoNumber.onblur=()=>{inputHz=null;syncAuto();};autoNumber.oninput=()=>setFrameRate(autoNumber.valueAsNumber);autoNumber.onchange=()=>{setFrameRate(autoNumber.valueAsNumber);};autoHz=document.createElement('output');autoHz.className='hubFrameHz';autoHz.title='Измеренная частота кадров браузера; при нагрузке может быть ниже частоты монитора';exact.append(head,autoNumber,autoHz);
     autoTrack.append(autoRange,autoButton,exact,angleText);rotL.className='hub-turn-half hub-turn-left';rotR.className='hub-turn-half hub-turn-right';for(const b of [rotL,rotR])b.innerHTML='<svg viewBox="0 0 20 40" aria-hidden="true"><path class="hub-step-angle" d="M19 11L10 20 19 29"/><path class="hub-step-speed" d="M19 2L2 20 19 38M19 10L10 20 19 30"/></svg>';autoSpeed.append(rotL,autoTrack,rotR);zoomBox.append(autoSpeed);syncAuto();
-    window.addEventListener('pagehide',stopAuto);
+    frameRaf=requestAnimationFrame(measureFrames);document.addEventListener('visibilitychange',()=>{frameStamp=null;frameElapsed=frameCount=0;});window.addEventListener('pagehide',()=>{stopAuto();cancelAnimationFrame(frameRaf);});window.addEventListener('pageshow',()=>{cancelAnimationFrame(frameRaf);frameStamp=null;frameRaf=requestAnimationFrame(measureFrames);});
     document.body.append(zoomBox);
     document.addEventListener('wheel',e=>{if(e.target.closest('.hub,.hubMirrorSettings,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoCv,#hubLogoBox'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(window.HubMirror?.wheelAt?.(e.clientX,e.clientY,e.deltaY)){e.preventDefault();return;}if(e.target.closest('.hubMirrorLine')&&window.HubMirror?.wheelAlong?.(e.deltaY)){e.preventDefault();return;}if(frame&&(e.clientX<frame.left||y>frame.height))return;e.preventDefault();zoom(Math.exp(-Math.max(-120,Math.min(120,e.deltaY))*.002),e.clientX,y);},{passive:false});
     const beginDrag=(e,requireHit=false)=>{
