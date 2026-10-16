@@ -11,7 +11,7 @@
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'bPlay' ? (e.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Анимация')
-        : id === 'bAutoVertical'||id === 'bTemplatePaint' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
+        : id === 'bAutoVertical'||id === 'bTemplatePaint'||id === 'bPaintMid' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
       on: () => e.matches('[aria-pressed="true"],.on'), disabled: () => e.disabled,
       click: () => e.click() };
   };
@@ -164,7 +164,7 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
-  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['midCol', 'line'], ['fixLines', 'corners']]) {   // v0.119: и «Центр»
+  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners']]) {   // v0.132: «Центр» (подсветка столба) снят
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.checked);

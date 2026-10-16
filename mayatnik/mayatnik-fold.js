@@ -97,11 +97,14 @@
     }
     // картинка «пиксель = бит» на весь холст окна, без сглаживания; бит везёт свой цвет с поля, центр — золотом
     function render(){
-      if(!state)return;if(!saved)dock();const W=state.width,H=state.height,mid=midOn(),mp=V?0:config?.()?.midPaint||0;   // v12: «Центр краской» — XOR-столбец ↔ цветом заливки
+      if(!state)return;if(!saved)dock();const W=state.width,H=state.height,mid=midOn(),mf=config?.()?.midFill;
+      // v14: «Центр краской» — та же заливка «Столбов» по центральному столбцу, но по картинке свёртки (в ↔ — её XOR-столбец)
+      let fillM=null;if(mf&&window.MayatnikFill){const col=V?mf.col:state.center;if(col>=0&&col<W){const fb=new Uint8Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)fb[y*W+x]=state.bit(x,y)+1;
+        fillM=new Uint8Array(W*H);for(const q of MayatnikFill.down(fb,W,col,[mf.bit+1]).indices)fillM[q]=1;}}
       if(!off||off.width!==W||off.height!==H){off=document.createElement('canvas');off.width=W;off.height=H;offImg=off.getContext('2d').createImageData(W,H);}
       const u=new Uint32Array(offImg.data.buffer);
       for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
-        u[i]=mp&&state.isMid(x,y)?mp:mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
+        u[i]=fillM&&fillM[i]?mf.colour:mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);}
       off.getContext('2d').putImageData(offImg,0,0);
       const dpr=Math.min(2,devicePixelRatio||1),cw=Math.max(1,view.clientWidth),ch=Math.max(1,view.clientHeight),pw=Math.round(cw*dpr),ph=Math.round(ch*dpr);
       if(view.width!==pw)view.width=pw;if(view.height!==ph)view.height=ph;
