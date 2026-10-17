@@ -570,7 +570,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     if (two.length) { const H2 = new Highlight(...two); H2.priority = 5; CSS.highlights.set("zcmp2x", H2); } else CSS.highlights.delete("zcmp2x");
     if (by.n.length) CSS.highlights.set("zcmpn", new Highlight(...by.n)); else CSS.highlights.delete("zcmpn");
     CMP_COLS.forEach((_, c) => { if (by[c].length) CSS.highlights.set("zcmp" + c, new Highlight(...by[c])); else CSS.highlights.delete("zcmp" + c); });
-    CSS.highlights.delete("zcmp");
+    CSS.highlights.delete("zcmp"); CSS.highlights.delete("zcmpok");   // v0.1275: зелёные места — заново ниже
   }
   if (cmp && root) {
     if (!sv) { sv = document.createElementNS("http://www.w3.org/2000/svg", "svg"); sv.id = "cmpArrows"; root.appendChild(sv); }
@@ -623,6 +623,36 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
         '" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" fill="none"><title>здесь пересеклись стрелки одинаковых бит</title></path>';
       sv._cross = xs.length;
     } else sv._cross = 0;
+    /* v0.1275, «автоматом теперь: если нет возможности без пересечения — покажи»: в «Σ ✎» у выбранного бита подсвечены (зелёным) места,
+       куда он может прыгнуть вверх без пересечения со стрелками тех же бит: такой же бит, свободный, в строке выше. Нет ни одного —
+       выбранный бит красный и сообщение */
+    const okR = [], P0 = handM && rowCmpHand.pend; sv._noway = null;
+    if (P0 && Z.rows[P0[0]]) {
+      const v = Z.rows[P0[0]][P0[1]], taken = new Set(cmp.links.filter(l => l.up).map(l => l.i + ":" + l.a));
+      const rngAt = (i, q) => { const bx = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (!bx) return null; const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd;
+        while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > q) { const rg = document.createRange(); rg.setStart(nd, q - c); rg.setEnd(nd, q - c + 1); return rg; } c += n; } return null; };
+      const sr = rngAt(P0[0], P0[1]), sbx = L.querySelector('.rw[data-r="' + P0[0] + '"] .bx');
+      if (sr && sbx) {
+        const s0 = sr.getBoundingClientRect(), sy0 = sbx.getBoundingClientRect(), x0 = X(s0.left + s0.width / 2), y0 = Y(sy0.top + sy0.height * 0.45);
+        const same = crv.filter(c => c.v === v), hit = (p, e) => Math.abs(p[0] - e[0]) < 4 && Math.abs(p[1] - e[1]) < 4;
+        const segX = (a, b, c, d) => { const r1x = b[0] - a[0], r1y = b[1] - a[1], r2x = d[0] - c[0], r2y = d[1] - c[1], den = r1x * r2y - r1y * r2x; if (Math.abs(den) < 1e-9) return null;
+          const t = ((c[0] - a[0]) * r2y - (c[1] - a[1]) * r2x) / den, u = ((c[0] - a[0]) * r1y - (c[1] - a[1]) * r1x) / den; return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? [a[0] + t * r1x, a[1] + t * r1y] : null; };
+        let tried = 0;
+        for (let i = P0[0] - 1; i >= 0 && tried < 800; i--) { const t = Z.rows[i], dbx = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (!dbx) continue; const dyR = dbx.getBoundingClientRect();
+          for (let q = 0; q < t.length && tried < 800; q++) { if (t[q] !== v || taken.has(i + ":" + q)) continue; const rg = rngAt(i, q); if (!rg) continue; tried++;
+            const d0 = rg.getBoundingClientRect(), x1 = X(d0.left + d0.width / 2), y1 = Y(dyR.top + dyR.height * 0.85), k = Math.max(4, Math.abs(y0 - y1) * 0.45), P = [];
+            for (let s2 = 0; s2 <= 16; s2++) { const u = s2 / 16, w = 1 - u; P.push([w*w*w*x0 + 3*w*w*u*x0 + 3*w*u*u*x1 + u*u*u*x1, w*w*w*y0 + 3*w*w*u*(y0 - k) + 3*w*u*u*(y1 + k) + u*u*u*y1]); }
+            let bad = false;
+            for (const C of same) { const e4 = [C.P[0], C.P[24], P[0], P[16]];
+              for (let a1 = 0; a1 < 24 && !bad; a1++) for (let a2 = 0; a2 < 16 && !bad; a2++) { const p = segX(C.P[a1], C.P[a1 + 1], P[a2], P[a2 + 1]); if (p && !e4.some(e => hit(p, e))) bad = true; }
+              if (bad) break; }
+            if (!bad) okR.push(rg);
+          } }
+        if (!okR.length) { sv._noway = P0.join(":"); if (sr) bad.push(sr); }
+      }
+    }
+    if (hl) { if (okR.length) CSS.highlights.set("zcmpok", new Highlight(...okR)); else CSS.highlights.delete("zcmpok");
+      if (bad.length) CSS.highlights.set("zcmpx", new Highlight(...bad)); }
     sv.innerHTML = "<defs>" + defs + "</defs>" + g;
     /* v0.1259, «при наведении на стрелку-нить пусть подсветит её и биты»: у каждой стрелки — широкая невидимая дорожка .hit (ловит мышь);
        наведение — стрелка толще и ярче, её биты в обеих строках (откуда и куда) — белым (Highlight «zcmph» с приоритетом) */
@@ -16760,6 +16790,7 @@ function init(){
       else if (r === P[0] && j === P[1]) { rowCmpHand.pend = null; say("Σ ✎: выбор снят."); }
       else { H.push([P[0], P[1], r, j]); rowCmpHand.pend = null; }
       renderRows(); save();
+      const sv = document.querySelector("#cmpArrows"); if (rowCmpHand.pend && sv && sv._noway === rowCmpHand.pend.join(":")) say(`Σ ✎: биту ${rowCmpHand.pend[1] + 1} строки ${rowCmpHand.pend[0] + 1} некуда прыгнуть вверх без пересечения — свободных таких же бит, до которых стрелка не перекрестит стрелки тех же бит, нет.`);   // v0.1275
     };
     $("rowList").addEventListener("pointerdown", (e) => {
       if (rowCmpMode() !== "hand" || e.button !== 0 || e.ctrlKey || e.shiftKey || e.altKey) return;
