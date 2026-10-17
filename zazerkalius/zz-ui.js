@@ -403,7 +403,7 @@ const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b
    отрезок подряд той же длины с тем же числом единиц и нулей. «Σ 0·1» (Z.rowCmp = "len") — порядок любой; «Σ ▮▯» ("grp") — единицы одним
    сплошным блоком и нули одним (1…10…0 или 0…01…1, в отрезке не больше одной смены бита). Поиск только по единицам (v0.1249, "one") снят;
    прежние true / "one" читаются как "len" */
-function rowCmpMode(){ return Z.rowCmp === "grp" ? "grp" : Z.rowCmp ? "len" : ""; }
+function rowCmpMode(){ return Z.rowCmp === "grp" || Z.rowCmp === "sel" ? Z.rowCmp : Z.rowCmp ? "len" : ""; }   // v0.1256: "sel" — вариант v0.1254
 /* v0.1252, «надо просто все подряд ближайшие находить и отмечать, но если они уже отмечены для высшей строки, то их нельзя»: строки идут сверху
    по очереди, каждая забирает свой ближайший отрезок; биты, уже занятые отрезком строки выше (used[i] — метки строки i), другим не достаются */
 function rowCmpFind(R, r, mode, used){   // ближайшая строка ниже r с таким отрезком (в строке — ближайший к середине, без занятых бит): { i, a, b } или null
@@ -432,7 +432,7 @@ function rowCmpInfo(){
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
   const links = [], lost = [], used = {}, uOf = (i) => used[i] || (used[i] = new Uint8Array(R[i].length));
   let txtMe = "";
-  if (mode === "len") {
+  if (mode === "len" || mode === "sel") {
     /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
        свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
        Занятые биты другим не достаются. Стрелка — одна на пару «строка → строка», подсвечен каждый забранный бит */
@@ -463,7 +463,8 @@ function rowCmpInfo(){
        биты. Бит отдаёт себя один раз и принимает один раз — одно другому не мешает (111 отдаёт в 1000 и принимает от 11 и 1). Красный — бит
        строки выше, который никуда не лёг */
     const gave = {}, gOf = (r) => gave[r] || (gave[r] = new Uint8Array(R[r].length));
-    for (let rc = a; rc >= 1 && work < 4e6; rc--) {
+    if (mode === "sel") for (let r = 0; r < a; r++) take(r, a, false);   // v0.1256, «тот вариант оставь тоже»: «Σ ↓» — строки выше ложатся только в выбранную и ниже (v0.1254)
+    else for (let rc = a; rc >= 1 && work < 4e6; rc--) {
       const t = R[rc], n = t.length, uu = uOf(rc); let f1 = 0, f0 = 0;
       for (let q = 0; q < n; q++) if (!uu[q]) { if (t[q] === "1") f1++; else f0++; }
       for (let g = rc - 1; g >= 0 && (f1 || f0) && work < 4e6; g--) {
@@ -479,7 +480,7 @@ function rowCmpInfo(){
         }
       }
     }
-    for (let g = 0; g < a; g++) { const gg = gave[g]; for (let j = 0; j < R[g].length; j++) if (!(gg && gg[j])) { lost.push({ i: g, a: j, b: j + 1 }); lostUp++; } }
+    if (mode !== "sel") for (let g = 0; g < a; g++) { const gg = gave[g]; for (let j = 0; j < R[g].length; j++) if (!(gg && gg[j])) { lost.push({ i: g, a: j, b: j + 1 }); lostUp++; } }
     const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0;
     take(a, a + 1, true);
     txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · выше никуда не легло ${lostUp}` : "") +
@@ -16598,7 +16599,7 @@ function init(){
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
   const fmLabel = () => {
-    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", rowCmpMode() === "len"); $("bRowCmp2").classList.toggle("on", rowCmpMode() === "grp"); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", rowCmpMode() === "len"); $("bRowCmp2").classList.toggle("on", rowCmpMode() === "grp"); $("bRowCmp3").classList.toggle("on", rowCmpMode() === "sel"); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
   };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
@@ -16610,9 +16611,10 @@ function init(){
   };
   $("bShow01").onclick = () => { Z.show01 = !Z.show01; fmLabel(); renderRows(); save(); };
   const rowCmpSet = (m) => { Z.rowCmp = rowCmpMode() === m ? false : m; fmLabel(); renderRows(); save(); const c = rowCmpInfo();   // v0.1250: две кнопки, либо-либо
-    say(Z.rowCmp ? (c ? c.txt : (m === "grp" ? "Σ ▮▯" : "Σ 0·1") + ": выбери строку — посчитаю её нули и единицы и проведу стрелки к таким же группам ниже.") : "Σ выключен."); };
+    say(Z.rowCmp ? (c ? c.txt : (m === "grp" ? "Σ ▮▯" : m === "sel" ? "Σ ↓" : "Σ 0·1") + ": выбери строку — посчитаю её нули и единицы и проведу стрелки к таким же группам ниже.") : "Σ выключен."); };
   $("bRowCmp").onclick = () => rowCmpSet("len");
   $("bRowCmp2").onclick = () => rowCmpSet("grp");   // v0.1251
+  $("bRowCmp3").onclick = () => rowCmpSet("sel");   // v0.1256
   const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
