@@ -2,6 +2,12 @@
 (() => {
   const canvas=document.getElementById('screenCanvas'),rows=document.getElementById('rows');
   if(!canvas||!rows)return;
+  // Browser scroll anchoring must not compete with our explicit zoom anchor.
+  canvas.style.overflowAnchor='none';
+  const horizonY=()=>{
+    const chain=document.getElementById('chain'),line=document.getElementById('hsplitTop');
+    return chain?chain.getBoundingClientRect().top+(parseFloat(line?.style.top)||0):rows.getBoundingClientRect().top;
+  };
   let pending=0,frame=0,point=null;
   canvas.addEventListener('wheel',e=>{
     if(e.altKey||e.shiftKey||!e.deltaY||e.target.closest('button,input,select,textarea,[contenteditable],#alignGrp,#colHeader'))return;
@@ -14,15 +20,24 @@
       frame=0;const old=+fs.value,rounded=Math.round(old*Math.exp(-pending*.0015));
       const next=Math.max(+fs.min,Math.min(+fs.max,rounded===old&&pending?old-Math.sign(pending):rounded));pending=0;
       if(next===old)return;
-      // Preserve the text position beneath the pointer, including padding used by centred rows.
+      // Keep the horizontal text position under the pointer, but pin vertical zoom to the horizon.
+      const horizonBefore=horizonY(),scrollBefore=canvas.scrollTop;
       const lines=Array.from(rows.querySelectorAll('.ln[data-idx]'));
       const line=lines.find(el=>{const r=el.getBoundingClientRect();return point.y>=r.top&&point.y<r.bottom;});
-      const span=line?.querySelector('.bits > span:first-child'),box=span?.getBoundingClientRect(),lr=line?.getBoundingClientRect();
-      const anchor=box&&box.width&&lr.height?{id:line.dataset.idx,x:(point.x-box.left)/box.width,y:(point.y-lr.top)/lr.height}:null;
+      const span=line?.querySelector('.bits > span:first-child'),box=span?.getBoundingClientRect();
+      const anchor=box&&box.width?{id:line.dataset.idx,x:(point.x-box.left)/box.width}:null;
       fs.value=String(next);applyFont();render();
+      canvas.scrollTop=scrollBefore;
+      const dy=horizonY()-horizonBefore;
+      if(Math.abs(dy)>.01){
+        const rowH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-h'))||1;
+        chainShiftRows-=dy/rowH;
+        applyPatOffsets();render();
+        canvas.scrollTop=scrollBefore;
+      }
       if(anchor){
-        const after=rows.querySelector(`.ln[data-idx="${anchor.id}"]`),ab=after?.querySelector('.bits > span:first-child')?.getBoundingClientRect(),ar=after?.getBoundingClientRect();
-        if(ab&&ar){canvas.scrollLeft+=ab.left+anchor.x*ab.width-point.x;canvas.scrollTop+=ar.top+anchor.y*ar.height-point.y;}
+        const after=rows.querySelector(`.ln[data-idx="${anchor.id}"]`),ab=after?.querySelector('.bits > span:first-child')?.getBoundingClientRect();
+        if(ab)canvas.scrollLeft+=ab.left+anchor.x*ab.width-point.x;
       }
       saveCacheSoon();window.ZZRowInk?.refresh();
     });
