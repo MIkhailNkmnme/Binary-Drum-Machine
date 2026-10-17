@@ -9,7 +9,7 @@
 #hubFieldTools[data-nested] .hubTreeBranch>summary{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;list-style:none;background:var(--hub-theme-bg);color:var(--hub-theme-bit)}
 #hubFieldTools[data-nested] .hubTreeBranch>summary b{font-size:16px}
 #hubFieldTools[data-nested] .hubTreeBranch>summary small{font:9px system-ui}
-#hubFieldTools[data-nested] .hubTreeBranch[open]>summary{background:var(--hub-theme-active)!important}
+#hubFieldTools[data-nested] .hubTreeBranch[open]>summary{background:var(--hub-theme-bg)!important}   /* v0.249: раскрытая голова — без заливки; выделение только рамкой */
 #hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=false]{background:var(--hub-theme-bg)!important;color:color-mix(in srgb,var(--hub-theme-bit) 60%,transparent)}
 #hubFieldTools[data-nested] .hubTreeBranch[data-has-action=true]>summary[aria-pressed=true]{background:var(--hub-theme-active)!important;color:var(--hub-theme-accent)}
 #hubFieldTools[data-nested] .hubTreeItem:has(details[open]){z-index:45}
@@ -61,3 +61,7 @@ body.hubReordering #hubTip{display:none}
 /* v0.236: ветки раскрыты всегда — сама коробка ветки (у «Вида битов» она большая) не ловит мышь, только её ромб-голова */
 #hubFieldTools[data-nested] .hubTreeBranch{pointer-events:none}
 #hubFieldTools[data-nested] .hubTreeBranch>summary{pointer-events:auto}
+/* v0.249: «иногда не даёт кнопку нажать, рука не появляется» — коробка ползунка (details.hubTilt) шире своего ромба и накрывала соседей
+   (А / Б / В, Минимум, Скорость…); ловят мышь только сам ромб и раскрытый ползунок. */
+#hubFieldTools[data-nested] .hubTreeItem,#hubFieldTools[data-nested] .hubTreeItem>details.hubTilt,#hubFieldTools details.hubTilt{pointer-events:none}
+#hubFieldTools[data-nested] .hubTreeItem>details.hubTilt>*,#hubFieldTools details.hubTilt>*{pointer-events:auto}

@@ -12,6 +12,8 @@
     const pins=new Set(saved.groups||[]),promoted=new Set(saved.controls||[]),records=new Map(),groups=[];let renderStamp='';
     // v0.236: «все группы раскрытыми, скрывать только правой кнопкой» — ветки открыты всегда, свёрнутые правой кнопкой помнятся
     let folded=new Set();try{folded=new Set(JSON.parse(localStorage.getItem('zerk_hub_folded')||'[]'));}catch(_){}
+    // v0.249: «Цвет» — свёрнут, раскрывается наведением на свою кнопку (ПКМ по ней — оставить раскрытым)
+    const hoverOnly=new Set(['colour']),hovered=new Set(),isOpen=id=>hoverOnly.has(id)?hovered.has(id):!folded.has(id);
     const saveFolded=()=>{try{localStorage.setItem('zerk_hub_folded',JSON.stringify([...folded]));}catch(_){}};
     // v0.245: «все группы магнитить к верху / низу, дать мне перемещать» — {группа: {x: вершина на экране, e: 't' | 'b'}}
     let places={};try{places=JSON.parse(localStorage.getItem('zerk_hub_places')||'{}')||{};}catch(_){}
@@ -27,7 +29,7 @@
       const record={id,node,children,group};records.set(id,record);
       head.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(record.action){record.action();render();}});
       head.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();openBranch(record,e.key==='ArrowRight');}});
-      node.addEventListener('toggle',()=>{const want=!folded.has(id);if(node.open!==want)node.open=want;render();});
+      node.addEventListener('toggle',()=>{const want=isOpen(id);if(node.open!==want)node.open=want;render();});
       return record;
     };
     function ancestors(record){const found=new Set();for(let n=record;n;n=n.parent)found.add(n.id);return found;}
@@ -237,12 +239,16 @@
       const mount=(r,parent)=>{r.parent=parent;const wrap=document.createElement('div');wrap.className='hubTreeItem';wrap.dataset.treeKey=r.id;wrap.append(r.node);slot.append(wrap);r.wrap=wrap;r.children?.forEach(c=>mount(c,r));};mount(group.root,null);
       group.root.node.dataset.group=group.key;
     }
-    for(const r of records.values())if(r.children)r.node.open=!folded.has(r.id);
+    for(const r of records.values())if(r.children)r.node.open=isOpen(r.id);
+    for(const id of hoverOnly){const r=records.get(id);if(!r)continue;const slot=r.group.slot;
+      r.node.querySelector(':scope > summary').addEventListener('click',e=>{if(e.pointerType==='mouse'||!hoverOnly.has(id))return;if(hovered.has(id))hovered.delete(id);else hovered.add(id);r.node.open=hovered.has(id);render();});
+      r.node.querySelector(':scope > summary').addEventListener('pointerenter',e=>{if(e.pointerType==='touch'||!hoverOnly.has(id))return;hovered.add(id);r.node.open=true;render();});
+      slot.addEventListener('pointerleave',()=>setTimeout(()=>{if(!hoverOnly.has(id)||slot.matches(':hover'))return;hovered.delete(id);r.node.open=false;render();},250));}
     if(view){view.querySelector('.hubBitViewOptions')?.remove();view.querySelector('.hubBitViewArrows')?.remove();}
     for(const id of [...promoted])if(!records.has(id))promoted.delete(id);
     // Правая кнопка: щелчок — закрепить / поднять (как было), зажать и вести — переставить кнопку среди соседей.
     let rdrag=null,rdragEnd=0;
-    const rightClick=r=>{if(r.children){openBranch(r,!r.node.open);return;}pinToggle(r);};
+    const rightClick=r=>{if(r.children&&(hoverOnly.has(r.id)||r.id==='colour')){if(hoverOnly.has(r.id))hoverOnly.delete(r.id);else{hoverOnly.add(r.id);hovered.delete(r.id);}r.node.open=isOpen(r.id);render();return;}if(r.children){openBranch(r,!r.node.open);return;}pinToggle(r);};
     const pinToggle=r=>{if(r.id===r.group.key){if(pins.has(r.id))pins.delete(r.id);else{pins.add(r.id);r.node.open=true;}}else if(promoted.has(r.id))promoted.delete(r.id);else promoted.add(r.id);persist();render();};
     const recAt=(x,y)=>{const n=document.elementFromPoint(x,y)?.closest?.('#hubFieldTools [data-tree-key]');return n?records.get(n.dataset.treeKey):null;};
     toolbar.addEventListener('pointerdown',e=>{
@@ -293,7 +299,10 @@
     toolbar.addEventListener('toggle',e=>{if(e.target.matches('.hubTilt')&&e.target.open){toolbar.querySelectorAll('.hubTilt[open]').forEach(n=>{if(n!==e.target)n.open=false;});render();}},true);
     for(const event of ['hubmirror','hubimage','hubmusic','hubflowstate','hubview'])window.addEventListener(event,render);
     window.addEventListener('resize',()=>{renderStamp='';render();});
-    window.HubMenuLayout={snapshot:()=>({groups:[...pins],controls:[...promoted],open:[...records.values()].filter(r=>r.children&&r.node.open).map(r=>r.id)}),restore:s=>{for(const r of records.values())if(r.children)r.node.open=!folded.has(r.id);render();}};
+    window.HubMenuLayout={snapshot:()=>({groups:[...pins],controls:[...promoted],open:[...records.values()].filter(r=>r.children&&r.node.open).map(r=>r.id)}),restore:s=>{for(const r of records.values())if(r.children)r.node.open=isOpen(r.id);
+    for(const id of hoverOnly){const r=records.get(id);if(!r)continue;const slot=r.group.slot;
+      r.node.querySelector(':scope > summary').addEventListener('pointerenter',e=>{if(e.pointerType==='touch'||!hoverOnly.has(id))return;hovered.add(id);r.node.open=true;render();});
+      slot.addEventListener('pointerleave',()=>setTimeout(()=>{if(!hoverOnly.has(id)||slot.matches(':hover'))return;hovered.delete(id);r.node.open=false;render();},250));}render();}};
     persist();render();syncLocks();
   }};
 })();

@@ -1,4 +1,24 @@
-/* Hub v0.240: на всех кнопках при наведении — курсор-рука и лёгкая подсветка.
-   :where() не прибавляет веса — свои курсоры и подсветки кнопок (ось, ползунки, перетаскивание) остаются главными. */
+/* Hub v0.240: на всех кнопках при наведении — курсор-рука.
+   :where() не прибавляет веса — свои курсоры кнопок (ось, ползунки, перетаскивание) остаются главными.
+   v0.249: «все кнопки однообразно, выделение без подсветки фона — чисто обводка рамки»: при наведении фон и яркость
+   не меняются, появляется тонкая белая рамка по форме кнопки (ромб — картинкой поверх своего фона, полоса страницы — ::before). */
 :where(button,summary,a[href],[role=button],label.hubRhomb,label:has(>input[type=checkbox]),select,.hubSwatch){cursor:pointer}
-:where(button,summary,a[href],[role=button],label.hubRhomb,select,.hubSwatch):not(:disabled):hover{filter:brightness(1.3)}
+:root{--hub-hover-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpolygon points='50,9 91,50 50,91 9,50' fill='none' stroke='%23fff' stroke-width='1.5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")}
+#hubFieldTools .hubRhomb:hover,#hubFieldTools summary:hover,#hubZoom>button:hover,#hubZoom .hub-turn-half:hover,#hubZoom button:hover,
+#hubPNG:hover,#hubRec:hover,#hubBitPacking:hover,#hubBitPacking:focus-visible,#hubZenToggle:hover,#hubZenToggle:focus-visible,
+#hubSidebarToggle:hover,#hubSidebarToggle:focus-visible,#hubPresetsPanel .hubRhomb:hover,#hubRombGrid .hubRgCell:hover,#hubRombGrid .hubRgCell.over,
+.hubBitView .hubBitViewOptions .hubRhomb:hover{filter:none!important;outline:0!important}
+#hubFieldTools .hubRhomb:not([aria-pressed=true]):not(:has(input:checked)):hover,#hubFieldTools summary:not([aria-pressed=true]):hover,
+#hubZoom>button:not([aria-pressed=true]):hover,#hubZoom .hub-turn-half:hover,#hubZoom button:not([aria-pressed=true]):not(.hub-auto-turn):hover,#hubPNG:hover,#hubRec:hover,
+#hubBitPacking:not([aria-pressed=true]):hover,#hubZenToggle:hover,#hubSidebarToggle:hover,#hubPresetsPanel .hubRhomb:hover,
+#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):hover,#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]).over{background-color:var(--hub-theme-bg)!important;background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
+#hubFieldTools .hubTreeItem>.hubSwatch:hover{filter:none!important}
+/* полосы страниц: фон прежний, рамка по скошенному контуру */
+.hub a.menu-btn.hubPg:hover,.hub a.menu-btn.hubPg:focus-visible{background:var(--hub-theme-bg)!important;filter:none!important;position:relative}
+.hub a.menu-btn.hubPg:hover::before,.hub a.menu-btn.hubPg:focus-visible::before{display:block!important;content:''!important;position:absolute!important;inset:0!important;pointer-events:none;
+  background:#fff!important;opacity:1!important;transform:none!important;mask:none!important;
+  clip-path:polygon(evenodd,10px 0,100% 0,calc(100% - 10px) 100%,0 100%,10px 0,11.4px 1.5px,calc(100% - 2.6px) 1.5px,calc(100% - 11.4px) calc(100% - 1.5px),2.6px calc(100% - 1.5px),11.4px 1.5px)!important}
+@media(min-width:1101px){
+  body.hubSidebarCollapsed .hub a.menu-btn.hubPg:hover::before,body.hubSidebarCollapsed .hub a.menu-btn.hubPg:focus-visible::before{
+    clip-path:polygon(evenodd,50% 9%,91% 50%,50% 91%,9% 50%,50% 9%,50% 12%,88% 50%,50% 88%,12% 50%,50% 12%)!important}
+}

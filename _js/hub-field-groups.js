@@ -13,8 +13,11 @@
       toggle.textContent=hidden?'»':'«';toggle.setAttribute('aria-expanded',String(!hidden));
       toggle.title=hidden?'Развернуть левое меню':'Свернуть левое меню в ромбы';toggle.setAttribute('aria-label',toggle.title);
     };
-    toggle.onclick=()=>{collapsed=!collapsed;try{localStorage.setItem('zerk_hub_sidebar_collapsed',String(collapsed));}catch(_){}sync();};
-    desktop.addEventListener('change',sync);sync();
+    // Hub v0.249: в раскрытом меню ромб «« — внизу, под кнопками страниц, у самого края
+    const place=()=>{if(!desktop.matches||collapsed){toggle.style.top='';return;}const last=[...menu.querySelectorAll('a.menu-btn')].pop(),b=last?last.getBoundingClientRect().bottom:0;toggle.style.top=Math.round(Math.min(innerHeight-48,Math.max(60,b+8)))+'px';};
+    addEventListener('resize',place);setTimeout(place,300);setTimeout(place,1500);menu.addEventListener('scroll',place);
+    toggle.onclick=()=>{collapsed=!collapsed;try{localStorage.setItem('zerk_hub_sidebar_collapsed',String(collapsed));}catch(_){}sync();place();};
+    desktop.addEventListener('change',()=>{sync();place();});sync();
   }
   function initZen() {
     if(document.getElementById('hubZenToggle'))return;
