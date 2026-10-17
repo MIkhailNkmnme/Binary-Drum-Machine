@@ -105,11 +105,59 @@
       for(let q=0;q<N;q++)if(outN[q]){rgba[q*4]=outR[q]/outN[q];rgba[q*4+1]=outG[q]/outN[q];rgba[q*4+2]=outB[q]/outN[q];rgba[q*4+3]=255;}
       return rgba;
     }
-    return {find,point,span,highlights};
+    // Inscribed 45-degree cones, independently on each exact symmetry run.
+    // Work in slice coordinates: one longitudinal step has the same length
+    // as one unit of radius. Both orientations and nested axes are retained.
+    // Packed vertices/rgb/lattice avoid millions of small canvas objects.
+    function triangles(segs, anchor=0, minRows=16) {
+      const packed=[];
+      minRows=Math.max(2,Math.floor(minRows)||16);
+      for(const sg of segs) {
+        const n=sg.widths.length;if(n<minRows)continue;
+        const radii=new Float64Array(n);
+        for(let i=0;i<n;i++){
+          const a=span(sg,i,anchor);
+          radii[i]=(a.n-1)/2*(sg.dir==='v'||sg.dir==='h'?2:1);
+        }
+        for(const reverse of [false,true]) {
+          let size=1;while(size<n)size*=2;
+          const tree=new Float64Array(size*2).fill(-Infinity);
+          for(let i=0;i<n;i++)tree[size+i]=i-radii[reverse?n-1-i:i];
+          for(let i=size-1;i;i--)tree[i]=Math.max(tree[i*2],tree[i*2+1]);
+          // First row whose mirror span is narrower than this cone.
+          const first=(node,l,r,start,limit)=>{
+            if(r<=start||tree[node]<=limit)return n;
+            if(r-l===1)return l;
+            const mid=(l+r)/2,left=first(node*2,l,mid,start,limit);
+            return left<n?left:first(node*2+1,mid,r,start,limit);
+          };
+          const heights=new Int32Array(n);
+          for(let i=0;i<n;i++)heights[i]=Math.min(n,first(1,0,size,i,i))-i;
+          for(let start=0;start<n;){
+            let stop=start+1;while(stop<n&&heights[stop]===heights[start])stop++;
+            const i=Math.floor((start+stop-1)/2),height=heights[i];
+            const peak=height>=(start?heights[start-1]:0)&&height>=(stop<n?heights[stop]:0);
+            start=stop;
+            // One representative per flat maximum, not a triangle at every
+            // pixel of a uniform stripe. Separate peaks and nested axes remain.
+            if(!peak||height<minRows)continue;
+            const end=i+height-1;
+            const ai=reverse?n-1-i:i,bi=reverse?n-1-end:end;
+            const step=sg.dir==='v'||sg.dir==='h'?1:2;
+            const a=point(sg.dir,sg.axis,sg.t0+ai*step),b=point(sg.dir,sg.axis,sg.t0+bi*step),h=end-i;
+            const dx=sg.dir==='v'?h:sg.dir==='h'?0:h,dy=sg.dir==='v'?0:sg.dir==='h'?h:sg.dir==='d'?-h:h;
+            const c=colour(sg.dir,sg.axis+ai*.381966+(reverse?19:0),sg.p);
+            packed.push(a[0],a[1],b[0]-dx,b[1]-dy,b[0]+dx,b[1]+dy,...c,sg.p);
+          }
+        }
+      }
+      return new Float32Array(packed);
+    }
+    return {find,point,span,highlights,triangles};
   }
   const api=createSymmetry();
   api.createWorker=()=>{
-    const code=`const api=(${createSymmetry.toString()})();onmessage=e=>{const {field,opts,bits}=e.data;const segs=api.find(field,opts);const rgba=bits?api.highlights(field,segs,opts.anchor):null;postMessage({segs,rgba},rgba?[rgba.buffer]:[]);};`;
+    const code=`const api=(${createSymmetry.toString()})();onmessage=e=>{const {field,opts,bits,totems,minTriangleRows}=e.data;const segs=api.find(field,opts);const rgba=bits?api.highlights(field,segs,opts.anchor):null;const triangles=totems?api.triangles(segs,opts.anchor,minTriangleRows):null;postMessage({segs,rgba,triangles},[...(rgba?[rgba.buffer]:[]),...(triangles?[triangles.buffer]:[])]);};`;
     const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
     try{return new Worker(url);}finally{URL.revokeObjectURL(url);}
   };

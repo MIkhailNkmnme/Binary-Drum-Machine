@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.138. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.139. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.138</title>
+<title>Zerkalius Маятник — v0.139</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.138</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.139</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -186,6 +186,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Искать и показывать горизонтальные оси ↔"><input id="symH" type="checkbox" checked data-mi-short="Оси ↔"> оси ↔</label>
     <label title="Искать и показывать диагональные оси ╲ ╱ (их много — по умолчанию выключены)"><input id="symD" type="checkbox" data-mi-short="Оси ╲╱"> оси ╲╱</label>
     <label title="Подсвечивать биты найденных осей при увеличении от 3 пикселей на клетку. На малом масштабе — только линии. Перекрывающиеся цвета смешиваются."><input id="symBits" type="checkbox" data-mi-short="Биты осей"> биты осей</label>
+    <label title="Тотемы: вместо линий осей — цветные треугольники в обе стороны вдоль каждой оси. Вложенные области сохраняются, полупрозрачные цвета перекрытий смешиваются. Только внутри найденной симметрии."><input id="symTriangles" type="checkbox" data-mi-short="Тотемы"> тотемы</label>
+    <label title="Минимальная высота треугольника в срезах вдоль оси. Увеличь, чтобы убрать мелкие треугольники; вложенные крупнее порога остаются.">высота от <input id="symTriangleRows" type="number" min="2" max="16384" value="16"></label>
+    <button id="bTriangleAxes" data-mi-short="Оси пустот" title="Найти чёрные треугольники текущего кадра и поставить свои оси по горизонтальному краю и двум диагоналям каждого. Минимальный размер — «высота от». Повторное нажатие не дублирует линии.">Оси пустот</button>
+    <button id="bFrameWindow" data-mi-short="Кадр отдельно" title="Зафиксировать текущий кадр в отдельном окне: без анимации и повторного построения. Оси и треугольники считаются в фоне, масштаб не пересчитывает подсветку.">Кадр отдельно</button>
+    <output id="triangleInfo" aria-live="polite"></output>
     <label title="Минимум последовательных поперечных срезов вдоль оси: строк для вертикальной, столбцов для горизонтальной, диагоналей для наклонной. Пропуски не допускаются.">строк от <input id="symRowsMin" type="number" min="2" max="16384" value="2"></label>
     <label title="Максимальная длина непрерывного участка симметрии; пусто или 0 — без верхнего предела. Более длинные участки скрываются.">строк до <input id="symRowsMax" type="number" min="0" max="16384" placeholder="∞"></label>
     <label title="Минимум совпадающих битов с КАЖДОЙ стороны оси, через одну клетку. Бит на самой оси не считается.">бит от <input id="symBitsMin" type="number" min="2" max="16384" value="2"></label>
@@ -201,6 +206,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       <button id="zFit">по ширине</button><button id="zTop" aria-pressed="false" data-mi-short="Верх" title="Закрепить верх: при масштабе первая строка остаётся у верхнего края окна">верх</button><button id="zSnap" aria-pressed="true" title="Масштаб только кратный двум: 2ⁿ пикселей монитора на бит (… 25 %, 50 %, 100 %, 2×, 4× …). При уменьшении экран берёт бит под серединой пикселя; при шаге ровно 2, 4… бита выборка не соскальзывает между двумя решётками кадра — без муара (крупной шахматки). Растяжение экрана Windows учтено. Выкл — плавный масштаб">кратный ×2</button>
     </span>
     <label title="Любой кадр: состояние поля после N вершин (← → — на кадр назад / вперёд)">кадр <input id="frame" type="range" min="0" max="512" value="0" style="width:180px"> <output id="frameV" class="ver">0</output></label>
+    <button id="bGif" aria-pressed="false" data-mi-short="GIF" title="Запись GIF всего поля: до 1024 px по длинной стороне, до 10 кадров/с, 256 цветов. Нажми, запусти анимацию или меняй кадры; ещё раз — скачать GIF.">GIF</button>
     <button id="bRec" aria-pressed="false" data-mi-short="Запись" title="Запись видео поля: нажми — пошла запись (запусти маятник, крути масштаб, крась), нажми ещё раз — файл скачается (.mp4, если браузер умеет, иначе .webm)">Запись</button>
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <button id="bDiag" title="Ромбы построчно: у каждой решётки (чётная — вершины 0, ±2…, нечётная — ±1, ±3…) ромбы стоят рядами по диагоналям. В файле — правые диагонали ↘ и левые ↙ обеих решёток; строка — одна диагональ сверху вниз, диагонали слева направо. Текущий кадр, окно показа">Диагонали .txt</button>
@@ -259,9 +265,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Высота копии в процентах от исходной фигуры">высота % <input id="templateHeight" type="number" min="1" max="3200" step="10" value="100"></label>
     <label title="Сдвиг по вертикали в строках поля; положительное значение — вниз">вниз, строк <input id="templateDown" type="number" min="-4096" max="4096" step="1" value="0"></label>
     <label title="Непрозрачность копии в процентах">видимость % <input id="templateAlpha" type="number" min="0" max="100" step="5" value="50"></label>
-    <button id="bPaintSave" title="Сохранить раскраску, поле, изменённые биты и шаблоны в файл для продолжения работы">Сохранить раскраску</button>
-    <button id="bPaintOpen" title="Открыть сохранённую раскраску из файла JSON">Открыть раскраску</button>
-    <input id="paintFile" type="file" accept=".json,application/json" hidden>
+    <button id="bPaintSave" data-mi-short="Сохранить всё" title="Сохранить всю работу: текущий кадр, раскраску, шаблоны, библиотеку, зеркала и подсветку в сжатый файл">Сохранить всё</button>
+    <button id="bPaintOpen" data-mi-short="Открыть работу" title="Открыть полную работу .mayatnik или старую раскраску JSON">Открыть работу</button>
+    <input id="paintFile" type="file" accept=".mayatnik,.json,application/json,application/octet-stream" hidden>
     <button id="bPaintNew" title="Начать раскрашивать тот же узор с нуля: убрать заливки, следы и шаблоны с поля. Действие можно отменить">Начать с нуля</button>
     <button id="bPaintRestore" title="Вернуть сохранённую раскраску или работу перед началом с нуля">Из памяти</button><span id="paintCacheInfo"></span><span id="templateInfo"></span>
     <span id="templateActions" hidden>
@@ -308,7 +314,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </dialog>
 
 <script src="mayatnik-core.js?v=4"></script>
-<script src="mayatnik-symmetry.js?v=27"></script>
+<script src="mayatnik-symmetry.js?v=139"></script>
+<script src="mayatnik-totems.js?v=139"></script>
+<script src="mayatnik-work-file.js?v=139"></script>
+<script src="mayatnik-gif.js?v=139"></script>
 <script src="mayatnik-fill.js?v=37"></script>
 <script src="mayatnik-template.js?v=36"></script>
 <script src="mayatnik-paint-cache.js?v=36"></script>
@@ -1373,7 +1382,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function paintSnapshot(){
     if(!f||!img)return null;
     rememberTemplate();
-    return {schema:2,st:{...st},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
+    return {schema:2,st:structuredClone(st),library:structuredClone(templateLibrary),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,field:f.val.slice(),width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,colour:$('fillColour').value,
       activeTemplate:colourTemplate?.id,templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry}))})),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
@@ -1386,7 +1395,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   async function restorePaint(supplied=null){
     try{
       await cacheWrites;const data=supplied||await MayatnikPaintCache.read();if(!data||![1,2].includes(data.schema))return false;
-      cacheRestoring=true;Object.assign(st,data.st);writeUI();reset();
+      cacheRestoring=true;mirrorLiveSet(false);Object.assign(st,data.st);writeUI();reset();
       if(!(data.field instanceof Int8Array)||data.field.length!==f.val.length)throw Error('field');
       f.val.set(data.field);k=data.k;target=k;updWin();canvasSize();draw();
       if(img.width!==data.width||img.height!==data.height)throw Error('picture');
@@ -1396,7 +1405,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       templateItems=data.schema===2?(data.templates||[]):data.template?[{...data.template,id:'field:legacy',name:data.template.hex,view:{...data.options,x:data.offsetX||0,returnTo:data.returnTo,paintBit:data.paintBit,visible:data.visible}}]:[];
       for(const t of templateItems){for(const p of t.parts){p.axis=p.mask.x+p.mask.width/2;p.canvas=document.createElement('canvas');p.canvas.width=p.mask.width;p.canvas.height=p.mask.height;p.canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(p.mask.data.buffer),p.mask.width,p.mask.height),0,0);}colourTemplate=t;if(!t.bits)t.bits=templateBits(true);}
       colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===data.activeTemplate)||templateItems[0]||null,false);templateMove=!!colourTemplate;
-      templateStatsKey='';save();fillSync();templateSync();layout();centerAnchor();draw();$('paintCacheInfo').textContent='Раскраска восстановлена из памяти браузера';return true;
+      if(Array.isArray(data.library)){await libraryReady;removedTemplateIds=new Set(data.libraryHidden||[]);templateLibrary=structuredClone(data.library);libraryList();}
+      mirrorXor=!!data.mirrors?.xor;mirrorLiveSet(!!data.mirrors?.live);if(mirrorLive&&data.mirrors.base)mirrorBase=data.mirrors.base;
+      axisLinesSync();$('symTriangles').checked=!!st.symTriangles;$('symTriangleRows').value=st.symTriangleRows||16;
+      templateStatsKey='';save();fillSync();templateSync();layout();centerAnchor();draw();$('paintCacheInfo').textContent='Работа восстановлена: кадр, раскраска, шаблоны и зеркала';return true;
     }catch(e){$('paintCacheInfo').textContent='Память раскраски недоступна — сохраняй PNG';return false;}
     finally{cacheRestoring=false;}
   }
@@ -1404,14 +1416,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function keepPaint(data){
     cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data,'saved')).catch(()=>{$('paintCacheInfo').textContent='Копия в браузере недоступна — используй файл раскраски';});
   }
-  $('bPaintSave').onclick=()=>{
-    if(cacheRestoring||templateDragging)return;stop();target=k;
+  $('bPaintSave').onclick=async()=>{
+    if(cacheRestoring||templateDragging)return;stop();target=k;await libraryReady;
     const data=paintSnapshot();if(!data)return;
+    $('bPaintSave').disabled=true;$('paintCacheInfo').textContent='Сжимаю всю работу в фоне…';
     try{
-      const text=JSON.stringify({format:'mayatnik-paint',version:1,data},(_,v)=>v instanceof Int8Array?{array:'i8',data:Array.from(v)}:v instanceof Uint32Array?{array:'u32',data:Array.from(v)}:v);
-      const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='mayatnik-colouring-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-      keepPaint(data);$('paintCacheInfo').textContent='Файл раскраски передан на скачивание';
-    }catch(_){$('paintCacheInfo').textContent='Не удалось сохранить файл раскраски';}
+      data.frameView=frameSnapshot();
+      const blob=await MayatnikWorkFile.run('encode',data);
+      download('mayatnik-kadr-'+data.k+'-'+new Date().toISOString().replace(/[:.]/g,'-')+'.mayatnik',blob);
+      keepPaint(data);$('paintCacheInfo').textContent=`Вся работа сохранена · ${(blob.size/1048576).toFixed(2)} МиБ`;
+    }catch(e){$('paintCacheInfo').textContent='Не удалось сохранить работу: '+e.message;}
+    finally{$('bPaintSave').disabled=false;}
   };
   $('bPaintNew').onclick=()=>{
     if(cacheRestoring||templateDragging||!img)return;stop();target=k;
@@ -1429,13 +1444,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     let before=null;
     try{
       if(file.size>512*1024*1024)throw Error('size');
-      const parsed=JSON.parse(await file.text(),(_,v)=>{
-        if(!v||!['i8','u32'].includes(v.array))return v;
-        if(!Array.isArray(v.data)||v.data.length>100e6||v.data.some(n=>!Number.isInteger(n)||n<(v.array==='i8'?-1:0)||n>(v.array==='i8'?1:0xffffffff)))throw Error('array');
-        return v.array==='i8'?Int8Array.from(v.data):Uint32Array.from(v.data);
-      });
+      const parsed=await MayatnikWorkFile.run('decode',file);
       const data=parsed.data;
-      if(parsed.format!=='mayatnik-paint'||parsed.version!==1||data?.schema!==2||!data.st||!(data.field instanceof Int8Array)||!Number.isInteger(data.k)||data.k<0)throw Error('format');
+      if(!((parsed.format==='mayatnik-paint'&&parsed.version===1)||(parsed.format==='mayatnik-work'&&parsed.version===2))||data?.schema!==2||!data.st||!(data.field instanceof Int8Array)||!Number.isInteger(data.k)||data.k<0)throw Error('format');
       if(!Number.isInteger(data.st.rows)||data.st.rows<8||data.st.rows>4096||!Number.isInteger(data.st.steps)||data.st.steps<1||data.st.steps>16384||!['pend','left','right','one'].includes(data.st.mode))throw Error('field');
       const pairs=data.st.pair&&data.st.mode==='pend',frames=data.st.mode==='one'?1:pairs?data.st.steps>>1:data.st.steps,vertices=data.st.mode==='one'?1:pairs?2*frames+1:data.st.steps;
       if(data.k>frames||data.field.length!==MAYATNIK.geometry(data.st.mode,vertices,data.st.rows).W*data.st.rows)throw Error('field');
@@ -1445,7 +1456,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       let pixels=0;for(const t of data.templates){if(!t.view||!Array.isArray(t.parts))throw Error('template');for(const p of t.parts){const m=p.mask;if(!m||!Number.isInteger(m.width)||!Number.isInteger(m.height)||m.width<1||m.height<1||!(m.data instanceof Uint32Array)||m.data.length!==m.width*m.height)throw Error('mask');pixels+=m.data.length;if(pixels>100e6)throw Error('size');}}
       if(cacheRestoring||templateDragging)throw Error('busy');stop();target=k;before=paintSnapshot();
       if(!await restorePaint(data))throw Error('restore');
-      if(before)keepPaint(before);savePaint();$('fillInfo').textContent='Раскраска открыта из файла — можно продолжать.';
+      if(before)keepPaint(before);if(Array.isArray(data.library)){await persistLibrary();await MayatnikPaintCache.write([...removedTemplateIds],'template-hidden');}savePaint();$('fillInfo').textContent='Вся работа открыта из файла — можно продолжать.';
     }catch(_){if(before)await restorePaint(before);$('paintCacheInfo').textContent='Не удалось открыть файл раскраски. Текущая работа сохранена.';}
     finally{$('paintFile').value='';}
   };
@@ -1671,7 +1682,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     $(id).addEventListener('change',()=>{st[key]=$(id).checked;if($(id).checked&&!st.sym){st.sym=true;$('sym').checked=true;}stop();target=k;clearKonus();save();if(f)draw();});}
   function symKey() {
     if (symField !== f) { symField = f; symGeneration++; }
-    return [symGeneration,k,symDirs().join(''),st.symRowsMin,st.symRowsMax,st.symBitsMin,st.symBitsMax,!!st.symBits].join('|');
+    return [symGeneration,k,symDirs().join(''),st.symRowsMin,st.symRowsMax,st.symBitsMin,st.symBitsMax,!!st.symBits,!!st.symTriangles,st.symTriangleRows].join('|');
   }
   function symGet() {
     if (!f || !st.sym || playing) return null;
@@ -1690,6 +1701,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       symCache = {key,...data};
       const counts = {v:0,h:0,d:0,u:0}; for (const sg of data.segs) counts[sg.dir]++;
       $('symInfo').textContent = `Участки осей: ${data.segs.length} · ↕ ${counts.v} · ↔ ${counts.h} · ╲ ${counts.d} · ╱ ${counts.u}`;
+      if(st.symTriangles)$('symInfo').textContent+=` · треугольников: ${(data.triangles?.length||0)/10} · в обе стороны`;
+      $('symInfo').dataset.triangles=(data.triangles?.length||0)/10;
       $('symInfo').dataset.count = data.segs.length; $('symInfo').dataset.summary = $('symInfo').textContent;
       queueDigits();
     };
@@ -1701,11 +1714,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         $('symInfo').textContent = 'Не удалось найти оси. Измените параметры для повторного поиска.';
         symCache = {key,segs:[],rgba:null};
       };
-      symWorker.postMessage({field,opts,bits:!!st.symBits},[field.val.buffer]);
+      symWorker.postMessage({field,opts,bits:!!st.symBits,totems:!!st.symTriangles,minTriangleRows:st.symTriangleRows},[field.val.buffer]);
     } catch (e) {
       // Blob workers may be forbidden by the host; preserve the offline page.
       const segs = MayatnikSymmetry.find(f,opts);
-      accept({segs,rgba:st.symBits?MayatnikSymmetry.highlights(f,segs,geo.anchor):null});
+      accept({segs,rgba:st.symBits?MayatnikSymmetry.highlights(f,segs,geo.anchor):null,triangles:st.symTriangles?MayatnikSymmetry.triangles(segs,geo.anchor,st.symTriangleRows):null});
     }
     return null;
   }
@@ -1727,7 +1740,25 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         }
       }
       ctx.lineWidth=exportMode?1:1.1;ctx.globalAlpha=.86;
+      if(st.symTriangles&&data.triangles){
+        const key=[VX,VW,VH,p].join('|');data.triangleLayers||=new Map();
+        let layer=data.triangleLayers.get(key);
+        if(!layer){
+          const resolution=Math.min(1,2048/Math.max(VW,VH));layer=document.createElement('canvas');layer.width=Math.max(1,Math.ceil(VW*resolution));layer.height=Math.max(1,Math.ceil(VH*resolution));
+          const lg=layer.getContext('2d'),ts=data.triangles;lg.scale(resolution,resolution);lg.lineWidth=.7;
+          for(let pass=0;pass<2;pass++)for(let i=0;i<ts.length;i+=10){
+            if(p>=0&&ts[i+9]!==p)continue;
+            const ax=ts[i]-VX+.5,ay=ts[i+1]+.5,bx=ts[i+2]-VX+.5,by=ts[i+3]+.5,cx=ts[i+4]-VX+.5,cy=ts[i+5]+.5;
+            if(Math.max(ax,bx,cx)<0||Math.min(ax,bx,cx)>VW||Math.max(ay,by,cy)<0||Math.min(ay,by,cy)>VH)continue;
+            lg.beginPath();lg.moveTo(ax,ay);lg.lineTo(bx,by);lg.lineTo(cx,cy);lg.closePath();const colour=`rgb(${ts[i+6]},${ts[i+7]},${ts[i+8]})`;
+            if(!pass){lg.globalAlpha=.12;lg.fillStyle=colour;lg.fill();}else{lg.globalAlpha=.38;lg.strokeStyle=colour;lg.stroke();}
+          }
+          if(data.triangleLayers.size>=3)data.triangleLayers.clear();data.triangleLayers.set(key,layer);
+        }
+        ctx.globalAlpha=1;ctx.imageSmoothingEnabled=false;ctx.drawImage(layer,x0+ox*s,y0,VW*s,VH*s);
+      }
       for(const sg of data.segs) {
+        if(st.symTriangles)continue;
         if(p>=0&&sg.p!==p)continue;
         const a=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t0),b=MayatnikSymmetry.point(sg.dir,sg.axis,sg.t1);
         if(Math.max(a[0],b[0])<VX||Math.min(a[0],b[0])>=VX+VW||Math.min(a[1],b[1])>=VH)continue;
@@ -2097,12 +2128,49 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     return out.join('\n') + '\n';
   }
   $('bDiag').onclick = () => { if (f) download(fname('txt').replace(/\.txt$/, `-diagonali-kadr${k}.txt`), new Blob([diagText()], { type: 'text/plain' })); };
+  let gifRecording=null;
+  $('bGif').onclick=()=>{
+    if(gifRecording){gifRecording.stop();$('bGif').disabled=true;$('triangleInfo').textContent='Завершаю GIF…';return;}
+    if(!img)return;const c=document.createElement('canvas');
+    gifRecording=MayatnikGif.record({width:img.width,height:img.height,capture:()=>{
+      c.width=img.width;c.height=img.height;const cg=c.getContext('2d');cg.putImageData(img,0,0);
+      if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,RK,c.width,c.height,true);
+      paintTemplate(cg,0,0,RK);return c;
+    },onDone:(blob,info)=>{download(fname('gif'),blob);gifRecording=null;$('bGif').disabled=false;$('bGif').setAttribute('aria-pressed','false');$('triangleInfo').textContent=`GIF сохранён · ${info.width} × ${info.height} · ${(blob.size/1048576).toFixed(2)} МиБ`;},
+    onError:e=>{gifRecording=null;$('bGif').disabled=false;$('bGif').setAttribute('aria-pressed','false');$('triangleInfo').textContent='Не удалось записать GIF: '+e.message;}});
+    $('bGif').setAttribute('aria-pressed','true');$('triangleInfo').textContent=`GIF записывается · ${gifRecording.width} × ${gifRecording.height} · ещё раз GIF — скачать`;
+  };
   $('bPng').onclick = () => {   // v0.017: полная картинка «пиксель = бит», а не уменьшенная с экрана
     if (!f) return; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
     const cg=c.getContext('2d');cg.putImageData(img,0,0);
     if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,RK,c.width,c.height,true);
     paintTemplate(cg,0,0,RK);
     c.toBlob(b => b && download(fname('png'), b));
+  };
+  function frameSnapshot(){
+    const rp=rombP(),W=VW,H=VH,anchor=geo.anchor-VX,val=new Int8Array(W*H).fill(-1);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const p=((x-y-anchor)%2+2)%2;if(rp>=0&&rp!==2&&p!==rp)continue;
+      const ox=rp===2&&p===1?VW+RG:0;
+      if(!outShow(y,x+VX))val[y*W+x]=rasterBit(Math.floor((x+ox+.5)*RK),Math.floor((y+.5)*RK));
+    }
+    const picture=document.createElement('canvas');picture.width=img.width;picture.height=img.height;
+    const pg=picture.getContext('2d');pg.putImageData(img,0,0);paintTemplate(pg,0,0,RK);
+    const pixels=pg.getImageData(0,0,picture.width,picture.height).data;
+    return {frame:k,field:{W,H,val},anchor,lattice:rp,gap:RG,rasterScale:RK,
+      image:{width:picture.width,height:picture.height,pixels},minRows:st.symTriangleRows||16,
+      source:{W:f.W,H:f.H,x:VX},axes:(st.userLines||[]).map(l=>l.slice())};
+  }
+  $('bFrameWindow').onclick=()=>{
+    if(!f||!img)return;stop();target=k;
+    const id=crypto.randomUUID(),child=window.open('mayatnik-frame.html#'+id,'_blank');
+    if(!child){$('triangleInfo').textContent='Браузер заблокировал отдельное окно. Разрешите открытие окна и нажмите ещё раз.';return;}
+    const snapshot={...frameSnapshot(),id,work:paintSnapshot()};
+    let timer;
+    const ready=e=>{if(e.origin!==location.origin||e.source!==child||e.data?.type!=='mayatnik-frame-ready'||e.data.id!==id)return;
+      clearTimeout(timer);removeEventListener('message',ready);child.postMessage({type:'mayatnik-frame',snapshot},location.origin,[snapshot.field.val.buffer,snapshot.image.pixels.buffer]);};
+    addEventListener('message',ready);timer=setTimeout(()=>removeEventListener('message',ready),60000);
+    $('triangleInfo').textContent=`Кадр ${k} зафиксирован для отдельного окна`;
   };
   for (const id of ['rows', 'steps', 'mode', 'bg']) $(id).addEventListener('change', reset);
   // v0.010, «не включается» (щёлкали по легенде): легенда — тоже переключатель вида; погашенные цвета видны в ней
@@ -2128,6 +2196,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('bClearAxis').onclick=()=>{axisPicking=false;$('bAxisPick').setAttribute('aria-pressed','false');clearKonus();if(f)draw();};
   $('sym').addEventListener('change', () => { if(!$('sym').checked){hideAxes();return;}st.sym=true;stop();target=k;save();if(f)draw(); });
   $('symBits').addEventListener('change',()=>{st.symBits=$('symBits').checked;if(st.symBits){st.sym=true;$('sym').checked=true;stop();target=k;}save();if(f)draw();});
+  $('symTriangles').checked=!!st.symTriangles;
+  st.symTriangleRows=clampInt(st.symTriangleRows,2,16384,16);$('symTriangleRows').value=st.symTriangleRows;
+  $('symTriangles').addEventListener('change',()=>{st.symTriangles=$('symTriangles').checked;if(st.symTriangles){st.sym=true;$('sym').checked=true;stop();target=k;}save();if(f)draw();});
+  $('symTriangleRows').addEventListener('change',()=>{st.symTriangleRows=clampInt($('symTriangleRows').value,2,16384,16);$('symTriangleRows').value=st.symTriangleRows;save();if(f)draw();});
   for(const id of ['symRowsMin','symRowsMax','symBitsMin','symBitsMax'])$(id).addEventListener('change',()=>{
     st[id]=clampInt($(id).value,id.endsWith('Min')?2:0,16384,id.endsWith('Min')?2:0);
     for(const prefix of ['symRows','symBits']){const lo=prefix+'Min',hi=prefix+'Max';if(st[hi]&&st[hi]<st[lo]){if(id===hi)st[lo]=Math.max(2,st[hi]);st[hi]=st[lo];}$(lo).value=st[lo];$(hi).value=st[hi]||'';}
@@ -2193,6 +2265,25 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const snapBit=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.round((cx-r.left)/s*2)/2,Math.round((cy-r.top)/s*2)/2];};
   function axisLinesSync(){$('bAxisLine').setAttribute('aria-pressed',String(axisLineMode));$('bAxisLinesClear').disabled=!st.userLines.length;$('bAxisMirror').disabled=$('bAxisXor').disabled=!st.userLines.length;if(!st.userLines.length&&mirrorLive)mirrorLiveSet(false);wrap.classList.toggle('fill-mode',fillMode||!!autoVertical||axisLineMode);}
   $('bAxisLine').onclick=()=>{axisLineMode=!axisLineMode;axisLinePending=null;if(axisLineMode){fillMode=false;autoVertical=0;autoSync();fillSync();stop();target=k;}axisLinesSync();queueDigits();};
+  let triangleWorker=null;
+  $('bTriangleAxes').onclick=()=>{
+    if(!f)return;stop();target=k;const source=f,frame=k,x0=VX,width=VW,height=VH,lattice=rombP();
+    if(triangleWorker)triangleWorker.terminate();$('bTriangleAxes').disabled=true;$('triangleInfo').textContent='Ищу чёрные треугольники…';
+    const done=triangles=>{
+      if(triangleWorker)triangleWorker.terminate();triangleWorker=null;$('bTriangleAxes').disabled=false;
+      if(f!==source||k!==frame||VX!==x0||VW!==width||VH!==height||rombP()!==lattice){$('triangleInfo').textContent='Кадр изменился — повторите поиск осей пустот.';return;}
+      const lines=MayatnikTotems.edges(triangles,{x0,width,height,lattice,gap:RG}),key=l=>{const a=l.slice(0,2).join(','),b=l.slice(2).join(',');return a<b?a+'|'+b:b+'|'+a;},seen=new Set(st.userLines.map(key));let added=0;
+      if(mirrorLive)mirrorLiveSet(false);
+      for(const l of lines)if(!seen.has(key(l))){seen.add(key(l));st.userLines.push(l);added++;}
+      axisSelected=false;axisLineMode=false;axisLinePending=null;save();axisLinesSync();queueDigits();
+      $('triangleInfo').textContent=`Чёрных треугольников: ${triangles.length/5} · добавлено осей: ${added}`;
+    };
+    const opts={anchor:geo.anchor,minRows:st.symTriangleRows||16};
+    try{triangleWorker=MayatnikTotems.createWorker();triangleWorker.onmessage=e=>done(e.data);
+      triangleWorker.onerror=()=>{triangleWorker.terminate();triangleWorker=null;$('bTriangleAxes').disabled=false;$('triangleInfo').textContent='Поиск не завершён. Повторите в отдельном окне кадра.';};
+      const val=f.val.slice();triangleWorker.postMessage({field:{W:f.W,H:f.H,val},opts},[val.buffer]);
+    }catch(e){done(MayatnikTotems.holes(f,opts));}
+  };
   // v0.049: зеркало вниз по последней своей оси. Есть краска (цвет не из правки битов) — отражается она;
   // нет — отражаются все биты над осью. Берутся точки, чья проекция попадает на отрезок оси.
   // Режим живой: пока кнопка нажата, ось можно тянуть параллельно, и зеркало пересчитывается от исходной картинки
@@ -2446,6 +2537,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=136"></script>
+<script src="mayatnik-menu.js?v=139"></script>
 </body>
 </html>
