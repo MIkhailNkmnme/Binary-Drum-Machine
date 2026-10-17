@@ -93,6 +93,7 @@
   help.onclick = () => {
     const on = help.getAttribute('aria-pressed') !== 'true';
     help.setAttribute('aria-pressed', String(on)); document.documentElement.classList.toggle('gz-help', on);
+    if (!on) $('tip').style.display = 'none';
   };
   menu.onclick = () => {
     const closed = document.body.classList.toggle('mayatnik-menu-closed');
