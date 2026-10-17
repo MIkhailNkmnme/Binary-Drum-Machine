@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.148. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.149. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.148</title>
+<title>Zerkalius Маятник — v0.149</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.148</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.149</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -336,7 +336,21 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   st.pair = false;   // v0.114: «Пары сразу» в меню больше нет — всегда «по очереди»
   st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
+  // v0.149: настройки ссылкой — ?n=строк&s=вершин&k=кадр&mode=pend|left|right|one&zerkalo=0|1|2&anim=0|1|2&centr=0|1.
+  // Со ссылкой память браузера не пишется (ни настройки, ни раскраска): ссылка не затирает своё.
+  const URLP = new URLSearchParams(location.search), URL_ON = ['n', 's', 'k', 'mode', 'zerkalo', 'anim', 'centr'].some(q => URLP.has(q));
+  let urlK = -1;
+  if (URL_ON) {
+    const num = (q, lo, hi) => { const v = parseInt(URLP.get(q), 10); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : null; };
+    const n = num('n', 8, 4096); if (n != null) { st.rows = n; if (!URLP.has('s')) st.steps = n; }
+    const sv = num('s', 1, 16384); if (sv != null) st.steps = sv;
+    if (['pend', 'left', 'right', 'one'].includes(URLP.get('mode'))) st.mode = URLP.get('mode');
+    const z = num('zerkalo', 0, 2); if (z != null) st.blackMirror = z;
+    const a = num('anim', 0, 2); if (a != null) st.animHl = a;
+    const c = num('centr', 0, 1); if (c != null) st.paintMid = !!c;
+    const kk = num('k', 0, 16384); urlK = kk == null ? 16384 : kk;
+  }
+  const save = () => { if (URL_ON) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
   let autoVertical=0,fillBase=null,fillBits=null;
   let chessLive=false,chessLayer=null,chessPrev=null,chessNext=0,chessScratch=null,chessRetry=0,chessSpare=null;   // v0.088: живой слой «Шахматки 0» (до первого draw)
@@ -782,7 +796,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   const LOCK_KEY='zerkalius_mayatnik_template_locks_v1';
   let templateLocks=(()=>{try{return JSON.parse(localStorage.getItem(LOCK_KEY))||null;}catch(_){return null;}})();
   const lockSig=()=>[st.rows,st.steps,st.mode,st.bg,pairOn()?1:0].join('|');
-  const lockSave=()=>{try{localStorage.setItem(LOCK_KEY,JSON.stringify(templateLocks));}catch(_){}};
+  const lockSave=()=>{if(URL_ON)return;try{localStorage.setItem(LOCK_KEY,JSON.stringify(templateLocks));}catch(_){}};
   function cellFreezeFrame(r,c){
     const d=c-geo.anchor,T=total();
     if(pairOn()){for(let j=T-1;j>=0;j--)if(Math.abs(d-j-1)<=r||Math.abs(d+j+1)<=r)return j+1;return Math.abs(d)<=r?0:Infinity;}
@@ -1546,7 +1560,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
-    if(cacheRestoring||templateDragging)return;
+    if(cacheRestoring||templateDragging||URL_ON)return;
     const data=paintSnapshot();if(!data)return;
     $('paintCacheInfo').textContent='Сохраняю раскраску…';
     cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data)).then(()=>{$('paintCacheInfo').textContent='Раскраска сохранена в браузере';}).catch(()=>{$('paintCacheInfo').textContent='Не удалось сохранить в браузере — сохрани PNG';});
@@ -2611,7 +2625,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('mayZen').onclick=()=>zenToggle();$('mayZenOut').onclick=()=>zenToggle(false);
   wrap.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});   // колёсико — без автопрокрутки браузера
   addEventListener('keydown',e=>{if(e.code==='Escape'&&document.body.classList.contains('may-zen')&&!e.target.closest?.('input,select,textarea'))zenToggle(false);});
-  writeUI();restorePaint().then(ok=>{if(!ok)build();});
+  writeUI();if(URL_ON)goTo(urlK);else restorePaint().then(ok=>{if(!ok)build();});   // v0.149: ссылка с настройками — сразу к кадру k
 })();
 </script>
 <script src="mayatnik-logo-pattern.js?v=138"></script>
