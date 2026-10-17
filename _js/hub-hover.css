@@ -1,0 +1,4 @@
+/* Hub v0.240: на всех кнопках при наведении — курсор-рука и лёгкая подсветка.
+   :where() не прибавляет веса — свои курсоры и подсветки кнопок (ось, ползунки, перетаскивание) остаются главными. */
+:where(button,summary,a[href],[role=button],label.hubRhomb,label:has(>input[type=checkbox]),select,.hubSwatch){cursor:pointer}
+:where(button,summary,a[href],[role=button],label.hubRhomb,select,.hubSwatch):not(:disabled):hover{filter:brightness(1.3)}
