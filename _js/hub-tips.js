@@ -2,7 +2,7 @@
    Системная подсказка (title) снимается с элемента на время наведения и показывается своей плашкой. */
 (() => {
   'use strict';
-  const SCOPE = '#hubFieldTools,#hubZoom,#hubRombGrid,#hubZenToggle,#hubSidebarToggle';
+  const SCOPE = '#hubFieldTools,#hubZoom,#hubRombGrid,#hubZenToggle,#hubSidebarToggle,.hub,.hubColorEditor';   // v0.251: и кнопки страниц, и окно цвета
   const box = document.createElement('div'); box.id = 'hubTip'; box.hidden = true;
   let cur = null;
   // title снимается только на время наведения и возвращается при уходе: другие модули ищут кнопки по нему.
@@ -22,8 +22,9 @@
     // v0.225: «подсказка скрывает кнопки» — под всей раскрытой группой; место пересчитывается, когда группа уже раскрылась.
     place(); requestAnimationFrame(() => requestAnimationFrame(place)); setTimeout(place, 250);
   }
+  // v0.251: место одно — внизу слева (CSS); прежний расчёт «под группой» больше не нужен.
   function place() {
-    if (!cur) return;
+    return;
     const a = area(cur), q = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
     const x = Math.max(8, Math.min(innerWidth - w - 8, q.left + q.width / 2 - w / 2));
     let y = a.b + 8; if (y + h > innerHeight - 4) y = Math.max(4, a.t - h - 8);

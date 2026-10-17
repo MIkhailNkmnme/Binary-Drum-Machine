@@ -2,3 +2,5 @@
 #hubTip{position:fixed;z-index:2147482000;max-width:260px;padding:6px 9px;background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:12px/1.35 system-ui,sans-serif;pointer-events:none;box-shadow:0 2px 12px #000c;white-space:normal}
 #hubTip[hidden]{display:none}
 body.hubZen #hubTip{display:none}
+/* v0.251: «все подсказки показывай в одном месте — внизу слева под кнопками, в самом низу браузера»: плашка всегда там, по ширине левого меню */
+#hubTip{left:8px!important;top:auto!important;bottom:8px;width:max-content;max-width:min(360px,calc(100vw - 16px));box-shadow:none}

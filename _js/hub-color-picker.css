@@ -1,7 +1,8 @@
 /* Hub v0.226: окно цвета целиком ромбом. v0.249: «минимизируй отступы, текст вдоль границ ромба, с середины в правый бок, под кнопки хаба» —
    ромб 300 × 300 справа под полосой групп; ромб насыщенности 200 в центре; подпись — вдоль верхней левой грани, HEX — вдоль нижней правой,
    непрозрачность — в левом углу, × — в правом. */
-.hubColorEditor{left:auto!important;right:72px!important;top:56px!important;transform:translateZ(0);width:300px!important;height:300px;max-height:none!important;padding:0!important;border:0!important;
+/* v0.251: «все подсказки — в одном месте внизу слева, и ромб цветов туда же» — окно цвета внизу слева, над строкой подсказки */
+.hubColorEditor{left:4px!important;right:auto!important;top:auto!important;bottom:56px!important;transform:translateZ(0);width:300px!important;height:300px;max-height:none!important;padding:0!important;border:0!important;
   overflow:visible!important;box-shadow:none!important;background:var(--hub-theme-bit)!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);isolation:isolate;filter:drop-shadow(0 4px 18px #000c)}
 .hubColorEditor::before{content:'';position:absolute;inset:1.5px;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg)}
 .hubColorEditor header{position:absolute;left:38px;top:76px;width:100px;height:22px;margin:0!important;justify-content:center;text-align:center;transform:rotate(-45deg)}
