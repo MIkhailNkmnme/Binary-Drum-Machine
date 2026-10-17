@@ -441,7 +441,7 @@ function rowCmpInfo(){
        Под полем — сколько бит выбранной заняли строки выше и «ровно», если заняли все и лишних нет */
     const al = Z.rowsAlign || "center", X = (j, n) => al === "left" ? j : al === "right" ? j - n + 1 : j - (n - 1) / 2;
     let work = 0, lostUp = 0, lostMe = 0; const meRows = new Map();
-    const take = (r, from, sel, skip) => {   // биты строки r (кроме skip) ищут свободный такой же бит в строках from и ниже
+    const take = (r, from, sel, skip) => {   // биты строки r (кроме skip) ищут свободный такой же бит в строках from и ниже (v0.1255 — только для выбранной)
       const s0 = R[r], n0 = s0.length, seen = new Set();
       for (let j = 0; j < n0; j++) {
         if (skip && skip[j]) continue;
@@ -452,16 +452,37 @@ function rowCmpInfo(){
           work += n;
           if (bq >= 0) hit = { i, q: bq };
         }
-        if (!hit) { lost.push({ i: r, a: j, b: j + 1 }); if (sel) lostMe++; else lostUp++; continue; }
+        if (!hit) { if (sel) lostMe++; else { lost.push({ i: r, a: j, b: j + 1 }); lostUp++; } continue; }   // v0.1255: у выбранной красным не метим — только счёт
         uOf(hit.i)[hit.q] = 1;
         links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sel, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
         if (sel) meRows.set(hit.i, (meRows.get(hit.i) || 0) + 1);
       }
     };
-    for (let r = 0; r < a; r++) take(r, a, false);
-    const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0, mine = used[a] ? used[a].slice() : null;
-    take(a, a + 1, true, mine);
-    txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · сверху без места ${lostUp}` : "") +
+    /* v0.1255, по снимку «почему 11 красные? ведь они из 111 взяли две» (выбрана 1000): каждая строка — приёмник для строк над ней. Приёмники
+       идут от выбранной вверх; приёмник забирает биты сначала у ближайшей строки над ним, потом у следующей, пока у него есть свободные такие
+       биты. Бит отдаёт себя один раз и принимает один раз — одно другому не мешает (111 отдаёт в 1000 и принимает от 11 и 1). Красный — бит
+       строки выше, который никуда не лёг */
+    const gave = {}, gOf = (r) => gave[r] || (gave[r] = new Uint8Array(R[r].length));
+    for (let rc = a; rc >= 1 && work < 4e6; rc--) {
+      const t = R[rc], n = t.length, uu = uOf(rc); let f1 = 0, f0 = 0;
+      for (let q = 0; q < n; q++) if (!uu[q]) { if (t[q] === "1") f1++; else f0++; }
+      for (let g = rc - 1; g >= 0 && (f1 || f0) && work < 4e6; g--) {
+        const s0 = R[g], n0 = s0.length, gg = gOf(g); let first = true;
+        for (let j = 0; j < n0 && (f1 || f0); j++) {
+          if (gg[j]) continue;
+          const v = s0[j]; if (v === "1" ? !f1 : !f0) continue;
+          const x = X(j, n0); let bq = -1, bd = Infinity;
+          for (let q = 0; q < n; q++) if (t[q] === v && !uu[q]) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
+          work += n; if (bq < 0) continue;
+          uu[bq] = 1; gg[j] = 1; if (v === "1") f1--; else f0--;
+          links.push({ r: g, i: rc, a: bq, b: bq + 1, sel: false, c: g % CMP_COLS.length, noArrow: !first }); first = false;
+        }
+      }
+    }
+    for (let g = 0; g < a; g++) { const gg = gave[g]; for (let j = 0; j < R[g].length; j++) if (!(gg && gg[j])) { lost.push({ i: g, a: j, b: j + 1 }); lostUp++; } }
+    const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0;
+    take(a, a + 1, true);
+    txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · выше никуда не легло ${lostUp}` : "") +
       (meRows.size ? ` · свободные ниже: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostMe ? ` · без пары ${lostMe}` : "");
   } else {
     for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
