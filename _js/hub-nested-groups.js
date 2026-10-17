@@ -67,8 +67,10 @@
         const obst=[];
         for(const g of groups){const pl=placeOf(g);g.placeDx=g.placeDy=null;if(!pl||g.slot.hidden)continue;const rect=g.slot.getBoundingClientRect(),rows=rowsOf(g);if(!rows.size)continue;
           const lo=Math.min(...[...rows.values()].map(v=>v[0])),hi=Math.max(...[...rows.values()].map(v=>v[1])),ys=[...rows.keys()],h=Math.max(...ys)*24+48;
-          const x=Math.max(edge-lo,Math.min(innerWidth-48-hi,pl.x));g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round(pl.e==='b'?innerHeight+24-h-rect.top:-24-rect.top);
-          if(pl.e!=='b')for(const [r,[a,b]] of rows)obst.push([r,x+a,x+b]);}
+          // v0.247: «перемещать за границы + отступ» — бока треугольника могут уходить за края экрана (на экране остаётся голова),
+          // а от верха / низа группу можно отодвинуть рядами (pl.dy, шаг полромба); за верх / низ — не дальше среза пополам
+          const x=Math.max(0,Math.min(innerWidth-48,pl.x)),dy=pl.e==='b'?Math.min(0,pl.dy||0):Math.max(0,pl.dy||0);g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round((pl.e==='b'?innerHeight+24-h-rect.top:-24-rect.top)+dy);
+          if(pl.e!=='b')for(const [r,[a,b]] of rows)obst.push([r+Math.round(dy/24),x+a,x+b]);}
         const pack=groups.filter(g=>!g.fixed&&!g.slot.hidden&&g.placeDx==null).map(g=>{const base=g.slot.getBoundingClientRect().left,rows=new Map();
           for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}
           return {g,base,rows};}).filter(it=>it.rows.size).sort((a,b)=>a.base-b.base);
@@ -259,18 +261,27 @@
     });
     // v0.245: группу перетаскивают за голову (левой кнопкой): отпустил в верхней половине — прилипает вершиной к верху,
     // в нижней — нижним рядом к низу; по ширине — шагом полромба. Брошена на левое меню — снова на своё место в общем ряду.
+    const menuRight=()=>matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen')?Math.max(0,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0)):0;
     toolbar.addEventListener('pointerdown',e=>{
       if(e.button!==0||e.pointerType==='touch'||document.body.classList.contains('hubMobButtons'))return;const r=recAt(e.clientX,e.clientY);if(!r||r.parent||r!==r.group.root)return;
       gdrag={g:r.group,x:e.clientX,y:e.clientY,ox:0,oy:0,moved:false};
-      const paint=()=>{for(const c of gdrag.g.slot.children)if(c._px!=null)c.style.transform='translate('+(c._px+gdrag.ox)+'px,'+(c._py+gdrag.oy)+'px)';};
+      // v0.247: куда встанет группа — перекрестье по месту вершины (шаг полромба), курсор — крест
+      const head=[...r.group.slot.children].find(c=>c.dataset.header==='true'),gh=()=>{let m=48;for(const c of gdrag.g.slot.children)if(!c.hidden)m=Math.max(m,(Number(c.dataset.pyrY)||0)+48);return m;};
+      const land=ev=>{const hr=head.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-48,Math.round(((gdrag.g.apex||0)+gdrag.ox)/24)*24)),e=ev.clientY<innerHeight/2?'t':'b';
+        const dy=e==='t'?Math.max(0,Math.round((hr.top+24)/24)*24):Math.min(0,Math.round((hr.top+gh()-innerHeight-24)/24)*24);
+        return {x,e,dy,top:e==='t'?-24+dy:innerHeight+24-gh()+dy};};
+      let cross=null;
+      const paint=ev=>{for(const c of gdrag.g.slot.children)if(c._px!=null)c.style.transform='translate('+(c._px+gdrag.ox)+'px,'+(c._py+gdrag.oy)+'px)';
+        if(!head||!ev)return;const L=land(ev),menu=ev.clientX<menuRight();if(!cross){cross=document.createElement('div');cross.id='hubDropCross';cross.innerHTML='<i></i><b></b>';document.body.append(cross);}
+        cross.hidden=menu;cross.style.left=(L.x+24)+'px';cross.style.top=(L.top+24)+'px';gdrag.land=L;};
       const mv=ev=>{if(!gdrag)return;const ox=ev.clientX-gdrag.x,oy=ev.clientY-gdrag.y;if(!gdrag.moved&&Math.hypot(ox,oy)<8)return;
-        if(!gdrag.moved){gdrag.moved=true;gdrag.g.slot.classList.add('hubGroupDrag');document.body.classList.add('hubReordering');}
-        gdrag.ox=ox;gdrag.oy=oy;paint();};
+        if(!gdrag.moved){gdrag.moved=true;gdrag.g.slot.classList.add('hubGroupDrag');document.body.classList.add('hubReordering','hubGroupDragging');}
+        gdrag.ox=ox;gdrag.oy=oy;paint(ev);};
       const up=ev=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true);
-        const d=gdrag;gdrag=null;if(!d?.moved)return;document.body.classList.remove('hubReordering');d.g.slot.classList.remove('hubGroupDrag');
+        const d=gdrag;gdrag=null;cross?.remove();cross=null;if(!d?.moved)return;document.body.classList.remove('hubReordering','hubGroupDragging');d.g.slot.classList.remove('hubGroupDrag');
         const eat=c=>{c.preventDefault();c.stopPropagation();};window.addEventListener('click',eat,true);setTimeout(()=>window.removeEventListener('click',eat,true),0);
-        if(ev.type==='pointerup'){const menu=matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen')?Math.max(0,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0)):0;
-          if(ev.clientX<menu)delete places[d.g.key];else{const x=(d.g.apex||0)+d.ox;places[d.g.key]={x:Math.round(x/24)*24,e:ev.clientY<innerHeight/2?'t':'b'};}savePlaces();}
+        if(ev.type==='pointerup'){
+          if(ev.clientX<menuRight())delete places[d.g.key];else{const L=d.land||{x:Math.round(((d.g.apex||0)+d.ox)/24)*24,e:ev.clientY<innerHeight/2?'t':'b',dy:0};places[d.g.key]={x:L.x,e:L.e,dy:L.dy};}savePlaces();}
         renderStamp='';render();};
       document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
     });
