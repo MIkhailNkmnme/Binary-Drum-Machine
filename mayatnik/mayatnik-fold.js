@@ -13,6 +13,19 @@
    v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
 (() => {
   'use strict';
+  // v17: «в свёртке также, чтобы работало по кнопке» — зеркало в чёрных треугольниках (Маятник v0.147) и в окне свёртки: ровные куски
+  // строк среди шума (от 12 бит или на бит уже ровного куска над ними, не у пустого и не у края), верх треугольника — линия-зеркало.
+  // m: 1 — отражается только краска (painted(i)), 2 — всё.
+  function blackMirror(W,H,m,u,bit,painted,mixPx){
+    const up=new Int16Array(W*H),flat=new Uint8Array(W*H);
+    for(let y=0;y<H;y++){const row=y*W;let s=0;
+      while(s<W){const v=bit(s,y);let e=s;while(e+1<W&&bit(e+1,y)===v)e++;
+        if(v>=0&&s>0&&e<W-1&&bit(s-1,y)>=0&&bit(e+1,y)>=0&&(e-s+1>=12||y>0&&flat[row-W+s-1]&&flat[row-W+e+1]))
+          for(let x=s;x<=e;x++){flat[row+x]=1;up[row+x]=(y>0?up[row-W+x]:0)+1;}
+        s=e+1;}}
+    for(let y=1;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,n=up[i];if(!n)continue;const sy=y-2*n+1;if(sy<0)continue;const j=sy*W+x;
+      if(m===1){if(!painted(j))continue;u[i]=mixPx(u[j],u[i],.8);}else u[i]=mixPx(u[j],u[i],.7);}
+  }
   function modelH({width,height,center,data,colour,paint}) {
     const moves=[],left=[0],right=[0];let l=0,r=0,side=1;
     while(l<center||r<width-center-1){
@@ -110,6 +123,7 @@
       for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,bit=state.bit(x,y);if(bit<0){u[i]=0;continue;}
         u[i]=fillM&&fillM[i]?fillM[i]:mid&&state.isMid(x,y)?(bit?0xff8ae0ff:0xff0b86b8):state.colourAt(x,y)||(bit?0xfff5ede8:0xff75645b);
         if(wideM&&wideM[i]&&!(fillM&&fillM[i]))u[i]=mixPx(wideM[i],u[i],mf.alpha);}
+      const bm=config?.()?.blackMirror;if(bm)blackMirror(W,H,bm,u,(x,y)=>state.bit(x,y),i=>!!(fillM&&fillM[i]||wideM&&wideM[i]||state.paintAt(i%W,Math.floor(i/W))),mixPx);
       off.getContext('2d').putImageData(offImg,0,0);
       const dpr=Math.min(2,devicePixelRatio||1),cw=Math.max(1,view.clientWidth),ch=Math.max(1,view.clientHeight),pw=Math.round(cw*dpr),ph=Math.round(ch*dpr);
       if(view.width!==pw)view.width=pw;if(view.height!==ph)view.height=ph;
