@@ -527,7 +527,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
         if (ends.length > 3000) continue;
         const w = document.createTreeWalker(sx, NodeFilter.SHOW_TEXT); let c = 0, nd, sr = null;
         while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > h.sa) { sr = document.createRange(); sr.setStart(nd, h.sa - c); sr.setEnd(nd, h.sa - c + 1); break; } c += n; }
-        if (sr) ends.push({ h, bit: true, src: sr.getBoundingClientRect(), dst: rg.getBoundingClientRect() });
+        if (sr) ends.push({ h, bit: true, src: sr.getBoundingClientRect(), dst: rg.getBoundingClientRect(), sy: sx.getBoundingClientRect(), dy: bx.getBoundingClientRect() });   // v0.1267: высота — по строкам, не по буквам (крупный шрифт выше строки)
       } else if (!h.noArrow) ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
     }
   }
@@ -552,12 +552,12 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     let g = "", defs = "";
     const cols = [...CMP_COLS, "#facc15"];
     cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker><marker id="cmpAb' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
-    ends.forEach(({ h, src, dst, bit }, n) => {
+    ends.forEach(({ h, src, dst, bit, sy, dy }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
       if (bit) {
-        const x0 = X(src.left + src.width / 2), y0 = Y(src.top + src.height / 2), x1 = X(dst.left + dst.width / 2), y1 = Y(dst.bottom - 1), k = Math.max(8, (y0 - y1) * 0.45);
+        const x0 = X(src.left + src.width / 2), y0 = Y(sy.top + sy.height * 0.45), x1 = X(dst.left + dst.width / 2), y1 = Y(dy.top + dy.height * 0.85), k = Math.max(4, (y0 - y1) * 0.45);
         const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + x0.toFixed(1) + "," + (y0 - k).toFixed(1) + " " + x1.toFixed(1) + "," + (y1 + k).toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
-        g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd + '" fill="none" stroke="' + col + '" stroke-width="' + (h.me ? 1.8 : 1.1) +
+        g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd + '" fill="none" stroke="' + col + '" stroke-width="' + (h.me ? 1.5 : 1.1) +
              '" opacity="' + (h.me ? 1 : 0.8) + '" marker-end="url(#cmpAb' + ci + ')"><title>строка ' + (h.r + 1) + ", бит " + (h.sa + 1) + " → строка " + (h.i + 1) + ", бит " + (h.a + 1) + "</title></path>";
         return;
       }
