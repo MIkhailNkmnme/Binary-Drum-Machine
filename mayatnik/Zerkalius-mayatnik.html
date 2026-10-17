@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.142. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.143. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.142</title>
+<title>Zerkalius Маятник — v0.143</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.142</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.143</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -256,7 +256,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <input id="templateFile" type="file" accept=".json,application/json" hidden>
     <label title="При движении оставлять позади шаблона противоположный цвет бита: 1 → чёрный, 0 → белый"><input id="templateTrail" type="checkbox">Инверт-след</label>
     <label title="Увеличивать ширину вместе с высотой поровну в обе стороны от центра самой фигуры"><input id="templateProportional" type="checkbox">Пропорции</label>
-    <label title="Когда маятник дошёл до всех битов под шаблоном и они больше не изменятся (будущие вершины их не достанут), шаблон закрашивается на поле своим цветом и держится так в каждом кадре"><input id="templateLock" type="checkbox" checked data-mi-short="Застыл — цветом">Застыл — цветом</label>
+    <label title="Застывшее — цветом: когда маятник дошёл до всех битов под шаблоном и они больше не изменятся (будущие вершины их не достанут), шаблон закрашивается на поле своим цветом и держится так в каждом кадре. Так же держится любая краска на застывших битах"><input id="templateLock" type="checkbox" checked data-mi-short="Застыл — цветом">Застыл — цветом</label>
     <label title="Высота копии в процентах от исходной фигуры">высота % <input id="templateHeight" type="number" min="1" max="3200" step="10" value="100"></label>
     <label title="Сдвиг по вертикали в строках поля; положительное значение — вниз">вниз, строк <input id="templateDown" type="number" min="-4096" max="4096" step="1" value="0"></label>
     <label title="Непрозрачность копии в процентах">видимость % <input id="templateAlpha" type="number" min="0" max="100" step="5" value="50"></label>
@@ -763,6 +763,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // v0.044: краска привязана к геометрии картинки, а не к виду: «цвета», «биты», «цифры», полосы, обводка и «Очки»
     // рисуют те же пиксели, поэтому смена вида краску не стирает. Ромбы меняют геометрию — их краска хранится отдельно и возвращается.
     const key=[k,rombP()<0?'flat':st.view,VX,VW,VH,RK].join(':');
+    if(fillField===f&&fillKey&&fillKey!==key)paintLockCheck(fillKey);   // v0.143: застывшая краска уходящего кадра — в замки
     if(fillField===f&&fillKey&&fillKey!==key){paintStash.set(fillKey,{fillMask,paintBits,templateItems,active:colourTemplate?.id});while(paintStash.size>8)paintStash.delete(paintStash.keys().next().value);const back=paintStash.get(key);
       if(back){paintStash.delete(key);fillKey=key;fillMask=back.fillMask;paintBits=back.paintBits;fillBits=null;fillHistory=[];fillRedo=[];fillHistoryBytes=0;templateItems=back.templateItems;colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===back.active)||templateItems[0]||null,false);fillSync();}}
     if(fillField!==f||fillKey!==key){const had=!!fillMask;clearFill(had&&fillField===f?'Краска этого вида отложена: вернётся, когда вернёшь вид.':had?'Другой рисунок · сохранённую раскраску можно вернуть кнопкой «Из памяти».':'');fillField=f;fillKey=key;templateItems=[];colourTemplate=null;templateVisible=false;templateMove=false;templateLastDown=0;templateOffsetX=0;templateStatsKey='';$('templateInfo').textContent='';templateSync();}
@@ -785,7 +786,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function templateLockCheck(){   // true — замок появился или изменился
     if(!f||!geo||!img)return false;let changed=false;
-    if(!templateLocks||templateLocks.sig!==lockSig()){templateLocks={sig:lockSig(),items:{}};lockSave();}
+    if(!templateLocks||templateLocks.sig!==lockSig()){templateLocks={sig:lockSig(),items:{},paint:{}};lockSave();}
     for(const item of templateItems){if(!item.view?.visible)continue;
       const cells=new Set();let kf=0;
       for(const part of item.parts){const r=templateRect(part,false,item),x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
@@ -797,14 +798,37 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     }
     return changed;
   }
+  // v0.143: «и не только шаблон — все закрашенные пусть не обесцвечиваются, неизменные». Краска кадра (fillMask) на застывших
+  // клетках запоминается по клеткам: templateLocks.paint[клетка] = [цвет, кадр застывания], и держится в каждом кадре от застывания.
+  let freezeCache=null,freezeCacheF=null,lockSaveT=0;
+  function freezeFrameOf(q){
+    if(freezeCacheF!==f){freezeCacheF=f;freezeCache=new Int32Array(f.W*f.H).fill(-1);}
+    let v=freezeCache[q];if(v<0){const kf=cellFreezeFrame(Math.floor(q/f.W),q%f.W);v=freezeCache[q]=kf===Infinity?2147483647:kf;}return v;
+  }
+  // old — ключ краски прошлого кадра [k, вид, VX, VW, VH, RK]: краска снимается при смене кадра, её клетки считаются по той геометрии.
+  function paintLockCheck(old){
+    if(!fillMask||!f||!img||!templateLocks||!geo)return;const P=templateLocks.paint||(templateLocks.paint={});let changed=false;
+    let kk=k,cellOf;
+    if(old){const [ko,view,vx,vw,vh,rk]=old.split(':');kk=+ko;
+      if(view==='flat'){const X=+vx,Wd=+vw*+rk,R=+rk;cellOf=i=>{const r=Math.floor(Math.floor(i/Wd)/R),c=X+Math.floor((i%Wd)/R);return r<+vh&&c<X+ +vw?r*f.W+c:-1;};}
+      else if(+vx===VX&&+vw===VW&&+vh===VH&&+rk===RK){const W=img.width;cellOf=i=>{const e=fieldCellAt(i%W,Math.floor(i/W));return e?e.r*f.W+e.c:-1;};}
+      else return;}
+    else{const W=img.width;cellOf=i=>{const e=fieldCellAt(i%W,Math.floor(i/W));return e?e.r*f.W+e.c:-1;};}
+    for(let i=0;i<fillMask.length;i++){const col=fillMask[i];if(!col)continue;
+      const q=cellOf(i);if(q<0||f.val[q]<0)continue;
+      const kf=freezeFrameOf(q);if(kf>kk)continue;const o=P[q];if(o&&o[0]===col&&o[1]===kf)continue;P[q]=[col,kf];changed=true;}
+    if(changed){templateLocks.W=f.W;clearTimeout(lockSaveT);lockSaveT=setTimeout(lockSave,400);}
+  }
+  function lockCell(px,q,col){
+    const r=Math.floor(q/f.W),c=q%f.W;if(r>=VH||c<VX||c>=VX+VW||outShow(r,c)||f.val[q]<0)return;
+    if(rombP()<0){for(let dy=0;dy<RK;dy++)for(let dx=0;dx<RK;dx++)px[(r*RK+dy)*img.width+(c-VX)*RK+dx]=col;return;}
+    const hs=rombP()===2?[[0,0],[1,VW+RG]]:[[rombP(),0]];for(const [p,ox] of hs){if(((c-geo.anchor-r)%2+2)%2!==p)continue;   // ромб клетки: центр (c+.5, r+.5), полуоси 1
+      const cx=(c-VX+ox+.5)*RK,cy=(r+.5)*RK;for(let y=Math.max(0,Math.floor(cy-RK));y<Math.min(img.height,Math.ceil(cy+RK));y++)for(let x=Math.max(0,Math.floor(cx-RK));x<Math.min(img.width,Math.ceil(cx+RK));x++)if(Math.abs(x+.5-cx)+Math.abs(y+.5-cy)<=RK)px[y*img.width+x]=col;}
+  }
   function templateLockApply(px){
-    templateLockCheck();if(st.templateLock===false||!templateLocks)return;
-    for(const L of Object.values(templateLocks.items)){if(L.k>k||L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));
-      for(const q of L.cells){const r=Math.floor(q/f.W),c=q%f.W;if(r>=VH||c<VX||c>=VX+VW||outShow(r,c)||f.val[q]<0)continue;
-        if(rombP()<0){for(let dy=0;dy<RK;dy++)for(let dx=0;dx<RK;dx++)px[(r*RK+dy)*img.width+(c-VX)*RK+dx]=col;}
-        else{const hs=rombP()===2?[[0,0],[1,VW+RG]]:[[rombP(),0]];for(const [p,ox] of hs){if(((c-geo.anchor-r)%2+2)%2!==p)continue;   // ромб клетки: центр (c+.5, r+.5), полуоси 1
-          const cx=(c-VX+ox+.5)*RK,cy=(r+.5)*RK;for(let y=Math.max(0,Math.floor(cy-RK));y<Math.min(img.height,Math.ceil(cy+RK));y++)for(let x=Math.max(0,Math.floor(cx-RK));x<Math.min(img.width,Math.ceil(cx+RK));x++)if(Math.abs(x+.5-cx)+Math.abs(y+.5-cy)<=RK)px[y*img.width+x]=col;}}
-      }}
+    templateLockCheck();if(!templateLocks)return;paintLockCheck();if(st.templateLock===false)return;
+    if(templateLocks.paint&&(templateLocks.W??f.W)===f.W)for(const q in templateLocks.paint){const [col,kf]=templateLocks.paint[q];if(kf<=k)lockCell(px,+q,col);}
+    for(const L of Object.values(templateLocks.items)){if(L.k>k||L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
   }
   function fieldCellAt(x,y){
     const half=halfOf((x+.5)/RK);if(!half)return null;const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
@@ -1072,7 +1096,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';draw();fillSync();savePaint();
   }
   $('bFillUndo').onclick=()=>historyStep(false);$('bFillRedo').onclick=()=>historyStep(true);
-  $('bFillClear').onclick=()=>{if(templateLocks){templateLocks.items={};lockSave();}const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
+  $('bFillClear').onclick=()=>{if(templateLocks){templateLocks.items={};templateLocks.paint={};lockSave();}const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
   $('bRegions').onclick=()=>{if(!img)return;stop();target=k;
     // v0.087: в режиме «Шахматки 0» — счёт по клеткам, как их соединяет этот режим, а не по пикселям точного цвета.
     if(st.fillArea==='chess0'&&f&&geo){const reg=chessZeroRegions();$('fillInfo').title='';$('fillInfo').dataset.regions=String(reg.count);
