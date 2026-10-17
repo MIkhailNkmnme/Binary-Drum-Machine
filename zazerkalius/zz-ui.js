@@ -473,13 +473,15 @@ function rowCmpInfo(){
          прыгает выбранная строка — каждый её бит (слева направо) прыгает вверх на свободный бит того же значения: сначала в ближайшую строку над
          ней, там — ближе всего по месту в поле; занятый бит второй раз не принимает. Не нашёл места — красным. «Ровно» — легли все и выше
          свободных не осталось (1, 11, 111: два бита 111 — на 11, один — на 1) */
-      /* v0.1264, «зачем сверху вниз? как было оставь вверх, но не меняй там ничего, когда переключаю выделенную ниже»: каждая строка (2-я … выбранная)
-         прыгает вверх сама по себе, на свободные места строк над ней — как будто других прыжков нет. Внутри прыжка одной строки бит над ней
-         принимает один раз. Так прыжок строки зависит только от строк над ней и не меняется, какую строку ниже ни выбери (111 → 11 и 1 всегда).
-         Цвет стрелки — по строке, откуда прыжок, все стрелки слева, у выбранной толще; красный — бит выбранной, которому места нет */
-      const n0 = s.length; let up = 0; const toRows = new Map();
+      /* v0.1268, «из 11 в 1 не прыгаем, так как в 1 уже прыгнула 1 из 111: 111 должна разложиться сразу на строки выше… 1000 никуда не прыгала —
+         у неё ни одного 0 выше, и там всё уже заполнено»: место занимается один раз на всех. Строки смотрятся по порядку с 2-й; строка прыгает вверх,
+         только если ВСЕ её биты ложатся на свободные места выше (111 → 11 и 1), иначе остаётся и ничего не занимает (11 — в 1 одно место; 1000 —
+         нулей выше нет). Прыжок строки зависит только от строк над ней, поэтому от выбора ниже не меняется. Выбранная прыгает в то, что осталось,
+         и может лечь не вся — её бит без места красный. Стрелки — на каждый бит, остриём вверх */
+      const n0 = s.length; let up = 0; const toRows = new Map(), stay = [];
       for (let r = 1; r <= a && work < 4e6; r++) {
-        const s0 = R[r], m = s0.length, tmp = {}, tOf = (i) => tmp[i] || (tmp[i] = new Uint8Array(R[i].length)), seen = new Set();
+        const s0 = R[r], m = s0.length, tmp = {}, tOf = (i) => tmp[i] || (tmp[i] = (used[i] ? used[i].slice() : new Uint8Array(R[i].length)));
+        const got = [], miss = [];
         for (let j = 0; j < m && work < 4e6; j++) {
           const v = s0[j], x = X(j, m); let hit = null;
           for (let i = r - 1; i >= 0 && !hit; i--) {
@@ -487,14 +489,18 @@ function rowCmpInfo(){
             for (let q = 0; q < n; q++) if (t[q] === v && !uu[q]) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
             work += n; if (bq >= 0) hit = { i, q: bq };
           }
-          if (!hit) { if (r === a) lost.push({ i: a, a: j, b: j + 1 }); continue; }
-          tOf(hit.i)[hit.q] = 1;
-          links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel: false, up: true, me: r === a, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
+          if (hit) { tOf(hit.i)[hit.q] = 1; got.push([j, hit]); } else miss.push(j);
+        }
+        if (r < a && miss.length) { stay.push(r + 1); continue; }
+        for (const i in tmp) used[i] = tmp[i];
+        for (const [j, hit] of got) {
+          links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel: false, up: true, me: r === a, c: r % CMP_COLS.length });
           if (r === a) { up++; toRows.set(hit.i, (toRows.get(hit.i) || 0) + 1); }
         }
+        if (r === a) for (const j of miss) lost.push({ i: a, a: j, b: j + 1 });
       }
       txtMe = ` · вверх легло ${up} из ${n0}` + (up === n0 && a > 0 ? " — ровно" : "") + (toRows.size ? ": " + [...toRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") +
-        (a > 0 && up < n0 ? ` · места нет ${n0 - up}` : "");
+        (a > 0 && up < n0 ? ` · места нет ${n0 - up}` : "") + (stay.length ? ` · не прыгнули (не ложатся целиком): ${stay.length > 12 ? stay.slice(0, 12).join(", ") + "…" : stay.join(", ")}` : "");
     }
   } else {
     for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sa: 0, sb: R[r].length, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
