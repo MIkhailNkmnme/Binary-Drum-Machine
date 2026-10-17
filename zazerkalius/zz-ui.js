@@ -443,10 +443,13 @@ function rowCmpInfo(){
       if (!R[r] || !R[i] || j >= R[r].length || q >= R[i].length || (i === r && j === q)) continue;   // v0.1272: куда угодно — вверх, вниз, в свою строку, на любой бит
       links.push({ r, i, a: q, b: q + 1, sa: j, sb: j + 1, sel: false, up: true, me: r === a, c: r % CMP_COLS.length });
     }
+    const dup = {}; for (const l of links) { const k = l.i + ":" + l.a; dup[k] = (dup[k] || 0) + 1; }   // v0.1273, «если второй прыгает на тот, на который уже прыгнул другой, — красным и число, и фон»
+    const twice = Object.keys(dup).filter(k => dup[k] > 1).map(k => { const [i, q] = k.split(":").map(Number); return { i, a: q, b: q + 1 }; });
     const P = rowCmpHand.pend;
     if (P && R[P[0]] && P[1] < R[P[0]].length) links.push({ r: P[0], i: P[0], a: P[1], b: P[1] + 1, sa: P[1], sb: P[1] + 1, sel: true, pend: true, noArrow: true, c: 0 });
     const mine = links.filter(l => l.up && l.r === a).length;
-    txtMe = ` · ✎ стрелок ${links.filter(l => l.up).length} · из строки ${a + 1} прыгнуло ${mine} из ${s.length}` + (P ? ` · выбран бит ${P[1] + 1} строки ${P[0] + 1} — щёлкни, куда он прыгает` : "");
+    txtMe = ` · ✎ стрелок ${links.filter(l => l.up).length} · из строки ${a + 1} прыгнуло ${mine} из ${s.length}` + (twice.length ? ` · дважды занято ${twice.length}` : "") + (P ? ` · выбран бит ${P[1] + 1} строки ${P[0] + 1} — щёлкни, куда он прыгает` : "");
+    rowCmpInfo._twice = twice;
   } else if (mode === "len" || mode === "sel") {
     /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
        свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
@@ -524,7 +527,7 @@ function rowCmpInfo(){
   }
   const me = links.find(l => l.sel && !l.pend), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` + txtMe + ` · стрелок ${links.filter(l => !l.noArrow).length}`;
-  const v = { a, links, lost, near, txt }; rowCmpInfo._c = { key, v }; return v;
+  const v = { a, links, lost, near, txt, twice: mode === "hand" ? rowCmpInfo._twice || [] : [] }; rowCmpInfo._c = { key, v }; return v;
 }
 function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк (вниз от выбранной — слева, v0.1257)
   const L = $("rowList"), root = L && L.querySelector(".rl-inner");
@@ -560,6 +563,11 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
   }
   if (hl) {
     if (bad.length) CSS.highlights.set("zcmpx", new Highlight(...bad)); else CSS.highlights.delete("zcmpx");
+    const two = [];   // v0.1273: «Σ ✎» — бит, на который прыгнули двое и больше, — красная цифра на красном фоне, поверх цвета строки
+    if (cmp && root) for (const h of cmp.twice || []) { const bx = L.querySelector('.rw[data-r="' + h.i + '"] .bx'); if (!bx) continue;
+      const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd;
+      while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > h.a) { const rg = document.createRange(); rg.setStart(nd, h.a - c); rg.setEnd(nd, h.a - c + 1); two.push(rg); break; } c += n; } }
+    if (two.length) { const H2 = new Highlight(...two); H2.priority = 5; CSS.highlights.set("zcmp2x", H2); } else CSS.highlights.delete("zcmp2x");
     if (by.n.length) CSS.highlights.set("zcmpn", new Highlight(...by.n)); else CSS.highlights.delete("zcmpn");
     CMP_COLS.forEach((_, c) => { if (by[c].length) CSS.highlights.set("zcmp" + c, new Highlight(...by[c])); else CSS.highlights.delete("zcmp" + c); });
     CSS.highlights.delete("zcmp");
