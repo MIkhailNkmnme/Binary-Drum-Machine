@@ -397,11 +397,21 @@ const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b
 /* v0.1249, «почему у 111 следующая ближайшая не 10101 — она же содержит три единицы»: считаются только единицы, нули между ними — любые.
    Группа в строке ниже — отрезок от единицы до единицы ровно с k единицами (k — сколько их в строке-источнике), ближайший к середине строки,
    при равенстве — короче. Строка без единиц ищет столько же нулей подряд */
-function rowCmpFind(R, r){   // ближайшая строка ниже r с такой группой: { i, a, b } или null
+/* v0.1250, «сделай два варианта кнопки и объясни подсказкой»: Z.rowCmp — "one" («Σ 1»: только единицы, как v0.1249) или "len" («Σ 0·1»:
+   отрезок той же длины с тем же числом единиц и нулей, порядок любой, как v0.1247–v0.1248); прежнее true читается как "one" */
+function rowCmpMode(){ return Z.rowCmp === "len" ? "len" : Z.rowCmp ? "one" : ""; }
+function rowCmpFind(R, r, mode){   // ближайшая строка ниже r с такой группой: { i, a, b } или null
   const s = R[r], k = zzOnes(s), L = s.length;
   for (let i = r + 1; i < R.length; i++) {
     const t = R[i], n = t.length; let best = -1, bl = 0, bd = Infinity;
-    if (k === 0) {
+    if (mode === "len") {
+      if (n < L) continue;
+      for (let j = 0, c = 0; j < n; j++) {
+        if (t[j] === "1") c++;
+        if (j >= L && t[j - L] === "1") c--;
+        if (j >= L - 1 && c === k) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; bl = L; } }
+      }
+    } else if (k === 0) {
       for (let j = 0, run = 0; j < n; j++) { run = t[j] === "0" ? run + 1 : 0; if (run >= L) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; bl = L; } } }
     } else {
       const ones = []; for (let j = 0; j < n; j++) if (t[j] === "1") ones.push(j);
@@ -417,15 +427,15 @@ function rowCmpFind(R, r){   // ближайшая строка ниже r с т
 function rowCmpInfo(){
   if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
   const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
-  const key = a + "|" + R.join(",");
+  const mode = rowCmpMode(), key = mode + a + "|" + R.join(",");
   if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
   const links = [];
-  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r); if (m) links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); }
+  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode); if (m) links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); }
   const me = links.find(l => l.sel), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    (me ? ` · ниже ${k} ед.: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже группы из ${k} ед. нет`) + ` · стрелок ${links.length}`;
+    (me ? ` · ниже ${mode === "len" ? s.length + " бит с " : ""}${k} ед.: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${mode === "len" ? s.length + " бит подряд с " + k + " ед." : "группы из " + k + " ед."} нет`) + ` · стрелок ${links.length}`;
   const v = { a, links, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
 function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
@@ -16526,7 +16536,7 @@ function init(){
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
   const fmLabel = () => {
-    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", !!Z.rowCmp); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", rowCmpMode() === "one"); $("bRowCmp2").classList.toggle("on", rowCmpMode() === "len"); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
   };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
@@ -16537,7 +16547,10 @@ function init(){
     say(Z.tri90 ? (ovControls() ? "◸ 90° включится, когда поля не наложением." : `◸ 90°: межсимвольный ${Z.tri90Ls} px — стороны треугольника под 45°, угол при вершине прямой. Сменишь шрифт или размер — подберётся заново.`) : "◸ 90° выключен — обычный интервал.");
   };
   $("bShow01").onclick = () => { Z.show01 = !Z.show01; fmLabel(); renderRows(); save(); };
-  $("bRowCmp").onclick = () => { Z.rowCmp = !Z.rowCmp; fmLabel(); renderRows(); save(); const c = rowCmpInfo(); say(Z.rowCmp ? (c ? c.txt : "Σ 0·1: выбери строку — посчитаю её нули и единицы и подсвечу такие же ниже.") : "Σ 0·1 выключен."); };   // v0.1245
+  const rowCmpSet = (m) => { Z.rowCmp = rowCmpMode() === m ? false : m; fmLabel(); renderRows(); save(); const c = rowCmpInfo();   // v0.1250: две кнопки, либо-либо
+    say(Z.rowCmp ? (c ? c.txt : (m === "len" ? "Σ 0·1" : "Σ 1") + ": выбери строку — посчитаю её нули и единицы и проведу стрелки к таким же группам ниже.") : "Σ выключен."); };
+  $("bRowCmp").onclick = () => rowCmpSet("one");
+  $("bRowCmp2").onclick = () => rowCmpSet("len");
   const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
