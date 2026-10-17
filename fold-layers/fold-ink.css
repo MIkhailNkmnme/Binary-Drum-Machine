@@ -1,0 +1,17 @@
+#rowInkBar{border-block:1px solid var(--line,#657186);padding:6px 8px;font:12px monospace;background:var(--bg,#11151c);flex:none}
+#rowInkBar[hidden]{display:none!important}
+#rowInkBar .ink-tools,#rowInkBar .ink-entry{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:3px 0}
+#rowInkBar button{min-height:30px;white-space:nowrap}
+#rowInkBar label{display:flex;align-items:center;gap:4px}
+#inkColor{width:32px;height:27px;padding:0;border:0;background:transparent}
+#inkValue{width:170px;min-width:80px;font:inherit;border:1px solid var(--line,#657186);background:transparent;color:inherit;padding:5px}
+#inkHint{opacity:.7;line-height:1.4}
+#rowInkOverlay{position:fixed;inset:0;pointer-events:none;z-index:120;overflow:hidden}
+#rows.row-ink-active{touch-action:none;cursor:crosshair;user-select:none}
+@media(max-width:700px){#rowInkBar button{min-height:36px}#inkValue{width:120px}}
+
+#rowInkBar{position:fixed;bottom:0;left:0;right:0;z-index:150;max-height:32vh;overflow:auto;background:var(--panel,#11151c);color:var(--fg,#eee)}
+body.fold-ink-open #screenCanvas{bottom:var(--fold-ink-h,150px)!important}
+#foldAnimPanel{border-top:1px solid var(--line,#657186);padding-top:5px;margin-top:5px}
+#foldAnimPanel select,#foldAnimPanel input{font:inherit;color:inherit;background:var(--panel,#1a1d26);border:1px solid var(--line,#657186)}
+#faSpeed{width:52px}#foldAnimPanel small{opacity:.65}#faStatus{padding:4px 0;color:var(--acc,#7bdeef)}
