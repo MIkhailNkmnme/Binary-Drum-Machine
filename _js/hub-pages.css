@@ -1,0 +1,13 @@
+/* Hub v0.231: кнопки страниц — вариант А витрины knopki/hub-stranicy.html: полосы 30 px со значком, разделы — в два столбца. */
+.hub a.menu-btn.hubPg{height:30px!important;min-height:30px!important;padding:0 12px!important;gap:6px;justify-content:flex-start!important;
+  clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)!important;font:12px/1 system-ui,sans-serif!important;letter-spacing:0!important;
+  white-space:nowrap;overflow:hidden;text-decoration:none;width:100%!important;margin:0!important}
+.hub a.menu-btn.hubPg::after,.hub a.menu-btn.hubPg::before{display:none!important}
+.hub a.menu-btn.hubPg.main-engine{height:40px!important;min-height:40px!important;font-size:14px!important;justify-content:center!important}
+.hub .hubPgIcon{flex:none;width:15px;height:15px;fill:none;stroke:var(--hub-theme-accent,#ff9a5a);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hub .main-engine .hubPgIcon{width:18px;height:18px}
+.hub .hubPgText{overflow:hidden;text-overflow:ellipsis}
+.hub .mainrow{display:grid!important;grid-template-columns:1fr;gap:4px!important}
+.hub .grid,.hub .row{display:grid!important;grid-template-columns:1fr 1fr;gap:4px!important}
+.hub .menu-btn.sfz-btn.hubPg{grid-column:auto}
+.hub .panel-title{margin-bottom:6px!important}
