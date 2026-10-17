@@ -53,7 +53,7 @@
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
       state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
-      if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(Object.keys(c).length===4)state.custom=c;}
+      if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym','zero'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(['bit','mirror','fold','sym'].every(k=>c[k]))state.custom=c;if(Number.isFinite(saved.zeroAlpha))state.zeroAlpha=Math.max(0,Math.min(1,saved.zeroAlpha));}
       if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
@@ -270,10 +270,10 @@
       if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
       btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();palBox.open=false;};palList.append(btn);palBtns.push(btn);});
     palBox.append(palHead,palList);colorGroup.append(palBox);
-    for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
+    for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['zero','c0','0','Цвет нулей оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
       const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot hubColorAlpha';wrap.style.gridArea=area;wrap.title=title;
       input.type='color';input.setAttribute('aria-label',title);
-      const edit=e=>{e.preventDefault();e.stopPropagation();const alphaKey={bit:'bitAlpha',mirror:'bitAlpha',fold:'foldAlpha',sym:'symAlpha'}[key];window.HubColorPicker.open({trigger:input,title,color:api.colors()[key],opacity:state[alphaKey],maxOpacity:key==='sym'?1:1.3,onChange:(color,opacity)=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=color;state[alphaKey]=opacity;syncColors();changed();save();}});};
+      const edit=e=>{e.preventDefault();e.stopPropagation();const alphaKey={bit:'bitAlpha',mirror:'bitAlpha',fold:'foldAlpha',sym:'symAlpha',zero:'zeroAlpha'}[key];window.HubColorPicker.open({trigger:input,title,color:api.colors()[key],opacity:state[alphaKey]??(key==='zero'?.18:1),maxOpacity:key==='sym'||key==='zero'?1:1.3,onChange:(color,opacity)=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=color;state[alphaKey]=opacity;syncColors();changed();save();}});};
       input.addEventListener('click',edit);input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')edit(e);});m.textContent=mark;wrap.append(input,m);inputs[key]=input;
       input.addEventListener('input',()=>{if(state.palette!==-1){state.custom={...api.colors()};state.palette=-1;}state.custom[key]=input.value;syncColors();changed();});input.addEventListener('change',save);
       colorGroup.append(wrap);}
@@ -552,7 +552,7 @@
       return {source:original,mirror};
     },
     rotationCenter(){return frame?center():null;},
-    colors(){if(state.palette===-1&&state.custom)return {...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166'};},
+    colors(){if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
     symbolsOnly(){return state.bitView!=='rhombs';},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||this.digitVisible(bit)||size<=0)return false;

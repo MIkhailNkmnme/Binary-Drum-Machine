@@ -149,12 +149,10 @@
     // Пульт движений (крест справа): все вращения — битов, оси, 3D и автозум.
     const motion={key:'motion',name:'Пульт движений'},moving=['bits|branch:turn','axis|branch:turn','space|branch:zoom'].map(id=>records.get(id)).filter(Boolean);
     moving.forEach(r=>{detach(r);regroup(r,motion);});
-    const flipSpeed=[...records.values()].find(r=>r.id==='space|hubFlipSpeed');if(flipSpeed)detach(flipSpeed);
-    groups.push(motion);
-    const turn3d=createBranch(motion,'motion|branch:3d','3D','3D',flipSpeed?[flipSpeed]:[]);if(flipSpeed)regroup(flipSpeed,motion);
+    groups.push(motion);   // v0.230: 3D-вращение в пульте снято — оно дублировало голову «Объём», скорость осталась в «Объёме»
     // v0.212: магнит оси (шаги 15° при вращении) — тоже в пульте.
     const magnet=[...records.values()].find(r=>!r.children&&r.id.startsWith('axis|Магнит оси'));if(magnet){detach(magnet);regroup(magnet,motion);}
-    motion.root=createBranch(motion,'motion','↻','Вращ.',[...moving.slice(0,2),turn3d,...moving.slice(2),...(magnet?[magnet]:[])]);
+    motion.root=createBranch(motion,'motion','↻','Вращ.',[...moving.slice(0,2),...moving.slice(2),...(magnet?[magnet]:[])]);
     motion.fixed=true;
     // A first diamond performs the main action as well as opening its children.
     // Reuse the actual original controls; do not duplicate handlers or state.
@@ -175,9 +173,8 @@
     bindAction('flow|branch:light',id=>id.includes('|А — свет:'),'Свет — включить / выключить');
     bindAction('flow|branch:snow',id=>id.includes('|Б — мокрый снег'),'Снег — включить / выключить');
     bindAction('flow|branch:water',id=>id.includes('|В — вода:'),'Вода — включить / выключить');
-    const space3d=records.get('space');if(space3d&&space3d.action){turn3d.action=space3d.action;turn3d.active=space3d.active;turn3d.node.dataset.hasAction='true';const h=turn3d.node.querySelector('summary');h.setAttribute('role','button');h.title='3D-вращение — пуск / пауза · Наведение / → — скорость';}
     // Пока выключено — зависимые кнопки скрыты.
-    for(const id of ['symmetry','axis','space','flow|branch:light','flow|branch:snow','flow|branch:water','motion|branch:3d'])if(records.get(id))records.get(id).gate=true;
+    for(const id of ['symmetry','axis','space','flow|branch:light','flow|branch:snow','flow|branch:water'])if(records.get(id))records.get(id).gate=true;
     // v0.212: вращение оси в пульте видно, только пока ось (зеркало) включена.
     if(records.get('axis|branch:turn'))records.get('axis|branch:turn').dep=records.get('axis');
     if(records.get('symmetry|Зеркало'))records.get('symmetry|Зеркало').free=true;
