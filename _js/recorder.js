@@ -241,6 +241,194 @@
         }
     };
 
+    /* ---------------------------------------------------------------------
+       Перемотка в записи (2026-10-17).
+
+       Chrome пишет mp4 «фрагментами» (moof + mdat), и длительность в заголовке
+       у него 0, а таблицы, где какой кадр, нет. Проигрыватель такой файл
+       играет, но не знает длины и не мотает. Здесь, когда запись кончилась,
+       в заголовок ставится длительность (mvhd, tkhd, mdhd, mehd), а в конец
+       файла — таблица фрагментов с опорными кадрами (mfra / tfra). Сами кадры
+       не трогаются. У webm то же самое: длительность (WEBM.fix) и таблица
+       Cues — где начинается каждый кластер с опорным кадром.
+       Не разобрался в файле — возвращаем как был: запись важнее перемотки.
+       --------------------------------------------------------------------- */
+    const MP4 = {
+        box(b, p, end) {
+            if (p + 8 > end) return null;
+            const dv = new DataView(b.buffer, b.byteOffset);
+            let size = dv.getUint32(p), head = 8;
+            const type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]);
+            if (size === 1) { size = dv.getUint32(p + 8) * 4294967296 + dv.getUint32(p + 12); head = 16; }
+            else if (size === 0) size = end - p;
+            if (size < head || p + size > end) return null;
+            return { p, type, size, head, end: p + size };
+        },
+        kids(b, s, e) { const out = []; for (let p = s; p < e; ) { const x = this.box(b, p, e); if (!x) return null; out.push(x); p = x.end; } return out; },
+        u32(n) { return [n >>> 24 & 255, n >>> 16 & 255, n >>> 8 & 255, n & 255]; },
+        u64(n) { return [...this.u32(Math.floor(n / 4294967296)), ...this.u32(n >>> 0)]; },
+        mk(type, body) { const o = new Uint8Array(8 + body.length); o.set(this.u32(8 + body.length)); for (let i = 0; i < 4; i++) o[4 + i] = type.charCodeAt(i); o.set(body, 8); return o; },
+
+        async fix(blob) {
+            try {
+                const b = new Uint8Array(await blob.arrayBuffer()), dv = new DataView(b.buffer);
+                const top = this.kids(b, 0, b.length); if (!top) return blob;
+                const moov = top.find(x => x.type === 'moov'); if (!moov || !top.some(x => x.type === 'moof')) return blob;
+                if (top.some(x => x.type === 'mfra')) return blob;                       // уже доведён
+                const rd = (p, v1) => v1 ? dv.getUint32(p) * 4294967296 + dv.getUint32(p + 4) : dv.getUint32(p);
+                // дорожки: номер → шкала времени (mdhd), значения по умолчанию (trex)
+                const T = new Map(), trex = new Map();
+                const mk = this.kids(b, moov.p + moov.head, moov.end); if (!mk) return blob;
+                let mvTs = 1000;
+                for (const x of mk) {
+                    if (x.type === 'mvhd') mvTs = dv.getUint32(x.p + (b[x.p + 8] === 1 ? 28 : 20));
+                    if (x.type === 'mvex') for (const y of this.kids(b, x.p + 8, x.end) || []) if (y.type === 'trex') trex.set(dv.getUint32(y.p + 12), { dur: dv.getUint32(y.p + 20), flags: dv.getUint32(y.p + 28) });
+                    if (x.type === 'trak') {
+                        let id = 0, ts = 0;
+                        for (const y of this.kids(b, x.p + 8, x.end) || []) {
+                            if (y.type === 'tkhd') id = dv.getUint32(y.p + (b[y.p + 8] === 1 ? 28 : 20));
+                            if (y.type === 'mdia') for (const z of this.kids(b, y.p + 8, y.end) || []) if (z.type === 'mdhd') ts = dv.getUint32(z.p + (b[z.p + 8] === 1 ? 28 : 20));
+                        }
+                        if (id && ts) T.set(id, { ts, end: 0, ra: [] });
+                    }
+                }
+                if (!T.size) return blob;
+                // фрагменты: начало, длительность, первый кадр опорный ли
+                for (const f of top) if (f.type === 'moof') {
+                    let traf = 0;
+                    for (const x of this.kids(b, f.p + 8, f.end) || []) if (x.type === 'traf') {
+                        traf++;
+                        let id = 0, dDur = 0, dFlags = 0, t0 = null, tr = 0;
+                        for (const y of this.kids(b, x.p + 8, x.end) || []) {
+                            if (y.type === 'tfhd') {
+                                const fl = dv.getUint32(y.p + 8) & 0xFFFFFF; let q = y.p + 16; id = dv.getUint32(y.p + 12);
+                                const df = trex.get(id) || { dur: 0, flags: 0 }; dDur = df.dur; dFlags = df.flags;
+                                if (fl & 1) q += 8; if (fl & 2) q += 4;
+                                if (fl & 8) { dDur = dv.getUint32(q); q += 4; }
+                                if (fl & 16) q += 4;
+                                if (fl & 32) dFlags = dv.getUint32(q);
+                            }
+                            if (y.type === 'tfdt') t0 = rd(y.p + 12, b[y.p + 8] === 1);
+                            if (y.type === 'trun') {
+                                tr++;
+                                const fl = dv.getUint32(y.p + 8) & 0xFFFFFF, n = dv.getUint32(y.p + 12); let q = y.p + 16, first = null, sum = 0;
+                                if (fl & 1) q += 4; if (fl & 4) { first = dv.getUint32(q); q += 4; }
+                                for (let i = 0; i < n; i++) {
+                                    let d = dDur, sf = dFlags;
+                                    if (fl & 0x100) { d = dv.getUint32(q); q += 4; }
+                                    if (fl & 0x200) q += 4;
+                                    if (fl & 0x400) { sf = dv.getUint32(q); q += 4; }
+                                    if (fl & 0x800) q += 4;
+                                    if (i === 0 && first !== null) sf = first;
+                                    if (i === 0 && tr === 1 && t0 !== null && T.has(id) && !(sf & 0x10000)) T.get(id).ra.push({ t: t0, off: f.p, traf });
+                                    sum += d;
+                                }
+                                const t = T.get(id); if (t && t0 !== null) { t.end = Math.max(t.end, t0 + sum); t0 += sum; }
+                            }
+                        }
+                    }
+                }
+                let movie = 0; for (const t of T.values()) movie = Math.max(movie, t.end / t.ts);
+                if (!(movie > 0)) return blob;
+                // заголовок с длительностью: те же коробки, поле длительности переписано, в mvex — mehd
+                const out = [], put = (x, v1Off, v0Off, val) => { const c = b.slice(x.p, x.end), d2 = new DataView(c.buffer), v1 = c[8] === 1, o = v1 ? v1Off : v0Off;
+                    if (v1) { d2.setUint32(o, Math.floor(val / 4294967296)); d2.setUint32(o + 4, val >>> 0); } else d2.setUint32(o, Math.min(val, 4294967295)); return c; };
+                const rebuild = (x, trackTs) => {
+                    if (x.type === 'mvhd') return put(x, 32, 24, Math.round(movie * mvTs));
+                    if (x.type === 'tkhd') return put(x, 36, 28, Math.round(movie * mvTs));
+                    if (x.type === 'mdhd') return put(x, 32, 24, Math.round(movie * trackTs));
+                    if (x.type === 'mehd') return put(x, 12, 12, Math.round(movie * mvTs));
+                    if (!['moov', 'trak', 'mdia', 'mvex'].includes(x.type)) return b.subarray(x.p, x.end);
+                    const ks = this.kids(b, x.p + x.head, x.end); let ts = trackTs;
+                    if (x.type === 'trak') for (const y of ks) if (y.type === 'tkhd') { const t = T.get(dv.getUint32(y.p + (b[y.p + 8] === 1 ? 28 : 20))); if (t) ts = t.ts; }
+                    const parts = ks.map(y => rebuild(y, ts));
+                    if (x.type === 'mvex' && !ks.some(y => y.type === 'mehd')) parts.unshift(this.mk('mehd', [1, 0, 0, 0, ...this.u64(Math.round(movie * mvTs))]));
+                    const len = parts.reduce((s, c) => s + c.length, 0), body = new Uint8Array(len); let q = 0; for (const c of parts) { body.set(c, q); q += c.length; }
+                    return this.mk(x.type, body);
+                };
+                const nm = rebuild(moov, 0), shift = nm.length - moov.size;
+                // таблица опорных кадров в конце файла
+                const tfras = [];
+                for (const [id, t] of T) {
+                    const e = []; for (const r of t.ra) e.push(...this.u64(r.t), ...this.u64(r.off + (r.off > moov.p ? shift : 0)), r.traf, 1, 1);
+                    tfras.push(this.mk('tfra', [1, 0, 0, 0, ...this.u32(id), 0, 0, 0, 0, ...this.u32(t.ra.length), ...e]));
+                }
+                const tl = tfras.reduce((s, c) => s + c.length, 0) + 16, mfro = this.mk('mfro', [0, 0, 0, 0, ...this.u32(tl + 8)]);
+                const mb = new Uint8Array(tl - 16 + mfro.length); let q = 0; for (const c of tfras) { mb.set(c, q); q += c.length; } mb.set(mfro, q);
+                out.push(b.subarray(0, moov.p), nm, b.subarray(moov.end), this.mk('mfra', mb));
+                return new Blob(out, { type: blob.type || 'video/mp4' });
+            } catch (err) { return blob; }
+        }
+    };
+
+    // Cues для webm: где начинается каждый кластер с опорным кадром. Кладутся перед первым
+    // кластером, сегмент получает известный размер. Позиции — 8-байтными числами, чтобы
+    // размер таблицы не зависел от самих позиций.
+    WEBM.cues = async function (blob) {
+        try {
+            const b = new Uint8Array(await blob.arrayBuffer());
+            const e = this.el(b, 0); if (!e || e.id !== 0x1A45DFA3) return blob;
+            const seg = this.el(b, e.end); if (!seg || seg.id !== 0x18538067) return blob;
+            const TOP = [0x1F43B675, 0x1C53BB6B, 0x1254C367, 0x1549A966, 0x1654AE6B, 0x114D9B74, 0x1941A469, 0x1043A770];
+            const segEnd = Math.min(seg.end, b.length), heads = [], clusters = [];
+            let track = 1, p = seg.data;
+            while (p < segEnd) {
+                const c = this.el(b, p); if (!c) return blob;
+                if (c.id === 0x1C53BB6B) return blob;                                       // Cues уже есть
+                if (c.id === 0x1F43B675) {
+                    let q = c.data, time = null, key = null, end = c.end;
+                    while (q < Math.min(end, segEnd)) {
+                        const k = this.el(b, q); if (!k) return blob;
+                        if (c.end === Infinity && TOP.includes(k.id)) break;
+                        if (k.id === 0xE7) { time = 0; for (let i = k.data; i < k.end; i++) time = time * 256 + b[i]; }
+                        if (key === null && (k.id === 0xA3 || k.id === 0xA0)) {
+                            const tn = b[k.data] & 0x80 ? 1 : 2;                       // номер дорожки — vint, флаги после двух байт времени
+                            key = k.id === 0xA0 ? true : !!(b[k.data + tn + 2] & 0x80);
+                        }
+                        if (k.end === Infinity) return blob;
+                        q = k.end;
+                    }
+                    clusters.push({ p, data: c.data, end: q, time, key });
+                    p = q; continue;
+                }
+                if (c.end === Infinity || c.end > segEnd) return blob;
+                if (c.id === 0x1654AE6B) for (let q = c.data; q < c.end; ) {                // Tracks → первая дорожка
+                    const te = this.el(b, q); if (!te) break;
+                    if (te.id === 0xAE) for (let r = te.data; r < te.end; ) { const f = this.el(b, r); if (!f) break; if (f.id === 0xD7) { track = b[f.data]; break; } r = f.end; }
+                    break;
+                }
+                if (c.id !== 0x114D9B74) heads.push([c.start, c.end]);                       // SeekHead со старыми адресами — выкинуть
+                p = c.end;
+            }
+            const cs = clusters.filter(c => c.key && c.time !== null); if (!cs.length) return blob;
+            const u = (n, len) => { const o = []; for (let i = len - 1; i >= 0; i--) { o[i] = n % 256; n = Math.floor(n / 256); } return o; };
+            // кластеры — с известным размером (8-байтным, заголовок всегда 12 байт): в сегменте известного размера
+            // кластер «до следующего» проигрыватели читают с предупреждением
+            let at = 0; for (const c of clusters) { c.at = at; at += 12 + c.end - c.data; }
+            const headLen = heads.reduce((s, h) => s + h[1] - h[0], 0), cuesLen = 4 + 8 + cs.length * 27;
+            const body = [];
+            for (const c of cs) {
+                const pos = headLen + cuesLen + c.at;
+                body.push(0xBB, 0x99, 0xB3, 0x88, ...u(c.time, 8), 0xB7, 0x8D, 0xF7, 0x81, track, 0xF1, 0x88, ...u(pos, 8));
+            }
+            const cues = new Uint8Array([0x1C, 0x53, 0xBB, 0x6B, 0x01, ...u(body.length, 7), ...body]);
+            const total = headLen + cues.length + at;
+            const segHead = new Uint8Array([0x18, 0x53, 0x80, 0x67, 0x01, ...u(total, 7)]);
+            const parts = [b.subarray(0, e.end), segHead, ...heads.map(h => b.subarray(h[0], h[1])), cues];
+            for (const c of clusters) parts.push(new Uint8Array([0x1F, 0x43, 0xB6, 0x75, 0x01, ...u(c.end - c.data, 7)]), b.subarray(c.data, c.end));
+            return new Blob(parts, { type: blob.type || 'video/webm' });
+        } catch (err) { return blob; }
+    };
+
+    // Любая запись: mp4 — длительность и таблица фрагментов, webm — длительность и Cues.
+    const fixVideo = async (blob, ms) => {
+        if (!blob) return blob;
+        let head; try { head = new Uint8Array(await blob.slice(0, 12).arrayBuffer()); } catch (e) { return blob; }
+        if (head[0] === 0x1A && head[1] === 0x45) return WEBM.cues(await WEBM.fix(blob, ms));
+        if (String.fromCharCode(head[4], head[5], head[6], head[7]) === 'ftyp') return MP4.fix(blob);
+        return blob;
+    };
+
     // Значок «в Хаб» (hub-link.js) — тоже холст: без этого исключения он растягивался на весь кадр
     // и висел в каждом ролике огромными песочными часами. data-no-rec — так же убрать любой свой холст.
     const visibleCanvases = () =>[...document.querySelectorAll('canvas')].filter(c => {
@@ -347,7 +535,7 @@
             this.sid = Date.now();
             this.sink = VAULT.sink(this.sid, { mime: this.mime, startedAt: this.sid, name: this.fileBase(this.sid) });
 
-            this.rec = new MediaRecorder(this.mix.stream, { mimeType: this.mime, videoBitsPerSecond: 16000000 });
+            this.rec = new MediaRecorder(this.mix.stream, { mimeType: this.mime, videoBitsPerSecond: 16000000, videoKeyFrameIntervalDuration: 1000 }   /* опорный кадр раз в секунду — есть куда мотать */);
             this.rec.ondataavailable = e => { if (e.data && e.data.size) this.sink.push(e.data); };
             this.rec.onstop = () => this.save();
             // Шаг в start(1000) соблюдает только webm: mp4-муксер Chrome копит кадры у
@@ -400,14 +588,15 @@
             } catch (e) { return true; }
         },
 
-        // Для страниц со своей записью: webm с длительностью в заголовке.
-        fixWebm(blob, ms) { return WEBM.fix(blob, ms); },
+        // Для страниц со своей записью: длительность и перемотка — и в webm, и в mp4 (2026-10-17; прежде только длительность webm).
+        fixWebm(blob, ms) { return fixVideo(blob, ms); },
+        fixVideo(blob, ms) { return fixVideo(blob, ms); },
 
         async download(parts, mime, base, ms) {
             if (!parts.length) return false;
             const ext = (mime || '').startsWith('video/mp4') ? 'mp4' : 'webm';
             let blob = new Blob(parts, { type: mime });
-            if (ext === 'webm') blob = await WEBM.fix(blob, ms);
+            blob = await fixVideo(blob, ms);
             const a = document.createElement('a');
             a.download = `${base}.${ext}`;
             a.href = URL.createObjectURL(blob);

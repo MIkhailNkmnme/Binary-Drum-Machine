@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.149. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.150. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.149</title>
+<title>Zerkalius Маятник — v0.150</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.149</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.150</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -974,10 +974,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(recorder){recorder.stop();return;}
     if(!cv.captureStream||!window.MediaRecorder){$('fillInfo').textContent='Этот браузер не умеет записывать видео с холста.';return;}
     const type=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
-    const chunks=[],r=new MediaRecorder(cv.captureStream(30),type?{mimeType:type,videoBitsPerSecond:8e6}:undefined);
+    const chunks=[],r=new MediaRecorder(cv.captureStream(30),{...(type?{mimeType:type}:{}),videoBitsPerSecond:8e6,videoKeyFrameIntervalDuration:1000});   // v0.150: опорный кадр раз в секунду
+    const t0=Date.now();
     r.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-    r.onstop=()=>{recorder=null;$('bRec').setAttribute('aria-pressed','false');$('bRec').textContent='Запись';
-      const ext=(r.mimeType||type).includes('mp4')?'mp4':'webm',blob=new Blob(chunks,{type:r.mimeType||type||'video/webm'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    r.onstop=async()=>{recorder=null;$('bRec').setAttribute('aria-pressed','false');$('bRec').textContent='Запись';
+      // v0.150: «запись как видео без перемотки» — у mp4 Chrome длительность 0 и нет таблицы кадров; доводит общий recorder.js
+      const ext=(r.mimeType||type).includes('mp4')?'mp4':'webm';let blob=new Blob(chunks,{type:r.mimeType||type||'video/webm'});
+      try{const R=window.__zerkRecorder;if(R?.fixVideo)blob=await R.fixVideo(blob,Date.now()-t0);}catch(_){}
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
       a.href=url;a.download=`mayatnik-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
       $('fillInfo').textContent=`Видео записано: ${(blob.size/1048576).toFixed(1)} МБ, .${ext}`;};
     r.start(500);recorder=r;$('bRec').setAttribute('aria-pressed','true');$('bRec').textContent='Стоп записи';$('fillInfo').textContent='Идёт запись видео поля…';draw();
@@ -2631,6 +2635,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-logo-pattern.js?v=138"></script>
 <script src="mayatnik-logo.js?v=138"></script>
 <script src="../_js/hub-link.js?v=1"></script>
+<script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
 <script src="mayatnik-menu.js?v=147"></script>
