@@ -494,7 +494,7 @@ function rowCmpInfo(){
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` + txtMe + ` · стрелок ${links.filter(l => !l.noArrow).length}`;
   const v = { a, links, lost, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
-function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
+function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк (вниз от выбранной — слева, v0.1257)
   const L = $("rowList"), root = L && L.querySelector(".rl-inner");
   let sv = root && root.querySelector(":scope > #cmpArrows");
   if (!cmp || !root) { if (sv) sv.remove(); }
@@ -537,9 +537,11 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
     ends.forEach(({ h, src, dst }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
-      let mx = 0; for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) mx = Math.max(mx, b.getBoundingClientRect().right); }
-      const x0 = X(src.right) + 3, y0 = Y(src.top + src.height / 2), x1 = X(dst.right) + 3, y1 = Y(dst.top + dst.height / 2);
-      const bx = X(mx) + 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
+      /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа */
+      const lf = h.sel; let mx = lf ? Infinity : 0;
+      for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
+      const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
+      const x0 = lf ? X(src.left) - 3 : X(src.right) + 3, x1 = lf ? X(dst.left) - 3 : X(dst.right) + 3, bx = lf ? Math.max(2, X(mx) - ofs) : X(mx) + ofs;
       g += '<path d="M' + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + bx.toFixed(1) + "," + y0.toFixed(1) + " " + bx.toFixed(1) + "," + y1.toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1) +
            '" fill="none" stroke="' + col + '" stroke-width="' + (h.sel ? 2.2 : 1.4) + '" opacity="' + (h.sel ? 1 : 0.85) + '" marker-end="url(#cmpAh' + ci + ')"><title>строка ' + (h.r + 1) + " → строка " + (h.i + 1) + ", биты " + (h.a + 1) + "–" + h.b + "</title></path>";
     });
