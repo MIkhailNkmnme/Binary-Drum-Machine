@@ -21,7 +21,7 @@
       head.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(record.action){record.action();if(e.pointerType!=='mouse')openBranch(record,true);render();}else openBranch(record,!node.open);});
       head.addEventListener('pointerenter',e=>{if(e.pointerType==='touch')return;
         // v0.229: наведение на ветку без видимых кнопок (выключена или пустая) не закрывает уже раскрытую соседку.
-        if(record.gate&&record.active?.()===false)return;if(!record.children.some(c=>c.children||!c.node.hidden))return;openBranch(record,true);});
+        if(record.gate&&gateOn(record)===false)return;if(!record.children.some(c=>c.children||!c.node.hidden))return;openBranch(record,true);});
       head.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();openBranch(record,e.key==='ArrowRight');}});
       node.addEventListener('toggle',()=>{if(id===group.key&&pins.has(id))node.open=true;render();});
       return record;
@@ -31,14 +31,16 @@
       if(on){const path=ancestors(record);for(const r of records.values())if(r.children&&!path.has(r.id)&&!pins.has(r.group.key))r.node.open=false;}
       record.node.open=on;render();
     }
+    // v0.234: ветка открыта, пока «включено» (r.on), а не только пока идёт (r.active): 3D на паузе — включён, «Сброс» виден
+    const gateOn=r=>r.on?r.on():r.active?.();
     function render(){
       for(const r of records.values())if(r.active){const value=r.active();if(value!==null){const h=r.node.querySelector('summary');if(h.getAttribute('aria-pressed')!==String(value))h.setAttribute('aria-pressed',String(value));}}
       // v0.226: «все включённые сразу вверх и не скрывать» — включённая кнопка встаёт первой в своей ветке.
       const lead=[];   // v0.233: «не меняй расположение, только выделяй» — включённые больше не встают первыми
-      const stamp=JSON.stringify([lead,[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate&&r.active?r.active():0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
+      const stamp=JSON.stringify([lead,[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate?gateOn(r):0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
-        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&r.active&&r.active()===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
+        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&gateOn(r)===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
         const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
@@ -168,6 +170,8 @@
     bindAction('symmetry',id=>id.endsWith('|Зеркальные оси и парные биты'),'Симметрия — включить / выключить');
     bindAction('axis',id=>id.endsWith('|hubAxisShow'),'Ось — показать / спрятать');
     bindAction('space',id=>id.endsWith('|Переворот вокруг оси зеркала в 3D'),'3D-вращение — пуск / пауза');
+    // v0.234: 3D включён, пока крутится или стоит не на 0° (пауза); пока крутится — голова мигает
+    {const sp=records.get('space');if(sp){sp.on=()=>window.HubView?.flipOn??sp.active?.();sp.node.dataset.blink='true';}}
     bindAction('file',id=>id.endsWith('|hubPresetList'),'Открыть список шаблонов');
     bindAction('flow|branch:light',id=>id.includes('|А — свет:'),'Свет — включить / выключить');
     bindAction('flow|branch:snow',id=>id.includes('|Б — мокрый снег'),'Снег — включить / выключить');
@@ -188,7 +192,7 @@
     const syncLocks=()=>{for(const r of lockItems)r.node.setAttribute('aria-pressed',String(window.HubLocks.has(r.lockKey)));lockHead.setAttribute('aria-pressed',window.HubLocks.all?'true':window.HubLocks.any?'mixed':'false');};
     window.addEventListener('hublocks',()=>{syncLocks();render();});syncLocks();
     // v0.226: кнопка включилась / выключилась — сразу пересобрать порядок (включённые первыми).
-    {let q=0;new MutationObserver(()=>{if(!q)q=requestAnimationFrame(()=>{q=0;render();});}).observe(toolbar,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});toolbar.addEventListener('change',()=>requestAnimationFrame(render),true);}
+    {let q=0;new MutationObserver(()=>{if(!q)q=requestAnimationFrame(()=>{q=0;render();});}).observe(toolbar,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});toolbar.addEventListener('change',()=>requestAnimationFrame(render),true);document.addEventListener('click',()=>requestAnimationFrame(()=>requestAnimationFrame(render)),true);}   // v0.234: и после щелчков (сброс 3D не меняет aria-pressed)
     // v0.225: «Сброс» — первым прямо под головой своей группы (3D, Поток) или своей ветки (наклон битов).
     for(const [pre,to] of [['space|Сбросить только 3D','space'],['flow|Очистить свет','flow'],['bits|Сброс наклона',null]]){
       const r=[...records.values()].find(x=>x.id.startsWith(pre));if(!r)continue;

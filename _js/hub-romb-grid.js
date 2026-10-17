@@ -65,13 +65,14 @@
     cells.forEach((c, i) => {
       const key = st.slots[i], o = find(key);
       c.classList.toggle('full', !!key); c.classList.toggle('lost', !!key && !o);
-      if (!key) { c.textContent = ''; c.title = 'Пустой ромб: перетащите сюда любую кнопку · тяните пустой ромб — двигать сетку'; c.removeAttribute('aria-pressed'); c.style.removeProperty('--rg-bg'); return; }
+      if (!key) { c.textContent = ''; c.title = 'Пустой ромб: перетащите сюда любую кнопку · тяните пустой ромб — двигать сетку'; c.removeAttribute('aria-pressed'); c.style.removeProperty('--rg-bg'); c.classList.remove('hasBg'); return; }
       if (!o) { c.textContent = '?'; c.title = 'Оригинал этой кнопки сейчас не найден · ПКМ — убрать'; return; }
       const t = textOf(o); if (c.textContent !== t) c.textContent = t;
       c.title = 'Копия: ' + (o.getAttribute('aria-label') || o.title || t).split(' · ')[0] + ' · тяните — в другой ромб · ПКМ — убрать';
       c.setAttribute('aria-pressed', String(pressedOf(o)));
       const bg = o.style.background || o.style.backgroundColor;
       if (bg) c.style.setProperty('--rg-bg', bg); else c.style.removeProperty('--rg-bg');
+      c.classList.toggle('hasBg', !!bg);   // Hub v0.234: свой фон (образец цвета) не затирается обводкой включённой
     });
   }
   const cellAt = (x, y) => document.elementsFromPoint(x, y).find(n => n.classList?.contains('hubRgCell')) || null;
