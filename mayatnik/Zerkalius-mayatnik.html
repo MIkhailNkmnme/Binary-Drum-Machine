@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.144. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.145. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.144</title>
+<title>Zerkalius Маятник — v0.145</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.144</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.145</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -258,6 +258,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="При движении оставлять позади шаблона противоположный цвет бита: 1 → чёрный, 0 → белый"><input id="templateTrail" type="checkbox">Инверт-след</label>
     <label title="Увеличивать ширину вместе с высотой поровну в обе стороны от центра самой фигуры"><input id="templateProportional" type="checkbox">Пропорции</label>
     <label title="Застывшее — цветом: когда маятник дошёл до всех битов под шаблоном и они больше не изменятся (будущие вершины их не достанут), шаблон закрашивается на поле своим цветом и держится так в каждом кадре. Так же держится любая краска на застывших битах"><input id="templateLock" type="checkbox" checked data-mi-short="Застыл — цветом">Застыл — цветом</label>
+    <label title="Маска: шаблон стоит трафаретом перед меняющимися битами — клетки его фигуры, которые ещё изменятся, закрыты цветом шаблона, в просветах фигуры видна аниматрица. Место шаблона запоминается и держится во всех кадрах, и в анимации"><input id="templateMask" type="checkbox" data-mi-short="Маска">Маска</label>
     <label title="Высота копии в процентах от исходной фигуры">высота % <input id="templateHeight" type="number" min="1" max="3200" step="10" value="100"></label>
     <label title="Сдвиг по вертикали в строках поля; положительное значение — вниз">вниз, строк <input id="templateDown" type="number" min="-4096" max="4096" step="1" value="0"></label>
     <label title="Непрозрачность копии в процентах">видимость % <input id="templateAlpha" type="number" min="0" max="100" step="5" value="50"></label>
@@ -787,14 +788,16 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function templateLockCheck(){   // true — замок появился или изменился
     if(!f||!geo||!img)return false;let changed=false;
-    if(!templateLocks||templateLocks.sig!==lockSig()){templateLocks={sig:lockSig(),items:{},paint:{}};lockSave();}
+    if(!templateLocks||templateLocks.sig!==lockSig()){templateLocks={sig:lockSig(),items:{},paint:{},masks:{}};lockSave();}
     for(const item of templateItems){if(!item.view?.visible)continue;
       const cells=new Set();let kf=0;
       for(const part of item.parts){const r=templateRect(part,false,item),x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
         for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){if(!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
           const cell=fieldCellAt(x,y);if(!cell||cells.has(cell.r*f.W+cell.c))continue;cells.add(cell.r*f.W+cell.c);kf=Math.max(kf,cellFreezeFrame(cell.r,cell.c));}}
-      if(!cells.size||kf>k)continue;   // ещё не дошли или не застынет
-      const list=[...cells].sort((a,b)=>a-b),old=templateLocks.items[item.id];
+      if(!cells.size)continue;const list=[...cells].sort((a,b)=>a-b),M=templateLocks.masks||(templateLocks.masks={}),om=M[item.id];   // v0.145: место шаблона — для маски
+      if(!om||om.hex!==item.hex||om.k!==kf||om.cells.length!==list.length||om.cells.some((v,i)=>v!==list[i])){M[item.id]={hex:item.hex,W:f.W,cells:list,k:kf};lockSave();changed=changed||st.templateMask===true;}
+      if(kf>k)continue;   // ещё не дошли или не застынет
+      const old=templateLocks.items[item.id];
       if(!old||old.k!==kf||old.hex!==item.hex||old.cells.length!==list.length||old.cells.some((v,i)=>v!==list[i])){templateLocks.items[item.id]={hex:item.hex,k:kf,W:f.W,cells:list};lockSave();changed=true;}
     }
     return changed;
@@ -827,9 +830,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       const cx=(c-VX+ox+.5)*RK,cy=(r+.5)*RK;for(let y=Math.max(0,Math.floor(cy-RK));y<Math.min(img.height,Math.ceil(cy+RK));y++)for(let x=Math.max(0,Math.floor(cx-RK));x<Math.min(img.width,Math.ceil(cx+RK));x++)if(Math.abs(x+.5-cx)+Math.abs(y+.5-cy)<=RK)px[y*img.width+x]=col;}
   }
   function templateLockApply(px){
-    templateLockCheck();if(!templateLocks)return;paintLockCheck();if(st.templateLock===false)return;
-    if(templateLocks.paint&&(templateLocks.W??f.W)===f.W)for(const q in templateLocks.paint){const [col,kf]=templateLocks.paint[q];if(kf<=k)lockCell(px,+q,col);}
-    for(const L of Object.values(templateLocks.items)){if(L.k>k||L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
+    templateLockCheck();if(!templateLocks)return;paintLockCheck();
+    if(st.templateLock!==false&&templateLocks.paint&&(templateLocks.W??f.W)===f.W)for(const q in templateLocks.paint){const [col,kf]=templateLocks.paint[q];if(kf<=k)lockCell(px,+q,col);}
+    if(st.templateLock!==false)for(const L of Object.values(templateLocks.items)){if(L.k>k||L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
+    // v0.145: «использовать шаблон как маску перед изменяющимися, закрывая и пропуская в просветах биты аниматрицы»: клетки фигуры
+    // шаблона, которые ещё изменятся (кадр застывания позже текущего), закрыты его цветом; в просветах фигуры видно поле.
+    if(st.templateMask===true&&templateLocks.masks)for(const L of Object.values(templateLocks.masks)){if(L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)if(freezeFrameOf(q)>k)lockCell(px,q,col);}
+    // место шаблона, застывшее целиком к этому кадру, — его цветом и в кадрах, где самого шаблона уже нет (v0.142 по месту)
+    if(st.templateLock!==false&&templateLocks.masks)for(const L of Object.values(templateLocks.masks)){if(L.W!==f.W||!(L.k<=k))continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
   }
   function fieldCellAt(x,y){
     const half=halfOf((x+.5)/RK);if(!half)return null;const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
@@ -1097,7 +1105,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';draw();fillSync();savePaint();
   }
   $('bFillUndo').onclick=()=>historyStep(false);$('bFillRedo').onclick=()=>historyStep(true);
-  $('bFillClear').onclick=()=>{if(templateLocks){templateLocks.items={};templateLocks.paint={};lockSave();}const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
+  $('bFillClear').onclick=()=>{if(templateLocks){templateLocks.items={};templateLocks.paint={};templateLocks.masks={};lockSave();}const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
   $('bRegions').onclick=()=>{if(!img)return;stop();target=k;
     // v0.087: в режиме «Шахматки 0» — счёт по клеткам, как их соединяет этот режим, а не по пикселям точного цвета.
     if(st.fillArea==='chess0'&&f&&geo){const reg=chessZeroRegions();$('fillInfo').title='';$('fillInfo').dataset.regions=String(reg.count);
@@ -1211,7 +1219,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('bTemplateFlipH').onclick=()=>mirrorTemplate('right',false);
   $('bTemplateFlipV').onclick=()=>mirrorTemplate('bottom',false);
-  $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
+  $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;if(templateLocks?.masks?.[colourTemplate.id]){delete templateLocks.masks[colourTemplate.id];lockSave();}const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
   function templateSync(){
     rememberTemplate();fieldTemplateList();
     $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;$('bTemplateFlipH').disabled=!colourTemplate;$('bTemplateFlipV').disabled=!colourTemplate;$('bXor1').disabled=$('bXor2').disabled=$('xorStep').disabled=!colourTemplate||!templateVisible;if(colourTemplate)$('xorStep').max=xorMax();$('bMirrorByLine').disabled=!colourTemplate||!mirrorLine;
@@ -1284,7 +1292,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(let i=0;i<u.length;i++){const b=part.bitsData[i];u[i]=b===1?one:b===0?zero:0;}
     c.getContext('2d').putImageData(im,0,0);return c;}
   function drawTemplate(){
-    if(!playing&&templateLockCheck()&&st.templateLock!==false)requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
+    if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
     rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode)||playing;if(templateCanvas.hidden)return;
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
@@ -1363,6 +1371,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!=='')changeTemplate(id,$(id).value);});
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('change',()=>changeTemplate(id,$(id).value||$(id).defaultValue));
   $('templateProportional').onchange=()=>{templateStatsKey='';queueDigits();savePaint();};
+  $('templateMask').checked=st.templateMask===true;$('templateMask').onchange=()=>{st.templateMask=$('templateMask').checked;save();if(f)draw();};   // v0.145
   $('templateLock').checked=st.templateLock!==false;$('templateLock').onchange=()=>{st.templateLock=$('templateLock').checked;save();if(f)draw();};   // v0.142
   for(const [id,field,step]of [['bTemplateTaller','templateHeight',10],['bTemplateShorter','templateHeight',-10],['bTemplateDown','templateDown',1],['bTemplateUp','templateDown',-1]])$(id).onclick=()=>changeTemplate(field,Number($(field).value)+step);
   // v0.144: «все выделенные шаблоны спускаются вниз построчно — и инверт, если стоит такая кнопка; после прохода вниз не повторять;
@@ -2562,7 +2571,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=144"></script>
+<script src="mayatnik-menu.js?v=145"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
