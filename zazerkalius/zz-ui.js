@@ -462,31 +462,34 @@ function rowCmpInfo(){
        идут от выбранной вверх; приёмник забирает биты сначала у ближайшей строки над ним, потом у следующей, пока у него есть свободные такие
        биты. Бит отдаёт себя один раз и принимает один раз — одно другому не мешает (111 отдаёт в 1000 и принимает от 11 и 1). Красный — бит
        строки выше, который никуда не лёг */
-    const gave = {}, gOf = (r) => gave[r] || (gave[r] = new Uint8Array(R[r].length));
-    if (mode === "sel") for (let r = 0; r < a; r++) take(r, a, false);   // v0.1256, «тот вариант оставь тоже»: «Σ ↓» — строки выше ложатся только в выбранную и ниже (v0.1254)
-    /* v0.1260, «пусть сначала заполняет сверху вниз, а выделенной — то, что останется»: приёмники идут сверху вниз (строка 2, 3, …, выбранная —
-       последней); каждый по-прежнему берёт сначала у ближайшей строки над ним */
-    else for (let rc = 1; rc <= a && work < 4e6; rc++) {
-      const t = R[rc], n = t.length, uu = uOf(rc); let f1 = 0, f0 = 0;
-      for (let q = 0; q < n; q++) if (!uu[q]) { if (t[q] === "1") f1++; else f0++; }
-      for (let g = rc - 1; g >= 0 && (f1 || f0) && work < 4e6; g--) {
-        const s0 = R[g], n0 = s0.length, gg = gOf(g); let first = true;
-        for (let j = 0; j < n0 && (f1 || f0); j++) {
-          if (gg[j]) continue;
-          const v = s0[j]; if (v === "1" ? !f1 : !f0) continue;
-          const x = X(j, n0); let bq = -1, bd = Infinity;
-          for (let q = 0; q < n; q++) if (t[q] === v && !uu[q]) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
-          work += n; if (bq < 0) continue;
-          uu[bq] = 1; gg[j] = 1; if (v === "1") f1--; else f0--;
-          links.push({ r: g, i: rc, a: bq, b: bq + 1, sa: j, sb: j + 1, sel: false, c: g % CMP_COLS.length, noArrow: !first }); first = false;
+    if (mode === "sel") {   // v0.1256, «тот вариант оставь тоже»: «Σ ↓» — строки выше ложатся только в выбранную и ниже (v0.1254)
+      for (let r = 0; r < a; r++) take(r, a, false);
+      const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0;
+      take(a, a + 1, true);
+      txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · выше никуда не легло ${lostUp}` : "") +
+        (meRows.size ? ` · свободные ниже: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostMe ? ` · без пары ${lostMe}` : "");
+    } else {
+      /* v0.1261, «пусть стрелки снизу вверх показывают, куда прыгнул каждый бит; в конце останется 111, которые одновременно на 11 и 1 прыгнут»:
+         прыгает выбранная строка — каждый её бит (слева направо) прыгает вверх на свободный бит того же значения: сначала в ближайшую строку над
+         ней, там — ближе всего по месту в поле; занятый бит второй раз не принимает. Не нашёл места — красным. «Ровно» — легли все и выше
+         свободных не осталось (1, 11, 111: два бита 111 — на 11, один — на 1) */
+      const n0 = s.length, x0 = (j) => X(j, n0); let up = 0, lostA = 0; const toRows = new Map(), seen = new Set();
+      for (let j = 0; j < n0 && work < 4e6; j++) {
+        const v = s[j], x = x0(j); let hit = null;
+        for (let i = a - 1; i >= 0 && !hit; i--) {
+          const t = R[i], n = t.length, uu = used[i]; let bq = -1, bd = Infinity;
+          for (let q = 0; q < n; q++) if (t[q] === v && !(uu && uu[q])) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
+          work += n; if (bq >= 0) hit = { i, q: bq };
         }
+        if (!hit) { lost.push({ i: a, a: j, b: j + 1 }); lostA++; continue; }
+        uOf(hit.i)[hit.q] = 1; up++;
+        links.push({ r: a, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel: false, up: true, c: hit.i % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
+        toRows.set(hit.i, (toRows.get(hit.i) || 0) + 1);
       }
+      let free = 0; for (let i = 0; i < a; i++) { const uu = used[i]; for (let q = 0; q < R[i].length; q++) if (!(uu && uu[q])) free++; }
+      txtMe = ` · вверх легло ${up} из ${n0}` + (up === n0 && !free && a > 0 ? " — ровно" : "") +
+        (toRows.size ? ": " + [...toRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostA ? ` · места нет ${lostA}` : "") + (free ? ` · выше свободных ${free}` : "");
     }
-    if (mode !== "sel") for (let g = 0; g < a; g++) { const gg = gave[g]; for (let j = 0; j < R[g].length; j++) if (!(gg && gg[j])) { lost.push({ i: g, a: j, b: j + 1 }); lostUp++; } }
-    const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0;
-    take(a, a + 1, true);
-    txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · выше никуда не легло ${lostUp}` : "") +
-      (meRows.size ? ` · свободные ниже: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostMe ? ` · без пары ${lostMe}` : "");
   } else {
     for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sa: 0, sb: R[r].length, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
     const me = links.find(l => l.sel);
@@ -541,9 +544,9 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
       /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа.
          v0.1258, «ещё те, что выделенную строку составляют, тоже слева»: стрелки в выбранную строку — тоже слева */
-      const lf = h.sel || h.i === cmp.a; let mx = lf ? Infinity : 0;
-      for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
-      const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
+      const lf = h.sel || h.up || h.i === cmp.a; let mx = lf ? Infinity : 0;   // v0.1261: прыжки вверх — тоже слева
+      for (let i = Math.min(h.r, h.i); i <= Math.max(h.r, h.i); i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
+      const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, Math.abs(y1 - y0) * 0.15);
       const x0 = lf ? X(src.left) - 3 : X(src.right) + 3, x1 = lf ? X(dst.left) - 3 : X(dst.right) + 3, bx = lf ? Math.max(2, X(mx) - ofs) : X(mx) + ofs;
       const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + bx.toFixed(1) + "," + y0.toFixed(1) + " " + bx.toFixed(1) + "," + y1.toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
       g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd +
