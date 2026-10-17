@@ -14,5 +14,15 @@
     return dist<=reach*reach?best:null;
   }
   function distance(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);}
-  const api={snap,distance};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MayatnikCellGeometry=api;
+  function upward(a,b,box){
+    if(a.y===b.y)return null;
+    const p=a.y<b.y?a:b,q=a.y<b.y?b:a,dx=(p.x-q.x)/(q.y-p.y),dy=-1;
+    let lo=0,hi=Infinity;
+    for(const [pos,dir,min,max]of [[p.x,dx,box.left,box.right],[p.y,dy,box.top,box.bottom]]){
+      if(!dir){if(pos<min||pos>max)return null;continue;}
+      const t1=(min-pos)/dir,t2=(max-pos)/dir;lo=Math.max(lo,Math.min(t1,t2));hi=Math.min(hi,Math.max(t1,t2));
+    }
+    return hi>=lo?{a:{x:p.x+lo*dx,y:p.y-lo},b:{x:p.x+hi*dx,y:p.y-hi}}:null;
+  }
+  const api={snap,distance,upward};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MayatnikCellGeometry=api;
 })(typeof window!=='undefined'?window:globalThis);

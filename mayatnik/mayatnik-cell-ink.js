@@ -3,23 +3,26 @@ window.MayatnikCellInk = function(o){
   const $=id=>document.getElementById(id), key='mayatnik-cell-ink-v1';
   let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}');}catch(_){}
   const book=()=>o.state().cellInk||(o.state().cellInk=saved);
-  let tool='back',undo=[],pending=null,hover=null,activeFrame='',lineRaf=0;
+  let tool='back',undo=[],pending=null,hover=null,activeFrame='',lineRaf=0,selected=-1;
   const bar=document.createElement('div');bar.id='cellInkBar';bar.hidden=true;
   bar.innerHTML='<strong>Грани клеток</strong><button data-tool="back" title="1 — косая сверху слева вниз вправо">1 · \\</button><button data-tool="slash" title="2 — косая снизу слева вверх вправо">2 · /</button><button data-tool="top" title="NumPad 5 — верхняя грань">5 · верх</button><button data-tool="bottom" title="NumPad 0 — нижняя грань">0 · низ</button><button data-tool="box" title="Рамка всей клетки">□</button><button data-tool="erase" title="Убрать все пометки клетки">Ластик</button><button id="cellInkUndo" title="Отменить последнюю пометку">↶</button><span id="cellInkHint"></span>';
   document.body.append(bar);
   const lineButton=document.createElement('button');lineButton.id='cellInkLine';lineButton.dataset.tool='line';lineButton.textContent='╱ Линия';lineButton.title='Линия по двум точкам; магнит к углам, серединам граней и центру бита. L — выбрать';bar.insertBefore(lineButton,bar.children[1]);
+  const rayButton=document.createElement('button');rayButton.id='cellInkRay';rayButton.textContent='↑ Луч';rayButton.title='Продлить выбранную линию вверх через границу фигуры в пустоту. Повторное нажатие убирает продолжение. Щёлкни линию, чтобы выбрать её.';bar.insertBefore(rayButton,lineButton.nextSibling);
   const canvas=document.createElement('canvas');canvas.id='cellInkCanvas';canvas.hidden=true;canvas.setAttribute('aria-label','Сетка и пометки граней клеток');document.body.append(canvas);
   const lineCanvas=document.createElement('canvas');lineCanvas.id='cellLineCanvas';lineCanvas.hidden=true;lineCanvas.setAttribute('aria-label','Линии с привязкой к клеткам');document.body.append(lineCanvas);
   const persist=()=>{try{localStorage.setItem(key,JSON.stringify(book()));}catch(_){}o.save();};
   const frame=()=>{const v=o.view();return v?[v.W,v.H,v.k,v.anchor,v.mode,v.steps,v.pair,v.bg].join(':'):'';};
   const marks=()=>book()[frame()]||{};
+  rayButton.onclick=()=>{const f=frame(),m=book()[f],before=m?.$lines?.slice();if(!before?.length)return;const i=selected>=0&&selected<before.length?selected:before.length-1,l=before[i];if(l.a.y===l.b.y)return;
+    undo.push({frame:f,cell:'$lines',before});if(undo.length>200)undo.shift();m.$lines=before.map((v,j)=>j===i?{...v,up:!v.up}:v);selected=i;persist();drawLines();};
   function choose(t){tool=t;pending=hover=null;for(const b of bar.querySelectorAll('[data-tool]'))b.setAttribute('aria-pressed',String(b.dataset.tool===t));draw();}
   for(const b of bar.querySelectorAll('[data-tool]'))b.onclick=()=>choose(b.dataset.tool);
   $('cellInkUndo').onclick=()=>{if(pending){pending=null;drawLines();return;}const u=undo.pop();if(!u)return;const m=book()[u.frame]||(book()[u.frame]={});if(u.before)m[u.cell]=u.before;else delete m[u.cell];persist();draw();};
   function line(ctx,a,b,c,d){ctx.moveTo(a,b);ctx.lineTo(c,d);}
   function draw(){
     const v=o.view(),on=$('cellInk').checked;bar.hidden=!on;canvas.hidden=lineCanvas.hidden=!on||!v||v.romb;
-    if(activeFrame!==frame()||!on){activeFrame=frame();pending=hover=null;}
+    if(activeFrame!==frame()||!on){activeFrame=frame();pending=hover=null;selected=-1;}
     if(!on)return;
     $('cellInkUndo').disabled=!undo.length&&!pending;
     hint(v);
@@ -58,18 +61,26 @@ window.MayatnikCellInk = function(o){
     const pos=p=>[rect.left-host.left+(p.x-v.VX)*s,rect.top-host.top+p.y*s];
     const segment=(a,b,preview=false)=>{const A=pos(a),B=pos(b);ctx.beginPath();line(ctx,...A,...B);ctx.setLineDash(preview?[6,4]:[]);ctx.strokeStyle='#07131e';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=preview?'#ffe066':'#5ce1e6';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);};
     const dot=(p,colour)=>{const [x,y]=pos(p);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=colour;ctx.fill();ctx.strokeStyle='#07131e';ctx.lineWidth=1;ctx.stroke();};
-    const lines=marks().$lines||[];lineCanvas.setAttribute('aria-label',`Линий: ${lines.length}${pending?' · выбирается конец':''}`);
-    for(const l of lines){segment(l.a,l.b);dot(l.a,'#5ce1e6');dot(l.b,'#5ce1e6');}
+    const lines=marks().$lines||[];if(selected>=lines.length)selected=lines.length-1;const chosen=lines[selected>=0?selected:lines.length-1];rayButton.disabled=!!pending||!chosen||chosen.a.y===chosen.b.y;rayButton.setAttribute('aria-pressed',String(!!chosen?.up));
+    lineCanvas.setAttribute('aria-label',`Линий: ${lines.length} · лучей вверх: ${lines.filter(l=>l.up).length}${pending?' · выбирается конец':''}`);
+    const box={left:v.VX+(host.left-rect.left)/s,right:v.VX+(host.left+o.wrap.clientWidth-rect.left)/s,top:(host.top-rect.top)/s,bottom:(host.top+o.wrap.clientHeight-rect.top)/s};
+    for(const [i,l]of lines.entries()){
+      if(l.up){const ray=MayatnikCellGeometry.upward(l.a,l.b,box);if(ray){segment(ray.a,ray.b,true);const P=pos(ray.b);ctx.fillStyle='#ffe066';ctx.beginPath();ctx.arc(...P,3,0,Math.PI*2);ctx.fill();}}
+      segment(l.a,l.b);dot(l.a,i===selected?'#ffe066':'#5ce1e6');dot(l.b,i===selected?'#ffe066':'#5ce1e6');
+    }
     if(pending){if(hover)segment(pending,hover,true);dot(pending,'#ffe066');}if(hover&&tool==='line')dot(hover,'#ffe066');hint(v);$('cellInkUndo').disabled=!undo.length&&!pending;
   }
   function point(e){const v=o.view();if(!v||v.romb)return null;const r=o.canvas.getBoundingClientRect(),p=MayatnikCellGeometry.snap((e.clientX-r.left)/v.s,(e.clientY-r.top)/v.s,v.width,v.height,(x,y)=>v.bit(x,y)>=0,8/v.s);return p&&{...p,x:p.x+v.VX};}
+  function lineDistance(p,l){let d=MayatnikCellGeometry.distance(p,l.a,l.b);if(l.up&&l.a.y!==l.b.y){const a=l.a.y<l.b.y?l.a:l.b,b=a===l.a?l.b:l.a,dx=a.x-b.x,dy=a.y-b.y,t=Math.max(0,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy));d=Math.min(d,Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy));}return d;}
   function editLine(e){
     const v=o.view();if(!v||v.romb)return;
     const f=frame(),m=book()[f]||(book()[f]={}),before=m.$lines?.slice(),lines=(before||[]).slice();
     if(e.button===2){if(pending){pending=null;drawLines();return;}
       const r=o.canvas.getBoundingClientRect(),p={x:(e.clientX-r.left)/v.s+v.VX,y:(e.clientY-r.top)/v.s};let at=-1,best=8/v.s;
-      lines.forEach((l,i)=>{const d=MayatnikCellGeometry.distance(p,l.a,l.b);if(d<=best){best=d;at=i;}});if(at<0)return;lines.splice(at,1);
-    }else{const p=point(e);if(!p)return;if(!pending){pending=p;hover=p;drawLines();return;}if(pending.x===p.x&&pending.y===p.y)return;lines.push({a:pending,b:p});pending=null;hover=p;}
+      lines.forEach((l,i)=>{const d=lineDistance(p,l);if(d<=best){best=d;at=i;}});if(at<0)return;lines.splice(at,1);
+    }else{if(!pending){const r=o.canvas.getBoundingClientRect(),p={x:(e.clientX-r.left)/v.s+v.VX,y:(e.clientY-r.top)/v.s};let at=-1,best=5/v.s;
+        lines.forEach((l,i)=>{const d=lineDistance(p,l);if(d<best){best=d;at=i;}});if(at>=0){selected=at;hover=null;drawLines();return;}}
+      const p=point(e);if(!p)return;if(!pending){pending=p;hover=p;drawLines();return;}if(pending.x===p.x&&pending.y===p.y)return;lines.push({a:pending,b:p});selected=lines.length-1;pending=null;hover=p;}
     undo.push({frame:f,cell:'$lines',before});if(undo.length>200)undo.shift();m.$lines=lines;persist();drawLines();
   }
   o.wrap.addEventListener('pointermove',e=>{if(!$('cellInk').checked||tool!=='line'||e.target!==o.canvas&&e.target!==o.wrap)return;hover=point(e);if(!lineRaf)lineRaf=requestAnimationFrame(drawLines);},true);
