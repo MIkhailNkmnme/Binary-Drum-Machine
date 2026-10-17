@@ -27,6 +27,15 @@
     const a = area(cur), q = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
     const x = Math.max(8, Math.min(innerWidth - w - 8, q.left + q.width / 2 - w / 2));
     let y = a.b + 8; if (y + h > innerHeight - 4) y = Math.max(4, a.t - h - 8);
+    // v0.244: «не перекрывать кнопки подсказками» — группы теперь стоят вплотную, поэтому плашка встаёт ниже ВСЕХ кнопок и открытых
+    // ползунков, что приходятся на её ширину, а не только своей группы.
+    if (cur.closest('#hubFieldTools')) {
+      let low = a.b;
+      for (const n of document.querySelectorAll('#hubFieldTools .hubTreeItem:not([hidden]), #hubFieldTools details[open] > label')) {
+        const r = n.getBoundingClientRect(); if (!r.width || r.right < x - 4 || r.left > x + w + 4 || r.top > innerHeight) continue; low = Math.max(low, r.bottom);
+      }
+      y = Math.min(low + 8, innerHeight - h - 4);
+    }
     box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
   }
   function hide() { giveBack(cur); cur = null; box.hidden = true; }

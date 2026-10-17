@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.139. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.155. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.139</title>
+<title>Zerkalius Маятник — v0.155</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -104,16 +104,20 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 #ochkiBox[hidden]{display:none}#ochkiBox summary{cursor:pointer;color:#ffb347}#ochkiList{max-height:180px;overflow:auto;white-space:pre;color:var(--mute)}
 #bitDigits{position:fixed;pointer-events:none;margin:0;background:transparent;image-rendering:auto;z-index:2}
 #bitDigits[hidden]{display:none}
+#geomCenterCanvas{position:fixed;pointer-events:none;z-index:4;margin:0;background:transparent;image-rendering:auto}#geomCenterCanvas[hidden]{display:none}
+#cellInkCanvas,#cellLineCanvas{position:fixed;pointer-events:none;z-index:5;background:transparent}#cellInkCanvas[hidden],#cellLineCanvas[hidden],#cellInkBar[hidden]{display:none}
+#cellInkBar{position:fixed;bottom:48px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:1040px;max-width:94vw;padding:8px 12px;background:#142232;color:#e8edf5;border:1px solid #5ce1e6;font:12px monospace}
+#cellInkBar button{color:inherit;background:#24394e;padding:5px 10px;border:0;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%)}#cellInkBar button[aria-pressed=true]{background:#007b91}#cellInkHint{flex-basis:100%;color:#b8cbd9;min-height:32px;line-height:16px}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=138">
+<link rel="stylesheet" href="mayatnik-menu.css?v=141">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.139</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.155</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -164,6 +168,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Цвет единиц в виде «Только цифры»">Цвет 1 <input id="digitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет нулей в виде «Только цифры»">Цвет 0 <input id="digitZeroColour" type="color" value="#7cbcff"></label>
     <label title="Подсветить центральный столбец (столб якоря) — на поле, в любом кадре и в свёртке"><input id="midCol" type="checkbox" data-mi-short="Центр"> центр</label>
+    <label title="Геометрический центр площади всех записанных клеток текущего кадра: 0 и 1 равноправны, пустые клетки не участвуют. Считается по всему полю, независимо от масштаба и обрезки вида."><input id="geomCenter" type="checkbox" data-mi-short="Геоцентр"> Геоцентр</label>
+    <label title="Границы фигуры и сетка битов. Щелчком ставь диагонали: 1 — \, 2 — /; NumPad 5/0 — верх/низ. ПКМ убирает косые. Биты не меняются."><input id="cellInk" type="checkbox" data-mi-short="Грани"> Грани</label>
     <label title="Тонкие линии: между ними — часть поля, которую оставшиеся вершины уже не изменят (от ближайших будущих вершин вниз под 45°)"><input id="fixLines" type="checkbox" data-mi-short="Застыло"> застыло</label>
     <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
@@ -180,6 +186,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
     <label title="Карта застывания: клетка, чей бит уже окончательный, — цветом кадра, с которого он такой: фиолетовый — до 64, синий — до 128, голубой — до 256, зелёный — до 512, жёлтый — до 1024, оранжевый — до 2048, красный — позже; ярко — 1, тускло — 0. На кадре k видно то, что застыло к нему"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
+    <button id="bBlackMirror" aria-pressed="true" data-mi-short="Зеркало в чёрных" title="Зеркало в каждом чёрном треугольнике: верхний край треугольника (ровные строки среди шума) — линия-зеркало, то, что над ним, отражается внутрь. По кругу: краска — только закрашенное (заливка, шаблоны, центр), всё — и сами биты, выкл">Зеркало: краска</button>
+    <button id="bAnimHl" aria-pressed="false" data-mi-short="Аниматрица" title="Аниматрица: подсветить биты, которые изменились с прошлого кадра, — золотом (стал 1) и голубым (стал 0), след гаснет за 4 кадра. По кругу: выкл → центральный столб → всё поле → выкл">Аниматрица: выкл</button>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
     <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked data-mi-short="Оси ↕"> оси ↕</label>
@@ -233,6 +241,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <button id="bTemplateShorter" disabled title="Уменьшить высоту шаблона на 10 процентов от исходной">Ниже −</button>
     <button id="bTemplateDown" disabled title="Сдвинуть шаблон вниз на одну строку по центральной оси">Сдвиг ↓</button>
     <button id="bTemplateUp" disabled title="Сдвинуть шаблон вверх на одну строку по центральной оси">Сдвиг ↑</button>
+    <button id="bTemplateFall" aria-pressed="false" data-mi-short="Спуск ↓↓" title="Спуск: все шаблоны на поле спускаются вниз по строке за шаг, каждый своим «Инверт-следом», если он включён. Шаблон идёт, пока под ним застывшие биты (больше не изменятся), и останавливается, где начинаются ещё меняющиеся, или у низа поля. Один проход, без повтора. Ещё раз — стоп">Спуск ↓↓</button>
     <button id="bTemplateAxisUnlock" disabled aria-pressed="false" title="Разблокировать ось: мышью двигать свободно влево-вправо и вверх-вниз. Выключено — двигать только вдоль видимой вертикальной оси">Свободная ось</button>
     <button id="bTemplateReset" disabled title="Вернуть высоту 100%, сдвиг 0 и непрозрачность 50%">Сброс шабл.</button>
     <button id="bTemplateMove" aria-pressed="false" disabled title="Тянуть фигуру: без клавиш — вверх-вниз, исходное место инвертируется один раз; Shift — пропорциональный размер от центра; Alt — свободный перенос без следа">Двигать</button>
@@ -262,6 +271,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <input id="templateFile" type="file" accept=".json,application/json" hidden>
     <label title="При движении оставлять позади шаблона противоположный цвет бита: 1 → чёрный, 0 → белый"><input id="templateTrail" type="checkbox">Инверт-след</label>
     <label title="Увеличивать ширину вместе с высотой поровну в обе стороны от центра самой фигуры"><input id="templateProportional" type="checkbox">Пропорции</label>
+    <label title="Застывшее — цветом: когда маятник дошёл до всех битов под шаблоном и они больше не изменятся (будущие вершины их не достанут), шаблон закрашивается на поле своим цветом и держится так в каждом кадре. Так же держится любая краска на застывших битах"><input id="templateLock" type="checkbox" checked data-mi-short="Застыл — цветом">Застыл — цветом</label>
+    <label title="Маска: шаблон стоит трафаретом перед меняющимися битами — клетки его фигуры, которые ещё изменятся, закрыты цветом шаблона, в просветах фигуры видна аниматрица. Место шаблона запоминается и держится во всех кадрах, и в анимации"><input id="templateMask" type="checkbox" data-mi-short="Маска">Маска</label>
     <label title="Высота копии в процентах от исходной фигуры">высота % <input id="templateHeight" type="number" min="1" max="3200" step="10" value="100"></label>
     <label title="Сдвиг по вертикали в строках поля; положительное значение — вниз">вниз, строк <input id="templateDown" type="number" min="-4096" max="4096" step="1" value="0"></label>
     <label title="Непрозрачность копии в процентах">видимость % <input id="templateAlpha" type="number" min="0" max="100" step="5" value="50"></label>
@@ -284,12 +295,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   <span id="stat"></span>
 </div>
 <div id="mayatnikStatus" aria-label="Состояние маятника"></div>
-<div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output></div>
+<div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output><output id="geomCenterInfo"></output></div>
 <details id="ochkiBox" hidden><summary id="ochkiSum"></summary><div id="ochkiList"></div></details>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas></div>
 <canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
 <canvas id="fillPreview" aria-label="Область будущей заливки под курсором" hidden></canvas>
 <canvas id="colourTemplate" aria-label="Полупрозрачная копия цветной фигуры" hidden></canvas>
+<canvas id="geomCenterCanvas" aria-label="Геометрический центр всей фигуры" hidden></canvas>
 <canvas id="symAxes" aria-label="Цветные оси симметрии и их биты" hidden></canvas>
 <div id="tip"></div>
 <dialog id="mayAboutDialog" aria-labelledby="mayAboutTitle">
@@ -314,6 +326,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 </dialog>
 
 <script src="mayatnik-core.js?v=4"></script>
+<script src="mayatnik-center.js?v=151"></script>
+<script src="mayatnik-cell-geometry.js?v=154"></script>
+<script src="mayatnik-cell-ink.js?v=154"></script>
 <script src="mayatnik-symmetry.js?v=139"></script>
 <script src="mayatnik-totems.js?v=139"></script>
 <script src="mayatnik-work-file.js?v=139"></script>
@@ -323,7 +338,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-paint-cache.js?v=36"></script>
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/zz-pult.js?v=2"></script>
-<script src="mayatnik-fold.js?v=16"></script>
+<script src="mayatnik-fold.js?v=17"></script>
 <script src="mayatnik-stolb.js?v=3"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
@@ -340,7 +355,22 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   st.pair = false;   // v0.114: «Пары сразу» в меню больше нет — всегда «по очереди»
   st.ochki = false;   // v0.023: «Очки по умолчанию выключи» — при загрузке всегда выключены, выбор вида и вариантов помнится
   if (st.zoom !== 'fit') { st.zoom = Number(st.zoom); if (!(st.zoom > 0)) st.zoom = 'fit'; }   // v0.001 хранил '1'…'8' строкой
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
+  // v0.149: настройки ссылкой — ?n=строк&s=вершин&k=кадр&mode=pend|left|right|one&zerkalo=0|1|2&anim=0|1|2&centr=0|1&geocentr=0|1.
+  // Со ссылкой память браузера не пишется (ни настройки, ни раскраска): ссылка не затирает своё.
+  const URLP = new URLSearchParams(location.search), URL_ON = ['n', 's', 'k', 'mode', 'zerkalo', 'anim', 'centr', 'geocentr'].some(q => URLP.has(q));
+  let urlK = -1;
+  if (URL_ON) {
+    const num = (q, lo, hi) => { const v = parseInt(URLP.get(q), 10); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : null; };
+    const n = num('n', 8, 4096); if (n != null) { st.rows = n; if (!URLP.has('s')) st.steps = n; }
+    const sv = num('s', 1, 16384); if (sv != null) st.steps = sv;
+    if (['pend', 'left', 'right', 'one'].includes(URLP.get('mode'))) st.mode = URLP.get('mode');
+    const z = num('zerkalo', 0, 2); if (z != null) st.blackMirror = z;
+    const a = num('anim', 0, 2); if (a != null) st.animHl = a;
+    const c = num('centr', 0, 1); if (c != null) st.paintMid = !!c;
+    const gc = num('geocentr', 0, 1); if (gc != null) st.geomCenter = !!gc;
+    const kk = num('k', 0, 16384); urlK = kk == null ? 16384 : kk;
+  }
+  const save = () => { if (URL_ON) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
   let autoVertical=0,fillBase=null,fillBits=null;
   let chessLive=false,chessLayer=null,chessPrev=null,chessNext=0,chessScratch=null,chessRetry=0,chessSpare=null;   // v0.088: живой слой «Шахматки 0» (до первого draw)
@@ -386,6 +416,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function writeUI() {
     $('fillArea').value=st.fillArea;
     $('digitOneColour').value=st.digitOneColour;$('digitZeroColour').value=st.digitZeroColour;
+    $('geomCenter').checked=!!st.geomCenter;
     st.midCol=false;$('midCol').checked=false;   // v0.132: подсветка «Центр» снята со страницы
     {const old=st.paintMid;st.paintMid=!!old;if(st.midOneOn===undefined){st.midOneOn=old!==2;st.midZeroOn=old===2;}}   // v0.135: было выкл / по 1 / по 0
     $('midOneOn').checked=st.midOneOn!==false;$('midZeroOn').checked=!!st.midZeroOn;$('midWide').checked=st.midWide!==false;$('midOneColour').value=st.midOneColour||'#ff7f27';$('midZeroColour').value=st.midZeroColour||'#4f9bff';midSync();$('fixLines').checked=st.fixLines!==false;$('bitOneColour').value=st.bitOneColour;$('bitZeroColour').value=st.bitZeroColour;$('digitFont').value=st.digitFont;$('digitSize').value=st.digitSize;
@@ -435,6 +466,27 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   let ZL = new Int32Array(0), ZR = new Int32Array(0), triangleSides = [];
   // v0.123: значение «не фона» в клетке (r, c); у «1 шахматкой» фон — 1 на решётке якоря и 0 на соседней.
   const bgNoise = () => st.bg === 'chess' ? (A => (r, c) => (c - A - r) & 1 ? 1 : 0)(geo.anchor) : (Z => () => Z)(st.bg === '0' ? 1 : 0);
+  // v0.139: фигура маятника — клетки под конусами вершин lo…hi от якоря: в строке r столбцы anchor + lo − r … anchor + hi + r.
+  // v0.140: внутри — ещё и без однородных полос по краям: в строке берутся клетки «не фона» (bgNoise), кучки, разделённые
+  // пустыми промежутками шире FIG_GAP; мелкие кучки (не больше FIG_SMALL клеток) с краёв отбрасываются, если в строке есть крупная.
+  // Строка без клеток «не фона» остаётся целиком. Нужна поиску осей: полосы за фигурой не участвуют. null — конусов ещё нет.
+  const FIG_GAP = 32, FIG_SMALL = 4;
+  function figureBounds() {
+    const sp = pairOn() ? [-k, k] : k ? MAYATNIK.span(st.mode, k) : null;
+    if (!sp) return null;
+    const { W, H, val } = f, L = new Int32Array(H), R = new Int32Array(H), Zc = sp[1] > sp[0] ? bgNoise() : null;   // одна вершина — полос нет; на пустом поле полосы — единицы, «не фон» — 0
+    for (let r = 0; r < H; r++) {
+      let a = Math.max(0, geo.anchor + sp[0] - r), b = Math.min(W - 1, geo.anchor + sp[1] + r);
+      if (Zc && r > 0) {
+        const row = r * W, cl = [];   // кучки [начало, конец, число клеток «не фона»]
+        for (let c = a; c <= b; c++) if (val[row + c] === Zc(r, c)) { const t = cl[cl.length - 1]; if (t && c - t[1] <= FIG_GAP) { t[1] = c; t[2]++; } else cl.push([c, c, 1]); }
+        if (cl.some(t => t[2] > FIG_SMALL)) { let i = 0, j = cl.length - 1; while (cl[i][2] <= FIG_SMALL) i++; while (cl[j][2] <= FIG_SMALL) j--; a = cl[i][0]; b = cl[j][1]; }
+        else if (cl.length) { a = cl[0][0]; b = cl[cl.length - 1][1]; }
+      }
+      L[r] = a; R[r] = b;
+    }
+    return [L, R];
+  }
   function zoneCalc(R) {
     const { W, val } = f, Zc = bgNoise();
     triangleSides = [];
@@ -683,10 +735,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       if (st.zoom !== 'fit') { const r = cv.getBoundingClientRect(); wrap.scrollLeft += r.left + (geo.anchor - VX + .5) * scale() - (oldR.left + (geo.anchor - oldVX + .5) * oldS); }
     }
     const rp = rombP(), P = st.view === 'digits' || st.view === 'digitsOnly' || rp >= 0 ? PAL.bits : PAL[st.view] || PAL.col, px = new Uint32Array(img.data.buffer), { W, H, val } = f;
-    let zero = 0, one = 0;
+    const measured=MayatnikCenter.measure(f),{zero,one}=measured;
     const empty = rgba(EMPTY), T = new Uint32Array(6);
     for (let v = 0; v < 2; v++) for (let c = 0; c < 3; c++) T[v * 3 + c] = rgba(P[v][c]);
-    for (let i = 0; i < val.length; i++) { const v = val[i]; if (v === 0) zero++; else if (v === 1) one++; }   // счёт — по всему полю
+
     const och = st.ochki && !playing ? ochkiGet() : null;   // v0.021: «Очки» — когда кадр стоит
     if (!st.ochki || playing) $('ochkiBox').hidden = true;
     if (rp >= 0) drawRomb(px, T, empty, och && och.hl);
@@ -708,9 +760,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     clearFillPreview();
     fillBase=px.slice();fillBits=null;
     paintMid();   // v0.132: «Центр краской» — заливка по центральному столбцу, до applyFill
-    applyFill(px);chessLiveApply(px);stolbApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
+    applyFill(px);chessLiveApply(px);stolbApply(px);templateLockApply(px);blackMirrorApply(px);animHlApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
     present();
-    pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
+    pictureStats = {frame:k,...measured}; imageStats(); queueDigits();
     status();
   }
   // v0.130 → v0.132: «имел в виду не столбец, а покраска по столбцу заливкой». «Центр краской» — заливка «Столбов» от верха
@@ -750,12 +802,124 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // v0.044: краска привязана к геометрии картинки, а не к виду: «цвета», «биты», «цифры», полосы, обводка и «Очки»
     // рисуют те же пиксели, поэтому смена вида краску не стирает. Ромбы меняют геометрию — их краска хранится отдельно и возвращается.
     const key=[k,rombP()<0?'flat':st.view,VX,VW,VH,RK].join(':');
+    if(fillField===f&&fillKey&&fillKey!==key)paintLockCheck(fillKey);   // v0.143: застывшая краска уходящего кадра — в замки
     if(fillField===f&&fillKey&&fillKey!==key){paintStash.set(fillKey,{fillMask,paintBits,templateItems,active:colourTemplate?.id});while(paintStash.size>8)paintStash.delete(paintStash.keys().next().value);const back=paintStash.get(key);
       if(back){paintStash.delete(key);fillKey=key;fillMask=back.fillMask;paintBits=back.paintBits;fillBits=null;fillHistory=[];fillRedo=[];fillHistoryBytes=0;templateItems=back.templateItems;colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===back.active)||templateItems[0]||null,false);fillSync();}}
     if(fillField!==f||fillKey!==key){const had=!!fillMask;clearFill(had&&fillField===f?'Краска этого вида отложена: вернётся, когда вернёшь вид.':had?'Другой рисунок · сохранённую раскраску можно вернуть кнопкой «Из памяти».':'');fillField=f;fillKey=key;templateItems=[];colourTemplate=null;templateVisible=false;templateMove=false;templateLastDown=0;templateOffsetX=0;templateStatsKey='';$('templateInfo').textContent='';templateSync();}
     if(paintBits){const black=rgba([0,0,0]),white=rgba([255,255,255]);for(let i=0;i<px.length;i++)if(paintBits[i]>=0)px[i]=paintBits[i]?white:black;}
     if(fillMask)for(let i=0;i<px.length;i++)if(fillMask[i])px[i]=fillMask[i];
   }
+  // v0.142: «если есть шаблон и вышли на его биты и они не меняемы — покрасить его цветом шаблона на холсте и при каждом кадре
+  // таким держать». Для клетки (r, c) кадр застывания — следующий за последней вершиной, чей конус её достаёт (|c − якорь − p| ≤ r);
+  // не достаёт ни одна — клетка не записана, шаблон не застынет. Когда текущий кадр дошёл до застывания всех клеток видимого
+  // шаблона, его клетки и цвет запоминаются (templateLocks, по одному на шаблон, своя память) и красятся в каждом кадре от
+  // застывания и дальше — даже когда шаблоны кадра сменились. Другой маятник (строки, вершины, ход, поле, пара) — замки снимаются.
+  const LOCK_KEY='zerkalius_mayatnik_template_locks_v1';
+  let templateLocks=(()=>{try{return JSON.parse(localStorage.getItem(LOCK_KEY))||null;}catch(_){return null;}})();
+  const lockSig=()=>[st.rows,st.steps,st.mode,st.bg,pairOn()?1:0].join('|');
+  const lockSave=()=>{if(URL_ON)return;try{localStorage.setItem(LOCK_KEY,JSON.stringify(templateLocks));}catch(_){}};
+  function cellFreezeFrame(r,c){
+    const d=c-geo.anchor,T=total();
+    if(pairOn()){for(let j=T-1;j>=0;j--)if(Math.abs(d-j-1)<=r||Math.abs(d+j+1)<=r)return j+1;return Math.abs(d)<=r?0:Infinity;}
+    for(let j=T-1;j>=0;j--)if(Math.abs(d-MAYATNIK.offset(st.mode,j))<=r)return j+1;return Infinity;
+  }
+  function templateLockCheck(){   // true — замок появился или изменился
+    if(!f||!geo||!img)return false;let changed=false;
+    if(!templateLocks||templateLocks.sig!==lockSig()){templateLocks={sig:lockSig(),items:{},paint:{},masks:{}};lockSave();}
+    for(const item of templateItems){if(!item.view?.visible)continue;
+      const cells=new Set();let kf=0;
+      for(const part of item.parts){const r=templateRect(part,false,item),x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
+        for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){if(!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
+          const cell=fieldCellAt(x,y);if(!cell||cells.has(cell.r*f.W+cell.c))continue;cells.add(cell.r*f.W+cell.c);kf=Math.max(kf,cellFreezeFrame(cell.r,cell.c));}}
+      if(!cells.size)continue;const list=[...cells].sort((a,b)=>a-b),M=templateLocks.masks||(templateLocks.masks={}),om=M[item.id];   // v0.145: место шаблона — для маски
+      if(!om||om.hex!==item.hex||om.k!==kf||om.cells.length!==list.length||om.cells.some((v,i)=>v!==list[i])){M[item.id]={hex:item.hex,W:f.W,cells:list,k:kf};lockSave();changed=changed||st.templateMask===true;}
+      if(kf>k)continue;   // ещё не дошли или не застынет
+      const old=templateLocks.items[item.id];
+      if(!old||old.k!==kf||old.hex!==item.hex||old.cells.length!==list.length||old.cells.some((v,i)=>v!==list[i])){templateLocks.items[item.id]={hex:item.hex,k:kf,W:f.W,cells:list};lockSave();changed=true;}
+    }
+    return changed;
+  }
+  // v0.143: «и не только шаблон — все закрашенные пусть не обесцвечиваются, неизменные». Краска кадра (fillMask) на застывших
+  // клетках запоминается по клеткам: templateLocks.paint[клетка] = [цвет, кадр застывания], и держится в каждом кадре от застывания.
+  let freezeCache=null,freezeCacheF=null,lockSaveT=0;
+  function freezeFrameOf(q){
+    if(freezeCacheF!==f){freezeCacheF=f;freezeCache=new Int32Array(f.W*f.H).fill(-1);}
+    let v=freezeCache[q];if(v<0){const kf=cellFreezeFrame(Math.floor(q/f.W),q%f.W);v=freezeCache[q]=kf===Infinity?2147483647:kf;}return v;
+  }
+  // old — ключ краски прошлого кадра [k, вид, VX, VW, VH, RK]: краска снимается при смене кадра, её клетки считаются по той геометрии.
+  function paintLockCheck(old){
+    if(!fillMask||!f||!img||!templateLocks||!geo)return;const P=templateLocks.paint||(templateLocks.paint={});let changed=false;
+    let kk=k,cellOf;
+    if(old){const [ko,view,vx,vw,vh,rk]=old.split(':');kk=+ko;
+      if(view==='flat'){const X=+vx,Wd=+vw*+rk,R=+rk;cellOf=i=>{const r=Math.floor(Math.floor(i/Wd)/R),c=X+Math.floor((i%Wd)/R);return r<+vh&&c<X+ +vw?r*f.W+c:-1;};}
+      else if(+vx===VX&&+vw===VW&&+vh===VH&&+rk===RK){const W=img.width;cellOf=i=>{const e=fieldCellAt(i%W,Math.floor(i/W));return e?e.r*f.W+e.c:-1;};}
+      else return;}
+    else{const W=img.width;cellOf=i=>{const e=fieldCellAt(i%W,Math.floor(i/W));return e?e.r*f.W+e.c:-1;};}
+    for(let i=0;i<fillMask.length;i++){const col=fillMask[i];if(!col)continue;
+      const q=cellOf(i);if(q<0||f.val[q]<0)continue;
+      const kf=freezeFrameOf(q);if(kf>kk)continue;const o=P[q];if(o&&o[0]===col&&o[1]===kf)continue;P[q]=[col,kf];changed=true;}
+    if(changed){templateLocks.W=f.W;clearTimeout(lockSaveT);lockSaveT=setTimeout(lockSave,400);}
+  }
+  function lockCell(px,q,col){
+    const r=Math.floor(q/f.W),c=q%f.W;if(r>=VH||c<VX||c>=VX+VW||outShow(r,c)||f.val[q]<0)return;
+    if(rombP()<0){for(let dy=0;dy<RK;dy++)for(let dx=0;dx<RK;dx++)px[(r*RK+dy)*img.width+(c-VX)*RK+dx]=col;return;}
+    const hs=rombP()===2?[[0,0],[1,VW+RG]]:[[rombP(),0]];for(const [p,ox] of hs){if(((c-geo.anchor-r)%2+2)%2!==p)continue;   // ромб клетки: центр (c+.5, r+.5), полуоси 1
+      const cx=(c-VX+ox+.5)*RK,cy=(r+.5)*RK;for(let y=Math.max(0,Math.floor(cy-RK));y<Math.min(img.height,Math.ceil(cy+RK));y++)for(let x=Math.max(0,Math.floor(cx-RK));x<Math.min(img.width,Math.ceil(cx+RK));x++)if(Math.abs(x+.5-cx)+Math.abs(y+.5-cy)<=RK)px[y*img.width+x]=col;}
+  }
+  function templateLockApply(px){
+    templateLockCheck();if(!templateLocks)return;paintLockCheck();
+    if(st.templateLock!==false&&templateLocks.paint&&(templateLocks.W??f.W)===f.W)for(const q in templateLocks.paint){const [col,kf]=templateLocks.paint[q];if(kf<=k)lockCell(px,+q,col);}
+    if(st.templateLock!==false)for(const L of Object.values(templateLocks.items)){if(L.k>k||L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
+    // v0.145: «использовать шаблон как маску перед изменяющимися, закрывая и пропуская в просветах биты аниматрицы»: клетки фигуры
+    // шаблона, которые ещё изменятся (кадр застывания позже текущего), закрыты его цветом; в просветах фигуры видно поле.
+    if(st.templateMask===true&&templateLocks.masks)for(const L of Object.values(templateLocks.masks)){if(L.W!==f.W)continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)if(freezeFrameOf(q)>k)lockCell(px,q,col);}
+    // место шаблона, застывшее целиком к этому кадру, — его цветом и в кадрах, где самого шаблона уже нет (v0.142 по месту)
+    if(st.templateLock!==false&&templateLocks.masks)for(const L of Object.values(templateLocks.masks)){if(L.W!==f.W||!(L.k<=k))continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
+  }
+  // v0.146: «подсветка бит в аниматрице по центральному столбу хотя бы». Клетка, чей бит изменился с прошлого показанного кадра,
+  // получает след 4 (стал 1 — золото, стал 0 — голубой), след гаснет на 1 с каждой сменой кадра. st.animHl: 0 — выкл, 1 — столб
+  // якоря, 2 — всё поле. Сравнение — с прошлым кадром, который был на экране (анимация, ползунок, шаг).
+  let animPrev=null,animPrevF=null,animPrevK=-1,animHeat=null,animTo=null;
+  const ANIM_ONE=rgba([255,211,91]),ANIM_ZERO=rgba([92,225,230]);
+  function animHlApply(px){
+    const m=st.animHl|0;if(!m||!f||!geo||!img){animPrev=null;return;}
+    const {W,H,val}=f,N=W*H;
+    if(animPrevF!==f||!animPrev||animPrev.length!==N){animPrevF=f;animPrev=val.slice();animPrevK=k;animHeat=new Uint8Array(N);animTo=new Int8Array(N);return;}
+    if(k!==animPrevK){const A=geo.anchor;
+      for(let q=0;q<N;q++){if(animHeat[q])animHeat[q]--;}
+      if(m===1){for(let r=0;r<H;r++){const q=r*W+A;if(val[q]!==animPrev[q]&&val[q]>=0){animHeat[q]=4;animTo[q]=val[q];}}}
+      else for(let q=0;q<N;q++)if(val[q]!==animPrev[q]&&val[q]>=0){animHeat[q]=4;animTo[q]=val[q];}
+      animPrev.set(val);animPrevK=k;}
+    const one=[255,211,91],zero=[92,225,230];
+    for(let q=0;q<N;q++){const h=animHeat[q];if(!h)continue;const r=Math.floor(q/W),c=q%W;if(r>=VH||c<VX||c>=VX+VW)continue;
+      const base=rombP()<0?px[r*RK*img.width+(c-VX)*RK]:0,col=rgba(animTo[q]?one:zero);lockCell(px,q,rombP()<0?mixPx(col,base,h/4):col);}
+  }
+  // v0.147: «это зеркало в чёрный треугольник», «в каждом чёрном сверху надо зеркало». Чёрный треугольник — ровные куски строк
+  // (все биты одинаковые) среди шума: кусок от 12 бит, или ровно на бит с каждой стороны уже куска над ним — так треугольник
+  // сужается к острию. Кусок, упёршийся в пустое или край поля (полосы снаружи конуса), — не треугольник. up — сколько ровных
+  // строк над клеткой в её столбце, считая её: верх треугольника T = r − up + 1, зеркальная строка — T − 1 − (r − T).
+  // st.blackMirror: 1 — отражается только краска (пиксели, отличные от картинки битов), 2 — всё, 0 — выкл. Плоские виды.
+  let bmKey='',bmUp=null,bmGen=0,bmF=null;   // v0.148: bmGen — поле переписано свёрткой (тот же кадр, другие биты)
+  const BM_MIN=12;
+  function blackTriUp(){
+    const key=[k,f.W,f.H,VH,bmGen].join('|');if(bmKey===key&&bmF===f&&bmUp)return bmUp;bmF=f;
+    const {W,val}=f,up=new Int16Array(W*VH),flat=new Uint8Array(W*VH);
+    for(let r=0;r<VH;r++){const row=r*W;let s=0;
+      while(s<W){const v=outShow(r,s)?-1:val[row+s];let e=s;while(e+1<W&&!outShow(r,e+1)&&val[row+e+1]===v)e++;
+        if(v>=0&&s>0&&e<W-1&&val[row+s-1]>=0&&val[row+e+1]>=0&&!outShow(r,s-1)&&!outShow(r,e+1)&&(e-s+1>=BM_MIN||r>0&&flat[row-W+s-1]&&flat[row-W+e+1]))
+          for(let c=s;c<=e;c++){flat[row+c]=1;up[row+c]=(r>0?up[row-W+c]:0)+1;}
+        s=e+1;}}
+    bmKey=key;return bmUp=up;
+  }
+  function blackMirrorApply(px){
+    const m=st.blackMirror??1;if(!m||!f||rombP()>=0||RK!==1)return;
+    const up=blackTriUp(),W=f.W,base=fillBase;
+    for(let r=1;r<VH;r++)for(let c=VX;c<VX+VW;c++){const u=up[r*W+c];if(!u)continue;const sr=r-2*u+1;if(sr<0)continue;
+      const so=sr*VW+c-VX,o=r*VW+c-VX,v=px[so];
+      if(m===1){if(!base||v===base[so])continue;px[o]=mixPx(v,px[o],.8);}else px[o]=mixPx(v,px[o],.7);}
+  }
+  const blackMirrorSync=()=>{const m=st.blackMirror??1,b=$('bBlackMirror');b.textContent='Зеркало: '+['выкл','краска','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
+  const animHlSync=()=>{const m=st.animHl|0,b=$('bAnimHl');b.textContent='Аниматрица: '+['выкл','столб','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   function fieldCellAt(x,y){
     const half=halfOf((x+.5)/RK);if(!half)return null;const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
     const [c,r]=p<0?[VX+Math.floor(half[1]),Math.floor((y+.5)/RK)]:rombCell(half[1],(y+.5)/RK,p);
@@ -831,10 +995,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(recorder){recorder.stop();return;}
     if(!cv.captureStream||!window.MediaRecorder){$('fillInfo').textContent='Этот браузер не умеет записывать видео с холста.';return;}
     const type=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
-    const chunks=[],r=new MediaRecorder(cv.captureStream(30),type?{mimeType:type,videoBitsPerSecond:8e6}:undefined);
+    const chunks=[],r=new MediaRecorder(cv.captureStream(30),{...(type?{mimeType:type}:{}),videoBitsPerSecond:8e6,videoKeyFrameIntervalDuration:1000});   // v0.150: опорный кадр раз в секунду
+    const t0=Date.now();
     r.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-    r.onstop=()=>{recorder=null;$('bRec').setAttribute('aria-pressed','false');$('bRec').textContent='Запись';
-      const ext=(r.mimeType||type).includes('mp4')?'mp4':'webm',blob=new Blob(chunks,{type:r.mimeType||type||'video/webm'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    r.onstop=async()=>{recorder=null;$('bRec').setAttribute('aria-pressed','false');$('bRec').textContent='Запись';
+      // v0.150: «запись как видео без перемотки» — у mp4 Chrome длительность 0 и нет таблицы кадров; доводит общий recorder.js
+      const ext=(r.mimeType||type).includes('mp4')?'mp4':'webm';let blob=new Blob(chunks,{type:r.mimeType||type||'video/webm'});
+      try{const R=window.__zerkRecorder;if(R?.fixVideo)blob=await R.fixVideo(blob,Date.now()-t0);}catch(_){}
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
       a.href=url;a.download=`mayatnik-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
       $('fillInfo').textContent=`Видео записано: ${(blob.size/1048576).toFixed(1)} МБ, .${ext}`;};
     r.start(500);recorder=r;$('bRec').setAttribute('aria-pressed','true');$('bRec').textContent='Стоп записи';$('fillInfo').textContent='Идёт запись видео поля…';draw();
@@ -1022,7 +1190,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';draw();fillSync();savePaint();
   }
   $('bFillUndo').onclick=()=>historyStep(false);$('bFillRedo').onclick=()=>historyStep(true);
-  $('bFillClear').onclick=()=>{const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
+  $('bFillClear').onclick=()=>{if(templateLocks){templateLocks.items={};templateLocks.paint={};templateLocks.masks={};lockSave();}const before=editSnapshot();fillMask=null;paintBits=null;fillBits=null;finishEdit(before);$('fillInfo').textContent='Краска и изменения битов сняты.';templateStatsKey='';draw();fillSync();savePaint();};
   $('bRegions').onclick=()=>{if(!img)return;stop();target=k;
     // v0.087: в режиме «Шахматки 0» — счёт по клеткам, как их соединяет этот режим, а не по пикселям точного цвета.
     if(st.fillArea==='chess0'&&f&&geo){const reg=chessZeroRegions();$('fillInfo').title='';$('fillInfo').dataset.regions=String(reg.count);
@@ -1136,7 +1304,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   $('bTemplateFlipH').onclick=()=>mirrorTemplate('right',false);
   $('bTemplateFlipV').onclick=()=>mirrorTemplate('bottom',false);
-  $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
+  $('bTemplateRemove').onclick=()=>{if(!colourTemplate)return;if(templateLocks?.masks?.[colourTemplate.id]){delete templateLocks.masks[colourTemplate.id];lockSave();}const i=templateItems.indexOf(colourTemplate);templateItems.splice(i,1);selectTemplate(templateItems[Math.min(i,templateItems.length-1)]||null);};
   function templateSync(){
     rememberTemplate();fieldTemplateList();
     $('bTemplateClone').disabled=!colourTemplate;$('bTemplateRemove').disabled=!colourTemplate;$('bTemplateFlipH').disabled=!colourTemplate;$('bTemplateFlipV').disabled=!colourTemplate;$('bXor1').disabled=$('bXor2').disabled=$('xorStep').disabled=!colourTemplate||!templateVisible;if(colourTemplate)$('xorStep').max=xorMax();$('bMirrorByLine').disabled=!colourTemplate||!mirrorLine;
@@ -1209,6 +1377,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(let i=0;i<u.length;i++){const b=part.bitsData[i];u[i]=b===1?one:b===0?zero:0;}
     c.getContext('2d').putImageData(im,0,0);return c;}
   function drawTemplate(){
+    if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
     rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode)||playing;if(templateCanvas.hidden)return;
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
@@ -1287,7 +1456,36 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!=='')changeTemplate(id,$(id).value);});
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('change',()=>changeTemplate(id,$(id).value||$(id).defaultValue));
   $('templateProportional').onchange=()=>{templateStatsKey='';queueDigits();savePaint();};
+  $('templateMask').checked=st.templateMask===true;$('templateMask').onchange=()=>{st.templateMask=$('templateMask').checked;save();if(f)draw();};   // v0.145
+  $('templateLock').checked=st.templateLock!==false;$('templateLock').onchange=()=>{st.templateLock=$('templateLock').checked;save();if(f)draw();};   // v0.142
   for(const [id,field,step]of [['bTemplateTaller','templateHeight',10],['bTemplateShorter','templateHeight',-10],['bTemplateDown','templateDown',1],['bTemplateUp','templateDown',-1]])$(id).onclick=()=>changeTemplate(field,Number($(field).value)+step);
+  // v0.144: «все выделенные шаблоны спускаются вниз построчно — и инверт, если стоит такая кнопка; после прохода вниз не повторять;
+  // повторять только пока не ушёл вниз до неизменённых бит». Каждый видимый шаблон — по строке за шаг через «Сдвиг ↓» (со своим
+  // «Инверт-следом» и отменой), пока все клетки под его следующим местом застыли к текущему кадру и он не у низа поля.
+  let templateFall=0;
+  function templateFallStop(){clearTimeout(templateFall);templateFall=0;$('bTemplateFall').setAttribute('aria-pressed','false');}
+  function templateCellsFrozen(item,dy){   // все клетки шаблона, сдвинутого на dy строк, записаны и застыли к кадру k
+    const was=$('templateDown').value;if(item===colourTemplate)$('templateDown').value=Number(was)+dy;
+    const saved=item.view.down;if(item!==colourTemplate)item.view={...item.view,down:(item.view.down||0)+dy};
+    let ok=true,any=false;
+    try{for(const part of item.parts){const r=templateRect(part,false,item);if(r.y+r.height>img.height){ok=false;break;}
+      const x0=Math.max(part.ox*RK,Math.floor(r.x)),x1=Math.min((part.ox+VW)*RK,Math.ceil(r.x+r.width)),y0=Math.max(0,Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(r.y+r.height));
+      for(let y=y0;y<y1&&ok;y++)for(let x=x0;x<x1;x++){if(!MayatnikTemplate.contains(part.mask,r,x+.5,y+.5))continue;
+        const e=fieldCellAt(x,y);if(!e){ok=false;break;}const q=e.r*f.W+e.c;if(f.val[q]<0||freezeFrameOf(q)>k){ok=false;break;}any=true;}
+      if(!ok)break;}}
+    finally{if(item===colourTemplate)$('templateDown').value=was;else item.view={...item.view,down:saved};}
+    return ok&&any;
+  }
+  function templateFallStep(){
+    if(!f||!img){templateFallStop();return;}rememberTemplate();
+    const keep=colourTemplate,items=templateItems.filter(t=>t.view?.visible);let moved=0;
+    for(const item of items){if(!templateCellsFrozen(item,1))continue;if(colourTemplate!==item)selectTemplate(item,false);$('bTemplateDown').disabled=false;$('bTemplateDown').click();moved++;}
+    if(keep&&colourTemplate!==keep&&templateItems.includes(keep))selectTemplate(keep,false);
+    templateSync();draw();
+    if(!moved){templateFallStop();$('fillInfo').textContent='Спуск: дальше биты ещё меняются или низ поля';return;}
+    templateFall=setTimeout(templateFallStep,40);
+  }
+  $('bTemplateFall').onclick=()=>{if(templateFall){templateFallStop();return;}if(!templateItems.some(t=>t.view?.visible))return;stop();target=k;$('bTemplateFall').setAttribute('aria-pressed','true');templateFall=setTimeout(templateFallStep,0);};
   $('bTemplateReset').onclick=()=>{$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateOffsetX=0;$('templateAlpha').value=50;$('templateProportional').checked=false;templateStatsKey='';queueDigits();savePaint();};
   function rasterBit(x,y,original=false){
     x=Math.floor(x);y=Math.floor(y);if(x<0||y<0||x>=img.width||y>=img.height)return -1;
@@ -1387,7 +1585,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
-    if(cacheRestoring||templateDragging)return;
+    if(cacheRestoring||templateDragging||URL_ON)return;
     const data=paintSnapshot();if(!data)return;
     $('paintCacheInfo').textContent='Сохраняю раскраску…';
     cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data)).then(()=>{$('paintCacheInfo').textContent='Раскраска сохранена в браузере';}).catch(()=>{$('paintCacheInfo').textContent='Не удалось сохранить в браузере — сохрани PNG';});
@@ -1691,7 +1889,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (symPending === key) return null;
     if (symWorker) { symWorker.terminate(); symWorker = null; }
     symPending = key; $('symInfo').textContent = 'Ищу оси…';
-    const field = {W:f.W,H:f.H,val:f.val.slice()}, opts = {anchor:geo.anchor,
+    const field = {W:f.W,H:f.H,val:f.val.slice()}, fb = figureBounds();
+    // v0.139: клетки за фигурой маятника (фон 1 / 0 / шахматка) — как незаписанные: оси и их биты там не ищутся.
+    for (let r = 0; r < f.H; r++) { const row = r * f.W, L = fb ? fb[0][r] : f.W, R = fb ? fb[1][r] : -1; for (let c = 0; c < f.W; c++) if (c < L || c > R) field.val[row + c] = -1; }
+    const fieldCopy = {W:field.W,H:field.H,val:field.val.slice()}, opts = {anchor:geo.anchor,
       minRows:st.symRowsMin,maxRows:st.symRowsMax,minBits:st.symBitsMin,maxBits:st.symBitsMax,directions:symDirs()};
     const accept = data => {
       if (symPending !== key) return;
@@ -1717,8 +1918,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       symWorker.postMessage({field,opts,bits:!!st.symBits,totems:!!st.symTriangles,minTriangleRows:st.symTriangleRows},[field.val.buffer]);
     } catch (e) {
       // Blob workers may be forbidden by the host; preserve the offline page.
-      const segs = MayatnikSymmetry.find(f,opts);
-      accept({segs,rgba:st.symBits?MayatnikSymmetry.highlights(f,segs,geo.anchor):null,triangles:st.symTriangles?MayatnikSymmetry.triangles(segs,geo.anchor,st.symTriangleRows):null});
+      const segs = MayatnikSymmetry.find(fieldCopy,opts);
+      accept({segs,rgba:st.symBits?MayatnikSymmetry.highlights(fieldCopy,segs,geo.anchor):null,triangles:st.symTriangles?MayatnikSymmetry.triangles(segs,geo.anchor,st.symTriangleRows):null});
     }
     return null;
   }
@@ -1836,6 +2037,34 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for (let i = 0; i < konus.n && konus.top + i < VH; i++) { const y = konus.top + i;
       for (const x of [konus.ax - i - 1, konus.ax + 2 + i]) if (x >= VX && x < VX + VW) px[y * VW + x - VX] = KONUS_COL; }
   }
+  function paintGeomCenter(ctx,x0,y0,s,w,h){
+    const c=pictureStats?.center;if(!st.geomCenter||!c)return;
+    const copies=rombP()===2?[0,VW+RG]:[0];
+    ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
+    for(const ox of copies){
+      const x=x0+(c.x-VX+ox)*s,y=y0+c.y*s;
+      if(c.x<VX||c.x>VX+VW||c.y>VH||x<-30||x>w+30||y<-30||y>h+30)continue;
+      for(const [colour,width] of [['#080b10',5],['#ffe66d',2]]){
+        ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);
+        ctx.moveTo(x-19,y);ctx.lineTo(x+19,y);ctx.moveTo(x,y-19);ctx.lineTo(x,y+19);ctx.stroke();
+      }
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
+      ctx.font='bold 12px monospace';ctx.lineWidth=3;ctx.strokeStyle='#080b10';ctx.strokeText('Центр',x+12,y-10);ctx.fillStyle='#ffe66d';ctx.fillText('Центр',x+12,y-10);
+    }
+    ctx.restore();
+  }
+  function drawGeomCenter(){
+    const el=$('geomCenterCanvas'),info=$('geomCenterInfo'),c=pictureStats?.center;
+    el.hidden=!st.geomCenter||!c;
+    if(!st.geomCenter){info.textContent='';return;}
+    if(!c){info.textContent='Геоцентр: нет записанных клеток';return;}
+    const fmt=n=>Number(n.toFixed(3)).toLocaleString('ru-RU');
+    info.textContent=`Геоцентр: x ${fmt(c.x-geo.anchor-.5)}, y ${fmt(c.y-.5)} · от первой вершины, в битах`;
+    const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),w=wrap.clientWidth,h=wrap.clientHeight,d=Math.min(2,DPR());
+    Object.assign(el.style,{left:host.left+'px',top:host.top+'px',width:w+'px',height:h+'px'});
+    el.width=Math.max(1,Math.round(w*d));el.height=Math.max(1,Math.round(h*d));
+    const ctx=el.getContext('2d');ctx.setTransform(d,0,0,d,0,0);paintGeomCenter(ctx,r.left-host.left,r.top-host.top,scale(),w,h);
+  }
   function imageStats() {
     if (!f) return;
     const r = cv.getBoundingClientRect(), num = n => n.toLocaleString('ru-RU');
@@ -1844,7 +2073,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
   }
-  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();foldTransport?.render();foldTransportV?.render();});}
+  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();drawGeomCenter();cellInk.draw();foldTransport?.render();foldTransportV?.render();});}
   function drawDigits() {
     digitsRaf=0;
     const rp=rombP(),only=st.view==='digitsOnly';
@@ -2144,7 +2373,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if (!f) return; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
     const cg=c.getContext('2d');cg.putImageData(img,0,0);
     if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,RK,c.width,c.height,true);
-    paintTemplate(cg,0,0,RK);
+    paintTemplate(cg,0,0,RK);paintGeomCenter(cg,0,0,RK,c.width,c.height);
     c.toBlob(b => b && download(fname('png'), b));
   };
   function frameSnapshot(){
@@ -2180,6 +2409,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.111: цвета клеток — перерисовать поле; шрифт и размер — слой цифр
   for(const id of ['bitOneColour','bitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;applyBitColours();save();if(f)draw();});
   $('fixLines').addEventListener('change',()=>{st.fixLines=$('fixLines').checked;save();if(f)draw();});   // v0.125
+  blackMirrorSync();$('bBlackMirror').onclick=()=>{st.blackMirror=((st.blackMirror??1)+1)%3;blackMirrorSync();save();if(f)draw();for(const t of [foldTransport,foldTransportV])if(t?.active)t.render();};   // v0.147; v0.148 — и окна свёртки
+  animHlSync();$('bAnimHl').onclick=()=>{st.animHl=((st.animHl|0)+1)%3;animPrev=null;animHlSync();save();if(f)draw();};   // v0.146
+  $('geomCenter').addEventListener('change',()=>{st.geomCenter=$('geomCenter').checked;save();queueDigits();});
   $('midCol').addEventListener('change',()=>{st.midCol=$('midCol').checked;save();if(f)draw();});   // v0.119
   $('digitFont').addEventListener('change',()=>{st.digitFont=$('digitFont').value;save();queueDigits();});
   $('digitSize').addEventListener('change',()=>{st.digitSize=Math.max(30,Math.min(100,+$('digitSize').value||80));$('digitSize').value=st.digitSize;save();queueDigits();});
@@ -2457,7 +2689,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         if(outShow(y,x+VX))continue;if(frozen&&!frozen(y,x+VX)){moving++;continue;}let v=f.val[y*f.W+x+VX];   // v0.127: незастывшие — не сворачиваются
         const parity=((x+VX-geo.anchor-y)%2+2)%2,ox=rp===2&&parity?VW+RG:0;
         if(rp<0||rp===2||rp===parity){const q=Math.floor((y+.5)*RK)*img.width+Math.floor((x+ox+.5)*RK),edited=paintBits?.[q];if(edited>=0)v=edited;
-          colour[y*VW+x]=midAuto?.mark[q]&&fillBase?fillBase[q]:pix[q];paint[y*VW+x]=midAuto?.mark[q]?0:fillMask?.[q]||0;}   // v0.096: цвет клетки со всей подсветкой — свёртка везёт его с битом
+          colour[y*VW+x]=midAuto?.mark[q]&&fillBase?fillBase[q]:pix[q];paint[y*VW+x]=midAuto?.mark[q]?0:fillMask?.[q]||(fillBase&&pix[q]!==fillBase[q]?pix[q]:0);}   // v0.148: и прочая краска (шаблоны, застывшее) — для зеркала в чёрных   // v0.096: цвет клетки со всей подсветкой — свёртка везёт его с битом
         data[y*VW+x]=v;
       }
       foldSource={field:f,frame:k,x:VX,w:VW,h:VH,view:st.view,paint:fillMask,bits:paintBits};
@@ -2468,11 +2700,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       return {width:VW,height:VH,center:centre,data,colour,paint,write};
     },
     config(){
-      if(!foldBack&&f&&geo)return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,midFill:st.paintMid?{...midCfg(),col:geo.anchor-VX}:null};   // v0.129: окну проверки снимка не нужны
+      if(!foldBack&&f&&geo)return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,blackMirror:st.blackMirror??1,midFill:st.paintMid?{...midCfg(),col:geo.anchor-VX}:null};   // v0.129: окну проверки снимка не нужны
       if(foldBack){const b=foldBack;if(b.f!==f||b.k!==k||b.view!==st.view)return null;   // v0.118: в режиме записи краска и биты меняются — не повод закрывать
-        return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol};}
+        return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,blackMirror:st.blackMirror??1};}
       const b=foldSource;if(!b||b.field!==f||b.frame!==k||b.x!==VX||b.w!==VW||b.h!==VH||b.view!==st.view||b.paint!==fillMask||b.bits!==paintBits)return null;
-      return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol};
+      return {scale:scale(),view:st.view,rp:rombP(),gap:RG,origin:VX,anchor:geo.anchor,one:st.digitOneColour,zero:st.digitZeroColour,font:digitFamily(),mid:!!st.midCol,blackMirror:st.blackMirror??1};
     },
     onClose(){if(foldBack&&foldBack.axis!==axis)return;foldSource=null;foldRestore();queueDigits();},
     apply(state){foldApply(state);},
@@ -2502,7 +2734,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(b.axis==='v'){foldApplyV(state,b);return;}
     const W=f.W,map=new Int32Array(VW);for(let x=0;x<VW;x++)map[x]=x===b.centre?x:state.srcAt(x);
     for(let y=0;y<VH;y++)for(let x=0;x<VW;x++)f.val[y*W+VX+x]=state.bit(x,y);
-    b.map=map;paintBits=null;fillBits=null;
+    b.map=map;paintBits=null;fillBits=null;bmGen++;
     if(b.mask){const IW=img.width,IH=img.height,R=RK,m=new Uint32Array(IW*IH);let any=false;
       for(let x=0;x<VW;x++){const sx=map[x];if(sx<0)continue;for(let y=0;y<IH;y++){const row=y*IW;for(let d=0;d<R;d++){const v=b.mask[row+sx*R+d];if(v){m[row+x*R+d]=v;any=true;}}}}
       fillMask=any?m:null;}
@@ -2512,14 +2744,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   function foldApplyV(state,b){
     const W=f.W,map=new Int32Array(VH);for(let y=0;y<VH;y++)map[y]=y===b.centre?y:state.srcAt(y);
     for(let y=0;y<VH;y++)for(let x=0;x<VW;x++)f.val[y*W+VX+x]=state.bit(x,y);
-    b.map=map;paintBits=null;fillBits=null;
+    b.map=map;paintBits=null;fillBits=null;bmGen++;
     if(b.mask){const IW=img.width,IH=img.height,R=RK,m=new Uint32Array(IW*IH);
       for(let y=0;y<VH;y++){const sy=map[y];if(sy<0)continue;for(let d=0;d<R;d++)if((y*R+d)<IH&&(sy*R+d)<IH)m.set(b.mask.subarray((sy*R+d)*IW,(sy*R+d+1)*IW),(y*R+d)*IW);}
       fillMask=m.some(Boolean)?m:null;}
     draw();
   }
   function foldRestore(){const b=foldBack;if(!b)return;
-    if(f===b.f&&k===b.k){foldUnshift();f.val.set(b.val);fillMask=b.mask&&b.mask.some(Boolean)?b.mask:null;paintBits=b.bits;}
+    if(f===b.f&&k===b.k){foldUnshift();f.val.set(b.val);bmGen++;fillMask=b.mask&&b.mask.some(Boolean)?b.mask:null;paintBits=b.bits;}
     foldBack=null;fillBits=null;if(f){draw();fillSync();savePaint();}}
   // v0.097: дзен — на экране только поле (и пульты свёртки / прохода, если включены). Кнопка в шапке, щелчок колёсиком по полю, Esc.
   function zenToggle(on=!document.body.classList.contains('may-zen')){
@@ -2529,14 +2761,17 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('mayZen').onclick=()=>zenToggle();$('mayZenOut').onclick=()=>zenToggle(false);
   wrap.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});   // колёсико — без автопрокрутки браузера
   addEventListener('keydown',e=>{if(e.code==='Escape'&&document.body.classList.contains('may-zen')&&!e.target.closest?.('input,select,textarea'))zenToggle(false);});
-  writeUI();restorePaint().then(ok=>{if(!ok)build();});
+  const cellInk=MayatnikCellInk({wrap,canvas:cv,state:()=>st,save,view:()=>!f||!img?null:{W:f.W,H:f.H,k,anchor:geo.anchor,mode:st.mode,steps:st.steps,pair:pairOn(),bg:st.bg,romb:rombP()>=0,VX,width:VW,height:VH,s:scale(),bit:(x,y)=>outShow(y,x+VX)?-1:rasterBit(Math.floor((x+.5)*RK),Math.floor((y+.5)*RK))}});
+  writeUI();if(URL_ON)goTo(urlK);else restorePaint().then(ok=>{if(!ok)build();});   // v0.149: ссылка с настройками — сразу к кадру k
 })();
 </script>
 <script src="mayatnik-logo-pattern.js?v=138"></script>
 <script src="mayatnik-logo.js?v=138"></script>
 <script src="../_js/hub-link.js?v=1"></script>
-<script src="../_js/menu-icons.js?v=18"></script>
+<script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
+<script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=139"></script>
+<script src="mayatnik-menu.js?v=155"></script>
+<script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>

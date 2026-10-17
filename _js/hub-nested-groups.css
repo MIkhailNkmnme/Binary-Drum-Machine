@@ -35,13 +35,15 @@
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;transform:none;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);cursor:pointer}
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch:hover{filter:brightness(1.25)}
 #hubFieldTools[data-nested] .hubTreeItem>.hubSwatch.hubPaletteOwn{background:var(--hub-theme-bg);color:#ffd166;font:16px/1 system-ui,sans-serif}
-#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor{position:relative;width:48px;height:48px;margin:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--slot,var(--hub-theme-bg))}
-#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor b{font-size:14px}
+#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor{position:relative;width:48px;height:48px;margin:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg)}
+/* v0.241: «стандартный фон должен быть, непонятно, нажата кнопка или нет» — цвет кнопки цвета только каймой и значком, фон обычный. */
+#hubFieldTools[data-nested] .hubTreeItem>.hubTreeColor b{font-size:14px;color:var(--slot,var(--hub-theme-bit));text-shadow:none}
 #hubFieldTools .hubColorGroup button.hubRhomb{width:40px;height:40px;font:12px/1.05 system-ui,sans-serif}
 #hubFieldTools .hubColorGroup .hubPaletteList{right:auto;left:-24px;top:44px}
 #hubFieldTools .hubPaletteList button{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:0;border:0;cursor:pointer}
 /* v0.211: верхний ряд ромбов прижат к верху экрана, заходит за край на четверть ромба. */
-@media(min-width:1101px){#hubFieldTools.hubMirrorSettings[data-nested]{top:-12px}}
+/* v0.243: «с обрезом верхних пополам» — верхний ряд заходит за край на полромба. */
+@media(min-width:1101px){#hubFieldTools.hubMirrorSettings[data-nested]{top:-24px}}
 /* v0.213: пирамида закреплённых — ромбы перекрывают квадраты соседей, мышь ловит только сам ромб. */
 #hubFieldTools[data-nested] .hubTreeItem{pointer-events:none}
 #hubFieldTools[data-nested] .hubTreeItem>*{pointer-events:auto}
@@ -49,6 +51,12 @@
 #hubFieldTools .hubTreeItem.hubReorderSrc>*{opacity:.45}
 #hubFieldTools .hubTreeItem.hubReorderOver>*{filter:drop-shadow(0 0 4px var(--hub-theme-accent)) brightness(1.3)}
 body.hubReordering,body.hubReordering *{cursor:grabbing!important;user-select:none!important}
+/* v0.247: группу тянут — курсор крестом, перекрестье там, где встанет её вершина */
+html body.hubGroupDragging,html body.hubGroupDragging *{cursor:crosshair!important}
+#hubDropCross{position:fixed;width:0;height:0;pointer-events:none;z-index:2147483000}
+#hubDropCross i,#hubDropCross b{position:absolute;background:rgba(255,211,91,.85);box-shadow:0 0 4px rgba(255,211,91,.9)}
+#hubDropCross i{left:-30px;top:-.5px;width:60px;height:1px}
+#hubDropCross b{top:-30px;left:-.5px;width:1px;height:60px}
 body.hubReordering #hubTip{display:none}
 /* v0.236: ветки раскрыты всегда — сама коробка ветки (у «Вида битов» она большая) не ловит мышь, только её ромб-голова */
 #hubFieldTools[data-nested] .hubTreeBranch{pointer-events:none}

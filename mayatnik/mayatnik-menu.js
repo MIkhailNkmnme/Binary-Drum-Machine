@@ -11,7 +11,7 @@
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'bPlay' ? (e.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Анимация')
-        : id === 'bAutoVertical'||id === 'bTemplatePaint'||id === 'bPaintMid' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
+        : id === 'bAutoVertical'||id === 'bTemplatePaint'||id === 'bPaintMid'||id === 'bAnimHl'||id === 'bBlackMirror' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
       on: () => e.matches('[aria-pressed="true"],.on'), disabled: () => e.disabled,
       click: () => e.click() };
   };
@@ -50,7 +50,7 @@
       check('third', 'tri'), control('speed'), control('frame') ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
+      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
@@ -59,7 +59,7 @@
       check('symTriangles','tri'),button('bTriangleAxes','tri'),button('bFrameWindow','corners'),control('symTriangleRows'),
       control('symRowsMin'), control('symRowsMax'), control('symBitsMin'), control('symBitsMax'), button('bAxisLine', 'line'), button('bAxisMirror', 'down'), button('bAxisXor', 'half'), button('bAxisLinesClear', 'cross') ] },
     { id: 'paint', title: 'Раскраска', color: '#ff9b50', items: [button('bPaintSave','save'),button('bPaintNew','reset'),button('bPaintOpen','load'),button('bPng','image'),button('bFill','colour'),button('bAutoVertical','line'),button('bStolb','swap'),button('bPaintMid','line'),control('midOneOn'),control('midZeroOn'),check('midWide','line'),button('bAutoAll','steps'),check('fillMirror','mirror'),control('fillColour'),select('fillArea','grid4'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bFillClear','cross'),button('bRegions','grid4'),button('bPaintRestore','undo')] },
-    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
+    { id: 'template', title: 'Шаблон', color: '#ffd35b', items: [button('bTemplateTake','colour'),button('bTemplateShow','eye'),button('bTemplateClone','copy'),button('bTemplateRemove','cross'),button('bTemplateFlipH','mirror'),button('bTemplateFlipV','mirror'),button('bMirrorLine','line'),button('bMirrorByLine','mirror'),button('bXor2','down'),button('bFillUndo','undo'),button('bFillRedo','forward'),button('bTemplateTaller','plus'),button('bTemplateShorter','minus'),button('bTemplateReturn','swap'),button('bTemplateReset','reset'),button('bTemplateTransfer','move'),button('bTemplateFall','down'),button('bTemplatePaint','colour'),check('templateTrail','half'),check('templateProportional','corners'),check('templateLock','pin'),check('templateMask','corners'),control('xorStep'),control('templateHeight'),control('templateDown'),control('templateAlpha')] },
     { id:'library',title:'Шаблоны',color:'#d9b9ff',items:[control('templateLibraryChoices'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: '#ffd166', items: [
       button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
@@ -176,7 +176,7 @@
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b); }
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
-  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners']]) {   // v0.132: «Центр» (подсветка столба) снят
+  for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners'], ['geomCenter', 'axes'], ['cellInk', 'grid4']]) {   // v0.132: «Центр» (подсветка столба) снят
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark); b.onclick = () => e.click();
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.checked);
@@ -198,7 +198,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', fixLines:'Застыло', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
+  const ptNames = { bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };

@@ -13,6 +13,10 @@
     // v0.236: «все группы раскрытыми, скрывать только правой кнопкой» — ветки открыты всегда, свёрнутые правой кнопкой помнятся
     let folded=new Set();try{folded=new Set(JSON.parse(localStorage.getItem('zerk_hub_folded')||'[]'));}catch(_){}
     const saveFolded=()=>{try{localStorage.setItem('zerk_hub_folded',JSON.stringify([...folded]));}catch(_){}};
+    // v0.245: «все группы магнитить к верху / низу, дать мне перемещать» — {группа: {x: вершина на экране, e: 't' | 'b'}}
+    let places={};try{places=JSON.parse(localStorage.getItem('zerk_hub_places')||'{}')||{};}catch(_){}
+    const savePlaces=()=>{try{localStorage.setItem('zerk_hub_places',JSON.stringify(places));}catch(_){}};
+    let gdrag=null;
     const persist=()=>{try{localStorage.setItem('zerk_hub_pins',JSON.stringify({groups:[...pins],controls:[...promoted]}));}catch(_){}};
     const labelOf=n=>n.id||n.getAttribute('aria-label')||n.querySelector('[aria-label]')?.getAttribute('aria-label')||n.title;
     const createBranch=(group,id,icon,name,children,existing=null)=>{
@@ -41,27 +45,49 @@
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
         const entries=[...records.values()].filter(r=>r.group===group),shut=[];
-        const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
+        const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,fill:true,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
         group.slot.dataset.lo=String(plan.span[0]*24);group.slot.dataset.hi=String(plan.span[1]*24);group.slot.style.setProperty('--tree-columns','1');group.root.node.dataset.groupPinned=String(pins.has(group.key));
       }
       toolbar.dataset.hasPins=String(pins.size+promoted.size>0);
       requestAnimationFrame(()=>{
-        const occupied=[];
+        const occupied=[];{const z=document.getElementById('hubZoom')?.getBoundingClientRect();if(z?.width)occupied.push({left:z.left,right:z.right,top:z.top,bottom:z.bottom});}   // v0.243: опустившаяся группа не ложится на масштаб
         // v0.236: деревья не заходят на левое меню (и кнопку его сворачивания)
         const desk=matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen'),edge=desk?Math.max(8,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0))+4:8;
         for(const group of groups)if(group.fixed){const z=document.getElementById('hubZoom')?.getBoundingClientRect();if(z){group.slot.style.left=Math.round(z.left+(z.width-48)/2)+'px';group.slot.style.top=Math.round(z.bottom-132+42)+'px';}}
+        // v0.243: «все группы — в треугольных сетках, вверх прилипали, с обрезом верхних» — треугольник группы висит вершиной
+        // (головой группы) у верхнего края; группы раскладываются слева направо вплотную, голова едет вместе со своим треугольником.
+        // Не хватает ширины — тогда, как раньше, следующий треугольник опускается под соседа.
+        // Треугольники сцепляются по рядам: ряд r этой группы встаёт правее ряда r соседей на ромб и правее рядов r ± 1 на полромба,
+        // так короткий треугольник заходит под плечо высокого. Группы идут слева направо по своим местам.
+        const mob=document.body.classList.contains('hubMobButtons'),placeOf=g=>mob?null:places[g.key]||null;
+        const rowsOf=g=>{const rows=new Map();for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}return rows;};
+        // v0.245: поставленные рукой — по своему месту: вершиной у верха (верхний ряд срезан пополам) или нижним рядом у низа (тоже пополам)
+        const obst=[];
+        for(const g of groups){const pl=placeOf(g);g.placeDx=g.placeDy=null;if(!pl||g.slot.hidden)continue;const rect=g.slot.getBoundingClientRect(),rows=rowsOf(g);if(!rows.size)continue;
+          const lo=Math.min(...[...rows.values()].map(v=>v[0])),hi=Math.max(...[...rows.values()].map(v=>v[1])),ys=[...rows.keys()],h=Math.max(...ys)*24+48;
+          // v0.247: «перемещать за границы + отступ» — бока треугольника могут уходить за края экрана (на экране остаётся голова),
+          // а от верха / низа группу можно отодвинуть рядами (pl.dy, шаг полромба); за верх / низ — не дальше среза пополам
+          const x=Math.max(0,Math.min(innerWidth-48,pl.x)),dy=pl.e==='b'?Math.min(0,pl.dy||0):Math.max(0,pl.dy||0);g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round((pl.e==='b'?innerHeight+24-h-rect.top:-24-rect.top)+dy);
+          if(pl.e!=='b')for(const [r,[a,b]] of rows)obst.push([r+Math.round(dy/24),x+a,x+b]);}
+        const pack=groups.filter(g=>!g.fixed&&!g.slot.hidden&&g.placeDx==null).map(g=>{const base=g.slot.getBoundingClientRect().left,rows=new Map();
+          for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}
+          return {g,base,rows};}).filter(it=>it.rows.size).sort((a,b)=>a.base-b.base);
+        {const R=new Map();for(const it of pack){let dx=-Infinity;for(const [r,[a]] of it.rows){const x=it.base+a;dx=Math.max(dx,edge-x,(R.get(r)??-1e9)+48-x,(R.get(r-1)??-1e9)+24-x,(R.get(r+1)??-1e9)+24-x);}
+          for(let k=0,hit=true;hit&&k<40;k++){hit=false;for(const [r,[a,b]] of it.rows)for(const [or,A,B] of obst){const gap=or===r?48:Math.abs(or-r)===1?24:0;if(!gap)continue;const L=it.base+a+dx,Rr=it.base+b+dx;if(L<B+gap&&Rr>A-gap){dx=B+gap-it.base-a;hit=true;}}}   // v0.245: не налезать на поставленные рукой
+          dx=Math.round(dx);it.g.packDx=dx;for(const [r,[,b]] of it.rows)R.set(r,Math.max(R.get(r)??-1e9,it.base+b+dx));}}
         for(const group of groups){
-          // v0.214: все ряды — одна ромбическая решётка от вершины; не влезает в экран — ряды сдвигаются целыми ромбами.
           const rect=group.slot.getBoundingClientRect(),lo=Number(group.slot.dataset.lo)||0,hi=Number(group.slot.dataset.hi)||0;
-          let dx=0;if(rect.left+hi+48>innerWidth-8)dx=-Math.ceil((rect.left+hi+48-innerWidth+8)/48)*48;if(rect.left+lo+dx<edge)dx+=Math.ceil((edge-rect.left-lo-dx)/48)*48;
+          const placed=group.placeDx!=null;let dx=placed?group.placeDx:group.fixed?0:group.packDx||0;
           const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
           const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=document.body.classList.contains('hubMobButtons')?24:0;   // v0.223: на телефоне группы стоят вплотную — дерево ниже ряда корней
           const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
-          for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
-          for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head?0:offset);cell.style.transform='translate('+px+'px,'+py+'px)';}
-          if(height&&!group.fixed)occupied.push({left,right,top:rect.top+24+offset,bottom:rect.top+height+offset});
+          if(placed)offset=group.placeDy;
+          else if(right>innerWidth-8||group.fixed)for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
+          const dg=gdrag?.moved&&gdrag.g===group?gdrag:null;group.apex=rect.left+dx;
+          for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head&&group.fixed&&!placed?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head&&!placed?0:offset);cell._px=px;cell._py=py;cell.style.transform='translate('+(px+(dg?dg.ox:0))+'px,'+(py+(dg?dg.oy:0))+'px)';}
+          if(height&&!group.fixed&&!placed)occupied.push({left,right,top:rect.top+24+offset,bottom:rect.top+height+offset});
         }
         for(const r of records.values())if(!r.children&&r.node.matches('details[open]')){
           const x=r.wrap.getBoundingClientRect().left;r.node.style.setProperty('--menu-left',Math.max(8-x,Math.min(0,innerWidth-188-x))+'px');
@@ -203,6 +229,8 @@
     }
     // v0.225: порядок кнопок внутри групп — правой кнопкой мыши перетаскивают (zerk_hub_order: {родитель: [дети]}).
     let order={};try{order=JSON.parse(localStorage.getItem('zerk_hub_order')||'{}')||{};}catch(_){}
+    // v0.243: кнопка, перенесённая правой кнопкой к другому родителю той же группы, встаёт туда и после перезагрузки
+    for(const r of records.values())if(r.children&&Array.isArray(order[r.id]))for(const id of order[r.id]){const c=records.get(id);if(!c||r.children.includes(c)||c.group!==r.group)continue;let anc=false;const sub=n=>{if(n===r)anc=true;n.children?.forEach(sub);};sub(c);if(anc)continue;const holder=[...records.values()].find(x=>x.children?.includes(c));if(!holder)continue;holder.children.splice(holder.children.indexOf(c),1);r.children.push(c);}
     for(const r of records.values())if(r.children&&Array.isArray(order[r.id])){const at=new Map(order[r.id].map((id,i)=>[id,i])),was=new Map(r.children.map((c,i)=>[c,i]));r.children.sort((a,b)=>(at.has(a.id)?at.get(a.id):1e3+was.get(a))-(at.has(b.id)?at.get(b.id):1e3+was.get(b)));}
     for(const group of groups){
       const slot=document.createElement('div');slot.className='hubFieldSlot hubTreeGrid';slot.dataset.group=group.key;slot.setAttribute('role','group');slot.setAttribute('aria-label',group.name);group.slot=slot;toolbar.append(slot);
@@ -222,13 +250,39 @@
       rdrag={r,x:e.clientX,y:e.clientY,moved:false,pending:null,over:null};
       const mv=ev=>{if(!rdrag)return;if(!rdrag.moved&&Math.hypot(ev.clientX-rdrag.x,ev.clientY-rdrag.y)<8)return;
         if(!rdrag.moved){if(!rdrag.r.parent){rdrag=null;return;}rdrag.moved=true;rdrag.r.wrap.classList.add('hubReorderSrc');document.body.classList.add('hubReordering');}
-        const t=recAt(ev.clientX,ev.clientY),ok=t&&t!==rdrag.r&&t.parent===rdrag.r.parent?t:null;
+        const t=recAt(ev.clientX,ev.clientY),inside=n=>{for(let p=n;p;p=p.parent)if(p===rdrag.r)return true;return false;},ok=t&&t.parent&&t.group===rdrag.r.group&&!inside(t)?t:null;   // v0.243: в любое место сетки своей группы
         if(rdrag.over!==ok){rdrag.over?.wrap.classList.remove('hubReorderOver');ok?.wrap.classList.add('hubReorderOver');rdrag.over=ok;}};
       const up=ev=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true);
         const d=rdrag;rdrag=null;if(!d)return;document.body.classList.remove('hubReordering');d.r.wrap.classList.remove('hubReorderSrc');d.over?.wrap.classList.remove('hubReorderOver');
-        if(d.moved){rdragEnd=Date.now();if(d.over&&ev.type==='pointerup'){const list=d.r.parent.children,to=list.indexOf(d.over);list.splice(list.indexOf(d.r),1);list.splice(to,0,d.r);
-          order[d.r.parent.id]=list.map(c=>c.id);try{localStorage.setItem('zerk_hub_order',JSON.stringify(order));}catch(_){}renderStamp='';render();}}
+        if(d.moved){rdragEnd=Date.now();if(d.over&&ev.type==='pointerup'){const from=d.r.parent,dest=d.over.parent;from.children.splice(from.children.indexOf(d.r),1);const list=dest.children;list.splice(list.indexOf(d.over)+(from===dest?0:0),0,d.r);d.r.parent=dest;
+          order[from.id]=from.children.map(c=>c.id);order[dest.id]=list.map(c=>c.id);try{localStorage.setItem('zerk_hub_order',JSON.stringify(order));}catch(_){}renderStamp='';render();}}
         else if(d.pending)rightClick(d.pending);};
+      document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
+    });
+    // v0.245: группу перетаскивают за голову (левой кнопкой): отпустил в верхней половине — прилипает вершиной к верху,
+    // в нижней — нижним рядом к низу; по ширине — шагом полромба. Брошена на левое меню — снова на своё место в общем ряду.
+    const menuRight=()=>matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen')?Math.max(0,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0)):0;
+    toolbar.addEventListener('pointerdown',e=>{
+      if(e.button!==0||e.pointerType==='touch'||document.body.classList.contains('hubMobButtons'))return;const r=recAt(e.clientX,e.clientY);if(!r||r.parent||r!==r.group.root)return;
+      gdrag={g:r.group,x:e.clientX,y:e.clientY,ox:0,oy:0,moved:false};
+      // v0.247: куда встанет группа — перекрестье по месту вершины (шаг полромба), курсор — крест
+      const head=[...r.group.slot.children].find(c=>c.dataset.header==='true'),gh=()=>{let m=48;for(const c of gdrag.g.slot.children)if(!c.hidden)m=Math.max(m,(Number(c.dataset.pyrY)||0)+48);return m;};
+      const land=ev=>{const hr=head.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-48,Math.round(((gdrag.g.apex||0)+gdrag.ox)/24)*24)),e=ev.clientY<innerHeight/2?'t':'b';
+        const dy=e==='t'?Math.max(0,Math.round((hr.top+24)/24)*24):Math.min(0,Math.round((hr.top+gh()-innerHeight-24)/24)*24);
+        return {x,e,dy,top:e==='t'?-24+dy:innerHeight+24-gh()+dy};};
+      let cross=null;
+      const paint=ev=>{for(const c of gdrag.g.slot.children)if(c._px!=null)c.style.transform='translate('+(c._px+gdrag.ox)+'px,'+(c._py+gdrag.oy)+'px)';
+        if(!head||!ev)return;const L=land(ev),menu=ev.clientX<menuRight();if(!cross){cross=document.createElement('div');cross.id='hubDropCross';cross.innerHTML='<i></i><b></b>';document.body.append(cross);}
+        cross.hidden=menu;cross.style.left=(L.x+24)+'px';cross.style.top=(L.top+24)+'px';gdrag.land=L;};
+      const mv=ev=>{if(!gdrag)return;const ox=ev.clientX-gdrag.x,oy=ev.clientY-gdrag.y;if(!gdrag.moved&&Math.hypot(ox,oy)<8)return;
+        if(!gdrag.moved){gdrag.moved=true;gdrag.g.slot.classList.add('hubGroupDrag');document.body.classList.add('hubReordering','hubGroupDragging');}
+        gdrag.ox=ox;gdrag.oy=oy;paint(ev);};
+      const up=ev=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true);
+        const d=gdrag;gdrag=null;cross?.remove();cross=null;if(!d?.moved)return;document.body.classList.remove('hubReordering','hubGroupDragging');d.g.slot.classList.remove('hubGroupDrag');
+        const eat=c=>{c.preventDefault();c.stopPropagation();};window.addEventListener('click',eat,true);setTimeout(()=>window.removeEventListener('click',eat,true),0);
+        if(ev.type==='pointerup'){
+          if(ev.clientX<menuRight())delete places[d.g.key];else{const L=d.land||{x:Math.round(((d.g.apex||0)+d.ox)/24)*24,e:ev.clientY<innerHeight/2?'t':'b',dy:0};places[d.g.key]={x:L.x,e:L.e,dy:L.dy};}savePlaces();}
+        renderStamp='';render();};
       document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
     });
     toolbar.addEventListener('contextmenu',e=>{

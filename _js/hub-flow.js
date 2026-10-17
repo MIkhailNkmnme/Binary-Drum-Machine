@@ -64,7 +64,7 @@
   }
   const invalidate=()=>{dirty=true;if(light||snow||water)wake();};
   function reset(){rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
-  function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:Math.min(sunRadius,innerWidth)};const left=matchMedia('(max-width:1100px)').matches?0:300;return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
+  function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:Math.min(sunRadius,innerWidth)};const left=matchMedia('(max-width:1100px)').matches?0:(window.HUB_MENU_W||300);return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
   function size(){
     const w=innerWidth,h=innerHeight,W=axisFlow?Math.ceil(Math.hypot(w,h)):w,H=axisFlow?W:h,scale=axisFlow?Math.max(1,Math.sqrt(W*H/(w*h))):1;
     if(radiusRange){radiusRange.max=String(w);sunRadius=Math.min(sunRadius,w);radiusRange.value=String(sunRadius);radiusOutput.textContent=sunRadius+'px';}
@@ -136,7 +136,7 @@
         const top=y+1-m;ctx.moveTo(x,top);ctx.lineTo(x+1,top);
       }
     }ctx.stroke();ctx.restore();
-    if(sun&&light){const origin=sunSource(),at=toField(origin.x,origin.y);ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.globalAlpha=.22;ctx.beginPath();ctx.arc(at[0],at[1],Math.max(1,origin.radius),0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.stroke();ctx.restore();}
+    if(sun&&light){const origin=sunSource(),at=toField(origin.x,origin.y);ctx.save();ctx.strokeStyle=ctx.fillStyle=palette.sym;ctx.lineWidth=1;ctx.beginPath();ctx.arc(at[0],at[1],Math.max(1,origin.radius),0,Math.PI*2);ctx.globalAlpha=.8;ctx.stroke();   /* v0.246: без заливки */ctx.restore();}
     if(light&&dense){
       if(!beams)beams=field.topBeams(horizon/cell);beamDistance+=dt*speeds.light*420/cell;
       ctx.save();ctx.strokeStyle=palette.sym;ctx.lineWidth=cell+1;ctx.lineCap='butt';
