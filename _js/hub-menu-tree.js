@@ -3,7 +3,7 @@
    and nothing leaves a gap. pyr = [dx, dy] in half-diamonds from the apex. */
 (function(root){
   'use strict';
-  function layout(tree,{promoted=[],open=[],hidden=[],rows=5,grow=false,lead=[]}={}){
+  function layout(tree,{promoted=[],open=[],hidden=[],rows=5,grow=false,fill=false,lead=[]}={}){
     const first=new Set(lead);   // v0.226: включённые — первыми среди соседей
     const index=new Map(),lifted=new Set(promoted),opened=new Set(open),invisible=new Set(hidden);
     const visit=n=>{index.set(n.id,n);n.children?.forEach(visit);};visit(tree);
@@ -12,6 +12,14 @@
     const cells=[];let r=0,lo=0,hi=0;
     const row=list=>{const n=list.length,shift=((n-1)&1)!==(r&1)?1:0;list.forEach((node,j)=>{const dx=2*j-(n-1)+shift;lo=Math.min(lo,dx);hi=Math.max(hi,dx);cells.push({id:node.id,head:cells.length===0,pyr:[dx,r]});});r++;};
     const apex=[...top,...lift];
+    // fill (Hub v0.243, «все группы — в треугольных сетках, все пустоты заполнить кнопками»): вся группа — один треугольник
+    // рядами 1, 2, 3…, кнопки идут подряд по уровням, ряд не начинается заново на новом уровне; неполным бывает только последний ряд.
+    if(fill){
+      const seq=[...apex];let lv=apex;
+      while(lv.length){lv=lv.flatMap(n=>opened.has(n.id)?(n.children||[]).filter(c=>!lifted.has(c.id)&&available(c)).sort((a,b)=>first.has(b.id)-first.has(a.id)):[]);seq.push(...lv);}
+      for(let i=0,k=1;i<seq.length;i+=k,k++)row(seq.slice(i,i+k));
+      return {cells,rows:r,span:[lo,hi]};
+    }
     for(let i=0,k=1;i<apex.length;i+=k,k++)row(apex.slice(i,i+k));
     let level=apex;
     while(level.length){

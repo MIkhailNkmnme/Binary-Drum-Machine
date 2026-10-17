@@ -221,6 +221,12 @@
     }
     pattern.value = state.pattern; patternLabel.className='hubRhomb';patternLabel.title='Узор: Хоррориус (кадр маятника) / исходный / Серпинский';patternLabel.append(pattern); settings.append(patternLabel);
     pattern.addEventListener('change', () => { state.pattern = pattern.value; changed(); save(); window.dispatchEvent(new Event('hubpattern')); });
+    // Hub v0.243: «в ромбы раскрыть» — узор не выпадающим списком, а тремя ромбами в группе; список спрятан и остаётся источником значения.
+    {const pick=[];for(const [value,mark,name] of [['horr','Х','Хоррориус (кадр маятника)'],['base','П','исходный'],['serp','С','Серпинский']]){
+      const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=mark;b.title='Узор: '+name;b.setAttribute('aria-label','Узор: '+name);
+      b.onclick=()=>{if(pattern.value===value)return;pattern.value=value;pattern.dispatchEvent(new Event('change'));};settings.append(b);pick.push([b,value]);}
+      const syncPick=()=>{pattern.value=state.pattern;for(const [b,value] of pick)b.setAttribute('aria-pressed',String(state.pattern===value));};
+      patternLabel.hidden=true;patternLabel.setAttribute('aria-hidden','true');syncPick();window.addEventListener('hubmirror',syncPick);window.addEventListener('hubpattern',syncPick);}
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
     const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка']];

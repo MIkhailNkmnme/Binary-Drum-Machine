@@ -3,12 +3,16 @@
    Сетку двигают за пустой ромб, копию — в другой ромб; правый клик по копии убирает её. */
 (() => {
   'use strict';
-  const KEY = 'zerk_hub_romb_grid', ROWS = [2, 1, 2, 3, 4], S = 48, H = S / 2;
-  const CELLS = ROWS.flatMap((n, r) => Array.from({ length: n }, (_, i) => [(i - (n - 1) / 2) * S, r * H]));
-  const W = Math.max(...ROWS) * S, HT = (ROWS.length - 1) * H + S;
+  // Hub v0.243: «наращивать сетку» — заняты все ромбы, снизу добавляется ряд на ромб длиннее (st.extra — сколько добавлено).
+  const KEY = 'zerk_hub_romb_grid', BASE = [2, 1, 2, 3, 4], S = 48, H = S / 2;
+  let ROWS, CELLS, W, HT;
+  const shape = extra => { ROWS = [...BASE]; for (let k = 0; k < extra; k++) ROWS.push(ROWS[ROWS.length - 1] + 1);
+    CELLS = ROWS.flatMap((n, r) => Array.from({ length: n }, (_, i) => [(i - (n - 1) / 2) * S, r * H]));
+    W = Math.max(...ROWS) * S; HT = (ROWS.length - 1) * H + S; };
   const SRC = 'button,summary,label.hubRhomb';
-  let st = { x: null, y: null, slots: [] };
+  let st = { x: null, y: null, slots: [], extra: 0 };
   try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  st.extra = Math.max(0, Math.min(8, st.extra | 0)); shape(st.extra);
   st.slots = CELLS.map((_, i) => st.slots?.[i] || null);
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
@@ -48,18 +52,24 @@
 
   const grid = document.createElement('div');
   grid.id = 'hubRombGrid'; grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', 'Ромбосетка для своих кнопок');
-  grid.style.width = W + 'px'; grid.style.height = HT + 'px';
-  const cells = CELLS.map(([x, y], i) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'hubRgCell'; b.dataset.i = i;
-    b.style.left = (W / 2 + x - H) + 'px'; b.style.top = y + 'px';
-    grid.append(b); return b;
-  });
+  let cells = [];
+  function build() {
+    grid.style.width = W + 'px'; grid.style.height = HT + 'px'; cells.forEach(c => c.remove());
+    cells = CELLS.map(([x, y], i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'hubRgCell'; b.dataset.i = i;
+      b.style.left = (W / 2 + x - H) + 'px'; b.style.top = y + 'px';
+      grid.append(b); return b;
+    });
+  }
+  build();
+  const grow = () => { if (st.slots.some(k => !k) || st.extra >= 8) return; st.extra++; shape(st.extra); st.slots = CELLS.map((_, i) => st.slots[i] || null); build(); place(); };
 
   function place() {
     const x = st.x ?? 330, y = st.y ?? innerHeight - HT - 24;
     grid.style.left = Math.max(0, Math.min(innerWidth - W, x)) + 'px';
-    grid.style.top = Math.max(0, Math.min(innerHeight - HT, y)) + 'px';
+    // Hub v0.243: «а внизу также с обрезом» — сетка прилипает к низу экрана, нижний ряд срезан краем пополам; двигается только вбок.
+    grid.style.top = (innerHeight - HT + H) + 'px';
   }
   function paint() {
     cells.forEach((c, i) => {
@@ -145,13 +155,13 @@
     const text = textOf(el);
     track(e, ev => { hover(ev); showGhost(text, ev.clientX, ev.clientY); }, ev => {
       const t = cellAt(ev.clientX, ev.clientY); if (!t) return;
-      st.slots[+t.dataset.i] = key; save(); paint();
+      st.slots[+t.dataset.i] = key; grow(); save(); paint();
     });
   }, true);
 
   window.HubRombGrid = {
     snapshot: () => JSON.parse(JSON.stringify(st)),
-    restore: s => { if (!s) return; st = { x: s.x ?? null, y: s.y ?? null, slots: CELLS.map((_, i) => s.slots?.[i] || null) }; save(); place(); paint(); }
+    restore: s => { if (!s) return; const extra = Math.max(0, Math.min(8, s.extra | 0)); shape(extra); st = { x: s.x ?? null, y: s.y ?? null, extra, slots: CELLS.map((_, i) => s.slots?.[i] || null) }; build(); save(); place(); paint(); }
   };
   const init = () => { document.body.append(grid); place(); paint(); setInterval(paint, 500); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0), { once: true });
