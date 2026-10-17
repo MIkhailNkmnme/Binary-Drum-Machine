@@ -1416,6 +1416,9 @@ function rowsFit(){
   if ((document.body.classList.contains("cutdrag") || document.body.classList.contains("wdrag")) && $("rowList") && $("rowList").style.getPropertyValue("--rlh")) return;   // v0.269: и пока тянут ширину поля
   const L = $("rowList"); if (!L || !L.clientHeight) return;
   const was = L.style.getPropertyValue("--rlh");
+  if (Z.rowCmp) {   // v0.1269, «почему у меня так стрелки — надо отступы, как ты показал»: при «Σ» строки не ужимаются по высоте (стрелкам между ними нужно место), поле листается
+    L.classList.remove("rlsq"); L.style.removeProperty("--rlh"); rowsFit.key = ""; if (was) rowsFitDone(); return;
+  }
   /* v0.246, «почему всё тормозит»: каждая подгонка — 4–5 полных раскладок поля (на 260 строках — по 0,1 с). Строк, шрифта и размера
      поля столько же, сколько в прошлый раз, и всё помещается — шаг строки прежний, раскладка одна. */
   const n = L.querySelectorAll(".rw:not(.lhrow)").length, fs = Z.fs || 16;
