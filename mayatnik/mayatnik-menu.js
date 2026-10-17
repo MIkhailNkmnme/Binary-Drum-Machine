@@ -11,7 +11,7 @@
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
       nameNow: () => id === 'bPlay' ? (e.getAttribute('aria-pressed') === 'true' ? 'Пауза' : 'Анимация')
-        : id === 'bAutoVertical'||id === 'bTemplatePaint'||id === 'bPaintMid' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
+        : id === 'bAutoVertical'||id === 'bTemplatePaint'||id === 'bPaintMid'||id === 'bAnimHl' ? e.textContent : id === 'bStep' ? e.textContent.trim() : name(e),
       on: () => e.matches('[aria-pressed="true"],.on'), disabled: () => e.disabled,
       click: () => e.click() };
   };
@@ -50,7 +50,7 @@
       check('third', 'tri'), control('speed'), control('frame') ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
-      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'),
+      button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bAnimHl', 'eye'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),control('ochkiLength') ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
       button('zOut', 'minus'), button('zIn', 'plus'), button('zFit', 'corners'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },

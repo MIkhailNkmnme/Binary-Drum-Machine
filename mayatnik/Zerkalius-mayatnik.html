@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.145. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.146. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.145</title>
+<title>Zerkalius Маятник — v0.146</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.145</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.146</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -180,6 +180,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
     <label title="Карта застывания: клетка, чей бит уже окончательный, — цветом кадра, с которого он такой: фиолетовый — до 64, синий — до 128, голубой — до 256, зелёный — до 512, жёлтый — до 1024, оранжевый — до 2048, красный — позже; ярко — 1, тускло — 0. На кадре k видно то, что застыло к нему"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
+    <button id="bAnimHl" aria-pressed="false" data-mi-short="Аниматрица" title="Аниматрица: подсветить биты, которые изменились с прошлого кадра, — золотом (стал 1) и голубым (стал 0), след гаснет за 4 кадра. По кругу: выкл → центральный столб → всё поле → выкл">Аниматрица: выкл</button>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
     <label title="Искать и показывать вертикальные оси ↕"><input id="symV" type="checkbox" checked data-mi-short="Оси ↕"> оси ↕</label>
@@ -723,7 +724,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     clearFillPreview();
     fillBase=px.slice();fillBits=null;
     paintMid();   // v0.132: «Центр краской» — заливка по центральному столбцу, до applyFill
-    applyFill(px);chessLiveApply(px);stolbApply(px);templateLockApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
+    applyFill(px);chessLiveApply(px);stolbApply(px);templateLockApply(px);animHlApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
     present();
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
@@ -839,6 +840,25 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // место шаблона, застывшее целиком к этому кадру, — его цветом и в кадрах, где самого шаблона уже нет (v0.142 по месту)
     if(st.templateLock!==false&&templateLocks.masks)for(const L of Object.values(templateLocks.masks)){if(L.W!==f.W||!(L.k<=k))continue;const col=rgba(hexRGB(L.hex));for(const q of L.cells)lockCell(px,q,col);}
   }
+  // v0.146: «подсветка бит в аниматрице по центральному столбу хотя бы». Клетка, чей бит изменился с прошлого показанного кадра,
+  // получает след 4 (стал 1 — золото, стал 0 — голубой), след гаснет на 1 с каждой сменой кадра. st.animHl: 0 — выкл, 1 — столб
+  // якоря, 2 — всё поле. Сравнение — с прошлым кадром, который был на экране (анимация, ползунок, шаг).
+  let animPrev=null,animPrevF=null,animPrevK=-1,animHeat=null,animTo=null;
+  const ANIM_ONE=rgba([255,211,91]),ANIM_ZERO=rgba([92,225,230]);
+  function animHlApply(px){
+    const m=st.animHl|0;if(!m||!f||!geo||!img){animPrev=null;return;}
+    const {W,H,val}=f,N=W*H;
+    if(animPrevF!==f||!animPrev||animPrev.length!==N){animPrevF=f;animPrev=val.slice();animPrevK=k;animHeat=new Uint8Array(N);animTo=new Int8Array(N);return;}
+    if(k!==animPrevK){const A=geo.anchor;
+      for(let q=0;q<N;q++){if(animHeat[q])animHeat[q]--;}
+      if(m===1){for(let r=0;r<H;r++){const q=r*W+A;if(val[q]!==animPrev[q]&&val[q]>=0){animHeat[q]=4;animTo[q]=val[q];}}}
+      else for(let q=0;q<N;q++)if(val[q]!==animPrev[q]&&val[q]>=0){animHeat[q]=4;animTo[q]=val[q];}
+      animPrev.set(val);animPrevK=k;}
+    const one=[255,211,91],zero=[92,225,230];
+    for(let q=0;q<N;q++){const h=animHeat[q];if(!h)continue;const r=Math.floor(q/W),c=q%W;if(r>=VH||c<VX||c>=VX+VW)continue;
+      const base=rombP()<0?px[r*RK*img.width+(c-VX)*RK]:0,col=rgba(animTo[q]?one:zero);lockCell(px,q,rombP()<0?mixPx(col,base,h/4):col);}
+  }
+  const animHlSync=()=>{const m=st.animHl|0,b=$('bAnimHl');b.textContent='Аниматрица: '+['выкл','столб','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   function fieldCellAt(x,y){
     const half=halfOf((x+.5)/RK);if(!half)return null;const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
     const [c,r]=p<0?[VX+Math.floor(half[1]),Math.floor((y+.5)/RK)]:rombCell(half[1],(y+.5)/RK,p);
@@ -2237,6 +2257,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.111: цвета клеток — перерисовать поле; шрифт и размер — слой цифр
   for(const id of ['bitOneColour','bitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;applyBitColours();save();if(f)draw();});
   $('fixLines').addEventListener('change',()=>{st.fixLines=$('fixLines').checked;save();if(f)draw();});   // v0.125
+  animHlSync();$('bAnimHl').onclick=()=>{st.animHl=((st.animHl|0)+1)%3;animPrev=null;animHlSync();save();if(f)draw();};   // v0.146
   $('midCol').addEventListener('change',()=>{st.midCol=$('midCol').checked;save();if(f)draw();});   // v0.119
   $('digitFont').addEventListener('change',()=>{st.digitFont=$('digitFont').value;save();queueDigits();});
   $('digitSize').addEventListener('change',()=>{st.digitSize=Math.max(30,Math.min(100,+$('digitSize').value||80));$('digitSize').value=st.digitSize;save();queueDigits();});
@@ -2571,7 +2592,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=145"></script>
+<script src="mayatnik-menu.js?v=146"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
