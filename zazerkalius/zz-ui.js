@@ -390,13 +390,13 @@ function rowChgInfo(){
    подряд внутри строк ниже. Все места — подсветкой бит (Highlight «zcmp»), места в ближайшей строке, где они есть, — ярче («zcmpn»).
    v0.1247, «нет — число бит, без разницы порядок»: ищется отрезок подряд той же длины с тем же числом единиц (значит, и нулей), биты в любом порядке.
    В каждой строке ниже — один отрезок, ближайший к середине строки (под выбранной); ближайшая такая строка — золотом, остальные — голубым */
-function rowCmpInfo(){
-  if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
-  const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
-  const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
-  for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const L = s.length, hits = []; let near = -1, nearAt = -1;
-  for (let i = a + 1; i < R.length; i++) {
+/* v0.1248, по снимку, «покажи сбоку стрелками, соединяя эти группы бит, сразу для всех строк сверху от выделенной»: для каждой строки с 1-й по
+   выбранную — ближайшая строка ниже, где есть отрезок подряд той же длины с тем же числом единиц (в строке — ближайший к середине). Отрезок
+   подсвечен цветом своей строки-источника, справа от строк — стрелка от источника к нему (SVG #cmpArrows в .rl-inner). У выбранной — золото */
+const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b6"];
+function rowCmpFind(R, r){   // ближайшая строка ниже r с отрезком той же длины и тем же числом единиц: { i, a, b } или null
+  const s = R[r], L = s.length, k = zzOnes(s);
+  for (let i = r + 1; i < R.length; i++) {
     const t = R[i], n = t.length; if (n < L) continue;
     let c = 0, best = -1, bd = Infinity;
     for (let j = 0; j < n; j++) {
@@ -404,28 +404,68 @@ function rowCmpInfo(){
       if (j >= L && t[j - L] === "1") c--;
       if (j >= L - 1 && c === k) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; } }
     }
-    if (best >= 0) { hits.push({ i, a: best, b: best + L, n: near < 0 }); if (near < 0) { near = i; nearAt = best; } }
+    if (best >= 0) return { i, a: best, b: best + L };
   }
-  const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    (near < 0 ? ` · ниже ${L} бит подряд с ${k} единицами нет` : ` · ниже ${L} бит с ${k} ед.: ближайшая строка ${near + 1}, с бита ${nearAt + 1} · всего строк ${hits.length}`);
-  return { a, hits, near, txt };
+  return null;
 }
-function rowCmpMark(cmp){   // v0.1246: места строки в строках ниже — подсветкой бит, строки не перерисовываются
-  if (!window.CSS || !CSS.highlights || typeof Highlight === "undefined") return;
-  const L = $("rowList"), all = [], nr = [];
-  if (cmp && L) {
-    const bxOf = {};
-    for (const h of cmp.hits) {
-      const bx = bxOf[h.i] || (bxOf[h.i] = L.querySelector('.rw[data-r="' + h.i + '"] .bx')); if (!bx) continue;
+function rowCmpInfo(){
+  if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
+  const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
+  const key = a + "|" + R.join(",");
+  if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
+  const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
+  for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
+  const links = [];
+  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r); if (m) links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); }
+  const me = links.find(l => l.sel), near = me ? me.i : -1;
+  const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
+    (me ? ` · ниже ${s.length} бит с ${k} ед.: строка ${me.i + 1}, с бита ${me.a + 1}` : ` · ниже ${s.length} бит подряд с ${k} единицами нет`) + ` · стрелок ${links.length}`;
+  const v = { a, links, near, txt }; rowCmpInfo._c = { key, v }; return v;
+}
+function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
+  const L = $("rowList"), root = L && L.querySelector(".rl-inner");
+  let sv = root && root.querySelector(":scope > #cmpArrows");
+  if (!cmp || !root) { if (sv) sv.remove(); }
+  const hl = window.CSS && CSS.highlights && typeof Highlight !== "undefined";
+  const by = { n: [] }; CMP_COLS.forEach((_, c) => by[c] = []);
+  const ends = [];
+  if (cmp && root) {
+    const bxOf = (i) => L.querySelector('.rw[data-r="' + i + '"] .bx');
+    for (const h of cmp.links) {
+      const bx = bxOf(h.i), sx = bxOf(h.r); if (!bx || !sx) continue;
       const at = (j) => { const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd, last = null;
         while ((nd = w.nextNode())) { const n = nd.textContent.length; last = nd; if (c + n > j) return [nd, j - c]; c += n; }
         return last ? [last, last.textContent.length] : null; };
       const p = at(h.a), q = at(h.b); if (!p || !q) continue;
-      const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); if (!rg.collapsed) (h.n ? nr : all).push(rg); } catch (e) { /* место за показанной частью строки */ }
+      const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); } catch (e) { continue; /* место за показанной частью строки */ }
+      if (rg.collapsed) continue;
+      (h.sel ? by.n : by[h.c]).push(rg); ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
     }
   }
-  if (all.length) CSS.highlights.set("zcmp", new Highlight(...all)); else CSS.highlights.delete("zcmp");
-  if (nr.length) CSS.highlights.set("zcmpn", new Highlight(...nr)); else CSS.highlights.delete("zcmpn");
+  if (hl) {
+    if (by.n.length) CSS.highlights.set("zcmpn", new Highlight(...by.n)); else CSS.highlights.delete("zcmpn");
+    CMP_COLS.forEach((_, c) => { if (by[c].length) CSS.highlights.set("zcmp" + c, new Highlight(...by[c])); else CSS.highlights.delete("zcmp" + c); });
+    CSS.highlights.delete("zcmp");
+  }
+  if (cmp && root) {
+    if (!sv) { sv = document.createElementNS("http://www.w3.org/2000/svg", "svg"); sv.id = "cmpArrows"; root.appendChild(sv); }
+    if (getComputedStyle(root).position === "static") root.style.position = "relative";
+    const rr = root.getBoundingClientRect(), sc = root.offsetWidth ? rr.width / root.offsetWidth : 1;
+    sv.setAttribute("width", root.scrollWidth); sv.setAttribute("height", root.scrollHeight);
+    const X = (x) => (x - rr.left) / sc, Y = (y) => (y - rr.top) / sc;
+    let g = "", defs = "";
+    const cols = [...CMP_COLS, "#facc15"];
+    cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
+    ends.forEach(({ h, src, dst }, n) => {
+      const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
+      let mx = 0; for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) mx = Math.max(mx, b.getBoundingClientRect().right); }
+      const x0 = X(src.right) + 3, y0 = Y(src.top + src.height / 2), x1 = X(dst.right) + 3, y1 = Y(dst.top + dst.height / 2);
+      const bx = X(mx) + 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
+      g += '<path d="M' + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + bx.toFixed(1) + "," + y0.toFixed(1) + " " + bx.toFixed(1) + "," + y1.toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1) +
+           '" fill="none" stroke="' + col + '" stroke-width="' + (h.sel ? 2.2 : 1.4) + '" opacity="' + (h.sel ? 1 : 0.85) + '" marker-end="url(#cmpAh' + ci + ')"><title>строка ' + (h.r + 1) + " → строка " + (h.i + 1) + ", биты " + (h.a + 1) + "–" + h.b + "</title></path>";
+    });
+    sv.innerHTML = "<defs>" + defs + "</defs>" + g;
+  }
   if (cmp && cmp.near >= 0 && rowCmpMark._a !== cmp.a + ":" + Z.rows[cmp.a]) {   // новая строка выбрана — ближайшее место в вид
     rowCmpMark._a = cmp.a + ":" + Z.rows[cmp.a];
     const r = L.querySelector('.rw[data-r="' + cmp.near + '"]'); if (r) requestAnimationFrame(() => scrollNear(r, { block: "nearest", inline: "nearest" }));
