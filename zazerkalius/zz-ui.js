@@ -394,17 +394,23 @@ function rowChgInfo(){
    выбранную — ближайшая строка ниже, где есть отрезок подряд той же длины с тем же числом единиц (в строке — ближайший к середине). Отрезок
    подсвечен цветом своей строки-источника, справа от строк — стрелка от источника к нему (SVG #cmpArrows в .rl-inner). У выбранной — золото */
 const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b6"];
-function rowCmpFind(R, r){   // ближайшая строка ниже r с отрезком той же длины и тем же числом единиц: { i, a, b } или null
-  const s = R[r], L = s.length, k = zzOnes(s);
+/* v0.1249, «почему у 111 следующая ближайшая не 10101 — она же содержит три единицы»: считаются только единицы, нули между ними — любые.
+   Группа в строке ниже — отрезок от единицы до единицы ровно с k единицами (k — сколько их в строке-источнике), ближайший к середине строки,
+   при равенстве — короче. Строка без единиц ищет столько же нулей подряд */
+function rowCmpFind(R, r){   // ближайшая строка ниже r с такой группой: { i, a, b } или null
+  const s = R[r], k = zzOnes(s), L = s.length;
   for (let i = r + 1; i < R.length; i++) {
-    const t = R[i], n = t.length; if (n < L) continue;
-    let c = 0, best = -1, bd = Infinity;
-    for (let j = 0; j < n; j++) {
-      if (t[j] === "1") c++;
-      if (j >= L && t[j - L] === "1") c--;
-      if (j >= L - 1 && c === k) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; } }
+    const t = R[i], n = t.length; let best = -1, bl = 0, bd = Infinity;
+    if (k === 0) {
+      for (let j = 0, run = 0; j < n; j++) { run = t[j] === "0" ? run + 1 : 0; if (run >= L) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; bl = L; } } }
+    } else {
+      const ones = []; for (let j = 0; j < n; j++) if (t[j] === "1") ones.push(j);
+      for (let q = 0; q + k <= ones.length; q++) {
+        const st = ones[q], len = ones[q + k - 1] - st + 1, d = Math.abs(2 * st + len - n);
+        if (d < bd || (d === bd && len < bl)) { bd = d; best = st; bl = len; }
+      }
     }
-    if (best >= 0) return { i, a: best, b: best + L };
+    if (best >= 0) return { i, a: best, b: best + bl };
   }
   return null;
 }
@@ -419,7 +425,7 @@ function rowCmpInfo(){
   for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r); if (m) links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); }
   const me = links.find(l => l.sel), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    (me ? ` · ниже ${s.length} бит с ${k} ед.: строка ${me.i + 1}, с бита ${me.a + 1}` : ` · ниже ${s.length} бит подряд с ${k} единицами нет`) + ` · стрелок ${links.length}`;
+    (me ? ` · ниже ${k} ед.: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже группы из ${k} ед. нет`) + ` · стрелок ${links.length}`;
   const v = { a, links, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
 function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
