@@ -278,6 +278,10 @@ body.may-zen #wrap{grid-column:1/-1!important;grid-row:1/-1!important}
 body.may-zen #mayatnikStatus{display:none!important}
 body.mayatnik-menu-ready.may-zen #mayZenOut{display:inline-flex;position:fixed;left:8px;bottom:8px;z-index:10;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif;opacity:.35}
 body.may-zen #mayZenOut:hover{opacity:1}
+/* v0.141: ◫ «Кнопки в окне» — рядом с ◎, только в дзене. */
+#mayZenWin{display:none}
+body.mayatnik-menu-ready.may-zen #mayZenWin{display:inline-flex;position:fixed;left:44px;bottom:8px;z-index:10;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif;opacity:.35}
+body.may-zen #mayZenWin:hover{opacity:1}
 /* v0.100 (правило кнопок): ползунок — шевроны «<» «>» по краям, ромб-бегунок цветом группы, пунктир-дорожка, значение по центру, без подписи. */
 .mayatnik-menu-ready label.may-slide{position:relative;gap:0!important;padding:0!important;--t:calc(12px / 1.7320508)}
 label.may-slide>.may-chev{flex:none;align-self:stretch;width:calc(3 * var(--t));min-height:22px;padding:0;margin:0;border:0;border-radius:0;background:#d6a838;cursor:pointer}

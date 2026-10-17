@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.140. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.141. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.140</title>
+<title>Zerkalius Маятник — v0.141</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -107,13 +107,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=138">
+<link rel="stylesheet" href="mayatnik-menu.css?v=141">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.140</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.141</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -429,12 +429,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.139: фигура маятника — клетки под конусами вершин lo…hi от якоря: в строке r столбцы anchor + lo − r … anchor + hi + r.
   // v0.140: внутри — ещё и без однородных полос по краям: в строке берутся клетки «не фона» (bgNoise), кучки, разделённые
   // пустыми промежутками шире FIG_GAP; мелкие кучки (не больше FIG_SMALL клеток) с краёв отбрасываются, если в строке есть крупная.
-  // Нужна поиску осей: фон и полосы за фигурой (1 / 0 / шахматка) не участвуют. null — конусов ещё нет.
+  // Строка без клеток «не фона» остаётся целиком. Нужна поиску осей: полосы за фигурой не участвуют. null — конусов ещё нет.
   const FIG_GAP = 32, FIG_SMALL = 4;
   function figureBounds() {
     const sp = pairOn() ? [-k, k] : k ? MAYATNIK.span(st.mode, k) : null;
     if (!sp) return null;
-    const { W, H, val } = f, L = new Int32Array(H), R = new Int32Array(H), Zc = st.bg === 'empty' ? null : bgNoise();
+    const { W, H, val } = f, L = new Int32Array(H), R = new Int32Array(H), Zc = sp[1] > sp[0] ? bgNoise() : null;   // одна вершина — полос нет; на пустом поле полосы — единицы, «не фон» — 0
     for (let r = 0; r < H; r++) {
       let a = Math.max(0, geo.anchor + sp[0] - r), b = Math.min(W - 1, geo.anchor + sp[1] + r);
       if (Zc && r > 0) {
@@ -442,7 +442,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
         for (let c = a; c <= b; c++) if (val[row + c] === Zc(r, c)) { const t = cl[cl.length - 1]; if (t && c - t[1] <= FIG_GAP) { t[1] = c; t[2]++; } else cl.push([c, c, 1]); }
         if (cl.some(t => t[2] > FIG_SMALL)) { let i = 0, j = cl.length - 1; while (cl[i][2] <= FIG_SMALL) i++; while (cl[j][2] <= FIG_SMALL) j--; a = cl[i][0]; b = cl[j][1]; }
         else if (cl.length) { a = cl[0][0]; b = cl[cl.length - 1][1]; }
-        else b = a - 1;   // строка целиком фон
       }
       L[r] = a; R[r] = b;
     }
@@ -2472,5 +2471,6 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
 <script src="mayatnik-menu.js?v=136"></script>
+<script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
