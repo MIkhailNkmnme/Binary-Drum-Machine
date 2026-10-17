@@ -522,7 +522,13 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       const p = at(h.a), q = at(h.b); if (!p || !q) continue;
       const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); } catch (e) { continue; /* место за показанной частью строки */ }
       if (rg.collapsed) continue;
-      (h.sel ? by.n : by[h.c]).push(rg); if (!h.noArrow) ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
+      (h.sel ? by.n : by[h.c]).push(rg);
+      if (h.up) {   // v0.1265, «все вниз стрелки, куда вверх?»: у прыжка вверх — стрелка на каждый бит, от бита строки ниже к его месту выше, остриём вверх
+        if (ends.length > 3000) continue;
+        const w = document.createTreeWalker(sx, NodeFilter.SHOW_TEXT); let c = 0, nd, sr = null;
+        while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > h.sa) { sr = document.createRange(); sr.setStart(nd, h.sa - c); sr.setEnd(nd, h.sa - c + 1); break; } c += n; }
+        if (sr) ends.push({ h, bit: true, src: sr.getBoundingClientRect(), dst: rg.getBoundingClientRect() });
+      } else if (!h.noArrow) ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
     }
   }
   const bad = [];
@@ -545,9 +551,16 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     const X = (x) => (x - rr.left) / sc, Y = (y) => (y - rr.top) / sc;
     let g = "", defs = "";
     const cols = [...CMP_COLS, "#facc15"];
-    cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
-    ends.forEach(({ h, src, dst }, n) => {
+    cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker><marker id="cmpAb' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
+    ends.forEach(({ h, src, dst, bit }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
+      if (bit) {
+        const x0 = X(src.left + src.width / 2), y0 = Y(src.top + src.height / 2), x1 = X(dst.left + dst.width / 2), y1 = Y(dst.bottom - 1), k = Math.max(8, (y0 - y1) * 0.45);
+        const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + x0.toFixed(1) + "," + (y0 - k).toFixed(1) + " " + x1.toFixed(1) + "," + (y1 + k).toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
+        g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd + '" fill="none" stroke="' + col + '" stroke-width="' + (h.me ? 1.8 : 1.1) +
+             '" opacity="' + (h.me ? 1 : 0.8) + '" marker-end="url(#cmpAb' + ci + ')"><title>строка ' + (h.r + 1) + ", бит " + (h.sa + 1) + " → строка " + (h.i + 1) + ", бит " + (h.a + 1) + "</title></path>";
+        return;
+      }
       /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа.
          v0.1258, «ещё те, что выделенную строку составляют, тоже слева»: стрелки в выбранную строку — тоже слева */
       const lf = h.sel || h.up || h.i === cmp.a; let mx = lf ? Infinity : 0;   // v0.1261: прыжки вверх — тоже слева
