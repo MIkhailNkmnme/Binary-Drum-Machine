@@ -29,3 +29,9 @@
   clip-path:polygon(evenodd,50% 14.7%,90.7% 55.4%,50% 96.1%,9.3% 55.4%,50% 14.7%,50% 20.6%,84.8% 55.4%,50% 90.2%,15.2% 55.4%,50% 20.6%)}
 #hubRombGrid .hubRgCell.full[aria-pressed=mixed]::before{background:#ffd166}
 #hubFieldTools .hubTreeItem>.hubSwatch[aria-pressed=true]{isolation:isolate}
+/* v0.234: 3D крутится — обводка головы «Объём» мигает; на паузе обводки нет, но ветка с «Сбросом» открыта */
+@keyframes hubPressBlink{0%,100%{opacity:1}50%{opacity:.15}}
+#hubFieldTools[data-nested] .hubTreeBranch[data-blink=true]>summary[aria-pressed=true]::before,#hubFieldTools[data-nested] .hubTreeBranch[data-blink=true]>summary[aria-pressed=true]::after{animation:hubPressBlink 1s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#hubFieldTools[data-nested] .hubTreeBranch[data-blink=true]>summary::before,#hubFieldTools[data-nested] .hubTreeBranch[data-blink=true]>summary::after{animation:none!important}}
+/* v0.234: копия образца цвета в ромбосетке — включённая сохраняет свой фон (иначе «кнопка удалилась, обводка осталась») */
+#hubRombGrid .hubRgCell.full.hasBg[aria-pressed=true],#hubRombGrid .hubRgCell.full.hasBg[aria-pressed=mixed]{background:var(--rg-bg)!important}
