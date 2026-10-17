@@ -537,8 +537,9 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
     ends.forEach(({ h, src, dst }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
-      /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа */
-      const lf = h.sel; let mx = lf ? Infinity : 0;
+      /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа.
+         v0.1258, «ещё те, что выделенную строку составляют, тоже слева»: стрелки в выбранную строку — тоже слева */
+      const lf = h.sel || h.i === cmp.a; let mx = lf ? Infinity : 0;
       for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
       const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
       const x0 = lf ? X(src.left) - 3 : X(src.right) + 3, x1 = lf ? X(dst.left) - 3 : X(dst.right) + 3, bx = lf ? Math.max(2, X(mx) - ofs) : X(mx) + ofs;
