@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.139. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.140. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.139</title>
+<title>Zerkalius Маятник — v0.140</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.139</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.140</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -427,10 +427,26 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.123: значение «не фона» в клетке (r, c); у «1 шахматкой» фон — 1 на решётке якоря и 0 на соседней.
   const bgNoise = () => st.bg === 'chess' ? (A => (r, c) => (c - A - r) & 1 ? 1 : 0)(geo.anchor) : (Z => () => Z)(st.bg === '0' ? 1 : 0);
   // v0.139: фигура маятника — клетки под конусами вершин lo…hi от якоря: в строке r столбцы anchor + lo − r … anchor + hi + r.
-  // Нужна поиску осей: фон за фигурой (1 / 0 / шахматка) не участвует. null — конусов ещё нет.
+  // v0.140: внутри — ещё и без однородных полос по краям: в строке берутся клетки «не фона» (bgNoise), кучки, разделённые
+  // пустыми промежутками шире FIG_GAP; мелкие кучки (не больше FIG_SMALL клеток) с краёв отбрасываются, если в строке есть крупная.
+  // Нужна поиску осей: фон и полосы за фигурой (1 / 0 / шахматка) не участвуют. null — конусов ещё нет.
+  const FIG_GAP = 32, FIG_SMALL = 4;
   function figureBounds() {
     const sp = pairOn() ? [-k, k] : k ? MAYATNIK.span(st.mode, k) : null;
-    return sp && [geo.anchor + sp[0], geo.anchor + sp[1]];
+    if (!sp) return null;
+    const { W, H, val } = f, L = new Int32Array(H), R = new Int32Array(H), Zc = st.bg === 'empty' ? null : bgNoise();
+    for (let r = 0; r < H; r++) {
+      let a = Math.max(0, geo.anchor + sp[0] - r), b = Math.min(W - 1, geo.anchor + sp[1] + r);
+      if (Zc && r > 0) {
+        const row = r * W, cl = [];   // кучки [начало, конец, число клеток «не фона»]
+        for (let c = a; c <= b; c++) if (val[row + c] === Zc(r, c)) { const t = cl[cl.length - 1]; if (t && c - t[1] <= FIG_GAP) { t[1] = c; t[2]++; } else cl.push([c, c, 1]); }
+        if (cl.some(t => t[2] > FIG_SMALL)) { let i = 0, j = cl.length - 1; while (cl[i][2] <= FIG_SMALL) i++; while (cl[j][2] <= FIG_SMALL) j--; a = cl[i][0]; b = cl[j][1]; }
+        else if (cl.length) { a = cl[0][0]; b = cl[cl.length - 1][1]; }
+        else b = a - 1;   // строка целиком фон
+      }
+      L[r] = a; R[r] = b;
+    }
+    return [L, R];
   }
   function zoneCalc(R) {
     const { W, val } = f, Zc = bgNoise();
@@ -1688,7 +1704,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     symPending = key; $('symInfo').textContent = 'Ищу оси…';
     const field = {W:f.W,H:f.H,val:f.val.slice()}, fb = figureBounds();
     // v0.139: клетки за фигурой маятника (фон 1 / 0 / шахматка) — как незаписанные: оси и их биты там не ищутся.
-    for (let r = 0; r < f.H; r++) { const row = r * f.W, L = fb ? fb[0] - r : f.W, R = fb ? fb[1] + r : -1; for (let c = 0; c < f.W; c++) if (c < L || c > R) field.val[row + c] = -1; }
+    for (let r = 0; r < f.H; r++) { const row = r * f.W, L = fb ? fb[0][r] : f.W, R = fb ? fb[1][r] : -1; for (let c = 0; c < f.W; c++) if (c < L || c > R) field.val[row + c] = -1; }
     const fieldCopy = {W:field.W,H:field.H,val:field.val.slice()}, opts = {anchor:geo.anchor,
       minRows:st.symRowsMin,maxRows:st.symRowsMax,minBits:st.symBitsMin,maxBits:st.symBitsMax,directions:symDirs()};
     const accept = data => {
