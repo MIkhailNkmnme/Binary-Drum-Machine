@@ -404,17 +404,20 @@ const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b
    сплошным блоком и нули одним (1…10…0 или 0…01…1, в отрезке не больше одной смены бита). Поиск только по единицам (v0.1249, "one") снят;
    прежние true / "one" читаются как "len" */
 function rowCmpMode(){ return Z.rowCmp === "grp" ? "grp" : Z.rowCmp ? "len" : ""; }
-function rowCmpFind(R, r, mode){   // ближайшая строка ниже r с таким отрезком (в строке — ближайший к середине): { i, a, b } или null
+/* v0.1252, «надо просто все подряд ближайшие находить и отмечать, но если они уже отмечены для высшей строки, то их нельзя»: строки идут сверху
+   по очереди, каждая забирает свой ближайший отрезок; биты, уже занятые отрезком строки выше (used[i] — метки строки i), другим не достаются */
+function rowCmpFind(R, r, mode, used){   // ближайшая строка ниже r с таким отрезком (в строке — ближайший к середине, без занятых бит): { i, a, b } или null
   const s = R[r], k = zzOnes(s), L = s.length;
   for (let i = r + 1; i < R.length; i++) {
-    const t = R[i], n = t.length; if (n < L) continue;
+    const t = R[i], n = t.length, u = used && used[i]; if (n < L) continue;
     let best = -1, bd = Infinity;
-    for (let j = 0, c = 0, tr = 0; j < n; j++) {
+    for (let j = 0, c = 0, tr = 0, x = 0; j < n; j++) {
       if (t[j] === "1") c++;
       if (j >= L && t[j - L] === "1") c--;
+      if (u) { if (u[j]) x++; if (j >= L && u[j - L]) x--; }   // x — занятых бит в отрезке; есть — отрезок мимо
       if (j >= 1 && t[j] !== t[j - 1]) tr++;                       // смены бита внутри отрезка [j − L + 1, j]: входящая справа…
       if (j >= L && t[j - L + 1] !== t[j - L]) tr--;               // …и ушедшая слева
-      if (j >= L - 1 && c === k && (mode !== "grp" || tr <= 1)) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; } }
+      if (j >= L - 1 && c === k && !x && (mode !== "grp" || tr <= 1)) { const st = j - L + 1, d = Math.abs(2 * st + L - n); if (d < bd) { bd = d; best = st; } }
     }
     if (best >= 0) return { i, a: best, b: best + L };
   }
@@ -427,8 +430,8 @@ function rowCmpInfo(){
   if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const links = [];
-  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode); if (m) links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); }
+  const links = [], used = {};
+  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); const uu = used[m.i] || (used[m.i] = new Uint8Array(R[m.i].length)); uu.fill(1, m.a, m.b); } }
   const me = links.find(l => l.sel), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
     (me ? ` · ниже ${s.length} бит с ${k} ед.${mode === "grp" ? " блоками" : ""}: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${s.length} бит подряд с ${k} ед.${mode === "grp" ? " блоками" : ""} нет`) + ` · стрелок ${links.length}`;
