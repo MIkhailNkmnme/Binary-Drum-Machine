@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.151. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.152. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.151</title>
+<title>Zerkalius Маятник — v0.152</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -105,6 +105,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 #bitDigits{position:fixed;pointer-events:none;margin:0;background:transparent;image-rendering:auto;z-index:2}
 #bitDigits[hidden]{display:none}
 #geomCenterCanvas{position:fixed;pointer-events:none;z-index:4;margin:0;background:transparent;image-rendering:auto}#geomCenterCanvas[hidden]{display:none}
+#cellInkCanvas{position:fixed;pointer-events:none;z-index:5;background:transparent}#cellInkCanvas[hidden],#cellInkBar[hidden]{display:none}
+#cellInkBar{position:fixed;bottom:48px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:max-content;max-width:94vw;padding:8px 12px;background:#142232;color:#e8edf5;border:1px solid #5ce1e6;font:12px monospace}
+#cellInkBar button{color:inherit;background:#24394e;padding:5px 10px;border:0;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%)}#cellInkBar button[aria-pressed=true]{background:#007b91}#cellInkHint{flex-basis:100%;color:#b8cbd9}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
@@ -114,7 +117,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.151</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.152</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -166,6 +169,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Цвет нулей в виде «Только цифры»">Цвет 0 <input id="digitZeroColour" type="color" value="#7cbcff"></label>
     <label title="Подсветить центральный столбец (столб якоря) — на поле, в любом кадре и в свёртке"><input id="midCol" type="checkbox" data-mi-short="Центр"> центр</label>
     <label title="Геометрический центр площади всех записанных клеток текущего кадра: 0 и 1 равноправны, пустые клетки не участвуют. Считается по всему полю, независимо от масштаба и обрезки вида."><input id="geomCenter" type="checkbox" data-mi-short="Геоцентр"> Геоцентр</label>
+    <label title="Границы фигуры и сетка битов. Щелчком ставь диагонали: 1 — \, 2 — /; NumPad 5/0 — верх/низ. ПКМ убирает косые. Биты не меняются."><input id="cellInk" type="checkbox" data-mi-short="Грани"> Грани</label>
     <label title="Тонкие линии: между ними — часть поля, которую оставшиеся вершины уже не изменят (от ближайших будущих вершин вниз под 45°)"><input id="fixLines" type="checkbox" data-mi-short="Застыло"> застыло</label>
     <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#e8edf5"></label>
     <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
@@ -317,6 +321,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 
 <script src="mayatnik-core.js?v=4"></script>
 <script src="mayatnik-center.js?v=151"></script>
+<script src="mayatnik-cell-ink.js?v=152"></script>
 <script src="mayatnik-symmetry.js?v=27"></script>
 <script src="mayatnik-fill.js?v=37"></script>
 <script src="mayatnik-template.js?v=36"></script>
@@ -2036,7 +2041,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const {frame,zero,one,empty} = pictureStats, bits = zero + one, percent = n => bits ? (100 * n / bits).toFixed(2).replace('.', ',') : '0,00';
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
   }
-  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();drawGeomCenter();foldTransport?.render();foldTransportV?.render();});}
+  function queueDigits(){if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{drawDigits();drawSymmetry();drawTemplate();drawFillPreview();drawGeomCenter();cellInk.draw();foldTransport?.render();foldTransportV?.render();});}
   function drawDigits() {
     digitsRaf=0;
     const rp=rombP(),only=st.view==='digitsOnly';
@@ -2664,6 +2669,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   $('mayZen').onclick=()=>zenToggle();$('mayZenOut').onclick=()=>zenToggle(false);
   wrap.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});   // колёсико — без автопрокрутки браузера
   addEventListener('keydown',e=>{if(e.code==='Escape'&&document.body.classList.contains('may-zen')&&!e.target.closest?.('input,select,textarea'))zenToggle(false);});
+  const cellInk=MayatnikCellInk({wrap,canvas:cv,state:()=>st,save,view:()=>!f||!img?null:{W:f.W,H:f.H,k,anchor:geo.anchor,mode:st.mode,steps:st.steps,pair:pairOn(),bg:st.bg,romb:rombP()>=0,VX,width:VW,height:VH,s:scale(),bit:(x,y)=>outShow(y,x+VX)?-1:rasterBit(Math.floor((x+.5)*RK),Math.floor((y+.5)*RK))}});
   writeUI();if(URL_ON)goTo(urlK);else restorePaint().then(ok=>{if(!ok)build();});   // v0.149: ссылка с настройками — сразу к кадру k
 })();
 </script>
@@ -2671,9 +2677,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-logo.js?v=138"></script>
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
-<script src="../_js/menu-icons.js?v=18"></script>
+<script src="../_js/menu-icons.js?v=19"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=151"></script>
+<script src="mayatnik-menu.js?v=152"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
