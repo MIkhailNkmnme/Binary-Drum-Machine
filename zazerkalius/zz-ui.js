@@ -73,7 +73,8 @@ const Z = {
   paneIcons: false,                      // v0.035: левая панель — значками в один столбик
   rowsH: 0,                              // v0.026: высота поля строк, когда под ним окна (0 — половина колонки)
   tplRef: null,   // v0.037: номер своего шаблона-эталона (⚑) — с ним сравниваются строки; null — ещё не выбран
-  showFM: false, show01: false, showFix: false, rowCmp: false,   // v0.036: числа у номеров; красные неподвижные биты
+  showFM: false, show01: false, showFix: false, rowCmp: false, cmpHand: [],   // v0.1271: cmpHand — стрелки «Σ ✎» [строка, бит, строка выше, бит]
+    // v0.036: числа у номеров; красные неподвижные биты
   rowsAlign: "center", rowsW: 0, rowsFolded: false, rowsWRestore: 0, tpl: [], layoutVer: 0,   // v0.995: щелчок по зубцам сужает поле до столбца кручений; ширина восстанавливается повторным щелчком
   maskStr: "10", maskN: 16, maskMode: "pascal",   // v0.011: треугольник по маске (v0.012: и от строки)
   sigMsg: "1101", sigBase: "10", sigDev: "inv", sigShape: "tri", sigLen: 8, sigNoise: 0,   // v0.013: сигнал по базе
@@ -394,6 +395,7 @@ function rowChgInfo(){
    выбранную — ближайшая строка ниже, где есть отрезок подряд той же длины с тем же числом единиц (в строке — ближайший к середине). Отрезок
    подсвечен цветом своей строки-источника, справа от строк — стрелка от источника к нему (SVG #cmpArrows в .rl-inner). У выбранной — золото */
 const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b6"];
+const rowCmpHand = { pend: null, eat: false };   // v0.1271, «Σ ✎»: pend — [строка, бит], выбранный для прыжка
 /* v0.1249, «почему у 111 следующая ближайшая не 10101 — она же содержит три единицы»: считаются только единицы, нули между ними — любые.
    Группа в строке ниже — отрезок от единицы до единицы ровно с k единицами (k — сколько их в строке-источнике), ближайший к середине строки,
    при равенстве — короче. Строка без единиц ищет столько же нулей подряд */
@@ -403,7 +405,7 @@ const CMP_COLS = ["#22d3ee", "#da70d6", "#7fff7f", "#ff7f50", "#179fff", "#f472b
    отрезок подряд той же длины с тем же числом единиц и нулей. «Σ 0·1» (Z.rowCmp = "len") — порядок любой; «Σ ▮▯» ("grp") — единицы одним
    сплошным блоком и нули одним (1…10…0 или 0…01…1, в отрезке не больше одной смены бита). Поиск только по единицам (v0.1249, "one") снят;
    прежние true / "one" читаются как "len" */
-function rowCmpMode(){ return Z.rowCmp === "grp" || Z.rowCmp === "sel" ? Z.rowCmp : Z.rowCmp ? "len" : ""; }   // v0.1256: "sel" — вариант v0.1254
+function rowCmpMode(){ return Z.rowCmp === "grp" || Z.rowCmp === "sel" || Z.rowCmp === "hand" ? Z.rowCmp : Z.rowCmp ? "len" : ""; }   // v0.1271: "hand" — стрелки руками   // v0.1256: "sel" — вариант v0.1254
 /* v0.1252, «надо просто все подряд ближайшие находить и отмечать, но если они уже отмечены для высшей строки, то их нельзя»: строки идут сверху
    по очереди, каждая забирает свой ближайший отрезок; биты, уже занятые отрезком строки выше (used[i] — метки строки i), другим не достаются */
 function rowCmpFind(R, r, mode, used){   // ближайшая строка ниже r с таким отрезком (в строке — ближайший к середине, без занятых бит): { i, a, b } или null
@@ -426,13 +428,26 @@ function rowCmpFind(R, r, mode, used){   // ближайшая строка ни
 function rowCmpInfo(){
   if (!Z.rowCmp || document.body.classList.contains("nocur")) return null;
   const a = Z.cur, R = Z.rows, s = R[a]; if (!s) return null;
-  const mode = rowCmpMode(), key = mode + a + "|" + R.join(",");
+  const mode = rowCmpMode(), key = mode + a + "|" + R.join(",") + (mode === "hand" ? "|" + JSON.stringify(Z.cmpHand || []) + "|" + rowCmpHand.pend : "");
   if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
   const links = [], lost = [], used = {}, uOf = (i) => used[i] || (used[i] = new Uint8Array(R[i].length));
   let txtMe = "";
-  if (mode === "len" || mode === "sel") {
+  if (mode === "hand") {
+    /* v0.1271, «дай мне вручную строить эти стрелки»: «Σ ✎» — стрелки ставятся щелчками: бит строки, потом такой же бит в строке выше.
+       Бит прыгает один раз, место принимает один раз. Стрелки видны все и от выбранной строки не зависят */
+    const H = Array.isArray(Z.cmpHand) ? Z.cmpHand : [];
+    for (const e of H) {
+      const [r, j, i, q] = e || [];
+      if (!R[r] || !R[i] || i >= r || j >= R[r].length || q >= R[i].length || R[r][j] !== R[i][q]) continue;
+      links.push({ r, i, a: q, b: q + 1, sa: j, sb: j + 1, sel: false, up: true, me: r === a, c: r % CMP_COLS.length });
+    }
+    const P = rowCmpHand.pend;
+    if (P && R[P[0]] && P[1] < R[P[0]].length) links.push({ r: P[0], i: P[0], a: P[1], b: P[1] + 1, sa: P[1], sb: P[1] + 1, sel: true, pend: true, noArrow: true, c: 0 });
+    const mine = links.filter(l => l.up && l.r === a).length;
+    txtMe = ` · ✎ стрелок ${links.filter(l => l.up).length} · из строки ${a + 1} ушло ${mine} из ${s.length}` + (mine === s.length && a > 0 ? " — ровно" : "") + (P ? ` · выбран бит ${P[1] + 1} строки ${P[0] + 1} — щёлкни, куда он прыгает` : "");
+  } else if (mode === "len" || mode === "sel") {
     /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
        свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
        Занятые биты другим не достаются. Стрелка — одна на пару «строка → строка», подсвечен каждый забранный бит */
@@ -507,7 +522,7 @@ function rowCmpInfo(){
     const me = links.find(l => l.sel);
     txtMe = me ? ` · ниже ${s.length} бит с ${k} ед. блоками: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${s.length} бит подряд с ${k} ед. блоками нет`;
   }
-  const me = links.find(l => l.sel), near = me ? me.i : -1;
+  const me = links.find(l => l.sel && !l.pend), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` + txtMe + ` · стрелок ${links.filter(l => !l.noArrow).length}`;
   const v = { a, links, lost, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
@@ -16675,7 +16690,7 @@ function init(){
   };
   // v0.036: переключатели чисел у номеров и красных неподвижных бит
   const fmLabel = () => {
-    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", rowCmpMode() === "len"); $("bRowCmp2").classList.toggle("on", rowCmpMode() === "grp"); $("bRowCmp3").classList.toggle("on", rowCmpMode() === "sel"); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
+    $("bShowFM").classList.toggle("on", !!Z.showFM); $("bShow01").classList.toggle("on", !!Z.show01); $("bRowCmp").classList.toggle("on", rowCmpMode() === "len"); $("bRowCmp2").classList.toggle("on", rowCmpMode() === "grp"); $("bRowCmp3").classList.toggle("on", rowCmpMode() === "sel"); if ($("bRowCmp4")) $("bRowCmp4").classList.toggle("on", rowCmpMode() === "hand"); $("bShowFix").classList.toggle("on", Z.showFix === true); $("bShowFixIr").classList.toggle("on", Z.showFix === "ir");   // v0.340: две кнопки, горит одна или ни одной
   };
   fmLabel();
   $("bShowFM").onclick = () => { Z.showFM = !Z.showFM; fmLabel(); renderRows(); save(); };
@@ -16691,6 +16706,40 @@ function init(){
   $("bRowCmp").onclick = () => rowCmpSet("len");
   $("bRowCmp2").onclick = () => rowCmpSet("grp");   // v0.1251
   $("bRowCmp3").onclick = () => rowCmpSet("sel");   // v0.1256
+  if ($("bRowCmp4")) {   // v0.1271: «Σ ✎» — стрелки руками; правый щелчок по кнопке — стереть все
+    $("bRowCmp4").onclick = () => { rowCmpHand.pend = null; rowCmpSet("hand"); };
+    $("bRowCmp4").oncontextmenu = (e) => { e.preventDefault(); if (!(Z.cmpHand || []).length) { say("Σ ✎: стрелок нет."); return; } Z.cmpHand = []; rowCmpHand.pend = null; renderRows(); save(); say("Σ ✎: все стрелки стёрты."); };
+    const bitAt = (e) => {
+      const rw = e.target.closest && e.target.closest('#rowList .rw[data-r]'), bx = rw && rw.querySelector(".bx"); if (!bx) return null;
+      const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let k = 0, nd;
+      while ((nd = w.nextNode())) {
+        const t = nd.textContent;
+        for (let q = 0; q < t.length; q++, k++) { const rg = document.createRange(); rg.setStart(nd, q); rg.setEnd(nd, q + 1); const b = rg.getBoundingClientRect();
+          if (e.clientX >= b.left && e.clientX < b.right && e.clientY >= b.top - 2 && e.clientY < b.bottom + 2) return { r: +rw.dataset.r, j: k }; }
+      }
+      return null;
+    };
+    const tap = ({ r, j }) => {
+      const H = Array.isArray(Z.cmpHand) ? Z.cmpHand : (Z.cmpHand = []), R = Z.rows, P = rowCmpHand.pend;
+      if (!P || r >= P[0]) {
+        if (P && r === P[0] && j === P[1]) { rowCmpHand.pend = null; say("Σ ✎: выбор снят."); }
+        else { const k = H.findIndex(x => x[0] === r && x[1] === j);
+          if (k >= 0 && !P) { H.splice(k, 1); say(`Σ ✎: стрелка бита ${j + 1} строки ${r + 1} снята.`); }
+          else if (!r) { rowCmpHand.pend = null; say("Σ ✎: над строкой 1 прыгать некуда."); }
+          else if (k >= 0) { rowCmpHand.pend = null; say(`Σ ✎: бит ${j + 1} строки ${r + 1} уже прыгнул — щёлкни по нему ещё раз, чтобы снять стрелку.`); }
+          else { rowCmpHand.pend = [r, j]; say(`Σ ✎: бит ${j + 1} строки ${r + 1} (${R[r][j]}) — щёлкни, куда он прыгает выше.`); } }
+      } else if (R[r][j] !== R[P[0]][P[1]]) say(`Σ ✎: прыгать можно только на такой же бит — ${R[P[0]][P[1]]}.`);
+      else if (H.some(x => x[2] === r && x[3] === j)) say("Σ ✎: на этот бит уже прыгнули — место занято.");
+      else { H.push([P[0], P[1], r, j]); rowCmpHand.pend = null; }
+      renderRows(); save();
+    };
+    $("rowList").addEventListener("pointerdown", (e) => {
+      if (rowCmpMode() !== "hand" || e.button !== 0 || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const h = bitAt(e); if (!h) return;
+      e.preventDefault(); e.stopPropagation(); rowCmpHand.eat = true; tap(h);
+    }, true);
+    $("rowList").addEventListener("click", (e) => { if (rowCmpHand.eat) { rowCmpHand.eat = false; e.preventDefault(); e.stopPropagation(); } }, true);
+  }
   const lockUi = () => { $("bRowLock").textContent = Z.rowLock ? "⛔" : "✎";   /* v0.173: свой значок — не путать с общим замком колец 🔒 */ $("bRowLock").classList.toggle("on", !!Z.rowLock); document.body.classList.toggle("rowlock", !!Z.rowLock); };
   lockUi();
   $("bRowLock").onclick = () => { Z.rowLock = !Z.rowLock; lockUi(); save(); say(Z.rowLock ? "🔒 Строки заперты: менять нельзя ничем, смотреть — сколько угодно." : "🔓 Строки открыты для правки."); };   // v0.061
