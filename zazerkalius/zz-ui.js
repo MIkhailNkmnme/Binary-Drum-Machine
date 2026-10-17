@@ -581,6 +581,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     let g = "", defs = "";
     const cols = [...CMP_COLS, "#facc15"];
     cols.forEach((c, i) => { defs += '<marker id="cmpAh' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker><marker id="cmpAb' + i + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L8,4L0,8Z" fill="' + c + '"/></marker>'; });
+    const crv = [], handM = rowCmpMode() === "hand";   // v0.1274: кривые «Σ ✎» — для поиска пересечений
     ends.forEach(({ h, src, dst, bit, sy, dy }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
       if (bit) {
@@ -590,6 +591,9 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
         const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + x0.toFixed(1) + "," + (y0 - dn * k).toFixed(1) + " " + x1.toFixed(1) + "," + (y1 + (h.i === h.r ? -k : dn * k)).toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
         g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd + '" fill="none" stroke="' + col + '" stroke-width="' + (h.me ? 1.5 : 1.1) +
              '" opacity="' + (h.me ? 1 : 0.8) + '" marker-end="url(#cmpAb' + ci + ')"><title>строка ' + (h.r + 1) + ", бит " + (h.sa + 1) + " → строка " + (h.i + 1) + ", бит " + (h.a + 1) + "</title></path>";
+        if (handM && crv.length < 600) { const c1y = y0 - dn * k, c2y = y1 + (h.i === h.r ? -k : dn * k), P = [];
+          for (let t = 0; t <= 24; t++) { const u = t / 24, w = 1 - u; P.push([w*w*w*x0 + 3*w*w*u*x0 + 3*w*u*u*x1 + u*u*u*x1, w*w*w*y0 + 3*w*w*u*c1y + 3*w*u*u*c2y + u*u*u*y1]); }
+          crv.push({ v: (Z.rows[h.r] || "")[h.sa], P }); }
         return;
       }
       /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа.
@@ -602,6 +606,23 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd +
            '" fill="none" stroke="' + col + '" stroke-width="' + (h.sel || h.me ? 2.2 : 1.4) + '" opacity="' + (h.sel ? 1 : 0.85) + '" marker-end="url(#cmpAh' + ci + ')"><title>строка ' + (h.r + 1) + " → строка " + (h.i + 1) + ", биты " + (h.a + 1) + "–" + h.b + "</title></path>";
     });
+    /* v0.1274, «стрелка не должна пересекаться со стрелкой тех же 0 или 1 … подсвети это красным крестиком»: в «Σ ✎» место, где пересеклись
+       две стрелки бит одного значения (1 с 1, 0 с 0), — красный ✕. Встречи у самих бит (общий конец или начало) не считаются */
+    if (handM && crv.length > 1) {
+      const cross = (a, b, c, d) => { const r1x = b[0] - a[0], r1y = b[1] - a[1], r2x = d[0] - c[0], r2y = d[1] - c[1], den = r1x * r2y - r1y * r2x; if (Math.abs(den) < 1e-9) return null;
+        const t = ((c[0] - a[0]) * r2y - (c[1] - a[1]) * r2x) / den, u = ((c[0] - a[0]) * r1y - (c[1] - a[1]) * r1x) / den;
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? [a[0] + t * r1x, a[1] + t * r1y] : null; };
+      const near = (p, q) => Math.abs(p[0] - q[0]) < 4 && Math.abs(p[1] - q[1]) < 4, xs = [];
+      for (let m = 0; m < crv.length; m++) for (let n = m + 1; n < crv.length; n++) {
+        const A = crv[m], B = crv[n]; if (A.v !== B.v) continue;
+        const ends4 = [A.P[0], A.P[24], B.P[0], B.P[24]];
+        for (let s1 = 0; s1 < 24; s1++) for (let s2 = 0; s2 < 24; s2++) { const p = cross(A.P[s1], A.P[s1 + 1], B.P[s2], B.P[s2 + 1]);
+          if (p && !ends4.some(e => near(p, e)) && !xs.some(q => near(p, q))) xs.push(p); }
+      }
+      for (const [x, y] of xs) g += '<path class="cmpx" d="M' + (x - 4).toFixed(1) + "," + (y - 4).toFixed(1) + "L" + (x + 4).toFixed(1) + "," + (y + 4).toFixed(1) + "M" + (x + 4).toFixed(1) + "," + (y - 4).toFixed(1) + "L" + (x - 4).toFixed(1) + "," + (y + 4).toFixed(1) +
+        '" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" fill="none"><title>здесь пересеклись стрелки одинаковых бит</title></path>';
+      sv._cross = xs.length;
+    } else sv._cross = 0;
     sv.innerHTML = "<defs>" + defs + "</defs>" + g;
     /* v0.1259, «при наведении на стрелку-нить пусть подсветит её и биты»: у каждой стрелки — широкая невидимая дорожка .hit (ловит мышь);
        наведение — стрелка толще и ярче, её биты в обеих строках (откуда и куда) — белым (Highlight «zcmph» с приоритетом) */
