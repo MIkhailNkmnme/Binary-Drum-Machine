@@ -570,7 +570,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     if (two.length) { const H2 = new Highlight(...two); H2.priority = 5; CSS.highlights.set("zcmp2x", H2); } else CSS.highlights.delete("zcmp2x");
     if (by.n.length) CSS.highlights.set("zcmpn", new Highlight(...by.n)); else CSS.highlights.delete("zcmpn");
     CMP_COLS.forEach((_, c) => { if (by[c].length) CSS.highlights.set("zcmp" + c, new Highlight(...by[c])); else CSS.highlights.delete("zcmp" + c); });
-    CSS.highlights.delete("zcmp"); CSS.highlights.delete("zcmpok");   // v0.1275: зелёные места — заново ниже
+    CSS.highlights.delete("zcmp"); CSS.highlights.delete("zcmpok"); CSS.highlights.delete("zcmpst");   // v0.1275: зелёные места — заново ниже
   }
   if (cmp && root) {
     if (!sv) { sv = document.createElementNS("http://www.w3.org/2000/svg", "svg"); sv.id = "cmpArrows"; root.appendChild(sv); }
@@ -651,7 +651,16 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
         if (!okR.length) { sv._noway = P0.join(":"); if (sr) bad.push(sr); }
       }
     }
-    if (hl) { if (okR.length) CSS.highlights.set("zcmpok", new Highlight(...okR)); else CSS.highlights.delete("zcmpok");
+    /* v0.1276, «и покажи те, которые не прыгнули, как-то, даже если в них прыгнули»: в «Σ ✎» бит, у которого нет своей стрелки, подчёркнут
+       (Highlight «zcmpst» — только черта, поверх фона, его не трогает). Строки — до самой нижней, где есть стрелка */
+    const stay = [];
+    if (handM) { const out = new Set(), lo = cmp.links.filter(l => l.up).reduce((m, l) => Math.max(m, l.r, l.i), -1);
+      for (const l of cmp.links) if (l.up) out.add(l.r + ":" + l.sa);
+      for (let i = 0; i <= lo && stay.length < 6000; i++) { const bx = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (!bx) continue;
+        const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd;
+        while ((nd = w.nextNode())) { const n = nd.textContent.length; for (let q = 0; q < n; q++) if (!out.has(i + ":" + (c + q))) { const rg = document.createRange(); rg.setStart(nd, q); rg.setEnd(nd, q + 1); stay.push(rg); } c += n; } } }
+    if (hl) { if (stay.length) CSS.highlights.set("zcmpst", new Highlight(...stay)); else CSS.highlights.delete("zcmpst");
+      if (okR.length) CSS.highlights.set("zcmpok", new Highlight(...okR)); else CSS.highlights.delete("zcmpok");
       if (bad.length) CSS.highlights.set("zcmpx", new Highlight(...bad)); }
     sv.innerHTML = "<defs>" + defs + "</defs>" + g;
     /* v0.1259, «при наведении на стрелку-нить пусть подсветит её и биты»: у каждой стрелки — широкая невидимая дорожка .hit (ловит мышь);
