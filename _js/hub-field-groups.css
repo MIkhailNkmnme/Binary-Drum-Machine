@@ -35,7 +35,7 @@
 #hubBitPacking{position:fixed;right:158px;top:6px;z-index:26;display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:12px/1.15 system-ui,sans-serif;white-space:pre-line;cursor:pointer;touch-action:manipulation}
 #hubBitPacking::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
 #hubBitPacking[aria-pressed=true],#hubBitPacking:hover,#hubBitPacking:focus-visible{background:var(--hub-theme-active);color:var(--hub-theme-accent)}
-#hubFlow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:6}
+#hubFlow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0}   /* v0.246: потоки под битами */
 #hubFieldTools .hubFlowStatus{grid-column:1/-1;font:10px/1.4 system-ui,sans-serif;color:var(--hub-theme-bit)}
 #hubFieldTools .hubFlowControls [aria-pressed=true]{color:var(--hub-theme-accent)!important;background:var(--hub-theme-active)!important}
 
