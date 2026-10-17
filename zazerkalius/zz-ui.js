@@ -464,7 +464,9 @@ function rowCmpInfo(){
        строки выше, который никуда не лёг */
     const gave = {}, gOf = (r) => gave[r] || (gave[r] = new Uint8Array(R[r].length));
     if (mode === "sel") for (let r = 0; r < a; r++) take(r, a, false);   // v0.1256, «тот вариант оставь тоже»: «Σ ↓» — строки выше ложатся только в выбранную и ниже (v0.1254)
-    else for (let rc = a; rc >= 1 && work < 4e6; rc--) {
+    /* v0.1260, «пусть сначала заполняет сверху вниз, а выделенной — то, что останется»: приёмники идут сверху вниз (строка 2, 3, …, выбранная —
+       последней); каждый по-прежнему берёт сначала у ближайшей строки над ним */
+    else for (let rc = 1; rc <= a && work < 4e6; rc++) {
       const t = R[rc], n = t.length, uu = uOf(rc); let f1 = 0, f0 = 0;
       for (let q = 0; q < n; q++) if (!uu[q]) { if (t[q] === "1") f1++; else f0++; }
       for (let g = rc - 1; g >= 0 && (f1 || f0) && work < 4e6; g--) {
