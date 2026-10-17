@@ -63,10 +63,10 @@
       const len=Math.hypot(nx,ny);if(len<1e-7)return [-vx,-vy];
       nx/=len;ny/=len;if(nx*vx+ny*vy>0){nx=-nx;ny=-ny;}return [nx,ny];
     }
-    topBeams(){
+    topBeams(y0=0){
       const beams=[],distance=12*Math.hypot(this.width,this.height);
       for(let x=0;x<this.width;x++){
-        const pending=[{ray:{x:x+.5,y:0,vx:0,vy:1,bounces:0},remaining:distance,start:0}];
+        const pending=[{ray:{x:x+.5,y:y0,vx:0,vy:1,bounces:0},remaining:distance,start:0}];
         for(let n=0;n<pending.length&&n<32;n++){
           const current=pending[n],forks=[],path=this.advanceRay(current.ray,current.remaining,forks);let travelled=current.start;
           for(let i=1;i<path.length;i++){
@@ -113,7 +113,7 @@
   class WaterField extends Field {
     constructor(...args){super(...args);this.activeRows=new Set();this.cornerPass=false;}
     addWater(x,y,amount=1){const added=super.addWater(x,y,amount);if(added>0)this.activeRows.add(Math.floor(y));return added;}
-    fillTop(){let added=0;for(let x=0;x<this.width;x++)added+=this.addWater(x,0);return added;}
+    fillTop(y=0){let added=0;for(let x=0;x<this.width;x++)added+=this.addWater(x,y);return added;}
     setMask(mask){
       this.solid=mask;
       // Moving bits may push liquid sideways or down, never lift it above its row.
