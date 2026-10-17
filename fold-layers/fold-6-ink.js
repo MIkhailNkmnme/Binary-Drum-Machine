@@ -6,7 +6,7 @@
   const viewport = document.getElementById('screenCanvas');
   const ns = 'http://www.w3.org/2000/svg', bar = document.createElement('div');
   bar.id = 'rowInkBar'; bar.hidden = true;
-  bar.innerHTML = `<div class="ink-tools"><button id="inkText" data-tool="text" title="Выбрать клетку и написать пометку поверх бита">✎ Текст</button><button id="inkEdge" data-tool="edge" title="Веди мышью вдоль краёв клеток: непрерывная обводка, в том числе спираль">⌑ Обводка</button><button id="inkBox" data-tool="box" title="Протяни от первой клетки до последней — внешняя рамка">□ Рамка</button><button id="inkSlash" data-tool="slash" title="Диагональ клетки снизу слева вверх вправо">/ Косая</button><button id="inkBack" data-tool="back" title="Диагональ клетки сверху слева вниз вправо">\\ Косая</button><button id="inkErase" data-tool="erase" title="Стереть все пометки в клетке">⌫ Ластик</button><button id="inkUndo" title="Отменить последнее действие разметки">↶ Отмена</button><button id="inkRedo" title="Вернуть отменённое действие разметки">↷ Повтор</button><button id="inkSave" title="Скачать все цепочки с битами и разметкой в JSON">💾 Файл</button><label>Цвет <input id="inkColor" type="color" value="#ffcf48" aria-label="Цвет разметки"></label></div><div class="ink-entry"><span id="inkAddress">Выбери клетку</span><input id="inkValue" type="text" maxlength="100" placeholder="Пометка; Enter — записать" aria-label="Текст клетки"><button id="inkWrite" title="Записать текст в выбранную клетку">✓ Записать</button><button id="inkHorr" title="Новая цепочка: 128 неизменяемых строк Хоррохориуса; прежняя цепочка сохраняется">▲ Хоррохориус 128</button></div><div id="inkHint">Обводка — веди по граням клеток. / и \\ — диагонали. Ctrl+Z — отмена, Esc — выйти. Пометки сохраняются вместе с цепочкой в JSON.</div>`;
+  bar.innerHTML = `<div class="ink-tools"><button id="inkText" data-tool="text" title="Выбрать клетку и написать пометку поверх бита">✎ Текст</button><button id="inkEdge" data-tool="edge" title="Веди мышью вдоль краёв клеток: непрерывная обводка, в том числе спираль">⌑ Обводка</button><button id="inkBox" data-tool="box" title="Протяни от первой клетки до последней — внешняя рамка">□ Рамка</button><button id="inkSlash" data-tool="slash" title="Диагональ клетки снизу слева вверх вправо">/ Косая</button><button id="inkBack" data-tool="back" title="Диагональ клетки сверху слева вниз вправо">\\ Косая</button><button id="inkTop" data-tool="top" title="Верхняя горизонтальная грань клетки (NumPad 5)">⎺ Верх</button><button id="inkBottom" data-tool="bottom" title="Нижняя горизонтальная грань клетки (NumPad 0)">⎽ Низ</button><button id="inkErase" data-tool="erase" title="Стереть все пометки в клетке">⌫ Ластик</button><button id="inkUndo" title="Отменить последнее действие разметки">↶ Отмена</button><button id="inkRedo" title="Вернуть отменённое действие разметки">↷ Повтор</button><button id="inkSave" title="Скачать все цепочки с битами и разметкой в JSON">💾 Файл</button><label>Цвет <input id="inkColor" type="color" value="#ffcf48" aria-label="Цвет разметки"></label></div><div class="ink-entry"><span id="inkAddress">Выбери клетку</span><input id="inkValue" type="text" maxlength="100" placeholder="Пометка; Enter — записать" aria-label="Текст клетки"><button id="inkWrite" title="Записать текст в выбранную клетку">✓ Записать</button><button id="inkHorr" title="Новая цепочка: 128 неизменяемых строк Хоррохориуса; прежняя цепочка сохраняется">▲ Хоррохориус 128</button></div><div id="inkHint">Обводка — веди по граням клеток. / и \\ — диагонали. 1: / · 2: \\ · NumPad 5: верх · NumPad 0: низ. ПКМ — убрать косые. Колесо — масштаб; Alt+колесо — прокрутка. Ctrl+Z — отмена, Esc — выйти. Пометки сохраняются вместе с цепочкой в JSON.</div>`;
   viewport.before(bar);
   const toggle = document.createElement('button'); toggle.id = 'bRowInk'; toggle.title = 'Разметка клеток как в Excel: текст, обводка спиралей, рамки и обе диагонали'; toggle.textContent = '✎ Клетки';
   document.getElementById('bAddTab').after(toggle);
@@ -64,7 +64,8 @@
     if(tool==='edge'){
       const distances=[Math.abs(e.clientY-c.y),Math.abs(e.clientX-c.x-c.w),Math.abs(e.clientY-c.y-c.h),Math.abs(e.clientX-c.x)];
       const edge=1<<distances.indexOf(Math.min(...distances));m.edges=(m.edges||0)|edge;
-    }else if(tool==='slash'||tool==='back')m[tool]=true;
+    }else if(tool==='top'||tool==='bottom')m.edges=(m.edges||0)|(tool==='top'?1:4);
+    else if(tool==='slash'||tool==='back')m[tool]=true;
   }
   function write(){if(!selected)return;checkpoint();const m=marks()[key(selected)]||(marks()[key(selected)]={});m.text=$('inkValue').value.slice(0,100);m.color=color();saveCache();queue();}
   function enabled(on){active=on;bar.hidden=!on;document.body.classList.toggle('fold-ink-open',on);toggle.classList.toggle('on',on);L.classList.toggle('row-ink-active',on);if(on){setTool(tool);queue();}else{drag=null;queue();}}
@@ -97,9 +98,21 @@
     drag=null;saveCache();queue();
   }
   window.addEventListener('pointerup',finish,true);window.addEventListener('pointercancel',finish,true);
-  for(const type of ['click','dblclick','contextmenu'])window.addEventListener(type,e=>{if(active&&viewport.contains(e.target)&&hit(e)){e.preventDefault();e.stopImmediatePropagation();}},true);
+  for(const type of ['click','dblclick'])window.addEventListener(type,e=>{if(active&&viewport.contains(e.target)&&hit(e)){e.preventDefault();e.stopImmediatePropagation();}},true);
+  window.addEventListener('contextmenu',e=>{
+    if(!viewport.contains(e.target))return;
+    cells=collect();const c=hit(e);if(!c)return;
+    const m=marks()[key(c)];if(!active&&!m?.slash&&!m?.back)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(!m?.slash&&!m?.back)return;
+    checkpoint();delete m.slash;delete m.back;
+    if(!m.edges&&!m.text)delete marks()[key(c)];
+    saveCache();queue();
+  },true);
   window.addEventListener('keydown',e=>{
     if(!active||e.target.closest('input,textarea,select,[contenteditable]'))return;
+    const shortcut=!e.ctrlKey&&!e.metaKey&&!e.altKey&&({Digit1:'slash',Numpad1:'slash',Digit2:'back',Numpad2:'back',Numpad5:'top',Numpad0:'bottom'})[e.code];
+    if(shortcut){e.preventDefault();e.stopImmediatePropagation();setTool(shortcut);return;}
     if(e.key==='Escape'){enabled(false);e.preventDefault();e.stopImmediatePropagation();return;}
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.stopImmediatePropagation();e.shiftKey?history(redo,undo):history(undo,redo);return;}
     if(selected&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();e.stopImmediatePropagation();setTool('text');$('inkValue').value=e.key;$('inkValue').focus();}
@@ -115,7 +128,7 @@
     next.uiSettings={...next.uiSettings,align:'center',lh:'1.2',fs:'19'};
     Object.assign(next,{rows:['',...payload.rows],tplRows:['',...payload.rows],used:Array(129).fill(false),pats:[],tplPats:[],step:0,aIdx:0,bIdx:1,topBuilt:0,horizonRow:0,selectedRows:[],rowDividers:[],rowGroups:[],rowGroupsL:[],rowGroupsR:[],pastes:[],undo:[],newBits:[],rowInk:{},rowInkSource:payload.meta});
     st.tabs.push(next);loadTabState(st.tabs.length-1);st.align='center';render();saveCache();enabled(true);
-    $('inkHint').textContent=`128 строк · шаги ${payload.meta.previousStep} и ${payload.meta.step} совпадают. Все биты этой области неизменяемы. Разметка сохраняется вместе с цепочкой.`;
+    $('inkHint').textContent=`128 строк · шаги ${payload.meta.previousStep} и ${payload.meta.step} совпадают. Все биты этой области неизменяемы. 1: / · 2: \\ · NumPad 5/0: верх/низ. ПКМ — убрать косые. Колесо — масштаб.`;
     say('Хоррохориус: 128 неизменяемых строк, 16 384 бита.');
   };
   window.ZZRowInk={refresh:queue,open:()=>enabled(true),selected:()=>selected?{r:selected.r,j:selected.j}:null};queue();
