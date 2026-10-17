@@ -430,11 +430,38 @@ function rowCmpInfo(){
   if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const links = [], used = {};
-  for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); const uu = used[m.i] || (used[m.i] = new Uint8Array(R[m.i].length)); uu.fill(1, m.a, m.b); } }
+  const links = [], used = {}, uOf = (i) => used[i] || (used[i] = new Uint8Array(R[i].length));
+  let txtMe = "";
+  if (mode === "len") {
+    /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
+       свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
+       Занятые биты другим не достаются. Стрелка — одна на пару «строка → строка», подсвечен каждый забранный бит */
+    const al = Z.rowsAlign || "center", X = (j, n) => al === "left" ? j : al === "right" ? j - n + 1 : j - (n - 1) / 2;
+    let work = 0, lost = 0; const meRows = new Map();
+    for (let r = 0; r <= a && work < 4e6; r++) {
+      const s0 = R[r], n0 = s0.length, seen = new Set();
+      for (let j = 0; j < n0; j++) {
+        const v = s0[j], x = X(j, n0); let hit = null;
+        for (let i = r + 1; i < R.length && !hit; i++) {
+          const t = R[i], n = t.length, uu = used[i]; let bq = -1, bd = Infinity;
+          for (let q = 0; q < n; q++) if (t[q] === v && !(uu && uu[q])) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
+          work += n;
+          if (bq >= 0) hit = { i, q: bq };
+        }
+        if (!hit) { if (r === a) lost++; continue; }
+        uOf(hit.i)[hit.q] = 1;
+        const pk = hit.i; links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sel: r === a, c: r % CMP_COLS.length, noArrow: seen.has(pk) }); seen.add(pk);
+        if (r === a) meRows.set(hit.i, (meRows.get(hit.i) || 0) + 1);
+      }
+    }
+    txtMe = meRows.size ? ` · ниже биты строки ${a + 1}: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") + (lost ? ` · без пары ${lost}` : "") : ` · ниже свободных таких бит нет`;
+  } else {
+    for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
+    const me = links.find(l => l.sel);
+    txtMe = me ? ` · ниже ${s.length} бит с ${k} ед. блоками: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${s.length} бит подряд с ${k} ед. блоками нет`;
+  }
   const me = links.find(l => l.sel), near = me ? me.i : -1;
-  const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` +
-    (me ? ` · ниже ${s.length} бит с ${k} ед.${mode === "grp" ? " блоками" : ""}: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${s.length} бит подряд с ${k} ед.${mode === "grp" ? " блоками" : ""} нет`) + ` · стрелок ${links.length}`;
+  const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` + txtMe + ` · стрелок ${links.filter(l => !l.noArrow).length}`;
   const v = { a, links, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
 function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
@@ -454,7 +481,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       const p = at(h.a), q = at(h.b); if (!p || !q) continue;
       const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); } catch (e) { continue; /* место за показанной частью строки */ }
       if (rg.collapsed) continue;
-      (h.sel ? by.n : by[h.c]).push(rg); ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
+      (h.sel ? by.n : by[h.c]).push(rg); if (!h.noArrow) ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
     }
   }
   if (hl) {
