@@ -430,31 +430,39 @@ function rowCmpInfo(){
   if (rowCmpInfo._c && rowCmpInfo._c.key === key) return rowCmpInfo._c.v;
   const k = zzOnes(s), z = s.length - k; let K = 0, T = 0;
   for (let i = 0; i <= a; i++) { K += zzOnes(R[i]); T += R[i].length; }
-  const links = [], used = {}, uOf = (i) => used[i] || (used[i] = new Uint8Array(R[i].length));
+  const links = [], lost = [], used = {}, uOf = (i) => used[i] || (used[i] = new Uint8Array(R[i].length));
   let txtMe = "";
   if (mode === "len") {
     /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
        свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
        Занятые биты другим не достаются. Стрелка — одна на пару «строка → строка», подсвечен каждый забранный бит */
+    /* v0.1254, по снимку, «как не хватило!! три 111, потом 11 и 1 — всё ровно же»: строки выше выбранной друг друга не заполняют. Их биты
+       ложатся сначала в выбранную строку, не влезло — ниже; потом свободные биты самой выбранной ищут пару ниже (золотом). Бит без пары — красным.
+       Под полем — сколько бит выбранной заняли строки выше и «ровно», если заняли все и лишних нет */
     const al = Z.rowsAlign || "center", X = (j, n) => al === "left" ? j : al === "right" ? j - n + 1 : j - (n - 1) / 2;
-    let work = 0, lost = 0; const meRows = new Map();
-    for (let r = 0; r <= a && work < 4e6; r++) {
+    let work = 0, lostUp = 0, lostMe = 0; const meRows = new Map();
+    const take = (r, from, sel, skip) => {   // биты строки r (кроме skip) ищут свободный такой же бит в строках from и ниже
       const s0 = R[r], n0 = s0.length, seen = new Set();
       for (let j = 0; j < n0; j++) {
+        if (skip && skip[j]) continue;
         const v = s0[j], x = X(j, n0); let hit = null;
-        for (let i = r + 1; i < R.length && !hit; i++) {
+        for (let i = from; i < R.length && !hit && work < 4e6; i++) {
           const t = R[i], n = t.length, uu = used[i]; let bq = -1, bd = Infinity;
           for (let q = 0; q < n; q++) if (t[q] === v && !(uu && uu[q])) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
           work += n;
           if (bq >= 0) hit = { i, q: bq };
         }
-        if (!hit) { if (r === a) lost++; continue; }
+        if (!hit) { lost.push({ i: r, a: j, b: j + 1 }); if (sel) lostMe++; else lostUp++; continue; }
         uOf(hit.i)[hit.q] = 1;
-        const pk = hit.i; links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sel: r === a, c: r % CMP_COLS.length, noArrow: seen.has(pk) }); seen.add(pk);
-        if (r === a) meRows.set(hit.i, (meRows.get(hit.i) || 0) + 1);
+        links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sel, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
+        if (sel) meRows.set(hit.i, (meRows.get(hit.i) || 0) + 1);
       }
-    }
-    txtMe = meRows.size ? ` · ниже биты строки ${a + 1}: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") + (lost ? ` · без пары ${lost}` : "") : ` · ниже свободных таких бит нет`;
+    };
+    for (let r = 0; r < a; r++) take(r, a, false);
+    const filled = used[a] ? used[a].reduce((x, y) => x + y, 0) : 0, mine = used[a] ? used[a].slice() : null;
+    take(a, a + 1, true, mine);
+    txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · сверху без места ${lostUp}` : "") +
+      (meRows.size ? ` · свободные ниже: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostMe ? ` · без пары ${lostMe}` : "");
   } else {
     for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
     const me = links.find(l => l.sel);
@@ -462,7 +470,7 @@ function rowCmpInfo(){
   }
   const me = links.find(l => l.sel), near = me ? me.i : -1;
   const txt = `Σ строка ${a + 1}: 0 — ${z}, 1 — ${k} · строки 1–${a + 1}: 0 — ${T - K}, 1 — ${K}` + txtMe + ` · стрелок ${links.filter(l => !l.noArrow).length}`;
-  const v = { a, links, near, txt }; rowCmpInfo._c = { key, v }; return v;
+  const v = { a, links, lost, near, txt }; rowCmpInfo._c = { key, v }; return v;
 }
 function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсветкой бит (строки не перерисовываются), стрелки — справа от строк
   const L = $("rowList"), root = L && L.querySelector(".rl-inner");
@@ -484,7 +492,14 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       (h.sel ? by.n : by[h.c]).push(rg); if (!h.noArrow) ends.push({ h, src: sx.getBoundingClientRect(), dst: bx.getBoundingClientRect() });
     }
   }
+  const bad = [];
+  if (cmp && root) for (const h of cmp.lost || []) {   // v0.1254: биты без пары — красным
+    const bx = L.querySelector('.rw[data-r="' + h.i + '"] .bx'); if (!bx) continue;
+    const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd;
+    while ((nd = w.nextNode())) { const n = nd.textContent.length; if (c + n > h.a) { const rg = document.createRange(); rg.setStart(nd, h.a - c); rg.setEnd(nd, h.a - c + 1); bad.push(rg); break; } c += n; }
+  }
   if (hl) {
+    if (bad.length) CSS.highlights.set("zcmpx", new Highlight(...bad)); else CSS.highlights.delete("zcmpx");
     if (by.n.length) CSS.highlights.set("zcmpn", new Highlight(...by.n)); else CSS.highlights.delete("zcmpn");
     CMP_COLS.forEach((_, c) => { if (by[c].length) CSS.highlights.set("zcmp" + c, new Highlight(...by[c])); else CSS.highlights.delete("zcmp" + c); });
     CSS.highlights.delete("zcmp");
