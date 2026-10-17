@@ -13,6 +13,10 @@
     // v0.236: «все группы раскрытыми, скрывать только правой кнопкой» — ветки открыты всегда, свёрнутые правой кнопкой помнятся
     let folded=new Set();try{folded=new Set(JSON.parse(localStorage.getItem('zerk_hub_folded')||'[]'));}catch(_){}
     const saveFolded=()=>{try{localStorage.setItem('zerk_hub_folded',JSON.stringify([...folded]));}catch(_){}};
+    // v0.245: «все группы магнитить к верху / низу, дать мне перемещать» — {группа: {x: вершина на экране, e: 't' | 'b'}}
+    let places={};try{places=JSON.parse(localStorage.getItem('zerk_hub_places')||'{}')||{};}catch(_){}
+    const savePlaces=()=>{try{localStorage.setItem('zerk_hub_places',JSON.stringify(places));}catch(_){}};
+    let gdrag=null;
     const persist=()=>{try{localStorage.setItem('zerk_hub_pins',JSON.stringify({groups:[...pins],controls:[...promoted]}));}catch(_){}};
     const labelOf=n=>n.id||n.getAttribute('aria-label')||n.querySelector('[aria-label]')?.getAttribute('aria-label')||n.title;
     const createBranch=(group,id,icon,name,children,existing=null)=>{
@@ -57,20 +61,31 @@
         // Не хватает ширины — тогда, как раньше, следующий треугольник опускается под соседа.
         // Треугольники сцепляются по рядам: ряд r этой группы встаёт правее ряда r соседей на ромб и правее рядов r ± 1 на полромба,
         // так короткий треугольник заходит под плечо высокого. Группы идут слева направо по своим местам.
-        const pack=groups.filter(g=>!g.fixed&&!g.slot.hidden).map(g=>{const base=g.slot.getBoundingClientRect().left,rows=new Map();
+        const mob=document.body.classList.contains('hubMobButtons'),placeOf=g=>mob?null:places[g.key]||null;
+        const rowsOf=g=>{const rows=new Map();for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}return rows;};
+        // v0.245: поставленные рукой — по своему месту: вершиной у верха (верхний ряд срезан пополам) или нижним рядом у низа (тоже пополам)
+        const obst=[];
+        for(const g of groups){const pl=placeOf(g);g.placeDx=g.placeDy=null;if(!pl||g.slot.hidden)continue;const rect=g.slot.getBoundingClientRect(),rows=rowsOf(g);if(!rows.size)continue;
+          const lo=Math.min(...[...rows.values()].map(v=>v[0])),hi=Math.max(...[...rows.values()].map(v=>v[1])),ys=[...rows.keys()],h=Math.max(...ys)*24+48;
+          const x=Math.max(edge-lo,Math.min(innerWidth-48-hi,pl.x));g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round(pl.e==='b'?innerHeight+24-h-rect.top:-24-rect.top);
+          if(pl.e!=='b')for(const [r,[a,b]] of rows)obst.push([r,x+a,x+b]);}
+        const pack=groups.filter(g=>!g.fixed&&!g.slot.hidden&&g.placeDx==null).map(g=>{const base=g.slot.getBoundingClientRect().left,rows=new Map();
           for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}
           return {g,base,rows};}).filter(it=>it.rows.size).sort((a,b)=>a.base-b.base);
         {const R=new Map();for(const it of pack){let dx=-Infinity;for(const [r,[a]] of it.rows){const x=it.base+a;dx=Math.max(dx,edge-x,(R.get(r)??-1e9)+48-x,(R.get(r-1)??-1e9)+24-x,(R.get(r+1)??-1e9)+24-x);}
+          for(let k=0,hit=true;hit&&k<40;k++){hit=false;for(const [r,[a,b]] of it.rows)for(const [or,A,B] of obst){const gap=or===r?48:Math.abs(or-r)===1?24:0;if(!gap)continue;const L=it.base+a+dx,Rr=it.base+b+dx;if(L<B+gap&&Rr>A-gap){dx=B+gap-it.base-a;hit=true;}}}   // v0.245: не налезать на поставленные рукой
           dx=Math.round(dx);it.g.packDx=dx;for(const [r,[,b]] of it.rows)R.set(r,Math.max(R.get(r)??-1e9,it.base+b+dx));}}
         for(const group of groups){
           const rect=group.slot.getBoundingClientRect(),lo=Number(group.slot.dataset.lo)||0,hi=Number(group.slot.dataset.hi)||0;
-          let dx=group.fixed?0:group.packDx||0;
+          const placed=group.placeDx!=null;let dx=placed?group.placeDx:group.fixed?0:group.packDx||0;
           const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
           const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=document.body.classList.contains('hubMobButtons')?24:0;   // v0.223: на телефоне группы стоят вплотную — дерево ниже ряда корней
           const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
-          if(right>innerWidth-8||group.fixed)for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
-          for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head&&group.fixed?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head?0:offset);cell.style.transform='translate('+px+'px,'+py+'px)';}
-          if(height&&!group.fixed)occupied.push({left,right,top:rect.top+24+offset,bottom:rect.top+height+offset});
+          if(placed)offset=group.placeDy;
+          else if(right>innerWidth-8||group.fixed)for(const box of occupied)if(left<box.right&&right>box.left&&rect.top+24+offset<box.bottom&&rect.top+24+offset+height>box.top)offset=box.bottom-rect.top-24+4;
+          const dg=gdrag?.moved&&gdrag.g===group?gdrag:null;group.apex=rect.left+dx;
+          for(const cell of group.slot.children){const head=cell.dataset.header==='true',px=(Number(cell.dataset.pyrX)||0)+(head&&group.fixed&&!placed?0:dx),py=(Number(cell.dataset.pyrY)||0)+(head&&!placed?0:offset);cell._px=px;cell._py=py;cell.style.transform='translate('+(px+(dg?dg.ox:0))+'px,'+(py+(dg?dg.oy:0))+'px)';}
+          if(height&&!group.fixed&&!placed)occupied.push({left,right,top:rect.top+24+offset,bottom:rect.top+height+offset});
         }
         for(const r of records.values())if(!r.children&&r.node.matches('details[open]')){
           const x=r.wrap.getBoundingClientRect().left;r.node.style.setProperty('--menu-left',Math.max(8-x,Math.min(0,innerWidth-188-x))+'px');
@@ -240,6 +255,23 @@
         if(d.moved){rdragEnd=Date.now();if(d.over&&ev.type==='pointerup'){const from=d.r.parent,dest=d.over.parent;from.children.splice(from.children.indexOf(d.r),1);const list=dest.children;list.splice(list.indexOf(d.over)+(from===dest?0:0),0,d.r);d.r.parent=dest;
           order[from.id]=from.children.map(c=>c.id);order[dest.id]=list.map(c=>c.id);try{localStorage.setItem('zerk_hub_order',JSON.stringify(order));}catch(_){}renderStamp='';render();}}
         else if(d.pending)rightClick(d.pending);};
+      document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
+    });
+    // v0.245: группу перетаскивают за голову (левой кнопкой): отпустил в верхней половине — прилипает вершиной к верху,
+    // в нижней — нижним рядом к низу; по ширине — шагом полромба. Брошена на левое меню — снова на своё место в общем ряду.
+    toolbar.addEventListener('pointerdown',e=>{
+      if(e.button!==0||e.pointerType==='touch'||document.body.classList.contains('hubMobButtons'))return;const r=recAt(e.clientX,e.clientY);if(!r||r.parent||r!==r.group.root)return;
+      gdrag={g:r.group,x:e.clientX,y:e.clientY,ox:0,oy:0,moved:false};
+      const paint=()=>{for(const c of gdrag.g.slot.children)if(c._px!=null)c.style.transform='translate('+(c._px+gdrag.ox)+'px,'+(c._py+gdrag.oy)+'px)';};
+      const mv=ev=>{if(!gdrag)return;const ox=ev.clientX-gdrag.x,oy=ev.clientY-gdrag.y;if(!gdrag.moved&&Math.hypot(ox,oy)<8)return;
+        if(!gdrag.moved){gdrag.moved=true;gdrag.g.slot.classList.add('hubGroupDrag');document.body.classList.add('hubReordering');}
+        gdrag.ox=ox;gdrag.oy=oy;paint();};
+      const up=ev=>{document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',up,true);
+        const d=gdrag;gdrag=null;if(!d?.moved)return;document.body.classList.remove('hubReordering');d.g.slot.classList.remove('hubGroupDrag');
+        const eat=c=>{c.preventDefault();c.stopPropagation();};window.addEventListener('click',eat,true);setTimeout(()=>window.removeEventListener('click',eat,true),0);
+        if(ev.type==='pointerup'){const menu=matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen')?Math.max(0,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0)):0;
+          if(ev.clientX<menu)delete places[d.g.key];else{const x=(d.g.apex||0)+d.ox;places[d.g.key]={x:Math.round(x/24)*24,e:ev.clientY<innerHeight/2?'t':'b'};}savePlaces();}
+        renderStamp='';render();};
       document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
     });
     toolbar.addEventListener('contextmenu',e=>{
