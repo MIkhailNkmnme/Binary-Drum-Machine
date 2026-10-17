@@ -4319,7 +4319,7 @@ function bipyToggle(id, run){
   bipyTgUi();
 }
 function bipyTgUi(){
-  for (const id of ["bBipyShift", "bBipyBuild"]) { const b = $(id); if (!b) continue; const T = bipyTg[id];
+  for (const id of ["bBipyShift", "bBipyShiftR", "bBipyBuild"]) { const b = $(id); if (!b) continue; const T = bipyTg[id];
     const on = !!T && T.got.length === Z.rows.length && T.got.every((x, i) => x === Z.rows[i]); if (b.classList.contains("on") !== on) b.classList.toggle("on", on); }
 }
 function bipyBuild(){
@@ -4354,6 +4354,20 @@ function bipyShift(){
   snapshot(); for (let i = 0; i < R.length; i++) Z.rows[i] = R[i];
   renderAll(); save();
   say(`◇ Сдвиг: перестроено строк ${ch} из ${ok} — левый бит твой, дальше инверсия строки выше. ↩ вернёт.`);
+}
+function bipyShiftR(){   // v0.1270, «а если от правого крайнего делать?» — да: зеркало «◇ сдвига»: строка n + 1 = инверсия строки n + её правый бит (твой)
+  if (rowsLocked()) return;
+  const R = Z.rows.slice(); let ch = 0, ok = 0;
+  for (let i = 1; i < R.length; i++) {
+    const s = R[i], n = s.length; if (n < 2 || R[i - 1].length !== n - 1) continue;
+    ok++; let t = ""; for (const c of R[i - 1]) t += cpInv(c); t += s[n - 1];
+    if (t !== s) { R[i] = t; ch++; }
+  }
+  if (!ok) { say("◇ Сдвиг ←: нет строк, где каждая на бит длиннее предыдущей, — строить нечего."); return; }
+  if (!ch) { say(`◇ Сдвиг ←: все ${ok} строк уже по правилу — инверсия строки выше, правый бит свой.`); return; }
+  snapshot(); for (let i = 0; i < R.length; i++) Z.rows[i] = R[i];
+  renderAll(); save();
+  say(`◇ Сдвиг ←: перестроено строк ${ch} из ${ok} — инверсия строки выше, правый бит твой. ↩ вернёт.`);
 }
 /* v0.788, «в строках бы такую кнопку, чтобы всё так же показала» (по разбору ▲1 ▼0 ▲0 …): «▲▼» над полем — поле строк треугольником: каждая клетка
    — треугольник с цифрой, ▲ — бит строки, ▼ между ними — инверсия бита строки над ним (бледнее). Строки по центру — ряды сами складываются в
@@ -10507,7 +10521,8 @@ function setupCone(){
     $("coneTor").onchange = (e) => { Z.coneTor = e.target.checked; if (Z.coneTor && !Z.cone3d) { Z.cone3d = true; $("cone3d").checked = true; } save(); renderCone();
       say(Z.coneTor ? "◎ Торы: строка 1 — шар радиуса d, кольцо строки n — тор с трубкой d, средняя линия (n − ½)·d; в вырезах — части T−1 (2n)." : "◎ Торы выключены — кольца дугами на своих высотах."); }; }
   if ($("bBipyBuild")) $("bBipyBuild").onclick = () => bipyToggle("bBipyBuild", bipyBuild);   // v0.787; v0.791 — переключатель
-  if ($("bBipyShift")) $("bBipyShift").onclick = () => bipyToggle("bBipyShift", bipyShift);   // v0.788; v0.791 — переключатель
+  if ($("bBipyShift")) $("bBipyShift").onclick = () => bipyToggle("bBipyShift", bipyShift);
+  if ($("bBipyShiftR")) $("bBipyShiftR").onclick = () => bipyToggle("bBipyShiftR", bipyShiftR);   // v0.1270   // v0.788; v0.791 — переключатель
   if ($("bTriView")) $("bTriView").onclick = () => {   // v0.788; v0.791 — одна кнопка по кругу: поле → ▲▼ → изм. → пары → поле
     if (!Z.triView) { Z.triView = true; Z.triGlass = ""; } else if (!Z.triGlass) Z.triGlass = "chg"; else if (Z.triGlass === "chg") Z.triGlass = "pair"; else { Z.triView = false; Z.triGlass = ""; }
     save(); renderRows();
