@@ -473,22 +473,28 @@ function rowCmpInfo(){
          прыгает выбранная строка — каждый её бит (слева направо) прыгает вверх на свободный бит того же значения: сначала в ближайшую строку над
          ней, там — ближе всего по месту в поле; занятый бит второй раз не принимает. Не нашёл места — красным. «Ровно» — легли все и выше
          свободных не осталось (1, 11, 111: два бита 111 — на 11, один — на 1) */
-      const n0 = s.length, x0 = (j) => X(j, n0); let up = 0, lostA = 0; const toRows = new Map(), seen = new Set();
-      for (let j = 0; j < n0 && work < 4e6; j++) {
-        const v = s[j], x = x0(j); let hit = null;
-        for (let i = a - 1; i >= 0 && !hit; i--) {
-          const t = R[i], n = t.length, uu = used[i]; let bq = -1, bd = Infinity;
-          for (let q = 0; q < n; q++) if (t[q] === v && !(uu && uu[q])) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
-          work += n; if (bq >= 0) hit = { i, q: bq };
+      /* v0.1262, «111 так и покажи — в 11 и 1, там стрелки больше не меняются»: прыгают все строки от выбранной вверх (выбранная — первой,
+         потом строка над ней и так до 2-й). Бит прыгает один раз и принимает один раз. Красный — бит, который не прыгнул и на который никто
+         не прыгнул. Стрелки выбранной — золотом слева, остальных строк — справа своим цветом */
+      const n0 = s.length; let up = 0, bad = 0; const toRows = new Map(), jumped = {};
+      for (let r = a; r >= 1 && work < 4e6; r--) {
+        const s0 = R[r], m = s0.length, seen = new Set(), jj = jumped[r] = new Uint8Array(m);
+        for (let j = 0; j < m && work < 4e6; j++) {
+          const v = s0[j], x = X(j, m); let hit = null;
+          for (let i = r - 1; i >= 0 && !hit; i--) {
+            const t = R[i], n = t.length, uu = used[i]; let bq = -1, bd = Infinity;
+            for (let q = 0; q < n; q++) if (t[q] === v && !(uu && uu[q])) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
+            work += n; if (bq >= 0) hit = { i, q: bq };
+          }
+          if (!hit) continue;
+          uOf(hit.i)[hit.q] = 1; jj[j] = 1;
+          links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel: r === a, up: true, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
+          if (r === a) { up++; toRows.set(hit.i, (toRows.get(hit.i) || 0) + 1); }
         }
-        if (!hit) { lost.push({ i: a, a: j, b: j + 1 }); lostA++; continue; }
-        uOf(hit.i)[hit.q] = 1; up++;
-        links.push({ r: a, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel: false, up: true, c: hit.i % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
-        toRows.set(hit.i, (toRows.get(hit.i) || 0) + 1);
       }
-      let free = 0; for (let i = 0; i < a; i++) { const uu = used[i]; for (let q = 0; q < R[i].length; q++) if (!(uu && uu[q])) free++; }
-      txtMe = ` · вверх легло ${up} из ${n0}` + (up === n0 && !free && a > 0 ? " — ровно" : "") +
-        (toRows.size ? ": " + [...toRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostA ? ` · места нет ${lostA}` : "") + (free ? ` · выше свободных ${free}` : "");
+      for (let r = 0; r <= a; r++) { const uu = used[r], jj = jumped[r]; for (let j = 0; j < R[r].length; j++) if (!(uu && uu[j]) && !(jj && jj[j])) { lost.push({ i: r, a: j, b: j + 1 }); bad++; } }
+      txtMe = ` · вверх легло ${up} из ${n0}` + (toRows.size ? ": " + [...toRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") +
+        (bad ? ` · без пары ${bad}` : a > 0 ? " · всё ровно" : "");
     }
   } else {
     for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sa: 0, sb: R[r].length, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
@@ -544,7 +550,7 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
       /* v0.1257, «те, что ниже ушли, — стрелки с другой стороны сделай»: стрелки от выбранной строки вниз — слева от строк, от строк выше — справа.
          v0.1258, «ещё те, что выделенную строку составляют, тоже слева»: стрелки в выбранную строку — тоже слева */
-      const lf = h.sel || h.up || h.i === cmp.a; let mx = lf ? Infinity : 0;   // v0.1261: прыжки вверх — тоже слева
+      const lf = h.sel || (!h.up && h.i === cmp.a); let mx = lf ? Infinity : 0;   // v0.1261: прыжки вверх — тоже слева
       for (let i = Math.min(h.r, h.i); i <= Math.max(h.r, h.i); i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
       const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, Math.abs(y1 - y0) * 0.15);
       const x0 = lf ? X(src.left) - 3 : X(src.right) + 3, x1 = lf ? X(dst.left) - 3 : X(dst.right) + 3, bx = lf ? Math.max(2, X(mx) - ofs) : X(mx) + ofs;
