@@ -6,7 +6,8 @@
   canvas.addEventListener('wheel',e=>{
     if(e.altKey||e.shiftKey||!e.deltaY||e.target.closest('button,input,select,textarea,[contenteditable],#alignGrp,#colHeader'))return;
     e.preventDefault();e.stopPropagation();
-    pending+=Math.max(-240,Math.min(240,e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?canvas.clientHeight:1)));
+    // Wheel down enlarges, wheel up reduces (user-selected direction).
+    pending-=Math.max(-240,Math.min(240,e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?canvas.clientHeight:1)));
     point={x:e.clientX,y:e.clientY};
     if(frame)return;
     frame=requestAnimationFrame(()=>{
