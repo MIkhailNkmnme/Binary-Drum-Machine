@@ -10,25 +10,25 @@
     const items=[...toolbar.children];items.forEach(n=>source.append(n));toolbar.append(source);
     let saved={};try{saved=JSON.parse(localStorage.getItem('zerk_hub_pins')||'{}')||{};}catch(_){}
     const pins=new Set(saved.groups||[]),promoted=new Set(saved.controls||[]),records=new Map(),groups=[];let renderStamp='';
+    // v0.236: «все группы раскрытыми, скрывать только правой кнопкой» — ветки открыты всегда, свёрнутые правой кнопкой помнятся
+    let folded=new Set();try{folded=new Set(JSON.parse(localStorage.getItem('zerk_hub_folded')||'[]'));}catch(_){}
+    const saveFolded=()=>{try{localStorage.setItem('zerk_hub_folded',JSON.stringify([...folded]));}catch(_){}};
     const persist=()=>{try{localStorage.setItem('zerk_hub_pins',JSON.stringify({groups:[...pins],controls:[...promoted]}));}catch(_){}};
     const labelOf=n=>n.id||n.getAttribute('aria-label')||n.querySelector('[aria-label]')?.getAttribute('aria-label')||n.title;
     const createBranch=(group,id,icon,name,children,existing=null)=>{
       const node=existing||document.createElement('details');node.className='hubTreeBranch hubFieldGroup';node.dataset.branch=id;node.dataset.nested='true';
       let head=node.querySelector(':scope > summary');if(!head){head=document.createElement('summary');node.append(head);const mark=document.createElement('b'),caption=document.createElement('small');mark.textContent=icon;caption.textContent=name;head.append(mark,caption);}
       head.className='hubRhomb';if(!existing)head.setAttribute('aria-label',(id===group.key?'Группа: ':'Подгруппа: ')+name);
-      head.title=name+' · ПКМ — '+(id===group.key?'закрепить группу':'поднять / вернуть');
+      head.title=name+' · ПКМ — свернуть / развернуть';
       const record={id,node,children,group};records.set(id,record);
-      head.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(record.action){record.action();if(e.pointerType!=='mouse')openBranch(record,true);render();}else openBranch(record,!node.open);});
-      head.addEventListener('pointerenter',e=>{if(e.pointerType==='touch')return;
-        // v0.229: наведение на ветку без видимых кнопок (выключена или пустая) не закрывает уже раскрытую соседку.
-        if(record.gate&&gateOn(record)===false)return;if(!record.children.some(c=>c.children||!c.node.hidden))return;openBranch(record,true);});
+      head.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(record.action){record.action();render();}});
       head.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();openBranch(record,e.key==='ArrowRight');}});
-      node.addEventListener('toggle',()=>{if(id===group.key&&pins.has(id))node.open=true;render();});
+      node.addEventListener('toggle',()=>{const want=!folded.has(id);if(node.open!==want)node.open=want;render();});
       return record;
     };
     function ancestors(record){const found=new Set();for(let n=record;n;n=n.parent)found.add(n.id);return found;}
     function openBranch(record,on){
-      if(on){const path=ancestors(record);for(const r of records.values())if(r.children&&!path.has(r.id)&&!pins.has(r.group.key))r.node.open=false;}
+      if(on)folded.delete(record.id);else folded.add(record.id);saveFolded();
       record.node.open=on;render();
     }
     // v0.234: ветка открыта, пока «включено» (r.on), а не только пока идёт (r.active): 3D на паузе — включён, «Сброс» виден
@@ -40,7 +40,7 @@
       const stamp=JSON.stringify([lead,[...pins],[...promoted],[...records.values()].map(r=>[r.id,r.node.open,r.node.hidden,r.gate?gateOn(r):0,r.dep?.active?.()])]);if(stamp===renderStamp)return;renderStamp=stamp;
       for(const r of records.values())if(r.wrap&&r.node.parentElement!==r.wrap)r.wrap.append(r.node);
       for(const group of groups){
-        const entries=[...records.values()].filter(r=>r.group===group),shut=[];for(const r of entries)if(r.gate&&gateOn(r)===false){const all=n=>n.children?.forEach(c=>{if(c.free)return;shut.push(c.id);all(c);});all(r);}for(const r of entries)if(r.dep?.active?.()===false){shut.push(r.id);const all=n=>n.children?.forEach(c=>{shut.push(c.id);all(c);});all(r);}
+        const entries=[...records.values()].filter(r=>r.group===group),shut=[];
         const plan=HubMenuTree.layout(group.root,{grow:!!group.grow,promoted:[...promoted],open:entries.filter(r=>r.children&&r.node.open).map(r=>r.id),hidden:[...entries.filter(r=>!r.children&&r.node.hidden&&!promoted.has(r.id)).map(r=>r.id),...shut]});
         const positions=new Map(plan.cells.map(c=>[c.id,c]));
         for(const r of entries){const p=positions.get(r.id);r.wrap.hidden=!p;if(p){r.wrap.style.gridColumn='1';r.wrap.style.gridRow='1';r.wrap.dataset.header=String(!!p.head);r.wrap.dataset.pyrX=String(p.pyr[0]*24);r.wrap.dataset.pyrY=String(p.pyr[1]*24);}r.node.dataset.controlPinned=String(promoted.has(r.id));}
@@ -49,11 +49,13 @@
       toolbar.dataset.hasPins=String(pins.size+promoted.size>0);
       requestAnimationFrame(()=>{
         const occupied=[];
+        // v0.236: деревья не заходят на левое меню (и кнопку его сворачивания)
+        const desk=matchMedia('(min-width:1101px)').matches&&!document.body.classList.contains('hubZen'),edge=desk?Math.max(8,...['.hub','#hubSidebarToggle'].map(q=>document.querySelector(q)?.getBoundingClientRect().right||0))+4:8;
         for(const group of groups)if(group.fixed){const z=document.getElementById('hubZoom')?.getBoundingClientRect();if(z){group.slot.style.left=Math.round(z.left+(z.width-48)/2)+'px';group.slot.style.top=Math.round(z.bottom-132+42)+'px';}}
         for(const group of groups){
           // v0.214: все ряды — одна ромбическая решётка от вершины; не влезает в экран — ряды сдвигаются целыми ромбами.
           const rect=group.slot.getBoundingClientRect(),lo=Number(group.slot.dataset.lo)||0,hi=Number(group.slot.dataset.hi)||0;
-          let dx=0;if(rect.left+hi+48>innerWidth-8)dx=-Math.ceil((rect.left+hi+48-innerWidth+8)/48)*48;if(rect.left+lo+dx<8)dx+=Math.ceil((8-rect.left-lo-dx)/48)*48;
+          let dx=0;if(rect.left+hi+48>innerWidth-8)dx=-Math.ceil((rect.left+hi+48-innerWidth+8)/48)*48;if(rect.left+lo+dx<edge)dx+=Math.ceil((edge-rect.left-lo-dx)/48)*48;
           const left=rect.left+lo+dx,right=rect.left+hi+dx+48;
           const cells=[...group.slot.children].filter(n=>!n.hidden&&n.dataset.header!=='true');let offset=document.body.classList.contains('hubMobButtons')?24:0;   // v0.223: на телефоне группы стоят вплотную — дерево ниже ряда корней
           const height=cells.length?Math.max(...cells.map(n=>(Number(n.dataset.pyrY)||0)+48)):0;
@@ -205,12 +207,14 @@
     for(const group of groups){
       const slot=document.createElement('div');slot.className='hubFieldSlot hubTreeGrid';slot.dataset.group=group.key;slot.setAttribute('role','group');slot.setAttribute('aria-label',group.name);group.slot=slot;toolbar.append(slot);
       const mount=(r,parent)=>{r.parent=parent;const wrap=document.createElement('div');wrap.className='hubTreeItem';wrap.dataset.treeKey=r.id;wrap.append(r.node);slot.append(wrap);r.wrap=wrap;r.children?.forEach(c=>mount(c,r));};mount(group.root,null);
-      group.root.node.dataset.group=group.key;if(pins.has(group.key))group.root.node.open=true;
+      group.root.node.dataset.group=group.key;
     }
+    for(const r of records.values())if(r.children)r.node.open=!folded.has(r.id);
     if(view){view.querySelector('.hubBitViewOptions')?.remove();view.querySelector('.hubBitViewArrows')?.remove();}
     for(const id of [...promoted])if(!records.has(id))promoted.delete(id);
     // Правая кнопка: щелчок — закрепить / поднять (как было), зажать и вести — переставить кнопку среди соседей.
     let rdrag=null,rdragEnd=0;
+    const rightClick=r=>{if(r.children){openBranch(r,!r.node.open);return;}pinToggle(r);};
     const pinToggle=r=>{if(r.id===r.group.key){if(pins.has(r.id))pins.delete(r.id);else{pins.add(r.id);r.node.open=true;}}else if(promoted.has(r.id))promoted.delete(r.id);else promoted.add(r.id);persist();render();};
     const recAt=(x,y)=>{const n=document.elementFromPoint(x,y)?.closest?.('#hubFieldTools [data-tree-key]');return n?records.get(n.dataset.treeKey):null;};
     toolbar.addEventListener('pointerdown',e=>{
@@ -224,21 +228,18 @@
         const d=rdrag;rdrag=null;if(!d)return;document.body.classList.remove('hubReordering');d.r.wrap.classList.remove('hubReorderSrc');d.over?.wrap.classList.remove('hubReorderOver');
         if(d.moved){rdragEnd=Date.now();if(d.over&&ev.type==='pointerup'){const list=d.r.parent.children,to=list.indexOf(d.over);list.splice(list.indexOf(d.r),1);list.splice(to,0,d.r);
           order[d.r.parent.id]=list.map(c=>c.id);try{localStorage.setItem('zerk_hub_order',JSON.stringify(order));}catch(_){}renderStamp='';render();}}
-        else if(d.pending)pinToggle(d.pending);};
+        else if(d.pending)rightClick(d.pending);};
       document.addEventListener('pointermove',mv,true);document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',up,true);
     });
     toolbar.addEventListener('contextmenu',e=>{
       const wrap=e.target.closest('[data-tree-key]'),r=records.get(wrap?.dataset.treeKey);if(!r)return;e.preventDefault();e.stopPropagation();
       if(rdrag){if(!rdrag.moved)rdrag.pending=r;return;}if(Date.now()-rdragEnd<400)return;
-      pinToggle(r);
+      rightClick(r);
     });
     toolbar.addEventListener('toggle',e=>{if(e.target.matches('.hubTilt')&&e.target.open){toolbar.querySelectorAll('.hubTilt[open]').forEach(n=>{if(n!==e.target)n.open=false;});render();}},true);
-    const close=()=>{for(const r of records.values())if(r.children&&!pins.has(r.group.key))r.node.open=false;render();};
-    document.addEventListener('pointerdown',e=>{if(!toolbar.contains(e.target))close();},true);
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
     for(const event of ['hubmirror','hubimage','hubmusic','hubflowstate','hubview'])window.addEventListener(event,render);
     window.addEventListener('resize',()=>{renderStamp='';render();});
-    window.HubMenuLayout={snapshot:()=>({groups:[...pins],controls:[...promoted],open:[...records.values()].filter(r=>r.children&&r.node.open).map(r=>r.id)}),restore:s=>{for(const r of records.values())if(r.children)r.node.open=(s?.open||[]).includes(r.id)||(r.id===r.group.key&&pins.has(r.group.key));render();}};
+    window.HubMenuLayout={snapshot:()=>({groups:[...pins],controls:[...promoted],open:[...records.values()].filter(r=>r.children&&r.node.open).map(r=>r.id)}),restore:s=>{for(const r of records.values())if(r.children)r.node.open=!folded.has(r.id);render();}};
     persist();render();syncLocks();
   }};
 })();
