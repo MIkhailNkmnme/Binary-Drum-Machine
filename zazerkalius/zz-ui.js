@@ -440,13 +440,13 @@ function rowCmpInfo(){
     const H = Array.isArray(Z.cmpHand) ? Z.cmpHand : [];
     for (const e of H) {
       const [r, j, i, q] = e || [];
-      if (!R[r] || !R[i] || i >= r || j >= R[r].length || q >= R[i].length || R[r][j] !== R[i][q]) continue;
+      if (!R[r] || !R[i] || j >= R[r].length || q >= R[i].length || (i === r && j === q)) continue;   // v0.1272: куда угодно — вверх, вниз, в свою строку, на любой бит
       links.push({ r, i, a: q, b: q + 1, sa: j, sb: j + 1, sel: false, up: true, me: r === a, c: r % CMP_COLS.length });
     }
     const P = rowCmpHand.pend;
     if (P && R[P[0]] && P[1] < R[P[0]].length) links.push({ r: P[0], i: P[0], a: P[1], b: P[1] + 1, sa: P[1], sb: P[1] + 1, sel: true, pend: true, noArrow: true, c: 0 });
     const mine = links.filter(l => l.up && l.r === a).length;
-    txtMe = ` · ✎ стрелок ${links.filter(l => l.up).length} · из строки ${a + 1} ушло ${mine} из ${s.length}` + (mine === s.length && a > 0 ? " — ровно" : "") + (P ? ` · выбран бит ${P[1] + 1} строки ${P[0] + 1} — щёлкни, куда он прыгает` : "");
+    txtMe = ` · ✎ стрелок ${links.filter(l => l.up).length} · из строки ${a + 1} прыгнуло ${mine} из ${s.length}` + (P ? ` · выбран бит ${P[1] + 1} строки ${P[0] + 1} — щёлкни, куда он прыгает` : "");
   } else if (mode === "len" || mode === "sel") {
     /* v0.1253, «не отрезок, а каждый бит отдельно надо искать»: «Σ 0·1» — каждый бит строки (сверху вниз, слева направо) забирает ближайший
        свободный бит того же значения ниже: ближе всего по строкам, в строке — ближе всего по месту в поле (как стоят ряды: по центру, слева, справа).
@@ -576,8 +576,10 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
     ends.forEach(({ h, src, dst, bit, sy, dy }, n) => {
       const ci = h.sel ? CMP_COLS.length : h.c, col = cols[ci];
       if (bit) {
-        const x0 = X(src.left + src.width / 2), y0 = Y(sy.top + sy.height * 0.45), x1 = X(dst.left + dst.width / 2), y1 = Y(dy.top + dy.height * 0.85), k = Math.max(4, (y0 - y1) * 0.45);
-        const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + x0.toFixed(1) + "," + (y0 - k).toFixed(1) + " " + x1.toFixed(1) + "," + (y1 + k).toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
+        const x0 = X(src.left + src.width / 2), y0 = Y(sy.top + sy.height * (h.i > h.r ? 0.55 : h.i === h.r ? 0.15 : 0.45)), x1 = X(dst.left + dst.width / 2),
+          y1 = Y(dy.top + dy.height * (h.i > h.r ? 0.15 : h.i === h.r ? 0.15 : 0.85)), dn = h.i > h.r ? -1 : 1,   // v0.1272: вниз — остриём вниз, в своей строке — дугой сверху
+          k = h.i === h.r ? Math.max(10, sy.height * 0.9 / sc) : Math.max(4, Math.abs(y0 - y1) * 0.45);
+        const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + x0.toFixed(1) + "," + (y0 - dn * k).toFixed(1) + " " + x1.toFixed(1) + "," + (y1 + (h.i === h.r ? -k : dn * k)).toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
         g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd + '" fill="none" stroke="' + col + '" stroke-width="' + (h.me ? 1.5 : 1.1) +
              '" opacity="' + (h.me ? 1 : 0.8) + '" marker-end="url(#cmpAb' + ci + ')"><title>строка ' + (h.r + 1) + ", бит " + (h.sa + 1) + " → строка " + (h.i + 1) + ", бит " + (h.a + 1) + "</title></path>";
         return;
@@ -16721,15 +16723,12 @@ function init(){
     };
     const tap = ({ r, j }) => {
       const H = Array.isArray(Z.cmpHand) ? Z.cmpHand : (Z.cmpHand = []), R = Z.rows, P = rowCmpHand.pend;
-      if (!P || r >= P[0]) {
-        if (P && r === P[0] && j === P[1]) { rowCmpHand.pend = null; say("Σ ✎: выбор снят."); }
-        else { const k = H.findIndex(x => x[0] === r && x[1] === j);
-          if (k >= 0 && !P) { H.splice(k, 1); say(`Σ ✎: стрелка бита ${j + 1} строки ${r + 1} снята.`); }
-          else if (!r) { rowCmpHand.pend = null; say("Σ ✎: над строкой 1 прыгать некуда."); }
-          else if (k >= 0) { rowCmpHand.pend = null; say(`Σ ✎: бит ${j + 1} строки ${r + 1} уже прыгнул — щёлкни по нему ещё раз, чтобы снять стрелку.`); }
-          else { rowCmpHand.pend = [r, j]; say(`Σ ✎: бит ${j + 1} строки ${r + 1} (${R[r][j]}) — щёлкни, куда он прыгает выше.`); } }
-      } else if (R[r][j] !== R[P[0]][P[1]]) say(`Σ ✎: прыгать можно только на такой же бит — ${R[P[0]][P[1]]}.`);
-      else if (H.some(x => x[2] === r && x[3] === j)) say("Σ ✎: на этот бит уже прыгнули — место занято.");
+      /* v0.1272, «сделай возможным прыгать куда угодно на любой бит»: цель — любой бит любой строки (выше, ниже, в своей), любого значения,
+         занятый тоже. Бит по-прежнему прыгает один раз: щелчок по прыгнувшему — снять его стрелку */
+      if (!P) { const k = H.findIndex(x => x[0] === r && x[1] === j);
+        if (k >= 0) { H.splice(k, 1); say(`Σ ✎: стрелка бита ${j + 1} строки ${r + 1} снята.`); }
+        else { rowCmpHand.pend = [r, j]; say(`Σ ✎: бит ${j + 1} строки ${r + 1} (${R[r][j]}) — щёлкни, куда он прыгает.`); } }
+      else if (r === P[0] && j === P[1]) { rowCmpHand.pend = null; say("Σ ✎: выбор снят."); }
       else { H.push([P[0], P[1], r, j]); rowCmpHand.pend = null; }
       renderRows(); save();
     };
