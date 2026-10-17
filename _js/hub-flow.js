@@ -64,7 +64,7 @@
   }
   const invalidate=()=>{dirty=true;if(light||snow||water)wake();};
   function reset(){rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
-  function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:Math.min(sunRadius,innerWidth)};const left=matchMedia('(max-width:1100px)').matches?0:300;return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
+  function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:Math.min(sunRadius,innerWidth)};const left=matchMedia('(max-width:1100px)').matches?0:(window.HUB_MENU_W||300);return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
   function size(){
     const w=innerWidth,h=innerHeight,W=axisFlow?Math.ceil(Math.hypot(w,h)):w,H=axisFlow?W:h,scale=axisFlow?Math.max(1,Math.sqrt(W*H/(w*h))):1;
     if(radiusRange){radiusRange.max=String(w);sunRadius=Math.min(sunRadius,w);radiusRange.value=String(sunRadius);radiusOutput.textContent=sunRadius+'px';}

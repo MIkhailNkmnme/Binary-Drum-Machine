@@ -29,6 +29,8 @@
       const m = document.createElement('span'); m.className = 'hubPgMini'; m.textContent = MINI[label] || label;
       a.replaceChildren(svg, t, m); a.classList.add('hubPg', 'rmbOn'); a.setAttribute('aria-label', label); if (!a.title) a.title = label;
     });
+    // v0.242: меню в 1,5 раза уже — не влезающее название берёт короткую подпись свёрнутого меню
+    document.querySelectorAll('.hub a.menu-btn.hubPg .hubPgText').forEach(t => { const a = t.parentElement, label = a.getAttribute('aria-label'); t.textContent = SHORT[label] || label; if (t.clientWidth && t.scrollWidth > t.clientWidth && MINI[label]) t.textContent = MINI[label]; });
     // свёрнутое меню: ромбы ёлочкой — каждый второй сдвинут вправо на полромба, раздел начинается заново
     document.querySelectorAll('.hub .mainrow, .hub .panel').forEach(box => box.querySelectorAll('a.menu-btn.hubPg').forEach((a, i) => { a.classList.toggle('hubPgOdd', i % 2 === 1); a.classList.toggle('hubPgFirst', i === 0); }));
   };

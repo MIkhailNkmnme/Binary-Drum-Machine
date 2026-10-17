@@ -27,3 +27,7 @@
   body.hubSidebarCollapsed .hub .hubPgMini{display:block}
   body.hubSidebarCollapsed .hub .hubPgIcon{width:14px;height:14px}
 }
+/* v0.242: меню в 1,5 раза уже (188 px) — полосы плотнее, чтобы названия влезали в два столбца. */
+@media(min-width:1101px){body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg:not(.main-engine){padding:0 4px 0 8px!important;gap:4px;font-size:11px!important;letter-spacing:-.2px!important;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)!important}
+  body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg:not(.main-engine) .hubPgIcon{width:12px;height:12px}
+  body:not(.hubSidebarCollapsed) .hub .grid,body:not(.hubSidebarCollapsed) .hub .row{gap:3px!important}}
