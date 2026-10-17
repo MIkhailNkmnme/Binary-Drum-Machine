@@ -59,10 +59,11 @@
 #hubSidebarToggle{display:none}
 @media(min-width:1101px){
   .hub,#hubLogo{transition:transform .25s ease,visibility .25s}
-  #hubSidebarToggle{display:flex;position:fixed;z-index:50;left:286px;top:10px;bottom:32px;width:14px;padding:0;align-items:center;justify-content:center;border:0;border-left:1px solid color-mix(in srgb,var(--hub-theme-bit) 45%,transparent);border-right:1px solid color-mix(in srgb,var(--hub-theme-bit) 45%,transparent);border-radius:0;background:color-mix(in srgb,var(--hub-theme-bg) 60%,transparent);color:var(--hub-theme-bit);font:18px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;transition:left .25s ease}
+  /* v0.232: вместо полосы во всю высоту — ромб у логотипа; свёрнутое меню — столбик ромбов (hub-pages.css) */
+  #hubSidebarToggle{display:flex;position:fixed;z-index:50;left:266px;top:12px;width:40px;height:40px;padding:0;align-items:center;justify-content:center;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg);color:var(--hub-theme-bit);font:16px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;transition:left .25s ease}
   #hubSidebarToggle:hover,#hubSidebarToggle:focus-visible{background:var(--hub-theme-active);color:var(--hub-theme-accent);outline:1px solid currentColor;outline-offset:-1px}
-  body.hubSidebarCollapsed .hub,body.hubSidebarCollapsed #hubLogo{transform:translateX(calc(-100% - 20px));visibility:hidden;pointer-events:none}
-  body.hubSidebarCollapsed #hubSidebarToggle{left:0}
+  body.hubSidebarCollapsed #hubLogo{transform:translateX(calc(-100% - 20px));visibility:hidden;pointer-events:none}
+  body.hubSidebarCollapsed #hubSidebarToggle{left:16px}
 }
 @media(prefers-reduced-motion:reduce){.hub,#hubLogo,#hubSidebarToggle{transition:none!important}}
 

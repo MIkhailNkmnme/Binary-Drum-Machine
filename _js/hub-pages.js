@@ -14,6 +14,10 @@
     ['hub-konus','curve'],['piramida','steps'],['sinhrofazotron','loop'],['mayatnik','wave'],['matryoshki','square'],['sinhroromb','star']];
   // длинные имена — короче, полное — в подсказке
   const SHORT = {'Исследование':'Исследов.','Битмультфильмы':'Битмульт.','Просмотр GIF':'GIF','Ядро GPU + синт':'GPU + синт','Модуль сетки':'Сетка','Хаб с конусом':'Хаб-конус','Синхрофазотрон':'Синхрофаз.'};
+  // подпись в свёрнутом меню — до 6 букв
+  const MINI = {'Треугольник':'Треуг.','Зазеркалиус':'Зазерк.','Борт-журнал':'Журнал','Исследование':'Исслед.','Сравнение':'Сравн.','Битмультфильмы':'Мульт.','Просмотр GIF':'GIF',
+    'Зеркалиус':'Зерк.','Генезис':'Генез.','Ядро GPU + синт':'GPU','Модуль сетки':'Сетка','Слои сгиба':'Слои','ASCII-арт':'ASCII','Бирамида':'Бирам.','Обои Lively':'Lively',
+    'Хаб с конусом':'Конус','Пирамида':'Пирам.','Синхрофазотрон':'Синхр.','Маятник':'Маятн.','Матрёшки':'Матр.','Синхроромб':'Ромб'};
   const build = () => {
     document.querySelectorAll('.hub a.menu-btn').forEach(a => {
       if (a.firstElementChild?.classList.contains('hubPgIcon')) return;
@@ -22,8 +26,11 @@
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'), path = document.createElementNS('http://www.w3.org/2000/svg', 'path'), t = document.createElement('span');
       svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.classList.add('hubPgIcon'); path.setAttribute('d', P[k]); svg.append(path);
       t.className = 'hubPgText'; t.textContent = SHORT[label] || label;
-      a.replaceChildren(svg, t); a.classList.add('hubPg', 'rmbOn'); a.setAttribute('aria-label', label); if (!a.title) a.title = label;
+      const m = document.createElement('span'); m.className = 'hubPgMini'; m.textContent = MINI[label] || label;
+      a.replaceChildren(svg, t, m); a.classList.add('hubPg', 'rmbOn'); a.setAttribute('aria-label', label); if (!a.title) a.title = label;
     });
+    // свёрнутое меню: ромбы ёлочкой — каждый второй сдвинут вправо на полромба, раздел начинается заново
+    document.querySelectorAll('.hub .mainrow, .hub .panel').forEach(box => box.querySelectorAll('a.menu-btn.hubPg').forEach((a, i) => { a.classList.toggle('hubPgOdd', i % 2 === 1); a.classList.toggle('hubPgFirst', i === 0); }));
   };
   // index.html сам зовёт hubMenuGrid() (надписи ромбами) — после неё ставим свои полосы
   const grid = window.hubMenuGrid; window.hubMenuGrid = () => { grid?.(); build(); };

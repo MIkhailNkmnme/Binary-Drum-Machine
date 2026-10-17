@@ -9,9 +9,9 @@
     toggle.id='hubSidebarToggle';toggle.type='button';toggle.setAttribute('aria-controls',menu.id);document.body.append(toggle);
     const sync=()=>{
       const hidden=desktop.matches&&collapsed;document.body.classList.toggle('hubSidebarCollapsed',hidden);
-      menu.inert=hidden;menu.setAttribute('aria-hidden',String(hidden));if(logo){logo.inert=hidden;logo.setAttribute('aria-hidden',String(hidden));}
+      if(logo){logo.inert=hidden;logo.setAttribute('aria-hidden',String(hidden));}
       toggle.textContent=hidden?'»':'«';toggle.setAttribute('aria-expanded',String(!hidden));
-      toggle.title=hidden?'Развернуть левое меню':'Свернуть левое меню в полоску';toggle.setAttribute('aria-label',toggle.title);
+      toggle.title=hidden?'Развернуть левое меню':'Свернуть левое меню в ромбы';toggle.setAttribute('aria-label',toggle.title);
     };
     toggle.onclick=()=>{collapsed=!collapsed;try{localStorage.setItem('zerk_hub_sidebar_collapsed',String(collapsed));}catch(_){}sync();};
     desktop.addEventListener('change',sync);sync();

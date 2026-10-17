@@ -11,3 +11,17 @@
 .hub .grid,.hub .row{display:grid!important;grid-template-columns:1fr 1fr;gap:4px!important}
 .hub .menu-btn.sfz-btn.hubPg{grid-column:auto}
 .hub .panel-title{margin-bottom:6px!important}
+/* v0.232: свёрнутое меню (кнопка-ромб у логотипа) — столбик ромбов 48 px ёлочкой: значок и короткая подпись; полное имя — в подсказке */
+.hub .hubPgMini{display:none}
+@media(min-width:1101px){
+  body.hubSidebarCollapsed .hub{width:88px!important;top:64px!important;padding:0 8px 16px!important;gap:24px!important;transform:none!important;visibility:visible!important;pointer-events:auto!important}
+  body.hubSidebarCollapsed .hub .panel-title{display:none!important}
+  body.hubSidebarCollapsed .hub .mainrow,body.hubSidebarCollapsed .hub .grid,body.hubSidebarCollapsed .hub .row{display:flex!important;flex-direction:column;gap:0!important;width:auto!important}
+  body.hubSidebarCollapsed .hub a.menu-btn.hubPg{width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;margin:-24px 0 0 0!important;flex-direction:column;justify-content:center!important;gap:1px;
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;font:8.5px/9px system-ui,sans-serif!important}
+  body.hubSidebarCollapsed .hub a.menu-btn.hubPg.hubPgFirst{margin-top:0!important}
+  body.hubSidebarCollapsed .hub a.menu-btn.hubPg.hubPgOdd{margin-left:24px!important}
+  body.hubSidebarCollapsed .hub .hubPgText{display:none}
+  body.hubSidebarCollapsed .hub .hubPgMini{display:block}
+  body.hubSidebarCollapsed .hub .hubPgIcon{width:14px;height:14px}
+}
