@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.155. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.156. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.155</title>
+<title>Zerkalius Маятник — v0.156</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -117,7 +117,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.155</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.156</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -175,6 +175,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
     <label title="Шрифт цифр на клетках">Шрифт <select id="digitFont"><option value="mono">Моноширинный</option><option value="consolas">Consolas</option><option value="courier">Courier</option><option value="sans">Без засечек</option><option value="serif">С засечками</option></select></label>
     <label title="Размер цифр, % клетки">Размер <input id="digitSize" type="number" min="30" max="100" step="5" value="80"></label>
+    <button id="bFoldCompare" data-mi-short="Сгиб" aria-pressed="false" title="Сгиб исходного кадра слева направо: ось по полклетки до середины, сравнение битов и пустоты без XOR">↦ Сгиб</button>
     <button id="bFoldHorizontal" data-mi-short="СвёрткаГориз" aria-pressed="false" title="СвёрткаГориз: правая часть влево, затем левая вправо, по столбцу к центру через XOR; выключить — исходное поле">СвёрткаГориз</button>
     <button id="bFoldVertical" data-mi-short="СвёрткаВерт" aria-pressed="false" title="СвёрткаВерт: нижняя часть вверх, затем верхняя вниз, по строке к центральной строке через XOR; выключить — исходное поле">СвёрткаВерт</button>
     <label title="Сколько верхних строк показывать (пусто — все). По ширине показ всегда обрезан до того, куда к этому кадру достали конусы, — при малом числе строк картинка (и обе половины «обе рядом») помещается крупно">показ строк <input id="vrows" type="number" min="0" max="4096" step="1" placeholder="все" style="width:64px"></label>
@@ -339,6 +340,9 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="../_js/zz-pult.js?v=2"></script>
 <script src="mayatnik-fold.js?v=17"></script>
+<link rel="stylesheet" href="mayatnik-fold-compare.css?v=1">
+<script src="mayatnik-fold-compare.js?v=1"></script>
+<script src="mayatnik-fold-compare-ui.js?v=1"></script>
 <script src="mayatnik-stolb.js?v=3"></script>
 <script src="../_js/initial-rows.js?v=2"></script>   <!-- v0.021: начальная последовательность для «Очков» -->
 <script>
@@ -2711,6 +2715,11 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     // v0.109: щелчок в свёртке — заливка / «Столбы» по исходному столбцу клетки, как обычный щелчок по полю
     tap(sx,y){if(!(fillMode||autoVertical)||!img)return false;const r=cv.getBoundingClientRect(),s=scale();fillAt(r.left+(sx+.5)*s,r.top+(y+.5)*s,false);return true;}
   });
+  MayatnikFoldCompareUI.mount({button:$('bFoldCompare'),capture(){
+    if(!f)return null;stop();target=k;autoStop();
+    if(!k){$('fillInfo').textContent='Сначала построй хотя бы один кадр маятника.';return null;}
+    return {W:f.W,H:f.H,val:f.val,anchor:geo.anchor,frame:k,span:pairOn()?[-k,k]:MAYATNIK.span(st.mode,k)};
+  }});
   foldTransport=MayatnikFold.mount(foldOpts('h',$('bFoldHorizontal')));foldTransportV=MayatnikFold.mount(foldOpts('v',$('bFoldVertical')));
   // v0.092: «Проход столба» — пульт в mayatnik-stolb.js; здесь — откуда начать и как показать столбец.
   stolbTransport=MayatnikStolb.mount({button:$('bStolb'),
@@ -2771,7 +2780,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=155"></script>
+<script src="mayatnik-menu.js?v=156"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
