@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.146. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.147. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.146</title>
+<title>Zerkalius Маятник — v0.147</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -113,7 +113,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.146</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.147</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -180,6 +180,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="«Очки» ищут ещё и инверсию строки последовательности (0 ↔ 1)"><input id="ochkiInv" type="checkbox"> инверс</label>
     <label title="«Очки» ищут ещё и строку задом наперёд; с «инверсом» — и инверсию задом наперёд"><input id="ochkiRev" type="checkbox"> реверс</label>
     <label title="Карта застывания: клетка, чей бит уже окончательный, — цветом кадра, с которого он такой: фиолетовый — до 64, синий — до 128, голубой — до 256, зелёный — до 512, жёлтый — до 1024, оранжевый — до 2048, красный — позже; ярко — 1, тускло — 0. На кадре k видно то, что застыло к нему"><input id="frozen" type="checkbox" data-mi-short="Неизменные" title="Подсветка битов, которые больше не изменятся"> неизменные</label>
+    <button id="bBlackMirror" aria-pressed="true" data-mi-short="Зеркало в чёрных" title="Зеркало в каждом чёрном треугольнике: верхний край треугольника (ровные строки среди шума) — линия-зеркало, то, что над ним, отражается внутрь. По кругу: краска — только закрашенное (заливка, шаблоны, центр), всё — и сами биты, выкл">Зеркало: краска</button>
     <button id="bAnimHl" aria-pressed="false" data-mi-short="Аниматрица" title="Аниматрица: подсветить биты, которые изменились с прошлого кадра, — золотом (стал 1) и голубым (стал 0), след гаснет за 4 кадра. По кругу: выкл → центральный столб → всё поле → выкл">Аниматрица: выкл</button>
     <label title="Жёлтая ступенчатая линия по краю «шумной» зоны: в каждой строке — крайний левый и крайний правый бит, отличный от фона полос"><input id="outline" type="checkbox"> обводка</label>
     <label title="Все вертикальные, горизонтальные и диагональные оси на обеих решётках. Биты сравниваются через одну клетку, порог — с каждой стороны. Поиск на остановленном кадре."><input id="sym" type="checkbox"> симметрия</label>
@@ -724,7 +725,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     clearFillPreview();
     fillBase=px.slice();fillBits=null;
     paintMid();   // v0.132: «Центр краской» — заливка по центральному столбцу, до applyFill
-    applyFill(px);chessLiveApply(px);stolbApply(px);templateLockApply(px);animHlApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
+    applyFill(px);chessLiveApply(px);stolbApply(px);templateLockApply(px);blackMirrorApply(px);animHlApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
     present();
     pictureStats = {frame:k,zero,one,empty:val.length-zero-one}; imageStats(); queueDigits();
     status();
@@ -858,6 +859,31 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     for(let q=0;q<N;q++){const h=animHeat[q];if(!h)continue;const r=Math.floor(q/W),c=q%W;if(r>=VH||c<VX||c>=VX+VW)continue;
       const base=rombP()<0?px[r*RK*img.width+(c-VX)*RK]:0,col=rgba(animTo[q]?one:zero);lockCell(px,q,rombP()<0?mixPx(col,base,h/4):col);}
   }
+  // v0.147: «это зеркало в чёрный треугольник», «в каждом чёрном сверху надо зеркало». Чёрный треугольник — ровные куски строк
+  // (все биты одинаковые) среди шума: кусок от 12 бит, или ровно на бит с каждой стороны уже куска над ним — так треугольник
+  // сужается к острию. Кусок, упёршийся в пустое или край поля (полосы снаружи конуса), — не треугольник. up — сколько ровных
+  // строк над клеткой в её столбце, считая её: верх треугольника T = r − up + 1, зеркальная строка — T − 1 − (r − T).
+  // st.blackMirror: 1 — отражается только краска (пиксели, отличные от картинки битов), 2 — всё, 0 — выкл. Плоские виды.
+  let bmKey='',bmUp=null;
+  const BM_MIN=12;
+  function blackTriUp(){
+    const key=[k,f.W,f.H,VH].join('|');if(bmKey===key&&bmUp)return bmUp;
+    const {W,val}=f,up=new Int16Array(W*VH),flat=new Uint8Array(W*VH);
+    for(let r=0;r<VH;r++){const row=r*W;let s=0;
+      while(s<W){const v=outShow(r,s)?-1:val[row+s];let e=s;while(e+1<W&&!outShow(r,e+1)&&val[row+e+1]===v)e++;
+        if(v>=0&&s>0&&e<W-1&&val[row+s-1]>=0&&val[row+e+1]>=0&&!outShow(r,s-1)&&!outShow(r,e+1)&&(e-s+1>=BM_MIN||r>0&&flat[row-W+s-1]&&flat[row-W+e+1]))
+          for(let c=s;c<=e;c++){flat[row+c]=1;up[row+c]=(r>0?up[row-W+c]:0)+1;}
+        s=e+1;}}
+    bmKey=key;return bmUp=up;
+  }
+  function blackMirrorApply(px){
+    const m=st.blackMirror??1;if(!m||!f||rombP()>=0||RK!==1)return;
+    const up=blackTriUp(),W=f.W,base=fillBase;
+    for(let r=1;r<VH;r++)for(let c=VX;c<VX+VW;c++){const u=up[r*W+c];if(!u)continue;const sr=r-2*u+1;if(sr<0)continue;
+      const so=sr*VW+c-VX,o=r*VW+c-VX,v=px[so];
+      if(m===1){if(!base||v===base[so])continue;px[o]=mixPx(v,px[o],.8);}else px[o]=mixPx(v,px[o],.7);}
+  }
+  const blackMirrorSync=()=>{const m=st.blackMirror??1,b=$('bBlackMirror');b.textContent='Зеркало: '+['выкл','краска','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   const animHlSync=()=>{const m=st.animHl|0,b=$('bAnimHl');b.textContent='Аниматрица: '+['выкл','столб','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   function fieldCellAt(x,y){
     const half=halfOf((x+.5)/RK);if(!half)return null;const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
@@ -2257,6 +2283,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.111: цвета клеток — перерисовать поле; шрифт и размер — слой цифр
   for(const id of ['bitOneColour','bitZeroColour'])$(id).addEventListener('input',()=>{st[id]=$(id).value;applyBitColours();save();if(f)draw();});
   $('fixLines').addEventListener('change',()=>{st.fixLines=$('fixLines').checked;save();if(f)draw();});   // v0.125
+  blackMirrorSync();$('bBlackMirror').onclick=()=>{st.blackMirror=((st.blackMirror??1)+1)%3;blackMirrorSync();save();if(f)draw();};   // v0.147
   animHlSync();$('bAnimHl').onclick=()=>{st.animHl=((st.animHl|0)+1)%3;animPrev=null;animHlSync();save();if(f)draw();};   // v0.146
   $('midCol').addEventListener('change',()=>{st.midCol=$('midCol').checked;save();if(f)draw();});   // v0.119
   $('digitFont').addEventListener('change',()=>{st.digitFont=$('digitFont').value;save();queueDigits();});
@@ -2592,7 +2619,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/menu-icons.js?v=18"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=146"></script>
+<script src="mayatnik-menu.js?v=147"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
