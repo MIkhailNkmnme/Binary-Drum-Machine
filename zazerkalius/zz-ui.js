@@ -454,7 +454,7 @@ function rowCmpInfo(){
         }
         if (!hit) { if (sel) lostMe++; else { lost.push({ i: r, a: j, b: j + 1 }); lostUp++; } continue; }   // v0.1255: у выбранной красным не метим — только счёт
         uOf(hit.i)[hit.q] = 1;
-        links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sel, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
+        links.push({ r, i: hit.i, a: hit.q, b: hit.q + 1, sa: j, sb: j + 1, sel, c: r % CMP_COLS.length, noArrow: seen.has(hit.i) }); seen.add(hit.i);
         if (sel) meRows.set(hit.i, (meRows.get(hit.i) || 0) + 1);
       }
     };
@@ -476,7 +476,7 @@ function rowCmpInfo(){
           for (let q = 0; q < n; q++) if (t[q] === v && !uu[q]) { const d = Math.abs(X(q, n) - x); if (d < bd) { bd = d; bq = q; } }
           work += n; if (bq < 0) continue;
           uu[bq] = 1; gg[j] = 1; if (v === "1") f1--; else f0--;
-          links.push({ r: g, i: rc, a: bq, b: bq + 1, sel: false, c: g % CMP_COLS.length, noArrow: !first }); first = false;
+          links.push({ r: g, i: rc, a: bq, b: bq + 1, sa: j, sb: j + 1, sel: false, c: g % CMP_COLS.length, noArrow: !first }); first = false;
         }
       }
     }
@@ -486,7 +486,7 @@ function rowCmpInfo(){
     txtMe = ` · сверху легло ${filled} из ${s.length}` + (filled === s.length && !lostUp ? " — ровно" : "") + (lostUp ? ` · выше никуда не легло ${lostUp}` : "") +
       (meRows.size ? ` · свободные ниже: ` + [...meRows].map(([i, c]) => `стр. ${i + 1} — ${c}`).join(", ") : "") + (lostMe ? ` · без пары ${lostMe}` : "");
   } else {
-    for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
+    for (let r = 0; r <= a; r++) { if (!R[r]) continue; const m = rowCmpFind(R, r, mode, used); if (m) { links.push({ r, i: m.i, a: m.a, b: m.b, sa: 0, sb: R[r].length, sel: r === a, c: r % CMP_COLS.length }); uOf(m.i).fill(1, m.a, m.b); } }
     const me = links.find(l => l.sel);
     txtMe = me ? ` · ниже ${s.length} бит с ${k} ед. блоками: строка ${me.i + 1}, биты ${me.a + 1}–${me.b}` : ` · ниже ${s.length} бит подряд с ${k} ед. блоками нет`;
   }
@@ -543,10 +543,35 @@ function rowCmpMark(cmp){   // v0.1246 / v0.1248: отрезки — подсв�
       for (let i = h.r; i <= h.i; i++) { const b = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (b) { const q = b.getBoundingClientRect(); mx = lf ? Math.min(mx, q.left) : Math.max(mx, q.right); } }
       const y0 = Y(src.top + src.height / 2), y1 = Y(dst.top + dst.height / 2), ofs = 10 + (n % 6) * 5 + Math.min(60, (y1 - y0) * 0.15);
       const x0 = lf ? X(src.left) - 3 : X(src.right) + 3, x1 = lf ? X(dst.left) - 3 : X(dst.right) + 3, bx = lf ? Math.max(2, X(mx) - ofs) : X(mx) + ofs;
-      g += '<path d="M' + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + bx.toFixed(1) + "," + y0.toFixed(1) + " " + bx.toFixed(1) + "," + y1.toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1) +
+      const dd = "M" + x0.toFixed(1) + "," + y0.toFixed(1) + " C" + bx.toFixed(1) + "," + y0.toFixed(1) + " " + bx.toFixed(1) + "," + y1.toFixed(1) + " " + x1.toFixed(1) + "," + y1.toFixed(1), pk = h.r + ">" + h.i;
+      g += '<path class="hit" data-k="' + pk + '" d="' + dd + '"/><path class="vis" data-k="' + pk + '" d="' + dd +
            '" fill="none" stroke="' + col + '" stroke-width="' + (h.sel ? 2.2 : 1.4) + '" opacity="' + (h.sel ? 1 : 0.85) + '" marker-end="url(#cmpAh' + ci + ')"><title>строка ' + (h.r + 1) + " → строка " + (h.i + 1) + ", биты " + (h.a + 1) + "–" + h.b + "</title></path>";
     });
     sv.innerHTML = "<defs>" + defs + "</defs>" + g;
+    /* v0.1259, «при наведении на стрелку-нить пусть подсветит её и биты»: у каждой стрелки — широкая невидимая дорожка .hit (ловит мышь);
+       наведение — стрелка толще и ярче, её биты в обеих строках (откуда и куда) — белым (Highlight «zcmph» с приоритетом) */
+    const pairs = {};
+    for (const h of cmp.links) { const k = h.r + ">" + h.i, p = pairs[k] || (pairs[k] = { r: h.r, i: h.i, s: [], d: [] }); p.s.push([h.sa, h.sb]); p.d.push([h.a, h.b]); }
+    sv._pairs = pairs;
+    if (!sv._hov) {
+      sv._hov = true;
+      const rng = (i, a, b) => { const bx = L.querySelector('.rw[data-r="' + i + '"] .bx'); if (!bx) return null;
+        const at = (j) => { const w = document.createTreeWalker(bx, NodeFilter.SHOW_TEXT); let c = 0, nd, last = null;
+          while ((nd = w.nextNode())) { const n = nd.textContent.length; last = nd; if (c + n > j) return [nd, j - c]; c += n; }
+          return last ? [last, last.textContent.length] : null; };
+        const p = at(a), q = at(b); if (!p || !q) return null;
+        const rg = document.createRange(); try { rg.setStart(p[0], p[1]); rg.setEnd(q[0], q[1]); } catch (e) { return null; } return rg.collapsed ? null : rg; };
+      const off = () => { sv.querySelectorAll("path.hov").forEach(x => x.classList.remove("hov")); if (window.CSS && CSS.highlights) CSS.highlights.delete("zcmph"); };
+      sv.addEventListener("pointerover", (e) => {
+        const t = e.target.closest && e.target.closest("[data-k]"); if (!t) return;
+        off(); const p = sv._pairs && sv._pairs[t.dataset.k]; if (!p) return;
+        sv.querySelectorAll('path.vis[data-k="' + t.dataset.k + '"]').forEach(x => x.classList.add("hov"));
+        if (!(window.CSS && CSS.highlights && typeof Highlight !== "undefined")) return;
+        const rs = [...p.s.map(([a, b]) => rng(p.r, a, b)), ...p.d.map(([a, b]) => rng(p.i, a, b))].filter(Boolean);
+        if (rs.length) { const H = new Highlight(...rs); H.priority = 10; CSS.highlights.set("zcmph", H); }
+      });
+      sv.addEventListener("pointerout", (e) => { if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest("#cmpArrows [data-k]"))) off(); });
+    }
   }
   if (cmp && cmp.near >= 0 && rowCmpMark._a !== cmp.a + ":" + Z.rows[cmp.a]) {   // новая строка выбрана — ближайшее место в вид
     rowCmpMark._a = cmp.a + ":" + Z.rows[cmp.a];
