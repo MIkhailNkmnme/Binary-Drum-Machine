@@ -1,4 +1,4 @@
-/* Маятник v0.120: page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.120 (меню полосой — v0.158): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -231,6 +231,21 @@
   // v0.124: «Дзен» и «?» — столбиком, одна над другой, у правого края шапки.
   // v0.125: столбик «Дзен» / «?» — в той же верхней полосе меню, последним.
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
+  // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
+  // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
+  // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
+  { tools.classList.add('pt-dd'); let open = null;
+    const shut = () => { if (!open) return; open.classList.remove('pt-open'); open.querySelector('.pt-l').setAttribute('aria-expanded', 'false'); open = null; };
+    const show = g => { if (open === g) return; shut(); open = g; g.classList.add('pt-open'); g.querySelector('.pt-l').setAttribute('aria-expanded', 'true');
+      const r = g.querySelector('.pt-r'); r.style.left = ''; const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
+    for (const g of tools.querySelectorAll('.pt-g')) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
+      l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
+      l.onclick = () => open === g ? shut() : show(g);
+      l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
+      l.onpointerenter = () => { if (open && open !== g) show(g); };
+      toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
+    addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
+    addEventListener('keydown', e => { if (e.key === 'Escape') shut(); }); }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';

@@ -314,3 +314,25 @@ header #paintTools .pt-view .pt-vx .pt-vrows{width:46px;height:16px;box-sizing:b
 #mayatnikInfoPanel #mayatnikStatus::-webkit-scrollbar{display:none}
 /* v0.120: «☰ Меню» на обычном экране не нужна — рейка и так открыта; на телефоне остаётся. */
 @media(min-width:601px){.mayatnik-menu-ready #mayMenu{display:none!important}}
+/* v0.158: меню в одну полоску — в шапке только названия групп, кнопки группы — выпадающим списком под названием. */
+.mayatnik-menu-ready>header{position:relative;z-index:40}
+header #paintTools.pt-dd{flex-wrap:wrap;align-items:center;gap:4px;margin:0}
+header #paintTools.pt-dd .pt-g{--c:#7cbcff;padding:0!important;border:0;background:transparent}
+header #paintTools.pt-dd .pt-l{position:relative;top:auto;left:auto;display:flex;align-items:center;gap:5px;height:24px;padding:0 10px;box-sizing:border-box;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);border-radius:5px;background:#121a30;color:var(--c);font:600 12px 'Segoe UI',sans-serif;letter-spacing:0;white-space:nowrap;cursor:pointer;user-select:none}
+header #paintTools.pt-dd .pt-l::after{content:"▾";font-size:10px;opacity:.75}
+header #paintTools.pt-dd .pt-l:hover,header #paintTools.pt-dd .pt-l:focus-visible{outline:none;background:color-mix(in srgb,var(--c) 22%,#121a30)}
+header #paintTools.pt-dd .pt-open>.pt-l{background:color-mix(in srgb,var(--c) 30%,#121a30);border-color:var(--c)}
+header #paintTools.pt-dd .pt-has-on>.pt-l::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 4px var(--c)}
+header #paintTools.pt-dd .pt-r{display:none!important;position:absolute;top:calc(100% + 3px);left:0;z-index:50;flex-direction:column;align-items:stretch;gap:2px!important;min-width:150px;max-height:calc(100dvh - 70px);overflow:auto;padding:6px;box-sizing:border-box;background:#0d1119f2;border:1px solid color-mix(in srgb,var(--c) 55%,transparent);border-radius:6px;box-shadow:0 8px 24px #000a}
+header #paintTools.pt-dd .pt-open>.pt-r{display:flex!important}
+header #paintTools.pt-dd .pt-r>*{grid-row:auto!important;grid-column:auto!important;margin:0!important;align-self:stretch}
+header #paintTools.pt-dd .pt-b.gz-hx{width:100%;height:24px;--gz-h:24px;font-size:12px;padding:0 12px 0 13px;gap:6px}
+header #paintTools.pt-dd .pt-b.gz-hx i{width:13px;height:13px}
+header #paintTools.pt-dd .pt-b:not(.gz-hx){width:auto;height:24px;display:flex;justify-content:flex-start;gap:6px;padding:0 8px}
+header #paintTools.pt-dd .pt-b:not(.gz-hx) .pt-t{position:static;transform:none;font-size:12px}
+header #paintTools.pt-dd .pt-sep{display:none}
+header #paintTools.pt-dd .pt-cw{display:flex;align-items:center;gap:6px;padding:2px 4px}
+header #paintTools.pt-dd .pt-cw .pt-t{position:static;transform:none;font-size:12px}
+header #paintTools.pt-dd .pt-mid{align-self:flex-start;margin:4px!important}
+header #paintTools.pt-dd .pt-view .pt-vx{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px;padding:4px 2px 0}
+#mayCorner{flex-direction:row;align-items:center;gap:4px}
