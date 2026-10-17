@@ -175,7 +175,7 @@
     turn.style.left = radius + 'px';
     Object.assign(orbit.style,{left:(px-radius)+'px',top:(py-radius)+'px',width:(2*radius)+'px',height:(2*radius)+'px'});
     orbit.querySelector('polygon').setAttribute('transform','rotate('+(-(window.HubView?.rotation||0)*180/Math.PI)+')');
-    window.HubView?.apply(root);refreshOrbitHover();handle.textContent = state.on ? '◇' : '×';
+    window.HubView?.apply(root);keepTurnOnCanvas(radius);refreshOrbitHover();handle.textContent = state.on ? '◇' : '×';
     handle.title = state.screenPin?'Тяни линию — зеркальный перенос пары; круглую ручку — поворот оси':state.on?'Ось: тяни линию, чтобы переместить отражение; круглая ручка поворачивает зеркало':'Ось закреплена в центре оригинала: только поворот';
     line.setAttribute('aria-label',state.screenPin?'Сдвинуть оригинал и отражение зеркально относительно неподвижной оси':state.on?'Переместить зеркало относительно оригинала':'Повернуть оригинал вокруг центра');
     handle.setAttribute('aria-label', 'Зеркало ' + (state.on ? 'включено' : 'выключено') + ', наклон ' + Math.round(turnAngle(state.angle+(window.HubView?.rotation||0)) * 180 / Math.PI) + ' градусов');
@@ -183,6 +183,16 @@
     turn.title = state.screenPin?'Вдоль оси — радиус, через центр — разворот луча; поперёк — поворот. Новое направление переключает действие без отпускания':state.on?'Повернуть зеркало относительно оригинала: тяни ручку или крути колесо':'Повернуть оригинал вокруг центра: тяни ручку';
     turn.title+='; колесо рядом — вращать только биты вокруг конца оси; ось неподвижна';
   };
+  // v0.239: круглая ручка оси при любом сдвиге и масштабе остаётся на холсте — на экране её подтягивает по оси к началу; сам радиус не меняется.
+  function keepTurnOnCanvas(radius){
+    if(!turn||!frame||radius<=0)return;
+    const m=14,mobile=matchMedia('(max-width: 1100px)').matches,x0=Math.max(0,mobile?0:frame.left)+m,x1=Math.min(innerWidth,frame.left+frame.width)-m,y0=m,y1=innerHeight-m;
+    const mid=()=>{const r=turn.getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2];};
+    const b=mid();if(b[0]>=x0&&b[0]<=x1&&b[1]>=y0&&b[1]<=y1)return;
+    turn.style.left='0px';const a=mid();let t=1;
+    for(const [p,q,lo,hi] of [[a[0],b[0],x0,x1],[a[1],b[1],y0,y1]]){if(q>hi&&p<hi)t=Math.min(t,(hi-p)/(q-p));else if(q<lo&&p>lo)t=Math.min(t,(lo-p)/(q-p));else if(q>hi||q<lo)t=0;}
+    turn.style.left=Math.max(0,t)*radius+'px';
+  }
   const changed = () => { revision++; update(); window.dispatchEvent(new Event('hubmirror')); };
   const visibleAngle=()=>state.angle+(window.HubView?.rotation||0),snapAngle=a=>Math.round(a/(Math.PI/12))*(Math.PI/12);
   function turnField(delta){if(locked('axis'))return;if(state.on){state.angle=turnAngle(state.angle+delta);return;}lockCenter();if(frame&&window.HubView?.rotateAround)window.HubView.rotateAround(delta,...center());else state.angle=turnAngle(state.angle+delta);}
