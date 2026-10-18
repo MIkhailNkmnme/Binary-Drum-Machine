@@ -169,7 +169,7 @@
     if(!cached){if(copy.width!==canvas.width||copy.height!==canvas.height){copy.width=canvas.width;copy.height=canvas.height;}const cg=copy.getContext('2d');cg.clearRect(0,0,copy.width,copy.height);cg.drawImage(canvas,0,0);}
     const g=canvas.getContext('2d'),k=view?view.scale:canvas.width/innerWidth,left=view?view.left:0,[a,b,c,d,e,f]=matrix(),shift=sourceShift(),reflection=window.HubMirror?.matrix?.(canvas,view);
     g.save();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,canvas.width,canvas.height);g.globalAlpha=1;g.shadowBlur=0;
-    const fast=!view&&vector&&!vector.direct&&nowMs()<movingUntil;
+    const fast=!view&&vector&&!vector.direct&&!!window.HubFastMove?.on&&nowMs()<movingUntil;   // v0.256: только при включённом «Быстро»
     const layer=(pass)=>{if(!vector){g.drawImage(copy,shift[0]*k,shift[1]*k);return;}
       if(fast){const c=vector.fastCopy||(vector.fastCopy={}),key=pass||'source';let mc=c[key];if(!mc||mc.width!==canvas.width||mc.height!==canvas.height){mc=c[key]=document.createElement('canvas');mc.width=canvas.width;mc.height=canvas.height;const mg=mc.getContext('2d');mg.setTransform(...vector.base);vector.draw(mg,pass);}g.drawImage(mc,shift[0]*k,shift[1]*k);return;}g.save();g.translate(shift[0]*k,shift[1]*k);g.transform(...vector.base);vector.draw(g,pass);g.restore();};   // v0.128: pass 'mirror' — своя палитра у отражения
     g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);const tx=(e+(a-1)*left)*k+shift[0]*k,ty=(f+b*left)*k+shift[1]*k;if(!vector||(!vector.direct&&a===1&&b===0&&c===0&&d===1&&!shift[0]&&!shift[1]&&Math.abs(tx-Math.round(tx))<1e-6&&Math.abs(ty-Math.round(ty))<1e-6))g.drawImage(copy,shift[0]*k,shift[1]*k);else layer();   // v0.130: сдвинутый исходник — заново ромбами, иначе край экрана обрезал картинку

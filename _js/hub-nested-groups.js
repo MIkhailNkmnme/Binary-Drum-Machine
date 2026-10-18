@@ -177,6 +177,14 @@
       b.title='Точный шаг колеса: колесо крутит биты до ближайшей точной линии, как Shift + колесо';b.setAttribute('aria-label',b.title);
       b.onclick=()=>window.HubExactTilt.set(!on);window.HubExactTilt.set(on);
       const turn=records.get('bits|branch:turn');if(turn)turn.children.push(leaf(bits,b));}
+    // v0.256: «Быстро» — быстрый кадр при движении (v0.250): пока двигают биты / ось, оригинал и зеркало — готовыми картинками, чётко — после остановки.
+    // По слову владельца отключаемо и по умолчанию выключено: зеркало и золото рисуются сразу, на каждом шаге.
+    {const b=document.createElement('button');b.type='button';b.id='hubFastMove';b.className='hubRhomb';b.textContent='⚡\nБыстро';
+      let on=false;try{on=localStorage.getItem('zerk_hub_fast_move')==='true';}catch(_){}
+      window.HubFastMove={get on(){return on;},set(v){on=!!v;b.setAttribute('aria-pressed',String(on));try{localStorage.setItem('zerk_hub_fast_move',String(on));}catch(_){}}};
+      b.title='Быстрый кадр при движении: пока двигают биты или ось, зеркало и золото симметрии дорисовываются после остановки (легче для компьютера). Выключено — всё рисуется сразу';b.setAttribute('aria-label',b.title);
+      b.onclick=()=>window.HubFastMove.set(!on);window.HubFastMove.set(on);
+      const turn=records.get('bits|branch:turn');if(turn)turn.children.push(leaf(bits,b));}
     // Пульт движений (крест справа): все вращения — битов, оси, 3D и автозум.
     const motion={key:'motion',name:'Пульт движений'},moving=['bits|branch:turn','axis|branch:turn','space|branch:zoom'].map(id=>records.get(id)).filter(Boolean);
     moving.forEach(r=>{detach(r);regroup(r,motion);});
