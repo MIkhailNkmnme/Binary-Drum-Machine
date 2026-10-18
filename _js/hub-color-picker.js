@@ -1,6 +1,6 @@
 /* Shared Hub color and opacity editor. */
 (()=>{
- 'use strict';let box,active,h=0,s=1,v=1;
+ 'use strict';let box,active,h=0,s=1,v=1,shut={};   // shut — кто и когда закрыл щелчком снаружи (v0.257: тот же щелчок не открывает окно снова)
  const clamp=x=>Math.max(0,Math.min(1,x));
  // Inverse of the square's 45 degree rotation, using its diamond bounding box.
  const diamondPoint=(x,y)=>({s:clamp(x+y-.5),v:clamp(.5+x-y)});
@@ -21,12 +21,13 @@
   hue.oninput=()=>{h=Number(hue.value);apply();};alpha.oninput=apply;
   text.oninput=()=>{if(/^#[0-9a-f]{6}$/i.test(text.value)){fromHex(text.value);apply();}};text.onchange=()=>{text.value=active.color;};
   box.querySelector('button').onclick=close;
-  document.addEventListener('pointerdown',e=>{if(!box.hidden&&!box.contains(e.target)&&e.target!==active.trigger)close();},true);
+  document.addEventListener('pointerdown',e=>{if(!box.hidden&&!box.contains(e.target)){shut={t:performance.now(),trigger:active.trigger};close();}},true);
   document.addEventListener('keydown',e=>{if(!box.hidden&&e.key==='Escape')close();});
  }
  // Hub v0.249: подпись вдоль края ромба — коротко, полное имя — в подсказке
  const SHORT={'Цвет битов оригинала':'Биты','Цвет нулей оригинала':'Нули','Цвет отражённых битов':'Отражение','Цвет заворота':'Заворот','Цвет подсветки симметрии по оси':'Симметрия'};
  function sync(){const hb=box.querySelector('header b');hb.textContent=SHORT[active.title]||String(active.title||'').replace(/^Цвет /,'');hb.title=active.title||'';box.querySelector('small').title=(active.title||'')+' — непрозрачность';box.querySelector('.hubColorSV').style.background=`linear-gradient(0deg,#000,transparent),linear-gradient(90deg,#fff,transparent),hsl(${h} 100% 50%)`;Object.assign(box.querySelector('.hubColorSV i').style,{left:(s*100)+'%',top:((1-v)*100)+'%'});box.querySelector('.hubColorSV').setAttribute('aria-valuetext',`Насыщенность ${Math.round(s*100)}%, яркость ${Math.round(v*100)}%`);box.querySelector('.hue').value=h;box.querySelector('.alpha').max=active.maxOpacity*100;box.querySelector('.alpha').value=Math.round(active.opacity*100);box.querySelector('output').textContent=Math.round(active.opacity*100)+'%';box.querySelector('small').title='Непрозрачность — ползунок по вертикали в ромбе';box.querySelector('.hex').value=active.color;Object.assign(box.querySelector('.preview i').style,{background:active.color,opacity:Math.min(1,active.opacity)});}
  function close(){box.hidden=true;active?.trigger?.focus();}
- window.HubColorPicker={open(options){if(!box)init();active={...options};fromHex(active.color);sync();box.hidden=false;box.querySelector('.hex').focus();}};
+ window.HubColorPicker={open(options){if(!box)init();if(options?.trigger&&((!box.hidden&&active?.trigger===options.trigger)||(shut.trigger===options.trigger&&performance.now()-shut.t<600))){shut={};if(!box.hidden)close();return;}   // v0.257: второе нажатие той же кнопки — окно сворачивается
+ active={...options};fromHex(active.color);sync();box.hidden=false;box.querySelector('.hex').focus();}};
 })();
