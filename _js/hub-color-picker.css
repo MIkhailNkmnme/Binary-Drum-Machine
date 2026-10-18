@@ -1,17 +1,18 @@
 /* Hub v0.226: окно цвета целиком ромбом. v0.249: «минимизируй отступы, текст вдоль границ ромба, с середины в правый бок, под кнопки хаба» —
    ромб 300 × 300 справа под полосой групп; ромб насыщенности 200 в центре; подпись — вдоль верхней левой грани, HEX — вдоль нижней правой,
    непрозрачность — в левом углу, × — в правом. */
+/* v0.255: «21% тоже по диагонали, вместо „Нули“, и отступы ещё меньше» — ромб 250 (кайма вокруг ромба цвета 25 px вместо 50), непрозрачность — вдоль верхней левой грани на месте подписи (имя цвета — в подсказке), HEX — вдоль нижней правой. */
 /* v0.251: «все подсказки — в одном месте внизу слева, и ромб цветов туда же» — окно цвета внизу слева, над строкой подсказки */
-.hubColorEditor{left:4px!important;right:auto!important;top:auto!important;bottom:56px!important;transform:translateZ(0);width:300px!important;height:300px;max-height:none!important;padding:0!important;border:0!important;
-  overflow:visible!important;box-shadow:none!important;background:var(--hub-theme-bit)!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);isolation:isolate;filter:drop-shadow(0 4px 18px #000c)}
+.hubColorEditor{left:4px!important;right:auto!important;top:auto!important;bottom:56px!important;transform:translateZ(0);width:250px!important;height:250px;max-height:none!important;padding:0!important;border:0!important;
+  overflow:visible!important;box-shadow:none!important;background:color-mix(in srgb,var(--hub-theme-bit) 40%,#000)!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);isolation:isolate;filter:drop-shadow(0 4px 18px #000c)}
 .hubColorEditor::before{content:'';position:absolute;inset:1.5px;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--hub-theme-bg)}
-.hubColorEditor header{position:absolute;left:38px;top:76px;width:100px;height:22px;margin:0!important;justify-content:center;text-align:center;transform:rotate(-45deg)}
-.hubColorEditor header b{font:600 11px/22px system-ui,sans-serif;white-space:nowrap}
-.hubColorEditor header button{position:fixed;left:256px;top:135px;width:30px;height:30px;padding:0;font-size:20px!important;line-height:30px;transform:rotate(45deg)}
-.hubColorEditor .hubColorDiamond{position:absolute!important;left:50px;top:50px;width:200px!important;margin:0!important}
-.hubColorEditor .hubColorRow{position:absolute;left:150px;top:201px;width:126px;height:22px;margin:0!important;gap:4px!important;transform:rotate(-45deg);transform-origin:50% 50%}
+.hubColorEditor header{position:absolute;left:0;top:0;width:0;height:0;margin:0!important;justify-content:center;text-align:center;transform:none}
+.hubColorEditor header b{display:none}
+.hubColorEditor header button{position:absolute;left:226px;top:116px;width:18px;height:18px;padding:0;font-size:15px!important;line-height:18px;transform:rotate(45deg)}
+.hubColorEditor .hubColorDiamond{position:absolute!important;left:25px;top:25px;width:200px!important;margin:0!important}
+.hubColorEditor .hubColorRow{position:absolute;left:118px;top:170px;width:126px;height:22px;margin:0!important;gap:4px!important;transform:rotate(-45deg);transform-origin:50% 50%}
 .hubColorEditor .hubColorRow .preview{width:22px!important;height:22px!important;flex:none}
 .hubColorEditor .hubColorRow .hex{padding:2px 4px!important;font-size:11px!important;min-width:0;width:90px}
-.hubColorEditor small{position:absolute;left:4px;top:140px;width:44px;margin:0!important;text-align:center;font-size:0!important}
+.hubColorEditor small{position:absolute;left:29px;top:59px;width:80px;height:20px;transform:rotate(-45deg);margin:0!important;text-align:center;font-size:0!important}
 .hubColorEditor small output{float:none!important;font:600 12px/20px system-ui,sans-serif}
 @media(max-width:460px){.hubColorEditor{right:8px!important}}
