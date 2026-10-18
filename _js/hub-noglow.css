@@ -1,0 +1,9 @@
+/* Hub v0.254: «и свечения все убери» — ни у надписей, ни у кнопок, ни у оси нет ореолов.
+   Тени-ореолы текста, светящиеся box-shadow и filter: drop-shadow снимаются здесь (файл подключён последним);
+   на холстах shadowBlur глушится в index.html (скрипт в начале страницы). Обычные тени окон (тёмные, со сдвигом) остаются. */
+*,*::before,*::after{text-shadow:none!important}
+#hubTitle,#hubLogo,.flow svg,.hubMirrorOrbit,.hubMirrorTurnMagnet,.hubAxisDragHint,.hubMirrorTurn::before,
+#hubFieldTools .hubFloodControl[aria-pressed=true],#hubFieldTools .hubTreeItem.hubReorderOver>*,
+#hubMirror .hubMirrorLine,#hubMirror [class^=hubMirror],#hubMirror [class*=" hubMirror"]{filter:none!important}
+.menu-btn,.menu-btn:hover,.menu-btn::before,.menu-btn::after,.hubMirrorLine::after,#zerkHubBtn,#zerkHubBtn:hover,#hubDropCross i,#hubDropCross b{box-shadow:none!important}
+.hubMirrorTurn{box-shadow:0 0 0 2px #10202a,0 0 0 4px #ffd166!important}
