@@ -81,8 +81,8 @@
       tiltV[b].addEventListener('dblclick', () => { const x = old.tilt(b); if (x && +x.value !== 0) { x.value = 0; fire(x, 'input'); fire(x, 'change'); } sync(); });   // v0.280: двойной щелчок — 0°
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
       control.append(l, tiltV[b], r); br.append(control);
+      if (b === '0') br.append(resetB = btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));   // «её между ними формой X» — ↺ между наклонами 0 и 1, выемки под их острия
     }
-    br.append(resetB = btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));   // «360 отсюда вообще убери, а сброс поворотов в цвет битов»: ↺ — половина цветом 0, половина цветом 1
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
     // 360° на пульте не показывается (кнопка «360°» осталась в рейке); free живёт для sync
 
