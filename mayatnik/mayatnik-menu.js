@@ -234,18 +234,25 @@
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
-  { tools.classList.add('pt-dd'); let open = null;
+  { tools.classList.add('pt-dd'); let open = null; const narrow = matchMedia('(max-width:600px)');
+    // v0.159: на телефоне «Что это такое?» — в конец полоски меню, чтобы шапка была в одну строку
+    const aboutHome = $('mayAbout').previousElementSibling, aboutPlace = () => { if (narrow.matches) $('mayCorner').append($('mayAbout')); else aboutHome.after($('mayAbout')); };
+    narrow.addEventListener('change', () => { shut(); aboutPlace(); }); aboutPlace();
     const shut = () => { if (!open) return; open.classList.remove('pt-open'); open.querySelector('.pt-l').setAttribute('aria-expanded', 'false'); open = null; };
     const show = g => { if (open === g) return; shut(); open = g; g.classList.add('pt-open'); g.querySelector('.pt-l').setAttribute('aria-expanded', 'true');
-      const r = g.querySelector('.pt-r'); r.style.left = ''; const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
+      const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
+      // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
+      if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
+      const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     for (const g of tools.querySelectorAll('.pt-g')) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       l.onclick = () => open === g ? shut() : show(g);
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
-      l.onpointerenter = () => { if (open && open !== g) show(g); };
+      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
-    addEventListener('keydown', e => { if (e.key === 'Escape') shut(); }); }
+    addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
+    tools.addEventListener('scroll', shut, { passive: true }); }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
