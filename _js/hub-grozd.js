@@ -66,7 +66,8 @@
       let pat = null, glyph = null;
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
         const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
-        const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
+        const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);
+        const fs = it => (g.key === 'space' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // «замор. — в правую рейку, не оставляй пустоты»: «3D объём» — 3D вращ. слева, остальное столбиком справа   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
         for (const c of r.children || []) {
           if (c.children) {
             const isBr = g.key === 'flow' && /^flow\|branch:/.test(c.id);
@@ -92,7 +93,7 @@
           if (/\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
-          add(SOUND.test(c.id) ? 'sound' : g.key, fa(fc(leafItem(c))), c.id);
+          add(SOUND.test(c.id) ? 'sound' : g.key, fs(fa(fc(leafItem(c)))), c.id);
         }
       };
       const root = g.root;
@@ -101,7 +102,7 @@
         if (b) add('file', { type: 'toggle', icon: '▤', name: 'Шаблоны', tip: 'Открыть список шаблонов', on: () => b.getAttribute('aria-expanded') === 'true', click: () => b.click() }, 'file'); }
       else if (root.action && g.key === 'space') {   // «при включении — на полкнопки 3D вращ. / Сброс», «а тот сброс убери»: пока 3D не в покое — пара, иначе одна кнопка
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
-        add('space', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
+        add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
           parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
       else if (root.action) add(g.key, g.key === 'flow' || g.key === 'axis' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
       walk(root, !root.gate || !!gateOn(root));
