@@ -260,28 +260,32 @@
     // (щелчок мимо, Esc, открытие другой группы). На телефоне закреп не действует — там список один, на всю ширину.
     const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.querySelector('.pt-l').firstChild.textContent.trim();
     let pins = new Set(); try { pins = new Set(JSON.parse(localStorage.getItem(PIN_DD) || '[]')); } catch (_) {}
-    const pinned = g => !narrow.matches && pins.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
+    // v0.166: «если закреп сверну, то не убирай закреп-галку… только если закреп уберу» — щелчок по названию закреплённой группы
+    // только сворачивает её (закреп горит), развернул снова — опять не закрывается; снимается закреп только значком
+    const FOLD_DD = 'mayatnik-dd-fold'; let folds = new Set(); try { folds = new Set(JSON.parse(localStorage.getItem(FOLD_DD) || '[]')); } catch (_) {}
+    const saveDd = () => { try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); localStorage.setItem(FOLD_DD, JSON.stringify([...folds])); } catch (_) {} };
+    const pinned = g => !narrow.matches && pins.has(keyOf(g)), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = ''; requestAnimationFrame(() => zig(r));
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); };
-    const pinsSync = () => { for (const g of groupsAll()) { const on = pinned(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
+    const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
     addEventListener('resize', () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) zig(g.querySelector('.pt-r')); });
-    const shut = () => { if (!open) return; const g = open; open = null; if (!pinned(g)) setOpen(g, false); };
+    const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       const pin = document.createElement('span'); pin.className = 'pt-pin'; pin.title = 'Закрепить: список не закрывается';
       pin.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
       pin.addEventListener('pointerdown', e => e.stopPropagation());
-      pin.addEventListener('click', e => { e.stopPropagation(); const k = keyOf(g); if (pins.has(k)) pins.delete(k); else pins.add(k);
-        try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); } catch (_) {} if (!pins.has(k) && open !== g) setOpen(g, false); pinsSync(); });
+      pin.addEventListener('click', e => { e.stopPropagation(); const k = keyOf(g); folds.delete(k); if (pins.has(k)) pins.delete(k); else pins.add(k);
+        saveDd(); if (!pins.has(k) && open !== g) setOpen(g, false); pinsSync(); });
       l.append(pin);
-      l.onclick = () => { if (pinned(g)) { pins.delete(keyOf(g)); try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); } catch (_) {} if (open === g) open = null; setOpen(g, false); return; }
+      l.onclick = () => { if (pinned(g)) { const k = keyOf(g); if (stay(g)) { folds.add(k); if (open === g) open = null; setOpen(g, false); } else { folds.delete(k); setOpen(g, true); } saveDd(); return; }
         open === g ? shut() : show(g); };
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
-      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g && !pinned(open)) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
+      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g && !stay(open)) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
