@@ -66,6 +66,11 @@
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
+  // v0.167: подсказки кнопок рейки — в title (их показывает mayatnik-tips.js рядом с кнопкой через 4 с)
+  for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
+    const wide = t => ['value', 'list', 'control'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));
+    const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
+    a.forEach((it, i) => { if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if (cb[i] && it.type !== 'control' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));

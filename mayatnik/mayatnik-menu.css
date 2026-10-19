@@ -404,3 +404,6 @@ header #paintTools.pt-dd .pt-lib .pt-r>.gz-control::before{display:none}
 header #paintTools.pt-dd .pt-lib .pt-r>.gz-control:has(#templateLibraryChoices:empty){display:none}
 header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direction:column;gap:0;width:100%;white-space:normal}
 @media (max-width:600px){header #paintTools.pt-dd .pt-lib .pt-r>.gz-control{grid-column:1/-1!important}}
+/* v0.167: подсказка рядом с кнопкой через 4 с (mayatnik-tips.js) — на фоне, без рамки, как подсказки рейки */
+#mayTip{position:fixed;z-index:2147483646;max-width:260px;padding:5px 10px;border-radius:4px;background:#121a30;color:#c5cee3;font:12px/1.3 'Segoe UI',Roboto,Arial,sans-serif;pointer-events:none;box-shadow:0 4px 14px #000a}
+#mayTip[hidden]{display:none}
