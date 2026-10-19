@@ -94,6 +94,16 @@
           mid.append(el('span', 'gz-nm', it.name), v); if (it.reset) mid.append(z);
           b.append(a('gz-a2', '◂◂', -2), a('', '◂', -1), mid, a('', '▸', 1), a('gz-a2', '▸▸', 2));
           refreshers.push(() => { v.textContent = it.get(); });
+          // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, колесо — шаг
+          if (it.frac && it.setFrac) {
+            b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'); mid.prepend(th);
+            refreshers.push(() => { th.style.left = (Math.max(0, Math.min(1, it.frac())) * 100) + '%'; });
+            const at = e => { const r = mid.getBoundingClientRect(); it.setFrac(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); refresh(); };
+            mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
+              const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
+              mid.addEventListener('pointermove', mv); mid.addEventListener('pointerup', up); mid.addEventListener('pointercancel', up); });
+            b.addEventListener('wheel', e => { e.preventDefault(); it.step(e.deltaY < 0 ? 1 : -1); refresh(); }, { passive: false });
+          }
           wide.append(b);
         } else if (it.type === 'list') {
           b.classList.add('gz-list');
@@ -131,9 +141,9 @@
         }
         b.addEventListener('keydown', e => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } });
       }
-      // соты: столбец k%2, второй сдвинут на полкнопки вниз и заходит в выемку первого
+      // соты: столбец k%2; второй начинается на полкнопки выше первого (слово владельца 19.10: «второй ряд начинать выше»), первый — в его выемке
       const s = getComputedStyle(root), W = parseFloat(s.getPropertyValue('--gz-w')) || 120, H = parseFloat(s.getPropertyValue('--gz-h')) || 24, N = parseFloat(s.getPropertyValue('--gz-n')) || 12, DY = H + 3;
-      cells.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY + col * DY / 2) + 'px'; });
+      cells.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY + (cells.length > 1 ? 1 - col : 0) * DY / 2) + 'px'; });
       const rows = Math.ceil(cells.length / 2);
       soty.style.height = cells.length ? (rows * DY + (cells.length > 1 ? DY / 2 : 0) - 3) + 'px' : '0';
       if (cells.length) box.append(soty);

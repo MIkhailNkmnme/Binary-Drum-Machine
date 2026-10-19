@@ -60,6 +60,14 @@
 .gz-val:hover .gz-a2,.gz-val:hover .gz-z{display:flex}
 .gz-val:hover .gz-nm{display:none}
 
+/* ползунок (значение с frac): пунктир, ромб цветом группы, число по центру, название — в подсказке */
+.gz-sl .gz-mid{position:relative;align-self:stretch;cursor:ew-resize;touch-action:none}
+.gz-sl .gz-mid::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed color-mix(in srgb,var(--c) 55%,transparent);pointer-events:none}
+.gz-sl .gz-th{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--c);transform:rotate(45deg);pointer-events:none}
+.gz-sl .gz-v{position:relative;padding:0 4px;background:var(--gz-bg);border-radius:2px;pointer-events:none}
+.gz-sl .gz-nm,.gz-sl:hover .gz-nm{display:none}
+.gz-sl .gz-a2,.gz-sl:hover .gz-a2{display:none}
+
 /* список: шапка с выбранным, лесенка вариантов справа */
 .gz-list{width:100%;justify-content:space-between}
 .gz-list .gz-nm{color:var(--gz-mut)}

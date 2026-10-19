@@ -30,7 +30,9 @@
       const put = x => { x = Math.max(lo(), Math.min(hi(), x)); const d = (String(inp.step).split('.')[1] || '').length; inp.value = d ? x.toFixed(d) : String(Math.round(x)); fire(inp); };
       return { type: 'value', name: v ? v[1] : cut(icName(n) || tip), tip,
         get: () => txt(out?.textContent || n.querySelector('.hubSlV')?.textContent || inp.value),
-        step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .1 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); } };
+        step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .1 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); },
+        // v0.263: «ползунком» — значение тянут по дорожке (grozd.js рисует бегунок), стрелки и колесо — шаг
+        ...(inp.type === 'range' ? { frac: () => (+inp.value - lo()) / ((hi() - lo()) || 1), setFrac: f => { const s = st(); put(lo() + Math.round(f * (hi() - lo()) / s) * s); } } : {}) };
     }
     const sel = n.querySelector('select');
     if (sel) return { type: 'list', icon: '▤', name: cut(tip.split(/[:·]/)[0]), tip, get: () => sel.value, set: x => { sel.value = x; fire(sel); }, options: [...sel.options].map(o => ({ v: o.value, name: txt(o.textContent) })) };
