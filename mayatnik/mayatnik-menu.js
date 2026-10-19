@@ -231,6 +231,11 @@
   $('mayAbout').after(tools);
   // v0.124: «Дзен» и «?» — столбиком, одна над другой, у правого края шапки.
   // v0.125: столбик «Дзен» / «?» — в той же верхней полосе меню, последним.
+  // v0.165: «шаблоны туда же» — список шаблонов (правая панель «Шаблоны») — выпадающей группой в полоске меню, с закрепом.
+  // Кнопки рейки переносятся как есть (их обновление и щелчки остаются), правая панель больше не показывается.
+  { const row = ptGroup('Шаблоны'), lib = railRIn.querySelector('.gz-group'); row.parentElement.classList.add('pt-lib'); row.parentElement.style.setProperty('--c', '#d9b9ff');
+    if (lib) { row.append(...lib.querySelectorAll('.gz-soty > .gz-hx'), ...lib.querySelectorAll('.gz-wide > *')); lib.remove(); }
+    railR.style.setProperty('display', 'none', 'important'); }
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
@@ -251,19 +256,34 @@
       const c = getComputedStyle(r).getPropertyValue('--c').trim() || '#7cbcff', d = pt.map(q => q.join(',')).join(' ');
       r.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
       r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="${c}" stroke-width="3" stroke-linejoin="round"/></svg>`) + '")'; };
-    addEventListener('resize', () => open && zig(open.querySelector('.pt-r')));
-    const shut = () => { if (!open) return; open.classList.remove('pt-open'); open.querySelector('.pt-l').setAttribute('aria-expanded', 'false'); open = null; };
-    const show = g => { if (open === g) return; shut(); open = g; g.classList.add('pt-open'); g.querySelector('.pt-l').setAttribute('aria-expanded', 'true');
-      const r = g.querySelector('.pt-r'); r.style.left = r.style.top = ''; requestAnimationFrame(() => zig(r));
+    // v0.165: «у этих кнопок тоже закреп» — значок закрепа у названия группы, как в рейке: закреплённый список не закрывается
+    // (щелчок мимо, Esc, открытие другой группы). На телефоне закреп не действует — там список один, на всю ширину.
+    const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.querySelector('.pt-l').firstChild.textContent.trim();
+    let pins = new Set(); try { pins = new Set(JSON.parse(localStorage.getItem(PIN_DD) || '[]')); } catch (_) {}
+    const pinned = g => !narrow.matches && pins.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
+    const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = ''; requestAnimationFrame(() => zig(r));
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
-    for (const g of tools.querySelectorAll('.pt-g')) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
+    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); };
+    const pinsSync = () => { for (const g of groupsAll()) { const on = pinned(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
+    addEventListener('resize', () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) zig(g.querySelector('.pt-r')); });
+    const shut = () => { if (!open) return; const g = open; open = null; if (!pinned(g)) setOpen(g, false); };
+    const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
+    for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
-      l.onclick = () => open === g ? shut() : show(g);
+      const pin = document.createElement('span'); pin.className = 'pt-pin'; pin.title = 'Закрепить: список не закрывается';
+      pin.innerHTML = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
+      pin.addEventListener('pointerdown', e => e.stopPropagation());
+      pin.addEventListener('click', e => { e.stopPropagation(); const k = keyOf(g); if (pins.has(k)) pins.delete(k); else pins.add(k);
+        try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); } catch (_) {} if (!pins.has(k) && open !== g) setOpen(g, false); pinsSync(); });
+      l.append(pin);
+      l.onclick = () => { if (pinned(g)) { pins.delete(keyOf(g)); try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); } catch (_) {} if (open === g) open = null; setOpen(g, false); return; }
+        open === g ? shut() : show(g); };
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
-      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
+      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g && !pinned(open)) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
+    narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }

@@ -390,3 +390,17 @@ header #paintTools.pt-dd .pt-r>.pt-cw{padding:0 4px;height:24px}
   header #paintTools.pt-dd .pt-r{padding:0}
   header #paintTools.pt-dd .pt-r>.pt-b.gz-hx{--gz-n:10px}
 }
+/* v0.165: закреп у названия группы, как в рейке: закреплённый список не закрывается */
+header #paintTools.pt-dd .pt-pin{display:flex;align-items:center;justify-content:center;width:12px;height:14px;margin-left:2px;opacity:.35;cursor:pointer;color:#dfe6f5}
+header #paintTools.pt-dd .pt-pin:hover{opacity:.8}
+header #paintTools.pt-dd .pt-pinned>.pt-l .pt-pin{opacity:1;color:var(--c);filter:brightness(1.6)}
+header #paintTools.pt-dd .pt-pinned>.pt-l .pt-pin{color:#fff}
+@media (max-width:600px){header #paintTools.pt-dd .pt-pin{display:none}}
+/* v0.165: «Шаблоны» — группой полоски: кнопки рейки и список шаблонов вплотную к рамке, как остальные */
+header #paintTools.pt-dd .pt-lib .pt-r{--gz-bg:#121a30;--gz-h:24px;--gz-n:9px;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:#dfe6f5;font:12px/1.2 'Segoe UI',sans-serif;min-width:200px}
+header #paintTools.pt-dd .pt-lib .pt-r>.gz-hx{position:static!important;width:100%;left:auto;top:auto;box-sizing:border-box}
+header #paintTools.pt-dd .pt-lib .pt-r>.gz-control{width:auto;height:auto;background:none;clip-path:none;padding:0}
+header #paintTools.pt-dd .pt-lib .pt-r>.gz-control::before{display:none}
+header #paintTools.pt-dd .pt-lib .pt-r>.gz-control:has(#templateLibraryChoices:empty){display:none}
+header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direction:column;gap:0;width:100%;white-space:normal}
+@media (max-width:600px){header #paintTools.pt-dd .pt-lib .pt-r>.gz-control{grid-column:1/-1!important}}
