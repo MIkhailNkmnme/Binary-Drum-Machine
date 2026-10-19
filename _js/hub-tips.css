@@ -3,5 +3,4 @@
 #hubTip[hidden]{display:none}
 body.hubZen #hubTip{display:none}
 /* v0.251: «все подсказки показывай в одном месте — внизу слева под кнопками, в самом низу браузера»: плашка всегда там, по ширине левого меню */
-#hubTip{left:8px!important;top:auto!important;bottom:8px;width:max-content;max-width:min(360px,calc(100vw - 16px));box-shadow:none}
-#hubTip.hubTipR{left:auto!important;right:8px}   /* v0.260: плашка накрыла бы наведённую группу — в правый нижний угол */
+#hubTip{width:max-content;max-width:min(300px,calc(100vw - 16px))}   /* 19.10: рядом с кнопкой, через 4 с (hub-tips.js) */

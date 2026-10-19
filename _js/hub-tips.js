@@ -15,35 +15,25 @@
     for (const n of nodes) { const q = n.getBoundingClientRect(); if (!q.width) continue; l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); }
     return { l, t, r, b };
   }
+  // 19.10: «подсказки показывай рядом с кнопками, но с задержкой 4 секунды» — title снимается сразу (системная не всплывёт),
+  // плашка — через 4 с наведения, сбоку от кнопки (у рейки — правее всей рейки), не влезает — с другой стороны.
+  const DELAY = 4000; let timer = 0;
   function show(el) {
     const text = tipOf(el); if (!text) { hide(); return; }
     if (cur !== el) giveBack(cur);
-    cur = el; box.textContent = text; box.hidden = false;
-    // v0.225: «подсказка скрывает кнопки» — под всей раскрытой группой; место пересчитывается, когда группа уже раскрылась.
-    place(); requestAnimationFrame(() => requestAnimationFrame(place)); setTimeout(place, 250);
+    cur = el; box.hidden = true; clearTimeout(timer);
+    timer = setTimeout(() => { if (cur !== el || !el.isConnected) return; box.textContent = tipOf(el); box.hidden = false; place(); }, DELAY);
   }
-  // v0.251: место одно — внизу слева (CSS); прежний расчёт «под группой» больше не нужен.
   function place() {
-    // v0.260: «ромбы Файл перенёс вниз под кнопки слева — он исчез»: плашка внизу слева ложилась на группу, поставленную туда рукой.
-    // Если плашка накрывает наведённую кнопку или её раскрытую группу — она уходит в правый нижний угол.
-    if (cur && !box.hidden) { box.classList.remove('hubTipR'); const a = area(cur), b = box.getBoundingClientRect();
-      if (b.width && a.l < b.right + 4 && a.r > b.left - 4 && a.t < b.bottom + 4 && a.b > b.top - 4) box.classList.add('hubTipR'); }
-    return;
-    const a = area(cur), q = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
-    const x = Math.max(8, Math.min(innerWidth - w - 8, q.left + q.width / 2 - w / 2));
-    let y = a.b + 8; if (y + h > innerHeight - 4) y = Math.max(4, a.t - h - 8);
-    // v0.244: «не перекрывать кнопки подсказками» — группы теперь стоят вплотную, поэтому плашка встаёт ниже ВСЕХ кнопок и открытых
-    // ползунков, что приходятся на её ширину, а не только своей группы.
-    if (cur.closest('#hubFieldTools')) {
-      let low = a.b;
-      for (const n of document.querySelectorAll('#hubFieldTools .hubTreeItem:not([hidden]), #hubFieldTools details[open] > label')) {
-        const r = n.getBoundingClientRect(); if (!r.width || r.right < x - 4 || r.left > x + w + 4 || r.top > innerHeight) continue; low = Math.max(low, r.bottom);
-      }
-      y = Math.min(low + 8, innerHeight - h - 4);
-    }
+    if (!cur || box.hidden) return;
+    const q = cur.getBoundingClientRect(), side = cur.closest('#hubRail,.gz-ladder')?.getBoundingClientRect() || q, w = box.offsetWidth, h = box.offsetHeight;
+    let x = Math.max(q.right, side.right) + 8; if (x + w > innerWidth - 4) x = Math.min(q.left, side.left) - w - 8;
+    if (x < 4) { x = Math.max(4, Math.min(innerWidth - w - 4, q.left + q.width / 2 - w / 2)); var y = q.bottom + 8 + h > innerHeight - 4 ? q.top - h - 8 : q.bottom + 8; }
+    else y = q.top + q.height / 2 - h / 2;
+    y = Math.max(4, Math.min(innerHeight - h - 4, y));
     box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
   }
-  function hide() { giveBack(cur); cur = null; box.hidden = true; }
+  function hide() { clearTimeout(timer); giveBack(cur); cur = null; box.hidden = true; }
   document.addEventListener('pointerover', e => {
     if (e.pointerType === 'touch') return;
     const el = e.target.closest?.('[title]') || (cur?.contains(e.target) ? cur : null);
