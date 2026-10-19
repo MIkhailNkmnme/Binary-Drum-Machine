@@ -68,7 +68,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       let pat = null, glyph = null;
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
         const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
-        const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);
+        const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = /^Завор/.test(it.name || '') ? 0 : 1), it);   // «тут слева пустота»: «Завор.» — под «Ось», «Центр ◇» и «Центр △» — справа
         const fs = it => (g.key === 'space' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // «замор. — в правую рейку, не оставляй пустоты»: «3D объём» — 3D вращ. слева, остальное столбиком справа   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
         for (const c of r.children || []) {
           if (c.children) {
