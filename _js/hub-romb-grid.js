@@ -1,7 +1,7 @@
 /* Hub v0.206: ромбосетка-треугольник на поле. Любую кнопку хаба тянут мышью в ромб — там встаёт копия, щелчок по ней жмёт оригинал.
    Сетку двигают за пустой ромб, копию — в другой ромб; правый клик по копии убирает её.
    Hub v0.266: «такие же слева перевернув, и сверху, и внизу — по 2; сворачивай до треугольника, если внутри пусто; убери крайние 2» —
-   шесть сеток: по две у нижнего, левого и верхнего края. Каждая — треугольник рядами 1 · 2 · 3 · 4 (два верхних ромба сняты),
+   шесть сеток: по две у нижнего, правого (v0.268; в v0.266 — у левого) и верхнего края. Каждая — треугольник рядами 1 · 2 · 3 · 4 (два верхних ромба сняты),
    основание срезано краем экрана пополам, вершина смотрит внутрь. Пустая сетка свёрнута в один ромб у края (видна половина) —
    раскрывается наведением и пока тянут кнопку; с кнопками в покое видны только занятые ромбы. Двигается только вдоль своего края. */
 (() => {
@@ -11,7 +11,7 @@
   const SRC = 'button,summary,label.hubRhomb';
   const DEFS = [   // id · край · ключ памяти · место по умолчанию (доля вдоль края)
     ['b1', 'b', 'zerk_hub_romb_grid', null], ['b2', 'b', 'zerk_hub_romb_grid_b2', .68],
-    ['l1', 'l', 'zerk_hub_romb_grid_l1', .62], ['l2', 'l', 'zerk_hub_romb_grid_l2', .86],
+    ['r1', 'r', 'zerk_hub_romb_grid_r1', .16], ['r2', 'r', 'zerk_hub_romb_grid_r2', .82],   // v0.268: «не слева, а справа — перепутал»; над и под крестом масштаба
     ['t1', 't', 'zerk_hub_romb_grid_t1', .5], ['t2', 't', 'zerk_hub_romb_grid_t2', .78]];
 
   // Ключ оригинала: id, путь в меню групп, иначе подпись.
@@ -87,7 +87,8 @@
       CELLS = ROWS.flatMap((n, r) => Array.from({ length: n }, (_, i) => [(i - (n - 1) / 2) * S, r * H]));
       W = Math.max(...ROWS) * S; HT = (ROWS.length - 1) * H + S; };
     let st = { x: null, y: null, a: null, slots: [], extra: 0 };
-    try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+    try { const own = localStorage.getItem(KEY), old = !own && edge === 'r' ? localStorage.getItem(KEY.replace(/_r(\d)$/, '_l$1')) : null;
+      st = Object.assign(st, JSON.parse(own || old || '{}')); if (old) st.a = null; } catch (_) {}   // v0.268: левые сетки v0.266 переехали направо со своими кнопками
     // v0.266: прежняя сетка (ряды 2 · 1 · 2 · 3 · 4) — два верхних ромба сняты; их копии — в первые пустые ромбы
     if (id === 'b1' && Array.isArray(st.slots) && st.slots.length && !st.v) {
       const ears = st.slots.slice(0, 2).filter(Boolean); st.slots = st.slots.slice(2);
@@ -110,10 +111,11 @@
       const a = W / 2 + x - H, d = HT - S - y;   // a — вдоль края, d — от края внутрь
       if (edge === 'b') { n.style.left = a + 'px'; n.style.top = y + 'px'; }
       else if (edge === 't') { n.style.left = a + 'px'; n.style.top = d + 'px'; }
+      else if (edge === 'r') { n.style.left = y + 'px'; n.style.top = a + 'px'; }
       else { n.style.left = d + 'px'; n.style.top = a + 'px'; }
     };
     function build() {
-      const across = edge === 'l';
+      const across = edge === 'l' || edge === 'r';
       grid.style.width = (across ? HT : W) + 'px'; grid.style.height = (across ? W : HT) + 'px';
       G.cells.forEach(c => c.remove());
       G.cells = CELLS.map(([x, y], i) => {
@@ -129,9 +131,9 @@
 
     function place() {
       // Hub v0.243: сетка прилипает к своему краю, ряд у края срезан пополам; двигается только вдоль края.
-      if (edge === 'l') {
+      if (edge === 'l' || edge === 'r') {
         const y = st.a ?? (innerHeight * frac - W / 2);
-        grid.style.top = Math.max(0, Math.min(innerHeight - W, y)) + 'px'; grid.style.left = (fieldLeft() - H) + 'px';   // у левого края поля, не под меню страниц
+        grid.style.top = Math.max(0, Math.min(innerHeight - W, y)) + 'px'; grid.style.left = (edge === 'r' ? innerWidth - HT + H : fieldLeft() - H) + 'px';   // левая — у края поля, не под меню страниц
       } else {
         const x = edge === 'b' && frac == null ? (st.x ?? 330) : (st.a ?? (innerWidth * frac - W / 2));
         grid.style.left = Math.max(0, Math.min(innerWidth - W, x)) + 'px';
@@ -139,7 +141,7 @@
       }
     }
     G.place = place;
-    const along = (dx, dy, r) => { if (edge === 'l') st.a = r.top + dy; else if (edge === 'b' && frac == null) st.x = r.left + dx; else st.a = r.left + dx; place(); };
+    const along = (dx, dy, r) => { if (edge === 'l' || edge === 'r') st.a = r.top + dy; else if (edge === 'b' && frac == null) st.x = r.left + dx; else st.a = r.left + dx; place(); };
     function paint() {
       grid.classList.toggle('fold', !st.slots.some(Boolean));
       G.cells.forEach((c, i) => {

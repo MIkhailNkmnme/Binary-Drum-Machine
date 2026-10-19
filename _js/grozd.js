@@ -26,6 +26,13 @@
   }
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 
+  // 19.10: «когда нажимаю — пусть даёт знать, даже если кнопка неактивна»: пока держат и ещё 0,16 с — фон кнопки снят, видна кайма (.gz-press)
+  function pressMark(e) {
+    const h = e.target.closest('.gz-hx'); if (!h || e.button > 0 || e.target.closest('.gz-pin')) return;
+    h.classList.add('gz-press'); const t0 = performance.now();
+    const off = () => { removeEventListener('pointerup', off, true); removeEventListener('pointercancel', off, true); setTimeout(() => h.classList.remove('gz-press'), Math.max(0, 160 - (performance.now() - t0))); };
+    addEventListener('pointerup', off, true); addEventListener('pointercancel', off, true);
+  }
   let tipEl = null;
   function tipShow(btn, text) {
     if (!text || !document.documentElement.classList.contains('gz-help')) return;
@@ -48,6 +55,7 @@
     const key = 'grozd:' + (cfg.key || 'rail');
     const saved = store.get(key) || {};
     const root = el('div', 'gz-rail'); host.append(root);
+    root.addEventListener('pointerdown', pressMark);
     const refreshers = [];
     const byId = new Map();
     let openId = saved.open !== undefined ? saved.open : (cfg.groups.find(g => g.open) || {}).id ?? null;
@@ -115,7 +123,7 @@
           refreshers.push(() => { const o = it.options.find(o => o.v === it.get()); v.textContent = o ? o.name : ''; });
           b.addEventListener('click', () => {
             if (ladder && ladder.owner === b) return closeLadder();
-            closeLadder(); ladder = el('div', 'gz-ladder'); ladder.owner = b; ladder.style.setProperty('--c', g.color || '#5aa9ff');
+            closeLadder(); ladder = el('div', 'gz-ladder'); ladder.addEventListener('pointerdown', pressMark); ladder.owner = b; ladder.style.setProperty('--c', g.color || '#5aa9ff');
             const r = b.getBoundingClientRect();
             ladder.style.left = (r.right + 4) + 'px'; ladder.style.top = Math.max(4, Math.min(innerHeight - it.options.length * 27 - 4, r.top)) + 'px';
             for (const o of it.options) {
