@@ -5,6 +5,7 @@
 body.hubRailOn .gz-ladder{background:#05070d;padding:6px;margin:-6px 0 0 -6px;border-radius:4px;box-shadow:0 2px 12px #000c}   /* 19.10: «список с заливкой фона между кнопок» — рейка не просвечивает */
 body.hubRailOn .gz-ladder{--gz-bg:#0a0f1d}   /* 19.10: «и немного цветом другим — темнее»: пункты списка темнее кнопок рейки */
 body.hubRailOn .gz-ladder .gz-hx:not(.gz-on){background:color-mix(in srgb,var(--c) 13%,#000)}
+#hubRail .gz-lc::after{content:"»";position:relative;z-index:1;margin-left:auto;padding-left:4px;color:inherit;font-weight:700}   /* 19.10: «в кнопке двойную стрелку цвета текста справа» — кнопка открывает список */
 body.hubRailOn #hubFieldTools .hubFieldSlot{display:none!important}   /* v0.266: и пульт движений — он в рейке группой «Вращение» */
 body.hubZen #hubRail{display:none}
 @media(max-width:1100px){

@@ -96,6 +96,14 @@
     // звук — в своём порядке: пуск, ноты, скорость, стоп
     const at = k => k === 'bits' ? 0 : /Семь/.test(k) ? 1 : /Скорость битов/.test(k) ? 2 : 3;
     out.get('sound').sort((a, b) => at(a.key) - at(b.key));
+    // 19.10: «кнопка, открывающая список, — по возможности в правую рейку»: в сотах правый столбец — нечётные места
+    for (const [k, a] of out) {
+      const cell = i => !(['value', 'control'].includes(i.type) || (i.type === 'list' && !i.compact)), cells = a.filter(cell);
+      if (cells.some(i => i.col != null)) continue;
+      const ls = cells.filter(i => i.type === 'list'), rest = cells.filter(i => i.type !== 'list'), seq = [];
+      while (ls.length || rest.length) seq.push(((seq.length % 2) ? ls.shift() : rest.shift()) || ls.shift() || rest.shift());
+      out.set(k, [...seq, ...a.filter(i => !cell(i))]);
+    }
     return out;
   }
   // v0.267: «из рейки тоже тянуть в ромбосетку» — ключ настоящей кнопки поля для hub-romb-grid.js (pin: — кнопка, branch: — голова ветки)
