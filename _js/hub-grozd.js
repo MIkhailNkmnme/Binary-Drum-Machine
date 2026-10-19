@@ -98,6 +98,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
               parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
           if (/\|Режим автозума/.test(c.id)) continue;
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
+          if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
           if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
@@ -160,6 +161,12 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     {   // «▣ кадр — перемести во «Вращение»» (был на нижнем пульте)
       const fl = () => document.querySelector('.hub-frame-lock');
       if (fl()) out.get('motion')?.push({ type: 'toggle', icon: '▣', name: 'Кадр', tip: 'Точный шаг вращения на каждый кадр', on: () => fl()?.getAttribute('aria-pressed') === 'true', click: () => fl()?.click(), key: 'motion|frame' });
+    }
+    if (toBits.mirror) {   // «Зерк. | ●»: слева зеркало вкл / выкл, справа цвет отражённых битов (отдельной «Отражение» больше нет)
+      const mi = leafItem(toBits.mirror), mc = toBits.mirrorColor && leafItem(toBits.mirrorColor);
+      const it = mc ? { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Зерк.', mid: '', tip: 'Зеркало: отражение от оси · справа — цвет отражённых битов',
+        parts: [{ label: '⋈ Зерк.', tip: mi.tip, on: mi.on, click: mi.click }, { label: '●', tip: 'Цвет отражённых битов', on: mi.on, open: mc.open, ink: () => mc.get() }], key: 'symmetry|mirror' } : { ...mi, name: 'Зерк.', key: toBits.mirror.id };
+      const sl = out.get('symmetry'); if (sl) { const k = sl.findIndex(i => i.key === 'symmetry'); sl.splice(k >= 0 ? k + 1 : 0, 0, it); }
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
