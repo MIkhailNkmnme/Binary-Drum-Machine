@@ -111,3 +111,5 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* «двигай бегунок почти до краёв, минимальный отступ, там тонкий пусть» — у ползунка стрелки узкие, дорожка почти во всю кнопку */
 .gz-val.gz-sl{padding:0 3px}
 .gz-sl .gz-a{width:10px;font-size:9px}
+/* «и высоту такую» — бегунок-ромб почти во всю высоту кнопки, тонкий отступ сверху и снизу */
+.gz-sl .gz-th{width:14px;height:calc(var(--gz-h) - 6px);margin:0 0 0 -7px;top:3px;transform:none;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
