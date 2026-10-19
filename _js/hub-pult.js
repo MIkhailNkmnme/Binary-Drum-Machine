@@ -19,7 +19,7 @@
   const btn = (cls, text, tip, fn) => { const b = el('button', 'hpB ' + cls, text, tip); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); sync(); }); return b; };
   const press = f => () => f()?.click();
   const fire = (e, t) => e && e.dispatchEvent(new Event(t, { bubbles: true }));
-  let box, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
+  let box, zoomRow, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
 
   // наклон битов: ◂ ▸ — на 15° (Shift — на 1°), удержание повторяет
   function tiltBy(b, d) {
@@ -39,7 +39,7 @@
     box.addEventListener('wheel', e => e.stopPropagation(), { passive: true });
 
     // 1. масштаб одной строкой: ⌂ · − 66% +
-    const zr = el('div', 'hpRow hpZoom');
+    const zr = zoomRow = el('div', 'hpRow hpZoom');
     scaleV = el('output', 'hpB hpVal', '100%', 'Масштаб холста · колесо — шаг · двойной щелчок — весь рисунок в поле');
     scaleV.addEventListener('wheel', e => { e.preventDefault(); (e.deltaY < 0 ? old.plus() : old.minus())?.click(); sync(); }, { passive: false });
     scaleV.addEventListener('dblclick', () => { old.home()?.click(); sync(); });
@@ -99,6 +99,16 @@
     const n = parseInt(m[1], 16); return 'rgba(' + (n >> 16) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
   }
 
+  // v0.284: «дзен сюда вниз» — ромб «Дзен» под столбиком ⌂ + 100% −; в дзене столбик спрятан, ромб остаётся на месте
+  function placeZen() {
+    const z = document.getElementById('hubZenToggle'); if (!z) return;
+    if (zoomRow?.getClientRects().length) {
+      const r = zoomRow.getBoundingClientRect(), w = z.offsetWidth || 48;
+      z.style.left = Math.round(r.left + r.width / 2 - w / 2) + 'px'; z.style.top = Math.round(r.bottom + 8) + 'px';
+      z.style.right = 'auto'; z.style.bottom = 'auto';
+    } else if (!document.body.classList.contains('hubZen')) for (const k of ['left', 'top', 'right', 'bottom']) z.style[k] = '';
+  }
+
   function sync() {
     if (!box) return;
     const s = old.scale(); if (s && scaleV.textContent !== s.textContent) scaleV.textContent = s.textContent;
@@ -112,6 +122,7 @@
     frame.setAttribute('aria-pressed', old.frame()?.getAttribute('aria-pressed') || 'false');
     free.setAttribute('aria-pressed', old.free()?.getAttribute('aria-pressed') || 'false');
     const colors = window.HubMirror?.colors();
+    placeZen();
     const bot = document.getElementById('hubPultBot');
     if (bot && colors?.bit) {   // v0.284: «пульт тоже в цвет битов»
       const a0 = window.HubMirror?.state?.zeroAlpha ?? .18, z = colors.zero || colors.bit;
