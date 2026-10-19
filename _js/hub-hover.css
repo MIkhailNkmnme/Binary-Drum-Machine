@@ -22,3 +22,9 @@
   body.hubSidebarCollapsed .hub a.menu-btn.hubPg:hover::before,body.hubSidebarCollapsed .hub a.menu-btn.hubPg:focus-visible::before{
     clip-path:polygon(evenodd,50% 9%,91% 50%,50% 91%,9% 50%,50% 9%,50% 12%,88% 50%,50% 88%,12% 50%,50% 12%)!important}
 }
+/* v0.261: «какие-то лишние линии иногда» — это была обычная квадратная рамка фокуса браузера: ромб режет её на
+   обрывки (две стойки по бокам и черта снизу). Ромбы с фокусом с клавиатуры — та же белая рамка по форме, что при наведении. */
+#hubFieldTools :is(summary,button,.hubRhomb,label):focus,#hubZoom :is(button,input):focus,#hubRombGrid .hubRgCell:focus,
+#hubPNG:focus,#hubRec:focus,#hubBitPacking:focus,#hubZenToggle:focus,#hubSidebarToggle:focus,#hubPresetsPanel .hubRhomb:focus,#hubMobSwitch:focus{outline:0!important}
+#hubFieldTools summary:not([aria-pressed=true]):focus-visible,#hubFieldTools .hubRhomb:not([aria-pressed=true]):focus-visible,#hubZoom>button:not([aria-pressed=true]):focus-visible,
+#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):focus-visible{background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
