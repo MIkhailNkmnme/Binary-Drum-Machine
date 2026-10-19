@@ -361,3 +361,4 @@ header #paintTools.pt-dd .pt-view .pt-vx{flex-direction:row;flex-wrap:wrap;align
 @media(max-width:600px){
   .mayatnik-menu-ready #mayatnikRailR{grid-column:1;grid-row:6;justify-self:stretch;width:auto;max-width:none;max-height:30dvh;margin:0 0 52px;padding:6px 8px;background:#0d1119;border-top:1px solid var(--line);pointer-events:auto}
 }
+#wrap.ruler-mode,#wrap.ruler-mode canvas{cursor:crosshair}   /* v0.161: линейка */

@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.160. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.161. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.160</title>
+<title>Zerkalius Маятник — v0.161</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -111,13 +111,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=12">
-<link rel="stylesheet" href="mayatnik-menu.css?v=160">
+<link rel="stylesheet" href="mayatnik-menu.css?v=161">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.160</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.161</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -205,6 +205,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     <label title="Минимум совпадающих битов с КАЖДОЙ стороны оси, через одну клетку. Бит на самой оси не считается.">бит от <input id="symBitsMin" type="number" min="2" max="16384" value="2"></label>
     <label title="Максимальная зеркальная ширина с каждой стороны в срезе; пусто или 0 — без предела. Более широкие срезы скрываются.">бит до <input id="symBitsMax" type="number" min="0" max="16384" placeholder="∞"></label>
     <button id="bAxisLine" aria-pressed="false" data-mi-short="Своя ось" title="Своя ось: щелчок по полю — горизонтальная ось по верхней границе бита на всю ширину, зеркало вниз включается сразу (на каждую ось нажать снова). Тянуть конец — менять ось, тянуть линию — двигать параллельно, правый клик по оси — удалить. Точки цепляются к краям и центрам бит. Delete — удалить выделенную (последнюю) ось, правая кнопка по линии — убрать её, по пустому месту — выйти из режима, Esc — отменить первую точку">Своя ось</button>
+    <button id="bRuler" aria-pressed="false" data-mi-short="Линейка" title="Линейка: щелчок по двум пикселям поля — сколько между ними по сторонам квадрата (↔ по горизонтали, ↕ по вертикали) и по диагонали. Третий щелчок — новая мерка, Esc или кнопка — убрать">Линейка</button>
     <button id="bAxisLinesClear" data-mi-short="Стереть оси" disabled title="Убрать все свои оси">Стереть оси</button>
     <button id="bAxisXor" data-mi-short="Хор-зеркало" disabled aria-pressed="false" title="Хор-зеркало по последней своей оси: отражение не кладётся поверх, а XOR-ится с битами под осью. Есть краска — её силуэт как единицы, нет — все биты над осью. Пока нажата — ось тянется, всё пересчитывается сразу">Хор-зеркало</button>
     <button id="bAxisMirror" data-mi-short="Зеркало вниз" disabled aria-pressed="false" title="Зеркало вниз по последней своей оси: всё закрашенное над осью; если краски нет — все биты над осью. Пока нажата — тяни ось мышью, зеркало обновляется сразу">Зеркало вниз</button>
@@ -350,6 +351,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   'use strict';
   const $ = id => document.getElementById(id);
   const cv = $('cv'), g = cv.getContext('2d'), wrap = $('wrap'), tip = $('tip');
+  let rulerMode=false,rulerA=null,rulerB=null,rulerHover=null;   // v0.161: линейка (см. rulerDraw); здесь, чтобы drawTemplate видел их с первого кадра
   const KEY = 'zerk_mayatnik';
   let st = { rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'col', zoom: 'fit', speed: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, zsnap: true, vrows: 0, noband: false, ochki: false, frozen: false, ochkiMode: 'diag', ochkiInv: false, ochkiRev: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
@@ -1382,7 +1384,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     c.getContext('2d').putImageData(im,0,0);return c;}
   function drawTemplate(){
     if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
-    rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode)||playing;if(templateCanvas.hidden)return;
+    rememberTemplate();templateStatus();templateCanvas.hidden=(!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode&&!rulerA)||playing;if(templateCanvas.hidden)return;
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
@@ -1392,6 +1394,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       st.userLines.forEach((l,i)=>{const a=P(l),b=P(l.slice(2)),sel=axisSelected&&i===st.userLines.length-1;templateG.lineWidth=sel?4:2;templateG.strokeStyle=templateG.fillStyle=sel?'#fff7b0':'#ffe14d';{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,k=(r.width+r.height)/L*2;templateG.save();templateG.globalAlpha=.45;templateG.lineWidth=1;templateG.setLineDash([4,5]);templateG.beginPath();templateG.moveTo(a[0]-dx*k,a[1]-dy*k);templateG.lineTo(b[0]+dx*k,b[1]+dy*k);templateG.stroke();templateG.restore();}templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();const hs=axisHandles(l);if(hs)for(const q of hs){const x=q[0]-host.left,y=q[1]-host.top;templateG.beginPath();templateG.arc(x,y,7,0,7);templateG.fillStyle='#0d1119';templateG.fill();templateG.lineWidth=2.5;templateG.stroke();templateG.beginPath();templateG.arc(x,y,2.5,0,7);templateG.fillStyle=templateG.strokeStyle;templateG.fill();}});templateG.lineWidth=2;templateG.strokeStyle=templateG.fillStyle='#ffe14d';
       if(axisLineMode&&axisLineHover){const [a,b]=axisRowLine(axisLineHover[1]).reduce((q,v,i)=>(q[i>>1].push(v),q),[[],[]]).map(P);templateG.setLineDash([5,4]);templateG.beginPath();templateG.moveTo(...a);templateG.lineTo(...b);templateG.stroke();templateG.setLineDash([]);}
       templateG.restore();}
+    if(rulerA)rulerDraw(templateG,r.left-host.left,r.top-host.top,scale());
     if(mirrorLine){const y=Math.round(r.top-host.top+mirrorLineY*scale())+.5,x0=Math.max(0,r.left-host.left),x1=Math.min(w,r.right-host.left);
       templateG.save();templateG.strokeStyle='#5ce1e6';templateG.lineWidth=2;templateG.beginPath();templateG.moveTo(x0,y);templateG.lineTo(x1,y);templateG.stroke();
       templateG.fillStyle='#5ce1e6';templateG.font='11px Segoe UI,sans-serif';templateG.fillText('зеркало · строка '+mirrorLineY,x0+6,y-5);templateG.restore();}
@@ -2560,9 +2563,30 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     st.userLines.forEach(([x1,y1,x2,y2],i)=>{const ax=r.left+x1*s,ay=r.top+y1*s,bx=r.left+x2*s,by=r.top+y2*s,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((cx-ax)*dx+(cy-ay)*dy)/(dx*dx+dy*dy||1))),d=Math.hypot(cx-ax-t*dx,cy-ay-t*dy);if(d<bd){bd=d;best=i;}});return best;}
   for(const id of ['bFill','bAutoVertical'])$(id).addEventListener('click',()=>{if((fillMode||autoVertical)&&axisLineMode){axisLineMode=false;axisLinePending=null;axisLinesSync();queueDigits();}});
   axisLinesSync();
+  // v0.161: «инструмент линейка — выделяю два любых пикселя, считаем сколько пикселей между, по диагонали и по краям квадрата».
+  // Пиксель — клетка показанной картинки (как у своих осей). ↔ и ↕ — стороны квадрата (разница номеров), ⟋ — диагональ по прямой;
+  // «с концами» — сколько пикселей занимает отрезок вместе с обоими концами (по диагонали — max(↔, ↕) + 1).
+  const rulerPx=(cx,cy)=>{const r=cv.getBoundingClientRect(),s=scale();return [Math.floor((cx-r.left)/s),Math.floor((cy-r.top)/s)];};
+  function rulerSync(){$('bRuler').setAttribute('aria-pressed',String(rulerMode));wrap.classList.toggle('ruler-mode',rulerMode);}
+  function rulerDraw(G,ox,oy,sc){const a=rulerA,b=rulerB||rulerHover,c=(p,k)=>[ox+(p[0]+.5)*sc,oy+(p[1]+.5)*sc][k];G.save();
+    const cell=p=>{G.fillStyle='#00e5ffaa';G.fillRect(ox+p[0]*sc,oy+p[1]*sc,Math.max(sc,2),Math.max(sc,2));G.strokeStyle='#00e5ff';G.lineWidth=2;G.strokeRect(ox+p[0]*sc-1.5,oy+p[1]*sc-1.5,Math.max(sc,2)+3,Math.max(sc,2)+3);};
+    cell(a);if(b){if(b!==rulerHover)cell(b);const dx=Math.abs(b[0]-a[0]),dy=Math.abs(b[1]-a[1]),d=Math.hypot(dx,dy),ax=c(a,0),ay=c(a,1),bx=c(b,0),by=c(b,1);
+      G.strokeStyle='#00e5ff';G.lineWidth=1.5;G.setLineDash([5,4]);G.beginPath();G.moveTo(ax,ay);G.lineTo(bx,ay);G.lineTo(bx,by);G.moveTo(ax,ay);G.lineTo(ax,by);G.lineTo(bx,by);G.stroke();
+      G.setLineDash([]);G.lineWidth=2.5;G.strokeStyle='#ffffff';G.beginPath();G.moveTo(ax,ay);G.lineTo(bx,by);G.stroke();
+      const nf=v=>Number.isInteger(v)?String(v):v.toFixed(2).replace('.',','),L1=`↔ ${dx}   ↕ ${dy}   ⟋ ${nf(d)}`,L2=`с концами: ↔ ${dx+1} · ↕ ${dy+1} · по диаг. ${Math.max(dx,dy)+1} пикс.`;
+      G.font='600 14px Segoe UI,sans-serif';const w=Math.max(G.measureText(L1).width,(G.font='11px Segoe UI,sans-serif',G.measureText(L2).width))+16;
+      const W=templateCanvas.clientWidth,H=templateCanvas.clientHeight;let tx=Math.min(W-w-4,Math.max(4,(ax+bx)/2-w/2)),ty=Math.min(by,ay)-48;if(ty<4)ty=Math.max(ay,by)+12;if(ty>H-44)ty=Math.max(4,H-44);
+      G.fillStyle='#0d1119e6';G.fillRect(tx,ty,w,40);G.strokeStyle='#00e5ff';G.lineWidth=1;G.strokeRect(tx+.5,ty+.5,w-1,39);
+      G.fillStyle='#e8f8ff';G.font='600 14px Segoe UI,sans-serif';G.fillText(L1,tx+8,ty+17);G.fillStyle='#9fd8e6';G.font='11px Segoe UI,sans-serif';G.fillText(L2,tx+8,ty+33);}
+    G.restore();}
+  $('bRuler').onclick=()=>{rulerMode=!rulerMode;rulerA=rulerB=rulerHover=null;if(rulerMode){fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;autoSync();fillSync();axisLinesSync();}rulerSync();queueDigits();};
+  for(const id of ['bFill','bAutoVertical','bAxisLine'])$(id).addEventListener('click',()=>{if(rulerMode&&id!=='bRuler'){rulerMode=false;rulerA=rulerB=rulerHover=null;rulerSync();queueDigits();}});
+  wrap.addEventListener('pointermove',e=>{if(!rulerMode||!rulerA||rulerB||e.pointerType!=='mouse')return;const p=rulerPx(e.clientX,e.clientY);if(!rulerHover||p[0]!==rulerHover[0]||p[1]!==rulerHover[1]){rulerHover=p;queueDigits();}});
+  rulerSync();
   const nearLine=cy=>{if(!mirrorLine||!f)return false;const r=cv.getBoundingClientRect();return Math.abs(cy-(r.top+mirrorLineY*scale()))<=5;};
   wrap.addEventListener('pointerdown', e => {
     if(templateDragging||lineDrag)return;
+    if(rulerMode&&e.button===0&&f){const p=rulerPx(e.clientX,e.clientY);if(!rulerA||rulerB){rulerA=p;rulerB=null;}else rulerB=p;rulerHover=null;queueDigits();e.preventDefault();return;}   // v0.161: линейка
     if(axisSelected&&e.button===0&&!axisLineMode&&nearestUserLine(e.clientX,e.clientY)<0){axisSelected=false;queueDigits();}
     if(e.button===0&&f&&!axisLinePending&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);if(i>=0){
       const l=st.userLines.splice(i,1)[0];st.userLines.push(l);axisSelected=true;const end=axisHandleAt(l,e.clientX,e.clientY);
@@ -2637,6 +2661,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if ((e.key === 'Delete' || e.key === 'Backspace') && colourTemplate && !e.defaultPrevented && !axisSelected && !e.target.closest('input,select,textarea')) { e.preventDefault(); $('bTemplateRemove').click(); return; }
     if (e.defaultPrevented || e.target.closest('input,select,button,a,[role="button"]')) return;
     if ((e.ctrlKey||e.metaKey) && (e.code === 'KeyZ' || e.code === 'KeyY')) { e.preventDefault(); historyStep(e.code === 'KeyY' || e.shiftKey); return; }
+    if (e.key === 'Escape' && rulerA) { rulerA = rulerB = rulerHover = null; queueDigits(); return; }
     if (e.key === 'Escape' && axisLinePending) { axisLinePending = null; queueDigits(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && axisSelected && st.userLines.length) { e.preventDefault(); st.userLines.pop(); axisSelected = st.userLines.length > 0; save(); axisLinesSync(); queueDigits(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && colourTemplate) { e.preventDefault(); $('bTemplateRemove').click(); return; }
@@ -2782,7 +2807,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=14"></script>
-<script src="mayatnik-menu.js?v=159"></script>
+<script src="mayatnik-menu.js?v=161"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
 </html>
