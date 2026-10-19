@@ -121,3 +121,10 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-hx.gz-pair::before,.gz-hx.gz-pair:hover::before{background:linear-gradient(90deg,var(--gz-f0,var(--gz-bg)) 0 calc(var(--gz-n) + 12px),var(--gz-bg) calc(var(--gz-n) + 12px) calc(100% - var(--gz-n) - 12px),var(--gz-f1,var(--gz-bg)) calc(100% - var(--gz-n) - 12px))!important}
 .gz-pair .gz-half.gz-on,.gz-pair.gz-cut .gz-half.gz-on{color:var(--gz-k,#fff);-webkit-text-stroke:0;text-shadow:none}
 .gz-pair:not(.gz-cut):not(.gz-rainbow) .gz-half{font-size:13px}
+/* «там же стрелки — тогда не до конца, и стрелкам фон другой, чтоб видно — шевроном»: стрелки ползунка — шевроны своим фоном у самых краёв, дорожка между ними */
+.gz-val.gz-sl{padding:0}
+.gz-sl .gz-a{width:20px;font-size:0;align-self:stretch;height:auto;background:color-mix(in srgb,var(--c) 55%,#000)}
+.gz-sl .gz-a:hover{background:var(--c)}
+.gz-sl .gz-a:nth-child(2){clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 7px) 50%,100% 100%,var(--gz-n) 100%)}
+.gz-sl .gz-a:nth-last-child(2){clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%,7px 50%)}
+.gz-sl .gz-mid{margin:0 4px}
