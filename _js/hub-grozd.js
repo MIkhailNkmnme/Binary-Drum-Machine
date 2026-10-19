@@ -53,7 +53,7 @@
   // «эти все в Биты»: Прозр. 0 / 1 и Цвет 0 / 1 — из «Цвета» в «Биты» (остальное «Цвета» — образцы — только списком «Палитра»)
   const IN_PAIR = /\|(Ромбы с цифрами|hubBitPacking)$/;
   const TO_BITS = /^colour\|(Прозрачные цифры [01]|Цвет битов оригинала|Цвет нулей оригинала)/;
-  const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
+  const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Зеркала', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
     ['space', 'Объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
   const HEAD = { symmetry: 'Поиск осей', axis: 'Ось', space: '3D', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
   const SOUND = /Семь световых|Скорость битов|Остановить биты/;
