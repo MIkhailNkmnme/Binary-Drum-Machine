@@ -171,7 +171,9 @@
     const soon = () => { if (!q) q = requestAnimationFrame(tick); };
     new MutationObserver(soon).observe(document.getElementById('hubFieldTools'), { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'hidden', 'aria-expanded'] });
     document.addEventListener('click', () => requestAnimationFrame(soon), true);
-    for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hubview', 'hublocks', 'resize']) addEventListener(ev, soon);
+    for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hublocks', 'resize']) addEventListener(ev, soon);
+    // «проверь на тормоза»: hubview приходит на каждый кадр поворота / масштаба — рейку по нему обновлять не чаще 4 раз в секунду (было — каждый кадр, 14 мс)
+    let viewT = 0; addEventListener('hubview', () => { if (viewT) return; viewT = setTimeout(() => { viewT = 0; soon(); }, 250); });
     setInterval(tick, 500); tick();
     requestAnimationFrame(() => document.documentElement.classList.remove('hubBoot'));   // v0.274: рейка готова — показать кнопки поля (index.html прячет их до этого)
   }
