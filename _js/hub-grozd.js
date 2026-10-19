@@ -59,23 +59,32 @@
     const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
     for (const g of T.groups) {
       if (!out.has(g.key) || !g.root) continue;
-      const walk = (r, vis) => {
+      let pat = null;
+      const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
+        const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
         for (const c of r.children || []) {
           if (c.children) {
-            if (c.action) add(g.key, headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), c.id);
-            walk(c, vis && (!c.gate || !!gateOn(c)));
+            const isBr = g.key === 'flow' && /^flow\|branch:/.test(c.id);
+            if (c.action) add(g.key, isBr ? { ...headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), col: 1 } : fc(headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent))), c.id);
+            walk(c, vis && (!c.gate || !!gateOn(c)), br || isBr);
             continue;
           }
           if ((!vis && !c.free) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
           if (g.key === 'colour' && c.node.matches('.hubSwatch')) continue;
-          add(SOUND.test(c.id) ? 'sound' : g.key, leafItem(c), c.id);
+          if (/\|Узор: /.test(c.id)) {   // v0.270: «как палитру — выпадающим из 3 списком»: Х / П / С — одной кнопкой со списком
+            if (!pat) { pat = (r.children || []).filter(x => !x.children && /\|Узор: /.test(x.id)).map(x => x.node);
+              add('bits', { type: 'list', compact: true, icon: '△', name: 'Узор', tip: 'Узор треугольника', get: () => pat.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
+                set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
+            continue;
+          }
+          add(SOUND.test(c.id) ? 'sound' : g.key, fc(leafItem(c)), c.id);
         }
       };
       const root = g.root;
       if (root.action && g.key === 'bits') add('sound', { ...headItem(root, 'M9 6l9 6-9 6z', 'Пуск'), name: 'Пуск' }, 'bits');   // пуск / пауза битов — это звук
       else if (g.key === 'file') { const b = document.getElementById('hubPresetList');
         if (b) add('file', { type: 'toggle', icon: '▤', name: 'Шаблоны', tip: 'Открыть список шаблонов', on: () => b.getAttribute('aria-expanded') === 'true', click: () => b.click() }, 'file'); }
-      else if (root.action) add(g.key, headItem(root, '', HEAD[g.key] || g.name), g.key);
+      else if (root.action) add(g.key, g.key === 'flow' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
       walk(root, !root.gate || !!gateOn(root));
       if (g.key === 'colour') {   // образцы палитры — одним списком
         const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);

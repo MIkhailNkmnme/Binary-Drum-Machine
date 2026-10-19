@@ -289,7 +289,7 @@
 
     const beginDrag=(e,requireHit=false)=>{
       const pinned=window.HubMirror?.state.screenPin===true;
-      if((requireHit&&e.button!==1&&!state.unlocked&&!pinned)||(e.button!==0&&e.button!==1)||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG,#hub3DQuick')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
+      if((requireHit&&e.button!==1&&!state.unlocked&&!pinned)||(e.button!==0&&e.button!==1)||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,#hubLogoBox,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubRail,.gz-ladder,.hubRombGrid')||(e.target.closest('button')&&!e.target.closest('.hubNoteCell'))||(!requireHit&&e.target.closest('#hubMirror')))return false;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(frame&&(e.clientX<frame.left||y>frame.height))return false;
       const hit=hitScreen(e.clientX,y),selectedBit=e.button===1?bitScreen(e.clientX,y):null,onBits=hit.source||hit.mirror||selectedBit!==null;
       if(e.button===0&&!pinned&&!state.unlocked&&(onBits||e.target.closest('.hubNoteCell')))return false;if(requireHit&&!onBits)return false;

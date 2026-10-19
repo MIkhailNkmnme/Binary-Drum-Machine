@@ -91,7 +91,7 @@
       const soty = el('div', 'gz-soty'), wide = el('div', 'gz-wide');
       const cells = [];
       for (const it of g.items) {
-        const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name);
+        const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name); if (it.col != null) b.gzCol = it.col;
         if (it.type === 'control') {
           // Existing native fields retain typing, scrubbing, labels and page listeners.
           b.classList.add('gz-control'); b.removeAttribute('role'); b.removeAttribute('tabindex');
@@ -155,9 +155,17 @@
       // соты: столбец k%2; первый — сразу под шапкой, второй на полкнопки выше и заходит в выемку шапки и первого
       // (слово владельца 19.10: «второй ряд начинать выше», «между заголовком и первым ниже не должно быть пустоты»)
       const s = getComputedStyle(root), W = parseFloat(s.getPropertyValue('--gz-w')) || 120, H = parseFloat(s.getPropertyValue('--gz-h')) || 24, N = parseFloat(s.getPropertyValue('--gz-n')) || 12, DY = H + 3;
-      cells.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY - col * DY / 2) + 'px'; });
-      const rows = Math.ceil(cells.length / 2);
-      soty.style.height = cells.length ? (rows * DY - 3) + 'px' : '0';
+      const put = (b, col, row) => { b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY - (col % 2) * DY / 2) + 'px'; };
+      if (cells.some(b => b.gzCol != null)) {
+        // свои столбцы (it.col: 0, 1, 2…) — каждый сверху вниз; нечётные на полкнопки выше (19.10, «Поток»: Свет · Вода · Снег — вторым, их списки — третьим)
+        const n = []; let h = 0, mc = 0;
+        cells.forEach(b => { const c = b.gzCol || 0, r = n[c] = (n[c] || 0); n[c]++; put(b, c, r); h = Math.max(h, (r + 1) * DY - (c % 2) * DY / 2); mc = Math.max(mc, c); });
+        soty.style.height = (h - 3) + 'px'; soty.style.width = (mc * (W - N + 4) + W) + 'px';
+      } else {
+        cells.forEach((b, k) => put(b, k % 2, k >> 1));
+        const rows = Math.ceil(cells.length / 2);
+        soty.style.height = cells.length ? (rows * DY - 3) + 'px' : '0';
+      }
       if (cells.length) box.append(soty);
       if (wide.children.length) box.append(wide);
       root.append(box);
