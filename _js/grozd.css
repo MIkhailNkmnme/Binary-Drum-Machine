@@ -128,3 +128,13 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sl .gz-a:nth-child(2){clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 7px) 50%,100% 100%,var(--gz-n) 100%)}
 .gz-sl .gz-a:nth-last-child(2){clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%,7px 50%)}
 .gz-sl .gz-mid{margin:0 4px}
+/* «1 и 0 по максимуму шевронами, текст в центре, и обводку — шевроном»: края пары — шевроны во всю высоту, заливка цветом бита, включённый — яркая кайма шеврона */
+.gz-hx.gz-pair:not(.gz-rainbow){background:color-mix(in srgb,var(--c) 30%,#000)!important}
+.gz-hx.gz-pair::before,.gz-hx.gz-pair:hover::before{background:var(--gz-bg)!important}
+.gz-pair .gz-half{width:calc(var(--gz-n) + 18px);font-size:13px}
+.gz-pair .gz-half:first-child{background:var(--gz-r0);clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 50%,100% 100%,var(--gz-n) 100%);padding-right:4px}
+.gz-pair .gz-half:last-child{background:var(--gz-r1);clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%,8px 50%);padding-left:4px}
+.gz-pair .gz-half::before{content:"";position:absolute;inset:1.5px;z-index:-1;clip-path:inherit}
+.gz-pair .gz-half:first-child::before{background:var(--gz-f0,var(--gz-bg))}
+.gz-pair .gz-half:last-child::before{background:var(--gz-f1,var(--gz-bg))}
+.gz-pair .gz-pm{color:var(--gz-txt,#dfe6f5)}
