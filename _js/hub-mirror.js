@@ -489,7 +489,8 @@
       if(mode==='mass'||R<1){let x=0,y=0;for(const p of pts){x+=p[0];y+=p[1];}return {x:x/pts.length,y:y/pts.length};}
       const at=(r,s)=>{const q=pts.filter(p=>p[4]===r&&p[3]===s);if(!q.length)return null;let x=0,y=0;for(const p of q){x+=p[0];y+=p[1];}return [x/q.length,y/q.length];};
       const c0=at(0,0),cl=at(R,-R),cr=at(R,R);if(!c0||!cl||!cr)return this.centerPoint('mass');
-      const u=[((cl[0]+cr[0])/2-c0[0])/R,((cl[1]+cr[1])/2-c0[1])/R],k=state.packedBits?1:.9,t=(2*R+k)/3;   // ряд центра контура: (−k + 2(R + k)) / 3
+      // ряд центра контура: (−e + 2(R + e)) / 3, e — выступ бита от центра вдоль шага рядов в долях шага (ромб — его остриё, квадрат / прямоугольник — его край; учтена «Сетка»)
+      const u=[((cl[0]+cr[0])/2-c0[0])/R,((cl[1]+cr[1])/2-c0[1])/R],ul=Math.hypot(...u)||1,ik=state.packedBits?.5:.45,P=this.bitPoly(bitCell.width*ik,bitCell.height*ik),side=Math.abs(u[0])>Math.abs(u[1]),e=Math.max(...P.map(q=>Math.abs(q[side?0:1])))/ul,t=(2*R+e)/3;
       return {x:c0[0]+u[0]*t,y:c0[1]+u[1]*t};
     },
     drawCenterBit(g,p,color=null){
