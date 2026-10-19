@@ -356,3 +356,8 @@ header #paintTools.pt-dd .pt-view .pt-vx{flex-direction:row;flex-wrap:wrap;align
   header #paintTools.pt-dd .pt-view .pt-vx input[type=color]{width:36px;height:24px}
   #mayCorner #mayAbout{white-space:nowrap}
 }
+/* v0.160: «кнопки шаблонов мешаются в поле, надо их под холст» — на телефоне «Шаблоны» отдельной строкой под холстом,
+   а не поверх него; снизу запас под свёрнутые «Сведения» (они прижаты к низу экрана). */
+@media(max-width:600px){
+  .mayatnik-menu-ready #mayatnikRailR{grid-column:1;grid-row:6;justify-self:stretch;width:auto;max-width:none;max-height:30dvh;margin:0 0 52px;padding:6px 8px;background:#0d1119;border-top:1px solid var(--line);pointer-events:auto}
+}
