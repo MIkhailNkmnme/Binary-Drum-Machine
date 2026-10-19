@@ -133,6 +133,8 @@
       if (r && M?.setBitShape) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · квадраты', mid: '', tip: 'Форма бита: ромбы · квадраты', parts: [shape('rhomb', '◇ Ромб.', 'Ромбы'), shape('square', '□ Квадр.', 'Квадраты')], key: 'bits|shape' });
       else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
       if (p) out.get('bits').push({ ...leafItem(p), key: p.id });
+      if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
+        on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
