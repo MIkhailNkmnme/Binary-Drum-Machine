@@ -50,9 +50,9 @@
     return { type: 'toggle', icon: ic(r.node) || icon, name, tip, on: () => { const v = r.on ? r.on() : r.active?.(); return v === true || v === 'mixed'; }, click: () => { r.action(); } };
   }
   const gateOn = r => r.on ? r.on() : r.active?.();
-  // «эти все в Биты»: Прозр. 0 / 1 и Цвет 0 / 1 — из «Цвета» в «Биты»
+  // «эти все в Биты»: Прозр. 0 / 1 и Цвет 0 / 1 — из «Цвета» в «Биты» (остальное «Цвета» — образцы — только списком «Палитра»)
   const TO_BITS = /^colour\|(Прозрачные цифры [01]|Цвет битов оригинала|Цвет нулей оригинала)/;
-  const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['colour', 'Цвет', '#ff9fd0'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
+  const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
     ['space', 'Объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
   const HEAD = { symmetry: 'Симметрия', axis: 'Ось', space: '3D', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
   const SOUND = /Семь световых|Скорость битов|Остановить биты/;
@@ -98,7 +98,7 @@
       walk(root, !root.gate || !!gateOn(root));
       if (g.key === 'colour') {   // образцы палитры — одним списком
         const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);
-        if (sw.length) add('colour', { type: 'list', compact: true, icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
+        if (sw.length) add('bits', { type: 'list', compact: true, icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
           set: i => sw[i]?.click(), options: sw.map((b, i) => ({ v: i, name: cut(txt(b.getAttribute('aria-label')).replace(/^Цвета: /, '')), icon: '●' })) }, 'colour|palette');
       }
     }
@@ -113,6 +113,8 @@
       while (ls.length || rest.length) seq.push(((seq.length % 2) ? ls.shift() : rest.shift()) || ls.shift() || rest.shift());
       out.set(k, [...seq, ...a.filter(i => !cell(i))]);
     }
+    // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
+    const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     return out;
   }
   // v0.267: «из рейки тоже тянуть в ромбосетку» — ключ настоящей кнопки поля для hub-romb-grid.js (pin: — кнопка, branch: — голова ветки)
