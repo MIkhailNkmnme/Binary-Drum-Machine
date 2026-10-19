@@ -333,6 +333,16 @@
       return b; };
     label.prepend(chev('l', -1)); label.append(chev('r', 1));
   }
+  // v0.173: «везде двойной клик по ползункам — в 0»: двойной щелчок по ползунку (дорожке, его подписи со стрелками, значению рейки)
+  // ставит 0, а если 0 меньше наименьшего — наименьшее (скорость — 1). У значений рейки — их кнопка «0».
+  document.addEventListener('dblclick', e => {
+    const t = e.target; if (!t.closest) return;
+    const val = t.closest('.gz-val'); if (val) { const z = val.querySelector('.gz-z'); if (z) { e.preventDefault(); z.click(); } return; }
+    const host = t.closest('label.may-slide, .zerk-range-wrap') || t, r = host.matches?.('input[type=range]') ? host : host.querySelector?.('input[type=range]');
+    if (!r || r.disabled) return; e.preventDefault();
+    const lo = r.min === '' ? 0 : +r.min, hi = r.max === '' ? 100 : +r.max, v = String(Math.max(lo, Math.min(hi, 0)));
+    if (r.value === v) return; r.value = v; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true }));
+  }, true);
   const placeTools = () => { for (const f of toolSync) f(); };
   addEventListener('resize', placeTools); placeTools();
   // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.
