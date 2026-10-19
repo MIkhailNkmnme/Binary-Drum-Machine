@@ -381,3 +381,12 @@ header #paintTools.pt-dd .pt-r{padding:6px 11px;border:0;border-radius:0;box-sha
   header #paintTools.pt-dd .pt-l{padding:0 15px 0 16px}
   header #paintTools.pt-dd .pt-r{padding:8px 12px}
 }
+/* v0.164: «стык в стык» — кнопки списка вплотную друг к другу и к рамке: остриё кнопки в выемке зубца (скос рамки = скос кнопки, zig) */
+header #paintTools.pt-dd .pt-r{padding:0;gap:0!important}
+header #paintTools.pt-dd .pt-r>.pt-b.gz-hx{--gz-n:9px}
+header #paintTools.pt-dd .pt-r>:not(.gz-hx){margin:0 12px!important;box-sizing:border-box;align-content:center}
+header #paintTools.pt-dd .pt-r>.pt-cw{padding:0 4px;height:24px}
+@media (max-width:600px){
+  header #paintTools.pt-dd .pt-r{padding:0}
+  header #paintTools.pt-dd .pt-r>.pt-b.gz-hx{--gz-n:10px}
+}
