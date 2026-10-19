@@ -7,7 +7,9 @@
 (() => {
   'use strict';
   // Hub v0.243: «наращивать сетку» — заняты все ромбы, у края добавляется ряд на ромб длиннее (st.extra — сколько добавлено).
-  const BASE = [1, 2, 3, 4], S = 48, H = S / 2;
+  // v0.269: «незаполненные не показывай — один ромб и снизу 2 полуромба»: сетка — треугольник 1 · 2 и растёт рядом, когда занята вся,
+  // пустые нижние ряды снимаются (fit); номера ромбов от вершины не меняются, поэтому копии остаются на местах
+  const BASE = [1, 2], S = 48, H = S / 2, MAXX = 10;
   const SRC = 'button,summary,label.hubRhomb';
   const DEFS = [   // id · край · ключ памяти · место по умолчанию (доля вдоль края)
     ['b1', 'b', 'zerk_hub_romb_grid', null], ['b2', 'b', 'zerk_hub_romb_grid_b2', .68],
@@ -94,8 +96,7 @@
       const ears = st.slots.slice(0, 2).filter(Boolean); st.slots = st.slots.slice(2);
       for (const k of ears) { const j = st.slots.findIndex(x => !x); if (j >= 0) st.slots[j] = k; else st.slots.push(k); }
     }
-    st.v = 2; st.extra = Math.max(0, Math.min(8, st.extra | 0)); shape(st.extra);
-    while (st.extra < 8 && st.slots.filter(Boolean).length > CELLS.length) shape(++st.extra);
+    st.v = 2; st.extra = Math.max(0, Math.min(MAXX, st.extra | 0)); shape(st.extra);
     st.slots = CELLS.map((_, i) => st.slots?.[i] || null);
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
 
@@ -126,7 +127,17 @@
       put(stub, 0, HT - S); grid.append(stub);
     }
     build();
-    const grow = () => { if (st.slots.some(k => !k) || st.extra >= 8) return; st.extra++; shape(st.extra); st.slots = CELLS.map((_, i) => st.slots[i] || null); build(); place(); };
+    // сколько рядов нужно: до последнего занятого ромба, и ещё ряд, если все они заняты; не меньше двух
+    const fit = () => {
+      let hi = -1; st.slots.forEach((k, i) => { if (k) hi = i; });
+      let need = 0; while (need * (need + 1) / 2 <= hi) need++;
+      const n = need * (need + 1) / 2, full = need > 0 && st.slots.slice(0, n).every(Boolean);
+      const extra = Math.max(0, Math.min(MAXX, need + (full ? 1 : 0) - BASE.length));
+      if (extra === st.extra && st.slots.length === CELLS.length) return;
+      const keep = st.slots; st.extra = extra; shape(extra); st.slots = CELLS.map((_, i) => keep[i] || null); build(); place();
+    };
+    fit();
+    const grow = fit;
     G.grow = grow;
 
     function place() {
@@ -143,6 +154,7 @@
     G.place = place;
     const along = (dx, dy, r) => { if (edge === 'l' || edge === 'r') st.a = r.top + dy; else if (edge === 'b' && frac == null) st.x = r.left + dx; else st.a = r.left + dx; place(); };
     function paint() {
+      fit();
       grid.classList.toggle('fold', !st.slots.some(Boolean));
       G.cells.forEach((c, i) => {
         const key = st.slots[i], o = find(key);
@@ -194,7 +206,7 @@
     grid.addEventListener('pointerout', e => { if (grid.contains(e.relatedTarget)) return; clearTimeout(shutT); shutT = setTimeout(() => grid.classList.remove('open'), 400); });
     grid.addEventListener('dblclick', e => e.stopPropagation());
     grid.addEventListener('wheel', e => e.stopPropagation());
-    G.restore = s => { const extra = Math.max(0, Math.min(8, s.extra | 0)); shape(extra); st = { v: 2, x: s.x ?? null, y: s.y ?? null, a: s.a ?? null, extra, slots: CELLS.map((_, i) => s.slots?.[i] || null) }; build(); save(); place(); paint(); };
+    G.restore = s => { const extra = Math.max(0, Math.min(MAXX, s.extra | 0)); shape(extra); st = { v: 2, x: s.x ?? null, y: s.y ?? null, a: s.a ?? null, extra, slots: CELLS.map((_, i) => s.slots?.[i] || null) }; build(); save(); place(); paint(); };
     return G;
   }
   for (const d of DEFS) grids.push(makeGrid(d));
