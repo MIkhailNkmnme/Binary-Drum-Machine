@@ -71,7 +71,7 @@
     // 3. кадр и поворот битов: ▣ кадр · 0 ◂ 0° ▸ · 1 ◂ 0° ▸ · ↺ · 360°
     const br = el('div', 'hpRow hpBits');
     frame = btn('hpFrame', '▣ кадр', 'Точный шаг вращения на каждый кадр', press(old.frame));
-    br.append(frame);
+    // «кадр — перемести во «Вращение»»: кнопка в рейке (hub-grozd.js), здесь не показывается; frame живёт для sync
     for (const b of ['0', '1']) {
       const control = el('span', 'hpTiltControl'); control.dataset.bit = b;
       control.setAttribute('role', 'group'); control.setAttribute('aria-label', 'Наклон битов ' + b);
@@ -91,7 +91,7 @@
     const bot = el('div'); bot.id = 'hubPultBot'; bot.className = 'hpRow';
     for (const t of ['pointerdown', 'dblclick', 'contextmenu']) bot.addEventListener(t, e => e.stopPropagation());
     bot.addEventListener('wheel', e => e.stopPropagation(), { passive: true });
-    bot.append(br, pult);
+    bot.append(pult, br);   // «пульт посередине, справа от него — вращение битов»
     box.append(zr); document.body.append(box, bot); document.body.classList.add('hubPultOn');
   }
 

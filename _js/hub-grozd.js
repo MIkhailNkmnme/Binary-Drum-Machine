@@ -144,6 +144,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
+    {   // «▣ кадр — перемести во «Вращение»» (был на нижнем пульте)
+      const fl = () => document.querySelector('.hub-frame-lock');
+      if (fl()) out.get('motion')?.push({ type: 'toggle', icon: '▣', name: 'Кадр', tip: 'Точный шаг вращения на каждый кадр', on: () => fl()?.getAttribute('aria-pressed') === 'true', click: () => fl()?.click(), key: 'motion|frame' });
+    }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     return out;

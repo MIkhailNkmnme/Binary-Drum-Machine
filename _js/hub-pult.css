@@ -134,3 +134,5 @@ body.hubZen #hubPultBot{display:none}
 /* пунктир над ромбом пуска при наведении */
 #hubPultBot .hpThLine{position:absolute;left:var(--zz-tx,50%);top:-4px;bottom:-4px;width:0;border-left:1px dotted #fff;z-index:6;pointer-events:none;display:none}
 #hubPultBot .zz-pult:has(.zz-pult-play:hover) .hpThLine{display:block}
+/* «пульт посередине поставь, справа от него вращение битов»: ромб пульта (260 px) — по центру экрана, наклоны 0 / 1 — справа */
+#hubPultBot{left:calc(50% - 130px);right:auto}
