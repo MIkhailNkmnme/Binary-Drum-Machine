@@ -98,3 +98,18 @@ body.hubZen #hubPultBot{display:none}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{width:15px!important;height:30px!important;font:700 9px/30px monospace!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-value{height:30px!important;line-height:30px!important}
 #hubPultBot .hpSpin .zz-pult-value{font:11px/30px ui-monospace,monospace!important}
+/* «в одну обводку пополам шириной с общей» — ↺ и 360° одной деталью шириной с деталь наклона, черта посередине; 360° включено — кайма яркая */
+#hubPultBot .hpPair{position:relative;display:flex;align-items:stretch;box-sizing:border-box;width:94px;height:30px;margin:0 3px;
+  background:color-mix(in srgb,var(--hp-c) 45%,transparent);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+#hubPultBot .hpPair::before{content:"";position:absolute;inset:1.5px;background:color-mix(in srgb,color-mix(in srgb,var(--hp-c) 22%,#060606) 65%,rgb(18,26,48));clip-path:inherit}
+#hubPultBot .hpPair:has(.hpFree[aria-pressed=true]){background:var(--hp-c)}
+#hubPultBot .hpPair .hpB{position:relative;z-index:1;flex:1 1 0;height:auto;min-width:0;margin:0;padding:0;background:transparent!important;clip-path:none;filter:none!important;color:var(--hp-c)}
+#hubPultBot .hpPair .hpB::before{display:none}
+#hubPultBot .hpPair .hpB+.hpB{box-shadow:inset 1px 0 0 color-mix(in srgb,var(--hp-c) 45%,transparent)}
+#hubPultBot .hpPair .hpB:hover,#hubPultBot .hpPair .hpB[aria-pressed=true]{color:#fff;text-shadow:0 0 6px var(--hp-c)}
+/* «сузь ширину» — деталь наклона 76 px (шевроны 20, градусы 36), пара ↺ · 360° — той же ширины */
+#hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{width:20px;min-width:20px!important}
+#hubPultBot .hpTiltControl .hpL{clip-path:polygon(0 0,100% 0,calc(100% - 8px) 50%,100% 100%,0 100%)!important}
+#hubPultBot .hpTiltControl .hpR{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,8px 50%)!important}
+#hubPultBot .hpTiltControl .hpTilt{min-width:36px;width:36px;padding:0!important}
+#hubPultBot .hpPair{width:76px}

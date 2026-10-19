@@ -82,9 +82,10 @@
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
       control.append(l, tiltV[b], r); br.append(control);
     }
-    br.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));
+    const pair = el('span', 'hpPair');   // «в одну обводку пополам» — ↺ и 360° одной деталью
+    pair.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
-    br.append(free);
+    pair.append(free); br.append(pair);
 
     // v0.280: «пульт в самый низ в одну строку справа, слева от ползунка» — масштаб у креста столбиком, вращение и биты — строкой внизу справа
     const bot = el('div'); bot.id = 'hubPultBot'; bot.className = 'hpRow';
