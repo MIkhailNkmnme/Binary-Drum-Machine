@@ -99,6 +99,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           if (/\|Режим автозума/.test(c.id)) continue;
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
           if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
+          if (/\|Цвет заворота/.test(c.id)) { toBits.foldColor = c; continue; }   // «Завор. — сюда цвет, отдельную кнопку-дубль цвета удали»: правой половиной «∿ Завор. | ●»
+          if (/\|Заворот:/.test(c.id)) { const it = fa(leafItem(c)); toBits.fold = it; add(g.key, it, c.id); continue; }   // место в «Оси» держит сама кнопка, цвет к ней — после обхода
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
           if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
@@ -167,6 +169,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const it = mc ? { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Зерк.', mid: '', tip: 'Зеркало: отражение от оси · справа — цвет отражённых битов',
         parts: [{ label: '⋈ Зерк.', tip: mi.tip, on: mi.on, click: mi.click }, { label: '●', tip: 'Цвет отражённых битов', on: mi.on, open: mc.open, ink: () => mc.get() }], key: 'symmetry|mirror' } : { ...mi, name: 'Зерк.', key: toBits.mirror.id };
       const sl = out.get('symmetry'); if (sl) { const k = sl.findIndex(i => i.key === 'symmetry'); sl.splice(k >= 0 ? k + 1 : 0, 0, it); }
+    }
+    if (toBits.fold && toBits.foldColor) {   // «∿ Завор. | ●»: слева заворот вкл / выкл, справа цвет заворота (отдельной «Заворот» в цветах больше нет)
+      const fi = toBits.fold, fc = leafItem(toBits.foldColor);
+      Object.assign(fi, { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Завор.', mid: '', tip: 'Заворот: части отражения вне треугольника — ещё и внутрь · справа — цвет заворота',
+        parts: [{ label: '∿ Завор.', tip: fi.tip, on: fi.on, click: fi.click }, { label: '●', tip: 'Цвет заворота', on: fi.on, open: fc.open, ink: () => fc.get() }] });
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);

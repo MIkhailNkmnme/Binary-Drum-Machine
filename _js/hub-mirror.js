@@ -382,6 +382,7 @@
       }
       if(drag.source){const a=drag.angle+(drag.mode==='angle'?Math.PI/2:0),co=Math.cos(a),si=Math.sin(a),distance=segmentX*co+segmentY*si;let dx=distance*co-drag.sourceX,dy=distance*si-drag.sourceY;
         if(state.magnet&&!e.altKey){const c=center(),p=magneticPoint(c[0]-dx,c[1]-dy,a);dx=c[0]-p[0];dy=c[1]-p[1];}
+        if(window.HubView?.centerBitPinned)window.HubView.setCenterBitPin(false);   // «перестала работать раздвижка от оси»: «Центр ◇ / △» тут же возвращал биты к оси — потянули пару сами, закрепление центра снимается (как при выборе бита)
         window.HubView?.shiftSourceBy(dx,dy);drag.sourceX+=dx;drag.sourceY+=dy;}
       else if (drag.turn) {
         if (Math.hypot(mx - drag.cx, my - drag.cy) < 12) return;
