@@ -51,6 +51,7 @@
   }
   const gateOn = r => r.on ? r.on() : r.active?.();
   // «эти все в Биты»: Прозр. 0 / 1 и Цвет 0 / 1 — из «Цвета» в «Биты» (остальное «Цвета» — образцы — только списком «Палитра»)
+  const IN_PAIR = /\|(Ромбы с цифрами|hubBitPacking)$/;
   const TO_BITS = /^colour\|(Прозрачные цифры [01]|Цвет битов оригинала|Цвет нулей оригинала)/;
   const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
     ['space', 'Объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
@@ -59,9 +60,10 @@
   function collect(T) {
     const out = new Map(GROUPS.map(([k]) => [k, []]));
     const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
+    const toBits = {};   // кнопки, собираемые в пары (ключ — подпись без группы)
     for (const g of T.groups) {
-      if (!out.has(g.key) || !g.root) continue;
-      let pat = null, glyph = null; const toBits = {};
+      if ((!out.has(g.key) && g.key !== 'colour') || !g.root) continue;   // «Цвета» в рейке нет, но из него берутся «Палитра» и пары 0 | 1
+      let pat = null, glyph = null;
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
         const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
         const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
@@ -87,7 +89,7 @@
                 set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
             continue;
           }
-          if (TO_BITS.test(c.id)) { toBits[c.id.replace(/^colour\|/, '')] = c; continue; }
+          if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
           add(SOUND.test(c.id) ? 'sound' : g.key, fa(fc(leafItem(c))), c.id);
         }
       };
@@ -103,7 +105,7 @@
         const part = (key, d) => { const c = toBits[key]; if (!c) return null; const it = leafItem(c);
           return { label: d, tip: it.tip, on: it.on, click: it.click, open: it.open, fill: () => pc()['f' + d], ink: () => pc()['k' + d] }; };
         const t0 = part('Прозрачные цифры 0', '0'), t1 = part('Прозрачные цифры 1', '1'), c0 = part('Цвет нулей оригинала', '0'), c1 = part('Цвет битов оригинала', '1');
-        if (t0 && t1) add('bits', { type: 'pair', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
+        if (t0 && t1) add('bits', { type: 'pair', cls: 'gz-cut', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
         if (c0 && c1) add('bits', { type: 'pair', cls: 'gz-rainbow', name: 'Цвет', tip: 'Цвет битов: 0 · 1', parts: [c0, c1] }, 'bits|colors');
       }
       if (g.key === 'colour') {   // образцы палитры — одним списком
@@ -122,6 +124,12 @@
       const ls = cells.filter(i => i.type === 'list'), rest = cells.filter(i => i.type !== 'list'), seq = [];
       while (ls.length || rest.length) seq.push(((seq.length % 2) ? ls.shift() : rest.shift()) || ls.shift() || rest.shift());
       out.set(k, [...seq, ...a.filter(i => !cell(i))]);
+    }
+    {   // «Ромбы» и «Встык» — «также в одну»: одна кнопка пополам
+      const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'];
+      const half = (c, d) => { const it = leafItem(c); return { label: d, tip: it.tip, on: it.on, click: it.click }; };
+      if (r && p) out.get('bits').push({ type: 'pair', name: 'Ромбы · встык', tip: 'Ромбы · встык', parts: [half(r, '◇'), half(p, '↔')], key: 'bits|rhombPack' });
+      else for (const c of [r, p]) if (c) out.get('bits').push({ ...leafItem(c), key: c.id });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
