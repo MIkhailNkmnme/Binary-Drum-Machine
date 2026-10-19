@@ -46,7 +46,7 @@
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -232,7 +232,7 @@
       patternLabel.hidden=true;patternLabel.setAttribute('aria-hidden','true');syncPick();window.addEventListener('hubmirror',syncPick);window.addEventListener('hubpattern',syncPick);}
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
-    const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка']];
+    const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка'],['none','–','Без знака']];   // «добавь — нет»: знак бита не рисуется
     const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;document.querySelectorAll('button[data-view]').forEach(b=>{const v=b.dataset.view,selected=v==='rhombs'?rhombOn():v===state.bitView||(v==='digits'&&state.bitView==='rhombs');b.hidden=false;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
     for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{if(value==='rhombs'){const on=!rhombOn();state.bitRhomb=on;if(!on&&state.bitView==='rhombs')state.bitView='digits';}else{if(state.bitView==='rhombs')state.bitRhomb=true;state.bitView=value;}syncView();if(viewBox.dataset.groupPinned!=='true')viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(!viewBox.dataset.nested&&e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
@@ -623,7 +623,7 @@
       for(const [x,y] of points)g.fillText(text,(x*co+y*si)/sx+ox,(-x*si+y*co)/sy+oy);
       g.restore();
     },
-    digitVisible(bit){return !(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
+    digitVisible(bit){return state.bitView!=='none'&&!(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
