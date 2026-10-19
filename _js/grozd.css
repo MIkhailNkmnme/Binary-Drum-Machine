@@ -175,3 +175,6 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* «при наведении на бегунок — курсор рука и вертикальный пунктир поверх бегунка, чуть выше его» */
 .gz-sl .gz-th{pointer-events:auto;cursor:pointer}
 .gz-sl .gz-mid:has(.gz-th:hover)::after{content:"";position:absolute;left:var(--thx);top:0;bottom:0;border-left:1px dotted #fff;z-index:3;pointer-events:none}
+/* половины пары — от ширины кнопки (--gz-w) напрямую: проценты здесь считались от 152 px, правая половина вылезала на 32 px и срезалась («1» и «↔» не видно) */
+.gz-pair.gz-split .gz-half.gz-h0{width:calc(var(--gz-w) / 2 + 4px)}
+.gz-pair.gz-split .gz-half.gz-h1{width:calc(var(--gz-w) / 2 + 3px)}
