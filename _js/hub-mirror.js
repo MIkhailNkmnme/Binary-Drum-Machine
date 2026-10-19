@@ -585,7 +585,7 @@
     colors(){if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
     symbolsOnly(){return !rhombOn();},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
-      if(this.symbolsOnly()||this.digitVisible(bit)||size<=0)return false;
+      if(this.symbolsOnly()||state.bitView==='none'||this.digitVisible(bit)||size<=0)return false;   // «когда Нет — просто ромбы без всего»: без выреза знака
       const m=g.getTransform(),scale=Math.max(2,Math.min(8,Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d))));
       const key=[bit,a,b,size,g.fillStyle,scale].join('|');let sprite=cutoutSprites.get(key);
       if(!sprite){
