@@ -19,7 +19,7 @@
   const btn = (cls, text, tip, fn) => { const b = el('button', 'hpB ' + cls, text, tip); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); sync(); }); return b; };
   const press = f => () => f()?.click();
   const fire = (e, t) => e && e.dispatchEvent(new Event(t, { bubbles: true }));
-  let box, zoomRow, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
+  let box, zoomRow, backB, fwdB, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
 
   // наклон битов: ◂ ▸ — на 15° (Shift — на 1°), удержание повторяет
   function tiltBy(b, d) {
@@ -48,8 +48,8 @@
 
     // 2. вращение — общий пульт пуска (zz-pult): ◀ ▶, ромб пуска на дорожке скорости, подпись
     pult = el('div', 'zz-pult hpSpin'); pult.dataset.play = '24';   // ромб пуска вдвое уже — ход до самых стрелок
-    const back = btn('zz-pult-back', '◀', 'Стоит — повернуть поле на −15°; крутится — медленнее', press(old.left));
-    const fwd = btn('zz-pult-fwd', '▶', 'Стоит — повернуть поле на +15°; крутится — быстрее', press(old.right));
+    const back = backB = btn('zz-pult-back', '◀', 'Стоит — повернуть поле на −15°; крутится — медленнее', press(old.left));
+    const fwd = fwdB = btn('zz-pult-fwd', '▶', 'Стоит — повернуть поле на +15°; крутится — быстрее', press(old.right));
     range = el('input', 'zz-pult-range'); range.type = 'range'; range.min = 0; range.max = 601; range.step = 1; range.setAttribute('aria-label', 'Скорость вращения');
     range.addEventListener('input', () => { const r = old.range(); if (!r) return; r.value = range.value; fire(r, 'input'); sync(); });
     play = btn('zz-pult-play', '▶', 'Вращение треугольника: пуск / пауза · тянуть вдоль — скорость · двойной щелчок — стоп и 0°', press(old.play));
@@ -115,6 +115,8 @@
     const r = old.range(); if (r && document.activeElement !== range && range.value !== r.value) range.value = r.value;
     const p = old.play(), on = p?.getAttribute('aria-pressed') === 'true' || document.body.classList.contains('hubAutoTurning');
     play.setAttribute('aria-pressed', String(on)); const pt = on ? '❚❚' : '▶'; if (play.textContent !== pt) play.textContent = pt;
+    const bt = on ? '◀' : '↺', ft = on ? '▶' : '↻';   // «когда стрелки поворачивают весь холст — значок по часовой и против»
+    if (backB.textContent !== bt) backB.textContent = bt; if (fwdB.textContent !== ft) fwdB.textContent = ft;
     const t = (old.angle()?.textContent || '').trim(), rt = (old.rate()?.textContent || '').trim();   // подпись — шаг за кадр; обороты за кадр — в подсказке
     if (rateV.textContent !== t) rateV.textContent = t;
     const tip = 'Шаг за кадр ' + t + (rt ? ' · ' + rt : '') + ' · щелчок — ввести обороты за кадр точно (дробь 1/2 или число)'; if (rateV.title !== tip && !rateV.dataset.hubTip) rateV.title = tip;
