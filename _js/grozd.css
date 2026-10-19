@@ -170,3 +170,5 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sl2 .gz-vr{color:var(--gz-mut)}
 .gz-total{position:fixed;transform:translateY(-50%);z-index:2147483000;padding:1px 6px;font:11px/16px system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#dfe6f5;
   background:#121a30;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:2px;pointer-events:none;white-space:nowrap}
+/* «с другой стороны надо общее, и без обводки и без фона — просто число» */
+.gz-total{border:0;background:none;padding:0;color:var(--gz-mut,#8592ad);text-shadow:0 0 3px #000,0 0 2px #000}

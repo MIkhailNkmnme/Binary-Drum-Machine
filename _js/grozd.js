@@ -115,7 +115,7 @@
               const W = mid.clientWidth, x = TH + f * (W - 2 * TH), g = 10, lw = vl.offsetWidth, rw = vr.offsetWidth;
               // «общее из ползунка вообще удали, при наведении покажи слева от него»: в ползунке — только текущее (слева от бегунка, нет места — справа); общее — плашкой слева от кнопки
               vl.style.left = (x - g - lw >= 0 ? x - g - lw : Math.min(W - lw, x + g)) + 'px'; vr.style.display = 'none'; tot.textContent = z;
-              if (tot.isConnected) { const r = b.getBoundingClientRect(); tot.style.left = (r.left - tot.offsetWidth - 4) + 'px'; tot.style.top = (r.top + r.height / 2) + 'px'; } });
+              if (tot.isConnected) { const r = b.getBoundingClientRect(); tot.style.left = (r.right + 4) + 'px'; tot.style.top = (r.top + r.height / 2) + 'px'; } });
             const tot = el('span', 'gz-total'); tot.style.setProperty('--c', g.color || '#5aa9ff');
             b.addEventListener('pointerenter', () => { if (!tot.textContent) return; document.body.append(tot); refresh(); });
             b.addEventListener('pointerleave', () => tot.remove());
