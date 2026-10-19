@@ -83,6 +83,7 @@
   const sidebar=document.createElement('aside');sidebar.id='mayatnikSidebar';$('mayatnikRail').before(sidebar);sidebar.append($('mayatnikRail'));
   source.hidden = true;
   document.body.classList.add('mayatnik-menu-ready');
+  document.documentElement.classList.remove('may-boot');   // v0.162: меню собрано — показать
   const help = $('mayHelp'), menu = $('mayMenu');
   const about = $('mayAboutDialog');
   $('mayAbout').onclick = () => about.showModal();
