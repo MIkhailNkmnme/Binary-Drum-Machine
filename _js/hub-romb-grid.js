@@ -247,5 +247,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 0), { once: true });
   else setTimeout(init, 0);
   addEventListener('resize', () => grids.forEach(g => g.place()));
-  for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hubview', 'hublocks']) addEventListener(ev, () => requestAnimationFrame(paintAll));
+  // «проверь на тормоза»: перерисовка — одна на кадр, а на hubview (каждый кадр поворота / масштаба) — не чаще 4 раз в секунду (было — 3,6 мс на каждый кадр)
+  let pq = 0, vq = 0; const paintSoon = () => { if (!pq) pq = requestAnimationFrame(() => { pq = 0; paintAll(); }); };
+  for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hublocks']) addEventListener(ev, paintSoon);
+  addEventListener('hubview', () => { if (!vq) vq = setTimeout(() => { vq = 0; paintSoon(); }, 250); });
 })();
