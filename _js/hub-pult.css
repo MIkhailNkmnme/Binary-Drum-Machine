@@ -61,3 +61,21 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpTiltControl .hpB::before{display:none}
 #hubPultBot .hpTiltControl .hpTilt{min-width:42px}
 #hubPultBot .hpTiltControl:has(.hpB:hover){outline:1px solid var(--hp-c);outline-offset:-2px}
+/* v0.284: «углы в цвет соответствующих битов» — деталь как ромб своего бита (0 — тёмная, цифры цветом; 1 — цветная, цифры тёмные); «и стрелки выдели фоном» */
+#hubPultBot .hpTiltControl{color:var(--hp-ink,var(--hp-c));background:var(--hp-fill,color-mix(in srgb,var(--hp-c) 22%,transparent))}
+#hubPultBot .hpTiltControl .hpB{color:var(--hp-ink,var(--hp-c))}
+#hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{align-self:stretch;min-width:20px;background:var(--hp-arrow,transparent)!important}
+#hubPultBot .hpTiltControl .hpL{padding-left:11px}
+#hubPultBot .hpTiltControl .hpR{padding-right:11px}
+#hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{filter:brightness(1.35)!important}
+#hubPultBot .hpTiltControl:has(.hpB:hover){outline-color:var(--hp-ink,var(--hp-c))}
+/* v0.284: «пульт тоже в цвет битов» — стрелки ◀ ▶ как ромб нуля, ход и ромб пуска цветом единицы (переменные ставит sync в hub-pult.js) */
+#hubPultBot .hpSpin .zz-pult-shape .glass{fill:var(--hp-b0f,rgba(28,36,51,.35));stroke:color-mix(in srgb,var(--hp-b1,#9fb0c8) 60%,transparent)}
+#hubPultBot .hpSpin .zz-pult-value{color:color-mix(in srgb,var(--hp-b1,#ffe6a8) 55%,#fff)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd){color:var(--hp-b0,#dfe6f5)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):not(:hover):not(.on){background:var(--hp-b0a,rgba(58,84,112,.4))!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):hover{background:color-mix(in srgb,var(--hp-b1,#4d6d90) 60%,#000)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd).on{background:var(--hp-b1,#9cc3ec)!important;color:#1c1c22!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{color:#1c1c22!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:not(:hover):not([aria-pressed=true]){background:color-mix(in srgb,var(--hp-b1,#5a4a86) 75%,#000)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(:hover,.on,[aria-pressed=true]){background:var(--hp-b1,#7a64b6)!important}

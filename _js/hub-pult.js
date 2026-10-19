@@ -94,6 +94,11 @@
     box.append(zr); document.body.append(box, bot); document.body.classList.add('hubPultOn');
   }
 
+  function rgba(hex, a) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex;
+    const n = parseInt(m[1], 16); return 'rgba(' + (n >> 16) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+
   function sync() {
     if (!box) return;
     const s = old.scale(); if (s && scaleV.textContent !== s.textContent) scaleV.textContent = s.textContent;
@@ -107,10 +112,22 @@
     frame.setAttribute('aria-pressed', old.frame()?.getAttribute('aria-pressed') || 'false');
     free.setAttribute('aria-pressed', old.free()?.getAttribute('aria-pressed') || 'false');
     const colors = window.HubMirror?.colors();
+    const bot = document.getElementById('hubPultBot');
+    if (bot && colors?.bit) {   // v0.284: «пульт тоже в цвет битов»
+      const a0 = window.HubMirror?.state?.zeroAlpha ?? .18, z = colors.zero || colors.bit;
+      bot.style.setProperty('--hp-b1', colors.bit); bot.style.setProperty('--hp-b0', z);
+      bot.style.setProperty('--hp-b0f', rgba(z, a0)); bot.style.setProperty('--hp-b0a', rgba(z, Math.min(1, a0 + .25)));
+    }
     for (const b of ['0', '1']) {
       const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
       const color = colors?.[b === '0' ? 'zero' : 'bit'];
-      if (color) tiltV[b].parentElement.style.setProperty('--hp-c', color);
+      if (color) {   // v0.284: «углы в цвет соответствующих битов» — деталь как ромб бита: 0 — тёмная с цветными цифрами, 1 — цветная с тёмными; стрелки — своим фоном
+        const c = tiltV[b].parentElement, a = b === '0' ? (window.HubMirror?.state?.zeroAlpha ?? .18) : 1;
+        c.style.setProperty('--hp-c', color);
+        c.style.setProperty('--hp-fill', rgba(color, a));
+        c.style.setProperty('--hp-ink', b === '0' ? color : '#1c1c22');
+        c.style.setProperty('--hp-arrow', b === '0' ? rgba(color, Math.min(1, a + .25)) : 'color-mix(in srgb,' + color + ' 62%,#000)');
+      }
     }
   }
 
