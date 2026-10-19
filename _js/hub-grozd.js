@@ -54,7 +54,7 @@
   const IN_PAIR = /\|(Ромбы с цифрами|hubBitPacking)$/;
   const TO_BITS = /^colour\|(Прозрачные цифры [01]|Цвет битов оригинала|Цвет нулей оригинала)/;
   const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Зеркала', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
-    ['space', 'Объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
+    ['space', '3D объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
   const HEAD = { symmetry: 'Поиск осей', axis: 'Ось', space: '3D вращ.', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
   const SOUND = /Семь световых|Скорость битов|Остановить биты/;
   function collect(T) {
@@ -89,7 +89,7 @@
                 set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
             continue;
           }
-          if (/\|Сбросить только 3D/.test(c.id)) continue;   // сброс 3D — правой половиной кнопки «3D вращ.»
+          if (/\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
           add(SOUND.test(c.id) ? 'sound' : g.key, fa(fc(leafItem(c))), c.id);
