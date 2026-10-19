@@ -412,3 +412,5 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 .mayatnik-menu-ready #mayatnikRail .gz-wide>.gz-control:has(input[type=number]){width:var(--gz-w);flex:none;margin-right:calc(4px - var(--gz-n))}
 .mayatnik-menu-ready #mayatnikRail .gz-control:has(input[type=number]) input[type=number]{width:44px;flex:0 0 44px}
 .mayatnik-menu-ready #mayatnikRail .gz-wide>.gz-control:has(#symTriangleRows){margin-right:calc(100% - var(--gz-w))}   /* высота — одна в ряду, дальше пары «от / до» */
+/* v0.172: ширина списка — по кнопкам, но не уже названия группы (min-width ставит mayatnik-menu.js) */
+@media (min-width:601px){header #paintTools.pt-dd .pt-r{width:max-content;min-width:0}}
