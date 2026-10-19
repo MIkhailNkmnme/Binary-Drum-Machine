@@ -85,3 +85,9 @@ body.hubZen #hubPultBot{display:none}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):hover{color:#fff!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{background:color-mix(in srgb,var(--hp-b1,#5a4a86) 75%,#000)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(:hover,.on,[aria-pressed=true]){color:#fff!important}
+/* «вот такие стрелки углов» — стрелка наклона: шеврон цветом стрелки (остриё — край детали, выемка — к градусам), без знака */
+#hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{width:26px;min-width:26px!important;padding:0!important;font-size:0!important}
+#hubPultBot .hpTiltControl .hpL{clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%)!important}
+#hubPultBot .hpTiltControl .hpR{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,10px 50%)!important}
+#hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{background:var(--hp-arrow)!important;filter:drop-shadow(0 0 0 transparent)!important}
+#hubPultBot .hpTiltControl:has(.hpL:hover,.hpR:hover){outline:1px solid var(--hp-c);outline-offset:-2px}
