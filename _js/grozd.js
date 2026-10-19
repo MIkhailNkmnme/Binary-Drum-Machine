@@ -107,7 +107,13 @@
           // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, ◂ ▸ — шаг
           if (it.frac && it.setFrac) {
             b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'); mid.prepend(th);
-            refreshers.push(() => { th.style.left = (Math.max(0, Math.min(1, it.frac())) * 100) + '%'; });
+            // «числа до и после бегунка»: «96 / 128» — 96 слева от бегунка, 128 справа; у края число не уходит за дорожку
+            const vl = el('span', 'gz-vl'), vr = el('span', 'gz-vr'); mid.append(vl, vr); b.classList.add('gz-sl2');
+            refreshers.push(() => { const f = Math.max(0, Math.min(1, it.frac())); th.style.left = (f * 100) + '%';
+              const t = String(it.get()), k = t.indexOf('/'), a = (k < 0 ? t : t.slice(0, k)).trim(), z = k < 0 ? '' : t.slice(k + 1).trim();
+              if (vl.textContent !== a) vl.textContent = a; if (vr.textContent !== z) vr.textContent = z;
+              const W = mid.clientWidth, x = f * W, g = 10, lw = vl.offsetWidth, rw = vr.offsetWidth;
+              vl.style.left = Math.max(0, x - g - lw) + 'px'; vr.style.left = Math.min(W - rw, x + g) + 'px'; });
             const at = e => { const r = mid.getBoundingClientRect(); it.setFrac(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); refresh(); };
             mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
               const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
