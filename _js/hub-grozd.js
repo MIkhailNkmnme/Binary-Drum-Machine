@@ -92,6 +92,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
                 set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
             continue;
           }
+          if (/\|Автозум от центра/.test(c.id)) {   // «автозум и маятник / сброс — также»: при включённом автозуме — «Автозум / Маятник» (или «Сброс»)
+            const it = fs(fa(fc(leafItem(c)))), md = () => document.querySelector('button[aria-label^="Режим автозума"]'), on = () => c.node.getAttribute('aria-pressed') === 'true';
+            add(g.key, { type: 'pair', col: it.col, cls: 'gz-split gz-bs', name: 'Автозум', mid: '', tip: it.tip, one: () => !on(),
+              parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
+          if (/\|Режим автозума/.test(c.id)) continue;
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }

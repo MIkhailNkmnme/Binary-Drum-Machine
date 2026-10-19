@@ -157,7 +157,7 @@
             h.addEventListener('click', e => { e.stopPropagation(); if (p.open) p.open(b); else if (p.click) p.click(); refresh(); }); return h; });
           // «в середине умести текст, а где 1 и 0 — там меньше; включение — как везде, обводкой граней»: [0 | название | 1], включённая сторона — яркая кайма своей половины
           b.append(hs[0], el('span', 'gz-pm', it.mid ?? it.name), hs[1]);
-          refreshers.push(() => { if (it.one) b.classList.toggle('gz-one', !!it.one()); });   // it.one() — показывать одну левую половину во всю кнопку
+          refreshers.push(() => { if (it.one) b.classList.toggle('gz-one', !!it.one()); it.parts.forEach((p, i) => { if (p.labelNow) { const t = p.labelNow(); if (hs[i].textContent !== t) hs[i].textContent = t; } }); });   // labelNow — живая подпись половины   // it.one() — показывать одну левую половину во всю кнопку
           refreshers.push(() => it.parts.forEach((p, i) => { const on = !!(p.on && p.on()); hs[i].classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + i, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)');
             const f = p.fill && p.fill(), k = p.ink && p.ink(); if (f && b.style.getPropertyValue('--gz-f' + i) !== f) b.style.setProperty('--gz-f' + i, f); if (k && hs[i].style.getPropertyValue('--gz-k') !== k) hs[i].style.setProperty('--gz-k', k); }));
           cells.push(b); soty.append(b);
