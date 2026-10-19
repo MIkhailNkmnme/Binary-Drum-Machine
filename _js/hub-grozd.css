@@ -2,6 +2,9 @@
 #hubRail{position:fixed;left:210px;top:8px;z-index:30;max-height:calc(100dvh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:0 2px 8px 0}
 #hubRail::-webkit-scrollbar{display:none}
 #hubRail .gz-rail{width:max-content;min-width:calc(var(--gz-w)*2 - var(--gz-n) + 4px)}   /* 19.10: «Поток» — третьим столбцом списки включённых Свет / Снег / Вода */
+body.hubRailOn .gz-ladder{background:#05070d;padding:6px;margin:-6px 0 0 -6px;border-radius:4px;box-shadow:0 2px 12px #000c}   /* 19.10: «список с заливкой фона между кнопок» — рейка не просвечивает */
+body.hubRailOn .gz-ladder{--gz-bg:#0a0f1d}   /* 19.10: «и немного цветом другим — темнее»: пункты списка темнее кнопок рейки */
+body.hubRailOn .gz-ladder .gz-hx:not(.gz-on){background:color-mix(in srgb,var(--c) 13%,#000)}
 body.hubRailOn #hubFieldTools .hubFieldSlot{display:none!important}   /* v0.266: и пульт движений — он в рейке группой «Вращение» */
 body.hubZen #hubRail{display:none}
 @media(max-width:1100px){
