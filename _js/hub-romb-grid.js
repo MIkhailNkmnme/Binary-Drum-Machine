@@ -121,7 +121,7 @@
       G.cells.forEach(c => c.remove());
       G.cells = CELLS.map(([x, y], i) => {
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'hubRgCell'; b.dataset.i = i;
+        b.type = 'button'; b.className = 'hubRgCell' + (y === (ROWS.length - 1) * H ? ' edge' : ''); b.dataset.i = i;   // edge — ряд у края (видно полуромбами)
         put(b, x, y); grid.append(b); return b;
       });
       put(stub, 0, HT - S); grid.append(stub);
@@ -155,10 +155,14 @@
     const along = (dx, dy, r) => { if (edge === 'l' || edge === 'r') st.a = r.top + dy; else if (edge === 'b' && frac == null) st.x = r.left + dx; else st.a = r.left + dx; place(); };
     function paint() {
       fit();
+      // 19.10: «цвет ромбов такой же, как из группы» — цвет группы рейки, где лежит та же кнопка
+      const gc = new Map(); document.querySelectorAll('#hubRail [data-rg-key]').forEach(n => { const c = n.closest('.gz-group')?.style.getPropertyValue('--c'); const o = c && find(n.dataset.rgKey); if (o) gc.set(o, c); });   // по самой кнопке: у одной кнопки ключи id: и pin: бывают оба
       grid.classList.toggle('fold', !st.slots.some(Boolean));
       G.cells.forEach((c, i) => {
         const key = st.slots[i], o = find(key);
         c.classList.toggle('full', !!key); c.classList.toggle('lost', !!key && !o);
+        if (o && gc.has(o)) c.style.setProperty('--rg-c', gc.get(o)); else c.style.removeProperty('--rg-c');
+        c.classList.toggle('grp', !!o && gc.has(o));
         if (!key) { c.textContent = ''; c.title = 'Пустой ромб: перетащите сюда любую кнопку · тяните пустой ромб — двигать сетку'; c.removeAttribute('aria-pressed'); c.style.removeProperty('--rg-bg'); c.classList.remove('hasBg'); return; }
         if (!o) { c.textContent = '?'; c.title = 'Оригинал этой кнопки сейчас не найден · ПКМ — убрать'; return; }
         const t = textOf(o); if (c.textContent !== t) c.textContent = t;

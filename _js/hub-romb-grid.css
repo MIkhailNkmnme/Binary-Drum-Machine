@@ -19,3 +19,11 @@ body.hubRgDragging .hubRombGrid .hubRgCell{visibility:visible!important}
 body.hubRgDragging,body.hubRgDragging *{user-select:none!important;cursor:grabbing!important}
 body.hubZen .hubRombGrid{visibility:hidden;pointer-events:none}
 body.hubZen .hubRombGrid .hubRgCell,body.hubZen .hubRombGrid .hubRgStub{pointer-events:none}
+/* 19.10: «если 2 ряд заполнен, то 3 — треугольниками»: ряд у края (срезан пополам) виден всегда, пока в сетке есть кнопки */
+.hubRombGrid:not(.fold) .hubRgCell.edge{visibility:visible}
+/* 19.10: «цвет ромбов такой же, как из группы» — как кнопки рейки: тёмная середина, обводка цветом группы; включённая — ярче со свечением */
+.hubRombGrid .hubRgCell.full.grp:not(.hasBg){background:color-mix(in srgb,var(--rg-c) 18%,#121a30);color:#dfe6f5}
+.hubRombGrid .hubRgCell.full.grp::after{border:1.5px solid var(--rg-c);opacity:.9}
+.hubRombGrid .hubRgCell.full.grp[aria-pressed=false]{color:color-mix(in srgb,#dfe6f5 60%,transparent)}
+.hubRombGrid .hubRgCell.full.grp[aria-pressed=true]:not(.hasBg),.hubRombGrid .hubRgCell.full.grp[aria-pressed=mixed]:not(.hasBg){background:color-mix(in srgb,var(--rg-c) 70%,#121a30);color:#fff}
+.hubRombGrid .hubRgCell.full.grp:hover{background:color-mix(in srgb,var(--rg-c) 45%,#121a30)}
