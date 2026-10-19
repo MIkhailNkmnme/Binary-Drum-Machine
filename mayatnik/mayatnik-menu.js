@@ -290,7 +290,11 @@
       l.onclick = () => { if (pinned(g)) { const k = keyOf(g); if (stay(g)) { folds.add(k); if (open === g) open = null; setOpen(g, false); } else { folds.delete(k); setOpen(g, true); } saveDd(); return; }
         open === g ? shut() : show(g); };
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
-      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g && !stay(open)) show(g); };   // v0.159: на касании enter приходит перед щелчком и закрывал список
+      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open && open !== g && !stay(open)) show(g); };
+      // v0.169: «не скрывается при уходе» — мышь ушла с названия и списка: незакреплённый список закрывается (с запасом 350 мс на переход)
+      g.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') return; clearTimeout(g._leave);
+        g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover')) shut(); }, 350); });
+      g.addEventListener('pointerenter', () => clearTimeout(g._leave));   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
