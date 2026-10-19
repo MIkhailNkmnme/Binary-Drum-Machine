@@ -237,6 +237,11 @@
       const from=[...records.values()].find(x=>x.children?.includes(r));const dest=to?records.get(to):from;if(!from||!dest)continue;
       from.children.splice(from.children.indexOf(r),1);dest.children.unshift(r);
     }
+    // v0.259: «лишние кнопки… подкнопки все открытыми, чтоб не дублили» — подгруппа, голова которой только открывала её
+    // (Рисунок, Вид битов, Поворот, Поиск, Минимумы, Солнце…), растворена: её кнопки стоят прямо в группе, лишнего ромба нет.
+    // Головы со своим действием (Свет, Снег, Вода, головы групп) остаются.
+    {const keep=new Set(groups.map(g=>g.root)),melt=r=>{if(!r.children)return;r.children=r.children.flatMap(c=>{melt(c);if(c.children&&!c.action&&!keep.has(c)){records.delete(c.id);return c.children;}return [c];});};
+      groups.forEach(g=>g.root&&melt(g.root));if(view)view.hidden=true;}
     // v0.225: порядок кнопок внутри групп — правой кнопкой мыши перетаскивают (zerk_hub_order: {родитель: [дети]}).
     let order={};try{order=JSON.parse(localStorage.getItem('zerk_hub_order')||'{}')||{};}catch(_){}
     // v0.243: кнопка, перенесённая правой кнопкой к другому родителю той же группы, встаёт туда и после перезагрузки

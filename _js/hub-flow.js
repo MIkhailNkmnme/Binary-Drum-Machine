@@ -203,9 +203,10 @@
     }
     const opticalChange=()=>{rays=[];beams=null;beamDistance=0;if(field){field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;}saveStyle();wake();};
     const sides=['Нет','Сверху','Снизу','Обе'],marks=['×','↓','↑','↕'];
-    for(let bit=0;bit<2;bit++)for(const [key,name,short] of [['pass','пропускание','Пропуск'],['reflect','отражение','Отраж.']]){
+    for(let bit=0;bit<2;bit++)for(const [key,name,short] of [['pass','пропускание','Проп.'],['reflect','отражение','Отр.']]){
       const b=button('','Свет '+bit+': '+name,()=>{lightRules[bit][key]=(lightRules[bit][key]+1)%4;update();opticalChange();});b.id='hubLightRule-'+bit+'-'+key;
-      const update=()=>{const v=lightRules[bit][key];b.textContent=marks[v]+'\n'+short;b.title='Бит '+bit+' · '+name+': '+sides[v]+' · Клик: нет → сверху → снизу → обе стороны. Стороны относительно экрана; оба действия — разделение 50/50.';b.setAttribute('aria-pressed',String(v!==0));b.setAttribute('aria-description',sides[v]);};update();
+      const update=()=>{const v=lightRules[bit][key];b.textContent=marks[v]+'\n'+bit+' '+short;   // v0.259: подгруппы «Бит 0 / Бит 1» сняты — бит в самой надписи
+      b.title='Бит '+bit+' · '+name+': '+sides[v]+' · Клик: нет → сверху → снизу → обе стороны. Стороны относительно экрана; оба действия — разделение 50/50.';b.setAttribute('aria-pressed',String(v!==0));b.setAttribute('aria-description',sides[v]);};update();
     }
     const loss=button('−50%\nОтраж.','Ослаблять отражённый свет на 50%',()=>{reflectionLoss=!reflectionLoss;loss.setAttribute('aria-pressed',String(reflectionLoss));opticalChange();});loss.id='hubLightLoss';loss.setAttribute('aria-pressed',String(reflectionLoss));
     cornersButton=button('↘\nУглы','Вода: стороны и углы — проход через шахматные стыки',()=>{waterCorners=!waterCorners;if(liquid)liquid.cornerPass=waterCorners;cornersButton.setAttribute('aria-pressed',String(waterCorners));saveStyle();wake();});cornersButton.setAttribute('aria-pressed',String(waterCorners));
