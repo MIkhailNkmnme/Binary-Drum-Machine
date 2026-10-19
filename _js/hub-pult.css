@@ -91,3 +91,10 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpTiltControl .hpR{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,10px 50%)!important}
 #hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{background:var(--hp-arrow)!important;filter:drop-shadow(0 0 0 transparent)!important}
 #hubPultBot .hpTiltControl:has(.hpL:hover,.hpR:hover){outline:1px solid var(--hp-c);outline-offset:-2px}
+/* «уменьши высоту до уровня кнопок» — пульт вращения 30 px: ◀ ▶ 30 × 24, ромб пуска 15 × 30 (размеры — data-cap / data-body / data-play в hub-pult.js) */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot :is(.zz-pult-box,.zz-pult){height:30px!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd){top:3px!important;width:30px!important;height:24px!important;font:700 11px/24px monospace!important;padding:0 0 0 11px!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-fwd{padding:0 11px 0 0!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{width:15px!important;height:30px!important;font:700 9px/30px monospace!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-value{height:30px!important;line-height:30px!important}
+#hubPultBot .hpSpin .zz-pult-value{font:11px/30px ui-monospace,monospace!important}
