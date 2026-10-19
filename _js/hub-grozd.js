@@ -105,8 +105,8 @@
         const part = (key, d) => { const c = toBits[key]; if (!c) return null; const it = leafItem(c);
           return { label: d, tip: it.tip, on: it.on, click: it.click, open: it.open, fill: () => pc()['f' + d], ink: () => pc()['k' + d] }; };
         const t0 = part('Прозрачные цифры 0', '0'), t1 = part('Прозрачные цифры 1', '1'), c0 = part('Цвет нулей оригинала', '0'), c1 = part('Цвет битов оригинала', '1');
-        if (t0 && t1) add('bits', { type: 'pair', cls: 'gz-cut', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
-        if (c0 && c1) add('bits', { type: 'pair', cls: 'gz-rainbow', name: 'Цвет', tip: 'Цвет битов: 0 · 1', parts: [c0, c1] }, 'bits|colors');
+        if (t0 && t1) add('bits', { type: 'pair', cls: 'gz-cut gz-split gz-mid', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
+        if (c0 && c1) add('bits', { type: 'pair', cls: 'gz-rainbow gz-split gz-mid', name: 'Цвет', tip: 'Цвет битов: 0 · 1', parts: [c0, c1] }, 'bits|colors');
       }
       if (g.key === 'colour') {   // образцы палитры — одним списком
         const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);
@@ -128,7 +128,7 @@
     {   // «Ромбы» и «Встык» — «также в одну»: одна кнопка пополам
       const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'];
       const half = (c, d) => { const it = leafItem(c); return { label: d, tip: it.tip, on: it.on, click: it.click }; };
-      if (r && p) out.get('bits').push({ type: 'pair', cls: 'gz-split', name: 'Ромбы · встык', mid: '', tip: 'Ромбы · встык', parts: [half(r, '◇ Ромбы'), half(p, 'Встык ↔')], key: 'bits|rhombPack' });
+      if (r && p) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · встык', mid: '', tip: 'Ромбы · встык', parts: [half(r, '◇ Ромбы'), half(p, 'Встык ↔')], key: 'bits|rhombPack' });
       else for (const c of [r, p]) if (c) out.get('bits').push({ ...leafItem(c), key: c.id });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
