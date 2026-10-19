@@ -89,6 +89,7 @@
                 set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
             continue;
           }
+          if (/\|Сбросить только 3D/.test(c.id)) continue;   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
           add(SOUND.test(c.id) ? 'sound' : g.key, fa(fc(leafItem(c))), c.id);
@@ -98,6 +99,10 @@
       if (root.action && g.key === 'bits') add('sound', { ...headItem(root, 'M9 6l9 6-9 6z', 'Пуск'), name: 'Пуск' }, 'bits');   // пуск / пауза битов — это звук
       else if (g.key === 'file') { const b = document.getElementById('hubPresetList');
         if (b) add('file', { type: 'toggle', icon: '▤', name: 'Шаблоны', tip: 'Открыть список шаблонов', on: () => b.getAttribute('aria-expanded') === 'true', click: () => b.click() }, 'file'); }
+      else if (root.action && g.key === 'space') {   // «при включении — на полкнопки 3D вращ. / Сброс», «а тот сброс убери»: пока 3D не в покое — пара, иначе одна кнопка
+        const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
+        add('space', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
+          parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
       else if (root.action) add(g.key, g.key === 'flow' || g.key === 'axis' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
       walk(root, !root.gate || !!gateOn(root));
       if (g.key === 'colour') {   // «прозрачности объедини в одну кнопку, обводку пополам, и цвета 1 и 0 так же; прозрачности — в цвет битов, слово „Прозр.“ убери, и „Цвет“ — но там обводка радугой»

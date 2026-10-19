@@ -179,3 +179,6 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-pair .gz-half{box-sizing:border-box}
 /* кнопки рейки под открытым списком (тот же столбец, та же группа) — затемнены */
 .gz-hx.gz-under{opacity:.18;pointer-events:none;transition:opacity .12s}
+/* пара в режиме «одна»: правая половина спрятана, левая — во всю кнопку */
+.gz-pair.gz-one .gz-half.gz-h1{display:none}
+.gz-pair.gz-split.gz-one .gz-half.gz-h0{width:100%;clip-path:polygon(0 50%,var(--gz-n) 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,var(--gz-n) 100%)}
