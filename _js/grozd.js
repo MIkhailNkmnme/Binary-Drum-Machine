@@ -113,7 +113,9 @@
               const t = String(it.get()), k = t.indexOf('/'), a = (k < 0 ? t : t.slice(0, k)).trim(), z = k < 0 ? '' : t.slice(k + 1).trim();
               if (vl.textContent !== a) vl.textContent = a; if (vr.textContent !== z) vr.textContent = z;
               const W = mid.clientWidth, x = f * W, g = 10, lw = vl.offsetWidth, rw = vr.offsetWidth;
-              vl.style.left = Math.max(0, x - g - lw) + 'px'; vr.style.left = Math.min(W - rw, x + g) + 'px'; });
+              vl.style.left = Math.max(0, x - g - lw) + 'px'; vr.style.left = Math.min(W - rw, x + g) + 'px';
+              // «у края — одна цифра»: число, которому нет места со своей стороны бегунка, не показывается; дошли до конца (96 = 128) — одно число
+              vl.style.visibility = x - g - lw < 0 ? 'hidden' : ''; vr.style.visibility = x + g + rw > W || a === z ? 'hidden' : ''; });
             const at = e => { const r = mid.getBoundingClientRect(); it.setFrac(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); refresh(); };
             mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
               const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
