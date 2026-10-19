@@ -185,3 +185,5 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* пара gz-wl — широкая левая половина (кнопка + название), узкая правая (цвет) */
 .gz-pair.gz-split.gz-wl .gz-half.gz-h0{width:calc(var(--gz-w) * .72 + 4px)}
 .gz-pair.gz-split.gz-wl .gz-half.gz-h1{width:calc(var(--gz-w) * .28 + 3px);font-size:16px;color:var(--gz-k,#fff)}
+/* «у точки тоже границы при включении подсветки» — правая половина горит каймой вместе с левой, точка остаётся своего цвета */
+.gz-pair.gz-split.gz-wl .gz-half.gz-h1.gz-on{color:var(--gz-k,#fff);text-shadow:0 0 6px var(--gz-k,#fff)}
