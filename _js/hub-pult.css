@@ -123,3 +123,9 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpBits .hpReset:not(.hpTilted):hover{background:var(--hp-b1,#8fd3ff)!important}
 /* ↺ между наклонами формой X: выемки слева и справа, в них заходят острия деталей 0 и 1 */
 #hubPultBot .hpBits .hpReset{width:40px;min-width:40px;margin:0 -7px;clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%,10px 50%)!important}
+/* «в высоту сравняй с кнопками, а бегунок чуть выше — отступ у всей полоски, а бегунок касается пола»: полоса (◀ ▶ и корпус) 30 px как кнопки, ромб пуска 18 × 36 во всю высоту пульта */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot :is(.zz-pult-box,.zz-pult){height:36px!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd){top:3px!important;height:30px!important;line-height:30px!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{width:18px!important;height:36px!important;line-height:36px!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-value{height:36px!important;line-height:36px!important}
+#hubPultBot .hpSpin .zz-pult-value{line-height:36px!important}
