@@ -127,10 +127,12 @@
       out.set(k, [...seq, ...a.filter(i => !cell(i))]);
     }
     {   // «Ромбы» и «Встык» — «также в одну»: одна кнопка пополам
-      const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'];
-      const half = (c, d) => { const it = leafItem(c); return { label: d, tip: it.tip, on: it.on, click: it.click }; };
-      if (r && p) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · встык', mid: '', tip: 'Ромбы · встык', parts: [half(r, '◇ Ромб.'), half(p, 'Встык ↔')], key: 'bits|rhombPack' });
-      else for (const c of [r, p]) if (c) out.get('bits').push({ ...leafItem(c), key: c.id });
+      // «добавь квадраты, встык — вынеси в отдельную»: «◇ Ромб. \ □ Квадр.» — форма бита, «Встык» — своей кнопкой
+      const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'], M = window.HubMirror;
+      const shape = (m, d, tip) => ({ label: d, tip, on: () => M?.bitShape?.() === m, click: () => M?.setBitShape?.(M.bitShape() === m ? null : m) });
+      if (r && M?.setBitShape) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · квадраты', mid: '', tip: 'Форма бита: ромбы · квадраты', parts: [shape('rhomb', '◇ Ромб.', 'Ромбы'), shape('square', '□ Квадр.', 'Квадраты')], key: 'bits|shape' });
+      else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
+      if (p) out.get('bits').push({ ...leafItem(p), key: p.id });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));

@@ -41,12 +41,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -495,7 +495,7 @@
     drawCenterBit(g,p,color=null){
       const size=Math.min(p.width,p.height)*.62,a=p.width*(state.packedBits?.5:.45),b=p.height*(state.packedBits?.5:.45);
       g.fillStyle=color||this.colors().sym;g.globalAlpha=1;
-      if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));g.beginPath();g.moveTo(0,-b);g.lineTo(a,0);g.lineTo(0,b);g.lineTo(-a,0);g.closePath();g.fill();g.restore();}
+      if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));this.pathBit(g,a,b);g.fill();g.restore();}
       if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);}
     },
     // v0.222: лучи были видны — щелчок по другому биту сразу переносит их на него
@@ -584,14 +584,19 @@
     rotationCenter(){return frame?center():null;},
     colors(){if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
     symbolsOnly(){return !rhombOn();},
+    // «добавь квадраты»: форма бита при включённых ромбах — ромб или квадрат (квадрат стоит в центре бита, сторона — по меньшей из полудиагоналей)
+    bitShape(){return rhombOn()?(state.bitSquare?'square':'rhomb'):null;},
+    setBitShape(m){if(m==='rhomb'||m==='square'){state.bitSquare=m==='square';state.bitRhomb=true;}else{state.bitRhomb=false;if(state.bitView==='rhombs'||state.bitView==='none')state.bitView='digits';}changed();save();},
+    bitPoly(a,b){if(state.bitSquare){const s=Math.min(a,b*.6);return [[-s,-s],[s,-s],[s,s],[-s,s]];}return [[0,-b],[a,0],[0,b],[-a,0]];},
+    pathBit(g,a,b,pt=(x,y)=>[x,y]){const P=this.bitPoly(a,b);g.beginPath();g.moveTo(...pt(...P[0]));for(let i=1;i<P.length;i++)g.lineTo(...pt(...P[i]));g.closePath();},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||state.bitView==='none'||this.digitVisible(bit)||size<=0)return false;   // «когда Нет — просто ромбы без всего»: без выреза знака
       const m=g.getTransform(),scale=Math.max(2,Math.min(8,Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d))));
-      const key=[bit,a,b,size,g.fillStyle,scale].join('|');let sprite=cutoutSprites.get(key);
+      const key=[bit,a,b,size,g.fillStyle,scale,state.bitSquare].join('|');let sprite=cutoutSprites.get(key);
       if(!sprite){
         const canvas=document.createElement('canvas'),w=Math.ceil(a*2*scale)+4,h=Math.ceil(b*2*scale)+4;canvas.width=w;canvas.height=h;
         const c=canvas.getContext('2d');c.setTransform(scale,0,0,scale,w/2,h/2);c.fillStyle=g.fillStyle;
-        c.beginPath();c.moveTo(0,-b);c.lineTo(a,0);c.lineTo(0,b);c.lineTo(-a,0);c.closePath();c.fill();
+        api.pathBit(c,a,b);c.fill();
         // Cut only this tile; destination layers remain untouched through the glyph.
         c.globalCompositeOperation='destination-out';c.fillStyle='#000';c.font=`bold ${size}px monospace`;c.textAlign='left';c.textBaseline='alphabetic';c.fillText(bit,...glyphOffset(c,bit,size));
         sprite={canvas,w:w/scale,h:h/scale};if(cutoutSprites.size>=96)cutoutSprites.clear();cutoutSprites.set(key,sprite);
