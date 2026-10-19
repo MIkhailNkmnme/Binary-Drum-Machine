@@ -481,6 +481,17 @@
       for(let index=0;index<bitCenters.length;index++){const [px,py,bit]=bitCenters[index];if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,index,width:bitCell.width,height:bitCell.height};}}
       return best;
     },
+    // «делай две кнопки центров»: mass — среднее центров ромбов (центр масс), tri — центр контура △ (вершина — остриё верхнего ромба, основание — по остриям нижнего ряда)
+    centerPoint(mode){
+      if(!bitCell||window.HubImage?.active||!bitCenters.length)return null;
+      const pts=bitCenters.filter(p=>(p[2]==='0'||p[2]==='1')&&(p[5]||0)>=0);if(!pts.length)return null;
+      const R=Math.max(...pts.map(p=>p[4]));
+      if(mode==='mass'||R<1){let x=0,y=0;for(const p of pts){x+=p[0];y+=p[1];}return {x:x/pts.length,y:y/pts.length};}
+      const at=(r,s)=>{const q=pts.filter(p=>p[4]===r&&p[3]===s);if(!q.length)return null;let x=0,y=0;for(const p of q){x+=p[0];y+=p[1];}return [x/q.length,y/q.length];};
+      const c0=at(0,0),cl=at(R,-R),cr=at(R,R);if(!c0||!cl||!cr)return this.centerPoint('mass');
+      const u=[((cl[0]+cr[0])/2-c0[0])/R,((cl[1]+cr[1])/2-c0[1])/R],k=state.packedBits?1:.9,t=(2*R+k)/3;   // ряд центра контура: (−k + 2(R + k)) / 3
+      return {x:c0[0]+u[0]*t,y:c0[1]+u[1]*t};
+    },
     drawCenterBit(g,p,color=null){
       const size=Math.min(p.width,p.height)*.62,a=p.width*(state.packedBits?.5:.45),b=p.height*(state.packedBits?.5:.45);
       g.fillStyle=color||this.colors().sym;g.globalAlpha=1;

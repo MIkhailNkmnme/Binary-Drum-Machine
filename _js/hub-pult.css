@@ -67,15 +67,21 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{align-self:stretch;min-width:20px;background:var(--hp-arrow,transparent)!important;color:var(--hp-arrow-ink,inherit)!important;font-weight:700}
 #hubPultBot .hpTiltControl .hpL{padding-left:11px}
 #hubPultBot .hpTiltControl .hpR{padding-right:11px}
-#hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{filter:brightness(1.35)!important}
+#hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{color:#fff!important}
 #hubPultBot .hpTiltControl:has(.hpB:hover){outline-color:var(--hp-ink,var(--hp-c))}
 /* v0.284: «пульт тоже в цвет битов» — стрелки ◀ ▶ как ромб нуля, ход и ромб пуска цветом единицы (переменные ставит sync в hub-pult.js) */
 #hubPultBot .hpSpin .zz-pult-shape .glass{fill:var(--hp-b0f,rgba(28,36,51,.35));stroke:color-mix(in srgb,var(--hp-b1,#9fb0c8) 60%,transparent)}
 #hubPultBot .hpSpin .zz-pult-value{color:color-mix(in srgb,var(--hp-b1,#ffe6a8) 55%,#fff)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd){color:var(--hp-b0,#dfe6f5)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):not(:hover):not(.on){background:var(--hp-b0a,rgba(58,84,112,.4))!important}
-:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):hover{background:color-mix(in srgb,var(--hp-b1,#4d6d90) 60%,#000)!important}
-:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd).on{background:var(--hp-b1,#9cc3ec)!important;color:#1c1c22!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{color:#1c1c22!important}
-:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:not(:hover):not([aria-pressed=true]){background:color-mix(in srgb,var(--hp-b1,#5a4a86) 75%,#000)!important}
-:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(:hover,.on,[aria-pressed=true]){background:var(--hp-b1,#7a64b6)!important}
+/* «ширину ромба бегунка в 2 раза сузь» — ромб пуска хаба 24 × 48 (узкий, центр на месте: translateX(-50%)) */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{width:24px!important;font-size:12px!important}
+/* «360 — нажатая не фон меняй и обводку как у кнопок, фон нигде не меняем»: нажатие и наведение — яркая кайма, заливка прежняя */
+#hubPult .hpB:is(:hover,[aria-pressed=true]),#hubPultBot .hpB:is(:hover,[aria-pressed=true]){background:var(--hp-c);filter:none!important}
+#hubPult .hpB:is(:hover,[aria-pressed=true])::before,#hubPultBot .hpB:is(:hover,[aria-pressed=true])::before{background:color-mix(in srgb,color-mix(in srgb,var(--hp-c) 22%,#060606) 65%,rgb(18,26,48))}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):not(.on){background:var(--hp-b0a,rgba(58,84,112,.4))!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd).on{background:var(--hp-b0a,rgba(58,84,112,.4))!important;color:color-mix(in srgb,var(--hp-b1,#9cc3ec) 45%,#fff)!important;text-shadow:0 0 6px var(--hp-b1,#9cc3ec)}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):hover{color:#fff!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{background:color-mix(in srgb,var(--hp-b1,#5a4a86) 75%,#000)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(:hover,.on,[aria-pressed=true]){color:#fff!important}

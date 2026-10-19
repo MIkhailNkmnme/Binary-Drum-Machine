@@ -17,8 +17,8 @@
 (() => {
   'use strict';
   const locked=key=>window.HubLocks?.has(key)===true;
-  const state={centerBitPin:false,unlocked:false,zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,flipRate:1,pan:[0,0],sourcePan:[0,0],spinRate:.25,frameLocked:true,frameStep:.01,spinDirection:1},buffers=new WeakMap();let frame=null,revision=0,centerBitPinButton,scaleText,angleText,rotationValue,minus,plus,flipButton,flipQuick,flipQuickShown=false,perpendicularButton,freezeButton,flipRateRange,flipRateValue,flipRunning=false,flipRaf=0,flipTime=0;
-  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(saved){state.unlocked=!!saved.unlocked;state.centerBitPin=saved.centerBitPin===true;for(const key of ['zoom','angle','flipRate'])if(Number.isFinite(saved[key]))state[key]=saved[key];if(Array.isArray(saved.pan)&&saved.pan.length===2&&saved.pan.every(Number.isFinite))state.pan=saved.pan;}}catch(_){}
+  const state={centerBitPin:false,unlocked:false,zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,flipRate:1,pan:[0,0],sourcePan:[0,0],spinRate:.25,frameLocked:true,frameStep:.01,spinDirection:1},buffers=new WeakMap();let frame=null,revision=0,centerBitPinButton,centerTriPinButton,scaleText,angleText,rotationValue,minus,plus,flipButton,flipQuick,flipQuickShown=false,perpendicularButton,freezeButton,flipRateRange,flipRateValue,flipRunning=false,flipRaf=0,flipTime=0;
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(saved){state.unlocked=!!saved.unlocked;state.centerBitPin=saved.centerBitPin===true||saved.centerBitPin==='mass'?'mass':saved.centerBitPin==='tri'?'tri':false;for(const key of ['zoom','angle','flipRate'])if(Number.isFinite(saved[key]))state[key]=saved[key];if(Array.isArray(saved.pan)&&saved.pan.length===2&&saved.pan.every(Number.isFinite))state.pan=saved.pan;}}catch(_){}
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Array.isArray(saved?.sourcePan)&&saved.sourcePan.length===2&&saved.sourcePan.every(Number.isFinite))state.sourcePan=saved.sourcePan;}catch(_){}
   state.zoom=Math.max(.2,Math.min(6,state.zoom));state.angle=state.angle===360?360:((state.angle%360)+360)%360;
   state.flipRate=Math.max(.1,Math.min(1000,state.flipRate));
@@ -69,19 +69,19 @@
     const hit=(reflected.every(Number.isFinite)?m.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?m.pickBit(...source):null);
     const bit=hit&&m.bitCenter?.(hit.index);if(!bit)return false;
     // A direct choice of another bit takes precedence over the central-bit lock.
-    if(state.centerBitPin&&hit.index!==m.centerBit()?.index)setCenterBitPin(false);
+    if(state.centerBitPin)setCenterBitPin(false);
     const sh=sourceShift();shiftSourceBy(axis[0]-bit.x-sh[0],axis[1]-bit.y-sh[1]);m.clearRotationBit?.();return true;
   }
   function enforceCenterBitPin(axis){
     if(locked('pan')||!state.centerBitPin||!frame||!axis?.every(Number.isFinite))return false;
-    const bit=window.HubMirror?.centerBit?.();if(!bit)return false;
+    const bit=window.HubMirror?.centerPoint?.(state.centerBitPin);if(!bit)return false;
     const next=[(axis[0]-bit.x)/frame.width,(axis[1]-bit.y)/frame.height];
     if(Math.hypot((next[0]-state.sourcePan[0])*frame.width,(next[1]-state.sourcePan[1])*frame.height)<1e-8)return false;
     state.sourcePan=next;revision++;save();
     document.querySelectorAll('#hubMirror,#hubAll,.hubNoteCell,#hubFly').forEach(apply);
     window.dispatchEvent(new Event('hubview'));return true;
   }
-  function setCenterBitPin(on){state.centerBitPin=!!on;centerBitPinButton?.setAttribute('aria-pressed',String(state.centerBitPin));changed();}
+  function setCenterBitPin(mode){state.centerBitPin=mode==='tri'?'tri':mode?'mass':false;centerBitPinButton?.setAttribute('aria-pressed',String(state.centerBitPin==='mass'));centerTriPinButton?.setAttribute('aria-pressed',String(state.centerBitPin==='tri'));changed();}
   // The axis anchor is unchanged by the 3D flip about itself, even edge-on.
   function screenCenterAnchor(){const [cx,cy]=center(),a=state.angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),x=innerWidth/2-cx-state.pan[0],y=innerHeight/2+(matchMedia('(max-width:1100px)').matches?scrollY:0)-cy-state.pan[1];return [cx+(c*x+s*y)/state.zoom,cy+(-s*x+c*y)/state.zoom];}
   function axisInverse(x,y){return inverseWith(matrix(false,true),x,y);}
@@ -201,7 +201,8 @@
   };
   function init(){const settings=document.querySelector('.hubMirrorSettings');if(!settings)return;
     const button=(text,label,action)=>{const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=label;b.setAttribute('aria-label',label);b.onclick=action;settings.append(b);return b;};
-    centerBitPinButton=button('⊙\nБит','Закрепить центральный бит треугольника в центре оси',()=>setCenterBitPin(!state.centerBitPin));centerBitPinButton.classList.add('hubCenterBitPin');centerBitPinButton.setAttribute('aria-pressed',String(state.centerBitPin));
+    centerBitPinButton=button('◇\nЦентр','Закрепить центр ромбов треугольника (центр масс) в центре оси',()=>setCenterBitPin(state.centerBitPin==='mass'?false:'mass'));centerBitPinButton.classList.add('hubCenterBitPin');centerBitPinButton.setAttribute('aria-pressed',String(state.centerBitPin==='mass'));
+    centerTriPinButton=button('△\nЦентр','Закрепить центр контура треугольника в центре оси',()=>setCenterBitPin(state.centerBitPin==='tri'?false:'tri'));centerTriPinButton.classList.add('hubCenterBitPin');centerTriPinButton.setAttribute('aria-pressed',String(state.centerBitPin==='tri'));
     zoomPlay=button('⊙\nЗум ▶','Автозум от центра — пуск / пауза',()=>{resumeZoom=false;if(zoomRunning)stopAutoZoom();else{syncZoomPhase();startAutoZoom();}});zoomPlay.classList.add('hubAutoZoomControl');
     zoomMode=button('','Режим автозума: маятник или сброс',()=>{state.zoomCycle=state.zoomCycle==='reset'?'swing':'reset';syncZoomPhase();syncAutoZoom();save();});zoomMode.classList.add('hubAutoZoomControl');
     const zoomSpeed=document.createElement('details');zoomSpeed.className='hubTilt hubAutoZoomControl';const zoomSpeedHead=document.createElement('summary');zoomSpeedHead.textContent='◷\nЗум';zoomSpeedHead.title='Время одного хода автозума';zoomSpeedHead.setAttribute('aria-label',zoomSpeedHead.title);

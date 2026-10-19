@@ -127,7 +127,7 @@
       let children=[];
       if(g.key==='bits')children=[sub(g,'pattern','△','Рисунок',take(/Узор|hubRowCount/)),sub(g,'turn','↻','Поворот',take(/Наклон|Сброс наклона|hubBitFreeRotation/)),sub(g,'music','♪','Движение',take(/./))];
       if(g.key==='symmetry')children=[...take(/\|Зеркало$/),sub(g,'search','∥','Поиск',take(/Зеркальные оси|Симметрия параллельно/)),sub(g,'limits','≡','Минимумы',take(/./))];
-      if(g.key==='axis')children=[sub(g,'position','⊙','Положение',take(/hubCenterBitPin|Магнит оси/)),sub(g,'turn','↻','Вращение',take(/Вращать ось|hubAxisSpeed/)),...take(/./)];
+      if(g.key==='axis')children=[sub(g,'position','⊙','Положение',take(/hubCenterBitPin|Закрепить центр|Магнит оси/)),sub(g,'turn','↻','Вращение',take(/Вращать ось|hubAxisSpeed/)),...take(/./)];
       if(g.key==='space')children=[sub(g,'zoom','⊙','Автозум',take(/автозума|Автозум/)),sub(g,'planes','3D','Плоскости',take(/./))];
       if(g.key==='file')children=[sub(g,'presets','▤','Состояния',take(/hubSaveState|hubPresetList/)),sub(g,'image','▧','Картинка',take(/./))];
       if(g.key==='flow'){
