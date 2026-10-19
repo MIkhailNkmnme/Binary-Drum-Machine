@@ -132,38 +132,38 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-hx.gz-pair:not(.gz-rainbow){background:color-mix(in srgb,var(--c) 30%,#000)!important}
 .gz-hx.gz-pair::before,.gz-hx.gz-pair:hover::before{background:var(--gz-bg)!important}
 .gz-pair .gz-half{width:calc(var(--gz-n) + 18px);font-size:13px}
-.gz-pair .gz-half:first-child{background:var(--gz-r0);clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 50%,100% 100%,var(--gz-n) 100%);padding-right:4px}
-.gz-pair .gz-half:last-child{background:var(--gz-r1);clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%,8px 50%);padding-left:4px}
+.gz-pair .gz-half.gz-h0{background:var(--gz-r0);clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 50%,100% 100%,var(--gz-n) 100%);padding-right:4px}
+.gz-pair .gz-half.gz-h1{background:var(--gz-r1);clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%,8px 50%);padding-left:4px}
 .gz-pair .gz-half::before{content:"";position:absolute;inset:1.5px;z-index:-1;clip-path:inherit}
-.gz-pair .gz-half:first-child::before{background:var(--gz-f0,var(--gz-bg))}
-.gz-pair .gz-half:last-child::before{background:var(--gz-f1,var(--gz-bg))}
+.gz-pair .gz-half.gz-h0::before{background:var(--gz-f0,var(--gz-bg))}
+.gz-pair .gz-half.gz-h1::before{background:var(--gz-f1,var(--gz-bg))}
 .gz-pair .gz-pm{color:var(--gz-txt,#dfe6f5)}
 /* «тут фон у 1 убери и у 0» — у пары «Прозр.» шевроны без заливки, только кайма; цифры — цветом своего бита */
 .gz-pair.gz-cut .gz-half::before{background:var(--gz-bg)!important}
-.gz-pair.gz-cut .gz-half:last-child{color:var(--gz-f1,inherit)}
+.gz-pair.gz-cut .gz-half.gz-h1{color:var(--gz-f1,inherit)}
 /* «тут 2 кнопки (значок + текст „Ромбы“) и (стык + значок стыка) через \ по центру» — пара gz-split: две половины, косая черта посередине, у каждой своя кайма */
 .gz-pair.gz-split .gz-pm{display:none}
 .gz-pair.gz-split .gz-half{flex:none;width:calc(50% + 4px);padding:0;font-size:11px;font-weight:400;gap:4px;white-space:nowrap}
-.gz-pair.gz-split .gz-half:first-child{clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 100%,var(--gz-n) 100%);padding:0 6px 0 4px}
-.gz-pair.gz-split .gz-half:last-child{margin-left:-7px;clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%);padding:0 4px 0 6px}
+.gz-pair.gz-split .gz-half.gz-h0{clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 100%,var(--gz-n) 100%);padding:0 6px 0 4px}
+.gz-pair.gz-split .gz-half.gz-h1{margin-left:-7px;clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%);padding:0 4px 0 6px}
 .gz-pair.gz-split .gz-half::before{background:var(--gz-bg)!important}
 .gz-pair.gz-split .gz-half.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
 /* наклон черты: gz-bs — «\» (верх левее), без него — «/» */
-.gz-pair.gz-split.gz-bs .gz-half:first-child{clip-path:polygon(0 50%,var(--gz-n) 0,calc(100% - 8px) 0,100% 100%,var(--gz-n) 100%)}
-.gz-pair.gz-split.gz-bs .gz-half:last-child{clip-path:polygon(1px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,9px 100%)}
+.gz-pair.gz-split.gz-bs .gz-half.gz-h0{clip-path:polygon(0 50%,var(--gz-n) 0,calc(100% - 8px) 0,100% 100%,var(--gz-n) 100%)}
+.gz-pair.gz-split.gz-bs .gz-half.gz-h1{clip-path:polygon(1px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,9px 100%)}
 /* «тут также — две половины кнопок через /» — «Прозр.» и «Цвет»: половины 0 / 1 через «/», название поверх по центру */
 .gz-pair.gz-split.gz-mid .gz-pm{display:block;position:absolute;left:0;right:0;top:0;bottom:0;line-height:var(--gz-h);text-align:center;z-index:2;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000}
 .gz-pair.gz-split.gz-mid .gz-half{font-size:13px;font-weight:700}
-.gz-pair.gz-split.gz-mid .gz-half:first-child{justify-content:flex-start;padding-left:calc(var(--gz-n) - 2px)}
-.gz-pair.gz-split.gz-mid .gz-half:last-child{justify-content:flex-end;padding-right:calc(var(--gz-n) - 2px)}
-.gz-pair.gz-split.gz-mid .gz-half:first-child::before{background:var(--gz-f0,var(--gz-bg))!important}
-.gz-pair.gz-split.gz-mid .gz-half:last-child::before{background:var(--gz-f1,var(--gz-bg))!important}
+.gz-pair.gz-split.gz-mid .gz-half.gz-h0{justify-content:flex-start;padding-left:calc(var(--gz-n) - 2px)}
+.gz-pair.gz-split.gz-mid .gz-half.gz-h1{justify-content:flex-end;padding-right:calc(var(--gz-n) - 2px)}
+.gz-pair.gz-split.gz-mid .gz-half.gz-h0::before{background:var(--gz-f0,var(--gz-bg))!important}
+.gz-pair.gz-split.gz-mid .gz-half.gz-h1::before{background:var(--gz-f1,var(--gz-bg))!important}
 .gz-pair.gz-split.gz-mid.gz-cut .gz-half::before{background:var(--gz-bg)!important}
 .gz-pair.gz-split.gz-mid .gz-half.gz-on{color:var(--gz-k,#fff);text-shadow:none}
-.gz-pair.gz-split.gz-mid.gz-cut .gz-half:last-child{color:var(--gz-f1,inherit)}
+.gz-pair.gz-split.gz-mid.gz-cut .gz-half.gz-h1{color:var(--gz-f1,inherit)}
 .gz-pair.gz-split.gz-rainbow .gz-half{background:transparent}
 /* правая половина пары не вылезает за кнопку (была шире на 1 px — кайма у острия срезалась) */
-.gz-pair.gz-split .gz-half:last-child{width:calc(50% + 3px)}
+.gz-pair.gz-split .gz-half.gz-h1{width:calc(50% + 3px)}
 /* числа по бокам бегунка (gz-sl2): прежнее «96 / 128» по центру спрятано */
 .gz-sl2 .gz-mid>.gz-v{display:none}
 .gz-sl2 .gz-vl,.gz-sl2 .gz-vr{position:absolute;top:50%;transform:translateY(-50%);padding:0 3px;background:var(--gz-bg);border-radius:2px;pointer-events:none;font-variant-numeric:tabular-nums;font-size:11px;line-height:14px}
