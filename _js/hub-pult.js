@@ -137,7 +137,8 @@
         c.style.setProperty('--hp-c', color);
         c.style.setProperty('--hp-fill', rgba(color, a));
         c.style.setProperty('--hp-ink', b === '0' ? color : '#1c1c22');
-        c.style.setProperty('--hp-arrow', b === '0' ? rgba(color, Math.min(1, a + .25)) : 'color-mix(in srgb,' + color + ' 62%,#000)');
+        c.style.setProperty('--hp-arrow', b === '0' ? color : 'color-mix(in srgb,' + color + ' 40%,#000)');   // «не вижу» стрелок: стрелка — наоборот к детали, знак контрастом к своему фону
+        c.style.setProperty('--hp-arrow-ink', b === '0' ? '#1c1c22' : color);
       }
     }
   }

@@ -64,7 +64,7 @@ body.hubZen #hubPultBot{display:none}
 /* v0.284: «углы в цвет соответствующих битов» — деталь как ромб своего бита (0 — тёмная, цифры цветом; 1 — цветная, цифры тёмные); «и стрелки выдели фоном» */
 #hubPultBot .hpTiltControl{color:var(--hp-ink,var(--hp-c));background:var(--hp-fill,color-mix(in srgb,var(--hp-c) 22%,transparent))}
 #hubPultBot .hpTiltControl .hpB{color:var(--hp-ink,var(--hp-c))}
-#hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{align-self:stretch;min-width:20px;background:var(--hp-arrow,transparent)!important}
+#hubPultBot .hpTiltControl .hpL,#hubPultBot .hpTiltControl .hpR{align-self:stretch;min-width:20px;background:var(--hp-arrow,transparent)!important;color:var(--hp-arrow-ink,inherit)!important;font-weight:700}
 #hubPultBot .hpTiltControl .hpL{padding-left:11px}
 #hubPultBot .hpTiltControl .hpR{padding-right:11px}
 #hubPultBot .hpTiltControl .hpL:hover,#hubPultBot .hpTiltControl .hpR:hover{filter:brightness(1.35)!important}
