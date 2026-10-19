@@ -141,11 +141,12 @@
         }
         b.addEventListener('keydown', e => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } });
       }
-      // соты: столбец k%2; второй начинается на полкнопки выше первого (слово владельца 19.10: «второй ряд начинать выше»), первый — в его выемке
+      // соты: столбец k%2; первый — сразу под шапкой, второй на полкнопки выше и заходит в выемку шапки и первого
+      // (слово владельца 19.10: «второй ряд начинать выше», «между заголовком и первым ниже не должно быть пустоты»)
       const s = getComputedStyle(root), W = parseFloat(s.getPropertyValue('--gz-w')) || 120, H = parseFloat(s.getPropertyValue('--gz-h')) || 24, N = parseFloat(s.getPropertyValue('--gz-n')) || 12, DY = H + 3;
-      cells.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY + (cells.length > 1 ? 1 - col : 0) * DY / 2) + 'px'; });
+      cells.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY - col * DY / 2) + 'px'; });
       const rows = Math.ceil(cells.length / 2);
-      soty.style.height = cells.length ? (rows * DY + (cells.length > 1 ? DY / 2 : 0) - 3) + 'px' : '0';
+      soty.style.height = cells.length ? (rows * DY - 3) + 'px' : '0';
       if (cells.length) box.append(soty);
       if (wide.children.length) box.append(wide);
       root.append(box);
