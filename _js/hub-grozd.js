@@ -61,7 +61,7 @@
     const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
     for (const g of T.groups) {
       if (!out.has(g.key) || !g.root) continue;
-      let pat = null, glyph = null;
+      let pat = null, glyph = null; const toBits = {};
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
         const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
         const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
@@ -87,7 +87,8 @@
                 set: i => pat[i]?.click(), options: pat.map((b, i) => ({ v: i, name: (NAMES.find(([re]) => re.test(b.getAttribute('aria-label'))) || [])[2] || txt(b.getAttribute('aria-label')).replace(/^Узор: /, ''), icon: txt(b.textContent) })) }, 'bits|pattern'); }
             continue;
           }
-          add(SOUND.test(c.id) ? 'sound' : TO_BITS.test(c.id) ? 'bits' : g.key, fa(fc(leafItem(c))), c.id);
+          if (TO_BITS.test(c.id)) { toBits[c.id.replace(/^colour\|/, '')] = c; continue; }
+          add(SOUND.test(c.id) ? 'sound' : g.key, fa(fc(leafItem(c))), c.id);
         }
       };
       const root = g.root;
@@ -96,6 +97,15 @@
         if (b) add('file', { type: 'toggle', icon: '▤', name: 'Шаблоны', tip: 'Открыть список шаблонов', on: () => b.getAttribute('aria-expanded') === 'true', click: () => b.click() }, 'file'); }
       else if (root.action) add(g.key, g.key === 'flow' || g.key === 'axis' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
       walk(root, !root.gate || !!gateOn(root));
+      if (g.key === 'colour') {   // «прозрачности объедини в одну кнопку, обводку пополам, и цвета 1 и 0 так же; прозрачности — в цвет битов, слово „Прозр.“ убери, и „Цвет“ — но там обводка радугой»
+        const pc = () => { const c = window.HubMirror?.colors?.() || {}, a = window.HubMirror?.state?.zeroAlpha ?? .18, z = c.zero || c.bit || '#8fd3ff';
+          return { f0: 'color-mix(in srgb,' + z + ' ' + Math.round(a * 100) + '%,#060a12)', k0: z, f1: c.bit || '#8fd3ff', k1: '#1c1c22' }; };
+        const part = (key, d) => { const c = toBits[key]; if (!c) return null; const it = leafItem(c);
+          return { label: d, tip: it.tip, on: it.on, click: it.click, open: it.open, fill: () => pc()['f' + d], ink: () => pc()['k' + d] }; };
+        const t0 = part('Прозрачные цифры 0', '0'), t1 = part('Прозрачные цифры 1', '1'), c0 = part('Цвет нулей оригинала', '0'), c1 = part('Цвет битов оригинала', '1');
+        if (t0 && t1) add('bits', { type: 'pair', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
+        if (c0 && c1) add('bits', { type: 'pair', cls: 'gz-rainbow', name: 'Цвет', tip: 'Цвет битов: 0 · 1', parts: [c0, c1] }, 'bits|colors');
+      }
       if (g.key === 'colour') {   // образцы палитры — одним списком
         const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);
         if (sw.length) add('bits', { type: 'list', compact: true, icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),

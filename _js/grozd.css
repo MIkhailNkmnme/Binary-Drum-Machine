@@ -97,3 +97,10 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-md i{font-style:normal;color:color-mix(in srgb,var(--c) 35%,#000);line-height:1}
 .gz-md i.on{color:color-mix(in srgb,var(--c) 60%,#fff)}
 .gz-md{gap:2px} .gz-md i{width:4px;height:4px;border-radius:50%;background:currentColor}
+.gz-hx.gz-pair{padding:0;gap:0}
+.gz-hx.gz-pair::before,.gz-hx.gz-pair:hover::before{background:linear-gradient(90deg,var(--gz-f0,var(--gz-bg)) 50%,var(--gz-f1,var(--gz-bg)) 50%)!important}
+.gz-pair .gz-half{flex:1 1 0;align-self:stretch;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gz-k,inherit);cursor:pointer}
+.gz-pair .gz-half+.gz-half{box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c) 60%,transparent)}
+.gz-pair .gz-half:hover{text-shadow:0 0 6px currentColor}
+.gz-pair .gz-half.gz-on{color:transparent;-webkit-text-stroke:1.2px var(--gz-k,#fff)}
+.gz-hx.gz-rainbow,.gz-hx.gz-rainbow:not(.gz-on):not(.gz-head){background:linear-gradient(90deg,#ff4d4d,#ffb84d,#fff04d,#5dff6a,#4de3ff,#5a7dff,#d45aff)!important}
