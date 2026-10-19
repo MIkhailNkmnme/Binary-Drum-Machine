@@ -138,3 +138,6 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-pair .gz-half:first-child::before{background:var(--gz-f0,var(--gz-bg))}
 .gz-pair .gz-half:last-child::before{background:var(--gz-f1,var(--gz-bg))}
 .gz-pair .gz-pm{color:var(--gz-txt,#dfe6f5)}
+/* «тут фон у 1 убери и у 0» — у пары «Прозр.» шевроны без заливки, только кайма; цифры — цветом своего бита */
+.gz-pair.gz-cut .gz-half::before{background:var(--gz-bg)!important}
+.gz-pair.gz-cut .gz-half:last-child{color:var(--gz-f1,inherit)}
