@@ -46,3 +46,12 @@ body.hubZen #hubPult{display:none}
 #hubPultBot .hpSpin .zz-pult-value{cursor:text;font:11px/48px ui-monospace,monospace!important;color:#ffe6a8!important;text-shadow:0 1px 2px #000}
 body.hubZen #hubPultBot{display:none}
 @media(max-width:1100px){#hubPultBot{display:none!important}}
+/* v0.282: «ширину уменьши, чтоб 100% поместилось, 100% текстом меньшим шрифтом, фон ещё слабее, и у пульта внизу слабее, и его ещё ниже до края» */
+#hubPult .hpZoom .hpB{width:46px;min-width:0;height:26px;padding:0 6px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
+#hubPult .hpZoom .hpVal{font-size:10px;letter-spacing:-.2px}
+#hubPult,#hubPultBot{--hp-bg:rgba(18,26,48,.35)}
+#hubPult .hpB:not(:hover):not([aria-pressed=true]),#hubPultBot .hpB:not(:hover):not([aria-pressed=true]){background:color-mix(in srgb,var(--hp-c) 22%,transparent)}
+#hubPultBot{bottom:0}
+#hubPultBot .hpSpin .zz-pult-shape .glass{fill:rgba(28,36,51,.35);stroke:rgba(159,176,200,.5)}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):not(:hover):not(.on){background:rgba(58,84,112,.4)!important}
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:not(:hover):not([aria-pressed=true]){background:rgba(90,74,134,.55)!important}
