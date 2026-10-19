@@ -270,7 +270,7 @@
       const label = document.createElement('label'), range = document.createElement('input'), value = document.createElement('output');
       range.type = 'range'; range.min = state.bitFreeRotation?'-180':'-60'; range.max = state.bitFreeRotation?'180':'60'; range.step = '1'; range.value = state[key];
       range.setAttribute('aria-label', 'Наклон ромбов ' + bit); value.textContent = state[key] + '°';
-      const tilt=document.createElement('details'),summary=document.createElement('summary');tilt.className='hubTilt';summary.title='Наклон ромбов '+bit;summary.append(document.createTextNode(bit+' · '),value);label.append(range);tilt.append(summary,label);settings.append(tilt);
+      const tilt=document.createElement('details'),summary=document.createElement('summary');tilt.className='hubTilt';summary.title='Наклон ромбов '+bit;summary.append(value);label.append(range);tilt.append(summary,label);settings.append(tilt);
       range.addEventListener('input', () => { if(locked(key)){range.value=state[key];return;}state[key] = bitRotation(Number(range.value)); range.value=state[key]; value.textContent = state[key] + '°'; changed(); });
       range.addEventListener('change', save);
     }

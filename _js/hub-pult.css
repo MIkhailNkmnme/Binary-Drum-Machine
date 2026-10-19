@@ -55,3 +55,9 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpSpin .zz-pult-shape .glass{fill:rgba(28,36,51,.35);stroke:rgba(159,176,200,.5)}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult :is(.zz-pult-back,.zz-pult-fwd):not(:hover):not(.on){background:rgba(58,84,112,.4)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:not(:hover):not([aria-pressed=true]){background:rgba(90,74,134,.55)!important}
+/* v0.283: наклон — одна деталь, стрелки и градусы цветом своего бита. */
+#hubPultBot .hpTiltControl{display:flex;align-items:center;height:30px;margin:0 3px;color:var(--hp-c);background:color-mix(in srgb,var(--hp-c) 22%,transparent);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+#hubPultBot .hpTiltControl .hpB{margin:0;min-width:24px;padding:0 6px;color:inherit;background:transparent!important;clip-path:none;filter:none!important}
+#hubPultBot .hpTiltControl .hpB::before{display:none}
+#hubPultBot .hpTiltControl .hpTilt{min-width:42px}
+#hubPultBot .hpTiltControl:has(.hpB:hover){outline:1px solid var(--hp-c);outline-offset:-2px}

@@ -52,7 +52,8 @@
     const fwd = btn('zz-pult-fwd', '▶', 'Стоит — повернуть поле на +15°; крутится — быстрее', press(old.right));
     range = el('input', 'zz-pult-range'); range.type = 'range'; range.min = 0; range.max = 601; range.step = 1; range.setAttribute('aria-label', 'Скорость вращения');
     range.addEventListener('input', () => { const r = old.range(); if (!r) return; r.value = range.value; fire(r, 'input'); sync(); });
-    play = btn('zz-pult-play', '▶', 'Вращение треугольника: пуск / пауза · тянуть вдоль — скорость', press(old.play));
+    play = btn('zz-pult-play', '▶', 'Вращение треугольника: пуск / пауза · тянуть вдоль — скорость · двойной щелчок — стоп и 0°', press(old.play));
+    play.addEventListener('dblclick', e => { e.preventDefault(); range.value = 0; fire(range, 'input'); sync(); });
     // ромб тянется как ползунок (щелчок без сдвига — пуск / пауза)
     play.addEventListener('pointerdown', e => {
       if (e.button) return; e.preventDefault(); const x0 = e.clientX, v0 = +range.value, w = window.ZerkPult?.trackWidth(pult) || 200; let moved = false;
@@ -71,13 +72,15 @@
     frame = btn('hpFrame', '▣ кадр', 'Точный шаг вращения на каждый кадр', press(old.frame));
     br.append(frame);
     for (const b of ['0', '1']) {
+      const control = el('span', 'hpTiltControl'); control.dataset.bit = b;
+      control.setAttribute('role', 'group'); control.setAttribute('aria-label', 'Наклон битов ' + b);
       const l = btn('hpL', '◂', 'Наклон битов ' + b + ' — против часовой на 15° (Shift — на 1°), удержание — дальше', () => {}),
         r = btn('hpR', '▸', 'Наклон битов ' + b + ' — по часовой на 15° (Shift — на 1°), удержание — дальше', () => {});
       hold(l, e => tiltBy(b, e.shiftKey ? -1 : -15)); hold(r, e => tiltBy(b, e.shiftKey ? 1 : 15));
-      tiltV[b] = el('output', 'hpB hpVal hpTilt', b + ' · 0°', 'Наклон битов ' + b + ' · колесо — на 1° · двойной щелчок — 0°');
+      tiltV[b] = el('output', 'hpB hpVal hpTilt', '0°', 'Наклон битов ' + b + ' · колесо — на 1° · двойной щелчок — 0°');
       tiltV[b].addEventListener('dblclick', () => { const x = old.tilt(b); if (x && +x.value !== 0) { x.value = 0; fire(x, 'input'); fire(x, 'change'); } sync(); });   // v0.280: двойной щелчок — 0°
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
-      br.append(l, tiltV[b], r);
+      control.append(l, tiltV[b], r); br.append(control);
     }
     br.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
@@ -103,7 +106,12 @@
     window.ZerkPult?.sync(pult, (+range.value || 0) / 601);
     frame.setAttribute('aria-pressed', old.frame()?.getAttribute('aria-pressed') || 'false');
     free.setAttribute('aria-pressed', old.free()?.getAttribute('aria-pressed') || 'false');
-    for (const b of ['0', '1']) { const x = old.tilt(b), v = b + ' · ' + (x ? x.value : 0) + '°'; if (tiltV[b].textContent !== v) tiltV[b].textContent = v; }
+    const colors = window.HubMirror?.colors();
+    for (const b of ['0', '1']) {
+      const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
+      const color = colors?.[b === '0' ? 'zero' : 'bit'];
+      if (color) tiltV[b].parentElement.style.setProperty('--hp-c', color);
+    }
   }
 
   function init() {
