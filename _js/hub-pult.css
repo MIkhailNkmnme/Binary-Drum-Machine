@@ -129,3 +129,5 @@ body.hubZen #hubPultBot{display:none}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play{width:18px!important;height:36px!important;line-height:36px!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-value{height:36px!important;line-height:36px!important}
 #hubPultBot .hpSpin .zz-pult-value{line-height:36px!important}
+/* «обводку толстую по бокам, когда плей играет» — у ромба пуска при игре яркие толстые бока (рамка 4 px слева и справа, острия ромба) */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(.on,[aria-pressed=true]){box-sizing:border-box!important;border-left:4px solid #fff!important;border-right:4px solid #fff!important;background-clip:padding-box!important;filter:drop-shadow(0 0 0 transparent)}
