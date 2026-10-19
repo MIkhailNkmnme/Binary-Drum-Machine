@@ -64,7 +64,8 @@
     });
     rateV = el('span', 'zz-pult-value hpRate', '', 'Шаг за кадр и обороты за кадр · щелчок — ввести точно (дробь 1/2 или число)');
     rateV.addEventListener('click', e => { e.stopPropagation(); const x = old.exact(); if (!x) return; const v = prompt('Обороты за кадр: дробь 1/2 или число 0.5', x.value); if (v == null) return; x.value = v; fire(x, 'input'); fire(x, 'change'); sync(); });
-    pult.append(back, range, play, rateV, fwd);
+    const thLine = el('span', 'hpThLine');   // «при наведении на бегунок — вертикальный пунктир поверх, чуть выше»
+    pult.append(back, range, play, rateV, fwd, thLine);
     range.addEventListener('dblclick', () => { range.value = 0; fire(range, 'input'); });   // v0.280: двойной щелчок по дорожке — скорость 0
 
     // 3. кадр и поворот битов: ▣ кадр · 0 ◂ 0° ▸ · 1 ◂ 0° ▸ · ↺ · 360°

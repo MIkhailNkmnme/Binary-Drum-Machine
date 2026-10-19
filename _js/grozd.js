@@ -109,7 +109,7 @@
             b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'), TH = 8; mid.prepend(th);
             // «числа до и после бегунка»: «96 / 128» — 96 слева от бегунка, 128 справа; у края число не уходит за дорожку
             const vl = el('span', 'gz-vl'), vr = el('span', 'gz-vr'); mid.append(vl, vr); b.classList.add('gz-sl2');
-            refreshers.push(() => { const f = Math.max(0, Math.min(1, it.frac())); th.style.left = 'calc(' + TH + 'px + ' + (f * 100) + '% - ' + (2 * TH * f) + 'px)';
+            refreshers.push(() => { const f = Math.max(0, Math.min(1, it.frac())); th.style.left = 'calc(' + TH + 'px + ' + (f * 100) + '% - ' + (2 * TH * f) + 'px)'; mid.style.setProperty('--thx', th.style.left);
               const t = String(it.get()), k = t.indexOf('/'), a = (k < 0 ? t : t.slice(0, k)).trim(), z = k < 0 ? '' : t.slice(k + 1).trim();
               if (vl.textContent !== a) vl.textContent = a; if (vr.textContent !== z) vr.textContent = z;
               const W = mid.clientWidth, x = TH + f * (W - 2 * TH), g = 10, lw = vl.offsetWidth, rw = vr.offsetWidth;

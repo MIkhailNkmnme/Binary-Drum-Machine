@@ -131,3 +131,6 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpSpin .zz-pult-value{line-height:36px!important}
 /* «обводку толстую по бокам, когда плей играет» — у ромба пуска при игре яркие толстые бока (рамка 4 px слева и справа, острия ромба) */
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult .zz-pult-play:is(.on,[aria-pressed=true]){box-sizing:border-box!important;border-left:4px solid #fff!important;border-right:4px solid #fff!important;background-clip:padding-box!important;filter:drop-shadow(0 0 0 transparent)}
+/* пунктир над ромбом пуска при наведении */
+#hubPultBot .hpThLine{position:absolute;left:var(--zz-tx,50%);top:-4px;bottom:-4px;width:0;border-left:1px dotted #fff;z-index:6;pointer-events:none;display:none}
+#hubPultBot .zz-pult:has(.zz-pult-play:hover) .hpThLine{display:block}
