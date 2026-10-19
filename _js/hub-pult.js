@@ -82,10 +82,9 @@
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
       control.append(l, tiltV[b], r); br.append(control);
     }
-    const pair = el('span', 'hpPair');   // «в одну обводку пополам» — ↺ и 360° одной деталью
-    pair.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));
+    br.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));   // «360 отсюда вообще убери, а сброс поворотов в цвет битов»: ↺ — половина цветом 0, половина цветом 1
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
-    pair.append(free); br.append(pair);
+    // 360° на пульте не показывается (кнопка «360°» осталась в рейке); free живёт для sync
 
     // v0.280: «пульт в самый низ в одну строку справа, слева от ползунка» — масштаб у креста столбиком, вращение и биты — строкой внизу справа
     const bot = el('div'); bot.id = 'hubPultBot'; bot.className = 'hpRow';
@@ -130,7 +129,7 @@
     if (bot && colors?.bit) {   // v0.284: «пульт тоже в цвет битов»
       const a0 = window.HubMirror?.state?.zeroAlpha ?? .18, z = colors.zero || colors.bit;
       bot.style.setProperty('--hp-b1', colors.bit); bot.style.setProperty('--hp-b0', z);
-      bot.style.setProperty('--hp-b0f', rgba(z, a0)); bot.style.setProperty('--hp-b0a', rgba(z, Math.min(1, a0 + .25)));
+      bot.style.setProperty('--hp-b0f', rgba(z, a0)); bot.style.setProperty('--hp-b0a', rgba(z, Math.min(1, a0 + .25))); bot.style.setProperty('--hp-b0o', 'color-mix(in srgb,' + z + ' ' + Math.round(a0 * 100) + '%,#060606)');
     }
     for (const b of ['0', '1']) {
       const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
