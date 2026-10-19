@@ -29,7 +29,7 @@
       const inp = n.querySelector('input'), out = n.querySelector('summary output'), v = VALS.find(([re]) => re.test(r.id));
       const lo = () => inp.min === '' ? -Infinity : +inp.min, hi = () => inp.max === '' ? Infinity : +inp.max, st = () => parseFloat(inp.step) || 1;
       const put = x => { x = Math.max(lo(), Math.min(hi(), x)); const d = (String(inp.step).split('.')[1] || '').length; inp.value = d ? x.toFixed(d) : String(Math.round(x)); fire(inp); };
-      return { type: 'value', name: v ? v[1] : cut(icName(n) || tip), tip,
+      return { type: 'value', name: v ? v[1] : cut(icName(n) || tip), tip, zero: () => put(0),   // v0.280: двойной щелчок по ползунку — 0 (или ближайшее разрешённое)
         get: () => /Наклон ромбов/.test(r.id) ? txt(n.querySelector('summary')?.textContent) : txt(out?.textContent || n.querySelector('.hubSlV')?.textContent || inp.value),   // v0.266: наклон — с номером бита («0 · 0°»)
         step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .1 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); },
         // v0.263: «ползунком» — значение тянут по дорожке (grozd.js рисует бегунок), стрелки и колесо — шаг
@@ -136,7 +136,8 @@
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
         const wideOf = i => ['value', 'list', 'control'].includes(i.type) && !i.compact, a = g.items.filter(i => !wideOf(i)), b = g.items.filter(wideOf);
-        a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; const k = rgKey(it); if (cells[i] && k) cells[i].dataset.rgKey = k; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip; }); }
+        a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; const k = rgKey(it); if (cells[i] && k) cells[i].dataset.rgKey = k; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip;
+          if (wide[i] && it.zero) (wide[i].querySelector('.gz-mid') || wide[i]).addEventListener('dblclick', e => { e.stopPropagation(); it.zero(); rail.refresh(); }); }); }   // «везде двойной клик по ползункам — в 0»
       return true;
     }
     const place = () => {

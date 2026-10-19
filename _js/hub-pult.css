@@ -1,6 +1,6 @@
 /* Hub v0.278: пульт у креста (hub-pult.js) — масштаб строкой, вращение общим пультом пуска, поворот битов. Только на компьютере;
    на телефоне — прежние кнопки #hubZoom. */
-#hubPult{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+#hubPult,#hubPultBot{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;align-items:flex-end;gap:8px;
   font:12px/1 system-ui,sans-serif;color:var(--hub-theme-bit,#dfe6f5);--hp-c:#7cbcff;--hp-bg:#121a30}
 #hubPult .hpRow{display:flex;align-items:center}
 #hubPult .hpB{box-sizing:border-box;position:relative;height:30px;min-width:30px;margin:0 -3px;padding:0 12px;border:0;display:flex;align-items:center;justify-content:center;
@@ -24,3 +24,25 @@
 @media(min-width:1101px){body.hubPultOn #hubZoom>:not(#hubColorPanel){display:none!important}}
 body.hubZen #hubPult{display:none}
 @media(max-width:1100px){#hubPult{display:none!important}}
+/* v0.280: масштаб — столбиком у креста; вращение и биты — одной строкой внизу справа */
+#hubPult .hpZoom{flex-direction:column;align-items:center;gap:4px}
+#hubPult .hpZoom .hpB{margin:0;width:64px}
+#hubPult .hpZoom .hpHome{margin:0 0 4px}
+#hubPultBot{top:auto;bottom:8px;right:64px;transform:none;flex-direction:row;align-items:center;gap:10px}
+#hubPultBot,#hubPultBot .hpB{font:12px/1 system-ui,sans-serif;color:var(--hub-theme-bit,#dfe6f5)}
+#hubPultBot .hpB{box-sizing:border-box;position:relative;isolation:isolate;height:30px;min-width:30px;margin:0 -3px;padding:0 12px;border:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;cursor:pointer;
+  background:color-mix(in srgb,var(--hp-c) 40%,#000);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+#hubPultBot .hpB::before{content:"";position:absolute;inset:1.5px;z-index:-1;background:var(--hp-bg);clip-path:inherit}
+#hubPultBot .hpB:hover,#hubPultBot .hpB[aria-pressed=true]{background:var(--hp-c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--hp-c) 70%,transparent))}
+#hubPultBot .hpB[aria-pressed=true]{color:#fff}
+#hubPultBot .hpB:active::before{background:#04060b}
+#hubPultBot .hpVal{min-width:58px;cursor:ns-resize;font-variant-numeric:tabular-nums}
+#hubPultBot .hpL,#hubPultBot .hpR{font-size:15px;font-weight:700}
+#hubPultBot .hpBits{--hp-c:#8fd3ff;display:flex;align-items:center}
+#hubPultBot .hpFrame{--hp-c:#ffb36b;margin-right:6px}
+#hubPultBot .hpReset,#hubPultBot .hpFree{margin-left:3px}
+#hubPultBot .hpTilt+.hpR{margin-right:4px}
+#hubPultBot .hpSpin{position:relative;width:260px}
+#hubPultBot .hpSpin .zz-pult-value{cursor:text;font:11px/48px ui-monospace,monospace!important;color:#ffe6a8!important;text-shadow:0 1px 2px #000}
+body.hubZen #hubPultBot{display:none}
+@media(max-width:1100px){#hubPultBot{display:none!important}}

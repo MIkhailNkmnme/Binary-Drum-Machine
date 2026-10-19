@@ -44,7 +44,7 @@
     scaleV.addEventListener('wheel', e => { e.preventDefault(); (e.deltaY < 0 ? old.plus() : old.minus())?.click(); sync(); }, { passive: false });
     scaleV.addEventListener('dblclick', () => { old.home()?.click(); sync(); });
     zr.append(btn('hpHome', '⌂', 'Вернуть рисунок и ось в центр: масштаб 100%, повороты 0°, остановить вращение', press(old.home)),
-      btn('hpL', '−', 'Уменьшить масштаб', press(old.minus)), scaleV, btn('hpR', '+', 'Увеличить масштаб', press(old.plus)));
+      btn('hpR', '+', 'Увеличить масштаб', press(old.plus)), scaleV, btn('hpL', '−', 'Уменьшить масштаб', press(old.minus)));   // v0.280: «масштаб оставь и переверни вертикально» — сверху вниз ⌂ + 100% −
 
     // 2. вращение — общий пульт пуска (zz-pult): ◀ ▶, ромб пуска на дорожке скорости, подпись
     pult = el('div', 'zz-pult hpSpin');
@@ -64,6 +64,7 @@
     rateV = el('span', 'zz-pult-value hpRate', '', 'Шаг за кадр и обороты за кадр · щелчок — ввести точно (дробь 1/2 или число)');
     rateV.addEventListener('click', e => { e.stopPropagation(); const x = old.exact(); if (!x) return; const v = prompt('Обороты за кадр: дробь 1/2 или число 0.5', x.value); if (v == null) return; x.value = v; fire(x, 'input'); fire(x, 'change'); sync(); });
     pult.append(back, range, play, rateV, fwd);
+    range.addEventListener('dblclick', () => { range.value = 0; fire(range, 'input'); });   // v0.280: двойной щелчок по дорожке — скорость 0
 
     // 3. кадр и поворот битов: ▣ кадр · 0 ◂ 0° ▸ · 1 ◂ 0° ▸ · ↺ · 360°
     const br = el('div', 'hpRow hpBits');
@@ -73,7 +74,8 @@
       const l = btn('hpL', '◂', 'Наклон битов ' + b + ' — против часовой на 15° (Shift — на 1°), удержание — дальше', () => {}),
         r = btn('hpR', '▸', 'Наклон битов ' + b + ' — по часовой на 15° (Shift — на 1°), удержание — дальше', () => {});
       hold(l, e => tiltBy(b, e.shiftKey ? -1 : -15)); hold(r, e => tiltBy(b, e.shiftKey ? 1 : 15));
-      tiltV[b] = el('output', 'hpB hpVal hpTilt', b + ' · 0°', 'Наклон битов ' + b + ' · колесо — на 1°');
+      tiltV[b] = el('output', 'hpB hpVal hpTilt', b + ' · 0°', 'Наклон битов ' + b + ' · колесо — на 1° · двойной щелчок — 0°');
+      tiltV[b].addEventListener('dblclick', () => { const x = old.tilt(b); if (x && +x.value !== 0) { x.value = 0; fire(x, 'input'); fire(x, 'change'); } sync(); });   // v0.280: двойной щелчок — 0°
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
       br.append(l, tiltV[b], r);
     }
@@ -81,7 +83,12 @@
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
     br.append(free);
 
-    box.append(zr, pult, br); document.body.append(box); document.body.classList.add('hubPultOn');
+    // v0.280: «пульт в самый низ в одну строку справа, слева от ползунка» — масштаб у креста столбиком, вращение и биты — строкой внизу справа
+    const bot = el('div'); bot.id = 'hubPultBot'; bot.className = 'hpRow';
+    for (const t of ['pointerdown', 'dblclick', 'contextmenu']) bot.addEventListener(t, e => e.stopPropagation());
+    bot.addEventListener('wheel', e => e.stopPropagation(), { passive: true });
+    bot.append(br, pult);
+    box.append(zr); document.body.append(box, bot); document.body.classList.add('hubPultOn');
   }
 
   function sync() {
