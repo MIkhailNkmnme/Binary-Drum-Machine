@@ -12,12 +12,12 @@
   body.hubMobButtons #hubFieldTools.hubMirrorSettings{left:0;width:100%;max-height:none;height:calc(100dvh - 68px);overflow:visible;flex-wrap:nowrap;align-content:flex-start;justify-content:space-between;gap:0}
   body.hubMobButtons #hubFieldTools .hubFieldSlot{flex:0 0 auto;min-width:0}
   body.hubMobButtons #hubMobSwitch{background:color-mix(in srgb,var(--hub-theme-accent) 30%,var(--hub-theme-bg))}
-  body.hubMobButtons #hubFieldTools .hubFieldSlot[data-group=motion],body.hubMobButtons #hubZoom,body.hubMobButtons #hubRombGrid,body.hubMobButtons #hubMirror{display:none!important}
+  body.hubMobButtons #hubFieldTools .hubFieldSlot[data-group=motion],body.hubMobButtons #hubZoom,body.hubMobButtons .hubRombGrid,body.hubMobButtons #hubMirror{display:none!important}
   body.hubMobButtons{overflow:hidden}
   body.hubZen #hubMobSwitch{display:none}
 }
 /* Hub v0.258: прокрутили к кнопкам страниц — пульт поля не налезает на них (прячется, вернётся наверху). */
 @media(max-width:1100px){
-  body.hubMobCanvas #hubFieldTools,body.hubMobCanvas #hubZoom,body.hubMobCanvas #hubRombGrid,body.hubMobCanvas #hubMirror,body.hubMobCanvas #hubMirrorViewport,body.hubMobCanvas #hubZenToggle{transition:opacity .2s,visibility .2s}
-  body.hubMobCanvas.hubMobScrolled #hubFieldTools,body.hubMobCanvas.hubMobScrolled #hubZoom,body.hubMobCanvas.hubMobScrolled #hubRombGrid,body.hubMobCanvas.hubMobScrolled #hubMirror,body.hubMobCanvas.hubMobScrolled #hubMirrorViewport,body.hubMobCanvas.hubMobScrolled #hubZenToggle{opacity:0;visibility:hidden;pointer-events:none}
+  body.hubMobCanvas #hubFieldTools,body.hubMobCanvas #hubZoom,body.hubMobCanvas .hubRombGrid,body.hubMobCanvas #hubMirror,body.hubMobCanvas #hubMirrorViewport,body.hubMobCanvas #hubZenToggle{transition:opacity .2s,visibility .2s}
+  body.hubMobCanvas.hubMobScrolled #hubFieldTools,body.hubMobCanvas.hubMobScrolled #hubZoom,body.hubMobCanvas.hubMobScrolled .hubRombGrid,body.hubMobCanvas.hubMobScrolled #hubMirror,body.hubMobCanvas.hubMobScrolled #hubMirrorViewport,body.hubMobCanvas.hubMobScrolled #hubZenToggle{opacity:0;visibility:hidden;pointer-events:none}
 }

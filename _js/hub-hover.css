@@ -6,12 +6,12 @@
 :root{--hub-hover-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpolygon points='50,9 91,50 50,91 9,50' fill='none' stroke='%23fff' stroke-width='1.5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")}
 #hubFieldTools .hubRhomb:hover,#hubFieldTools summary:hover,#hubZoom>button:hover,#hubZoom .hub-turn-half:hover,#hubZoom button:hover,
 #hubPNG:hover,#hubRec:hover,#hubBitPacking:hover,#hubBitPacking:focus-visible,#hubZenToggle:hover,#hubZenToggle:focus-visible,
-#hubSidebarToggle:hover,#hubSidebarToggle:focus-visible,#hubPresetsPanel .hubRhomb:hover,#hubRombGrid .hubRgCell:hover,#hubRombGrid .hubRgCell.over,
+#hubSidebarToggle:hover,#hubSidebarToggle:focus-visible,#hubPresetsPanel .hubRhomb:hover,.hubRombGrid .hubRgCell:hover,.hubRombGrid .hubRgCell.over,
 .hubBitView .hubBitViewOptions .hubRhomb:hover{filter:none!important;outline:0!important}
 #hubFieldTools .hubRhomb:not([aria-pressed=true]):not(:has(input:checked)):hover,#hubFieldTools summary:not([aria-pressed=true]):hover,
 #hubZoom>button:not([aria-pressed=true]):hover,#hubZoom .hub-turn-half:hover,#hubZoom button:not([aria-pressed=true]):not(.hub-auto-turn):hover,#hubPNG:hover,#hubRec:hover,
 #hubBitPacking:not([aria-pressed=true]):hover,#hubZenToggle:hover,#hubSidebarToggle:hover,#hubPresetsPanel .hubRhomb:hover,
-#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):hover,#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]).over{background-color:var(--hub-theme-bg)!important;background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
+.hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):hover,.hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]).over{background-color:var(--hub-theme-bg)!important;background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
 #hubFieldTools .hubTreeItem>.hubSwatch:hover{filter:none!important}
 /* полосы страниц: фон прежний, рамка по скошенному контуру */
 .hub a.menu-btn.hubPg:hover,.hub a.menu-btn.hubPg:focus-visible{background:var(--hub-theme-bg)!important;filter:none!important;position:relative}
@@ -24,7 +24,7 @@
 }
 /* v0.261: «какие-то лишние линии иногда» — это была обычная квадратная рамка фокуса браузера: ромб режет её на
    обрывки (две стойки по бокам и черта снизу). Ромбы с фокусом с клавиатуры — та же белая рамка по форме, что при наведении. */
-#hubFieldTools :is(summary,button,.hubRhomb,label):focus,#hubZoom :is(button,input):focus,#hubRombGrid .hubRgCell:focus,
+#hubFieldTools :is(summary,button,.hubRhomb,label):focus,#hubZoom :is(button,input):focus,.hubRombGrid .hubRgCell:focus,
 #hubPNG:focus,#hubRec:focus,#hubBitPacking:focus,#hubZenToggle:focus,#hubSidebarToggle:focus,#hubPresetsPanel .hubRhomb:focus,#hubMobSwitch:focus{outline:0!important}
 #hubFieldTools summary:not([aria-pressed=true]):focus-visible,#hubFieldTools .hubRhomb:not([aria-pressed=true]):focus-visible,#hubZoom>button:not([aria-pressed=true]):focus-visible,
-#hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):focus-visible{background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}
+.hubRombGrid .hubRgCell:not(.hasBg):not([aria-pressed]):focus-visible{background-image:var(--hub-hover-frame)!important;background-size:100% 100%!important;background-repeat:no-repeat!important}

@@ -110,7 +110,8 @@
         } else if (it.type === 'list') {
           b.classList.add('gz-list');
           const ic = icon(it.icon), v = el('span', 'gz-v');
-          b.append(ic, el('span', 'gz-nm', it.name), v, el('span', 'gz-ar', '▾'));
+          // compact — обычная кнопка в сотах: значок и текущий вариант, без названия (оно в подсказке)
+          if (it.compact) { b.classList.add('gz-lc'); b.append(ic, v); } else b.append(ic, el('span', 'gz-nm', it.name), v, el('span', 'gz-ar', '▾'));
           refreshers.push(() => { const o = it.options.find(o => o.v === it.get()); v.textContent = o ? o.name : ''; });
           b.addEventListener('click', () => {
             if (ladder && ladder.owner === b) return closeLadder();
@@ -123,7 +124,7 @@
             }
             document.body.append(ladder);
           });
-          wide.append(b);
+          if (it.compact) { cells.push(b); soty.append(b); } else wide.append(b);
         } else if (it.type === 'color') {
           const sw = el('input', 'gz-color'); sw.type = 'color'; sw.title = it.tip || it.name;
           sw.addEventListener('input', () => { it.set(sw.value); refresh(); });

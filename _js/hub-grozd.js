@@ -2,7 +2,8 @@
    шапки групп одна под другой справа от меню страниц, открыта одна, кнопки — шестигранники сотами в 2 столбца.
    Рейка рисует свои кнопки, а щелчок передаёт настоящей кнопке поля (hub-nested-groups.js), поэтому вся логика хаба прежняя.
    «по всему звуку - нотам, отдельное меню» — пуск / пауза битов, ноты, скорость и стоп собраны в группу «Звук».
-   Пульт движений у креста и сам крест остаются как были. */
+   Пульт движений у креста и сам крест остаются как были.
+   v0.266: «это осталось — тоже в меню» — пульт движений («Вращ.») — группой «Вращение» в рейке, у креста его больше нет. */
 (() => {
   'use strict';
   const txt = s => String(s || '').replace(/\s+/g, ' ').trim();
@@ -16,8 +17,8 @@
     [/Цвет битов оригинала/, '1', 'Цвет 1'], [/Цвет нулей оригинала/, '0', 'Цвет 0'], [/Прозрачные цифры 0/, '0', 'Прозр. 0'], [/Прозрачные цифры 1/, '1', 'Прозр. 1'],
     [/Цвет отражённых/, '◇', 'Отражение'], [/Цвет заворота/, '⤵', 'Заворот'], [/Цвет подсветки симметрии/, '✦', 'Подсветка'], [/Золото:/, '✦', 'Золото'],
     [/Скорость битов/, '♪', 'Скорость'], [/Семь световых/, null, 'Ноты'], [/Остановить биты/, null, 'Стоп']];
-  const VALS = [[/hubRowCount/, 'Строки'], [/hubFlipSpeed/, 'Скорость'], [/Скорость света/, 'Свет'], [/Скорость снега/, 'Снег'], [/Скорость воды/, 'Вода'],
-    [/Размер битов света/, 'Размер'], [/Радиус солнца/, 'Солнце'], [/Минимум строк/, 'Мин. строк'], [/Минимум пар/, 'Мин. пар']];
+  const VALS = [[/hubRowCount/, 'Строки'], [/hubFlipSpeed/, 'Скор. 3D'], [/Скорость света/, 'Свет'], [/Скорость снега/, 'Снег'], [/Скорость воды/, 'Вода'],
+    [/Размер битов света/, 'Размер'], [/Наклон ромбов 0/, 'Наклон 0'], [/Наклон ромбов 1/, 'Наклон 1'], [/hubAxisSpeed/, 'Скор. оси'], [/автозума/, 'Ход зума'], [/Радиус солнца/, 'Солнце'], [/Минимум строк/, 'Мин. строк'], [/Минимум пар/, 'Мин. пар']];
   const ic = n => { const p = n.querySelector(':scope > .hubIc path, :scope > summary > .hubIc path'); return p ? p.getAttribute('d') : ''; };
   const icName = n => txt(n.querySelector(':scope > .hubIc > span, :scope > summary > .hubIc > span')?.textContent);
   function leafItem(r) {
@@ -29,7 +30,7 @@
       const lo = () => inp.min === '' ? -Infinity : +inp.min, hi = () => inp.max === '' ? Infinity : +inp.max, st = () => parseFloat(inp.step) || 1;
       const put = x => { x = Math.max(lo(), Math.min(hi(), x)); const d = (String(inp.step).split('.')[1] || '').length; inp.value = d ? x.toFixed(d) : String(Math.round(x)); fire(inp); };
       return { type: 'value', name: v ? v[1] : cut(icName(n) || tip), tip,
-        get: () => txt(out?.textContent || n.querySelector('.hubSlV')?.textContent || inp.value),
+        get: () => /Наклон ромбов/.test(r.id) ? txt(n.querySelector('summary')?.textContent) : txt(out?.textContent || n.querySelector('.hubSlV')?.textContent || inp.value),   // v0.266: наклон — с номером бита («0 · 0°»)
         step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .1 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); },
         // v0.263: «ползунком» — значение тянут по дорожке (grozd.js рисует бегунок), стрелки и колесо — шаг
         ...(inp.type === 'range' ? { frac: () => (+inp.value - lo()) / ((hi() - lo()) || 1), setFrac: f => { const s = st(); put(lo() + Math.round(f * (hi() - lo()) / s) * s); } } : {}) };
@@ -50,7 +51,7 @@
   }
   const gateOn = r => r.on ? r.on() : r.active?.();
   const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['colour', 'Цвет', '#ff9fd0'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
-    ['space', 'Объём', '#a98bff'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
+    ['space', 'Объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
   const HEAD = { symmetry: 'Симметрия', axis: 'Ось', space: '3D', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
   const SOUND = /Семь световых|Скорость битов|Остановить биты/;
   function collect(T) {
@@ -78,7 +79,7 @@
       walk(root, !root.gate || !!gateOn(root));
       if (g.key === 'colour') {   // образцы палитры — одним списком
         const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);
-        if (sw.length) add('colour', { type: 'list', icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
+        if (sw.length) add('colour', { type: 'list', compact: true, icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
           set: i => sw[i]?.click(), options: sw.map((b, i) => ({ v: i, name: cut(txt(b.getAttribute('aria-label')).replace(/^Цвета: /, '')), icon: '●' })) }, 'colour|palette');
       }
     }
@@ -102,7 +103,7 @@
       // подсказка — плашкой хаба (hub-tips.js читает title)
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
-        const a = g.items.filter(i => !['value', 'list', 'control'].includes(i.type)), b = g.items.filter(i => ['value', 'list', 'control'].includes(i.type));
+        const wideOf = i => ['value', 'list', 'control'].includes(i.type) && !i.compact, a = g.items.filter(i => !wideOf(i)), b = g.items.filter(wideOf);
         a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip; }); }
       return true;
     }

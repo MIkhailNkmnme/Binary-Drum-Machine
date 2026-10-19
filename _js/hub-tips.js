@@ -2,7 +2,7 @@
    Системная подсказка (title) снимается с элемента на время наведения и показывается своей плашкой. */
 (() => {
   'use strict';
-  const SCOPE = '#hubRail,#hubFieldTools,#hubZoom,#hubRombGrid,#hubZenToggle,#hubSidebarToggle,.hub,.hubColorEditor';   // v0.251: и кнопки страниц, и окно цвета
+  const SCOPE = '#hubRail,#hubFieldTools,#hubZoom,.hubRombGrid,#hubZenToggle,#hubSidebarToggle,.hub,.hubColorEditor';   // v0.251: и кнопки страниц, и окно цвета
   const box = document.createElement('div'); box.id = 'hubTip'; box.hidden = true;
   let cur = null;
   // title снимается только на время наведения и возвращается при уходе: другие модули ищут кнопки по нему.
@@ -10,7 +10,7 @@
   const giveBack = el => { if (el && el.dataset.hubTip != null && !el.hasAttribute('title')) el.setAttribute('title', el.dataset.hubTip); if (el) delete el.dataset.hubTip; };
   function area(el) {
     const slot = el.closest('.hubFieldSlot');
-    const nodes = slot ? [...slot.querySelectorAll(':scope > .hubTreeItem:not([hidden])')] : [el.closest('#hubZoom,#hubRombGrid,.gz-group') || el];
+    const nodes = slot ? [...slot.querySelectorAll(':scope > .hubTreeItem:not([hidden])')] : [el.closest('#hubZoom,.hubRombGrid,.gz-group') || el];
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
     for (const n of nodes) { const q = n.getBoundingClientRect(); if (!q.width) continue; l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); }
     return { l, t, r, b };
