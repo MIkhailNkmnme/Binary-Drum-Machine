@@ -136,6 +136,7 @@
         } else if (it.type === 'color') {
           const sw = el('input', 'gz-color'); sw.type = 'color'; sw.title = it.tip || it.name;
           sw.addEventListener('input', () => { it.set(sw.value); refresh(); });
+          if (it.open) sw.addEventListener('click', e => { e.preventDefault(); it.open(); });   // своя палитра страницы (хаб): повторный щелчок её сворачивает
           const dot = el('span', 'gz-dot');
           b.append(icon(it.icon), el('span', 'gz-nm', it.name), dot, sw);
           refreshers.push(() => { const c = it.get(); if (document.activeElement !== sw) sw.value = c; dot.style.background = c; });

@@ -38,7 +38,7 @@
     const sel = n.querySelector('select');
     if (sel) return { type: 'list', icon: '▤', name: cut(tip.split(/[:·]/)[0]), tip, get: () => sel.value, set: x => { sel.value = x; fire(sel); }, options: [...sel.options].map(o => ({ v: o.value, name: txt(o.textContent) })) };
     const inp = n.querySelector('input');
-    if (inp && inp.type === 'color') return { type: 'color', icon, name, tip, get: () => inp.value, set: x => { inp.value = x; fire(inp); } };
+    if (inp && inp.type === 'color') return { type: 'color', icon, name, tip, get: () => inp.value, set: x => { inp.value = x; fire(inp); }, open: () => inp.click() };   // «повторный клик по кнопке — сверни палитру»: своя палитра хаба вместо системной, второе нажатие её сворачивает
     if (inp && inp.type === 'checkbox') return { type: 'toggle', icon, name, tip, on: () => inp.checked, click: () => inp.click() };
     if (n.hasAttribute('aria-pressed')) return { type: 'toggle', icon, name, tip, on: () => n.getAttribute('aria-pressed') === 'true', click: () => n.click() };
     const live = /Скорость битов|Режим автозума/.test(r.id);   // кнопки, чья надпись — текущее значение
