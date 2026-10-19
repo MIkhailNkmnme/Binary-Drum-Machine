@@ -177,3 +177,5 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sl .gz-mid:has(.gz-th:hover)::after{content:"";position:absolute;left:var(--thx);top:0;bottom:0;border-left:1px dotted #fff;z-index:3;pointer-events:none}
 /* половины пары — ширина вместе с отступами (box-sizing): иначе отступы 16 px прибавлялись сверху, правая половина вылезала за кнопку и срезалась («1» и «↔» не видно) */
 .gz-pair .gz-half{box-sizing:border-box}
+/* кнопки рейки под открытым списком (тот же столбец, та же группа) — затемнены */
+.gz-hx.gz-under{opacity:.18;pointer-events:none;transition:opacity .12s}

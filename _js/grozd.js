@@ -47,7 +47,10 @@
   function withTip(b, text) { b.addEventListener('pointerenter', () => tipShow(b, text)); b.addEventListener('pointerleave', tipHide); }
 
   let ladder = null;
-  function closeLadder() { if (ladder) { ladder.remove(); ladder = null; } }
+  function closeLadder() { if (ladder) { ladder.remove(); ladder = null; } document.querySelectorAll('.gz-under').forEach(x => x.classList.remove('gz-under')); }
+  // «когда список накладывается на рейку — затемняй рейку всю по этому столбцу в этой группе»
+  function dimUnder(owner) { const g = owner.closest('.gz-group'); if (!g || !ladder) return; const L = ladder.getBoundingClientRect();
+    for (const x of g.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')) { if (x === owner) continue; const r = x.getBoundingClientRect(); if (r.right > L.left + 2 && r.left < L.right - 2) x.classList.add('gz-under'); } }
   document.addEventListener('pointerdown', e => { if (ladder && !e.target.closest('.gz-ladder,.gz-list')) closeLadder(); }, true);
 
   const PIN = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
@@ -144,7 +147,7 @@
               const ob = el('div', 'gz-hx' + (o.v === it.get() ? ' gz-on' : '')); ob.append(icon(o.icon || '·'), el('span', 'gz-nm', o.name));
               ob.addEventListener('click', () => { it.set(o.v); closeLadder(); refresh(); }); ladder.append(ob);
             }
-            document.body.append(ladder);
+            document.body.append(ladder); dimUnder(b);
           });
           if (it.compact) { cells.push(b); soty.append(b); } else wide.append(b);
         } else if (it.type === 'pair') {
