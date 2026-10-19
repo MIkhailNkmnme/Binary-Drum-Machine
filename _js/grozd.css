@@ -141,3 +141,10 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* «тут фон у 1 убери и у 0» — у пары «Прозр.» шевроны без заливки, только кайма; цифры — цветом своего бита */
 .gz-pair.gz-cut .gz-half::before{background:var(--gz-bg)!important}
 .gz-pair.gz-cut .gz-half:last-child{color:var(--gz-f1,inherit)}
+/* «тут 2 кнопки (значок + текст „Ромбы“) и (стык + значок стыка) через \ по центру» — пара gz-split: две половины, косая черта посередине, у каждой своя кайма */
+.gz-pair.gz-split .gz-pm{display:none}
+.gz-pair.gz-split .gz-half{flex:none;width:calc(50% + 4px);padding:0;font-size:11px;font-weight:400;gap:4px;white-space:nowrap}
+.gz-pair.gz-split .gz-half:first-child{clip-path:polygon(0 50%,var(--gz-n) 0,100% 0,calc(100% - 8px) 100%,var(--gz-n) 100%);padding:0 6px 0 4px}
+.gz-pair.gz-split .gz-half:last-child{margin-left:-7px;clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%);padding:0 4px 0 6px}
+.gz-pair.gz-split .gz-half::before{background:var(--gz-bg)!important}
+.gz-pair.gz-split .gz-half.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}

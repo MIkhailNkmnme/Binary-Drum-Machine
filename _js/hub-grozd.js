@@ -128,7 +128,7 @@
     {   // «Ромбы» и «Встык» — «также в одну»: одна кнопка пополам
       const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'];
       const half = (c, d) => { const it = leafItem(c); return { label: d, tip: it.tip, on: it.on, click: it.click }; };
-      if (r && p) out.get('bits').push({ type: 'pair', name: 'Ромбы · встык', mid: 'Ромбы', tip: 'Ромбы · встык', parts: [half(r, '◇'), half(p, '↔')], key: 'bits|rhombPack' });
+      if (r && p) out.get('bits').push({ type: 'pair', cls: 'gz-split', name: 'Ромбы · встык', mid: '', tip: 'Ромбы · встык', parts: [half(r, '◇ Ромбы'), half(p, 'Встык ↔')], key: 'bits|rhombPack' });
       else for (const c of [r, p]) if (c) out.get('bits').push({ ...leafItem(c), key: c.id });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
