@@ -182,3 +182,6 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* пара в режиме «одна»: правая половина спрятана, левая — во всю кнопку */
 .gz-pair.gz-one .gz-half.gz-h1{display:none}
 .gz-pair.gz-split.gz-one .gz-half.gz-h0{width:100%;clip-path:polygon(0 50%,var(--gz-n) 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,var(--gz-n) 100%)}
+/* пара gz-wl — широкая левая половина (кнопка + название), узкая правая (цвет) */
+.gz-pair.gz-split.gz-wl .gz-half.gz-h0{width:calc(var(--gz-w) * .72 + 4px)}
+.gz-pair.gz-split.gz-wl .gz-half.gz-h1{width:calc(var(--gz-w) * .28 + 3px);font-size:16px;color:var(--gz-k,#fff)}
