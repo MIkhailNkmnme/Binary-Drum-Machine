@@ -587,7 +587,8 @@
     // «добавь квадраты»: форма бита при включённых ромбах — ромб или квадрат (квадрат стоит в центре бита, сторона — по меньшей из полудиагоналей)
     bitShape(){return rhombOn()?(state.bitSquare?'square':'rhomb'):null;},
     setBitShape(m){if(m==='rhomb'||m==='square'){state.bitSquare=m==='square';state.bitRhomb=true;}else{state.bitRhomb=false;if(state.bitView==='rhombs'||state.bitView==='none')state.bitView='digits';}changed();save();},
-    bitPoly(a,b){if(state.bitSquare){const s=Math.min(a,b*.6);return [[-s,-s],[s,-s],[s,s],[-s,s]];}return [[0,-b],[a,0],[0,b],[-a,0]];},
+    // «верт. отступ как у межсимвольного»: квадрат — шириной 2a (зазор в строке a/k − 2a), высотой — шаг строк b/2k минус тот же зазор
+    bitPoly(a,b){if(state.bitSquare){const k=state.packedBits?.5:.45,gap=a/k-2*a,sy=Math.max(.5,(b/(2*k)-gap)/2);return [[-a,-sy],[a,-sy],[a,sy],[-a,sy]];}return [[0,-b],[a,0],[0,b],[-a,0]];},
     pathBit(g,a,b,pt=(x,y)=>[x,y]){const P=this.bitPoly(a,b);g.beginPath();g.moveTo(...pt(...P[0]));for(let i=1;i<P.length;i++)g.lineTo(...pt(...P[i]));g.closePath();},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||state.bitView==='none'||this.digitVisible(bit)||size<=0)return false;   // «когда Нет — просто ромбы без всего»: без выреза знака
