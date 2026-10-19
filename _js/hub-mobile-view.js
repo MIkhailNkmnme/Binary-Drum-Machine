@@ -21,4 +21,9 @@
   const init = () => { document.body.append(shade, btn); sync(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
   mq.addEventListener?.('change', sync);
+  // Hub v0.258: «мобильная — наложение кнопок». Пульт поля (крест, «Вращ.», ромбы движения, ось, «Дзен») — position: fixed
+  // и при прокрутке к кнопкам страниц ложился поверх них. Прокрутил вниз — пульт прячется, вернулся к холсту наверх — появляется.
+  let scrolled = false;
+  const onScroll = () => { const s = mq.matches && scrollY > 40; if (s !== scrolled) { scrolled = s; document.body.classList.toggle('hubMobScrolled', s); } };
+  addEventListener('scroll', onScroll, { passive: true }); mq.addEventListener?.('change', onScroll); onScroll();
 })();

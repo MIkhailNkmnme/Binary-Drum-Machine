@@ -16,3 +16,8 @@
   body.hubMobButtons{overflow:hidden}
   body.hubZen #hubMobSwitch{display:none}
 }
+/* Hub v0.258: прокрутили к кнопкам страниц — пульт поля не налезает на них (прячется, вернётся наверху). */
+@media(max-width:1100px){
+  body.hubMobCanvas #hubFieldTools,body.hubMobCanvas #hubZoom,body.hubMobCanvas #hubRombGrid,body.hubMobCanvas #hubMirror,body.hubMobCanvas #hubMirrorViewport,body.hubMobCanvas #hubZenToggle{transition:opacity .2s,visibility .2s}
+  body.hubMobCanvas.hubMobScrolled #hubFieldTools,body.hubMobCanvas.hubMobScrolled #hubZoom,body.hubMobCanvas.hubMobScrolled #hubRombGrid,body.hubMobCanvas.hubMobScrolled #hubMirror,body.hubMobCanvas.hubMobScrolled #hubMirrorViewport,body.hubMobCanvas.hubMobScrolled #hubZenToggle{opacity:0;visibility:hidden;pointer-events:none}
+}
