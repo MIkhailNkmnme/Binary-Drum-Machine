@@ -97,6 +97,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             add(g.key, { type: 'pair', col: it.col, cls: 'gz-split gz-bs', name: 'Автозум', mid: '', tip: it.tip, one: () => !on(),
               parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
           if (/\|Режим автозума/.test(c.id)) continue;
+          if (/\|Наклон ромбов [01]$/.test(c.id)) continue;   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
