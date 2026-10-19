@@ -71,7 +71,7 @@
           const lo=Math.min(...[...rows.values()].map(v=>v[0])),hi=Math.max(...[...rows.values()].map(v=>v[1])),ys=[...rows.keys()],h=Math.max(...ys)*24+48;
           // v0.247: «перемещать за границы + отступ» — бока треугольника могут уходить за края экрана (на экране остаётся голова),
           // а от верха / низа группу можно отодвинуть рядами (pl.dy, шаг полромба); за верх / низ — не дальше среза пополам
-          const x=Math.max(0,Math.min(innerWidth-48,pl.x)),dy=pl.e==='b'?Math.min(0,pl.dy||0):Math.max(0,pl.dy||0);g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round((pl.e==='b'?innerHeight+24-h-rect.top:-24-rect.top)+dy);
+          const x=Math.max(0,Math.min(innerWidth-48,pl.x)),dy=pl.e==='b'?Math.min(0,pl.dy||0):Math.max(0,pl.dy||0);g.placeDx=Math.round(x-rect.left);g.placeDy=Math.round((pl.e==='b'?Math.min(innerHeight+24-h,innerHeight-48)-rect.top:-24-rect.top)+dy);   // v0.260: у низа голова целиком на экране — свёрнутая группа не уходит за край наполовину
           if(pl.e!=='b')for(const [r,[a,b]] of rows)obst.push([r+Math.round(dy/24),x+a,x+b]);}
         const pack=groups.filter(g=>!g.fixed&&!g.slot.hidden&&g.placeDx==null).map(g=>{const base=g.slot.getBoundingClientRect().left,rows=new Map();
           for(const c of g.slot.children){if(c.hidden)continue;const r=Math.round((Number(c.dataset.pyrY)||0)/24),x=Number(c.dataset.pyrX)||0,o=rows.get(r);if(o){o[0]=Math.min(o[0],x);o[1]=Math.max(o[1],x);}else rows.set(r,[x,x]);}

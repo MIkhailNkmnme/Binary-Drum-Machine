@@ -24,6 +24,10 @@
   }
   // v0.251: место одно — внизу слева (CSS); прежний расчёт «под группой» больше не нужен.
   function place() {
+    // v0.260: «ромбы Файл перенёс вниз под кнопки слева — он исчез»: плашка внизу слева ложилась на группу, поставленную туда рукой.
+    // Если плашка накрывает наведённую кнопку или её раскрытую группу — она уходит в правый нижний угол.
+    if (cur && !box.hidden) { box.classList.remove('hubTipR'); const a = area(cur), b = box.getBoundingClientRect();
+      if (b.width && a.l < b.right + 4 && a.r > b.left - 4 && a.t < b.bottom + 4 && a.b > b.top - 4) box.classList.add('hubTipR'); }
     return;
     const a = area(cur), q = cur.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
     const x = Math.max(8, Math.min(innerWidth - w - 8, q.left + q.width / 2 - w / 2));
