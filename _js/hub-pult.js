@@ -19,7 +19,7 @@
   const btn = (cls, text, tip, fn) => { const b = el('button', 'hpB ' + cls, text, tip); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); sync(); }); return b; };
   const press = f => () => f()?.click();
   const fire = (e, t) => e && e.dispatchEvent(new Event(t, { bubbles: true }));
-  let box, zoomRow, backB, fwdB, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
+  let box, zoomRow, backB, fwdB, resetB, scaleV, pult, play, range, rateV, frame, free, tiltV = {};
 
   // наклон битов: ◂ ▸ — на 15° (Shift — на 1°), удержание повторяет
   function tiltBy(b, d) {
@@ -82,7 +82,7 @@
       tiltV[b].addEventListener('wheel', e => { e.preventDefault(); tiltBy(b, e.deltaY < 0 ? 1 : -1); sync(); }, { passive: false });
       control.append(l, tiltV[b], r); br.append(control);
     }
-    br.append(btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));   // «360 отсюда вообще убери, а сброс поворотов в цвет битов»: ↺ — половина цветом 0, половина цветом 1
+    br.append(resetB = btn('hpReset', '↺', 'Сброс наклона битов', press(old.tiltReset)));   // «360 отсюда вообще убери, а сброс поворотов в цвет битов»: ↺ — половина цветом 0, половина цветом 1
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
     // 360° на пульте не показывается (кнопка «360°» осталась в рейке); free живёт для sync
 
@@ -131,8 +131,9 @@
       bot.style.setProperty('--hp-b1', colors.bit); bot.style.setProperty('--hp-b0', z);
       bot.style.setProperty('--hp-b0f', rgba(z, a0)); bot.style.setProperty('--hp-b0a', rgba(z, Math.min(1, a0 + .25))); bot.style.setProperty('--hp-b0o', 'color-mix(in srgb,' + z + ' ' + Math.round(a0 * 100) + '%,#060606)');
     }
+    let tilted = false;
     for (const b of ['0', '1']) {
-      const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
+      const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (x && +x.value !== 0) tilted = true; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
       const color = colors?.[b === '0' ? 'zero' : 'bit'];
       if (color) {   // v0.284: «углы в цвет соответствующих битов» — деталь как ромб бита: 0 — тёмная с цветными цифрами, 1 — цветная с тёмными; стрелки — своим фоном
         const c = tiltV[b].parentElement, a = b === '0' ? (window.HubMirror?.state?.zeroAlpha ?? .18) : 1;
@@ -143,6 +144,7 @@
         c.style.setProperty('--hp-arrow-ink', b === '0' ? '#1c1c22' : color);
       }
     }
+    resetB?.classList.toggle('hpTilted', tilted);   // «цвет — когда повёрнуты от 0, а когда 0 — без фона»
   }
 
   function init() {

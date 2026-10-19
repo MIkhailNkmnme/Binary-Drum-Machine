@@ -117,3 +117,7 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpBits .hpReset{width:34px;min-width:34px;padding:0;margin-left:3px;background:var(--hp-b1,#8fd3ff)!important;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000}
 #hubPultBot .hpBits .hpReset::before{background:linear-gradient(90deg,var(--hp-b0o,#1a1020) 50%,var(--hp-b1,#8fd3ff) 50%)!important}
 #hubPultBot .hpBits .hpReset:hover{background:#fff!important}
+/* ↺ без наклона (оба 0°) — без фона: тусклая кайма и значок цветом 1 */
+#hubPultBot .hpBits .hpReset:not(.hpTilted){background:color-mix(in srgb,var(--hp-b1,#8fd3ff) 45%,transparent)!important;color:var(--hp-b1,#8fd3ff);text-shadow:none}
+#hubPultBot .hpBits .hpReset:not(.hpTilted)::before{background:#060606!important}
+#hubPultBot .hpBits .hpReset:not(.hpTilted):hover{background:var(--hp-b1,#8fd3ff)!important}
