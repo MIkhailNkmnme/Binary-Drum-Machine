@@ -47,7 +47,7 @@
       btn('hpR', '+', 'Увеличить масштаб', press(old.plus)), scaleV, btn('hpL', '−', 'Уменьшить масштаб', press(old.minus)));   // v0.280: «масштаб оставь и переверни вертикально» — сверху вниз ⌂ + 100% −
 
     // 2. вращение — общий пульт пуска (zz-pult): ◀ ▶, ромб пуска на дорожке скорости, подпись
-    pult = el('div', 'zz-pult hpSpin');
+    pult = el('div', 'zz-pult hpSpin'); pult.dataset.play = '24';   // ромб пуска вдвое уже — ход до самых стрелок
     const back = btn('zz-pult-back', '◀', 'Стоит — повернуть поле на −15°; крутится — медленнее', press(old.left));
     const fwd = btn('zz-pult-fwd', '▶', 'Стоит — повернуть поле на +15°; крутится — быстрее', press(old.right));
     range = el('input', 'zz-pult-range'); range.type = 'range'; range.min = 0; range.max = 601; range.step = 1; range.setAttribute('aria-label', 'Скорость вращения');

@@ -8,12 +8,14 @@
   const NS = 'http://www.w3.org/2000/svg';
   const P = { H: 48, BODY: 36, CAP: 48, PLAY: 48, GAP: 30 };   // высота, высота корпуса, ширина ◀ ▶, ромб пуска, отступ подписи от ромба
   // Центр ромба пуска при доле f: ромб ходит между ◀ и ▶, не наезжая на них.
-  const trackX = (W, f) => P.CAP + P.PLAY / 2 + Math.min(1, Math.max(0, f)) * Math.max(1, W - 2 * P.CAP - P.PLAY);
+  // v3: ширина ромба пуска — data-play у пульта (хаб: 24, «ширину ромба бегунка в 2 раза сузь»), иначе P.PLAY; ромб доходит до ◀ ▶ вплотную
+  const playW = host => +host?.dataset?.play || P.PLAY;
+  const trackX = (W, f, pw = P.PLAY) => P.CAP + pw / 2 + Math.min(1, Math.max(0, f)) * Math.max(1, W - 2 * P.CAP - pw);
   // Сколько пикселей корпуса приходится на всю шкалу (для перетаскивания ромба).
-  const trackWidth = host => Math.max(1, (host.offsetWidth || 480) - 2 * P.CAP - P.PLAY);
+  const trackWidth = host => Math.max(1, (host.offsetWidth || 480) - 2 * P.CAP - playW(host));
   function sync(host, f) {
     const W = host.offsetWidth; if (!W) return null;
-    const H = host.offsetHeight || P.H, t = (H - P.BODY) / 2 + .5, b = H - (H - P.BODY) / 2 - .5, m = H / 2, L = P.CAP, R = W - P.CAP, tx = trackX(W, f);
+    const H = host.offsetHeight || P.H, t = (H - P.BODY) / 2 + .5, b = H - (H - P.BODY) / 2 - .5, m = H / 2, L = P.CAP, R = W - P.CAP, tx = trackX(W, f, playW(host));
     let svg = host.querySelector(':scope > svg.zz-pult-shape');
     if (!svg) {
       svg = document.createElementNS(NS, 'svg'); svg.classList.add('zz-pult-shape'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
