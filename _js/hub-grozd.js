@@ -8,7 +8,9 @@
   'use strict';
   const txt = s => String(s || '').replace(/\s+/g, ' ').trim();
   const cut = s => s.length > 16 ? s.slice(0, 15) + '…' : s;
-  const tipOf = n => txt((n.dataset.hubTip ?? n.getAttribute('title') ?? n.getAttribute('aria-label') ?? '').split(' · ПКМ')[0].split(' · Наведение')[0]);
+  // «подсказки проверь»: служебный хвост старого меню («ПКМ — поднять…», «Наведение…») вырезается и тогда, когда он — вся подсказка; пусто — берётся aria-label
+const tipCut = t => txt((t || '').split(/(?: · )?ПКМ —/)[0].split(/(?: · )?Наведение /)[0]);
+const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut(n.getAttribute('aria-label')) || tipCut(n.closest?.('details')?.getAttribute('aria-label'));
   const fire = inp => { inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true })); };
   // короткие названия там, где у кнопки поля нет своей подписи
   const NAMES = [[/Узор: Хоррориус/, 'Х', 'Хоррориус'], [/Узор: исходный/, 'П', 'Исходный'], [/Узор: Серпинский/, 'С', 'Серпинский'],
