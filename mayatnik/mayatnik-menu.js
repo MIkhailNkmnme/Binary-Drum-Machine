@@ -239,9 +239,18 @@
     // v0.159: на телефоне «Что это такое?» — в конец полоски меню, чтобы шапка была в одну строку
     const aboutHome = $('mayAbout').previousElementSibling, aboutPlace = () => { if (narrow.matches) $('mayCorner').append($('mayAbout')); else aboutHome.after($('mayAbout')); };
     narrow.addEventListener('change', () => { shut(); aboutPlace(); }); aboutPlace();
+    // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
+    const zig = r => { if (!r.getClientRects().length) return; r.style.height = ''; const P = 24, D = 7, w = r.offsetWidth, n = Math.max(1, Math.ceil(r.offsetHeight / P)), h = n * P;
+      r.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]];
+      for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
+      pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
+      const c = getComputedStyle(r).getPropertyValue('--c').trim() || '#7cbcff', d = pt.map(q => q.join(',')).join(' ');
+      r.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
+      r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="${c}" stroke-width="3" stroke-linejoin="round"/></svg>`) + '")'; };
+    addEventListener('resize', () => open && zig(open.querySelector('.pt-r')));
     const shut = () => { if (!open) return; open.classList.remove('pt-open'); open.querySelector('.pt-l').setAttribute('aria-expanded', 'false'); open = null; };
     const show = g => { if (open === g) return; shut(); open = g; g.classList.add('pt-open'); g.querySelector('.pt-l').setAttribute('aria-expanded', 'true');
-      const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
+      const r = g.querySelector('.pt-r'); r.style.left = r.style.top = ''; requestAnimationFrame(() => zig(r));
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };

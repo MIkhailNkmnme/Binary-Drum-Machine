@@ -362,3 +362,22 @@ header #paintTools.pt-dd .pt-view .pt-vx{flex-direction:row;flex-wrap:wrap;align
   .mayatnik-menu-ready #mayatnikRailR{grid-column:1;grid-row:6;justify-self:stretch;width:auto;max-width:none;max-height:30dvh;margin:0 0 52px;padding:6px 8px;background:#0d1119;border-top:1px solid var(--line);pointer-events:auto}
 }
 #wrap.ruler-mode,#wrap.ruler-mode canvas{cursor:crosshair}   /* v0.161: линейка */
+/* v0.163: названия групп в полоске — шестигранные кнопки как в списке (внешний слой — обводка, ::before — фон внутри);
+   рамка списка — зубцами по бокам: контур и фон ставит mayatnik-menu.js (zig), здесь только поля под зубцы */
+header #paintTools.pt-dd .pt-l{isolation:isolate;border:0;border-radius:0;padding:0 14px 0 15px;color:#dfe6f5;background:color-mix(in srgb,var(--c) 45%,#000);
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+header #paintTools.pt-dd .pt-l::before{content:"";position:absolute;inset:1.5px;z-index:-1;width:auto;height:auto;border-radius:0;box-shadow:none;background:#121a30;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%)}
+header #paintTools.pt-dd .pt-l::after{color:var(--c)}
+header #paintTools.pt-dd .pt-l:hover,header #paintTools.pt-dd .pt-l:focus-visible{background:color-mix(in srgb,var(--c) 45%,#000)}
+header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-l:focus-visible::before{background:color-mix(in srgb,var(--c) 22%,#121a30)}
+header #paintTools.pt-dd .pt-open>.pt-l{background:var(--c)}
+header #paintTools.pt-dd .pt-open>.pt-l::before{background:color-mix(in srgb,var(--c) 30%,#121a30)}
+header #paintTools.pt-dd .pt-has-on>.pt-l{background:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
+header #paintTools.pt-dd .pt-has-on>.pt-l::before{width:auto;height:auto;border-radius:0;box-shadow:none;background:#121a30}
+header #paintTools.pt-dd .pt-has-on.pt-open>.pt-l::before{background:color-mix(in srgb,var(--c) 30%,#121a30)}
+header #paintTools.pt-dd .pt-r{padding:6px 11px;border:0;border-radius:0;box-shadow:none;background:transparent no-repeat 0 0;scrollbar-width:thin}
+@media (max-width:600px){
+  header #paintTools.pt-dd .pt-l{padding:0 15px 0 16px}
+  header #paintTools.pt-dd .pt-r{padding:8px 12px}
+}
