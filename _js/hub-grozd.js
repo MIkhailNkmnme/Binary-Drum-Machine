@@ -88,6 +88,13 @@
     out.get('sound').sort((a, b) => at(a.key) - at(b.key));
     return out;
   }
+  // v0.267: «из рейки тоже тянуть в ромбосетку» — ключ настоящей кнопки поля для hub-romb-grid.js (pin: — кнопка, branch: — голова ветки)
+  const esc = v => window.CSS?.escape ? CSS.escape(v) : v.replace(/["\\]/g, '\\$&');
+  const rgKey = it => { const k = it.key; if (!k || ['value', 'list', 'control', 'color'].includes(it.type)) return null;
+    if (k === 'file') return 'id:hubPresetList';
+    if (document.querySelector('[data-pin-control="' + esc(k) + '"]')) return 'pin:' + k;
+    if (document.querySelector('details[data-branch="' + esc(k) + '"]')) return 'branch:' + k;
+    return null; };
   function init() {
     const T = window.HubNestedGroups?.tree; if (!T || !window.ZerkGrozd) return;
     const host = document.createElement('div'); host.id = 'hubRail'; document.body.append(host);
@@ -104,7 +111,7 @@
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
         const wideOf = i => ['value', 'list', 'control'].includes(i.type) && !i.compact, a = g.items.filter(i => !wideOf(i)), b = g.items.filter(wideOf);
-        a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip; }); }
+        a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; const k = rgKey(it); if (cells[i] && k) cells[i].dataset.rgKey = k; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip; }); }
       return true;
     }
     const place = () => {

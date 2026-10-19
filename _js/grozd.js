@@ -96,7 +96,7 @@
           mid.append(el('span', 'gz-nm', it.name), v); if (it.reset) mid.append(z);
           b.append(a('gz-a2', '◂◂', -2), a('', '◂', -1), mid, a('', '▸', 1), a('gz-a2', '▸▸', 2));
           refreshers.push(() => { v.textContent = it.get(); });
-          // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, колесо — шаг
+          // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, ◂ ▸ — шаг
           if (it.frac && it.setFrac) {
             b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'); mid.prepend(th);
             refreshers.push(() => { th.style.left = (Math.max(0, Math.min(1, it.frac())) * 100) + '%'; });
@@ -104,7 +104,7 @@
             mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
               const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
               mid.addEventListener('pointermove', mv); mid.addEventListener('pointerup', up); mid.addEventListener('pointercancel', up); });
-            b.addEventListener('wheel', e => { e.preventDefault(); it.step(e.deltaY < 0 ? 1 : -1); refresh(); }, { passive: false });
+            // 19.10: колесо над ползунком не трогает значение — прокручивает рейку («скрол вверх-вниз при переполнении»)
           }
           wide.append(b);
         } else if (it.type === 'list') {

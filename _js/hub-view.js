@@ -267,6 +267,7 @@
     document.addEventListener('click',()=>{wheelAction=null;},true);
     document.addEventListener('wheel',e=>{
       if(!e.deltaY&&!(e.shiftKey&&e.deltaX))return;   // v0.214: Shift + колесо часто приходит как deltaX
+      if(e.target.closest?.('#hubRail,.gz-ladder,.hubRombGrid'))return;   // v0.267: колесо над рейкой прокручивает её (и ползунки в ней), а не поле
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0),mirror=window.HubMirror;
       if(!wheelAction){
         if(e.target===angleText)wheelAction=ev=>{rotate(Math.sign(ev.deltaY)*5);rotation.value=state.angle;};

@@ -201,10 +201,12 @@
   // Снаружи: любую кнопку тянут в ромб — копией. Ползунки и поля ввода не берутся.
   document.addEventListener('pointerdown', e => {
     if (e.button !== 0 || e.target.closest?.('.hubRombGrid')) return;
-    const el = e.target.closest?.(SRC);
-    if (!el || e.target.closest('input,select,textarea') || el.matches('.hubTilt > summary,.hub-auto-turn')) return;
-    const key = keyOf(el); if (!key) return;
-    const text = textOf(el);
+    const rail = e.target.closest?.('#hubRail [data-rg-key]');   // v0.267: кнопка рейки — копия её настоящей кнопки поля
+    if (rail && e.target.closest('.gz-pin')) return;
+    const el = rail ? null : e.target.closest?.(SRC);
+    if (!rail && (!el || e.target.closest('input,select,textarea') || el.matches('.hubTilt > summary,.hub-auto-turn'))) return;
+    const key = rail ? rail.dataset.rgKey : keyOf(el); if (!key) return;
+    const text = rail ? (rail.textContent || '').trim().slice(0, 24) : textOf(el);
     track(e, ev => { hover(ev); showGhost(text, ev.clientX, ev.clientY); }, ev => {
       const t = cellAt(ev.clientX, ev.clientY); if (!t) return;
       const g = grids.find(x => x.grid.contains(t)); if (!g) return;
