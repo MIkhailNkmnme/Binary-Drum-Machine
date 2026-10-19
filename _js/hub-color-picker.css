@@ -16,3 +16,6 @@
 .hubColorEditor small{position:absolute;left:29px;top:59px;width:80px;height:20px;transform:rotate(-45deg);margin:0!important;text-align:center;font-size:0!important}
 .hubColorEditor small output{float:none!important;font:600 12px/20px system-ui,sans-serif}
 @media(max-width:460px){.hubColorEditor{right:8px!important}}
+/* «прав. верх и нижн. лев. можно убрать полосы» — кайма только вдоль верхней левой (непрозрачность) и нижней правой (HEX) граней: окно — вытянутый ромб; «крестик не нужен» — закрытие щелчком мимо, Escape или повторным нажатием кнопки */
+.hubColorEditor,.hubColorEditor::before{clip-path:polygon(5% 45%,45% 5%,95% 55%,55% 95%)}
+.hubColorEditor header button{display:none!important}

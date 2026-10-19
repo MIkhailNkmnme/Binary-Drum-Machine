@@ -1,6 +1,6 @@
 /* Shared Hub color and opacity editor. */
 (()=>{
- 'use strict';let box,active,h=0,s=1,v=1,shut={};   // shut — кто и когда закрыл щелчком снаружи (v0.257: тот же щелчок не открывает окно снова)
+ 'use strict';let box,active,h=0,s=1,v=1,shut={},nextAnchor=null;   // shut — кто и когда закрыл щелчком снаружи (v0.257: тот же щелчок не открывает окно снова)
  const clamp=x=>Math.max(0,Math.min(1,x));
  // Inverse of the square's 45 degree rotation, using its diamond bounding box.
  const diamondPoint=(x,y)=>({s:clamp(x+y-.5),v:clamp(.5+x-y)});
@@ -28,6 +28,12 @@
  const SHORT={'Цвет битов оригинала':'Биты','Цвет нулей оригинала':'Нули','Цвет отражённых битов':'Отражение','Цвет заворота':'Заворот','Цвет подсветки симметрии по оси':'Симметрия'};
  function sync(){const hb=box.querySelector('header b');hb.textContent=SHORT[active.title]||String(active.title||'').replace(/^Цвет /,'');hb.title=active.title||'';box.querySelector('small').title=(active.title||'')+' — непрозрачность';box.querySelector('.hubColorSV').style.background=`linear-gradient(0deg,#000,transparent),linear-gradient(90deg,#fff,transparent),hsl(${h} 100% 50%)`;Object.assign(box.querySelector('.hubColorSV i').style,{left:(s*100)+'%',top:((1-v)*100)+'%'});box.querySelector('.hubColorSV').setAttribute('aria-valuetext',`Насыщенность ${Math.round(s*100)}%, яркость ${Math.round(v*100)}%`);box.querySelector('.hue').value=h;box.querySelector('.alpha').max=active.maxOpacity*100;box.querySelector('.alpha').value=Math.round(active.opacity*100);box.querySelector('output').textContent=Math.round(active.opacity*100)+'%';box.querySelector('small').title='Непрозрачность — ползунок по вертикали в ромбе';box.querySelector('.hex').value=active.color;Object.assign(box.querySelector('.preview i').style,{background:active.color,opacity:Math.min(1,active.opacity)});}
  function close(){box.hidden=true;active?.trigger?.focus();}
- window.HubColorPicker={open(options){if(!box)init();if(options?.trigger&&((!box.hidden&&active?.trigger===options.trigger)||(shut.trigger===options.trigger&&performance.now()-shut.t<600))){shut={};if(!box.hidden)close();return;}   // v0.257: второе нажатие той же кнопки — окно сворачивается
- active={...options};fromHex(active.color);sync();box.hidden=false;box.querySelector('.hex').focus();}};
+ // «показывай под нажатой кнопкой, но в пределах реек»: окно — под кнопкой рейки (anchor), по ширине — внутри рейки и экрана
+ function place(anchor){const st=box.style;for(const k of ['left','top','right','bottom'])st.removeProperty(k);if(!anchor?.getClientRects().length)return;
+  const a=anchor.getBoundingClientRect(),rail=anchor.closest('.gz-rail')?.getBoundingClientRect()||{left:0,right:innerWidth},bw=box.offsetWidth,bh=box.offsetHeight;
+  let x=Math.min(Math.max(a.left+a.width/2-bw/2,rail.left),rail.right-bw);x=Math.min(Math.max(x,4),innerWidth-bw-4);
+  let y=a.bottom+4;if(y+bh>innerHeight-4)y=Math.max(4,a.top-bh-4);
+  st.setProperty('right','auto','important');st.setProperty('bottom','auto','important');st.setProperty('left',Math.round(x)+'px','important');st.setProperty('top',Math.round(y)+'px','important');}
+ window.HubColorPicker={anchor(el){nextAnchor=el;},open(options){if(!box)init();const anchor=options?.anchor||nextAnchor;nextAnchor=null;if(options?.trigger&&((!box.hidden&&active?.trigger===options.trigger)||(shut.trigger===options.trigger&&performance.now()-shut.t<600))){shut={};if(!box.hidden)close();return;}   // v0.257: второе нажатие той же кнопки — окно сворачивается
+ active={...options};fromHex(active.color);sync();box.hidden=false;place(anchor);box.querySelector('.hex').focus({preventScroll:true});}};
 })();
