@@ -59,7 +59,7 @@
     const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
     for (const g of T.groups) {
       if (!out.has(g.key) || !g.root) continue;
-      let pat = null;
+      let pat = null, glyph = null;
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
         const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
         const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
@@ -72,6 +72,13 @@
           }
           if ((!vis && !c.free) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
           if (g.key === 'colour' && c.node.matches('.hubSwatch')) continue;
+          if (c.node.dataset?.view && c.node.dataset.view !== 'rhombs') {   // v0.279: «это всё в одну кнопку-список»: знак бита (цифры, скобки, черты, уголки, звезда) — списком; «Ромбы» — отдельной кнопкой
+            if (!glyph) { glyph = (r.children || []).filter(x => !x.children && x.node.dataset?.view && x.node.dataset.view !== 'rhombs').map(x => [x.node, leafItem(x)]);
+              add(g.key, { type: 'list', compact: true, icon: '1', name: 'Знак', tip: 'Знак бита: цифры, скобки, черты, уголки, звезда · при включённых «Ромбах» — внутри ромба',
+                get: () => glyph.findIndex(([b]) => b.getAttribute('aria-pressed') === 'true'), set: i => glyph[i]?.[0].click(),
+                options: glyph.map(([, it], i) => ({ v: i, name: it.name, icon: it.icon })) }, 'bits|glyph'); }
+            continue;
+          }
           if (/\|Узор: /.test(c.id)) {   // v0.270: «как палитру — выпадающим из 3 списком»: Х / П / С — одной кнопкой со списком
             if (!pat) { pat = (r.children || []).filter(x => !x.children && /\|Узор: /.test(x.id)).map(x => x.node);
               add('bits', { type: 'list', compact: true, icon: '△', name: 'Узор', tip: 'Узор треугольника', get: () => pat.findIndex(b => b.getAttribute('aria-pressed') === 'true'),

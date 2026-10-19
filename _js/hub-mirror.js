@@ -41,12 +41,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -111,6 +111,9 @@
   }
 
   const buffers = new WeakMap(),liveSources=new Set(),glyphMetrics=new Map(),cutoutSprites=new Map(),lastBitScroll={0:5,1:5};
+  // v0.279: «это всё в одну кнопку-список, и они пусть лежат в ромбах, если ромбы включены» — ромб отдельно (bitRhomb), знак — списком;
+  // прежний вид 'rhombs' = цифры в ромбах
+  const rhombOn=()=>state.bitView==='rhombs'||state.bitRhomb===true;
   function bitGlyph(bit){
     const glyphs={brackets:['()',')'],parentheses:['(',')'],slashes:['\\','/'],angles:['<','>']};
     return glyphs[state.bitView]?.[bit==='1'?1:0]??bit;
@@ -120,7 +123,7 @@
     if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
   }
   function packedScale(g,text,size,width,height){
-    if(!state.packedBits||state.bitView==='rhombs')return [1,1];
+    if(!state.packedBits||rhombOn())return [1,1];
     const key=g.font+'|'+text+'|ink';let bounds=glyphMetrics.get(key);
     if(!bounds){const m=g.measureText(text);bounds=[(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight??m.width),(m.actualBoundingBoxAscent??size*.7)+(m.actualBoundingBoxDescent||0)];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,bounds);}
     return [width/Math.max(.01,bounds[0]),height/Math.max(.01,bounds[1])];
@@ -230,11 +233,11 @@
     const viewBox=document.createElement('details'),viewHead=document.createElement('summary'),viewOptions=document.createElement('div'),viewArrows=document.createElement('span');
     viewBox.className='hubTilt hubBitView';viewHead.setAttribute('aria-label','Вид битов');viewOptions.className='hubBitViewOptions';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Варианты вида битов');viewArrows.className='hubBitViewArrows';viewArrows.setAttribute('aria-hidden','true');viewArrows.innerHTML='<svg viewBox="0 0 48 60"><path d="M2 29 L24 51 L46 29 M2 35 L24 57 L46 35"/></svg>';
     const views=[['rhombs','◇1','Ромбы с цифрами'],['digits','1','Только цифры'],['brackets',')','Скобки: 1 = ), 0 = ()'],['parentheses',')(','Скобки: 1 = ), 0 = ('],['slashes','\\/','Черты: 0 = \\, 1 = /'],['angles','<>','Уголки: 0 = <, 1 = >'],['stars','*','Звезда и точка']];
-    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;document.querySelectorAll('button[data-view]').forEach(b=>{const selected=b.dataset.view===state.bitView;b.hidden=false;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
-    for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{state.bitView=value;syncView();if(viewBox.dataset.groupPinned!=='true')viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
+    const syncView=()=>{const selected=views.find(v=>v[0]===state.bitView);viewHead.textContent=selected[1];viewHead.title=selected[2]+' — варианты при наведении';let visible=0;document.querySelectorAll('button[data-view]').forEach(b=>{const v=b.dataset.view,selected=v==='rhombs'?rhombOn():v===state.bitView||(v==='digits'&&state.bitView==='rhombs');b.hidden=false;if(!selected)b.style.setProperty('--view-offset',(visible++%2===0?12:-12)+'px');b.setAttribute('aria-pressed',String(selected));});};
+    for(const [value,text,label] of views){const button=document.createElement('button');button.type='button';button.className='hubRhomb';button.dataset.view=value;button.textContent=text;button.title=label;button.setAttribute('aria-label',label);button.onclick=()=>{if(value==='rhombs'){const on=!rhombOn();state.bitRhomb=on;if(!on&&state.bitView==='rhombs')state.bitView='digits';}else{if(state.bitView==='rhombs')state.bitRhomb=true;state.bitView=value;}syncView();if(viewBox.dataset.groupPinned!=='true')viewBox.open=false;changed();save();viewHead.focus();};viewOptions.append(button);}
     viewHead.addEventListener('click',e=>{if(!viewBox.dataset.nested&&e.pointerType==='mouse'){e.preventDefault();viewBox.open=true;}});
     viewBox.addEventListener('pointerenter',e=>{if(!viewBox.dataset.nested&&e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(!viewBox.dataset.nested&&e.pointerType!=='touch'&&viewBox.dataset.groupPinned!=='true')viewBox.open=false;});
-    viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();
+    viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();window.addEventListener('hubmirror',syncView);
     const packing=document.createElement('button');packing.id='hubBitPacking';packing.type='button';packing.textContent='↔\nвстык';packing.setAttribute('aria-label','Биты без отступов');packing.title='Увеличить знаки до соприкосновения, сохранив центры битов';
     const syncPacking=()=>packing.setAttribute('aria-pressed',String(!!state.packedBits));
     packing.onclick=()=>{state.packedBits=!state.packedBits;syncPacking();changed();save();};syncPacking();document.body.append(packing);
@@ -569,7 +572,7 @@
     },
     rotationCenter(){return frame?center():null;},
     colors(){if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
-    symbolsOnly(){return state.bitView!=='rhombs';},
+    symbolsOnly(){return !rhombOn();},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||this.digitVisible(bit)||size<=0)return false;
       const m=g.getTransform(),scale=Math.max(2,Math.min(8,Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d))));
