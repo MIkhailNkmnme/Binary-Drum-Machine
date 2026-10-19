@@ -168,3 +168,5 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sl2 .gz-mid>.gz-v{display:none}
 .gz-sl2 .gz-vl,.gz-sl2 .gz-vr{position:absolute;top:50%;transform:translateY(-50%);padding:0 3px;background:var(--gz-bg);border-radius:2px;pointer-events:none;font-variant-numeric:tabular-nums;font-size:11px;line-height:14px}
 .gz-sl2 .gz-vr{color:var(--gz-mut)}
+.gz-total{position:fixed;transform:translateY(-50%);z-index:2147483000;padding:1px 6px;font:11px/16px system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#dfe6f5;
+  background:#121a30;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);border-radius:2px;pointer-events:none;white-space:nowrap}

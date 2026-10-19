@@ -113,9 +113,12 @@
               const t = String(it.get()), k = t.indexOf('/'), a = (k < 0 ? t : t.slice(0, k)).trim(), z = k < 0 ? '' : t.slice(k + 1).trim();
               if (vl.textContent !== a) vl.textContent = a; if (vr.textContent !== z) vr.textContent = z;
               const W = mid.clientWidth, x = TH + f * (W - 2 * TH), g = 10, lw = vl.offsetWidth, rw = vr.offsetWidth;
-              vl.style.left = Math.max(0, x - g - lw) + 'px'; vr.style.left = Math.min(W - rw, x + g) + 'px';
-              // «у края — одна цифра»: число, которому нет места со своей стороны бегунка, не показывается; дошли до конца (96 = 128) — одно число
-              vl.style.visibility = x - g - lw < 0 ? 'hidden' : ''; vr.style.visibility = x + g + rw > W || a === z ? 'hidden' : ''; });
+              // «общее из ползунка вообще удали, при наведении покажи слева от него»: в ползунке — только текущее (слева от бегунка, нет места — справа); общее — плашкой слева от кнопки
+              vl.style.left = (x - g - lw >= 0 ? x - g - lw : Math.min(W - lw, x + g)) + 'px'; vr.style.display = 'none'; tot.textContent = z;
+              if (tot.isConnected) { const r = b.getBoundingClientRect(); tot.style.left = (r.left - tot.offsetWidth - 4) + 'px'; tot.style.top = (r.top + r.height / 2) + 'px'; } });
+            const tot = el('span', 'gz-total'); tot.style.setProperty('--c', g.color || '#5aa9ff');
+            b.addEventListener('pointerenter', () => { if (!tot.textContent) return; document.body.append(tot); refresh(); });
+            b.addEventListener('pointerleave', () => tot.remove());
             const at = e => { const r = mid.getBoundingClientRect(); it.setFrac(Math.max(0, Math.min(1, (e.clientX - r.left - TH) / Math.max(1, r.width - 2 * TH)))); refresh(); };   // «не схватывает бегунок, когда прижат влево»: ход бегунка — внутри дорожки, на TH от краёв
             mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
               const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
