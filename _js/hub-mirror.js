@@ -80,7 +80,7 @@
       if(Math.abs(delta)>1e-12){turnField(delta);snapAxisPosition();changed();}}
     spinTime=time;spinRaf=requestAnimationFrame(spinTick);
   }
-  function startSpin(){if(spinRunning)return;spinRemainder=0;spinRunning=true;spinTime=0;spinRaf=requestAnimationFrame(spinTick);syncSpin();}
+  function startSpin(){if(spinRunning||!state.on)return;spinRemainder=0;spinRunning=true;spinTime=0;spinRaf=requestAnimationFrame(spinTick);syncSpin();}
   // Rows are projections in the direction of the current stroke. Snap to a
   // bit/row coordinate or halfway between its two neighbouring coordinates.
   function magneticPoint(x,y,direction=state.angle+Math.PI/2){
@@ -244,7 +244,7 @@
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
-    enabled.addEventListener('change', () => { state.on = enabled.checked;syncSpin();changed();save(); });
+    enabled.addEventListener('change', () => { state.on = enabled.checked;if(!state.on&&spinRunning)stopSpin();syncSpin();changed();save(); });   // зеркало выключили — кручение оси останавливается (без зеркала оно дублирует пуск холста)
     // v0.218: «Ось» только показывает / прячет линию оси с ручками; зеркало включается отдельно (◇ в «Симм.»).
     axisShow=document.createElement('button');axisShow.type='button';axisShow.id='hubAxisShow';axisShow.className='hubRhomb';axisShow.textContent='↗\nОсь';axisShow.title='Ось — показать / спрятать линию и ручки';axisShow.setAttribute('aria-label',axisShow.title);axisShow.setAttribute('aria-pressed',String(state.axisShown));axisShow.onclick=()=>{state.axisShown=!state.axisShown;changed();save();};settings.append(axisShow);
     const sym = document.createElement('button'); sym.type='button'; sym.className='hubRhomb hubBitSymmetry'; sym.textContent='│\nсим.';
@@ -314,7 +314,7 @@
     for(const [key,text,title] of [['gold','✦','Золото: области, симметричные относительно оси'],['foldIn','⤵','Заворот: части отражения вне треугольника — ещё и отражённые от его сторон внутрь (сами остаются)'],['magnet','🧲','Магнит оси: центры битов и рядов, середины промежутков'],['axisRotate','⟳','Вращать ось за линию вместо переноса']]){const b=document.createElement('button');b.type='button';b.className='hubRhomb';b.textContent=text;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('aria-pressed',String(state[key]));b.onclick=()=>{state[key]=!state[key];if(key==='magnet'){spinRemainder=0;if(state.magnet){turnField(snapAngle(visibleAngle())-visibleAngle());snapAxisPosition();}}b.setAttribute('aria-pressed',String(state[key]));changed();save();};settings.append(b);}
     { const g=settings.querySelector('[aria-label^="Золото"]');if(g&&colorGroup){g.style.gridArea='gold';colorGroup.append(g);} }   // v0.141: ✦ — в группе «Цвета»
     const spinControl=document.createElement('div');spinControl.className='hubMirrorSpinControl';
-    spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать зеркало; без зеркала — оригинал вокруг центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать ось: зеркало или оригинал');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else startSpin();save();};spinControl.append(spinButton);
+    spinButton=document.createElement('button');spinButton.type='button';spinButton.className='hubRhomb hubMirrorSpin';spinButton.title='Вращать зеркало; без зеркала — оригинал вокруг центра: пуск / пауза';spinButton.setAttribute('aria-label','Вращать ось: зеркало или оригинал');spinButton.onclick=()=>{resumeSpin=false;if(spinRunning)stopSpin();else if(state.on)startSpin();save();};   /* «без зеркала это дубль пуска — не давай включать так» */spinControl.append(spinButton);
     const spinLabel=document.createElement('label'),spinHead=document.createElement('span');spinLabel.className='hubMirrorSpeedControl';spinHead.append(document.createTextNode('Зеркало · '));spinValue=document.createElement('output');spinHead.append(spinValue);spinLabel.append(spinHead);
     spinValue.title='Двойной щелчок — скорость ×1';spinValue.ondblclick=()=>{state.spinSpeed=30;syncSpin();save();};
     spinRange=document.createElement('input');spinRange.type='range';spinRange.min=-100;spinRange.max=300;spinRange.step=1;spinRange.className='hubMirrorSpeed';spinRange.setAttribute('aria-label','Множитель скорости вращения зеркала');spinRange.oninput=()=>{state.spinSpeed=30*Math.pow(10,Number(spinRange.value)/100);syncSpin();};spinRange.onchange=save;spinLabel.append(spinRange);spinControl.append(spinLabel);settings.append(spinControl);syncSpin();
