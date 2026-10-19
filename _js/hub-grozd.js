@@ -135,6 +135,7 @@
     document.addEventListener('click', () => requestAnimationFrame(soon), true);
     for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hubview', 'hublocks', 'resize']) addEventListener(ev, soon);
     setInterval(tick, 500); tick();
+    requestAnimationFrame(() => document.documentElement.classList.remove('hubBoot'));   // v0.274: рейка готова — показать кнопки поля (index.html прячет их до этого)
   }
   const start = () => setTimeout(() => { if (window.HubNestedGroups?.tree) init(); else setTimeout(start, 200); }, 0);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
