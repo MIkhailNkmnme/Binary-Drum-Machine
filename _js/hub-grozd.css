@@ -13,3 +13,6 @@ body.hubZen #hubRail{display:none}
   body:not(.hubMobButtons) #hubRail{display:none}
   #hubRail .gz-rail{--gz-h:30px;--gz-w:150px;font-size:13px}
 }
+/* 19.10: «при наведении не изменяй фон, покажи рамку как у включённой и убери при уходе» — рейка и выпадающие списки */
+#hubRail .gz-hx:hover::before,body.hubRailOn .gz-ladder .gz-hx:hover::before{background:var(--gz-bg)}
+#hubRail .gz-hx:not(.gz-press):hover,body.hubRailOn .gz-ladder .gz-hx:not(.gz-press):hover{background:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
