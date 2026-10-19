@@ -316,6 +316,7 @@
     for(const id of hoverOnly){const r=records.get(id);if(!r)continue;const slot=r.group.slot;
       r.node.querySelector(':scope > summary').addEventListener('pointerenter',e=>{if(e.pointerType==='touch'||!hoverOnly.has(id))return;hovered.add(id);r.node.open=true;render();});
       slot.addEventListener('pointerleave',()=>setTimeout(()=>{if(!hoverOnly.has(id)||slot.matches(':hover'))return;hovered.delete(id);r.node.open=false;render();},250));}render();}};
+    window.HubNestedGroups.tree={groups,records,render:()=>{renderStamp="";render();}};   // v0.262: дерево групп — для рейки «Вариант А» (hub-grozd.js)
     persist();render();syncLocks();
   }};
 })();

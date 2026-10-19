@@ -1,0 +1,121 @@
+/* Hub v0.262: «все кнопки переделай в такой вид в хабе» — группы поля рейкой «Вариант А» (ZerkGrozd, как в Маятнике):
+   шапки групп одна под другой справа от меню страниц, открыта одна, кнопки — шестигранники сотами в 2 столбца.
+   Рейка рисует свои кнопки, а щелчок передаёт настоящей кнопке поля (hub-nested-groups.js), поэтому вся логика хаба прежняя.
+   «по всему звуку - нотам, отдельное меню» — пуск / пауза битов, ноты, скорость и стоп собраны в группу «Звук».
+   Пульт движений у креста и сам крест остаются как были. */
+(() => {
+  'use strict';
+  const txt = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const cut = s => s.length > 16 ? s.slice(0, 15) + '…' : s;
+  const tipOf = n => txt((n.dataset.hubTip ?? n.getAttribute('title') ?? n.getAttribute('aria-label') ?? '').split(' · ПКМ')[0].split(' · Наведение')[0]);
+  const fire = inp => { inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true })); };
+  // короткие названия там, где у кнопки поля нет своей подписи
+  const NAMES = [[/Узор: Хоррориус/, 'Х', 'Хоррориус'], [/Узор: исходный/, 'П', 'Исходный'], [/Узор: Серпинский/, 'С', 'Серпинский'],
+    [/Ромбы с цифрами/, '◇', 'Ромбы'], [/Только цифры/, '1', 'Цифры'], [/Скобки: 1 = \), 0 = \(\)/, ')', 'Скобки ()'], [/Скобки: 1 = \), 0 = \($/, ')(', 'Скобки )('],
+    [/Черты/, '\\/', 'Черты'], [/Уголки/, '<>', 'Уголки'], [/Звезда/, '*', 'Звезда'], [/hubPNG$/, '▧', 'PNG'], [/hubRec$/, '⏺', 'Видео'],
+    [/Цвет битов оригинала/, '1', 'Цвет 1'], [/Цвет нулей оригинала/, '0', 'Цвет 0'], [/Прозрачные цифры 0/, '0', 'Прозр. 0'], [/Прозрачные цифры 1/, '1', 'Прозр. 1'],
+    [/Цвет отражённых/, '◇', 'Отражение'], [/Цвет заворота/, '⤵', 'Заворот'], [/Цвет подсветки симметрии/, '✦', 'Подсветка'], [/Золото:/, '✦', 'Золото'],
+    [/Скорость битов/, '♪', 'Скорость'], [/Семь световых/, null, 'Ноты'], [/Остановить биты/, null, 'Стоп']];
+  const VALS = [[/hubRowCount/, 'Строки'], [/hubFlipSpeed/, 'Скорость'], [/Скорость света/, 'Свет'], [/Скорость снега/, 'Снег'], [/Скорость воды/, 'Вода'],
+    [/Размер битов света/, 'Размер'], [/Радиус солнца/, 'Солнце'], [/Минимум строк/, 'Мин. строк'], [/Минимум пар/, 'Мин. пар']];
+  const ic = n => { const p = n.querySelector(':scope > .hubIc path, :scope > summary > .hubIc path'); return p ? p.getAttribute('d') : ''; };
+  const icName = n => txt(n.querySelector(':scope > .hubIc > span, :scope > summary > .hubIc > span')?.textContent);
+  function leafItem(r) {
+    const n = r.node, tip = tipOf(n.matches('details') ? n.querySelector('summary') : n) || tipOf(n), m = NAMES.find(([re]) => re.test(r.id));
+    const own = txt([...n.childNodes].filter(c => c.nodeType === 3).map(c => c.textContent).join(' '));
+    const icon = ic(n) || (m && m[1]) || own.split(' ')[0].slice(0, 3), name = cut((m && m[2]) || icName(n) || txt(n.querySelector('small')?.textContent) || (own.includes(' ') ? own.slice(own.indexOf(' ') + 1) : '') || tip);
+    if (n.matches('details')) {
+      const inp = n.querySelector('input'), out = n.querySelector('summary output'), v = VALS.find(([re]) => re.test(r.id));
+      const lo = () => inp.min === '' ? -Infinity : +inp.min, hi = () => inp.max === '' ? Infinity : +inp.max, st = () => parseFloat(inp.step) || 1;
+      const put = x => { x = Math.max(lo(), Math.min(hi(), x)); const d = (String(inp.step).split('.')[1] || '').length; inp.value = d ? x.toFixed(d) : String(Math.round(x)); fire(inp); };
+      return { type: 'value', name: v ? v[1] : cut(icName(n) || tip), tip,
+        get: () => txt(out?.textContent || n.querySelector('.hubSlV')?.textContent || inp.value),
+        step: d => { let s = st(); if (Math.abs(d) === 2) { const span = hi() - lo(); s = Number.isFinite(span) ? Math.max(s, Math.round(span * .1 / s) * s) : s * 5; } put(+inp.value + Math.sign(d) * s); } };
+    }
+    const sel = n.querySelector('select');
+    if (sel) return { type: 'list', icon: '▤', name: cut(tip.split(/[:·]/)[0]), tip, get: () => sel.value, set: x => { sel.value = x; fire(sel); }, options: [...sel.options].map(o => ({ v: o.value, name: txt(o.textContent) })) };
+    const inp = n.querySelector('input');
+    if (inp && inp.type === 'color') return { type: 'color', icon, name, tip, get: () => inp.value, set: x => { inp.value = x; fire(inp); } };
+    if (inp && inp.type === 'checkbox') return { type: 'toggle', icon, name, tip, on: () => inp.checked, click: () => inp.click() };
+    if (n.hasAttribute('aria-pressed')) return { type: 'toggle', icon, name, tip, on: () => n.getAttribute('aria-pressed') === 'true', click: () => n.click() };
+    const live = /Скорость битов|Режим автозума/.test(r.id);   // кнопки, чья надпись — текущее значение
+    return { type: 'action', icon, name, tip, nameNow: live ? () => cut(txt(n.textContent)) : null, click: () => n.click() };
+  }
+  // голова со своим действием (Симметрия, Ось, 3D, Свет…) — первой кнопкой
+  function headItem(r, icon, name) {
+    const s = r.node.querySelector(':scope > summary'), tip = tipOf(s);
+    return { type: 'toggle', icon: ic(r.node) || icon, name, tip, on: () => { const v = r.on ? r.on() : r.active?.(); return v === true || v === 'mixed'; }, click: () => { r.action(); } };
+  }
+  const gateOn = r => r.on ? r.on() : r.active?.();
+  const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['colour', 'Цвет', '#ff9fd0'], ['symmetry', 'Симметрия', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
+    ['space', 'Объём', '#a98bff'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
+  const HEAD = { symmetry: 'Симметрия', axis: 'Ось', space: '3D', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
+  const SOUND = /Семь световых|Скорость битов|Остановить биты/;
+  function collect(T) {
+    const out = new Map(GROUPS.map(([k]) => [k, []]));
+    const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
+    for (const g of T.groups) {
+      if (!out.has(g.key) || !g.root) continue;
+      const walk = (r, vis) => {
+        for (const c of r.children || []) {
+          if (c.children) {
+            if (c.action) add(g.key, headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), c.id);
+            walk(c, vis && (!c.gate || !!gateOn(c)));
+            continue;
+          }
+          if ((!vis && !c.free) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
+          if (g.key === 'colour' && c.node.matches('.hubSwatch')) continue;
+          add(SOUND.test(c.id) ? 'sound' : g.key, leafItem(c), c.id);
+        }
+      };
+      const root = g.root;
+      if (root.action && g.key === 'bits') add('sound', { ...headItem(root, 'M9 6l9 6-9 6z', 'Пуск'), name: 'Пуск' }, 'bits');   // пуск / пауза битов — это звук
+      else if (g.key === 'file') { const b = document.getElementById('hubPresetList');
+        if (b) add('file', { type: 'toggle', icon: '▤', name: 'Шаблоны', tip: 'Открыть список шаблонов', on: () => b.getAttribute('aria-expanded') === 'true', click: () => b.click() }, 'file'); }
+      else if (root.action) add(g.key, headItem(root, '', HEAD[g.key] || g.name), g.key);
+      walk(root, !root.gate || !!gateOn(root));
+      if (g.key === 'colour') {   // образцы палитры — одним списком
+        const sw = (root.children || []).filter(c => !c.children && c.node.matches('.hubSwatch')).map(c => c.node);
+        if (sw.length) add('colour', { type: 'list', icon: '🎨', name: 'Палитра', tip: 'Готовые пары цветов', get: () => sw.findIndex(b => b.getAttribute('aria-pressed') === 'true'),
+          set: i => sw[i]?.click(), options: sw.map((b, i) => ({ v: i, name: cut(txt(b.getAttribute('aria-label')).replace(/^Цвета: /, '')), icon: '●' })) }, 'colour|palette');
+      }
+    }
+    // звук — в своём порядке: пуск, ноты, скорость, стоп
+    const at = k => k === 'bits' ? 0 : /Семь/.test(k) ? 1 : /Скорость битов/.test(k) ? 2 : 3;
+    out.get('sound').sort((a, b) => at(a.key) - at(b.key));
+    return out;
+  }
+  function init() {
+    const T = window.HubNestedGroups?.tree; if (!T || !window.ZerkGrozd) return;
+    const host = document.createElement('div'); host.id = 'hubRail'; document.body.append(host);
+    for (const t of ['pointerdown', 'dblclick', 'wheel', 'contextmenu']) host.addEventListener(t, e => e.stopPropagation());
+    document.body.classList.add('hubRailOn');
+    let rail = null, sig = '';
+    function build() {
+      const m = collect(T), now = [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
+      if (now === sig) return false; sig = now;
+      if (rail) rail.destroy();
+      const gs = GROUPS.filter(([k]) => m.get(k).length).map(([id, title, color]) => ({ id, title, color, items: m.get(id) }));
+      rail = window.ZerkGrozd.rail(host, { key: 'hub', groups: gs });
+      // подсказка — плашкой хаба (hub-tips.js читает title)
+      for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
+        const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
+        const a = g.items.filter(i => !['value', 'list', 'control'].includes(i.type)), b = g.items.filter(i => ['value', 'list', 'control'].includes(i.type));
+        a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip; }); }
+      return true;
+    }
+    const place = () => {
+      const desk = matchMedia('(min-width:1101px)').matches;
+      const left = desk ? Math.max(8, ...['.hub', '#hubSidebarToggle'].map(q => { const r = document.querySelector(q)?.getBoundingClientRect(); return r && r.width ? r.right : 0; })) + 10 : null;
+      host.style.left = desk ? Math.round(left) + 'px' : '';
+    };
+    let q = 0; const tick = () => { q = 0; if (!build() && rail) rail.refresh(); place(); };
+    const soon = () => { if (!q) q = requestAnimationFrame(tick); };
+    new MutationObserver(soon).observe(document.getElementById('hubFieldTools'), { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'hidden', 'aria-expanded'] });
+    document.addEventListener('click', () => requestAnimationFrame(soon), true);
+    for (const ev of ['hubmirror', 'hubimage', 'hubmusic', 'hubflowstate', 'hubview', 'hublocks', 'resize']) addEventListener(ev, soon);
+    setInterval(tick, 500); tick();
+  }
+  const start = () => setTimeout(() => { if (window.HubNestedGroups?.tree) init(); else setTimeout(start, 200); }, 0);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
+})();

@@ -1,0 +1,10 @@
+/* Hub v0.262: группы поля — рейкой «Вариант А» (hub-grozd.js); прежние ромбовые деревья спрятаны, пульт движений у креста остался */
+#hubRail{position:fixed;left:210px;top:8px;z-index:30;max-height:calc(100dvh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:0 2px 8px 0}
+#hubRail::-webkit-scrollbar{display:none}
+body.hubRailOn #hubFieldTools .hubFieldSlot:not([data-group=motion]){display:none!important}
+body.hubZen #hubRail{display:none}
+@media(max-width:1100px){
+  #hubRail{left:50%;transform:translateX(-50%);top:64px;z-index:25;max-height:calc(100dvh - 72px)}
+  body:not(.hubMobButtons) #hubRail{display:none}
+  #hubRail .gz-rail{--gz-h:30px;--gz-w:150px;font-size:13px}
+}
