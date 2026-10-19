@@ -218,7 +218,7 @@
 
   // Снаружи: любую кнопку тянут в ромб — копией. Ползунки и поля ввода не берутся.
   document.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || e.target.closest?.('.hubRombGrid')) return;
+    if (e.button !== 0 || e.target.closest?.('.hubRombGrid,#hubMirrorViewport,#hubMirror,#hubPult,#hubPultBot')) return;   // v0.281: ручки оси и пульт — не кнопки для ромбосетки (тянули ось — вылезали все сетки)
     const rail = e.target.closest?.('#hubRail [data-rg-key]');   // v0.267: кнопка рейки — копия её настоящей кнопки поля
     if (rail && e.target.closest('.gz-pin')) return;
     const el = rail ? null : e.target.closest?.(SRC);
