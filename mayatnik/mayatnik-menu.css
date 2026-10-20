@@ -560,3 +560,5 @@ body.may-raildrag #mayatnikRail{z-index:45}
 .gz-group.gz-mini>.gz-head>.gz-nm,.gz-group.gz-mini>.gz-head>.gz-hr{display:none}
 .gz-group.gz-mini>.gz-head>.gz-mico{display:block;position:relative;z-index:1;font-size:13px;line-height:1;color:var(--c)}
 .gz-group.gz-mini.gz-open>.gz-head>.gz-mico{color:#fff}
+/* v0.256: «убери этот значок» — бипирамида-логотип у названия не показывается */
+.may-logo{display:none!important}
