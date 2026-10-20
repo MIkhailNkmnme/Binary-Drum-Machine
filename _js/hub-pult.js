@@ -105,7 +105,8 @@
       show(); br.append(box);
       resetB?.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); run(!raf); });
       if (resetB) resetB.title += ' · правый щелчок — автоповорот битов (ползунок скорости справа)';
-      window.HubBitSpin = { get on() { return !!raf; }, run, get speed() { return speed; } }; }
+      window.HubBitSpin = { get on() { return !!raf; }, run, get speed() { return speed; } };
+      let resumeSpin = false; addEventListener('hubmotionpause', e => { if (e.detail.paused) { resumeSpin = !!raf; run(false); } else { if (resumeSpin) run(true); resumeSpin = false; } }); }   // v0.377: общая пауза — и автоповорот битов
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
     // 360° на пульте не показывается (кнопка «360°» осталась в рейке); free живёт для sync
 

@@ -284,8 +284,9 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       if (fl) { const s2 = fl.map((it, i) => [it, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]); fl.splice(0, fl.length, ...s2); }
     }
     { const M = window.HubMirror, bl0 = out.get('bits');   // «кнопка авто изменения цвета каждые сколько-то секунд — ползунком»: слева вкл / выкл, ползунок — секунды (1–60)
-      if (M?.setAutoPal && bl0) bl0.push({ type: 'value', name: 'Смена цвета', tip: 'Автосмена палитры: следующая готовая палитра каждые N секунд · ползунок — N', key: 'bits|autoPal',
+      if (M?.setAutoPal && bl0) bl0.push({ type: 'value', name: 'Смена цвета', tip: 'Автосмена цвета · Палитры — перетекают одна в другую (ползунок — секунды на переход) · 🌈 Радуга — оригинал по радуге, отражение навстречу (полный круг — 12 × ползунок секунд)', key: 'bits|autoPal',
         head: { label: '⟳ Цвет', on: () => !!M.state.autoPal, click: () => M.setAutoPal(!M.state.autoPal) },
+        tail: { label: 'Палитры', labelNow: () => M.state.autoPalMode === 'rainbow' ? '🌈 Радуга' : 'Палитры', on: () => M.state.autoPalMode === 'rainbow', click: () => M.setAutoPalMode(M.state.autoPalMode === 'rainbow' ? 'pal' : 'rainbow') },   // «чисто радугу — антирадуга и радуга»
         get: () => M.state.autoPalSec + ' с', step: d => M.setAutoPalSec(M.state.autoPalSec + Math.sign(d) * (Math.abs(d) === 2 ? 5 : 1)), zero: () => M.setAutoPalSec(10),
         frac: () => (M.state.autoPalSec - 1) / 59, setFrac: f => M.setAutoPalSec(1 + f * 59) }); }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»

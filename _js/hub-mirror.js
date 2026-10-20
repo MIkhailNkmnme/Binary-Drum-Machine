@@ -41,7 +41,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -54,7 +54,7 @@
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
       state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym','zero'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(['bit','mirror','fold','sym'].every(k=>c[k]))state.custom=c;if(Number.isFinite(saved.zeroAlpha))state.zeroAlpha=Math.max(0,Math.min(1,saved.zeroAlpha));}
-      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;state.axis2=saved.axis2===true;if([90,30,60,0,-1,-2].includes(saved.axis2Deg))state.axis2Deg=saved.axis2Deg;if(Number.isFinite(saved.axis2Free))state.axis2Free=saved.axis2Free;state.autoPal=saved.autoPal===true;if(Number.isFinite(saved.autoPalSec))state.autoPalSec=Math.max(1,Math.min(60,Math.round(saved.autoPalSec)));
+      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;state.axis2=saved.axis2===true;if([90,30,60,0,-1,-2].includes(saved.axis2Deg))state.axis2Deg=saved.axis2Deg;if(Number.isFinite(saved.axis2Free))state.axis2Free=saved.axis2Free;state.autoPal=saved.autoPal===true;if(saved.autoPalMode==='rainbow')state.autoPalMode='rainbow';if(Number.isFinite(saved.autoPalSec))state.autoPalSec=Math.max(1,Math.min(60,Math.round(saved.autoPalSec)));
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -303,10 +303,13 @@
     // v0.375: «автоизменение цвета плавнее, бросаются в глаза скачки, может радугу?» — цвета непрерывно перетекают в следующую палитру
     // (ползунок — секунды на один переход), без пауз, по кругу через все палитры; ~15 кадров в секунду, во вкладке в фоне — стоит
     autoPalSync=()=>{cancelAnimationFrame(autoPalTimer);autoPalTimer=0;const n=PALETTES.length;
-      if(!state.autoPal){if(palMix){state.palette=palMix.a;palMix=null;api.mixKey='';syncColors();changed();save();}return;}
-      if(!palMix){const a=state.palette>=0?state.palette:0;palMix={a,b:(a+1)%n,t:0,last:0,shown:0};}
+      if(!state.autoPal){if(palMix){if(!palMix.rb)state.palette=palMix.a;palMix=null;api.mixKey='';syncColors();changed();save();}return;}
+      const rb=state.autoPalMode==='rainbow';if(palMix&&!!palMix.rb!==rb)palMix=null;
+      if(!palMix){const a=state.palette>=0?state.palette:0;palMix=rb?{rb:true,h:0,a,last:0,shown:0}:{a,b:(a+1)%n,t:0,last:0,shown:0};}
       const tick=now=>{autoPalTimer=requestAnimationFrame(tick);if(document.hidden){palMix.last=0;return;}if(!palMix.last){palMix.last=now;return;}
-        if(now-palMix.shown<66)return;const dt=(now-palMix.last)/1000;palMix.last=now;palMix.shown=now;palMix.t+=dt/Math.max(1,state.autoPalSec);
+        if(now-palMix.shown<66)return;const dt=(now-palMix.last)/1000;palMix.last=now;palMix.shown=now;
+        if(palMix.rb){palMix.h=(palMix.h+dt*360/(12*Math.max(1,state.autoPalSec)))%360;api.mixKey='rb:'+palMix.h.toFixed(1);syncColors();changed();return;}   // радуга: полный круг за 12 × ползунок секунд
+        palMix.t+=dt/Math.max(1,state.autoPalSec);
         if(palMix.t>=1){palMix.t-=Math.floor(palMix.t);palMix.a=palMix.b;palMix.b=(palMix.b+1)%n;state.palette=palMix.a;save();}
         api.mixKey=palMix.a+':'+palMix.b+':'+palMix.t.toFixed(3);syncColors();changed();};
       autoPalTimer=requestAnimationFrame(tick);};autoPalSync();
@@ -340,6 +343,7 @@
     spinValue.title='Двойной щелчок — скорость ×1';spinValue.ondblclick=()=>{state.spinSpeed=30;syncSpin();save();};
     spinRange=document.createElement('input');spinRange.type='range';spinRange.min=-100;spinRange.max=300;spinRange.step=1;spinRange.className='hubMirrorSpeed';spinRange.setAttribute('aria-label','Множитель скорости вращения зеркала');spinRange.oninput=()=>{state.spinSpeed=30*Math.pow(10,Number(spinRange.value)/100);syncSpin();};spinRange.onchange=save;spinLabel.append(spinRange);spinControl.append(spinLabel);settings.append(spinControl);syncSpin();
     window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumeSpin=spinRunning;stopSpin();save();}else{if(resumeSpin)startSpin();resumeSpin=false;}});
+    {let resumePal=false;window.addEventListener('hubmotionpause',e=>{if(e.detail.paused){resumePal=!!autoPalTimer;cancelAnimationFrame(autoPalTimer);autoPalTimer=0;if(palMix)palMix.last=0;}else{if(resumePal&&state.autoPal)autoPalSync();resumePal=false;}});}   // v0.377: смена цвета тоже на паузу (цвет замирает как есть)
     window.addEventListener('pagehide',()=>{stopSpin();save();});
     document.addEventListener('pointermove',e=>{
       orbitPointer=e.pointerType==='touch'||e.target?.closest?.('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button:not(.hubMirrorTurn):not(.hubNoteCell),#hubZoom,#hubLogoBox')?null:[e.clientX,e.clientY];refreshOrbitHover();
@@ -605,7 +609,9 @@
       return {source:original,mirror};
     },
     rotationCenter(){return frame?center():null;},
-    colors(){if(palMix){const A=PALETTES[palMix.a],B=PALETTES[palMix.b],t=palMix.t*palMix.t*(3-2*palMix.t),mix=(x,y)=>{const p=q=>[1,3,5].map(i=>parseInt(q.slice(i,i+2),16)),u=p(x),v=p(y);return '#'+u.map((c,i)=>Math.round(c+(v[i]-c)*t).toString(16).padStart(2,'0')).join('');};   // «автоизменение цвета плавнее» — между палитрами перетекает
+    colors(){if(palMix&&palMix.rb){const h=palMix.h,hx=d=>{const H=((d%360)+360)%360,f=n=>{const k=(n+H/30)%12,a=.95*Math.min(.68,1-.68);return Math.round(255*(.68-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0');};return '#'+f(0)+f(8)+f(4);};   // «чисто радугу — с двух сторон антирадуга и радуга»: оригинал по кругу, отражение — навстречу
+      return {bit:hx(h),mirror:hx(-h),fold:hx(-h),sym:hx(-h),zero:hx(h)};}   // «2 цвета от радуги»: оригинал — радуга, отражение (и заворот, подсветка) — антирадуга
+      if(palMix){const A=PALETTES[palMix.a],B=PALETTES[palMix.b],t=palMix.t*palMix.t*(3-2*palMix.t),mix=(x,y)=>{const p=q=>[1,3,5].map(i=>parseInt(q.slice(i,i+2),16)),u=p(x),v=p(y);return '#'+u.map((c,i)=>Math.round(c+(v[i]-c)*t).toString(16).padStart(2,'0')).join('');};   // «автоизменение цвета плавнее» — между палитрами перетекает
       return {bit:mix(A[1],B[1]),mirror:mix(A[2],B[2]),fold:mix(A[3],B[3]),sym:mix(A[4]||'#ffd166',B[4]||'#ffd166'),zero:mix(A[1],B[1])};}
       if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
     symbolsOnly(){return !rhombOn();},
@@ -689,6 +695,7 @@
     },
     setAxis2(on){state.axis2=!!on;changed();save();},
     setAutoPal(on){state.autoPal=!!on;autoPalSync();save();window.dispatchEvent(new Event('hubmirror'));},
+    setAutoPalMode(m){state.autoPalMode=m==='rainbow'?'rainbow':'pal';autoPalSync();save();window.dispatchEvent(new Event('hubmirror'));},
     setAutoPalSec(sec){state.autoPalSec=Math.max(1,Math.min(60,Math.round(sec)));autoPalSync();save();},
     cycleAxis2Deg(){state.axis2Deg={90:30,30:60,60:0,0:-1,'-1':-2,'-2':90}[state.axis2Deg]??90;changed();save();},
     axis2Replaces1(){return !!(state.on&&state.axis2&&state.axis2Deg===-2);},   // ✳3: отражение от своей оси не рисуется — его заменяют три оси

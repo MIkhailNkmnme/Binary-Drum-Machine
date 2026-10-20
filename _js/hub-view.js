@@ -284,7 +284,7 @@
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     // «правой кнопкой по холсту или битам — выход из запомненного режима кручения или масштаба для следующего скрола»: сброс (как любым нажатием) и без меню браузера
-    document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.hub,#hubRail,.gz-ladder,.hubRombGrid,input,select,textarea,button,summary,#hubPult,#hubPultBot,.hubZenSave,#hubZenToggle,a'))return;wheelAction=null;wheelBits.clear();window.HubMirror?.clearRotationBit?.();e.preventDefault();},true);
+    document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.hub,#hubRail,.gz-ladder,.hubRombGrid,input,select,textarea,button,summary,#hubPult,#hubPultBot,.hubZenSave,#hubZenToggle,a'))return;wheelAction=null;wheelBits.clear();window.HubMirror?.clearRotationBit?.();e.preventDefault();window.HubView?.motionPauseToggle?.();},true);   // v0.377: «правая кнопка по холсту — на паузу все вращения и смену цветов» (ещё раз — продолжить)
     document.addEventListener('wheel',e=>{
       if(!e.deltaY&&!(e.shiftKey&&e.deltaX))return;   // v0.214: Shift + колесо часто приходит как deltaX
       if(e.target.closest?.('#hubRail,.gz-ladder,.hubRombGrid'))return;   // v0.267: колесо над рейкой прокручивает её (и ползунки в ней), а не поле
@@ -339,7 +339,10 @@
       return true;
     };window.HubView.grabBits=beginDrag;document.addEventListener('pointerdown',e=>beginDrag(e));
     window.addEventListener('hubview',()=>rotation.value=state.angle);window.addEventListener('hubmirror',()=>{markMoving();if(state.flip||state.mirrorFlip)changed(false);});changed();
-    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<0||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();});
+    document.addEventListener('dblclick',e=>{if(e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox,.hubMirrorTurn'))return;const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);if(!frame||e.clientX<0||y>frame.height)return;if(centerTriangleAtAxis(e.clientX,y)){e.preventDefault();e.stopPropagation();return;}if(e.target.closest('.hubNoteCell'))return;e.preventDefault();e.stopPropagation();motionPauseToggle();});
+    // общая пауза всего движения — двойной щелчок и (v0.377) правый щелчок по холсту; hubmotionpause слушают ось, автозум, потоки, звук, автоповорот битов, смена цвета
+    function motionPauseToggle(){if(!fieldPaused){resumeFlip=flipRunning;resumeAuto=autoRunning;stopAuto();stopFlip();fieldPaused=true;}else{fieldPaused=false;if(resumeAuto)startAuto();resumeAuto=false;if(resumeFlip){flipRunning=true;flipTime=0;flipRaf=requestAnimationFrame(flipTick);}}window.dispatchEvent(new CustomEvent('hubmotionpause',{detail:{paused:fieldPaused}}));changed();}
+    window.HubView.motionPauseToggle=motionPauseToggle;
   }
   window.HubView.snapshot=()=>({state:JSON.parse(JSON.stringify(state)),autoRunning,flipRunning,zoomRunning,zoomPhase,fieldPaused,resumeAuto,resumeFlip,resumeZoom,lastScrollRotation,autoRemainder,autoZero,flipQuickShown});
   window.HubView.restore=s=>{
