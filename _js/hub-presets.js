@@ -33,7 +33,7 @@
       request.onsuccess=()=>{const id=(Number(request.result)||0)+1;meta.put(id,'counter');const record={...snapshot,id,name:defaultName?'Зеркалиус-'+id:snapshot.name};tx.objectStore('presets').put(record);done(record);};
     });
   }
-  const message=text=>{status.textContent=text;};
+  let msgTimer=0;const message=text=>{status.textContent=text;clearTimeout(msgTimer);if(text)msgTimer=setTimeout(()=>{status.textContent='';},4000);};   // «не убирается подсказка» — сообщение гаснет само через 4 с
   function choose(id){selected=id;sessionStorage.setItem(SELECTED,String(id));list?.querySelectorAll('[data-preset]').forEach(row=>row.dataset.selected=String(Number(row.dataset.preset)===id));}
   const controlKey=node=>node.id||node.dataset.pinControl||node.getAttribute('aria-label')||node.querySelector(':scope > summary')?.getAttribute('aria-label');
   function snapshot(){
@@ -110,7 +110,7 @@
     const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;input.setAttribute('aria-label','Файл состояния Зеркалиуса');
     const upload=document.createElement('button');upload.className='hubRhomb';upload.textContent='↑\nФайл';upload.setAttribute('aria-label','Загрузить состояние из файла');upload.onclick=()=>input.click();
     input.onchange=()=>run(async()=>{const file=input.files[0];input.value='';if(!file)return;if(file.size>128*1024*1024)throw Error('Файл больше 128 МБ');const record=await add(C.validate(JSON.parse(await file.text())),false);choose(record.id);await render();message('Добавлен: '+record.name+'. Кликните, чтобы открыть.');});
-    status=document.createElement('div');status.id='hubPresetStatus';status.setAttribute('role','status');
+    status=document.createElement('div');status.id='hubPresetStatus';status.title='Щелчок — убрать';status.addEventListener('click',()=>{status.textContent='';});status.setAttribute('role','status');
     undoButton=document.createElement('button');undoButton.className='hubPresetUndo';undoButton.textContent='Вернуть удалённый';undoButton.hidden=true;
     undoButton.onclick=()=>run(async()=>{const record=await read('meta','deleted');if(record){await transaction(['presets','meta'],'readwrite',tx=>{tx.objectStore('presets').put(record);tx.objectStore('meta').delete('deleted');});choose(record.id);await render();message('Шаблон возвращён');}undoButton.hidden=true;});
     panel.append(head,hint,list,upload,input,undoButton);document.body.append(panel,status);
