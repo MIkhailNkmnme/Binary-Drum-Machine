@@ -550,3 +550,6 @@ body.may-raildrag #mayatnikRail{z-index:45}
 .may-rc th{color:#8592ad;font-weight:500;border-bottom:1px solid #2a3350}
 .may-rc td:nth-child(3){color:#8592ad;text-align:left}
 .may-rc .rc-n{margin:6px 0 0;color:#8592ad;max-width:520px}
+/* v0.241: «сделай фон кнопкам такой же рейкой с отступом от кнопок, но тёмный, а то сливается»: левая рейка лежит прямо на поле — вокруг каждой
+   кнопки и шапки группы тёмная кайма 3 px (по контуру шестиугольников, просветы между кнопками закрыты), как у столбца вариантов (v0.233) */
+#mayatnikRail .gz-rail,#mayatnikRailR .gz-rail{filter:drop-shadow(3px 0 0 #05070d) drop-shadow(-3px 0 0 #05070d) drop-shadow(0 3px 0 #05070d) drop-shadow(0 -3px 0 #05070d)}
