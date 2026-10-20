@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.056. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.057. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -47,6 +47,7 @@
      v0.032: в 14¾ — опыт с тремя вершинами: шум начинается, как только вершины есть с обеих сторон; «виртуальной вершины»-точки нет.
      v0.033: Codex — независимый исследователь Хоррориуса: раздел 15, доказательство периодичности краевой полосы по степеням двойки, контрпример к n/2, воспроизводимый расчёт.
      v0.034: раздел 14⅞ «Конец ленты»: при высоте N картинка внутри конуса якоря застывает к ≈ 4N вершинам.
+     v0.057: текст под заголовком и полоса «Битмультфильмы · Борт-журнал» — один блок (.intro), картинки по центру ширины.
      v0.056: темы пронумерованы 1–7 (в оглавлении и в тексте). В тексте — заголовки семи тем оглавления (#tema-1…7); разделы переставлены по темам (номера прежние: 11 — в «Ромбах», 24 — в «Маятнике: устройство»).
      v0.055: в «Коротко» слова, совпадающие с разделами (XOR, цикл 128, период, ромбы, размер ромбов, разгон), — ссылки на разделы.
      v0.054: заголовки тем, карточек полосы и пункты списков подчёркиваются при наведении (это ссылки).
@@ -66,7 +67,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.056</title>
+<title>Zerkalius Исследование — v0.057</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -165,11 +166,20 @@
   h2.tb span{ display:block; font-size:13px; color:var(--dim); letter-spacing:.3px; margin-top:3px; }
   .tn{ font-style:normal; color:var(--dim); font-weight:400; margin-right:8px; }
   h2.tb + h2{ border-top:0; margin-top:14px; }
+  /* v0.057: текст под заголовком и полоса картинок — один блок, картинки по центру ширины. */
+  .intro{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin:0 0 16px; }
+  .intro .sub{ margin:0 0 10px; }
+  .intro .polosa{ justify-content:center; gap:22px; margin:0; }
+  .intro .pl{ background:none; border:0; padding:0; text-align:center; }
+  .intro .pl b{ text-align:center; }
+  .intro .pl span{ justify-content:center; }
+  .intro .pl:hover img{ border-color:var(--gold); }
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>zerkalius · исследование</h1>
+<div class="intro">
 <p class="sub">Щелчок по картинке — в полный размер (и ×2, ×4). Цикл Аниматрицы в <a href="../Zerkalius-code.html">Zerkalius Code</a> на сцене «1» — что нашлось, 2026-09-24.
 Кратко то же — в <a href="../Zerkalius-dnevnik.html">борт-журнале</a> (v0.089, запись после Code 35.55, и словарь).
 Готовым к просмотру, без разбора — <a href="../rezultaty/Zerkalius-rezultaty.html">«Битмультфильмы»</a>.</p>
@@ -177,6 +187,7 @@
 <div class="polosa">
   <a class="pl" href="../rezultaty/Zerkalius-rezultaty.html"><b>Битмультфильмы</b><span><img src="oglavlenie/b-tri-zerkala.webp" alt="Три зеркала" title="Три зеркала" width="320" height="200"><img src="oglavlenie/b-mayatnik.webp" alt="Маятник 2024" title="Маятник 2024" width="320" height="200"><img src="oglavlenie/b-cikl.webp" alt="Цикл 1024" title="Цикл 1024" width="320" height="200"><img src="oglavlenie/b-kraska.webp" alt="Маятник: краска" title="Маятник: краска" width="320" height="200"></span></a>
   <a class="pl" href="../Zerkalius-dnevnik.html"><b>Борт-журнал</b><span><img src="../oktaedr/zerkalius-logo.svg" alt="Знак Zerkalius" class="lg"></span></a>
+</div>
 </div>
 <div class="novoe">
   <div><p class="sub nv-h">Новое:</p>
