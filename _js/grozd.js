@@ -242,16 +242,17 @@
     function dragHead(head, box) {
       head.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
-        const y0 = e.clientY; let slot = null, top0 = 0;
+        const y0 = e.clientY, x0 = e.clientX; let slot = null, top0 = 0, left0 = 0;
+        const row = getComputedStyle(root).flexDirection === 'row';   // Hub v0.383: рейка полосой сверху — группы в ряд, тянут и вбок
         const move = ev => {
-          if (!slot && Math.abs(ev.clientY - y0) < 6) return;
+          if (!slot && Math.abs(ev.clientY - y0) < 6 && (!row || Math.abs(ev.clientX - x0) < 6)) return;
           if (!slot) {   // 15.10: группа едет за курсором, на её месте — пунктирная щель
-            const r = box.getBoundingClientRect(); top0 = r.top;
-            slot = el('div', 'gz-slot'); box.after(slot); closeLadder(); tipHide();
+            const r = box.getBoundingClientRect(); top0 = r.top; left0 = r.left;
+            slot = el('div', 'gz-slot'); if (row) slot.style.width = head.offsetWidth + 'px'; box.after(slot); closeLadder(); tipHide();
             Object.assign(box.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px' }); box.classList.add('gz-drag');
           }
-          box.style.top = (top0 + ev.clientY - y0) + 'px';
-          const after = [...root.querySelectorAll(':scope > .gz-group:not(.gz-drag)')].find(g => { const r = g.getBoundingClientRect(); return ev.clientY < r.top + 15; });
+          box.style.top = (top0 + ev.clientY - y0) + 'px'; if (row) box.style.left = (left0 + ev.clientX - x0) + 'px';
+          const after = [...root.querySelectorAll(':scope > .gz-group:not(.gz-drag)')].find(g => { const r = g.getBoundingClientRect(); return row ? ev.clientY < r.top || (ev.clientY < r.top + head.offsetHeight + 4 && ev.clientX < r.left + r.width / 2) : ev.clientY < r.top + 15; });
           if (after) after.before(slot); else root.append(slot);
         };
         const up = () => {

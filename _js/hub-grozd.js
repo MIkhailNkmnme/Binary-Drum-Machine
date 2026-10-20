@@ -209,7 +209,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       // v0.382, «все 3 стыка в одну кнопку с номерами 1, 2, 3»: [⛶ Стык | 1 | 2 | 3] — 1 и 2 — Стык1 / Стык2, 3 — прежний «встык» (растяжка в клетку);
       // ключ прежний (p.id) — кнопка остаётся на месте «Встык», куда её поставили
       if (p) { const pv = leafItem(p), st = M?.setPackMode ? m => ({ label: m.slice(-1), on: () => M.packMode() === m, click: () => M.setPackMode(m) }) : null;
-        out.get('bits').push(st ? { type: 'pair', cls: 'gz-tri', name: '⛶ Стык', tip: 'Знаки встык: 1 — касаются через одного · 2 — касаются соседа, не перекрываются · 3 — растянуты на клетку · повторный щелчок — выкл', parts: [
+        out.get('bits').push(st ? { type: 'pair', cls: 'gz-tri', name: 'Стык', tip: 'Знаки встык: 1 — касаются через одного · 2 — касаются соседа, не перекрываются · 3 — растянуты на клетку · повторный щелчок — выкл', parts: [
           { ...st('styk1'), tip: 'Стык 1: знак целиком крупнее, касается знака через одного' }, { ...st('styk2'), tip: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой' },
           { label: '3', tip: 'Стык 3: знак растянут на всю клетку бита', on: pv.on, click: pv.click }], key: p.id } : { ...pv, key: p.id }); }
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
@@ -322,6 +322,13 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     const host = document.createElement('div'); host.id = 'hubRail'; document.body.append(host);
     for (const t of ['pointerdown', 'dblclick', 'wheel', 'contextmenu']) host.addEventListener(t, e => e.stopPropagation());
     document.body.classList.add('hubRailOn');
+    /* v0.383, «дай возможность закреплять меню хаба на верхней полосе по всей ширине браузера»: кнопка ▔ у рейки — группы встают в ряд
+       полосой сверху (открытая раскрывается вниз), повторно — обратно столбцом. Поле, логотип и меню страниц сдвигаются вниз на высоту
+       шапок полосы (HUB_RAIL_TOP). Выбор помнится (zerk_hub_rail_top); только на компьютере */
+    const TOPK = 'zerk_hub_rail_top'; let top = false; try { top = localStorage.getItem(TOPK) === '1'; } catch (_) {}
+    const dock = document.createElement('button'); dock.type = 'button'; dock.className = 'hubRailDock'; host.append(dock);
+    const syncDock = () => { dock.textContent = top ? '▌' : '▔'; dock.title = top ? 'Меню — обратно столбцом слева' : 'Меню — полосой сверху во всю ширину'; dock.setAttribute('aria-pressed', String(top)); };
+    dock.addEventListener('click', e => { e.stopPropagation(); top = !top; try { localStorage.setItem(TOPK, top ? '1' : '0'); } catch (_) {} syncDock(); place(); }); syncDock();
     let rail = null, sig = '';
     function build() {
       const m = collect(T), now = [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
@@ -340,7 +347,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     const place = () => {
       const desk = matchMedia('(min-width:1101px)').matches;
       const left = desk ? Math.max(8, ...['.hub', '#hubSidebarToggle'].map(q => { const r = document.querySelector(q)?.getBoundingClientRect(); return r && r.width ? r.right : 0; })) + 10 : null;
-      host.style.left = desk ? Math.round(left) + 'px' : '';
+      const strip = desk && top; document.body.classList.toggle('hubRailTop', strip);
+      host.style.left = desk && !strip ? Math.round(left) + 'px' : '';
+      let res = 0; if (strip) for (const h of host.querySelectorAll('.gz-head')) { const r = h.getBoundingClientRect(); if (r.height) res = Math.max(res, Math.ceil(r.bottom) + 6); }
+      if (res !== (window.HUB_RAIL_TOP || 0)) { window.HUB_RAIL_TOP = res; document.documentElement.style.setProperty('--hub-rail-top', res + 'px'); dispatchEvent(new Event('resize')); }
     };
     let q = 0; const tick = () => { q = 0; if (!build() && rail) rail.refresh(); place(); };
     const soon = () => { if (!q) q = requestAnimationFrame(tick); };

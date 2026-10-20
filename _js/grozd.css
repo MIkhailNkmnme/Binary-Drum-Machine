@@ -216,7 +216,16 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-hx.gz-pair.gz-tri:not(.gz-rainbow){background:color-mix(in srgb,var(--c) 30%,#000)!important}
 .gz-hx.gz-pair.gz-tri.gz-any:not(.gz-rainbow){background:var(--c)!important}
 .gz-hx.gz-pair.gz-tri::before,.gz-hx.gz-pair.gz-tri:hover::before{background:var(--gz-bg)!important}
-.gz-pair.gz-tri .gz-pm{flex:1 1 0;text-align:left;padding-left:calc(var(--gz-n) + 1px);color:var(--gz-txt,inherit)}
+/* Hub v0.383, «сделай 2 по центру ромбом»: [1 · Стык · ◇2 · 3] — 1 у левого края, 2 в ромбе ровно посередине кнопки, 3 у правого края.
+   Левая и правая части растут поровну (у обеих основа 17 px), поэтому ромб всегда в центре */
 .gz-pair.gz-tri .gz-half{flex:none;width:17px;font-size:13px;color:var(--gz-mut,inherit)}
-.gz-pair.gz-tri .gz-half:last-child{margin-right:calc(var(--gz-n) - 3px)}
+.gz-pair.gz-tri .gz-h0{order:0;justify-content:flex-start;padding-left:calc(var(--gz-n) - 4px);width:calc(var(--gz-n) + 6px)}
+.gz-pair.gz-tri .gz-pm{order:1;flex:1 1 0;min-width:0;padding:0;text-align:center;color:var(--gz-txt,inherit);font-size:10.5px;text-overflow:clip}
+.gz-pair.gz-tri .gz-h1{order:2;position:relative;width:24px}
+.gz-pair.gz-tri .gz-h1::before,.gz-pair.gz-tri .gz-h1::after{content:'';position:absolute;left:50%;top:50%;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.gz-pair.gz-tri .gz-h1::before{width:24px;height:22px;margin:-11px 0 0 -12px;background:color-mix(in srgb,var(--c) 55%,#000)}
+.gz-pair.gz-tri .gz-h1::after{width:21px;height:19px;margin:-9.5px 0 0 -10.5px;background:var(--gz-bg)}
+.gz-pair.gz-tri .gz-h1.gz-on::before{background:var(--c)}
+.gz-pair.gz-tri .gz-h1.gz-on::after{background:color-mix(in srgb,var(--c) 35%,var(--gz-bg))}
+.gz-pair.gz-tri .gz-h2{order:3;flex:1 1 calc(var(--gz-n) + 6px);justify-content:flex-end;padding-right:calc(var(--gz-n) - 4px);width:auto}
 .gz-pair.gz-tri .gz-half.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
