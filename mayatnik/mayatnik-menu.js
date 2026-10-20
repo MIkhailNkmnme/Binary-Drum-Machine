@@ -386,10 +386,10 @@
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
   { const VIEW_COLS = [
-      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'zTop', 'vx']],
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat', 'zTop', 'vx']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
-      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'rowLab', 'vtxFlash', 'heat', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
+      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
        ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
        ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],
        ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];
