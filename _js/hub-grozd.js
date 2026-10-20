@@ -254,7 +254,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
-      out.get('axis')?.push( { type: 'pair', col: 1,   /* «не оставляй пустот — в правую рейку»: под «Центр» */ cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
+      const al = out.get('axis'), ai = al ? al.findIndex(i => i.key === 'axis') + 1 : 0;   // «когда появляются кнопки — не меняй расположение старых»: Подсве.ось (есть всегда) — выше «Центр» (появляется с осью)
+      al?.splice(ai, 0, { type: 'pair', col: 1,   /* «не оставляй пустот — в правую рейку»: под «Центр» */ cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
  mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',
         parts: [{ label: '✦ Подсве.ось', tip: gi.tip, on: gi.on, click: gi.click }, ci ? { label: '●', tip: 'Цвет подсветки', on: gi.on, open: ci.open, ink: () => ci.get() } : { label: '' }], key: 'symmetry|gold' });
     }
