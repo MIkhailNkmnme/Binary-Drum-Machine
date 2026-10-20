@@ -1110,7 +1110,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const up=blackTriUp(),W=f.W,base=fillBase;mirPre();
     for(let r=1;r<VH;r++)for(let c=VX;c<VX+VW;c++){const u=up[r*W+c];if(!u)continue;const sr=r-2*u+1;if(sr<0)continue;
       const so=sr*VW+c-VX,o=r*VW+c-VX,v=px[so];
-      if(m===1){if(!base||v===base[so])continue;mirPut(px,o,v,1);}else mirPut(px,o,v,.7);}
+      if(m===1){if(!base||v===base[so])continue;mirPut(px,o,v,1);}else mirPut(px,o,v,1);}
   }
   const blackMirrorSync=()=>{const m=st.blackMirror??1,b=$('bBlackMirror');b.textContent='Зеркало: '+['выкл','краска','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   const animHlSync=()=>{const m=st.animHl|0,b=$('bAnimHl');b.textContent='Аниматрица: '+['выкл','столб','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
