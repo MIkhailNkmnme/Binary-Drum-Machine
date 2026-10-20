@@ -311,9 +311,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     {   // «сюда Сброс на начальные настройки, и не оставляй пустоты в рейках»: ↺ Сброс в «Файле» (четвёртая — соты 2 × 2)
       const fl = out.get('file'), KEYS = ['zerk_hub_view', 'zerk_hub_flow', 'zerk_hub_mirror', 'zerk_hub_visible_rows', 'zerk_hub_locks', 'zerk_hub_fast_move', 'zerk_hub_exact_tilt', 'zerk_hub_all7', 'zerk_hub_bitspin',
         // v0.397, «Сброс не возвращает на место кнопки»: и раскладка — порядок, открытые и закреплённые группы рейки, полоса сверху, места кнопок в группах
-        'grozd:hub', 'grozd:hubtop', 'zerk_hub_strip', 'zerk_hub_order', 'zerk_hub_places', 'zerk_hub_pins', 'zerk_hub_folded'];
-      if (fl) fl.push({ type: 'action', icon: '↺', name: 'Сброс', key: 'file|reset', tip: 'Сброс на начальные настройки: ось, биты, цвета, потоки, вращения, замки и раскладка кнопок (порядок групп, полоса сверху, закрепы, места кнопок). Копии в ромбосетке остаются. Прежние настройки сохраняются копией (zerk_hub_pered_sbrosom)',
-        click: () => { if (!confirm('Сбросить хаб на начальные настройки?\n(ось, биты, цвета, потоки, вращения, замки и раскладка кнопок; прежние — копией)')) return;
+        'grozd:hub', 'grozd:hubtop', 'zerk_hub_strip', 'zerk_hub_order', 'zerk_hub_places', 'zerk_hub_pins', 'zerk_hub_folded',
+        // v0.398, «да» на «копии в ромбосетке тоже убирать»: все шесть ромбосеток с их копиями кнопок
+        'zerk_hub_romb_grid', 'zerk_hub_romb_grid_b2', 'zerk_hub_romb_grid_r1', 'zerk_hub_romb_grid_r2', 'zerk_hub_romb_grid_t1', 'zerk_hub_romb_grid_t2'];
+      if (fl) fl.push({ type: 'action', icon: '↺', name: 'Сброс', key: 'file|reset', tip: 'Сброс на начальные настройки: ось, биты, цвета, потоки, вращения, замки и раскладка кнопок (порядок групп, полоса сверху, закрепы, места кнопок, копии в ромбосетках). Прежние настройки сохраняются копией (zerk_hub_pered_sbrosom)',
+        click: () => { if (!confirm('Сбросить хаб на начальные настройки?\n(ось, биты, цвета, потоки, вращения, замки, раскладка кнопок и копии в ромбосетках; прежние — копией)')) return;
           try { const bak = {}; for (const k of KEYS) { const v = localStorage.getItem(k); if (v != null) bak[k] = v; } localStorage.setItem('zerk_hub_pered_sbrosom', JSON.stringify({ at: new Date().toISOString(), keys: bak }));
             sessionStorage.setItem('zerk_hub_reset', JSON.stringify(KEYS)); for (const k of KEYS) localStorage.removeItem(k); } catch (_) {}
           location.reload(); } });   // «Сброс не возвратил»: при уходе со страницы модули записывали настройки обратно — стирает ещё раз первый скрипт <head> по отметке
