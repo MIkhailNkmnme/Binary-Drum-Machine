@@ -448,3 +448,7 @@ header #paintTools.pt-dd .pt-l:hover,header #paintTools.pt-dd .pt-l:focus-visibl
 #paintTools .pt-b:not(.gz-hx):hover{background:transparent;outline:1px solid var(--c,#ff9b50);outline-offset:-1px}
 #mayRhombs .may-rh:hover,#mayRhombs .may-rh:focus-visible{background:#121a30}
 #mayRhombs .may-rh:hover::after,#mayRhombs .may-rh:focus-visible::after{opacity:1}
+/* v0.184: «отступ кнопок нужен, границы толще, как в хабе» — в выпадающих списках зазор между кнопками, рамка 1,5 px */
+header #paintTools.pt-dd .pt-r{gap:4px!important}
+header #paintTools .pt-b.gz-hx::before,header #paintTools .pt-b.gz-hx:not(.gz-on)::before{inset:1.5px}
+header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 45%,#000)}   /* своя тусклая рамка, как в хабе; наведение — светлее, включённая — цветом группы */

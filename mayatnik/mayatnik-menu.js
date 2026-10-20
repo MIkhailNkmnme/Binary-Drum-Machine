@@ -307,7 +307,7 @@
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
     const zig = r => { if (!r.getClientRects().length) return; r.style.height = '';
       // v0.164: «стык в стык» — зубцы рамки той же высоты и скоса, что кнопки: острия кнопок входят в выемки рамки, прочее — целым числом рядов
-      const b0 = r.querySelector(':scope > .gz-hx'), P = b0 ? b0.offsetHeight : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;
+      const b0 = r.querySelector(':scope > .gz-hx'), GAP = parseFloat(getComputedStyle(r).rowGap) || 0, P = b0 ? b0.offsetHeight + GAP : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;   // v0.184: шаг зубцов — кнопка + зазор
       for (const c of r.children) if (!c.matches('.gz-hx')) { c.style.minHeight = ''; const ch = c.offsetHeight; if (ch) c.style.minHeight = Math.ceil(ch / P) * P + 'px'; }
       const w = r.offsetWidth, n = Math.max(1, Math.ceil(r.offsetHeight / P)), h = n * P;
       r.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]];
@@ -331,9 +331,14 @@
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
-    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); };
+    // v0.184: «исправь наложение» — открытые (закреплённые) списки не наезжают друг на друга: слева направо, следующий — не левее правого края предыдущего
+    const noOverlap = () => { if (narrow.matches) return; let edge = -Infinity;
+      for (const g of groupsAll().filter(x => x.classList.contains('pt-open')).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)) {
+        const r = g.querySelector('.pt-r'), b = r.getBoundingClientRect(); if (!b.width) continue;
+        if (b.left < edge + 4) { r.style.left = ((parseFloat(r.style.left) || 0) + edge + 4 - b.left) + 'px'; edge = edge + 4 + b.width; } else edge = b.right; } };
+    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(noOverlap)); };
     const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
-    addEventListener('resize', () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) zig(g.querySelector('.pt-r')); });
+    addEventListener('resize', () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(noOverlap); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
