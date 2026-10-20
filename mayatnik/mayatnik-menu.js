@@ -87,6 +87,8 @@
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
+      { type: 'toggle', icon: '▱', name: 'Контур', tip: 'Контур: внешняя граница фигуры маятника линиями в 1 px · наведи на линию — она продолжится пунктиром в обе стороны',   // v0.186
+        on: () => !!window.MayContour?.on, click: () => window.MayContour?.toggle() },
       check('sym', 'axes'), check('symV', 'axes'), check('symH', 'axes'), check('symD', 'axes'), check('symBits', 'grid4'),   // v0.133: какие оси и их длина / ширина
       check('symTriangles','tri'),button('bTriangleAxes','tri'),num('symTriangleRows',{name:'Высота ≥',tip:'Высота тотемов: строк от',slider:false}),
       { type: 'vpair', name: 'Строк', tip: 'Длина оси: строк от · до', parts: [{ ...num('symRowsMin', { slider: false }), name: 'строк ≥' }, { ...num('symRowsMax', { slider: false, inf: true, fromInf: () => +$('symRowsMin').value || 2 }), name: '≤' }] },
