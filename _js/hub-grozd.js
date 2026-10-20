@@ -343,7 +343,21 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     // а не очередь в ряду — встаёт, куда отпустили, и в полосе тянется вбок куда угодно. zerk_hub_strip — { группа: x } (прежний список v0.385 — по 126 px)
     const topX = new Map(); try { const a = JSON.parse(localStorage.getItem(STK) || '[]'); if (Array.isArray(a)) a.forEach((id, i) => topX.set(id, i * 126)); else if (a && typeof a === 'object') for (const [id, x] of Object.entries(a)) if (Number.isFinite(x)) topX.set(id, x); } catch (_) {}
     const saveTop = () => { try { localStorage.setItem(STK, JSON.stringify(Object.fromEntries(topX))); } catch (_) {} };
-    const putX = () => strip.querySelectorAll('.gz-group').forEach(b => b.style.setProperty('--sx', Math.round(topX.get(b.dataset.id) || 0) + 'px'));
+    /* v0.393, «сделай невидимую сетку для кнопок, чтобы не смешивались»: полоса делится на ячейки шириной в группу столбца (+8 px); группа встаёт
+       в ближайшую к своему месту свободную ячейку — ни на столбец (его ячейка 0, пока в нём есть группы), ни на соседку. Только что поставленная
+       (lastTop) выбирает первой, остальные уступают. Хранится место, куда отпустили (x), ячейка считается при раскладке */
+    let lastTop = null;
+    const putX = () => {
+      const col = host.querySelector(':scope > .gz-rail'), W = Math.max(120, col?.offsetWidth || 236) + 8, n = Math.max(1, Math.floor((strip.getBoundingClientRect().width + 8) / W));
+      const c0 = col && col.querySelector('.gz-group') ? 1 : 0, used = new Set(), boxes = [...strip.querySelectorAll('.gz-group')];
+      boxes.sort((a, b) => (b.dataset.id === lastTop) - (a.dataset.id === lastTop) || (topX.get(a.dataset.id) || 0) - (topX.get(b.dataset.id) || 0));
+      for (const b of boxes) {
+        const want = Math.max(c0, Math.min(n - 1, Math.round((topX.get(b.dataset.id) || 0) / W)));
+        let c = want; for (let k = 1; used.has(c) && k < 2 * n; k++) { const t = want + (k % 2 ? 1 : -1) * Math.ceil(k / 2); if (t >= c0 && t < n && !used.has(t)) c = t; }
+        if (used.has(c)) for (let t = c0; t < 999; t++) if (!used.has(t)) { c = t; break; }   // мест в окне нет — дальше вправо
+        used.add(c); b.style.setProperty('--sx', c * W + 'px');
+      }
+    };
     const desk = () => matchMedia('(min-width:1101px)').matches;
     let rail = null, railTop = null, sig = '';
     function build() {
@@ -383,14 +397,14 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const d = drag; drag = null; document.body.classList.remove('hubStripHint');
       if (!d || !d.id || Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return;
       const sr = strip.getBoundingClientRect(), xAt = () => Math.max(0, Math.min(Math.max(0, sr.width - 120), e.clientX - d.ox - sr.left));
-      if (!d.top && e.clientY < ZONE) topX.set(d.id, xAt());
+      if (!d.top && e.clientY < ZONE) { topX.set(d.id, xAt()); lastTop = d.id; }
       else if (d.top && e.clientY > stripBottom() + 30) { const n = [...host.querySelectorAll(':scope > .gz-rail > .gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.top < e.clientY; }).length; topX.delete(d.id); putAt('hub', d.id, n); }
-      else if (d.top) { topX.set(d.id, xAt()); saveTop(); setTimeout(putX, 0); return; }   // в полосе — вбок на новое место
+      else if (d.top) { topX.set(d.id, xAt()); lastTop = d.id; saveTop(); setTimeout(putX, 0); return; }   // в полосе — вбок на новое место
       else return;
       saveTop();
       setTimeout(() => { sig = ''; tick(); }, 0);   // после того как grozd.js сам положил группу в щель и сохранил порядок
     });
-    let q = 0; const tick = () => { q = 0; if (!build()) refreshAll(); place(); };
+    let q = 0; const tick = () => { q = 0; if (!build()) refreshAll(); place(); if (railTop) putX(); };
     const soon = () => { if (!q) q = requestAnimationFrame(tick); };
     new MutationObserver(soon).observe(document.getElementById('hubFieldTools'), { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'hidden', 'aria-expanded'] });
     document.addEventListener('click', () => requestAnimationFrame(soon), true);
