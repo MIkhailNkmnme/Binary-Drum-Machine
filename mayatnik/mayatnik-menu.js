@@ -141,12 +141,12 @@
     menu.setAttribute('aria-expanded', String(!closed)); dispatchEvent(new Event('resize'));
   };
   // v0.037: неактивные кнопки в рейке не показываются (как на других страницах); соты пересобираются без них.
-  const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty')]) {
+  const relayout = () => { for (const soty of [...rail.el.querySelectorAll('.gz-soty'), ...railR.querySelectorAll('.gz-soty'), ...tools.querySelectorAll(':scope > .gz-group .gz-soty')]) {   // v0.232: и группы рейки, поднятые в шапку
     const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
-    const key = shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;
+    const top = tools.contains(soty), key = (top ? 'u' : '') + shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;   // top — в шапке (v0.232)
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
-    const flat = railR.contains(soty), st = flat ? 0 : 13.5;
+    const flat = railR.contains(soty), st = flat || top ? 0 : 13.5;   // v0.232: в шапке — столбцы ровные, правый не лезет вверх на соседей полосы
     if (flat) { cells.forEach(b => { b.style.left = b.style.top = ''; }); soty.style.height = ''; soty.style.display = shown.length ? '' : 'none'; continue; }   // v0.075: справа — в строку с шапкой
     shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 - col * st) + 'px'; });   // v0.181: «не оставляй пустоты справа вверху» — правый столбец на полкнопки ВЫШЕ (в выемку у заголовка), как в хабе
     soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 - 3) + 'px' : '0';
@@ -466,81 +466,119 @@
     // не влезло по ширине окна — место считается заново при раскладке (позже поставленное главнее), память при этом не трогается.
     // Двойной щелчок по пустому месту шапки — всё по умолчанию (прежнее — копией в mayatnik-dd-grid_pered_sbrosom), ещё раз — вернуть.
     // На телефоне сетки нет: полоса листается вбок, как была, порядок — по рядам сетки.
-    { const ORDER = 'mayatnik-dd-order', GRID = 'mayatnik-dd-grid', BAK = 'mayatnik-dd-grid_pered_sbrosom', head = tools.closest('header');
+    // v0.232: на компьютере полоса всегда по сетке (без своей раскладки — подряд, как текст); «Правка» («↶ Отм. | ↷ Повт.») закреплена по середине
+    // шапки, не тянется, остальные её обходят. «это тоже чтобы можно вверх» — группу левой рейки тянут за шапку в шапку страницы: там она
+    // в сетке, кнопки — выпадающим списком под шапкой группы (mayatnik-dd-up — их id, место — в mayatnik-dd-grid как «gz:id»); оттуда — ниже шапки —
+    // обратно в рейку. На телефоне такие группы — в рейке.
+    { const ORDER = 'mayatnik-dd-order', GRID = 'mayatnik-dd-grid', BAK = 'mayatnik-dd-grid_pered_sbrosom', UPK = 'mayatnik-dd-up', head = tools.closest('header');
       const SX = 12 / Math.sqrt(3), SY = 28, GAP = 4, MAXR = 6, factory = groupsAll().map(keyOf);
-      const items = () => [...groupsAll(), $('mayCorner')].filter(Boolean), idOf = el => el.id === 'mayCorner' ? '?' : keyOf(el);
+      const ups = () => [...tools.querySelectorAll(':scope > .gz-group')], items = () => [...groupsAll(), $('mayCorner'), ...ups()].filter(Boolean);
+      const idOf = el => el.id === 'mayCorner' ? '?' : el.classList.contains('gz-group') ? 'gz:' + el.dataset.id : keyOf(el);
       const arrange = keys => { const gs = groupsAll(), at = k => { const i = keys.indexOf(keyOf(k)); return i < 0 ? keys.length + gs.indexOf(k) : i; }, end = gs[gs.length - 1].nextSibling;
         for (const g of [...gs].sort((a, b) => at(a) - at(b))) tools.insertBefore(g, end); };
       try { const k = JSON.parse(localStorage.getItem(ORDER) || 'null'); if (Array.isArray(k)) arrange(k); } catch (_) {}
       let gw = null; try { const v = JSON.parse(localStorage.getItem(GRID) || 'null'); if (v && typeof v === 'object' && !Array.isArray(v)) gw = v; } catch (_) {}
-      const saveGrid = () => { try { if (gw) localStorage.setItem(GRID, JSON.stringify(gw)); else localStorage.removeItem(GRID); } catch (_) {} };
-      const on = () => !!gw && !narrow.matches, ok = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
-      const topT = () => Math.max(0, ...Object.values(gw || {}).map(p => +(p && p[2]) || 0));
+      const saveGrid = () => { if (gw && !Object.keys(gw).length) gw = null; try { if (gw) localStorage.setItem(GRID, JSON.stringify(gw)); else localStorage.removeItem(GRID); } catch (_) {} };
+      const ok = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]), topT = () => Math.max(0, ...Object.values(gw || {}).map(p => +(p && p[2]) || 0));
+      let up = []; try { const a = JSON.parse(localStorage.getItem(UPK) || '[]'); if (Array.isArray(a)) up = a.filter(x => typeof x === 'string'); } catch (_) {}
+      const saveUp = () => { try { if (up.length) localStorage.setItem(UPK, JSON.stringify(up)); else localStorage.removeItem(UPK); } catch (_) {} };
+      const railOrder = [...rail.el.querySelectorAll(':scope > .gz-group')].map(b => b.dataset.id);
+      const boxOf = id => [...rail.el.children, ...tools.children].find(b => b.classList.contains('gz-group') && b.dataset.id === id);
+      // обратно в рейку: по месту курсора (y) или на своё место по порядку рейки
+      const toRail = (box, y) => { const kids = [...rail.el.querySelectorAll(':scope > .gz-group')], ri = railOrder.indexOf(box.dataset.id);
+        const at = y == null ? kids.find(k => railOrder.indexOf(k.dataset.id) > ri) : kids.find(k => y < k.getBoundingClientRect().top + 12);
+        rail.el.insertBefore(box, at || null); box.style.left = box.style.top = ''; box.style.removeProperty('--gdx'); box.classList.remove('pt-drag'); };
+      const placeUps = () => { for (const id of up) { const b = boxOf(id); if (!b) continue; if (narrow.matches) { if (b.parentElement !== rail.el) toRail(b); } else if (b.parentElement !== tools) tools.append(b); } };
       // порядок в DOM (телефон, Tab) — по рядам сетки
       const domSort = () => { if (!gw) return; const at = el => gw[idOf(el)], all = items(), a = all.filter(el => ok(at(el))).sort((x, y) => at(x)[1] - at(y)[1] || at(x)[0] - at(y)[0]);
         for (const el of [...a, ...all.filter(el => !ok(at(el)))]) tools.append(el); };
       const room = () => { const T = tools.getBoundingClientRect(), H = head.getBoundingClientRect(), pl = parseFloat(getComputedStyle(head).paddingLeft) || 0;
         return { W: tools.clientWidth, neg: Math.floor(Math.max(0, T.left - H.left - pl) / SX) }; };
+      const busy = (row, x, w) => (row || []).some(([a, b]) => x < b + GAP && x + w + GAP > a);
       // ближайшее к (c0, r0) свободное место шириной w — не ближе GAP к занятым; ряд «дороже» столбца, чтобы сперва искать вбок в том же ряду
       const fit = (occ, w, c0, r0, B) => { let best = null, bd = Infinity;
-        for (let r = 0; r < MAXR; r++) { const lo = r ? -B.neg : 0, hi = Math.max(lo, Math.floor((B.W - w) / SX)), row = occ[r] || [];
-          for (let c = lo; c <= hi; c++) { const x = c * SX; if (row.some(([a, b]) => x < b + GAP && x + w + GAP > a)) continue;
+        for (let r = 0; r < MAXR; r++) { const lo = r ? -B.neg : 0, hi = Math.max(lo, Math.floor((B.W - w) / SX));
+          for (let c = lo; c <= hi; c++) { if (busy(occ[r], c * SX, w)) continue;
             const dd = Math.hypot((c - c0) * SX, (r - r0) * SY * 4); if (dd < bd) { bd = dd; best = [c, r]; } } }
         if (best) return best; let r = MAXR; while (occ[r]?.length) r++; return [-B.neg, r]; };   // окно слишком узкое — ряд ниже всех
-      let shown = new Map(), sig = '', d = null, swallow = false;
+      // подряд, как текст: первое свободное место не раньше курсора (раскладка по умолчанию и кнопки без своего места)
+      const seq = (occ, w, B, [c0, r0]) => { const hi = Math.max(0, Math.floor((B.W - w) / SX));
+        for (let r = r0; ; r++) for (let c = r === r0 ? c0 : 0; c <= hi; c++) if (!busy(occ[r], c * SX, w)) return [c, r]; };
+      let shown = new Map(), sig = '', d = null, rd = null, rdown = null, swallow = false;
       const sigOf = () => tools.clientWidth + ':' + items().map(el => el.getClientRects().length ? el.offsetWidth : 0).join(',');
+      const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
       const relayout = () => { const all = items();
-        if (!on()) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; } shown = new Map(); sig = ''; return; }
+        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; } shown = new Map(); sig = ''; return; }
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
-        const B = room(), occ = [], at = el => gw[idOf(el)], vis = all.filter(el => el.getClientRects().length && el !== (d?.on && d.el));
-        const keyed = vis.filter(el => ok(at(el))).sort((x, y) => (+at(y)[2] || 0) - (+at(x)[2] || 0)), rest = vis.filter(el => !ok(at(el)));
+        const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held);
         shown = new Map(); let rows = 1;
-        for (const el of [...keyed, ...rest]) { const w = el.offsetWidth, p = at(el), end0 = Math.max(0, ...(occ[0] || []).map(q => q[1]));   // без места (новая группа) — в конец первого ряда
-          const [c, r] = ok(p) ? fit(occ, w, p[0], p[1], B) : fit(occ, w, Math.ceil((end0 + GAP) / SX), 0, B);
-          (occ[r] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, r, w]); rows = Math.max(rows, r + 1);
-          el.style.left = Math.round(c * SX) + 'px'; el.style.top = r * SY + 'px'; }
+        const put = (el, [c, r], w) => { (occ[r] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, r, w]); rows = Math.max(rows, r + 1); el.style.left = Math.round(c * SX) + 'px'; el.style.top = r * SY + 'px'; };
+        if (vis.includes(ud)) { const w = ud.offsetWidth, H = head.getBoundingClientRect(), T = tools.getBoundingClientRect();   // «Правка» — по середине шапки, первой
+          put(ud, [Math.max(0, Math.min(Math.floor((B.W - w) / SX), Math.round((H.left + H.width / 2 - T.left - w / 2) / SX))), 0], w); }
+        const rest = vis.filter(el => el !== ud), keyed = rest.filter(el => ok(at(el))).sort((x, y) => (+at(y)[2] || 0) - (+at(x)[2] || 0));
+        for (const el of keyed) { const w = el.offsetWidth, p = at(el); put(el, fit(occ, w, p[0], p[1], B), w); }
+        let cur = [0, 0]; for (const el of rest.filter(el => !ok(at(el)))) { const w = el.offsetWidth, p = seq(occ, w, B, cur); put(el, p, w); cur = [p[0] + Math.ceil((w + GAP) / SX), p[1]]; }
+        const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
+          const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
         tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); };
       const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); };
       addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
       const ghost = document.createElement('div'), bg0 = document.createElement('div'), bg1 = document.createElement('div'); ghost.className = 'pt-ghost'; bg0.className = bg1.className = 'pt-gridbg';
+      const showGrid = (B, w, c) => { const { W, neg } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
+        bg1.style.cssText = `left:${(-neg * SX).toFixed(2)}px;top:${SY}px;width:${(W + neg * SX).toFixed(2)}px;height:${(MAXR - 1) * SY - GAP}px`;
+        ghost.style.width = w + 'px'; ghost.style.display = ''; ghost.style.setProperty('--c', c || '#7cbcff'); tools.prepend(bg0, bg1); tools.append(ghost); };
+      const hideGrid = () => { ghost.remove(); bg0.remove(); bg1.remove(); $('mayatnikRail').classList.remove('may-drop'); document.body.classList.remove('may-raildrag'); };
+      const occOf = skip => { const o = []; for (const [it, [c, r, w]] of shown) if (it !== skip) (o[r] ||= []).push([c * SX, c * SX + w]); return o; };
+      const ghostAt = p => { ghost.style.left = Math.round(p[0] * SX) + 'px'; ghost.style.top = p[1] * SY + 'px'; };
       // движение и отпускание слушаются на окне: элемент едет за мышью поверх всего
       addEventListener('pointermove', e => { if (!d || d.dead || e.pointerId !== d.id) return; const el = d.el;
-        if (!d.on) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; shut();
-          if (!gw) { d.fresh = true; const T = tools.getBoundingClientRect(); gw = {};   // первая перестановка — сетка снимается с того, как полоса стоит сейчас
-            items().forEach((it, i) => { if (!it.getClientRects().length) return; const r = it.getBoundingClientRect(); gw[idOf(it)] = [Math.round((r.left - T.left) / SX), Math.max(0, Math.round((r.top - T.top) / SY)), i]; });
-            relayout(); for (const [it, [c, r]] of shown) gw[idOf(it)] = [c, r, gw[idOf(it)][2]]; }
-          const r = el.getBoundingClientRect(); Object.assign(d, { on: true, ox: d.x - r.left, oy: d.y - r.top, w: el.offsetWidth, B: room(), occ: [] });
-          for (const [it, [c, rr, w]] of shown) if (it !== el) (d.occ[rr] ||= []).push([c * SX, c * SX + w]);
-          tools.classList.add('pt-dragging'); el.classList.add('pt-drag');
-          const { W, neg } = d.B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
-          bg1.style.cssText = `left:${(-neg * SX).toFixed(2)}px;top:${SY}px;width:${(W + neg * SX).toFixed(2)}px;height:${(MAXR - 1) * SY - GAP}px`;
-          ghost.style.width = d.w + 'px'; ghost.style.setProperty('--c', getComputedStyle(el).getPropertyValue('--c').trim() || '#7cbcff'); tools.prepend(bg0, bg1); tools.append(ghost); }
+        if (!d.on) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; shut(); if (!gw) { d.fresh = true; snap(); }
+          const r = el.getBoundingClientRect(); Object.assign(d, { on: true, ox: d.x - r.left, oy: d.y - r.top, w: el.offsetWidth, B: room(), occ: occOf(el) });
+          tools.classList.add('pt-dragging'); el.classList.add('pt-drag'); showGrid(d.B, d.w, getComputedStyle(el).getPropertyValue('--c').trim()); }
         e.preventDefault(); const T = tools.getBoundingClientRect(), x = e.clientX - d.ox - T.left, y = e.clientY - d.oy - T.top;
         el.style.left = x + 'px'; el.style.top = y + 'px';
-        d.at = fit(d.occ, d.w, Math.round(x / SX), Math.round(y / SY), d.B); ghost.style.left = Math.round(d.at[0] * SX) + 'px'; ghost.style.top = d.at[1] * SY + 'px'; });
-      const end = e => { if (!d || e.pointerId !== d.id) return; const { el, on: moved, at, dead, fresh } = d;
+        d.down = el.classList.contains('gz-group') && e.clientY > head.getBoundingClientRect().bottom + 24;   // группу рейки опустили ниже шапки — обратно в рейку
+        $('mayatnikRail').classList.toggle('may-drop', d.down); ghost.style.display = d.down ? 'none' : '';
+        d.at = fit(d.occ, d.w, Math.round(x / SX), Math.round(y / SY), d.B); ghostAt(d.at); });
+      const end = e => { if (!d || e.pointerId !== d.id) return; const { el, on: moved, at, dead, fresh, down } = d;
         d = e.type === 'esc' ? { id: d.id, dead: true } : null;   // Esc — отмена; щелчок от отпускания потом проглотить
         if (dead) { swallow = e.type === 'pointerup'; setTimeout(() => { swallow = false; }, 0); return; }
         if (!moved) return; if (e.type === 'pointerup') { swallow = true; setTimeout(() => { swallow = false; }, 0); }
-        tools.classList.remove('pt-dragging'); el.classList.remove('pt-drag'); ghost.remove(); bg0.remove(); bg1.remove();
-        if (e.type === 'pointerup' && at) { gw[idOf(el)] = [at[0], at[1], topT() + 1]; saveGrid(); domSort(); } else if (fresh) gw = null;
+        tools.classList.remove('pt-dragging'); el.classList.remove('pt-drag'); hideGrid();
+        if (e.type === 'pointerup' && down) { if (fresh) gw = null; else if (gw) delete gw[idOf(el)]; up = up.filter(x => x !== el.dataset.id); saveUp(); saveGrid(); toRail(el, e.clientY); }
+        else if (e.type === 'pointerup' && at) { gw[idOf(el)] = [at[0], at[1], topT() + 1]; saveGrid(); domSort(); } else if (fresh) gw = null;
         relayout(); reopen(); };
       addEventListener('pointerup', end, true); addEventListener('pointercancel', end, true);
       addEventListener('keydown', e => { if (e.key === 'Escape' && d?.on) end({ pointerId: d.id, type: 'esc' }); }, true);
-      const start = (el, e) => { if (e.button !== 0 || narrow.matches) return; d = { el, x: e.clientX, y: e.clientY, id: e.pointerId, on: false }; };
+      const start = (el, e) => { if (e.button !== 0 || narrow.matches || el === ud) return; d = { el, x: e.clientX, y: e.clientY, id: e.pointerId, on: false }; };
       for (const g of groupsAll()) g.querySelector('.pt-l').addEventListener('pointerdown', e => start(g, e));
       { const c = $('mayCorner'); c.addEventListener('pointerdown', e => start(c, e)); const h = $('mayHelp'); if (h) h.title += ' · тянуть — переставить'; }
+      // группа рейки в шапке: шапку группы тянет сетка (перестановку в рейке grozd тут не начинает); щелчок мимо — незакреплённая сворачивается
+      tools.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'), box = h?.parentElement; if (!h || box?.parentElement !== tools) return;
+        e.stopPropagation(); if (!e.target.closest('.gz-pin')) start(box, e); }, true);
+      addEventListener('pointerdown', e => { for (const b of ups()) if (b.classList.contains('gz-open') && !b.classList.contains('gz-pinned') && !b.contains(e.target) && !e.target.closest?.('.gz-ladder')) rail.close(); }, true);
+      // группа рейки едет за мышью (grozd, .gz-drag): над шапкой — пунктиром место в сетке; отпустили там — группа наверх
+      rail.el.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'); rdown = null; if (h && e.button === 0 && !narrow.matches) { const r = h.getBoundingClientRect(); rdown = { ox: e.clientX - r.left, oy: e.clientY - r.top }; } }, true);
+      addEventListener('pointermove', e => { if (!rdown) return; const box = rail.el.querySelector(':scope > .gz-group.gz-drag'); if (!box) return;
+        if (!rd) { rd = { box, w: box.querySelector('.gz-head').offsetWidth, B: room(), occ: occOf(null) }; document.body.classList.add('may-raildrag'); showGrid(rd.B, rd.w, getComputedStyle(box).getPropertyValue('--c').trim()); }
+        box.style.left = (e.clientX - rdown.ox) + 'px';   // grozd в столбце тянет только вверх-вниз — вбок ведём сами
+        const T = tools.getBoundingClientRect(), over = e.clientY < head.getBoundingClientRect().bottom + 6;
+        rd.at = over ? fit(rd.occ, rd.w, Math.round((e.clientX - rdown.ox - T.left) / SX), Math.round((e.clientY - rdown.oy - T.top) / SY), rd.B) : null;
+        ghost.style.display = over ? '' : 'none'; if (over) ghostAt(rd.at); }, true);
+      addEventListener('pointerup', () => { rdown = null; if (!rd) return; const { box, at } = rd; rd = null; hideGrid(); if (!at) return;
+        setTimeout(() => { if (!gw) snap(); gw['gz:' + box.dataset.id] = [at[0], at[1], topT() + 1]; if (!up.includes(box.dataset.id)) up.push(box.dataset.id);   // grozd уже вернул её в рейку — переносим
+          saveUp(); saveGrid(); tools.append(box); domSort(); relayout(); }, 0); }, true);
       // двойной щелчок по пустому месту шапки: своя раскладка есть — по умолчанию (копия остаётся), нет — вернуть копию
       head.addEventListener('dblclick', e => { if (e.target !== head && e.target !== tools) return; let ord = null; try { ord = localStorage.getItem(ORDER); } catch (_) {}
-        if (gw || ord) { try { localStorage.setItem(BAK, JSON.stringify({ grid: gw, order: ord })); localStorage.removeItem(ORDER); } catch (_) {}
-          gw = null; saveGrid(); arrange(factory); tools.append($('mayCorner')); }
+        if (gw || ord || up.length) { try { localStorage.setItem(BAK, JSON.stringify({ grid: gw, order: ord, up })); localStorage.removeItem(ORDER); } catch (_) {}
+          for (const b of ups()) toRail(b); gw = null; up = []; saveUp(); saveGrid(); arrange(factory); tools.append($('mayCorner')); }
         else { let b = null; try { b = JSON.parse(localStorage.getItem(BAK) || 'null'); } catch (_) {} if (!b) return;
-          gw = b.grid && typeof b.grid === 'object' && !Array.isArray(b.grid) ? b.grid : null; saveGrid();
-          try { if (b.order) { localStorage.setItem(ORDER, b.order); const k = JSON.parse(b.order); if (Array.isArray(k)) arrange(k); } localStorage.removeItem(BAK); } catch (_) {} domSort(); }
+          gw = b.grid && typeof b.grid === 'object' && !Array.isArray(b.grid) ? b.grid : null; up = Array.isArray(b.up) ? b.up : []; saveGrid(); saveUp();
+          try { if (b.order) { localStorage.setItem(ORDER, b.order); const k = JSON.parse(b.order); if (Array.isArray(k)) arrange(k); } localStorage.removeItem(BAK); } catch (_) {} placeUps(); domSort(); }
         shut(); relayout(); reopen(); });
-      grid = { relayout, tick: () => { if (on() && !d?.on && sigOf() !== sig) relayout(); },
+      grid = { relayout, tick: () => { if (!narrow.matches && !d?.on && !rd && sigOf() !== sig) relayout(); },
         touch: k => { if (gw && ok(gw[k])) { gw[k][2] = topT() + 1; saveGrid(); } relayout(); } };   // правый щелчок (ромб ↔ название): тот, кого меняли, остаётся на месте, соседи уступают
-      narrow.addEventListener('change', relayout); domSort(); relayout(); toolSync.push(grid.tick); }
+      narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick); }
     // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
     // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
     // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
@@ -548,7 +586,7 @@
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
-        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · тянуть — переставить · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); }
       // v0.227: «это тоже в ромб сворачивать» — «Что это такое?» правым щелчком — ромб «ℹ», ещё раз — обратно (та же память, ключ — надпись кнопки)
@@ -568,7 +606,7 @@
   // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
   { const after = () => { rail.refresh(); placeTools(); };
     const reg = (b, options) => { if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
-      host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-col, .pt-r, .gz-rail') }); };   // v0.226: в «Виде» — правее своего столбца
+      host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-col, .pt-r, .gz-rail, .gz-soty, .gz-wide') }); };   // v0.226: в «Виде» — правее своего столбца; v0.232: в группе рейки, поднятой в шапку, — правее её списка
     const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
       pick: () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }));
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
@@ -638,7 +676,7 @@
   const PIN_KEY = 'mayatnik-pins';
   let pins = []; try { pins = JSON.parse(localStorage.getItem(PIN_KEY) || '[]'); } catch (_) {}
   const savePins = () => { try { localStorage.setItem(PIN_KEY, JSON.stringify(pins.map(({ g, i, x, y }) => ({ g, i, x, y })))); } catch (_) {} };
-  const cellOf = (g, i) => rail.el.querySelectorAll(`.gz-group[data-id="${g}"] .gz-soty > .gz-hx`)[i] || null;
+  const cellOf = (g, i) => document.querySelectorAll(`#mayatnikRail .gz-group[data-id="${g}"] .gz-soty > .gz-hx, #paintTools > .gz-group[data-id="${g}"] .gz-soty > .gz-hx`)[i] || null;   // v0.232: группа может быть и в шапке
   function makePin(pin) {
     const src = cellOf(pin.g, pin.i); if (!src) return null;
     const el = src.cloneNode(true); el.classList.add('may-pin'); el.style.display = ''; el.removeAttribute('tabindex'); el.title = (src.title || '') + ' · тянуть — переставить, правая кнопка — убрать';
@@ -659,8 +697,8 @@
         const n = p.src.querySelector('.gz-nm'), m = p.el.querySelector('.gz-nm'); if (n && m && m.textContent !== n.textContent) m.textContent = n.textContent; } } }
   pins = pins.filter(p => makePin(p)); placePins();
   let suppressClick = false;
-  rail.el.addEventListener('click', e => { if (suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
-  rail.el.addEventListener('pointerdown', e => {
+  for (const host of [rail.el, tools]) host.addEventListener('click', e => { if (suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
+  const ctrlPin = e => {
     const cell = e.target.closest('.gz-soty > .gz-hx'); if (!cell || !(e.ctrlKey || e.metaKey) || e.button !== 0) return;
     e.preventDefault(); e.stopPropagation();
     const g = cell.closest('.gz-group').dataset.id, i = [...cell.parentElement.children].indexOf(cell), r0 = cell.getBoundingClientRect();
@@ -672,7 +710,8 @@
       if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
         const pin = { g, i, x: ev.clientX - dx - r.left, y: ev.clientY - dy - r.top }; if (makePin(pin)) { pins.push(pin); savePins(); placePins(); } } };
     addEventListener('pointermove', mv); addEventListener('pointerup', upv);
-  }, true);
+  };
+  rail.el.addEventListener('pointerdown', ctrlPin, true); tools.addEventListener('pointerdown', ctrlPin, true);   // v0.232: и из групп рейки в шапке
   setInterval(() => { rail.refresh(); relayout(); placeTools(); placePins(); }, 200);
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
