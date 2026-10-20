@@ -141,3 +141,6 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot{left:calc(50% - 130px);right:auto}
 /* v0.362: телефон — нижний пульт в ширину не влезает: вращение строкой, наклоны битов — под ним; выше стрелки «вниз к кнопкам» (последним — перебивает bottom:0 и центровку выше) */
 @media(max-width:1100px){#hubPultBot{left:4px;right:4px;bottom:54px;flex-wrap:wrap;justify-content:center;row-gap:6px}}
+/* наклон 0° (без смещения) — деталь притушена, тоньше по виду; наведение — ярко, как при угле */
+#hubPultBot .hpTiltControl.hpAt0{filter:brightness(.55) saturate(.75)}
+#hubPultBot .hpTiltControl.hpAt0:hover{filter:none}

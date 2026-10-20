@@ -149,7 +149,7 @@
     }
     let tilted = false;
     for (const b of ['0', '1']) {
-      const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (x && +x.value !== 0) tilted = true; if (tiltV[b].textContent !== v) tiltV[b].textContent = v;
+      const x = old.tilt(b), v = (x ? x.value : 0) + '°'; if (x && +x.value !== 0) tilted = true; if (tiltV[b].textContent !== v) tiltV[b].textContent = v; tiltV[b].parentElement.classList.toggle('hpAt0', !x || +x.value === 0);   // «при 0° — убавить яркость»: без смещения деталь притушена
       const color = colors?.[b === '0' ? 'zero' : 'bit'];
       if (color) {   // v0.284: «углы в цвет соответствующих битов» — деталь как ромб бита: 0 — тёмная с цветными цифрами, 1 — цветная с тёмными; стрелки — своим фоном
         const c = tiltV[b].parentElement, a = b === '0' ? (window.HubMirror?.state?.zeroAlpha ?? .18) : 1;
