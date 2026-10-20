@@ -139,12 +139,13 @@
     if (!saves) {
       const mk = (id, text, src) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'hubZenSave'; b.textContent = text;
         b.addEventListener('click', () => document.getElementById(src)?.click()); document.body.append(b); return b; };
-      saves = [mk('hubZenPng', 'PNG', 'hubPNG'), mk('hubZenRec', '⏺'+String.fromCharCode(10)+'Видео', 'hubRec')];
+      saves = [mk('hubZenPng', 'PNG', 'hubPNG'), mk('hubZenRec', '⏺'+String.fromCharCode(10)+'Видео', 'hubRec'), mk('hubZenSys', '🔊'+String.fromCharCode(10)+'ПК', 'hubRecSys')];   // v0.389: звук компьютера в видео
     }
-    const [png, rec] = saves, r = z.getBoundingClientRect(), w = r.width || 48, gap = 6, below = r.bottom + 2 * (w + gap) <= innerHeight;
+    const [png, rec, sys] = saves, r = z.getBoundingClientRect(), w = r.width || 48, gap = 6, below = r.bottom + saves.length * (w + gap) <= innerHeight;
     saves.forEach((b, i) => { b.style.left = Math.round(r.left) + 'px'; b.style.top = Math.round(below ? r.bottom + gap + i * (w + gap) : r.top - (i + 1) * (w + gap)) + 'px'; });
     const o = document.getElementById('hubRec'), on = !!o?.classList.contains('on');
     rec.classList.toggle('on', on); if (o && rec.title !== o.title) { rec.title = o.title; rec.setAttribute('aria-label', 'Видео: старт / стоп'); }
+    const so = document.getElementById('hubRecSys'); if (so) { sys.classList.toggle('on', so.getAttribute('aria-pressed') === 'true'); if (sys.title !== so.title) { sys.title = so.title; sys.setAttribute('aria-label', 'Звук ПК в видео: вкл / выкл'); } }
     const p = document.getElementById('hubPNG'); if (p && png.title !== p.title) { png.title = p.title; png.setAttribute('aria-label', p.getAttribute('aria-label') || 'PNG'); }
   }
 

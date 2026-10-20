@@ -81,5 +81,6 @@ body.hubZen #hubZenToggle:hover,body.hubZen #hubZenToggle:focus-visible{opacity:
 .hubZenSave::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
 .hubZenSave:hover,.hubZenSave:focus-visible{color:var(--hub-theme-accent);background:var(--hub-theme-active)}
 #hubZenRec.on{color:#ff4d5e;animation:hub-rec-blink 1s ease-in-out infinite}
+#hubZenSys.on{color:var(--hub-theme-accent);background:var(--hub-theme-active)}   /* v0.389: звук ПК в видео включён */
 body.hubZen .hubZenSave{opacity:.35}
 body.hubZen .hubZenSave:hover,body.hubZen .hubZenSave:focus-visible,body.hubZen #hubZenRec.on{opacity:1}

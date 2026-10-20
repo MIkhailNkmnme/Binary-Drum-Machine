@@ -66,9 +66,8 @@
         publish();
       },
       play(t) { audio(); tone(((t | 0) % 7 + 7) % 7); },   // v0.007: одна нота — для бегающих битов ↓ хаба
-      // Hub v0.388, «видео пишет звук? надо»: звук заводился только с первой ноты — запись, начатая раньше, шла без звуковой дорожки;
-      // теперь «Видео» само заводит звук (щелчок — жест пользователя, браузер разрешает), и ноты попадают в ролик всегда
-      stream: () => { try { audio(); } catch (e) { return null; } return destination ? destination.stream : null; }
+      // Hub v0.389: stream(true) заводит звук, если его ещё нет (запись видео при включённых «Нотах»); stream() — только уже заведённый
+      stream: (make) => { if (make) { try { audio(); } catch (e) { return null; } } return destination ? destination.stream : null; }
     };
   };
 })();
