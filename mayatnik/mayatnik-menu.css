@@ -455,3 +455,10 @@ header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb
 /* v0.185: «расширь заголовок по стандарту ширины» — названия групп полосы не уже кнопки списка (126 px), подпись слева, закреп и стрелка справа; у раскрытого списка — только фон, без обводки (в mayatnik-menu.js) */
 header #paintTools.pt-dd .pt-l{min-width:126px;justify-content:space-between}
 @media(max-width:600px){header #paintTools.pt-dd .pt-l{min-width:0}}
+
+/* v0.187: «значки не скрывай» — у включённой кнопки значок не чернеет (заливки больше нет, только рамка), светлый, как у остальных */
+#paintTools .pt-b.on i,header #paintTools .pt-b.gz-hx.on i{filter:brightness(0) invert(1)}
+/* v0.187: «обводка не нажатых — как в хабе»: тусклая (20% цвета группы), 1 px; нажатая — ярко, 1,5 px; наведение — светлее */
+header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 20%,#000)}
+header #paintTools .pt-b.gz-hx:not(.on)::before{inset:1px}
+header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
