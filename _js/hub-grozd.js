@@ -58,26 +58,37 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
   const GROUPS = [['sound', 'Звук', '#4fe3c4'], ['bits', 'Биты', '#8fd3ff'], ['symmetry', 'Зеркала', '#ffd35b'], ['axis', 'Ось', '#ff87cf'],
     ['space', '3D объём', '#a98bff'], ['motion', 'Вращение', '#ffb36b'], ['flow', 'Поток', '#5ad1ff'], ['file', 'Файл', '#7fe0a0'], ['locks', 'Замок', '#c0c8d8']];
   const HEAD = { symmetry: 'Поиск осей', axis: 'Ось', space: '3D вращ.', flow: 'Пуск', locks: 'Все', 'flow|branch:light': 'Свет', 'flow|branch:snow': 'Снег', 'flow|branch:water': 'Вода' };
+  const FLOW_COMMON = /^flow\|(hubLightRule-|hubLightLoss$)/;   // «это общие — их всегда показывать, не скрывать»: правила прохода / отражения и потеря
+  const FLOW_C = { 'flow|branch:light': '#ffe46b', 'flow|branch:snow': '#e6eeff', 'flow|branch:water': '#3f8cff' };
+  const FLOW_SPEED = /^flow\|Скорость (света|снега|воды)$/;
   const SOUND = /Семь световых|Скорость битов|Остановить биты/;
   function collect(T) {
     const out = new Map(GROUPS.map(([k]) => [k, []]));
     const add = (k, it, id) => { it.key = id; out.get(k)?.push(it); };
-    const toBits = {};   // кнопки, собираемые в пары (ключ — подпись без группы)
+    const toBits = {};
+    const flowG = T.groups.find(x => x.key === 'flow'), flowOff = () => !(flowG?.root?.children || []).some(x => /^flow\|branch:/.test(x.id) && gateOn(x));   // все потоки выключены   // кнопки, собираемые в пары (ключ — подпись без группы)
     for (const g of T.groups) {
       if ((!out.has(g.key) && g.key !== 'colour') || !g.root) continue;   // «Цвета» в рейке нет, но из него берутся «Палитра» и пары 0 | 1
       let pat = null, glyph = null;
       const walk = (r, vis, br) => {   // br — внутри ветки Поток (Свет / Снег / Вода)
-        const fc = it => (g.key === 'flow' && (it.col = br ? 2 : 0), it);
+        let cur = '';   // id текущего листа (для fc)
+        const fc = it => { if (g.key === 'flow') { delete it.col; if (br && !FLOW_COMMON.test(cur)) { it.sec = br; it.secColor = FLOW_C[br]; }
+          if (FLOW_COMMON.test(cur)) it.disabled = flowOff; } return it; };   // «настройки каждого потока — под ним, своим цветом»; общие правила — в общей части, «неактивны, когда выкл. потоки»   // Свет / Снег / Вода — в ползунках, их кнопки — вторым столбцом, без пустоты
         const fa = it => (g.key === 'axis' && it.type !== 'value' && it.type !== 'list' && (it.col = /^Завор/.test(it.name || '') ? 0 : 1), it);   // «тут слева пустота»: «Завор.» — под «Ось», «Центр ◇» и «Центр △» — справа
         const fs = it => (g.key === 'space' && it.type !== 'value' && it.type !== 'list' && (it.col = 1), it);   // «замор. — в правую рейку, не оставляй пустоты»: «3D объём» — 3D вращ. слева, остальное столбиком справа   // v0.274: «Ось» — кнопка «Ось» первым столбцом, «Завор.» и «Центр» вторым, одна под другой   // 19.10: «свет и вода во 2 столб… от каждой её список 3 столбцом при включении»
         for (const c of r.children || []) {
           if (c.children) {
             const isBr = g.key === 'flow' && /^flow\|branch:/.test(c.id);
-            if (c.action) add(g.key, isBr ? { ...headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), col: 1 } : fc(headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent))), c.id);
-            walk(c, vis && (!c.gate || !!gateOn(c)), br || isBr);
+            const spd = isBr && (c.children || []).find(x => FLOW_SPEED.test(x.id));
+            if (c.action && spd) { const h = headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent));   // «Свет / Снег / Вода — каждую со своим ползунком скорости»: слева вкл / выкл, справа скорость (видна всегда)
+              add(g.key, { ...leafItem(spd), sec: c.id, secColor: FLOW_C[c.id], name: h.name, tip: h.tip + ' · ползунок — скорость', head: { label: h.name, on: h.on, click: h.click } }, c.id); }
+            else if (c.action) add(g.key, isBr ? { ...headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), col: 1 } : fc(headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent))), c.id);
+            walk(c, vis && (!c.gate || !!gateOn(c)), br || (isBr ? c.id : ''));
             continue;
           }
-          if ((!vis && !c.free) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
+          cur = c.id;
+          if (FLOW_SPEED.test(c.id) || /^flow\|Очистить свет/.test(c.id)) continue;   // сброс потоков — правой половиной «Пуск»   // скорость потока — в кнопке своей ветки
+          if ((!vis && !c.free && !FLOW_COMMON.test(c.id)) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
           if (g.key === 'colour' && c.node.matches('.hubSwatch')) continue;
           if (c.node.dataset?.view && c.node.dataset.view !== 'rhombs') {   // v0.279: «это всё в одну кнопку-список»: знак бита (цифры, скобки, черты, уголки, звезда) — списком; «Ромбы» — отдельной кнопкой
             if (!glyph) { glyph = (r.children || []).filter(x => !x.children && x.node.dataset?.view && x.node.dataset.view !== 'rhombs').map(x => [x.node, leafItem(x)]);
@@ -98,9 +109,14 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
               parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
           if (/\|Режим автозума/.test(c.id)) continue;
           if (/\|Минимум (строк|пар)/.test(c.id) && c.node.matches('details')) { toBits[/строк/.test(c.id) ? 'minR' : 'minP'] = c; continue; }   // «Мин. строк | Мин. пар» — одной кнопкой (после обхода)
+          if (/\|hubAxisSpeed$/.test(c.id)) { toBits.spinVal = c; continue; }   // «Крут. — объедини с его ползунком» (после обхода)
           if (/автозума/.test(c.id) && c.node.matches('details')) { toBits.zoomVal = c; continue; }   // «Автозум — объедини с его ползунком»: ползунок — в кнопку «Автозум» (после обхода)
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
           if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
+          if (/^flow\|(Сплошной поток|hubFlowAxis$)/.test(c.id)) {   // «Плотно и От оси — объедини»: одна кнопка пополам, место держит первая
+            toBits[/Сплошной/.test(c.id) ? 'fDense' : 'fAxis'] = leafItem(c);
+            if (!toBits.flowPair) { toBits.flowPair = { ...fc(leafItem(c)), key: 'flow|dense-axis' }; add(g.key, toBits.flowPair, 'flow|dense-axis'); }
+            continue; }
           if (/\|Закрепить центр (ромбов|контура)/.test(c.id)) {   // «Центр ◇ и Центр △ — как „Ромб. | Квадр.“»: одна кнопка пополам, место держит первая
             const k = /ромбов/.test(c.id) ? 'cMass' : 'cTri'; toBits[k] = leafItem(c);
             if (!toBits.center) { toBits.center = { ...fa(leafItem(c)), key: 'axis|center' }; add(g.key, toBits.center, 'axis|center'); }
@@ -108,7 +124,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           if (/\|Цвет заворота/.test(c.id)) { toBits.foldColor = c; continue; }   // «Завор. — сюда цвет, отдельную кнопку-дубль цвета удали»: правой половиной «∿ Завор. | ●»
           if (/\|Заворот:/.test(c.id)) { const it = leafItem(c); toBits.fold = it; add('symmetry', it, c.id); continue; }   // «Завор. — перемести в Зеркала»   // место в «Оси» держит сама кнопка, цвет к ней — после обхода
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
-          if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
+          if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, toBits.spin = { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
           if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
@@ -128,6 +144,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
         add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
           parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
+      else if (root.action && g.key === 'flow') {   // «объедини, покажи Сброс — когда запущен Пуск»: пока пуск не идёт — одна кнопка «Пуск»
+        const h = headItem(root, '', HEAD.flow), clr = () => document.querySelector('button[aria-label^="Очистить свет, снег и воду"]');
+        add('flow', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.flow, mid: '', tip: h.tip, one: () => !h.on(),
+          parts: [{ label: HEAD.flow, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Очистить свет, снег и воду, остановить потоки', click: () => clr()?.click() }] }, 'flow'); }
       else if (root.action && g.key === 'axis' && window.HubMirror?.setAxisColor) {   // «Ось — добавь цвет»: слева показать / спрятать ось, справа её цвет
         const h = headItem(root, '', HEAD.axis), M = window.HubMirror, trig = document.createElement('span');
         add('axis', { type: 'pair', col: 0, cls: 'gz-split gz-bs gz-wl', name: HEAD.axis, mid: '', tip: h.tip + ' · справа — цвет оси',
@@ -181,10 +201,20 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         parts: [{ label: '⋈ Зерк.', tip: mi.tip, on: mi.on, click: mi.click }, { label: '●', tip: 'Цвет отражённых битов', on: mi.on, open: mc.open, ink: () => mc.get() }], key: 'symmetry|mirror' } : { ...mi, name: 'Зерк.', key: toBits.mirror.id };
       const sl = out.get('symmetry'); if (sl) { const k = sl.findIndex(i => i.key === 'symmetry'); sl.splice(k >= 0 ? k + 1 : 0, 0, it); }
     }
+    if (toBits.flowPair && toBits.fDense && toBits.fAxis) {
+      const d = toBits.fDense, a = toBits.fAxis;
+      Object.assign(toBits.flowPair, { type: 'pair', cls: 'gz-split gz-bs', name: 'Плотно · от оси', mid: '', tip: 'Плотно — сплошной поток света и воды сверху · От оси — поток от оси',
+        parts: [{ label: '▦ Плотно', tip: d.tip, on: d.on, click: d.click }, { label: '✣ От оси', tip: a.tip, on: a.on, click: a.click }] });
+    }
     if (toBits.center && toBits.cMass && toBits.cTri) {
       const m = toBits.cMass, t = toBits.cTri;
       Object.assign(toBits.center, { type: 'pair', cls: 'gz-split gz-bs', name: 'Центр', mid: '', tip: 'Закрепить центр в центре оси: ◇ — центр масс ромбов · △ — центр контура треугольника',
         parts: [{ label: 'Центр ◇', tip: m.tip, on: m.on, click: m.click }, { label: 'Центр △', tip: t.tip, on: t.on, click: t.click }] });
+    }
+    if (toBits.spin && toBits.spinVal) {   // «Крут. | ползунок скорости оси»: слева пуск / пауза кручения оси (без зеркала — притушен), справа скорость
+      const z = toBits.spin, { on, click, disabled: off, tip } = z, t = { label: 'ВращВсё', on, click: () => { if (!off()) click(); } };
+      for (const k of ['col', 'icon', 'nameNow', 'modes', 'disabled']) delete z[k];
+      Object.assign(z, leafItem(toBits.spinVal), { name: 'ВращВсё', tip: tip + ' · ползунок — скорость', head: t });
     }
     if (toBits.zoom && toBits.zoomVal) {   // «Автозум | ползунок хода зума | Маятник»: слева вкл / выкл, справа режим (при включённом)
       const z = toBits.zoom, [p0, p1] = z.parts, v = leafItem(toBits.zoomVal);
@@ -199,7 +229,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
-      out.get('axis')?.push( { type: 'pair', col: 0, cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
+      out.get('axis')?.push( { type: 'pair', col: 1,   /* «не оставляй пустот — в правую рейку»: под «Центр» */ cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
  mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',
         parts: [{ label: '✦ Подсве.ось', tip: gi.tip, on: gi.on, click: gi.click }, ci ? { label: '●', tip: 'Цвет подсветки', on: gi.on, open: ci.open, ink: () => ci.get() } : { label: '' }], key: 'symmetry|gold' });
     }

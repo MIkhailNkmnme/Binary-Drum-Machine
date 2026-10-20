@@ -92,13 +92,19 @@
       const rt = el('span', 'gz-hr'); rt.append(pin, ar);
       head.append(nm, rt); box.append(head); withTip(head, g.tip || '');
       const soty = el('div', 'gz-soty'), wide = el('div', 'gz-wide');
-      const cells = [];
+      const cells = [], secs = new Map();
+      // «кнопки настроек каждого из потоков — под ним, каждый поток своим цветом»: it.sec — свой блок в широкой части группы:
+      // первая широкая строка (ползунок с включателем) сверху, под ней соты блока, ниже остальные ползунки; it.secColor — цвет блока
+      const secOf = it => { if (!it.sec) return null; let S = secs.get(it.sec);
+        if (!S) { const box2 = el('div', 'gz-sec'); if (it.secColor) box2.style.setProperty('--c', it.secColor); S = { box: box2, top: el('div', 'gz-wide'), soty: el('div', 'gz-soty'), bot: el('div', 'gz-wide'), cells: [] }; box2.append(S.top, S.soty, S.bot); wide.append(box2); secs.set(it.sec, S); }
+        return S; };
       for (const it of g.items) {
+        const S = secOf(it), toSoty = b => { (S ? S.cells : cells).push(b); (S ? S.soty : soty).append(b); }, toWide = b => { if (S) (S.top.children.length ? S.bot : S.top).append(b); else wide.append(b); };
         const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name); if (it.col != null) b.gzCol = it.col;
         if (it.type === 'control') {
           // Existing native fields retain typing, scrubbing, labels and page listeners.
           b.classList.add('gz-control'); b.removeAttribute('role'); b.removeAttribute('tabindex');
-          b.append(it.node); wide.append(b);
+          b.append(it.node); toWide(b);
         } else if (it.type === 'value') {
           b.classList.add('gz-val');
           const a = (cls, t, d) => { const s = el('span', 'gz-a ' + cls, t); s.addEventListener('click', e => { e.stopPropagation(); it.step(d); refresh(); }); return s; };
@@ -137,7 +143,7 @@
               mid.addEventListener('pointermove', mv); mid.addEventListener('pointerup', up); mid.addEventListener('pointercancel', up); });
             // 19.10: колесо над ползунком не трогает значение — прокручивает рейку («скрол вверх-вниз при переполнении»)
           }
-          wide.append(b);
+          toWide(b);
         } else if (it.type === 'list') {
           b.classList.add('gz-list');
           const ic = icon(it.icon), v = el('span', 'gz-v');
@@ -155,7 +161,7 @@
             }
             document.body.append(ladder); dimUnder(b);
           });
-          if (it.compact) { cells.push(b); soty.append(b); } else wide.append(b);
+          if (it.compact) toSoty(b); else toWide(b);
         } else if (it.type === 'pair') {
           // пара — одна кнопка, одна обводка, пополам: parts[i] = { label, tip, on(), click() | open(anchor), fill(), ink() }; it.cls — свой класс (gz-rainbow — обводка радугой)
           b.classList.add('gz-pair'); if (it.cls) b.classList.add(...it.cls.split(' '));
@@ -166,7 +172,7 @@
           refreshers.push(() => { if (it.one) b.classList.toggle('gz-one', !!it.one()); it.parts.forEach((p, i) => { if (p.labelNow) { const t = p.labelNow(); if (hs[i].textContent !== t) hs[i].textContent = t; } }); });   // labelNow — живая подпись половины   // it.one() — показывать одну левую половину во всю кнопку
           refreshers.push(() => it.parts.forEach((p, i) => { const on = !!(p.on && p.on()); hs[i].classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + i, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)');
             const f = p.fill && p.fill(), k = p.ink && p.ink(); if (f && b.style.getPropertyValue('--gz-f' + i) !== f) b.style.setProperty('--gz-f' + i, f); if (k && hs[i].style.getPropertyValue('--gz-k') !== k) hs[i].style.setProperty('--gz-k', k); }));
-          if (it.wide) { b.classList.add('gz-pw'); wide.append(b); } else { cells.push(b); soty.append(b); }   // it.wide — во всю ширину рейки, среди ползунков
+          if (it.wide) { b.classList.add('gz-pw'); toWide(b); } else toSoty(b);   // it.wide — во всю ширину рейки, среди ползунков
         } else if (it.type === 'vpair') {
           // «Мин. строк и Мин. пар — в одну пополам»: два значения в одной кнопке, у каждой половины свои ◂ ▸
           b.classList.add('gz-val', 'gz-vp');
@@ -177,7 +183,7 @@
             h.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); p.step(e.deltaY < 0 ? 1 : -1); refresh(); }, { passive: false });
             refreshers.push(() => { const t = p.get(); if (v.textContent !== t) v.textContent = t; });
             if (i) b.append(el('span', 'gz-vps')); b.append(h); });
-          wide.append(b);
+          toWide(b);
         } else if (it.type === 'color') {
           const sw = el('input', 'gz-color'); sw.type = 'color'; sw.title = it.tip || it.name;
           sw.addEventListener('input', () => { it.set(sw.value); refresh(); });
@@ -185,7 +191,7 @@
           const dot = el('span', 'gz-dot');
           b.append(icon(it.icon), el('span', 'gz-nm', it.name), dot, sw);
           refreshers.push(() => { const c = it.get(); if (document.activeElement !== sw) sw.value = c; dot.style.background = c; });
-          cells.push(b); soty.append(b);
+          toSoty(b);
         } else {
           const nm = el('span', 'gz-nm', it.name); b.append(icon(it.icon), nm);
           if (it.nameNow) refreshers.push(() => { const n = it.nameNow(); if (nm.textContent !== n) nm.textContent = n; });
@@ -194,24 +200,28 @@
           b.addEventListener('click', () => { if (it.disabled && it.disabled()) return; it.click && it.click(); refresh(); });
           if (it.type === 'toggle') refreshers.push(() => b.classList.toggle('gz-on', !!it.on()));
           if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));
-          cells.push(b); soty.append(b);
+          toSoty(b);
         }
         b.addEventListener('keydown', e => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } });
       }
       // соты: столбец k%2; первый — сразу под шапкой, второй на полкнопки выше и заходит в выемку шапки и первого
       // (слово владельца 19.10: «второй ряд начинать выше», «между заголовком и первым ниже не должно быть пустоты»)
       const s = getComputedStyle(root), W = parseFloat(s.getPropertyValue('--gz-w')) || 120, H = parseFloat(s.getPropertyValue('--gz-h')) || 24, N = parseFloat(s.getPropertyValue('--gz-n')) || 12, DY = H + 3;
-      const put = (b, col, row) => { b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY - (col % 2) * DY / 2) + 'px'; };
+      let flat = false;   // в блоке потока столбцы ровные: правый не заходит на ползунок над ним
+      const put = (b, col, row) => { b.style.left = (col * (W - N + 4)) + 'px'; b.style.top = (row * DY - (flat ? 0 : (col % 2) * DY / 2)) + 'px'; };
+      const lay = (cells, soty) => {
       if (cells.some(b => b.gzCol != null)) {
         // свои столбцы (it.col: 0, 1, 2…) — каждый сверху вниз; нечётные на полкнопки выше (19.10, «Поток»: Свет · Вода · Снег — вторым, их списки — третьим)
         const n = []; let h = 0, mc = 0;
-        cells.forEach(b => { const c = b.gzCol || 0, r = n[c] = (n[c] || 0); n[c]++; put(b, c, r); h = Math.max(h, (r + 1) * DY - (c % 2) * DY / 2); mc = Math.max(mc, c); });
+        cells.forEach(b => { const c = b.gzCol || 0, r = n[c] = (n[c] || 0); n[c]++; put(b, c, r); h = Math.max(h, (r + 1) * DY - (flat ? 0 : (c % 2) * DY / 2)); mc = Math.max(mc, c); });
         soty.style.height = (h - 3) + 'px'; soty.style.width = (mc * (W - N + 4) + W) + 'px';
       } else {
         cells.forEach((b, k) => put(b, k % 2, k >> 1));
         const rows = Math.ceil(cells.length / 2);
         soty.style.height = cells.length ? (rows * DY - 3) + 'px' : '0';
-      }
+      } };
+      lay(cells, soty);
+      flat = true; for (const S of secs.values()) { if (S.cells.length) lay(S.cells, S.soty); else S.soty.remove(); if (!S.bot.children.length) S.bot.remove(); }
       if (cells.length) box.append(soty);
       if (wide.children.length) box.append(wide);
       root.append(box);

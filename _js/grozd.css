@@ -202,3 +202,9 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-vp .gz-vph .gz-v{min-width:12px;text-align:left}
 .gz-vp .gz-vps{flex:none;align-self:stretch;width:1px;margin:3px 2px;background:color-mix(in srgb,var(--c) 45%,transparent)}
 .gz-wide>.gz-pair.gz-pw{width:100%}
+/* блок потока (it.sec): ползунок с включателем, под ним его кнопки, ниже его ползунки — своим цветом */
+.gz-sec{display:flex;flex-direction:column}
+.gz-sec>.gz-wide{margin-top:0}
+.gz-sec>.gz-soty{margin:3px 0 0}
+.gz-sec+.gz-sec,.gz-wide>.gz-hx+.gz-sec,.gz-sec+.gz-hx{margin-top:3px}
+.gz-sec>.gz-bot,.gz-sec>.gz-wide+.gz-wide{margin-top:3px}
