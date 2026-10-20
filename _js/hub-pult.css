@@ -144,3 +144,10 @@ body.hubZen #hubPultBot{display:none}
 /* наклон 0° (без смещения) — деталь притушена, тоньше по виду; наведение — ярко, как при угле */
 #hubPultBot .hpTiltControl.hpAt0{filter:brightness(.55) saturate(.75)}
 #hubPultBot .hpTiltControl.hpAt0:hover{filter:none}
+/* автоповорот битов: ползунок скорости справа от наклонов — виден, пока крутится; «360» при этом мигает */
+#hubPultBot .hpSpinBox{display:none;align-items:center;gap:6px;margin-left:8px;height:30px;padding:0 10px;background:color-mix(in srgb,var(--hp-b1,#8fd3ff) 18%,#060a12);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+#hubPultBot .hpSpinBox.on{display:flex}
+#hubPultBot .hpSpinBox input{width:110px;accent-color:var(--hp-b1,#8fd3ff);cursor:pointer}
+#hubPultBot .hpSpinV{min-width:46px;font:12px/1 system-ui,sans-serif;color:var(--hp-b1,#8fd3ff);font-variant-numeric:tabular-nums}
+#hubPultBot .hpBits .hpReset.hpSpin{animation:hpSpinBlink 1s ease-in-out infinite}
+@keyframes hpSpinBlink{50%{filter:brightness(.6)}}

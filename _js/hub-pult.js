@@ -84,6 +84,28 @@
       control.append(l, tiltV[b], r); br.append(control);
       if (b === '0') br.append(resetB = btn('hpReset', '360', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free)));   // «360 вращ. — перемести вместо ↺, её убери (дубль)»: сброс наклона — двойной щелчок по углу   // «её между ними формой X» — ↺ между наклонами 0 и 1, выемки под их острия
     }
+    // «правой кнопкой по 360 — автоповорот битов со скоростью ползунка, ползунок справа»: оба наклона (0 и 1) крутятся по кругу,
+    // свободный поворот включается сам; ползунок °/с — справа от наклонов, пока крутится; скорость помнится
+    { const KEY = 'zerk_hub_bitspin'; let sv = {}; try { sv = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (_) {}
+      let speed = Number.isFinite(sv.speed) ? sv.speed : 30, raf = 0, last = 0, acc = 0;
+      const box = el('span', 'hpSpinBox'), rng = document.createElement('input'), out = el('span', 'hpSpinV');
+      rng.type = 'range'; rng.min = '1'; rng.max = '180'; rng.step = '1'; rng.value = String(speed); rng.setAttribute('aria-label', 'Скорость автоповорота битов, °/с');
+      box.title = 'Скорость автоповорота битов · правый щелчок по «360» — стоп'; box.append(rng, out);
+      const show = () => { out.textContent = speed + '°/с'; };
+      rng.addEventListener('input', () => { speed = +rng.value; show(); try { localStorage.setItem(KEY, JSON.stringify({ speed })); } catch (_) {} });
+      for (const t of ['pointerdown', 'wheel', 'dblclick']) box.addEventListener(t, e => e.stopPropagation(), { passive: true });
+      const wrap = v => { while (v > 180) v -= 360; while (v < -180) v += 360; return v; };
+      const tick = t => { raf = requestAnimationFrame(tick); if (!last) { last = t; return; } acc += speed * Math.min(.5, (t - last) / 1000); last = t;
+        const n = Math.trunc(acc); if (!n) return; acc -= n;
+        for (const b of ['0', '1']) { const r = old.tilt(b); if (!r) continue; r.value = String(wrap(+r.value + n)); fire(r, 'input'); } };
+      const run = on => { if (on === !!raf) return;
+        if (on) { const f = old.free(); if (f && f.getAttribute('aria-pressed') !== 'true') f.click(); last = 0; acc = 0; raf = requestAnimationFrame(tick); }
+        else { cancelAnimationFrame(raf); raf = 0; for (const b of ['0', '1']) { const r = old.tilt(b); if (r) fire(r, 'change'); } }
+        box.classList.toggle('on', !!raf); resetB?.classList.toggle('hpSpin', !!raf); };
+      show(); br.append(box);
+      resetB?.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); run(!raf); });
+      if (resetB) resetB.title += ' · правый щелчок — автоповорот битов (ползунок скорости справа)';
+      window.HubBitSpin = { get on() { return !!raf; }, run, get speed() { return speed; } }; }
     free = btn('hpFree', '360°', 'Свободный поворот битов: включено — полный круг, выключено — стоп на ±60°', press(old.free));
     // 360° на пульте не показывается (кнопка «360°» осталась в рейке); free живёт для sync
 

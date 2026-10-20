@@ -283,6 +283,8 @@
     document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0),bitClick.rays);}bitClick=null;}},true);
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
+    // «правой кнопкой по холсту или битам — выход из запомненного режима кручения или масштаба для следующего скрола»: сброс (как любым нажатием) и без меню браузера
+    document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.hub,#hubRail,.gz-ladder,.hubRombGrid,input,select,textarea,button,summary,#hubPult,#hubPultBot,.hubZenSave,#hubZenToggle,a'))return;wheelAction=null;wheelBits.clear();window.HubMirror?.clearRotationBit?.();e.preventDefault();},true);
     document.addEventListener('wheel',e=>{
       if(!e.deltaY&&!(e.shiftKey&&e.deltaX))return;   // v0.214: Shift + колесо часто приходит как deltaX
       if(e.target.closest?.('#hubRail,.gz-ladder,.hubRombGrid'))return;   // v0.267: колесо над рейкой прокручивает её (и ползунки в ней), а не поле
