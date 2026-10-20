@@ -145,6 +145,15 @@
   /* v0.382, «1 и 2 стык при автоплее удлиняются»: подбор по наклону менял размер на каждом повороте. Теперь знак вписан в круг
      (радиус — дальняя точка чернил от его центра), и круги соседей касаются: при любом наклоне знаки не налезают, размер постоянный.
      Черта, лежащая вдоль ряда, при этом касается соседки концом в конец — ровно как раньше. */
+  /* v0.390, «черту линией ровно под 45°»: черта — не буква шрифта (её наклон у каждого шрифта свой, круче 45°), а отрезок ровно под 45°
+     в своём бите: 0 = \, 1 = /. Отражение зеркалом (картинка отражается целиком) само делает из / — \. Длина — как у буквы (0,76 кегля), толщина 0,13 */
+  const SL_H=.38,SL_W=.13,slashOn=()=>state.bitView==='slashes';
+  function slashHull(bit){const g=bit==='1'?-1:1,nx=g*Math.SQRT1_2,ny=-Math.SQRT1_2,w=SL_W/2,P=[];for(const [x,y] of [[-SL_H,-g*SL_H],[SL_H,g*SL_H]])P.push([x+nx*w,y+ny*w],[x-nx*w,y-ny*w]);return P;}
+  function slashScale(size,width,height){
+    if(!state.packedBits||rhombOn())return 1;
+    if(state.packMode)return packFit(size,width,height);
+    return Math.min(width,height)/((2*SL_H+SL_W*Math.SQRT1_2)*size);   // «3» — растяжка в клетку: отрезок остаётся под 45°, доходит до меньшей стороны клетки
+  }
   let packFitKey='',packFitK=1;
   function packFit(size,width,height){
     const key=[state.packMode,state.bitView,state.hideZeroDigit,state.hideOneDigit,size,width,height].join('|');
@@ -153,7 +162,7 @@
     for(const bit of ['0','1']){
       if(state.bitView==='none'||(bit==='0'?state.hideZeroDigit:state.hideOneDigit))continue;
       if(state.bitView==='stars')r=Math.max(r,width/2);
-      else for(const [x,y] of inkHull(bitGlyph(bit)))r=Math.max(r,Math.hypot(x,y)*size);
+      else for(const [x,y] of (slashOn()?slashHull(bit):inkHull(bitGlyph(bit))))r=Math.max(r,Math.hypot(x,y)*size);
     }
     let k=1;
     if(r>0){
@@ -691,6 +700,9 @@
         if(state.packedBits&&state.packMode&&this.symbolsOnly()){const k=packFit(size,width,height);g.scale(k,k);}
         if(bit==='0'){g.beginPath();g.arc(0,0,state.packedBits?width/2:Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
         else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
+      }else if(slashOn()){   // v0.390: черта — отрезок ровно под 45°
+        const k=slashScale(size,width,height),h=SL_H*size*k,sg=bit==='1'?-1:1;
+        g.strokeStyle=g.fillStyle;g.lineWidth=SL_W*size*k;g.lineCap='butt';g.beginPath();g.moveTo(-h,-sg*h);g.lineTo(h,sg*h);g.stroke();
       }else{
         const text=bitGlyph(bit);
         g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';
@@ -703,6 +715,12 @@
     drawSymbolBatch(g,bit,points,size,color,alpha,width=size/.62,height=width*Math.sqrt(3)){
       if(!this.digitVisible(bit)||!points.length)return;
       const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=bitGlyph(bit);
+      if(slashOn()){   // v0.390: черты — отрезки ровно под 45°, одним путём
+        const k=slashScale(size,width,height),h=SL_H*size*k,sg=bit==='1'?-1:1;
+        g.save();g.rotate(angle);g.strokeStyle=color;g.globalAlpha=alpha;g.lineWidth=SL_W*size*k;g.lineCap='butt';g.beginPath();
+        for(const [x,y] of points){const cx=x*co+y*si,cy=-x*si+y*co;g.moveTo(cx-h,cy-sg*h);g.lineTo(cx+h,cy+sg*h);}
+        g.stroke();g.restore();return;
+      }
       g.save();g.rotate(angle);g.font=`bold ${size}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';g.fillStyle=color;g.globalAlpha=alpha;
       const [ox,oy]=glyphOffset(g,text,size);
       const [sx,sy]=packedScale(g,text,size,width,height);if(state.packedBits&&this.symbolsOnly())g.scale(sx,sy);
