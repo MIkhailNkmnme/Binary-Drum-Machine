@@ -41,12 +41,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, packMode:null, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, bitD90:false, packedBits:false, packMode:null, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;state.bitGrid=saved.bitGrid===true;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;state.bitGrid=saved.bitGrid===true;state.bitD90=saved.bitD90===true;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;state.packMode=['styk1','styk2'].includes(saved.packMode)?saved.packMode:null;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -674,10 +674,14 @@
     squareGrid(){return state.bitGrid===true&&rhombOn()&&state.bitSquare===true;},
     packMode(){return state.packedBits?state.packMode:null;},
     setPackMode(m){if(m&&state.packedBits&&state.packMode===m){state.packedBits=false;state.packMode=null;}else if(m){state.packedBits=true;state.packMode=m;}else state.packMode=null;changed();save();},
-    setSquareGrid(on){state.bitGrid=!!on;changed();save();},
+    setSquareGrid(on){state.bitGrid=!!on;if(on)state.bitD90=false;changed();save();},
+    // v0.400, «ромб 90°»: высота ромба = ширине (dh = dw), ряды через dw/2 — ромбы с прямыми углами встают ребро к ребру, соседи ровно под 45°
+    diamond90(){return state.bitD90===true&&!this.squareGrid();},
+    setDiamond90(on){state.bitD90=!!on;if(on)state.bitGrid=false;changed();save();},
     setBitShape(m){if(m==='rhomb'||m==='square'){state.bitSquare=m==='square';state.bitRhomb=true;}else{state.bitRhomb=false;if(state.bitView==='rhombs'||state.bitView==='none')state.bitView='digits';}changed();save();},
     // «верт. отступ как у межсимвольного»: квадрат — шириной 2a (зазор в строке a/k − 2a), высотой — шаг строк b/2k минус тот же зазор
-    bitPoly(a,b){if(state.bitSquare){const k=state.packedBits?.5:.45,gap=a/k-2*a,sy=Math.max(.5,(b/(2*k)-gap)/2);return [[-a,-sy],[a,-sy],[a,sy],[-a,sy]];}return [[0,-b],[a,0],[0,b],[-a,0]];},
+    bitPoly(a,b){if(state.bitSquare&&api.diamond90()){const s=Math.min(a,b)*Math.SQRT1_2;return [[-s,-s],[s,-s],[s,s],[-s,s]];}   // v0.400: в «ромбе 90°» квадрат — тот же ромб, только не повёрнутый: на 45° совпадает с ним
+      if(state.bitSquare){const k=state.packedBits?.5:.45,gap=a/k-2*a,sy=Math.max(.5,(b/(2*k)-gap)/2);return [[-a,-sy],[a,-sy],[a,sy],[-a,sy]];}return [[0,-b],[a,0],[0,b],[-a,0]];},
     pathBit(g,a,b,pt=(x,y)=>[x,y]){const P=this.bitPoly(a,b);g.beginPath();g.moveTo(...pt(...P[0]));for(let i=1;i<P.length;i++)g.lineTo(...pt(...P[i]));g.closePath();},
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||state.bitView==='none'||this.digitVisible(bit)||size<=0)return false;   // «когда Нет — просто ромбы без всего»: без выреза знака

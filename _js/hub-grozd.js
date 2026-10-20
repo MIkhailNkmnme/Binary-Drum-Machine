@@ -226,6 +226,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             { label: '2', tip: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой', click: pick(2), on: () => sel() === 2 },
             { label: '3', tip: 'Стык 3: знак растянут на всю клетку бита', click: pick(3), on: () => sel() === 3 }], key: p.id });
         } else out.get('bits').push({ ...pv, key: p.id }); }
+      if (M?.setDiamond90) out.get('bits').push({ type: 'toggle', icon: '◇', name: '90°', tip: 'Ромб 90°: ромбы с прямыми углами ребро к ребру, соседние биты ровно под 45° — черты сходятся в сплошные диагонали; квадрат, повёрнутый на 45°, совпадает с ромбом. Треугольник ниже и шире',
+        on: () => M.diamond90(), click: () => M.setDiamond90(!M.diamond90()), key: 'bits|d90' });   // v0.400, выбор «1» — раскладка «ромб 90°»
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
