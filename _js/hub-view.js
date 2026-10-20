@@ -56,10 +56,12 @@
     }
     for(;slot<centerMarkers.length;slot++)centerMarkers[slot].node.hidden=true;
   }
-  function selectBitScreen(x,y,rays=false){   // v0.222: rays — лучи были видны, у нового бита показать сразу
+  function selectBitScreen(x,y,rays=false,rows=false){   // v0.222: rays — лучи были видны, у нового бита показать сразу
     const mirror=window.HubMirror;if(!mirror?.pickBit)return;
     const reflected=inverse(x,y,true),source=inverse(x,y);
-    mirror.selectRotationBit((reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null),rays);
+    const hit=(reflected.every(Number.isFinite)?mirror.pickBit(...reflected,true):null)??(source.every(Number.isFinite)?mirror.pickBit(...source):null);
+    mirror.selectRotationBit(hit,rays);
+    if(rows&&hit&&mirror.rowMode?.())mirror.toggleRowOf(hit.index);   // v0.409: «≡ Строки» — щелчок добавляет / снимает строку бита
   }
   function repeatScrollRotation(){stopAuto();rotate(lastScrollRotation,window.HubMirror.rotationCenter?.()||originalCenter(),true);}
   function centerTriangleAtAxis(x,y){
@@ -277,14 +279,14 @@
       if(e.button!==0||e.target.closest('.hub,.hubMirrorSettings,.hubBitView,.hubColorEditor,input,select,summary,button,#hubMirror,#hubZoom,#hubRec,#hubPNG,#hub3DQuick,#hubLogoBox'))return;
       const y=e.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0);
       if(frame&&(e.clientX<frame.left||y>frame.height))return;
-      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,previous,rays,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+      const bit=bitScreen(e.clientX,y);if(bit!==null)bitClick={bit,previous,rays,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};else window.HubMirror?.setRowSelection?.([]);   // v0.409: щелчок мимо битов — выбор строк снят
     },true);
     document.addEventListener('pointermove',e=>{if(bitClick&&bitClick.id===e.pointerId&&Math.hypot(e.clientX-bitClick.x,e.clientY-bitClick.y)>3)bitClick.moved=true;},true);
-    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0),bitClick.rays);}bitClick=null;}},true);
+    document.addEventListener('pointerup',e=>{if(bitClick&&bitClick.id===e.pointerId){if(!bitClick.moved){wheelBits=bitClick.previous;wheelBits.delete(bitClick.bit);wheelBits.add(bitClick.bit);selectBitScreen(bitClick.x,bitClick.y+(matchMedia('(max-width:1100px)').matches?scrollY:0),bitClick.rays,true);}bitClick=null;}},true);
     document.addEventListener('pointercancel',()=>{bitClick=null;wheelBits.clear();},true);
     document.addEventListener('click',()=>{wheelAction=null;},true);
     // «правой кнопкой по холсту или битам — выход из запомненного режима кручения или масштаба для следующего скрола»: сброс (как любым нажатием) и без меню браузера
-    document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.hub,#hubRail,.gz-ladder,.hubRombGrid,input,select,textarea,button,summary,#hubPult,#hubPultBot,.hubZenSave,#hubZenToggle,a'))return;wheelAction=null;wheelBits.clear();window.HubMirror?.clearRotationBit?.();e.preventDefault();window.HubView?.motionPauseToggle?.();},true);   // v0.377: «правая кнопка по холсту — на паузу все вращения и смену цветов» (ещё раз — продолжить)
+    document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.hub,#hubRail,.gz-ladder,.hubRombGrid,input,select,textarea,button,summary,#hubPult,#hubPultBot,.hubZenSave,#hubZenToggle,a'))return;wheelAction=null;wheelBits.clear();window.HubMirror?.clearRotationBit?.();window.HubMirror?.setRowSelection?.([]);e.preventDefault();window.HubView?.motionPauseToggle?.();},true);   // v0.377: «правая кнопка по холсту — на паузу все вращения и смену цветов» (ещё раз — продолжить)
     document.addEventListener('wheel',e=>{
       if(!e.deltaY&&!(e.shiftKey&&e.deltaX))return;   // v0.214: Shift + колесо часто приходит как deltaX
       if(e.target.closest?.('#hubRail,.gz-ladder,.hubRombGrid'))return;   // v0.267: колесо над рейкой прокручивает её (и ползунки в ней), а не поле
@@ -298,7 +300,8 @@
           if(zone)wheelAction=ev=>mirror.wheelStep(zone,ev.deltaY);
           else if(e.target.closest('.hubMirrorLine')&&mirror?.wheelAlong)wheelAction=ev=>mirror.wheelAlong(ev.deltaY);
           else{const bit=bitScreen(e.clientX,y);
-            if(bit!==null&&wheelBits.size){const selected=[...wheelBits];wheelAction=ev=>{const d=Math.sign(ev.deltaY||ev.deltaX);if(!d)return;for(const chosen of selected){if((ev.shiftKey||window.HubExactTilt?.on)&&mirror.tiltBitExact)mirror.tiltBitExact(chosen,d);else mirror.tiltBit(chosen,d*5);}};}
+            if(bit!==null&&mirror?.rowMode?.()&&mirror.rowSelection?.().length)wheelAction=ev=>{const d=Math.sign(ev.deltaY||ev.deltaX);if(d)mirror.tiltRows(d*(ev.shiftKey||window.HubExactTilt?.on?1:5));};   // v0.409: все выбранные строки, Shift — по 1°
+            else if(bit!==null&&wheelBits.size){const selected=[...wheelBits];wheelAction=ev=>{const d=Math.sign(ev.deltaY||ev.deltaX);if(!d)return;for(const chosen of selected){if((ev.shiftKey||window.HubExactTilt?.on)&&mirror.tiltBitExact)mirror.tiltBitExact(chosen,d);else mirror.tiltBit(chosen,d*5);}};}
             else{if(frame&&(e.clientX<frame.left||y>frame.height))return;
               wheelAction=ev=>zoom(Math.exp(-Math.max(-120,Math.min(120,ev.deltaY))*.002),ev.clientX,ev.clientY+(matchMedia('(max-width:1100px)').matches?scrollY:0));}
           }

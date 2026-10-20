@@ -226,17 +226,19 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             { label: '2', tip: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой', click: pick(2), on: () => sel() === 2 },
             { label: '3', tip: 'Стык 3: знак растянут на всю клетку бита', click: pick(3), on: () => sel() === 3 }], key: p.id });
         } else out.get('bits').push({ ...pv, key: p.id }); }
-      if (M?.setRowMode) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Строки', mid: '', tip: 'Построчно: щелчок по биту и колесо наклоняют только его строку · справа — сбросить наклоны строк', key: 'bits|rows',   // v0.401
-        parts: [{ label: '≡ Строки', tip: 'Построчно: пока включено, щелчок по биту и колесо наклоняют только строку этого бита (поверх общего наклона 0 / 1)', on: () => M.rowMode(), click: () => M.setRowMode(!M.rowMode()) },
-          { label: '↺', tip: 'Сбросить наклоны всех строк', on: () => M.rowTilted(), click: () => M.resetRowTilt() }] });
       if (M?.setDiamond90) out.get('bits').push({ type: 'toggle', icon: '◇', name: '90°', tip: 'Ромб 90°: ромбы с прямыми углами ребро к ребру, соседние биты ровно под 45° — черты сходятся в сплошные диагонали; квадрат, повёрнутый на 45°, совпадает с ромбом. Треугольник ниже и шире',
         on: () => M.diamond90(), click: () => M.setDiamond90(!M.diamond90()), key: 'bits|d90' });   // v0.400, выбор «1» — раскладка «ромб 90°»
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
     {   // «▣ кадр — перемести во «Вращение»» (был на нижнем пульте)
-      const fl = () => document.querySelector('.hub-frame-lock');
+      const fl = () => document.querySelector('.hub-frame-lock'), M = window.HubMirror;
       if (fl()) out.get('motion')?.push({ type: 'toggle', icon: '▣', name: 'Кадр', tip: 'Точный шаг вращения на каждый кадр', on: () => fl()?.getAttribute('aria-pressed') === 'true', click: () => fl()?.click(), key: 'motion|frame' });
+      // v0.409: «≡ Строки | ↺» — из «Битов» во «Вращение» («перемести во Вращение и дай выделить несколько строк»)
+      if (M?.setRowMode) out.get('motion')?.push({ type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Строки', mid: '', key: 'motion|rows',
+        tip: 'Построчно: щелчок по биту выбирает его строку, ещё щелчок — снимает; строк можно несколько · колесо над битом наклоняет все выбранные (Shift — по 1°) · щелчок мимо битов или правая кнопка — снять выбор · справа — сбросить наклоны строк',
+        parts: [{ label: '≡ Строки', tip: 'Построчно: пока включено, щелчок по биту выбирает / снимает его строку (можно несколько), колесо над битом наклоняет все выбранные строки (поверх общего наклона 0 / 1)', on: () => M.rowMode(), click: () => M.setRowMode(!M.rowMode()) },
+          { label: '↺', tip: 'Сбросить наклоны всех строк', on: () => M.rowTilted(), click: () => M.resetRowTilt() }] });
     }
     if (toBits.mirror) {   // «Зерк. | ●»: слева зеркало вкл / выкл, справа цвет отражённых битов (отдельной «Отражение» больше нет)
       const mi = leafItem(toBits.mirror), mc = toBits.mirrorColor && leafItem(toBits.mirrorColor);

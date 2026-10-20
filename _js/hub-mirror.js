@@ -148,6 +148,7 @@
   /* v0.390, «черту линией ровно под 45°»: черта — не буква шрифта (её наклон у каждого шрифта свой, круче 45°), а отрезок ровно под 45°
      в своём бите: 0 = \, 1 = /. Отражение зеркалом (картинка отражается целиком) само делает из / — \. Длина — как у буквы (0,76 кегля), толщина 0,13 */
   let curRow=null;   // v0.401: строка, которую сейчас рисует поле (bitAngle по строкам)
+  let rowSel=new Set();   // v0.409: «дай выделить несколько строк» — выбранные строки «≡ Строк» (номера строк), колесо наклоняет их все
   const SL_H=.38,SL_W=.13,slashOn=()=>state.bitView==='slashes';
   function slashHull(bit){const g=bit==='1'?-1:1,nx=g*Math.SQRT1_2,ny=-Math.SQRT1_2,w=SL_W/2,P=[];for(const [x,y] of [[-SL_H,-g*SL_H],[SL_H,g*SL_H]])P.push([x+nx*w,y+ny*w],[x-nx*w,y-ny*w]);return P;}
   function slashScale(size,width,height){
@@ -583,6 +584,11 @@
     guidesShown(){return !!(rotationGuide&&rotationBit);},
     clearRotationBit(){const visible=rotationGuide;rotationBit=null;rotationGuide=false;if(visible)changed();},
     drawRotationGuides(g,mirror=false){
+      if(state.rowMode&&rowSel.size&&bitCell){   // v0.409: выбранные строки — обводкой битов
+        const a=bitCell.width*(state.packedBits?.5:.45)*1.08,b=bitCell.height*(state.packedBits?.5:.45)*1.08;
+        g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.9;g.shadowBlur=0;g.lineWidth=1.4/Math.max(.2,window.HubView?.scale||1);
+        for(const p of bitCenters){if((p[2]!=='0'&&p[2]!=='1')||!rowSel.has(p[4]))continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(p[2],p[4]));this.pathBit(g,a,b);g.stroke();g.restore();}
+        g.restore();}
       if(!rotationGuide||!rotationBit||!bitCell)return;
       const arcs=state.bitView==='brackets'||state.bitView==='parentheses';
       if(!arcs&&rotationBit.mirror!==mirror)return;
@@ -646,8 +652,7 @@
     },
     tiltBit(bit,delta=null){
       if(locked(bit==='0'?'zero':'one')||(bit!=='0'&&bit!=='1'))return false;rotationGuide=rotationBit?.bit===bit;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
-      const rowOf=state.rowMode&&rotationBit?bitCenters[rotationBit.index]?.[4]:null;
-      if(Number.isInteger(rowOf)){const t=(((state.rowTilt[rowOf]||0)+lastBitScroll[bit])%360+540)%360-180;if(t)state.rowTilt[rowOf]=t;else delete state.rowTilt[rowOf];changed();save();return true;}   // v0.401: «≡ Строки» — наклон только этой строки
+      if(state.rowMode&&rowSel.size)return this.tiltRows(lastBitScroll[bit]);   // v0.401: «≡ Строки» — наклон только строк; v0.409 — всех выбранных
       const key=bit==='0'?'zero':'one';state[key]=bitRotation(state[key]+lastBitScroll[bit]);
       const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}changed();save();return true;
     },
@@ -747,7 +752,11 @@
        «≡ Строки». Строку берут из второго аргумента, а без него — из строки, которую сейчас рисует поле (setRowCtx), иначе — общий наклон */
     bitAngle(bit,row=curRow) { let d=bit === '0' ? state.zero : state.one; if(state.rowMode&&row!=null&&state.rowTilt[row])d+=state.rowTilt[row]; return d * Math.PI / 180; },
     setRowCtx(r){curRow=r;}, rowCtx(){return curRow;},
-    rowMode(){return state.rowMode===true;}, setRowMode(on){state.rowMode=!!on;changed();save();},
+    rowMode(){return state.rowMode===true;}, setRowMode(on){state.rowMode=!!on;if(!state.rowMode)rowSel.clear();changed();save();},
+    // v0.409: выбор строк — щелчок по биту (hub-view) добавляет / снимает его строку; колесо над битом наклоняет все выбранные (tiltRows)
+    rowSelection(){return [...rowSel];}, setRowSelection(rows){const was=rowSel.size;rowSel=new Set(rows);if(was||rowSel.size)changed();},
+    toggleRowOf(index){const r=bitCenters[index]?.[4];if(!Number.isInteger(r))return;if(rowSel.has(r))rowSel.delete(r);else rowSel.add(r);changed();},
+    tiltRows(delta){if(!rowSel.size||!delta)return false;for(const r of rowSel){const t=(((state.rowTilt[r]||0)+delta)%360+540)%360-180;if(t)state.rowTilt[r]=t;else delete state.rowTilt[r];}changed();save();return true;},
     resetRowTilt(){state.rowTilt={};changed();save();}, rowTilted(){return Object.keys(state.rowTilt).length>0;},
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
