@@ -72,8 +72,11 @@
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     // v0.247: «это объедини в одно меню» — «Поле» и «Анимация» одной группой «Поле» (кнопки анимации — после настроек поля)
       button('bRowRun', 'down'), check('third', 'tri'),   // «До N/3 — в правую рейку вверх»: вторая по счёту — правый столбец, первая строка   // «+1 / −1 вершина — объедини стрелки»: отдельной «+1 вершина» нет — это стрелки ползунка кадра
-      ...[...source.querySelectorAll('button.pre')].map(e => ({ type: 'action', name: e.textContent,
-        icon: icon(e, 'field'), tip: e.title || `Построить ${e.dataset.n} строк и вершин (или до N/3)`, click: () => e.click() })),
+      // v0.248: «объедини 2 кнопки в одну, все»: размеры хорра (256 … 4096) — одной кнопкой-списком: выбор — построить N строк и вершин (или до N/3)
+      { type: 'list', icon: icon(source.querySelector('button.pre'), 'field'), name: 'Хорр', tip: 'Сразу построить маятник: строк = N, вершин = N (или N/3 при «До N/3») · наведение — список размеров',
+        options: [...source.querySelectorAll('button.pre')].map(e => ({ v: e.dataset.n, name: e.textContent })),
+        get: () => { const n = String(+$('rows').value || ''); return [...source.querySelectorAll('button.pre')].some(e => e.dataset.n === n) ? n : ''; },
+        set: v => source.querySelector('button.pre[data-n="' + v + '"]')?.click() },
       { ...num('speed', { name: 'Анимация', tip: 'Скорость анимации', fmt: v => '×' + v, zero: 1 }), name: 'Анимация',   // «Анимация» — включатель внутри своего ползунка скорости
         head: { label: '▶ Анимация', on: () => $('bPlay').getAttribute('aria-pressed') === 'true', click: () => $('bPlay').click() } },
       { ...num('frame', { name: 'Кадр', fmt: v => 'кадр ' + v, zero: 0 }), tip: 'Кадр = вершина · −1 / +1 — на вершину (в паре — пара) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
