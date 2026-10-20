@@ -87,6 +87,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             continue;
           }
           cur = c.id;
+          if (/\|(hubPNG|hubRec)$/.test(c.id)) continue;   // PNG и видео — ромбами под «Дзен»
           if (FLOW_SPEED.test(c.id) || /^flow\|Очистить свет/.test(c.id)) continue;   // сброс потоков — правой половиной «Пуск»   // скорость потока — в кнопке своей ветки
           if ((!vis && !c.free && !FLOW_COMMON.test(c.id)) || c.node.hidden || (c.dep && !gateOn(c.dep))) continue;
           if (g.key === 'colour' && c.node.matches('.hubSwatch')) continue;
@@ -236,9 +237,9 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         parts: [{ label: 'Центр ◇', tip: m.tip, on: m.on, click: m.click }, { label: 'Центр △', tip: t.tip, on: t.on, click: t.click }] });
     }
     if (toBits.spin && toBits.spinVal) {   // «Крут. | ползунок скорости оси»: слева пуск / пауза кручения оси (без зеркала — притушен), справа скорость
-      const z = toBits.spin, { on, click, disabled: off, tip } = z, t = { label: 'ВращВсё', on, click: () => { if (!off()) click(); } };
+      const z = toBits.spin, { on, click, disabled: off, tip } = z, t = { label: 'ВращЗерк.', on, click: () => { if (!off()) click(); } };
       for (const k of ['col', 'icon', 'nameNow', 'modes', 'disabled']) delete z[k];
-      Object.assign(z, leafItem(toBits.spinVal), { name: 'ВращВсё', tip: tip + ' · ползунок — скорость', head: t });
+      Object.assign(z, leafItem(toBits.spinVal), { name: 'ВращЗерк.', tip: tip + ' · ползунок — скорость', head: t });
     }
     if (toBits.zoom && toBits.zoomVal) {   // «Автозум | ползунок хода зума | Маятник»: слева вкл / выкл, справа режим (при включённом)
       const z = toBits.zoom, [p0, p1] = z.parts, v = leafItem(toBits.zoomVal);
@@ -263,6 +264,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     } else for (const c of [toBits.minR, toBits.minP]) if (c) out.get('symmetry')?.push({ ...leafItem(c), key: c.id });
     {   // «не меняй местами их»: блоки потоков всегда Свет · Снег · Вода, как бы ни включали (порядок в дереве меняется — включённые первыми)
       const fl = out.get('flow'), rank = it => it.sec ? 1 + Object.keys(FLOW_C).indexOf(it.sec) : 0;
+      if (fl) { let k = 0; for (const it of fl) if (!it.sec && !it.wide && !['value', 'vpair'].includes(it.type)) it.col = it.key === 'flow|dense-axis' ? 1 : k++ % 2; }   // «пустое место справа — просто перемести её вправо»: «Плотно | От оси» — правым столбцом
       if (fl) { const s2 = fl.map((it, i) => [it, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]); fl.splice(0, fl.length, ...s2); }
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»

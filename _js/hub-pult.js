@@ -108,6 +108,21 @@
       z.style.left = Math.round(r.left + r.width / 2 - w / 2) + 'px'; z.style.top = Math.round(r.bottom + 8) + 'px';
       z.style.right = 'auto'; z.style.bottom = 'auto';
     } else if (!document.body.classList.contains('hubZen')) for (const k of ['left', 'top', 'right', 'bottom']) z.style[k] = '';
+    placeSaves(z);
+  }
+  // «сохр. и видео перенеси под дзен-кнопку и не убирай при дзене»: ромбы PNG и ⏺ под «Дзен» — жмут настоящие кнопки (они в дереве меню)
+  let saves = null;
+  function placeSaves(z) {
+    if (!saves) {
+      const mk = (id, text, src) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'hubZenSave'; b.textContent = text;
+        b.addEventListener('click', () => document.getElementById(src)?.click()); document.body.append(b); return b; };
+      saves = [mk('hubZenPng', 'PNG', 'hubPNG'), mk('hubZenRec', '⏺'+String.fromCharCode(10)+'Видео', 'hubRec')];
+    }
+    const [png, rec] = saves, r = z.getBoundingClientRect(), w = r.width || 48, gap = 6, below = r.bottom + 2 * (w + gap) <= innerHeight;
+    saves.forEach((b, i) => { b.style.left = Math.round(r.left) + 'px'; b.style.top = Math.round(below ? r.bottom + gap + i * (w + gap) : r.top - (i + 1) * (w + gap)) + 'px'; });
+    const o = document.getElementById('hubRec'), on = !!o?.classList.contains('on');
+    rec.classList.toggle('on', on); if (o && rec.title !== o.title) { rec.title = o.title; rec.setAttribute('aria-label', 'Видео: старт / стоп'); }
+    const p = document.getElementById('hubPNG'); if (p && png.title !== p.title) { png.title = p.title; png.setAttribute('aria-label', p.getAttribute('aria-label') || 'PNG'); }
   }
 
   function sync() {
