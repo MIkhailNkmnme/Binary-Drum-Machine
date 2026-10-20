@@ -264,6 +264,26 @@
     ba.oncontextmenu = ev => { ev.preventDefault(); const A = window.mayFixAxis; A?.set((A.get() + 2) % 3); placeTools(); };
     toolSync.push(() => { const i = window.mayFixAxis?.get() || 0, nm = ba.querySelector('.gz-nm'); ba.classList.toggle('on', i > 0); if (nm && nm.textContent !== AX[i]) nm.textContent = AX[i];
       ba.title = 'Ось «Зеркала ↑»: ход — за точкой встречи: при равном числе битов слева и справа — на границе между битами (2 пикселя), иначе на бите слева или справа от неё; стоит — на границе, толщиной 2 пикселя; антиход — 1 пиксель навстречу маятнику · сейчас: ' + AX[i].slice(5) + ' · щелчок — следующий, правый — предыдущий'; });
+    // v0.235: «Биты в строках» — таблица строк 1…15 текущего кадра (window.mayRowCount) под кнопкой; ещё щелчок, Esc или щелчок мимо — закрыть. Кадр сменился — таблица пересчитывается
+    const rcp = document.createElement('button'); rcp.title = 'Счёт'; let rcBox = null;
+    const rcFmt = v => v === null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + String(Math.abs(v)).replace('.5', '½').replace(/^0½/, '½');
+    const rcFill = () => { const d = window.mayRowCount?.(15); if (!rcBox || !d) return;
+      const AXN = ['ход', 'стоит', 'антиход'], h = 'Кадр ' + d.k + ' · вершин ' + d.n + (d.n ? ' (от ' + rcFmt(d.vLo) + ' до ' + rcFmt(d.vHi) + ')' : '') +
+        (d.axis === null ? ' · линий «Застыло» нет' : ' · точка встречи: столбец ' + rcFmt(d.meet) + ', строка ' + rcFmt(d.meetY) + ' · ось (' + AXN[d.am] + '): ' + rcFmt(d.axis));
+      rcBox.querySelector('.rc-h').textContent = h;
+      rcBox.querySelector('tbody').innerHTML = d.rows.map(o => '<tr><td>' + o.r + '</td><td><b>' + o.all + '</b></td><td>' + (o.all % 2 ? 'нечёт' : 'чёт') + '</td><td>' + o.one + '</td><td>' + o.zero + '</td><td>' + rcFmt(o.lo) + ' … ' + rcFmt(o.hi) +
+        '</td><td>' + rcFmt(o.mid) + '</td><td>' + (d.axis === null ? '—' : o.L + ' | ' + o.M + ' | ' + o.R + (o.L === o.R ? ' ✓' : '')) + '</td></tr>').join(''); };
+    const rcClose = () => { rcBox?.remove(); rcBox = null; bRc.classList.remove('on'); };
+    const bRc = ptBtn('rowCount', 'bars', rcp, () => { if (rcBox) { rcClose(); return; }
+      rcBox = document.createElement('div'); rcBox.className = 'may-rc';
+      rcBox.innerHTML = '<div class="rc-h"></div><table><thead><tr><th>строка</th><th>битов</th><th></th><th>1</th><th>0</th><th>столбцы от якоря</th><th>середина</th><th>слева | на оси | справа</th></tr></thead><tbody></tbody></table>' +
+        '<div class="rc-n">Столбец 0 — якорь, ½ — граница между битами. Ширина строки r = вершин + 2·(r − 1): чётность у всех строк кадра одна.</div>';
+      document.body.append(rcBox); const b = bRc.getBoundingClientRect(); rcBox.style.left = Math.max(4, Math.min(innerWidth - rcBox.offsetWidth - 4, b.left)) + 'px'; rcBox.style.top = Math.round(b.bottom + 6) + 'px';
+      bRc.classList.add('on'); rcFill(); });
+    bRc.title = 'Биты в строках: сколько битов в каждой строке 1…15 текущего кадра, из них 1 и 0, крайние столбцы, середина, слева / справа от оси «Застыло»';
+    toolSync.push(rcFill);
+    addEventListener('keydown', e => { if (e.key === 'Escape' && rcBox) rcClose(); });
+    addEventListener('pointerdown', e => { if (rcBox && !rcBox.contains(e.target) && !bRc.contains(e.target)) rcClose(); }, true);
     // v0.220: «Во всю ширину» — вверх отражается вся строка, как если бы треугольник прошёл по горизонтали всё поле
     const wp = document.createElement('button'); wp.title = 'Ширина'; const bw = ptBtn('fixWide', 'corners', wp, () => { const W = window.mayFixWide; W?.set(!W.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixWide?.get(); bw.classList.toggle('on', on); bw.title = 'Во всю ширину: «Зеркало ↑» отражает вверх от горизонтали всю строку поля, а не только треугольник между диагоналями · ' + (on ? 'вкл' : 'выкл'); });
@@ -283,7 +303,7 @@
     // v0.224: «Наружу» — «Зеркало ↓» наоборот: нижний треугольник через диагонали в боковые клинья
     const op = document.createElement('button'); op.title = 'Наружу'; const bn = ptBtn('fixLowOut', 'swap', op, () => { const Lw = window.mayFixLow; Lw?.setOut(!Lw.out()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLow?.out(); bn.classList.toggle('on', on); bn.title = 'Наружу: «Зеркало ↓» наоборот — нижний треугольник отражается через диагонали в боковые клинья · ' + (on ? 'вкл' : 'выкл'); });
-    gView.querySelector('[data-n="fixMirror"]').after(bd, bf, bv, ba, bw, br, bk, bl, bn, bc, bo);
+    gView.querySelector('[data-n="fixMirror"]').after(bd, bf, bv, ba, bRc, bw, br, bk, bl, bn, bc, bo);
     window.mayFixAxisNames = AX;
     window.mayMirLists = { col: COL, op: OP }; }
   // v0.194: показ пикселей по цвету — пять кнопок: горит — пиксели этого цвета видны, погашена — скрыты (цветом пустоты)
@@ -310,7 +330,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'ЗагибВерт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
+  const ptNames = { fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'ЗагибВерт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
@@ -341,7 +361,7 @@
       [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'zTop', 'vx']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
-      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixWide', 'fixRot', 'fixDragK']],
+      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
        ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
        ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],
        ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];

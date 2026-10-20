@@ -542,3 +542,11 @@ header #paintTools.pt-grid>.gz-group .gz-control:has(input[type=number]) input[t
 header #paintTools.pt-grid>.gz-group .gz-wide>.gz-control:has(#symTriangleRows){margin-right:calc(100% - var(--gz-w))}
 body.may-raildrag #mayatnikRail{z-index:45}
 #mayatnikRail.may-drop{outline:1px dashed #7cbcff99;outline-offset:-3px}
+/* v0.235: «Биты в строках» — таблица строк 1…15 под кнопкой */
+.may-rc{position:fixed;z-index:2147483640;max-width:calc(100vw - 8px);max-height:calc(100dvh - 90px);overflow:auto;box-sizing:border-box;padding:8px 10px;background:#0d1119f5;border:1px solid #b48cff88;border-radius:6px;box-shadow:0 8px 24px #000a;color:#dfe6f5;font:12px/1.35 system-ui,sans-serif}
+.may-rc .rc-h{margin:0 0 6px;color:#cdb8ff}
+.may-rc table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.may-rc th,.may-rc td{padding:1px 8px;text-align:right;white-space:nowrap}
+.may-rc th{color:#8592ad;font-weight:500;border-bottom:1px solid #2a3350}
+.may-rc td:nth-child(3){color:#8592ad;text-align:left}
+.may-rc .rc-n{margin:6px 0 0;color:#8592ad;max-width:520px}
