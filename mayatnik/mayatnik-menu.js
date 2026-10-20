@@ -263,7 +263,7 @@
     const ba = ptBtn('fixAxis', 'swap', ap, () => { const A = window.mayFixAxis; A?.set((A.get() + 1) % 3); placeTools(); });
     ba.oncontextmenu = ev => { ev.preventDefault(); const A = window.mayFixAxis; A?.set((A.get() + 2) % 3); placeTools(); };
     toolSync.push(() => { const i = window.mayFixAxis?.get() || 0, nm = ba.querySelector('.gz-nm'); ba.classList.toggle('on', i > 0); if (nm && nm.textContent !== AX[i]) nm.textContent = AX[i];
-      ba.title = 'Ось «Зеркала ↑»: ход — 1 пиксель то справа, то слева от границы между пикселями, вслед маятнику; стоит — на границе, толщиной 2 пикселя; антиход — 1 пиксель навстречу маятнику · сейчас: ' + AX[i].slice(5) + ' · щелчок — следующий, правый — предыдущий'; });
+      ba.title = 'Ось «Зеркала ↑»: ход — за точкой встречи: при равном числе битов слева и справа — на границе между битами (2 пикселя), иначе на бите слева или справа от неё; стоит — на границе, толщиной 2 пикселя; антиход — 1 пиксель навстречу маятнику · сейчас: ' + AX[i].slice(5) + ' · щелчок — следующий, правый — предыдущий'; });
     // v0.220: «Во всю ширину» — вверх отражается вся строка, как если бы треугольник прошёл по горизонтали всё поле
     const wp = document.createElement('button'); wp.title = 'Ширина'; const bw = ptBtn('fixWide', 'corners', wp, () => { const W = window.mayFixWide; W?.set(!W.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixWide?.get(); bw.classList.toggle('on', on); bw.title = 'Во всю ширину: «Зеркало ↑» отражает вверх от горизонтали всю строку поля, а не только треугольник между диагоналями · ' + (on ? 'вкл' : 'выкл'); });
