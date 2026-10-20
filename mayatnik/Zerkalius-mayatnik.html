@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.180. v0.180: сводка «Очков» — выпадающей группой «👓 Очки» в верхней полосе (как остальные списки), не полосой под шапкой; у ромба записи — «⏺ Видео». v0.179: v0.179: «◎ Дзен», «⏺ Видео», «GIF» — ромбами справа по середине высоты, как в хабе, видны и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет. v0.178: v0.178: ползунок кадра — бегунок шире со значком ▶ / ❚❚ (щелчок — пуск / пауза), стрелки вдвое шире с подписями −1 / +1; «До N/3» — в правом столбце «Анимации» наверху. v0.177: v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.181. v0.181: список серий в выпадающей «👓 Очках» — до низа окна, если не вмещается (дальше — прокрутка); в списке — стр., стлбц, чёт. / нечёт.; правый столбец групп рейки — на полкнопки выше, как в хабе (без пустоты справа вверху). v0.180: v0.180: сводка «Очков» — выпадающей группой «👓 Очки» в верхней полосе (как остальные списки), не полосой под шапкой; у ромба записи — «⏺ Видео». v0.179: v0.179: «◎ Дзен», «⏺ Видео», «GIF» — ромбами справа по середине высоты, как в хабе, видны и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет. v0.178: v0.178: ползунок кадра — бегунок шире со значком ▶ / ❚❚ (щелчок — пуск / пауза), стрелки вдвое шире с подписями −1 / +1; «До N/3» — в правом столбце «Анимации» наверху. v0.177: v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.180</title>
+<title>Zerkalius Маятник — v0.181</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -114,13 +114,13 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <!-- v0.162: пока не собралось меню (скрипты в конце страницы), сырая панель кнопок не мелькает; не соберётся — покажется после загрузки -->
 <style>html.may-boot .bar,html.may-boot header .sub,html.may-boot #mayatnikStatus{visibility:hidden}</style>
 <script>document.documentElement.classList.add('may-boot');addEventListener('load',()=>setTimeout(()=>document.documentElement.classList.remove('may-boot'),0));</script>
-<link rel="stylesheet" href="mayatnik-menu.css?v=175">
+<link rel="stylesheet" href="mayatnik-menu.css?v=176">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=4">
 </head>
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.180</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.181</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -598,14 +598,14 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     if(ochki.simple){
       const {found,count,longest}=ochki,label=$('ochkiPattern').selectedOptions[0].textContent;
       $('ochkiSum').textContent=`👓 ${label} · ${st.ochkiMode==='row'?'по рядам':'диагонали ↘ ↙'} · от ${st.ochkiLength||5} бит · серий: ${count} · самая длинная: ${longest} бит`;
-      $('ochkiList').textContent=found.map(x=>`${x.n} бит · строка ${x.r+1} · столбец ${x.c-geo.anchor} · ${x.dir>0?'↘':x.dir<0?'↙':'ряд'} · ${x.p?'нечётная':'чётная'}`).join('\n')+(count>found.length?`\nПоказаны первые ${found.length}; подсвечены все.`:'');return;
+      $('ochkiList').textContent=found.map(x=>`${x.n} бит · стр. ${x.r+1} · стлбц ${x.c-geo.anchor} · ${x.dir>0?'↘':x.dir<0?'↙':'ряд'} · ${x.p?'нечёт.':'чёт.'}`).join('\n')+(count>found.length?`\nПоказаны первые ${found.length}; подсвечены все.`:'');return;
     }
     const { found, total } = ochki, A = geo.anchor, seq = typeof ZZ_INITIAL_ROWS !== 'undefined' ? ZZ_INITIAL_ROWS : [];
     const last = found.reduce((m, x) => x.i > (m ? m.i : -1) ? x : m, null);
     $('ochkiSum').textContent = `👓 Очки ${st.ochkiMode === 'row' ? 'по рядам' : 'по диагоналям ↘ ↙'}${st.ochkiInv ? ' + инверс' : ''}${st.ochkiRev ? ' + реверс' : ''} · кадр ${k}: найдено ${found.length} из ${total} строк последовательности` +
-      (last ? ` · самая длинная найденная — №${last.i + 1} (${last.n} бит), строка ${last.r + 1}` : '');
+      (last ? ` · самая длинная найденная — №${last.i + 1} (${last.n} бит), стр. ${last.r + 1}` : '');
     const rows = found.slice().sort((a, b) => a.i - b.i).map(x =>
-      `№${String(x.i + 1).padStart(2)}  ${seq[x.i].padEnd(24)} строка ${String(x.r + 1).padStart(4)} · ${x.p ? 'нечётная' : 'чётная  '} ${x.dir > 0 ? '↘' : x.dir < 0 ? '↙' : 'ряд'} · столбец ${x.c - A >= 0 ? '+' : ''}${x.c - A}${x.vn ? ' · ' + x.vn : ''}`);
+      `№${String(x.i + 1).padStart(2)}  ${seq[x.i].padEnd(24)} стр. ${String(x.r + 1).padStart(4)} · ${x.p ? 'нечёт.' : 'чёт.  '} ${x.dir > 0 ? '↘' : x.dir < 0 ? '↙' : 'ряд'} · стлбц ${x.c - A >= 0 ? '+' : ''}${x.c - A}${x.vn ? ' · ' + x.vn : ''}`);
     const miss = seq.map((t, i) => i).filter(i => !found.some(x => x.i === i));
     if (miss.length) rows.push(`не найдены (${miss.length}): №${miss.map(i => i + 1).join(', №')}`);
     $('ochkiList').textContent = rows.join('\n');
@@ -2861,7 +2861,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=43"></script>
-<script src="mayatnik-menu.js?v=181"></script>
+<script src="mayatnik-menu.js?v=183"></script>
 <script src="mayatnik-tips.js?v=167"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>

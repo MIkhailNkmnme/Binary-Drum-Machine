@@ -6,7 +6,7 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -146,8 +146,8 @@
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
     const flat = railR.contains(soty), st = flat ? 0 : 13.5;
     if (flat) { cells.forEach(b => { b.style.left = b.style.top = ''; }); soty.style.height = ''; soty.style.display = shown.length ? '' : 'none'; continue; }   // v0.075: справа — в строку с шапкой
-    shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 + col * st) + 'px'; });
-    soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 + (shown.length > 1 ? st : 0) - 3) + 'px' : '0';
+    shown.forEach((b, k) => { const col = k % 2, row = k >> 1; b.style.left = (col * 112) + 'px'; b.style.top = (row * 27 - col * st) + 'px'; });   // v0.181: «не оставляй пустоты справа вверху» — правый столбец на полкнопки ВЫШЕ (в выемку у заголовка), как в хабе
+    soty.style.height = shown.length ? (Math.ceil(shown.length / 2) * 27 - 3) + 'px' : '0';
     soty.style.display = shown.length ? '' : 'none'; } };
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
@@ -277,6 +277,8 @@
   // v0.180: «это в верхнее меню, открытие кнопкой и скрытие, как выпадающее меню, только полем»: сводка «Очков» — не полосой под шапкой,
   // а выпадающей группой «👓 Очки» в полосе (наведение / щелчок / закреп — как у остальных); группа видна, только пока «Очки» что-то показывают
   { const row = ptGroup('👓 Очки'), g = row.parentElement, box = $('ochkiBox'); g.classList.add('pt-ochki'); g.style.setProperty('--c', '#ffb347'); row.append(box); box.open = true;
+    const top = () => { const l = $('ochkiList'); if (l?.getClientRects().length) g.style.setProperty('--ochki-top', Math.round(l.getBoundingClientRect().top) + 'px'); };   // v0.181: верх списка — чтобы дотянуть его ровно до низа окна
+    g.querySelector('.pt-l').addEventListener('pointerenter', () => requestAnimationFrame(top)); g.querySelector('.pt-l').addEventListener('click', () => requestAnimationFrame(top)); addEventListener('resize', top);
     toolSync.push(() => { const hide = box.hidden; if ((g.style.display === 'none') !== hide) g.style.display = hide ? 'none' : ''; }); }
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // v0.179: «Видео (Запись, GIF) — ромбами как в хабе, справа по середине высоты, и Дзен также»: столбик ромбов у правого края,

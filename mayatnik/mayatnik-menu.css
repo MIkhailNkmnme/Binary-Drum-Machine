@@ -434,3 +434,5 @@ body.may-zen #mayRhombs .may-rh:hover,body.may-zen #mayRhombs #mayRhRec.on{opaci
 /* v0.180: сводка «Очков» — внутри выпадающей группы «👓 Очки» полосы */
 header #paintTools .pt-ochki #ochkiBox{grid-column:auto;grid-row:auto;border:0;background:transparent;padding:4px 12px;max-width:min(900px,92vw);min-width:420px;box-sizing:border-box}
 header #paintTools .pt-ochki #ochkiBox summary{white-space:normal}
+/* v0.181: «во всю высоту до низа, если не вмещается» — список серий в выпадающей «Очках» тянется до низа окна, дальше — прокрутка */
+header #paintTools .pt-ochki #ochkiList{max-height:calc(100dvh - var(--ochki-top,90px) - 12px)}
