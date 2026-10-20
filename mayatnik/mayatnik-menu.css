@@ -419,3 +419,15 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 /* v0.176: ● цвета внутри кнопки полосы — у правого края, щелчок — палитра */
 #paintTools .pt-b .pt-dot{order:9;margin-left:auto;flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px #0008,0 0 0 2px #fff4;cursor:pointer}
 #paintTools .pt-b .pt-dot:hover{box-shadow:0 0 0 1px #000,0 0 0 2px #fff}
+/* v0.179: ромбы «Дзен · Запись · GIF» — справа по середине высоты, как в хабе; видны и в дзене */
+#mayRhombs{position:fixed;right:10px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:6px}
+#mayRhombs .may-rh{position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:48px;height:48px;padding:0;border:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#121a30;color:#8fd3ff;font:11px/1.15 system-ui,sans-serif;white-space:pre-line;text-align:center;cursor:pointer;touch-action:manipulation}
+#mayRhombs .may-rh::after{content:'';position:absolute;inset:7.5px;border:1px solid currentColor;transform:rotate(45deg);pointer-events:none;opacity:.55}
+#mayRhombs .may-rh:hover,#mayRhombs .may-rh:focus-visible{color:#ffd166;background:#1d2a48}
+#mayRhombs .may-rh:disabled{opacity:.4;cursor:default}
+#mayRhombs #mayRhRec.on{color:#ff4d5e;animation:mayRecBlink 1s ease-in-out infinite}
+@keyframes mayRecBlink{50%{opacity:.45}}
+#mayRhombs #mayRhZen[aria-pressed=true]{color:#ffd166}
+body.may-zen #mayRhombs .may-rh{opacity:.35}
+body.may-zen #mayRhombs .may-rh:hover,body.may-zen #mayRhombs #mayRhRec.on{opacity:1}
+.mayatnik-menu-ready #mayCorner #mayZen,body.mayatnik-menu-ready.may-zen #mayZenOut{display:none!important}
