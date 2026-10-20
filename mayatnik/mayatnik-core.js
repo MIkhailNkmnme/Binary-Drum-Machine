@@ -71,6 +71,7 @@ const MAYATNIK = (() => {
   // Сдвиг k-й вершины от якоря
   function offset(mode, k) {
     if (mode === 'pend') return k === 0 ? 0 : (k % 2 ? -((k + 1) >> 1) : (k >> 1));
+    if (mode === 'pendR') return k === 0 ? 0 : (k % 2 ? ((k + 1) >> 1) : -(k >> 1));   // 20.10: маятник с другой стороны — первая вершина после якоря вправо
     if (mode === 'right') return k;
     if (mode === 'left') return -k;
     return 0;
