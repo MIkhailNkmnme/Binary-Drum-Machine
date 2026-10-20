@@ -41,12 +41,12 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, bitD90:false, packedBits:false, packMode:null, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, bitD90:false, rowMode:false, rowTilt:{}, packedBits:false, packMode:null, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
-      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;state.bitGrid=saved.bitGrid===true;state.bitD90=saved.bitD90===true;
+      state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;state.bitGrid=saved.bitGrid===true;state.bitD90=saved.bitD90===true;state.rowMode=saved.rowMode===true;if(saved.rowTilt&&typeof saved.rowTilt==='object')for(const [k,v] of Object.entries(saved.rowTilt))if(Number.isFinite(v)&&/^\d+$/.test(k))state.rowTilt[k]=v;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
       state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;state.packMode=['styk1','styk2'].includes(saved.packMode)?saved.packMode:null;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
@@ -147,6 +147,7 @@
      Черта, лежащая вдоль ряда, при этом касается соседки концом в конец — ровно как раньше. */
   /* v0.390, «черту линией ровно под 45°»: черта — не буква шрифта (её наклон у каждого шрифта свой, круче 45°), а отрезок ровно под 45°
      в своём бите: 0 = \, 1 = /. Отражение зеркалом (картинка отражается целиком) само делает из / — \. Длина — как у буквы (0,76 кегля), толщина 0,13 */
+  let curRow=null;   // v0.401: строка, которую сейчас рисует поле (bitAngle по строкам)
   const SL_H=.38,SL_W=.13,slashOn=()=>state.bitView==='slashes';
   function slashHull(bit){const g=bit==='1'?-1:1,nx=g*Math.SQRT1_2,ny=-Math.SQRT1_2,w=SL_W/2,P=[];for(const [x,y] of [[-SL_H,-g*SL_H],[SL_H,g*SL_H]])P.push([x+nx*w,y+ny*w],[x-nx*w,y-ny*w]);return P;}
   function slashScale(size,width,height){
@@ -533,7 +534,7 @@
       if(!frame||!bitCell||window.HubImage?.active)return null;
       if(mirror){if(!state.on)return null;const p=this.point(x,y,false);if(!p)return null;[x,y]=p;}
       const shift=window.HubView?.sourceShift()||[0,0];x-=shift[0];y-=shift[1];
-      for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return {bit,index:i,mirror};}
+      for(let i=bitCenters.length-1;i>=0;i--){const [cx,cy,bit]=bitCenters[i];if(bit!=='0'&&bit!=='1')continue;const angle=this.symbolsOnly()?0:this.bitAngle(bit,bitCenters[i][4]??null),co=Math.cos(angle),si=Math.sin(angle),dx=x-cx,dy=y-cy;if(Math.abs(dx*co+dy*si)/(bitCell.width/2)+Math.abs(-dx*si+dy*co)/(bitCell.height/2)<=1+1e-9)return {bit,index:i,mirror};}
       return null;
     },
     bitCenter(index){
@@ -574,8 +575,8 @@
     drawCenterBit(g,p,color=null){
       const size=Math.min(p.width,p.height)*.62,a=p.width*(state.packedBits?.5:.45),b=p.height*(state.packedBits?.5:.45);
       g.fillStyle=color||this.colors().sym;g.globalAlpha=1;
-      if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size)){g.save();g.rotate(this.bitAngle(p.bit));this.pathBit(g,a,b);g.fill();g.restore();}
-      if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);}
+      if(!this.symbolsOnly()&&!this.fillCutoutRhomb(g,p.bit,0,0,a,b,size,this.bitAngle(p.bit,p.row))){g.save();g.rotate(this.bitAngle(p.bit,p.row));this.pathBit(g,a,b);g.fill();g.restore();}
+      if(this.symbolsOnly()||p.width>=7){if(!this.symbolsOnly())g.fillStyle='#06150d';const was=curRow;if(p.row!==undefined)curRow=p.row;this.drawSymbol(g,p.bit,0,0,size,p.width,p.height);curRow=was;}
     },
     // v0.222: лучи были видны — щелчок по другому биту сразу переносит их на него
     selectRotationBit(hit,show=false){rotationBit=hit;rotationGuide=!!(show&&hit);if(rotationGuide)changed();},
@@ -588,7 +589,7 @@
       const chosen=rotationBit.bit,points=arcs?bitCenters.filter(p=>p[2]===chosen):[bitCenters[rotationBit.index]];
       const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=state.bitView==='stars'||slashOn()?1e5:Math.max(a,b)*6;   // v0.210: у звезды — до края поля; v0.391: у черты — тоже
       g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.3;g.shadowBlur=0;g.lineWidth=.7/Math.max(.2,window.HubView?.scale||1);
-      for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen));g.beginPath();
+      for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen,p[4]??null));g.beginPath();
         if(arcs){if(state.packedBits){const text=state.bitView==='brackets'&&chosen==='0'?'()':chosen==='1'?')':'(';g.font=`bold ${size}px monospace`;g.scale(...packedScale(g,text,size,bitCell.width,bitCell.height));}const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
         else if(slashOn()){const sg=chosen==='1'?-1:1,d=Math.SQRT1_2*length;g.moveTo(-d,-sg*d);g.lineTo(d,sg*d);}   // v0.391, «продолжение для черт вдоль самой черты до края поля»: прямая через бит по черте (было — грани ромба)
         else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
@@ -645,6 +646,8 @@
     },
     tiltBit(bit,delta=null){
       if(locked(bit==='0'?'zero':'one')||(bit!=='0'&&bit!=='1'))return false;rotationGuide=rotationBit?.bit===bit;if(delta!==null&&delta!==0)lastBitScroll[bit]=delta;
+      const rowOf=state.rowMode&&rotationBit?bitCenters[rotationBit.index]?.[4]:null;
+      if(Number.isInteger(rowOf)){const t=(((state.rowTilt[rowOf]||0)+lastBitScroll[bit])%360+540)%360-180;if(t)state.rowTilt[rowOf]=t;else delete state.rowTilt[rowOf];changed();save();return true;}   // v0.401: «≡ Строки» — наклон только этой строки
       const key=bit==='0'?'zero':'one';state[key]=bitRotation(state[key]+lastBitScroll[bit]);
       const range=document.querySelector?.('input[aria-label="Наклон ромбов '+bit+'"]');if(range){range.value=state[key];range.closest('.hubTilt').querySelector('output').textContent=state[key]+'°';}changed();save();return true;
     },
@@ -723,9 +726,9 @@
       }
       g.restore();
     },
-    drawSymbolBatch(g,bit,points,size,color,alpha,width=size/.62,height=width*Math.sqrt(3)){
+    drawSymbolBatch(g,bit,points,size,color,alpha,width=size/.62,height=width*Math.sqrt(3),row=null){
       if(!this.digitVisible(bit)||!points.length)return;
-      const angle=this.bitAngle(bit),co=Math.cos(angle),si=Math.sin(angle),text=bitGlyph(bit);
+      const angle=this.bitAngle(bit,row),co=Math.cos(angle),si=Math.sin(angle),text=bitGlyph(bit);
       if(slashOn()){   // v0.390: черты — отрезки ровно под 45°, одним путём
         const k=slashScale(size,width,height),h=SL_H*size*k,sg=bit==='1'?-1:1;
         g.save();g.rotate(angle);g.strokeStyle=color;g.globalAlpha=alpha;g.lineWidth=SL_W*size*k;g.lineCap='butt';g.beginPath();
@@ -740,7 +743,12 @@
     },
     glyphLabel(bit){return state.bitView==='stars'?(bit==='1'?'*':'•'):state.bitView==='none'?bit:bitGlyph(bit);},   // v0.395: знак бита текущего вида — подписью на кнопке «Прозр.»
     digitVisible(bit){return state.bitView!=='none'&&!(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
-    bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
+    /* v0.401, «дай возможность крутить биты отдельно — построчно»: у строки свой добавочный наклон (state.rowTilt[строка], градусы), пока включено
+       «≡ Строки». Строку берут из второго аргумента, а без него — из строки, которую сейчас рисует поле (setRowCtx), иначе — общий наклон */
+    bitAngle(bit,row=curRow) { let d=bit === '0' ? state.zero : state.one; if(state.rowMode&&row!=null&&state.rowTilt[row])d+=state.rowTilt[row]; return d * Math.PI / 180; },
+    setRowCtx(r){curRow=r;}, rowCtx(){return curRow;},
+    rowMode(){return state.rowMode===true;}, setRowMode(on){state.rowMode=!!on;changed();save();},
+    resetRowTilt(){state.rowTilt={};changed();save();}, rowTilted(){return Object.keys(state.rowTilt).length>0;},
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },
     point(x, y,shift=true) {
       if (!frame || !state.on) return null;
