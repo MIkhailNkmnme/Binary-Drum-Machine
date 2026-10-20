@@ -104,6 +104,15 @@
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
+  // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
+  // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
+  { const MINI = 'mayatnik-rail-mini', ICO = { 'Поле': '▦', 'Очки': '◎', 'Масштаб': '⤢', 'Зеркала': '⋈', 'Раскраска': '✎', 'Шаблон': '▣', 'Шаблоны': '▤', 'Экспорт': '⇩' };
+    let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
+    for (const box of rail.el.querySelectorAll('.gz-group')) { const head = box.querySelector(':scope > .gz-head'), nm = head?.querySelector('.gz-nm'); if (!nm) continue;
+      const k = nm.textContent.trim(), ic = document.createElement('span'); ic.className = 'gz-mico'; ic.textContent = ICO[k] || [...k][0] || '◆'; head.prepend(ic);
+      const sync = () => { box.classList.toggle('gz-mini', minis.has(k)); head.setAttribute('aria-label', k); };
+      sync(); head.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
+        try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); }); } }
   // v0.167: подсказки кнопок рейки — в title (их показывает mayatnik-tips.js рядом с кнопкой через 4 с)
   for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
     const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));

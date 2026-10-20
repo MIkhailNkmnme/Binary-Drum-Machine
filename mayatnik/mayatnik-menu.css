@@ -553,3 +553,10 @@ body.may-raildrag #mayatnikRail{z-index:45}
 /* v0.241: «сделай фон кнопкам такой же рейкой с отступом от кнопок, но тёмный, а то сливается»: левая рейка лежит прямо на поле — вокруг каждой
    кнопки и шапки группы тёмная кайма 3 px (по контуру шестиугольников, просветы между кнопками закрыты), как у столбца вариантов (v0.233) */
 #mayatnikRail .gz-rail,#mayatnikRailR .gz-rail{filter:drop-shadow(3px 0 0 #05070d) drop-shadow(-3px 0 0 #05070d) drop-shadow(0 3px 0 #05070d) drop-shadow(0 -3px 0 #05070d)}
+/* v0.255: шапка группы рейки, свёрнутая правым щелчком, — ромб со значком (.gz-mini, значок .gz-mico) */
+.gz-head .gz-mico{display:none}
+.gz-group.gz-mini>.gz-head{width:34px!important;min-width:0!important;padding:0;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.gz-group.gz-mini>.gz-head::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.gz-group.gz-mini>.gz-head>.gz-nm,.gz-group.gz-mini>.gz-head>.gz-hr{display:none}
+.gz-group.gz-mini>.gz-head>.gz-mico{display:block;position:relative;z-index:1;font-size:13px;line-height:1;color:var(--c)}
+.gz-group.gz-mini.gz-open>.gz-head>.gz-mico{color:#fff}
