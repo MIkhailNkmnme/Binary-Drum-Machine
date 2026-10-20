@@ -462,3 +462,10 @@ header #paintTools.pt-dd .pt-l{min-width:126px;justify-content:space-between}
 header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 20%,#000)}
 header #paintTools .pt-b.gz-hx:not(.on)::before{inset:1px}
 header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
+/* v0.190: кнопка со списком — стрелка обводкой справа (правый угол шестиугольника светлой каймой); варианты — столбцом рядом (.may-fly) */
+.gz-hx.may-lst::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:color-mix(in srgb,var(--c) 55%,#fff);
+  clip-path:polygon(calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,calc(100% - var(--gz-n) - 2px) 100%,calc(100% - 2.5px) 50%,calc(100% - var(--gz-n) - 2px) 0)}
+.gz-hx.may-lst .gz-ar{display:none}
+.may-fly{z-index:2147483645}
+.may-fly .gz-hx{width:auto;min-width:var(--gz-w);padding-right:16px}
+.may-fly .may-fi{width:14px;height:14px;background:center/contain no-repeat;filter:brightness(0) invert(.92)}
