@@ -562,3 +562,9 @@ body.may-raildrag #mayatnikRail{z-index:45}
 .gz-group.gz-mini.gz-open>.gz-head>.gz-mico{color:#fff}
 /* v0.256: «убери этот значок» — бипирамида-логотип у названия не показывается */
 .may-logo{display:none!important}
+/* v0.260: «тут всё сузь в ширину стандартной кнопки, позволяет размер»: список «Вида» / «Зеркал» был широким из-за строки цветов «1 · 0 · стал 1 · стал 0» —
+   она теперь в два ряда (2 × 2), столбец не шире 156 px, длинные названия — с многоточием */
+header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{max-width:156px}
+header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#paintTools .pt-sec>.lg{height:auto!important;min-height:24px;flex-wrap:wrap!important;white-space:normal!important;row-gap:2px;column-gap:8px!important;padding:2px 8px!important}
+#paintTools .pt-sec>.lg>*{white-space:nowrap}
