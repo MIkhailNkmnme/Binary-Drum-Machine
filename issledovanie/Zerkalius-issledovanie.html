@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.052. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.053. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -47,6 +47,7 @@
      v0.032: в 14¾ — опыт с тремя вершинами: шум начинается, как только вершины есть с обеих сторон; «виртуальной вершины»-точки нет.
      v0.033: Codex — независимый исследователь Хоррориуса: раздел 15, доказательство периодичности краевой полосы по степеням двойки, контрпример к n/2, воспроизводимый расчёт.
      v0.034: раздел 14⅞ «Конец ленты»: при высоте N картинка внутри конуса якоря застывает к ≈ 4N вершинам.
+     v0.053: вверху полоса малых картинок — «Битмультфильмы» (4 превью) и борт-журнал (знак).
      v0.052: «Новое» вверху — столбиком на левую половину страницы, справа картинка последнего раздела (27).
      v0.051: картинки оглавления в 1,5 раза крупнее (карточки от 495 px), карточки не тянутся по высоте соседней, поля меньше.
      v0.050: оглавление по темам (7 тем) с картинками-превью прямо в оглавлении (oglavlenie/*.webp); у всех разделов
@@ -62,7 +63,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.052</title>
+<title>Zerkalius Исследование — v0.053</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -141,6 +142,14 @@
   .nv-pic img{ display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:4px; background:#000; }
   .nv-pic:hover img{ border-color:var(--gold); }
   @media (max-width:760px){ .novoe{ grid-template-columns:1fr; } }
+  /* v0.053: полоса малых картинок вверху — «Битмультфильмы» и борт-журнал. */
+  .polosa{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+  .pl{ display:block; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:5px 7px; text-decoration:none; }
+  .pl:hover{ border-color:var(--gold); }
+  .pl b{ display:block; color:var(--gold); font-size:13px; margin-bottom:4px; }
+  .pl span{ display:flex; gap:3px; }
+  .pl img{ display:block; height:72px; width:auto; aspect-ratio:8/5; object-fit:cover; border:1px solid var(--line); border-radius:3px; background:#000; }
+  .pl img.lg{ aspect-ratio:5/4; object-fit:contain; }
 </style>
 </head>
 <body>
@@ -150,6 +159,10 @@
 Кратко то же — в <a href="../Zerkalius-dnevnik.html">борт-журнале</a> (v0.089, запись после Code 35.55, и словарь).
 Готовым к просмотру, без разбора — <a href="../rezultaty/Zerkalius-rezultaty.html">«Битмультфильмы»</a>.</p>
 
+<div class="polosa">
+  <a class="pl" href="../rezultaty/Zerkalius-rezultaty.html"><b>Битмультфильмы</b><span><img src="oglavlenie/b-tri-zerkala.webp" alt="Три зеркала" title="Три зеркала" width="320" height="200"><img src="oglavlenie/b-mayatnik.webp" alt="Маятник 2024" title="Маятник 2024" width="320" height="200"><img src="oglavlenie/b-cikl.webp" alt="Цикл 1024" title="Цикл 1024" width="320" height="200"><img src="oglavlenie/b-kraska.webp" alt="Маятник: краска" title="Маятник: краска" width="320" height="200"></span></a>
+  <a class="pl" href="../Zerkalius-dnevnik.html"><b>Борт-журнал</b><span><img src="../oktaedr/zerkalius-logo.svg" alt="Знак Zerkalius" class="lg"></span></a>
+</div>
 <div class="novoe">
   <div><p class="sub nv-h">Новое:</p>
   <ol><li><a href="#mayatnik-boka">27. Маятник: одинаковые узоры по бокам по всей длине</a> <span>20.10.2026</span></li><li><a href="#mayatnik-zerkala">26. Маятник: подсветка, зеркало в чёрных треугольниках и застывшая зона</a> <span>17.10.2026</span></li><li><a href="#slice-mirror">25. Зеркальная двоичность</a> <span>15.10.2026</span></li></ol></div>
