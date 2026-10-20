@@ -113,6 +113,7 @@
           mid.append(el('span', 'gz-nm', it.name), v); if (it.reset) mid.append(z);
           b.append(a('gz-a2', '◂◂', -2), a('', '◂', -1), mid, a('', '▸', 1), a('gz-a2', '▸▸', 2));
           refreshers.push(() => { v.textContent = it.get(); });
+          if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));   // значение бывает неактивным (Маятник: поля шаблона без шаблона)
           // «Автозум — объедини с его ползунком»: it.head — включатель слева в той же кнопке, it.tail — режим справа (виден, пока tail.show())
           if (it.head) { const h = el('span', 'gz-vh', it.head.label); b.prepend(h); b.classList.add('gz-vhd');
             h.addEventListener('click', e => { e.stopPropagation(); it.head.click(); refresh(); }); refreshers.push(() => { const on = !!it.head.on(); h.classList.toggle('gz-on', on); b.classList.toggle('gz-on', on); }); }   // «обводки нет при включённой» — включён: обводка всей кнопки, как у остальных
