@@ -1,4 +1,4 @@
-/* v1: exact vertical folds on a half-cell lattice; source bits never change. */
+/* v2: exact vertical folds on a half-cell lattice; v2 — any axis through two points (cell centre = x + 1/2); source bits never change. */
 (function(root){
   'use strict';
   function create({W,H,val,anchor=0,frame=0,span=null}){
@@ -40,7 +40,37 @@
       out.match=out.pairs>0&&out.different===0&&out.overhang===0&&out.missing===0;
       return out;
     }
-    return {W,H,anchor,frame,left,right,top,bottom,width,height,empty,max:width,bit,target,pair,analyze};
+    // v2: axis through A and B (cell-centre coordinates). Side < 0 is the source (folded) side, > 0 the target.
+    // A reflected centre is rounded to the nearest cell: exact for 0°, 45°, 90°; nearest cell for other slopes.
+    function line(A,B,flip){
+      let dx=B.x-A.x,dy=B.y-A.y;const L=Math.hypot(dx,dy);if(!L)return null;dx/=L;dy/=L;const g=flip?-1:1;
+      const side=(px,py)=>{const s=((px-A.x)*dy-(py-A.y)*dx)*g;return Math.abs(s)<1e-9?0:s;};
+      const mirror=(x,y)=>{const ux=x+.5-A.x,uy=y+.5-A.y,t=ux*dx+uy*dy;return [Math.round(A.x+2*t*dx-ux-.5)+0,Math.round(A.y+2*t*dy-uy-.5)+0];};
+      function pair(x,y){
+        if(empty||x<left||x>right||y<top||y>bottom)return null;const s=side(x+.5,y+.5),to=bit(x,y);
+        if(s===0)return {kind:'fixed',x,y,sx:x,sy:y,from:to,to};
+        if(s<0)return null;
+        const [sx,sy]=mirror(x,y),from=bit(sx,sy),kind=from<0?(to<0?'empty':'missing'):to<0?'overhang':from===to?'same':'different';
+        return {kind,x,y,sx,sy,from,to};
+      }
+      function analyze(){
+        const out={same:0,different:0,overhang:0,missing:0,fixed:0,first:null};
+        for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){
+          const a=data[y*W+x],s=side(x+.5,y+.5);
+          if(s===0){if(a>=0)out.fixed++;continue;}
+          if(s>0)continue;
+          const [tx,ty]=mirror(x,y),b=bit(tx,ty);if(a<0&&b<0)continue;
+          const kind=a<0?'missing':b<0?'overhang':a===b?'same':'different';out[kind]++;
+          if(kind==='different'&&!out.first)out.first={sx:x,sy:y,x:tx,y:ty,from:a,to:b};
+        }
+        out.pairs=out.same+out.different;out.match=out.pairs>0&&out.different===0&&out.overhang===0&&out.missing===0;
+        const c=[[left,top],[right,top],[left,bottom],[right,bottom]].map(([x,y])=>side(x+.5,y+.5));
+        out.atStart=c.every(v=>v>=0);out.atEnd=c.every(v=>v<=0);
+        return out;
+      }
+      return {A,B,flip:!!flip,dx,dy,side,mirror,pair,analyze};
+    }
+    return {W,H,anchor,frame,left,right,top,bottom,width,height,empty,max:width,bit,target,pair,analyze,line};
   }
   const api={create};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MayatnikFoldCompare=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

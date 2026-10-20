@@ -1,4 +1,4 @@
-/* v1 */
+/* v2: [hidden] прячет и подписи / легенду; нажатые кнопки окна — подсвечены. */
 .may-compare{box-sizing:border-box;width:min(1440px,98vw);height:94vh;max-width:98vw;max-height:96vh;padding:12px;border:1px solid #718393;background:#10151d;color:#e3eaf2;font:13px system-ui;overflow:hidden}
 .may-compare[open]{display:flex;flex-direction:column;gap:9px}.may-compare::backdrop{background:#0009}
 .may-compare header,.mc-tools,.mc-axis,.mc-legend{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
@@ -9,3 +9,5 @@
 .may-compare canvas{flex:1;min-height:100px;width:100%;display:block;background:#0d1013;touch-action:none;cursor:crosshair}
 .may-compare .mc-stats{min-height:36px;line-height:18px}.may-compare small{color:#a9b8c8;line-height:1.35}.may-compare [data-el=hover]{min-height:32px;line-height:16px}
 @media(max-width:650px){.may-compare{padding:7px;font-size:11px;gap:5px}.may-compare header span{flex-basis:70%}.may-compare button{padding:5px 8px}.may-compare .mc-stats{min-height:54px}.mc-tools,.mc-axis,.mc-legend{gap:5px}}
+.may-compare [hidden]{display:none!important}.may-compare button[aria-pressed=true]{background:#7a6420;color:#fff}.may-compare button[aria-pressed=true]:hover{background:#94782a}
+.may-compare .mc-axis{min-height:28px}

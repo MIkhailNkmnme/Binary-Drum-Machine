@@ -43,3 +43,15 @@ test('all axes agree with independent centre-coordinate reflection on random ter
   }
  }
 });
+test('v2: axis through two points matches vertical folds and is exact for horizontal and diagonal axes',()=>{
+ let seed=7;const rand=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)%3)-1;
+ for(let W=2;W<14;W++){const H=7,val=Int8Array.from({length:W*H},rand),m=C.create({W,H,val});if(m.empty)continue;
+  for(let step=0;step<=m.max;step++){const a=m.left+step/2,v=m.analyze(step),l=m.line({x:a,y:0},{x:a,y:1}).analyze();
+   for(const k of ['same','different','overhang','missing','fixed'])assert.equal(l[k],v[k],`${W}/${step}/${k}`);}
+ }
+ const h=C.create(field(['101','010','101'])).line({x:0,y:1.5},{x:1,y:1.5}).analyze();
+ assert.equal(h.same,3);assert.equal(h.fixed,3);assert.equal(h.match,true);
+ const d=C.create(field(['10','11'])),r=d.line({x:.5,y:.5},{x:1.5,y:1.5}).analyze();
+ assert.equal(r.fixed,2);assert.equal(r.different,1);assert.deepEqual([r.first.x,r.first.y,r.first.sx,r.first.sy].sort(),[0,0,1,1]);
+ assert.equal(d.line({x:.5,y:.5},{x:1.5,y:1.5},true).analyze().different,1);assert.equal(d.line({x:1,y:1},{x:1,y:1}),null);
+});
