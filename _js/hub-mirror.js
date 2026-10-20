@@ -63,7 +63,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let autoPalTimer = 0, autoPalSync = () => {}, colorGroup = null, frame = null, root = null, viewport = null, line = null, line2 = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,axisShow = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
+  let autoPalTimer = 0, autoPalSync = () => {}, palMix = null, colorGroup = null, frame = null, root = null, viewport = null, line = null, line2 = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,axisShow = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -296,11 +296,20 @@
       for(const k in inputs){if(document.activeElement!==inputs[k])inputs[k].value=c[k];inputs[k].parentElement.style.setProperty('--slot',c[k]);}};
     [...PALETTES.map((p,i)=>[i,p[0],p[1],p[4]]),[-1,'★ Свой',null,null]].forEach(([i,name,a,b])=>{const btn=document.createElement('button');btn.type='button';btn.dataset.i=i;const slot=i<0?PALETTES.length:i;const row=Math.floor(slot/5),col=slot%5;btn.style.left=(90+(col-row-.5)*20)+'px';btn.style.top=(90+(col+row-3.5)*20)+'px';btn.title=name;btn.setAttribute('aria-label','Цвета: '+name);
       if(i>=0)btn.style.background=sw(a,b);else{btn.textContent='★';btn.className='hubPaletteOwn';}
-      btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;syncColors();changed();save();palBox.open=false;};palList.append(btn);palBtns.push(btn);});
+      btn.onclick=e=>{e.preventDefault();if(i===-1&&!state.custom)state.custom={...api.colors()};state.palette=i;if(palMix){palMix=null;api.mixKey='';autoPalSync();}syncColors();changed();save();palBox.open=false;};palList.append(btn);palBtns.push(btn);});
     palBox.append(palHead,palList);colorGroup.append(palBox);
     // «кнопка авто изменения цвета каждые сколько-то секунд, ползунком»: следующая готовая палитра по кругу (свою ★ пропускает)
     const palNext=()=>{const n=PALETTES.length;state.palette=((state.palette>=0?state.palette:-1)+1)%n;syncColors();changed();save();};
-    autoPalSync=()=>{clearInterval(autoPalTimer);autoPalTimer=0;if(state.autoPal)autoPalTimer=setInterval(()=>{if(!document.hidden)palNext();},state.autoPalSec*1000);};autoPalSync();
+    // v0.375: «автоизменение цвета плавнее, бросаются в глаза скачки, может радугу?» — цвета непрерывно перетекают в следующую палитру
+    // (ползунок — секунды на один переход), без пауз, по кругу через все палитры; ~15 кадров в секунду, во вкладке в фоне — стоит
+    autoPalSync=()=>{cancelAnimationFrame(autoPalTimer);autoPalTimer=0;const n=PALETTES.length;
+      if(!state.autoPal){if(palMix){state.palette=palMix.a;palMix=null;api.mixKey='';syncColors();changed();save();}return;}
+      if(!palMix){const a=state.palette>=0?state.palette:0;palMix={a,b:(a+1)%n,t:0,last:0,shown:0};}
+      const tick=now=>{autoPalTimer=requestAnimationFrame(tick);if(document.hidden){palMix.last=0;return;}if(!palMix.last){palMix.last=now;return;}
+        if(now-palMix.shown<66)return;const dt=(now-palMix.last)/1000;palMix.last=now;palMix.shown=now;palMix.t+=dt/Math.max(1,state.autoPalSec);
+        if(palMix.t>=1){palMix.t-=Math.floor(palMix.t);palMix.a=palMix.b;palMix.b=(palMix.b+1)%n;state.palette=palMix.a;save();}
+        api.mixKey=palMix.a+':'+palMix.b+':'+palMix.t.toFixed(3);syncColors();changed();};
+      autoPalTimer=requestAnimationFrame(tick);};autoPalSync();
     for(const [key,area,mark,title] of [['bit','cb','1','Цвет битов оригинала'],['zero','c0','0','Цвет нулей оригинала'],['mirror','cm','◇','Цвет отражённых битов'],['fold','cf','⤵','Цвет заворота'],['sym','cs','✦','Цвет подсветки симметрии по оси']]){
       const wrap=document.createElement('label'),input=document.createElement('input'),m=document.createElement('b');wrap.className='hubColorSlot hubColorAlpha';wrap.style.gridArea=area;wrap.title=title;
       input.type='color';input.setAttribute('aria-label',title);
@@ -596,7 +605,9 @@
       return {source:original,mirror};
     },
     rotationCenter(){return frame?center():null;},
-    colors(){if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
+    colors(){if(palMix){const A=PALETTES[palMix.a],B=PALETTES[palMix.b],t=palMix.t*palMix.t*(3-2*palMix.t),mix=(x,y)=>{const p=q=>[1,3,5].map(i=>parseInt(q.slice(i,i+2),16)),u=p(x),v=p(y);return '#'+u.map((c,i)=>Math.round(c+(v[i]-c)*t).toString(16).padStart(2,'0')).join('');};   // «автоизменение цвета плавнее» — между палитрами перетекает
+      return {bit:mix(A[1],B[1]),mirror:mix(A[2],B[2]),fold:mix(A[3],B[3]),sym:mix(A[4]||'#ffd166',B[4]||'#ffd166'),zero:mix(A[1],B[1])};}
+      if(state.palette===-1&&state.custom)return {zero:state.custom.bit,...state.custom};const p=PALETTES[state.palette]||PALETTES[2];return {bit:p[1],mirror:p[2],fold:p[3],sym:p[4]||'#ffd166',zero:p[1]};},   // v0.230: zero — свой цвет нулей оригинала (по умолчанию как биты)
     symbolsOnly(){return !rhombOn();},
     // «добавь квадраты»: форма бита при включённых ромбах — ромб или квадрат (квадрат стоит в центре бита, сторона — по меньшей из полудиагоналей)
     bitShape(){return rhombOn()?(state.bitSquare?'square':'rhomb'):null;},
