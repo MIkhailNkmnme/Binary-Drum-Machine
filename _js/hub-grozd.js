@@ -274,6 +274,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       if (fl) { let k = 0; for (const it of fl) if (!it.sec && !it.wide && !['value', 'vpair'].includes(it.type)) it.col = it.key === 'flow|dense-axis' ? 1 : k++ % 2; }   // «пустое место справа — просто перемести её вправо»: «Плотно | От оси» — правым столбцом
       if (fl) { const s2 = fl.map((it, i) => [it, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]); fl.splice(0, fl.length, ...s2); }
     }
+    { const M = window.HubMirror, bl0 = out.get('bits');   // «кнопка авто изменения цвета каждые сколько-то секунд — ползунком»: слева вкл / выкл, ползунок — секунды (1–60)
+      if (M?.setAutoPal && bl0) bl0.push({ type: 'value', name: 'Смена цвета', tip: 'Автосмена палитры: следующая готовая палитра каждые N секунд · ползунок — N', key: 'bits|autoPal',
+        head: { label: '⟳ Цвет', on: () => !!M.state.autoPal, click: () => M.setAutoPal(!M.state.autoPal) },
+        get: () => M.state.autoPalSec + ' с', step: d => M.setAutoPalSec(M.state.autoPalSec + Math.sign(d) * (Math.abs(d) === 2 ? 5 : 1)), zero: () => M.setAutoPalSec(10),
+        frac: () => (M.state.autoPalSec - 1) / 59, setFrac: f => M.setAutoPalSec(1 + f * 59) }); }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     {   // «Сетка — в правую рейку под Встык»: соты «Битов» — прежний порядок слева-справа, «Сетка» — правым столбцом
