@@ -263,7 +263,7 @@
     const ba = ptBtn('fixAxis', 'swap', ap, () => { const A = window.mayFixAxis; A?.set((A.get() + 1) % 3); placeTools(); });
     ba.oncontextmenu = ev => { ev.preventDefault(); const A = window.mayFixAxis; A?.set((A.get() + 2) % 3); placeTools(); };
     toolSync.push(() => { const i = window.mayFixAxis?.get() || 0, nm = ba.querySelector('.gz-nm'); ba.classList.toggle('on', i > 0); if (nm && nm.textContent !== AX[i]) nm.textContent = AX[i];
-      ba.title = 'Ось «Зеркала ↑»: ход — дрожит вслед маятнику (кадр за кадром на ½ бита: на бите / между битами), стоит — всегда на бите, антиход — шагает навстречу маятнику · сейчас: ' + AX[i].slice(5) + ' · щелчок — следующий, правый — предыдущий'; });
+      ba.title = 'Ось «Зеркала ↑»: ход — 1 пиксель то справа, то слева от границы между пикселями, вслед маятнику; стоит — на границе, толщиной 2 пикселя; антиход — 1 пиксель навстречу маятнику · сейчас: ' + AX[i].slice(5) + ' · щелчок — следующий, правый — предыдущий'; });
     gView.querySelector('[data-n="fixMirror"]').after(bf, bv, ba, bk, bc, bo);
     window.mayFixAxisNames = AX;
     window.mayMirLists = { col: COL, op: OP }; }
