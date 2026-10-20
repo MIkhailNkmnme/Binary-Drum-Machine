@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.176. v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.177. v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.176</title>
+<title>Zerkalius Маятник — v0.177</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -120,7 +120,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.176</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.177</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1985,6 +1985,56 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
       ctx.restore();
     }
   }
+
+  /* v0.177: «добавь зеркальную ось, которая привязана своим концом к нижней границе последней строки».
+     Один конец оси (A) — на нижней границе последней показанной строки, едет вдоль неё; второй конец (B) тянут — ось поворачивается.
+     Отражение поля от оси рисуется ПОД полем (холст над ним), поэтому оригинал всегда виден целиком. По умолчанию ось лежит по низу:
+     под полем — перевёрнутая копия. Слой — fixed-холст на окно поля, как оси симметрии; распорка в #wrap даёт докрутить до отражения.
+     Всё создаётся лениво (mirDraw.o): present() зовёт mirDraw и при первом построении, раньше этой строки. */
+  function mirState() { const m = st.mirAxis && typeof st.mirAxis === 'object' ? st.mirAxis : (st.mirAxis = {});
+    if (typeof m.on !== 'boolean') m.on = false; if (!Number.isFinite(m.ax)) m.ax = .5; if (!Number.isFinite(m.ang)) m.ang = 0; if (!Number.isFinite(m.len)) m.len = .3; return m; }
+  function mirInit() {
+    if (getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+    cv.style.position = 'relative'; cv.style.zIndex = '1';   // поле — над отражением
+    const mk = (tag, css) => { const e = document.createElement(tag); e.className = 'may-mir'; Object.assign(e.style, css); document.body.append(e); return e; };
+    const c = mk('canvas', { position: 'fixed', pointerEvents: 'none', zIndex: '0', margin: '0' });
+    const line = mk('div', { position: 'fixed', height: '0', borderTop: '2px dashed var(--mir-c,#ffe600)', transformOrigin: '0 0', pointerEvents: 'none', zIndex: '4', filter: 'drop-shadow(0 0 2px #000)' });
+    const knob = (t) => { const k = mk('div', { position: 'fixed', width: '16px', height: '16px', margin: '-8px 0 0 -8px', borderRadius: '50%', boxSizing: 'border-box', zIndex: '5', cursor: 'grab', touchAction: 'none',
+      border: '2px solid var(--mir-c,#ffe600)', background: '#0d1119cc', boxShadow: '0 0 0 2px #000a' }); k.title = t; return k; };
+    const a = knob('Конец оси на нижней границе последней строки · тяни — вдоль низа'), b = knob('Второй конец оси · тяни — повернуть (шаг 15° у кратных; Alt — свободно) · двойной щелчок — по низу');
+    const sp = document.createElement('div'); Object.assign(sp.style, { position: 'absolute', width: '1px', height: '1px', pointerEvents: 'none', visibility: 'hidden' }); wrap.append(sp);
+    const drag = (k, move) => { k.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); k.setPointerCapture(e.pointerId); k.style.cursor = 'grabbing';
+      const mv = ev => { move(ev, cv.getBoundingClientRect(), mirState()); mirDraw(); }, up = () => { k.style.cursor = 'grab'; k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', up); k.removeEventListener('pointercancel', up); save(); };
+      k.addEventListener('pointermove', mv); k.addEventListener('pointerup', up); k.addEventListener('pointercancel', up); }); };
+    drag(a, (e, r, m) => { m.ax = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width))); });
+    drag(b, (e, r, m) => { const Ax = r.left + m.ax * r.width, Ay = r.bottom, dx = e.clientX - Ax, dy = e.clientY - Ay; let t = Math.atan2(dy, dx);
+      if (!e.altKey) { const q = Math.PI / 12, n = Math.round(t / q) * q; if (Math.abs(t - n) < Math.PI / 60) t = n; }
+      m.ang = t; m.len = Math.max(.02, Math.hypot(dx, dy) / Math.max(1, r.width)); });
+    b.addEventListener('dblclick', e => { e.stopPropagation(); const m = mirState(); m.ang = 0; save(); mirDraw(); });
+    for (const k of [a, b]) k.addEventListener('dblclick', e => e.stopPropagation());
+    wrap.addEventListener('scroll', () => mirDraw(), { passive: true }); addEventListener('resize', () => mirDraw());
+    return { c, g: c.getContext('2d'), line, a, b, sp };
+  }
+  function mirDraw() {
+    if (typeof cv === 'undefined' || typeof wrap === 'undefined' || !cv || !wrap) return;
+    const m = mirState(), on = m.on && img && cv.width > 1 && !document.body.classList.contains('may-fold-active');
+    let o = mirDraw.o; if (!o) { if (!on) return; o = mirDraw.o = mirInit(); }
+    if (!on) { o.c.hidden = o.line.hidden = o.a.hidden = o.b.hidden = true; o.sp.style.display = 'none'; return; }
+    const host = wrap.getBoundingClientRect(), r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1), w = wrap.clientWidth, h = wrap.clientHeight;
+    const c = o.c; c.hidden = false; Object.assign(c.style, { left: host.left + 'px', top: host.top + 'px', width: w + 'px', height: h + 'px' });
+    const W = Math.max(1, Math.round(w * d)), H = Math.max(1, Math.round(h * d)); if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+    const x0 = r.left - host.left, y0 = r.top - host.top, Ax = x0 + m.ax * r.width, Ay = y0 + r.height, c2 = Math.cos(2 * m.ang), s2 = Math.sin(2 * m.ang);
+    const tx = Ax - (c2 * Ax + s2 * Ay), ty = Ay - (s2 * Ax - c2 * Ay), G = o.g;   // отражение от прямой через A под углом ang: p' = R p + (A − R A)
+    G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, W, H);
+    G.setTransform(c2 * d, s2 * d, s2 * d, -c2 * d, tx * d, ty * d); G.imageSmoothingEnabled = false; G.drawImage(cv, x0, y0, r.width, r.height);
+    const L = Math.max(24, m.len * r.width), ca = Math.cos(m.ang), sa = Math.sin(m.ang);
+    o.line.hidden = o.a.hidden = o.b.hidden = false;
+    Object.assign(o.line.style, { left: host.left + Ax + 'px', top: host.top + Ay - 1 + 'px', width: L + 'px', transform: 'rotate(' + m.ang + 'rad)' });
+    Object.assign(o.a.style, { left: host.left + Ax + 'px', top: host.top + Ay + 'px' }); Object.assign(o.b.style, { left: host.left + Ax + L * ca + 'px', top: host.top + Ay + L * sa + 'px' });
+    let mx = -Infinity, my = -Infinity; for (const [x, y] of [[x0, y0], [x0 + r.width, y0], [x0, y0 + r.height], [x0 + r.width, y0 + r.height]]) { mx = Math.max(mx, c2 * x + s2 * y + tx); my = Math.max(my, s2 * x - c2 * y + ty); }
+    o.sp.style.display = ''; o.sp.style.left = Math.round(mx + wrap.scrollLeft) + 'px'; o.sp.style.top = Math.round(my + wrap.scrollTop) + 'px';   // распорка: докрутить до отражения
+  }
+  window.MayMirAxis = { get on() { return mirState().on; }, toggle() { const m = mirState(); m.on = !m.on; save(); mirDraw(); }, reset() { const m = mirState(); Object.assign(m, { ax: .5, ang: 0, len: .3 }); save(); mirDraw(); } };
   function drawSymmetry() {
     $('mayHideAxes').hidden = !st.sym && !axisPicking && !konus;
     if(!st.sym||!f||playing){symCanvas.hidden=true;if(!st.sym)$('symInfo').textContent='';else if(playing)$('symInfo').textContent='Оси — после паузы';return;}
@@ -2208,6 +2258,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     midColLine();   // v0.119: подсветка центрального столбца
     fixColLines();   // v0.125: граница застывшей части
     align();
+    mirDraw();   // v0.177: зеркальная ось у низа последней строки
   }
   function align() {   // левый верхний угол холста — на целом пикселе монитора, иначе и 1:1 даёт ничьи
     cv.style.transform = '';
@@ -2810,7 +2861,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=42"></script>
-<script src="mayatnik-menu.js?v=177"></script>
+<script src="mayatnik-menu.js?v=178"></script>
 <script src="mayatnik-tips.js?v=167"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
