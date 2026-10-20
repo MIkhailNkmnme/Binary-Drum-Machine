@@ -77,6 +77,16 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
     field=new HubFlowCore.Field(cols,rows);field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;liquid=new HubFlowCore.WaterField(lw,lh);liquid.cornerPass=waterCorners;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(lw,lh);rays=[];dirty=true;
     beams=null;canvas.dataset.waterCell='1';
   }
+  // v0.405: a crack of 1–2 px between two touching bits is a rasterisation seam, not a channel — close it for water.
+  function seal(m,w,h){
+    const o=new Uint8Array(m.length),s=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&m[y*w+x]===1;
+    for(let y=0;y<h;y++){const r=y*w;for(let x=0;x<w;x++){const i=r+x;if(m[i])continue;
+      if(((x>0&&m[i-1])||(x>1&&m[i-2]))&&((x<w-1&&m[i+1])||(x<w-2&&m[i+2]))){o[i]=1;continue;}
+      if(((y>0&&m[i-w])||(y>1&&m[i-2*w]))&&((y<h-1&&m[i+w])||(y<h-2&&m[i+2*w]))){o[i]=1;continue;}
+      if((s(x-1,y-1)||s(x-2,y-2))&&(s(x+1,y+1)||s(x+2,y+2))){o[i]=1;continue;}
+      if((s(x-1,y+1)||s(x-2,y+2))&&(s(x+1,y-1)||s(x+2,y-2)))o[i]=1;}}
+    for(let i=0;i<m.length;i++)if(o[i])m[i]=1;
+  }
   function rebuild(time){
     if(!dirty||time-lastMask<100)return;
     dirty=false;lastMask=time;
@@ -95,6 +105,7 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
         const i=y*w+x;if(ready&&rgba[i*4+3]>=32){if(!solid[i])count++;solid[i]=1;types[i]|=bit==='0'?1:2;if(bit==='0')zero++;else one++;}
       }
     }
+    seal(liquidSolid,liquid.width,liquid.height);   // v0.405: вода не течёт в щели между соседними битами (синяя «стрелка» по шву)
     field.setMask(solid);field.lightTypes=types;liquid.setMask(liquidSolid);beams=null;bounds={minX:0,maxX:frameW/cell-1,y:horizon/cell};
     canvas.dataset.sourceLeft='0';canvas.dataset.sourceRight=String(canvas.width);
     canvas.dataset.zeroObstacles=String(zero);canvas.dataset.oneObstacles=String(one);
