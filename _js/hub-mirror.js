@@ -41,7 +41,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisColor: null, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -54,7 +54,7 @@
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
       state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym','zero'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(['bit','mirror','fold','sym'].every(k=>c[k]))state.custom=c;if(Number.isFinite(saved.zeroAlpha))state.zeroAlpha=Math.max(0,Math.min(1,saved.zeroAlpha));}
-      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;
+      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;state.axis2=saved.axis2===true;if([90,30,60].includes(saved.axis2Deg))state.axis2Deg=saved.axis2Deg;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -63,7 +63,7 @@
       localStorage.setItem('zerk_hub_mirror', JSON.stringify(state));
     }
   } catch (_) {}
-  let colorGroup = null, frame = null, root = null, viewport = null, line = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,axisShow = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
+  let colorGroup = null, frame = null, root = null, viewport = null, line = null, line2 = null, tail = null, handle = null, turn = null, orbit = null, dragHint = null, drag = null, revision = 0, enabled = null,axisShow = null,bitCenters=[],bitCell=null,rotationBit=null,rotationGuide=false,pairLock=null;
   let spinRunning=false,spinRaf=0,spinTime=0,spinButton,spinRange,spinValue,resumeSpin=false,spinRemainder=0;
   function syncSpin(){
     document.body?.classList.toggle('hubMirrorSpinning',spinRunning);
@@ -174,6 +174,7 @@
     if (enabled) enabled.checked = state.on;
     Object.assign(root.style, { position: mobile ? 'absolute' : 'fixed', left: frame.left + 'px', top: '0px', width: frame.width + 'px', height: frame.height + 'px' });
     Object.assign(line.style, { left: px + 'px', top: (py - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
+    if(line2){line2.hidden=!(state.on&&state.axis2);Object.assign(line2.style,{left:(px-length)+'px',top:(py-10)+'px',width:(2*length)+'px',transform:'rotate('+(state.angle+state.axis2Deg*Math.PI/180)+'rad)'});}
     if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = radius + 'px';
@@ -207,13 +208,14 @@
     root = document.createElement('div'); root.id = 'hubMirror';
     line = document.createElement('div'); line.className = 'hubMirrorLine';line.tabIndex=0;line.setAttribute('role','button');line.setAttribute('aria-label','Переместить зеркало относительно оригинала');
     tail=document.createElement('span');tail.className='hubMirrorTail';tail.setAttribute('aria-hidden','true');
+    line2=document.createElement('div');line2.className='hubMirrorLine2';line2.setAttribute('aria-hidden','true');   // «добавить 2 ось»: пунктир второй оси через тот же центр
     handle = document.createElement('button'); handle.type = 'button'; handle.className = 'hubMirrorHandle';
     turn = document.createElement('button'); turn.type = 'button'; turn.className = 'hubMirrorTurn'; turn.setAttribute('aria-label', 'Повернуть зеркало');
     orbit=document.createElement('div');orbit.className='hubMirrorOrbit';orbit.setAttribute('aria-hidden','true');
     const polygonPoints=(n,r)=>Array.from({length:n},(_,i)=>{const a=i*2*Math.PI/n;return (r*Math.cos(a)).toFixed(5)+','+(r*Math.sin(a)).toFixed(5);}).join(' ');
     orbit.innerHTML='<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="100"/><polygon points="'+polygonPoints(24,100)+'"/></svg>';
     turn.innerHTML='<svg class="hubMirrorTurnMagnet" viewBox="-14 -14 28 28" aria-hidden="true"><polygon points="'+polygonPoints(6,11)+'"/><polygon points="'+polygonPoints(6,7)+'"/></svg>';
-    line.append(tail,handle, turn); root.append(orbit,line);viewport.append(root);document.body.append(viewport);
+    line.append(tail,handle, turn); root.append(orbit,line2,line);viewport.append(root);document.body.append(viewport);
     dragHint=document.createElement('div');dragHint.className='hubAxisDragHint';dragHint.hidden=true;dragHint.setAttribute('aria-hidden','true');dragHint.innerHTML='<svg viewBox="-32 -32 64 64"><g class="along"><path d="M-14 -14H14M9 -19L14 -14 9 -9"/><path d="M14 14H-14M-9 9L-14 14 -9 19"/></g><g class="across"><path d="M0 -4V-28M-5 -23L0 -28 5 -23"/><path d="M0 4V28M-5 23L0 28 5 23"/></g></svg>';document.body.append(dragHint);
     const settings = document.createElement('div'); settings.className = 'hubMirrorSettings'; settings.id = 'hubFieldTools';
     settings.setAttribute('role', 'toolbar'); settings.setAttribute('aria-label', 'Настройки поля');
@@ -645,6 +647,19 @@
       return [x - 2 * distance * nx, y - 2 * distance * ny];
     },
     contains(x, y, w, h) { return frame && x - w / 2 >= frame.left && x + w / 2 <= frame.left + frame.width && y - h / 2 >= 0 && y + h / 2 <= frame.height; },
+    // «2 ось и кнопка 90 / 30 / 60° от первой»: два зеркала под углом θ — калейдоскоп: повороты на 2θk (слой оригинала) и отражения от осей a + θk (слой отражения);
+    // первая ось (k = 0) рисуется как прежде, здесь — остальные копии
+    axis2Layers(canvas,view=null){
+      if(!frame||!state.on||!state.axis2)return [];
+      const offset=view?view.left:0,sx=view?view.scale:canvas.width/(frame.left+frame.width),sy=view?view.scale:canvas.height/frame.height;
+      const [x,y]=center(),cx=(x-offset)*sx,cy=y*sy,th=state.axis2Deg*Math.PI/180,n=Math.round(180/state.axis2Deg),out=[];
+      const put=(p,q,r,t,pass)=>{const A=p,C=q*sx/sy,B=r*sy/sx,D=t;out.push({m:[A,B,C,D,cx-A*cx-C*cy,cy-B*cx-D*cy],pass});};
+      for(let k=1;k<n;k++){const a=2*th*k,c=Math.cos(a),si=Math.sin(a);put(c,-si,si,c,'source');}
+      for(let k=1;k<n;k++){const a=2*(state.angle+th*k),c=Math.cos(a),si=Math.sin(a);put(c,si,si,-c,'mirror');}
+      return out;
+    },
+    setAxis2(on){state.axis2=!!on;changed();save();},
+    cycleAxis2Deg(){state.axis2Deg={90:30,30:60,60:90}[state.axis2Deg]||90;changed();save();},
     matrix(canvas,view=null){
       if(!frame||!state.on)return null;
       const offset=view?view.left:0,sx=view?view.scale:canvas.width/(frame.left+frame.width),sy=view?view.scale:canvas.height/frame.height;

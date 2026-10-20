@@ -173,7 +173,9 @@
     const layer=(pass)=>{if(!vector){g.drawImage(copy,shift[0]*k,shift[1]*k);return;}
       if(fast){const c=vector.fastCopy||(vector.fastCopy={}),key=pass||'source';let mc=c[key];if(!mc||mc.width!==canvas.width||mc.height!==canvas.height){mc=c[key]=document.createElement('canvas');mc.width=canvas.width;mc.height=canvas.height;const mg=mc.getContext('2d');mg.setTransform(...vector.base);vector.draw(mg,pass);}g.drawImage(mc,shift[0]*k,shift[1]*k);return;}g.save();g.translate(shift[0]*k,shift[1]*k);g.transform(...vector.base);vector.draw(g,pass);g.restore();};   // v0.128: pass 'mirror' — своя палитра у отражения
     g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);const tx=(e+(a-1)*left)*k+shift[0]*k,ty=(f+b*left)*k+shift[1]*k;if(!vector||(!vector.direct&&a===1&&b===0&&c===0&&d===1&&!shift[0]&&!shift[1]&&Math.abs(tx-Math.round(tx))<1e-6&&Math.abs(ty-Math.round(ty))<1e-6))g.drawImage(copy,shift[0]*k,shift[1]*k);else layer();   // v0.130: сдвинутый исходник — заново ромбами, иначе край экрана обрезал картинку
-    if(reflection){const [ma,mb,mc,md,me,mf]=matrix(true);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...reflection);layer('mirror');}g.restore();
+    if(reflection){const [ma,mb,mc,md,me,mf]=matrix(true);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...reflection);layer('mirror');}
+    for(const L of window.HubMirror?.axis2Layers?.(canvas,view)||[]){const mir=L.pass==='mirror',[ma,mb,mc,md,me,mf]=matrix(mir);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...L.m);layer(mir?'mirror':undefined);}   // «2 ось»: остальные копии калейдоскопа
+    g.restore();
     // v0.127: vector.extra — слой поверх в координатах поля (после сдвига и зеркала), только под камерой: «заворот» внутрь треугольника
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
     if(vector?.screen&&!fast){g.save();g.setTransform(k,0,0,k,-left*k,0);vector.screen(g);g.restore();}
