@@ -23,7 +23,7 @@
 #hubPult .hpSpin .zz-pult-value{cursor:text;font:11px/48px ui-monospace,monospace!important;color:#ffe6a8!important;text-shadow:0 1px 2px #000}
 @media(min-width:1101px){body.hubPultOn #hubZoom>:not(#hubColorPanel){display:none!important}}
 body.hubZen #hubPult{display:none}
-@media(max-width:1100px){#hubPult{display:none!important}}
+@media(max-width:1100px){body:not(.hubMobCanvas) #hubPult{display:none!important}}   /* «мобильная — поправь там старый пульт»: на телефоне (холст) — новый пульт, как на компьютере */
 /* v0.280: масштаб — столбиком у креста; вращение и биты — одной строкой внизу справа */
 #hubPult .hpZoom{flex-direction:column;align-items:center;gap:4px}
 #hubPult .hpZoom .hpB{margin:0;width:64px}
@@ -45,7 +45,10 @@ body.hubZen #hubPult{display:none}
 #hubPultBot .hpSpin{position:relative;width:260px}
 #hubPultBot .hpSpin .zz-pult-value{cursor:text;font:11px/48px ui-monospace,monospace!important;color:#ffe6a8!important;text-shadow:0 1px 2px #000}
 body.hubZen #hubPultBot{display:none}
-@media(max-width:1100px){#hubPultBot{display:none!important}}
+@media(max-width:1100px){body:not(.hubMobCanvas) #hubPultBot{display:none!important}
+  body.hubMobCanvas.hubPultOn #hubZoom>:not(#hubColorPanel){display:none!important}   /* старый пульт (⌂ + −, кадр, об/кадр) — не показывается */
+  body.hubMobCanvas #hubPult,body.hubMobCanvas #hubPultBot,body.hubMobCanvas .hubZenSave{transition:opacity .2s,visibility .2s}
+  body.hubMobCanvas.hubMobScrolled #hubPult,body.hubMobCanvas.hubMobScrolled #hubPultBot,body.hubMobCanvas.hubMobScrolled .hubZenSave{opacity:0;visibility:hidden;pointer-events:none}}
 /* v0.282: «ширину уменьши, чтоб 100% поместилось, 100% текстом меньшим шрифтом, фон ещё слабее, и у пульта внизу слабее, и его ещё ниже до края» */
 #hubPult .hpZoom .hpB{width:46px;min-width:0;height:26px;padding:0 6px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
 #hubPult .hpZoom .hpVal{font-size:10px;letter-spacing:-.2px}
@@ -136,3 +139,5 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .zz-pult:has(.zz-pult-play:hover) .hpThLine{display:block}
 /* «пульт посередине поставь, справа от него вращение битов»: ромб пульта (260 px) — по центру экрана, наклоны 0 / 1 — справа */
 #hubPultBot{left:calc(50% - 130px);right:auto}
+/* v0.362: телефон — нижний пульт в ширину не влезает: вращение строкой, наклоны битов — под ним; выше стрелки «вниз к кнопкам» (последним — перебивает bottom:0 и центровку выше) */
+@media(max-width:1100px){#hubPultBot{left:4px;right:4px;bottom:54px;flex-wrap:wrap;justify-content:center;row-gap:6px}}
