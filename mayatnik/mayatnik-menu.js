@@ -109,7 +109,7 @@
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));
-  for (const id of ['lg', 'stat', 'zoomV', 'konusInfo', 'symInfo', 'triangleInfo', 'fillInfo','paintCacheInfo','templateInfo','templateActions']) status.append($(id));
+  for (const id of ['stat', 'zoomV', 'konusInfo', 'symInfo', 'triangleInfo', 'fillInfo','paintCacheInfo','templateInfo','templateActions']) status.append($(id));
   for(const [id,kind]of [['bTemplateQuickSave','save'],['bTemplateColour','colour']]){
     const e=$(id),mark=document.createElement('i');mark.className='gz-ic';mark.style.backgroundImage=icon(e,kind);mark.style.backgroundSize='contain';mark.style.backgroundRepeat='no-repeat';e.querySelector('span').prepend(mark);
   }
@@ -233,6 +233,8 @@
     toolSync.push(() => { const on = !window.mayPx?.has(c); b.classList.toggle('on', on); b.title = 'Пиксели: ' + t + (on ? ' — видны, щелчок — скрыть' : ' — скрыты, щелчок — показать'); });
     gView.append(b); }
   gView.append(gView.querySelector('[data-n="bFoldHorizontal"]'),gView.querySelector('[data-n="bFoldVertical"]'));
+  // v0.200: «из сведений переключение подсветки перенеси в вид» — легенда 1 · 0 · стал 1 · стал 0 (щелчок — цвета перекрытий вкл / выкл) — в «Вид», первой
+  gView.prepend($('lg'));
   // v0.075: Xor-Next — в верхней панели, виден всегда; без шаблона бледный.
   { const g = ptGroup('Шаблон'), e = $('bXor2'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'bXor2';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'steps'); b.append(mark); b.onclick = () => e.click();
