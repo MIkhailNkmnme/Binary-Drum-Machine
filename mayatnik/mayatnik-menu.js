@@ -196,7 +196,7 @@
     b.onclick=()=>{source.selectedIndex=(source.selectedIndex+1)%source.options.length;source.dispatchEvent(new Event('change',{bubbles:true}));};
     toolSync.push(()=>{b.title='Область заливки: '+source.selectedOptions[0].textContent+' · щелчок — следующий режим';const label=b.querySelector('.gz-nm');if(label)label.textContent=source.selectedOptions[0].textContent;});}
   // v0.044: виды поля — значками на холсте, рядом с раскраской.
-  const gView = ptGroup('Вид');
+  const gView = ptGroup('Вид'), gMir = ptGroup('Зеркала');   // v0.238: «раздели на 2 вкладки — Вид и Зеркала»: правый столбец «Вида» — своей группой
   {const e=$('bFoldCompare'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldCompare';b.title=e.title;
     const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'swap');b.append(mark);b.onclick=()=>e.click();gView.append(b);
     toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
@@ -336,7 +336,7 @@
   const ptNames = { fixMirror:'Зеркало ↑', fixFold:'Загиб', fixFoldV:'ЗагибВерт', fixDragK:'Сдвиг кадром', fixAxis:'Ось: ход', rowCount:'Биты в строках', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
-  const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
+  const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
   for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
@@ -346,7 +346,7 @@
   // v0.063: панель значков — в шапке, рядом с «Что это такое?», а не поверх холста.
   tools.insertBefore(gHistory.parentElement,gView.parentElement);
   // v0.103: «Вид» в шапке — компактно, в три ряда; цвета цифр и «показ строк» — сами поля, столбиком в конце группы
-  gView.parentElement.classList.add('pt-view');
+  gView.parentElement.classList.add('pt-view'); gMir.parentElement.classList.add('pt-view');
   { const done = b => { b.classList.add('gz-hx'); b.querySelector('i')?.classList.add('gz-ic'); const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return b; };   // эти встают после общей раздачи надписей
     for (const [id, title] of [['digitOneColour', 'Цвет цифры 1'], ['digitZeroColour', 'Цвет цифры 0'], ['bitOneColour', 'Цвет клетки 1'], ['bitZeroColour', 'Цвет клетки 0']]) {
       const b = ptBtn('c_' + id, 'colour', $(id), null), d = dotIn(b, id, title); b.onclick = () => d.click(); b.title = title + ' · щелчок — палитра'; gView.append(done(b)); }
@@ -372,8 +372,8 @@
     const cols = VIEW_COLS.map(secs => { const col = document.createElement('div'); col.className = 'pt-col';
       for (const [t, c, ns] of secs) { const s = document.createElement('div'); s.className = 'pt-sec'; s.title = t; s.style.setProperty('--s', c);
         for (const n of ns) { const e = pick(n); if (e) s.append(e); } if (s.children.length) col.append(s); } return col; });
-    const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[1].append(s); }   // новая кнопка без темы — в конец правого столбца
-    gView.append(...cols); gView.classList.add('pt-cols'); }
+    const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[0].append(s); }   // новая кнопка без темы — в конец «Вида»
+    gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
@@ -605,7 +605,7 @@
     // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
     // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
     // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
-    { const MINI = 'mayatnik-dd-mini', ICO = { 'Краска': '✎', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
+    { const MINI = 'mayatnik-dd-mini', ICO = { 'Краска': '✎', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
