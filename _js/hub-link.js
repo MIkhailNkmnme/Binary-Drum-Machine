@@ -1,5 +1,5 @@
 /* ===========================================================================
-   ЗНАЧОК «В ХАБ» — v0.001, один и тот же во всех машинах Зеркалиуса.
+   ЗНАЧОК «В ХАБ» — v0.002, один и тот же во всех машинах Зеркалиуса.
    Подключается одной строкой:  <script src="_js/hub-link.js"></script>
 
    Путь до хаба вычисляется сам, поэтому модуль одинаково работает и в корне,
@@ -13,6 +13,9 @@
      в строку с ним; заголовка нет или он спрятан — в левом верхнем углу;
      window.zerkHubSlot = 'селектор' (ДО подключения) — поставить перед другим местом;
    - тот же знак — значком вкладки (favicon), если своего у страницы нет.
+   v0.002 (2026-10-20, Маятник v0.188, «вращающиеся останови — тоже жрут»): window.zerkHubStill = true (ДО подключения) —
+   значок не крутится: один кадр под тем же углом, что у вращения через 0,9 с; заново — только при смене размера окна.
+   Без флага — как было, крутится.
    =========================================================================== */
 (function () {
     if (window.__zerkHubLink) return;
@@ -63,8 +66,10 @@
            низ золотой, пояс светлый) — объёмным телом на холсте (с 2026-09-29 — Зеркалидус, треугольная бипирамида; прежде октаэдр): крутится вокруг оси, светится, свечение дышит. Ближние рёбра ярче
            дальних. Вкладка скрыта — не рисуется (requestAnimationFrame стоит сам) */
         const cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); a.appendChild(cv);
+        const still = !!window.zerkHubStill;
         const draw = (t) => {
             if (!cv.isConnected) return;
+            if (still) t = 900;
             if (!a.getClientRects().length) { setTimeout(() => requestAnimationFrame(draw), 500); return; }   // спрятан (дзен, фон хаба) — не рисовать
             const s =Math.round(a.clientWidth || 26), d = window.devicePixelRatio || 1;
             if (cv.width !== Math.round(s * d)) { cv.width = cv.height = Math.round(s * d); }
@@ -83,9 +88,11 @@
                 g.globalAlpha = z > 0.15 ? 0.32 : 1; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke(); };
             eq.forEach((e, i) => { edge(top, e, '#7cd4ff'); edge(bot, e, '#ffcf6b'); edge(e, eq[(i + 1) % eq.length], '#d8dce6'); });
             g.globalAlpha = 1; g.shadowBlur = 0;
+            if (still) return;
             if (!document.hidden) requestAnimationFrame(draw); else document.addEventListener('visibilitychange', () => requestAnimationFrame(draw), { once: true });
         };
         requestAnimationFrame(draw);
+        if (still) addEventListener('resize', () => requestAnimationFrame(draw));   // масштаб экрана сменился — чёткость
         // window.zerkHubNoKey = true (ставится ДО подключения модуля) — у страницы своя клавиша H, например
         // методичка Октаэдра; тогда в Хаб ведёт только значок.
         a.title = window.zerkHubNoKey ? 'В Хаб' : 'В Хаб (H)';

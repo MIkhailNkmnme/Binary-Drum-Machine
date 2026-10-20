@@ -1,4 +1,6 @@
-/* v0.138: perforated, rotating triangular bipyramid, same cadence as the Hub icon. */
+/* v0.138: perforated, rotating triangular bipyramid, same cadence as the Hub icon.
+   v0.188: «вращающиеся останови — тоже жрут»: один неподвижный кадр под углом STILL (прежде — перерисовка 60 раз в секунду,
+   вместе со значком хаба ~35 мс работы страницы в секунду простоя); заново рисуется только при смене размера окна. */
 (() => {
   'use strict';
   function geometry(time,size){
@@ -20,20 +22,20 @@
   // Draw only solid pixels. Holes remain alpha=0 on every front and back face.
   for(let y=0;y<26;y++)for(let x=0;x<26;x++){const bit=pattern[y][x];if(bit===' ')continue;tg.fillStyle=bit==='a'?'#ff9a5a':bit==='b'?'#8fd3ff':'#1e2a32';tg.fillRect(x*4,y*4,4,4);}
   const back=document.createElement('canvas');back.width=back.height=104;const bg=back.getContext('2d');bg.drawImage(texture,0,0);bg.globalCompositeOperation='source-atop';bg.fillStyle='rgba(0,0,0,.45)';bg.fillRect(0,0,104,104);
-  const g=cv.getContext('2d');let raf=0;
-  function draw(t){
-    raf=0;if(!cv.isConnected||document.hidden)return;
+  const g=cv.getContext('2d'),STILL=900;   // угол — как у прежнего вращения через 0,9 с
+  function draw(){
+    if(!cv.isConnected)return;
     const s=cv.clientWidth||26,d=Math.min(3,devicePixelRatio||1),pixels=Math.round(s*d);
     if(cv.width!==pixels){cv.width=cv.height=pixels;}
     g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,s,s);g.save();g.beginPath();g.arc(s/2,s/2,s/2,0,Math.PI*2);g.clip();
-    const {faces}=geometry(t,s);g.imageSmoothingEnabled=false;
+    const {faces}=geometry(STILL,s);g.imageSmoothingEnabled=false;
     for(const face of faces){const p=face.points;g.save();g.beginPath();g.moveTo(...p[0].slice(0,2));g.lineTo(...p[1].slice(0,2));g.lineTo(...p[2].slice(0,2));g.closePath();g.clip();
       g.transform(...affine(face.uv,p));g.drawImage(face.depth>.08?back:texture,0,0,26,26);g.restore();
     }
     // Thin rims reveal the volume without closing the cutouts.
     for(const face of faces){g.globalAlpha=face.depth>.08?.18:.6;g.strokeStyle=face.ids[0]===0?'#8fd3ff':'#ff9a5a';g.lineWidth=.4;g.beginPath();face.points.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.stroke();}
-    g.restore();raf=requestAnimationFrame(draw);
+    g.restore();
   }
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;}else if(!raf)raf=requestAnimationFrame(draw);});
-  raf=requestAnimationFrame(draw);
+  addEventListener('resize',()=>requestAnimationFrame(draw));   // масштаб экрана сменился — чёткость
+  requestAnimationFrame(draw);
 })();
