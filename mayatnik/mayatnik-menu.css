@@ -436,3 +436,7 @@ header #paintTools .pt-ochki #ochkiBox{grid-column:auto;grid-row:auto;border:0;b
 header #paintTools .pt-ochki #ochkiBox summary{white-space:normal}
 /* v0.181: «во всю высоту до низа, если не вмещается» — список серий в выпадающей «Очках» тянется до низа окна, дальше — прокрутка */
 header #paintTools .pt-ochki #ochkiList{max-height:calc(100dvh - var(--ochki-top,90px) - 12px)}
+/* v0.182: «Сведения» — внутри выпадающей группы «ⓘ Сведения» полосы: не в углу, без своего заголовка, по содержимому */
+header #paintTools .pt-info #mayatnikInfoPanel{position:static;right:auto;bottom:auto;width:min(640px,92vw);max-width:none;height:auto;min-height:0;max-height:calc(100dvh - 90px);border:0;background:transparent;box-shadow:none;display:flex;flex-direction:column}
+header #paintTools .pt-info #mayatnikInfoPanel>summary{display:none}
+header #paintTools .pt-info #mayatnikInfoPanel #mayatnikStatus{overflow:auto}

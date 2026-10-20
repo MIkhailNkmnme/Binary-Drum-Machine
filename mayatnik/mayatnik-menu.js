@@ -280,6 +280,8 @@
     const top = () => { const l = $('ochkiList'); if (l?.getClientRects().length) g.style.setProperty('--ochki-top', Math.round(l.getBoundingClientRect().top) + 'px'); };   // v0.181: верх списка — чтобы дотянуть его ровно до низа окна
     g.querySelector('.pt-l').addEventListener('pointerenter', () => requestAnimationFrame(top)); g.querySelector('.pt-l').addEventListener('click', () => requestAnimationFrame(top)); addEventListener('resize', top);
     toolSync.push(() => { const hide = box.hidden; if ((g.style.display === 'none') !== hide) g.style.display = hide ? 'none' : ''; }); }
+  // v0.182: «Сведения — тоже кнопкой, как Очки»: выпадающая группа «ⓘ Сведения» в полосе; панель (#mayatnikInfoPanel) кладётся в неё ниже
+  const infoRow = ptGroup('ⓘ Сведения'); infoRow.parentElement.classList.add('pt-info'); infoRow.parentElement.style.setProperty('--c', '#9fb4d8');
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // v0.179: «Видео (Запись, GIF) — ромбами как в хабе, справа по середине высоты, и Дзен также»: столбик ромбов у правого края,
   // виден и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет — ромбы жмут прежние кнопки
@@ -361,11 +363,10 @@
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
   // v0.091: скрытые исходные «Сохранить»/«Цвет» с полем цвета — в группу «Шаблон» шапки, чтобы окно цвета открывалось там.
   tools.querySelector('[data-n="bTemplateColour"]')?.parentElement.parentElement.append($('templateActions'));
-  infoPanel.append(infoTitle,status);document.body.append(infoPanel);
-  try{infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1';}catch(_){}
+  infoPanel.append(infoTitle,status);infoRow.append(infoPanel);infoPanel.open=true;   // v0.182: не в углу, а в выпадающей «Сведения» (всегда раскрыта внутри)
   infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
   // v0.116: «сдвинь ширину под шаблоны ровно» — «Сведения» той же ширины и с тем же правым краем, что и панель «Шаблоны» (она по содержимому)
-  toolSync.push(()=>{const r=railRIn.getBoundingClientRect();if(!r.width||innerWidth<=600){infoPanel.style.width=infoPanel.style.right='';return;}
+  if(0)toolSync.push(()=>{const r=railRIn.getBoundingClientRect();if(!r.width||innerWidth<=600){infoPanel.style.width=infoPanel.style.right='';return;}   // v0.182: панель в выпадающей группе — ширину не подгонять
     const w=Math.max(260,Math.round(r.width))+'px',right=Math.max(0,Math.round(innerWidth-r.right))+'px';if(infoPanel.style.width!==w)infoPanel.style.width=w;if(infoPanel.style.right!==right)infoPanel.style.right=right;});
   // v0.100 (правило кнопок): ползунок без подписи — значение на самой дорожке по центру, по краям шевроны «<» «>»
   // (щелчок — шаг, удержание — подряд), бегунок — ромб цветом группы, дорожка — тонкий пунктир. Как ползунки групп Zazerkalius.
