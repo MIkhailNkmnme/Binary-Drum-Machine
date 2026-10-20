@@ -178,8 +178,8 @@
           const ic = icon(it.icon), v = el('span', 'gz-v');
           // compact — обычная кнопка в сотах: значок и текущий вариант, без названия (оно в подсказке)
           if (it.compact) { b.classList.add('gz-lc'); b.append(ic, v); } else b.append(ic, el('span', 'gz-nm', it.name), v, el('span', 'gz-ar', '▾'));
-          refreshers.push(() => { const o = it.options.find(o => o.v === it.get()); v.textContent = o ? o.name : ''; });
-          listHover(b, { color: () => g.color, after: refresh, options: () => it.options.map(o => ({ name: o.name, icon: o.icon, on: o.v === it.get(), pick: () => it.set(o.v) })) });   // 20.10: столбец — наведением
+          refreshers.push(() => { const o = it.options.find(o => o.v === it.get()); v.textContent = o ? o.name : ''; if (it.liveIcon && o?.icon && ic.textContent !== o.icon) ic.textContent = o.icon; });   // it.liveIcon — значок нынешнего варианта (хаб: «Форма»)
+          listHover(b, { color: () => g.color, after: refresh, col: () => b.closest('.gz-rail'), options: () => it.options.map(o => ({ name: o.name, icon: o.icon, on: o.v === it.get(), pick: () => it.set(o.v) })) });   // 20.10: столбец — наведением, правее всей рейки (не накрывает её кнопки)
           if (it.compact) toSoty(b); else toWide(b);
         } else if (it.type === 'pair') {
           // пара — одна кнопка, одна обводка, пополам: parts[i] = { label, tip, on(), click() | open(anchor), fill(), ink() }; it.cls — свой класс (gz-rainbow — обводка радугой)

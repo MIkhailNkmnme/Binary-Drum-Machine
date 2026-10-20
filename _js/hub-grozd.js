@@ -205,8 +205,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     {   // «Ромбы» и «Встык» — «также в одну»: одна кнопка пополам
       // «добавь квадраты, встык — вынеси в отдельную»: «◇ Ромб. \ □ Квадр.» — форма бита, «Встык» — своей кнопкой
       const r = toBits['Ромбы с цифрами'], p = toBits['hubBitPacking'], M = window.HubMirror;
-      const shape = (m, d, tip) => ({ label: d, tip, on: () => M?.bitShape?.() === m, click: () => M?.setBitShape?.(M.bitShape() === m ? null : m) });
-      if (r && M?.setBitShape) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · квадраты', mid: '', tip: 'Форма бита: ромбы · квадраты', parts: [shape('rhomb', '◇ Ромб.', 'Ромбы'), shape('square', '□ Квадр.', 'Квадраты')], key: 'bits|shape' });
+      // v0.410: «наравне с ромбами-квадратами — круги, треугольники, 5- и 6-угольники»: форма бита — списком (столбец при наведении), место и ключ прежние
+      if (r && M?.setBitShape) out.get('bits').push({ type: 'list', compact: true, icon: '◇', liveIcon: true, name: 'Форма', key: 'bits|shape',
+        tip: 'Форма бита: ромб, квадрат, круг, треугольник, 5- и 6-угольник — или без формы (только знаки)',
+        options: [['rhomb', 'Ромб', '◇'], ['square', 'Квадрат', '□'], ['circle', 'Круг', '○'], ['tri', 'Треугольник', '△'], ['penta', '5-угольник', '⬠'], ['hexa', '6-угольник', '⬡'], ['none', 'Без формы', '–']].map(([v, name, icon]) => ({ v, name, icon })),
+        get: () => M.bitShape() || 'none', set: v => M.setBitShape(v === 'none' ? null : v) });
       else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
       // v0.382, «все 3 стыка в одну кнопку с номерами 1, 2, 3»: [⛶ Стык | 1 | 2 | 3] — 1 и 2 — Стык1 / Стык2, 3 — прежний «встык» (растяжка в клетку);
       // ключ прежний (p.id) — кнопка остаётся на месте «Встык», куда её поставили

@@ -47,7 +47,7 @@
     for(const reflected of mirror.state.on?[false,true]:[false])for(const point of points){
       let marker=centerMarkers[slot++];
       if(!marker){const node=document.createElement('canvas');node.className='hubCenterBit';node.setAttribute('aria-hidden','true');document.body.append(node);marker={node,key:''};centerMarkers.push(marker);}
-      const node=marker.node,side=Math.ceil(Math.max(point.width,point.height)*1.5+6),key=JSON.stringify([point,mirror.state.bitView,mirror.state.bitRhomb,mirror.state.packedBits,mirror.state.packMode,mirror.bitAngle(point.bit,point.row??null),mirror.digitVisible(point.bit),mirror.colors()]);
+      const node=marker.node,side=Math.ceil(Math.max(point.width,point.height)*1.5+6),key=JSON.stringify([point,mirror.state.bitView,mirror.state.bitRhomb,mirror.state.bitSquare,mirror.state.bitForm,mirror.state.bitD90,mirror.state.packedBits,mirror.state.packMode,mirror.bitAngle(point.bit,point.row??null),mirror.digitVisible(point.bit),mirror.colors()]);
       if(key!==marker.key){marker.key=key;node.width=node.height=side*2;node.style.width=node.style.height=side+'px';const g=node.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,point);}
       const project=(x,y)=>{const p=window.HubView.projectBit(x,y,reflected);return [camera[0]*p[0]+camera[2]*p[1]+camera[4],camera[1]*p[0]+camera[3]*p[1]+camera[5]];};
       const p=project(point.x,point.y),x=project(point.x+1,point.y),q=project(point.x,point.y+1);
