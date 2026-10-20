@@ -141,7 +141,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
           if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, toBits.spin = { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
-          if (/\|hubBitFreeRotation$/.test(c.id)) { add('bits', { ...leafItem(c), name: '360 вращ.' }, c.id); continue; }   // «в Биты, „360 вращ.“» (из «Вращения»)
+          if (/\|hubBitFreeRotation$/.test(c.id)) continue;   // «360 вращ.» — на нижнем пульте, на месте ↺   // «в Биты, „360 вращ.“» (из «Вращения»)
           if (TO_BITS.test(c.id) || IN_PAIR.test(c.id)) { toBits[c.id.replace(/^[^|]*\|/, '')] = c; continue; }
           add(SOUND.test(c.id) ? 'sound' : g.key, fs(fa(fc(leafItem(c)))), c.id);
         }
@@ -153,8 +153,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       else if (root.action && g.key === 'symmetry') {   // «поиск и парал. — в одну кнопку пополам, когда включён поиск»
         const h = headItem(root, '', HEAD.symmetry), par = () => document.querySelector('#hubFieldTools [aria-label*="Симметрия параллельно"], [aria-label*="Симметрия параллельно"]');
         const pon = () => { const n = par(); if (!n) return false; const i = n.matches('input') ? n : n.querySelector('input[type=checkbox]'); return i ? i.checked : n.getAttribute('aria-pressed') === 'true'; };
-        add('symmetry', { type: 'pair', wide: true, cls: 'gz-split gz-bs', name: HEAD.symmetry, mid: '', tip: h.tip, one: () => !h.on(),
-          parts: [{ label: HEAD.symmetry, tip: h.tip, on: h.on, click: h.click }, { label: 'Парал.', tip: 'Симметрия параллельно: искать оси, параллельные главной', on: pon, click: () => { const n = par(); (n?.matches('input') ? n : n?.querySelector('input[type=checkbox]') || n)?.click(); } }] }, 'symmetry'); }
+        add('symmetry', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.symmetry,   /* «эту кнопку — в одну шириной» */ mid: '', tip: h.tip, one: () => !h.on(),
+          parts: [{ label: HEAD.symmetry, labelNow: () => h.on() ? 'Поиск' : HEAD.symmetry, tip: h.tip, on: h.on, click: h.click }, { label: 'Парал.', tip: 'Симметрия параллельно: искать оси, параллельные главной', on: pon, click: () => { const n = par(); (n?.matches('input') ? n : n?.querySelector('input[type=checkbox]') || n)?.click(); } }] }, 'symmetry'); }
       else if (root.action && g.key === 'space') {   // «при включении — на полкнопки 3D вращ. / Сброс», «а тот сброс убери»: пока 3D не в покое — пара, иначе одна кнопка
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
         add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
