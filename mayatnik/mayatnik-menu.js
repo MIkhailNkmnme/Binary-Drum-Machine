@@ -238,6 +238,19 @@
     toolSync.push(() => { const m = Z()?.get() || 0; b.classList.toggle('on', m > 0); const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== names[m]) nm.textContent = names[m];
       b.title = 'Зеркало вверх от точки встречи линий «Застыло»: нижний треугольник между диагоналями ложится на верхний, на каждом кадре · сейчас: ' + ['выкл', 'все биты', 'шахматка 1', 'шахматка 2', 'XOR верх ⊕ низ', 'AND верх ∧ низ'][m] + ' · щелчок — следующий, правый — предыдущий'; });
     gView.querySelector('[data-n="fixLines"]').after(b); }
+  // v0.210: общие настройки всех зеркал — какой цвет отражать (только его) и как ложится отражение (копия / XOR / AND)
+  { const M = () => window.mayMir, COL = [['', 'все цвета'], ['b', 'синие'], ['r', 'красные'], ['y', 'жёлтые'], ['k', 'чёрные'], ['w', 'белые']], OP = [['', 'копия'], ['xor', 'XOR'], ['and', 'AND']];
+    const mk = (n, list, key, tipHead) => { const probe = document.createElement('button'); probe.title = 'Зеркало';
+      const at = () => Math.max(0, list.findIndex(x => x[0] === (key === 'col' ? M()?.col() : M()?.op())));
+      const b = ptBtn(n, 'mirror', probe, () => { M()?.set(key, list[(at() + 1) % list.length][0]); placeTools(); });
+      b.oncontextmenu = ev => { ev.preventDefault(); M()?.set(key, list[(at() + list.length - 1) % list.length][0]); placeTools(); };
+      toolSync.push(() => { const i = at(), nm = b.querySelector('.gz-nm'), t = 'Зерк. ' + list[i][1]; b.classList.toggle('on', i > 0); if (nm && nm.textContent !== t) nm.textContent = t;
+        b.title = tipHead + ' · сейчас: ' + list[i][1] + ' · щелчок — следующий, правый — предыдущий'; });
+      return b; };
+    const bc = mk('mirCol', COL, 'col', 'Все зеркала (Зерк. краска / всё, Зеркало ↑, Зеркало вниз, Зерк. ось): отражается только пиксель выбранного цвета');
+    const bo = mk('mirOp', OP, 'op', 'Все зеркала: копия — отражение поверх; XOR / AND — бит отражённого с битом под ним (белый и синий — 1, чёрный и красный — 0), результат чёрно-белый');
+    gView.querySelector('[data-n="fixMirror"]').after(bc, bo);
+    window.mayMirLists = { col: COL, op: OP }; }
   // v0.194: показ пикселей по цвету — пять кнопок: горит — пиксели этого цвета видны, погашена — скрыты (цветом пустоты)
   for (const [c, col, t] of [['b', '#4f9bff', 'синие (стал 1)'], ['r', '#ff5a4f', 'красные (стал 0)'], ['y', '#ffd35b', 'жёлтые'], ['k', '#5b6475', 'чёрные (0)'], ['w', '#e8edf5', 'белые (1)']]) {
     const probe = document.createElement('button'); probe.title = t; const b = ptBtn('px_' + c, 'eye', probe, () => { window.mayPx?.toggle(c); placeTools(); });
@@ -262,7 +275,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { fixMirror:'Зеркало ↑', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
+  const ptNames = { fixMirror:'Зеркало ↑', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
@@ -429,6 +442,9 @@
     reg(tools.querySelector('[data-n="viewCycle"]'), fromSelect($('view'), o => (viewIcons[o.value] || [, o.textContent])[1], o => viewIcon.get(o.value)));
     reg(tools.querySelector('[data-n="fontCycle"]'), fromSelect($('digitFont')));
     reg(tools.querySelector('[data-n="fillArea"]'), fromSelect($('fillArea')));
+    { const M = () => window.mayMir, L = () => window.mayMirLists;   // v0.210
+      reg(tools.querySelector('[data-n="mirCol"]'), () => L().col.map(([v, name]) => ({ name, on: M()?.col() === v, pick: () => M()?.set('col', v) })));
+      reg(tools.querySelector('[data-n="mirOp"]'), () => L().op.map(([v, name]) => ({ name, on: M()?.op() === v, pick: () => M()?.set('op', v) }))); }
     { const Z = () => window.mayFixMirror; reg(tools.querySelector('[data-n="fixMirror"]'), () => ['Выкл', 'Все биты', 'Шахматка 1', 'Шахматка 2', 'XOR', 'AND'].map((name, i) => ({ name, on: (Z()?.get() || 0) === i, pick: () => Z()?.set(i) }))); }
     { const e = $('noband'), mode = () => +e.dataset.mode || 0;   // три положения по кругу: каждое change — следующее
       reg(tools.querySelector('[data-n="noband"]'), () => ['Полосы', 'Без полос', 'До треуг.'].map((name, i) => ({ name, on: mode() === i,

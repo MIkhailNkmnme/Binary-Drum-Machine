@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.209. v0.209: правый щелчок по названию группы верхней полосы — свернуть его в ромб со значком (соседи сдвигаются), ещё раз — развернуть. v0.208: «Верх» пополам с «Гориз»: включена — центр «Зеркала ↑» тянут по горизонтали за голубую вертикаль (сдвиг держится на кадрах, двойной щелчок — снять). v0.207: центр «Зеркала ↑» тянут мышью вверх-вниз по оси за зелёную горизонталь, сдвиг держится на всех кадрах (двойной щелчок — снять). v0.206: линии «Застыло» — фиолетовые (красные сливались с красными пикселями). v0.205: «Зеркало ↑» в «Виде» — нижний треугольник между линиями «Застыло» отражается вверх от точки встречи (все биты / шахматка 1 / шахматка 2 / XOR / AND бит верха с битом низа). v0.204: «Застыло» — из точек встречи вертикаль (голубая) и горизонталь (зелёная); все линии толщиной в пиксель маятника. v0.203: линии «Застыло» продолжены пунктиром до низа поля. v0.202: Аниматрица слушается кнопок показа цветов; заливка «Столбов» повторяется на каждом новом кадре. v0.201: «кратный ×N» — масштаб кратный любому числу 2…10 (список при наведении, правый щелчок — следующее). v0.200: переключатель подсветки (1 · 0 · стал 1 · стал 0) — из «Сведений» в «Вид». v0.199: заливка красит как видно: скрытый пиксель — чёрный 0. v0.198: скрытые чёрные (нули) заливка красит по режиму, обходит только скрытые цветные и белые. v0.197: заливка, Столбы, Центр и «Авто» считают пиксели скрытых цветов пустотой. v0.196: скрытие пикселей по цвету не прячет краску (Столбы, Заливка, Центр…) — только саму картинку. v0.195: нарисованную линейку меняют за любую из 4 вершин её рамки. v0.194: «Вид» — пять кнопок показа пикселей по цвету: синие, красные, жёлтые, чёрные, белые (погашенная — скрыто). v0.193: группы верхней полосы переставляются — тянуть название вбок; порядок запоминается. v0.192: «↦ Сгиб» — кнопка «◐ Ч/Б» (исходные биты чёрно-белыми), ось тянется мышью прямо за линию, «⟋ По 2 битам» — ось через центры двух щёлкнутых битов с любым наклоном (точки тоже тянутся, «⇄ Сторона», «│ Отвесно»). v0.191: столбец вариантов и стрелка обводкой у кнопок-списков — общие из grozd.js (так же в хабе), своего кода меньше. v0.190: кнопки-списки (Вид, Полосы, Шрифт, Область заливки; в рейке — Ход, Поле, Поиск, Серии, Область, Зеркало, Аниматрица) — при наведении все варианты столбцом рядом, нынешний обведён, щелчок — выбрать (соседняя кнопка-список по дороге к столбцу его не перехватывает); у таких кнопок стрелка обводкой справа. v0.189: замки краски на большом поле — плотной копией в типизированных массивах: запись пропускается, когда краска, кадр и раскладка те же (в плоском виде — только изменённые пиксели), наложение — без перебора ключей объекта (2024 после «Авто»: перерисовка 1,5–1,7 с → 0,3–0,45 с, кадр ∓1 — 4–6 с → 0,6–0,7 с; картинка и замки те же, память браузера — тот же формат). v0.188: тормоза больших полей: «Авто»-покраска порциями по 40 мс, перерисовка раз в 0,7 с и в конце, замки краски пишутся один раз в конце (2024 — 3 с вместо ~50 мин); «Строки .txt» байтами (2,2 с → 0,03 с); «Очки» — тот же результат быстрым поиском (4–9 с → 0,2–0,6 с), при листании кадров — когда кадр постоит; кадр застывания замков — строкой сразу; запись отмены — типизированными массивами; логотип и значок хаба не крутятся. v0.187: значки включённых кнопок полосы видны (не чернеют); рамка ненажатых — тусклая, 1 px, как в хабе. v0.186: v0.186: «▱ Контур» (Зеркала) — внешняя граница фигуры маятника тонкими линиями в 1 px (ступени слиты в прямые отрезки); наведение на отрезок — он ярче и продолжается пунктиром в обе стороны; слой отражения зеркальной оси — прозрачный (закрывал фон окна чёрным). v0.185: v0.185: названия групп полосы — стандартной ширины (как кнопки списка, 126 px); у раскрытого списка только фон, без обводки группы. v0.184: v0.184: открытые списки полосы не наезжают друг на друга; в списках зазор между кнопками, рамки 1,5 px, как в хабе. v0.183: v0.183: наведение на кнопки (полоса, рейка, названия групп, ромбы) — только рамка, без заливки, как в хабе. v0.182: v0.182: «Сведения» — выпадающей группой «ⓘ Сведения» в верхней полосе, как «Очки», а не панелью в правом нижнем углу. v0.181: v0.181: список серий в выпадающей «👓 Очках» — до низа окна, если не вмещается (дальше — прокрутка); в списке — стр., стлбц, чёт. / нечёт.; правый столбец групп рейки — на полкнопки выше, как в хабе (без пустоты справа вверху). v0.180: v0.180: сводка «Очков» — выпадающей группой «👓 Очки» в верхней полосе (как остальные списки), не полосой под шапкой; у ромба записи — «⏺ Видео». v0.179: v0.179: «◎ Дзен», «⏺ Видео», «GIF» — ромбами справа по середине высоты, как в хабе, видны и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет. v0.178: v0.178: ползунок кадра — бегунок шире со значком ▶ / ❚❚ (щелчок — пуск / пауза), стрелки вдвое шире с подписями −1 / +1; «До N/3» — в правом столбце «Анимации» наверху. v0.177: v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.210. v0.210: у всех зеркал — выбор цвета (отражается только он) и XOR / AND с тем, что под отражением: кнопки «Зерк. цвет» и «Зерк. оп.» в «Виде»; фиолетовые диагонали «Застыло» идут через сдвинутый рукой центр. v0.209: правый щелчок по названию группы верхней полосы — свернуть его в ромб со значком (соседи сдвигаются), ещё раз — развернуть. v0.208: «Верх» пополам с «Гориз»: включена — центр «Зеркала ↑» тянут по горизонтали за голубую вертикаль (сдвиг держится на кадрах, двойной щелчок — снять). v0.207: центр «Зеркала ↑» тянут мышью вверх-вниз по оси за зелёную горизонталь, сдвиг держится на всех кадрах (двойной щелчок — снять). v0.206: линии «Застыло» — фиолетовые (красные сливались с красными пикселями). v0.205: «Зеркало ↑» в «Виде» — нижний треугольник между линиями «Застыло» отражается вверх от точки встречи (все биты / шахматка 1 / шахматка 2 / XOR / AND бит верха с битом низа). v0.204: «Застыло» — из точек встречи вертикаль (голубая) и горизонталь (зелёная); все линии толщиной в пиксель маятника. v0.203: линии «Застыло» продолжены пунктиром до низа поля. v0.202: Аниматрица слушается кнопок показа цветов; заливка «Столбов» повторяется на каждом новом кадре. v0.201: «кратный ×N» — масштаб кратный любому числу 2…10 (список при наведении, правый щелчок — следующее). v0.200: переключатель подсветки (1 · 0 · стал 1 · стал 0) — из «Сведений» в «Вид». v0.199: заливка красит как видно: скрытый пиксель — чёрный 0. v0.198: скрытые чёрные (нули) заливка красит по режиму, обходит только скрытые цветные и белые. v0.197: заливка, Столбы, Центр и «Авто» считают пиксели скрытых цветов пустотой. v0.196: скрытие пикселей по цвету не прячет краску (Столбы, Заливка, Центр…) — только саму картинку. v0.195: нарисованную линейку меняют за любую из 4 вершин её рамки. v0.194: «Вид» — пять кнопок показа пикселей по цвету: синие, красные, жёлтые, чёрные, белые (погашенная — скрыто). v0.193: группы верхней полосы переставляются — тянуть название вбок; порядок запоминается. v0.192: «↦ Сгиб» — кнопка «◐ Ч/Б» (исходные биты чёрно-белыми), ось тянется мышью прямо за линию, «⟋ По 2 битам» — ось через центры двух щёлкнутых битов с любым наклоном (точки тоже тянутся, «⇄ Сторона», «│ Отвесно»). v0.191: столбец вариантов и стрелка обводкой у кнопок-списков — общие из grozd.js (так же в хабе), своего кода меньше. v0.190: кнопки-списки (Вид, Полосы, Шрифт, Область заливки; в рейке — Ход, Поле, Поиск, Серии, Область, Зеркало, Аниматрица) — при наведении все варианты столбцом рядом, нынешний обведён, щелчок — выбрать (соседняя кнопка-список по дороге к столбцу его не перехватывает); у таких кнопок стрелка обводкой справа. v0.189: замки краски на большом поле — плотной копией в типизированных массивах: запись пропускается, когда краска, кадр и раскладка те же (в плоском виде — только изменённые пиксели), наложение — без перебора ключей объекта (2024 после «Авто»: перерисовка 1,5–1,7 с → 0,3–0,45 с, кадр ∓1 — 4–6 с → 0,6–0,7 с; картинка и замки те же, память браузера — тот же формат). v0.188: тормоза больших полей: «Авто»-покраска порциями по 40 мс, перерисовка раз в 0,7 с и в конце, замки краски пишутся один раз в конце (2024 — 3 с вместо ~50 мин); «Строки .txt» байтами (2,2 с → 0,03 с); «Очки» — тот же результат быстрым поиском (4–9 с → 0,2–0,6 с), при листании кадров — когда кадр постоит; кадр застывания замков — строкой сразу; запись отмены — типизированными массивами; логотип и значок хаба не крутятся. v0.187: значки включённых кнопок полосы видны (не чернеют); рамка ненажатых — тусклая, 1 px, как в хабе. v0.186: v0.186: «▱ Контур» (Зеркала) — внешняя граница фигуры маятника тонкими линиями в 1 px (ступени слиты в прямые отрезки); наведение на отрезок — он ярче и продолжается пунктиром в обе стороны; слой отражения зеркальной оси — прозрачный (закрывал фон окна чёрным). v0.185: v0.185: названия групп полосы — стандартной ширины (как кнопки списка, 126 px); у раскрытого списка только фон, без обводки группы. v0.184: v0.184: открытые списки полосы не наезжают друг на друга; в списках зазор между кнопками, рамки 1,5 px, как в хабе. v0.183: v0.183: наведение на кнопки (полоса, рейка, названия групп, ромбы) — только рамка, без заливки, как в хабе. v0.182: v0.182: «Сведения» — выпадающей группой «ⓘ Сведения» в верхней полосе, как «Очки», а не панелью в правом нижнем углу. v0.181: v0.181: список серий в выпадающей «👓 Очках» — до низа окна, если не вмещается (дальше — прокрутка); в списке — стр., стлбц, чёт. / нечёт.; правый столбец групп рейки — на полкнопки выше, как в хабе (без пустоты справа вверху). v0.180: v0.180: сводка «Очков» — выпадающей группой «👓 Очки» в верхней полосе (как остальные списки), не полосой под шапкой; у ромба записи — «⏺ Видео». v0.179: v0.179: «◎ Дзен», «⏺ Видео», «GIF» — ромбами справа по середине высоты, как в хабе, видны и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет. v0.178: v0.178: ползунок кадра — бегунок шире со значком ▶ / ❚❚ (щелчок — пуск / пауза), стрелки вдвое шире с подписями −1 / +1; «До N/3» — в правом столбце «Анимации» наверху. v0.177: v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.209</title>
+<title>Zerkalius Маятник — v0.210</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -120,7 +120,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.209</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.210</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1074,10 +1074,10 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   }
   function blackMirrorApply(px){
     const m=st.blackMirror??1;if(!m||!f||rombP()>=0||RK!==1)return;
-    const up=blackTriUp(),W=f.W,base=fillBase;
+    const up=blackTriUp(),W=f.W,base=fillBase;mirPre();
     for(let r=1;r<VH;r++)for(let c=VX;c<VX+VW;c++){const u=up[r*W+c];if(!u)continue;const sr=r-2*u+1;if(sr<0)continue;
       const so=sr*VW+c-VX,o=r*VW+c-VX,v=px[so];
-      if(m===1){if(!base||v===base[so])continue;px[o]=mixPx(v,px[o],.8);}else px[o]=mixPx(v,px[o],.7);}
+      if(m===1){if(!base||v===base[so])continue;mirPut(px,o,v,.8);}else mirPut(px,o,v,.7);}
   }
   const blackMirrorSync=()=>{const m=st.blackMirror??1,b=$('bBlackMirror');b.textContent='Зеркало: '+['выкл','краска','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
   const animHlSync=()=>{const m=st.animHl|0,b=$('bAnimHl');b.textContent='Аниматрица: '+['выкл','столб','всё'][m];b.setAttribute('aria-pressed',String(m>0));};
@@ -2241,6 +2241,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     wrap.addEventListener('scroll', () => mirDraw(), { passive: true }); addEventListener('resize', () => mirDraw());
     return { c, g: c.getContext('2d'), line, a, b, sp };
   }
+  // v0.210: выбран цвет зеркал — отражается только он (копия картинки, прочие пиксели прозрачны)
+  function mirSrc() { const c = st.mirCol || ''; if (!c || !img) return cv; const o = mirSrc.o || (mirSrc.o = document.createElement('canvas'));
+    if (o.width !== img.width || o.height !== img.height) { o.width = img.width; o.height = img.height; }
+    const d = new ImageData(img.width, img.height), a = new Uint32Array(img.data.buffer), b = new Uint32Array(d.data.buffer), fam = new Map();
+    for (let i = 0; i < a.length; i++) { const u = a[i]; let h = fam.get(u); if (h === undefined) { h = pxFam(u) === c; fam.set(u, h); } if (h) b[i] = u; }
+    o.getContext('2d').putImageData(d, 0, 0); return o; }
   function mirDraw() {
     if (typeof cv === 'undefined' || typeof wrap === 'undefined' || !cv || !wrap) return;
     const m = mirState(), on = m.on && img && cv.width > 1 && !document.body.classList.contains('may-fold-active');
@@ -2252,7 +2258,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const x0 = r.left - host.left, y0 = r.top - host.top, Ax = x0 + m.ax * r.width, Ay = y0 + r.height, c2 = Math.cos(2 * m.ang), s2 = Math.sin(2 * m.ang);
     const tx = Ax - (c2 * Ax + s2 * Ay), ty = Ay - (s2 * Ax - c2 * Ay), G = o.g;   // отражение от прямой через A под углом ang: p' = R p + (A − R A)
     G.setTransform(1, 0, 0, 1, 0, 0); G.clearRect(0, 0, W, H);
-    G.setTransform(c2 * d, s2 * d, s2 * d, -c2 * d, tx * d, ty * d); G.imageSmoothingEnabled = false; G.drawImage(cv, x0, y0, r.width, r.height);
+    G.setTransform(c2 * d, s2 * d, s2 * d, -c2 * d, tx * d, ty * d); G.imageSmoothingEnabled = false; G.drawImage(mirSrc(), x0, y0, r.width, r.height);
     const L = Math.max(24, m.len * r.width), ca = Math.cos(m.ang), sa = Math.sin(m.ang);
     o.line.hidden = o.a.hidden = o.b.hidden = false;
     Object.assign(o.line.style, { left: host.left + Ax + 'px', top: host.top + Ay - 1 + 'px', width: L + 'px', transform: 'rotate(' + m.ang + 'rad)' });
@@ -2428,9 +2434,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // v0.204: «а также верт и гориз из этой точки другими цветами, и тонкие линии все в один пиксель»: из каждой точки встречи —
   // вертикаль вниз до низа поля (голубая) и горизонталь на всю ширину поля (зелёная); все линии — толщиной в пиксель маятника, как и были (u = 1 пиксель холста)
   function fixLinesDraw(G,x0,y0,c,u){const segs=fixSegments();if(!segs.length)return;const P=(x,y)=>[x0+(x+.5)*c,y0+(y+.5)*c],H=Math.min(VH,st.rows);
-    G.save();G.lineWidth=u;G.strokeStyle='#c25bff';G.beginPath();for(const[a,b,x,y]of segs){G.moveTo(...P(a,b));G.lineTo(...P(x,y));}G.stroke();
-    G.setLineDash([4*u,3*u]);G.globalAlpha=.75;G.beginPath();for(const[,,x,y,ex,ey]of segs){if(ey>y){G.moveTo(...P(x,y));G.lineTo(...P(ex,ey));}}G.stroke();
-    G.setLineDash([]);G.globalAlpha=.85;const pts=fixPts(segs,H);
+    const pts=fixPts(segs,H);
+    // v0.210: «не двигает при ручном фиолетовые линии» — диагонали идут через сдвинутый центр: сплошная от верха до него, пунктир — дальше до низа
+    const D=segs.map(([a,,x,y])=>{const q=pts.get(x+':'+y),X=q?q[3]:x,Y=q?q[2]:y,sg=Math.sign(x-a)||1;return[X-sg*Y,X,Y,X+sg*(H-1-Y)];});
+    G.save();G.lineWidth=u;G.strokeStyle='#c25bff';G.beginPath();for(const[t,X,Y]of D){G.moveTo(...P(t,0));G.lineTo(...P(X,Y));}G.stroke();
+    G.setLineDash([4*u,3*u]);G.globalAlpha=.75;G.beginPath();for(const[,X,Y,e]of D){if(Y<H-1){G.moveTo(...P(X,Y));G.lineTo(...P(e,H-1));}}G.stroke();
+    G.setLineDash([]);G.globalAlpha=.85;
     G.strokeStyle='#3bd1ff';G.beginPath();for(const[,y,y1,x]of pts.values()){const[X,Y]=P(x,Math.min(y,y1));G.moveTo(X,Y);G.lineTo(X,y0+H*c);}G.stroke();
     G.strokeStyle='#6cff6c';G.beginPath();for(const[x,,y]of pts.values()){const Y=P(x,y)[1];G.moveTo(x0,Y);G.lineTo(x0+VW*c,Y);}G.stroke();
     if(st.fixDy||st.fixDx){G.fillStyle='#6cff6c';for(const[,,y,x]of pts.values()){const[X,Y]=P(x,y);G.beginPath();G.arc(X,Y,Math.max(2,c*.9),0,7);G.fill();}}G.restore();}
@@ -2443,14 +2452,26 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
   // Точка встречи (x, y) линий «Застыло»: клетка (r, c) верхнего треугольника (r < y, |c − x| ≤ y − r) получает поверх себя бит клетки (2y − r, c)
   // нижнего, на каждом кадре. st.fixMirror: 0 — выкл, 1 — все клетки, 2 — шахматка 1 ((r + c − x) чётное), 3 — шахматка 2 (нечётное), 4 — XOR, 5 — AND (бит верха с битом низа). Только вид.
   function fixMirrorApply(px){const m=st.fixMirror|0;if(!m||!f||!geo||rombP()>=0||RK!==1||px.length!==VW*VH)return;
-    const segs=fixSegments(true),seen=new Set(),bitC=[rgba(PAL.bits[0][0]),rgba(PAL.bits[1][0])];
+    const segs=fixSegments(true),seen=new Set(),bitC=[rgba(PAL.bits[0][0]),rgba(PAL.bits[1][0])],mc=st.mirCol||'';mirPre();
     for(const[,,y,x]of fixPts(segs,Math.min(VH,st.rows)).values()){const key=x+':'+y;if(seen.has(key)||y<=0||y>=VH-1)continue;seen.add(key);
       for(let r=0;r<y;r++){const sr=2*y-r;if(sr>=VH)continue;const d=y-r;
         for(let c=Math.max(0,x-d);c<=Math.min(VW-1,x+d);c++){
+          if(mc&&pxFam(px[sr*VW+c])!==mc)continue;   // v0.210: только выбранный цвет
           if(m>=4){const a=outShow(r,c+VX)?-1:f.val[r*f.W+c+VX],b=outShow(sr,c+VX)?-1:f.val[sr*f.W+c+VX];if(a<0||b<0)continue;   // v0.205: XOR / AND бит верха с битом низа
             px[r*VW+c]=bitC[m===4?a^b:a&b];continue;}
-          if(m>1&&((r+c-x)%2+2)%2!==m-2)continue;px[r*VW+c]=mixPx(px[sr*VW+c],px[r*VW+c],.8);}}}}
+          if(m>1&&((r+c-x)%2+2)%2!==m-2)continue;mirPut(px,r*VW+c,px[sr*VW+c],.8);}}}}
   window.mayFixMirror={get:()=>st.fixMirror|0,set(v){st.fixMirror=v;save();if(f)draw();}};
+  // v0.210: «для всех зеркал — выбор отражать любой цвет (эксклюзивно), и также XOR, AND». Общие настройки всех зеркал:
+  // st.mirCol — отражается только пиксель этой семьи цвета (b синие, r красные, y жёлтые, k чёрные, w белые; '' — все);
+  // st.mirOp — '' копия, 'xor' / 'and' — бит отражённого с битом под ним (белый и синий — 1, чёрный и красный — 0), результат ч/б.
+  // Действует в «Зерк. краска / всё», «Зеркале ↑», «Зеркале вниз» по своей оси (там «Хор» — свой XOR) и в «⋈ Зерк. оси» (только цвет: отражение ложится вне поля).
+  let mirBitC=[0,0];
+  const mirPre=()=>{mirBitC=[rgba(PAL.bits[0][0]),rgba(PAL.bits[1][0])];};
+  const pxBit=u=>{const k=pxFam(u);return k==='w'||k==='b'?1:k==='k'||k==='r'?0:-1;};
+  function mirPut(px,o,v,a){const c=st.mirCol||'';if(c&&pxFam(v)!==c)return;const op=st.mirOp||'';
+    if(op){const s=pxBit(v),t=pxBit(px[o]);if(s<0||t<0)return;px[o]=mirBitC[op==='xor'?s^t:s&t];return;}
+    px[o]=mixPx(v,px[o],a);}
+  window.mayMir={col:()=>st.mirCol||'',op:()=>st.mirOp||'',set(k,v){st[k==='col'?'mirCol':'mirOp']=v;save();if(f){if(mirrorLive)mirrorApply(false);else draw();}mirDraw();}};
   function fixColLines(){if(!img)return;fixLinesDraw(g,0,0,RK*cv.width/img.width,1);}
   function fixDigitLines(x0,y0,s){fixLinesDraw(digitG,x0,y0,s,1);}
   function midDigitLine(x0,y0,s){if(!st.midCol||!geo||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;
@@ -2874,18 +2895,19 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     let nx=-dy/len,ny=dx/len;if(ny<0||(ny===0&&nx<0)){nx=-nx;ny=-ny;}
     const W=img.width,H=img.height,N=W*H,painted=q=>fillMask?.[q]&&!(paintBits?.[q]>=0);
     let colourMode=false;if(fillMask)for(let q=0;q<N;q++)if(painted(q)){colourMode=true;break;}
-    const black=rgba([0,0,0]),white=rgba([255,255,255]),src=colourMode?fillMask.slice():null;let count=0;
+    const black=rgba([0,0,0]),white=rgba([255,255,255]),src=colourMode?fillMask.slice():null,shown=new Uint32Array(img.data.buffer),mc=st.mirCol||'',op=mirrorXor?'xor':st.mirOp||'';let count=0;   // v0.210: цвет и XOR / AND всех зеркал
     for(let y=0;y<H;y++)for(let x=0;x<W;x++){const px=x+.5-ax,py=y+.5-ay,d=px*nx+py*ny;if(d>=0)continue;
       const t=(px*dx+py*dy)/(len*len);if(t<0||t>1)continue;
       const tx=Math.floor(x+.5-2*d*nx),ty=Math.floor(y+.5-2*d*ny);if(tx<0||ty<0||tx>=W||ty>=H)continue;const q=y*W+x,o=ty*W+tx;
-      if(colourMode&&!mirrorXor){if(!src[q]||paintBits?.[q]>=0)continue;fillMask[o]=src[q];count++;continue;}
+      if(mc&&pxFam(shown[q])!==mc)continue;
+      if(colourMode&&!op){if(!src[q]||paintBits?.[q]>=0)continue;fillMask[o]=src[q];count++;continue;}
       if(colourMode&&(!src[q]||paintBits?.[q]>=0))continue;
       // v0.058 хор-зеркало: бит под осью = его бит XOR отражённый (у краски отражённый — единица).
-      let v=colourMode?1:rasterBit(x,y);const orig=rasterBit(tx,ty,true);if(v<0||orig<0)continue;if(mirrorXor){const t=rasterBit(tx,ty);if(t<0)continue;v^=t;}
+      let v=colourMode?1:rasterBit(x,y);const orig=rasterBit(tx,ty,true);if(v<0||orig<0)continue;if(op){const t=rasterBit(tx,ty);if(t<0)continue;v=op==='xor'?v^t:v&t;}
       if(!paintBits)paintBits=new Int8Array(N).fill(-1);if(!fillMask)fillMask=new Uint32Array(N);
       if(v===orig){paintBits[o]=-1;fillMask[o]=0;}else{paintBits[o]=v;fillMask[o]=v?white:black;}count++;}
     if(fillMask&&!fillMask.some(Boolean))fillMask=null;if(paintBits&&!paintBits.some(v=>v>=0))paintBits=null;
-    $('fillInfo').textContent=`${mirrorXor?'Хор-зеркало':'Зеркало вниз'} (${colourMode?'краска':'биты'}): ${count.toLocaleString('ru-RU')} пикселей`;return count;
+    $('fillInfo').textContent=`${mirrorXor?'Хор-зеркало':op==='and'?'AND-зеркало':'Зеркало вниз'} (${colourMode?'краска':'биты'}): ${count.toLocaleString('ru-RU')} пикселей`;return count;
   }
   function mirrorApply(commit){
     if(!mirrorLive||!mirrorBase)return;const before=commit?editSnapshot():null;
@@ -3177,7 +3199,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
 <script src="../_js/grozd.js?v=48"></script>
-<script src="mayatnik-menu.js?v=209"></script>
+<script src="mayatnik-menu.js?v=210"></script>
 <script src="mayatnik-tips.js?v=167"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
