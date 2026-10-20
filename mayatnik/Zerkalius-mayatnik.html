@@ -2608,11 +2608,12 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const segs=fixSegments(true),q=segs.length?[...fixPts(segs,Math.min(VH,st.rows)).values()][0]:null;if(!q){if(o)o.c.style.display='none';return;}
     if(!o){const c=document.createElement('canvas');c.className='may-sectors';Object.assign(c.style,{position:'fixed',pointerEvents:'none',zIndex:'1',margin:'0',background:'transparent',imageRendering:'pixelated'});document.body.append(c);
       o=sectorDraw.o={c,g:c.getContext('2d'),key:''};const re=()=>requestAnimationFrame(sectorDraw);wrap.addEventListener('scroll',re,{passive:true});addEventListener('resize',re);}
-    const X=q[0],Y=q[1],c=o.c,key=[X,Y,VW,VH].join(':');
+    const {past}=fixApexes(),sym=past.length>0&&Math.min(...past)===-Math.max(...past);   // v0.270: «правая и левая пусть одинаково, когда симметрично» — вершин поровну по сторонам: обе жёлтые
+    const X=q[0],Y=q[1],c=o.c,key=[X,Y,VW,VH,sym].join(':');
     if(o.key!==key){o.key=key;if(c.width!==VW||c.height!==VH){c.width=VW;c.height=VH;}const id=o.g.createImageData(VW,VH),D=new Uint32Array(id.data.buffer);
       const Tc=(0x38<<24|0xff<<16|0x9b<<8|0x4f)>>>0,Bc=(0x38<<24|0x4f<<16|0x5a<<8|0xff)>>>0,Lc=(0x30<<24|0x5b<<16|0xd3<<8|0xff)>>>0,Rc=(0x30<<24|0xa5<<16|0xe4<<8|0x73)>>>0;   // 0xAABBGGRR: синий #4f9bff, красный #ff5a4f, жёлтый #ffd35b, зелёный #73e4a5
       for(let r=0;r<VH;r++){const dr=r-Y;for(let cc=0;cc<VW;cc++){const dx=cc-X,ad=Math.abs(dx),ar=Math.abs(dr);
-        D[r*VW+cc]=ad<-dr?Tc:ad<dr?Bc:ad>ar?(dx<0?Lc:Rc):0;}}
+        D[r*VW+cc]=ad<-dr?Tc:ad<dr?Bc:ad>ar?(dx<0||sym?Lc:Rc):0;}}
       o.g.putImageData(id,0,0);}
     const r=cv.getBoundingClientRect();c.style.display='';Object.assign(c.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
   // v0.259: «при каждом шаге выделяй на 1 с все биты, пришедшие с вершины» (st.vtxFlash): новая вершина кадра — её конус (строка r: столбцы a − r … a + r
