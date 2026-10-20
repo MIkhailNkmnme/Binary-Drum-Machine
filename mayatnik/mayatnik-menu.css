@@ -468,5 +468,9 @@ header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
 #paintTools .pt-g.pt-drag{opacity:.6}#paintTools.pt-dragging .pt-l{cursor:grabbing}
 #wrap.ruler-grab,#wrap.ruler-grab canvas{cursor:move!important}   /* v0.195: вершина линейки под мышью */
 #wrap.fix-grab,#wrap.fix-grab canvas{cursor:ns-resize!important}   /* v0.207: центр «Зеркала ↑» */
+#wrap.fix-grab-h,#wrap.fix-grab-h canvas{cursor:ew-resize!important}   /* v0.208: по горизонтали */
+#paintTools .pt-b .pt-half{order:9;margin-left:4px;padding:0 0 0 6px;border-left:1px solid #ffffff40;font-size:inherit;color:#8e98ad;cursor:pointer;align-self:stretch;display:flex;align-items:center}
+#paintTools .pt-b .pt-half:hover{color:#fff}
+#paintTools .pt-b .pt-half.on{color:#6cff6c;text-shadow:0 0 4px #6cff6c99}
 #paintTools .pt-r > .lg{box-sizing:border-box;width:100%;padding:5px 12px;flex-wrap:wrap;gap:4px 10px;color:#c7d3e6;border:1px solid color-mix(in srgb,var(--c,#7cbcff) 35%,transparent);border-radius:4px}   /* v0.200: подсветка в «Виде» */
 #paintTools .pt-r > .lg:hover{background:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
