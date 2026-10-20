@@ -513,3 +513,15 @@ header #paintTools.pt-dd .pt-view .pt-sec>.pt-vx{height:24px;box-sizing:border-b
 .mayatnik-menu-ready #mayAbout.pt-mini::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .mayatnik-menu-ready #mayAbout.pt-mini>span:not(.pt-ico){display:none}
 .mayatnik-menu-ready #mayAbout.pt-mini>.pt-ico{display:block;font-size:13px;line-height:1;color:var(--c)}
+/* v0.229: «Правка» — кнопка полосы пополам «↶ Отм. | ↷ Повт.», без списка (.pt-btn); в ромбе — ↶ ↷ по половинкам */
+header #paintTools.pt-dd .pt-btn>.pt-l{justify-content:center;gap:0;padding:0 12px;cursor:default}
+header #paintTools.pt-dd .pt-btn>.pt-l::after,header #paintTools.pt-dd .pt-btn>.pt-l .pt-pin,header #paintTools.pt-dd .pt-btn>.pt-l .pt-ico{display:none}
+header #paintTools.pt-dd .pt-btn .pt-ud{flex:1 1 0;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 3px;color:#c9d3e3;font-weight:600;white-space:nowrap;cursor:pointer;outline:none}
+header #paintTools.pt-dd .pt-btn .pt-ud:hover,header #paintTools.pt-dd .pt-btn .pt-ud:focus-visible{color:#fff;text-shadow:0 0 6px var(--c)}
+header #paintTools.pt-dd .pt-btn .pt-ud.dis{opacity:.35;cursor:default;text-shadow:none}
+header #paintTools.pt-dd .pt-btn .pt-ud-g{color:var(--c);font-weight:400}
+header #paintTools.pt-dd .pt-btn .pt-ud-sep{flex:none;align-self:stretch;width:1px;margin:5px 3px;background:color-mix(in srgb,var(--c) 60%,transparent)}
+header #paintTools.pt-dd .pt-btn.pt-mini .pt-ud-n,header #paintTools.pt-dd .pt-btn.pt-mini .pt-ud-sep{display:none}
+header #paintTools.pt-dd .pt-btn.pt-mini .pt-ud{font-size:11px;padding:0;gap:0}
+header #paintTools.pt-dd .pt-btn.pt-mini .pt-ud:first-child{justify-content:flex-end;padding-right:1px}
+header #paintTools.pt-dd .pt-btn.pt-mini .pt-ud:nth-child(3){justify-content:flex-start;padding-left:1px}

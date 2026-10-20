@@ -405,13 +405,13 @@
       r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="none" stroke-linejoin="round"/></svg>`) + '")'; };
     // v0.165: «у этих кнопок тоже закреп» — значок закрепа у названия группы, как в рейке: закреплённый список не закрывается
     // (щелчок мимо, Esc, открытие другой группы). На телефоне закреп не действует — там список один, на всю ширину.
-    const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.querySelector('.pt-l').firstChild.textContent.trim();
+    const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.dataset.k || g.querySelector('.pt-l').firstChild.textContent.trim();   // data-k — у «Правки»-кнопки (v0.229)
     let pins = new Set(); try { pins = new Set(JSON.parse(localStorage.getItem(PIN_DD) || '[]')); } catch (_) {}
     // v0.166: «если закреп сверну, то не убирай закреп-галку… только если закреп уберу» — щелчок по названию закреплённой группы
     // только сворачивает её (закреп горит), развернул снова — опять не закрывается; снимается закреп только значком
     const FOLD_DD = 'mayatnik-dd-fold'; let folds = new Set(); try { folds = new Set(JSON.parse(localStorage.getItem(FOLD_DD) || '[]')); } catch (_) {}
     const saveDd = () => { try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); localStorage.setItem(FOLD_DD, JSON.stringify([...folds])); } catch (_) {} };
-    const pinned = g => !narrow.matches && pins.has(keyOf(g)), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
+    const pinned = g => !narrow.matches && pins.has(keyOf(g)) && !g.classList.contains('pt-btn'), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : g.querySelector('.pt-l').offsetWidth + 'px'; requestAnimationFrame(() => zig(r));
@@ -428,6 +428,17 @@
     addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(noOverlap); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
+    // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
+    // «↶ Отм. | ↷ Повт.» (жмёт прежние «Отмена» / «Повтор»); тянется по сетке и сворачивается в ромб ↶ ↷, как остальные; ключ раскладки — прежний («Правка»)
+    const ud = gHistory.parentElement, udL = ud.querySelector('.pt-l');
+    { ud.classList.add('pt-btn'); ud.dataset.k = 'Правка'; udL.textContent = '';
+      const half = (src, glyph, name) => { const e = $(src), s = document.createElement('span'), a = document.createElement('span'), n = document.createElement('span');
+        s.className = 'pt-ud'; s.setAttribute('role', 'button'); s.tabIndex = 0; a.className = 'pt-ud-g'; a.textContent = glyph; n.className = 'pt-ud-n'; n.textContent = name; s.append(a, n);
+        const go = () => { if (!e.disabled) { e.click(); placeTools(); } };
+        s.addEventListener('click', go); s.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+        toolSync.push(() => { const off = !!e.disabled; s.classList.toggle('dis', off); s.title = tip(e) + (off ? ' — пока нечего' : ''); }); return s; };
+      const sep = document.createElement('span'); sep.className = 'pt-ud-sep';
+      udL.append(half('bFillUndo', '↶', 'Отм.'), sep, half('bFillRedo', '↷', 'Повт.')); }
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       const pin = document.createElement('span'); pin.className = 'pt-pin'; pin.title = 'Закрепить: список не закрывается';
@@ -446,6 +457,7 @@
         g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover')) shut(); }, 350); });
       g.addEventListener('pointerenter', () => clearTimeout(g._leave));   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
+    udL.onclick = udL.onkeydown = udL.onpointerenter = null; udL.tabIndex = -1; udL.removeAttribute('role'); udL.removeAttribute('aria-haspopup'); udL.removeAttribute('aria-expanded');   // v0.229: списка нет — жмут половинки
     // v0.193: «дай менять местами» — группу полосы тянут за название вбок, она встаёт между соседями; порядок — в памяти браузера (mayatnik-dd-order)
     // v0.225: «дай двигать кнопки маятника вверху в любое место в сетке, но чтоб не перекрывались» — названия групп, ромбы и «?» тянут куда угодно
     // по невидимой сетке шапки: шаг вбок — t = 12/√3 ≈ 6,93 px (сетка треугольников), ряд — 28 px, рядов до MAXR; первый ряд — правее заголовка,
@@ -536,7 +548,7 @@
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
-        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = on ? k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · тянуть — переставить · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); }
       // v0.227: «это тоже в ромб сворачивать» — «Что это такое?» правым щелчком — ромб «ℹ», ещё раз — обратно (та же память, ключ — надпись кнопки)
