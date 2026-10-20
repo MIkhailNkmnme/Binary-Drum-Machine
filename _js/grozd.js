@@ -46,12 +46,37 @@
   function tipHide() { if (tipEl) tipEl.hidden = true; }
   function withTip(b, text) { b.addEventListener('pointerenter', () => tipShow(b, text)); b.addEventListener('pointerleave', tipHide); }
 
-  let ladder = null;
-  function closeLadder() { if (ladder) { ladder.remove(); ladder = null; } document.querySelectorAll('.gz-under').forEach(x => x.classList.remove('gz-under')); }
+  let ladder = null, ladT = 0, swT = 0, swB = null;
+  function closeLadder() { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder) { ladder.remove(); ladder = null; } document.querySelectorAll('.gz-under').forEach(x => x.classList.remove('gz-under')); }
   // «когда список накладывается на рейку — затемняй рейку всю по этому столбцу в этой группе»
   function dimUnder(owner) { const g = owner.closest('.gz-group'); if (!g || !ladder) return; const L = ladder.getBoundingClientRect();
     for (const x of g.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')) { if (x === owner) continue; const r = x.getBoundingClientRect(); if (r.right > L.left + 2 && r.left < L.right - 2) x.classList.add('gz-under'); } }
-  document.addEventListener('pointerdown', e => { if (ladder && !e.target.closest('.gz-ladder,.gz-list')) closeLadder(); }, true);
+  document.addEventListener('pointerdown', e => { if (ladder && !e.target.closest('.gz-ladder,.gz-lst')) closeLadder(); }, true);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && ladder) closeLadder(); });
+  // 20.10: «те кнопки, в которых список, — покажи выводом всех в соседний столбец при наведении, и у таких кнопок стрелки обводкой справа»
+  // (Маятник v0.190, потом «также» — хаб). listHover(b, o): у кнопки стрелка обводкой справа (.gz-lst, grozd.css); наведение, щелчок —
+  // столбец вариантов (лесенка) рядом, нынешний — обводкой (gz-on), щелчок по варианту — выбрать, столбец остаётся. Уходит, когда мышь
+  // ушла и с кнопки, и со столбца (250 мс), по щелчку мимо и Esc. Мышь по дороге к столбцу наискось задевает соседние кнопки-списки:
+  // пока столбец открыт, другая кнопка забирает его, только если мышь на ней задержалась (280 мс).
+  // o: { options() → [{ name, icon, on, pick() }], color() — цвет, after() — после выбора, host() — куда класть столбец (body),
+  //      col() — столбец кнопки: лесенка правее его правого края (иначе — правее самой кнопки) }
+  const ladLater = () => { clearTimeout(ladT); ladT = setTimeout(closeLadder, 250); };
+  function ladderSync() { if (!ladder) return; const b = ladder.owner, o = b.gzList; if (!b.isConnected || !b.getClientRects().length) { closeLadder(); return; }
+    const opts = o.options(); [...ladder.children].forEach((x, i) => x.classList.toggle('gz-on', !!opts[i]?.on));
+    const r = b.getBoundingClientRect(), c = o.col?.()?.getBoundingClientRect() || r, w = ladder.offsetWidth, h = ladder.offsetHeight;
+    let x = Math.max(r.right, c.right) + 4; if (x + w > innerWidth - 4) x = Math.min(r.left, c.left) - w - 4;
+    ladder.style.left = Math.round(Math.max(4, x)) + 'px'; ladder.style.top = Math.round(Math.max(4, Math.min(innerHeight - h - 4, r.top))) + 'px'; }
+  function openLadder(b) { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder && ladder.owner === b) { ladderSync(); return; }
+    closeLadder(); const o = b.gzList; ladder = el('div', 'gz-ladder'); ladder.addEventListener('pointerdown', pressMark); ladder.owner = b; ladder.style.setProperty('--c', o.color?.() || '#5aa9ff');
+    for (const x of o.options()) { const ob = el('div', 'gz-hx'); ob.title = x.name; ob.append(icon(x.icon || '·'), el('span', 'gz-nm', x.name));
+      ob.addEventListener('click', e => { e.stopPropagation(); x.pick(); o.after?.(); ladderSync(); }); ladder.append(ob); }
+    ladder.addEventListener('pointerenter', () => { clearTimeout(ladT); clearTimeout(swT); swB = null; }); ladder.addEventListener('pointerleave', ladLater);
+    (o.host?.() || document.body).append(ladder); ladderSync(); dimUnder(b); }
+  function listHover(b, o) { b.gzList = o; b.classList.add('gz-lst');
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'touch') return; clearTimeout(ladT); clearTimeout(swT); swB = null;
+      if (!ladder || ladder.owner === b) { openLadder(b); return; } swB = b; swT = setTimeout(() => { swB = null; openLadder(b); }, 280); });
+    b.addEventListener('pointerleave', () => { if (swB === b) { clearTimeout(swT); swB = null; } if (ladder) ladLater(); });
+    b.addEventListener('click', () => openLadder(b)); }
 
   const PIN = '<svg viewBox="0 0 16 16" width="11" height="11"><path d="M10.5 1.5l4 4-1.6.4-2.6 2.6.3 3.2-1.4 1.4-2.5-2.5-4 4-.7-.7 4-4L3.5 7.4l1.4-1.4 3.2.3 2.6-2.6z" fill="currentColor"/></svg>';
   function rail(host, cfg) {
@@ -154,17 +179,7 @@
           // compact — обычная кнопка в сотах: значок и текущий вариант, без названия (оно в подсказке)
           if (it.compact) { b.classList.add('gz-lc'); b.append(ic, v); } else b.append(ic, el('span', 'gz-nm', it.name), v, el('span', 'gz-ar', '▾'));
           refreshers.push(() => { const o = it.options.find(o => o.v === it.get()); v.textContent = o ? o.name : ''; });
-          b.addEventListener('click', () => {
-            if (ladder && ladder.owner === b) return closeLadder();
-            closeLadder(); ladder = el('div', 'gz-ladder'); ladder.addEventListener('pointerdown', pressMark); ladder.owner = b; ladder.style.setProperty('--c', g.color || '#5aa9ff');
-            const r = b.getBoundingClientRect();
-            ladder.style.left = (r.right + 4) + 'px'; ladder.style.top = Math.max(4, Math.min(innerHeight - it.options.length * 27 - 4, r.top)) + 'px';
-            for (const o of it.options) {
-              const ob = el('div', 'gz-hx' + (o.v === it.get() ? ' gz-on' : '')); ob.append(icon(o.icon || '·'), el('span', 'gz-nm', o.name));
-              ob.addEventListener('click', () => { it.set(o.v); closeLadder(); refresh(); }); ladder.append(ob);
-            }
-            document.body.append(ladder); dimUnder(b);
-          });
+          listHover(b, { color: () => g.color, after: refresh, options: () => it.options.map(o => ({ name: o.name, icon: o.icon, on: o.v === it.get(), pick: () => it.set(o.v) })) });   // 20.10: столбец — наведением
           if (it.compact) toSoty(b); else toWide(b);
         } else if (it.type === 'pair') {
           // пара — одна кнопка, одна обводка, пополам: parts[i] = { label, tip, on(), click() | open(anchor), fill(), ink() }; it.cls — свой класс (gz-rainbow — обводка радугой)
@@ -269,7 +284,7 @@
       });
     }
 
-    function refresh() { for (const f of refreshers) f(); }
+    function refresh() { for (const f of refreshers) f(); ladderSync(); }
     setOpen(openId);
     return { el: root, refresh, open: id => setOpen(id), close: () => setOpen(null), destroy: () => { closeLadder(); tipHide(); root.remove(); } };
   }
@@ -380,5 +395,5 @@
     return { dock, rebuild: () => { sig = ''; build(); } };
   }
 
-  window.ZerkGrozd = { version: 11, rail, adopt };
+  window.ZerkGrozd = { version: 12, rail, adopt, listHover };
 })();

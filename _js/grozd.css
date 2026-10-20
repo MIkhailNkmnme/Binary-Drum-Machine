@@ -235,3 +235,7 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* Hub v0.387, «когда на 1 или 3 — они тоже ромбами становятся, перекрывают часть 2, пусть»: выбранная крайняя — ромб поверх края двойки */
 .gz-pair.gz-tri .gz-half.gz-on{z-index:2}
 .gz-pair.gz-tri .gz-h0.gz-on::before,.gz-pair.gz-tri .gz-h2.gz-on::before{inset:auto;left:50%;top:50%;width:24px;height:20px;margin:-10px 0 0 -12px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+/* 20.10: кнопка со списком (listHover, .gz-lst) — стрелка обводкой справа: правый угол шестиугольника светлой каймой; ▾ не нужна */
+.gz-hx.gz-lst::after{content:"";position:absolute;inset:0;z-index:2;margin:0;padding:0;pointer-events:none;background:color-mix(in srgb,var(--c) 55%,#fff);
+  clip-path:polygon(calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,calc(100% - var(--gz-n) - 2px) 100%,calc(100% - 2.5px) 50%,calc(100% - var(--gz-n) - 2px) 0)}
+.gz-hx.gz-lst .gz-ar{display:none}

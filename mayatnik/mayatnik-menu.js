@@ -367,30 +367,12 @@
     tools.addEventListener('scroll', shut, { passive: true }); }
   // v0.190: «те кнопки, в которых список, — покажи выводом всех в соседний столбец при наведении, и у таких кнопок стрелки обводкой справа».
   // Наведение на кнопку-список — столбец всех вариантов справа от столбца, где она (список группы полосы или рейка); нынешний — обводкой,
-  // щелчок — выбрать. Столбец уходит, когда мышь ушла и с кнопки, и с него. Щелчок, правый и колесо по самой кнопке — как прежде;
-  // в рейке щелчок показывает этот же столбец (прежняя лесенка grozd не нужна). В полосе столбец лежит в группе: пока мышь на нём, список не закрывается.
-  // Мышь по дороге к столбцу наискось задевает соседние кнопки-списки: пока столбец открыт, другая кнопка забирает его, только если мышь
-  // на ней задержалась (280 мс) — ушла с неё раньше (в столбец) — подмены нет.
-  { let fly = null, owner = null, hideT = 0, swT = 0, swB = null; const specs = new Map();
-    const hide = () => { clearTimeout(hideT); clearTimeout(swT); swB = null; if (fly) fly.remove(); fly = owner = null; };
-    const later = () => { clearTimeout(hideT); hideT = setTimeout(hide, 250); };
-    const place = () => { const b = owner.getBoundingClientRect(), col = (owner.closest('.pt-r, .gz-rail') || owner).getBoundingClientRect(), w = fly.offsetWidth, h = fly.offsetHeight;
-      let x = Math.max(b.right, col.right) + 4; if (x + w > innerWidth - 4) x = Math.min(b.left, col.left) - w - 4;
-      fly.style.left = Math.round(Math.max(4, x)) + 'px'; fly.style.top = Math.round(Math.max(4, Math.min(innerHeight - h - 4, b.top))) + 'px'; };
-    const sync = () => { if (!fly) return; if (!owner.isConnected || !owner.getClientRects().length) { hide(); return; }
-      const opts = specs.get(owner)(); [...fly.children].forEach((ob, i) => ob.classList.toggle('gz-on', !!opts[i]?.on)); place(); };
-    const show = b => { clearTimeout(hideT); if (owner === b) { sync(); return; } hide(); owner = b;
-      fly = document.createElement('div'); fly.className = 'gz-ladder may-fly'; fly.style.setProperty('--c', getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff');
-      for (const o of specs.get(b)()) { const ob = document.createElement('div'), ic = document.createElement('span'), nm = document.createElement('span');
-        ob.className = 'gz-hx'; ic.className = 'gz-ic'; nm.className = 'gz-nm'; nm.textContent = o.name; ob.title = o.name;
-        if (o.icon) { ic.classList.add('may-fi'); ic.style.backgroundImage = o.icon; } else ic.textContent = '·';
-        ob.append(ic, nm); ob.addEventListener('click', e => { e.stopPropagation(); o.pick(); rail.refresh(); placeTools(); sync(); }); fly.append(ob); }
-      fly.addEventListener('pointerenter', () => { clearTimeout(hideT); clearTimeout(swT); swB = null; }); fly.addEventListener('pointerleave', later);
-      (b.closest('.pt-g') || document.body).append(fly); sync(); };
-    const enter = b => { clearTimeout(hideT); clearTimeout(swT); swB = null; if (!fly || owner === b) { show(b); return; } swB = b; swT = setTimeout(() => { swB = null; show(b); }, 280); };
-    const reg = (b, opts) => { if (!b) return; specs.set(b, opts); b.classList.add('may-lst');
-      b.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') enter(b); });
-      b.addEventListener('pointerleave', () => { if (swB === b) { clearTimeout(swT); swB = null; } later(); }); };
+  // щелчок — выбрать. Щелчок, правый и колесо по самой кнопке — как прежде. В полосе столбец лежит в группе: пока мышь на нём, список не закрывается.
+  // v0.191: столбец — общий из grozd (ZerkGrozd.listHover; им же — списки рейки «Ход», «Поле», «Поиск», «Серии», «Область» и хаба);
+  // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
+  { const after = () => { rail.refresh(); placeTools(); };
+    const reg = (b, options) => { if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
+      host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-r, .gz-rail') }); };
     const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
       pick: () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }));
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
@@ -400,18 +382,12 @@
     { const e = $('noband'), mode = () => +e.dataset.mode || 0;   // три положения по кругу: каждое change — следующее
       reg(tools.querySelector('[data-n="noband"]'), () => ['Полосы', 'Без полос', 'До треуг.'].map((name, i) => ({ name, on: mode() === i,
         pick: () => { for (let n = 0; n < 3 && mode() !== i; n++) e.dispatchEvent(new Event('change')); } }))); }
-    // рейка: списки grozd и кнопки «по кругу» (Зеркало, Аниматрица) — кнопка находится по месту пункта в группе, как подсказки выше
+    // рейка: кнопки «по кругу» — кнопка находится по месту пункта в группе, как подсказки выше
     const ring = { bBlackMirror: ['выкл', 'краска', 'всё'], bAnimHl: ['выкл', 'столб', 'всё'] };
     for (const g of groups) { const box = rail.el.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
-      const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), w = g.items.filter(i => wide(i.type));
-      const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
-      w.forEach((it, i) => { if (it.type === 'list' && cb[i]) reg(cb[i], () => it.options.map(o => ({ name: o.name, on: o.v === it.get(), pick: () => it.set(o.v) }))); });
+      const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), ca = box.querySelectorAll('.gz-soty > .gz-hx');
       a.forEach((it, i) => { const names = ring[it.src], e = $(it.src); if (!names || !ca[i] || !e) return; const now = () => e.textContent.split(': ')[1];
-        reg(ca[i], () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); }
-    rail.el.addEventListener('click', e => { const b = e.target.closest('.gz-list.may-lst'); if (!b) return; e.stopPropagation(); show(b); }, true);
-    addEventListener('pointerdown', e => { if (!fly || fly.contains(e.target)) return; const b = e.target.closest?.('.may-lst'); if (b && specs.has(b)) show(b); else hide(); }, true);
-    addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
-    toolSync.push(sync); }
+        reg(ca[i], () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
