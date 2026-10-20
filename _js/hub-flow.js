@@ -12,7 +12,7 @@
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');waterCorners=saved.waterCorners!==false;waterCornersUp=saved.waterCornersUp===true;}catch(_){}
   // v0.235: the simulation runs in a field frame; «От оси» turns it so that field-down follows the axis.
   let axisFlow=false,axisButton,guide=null,frameW=0,frameH=0,ls=1,dirX=0,dirY=1,horizon=0,lastTurn=-Infinity;
-  axisFlow=true;   // v0.405: «всегда» — горизонт через ручку оси и тяжесть поперёк него действуют всегда (нет оси — сверху вниз)
+  try{axisFlow=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').axis===true;}catch(_){}   // v0.408: снова переключается, как до v0.406
   const toField=(sx,sy)=>{const u=sx-innerWidth/2,v=sy-innerHeight/2;return [frameW/2+dirY*u-dirX*v,frameH/2+dirX*u+dirY*v];};
   const fieldMatrix=()=>{const cx=innerWidth/2,cy=innerHeight/2;return [dirY,-dirX,dirX,dirY,cx-dirY*frameW/2-dirX*frameH/2,cy+dirX*frameW/2-dirY*frameH/2];};
   const maskMatrix=()=>{const cx=innerWidth/2,cy=innerHeight/2;return [dirY/ls,dirX/ls,-dirX/ls,dirY/ls,(frameW/2-dirY*cx+dirX*cy)/ls,(frameH/2-dirX*cx-dirY*cy)/ls];};
@@ -215,7 +215,7 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
     button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
     denseButton=button('▤\nПлотно','Сплошной поток света и воды сверху',()=>{dense=!dense;if(dense)sun=false;sunButton.setAttribute('aria-pressed',String(sun));denseButton.setAttribute('aria-pressed',String(dense));rays=[];beams=null;beamDistance=0;saveStyle();sync();});
     denseButton.setAttribute('aria-pressed',String(dense));
-    axisButton=button('↗\nОт оси','Потоки от оси — всегда: свет, снег и вода идут от круглой ручки к началу оси, горизонт — поперёк оси через ручку, солнце — на ручке; тяни ось — всё меняется вживую',()=>{axisFlow=true;axisButton.setAttribute('aria-pressed','true');sync();});
+    axisButton=button('↗\nОт оси','Потоки от оси: свет, снег и вода идут от круглой ручки к началу оси, горизонт — поперёк оси через ручку, солнце — на ручке; тяни ось — всё меняется вживую',()=>{axisFlow=!axisFlow;axisButton.setAttribute('aria-pressed',String(axisFlow));saveStyle();sync();});
     axisButton.id='hubFlowAxis';axisButton.setAttribute('aria-pressed',String(axisFlow));
     shapeButton=button('01\nСвет','Свет в виде выбранных битов 0 и 1',()=>{lightBits=!lightBits;shapeButton.setAttribute('aria-pressed',String(lightBits));saveStyle();wake();});
     shapeButton.setAttribute('aria-pressed',String(lightBits));
@@ -249,7 +249,7 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
     togglePause(){paused=!paused;lastTime=0;if(!paused)wake();window.dispatchEvent?.(new Event('hubflowstate'));},
     snapshot(){return {axis:axisFlow,dirX,dirY,light,snow,water,paused,rays:JSON.parse(JSON.stringify(rays)),emission,snowEmission,waterEmission,sample,beamDistance,accumulator,snowAccumulator,snowGrid:window.HubPresetCore.pack(field),waterGrid:window.HubPresetCore.pack(liquid)};},
     restore(s){
-      if(typeof s.axis==='boolean'){if(Number.isFinite(s.dirX)&&Number.isFinite(s.dirY)){dirX=s.dirX;dirY=s.dirY;}}
+      if(typeof s.axis==='boolean'){axisFlow=s.axis;axisButton?.setAttribute('aria-pressed',String(axisFlow));if(axisFlow&&Number.isFinite(s.dirX)&&Number.isFinite(s.dirY)){dirX=s.dirX;dirY=s.dirY;}}
       size();reset();light=!!s.light;snow=!!s.snow;water=!!s.water;paused=!!s.paused;
       dirty=true;lastMask=-Infinity;rebuild(performance.now());
       window.HubPresetCore.restoreGrid(field,s.snowGrid);window.HubPresetCore.restoreGrid(liquid,s.waterGrid);
