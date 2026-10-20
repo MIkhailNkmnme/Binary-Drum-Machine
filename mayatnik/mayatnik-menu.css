@@ -183,9 +183,10 @@ header #paintTools .pt-long .pt-g,header #paintTools .pt-g.pt-long{padding:9px 6
 header #paintTools .pt-b.gz-hx{width:auto;height:22px;--gz-h:22px;--gz-n:9px;--gz-bg:#121a30;padding:0 10px 0 11px;border:0;border-radius:0;font:11px 'Segoe UI',sans-serif;color:#dfe6f5;justify-content:flex-start}
 header #paintTools .pt-b.gz-hx:nth-child(even){margin-left:-6px}
 header #paintTools .pt-b.gz-hx i{width:13px;height:13px;background-color:transparent}
+/* v0.176: включённая — обводкой цветом группы, как в рейке и хабе (не заливкой) */
 header #paintTools .pt-b.gz-hx.on{background:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
-header #paintTools .pt-b.gz-hx.on::before{background:color-mix(in srgb,var(--c) 45%,#121a30)}
-header #paintTools .pt-b.gz-hx.on i{filter:brightness(0) invert(1)}
+header #paintTools .pt-b.gz-hx.on::before{background:#121a30}
+header #paintTools .pt-b.gz-hx.on{color:#fff}
 header #paintTools .pt-b.gz-hx:hover{background:color-mix(in srgb,var(--c) 70%,#000)}
 header #paintTools .pt-b.gz-hx:disabled{opacity:.35}
 header #paintTools .pt-b.gz-hx small{display:none}
@@ -414,3 +415,7 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 .mayatnik-menu-ready #mayatnikRail .gz-wide>.gz-control:has(#symTriangleRows){margin-right:calc(100% - var(--gz-w))}   /* высота — одна в ряду, дальше пары «от / до» */
 /* v0.172: ширина списка — по кнопкам, но не уже названия группы (min-width ставит mayatnik-menu.js) */
 @media (min-width:601px){header #paintTools.pt-dd .pt-r{width:max-content;min-width:0}}
+
+/* v0.176: ● цвета внутри кнопки полосы — у правого края, щелчок — палитра */
+#paintTools .pt-b .pt-dot{order:9;margin-left:auto;flex:none;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1px #0008,0 0 0 2px #fff4;cursor:pointer}
+#paintTools .pt-b .pt-dot:hover{box-shadow:0 0 0 1px #000,0 0 0 2px #fff}

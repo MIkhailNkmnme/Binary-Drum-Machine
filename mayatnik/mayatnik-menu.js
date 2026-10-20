@@ -173,19 +173,20 @@
       toolSync.push(() => { b.title = !hide.hidden || e.checked ? 'Оси симметрии видны · щелчок — скрыть' : 'Показать оси симметрии'; b.classList.toggle('on', !hide.hidden || e.checked); }); }
     groupOf[id].append(b);
   }
+  // v0.176: «верхняя полоса — по логике хаба»: цвет — ● внутри своей кнопки (щелчок по ● — палитра), сырых полей нет
+  const dotIn = (b, srcId, title) => { const src = $(srcId), open = picker(src), d = document.createElement('span'); d.className = 'pt-dot'; d.title = title || tip(src) || 'Цвет';
+    d.addEventListener('click', ev => { ev.stopPropagation(); open(d); }); toolSync.push(() => { d.style.background = src.value; }); b.append(d); return d; };
+  const ptBtn = (n, kind, src, onclick) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = n;
+    const mark = document.createElement('i'); mark.style.backgroundImage = icon(src, kind); b.append(mark); b.onclick = onclick; return b; };
+  dotIn(gPaint.querySelector('[data-n="bFill"]'), 'fillColour', 'Цвет заливки · щелчок — палитра');
   const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
   colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
   toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
-  const colourBox = document.createElement('span'); colourBox.className = 'pt-cw'; colourBox.append(colour); gPaint.append(colourBox);
+  // отдельного поля «Цвет» больше нет — ● в «Заливке»
   // v0.135: настройки «Центра» — 1 и 0 со своими цветами (оба — красит оба), ⇔ — 2-й уровень (расширенная ось)
-  { const box = document.createElement('span'); box.className = 'pt-mid'; box.dataset.n = 'midBox';
-    const tog = (id, text, title) => { const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-mt'; b.textContent = text; b.title = title;
-      b.onclick = () => e.click(); toolSync.push(() => b.classList.toggle('on', e.checked)); return b; };
-    const col = id => { const e = $(id), c = document.createElement('input'); c.type = 'color'; c.className = 'pt-mc'; c.title = 'Цвет';
-      c.oninput = () => { e.value = c.value; e.dispatchEvent(new Event('input', { bubbles: true })); }; toolSync.push(() => { if (document.activeElement !== c) c.value = e.value; }); return c; };
-    box.append(tog('midOneOn', '1', 'Центр: заливать области 1'), col('midOneColour'), tog('midZeroOn', '0', 'Центр: заливать области 0 (вместе с 1 — оба)'), col('midZeroColour'),
-      tog('midWide', '⇔', '2-й уровень — расширенная ось: пары равных битов слева и справа от центра, прозрачнее'));
-    gPaint.append(box); }
+  for (const [id, col, title] of [['midOneOn', 'midOneColour', 'Центр: заливать области 1'], ['midZeroOn', 'midZeroColour', 'Центр: заливать области 0 (вместе с 1 — оба)'], ['midWide', null, '2-й уровень — расширенная ось: пары равных битов слева и справа от центра, прозрачнее']]) {
+    const e = $(id), b = ptBtn(id, col ? 'line' : 'swap', e, () => e.click()); b.title = title + (col ? ' · ● — цвет' : '');
+    if (col) dotIn(b, col); toolSync.push(() => b.classList.toggle('on', e.checked)); gPaint.append(b); }
   {const source=$('fillArea'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='fillArea';
     const mark=document.createElement('i');mark.style.backgroundImage=icon(source,'grid4');b.append(mark);gPaint.append(b);
     b.onclick=()=>{source.selectedIndex=(source.selectedIndex+1)%source.options.length;source.dispatchEvent(new Event('change',{bubbles:true}));};
@@ -203,15 +204,13 @@
     const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'down');b.append(mark);b.onclick=()=>e.click();gView.append(b);
     toolSync.push(()=>b.classList.toggle('on',e.getAttribute('aria-pressed')==='true'));}
   const viewIcons = { col: ['colour', 'Цвета перекрытий'], bits: ['grid4', 'Только биты'], digits: ['steps', 'Цифры 0/1'], digitsOnly: ['steps', 'Только цифры'], romb0: ['square', 'Ромбы · чётная'], romb1: ['square', 'Ромбы · нечётная'], romb2: ['copy', 'Ромбы · обе рядом'] };
-  for (const o of $('view').options) {
-    const [kind, title] = viewIcons[o.value] || ['eye', o.textContent], b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = o.value;
-    const probe = document.createElement('button'); probe.title = title; probe.textContent = title;
-    const mark = document.createElement('i'); mark.style.backgroundImage = icon(probe, kind); b.append(mark);
-    if (o.value === 'romb1') { const n = document.createElement('small'); n.textContent = '1'; b.append(n); }
-    if (o.value === 'romb0') { const n = document.createElement('small'); n.textContent = '0'; b.append(n); }
-    b.title = 'Вид: ' + title; b.onclick = () => { $('view').value = o.value; $('view').dispatchEvent(new Event('change', { bubbles: true })); };
-    toolSync.push(() => b.classList.toggle('on', $('view').value === o.value)); gView.append(b);
-  }
+  { const sel = $('view'), nameOf = o => (viewIcons[o.value] || [, o.textContent])[1];   // v0.176: семь видов «или — или» — одной кнопкой, как список в хабе
+    const go = d => { const n = sel.options.length; sel.selectedIndex = (sel.selectedIndex + d + n) % n; sel.dispatchEvent(new Event('change', { bubbles: true })); };
+    const probe = document.createElement('button'); probe.title = 'Цвета'; const b = ptBtn('viewCycle', 'eye', probe, () => go(1));
+    b.oncontextmenu = ev => { ev.preventDefault(); go(-1); }; b.addEventListener('wheel', ev => { ev.preventDefault(); go(ev.deltaY > 0 ? 1 : -1); }, { passive: false });
+    toolSync.push(() => { const t = nameOf(sel.selectedOptions[0] || sel.options[0]); b.title = 'Вид: ' + t + ' · щелчок — следующий, правый — предыдущий, колесо — листать · ' + [...sel.options].map(nameOf).join(' · ');
+      const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; });
+    gView.append(b); }
   // v0.059: «Верх» — закрепить первую строку у верха при масштабе; на холсте в группе «Вид».
   { const e = $('zTop'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'zTop';
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
@@ -239,7 +238,7 @@
     toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gRec.append(b); }
   // v0.056: каждая группа в своей рамке; значки подписаны через один — сверху и снизу.
   {const e=$('bGif'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bGif';const mark=document.createElement('i');mark.style.backgroundImage=icon(e,'record');b.append(mark);b.onclick=()=>e.click();toolSync.push(()=>{b.title=tip(e);b.disabled=e.disabled;b.classList.toggle('on',e.getAttribute('aria-pressed')==='true');});tools.querySelector('[data-n="bRec"]').parentElement.append(b);}
-  const ptNames = { bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить' };
+  const ptNames = { bReset:'Всё поле', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
   const ptColour = { 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Шаблон':'#ffd35b' };
@@ -253,15 +252,16 @@
   tools.insertBefore(gHistory.parentElement,gView.parentElement);
   // v0.103: «Вид» в шапке — компактно, в три ряда; цвета цифр и «показ строк» — сами поля, столбиком в конце группы
   gView.parentElement.classList.add('pt-view');
-  { const box = document.createElement('span'); box.className = 'pt-vx';
-    for (const id of ['digitOneColour', 'digitZeroColour']) { const e = $(id); e.title = tip(e); box.append(e); }
-    const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v);
-    gView.append(box);
-    // v0.111: цвета клеток 1 / 0, шрифт и размер цифр — вторым столбиком
-    const box2 = document.createElement('span'); box2.className = 'pt-vx'; const pair = document.createElement('span'); pair.className = 'pt-vx-row';
-    for (const id of ['bitOneColour', 'bitZeroColour']) { const e = $(id); e.title = tip(e); pair.append(e); }
-    const fnt = $('digitFont'), sz = $('digitSize'); fnt.title = tip(fnt); sz.title = tip(sz); sz.classList.add('pt-vrows');
-    box2.append(pair, fnt, sz); gView.append(box2); }
+  { const done = b => { b.classList.add('gz-hx'); b.querySelector('i')?.classList.add('gz-ic'); const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return b; };   // эти встают после общей раздачи надписей
+    for (const [id, title] of [['digitOneColour', 'Цвет цифры 1'], ['digitZeroColour', 'Цвет цифры 0'], ['bitOneColour', 'Цвет клетки 1'], ['bitZeroColour', 'Цвет клетки 0']]) {
+      const b = ptBtn('c_' + id, 'colour', $(id), null), d = dotIn(b, id, title); b.onclick = () => d.click(); b.title = title + ' · щелчок — палитра'; gView.append(done(b)); }
+    const fnt = $('digitFont'), fb = ptBtn('fontCycle', 'steps', fnt, () => { fnt.selectedIndex = (fnt.selectedIndex + 1) % fnt.options.length; fnt.dispatchEvent(new Event('change', { bubbles: true })); });
+    fb.oncontextmenu = ev => { ev.preventDefault(); const n = fnt.options.length; fnt.selectedIndex = (fnt.selectedIndex - 1 + n) % n; fnt.dispatchEvent(new Event('change', { bubbles: true })); };
+    toolSync.push(() => { const t = fnt.selectedOptions[0]?.textContent || ''; fb.title = 'Шрифт цифр: ' + t + ' · щелчок — следующий, правый — предыдущий'; const nm = fb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(fb));
+    const sz = $('digitSize'), szSet = d => { const v = Math.max(+sz.min, Math.min(+sz.max, (+sz.value || 80) + d * (+sz.step || 5))); if (v === +sz.value) return; sz.value = v; fire(sz); };
+    const sb = ptBtn('sizeCtl', 'plus', sz, () => szSet(1)); sb.oncontextmenu = ev => { ev.preventDefault(); szSet(-1); }; sb.addEventListener('wheel', ev => { ev.preventDefault(); szSet(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
+    toolSync.push(() => { const t = 'Цифры ' + sz.value + ' %'; sb.title = 'Размер цифр в клетке · щелчок — больше, правый — меньше, колесо'; const nm = sb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(sb));
+    const box = document.createElement('span'); box.className = 'pt-vx'; const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v); gView.append(box); }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
