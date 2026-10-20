@@ -208,10 +208,21 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
       // v0.382, «все 3 стыка в одну кнопку с номерами 1, 2, 3»: [⛶ Стык | 1 | 2 | 3] — 1 и 2 — Стык1 / Стык2, 3 — прежний «встык» (растяжка в клетку);
       // ключ прежний (p.id) — кнопка остаётся на месте «Встык», куда её поставили
-      if (p) { const pv = leafItem(p), st = M?.setPackMode ? m => ({ label: m.slice(-1), on: () => M.packMode() === m, click: () => M.setPackMode(m) }) : null;
-        out.get('bits').push(st ? { type: 'pair', cls: 'gz-tri', name: 'Стык', tip: 'Знаки встык: 1 — касаются через одного · 2 — касаются соседа, не перекрываются · 3 — растянуты на клетку · повторный щелчок — выкл', parts: [
-          { ...st('styk1'), tip: 'Стык 1: знак целиком крупнее, касается знака через одного' }, { ...st('styk2'), tip: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой' },
-          { label: '3', tip: 'Стык 3: знак растянут на всю клетку бита', on: pv.on, click: pv.click }], key: p.id } : { ...pv, key: p.id }); }
+      // v0.384, «Стык — текст, потом 1, 2, 3, как бы перелистываются: в ромбе выбранный, две — с края стрелкой, чуть шире, чтоб видно цифру»:
+      // [Стык ‹a ◇b c›] — b выбранный, a и c — соседние по кругу; щелчок по стрелке листает на её номер и включает, по ромбу — вкл / выкл.
+      // 1, 2 — Стык1 / Стык2, 3 — прежний «встык» (растяжка в клетку). Ключ прежний (p.id) — кнопка остаётся на месте «Встык»
+      if (p) { const pv = leafItem(p);
+        if (M?.setPackMode) {
+          const mode = () => M.packMode() === 'styk1' ? 1 : M.packMode() === 'styk2' ? 2 : pv.on() ? 3 : 0;
+          let cur = mode() || 2; const at = d => (cur + d + 2) % 3 + 1;
+          const off = () => { const m = mode(); if (m === 3) pv.click(); else if (m) M.setPackMode('styk' + m); };
+          const set = n => { cur = n; if (mode() === n) return; if (n === 3) { if (M.packMode()) pv.click(); else { off(); pv.click(); } } else M.setPackMode('styk' + n); };
+          const TIPS = { 1: 'Стык 1: знак целиком крупнее, касается знака через одного', 2: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой', 3: 'Стык 3: знак растянут на всю клетку бита' };
+          out.get('bits').push({ type: 'pair', cls: 'gz-tri', name: 'Стык', tip: 'Знаки встык: 1 — касаются через одного · 2 — касаются соседа, не перекрываются · 3 — растянуты на клетку · стрелки листают, ромб — вкл / выкл', parts: [
+            { label: '1', labelNow: () => { const m = mode(); if (m) cur = m; return String(at(-1)); }, click: () => set(at(-1)), on: () => false },
+            { label: '2', labelNow: () => String(cur), click: () => mode() ? off() : set(cur), on: () => !!mode() },
+            { label: '3', labelNow: () => String(at(1)), click: () => set(at(1)), on: () => false }], key: p.id });
+        } else out.get('bits').push({ ...pv, key: p.id }); }
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
