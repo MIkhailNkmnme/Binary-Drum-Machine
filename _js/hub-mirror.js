@@ -539,7 +539,7 @@
     },
     bitCenter(index){
       const p=bitCenters[index];if(!p||!bitCell||window.HubImage?.active||!['0','1'].includes(p[2]))return null;
-      return {x:p[0],y:p[1],bit:p[2],index,width:bitCell.width,height:bitCell.height};
+      return {x:p[0],y:p[1],bit:p[2],index,width:bitCell.width,height:bitCell.height,row:p[4]??null};   // v0.404: row — подсветка при наведении с наклоном своей строки («≡ Строки»)
     },
     vertexBits(){
       if(window.HubImage?.active||!bitCell)return [];
@@ -557,7 +557,7 @@
       if(!bitCell||window.HubImage?.active)return null;
       const c=window.HubView?.originalCenter?.();if(!c)return null;
       const sh=window.HubView?.sourceShift()||[0,0],x=c[0]-sh[0],y=c[1]-sh[1];let best=null,distance=Infinity;
-      for(let index=0;index<bitCenters.length;index++){const [px,py,bit]=bitCenters[index];if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,index,width:bitCell.width,height:bitCell.height};}}
+      for(let index=0;index<bitCenters.length;index++){const [px,py,bit]=bitCenters[index];if(bit!=='0'&&bit!=='1')continue;const d=(px-x)**2+(py-y)**2;if(d<distance){distance=d;best={x:px,y:py,bit,index,width:bitCell.width,height:bitCell.height,row:bitCenters[index][4]??null};}}
       return best;
     },
     // «делай две кнопки центров»: mass — среднее центров ромбов (центр масс), tri — центр контура △ (вершина — остриё верхнего ромба, основание — по остриям нижнего ряда)
