@@ -151,7 +151,7 @@
     }
     // ✦ — в «Симметрию»; PNG и видео — в «Файл».
     const gold=document.querySelector('.hubColorGroup [aria-label^="Золото"]'),sym=owner('symmetry');
-    if(gold){const r=leaf(sym,gold),search=records.get('symmetry|branch:search');(search||sym.root).children.unshift(r);}
+    if(gold){const r=leaf(sym,gold);r.free=true;sym.root.children.unshift(r);}   // «Подсве.ось — не должна скрываться, если выкл. Поиск»: она про главную ось зеркала, не про поиск — не в ветке «Поиск»
     const file=owner('file'),img=records.get('file|branch:image');
     for(const id of ['hubPNG','hubRec']){const n=document.getElementById(id);if(n)(img||file.root).children.push(leaf(file,n));}
     // Цвета — своя группа наверху, весь ромб цветов одной кнопкой.
@@ -163,7 +163,7 @@
       palette.id=palette.id||'hubColorPanel';palette.hidden=true;
       // v0.220: «отражённ и заворот тоже к симметр» — цвета отражения, заворота и подсветки симметрии — в «Симм.»; первые два видны и без симметрии.
       const symSlots=['Цвет отражённых','Цвет заворота','Цвет подсветки симметрии'].map(t=>palette.querySelector('input[aria-label^="'+t+'"]')?.closest('label')).filter(Boolean);
-      symSlots.forEach((n,i)=>{n.classList.add('hubTreeColor');const r=leaf(sym,n);if(i<2)r.free=true;sym.root.children.splice(1+i,0,r);});
+      symSlots.forEach((n,i)=>{n.classList.add('hubTreeColor');const r=leaf(sym,n);r.free=true;   /* v0.353: и цвет подсветки оси — без поиска тоже */sym.root.children.splice(1+i,0,r);});
       const swatches=[...palette.querySelectorAll('.hubPaletteList button[data-i]')];
       for(const b of swatches){b.style.left=b.style.top='';b.classList.add('hubSwatch');}
       const slots=[...palette.querySelectorAll('label.hubColorSlot')].filter(n=>!symSlots.includes(n));slots.forEach(n=>n.classList.add('hubTreeColor'));
