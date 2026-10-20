@@ -27,6 +27,8 @@ body.hubRailOn .gz-ladder{background:none!important;box-shadow:none!important;bo
 /* v0.385: полоса сверху для групп, перенесённых туда за шапку (hub-grozd.js); левое меню страниц не трогается — полоса начинается правее него */
 #hubRail .hubStrip{position:fixed;top:4px;right:8px;z-index:31;pointer-events:none}
 #hubRail .hubStrip .gz-rail{flex-direction:row;flex-wrap:wrap;align-items:flex-start;column-gap:6px;row-gap:4px;width:auto;min-width:0}
+#hubRail .hubStrip .gz-group:not(.gz-drag){position:absolute;left:var(--sx,0px);top:0}   /* v0.392: своё место по ширине полосы */
+#hubRail .hubStrip .gz-slot{display:none}
 #hubRail .hubStrip .gz-group{pointer-events:auto}
 #hubRail .hubStrip .gz-group.gz-open{width:max-content;min-width:calc(var(--gz-w)*2 - var(--gz-n) + 4px)}
 body.hubStripHint #hubRail .hubStrip{min-height:26px;outline:1px dashed #8fa0c8;outline-offset:-1px}

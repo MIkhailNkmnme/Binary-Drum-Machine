@@ -339,17 +339,21 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
        полосы) — группа переезжает в полосу сверху, правее меню страниц; из полосы тянут вниз — обратно в столбец. Полоса — своя рейка
        (grozd:hubtop) внутри #hubRail, position:fixed; столбец встаёт под неё, поле — тоже (HUB_RAIL_TOP). Список — zerk_hub_strip; только на компьютере */
     const STK = 'zerk_hub_strip', strip = document.createElement('div'); strip.className = 'hubStrip'; host.append(strip);
-    let topIds = new Set(); try { const a = JSON.parse(localStorage.getItem(STK) || '[]'); if (Array.isArray(a)) topIds = new Set(a); } catch (_) {}
+    // v0.392, «не даёт кнопку дальше в верхней полосе расположить по ширине»: у группы в полосе своё место по ширине (px от левого края полосы),
+    // а не очередь в ряду — встаёт, куда отпустили, и в полосе тянется вбок куда угодно. zerk_hub_strip — { группа: x } (прежний список v0.385 — по 126 px)
+    const topX = new Map(); try { const a = JSON.parse(localStorage.getItem(STK) || '[]'); if (Array.isArray(a)) a.forEach((id, i) => topX.set(id, i * 126)); else if (a && typeof a === 'object') for (const [id, x] of Object.entries(a)) if (Number.isFinite(x)) topX.set(id, x); } catch (_) {}
+    const saveTop = () => { try { localStorage.setItem(STK, JSON.stringify(Object.fromEntries(topX))); } catch (_) {} };
+    const putX = () => strip.querySelectorAll('.gz-group').forEach(b => b.style.setProperty('--sx', Math.round(topX.get(b.dataset.id) || 0) + 'px'));
     const desk = () => matchMedia('(min-width:1101px)').matches;
     let rail = null, railTop = null, sig = '';
     function build() {
-      const m = collect(T), now = desk() + '#' + [...topIds].join(',') + '#' + [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
+      const m = collect(T), now = desk() + '#' + [...topX.keys()].join(',') + '#' + [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
       if (now === sig) return false; sig = now;
       if (rail) rail.destroy(); if (railTop) { railTop.destroy(); railTop = null; }
       const gs = GROUPS.filter(([k]) => m.get(k).length).map(([id, title, color]) => ({ id, title, color, items: m.get(id) }));
-      const up = g => desk() && topIds.has(g.id), ups = gs.filter(up);
+      const up = g => desk() && topX.has(g.id), ups = gs.filter(up);
       rail = window.ZerkGrozd.rail(host, { key: 'hub', groups: gs.filter(g => !up(g)) });
-      if (ups.length) railTop = window.ZerkGrozd.rail(strip, { key: 'hubtop', groups: ups });
+      if (ups.length) { railTop = window.ZerkGrozd.rail(strip, { key: 'hubtop', groups: ups }); putX(); }
       // подсказка — плашкой хаба (hub-tips.js читает title)
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
@@ -373,15 +377,17 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     const putAt = (key, id, n) => { const k = 'grozd:' + key; let v = {}; try { v = JSON.parse(localStorage.getItem(k)) || {}; } catch (_) {}
       const o = (Array.isArray(v.order) ? v.order : []).filter(x => x !== id); o.splice(Math.min(n, o.length), 0, id); v.order = o; try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
     host.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'); if (!h || e.button !== 0 || e.target.closest('.gz-pin') || !desk()) return;
-      drag = { id: h.closest('.gz-group')?.dataset.id, top: !!h.closest('.hubStrip'), x: e.clientX, y: e.clientY }; }, true);
+      drag = { id: h.closest('.gz-group')?.dataset.id, top: !!h.closest('.hubStrip'), x: e.clientX, y: e.clientY, ox: e.clientX - h.getBoundingClientRect().left }; }, true);
     addEventListener('pointermove', e => { if (drag && !drag.top) document.body.classList.toggle('hubStripHint', e.clientY < ZONE && Math.abs(e.clientY - drag.y) > 6); });
     addEventListener('pointerup', e => {
       const d = drag; drag = null; document.body.classList.remove('hubStripHint');
       if (!d || !d.id || Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return;
-      if (!d.top && e.clientY < ZONE) { const n = [...strip.querySelectorAll('.gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.left + r.width / 2 < e.clientX; }).length; topIds.add(d.id); putAt('hubtop', d.id, n); }
-      else if (d.top && e.clientY > stripBottom() + 30) { const n = [...host.querySelectorAll(':scope > .gz-rail > .gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.top < e.clientY; }).length; topIds.delete(d.id); putAt('hub', d.id, n); }
+      const sr = strip.getBoundingClientRect(), xAt = () => Math.max(0, Math.min(Math.max(0, sr.width - 120), e.clientX - d.ox - sr.left));
+      if (!d.top && e.clientY < ZONE) topX.set(d.id, xAt());
+      else if (d.top && e.clientY > stripBottom() + 30) { const n = [...host.querySelectorAll(':scope > .gz-rail > .gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.top < e.clientY; }).length; topX.delete(d.id); putAt('hub', d.id, n); }
+      else if (d.top) { topX.set(d.id, xAt()); saveTop(); setTimeout(putX, 0); return; }   // в полосе — вбок на новое место
       else return;
-      try { localStorage.setItem(STK, JSON.stringify([...topIds])); } catch (_) {}
+      saveTop();
       setTimeout(() => { sig = ''; tick(); }, 0);   // после того как grozd.js сам положил группу в щель и сохранил порядок
     });
     let q = 0; const tick = () => { q = 0; if (!build()) refreshAll(); place(); };
