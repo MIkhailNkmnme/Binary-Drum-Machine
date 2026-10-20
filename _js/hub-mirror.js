@@ -682,13 +682,17 @@
     fillCutoutRhomb(g,bit,x,y,a,b,size,angle=this.bitAngle(bit)){
       if(this.symbolsOnly()||state.bitView==='none'||this.digitVisible(bit)||size<=0)return false;   // «когда Нет — просто ромбы без всего»: без выреза знака
       const m=g.getTransform(),scale=Math.max(2,Math.min(8,Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c,m.d))));
-      const key=[bit,a,b,size,g.fillStyle,scale,state.bitSquare].join('|');let sprite=cutoutSprites.get(key);
+      const key=[bit,a,b,size,g.fillStyle,scale,state.bitSquare,state.bitView].join('|');let sprite=cutoutSprites.get(key);
       if(!sprite){
         const canvas=document.createElement('canvas'),w=Math.ceil(a*2*scale)+4,h=Math.ceil(b*2*scale)+4;canvas.width=w;canvas.height=h;
         const c=canvas.getContext('2d');c.setTransform(scale,0,0,scale,w/2,h/2);c.fillStyle=g.fillStyle;
         api.pathBit(c,a,b);c.fill();
         // Cut only this tile; destination layers remain untouched through the glyph.
-        c.globalCompositeOperation='destination-out';c.fillStyle='#000';c.font=`bold ${size}px monospace`;c.textAlign='left';c.textBaseline='alphabetic';c.fillText(bit,...glyphOffset(c,bit,size));
+        c.globalCompositeOperation='destination-out';c.fillStyle=c.strokeStyle='#000';
+        // v0.395, «их тоже вырезами, если прозрачность стоит»: вырез — формой знака текущего вида (черта, скобка, уголок, звезда), а не цифрой
+        if(slashOn()){const sg=bit==='1'?-1:1,L=a+b;c.lineWidth=SL_W*size;c.lineCap='butt';c.beginPath();c.moveTo(-L,-sg*L);c.lineTo(L,sg*L);c.stroke();}
+        else if(state.bitView==='stars'){c.lineCap='round';c.lineWidth=Math.max(.35,size*.1);c.beginPath();if(bit==='0'){c.arc(0,0,Math.max(.35,size*.12),0,2*Math.PI);c.fill();}else{for(let i=0;i<3;i++){const t=i*Math.PI/3,dx=Math.cos(t)*size*.45,dy=Math.sin(t)*size*.45;c.moveTo(-dx,-dy);c.lineTo(dx,dy);}c.stroke();}}
+        else{const text=bitGlyph(bit);c.font=`bold ${size}px monospace`;c.textAlign='left';c.textBaseline='alphabetic';c.fillText(text,...glyphOffset(c,text,size));}
         sprite={canvas,w:w/scale,h:h/scale};if(cutoutSprites.size>=96)cutoutSprites.clear();cutoutSprites.set(key,sprite);
       }
       g.save();g.translate(x,y);g.rotate(angle);g.shadowBlur=0;g.drawImage(sprite.canvas,-sprite.w/2,-sprite.h/2,sprite.w,sprite.h);g.restore();return true;
@@ -730,6 +734,7 @@
       for(const [x,y] of points)g.fillText(text,(x*co+y*si)/sx+ox,(-x*si+y*co)/sy+oy);
       g.restore();
     },
+    glyphLabel(bit){return state.bitView==='stars'?(bit==='1'?'*':'•'):state.bitView==='none'?bit:bitGlyph(bit);},   // v0.395: знак бита текущего вида — подписью на кнопке «Прозр.»
     digitVisible(bit){return state.bitView!=='none'&&!(bit==='0'?state.hideZeroDigit:state.hideOneDigit);},
     bitAngle(bit) { return (bit === '0' ? state.zero : state.one) * Math.PI / 180; },
     place(left, width, height) { frame = { left, width, height }; window.HubView?.place(left,width,height); update(); },

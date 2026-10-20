@@ -180,6 +180,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         const part = (key, d) => { const c = toBits[key]; if (!c) return null; const it = leafItem(c);
           return { label: d, tip: it.tip, on: it.on, click: it.click, open: it.open, fill: () => pc()['f' + d], ink: () => pc()['k' + d] }; };
         const t0 = part('Прозрачные цифры 0', '0'), t1 = part('Прозрачные цифры 1', '1'), c0 = part('Цвет нулей оригинала', '0'), c1 = part('Цвет битов оригинала', '1');
+        // v0.395, «тут ставь символы текущего выбранного»: по краям «Прозр.» — знаки текущего вида бита (\ /, скобки, уголки…), включённый — контуром, как вырез
+        for (const [t, b] of [[t0, '0'], [t1, '1']]) if (t) t.labelNow = () => window.HubMirror?.glyphLabel?.(b) ?? b;
         if (t0 && t1) add('bits', { type: 'pair', cls: 'gz-cut gz-split gz-mid', name: 'Прозр.', tip: 'Прозрачный вырез знака в ромбах: 0 · 1', parts: [t0, t1] }, 'bits|cutout');
         if (c0 && c1) add('bits', { type: 'pair', cls: 'gz-rainbow gz-split gz-mid', name: 'Цвет', tip: 'Цвет битов: 0 · 1', parts: [c0, c1] }, 'bits|colors');
       }
