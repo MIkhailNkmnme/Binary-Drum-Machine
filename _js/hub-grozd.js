@@ -379,7 +379,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       return true;
     }
     const refreshAll = () => { rail?.refresh(); railTop?.refresh(); };
-    const stripBottom = () => { let b = 0; for (const h of strip.querySelectorAll('.gz-head')) { const r = h.getBoundingClientRect(); if (r.height) b = Math.max(b, Math.ceil(r.bottom) + 6); } return b; };
+    const stripBottom = () => { let b = 0; for (const h of strip.querySelectorAll('.gz-group:not(.gz-drag) > .gz-head')) {   /* v0.396, «с верхнего меню не могу обратно вставить в левое»: тащимая группа едет за курсором и в низ полосы не считается — иначе низ был под курсором и «ниже полосы» не наступало */ const r = h.getBoundingClientRect(); if (r.height) b = Math.max(b, Math.ceil(r.bottom) + 6); } return b; };
     const place = () => {
       const d = desk();
       const left = d ? Math.max(8, ...['.hub', '#hubSidebarToggle'].map(q => { const r = document.querySelector(q)?.getBoundingClientRect(); return r && r.width ? r.right : 0; })) + 10 : null;
