@@ -54,7 +54,7 @@
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
       state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym','zero'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(['bit','mirror','fold','sym'].every(k=>c[k]))state.custom=c;if(Number.isFinite(saved.zeroAlpha))state.zeroAlpha=Math.max(0,Math.min(1,saved.zeroAlpha));}
-      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;state.axis2=saved.axis2===true;if([90,30,60,0,-1].includes(saved.axis2Deg))state.axis2Deg=saved.axis2Deg;if(Number.isFinite(saved.axis2Free))state.axis2Free=saved.axis2Free;state.autoPal=saved.autoPal===true;if(Number.isFinite(saved.autoPalSec))state.autoPalSec=Math.max(1,Math.min(60,Math.round(saved.autoPalSec)));
+      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;state.axis2=saved.axis2===true;if([90,30,60,0,-1,-2].includes(saved.axis2Deg))state.axis2Deg=saved.axis2Deg;if(Number.isFinite(saved.axis2Free))state.axis2Free=saved.axis2Free;state.autoPal=saved.autoPal===true;if(Number.isFinite(saved.autoPalSec))state.autoPalSec=Math.max(1,Math.min(60,Math.round(saved.autoPalSec)));
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -174,7 +174,7 @@
     if (enabled) enabled.checked = state.on;
     Object.assign(root.style, { position: mobile ? 'absolute' : 'fixed', left: frame.left + 'px', top: '0px', width: frame.width + 'px', height: frame.height + 'px' });
     Object.assign(line.style, { left: px + 'px', top: (py - 10) + 'px', width: length + 'px', transform: 'rotate(' + state.angle + 'rad)' });
-    if(line2){line2.hidden=!(state.on&&state.axis2&&state.axis2Deg!==-1);Object.assign(line2.style,{left:(px-length)+'px',top:(py-10)+'px',width:(2*length)+'px',transform:'rotate('+(state.angle+(state.axis2Deg||state.axis2Free)*Math.PI/180)+'rad)'});line2.classList.toggle('free',!state.axis2Deg);}
+    if(line2){line2.hidden=!(state.on&&state.axis2&&state.axis2Deg>=0);Object.assign(line2.style,{left:(px-length)+'px',top:(py-10)+'px',width:(2*length)+'px',transform:'rotate('+(state.angle+(state.axis2Deg||state.axis2Free)*Math.PI/180)+'rad)'});line2.classList.toggle('free',!state.axis2Deg);}
     if(tail){const extent=axisTailLength();tail.style.width=extent+'px';tail.style.left=-extent+'px';}
     handle.style.transform = 'translateX(-50%) rotate(' + (-state.angle) + 'rad)';
     turn.style.left = radius + 'px';
@@ -662,6 +662,13 @@
     setAxis2Free(deg){deg=((deg%180)+180)%180;state.axis2Free=Math.round(deg*10)/10||0.1;changed();save();},
     axis2Layers(canvas,view=null){
       if(!frame||!state.on||!state.axis2||state.axis2Deg===-1)return [];
+      if(state.axis2Deg===-2){   // «другой режим 3 осей — через центр»: оси ∥ сторонам треугольника (0°, 60°, 120°) — повороты на 120° и три отражения; своя ось не отражает
+        const offset=view?view.left:0,sx=view?view.scale:canvas.width/(frame.left+frame.width),sy=view?view.scale:canvas.height/frame.height,[x,y]=center(),cx=(x-offset)*sx,cy=y*sy,out=[];
+        const put=(p,q,r,t,pass)=>{const A=p,C=q*sx/sy,B=r*sy/sx,D=t;out.push({m:[A,B,C,D,cx-A*cx-C*cy,cy-B*cx-D*cy],pass});};
+        for(const a of [2*Math.PI/3,4*Math.PI/3])put(Math.cos(a),-Math.sin(a),Math.sin(a),Math.cos(a),'source');
+        for(const ph of [0,Math.PI/3,2*Math.PI/3]){const c=Math.cos(2*ph),si=Math.sin(2*ph);put(c,si,si,-c,'mirror');}
+        out.star={c:[cx,cy],angles:[0,Math.PI/3,2*Math.PI/3]};return out;
+      }
       const offset=view?view.left:0,sx=view?view.scale:canvas.width/(frame.left+frame.width),sy=view?view.scale:canvas.height/frame.height;
       const [x,y]=center(),cx=(x-offset)*sx,cy=y*sy,th=api.axis2Angle(),n=state.axis2Deg?Math.round(180/state.axis2Deg):2,out=[];   // свободная: одно отражение от 2-й оси и поворот на 2θ
       const put=(p,q,r,t,pass)=>{const A=p,C=q*sx/sy,B=r*sy/sx,D=t;out.push({m:[A,B,C,D,cx-A*cx-C*cy,cy-B*cx-D*cy],pass});};
@@ -672,7 +679,8 @@
     setAxis2(on){state.axis2=!!on;changed();save();},
     setAutoPal(on){state.autoPal=!!on;autoPalSync();save();window.dispatchEvent(new Event('hubmirror'));},
     setAutoPalSec(sec){state.autoPalSec=Math.max(1,Math.min(60,Math.round(sec)));autoPalSync();save();},
-    cycleAxis2Deg(){state.axis2Deg={90:30,30:60,60:0,0:-1,'-1':90}[state.axis2Deg]??90;changed();save();},
+    cycleAxis2Deg(){state.axis2Deg={90:30,30:60,60:0,0:-1,'-1':-2,'-2':90}[state.axis2Deg]??90;changed();save();},
+    axis2Replaces1(){return !!(state.on&&state.axis2&&state.axis2Deg===-2);},   // ✳3: отражение от своей оси не рисуется — его заменяют три оси
     // «режим 3 осей — параллельно 3 сторонам треугольника» (axis2Deg −1): три зеркала — стороны равностороннего треугольника вокруг центра оси
     // (радиус — круглая ручка), узор внутри него отражается от сторон снова и снова — копии заполняют экран (группа p3m1)
     triLayers(canvas,view=null){
