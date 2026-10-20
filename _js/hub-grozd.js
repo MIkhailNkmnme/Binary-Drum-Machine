@@ -256,9 +256,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
     { const M = window.HubMirror, al2 = out.get('axis');   // «добавить 2 ось, и кнопку 90-30-60 градусов от первой»: слева 2-я ось вкл / выкл, справа угол к первой
       if (M?.setAxis2 && al2) { const i2 = al2.findIndex(i => i.key === 'axis') + 1;
-        al2.splice(i2, 0, { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: '2 ось', mid: '', tip: 'Вторая ось зеркала через тот же центр — калейдоскоп · справа — угол к первой: 90° → 30° → 60°',
+        al2.splice(i2, 0, { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: '2 ось', mid: '', tip: 'Вторая ось зеркала через тот же центр — калейдоскоп · справа — угол к первой: 90° → 30° → 60° → свободный',
           parts: [{ label: '✣ 2 ось', tip: 'Вторая ось: вкл / выкл (нужно включённое зеркало)', on: () => !!M.state.axis2, click: () => M.setAxis2(!M.state.axis2) },
-            { label: '90°', labelNow: () => M.state.axis2Deg + '°', tip: 'Угол второй оси к первой: 90° → 30° → 60°', on: () => !!M.state.axis2, click: () => M.cycleAxis2Deg() }], key: 'axis|axis2' }); } }
+            { label: '90°', labelNow: () => M.state.axis2Deg ? M.state.axis2Deg + '°' : '⟳' + Math.round(M.state.axis2Free) + '°', tip: 'Угол второй оси к первой: 90° → 30° → 60° → свободный (⟳: колесо — на 1°, Shift — на 10°, или тяни линию 2-й оси)', on: () => !!M.state.axis2, click: () => M.cycleAxis2Deg(),
+              wheel: d => { if (M.state.axis2Deg) return false; M.setAxis2Free(M.state.axis2Free + d); return true; } }], key: 'axis|axis2' }); } }
       const al = out.get('axis'), ai = al ? al.findIndex(i => i.key === 'axis') + 1 : 0;   // «когда появляются кнопки — не меняй расположение старых»: Подсве.ось (есть всегда) — выше «Центр» (появляется с осью)
       al?.splice(ai, 0, { type: 'pair', col: 1,   /* «не оставляй пустот — в правую рейку»: под «Центр» */ cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
  mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',

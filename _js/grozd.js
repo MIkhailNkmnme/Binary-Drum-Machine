@@ -167,6 +167,7 @@
           b.classList.add('gz-pair'); if (it.cls) b.classList.add(...it.cls.split(' '));
           const hs = it.parts.map((p, i) => { const h = el('span', 'gz-half gz-h' + i, p.label);   // gz-h0 / gz-h1 — не :first/:last-child: в кнопку дописывают свои метки if (p.tip) withTip(h, p.tip);
             h.addEventListener('click', e => { e.stopPropagation(); if (it.disabled && it.disabled()) return; if (p.open) p.open(b); else if (p.click) p.click(); refresh(); }); return h; });
+          it.parts.forEach((p, i) => { if (p.wheel) hs[i].addEventListener('wheel', e => { if (p.wheel((e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1))) { e.preventDefault(); e.stopPropagation(); refresh(); } }, { passive: false }); });   // p.wheel(d) — колесо над половиной (true — съедено)
           if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));   // пара тоже бывает притушена (правила потоков без потоков)
           // «в середине умести текст, а где 1 и 0 — там меньше; включение — как везде, обводкой граней»: [0 | название | 1], включённая сторона — яркая кайма своей половины
           b.append(hs[0], el('span', 'gz-pm', it.mid ?? it.name), hs[1]);
