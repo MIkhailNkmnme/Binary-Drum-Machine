@@ -538,7 +538,12 @@
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
         const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = on ? k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); } }
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); }
+      // v0.227: «это тоже в ромб сворачивать» — «Что это такое?» правым щелчком — ромб «ℹ», ещё раз — обратно (та же память, ключ — надпись кнопки)
+      { const a = $('mayAbout'), k = 'Что это такое?', ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = 'ℹ︎'; a.append(ic); a.setAttribute('aria-label', k);
+        const sync = () => { const on = minis.has(k); a.classList.toggle('pt-mini', on); a.title = on ? k + ' · правый щелчок — развернуть' : 'Что такое маятник · правый щелчок — свернуть в ромб'; };
+        sync(); a.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.relayout(); requestAnimationFrame(noOverlap); }); } }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);

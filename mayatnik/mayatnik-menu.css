@@ -507,3 +507,9 @@ header #paintTools.pt-dd .pt-sec>:not(.gz-hx){margin:0 12px!important}
 #paintTools .pt-sec>.lg{box-sizing:border-box;height:24px;padding:0 10px;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:10px;color:#c7d3e6;border:1px solid color-mix(in srgb,var(--c,#7cbcff) 35%,transparent);border-radius:4px}
 #paintTools .pt-sec>.lg:hover{background:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
 header #paintTools.pt-dd .pt-view .pt-sec>.pt-vx{height:24px;box-sizing:border-box;padding:0;flex-wrap:nowrap}
+/* v0.227: «Что это такое?» свёрнутое в ромб (правый щелчок) — как названия групп v0.209: 34 × 24, только значок ℹ */
+.mayatnik-menu-ready #mayAbout .pt-ico{display:none}
+.mayatnik-menu-ready #mayAbout.pt-mini{width:34px;padding:0;gap:0;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.mayatnik-menu-ready #mayAbout.pt-mini::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.mayatnik-menu-ready #mayAbout.pt-mini>span:not(.pt-ico){display:none}
+.mayatnik-menu-ready #mayAbout.pt-mini>.pt-ico{display:block;font-size:13px;line-height:1;color:var(--c)}
