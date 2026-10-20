@@ -107,6 +107,12 @@
           mid.append(el('span', 'gz-nm', it.name), v); if (it.reset) mid.append(z);
           b.append(a('gz-a2', '◂◂', -2), a('', '◂', -1), mid, a('', '▸', 1), a('gz-a2', '▸▸', 2));
           refreshers.push(() => { v.textContent = it.get(); });
+          // «Автозум — объедини с его ползунком»: it.head — включатель слева в той же кнопке, it.tail — режим справа (виден, пока tail.show())
+          if (it.head) { const h = el('span', 'gz-vh', it.head.label); b.prepend(h); b.classList.add('gz-vhd');
+            h.addEventListener('click', e => { e.stopPropagation(); it.head.click(); refresh(); }); refreshers.push(() => h.classList.toggle('gz-on', !!it.head.on())); }
+          if (it.tail) { const t = el('span', 'gz-vt', it.tail.label); b.append(t);
+            t.addEventListener('click', e => { e.stopPropagation(); it.tail.click(); refresh(); });
+            refreshers.push(() => { const sh = !it.tail.show || it.tail.show(); t.style.display = sh ? '' : 'none'; const n = it.tail.labelNow ? it.tail.labelNow() : it.tail.label; if (t.textContent !== n) t.textContent = n; }); }
           // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, ◂ ▸ — шаг
           if (it.frac && it.setFrac) {
             b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'), TH = 8; mid.prepend(th);

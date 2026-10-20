@@ -187,3 +187,11 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-pair.gz-split.gz-wl .gz-half.gz-h1{width:calc(var(--gz-w) * .28 + 3px);font-size:16px;color:var(--gz-k,#fff)}
 /* «у точки тоже границы при включении подсветки» — правая половина горит каймой вместе с левой, точка остаётся своего цвета */
 .gz-pair.gz-split.gz-wl .gz-half.gz-h1.gz-on{color:var(--gz-k,#fff);text-shadow:0 0 6px var(--gz-k,#fff)}
+/* «Автозум — объедини с его ползунком»: включатель слева и режим справа — части той же кнопки-ползунка */
+.gz-val .gz-vh,.gz-val .gz-vt{flex:none;align-self:stretch;display:flex;align-items:center;padding:0 7px;cursor:pointer;font-size:12px;color:var(--gz-mut);white-space:nowrap}
+.gz-val .gz-vh{padding-left:10px;box-shadow:inset -1px 0 0 color-mix(in srgb,var(--c) 45%,transparent)}
+.gz-val .gz-vt{padding-right:10px;box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c) 45%,transparent)}
+.gz-val .gz-vh:hover,.gz-val .gz-vt:hover{color:#fff}
+.gz-val .gz-vh.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
+.gz-val.gz-vhd .gz-a{display:none}   /* ◂ ▸ в середине кнопки мешают: значение — перетаскиванием и колесом */
+.gz-val.gz-vhd .gz-mid{margin:0 6px}

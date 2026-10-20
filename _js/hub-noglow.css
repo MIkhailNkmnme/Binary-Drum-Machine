@@ -6,4 +6,4 @@
 #hubFieldTools .hubFloodControl[aria-pressed=true],#hubFieldTools .hubTreeItem.hubReorderOver>*,
 #hubMirror .hubMirrorLine,#hubMirror [class^=hubMirror],#hubMirror [class*=" hubMirror"]{filter:none!important}
 .menu-btn,.menu-btn:hover,.menu-btn::before,.menu-btn::after,.hubMirrorLine::after,#zerkHubBtn,#zerkHubBtn:hover,#hubDropCross i,#hubDropCross b{box-shadow:none!important}
-.hubMirrorTurn{box-shadow:0 0 0 2px #10202a,0 0 0 4px #ffd166!important}
+.hubMirrorTurn{box-shadow:0 0 0 2px #10202a,0 0 0 4px var(--hubAxisC,#ffd166)!important}

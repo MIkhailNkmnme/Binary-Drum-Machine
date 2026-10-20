@@ -41,7 +41,7 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
@@ -54,7 +54,7 @@
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
       state.foldIn=saved.foldIn===true;if(Number.isFinite(saved.symAlpha))state.symAlpha=Math.max(0,Math.min(1,saved.symAlpha));for(const k of ['bitAlpha','foldAlpha'])if(Number.isFinite(saved[k]))state[k]=Math.max(0,Math.min(1.3,saved[k]));
       if(saved.custom&&typeof saved.custom==='object'){const c={};for(const k of ['bit','mirror','fold','sym','zero'])if(/^#[0-9a-f]{6}$/i.test(saved.custom[k]||''))c[k]=saved.custom[k];if(['bit','mirror','fold','sym'].every(k=>c[k]))state.custom=c;if(Number.isFinite(saved.zeroAlpha))state.zeroAlpha=Math.max(0,Math.min(1,saved.zeroAlpha));}
-      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;
+      if(saved.palette===-1&&state.custom)state.palette=-1;if(Number.isInteger(saved.palette)&&saved.palette>=0&&saved.palette<PALETTES.length)state.palette=saved.palette;state.axisRotate=!!saved.axisRotate;if(/^#[0-9a-f]{6}$/i.test(saved.axisColor||''))state.axisColor=saved.axisColor;
       state.pattern = saved.horrDefaultRevision === 1 && ['base','serp','horr'].includes(saved.pattern) ? saved.pattern : 'horr'; // v0.116: migrate the old initial pattern once
       state.angle = typeof saved.angle === 'number' && Number.isFinite(saved.angle) ? turnAngle(saved.angle) : saved.axis === 'h' ? 0 : Math.PI / 2;
       if(Number.isFinite(saved.spinSpeed))state.spinSpeed=Math.max(3,Math.min(30000,saved.spinSpeed));
@@ -156,8 +156,9 @@
   }
   let orbitPointer=null;
   const refreshOrbitHover=()=>{if(root)root.classList.toggle('orbitHover',!!orbitPointer&&window.HubMirror.orbitNear(orbitPointer[0],orbitPointer[1]+(matchMedia('(max-width:1100px)').matches?scrollY:0)));};
+  let axisInk='';const paintAxis=()=>{const c=state.axisColor||'';if(c===axisInk)return;axisInk=c;const st=document.documentElement.style;if(c)st.setProperty('--hubAxisC',c);else st.removeProperty('--hubAxisC');};   // «Ось — добавь цвет»: линия, точка, ручка и подсказка оси — одним цветом (без своего — прежние жёлтые)
   const update = () => {
-    lockCenter();
+    lockCenter();paintAxis();
     if(frame)window.HubView?.enforceCenterBitPin?.(center());
     if (!root || !frame) return;
     const px=frame.width*state.x, py=frame.height*state.y, radius=Math.min(frame.width,frame.height)*state.orbitRadius;
@@ -421,7 +422,7 @@
   const api = window.HubMirror = {
     snapshot:()=>({state:JSON.parse(JSON.stringify(state)),spinRunning,resumeSpin,spinRemainder,lastBitScroll:{...lastBitScroll},rotationBit,rotationGuide}),
     restore(s){stopSpin();window.HubPresetCore.applyKnown(state,s.state);resumeSpin=!!s.resumeSpin;if(s.spinRunning)startSpin();spinRemainder=s.spinRemainder||0;Object.assign(lastBitScroll,s.lastBitScroll);rotationBit=s.rotationBit||null;rotationGuide=!!s.rotationGuide;changed();save();},
-    state, syncCenter:update, rotateBy:rotate,axisTailLength,
+    state, syncCenter:update,axisColor:()=>state.axisColor||'#ffe600',setAxisColor(c){state.axisColor=/^#[0-9a-f]{6}$/i.test(c||'')?c:null;paintAxis();save();}, rotateBy:rotate,axisTailLength,
     wheelAlong(delta){if(!frame||!window.HubView?.shiftSourceBy)return false;const step=Math.sign(delta)*24/(window.HubView.scale||1);window.HubView.shiftSourceBy(step*Math.cos(state.angle),step*Math.sin(state.angle));return true;},
     wheelZoneAt(x,y){
       if(!frame||!handle||document.body.classList.contains('hubAutoTurning')||document.body.classList.contains('hubMirrorSpinning'))return false;

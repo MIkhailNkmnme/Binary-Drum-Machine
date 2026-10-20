@@ -94,11 +94,16 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           }
           if (/\|Автозум от центра/.test(c.id)) {   // «автозум и маятник / сброс — также»: при включённом автозуме — «Автозум / Маятник» (или «Сброс»)
             const it = fs(fa(fc(leafItem(c)))), md = () => document.querySelector('button[aria-label^="Режим автозума"]'), on = () => c.node.getAttribute('aria-pressed') === 'true';
-            add(g.key, { type: 'pair', col: it.col, cls: 'gz-split gz-bs', name: 'Автозум', mid: '', tip: it.tip, one: () => !on(),
+            add(g.key, toBits.zoom = { type: 'pair', col: it.col, cls: 'gz-split gz-bs', name: 'Автозум', mid: '', tip: it.tip, one: () => !on(),
               parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
           if (/\|Режим автозума/.test(c.id)) continue;
+          if (/автозума/.test(c.id) && c.node.matches('details')) { toBits.zoomVal = c; continue; }   // «Автозум — объедини с его ползунком»: ползунок — в кнопку «Автозум» (после обхода)
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
           if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
+          if (/\|Закрепить центр (ромбов|контура)/.test(c.id)) {   // «Центр ◇ и Центр △ — как „Ромб. | Квадр.“»: одна кнопка пополам, место держит первая
+            const k = /ромбов/.test(c.id) ? 'cMass' : 'cTri'; toBits[k] = leafItem(c);
+            if (!toBits.center) { toBits.center = { ...fa(leafItem(c)), key: 'axis|center' }; add(g.key, toBits.center, 'axis|center'); }
+            continue; }
           if (/\|Цвет заворота/.test(c.id)) { toBits.foldColor = c; continue; }   // «Завор. — сюда цвет, отдельную кнопку-дубль цвета удали»: правой половиной «∿ Завор. | ●»
           if (/\|Заворот:/.test(c.id)) { const it = fa(leafItem(c)); toBits.fold = it; add(g.key, it, c.id); continue; }   // место в «Оси» держит сама кнопка, цвет к ней — после обхода
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
@@ -122,6 +127,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
         add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
           parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
+      else if (root.action && g.key === 'axis' && window.HubMirror?.setAxisColor) {   // «Ось — добавь цвет»: слева показать / спрятать ось, справа её цвет
+        const h = headItem(root, '', HEAD.axis), M = window.HubMirror, trig = document.createElement('span');
+        add('axis', { type: 'pair', col: 0, cls: 'gz-split gz-bs gz-wl', name: HEAD.axis, mid: '', tip: h.tip + ' · справа — цвет оси',
+          parts: [{ label: '✣ Ось', tip: h.tip, on: h.on, click: h.click }, { label: '●', tip: 'Цвет оси', on: h.on, ink: () => M.axisColor(),
+            open: a => window.HubColorPicker?.open({ trigger: trig, anchor: a, title: 'Цвет оси', color: M.axisColor(), opacity: 1, maxOpacity: 1, onChange: c => M.setAxisColor(c) }) }] }, 'axis'); }
       else if (root.action) add(g.key, g.key === 'flow' || g.key === 'axis' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
       walk(root, !root.gate || !!gateOn(root));
       if (g.key === 'colour') {   // «прозрачности объедини в одну кнопку, обводку пополам, и цвета 1 и 0 так же; прозрачности — в цвет битов, слово „Прозр.“ убери, и „Цвет“ — но там обводка радугой»
@@ -169,6 +179,17 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const it = mc ? { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Зерк.', mid: '', tip: 'Зеркало: отражение от оси · справа — цвет отражённых битов',
         parts: [{ label: '⋈ Зерк.', tip: mi.tip, on: mi.on, click: mi.click }, { label: '●', tip: 'Цвет отражённых битов', on: mi.on, open: mc.open, ink: () => mc.get() }], key: 'symmetry|mirror' } : { ...mi, name: 'Зерк.', key: toBits.mirror.id };
       const sl = out.get('symmetry'); if (sl) { const k = sl.findIndex(i => i.key === 'symmetry'); sl.splice(k >= 0 ? k + 1 : 0, 0, it); }
+    }
+    if (toBits.center && toBits.cMass && toBits.cTri) {
+      const m = toBits.cMass, t = toBits.cTri;
+      Object.assign(toBits.center, { type: 'pair', cls: 'gz-split gz-bs', name: 'Центр', mid: '', tip: 'Закрепить центр в центре оси: ◇ — центр масс ромбов · △ — центр контура треугольника',
+        parts: [{ label: 'Центр ◇', tip: m.tip, on: m.on, click: m.click }, { label: 'Центр △', tip: t.tip, on: t.on, click: t.click }] });
+    }
+    if (toBits.zoom && toBits.zoomVal) {   // «Автозум | ползунок хода зума | Маятник»: слева вкл / выкл, справа режим (при включённом)
+      const z = toBits.zoom, [p0, p1] = z.parts, v = leafItem(toBits.zoomVal);
+      for (const k of ['parts', 'cls', 'one', 'mid', 'col']) delete z[k];
+      Object.assign(z, v, { name: 'Автозум', tip: p0.tip + ' · ползунок — ход зума', head: { label: 'Автозум', on: p0.on, click: p0.click },
+        tail: { label: p1.label, labelNow: p1.labelNow, show: p0.on, click: p1.click } });
     }
     if (toBits.fold && toBits.foldColor) {   // «∿ Завор. | ●»: слева заворот вкл / выкл, справа цвет заворота (отдельной «Заворот» в цветах больше нет)
       const fi = toBits.fold, fc = leafItem(toBits.foldColor);
