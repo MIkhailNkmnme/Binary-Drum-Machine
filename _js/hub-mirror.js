@@ -702,7 +702,9 @@
         if(bit==='0'){g.beginPath();g.arc(0,0,state.packedBits?width/2:Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
         else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
       }else if(slashOn()){   // v0.390: черта — отрезок ровно под 45°
-        const k=slashScale(size,width,height),h=SL_H*size*k,sg=bit==='1'?-1:1;
+        const k=slashScale(size,width,height),sg=bit==='1'?-1:1;let h=SL_H*size*k;
+        // v0.394, «их продолжай до выреза квадрата или ромба также»: в ромбе / квадрате черта идёт до самого края фигуры — длинный отрезок, обрезанный её контуром
+        if(!this.symbolsOnly()){const kk=state.packedBits?.5:.45,P=this.bitPoly(width*kk,height*kk);g.beginPath();g.moveTo(...P[0]);for(let i=1;i<P.length;i++)g.lineTo(...P[i]);g.closePath();g.clip();h=Math.hypot(width,height);}
         g.strokeStyle=g.fillStyle;g.lineWidth=SL_W*size*k;g.lineCap='butt';g.beginPath();g.moveTo(-h,-sg*h);g.lineTo(h,sg*h);g.stroke();
       }else{
         const text=bitGlyph(bit);
