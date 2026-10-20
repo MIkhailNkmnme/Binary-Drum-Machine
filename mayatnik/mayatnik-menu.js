@@ -334,6 +334,23 @@
     const sb = ptBtn('sizeCtl', 'plus', sz, () => szSet(1)); sb.oncontextmenu = ev => { ev.preventDefault(); szSet(-1); }; sb.addEventListener('wheel', ev => { ev.preventDefault(); szSet(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
     toolSync.push(() => { const t = 'Цифры ' + sz.value + ' %'; sb.title = 'Размер цифр в клетке · щелчок — больше, правый — меньше, колесо'; const nm = sb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(sb));
     const box = document.createElement('span'); box.className = 'pt-vx'; const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v); gView.append(box); }
+  // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
+  // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
+  // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
+  { const VIEW_COLS = [
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'zTop', 'vx']],
+       ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
+       ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
+      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixWide', 'fixRot', 'fixDragK']],
+       ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
+       ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],
+       ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];
+    const pick = n => n === 'lg' ? $('lg') : n === 'vx' ? gView.querySelector(':scope > .pt-vx') : gView.querySelector(':scope > [data-n="' + n + '"]');
+    const cols = VIEW_COLS.map(secs => { const col = document.createElement('div'); col.className = 'pt-col';
+      for (const [t, c, ns] of secs) { const s = document.createElement('div'); s.className = 'pt-sec'; s.title = t; s.style.setProperty('--s', c);
+        for (const n of ns) { const e = pick(n); if (e) s.append(e); } if (s.children.length) col.append(s); } return col; });
+    const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[1].append(s); }   // новая кнопка без темы — в конец правого столбца
+    gView.append(...cols); gView.classList.add('pt-cols'); }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
@@ -377,7 +394,7 @@
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
     const zig = r => { if (!r.getClientRects().length) return; r.style.height = '';
       // v0.164: «стык в стык» — зубцы рамки той же высоты и скоса, что кнопки: острия кнопок входят в выемки рамки, прочее — целым числом рядов
-      const b0 = r.querySelector(':scope > .gz-hx'), GAP = parseFloat(getComputedStyle(r).rowGap) || 0, P = b0 ? b0.offsetHeight + GAP : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;   // v0.184: шаг зубцов — кнопка + зазор
+      const b0 = r.querySelector(':scope > .gz-hx, :scope > .pt-col .gz-hx'), GAP = parseFloat(getComputedStyle(r).rowGap) || 0, P = b0 ? b0.offsetHeight + GAP : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;   // v0.184: шаг зубцов — кнопка + зазор
       for (const c of r.children) if (!c.matches('.gz-hx')) { c.style.minHeight = ''; const ch = c.offsetHeight; if (ch) c.style.minHeight = Math.ceil(ch / P) * P + 'px'; }
       const w = r.offsetWidth, n = Math.max(1, Math.ceil(r.offsetHeight / P)), h = n * P;
       r.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]];
@@ -534,7 +551,7 @@
   // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
   { const after = () => { rail.refresh(); placeTools(); };
     const reg = (b, options) => { if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
-      host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-r, .gz-rail') }); };
+      host: () => b.closest('.pt-g') || document.body, col: () => b.closest('.pt-col, .pt-r, .gz-rail') }); };   // v0.226: в «Виде» — правее своего столбца
     const fromSelect = (sel, nameOf = o => o.textContent, iconOf = null) => () => [...sel.options].map(o => ({ name: nameOf(o), icon: iconOf?.(o), on: o.value === sel.value,
       pick: () => { if (sel.value === o.value) return; sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } }));
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
