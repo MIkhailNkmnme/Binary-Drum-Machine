@@ -124,6 +124,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             const it = fc(leafItem(c)); toBits[/Радиус/.test(c.id) ? 'sunR' : 'sunOn'] = it;
             if (!toBits.sun) { toBits.sun = { ...it, key: 'flow|sun' }; add(g.key, toBits.sun, 'flow|sun'); }
             continue; }
+          if (/^space\|(Оригинал и зеркало под прямым углом|Заморозить 3D-наклон)/.test(c.id)) {   // «90° и Замор. — в одну кнопку, или — или»
+            toBits[/прямым/.test(c.id) ? 'sp90' : 'spFrz'] = leafItem(c);
+            if (!toBits.spPair) { toBits.spPair = { ...fs(leafItem(c)), key: 'space|90-freeze' }; add(g.key, toBits.spPair, 'space|90-freeze'); }
+            continue; }
           if (/^flow\|(Свет в виде выбранных битов|Размер битов света)/.test(c.id)) {   // «Биты — объедини со своим ползунком»: слева вкл / выкл, справа размер
             const it = fc(leafItem(c)); toBits[/Размер/.test(c.id) ? 'lbSize' : 'lbOn'] = it;
             if (!toBits.lbits) { toBits.lbits = { ...it, key: 'flow|lightBits' }; add(g.key, toBits.lbits, 'flow|lightBits'); }
@@ -226,6 +230,11 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       for (const k of Object.keys(z)) if (!['key', 'sec', 'secColor'].includes(k)) delete z[k];
       Object.assign(z, toBits.lbSize, { key: 'flow|lightBits', name: 'Биты', tip: t.tip + ' · ползунок — размер битов света', head: { label: '01 Биты', on: t.on, click: t.click } });
     } else if (toBits.lbits) Object.assign(toBits.lbits, toBits.lbOn || toBits.lbSize, { key: 'flow|lightBits' });
+    if (toBits.spPair && toBits.sp90 && toBits.spFrz) {
+      const a = toBits.sp90, b = toBits.spFrz, only = (x, y) => () => { if (!x.on() && y.on()) y.click(); x.click(); };   // включил одну — другая выключается
+      Object.assign(toBits.spPair, { type: 'pair', cls: 'gz-split gz-bs', name: '90° · замор.', mid: '', tip: 'Или — или: 90° — оригинал и зеркало под прямым углом · Замор. — заморозить 3D-наклон оригинала',
+        parts: [{ label: '⛶ 90°', tip: a.tip, on: a.on, click: only(a, b) }, { label: '❄ Замор', tip: b.tip, on: b.on, click: only(b, a) }] });
+    } else if (toBits.spPair) Object.assign(toBits.spPair, toBits.sp90 || toBits.spFrz, { key: 'space|90-freeze' });
     if (toBits.flowPair && toBits.fDense && toBits.fAxis) {
       const d = toBits.fDense, a = toBits.fAxis;
       Object.assign(toBits.flowPair, { type: 'pair', cls: 'gz-split gz-bs', name: 'Плотно · от оси', mid: '', tip: 'Плотно — сплошной поток света и воды сверху · От оси — поток от оси',
