@@ -111,7 +111,7 @@
   // Hydrostatic relaxation along each supported horizontal span. Unlike the local
   // snow-like solver, a pool levels across its full width before its next fall.
   class WaterField extends Field {
-    constructor(...args){super(...args);this.activeRows=new Set();this.cornerPass=false;}
+    constructor(...args){super(...args);this.activeRows=new Set();this.cornerPass=false;this.cornerUp=false;}   // v0.407: шахматный стык вниз / вверх — отдельно
     addWater(x,y,amount=1){const added=super.addWater(x,y,amount);if(added>0)this.activeRows.add(Math.floor(y));return added;}
     fillTop(y=0){let added=0;for(let x=0;x<this.width;x++)added+=this.addWater(x,y);return added;}
     setMask(mask){
@@ -184,8 +184,8 @@
     const {width:w,height:h,solid:s,water:m}=this,seen=new Uint8Array(w*h),rest=i=>m[i]>0&&!s[i]&&i+w<w*h&&(s[i+w]||m[i+w]>=.99999);
     const nb=(i,f)=>{const x=i%w;
       if(x>0&&!s[i-1])f(i-1);if(x<w-1&&!s[i+1])f(i+1);if(i>=w&&!s[i-w])f(i-w);if(i+w<w*h&&!s[i+w])f(i+w);
-      for(const dx of [-1,1]){if(x+dx<0||x+dx>=w)continue;const side=!s[i+dx]||this.cornerPass;
-        if(i+w<w*h&&!s[i+w+dx]&&(side||!s[i+w]))f(i+w+dx);if(i>=w&&!s[i-w+dx]&&(side||!s[i-w]))f(i-w+dx);}};
+      for(const dx of [-1,1]){if(x+dx<0||x+dx>=w)continue;const side=!s[i+dx];
+        if(i+w<w*h&&!s[i+w+dx]&&(side||!s[i+w]||this.cornerPass))f(i+w+dx);if(i>=w&&!s[i-w+dx]&&(side||!s[i-w]||this.cornerUp))f(i-w+dx);}};
     for(const y0 of [...this.activeRows])for(let x0=0;x0<w;x0++){
       const i0=y0*w+x0;if(seen[i0]||!rest(i0))continue;
       const body=[i0];seen[i0]=1;let vol=0;

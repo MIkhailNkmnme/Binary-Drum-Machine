@@ -7,9 +7,9 @@
   let bounds=null,rays=[],emission=0,snowEmission=0,waterEmission=0,sample=0,lightButton,snowButton,waterButton,status;
   let lightBits=false,lightSize=16,shapeButton,sizeOutput,sun=false,sunRadius=40,sunButton,radiusRange,radiusOutput;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');lightBits=saved.bits===true;sun=saved.sun===true;if(Number.isFinite(saved.radius))sunRadius=Math.max(0,Math.min(innerWidth,saved.radius));if(Number.isFinite(saved.size))lightSize=Math.max(4,Math.min(64,saved.size));}catch(_){}
-  let dense=false,denseButton,beams=null,beamDistance=0,waterCorners=true,cornersButton;
+  let dense=false,denseButton,beams=null,beamDistance=0,waterCorners=true,cornersButton,waterCornersUp=false,cornersUpButton;
   try{dense=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').dense===true;if(dense)sun=false;}catch(_){}
-  try{waterCorners=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').waterCorners!==false;}catch(_){}
+  try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');waterCorners=saved.waterCorners!==false;waterCornersUp=saved.waterCornersUp===true;}catch(_){}
   // v0.235: the simulation runs in a field frame; «От оси» turns it so that field-down follows the axis.
   let axisFlow=false,axisButton,guide=null,frameW=0,frameH=0,ls=1,dirX=0,dirY=1,horizon=0,lastTurn=-Infinity;
   axisFlow=true;   // v0.405: «всегда» — горизонт через ручку оси и тяжесть поперёк него действуют всегда (нет оси — сверху вниз)
@@ -54,7 +54,7 @@
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}').speeds;for(const key of Object.keys(speeds))if(Number.isFinite(saved?.[key]))speeds[key]=Math.max(0,Math.min(4,saved[key]));}catch(_){}
   const lightRules=[{pass:1,reflect:2},{pass:2,reflect:1}];let reflectionLoss=true;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_flow')||'{}');reflectionLoss=saved.reflectionLoss!==false;for(let bit=0;bit<2;bit++)for(const key of ['pass','reflect']){const value=saved.lightRules?.[bit]?.[key];if(Number.isInteger(value)&&value>=0&&value<=3)lightRules[bit][key]=value;}}catch(_){}
-  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,speeds,lightRules,reflectionLoss}));}catch(_){}};
+  const saveStyle=()=>{try{localStorage.setItem('zerk_hub_flow',JSON.stringify({axis:axisFlow,bits:lightBits,size:lightSize,sun,radius:sunRadius,dense,waterCorners,waterCornersUp,speeds,lightRules,reflectionLoss}));}catch(_){}};
   let spriteKey='',sprites=[];
   function lightSprites(){
     const mirror=window.HubMirror;if(!mirror)return [];
@@ -74,7 +74,7 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
     if(field&&field.width===cols&&field.height===rows&&canvas.width===w&&canvas.height===h&&liquid.width===lw&&liquid.height===lh)return;
     frameW=W;frameH=H;ls=scale;if(!axisFlow){dirX=0;dirY=1;horizon=0;guide=null;}
     canvas.width=w;canvas.height=h;maskCanvas.width=liquidCanvas.width=lw;maskCanvas.height=liquidCanvas.height=lh;waterCanvas.width=cols;waterCanvas.height=rows;
-    field=new HubFlowCore.Field(cols,rows);field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;liquid=new HubFlowCore.WaterField(lw,lh);liquid.cornerPass=waterCorners;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(lw,lh);rays=[];dirty=true;
+    field=new HubFlowCore.Field(cols,rows);field.lightRules=lightRules;field.reflectionLoss=reflectionLoss;liquid=new HubFlowCore.WaterField(lw,lh);liquid.cornerPass=waterCorners;liquid.cornerUp=waterCornersUp;pixels=waterCtx.createImageData(cols,rows);liquidPixels=liquidCtx.createImageData(lw,lh);rays=[];dirty=true;
     beams=null;canvas.dataset.waterCell='1';
   }
   function rebuild(time){
@@ -171,7 +171,7 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
     rays=rays.filter(r=>!r.dead&&r.age<8);ctx.globalAlpha=1;ctx.shadowBlur=0;
     for(const key of Object.keys(speeds))canvas.dataset[key+'Speed']=String(speeds[key]);
     canvas.dataset.lightRules=JSON.stringify(lightRules);canvas.dataset.reflectionLoss=String(reflectionLoss);
-    canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.waterCorners=String(waterCorners);canvas.dataset.dense=String(dense);canvas.dataset.lightStyle=dense?'continuous':lightBits?'bits':'rays';canvas.dataset.beams=String(beams?.length||0);canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY=String(Math.round(horizon));canvas.dataset.axisFlow=String(axisFlow);canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
+    canvas.dataset.snow=String(Math.round(snowVolume));canvas.dataset.water=String(Math.round(volume));canvas.dataset.rays=String(rays.length);canvas.dataset.waterCorners=String(waterCorners);canvas.dataset.waterCornersUp=String(waterCornersUp);canvas.dataset.dense=String(dense);canvas.dataset.lightStyle=dense?'continuous':lightBits?'bits':'rays';canvas.dataset.beams=String(beams?.length||0);canvas.dataset.lightSize=String(lightSize);canvas.dataset.sourceY=String(Math.round(horizon));canvas.dataset.axisFlow=String(axisFlow);canvas.dataset.lightSource=sun?'sun':'top';canvas.dataset.sunRadius=String(sunRadius);
   }
   function frame(time){
     raf=0;if(document.hidden||paused){lastTime=0;return;}
@@ -210,7 +210,8 @@ function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEm
       b.title='Бит '+bit+' · '+name+': '+sides[v]+' · Клик: нет → сверху → снизу → обе стороны. Стороны относительно экрана; оба действия — разделение 50/50.';b.setAttribute('aria-pressed',String(v!==0));b.setAttribute('aria-description',sides[v]);};update();
     }
     const loss=button('−50%\nОтраж.','Ослаблять отражённый свет на 50%',()=>{reflectionLoss=!reflectionLoss;loss.setAttribute('aria-pressed',String(reflectionLoss));opticalChange();});loss.id='hubLightLoss';loss.setAttribute('aria-pressed',String(reflectionLoss));
-    cornersButton=button('↘\nУглы','Вода: стороны и углы — проход через шахматные стыки',()=>{waterCorners=!waterCorners;if(liquid)liquid.cornerPass=waterCorners;cornersButton.setAttribute('aria-pressed',String(waterCorners));saveStyle();wake();});cornersButton.setAttribute('aria-pressed',String(waterCorners));
+    cornersButton=button('↘\nУглы ↓','Вода: стороны и углы — проход вниз через шахматные стыки',()=>{waterCorners=!waterCorners;if(liquid)liquid.cornerPass=waterCorners;cornersButton.setAttribute('aria-pressed',String(waterCorners));saveStyle();wake();});cornersButton.setAttribute('aria-pressed',String(waterCorners));
+    cornersUpButton=button('↗\nУглы ↑','Вода: углы вверх — уровень поднимается через шахматные стыки',()=>{waterCornersUp=!waterCornersUp;if(liquid)liquid.cornerUp=waterCornersUp;cornersUpButton.setAttribute('aria-pressed',String(waterCornersUp));saveStyle();wake();});cornersUpButton.setAttribute('aria-pressed',String(waterCornersUp));   // v0.407
     button('↺\nСброс','Очистить свет, снег и воду, остановить потоки',()=>{light=snow=water=false;reset();sync();});
     denseButton=button('▤\nПлотно','Сплошной поток света и воды сверху',()=>{dense=!dense;if(dense)sun=false;sunButton.setAttribute('aria-pressed',String(sun));denseButton.setAttribute('aria-pressed',String(dense));rays=[];beams=null;beamDistance=0;saveStyle();sync();});
     denseButton.setAttribute('aria-pressed',String(dense));

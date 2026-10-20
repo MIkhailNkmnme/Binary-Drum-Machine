@@ -192,3 +192,15 @@ test('v0.405: a narrow shaft and the side channels joined to it fill to one leve
   assert.ok(level(c-10)<=31,'left channel filled');assert.ok(level(c+10)<=31,'right channel filled');
   assert.ok(Math.abs(f.drained+sum(f.water)-added)<.002);
 });
+
+test('v0.407: the level climbs through a checkerboard corner only when corners-up is on',()=>{
+  const run=up=>{const w=20,h=20,f=new WaterField(w,h);f.cornerUp=up;
+    for(let y=5;y<15;y++)for(let x=0;x<w;x++)f.solid[y*w+x]=1;
+    for(let y=10;y<14;y++)for(const x of [9,10])f.solid[y*w+x]=0;   // pool
+    for(let y=5;y<10;y++)f.solid[y*w+9]=0;   // inlet straight above the pool
+    for(let y=6;y<10;y++)f.solid[y*w+11]=0;   // side shaft, joined to the pool only by the corner (10,10)-(11,9)
+    let added=0;for(let t=0;t<200;t++){if(t<12)added+=f.addWater(9,0,1);f.stepWater();}
+    let side=0;for(let y=6;y<10;y++)side+=f.water[y*w+11];
+    assert.ok(Math.abs(f.drained+f.water.reduce((a,b)=>a+b,0)-added)<.002);return side;};
+  assert.equal(run(false),0);assert.ok(run(true)>0);
+});
