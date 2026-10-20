@@ -21,3 +21,6 @@ body.hubZen #hubRail{display:none}
 #hubRail .gz-hx.gz-sl::before,#hubRail .gz-hx.gz-sl:hover::before{inset:0;background:var(--gz-bg)!important}
 /* «ромбовидный фон у списков всех» — подложка списка по контуру самих кнопок (зубчатые края), а не прямоугольником: тёмная кайма 3 px вокруг каждой шестиугольной кнопки, просветы между ними закрыты */
 body.hubRailOn .gz-ladder{background:none!important;box-shadow:none!important;border-radius:0;filter:drop-shadow(3px 0 0 #05070d) drop-shadow(-3px 0 0 #05070d) drop-shadow(0 2px 0 #05070d) drop-shadow(0 -2px 0 #05070d)}
+/* «обводки нет при включённой»: ползунок с включателем (Автозум) — включён: обводка цветом группы, как у кнопок */
+#hubRail .gz-hx.gz-sl.gz-vhd.gz-on,#hubRail .gz-hx.gz-sl.gz-vhd.gz-on:hover{background:var(--c)!important}
+#hubRail .gz-hx.gz-sl.gz-vhd.gz-on::before{inset:1.5px}

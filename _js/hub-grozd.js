@@ -97,6 +97,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             add(g.key, toBits.zoom = { type: 'pair', col: it.col, cls: 'gz-split gz-bs', name: 'Автозум', mid: '', tip: it.tip, one: () => !on(),
               parts: [{ label: 'Автозум', tip: it.tip, on, click: () => c.node.click() }, { label: 'Маятник', labelNow: () => /Сброс/.test(md()?.textContent || '') ? 'Сброс' : 'Маятник', tip: 'Режим автозума: маятник или сброс к минимуму', click: () => md()?.click() }] }, c.id); continue; }
           if (/\|Режим автозума/.test(c.id)) continue;
+          if (/\|Минимум (строк|пар)/.test(c.id) && c.node.matches('details')) { toBits[/строк/.test(c.id) ? 'minR' : 'minP'] = c; continue; }   // «Мин. строк | Мин. пар» — одной кнопкой (после обхода)
           if (/автозума/.test(c.id) && c.node.matches('details')) { toBits.zoomVal = c; continue; }   // «Автозум — объедини с его ползунком»: ползунок — в кнопку «Автозум» (после обхода)
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
           if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
@@ -105,7 +106,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             if (!toBits.center) { toBits.center = { ...fa(leafItem(c)), key: 'axis|center' }; add(g.key, toBits.center, 'axis|center'); }
             continue; }
           if (/\|Цвет заворота/.test(c.id)) { toBits.foldColor = c; continue; }   // «Завор. — сюда цвет, отдельную кнопку-дубль цвета удали»: правой половиной «∿ Завор. | ●»
-          if (/\|Заворот:/.test(c.id)) { const it = fa(leafItem(c)); toBits.fold = it; add(g.key, it, c.id); continue; }   // место в «Оси» держит сама кнопка, цвет к ней — после обхода
+          if (/\|Заворот:/.test(c.id)) { const it = leafItem(c); toBits.fold = it; add('symmetry', it, c.id); continue; }   // «Завор. — перемести в Зеркала»   // место в «Оси» держит сама кнопка, цвет к ней — после обхода
           if (/\|(Золото:|Цвет подсветки симметрии)/.test(c.id)) { toBits[/Золото:/.test(c.id) ? 'gold' : 'goldColor'] = c; continue; }   // собираются в пару «✦ Подсветка | ●»
           if (/\|Вращать ось: зеркало/.test(c.id)) { add(g.key, { ...fs(fa(fc(leafItem(c)))), disabled: () => !window.HubMirror?.state?.on }, c.id); continue; }   // «Крут.» без зеркала — дубль пуска: притушена и не жмётся   // «убери дубли»: наклоны 0 / 1 — на нижнем пульте рядом с пуском
           if (/^symmetry\|.*Симметрия параллельно/.test(c.id) || /\|Сбросить только 3D/.test(c.id) || /^bits\|Сброс наклона/.test(c.id)) continue;   // сброс наклона битов — дубль ↺ на пульте   // сброс 3D — правой половиной кнопки «3D вращ.»
@@ -121,7 +122,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       else if (root.action && g.key === 'symmetry') {   // «поиск и парал. — в одну кнопку пополам, когда включён поиск»
         const h = headItem(root, '', HEAD.symmetry), par = () => document.querySelector('#hubFieldTools [aria-label*="Симметрия параллельно"], [aria-label*="Симметрия параллельно"]');
         const pon = () => { const n = par(); if (!n) return false; const i = n.matches('input') ? n : n.querySelector('input[type=checkbox]'); return i ? i.checked : n.getAttribute('aria-pressed') === 'true'; };
-        add('symmetry', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.symmetry, mid: '', tip: h.tip, one: () => !h.on(),
+        add('symmetry', { type: 'pair', wide: true, cls: 'gz-split gz-bs', name: HEAD.symmetry, mid: '', tip: h.tip, one: () => !h.on(),
           parts: [{ label: HEAD.symmetry, tip: h.tip, on: h.on, click: h.click }, { label: 'Парал.', tip: 'Симметрия параллельно: искать оси, параллельные главной', on: pon, click: () => { const n = par(); (n?.matches('input') ? n : n?.querySelector('input[type=checkbox]') || n)?.click(); } }] }, 'symmetry'); }
       else if (root.action && g.key === 'space') {   // «при включении — на полкнопки 3D вращ. / Сброс», «а тот сброс убери»: пока 3D не в покое — пара, иначе одна кнопка
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
@@ -198,11 +199,20 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
-      out.get('symmetry')?.push( { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось', mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',
+      out.get('axis')?.push( { type: 'pair', col: 0, cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось',   // «Подсве.ось — в Ось»: под «Ось | ●»
+ mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',
         parts: [{ label: '✦ Подсве.ось', tip: gi.tip, on: gi.on, click: gi.click }, ci ? { label: '●', tip: 'Цвет подсветки', on: gi.on, open: ci.open, ink: () => ci.get() } : { label: '' }], key: 'symmetry|gold' });
     }
+    if (toBits.minR && toBits.minP) {   // «эти объедини в одну пополам и помести над ними Поиск осей»: «Поиск осей» — широкой кнопкой прямо над «Мин. строк | Мин. пар»
+      const r = leafItem(toBits.minR), p = leafItem(toBits.minP);
+      out.get('symmetry')?.push({ type: 'vpair', name: 'Минимумы', tip: 'Минимумы поиска осей: строк · пар', parts: [{ ...r, name: 'Строк', tip: 'Минимум строк в найденной фигуре' }, { ...p, name: 'Пар', tip: 'Минимум пар битов в найденной фигуре' }], key: 'symmetry|mins' });
+    } else for (const c of [toBits.minR, toBits.minP]) if (c) out.get('symmetry')?.push({ ...leafItem(c), key: c.id });
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
+    {   // «Сетка — в правую рейку под Встык»: соты «Битов» — прежний порядок слева-справа, «Сетка» — правым столбцом
+      const soty = it => !['value', 'vpair', 'control'].includes(it.type) && !(it.type === 'list' && !it.compact) && !it.wide;
+      if (bl.some(i => i.key === 'bits|squareGrid')) { let k = 0; for (const it of bl) if (soty(it)) it.col = it.key === 'bits|squareGrid' ? 1 : k++ % 2; }
+    }
     return out;
   }
   // v0.267: «из рейки тоже тянуть в ромбосетку» — ключ настоящей кнопки поля для hub-romb-grid.js (pin: — кнопка, branch: — голова ветки)

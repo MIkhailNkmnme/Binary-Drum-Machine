@@ -195,3 +195,10 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-val .gz-vh.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
 .gz-val.gz-vhd .gz-a{display:none}   /* ◂ ▸ в середине кнопки мешают: значение — перетаскиванием и колесом */
 .gz-val.gz-vhd .gz-mid{margin:0 6px}
+/* «Мин. строк и Мин. пар — в одну пополам» (gz-vp); пара во всю ширину (gz-pw) — «Поиск осей» над ними */
+.gz-val.gz-vp{padding:0 4px}
+.gz-vp .gz-vph{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:3px;font-size:12px}
+.gz-vp .gz-vph .gz-nm{flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gz-vp .gz-vph .gz-v{min-width:12px;text-align:left}
+.gz-vp .gz-vps{flex:none;align-self:stretch;width:1px;margin:3px 2px;background:color-mix(in srgb,var(--c) 45%,transparent)}
+.gz-wide>.gz-pair.gz-pw{width:100%}

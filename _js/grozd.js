@@ -109,7 +109,7 @@
           refreshers.push(() => { v.textContent = it.get(); });
           // «Автозум — объедини с его ползунком»: it.head — включатель слева в той же кнопке, it.tail — режим справа (виден, пока tail.show())
           if (it.head) { const h = el('span', 'gz-vh', it.head.label); b.prepend(h); b.classList.add('gz-vhd');
-            h.addEventListener('click', e => { e.stopPropagation(); it.head.click(); refresh(); }); refreshers.push(() => h.classList.toggle('gz-on', !!it.head.on())); }
+            h.addEventListener('click', e => { e.stopPropagation(); it.head.click(); refresh(); }); refreshers.push(() => { const on = !!it.head.on(); h.classList.toggle('gz-on', on); b.classList.toggle('gz-on', on); }); }   // «обводки нет при включённой» — включён: обводка всей кнопки, как у остальных
           if (it.tail) { const t = el('span', 'gz-vt', it.tail.label); b.append(t);
             t.addEventListener('click', e => { e.stopPropagation(); it.tail.click(); refresh(); });
             refreshers.push(() => { const sh = !it.tail.show || it.tail.show(); t.style.display = sh ? '' : 'none'; const n = it.tail.labelNow ? it.tail.labelNow() : it.tail.label; if (t.textContent !== n) t.textContent = n; }); }
@@ -166,7 +166,18 @@
           refreshers.push(() => { if (it.one) b.classList.toggle('gz-one', !!it.one()); it.parts.forEach((p, i) => { if (p.labelNow) { const t = p.labelNow(); if (hs[i].textContent !== t) hs[i].textContent = t; } }); });   // labelNow — живая подпись половины   // it.one() — показывать одну левую половину во всю кнопку
           refreshers.push(() => it.parts.forEach((p, i) => { const on = !!(p.on && p.on()); hs[i].classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + i, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)');
             const f = p.fill && p.fill(), k = p.ink && p.ink(); if (f && b.style.getPropertyValue('--gz-f' + i) !== f) b.style.setProperty('--gz-f' + i, f); if (k && hs[i].style.getPropertyValue('--gz-k') !== k) hs[i].style.setProperty('--gz-k', k); }));
-          cells.push(b); soty.append(b);
+          if (it.wide) { b.classList.add('gz-pw'); wide.append(b); } else { cells.push(b); soty.append(b); }   // it.wide — во всю ширину рейки, среди ползунков
+        } else if (it.type === 'vpair') {
+          // «Мин. строк и Мин. пар — в одну пополам»: два значения в одной кнопке, у каждой половины свои ◂ ▸
+          b.classList.add('gz-val', 'gz-vp');
+          it.parts.forEach((p, i) => {
+            const h = el('span', 'gz-vph'), v = el('span', 'gz-v');
+            const a = (t, d) => { const x = el('span', 'gz-a', t); x.addEventListener('click', e => { e.stopPropagation(); p.step(d); refresh(); }); return x; };
+            h.append(a('◂', -1), el('span', 'gz-nm', p.name), v, a('▸', 1)); withTip(h, p.tip || p.name);
+            h.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); p.step(e.deltaY < 0 ? 1 : -1); refresh(); }, { passive: false });
+            refreshers.push(() => { const t = p.get(); if (v.textContent !== t) v.textContent = t; });
+            if (i) b.append(el('span', 'gz-vps')); b.append(h); });
+          wide.append(b);
         } else if (it.type === 'color') {
           const sw = el('input', 'gz-color'); sw.type = 'color'; sw.title = it.tip || it.name;
           sw.addEventListener('input', () => { it.set(sw.value); refresh(); });
