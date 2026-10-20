@@ -315,7 +315,7 @@
       pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
       const c = getComputedStyle(r).getPropertyValue('--c').trim() || '#7cbcff', d = pt.map(q => q.join(',')).join(' ');
       r.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
-      r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="${c}" stroke-width="3" stroke-linejoin="round"/></svg>`) + '")'; };
+      r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="none" stroke-linejoin="round"/></svg>`) + '")'; };
     // v0.165: «у этих кнопок тоже закреп» — значок закрепа у названия группы, как в рейке: закреплённый список не закрывается
     // (щелчок мимо, Esc, открытие другой группы). На телефоне закреп не действует — там список один, на всю ширину.
     const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.querySelector('.pt-l').firstChild.textContent.trim();

@@ -452,3 +452,6 @@ header #paintTools.pt-dd .pt-l:hover,header #paintTools.pt-dd .pt-l:focus-visibl
 header #paintTools.pt-dd .pt-r{gap:4px!important}
 header #paintTools .pt-b.gz-hx::before,header #paintTools .pt-b.gz-hx:not(.gz-on)::before{inset:1.5px}
 header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 45%,#000)}   /* своя тусклая рамка, как в хабе; наведение — светлее, включённая — цветом группы */
+/* v0.185: «расширь заголовок по стандарту ширины» — названия групп полосы не уже кнопки списка (126 px), подпись слева, закреп и стрелка справа; у раскрытого списка — только фон, без обводки (в mayatnik-menu.js) */
+header #paintTools.pt-dd .pt-l{min-width:126px;justify-content:space-between}
+@media(max-width:600px){header #paintTools.pt-dd .pt-l{min-width:0}}
