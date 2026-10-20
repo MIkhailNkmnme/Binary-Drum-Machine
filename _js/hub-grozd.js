@@ -198,8 +198,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     }
     if (toBits.gold) {   // «подсветка — цвет Золота? выбор цвета — в Золото, и переименуй»: одна кнопка — слева вкл / выкл подсветки симметричных областей, справа её цвет
       const gi = leafItem(toBits.gold), ci = toBits.goldColor && leafItem(toBits.goldColor);
-      out.get('symmetry')?.push( { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Подсветка', mid: '', tip: 'Подсветка: области, симметричные относительно оси · справа — её цвет',
-        parts: [{ label: '✦ Подсветка', tip: gi.tip, on: gi.on, click: gi.click }, ci ? { label: '●', tip: 'Цвет подсветки', on: gi.on, open: ci.open, ink: () => ci.get() } : { label: '' }], key: 'symmetry|gold' });
+      out.get('symmetry')?.push( { type: 'pair', cls: 'gz-split gz-bs gz-wl', name: 'Подсве.ось', mid: '', tip: 'Подсветка оси: области, симметричные относительно главной оси зеркала · справа — её цвет',
+        parts: [{ label: '✦ Подсве.ось', tip: gi.tip, on: gi.on, click: gi.click }, ci ? { label: '●', tip: 'Цвет подсветки', on: gi.on, open: ci.open, ink: () => ci.get() } : { label: '' }], key: 'symmetry|gold' });
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
