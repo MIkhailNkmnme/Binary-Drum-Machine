@@ -171,9 +171,51 @@
           for(let xx=start;xx<end;xx++)m[y*w+xx]=level;
         }
       }
+      if(this.tick%4===0)this.levelBodies(active);
       this.activeRows=new Set([...active].filter(y=>m.subarray(y*w,(y+1)*w).some(q=>q>0)));
       this.tick++;
     }
   }
+  // v0.405: communicating vessels. Each resting body of water (cells that lie on a wall or on full water) is
+  // refilled lowest-first over every free cell it can reach, so a pool rises evenly in all its branches —
+  // a narrow shaft and the side channels joined to it fill to one level. A body that would reach the edge
+  // of the field is left to the ordinary flow (it drains there anyway).
+  WaterField.prototype.levelBodies=function(active){
+    const {width:w,height:h,solid:s,water:m}=this,seen=new Uint8Array(w*h),rest=i=>m[i]>0&&!s[i]&&i+w<w*h&&(s[i+w]||m[i+w]>=.99999);
+    const nb=(i,f)=>{const x=i%w;
+      if(x>0&&!s[i-1])f(i-1);if(x<w-1&&!s[i+1])f(i+1);if(i>=w&&!s[i-w])f(i-w);if(i+w<w*h&&!s[i+w])f(i+w);
+      for(const dx of [-1,1]){if(x+dx<0||x+dx>=w)continue;const side=!s[i+dx]||this.cornerPass;
+        if(i+w<w*h&&!s[i+w+dx]&&(side||!s[i+w]))f(i+w+dx);if(i>=w&&!s[i-w+dx]&&(side||!s[i-w]))f(i-w+dx);}};
+    for(const y0 of [...this.activeRows])for(let x0=0;x0<w;x0++){
+      const i0=y0*w+x0;if(seen[i0]||!rest(i0))continue;
+      const body=[i0];seen[i0]=1;let vol=0;
+      for(let k=0;k<body.length;k++){const i=body[k];vol+=m[i];nb(i,j=>{if(!seen[j]&&rest(j)){seen[j]=1;body.push(j);}});}
+      if(body.length<2||vol<1)continue;
+      // Priority flood from the body's own cells, deepest row first.
+      let left=vol;const inBody=new Set(body);
+      // Water met on the way (a drop still falling) joins the body, so nothing is overwritten.
+      const buckets=new Map(),mark=new Set(),push=j=>{if(mark.has(j))return;mark.add(j);if(m[j]>0&&!inBody.has(j)){inBody.add(j);body.push(j);left+=m[j];}const y=Math.floor(j/w);if(!buckets.has(y))buckets.set(y,[]);buckets.get(y).push(j);};
+      body.slice().forEach(push);
+      const fill=[];let edge=false,lastRow=-1,rowCells=[];
+      while(left>1e-6){
+        let y=-1;for(const [yy,list] of buckets)if(list.length&&yy>y)y=yy;if(y<0)break;
+        const i=buckets.get(y).pop(),x=i%w;
+        if(x===0||x===w-1||y===h-1){edge=true;break;}
+        if(y!==lastRow){lastRow=y;rowCells=[];}
+        rowCells.push(i);fill.push(i);left-=1;nb(i,push);
+      }
+      if(edge)continue;
+      for(const i of body)m[i]=0;
+      for(const i of fill){m[i]=1;active.add(Math.floor(i/w));}
+      if(left<0){
+        // The top row holds the fraction: spread it over every reachable cell of that row.
+        const row=new Set(rowCells),q=[...(buckets.get(lastRow)||[])];for(const j of q)row.add(j);
+        let extra=0;
+        for(let k=0;k<q.length;k++)nb(q[k],j=>{if(Math.floor(j/w)===lastRow&&!row.has(j)&&!mark.has(j)){mark.add(j);row.add(j);q.push(j);if(m[j]>0&&!inBody.has(j)){extra+=m[j];m[j]=0;}}});
+        const total=rowCells.length+left+extra;
+        const level=Math.max(0,total/row.size);for(const j of row)m[j]=level;
+      }
+    }
+  };
   if(typeof module==='object'&&module.exports)module.exports={Field,WaterField};else root.HubFlowCore={Field,WaterField};
 })(typeof window==='object'?window:globalThis);

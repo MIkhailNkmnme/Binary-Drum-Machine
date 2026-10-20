@@ -181,3 +181,14 @@ test('split light halves both branches, applies optional loss only to reflection
   const beams=f.topBeams();assert.ok(beams.some(s=>s.alpha===.5&&s.b[1]>20));assert.ok(beams.some(s=>s.alpha===(loss?.25:.5)&&s.b[1]<s.a[1]));
  }
 });
+
+test('v0.405: a narrow shaft and the side channels joined to it fill to one level (communicating vessels)',()=>{
+  const w=41,h=60,c=20,f=new WaterField(w,h);
+  for(let y=10;y<55;y++)for(let x=0;x<w;x++)f.solid[y*w+x]=1;
+  for(let y=10;y<=40;y++)f.solid[y*w+c]=0;
+  for(let k=0;k<=15;k++){const y=40-k;for(const x of [c-k,c-k-1,c+k,c+k+1])f.solid[y*w+x]=0;}
+  let added=0;for(let t=0;t<1500;t++){if(t%5===0)added+=f.addWater(c,0,1);f.stepWater();}
+  const level=x=>{for(let y=0;y<h;y++)if(f.water[y*w+x]>.5)return y;return h;};
+  assert.ok(level(c-10)<=31,'left channel filled');assert.ok(level(c+10)<=31,'right channel filled');
+  assert.ok(Math.abs(f.drained+sum(f.water)-added)<.002);
+});
