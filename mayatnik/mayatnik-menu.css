@@ -464,3 +464,5 @@ header #paintTools .pt-b.gz-hx:not(.on)::before{inset:1px}
 header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
 /* v0.190 → v0.191: стрелка обводкой справа у кнопок-списков и столбец вариантов — общие из grozd (.gz-lst, .gz-ladder); здесь — ширина по самому длинному варианту */
 .gz-ladder .gz-hx{width:auto;min-width:var(--gz-w);padding-right:16px}
+/* v0.193: перетаскивание групп полосы */
+#paintTools .pt-g.pt-drag{opacity:.6}#paintTools.pt-dragging .pt-l{cursor:grabbing}

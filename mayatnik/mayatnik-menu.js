@@ -355,12 +355,32 @@
         if (open === g && Date.now() - (g._hoverAt || 0) < 900) return;   // только что раскрылся наведением — щелчок его не захлопывает
         open === g ? shut() : show(g); };
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
-      l.onpointerenter = e => { if (e.pointerType === 'mouse' && open !== g && !g.classList.contains('pt-open')) { g._hoverAt = Date.now(); show(g); } };   // v0.170: «раскрывай сразу при наведении» — мышью без щелчка
+      l.onpointerenter = e => { if (e.pointerType === 'mouse' && !tools.classList.contains('pt-dragging') && open !== g && !g.classList.contains('pt-open')) { g._hoverAt = Date.now(); show(g); } };   // v0.170: «раскрывай сразу при наведении» — мышью без щелчка
       // v0.169: «не скрывается при уходе» — мышь ушла с названия и списка: незакреплённый список закрывается (с запасом 350 мс на переход)
       g.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') return; clearTimeout(g._leave);
         g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover')) shut(); }, 350); });
       g.addEventListener('pointerenter', () => clearTimeout(g._leave));   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
+    // v0.193: «дай менять местами» — группу полосы тянут за название вбок, она встаёт между соседями; порядок — в памяти браузера (mayatnik-dd-order)
+    { const ORDER = 'mayatnik-dd-order', save = () => { try { localStorage.setItem(ORDER, JSON.stringify(groupsAll().map(keyOf))); } catch (_) {} };
+      const arrange = keys => { const gs = groupsAll(), at = k => { const i = keys.indexOf(keyOf(k)); return i < 0 ? keys.length + gs.indexOf(k) : i; }, end = gs[gs.length - 1].nextSibling;
+        for (const g of [...gs].sort((a, b) => at(a) - at(b))) tools.insertBefore(g, end); };
+      try { const k = JSON.parse(localStorage.getItem(ORDER) || 'null'); if (Array.isArray(k)) arrange(k); } catch (_) {}
+      let d = null, swallow = false;
+      addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
+      // перенос группы в DOM снимает захват указателя, поэтому движение и отпускание слушаются на окне
+      addEventListener('pointermove', e => { if (!d || e.pointerId !== d.id) return; const g = d.g;
+        if (!d.on) { if (Math.abs(e.clientX - d.x) < 6) return; d.on = true; shut(); tools.classList.add('pt-dragging'); g.classList.add('pt-drag'); }
+        e.preventDefault(); const x = e.clientX, others = groupsAll().filter(o => o !== g && o.offsetParent !== null);
+        const next = others.find(o => { const r = o.querySelector('.pt-l').getBoundingClientRect(); return x < r.left + r.width / 2; });
+        const ref = next || others[others.length - 1].nextSibling; if (ref !== g && g.nextSibling !== ref) tools.insertBefore(g, ref);
+        for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); });
+      const end = e => { if (!d || e.pointerId !== d.id) return; const { g, on } = d; d = null; if (!on) return;
+        swallow = e.type === 'pointerup'; setTimeout(() => { swallow = false; }, 0); tools.classList.remove('pt-dragging'); g.classList.remove('pt-drag'); save(); requestAnimationFrame(noOverlap); };
+      addEventListener('pointerup', end, true); addEventListener('pointercancel', end, true);
+      for (const g of groupsAll()) { const l = g.querySelector('.pt-l');
+        l.addEventListener('pointerdown', e => { if (e.button !== 0 || narrow.matches) return; d = { g, x: e.clientX, id: e.pointerId, on: false }; });
+        if (!l.title) l.title = 'Щелчок — открыть · тянуть вбок — переставить группу'; } }
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
