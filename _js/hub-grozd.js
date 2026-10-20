@@ -333,37 +333,57 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
     const host = document.createElement('div'); host.id = 'hubRail'; document.body.append(host);
     for (const t of ['pointerdown', 'dblclick', 'wheel', 'contextmenu']) host.addEventListener(t, e => e.stopPropagation());
     document.body.classList.add('hubRailOn');
-    /* v0.383, «дай возможность закреплять меню хаба на верхней полосе по всей ширине браузера»: кнопка ▔ у рейки — группы встают в ряд
-       полосой сверху (открытая раскрывается вниз), повторно — обратно столбцом. Поле, логотип и меню страниц сдвигаются вниз на высоту
-       шапок полосы (HUB_RAIL_TOP). Выбор помнится (zerk_hub_rail_top); только на компьютере */
-    const TOPK = 'zerk_hub_rail_top'; let top = false; try { top = localStorage.getItem(TOPK) === '1'; } catch (_) {}
-    const dock = document.createElement('button'); dock.type = 'button'; dock.className = 'hubRailDock'; host.append(dock);
-    const syncDock = () => { dock.textContent = top ? '▌' : '▔'; dock.title = top ? 'Меню — обратно столбцом слева' : 'Меню — полосой сверху во всю ширину'; dock.setAttribute('aria-pressed', String(top)); };
-    dock.addEventListener('click', e => { e.stopPropagation(); top = !top; try { localStorage.setItem(TOPK, top ? '1' : '0'); } catch (_) {} syncDock(); place(); }); syncDock();
-    let rail = null, sig = '';
+    /* v0.385, «без кнопки, просто по одной: переместить группу кнопок, прижав наверх, и отступи от левого меню — его не трогаем»
+       (v0.383 ставила всю рейку полосой кнопкой ▔ и сдвигала меню страниц — снято). Шапку группы тянут к самому верху окна (пунктир
+       полосы) — группа переезжает в полосу сверху, правее меню страниц; из полосы тянут вниз — обратно в столбец. Полоса — своя рейка
+       (grozd:hubtop) внутри #hubRail, position:fixed; столбец встаёт под неё, поле — тоже (HUB_RAIL_TOP). Список — zerk_hub_strip; только на компьютере */
+    const STK = 'zerk_hub_strip', strip = document.createElement('div'); strip.className = 'hubStrip'; host.append(strip);
+    let topIds = new Set(); try { const a = JSON.parse(localStorage.getItem(STK) || '[]'); if (Array.isArray(a)) topIds = new Set(a); } catch (_) {}
+    const desk = () => matchMedia('(min-width:1101px)').matches;
+    let rail = null, railTop = null, sig = '';
     function build() {
-      const m = collect(T), now = [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
+      const m = collect(T), now = desk() + '#' + [...topIds].join(',') + '#' + [...m].map(([k, a]) => k + ':' + a.map(i => i.key + (i.type === 'list' ? i.options.length : '')).join(',')).join('|');
       if (now === sig) return false; sig = now;
-      if (rail) rail.destroy();
+      if (rail) rail.destroy(); if (railTop) { railTop.destroy(); railTop = null; }
       const gs = GROUPS.filter(([k]) => m.get(k).length).map(([id, title, color]) => ({ id, title, color, items: m.get(id) }));
-      rail = window.ZerkGrozd.rail(host, { key: 'hub', groups: gs });
+      const up = g => desk() && topIds.has(g.id), ups = gs.filter(up);
+      rail = window.ZerkGrozd.rail(host, { key: 'hub', groups: gs.filter(g => !up(g)) });
+      if (ups.length) railTop = window.ZerkGrozd.rail(strip, { key: 'hubtop', groups: ups });
       // подсказка — плашкой хаба (hub-tips.js читает title)
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
         const wideOf = i => ['value', 'list', 'control'].includes(i.type) && !i.compact, a = g.items.filter(i => !wideOf(i)), b = g.items.filter(wideOf);
         a.forEach((it, i) => { if (cells[i] && it.tip) cells[i].title = it.tip; const k = rgKey(it); if (cells[i] && k) cells[i].dataset.rgKey = k; }); b.forEach((it, i) => { if (wide[i] && it.tip) wide[i].title = it.tip;
-          if (wide[i] && it.zero) (wide[i].querySelector('.gz-mid') || wide[i]).addEventListener('dblclick', e => { e.stopPropagation(); it.zero(); rail.refresh(); }); }); }   // «везде двойной клик по ползункам — в 0»
+          if (wide[i] && it.zero) (wide[i].querySelector('.gz-mid') || wide[i]).addEventListener('dblclick', e => { e.stopPropagation(); it.zero(); refreshAll(); }); }); }   // «везде двойной клик по ползункам — в 0»
       return true;
     }
+    const refreshAll = () => { rail?.refresh(); railTop?.refresh(); };
+    const stripBottom = () => { let b = 0; for (const h of strip.querySelectorAll('.gz-head')) { const r = h.getBoundingClientRect(); if (r.height) b = Math.max(b, Math.ceil(r.bottom) + 6); } return b; };
     const place = () => {
-      const desk = matchMedia('(min-width:1101px)').matches;
-      const left = desk ? Math.max(8, ...['.hub', '#hubSidebarToggle'].map(q => { const r = document.querySelector(q)?.getBoundingClientRect(); return r && r.width ? r.right : 0; })) + 10 : null;
-      const strip = desk && top; document.body.classList.toggle('hubRailTop', strip);
-      host.style.left = desk && !strip ? Math.round(left) + 'px' : '';
-      let res = 0; if (strip) for (const h of host.querySelectorAll('.gz-head')) { const r = h.getBoundingClientRect(); if (r.height) res = Math.max(res, Math.ceil(r.bottom) + 6); }
-      if (res !== (window.HUB_RAIL_TOP || 0)) { window.HUB_RAIL_TOP = res; document.documentElement.style.setProperty('--hub-rail-top', res + 'px'); dispatchEvent(new Event('resize')); }
+      const d = desk();
+      const left = d ? Math.max(8, ...['.hub', '#hubSidebarToggle'].map(q => { const r = document.querySelector(q)?.getBoundingClientRect(); return r && r.width ? r.right : 0; })) + 10 : null;
+      host.style.left = d ? Math.round(left) + 'px' : ''; strip.style.left = d ? Math.round(left) + 'px' : '';
+      const res = d ? stripBottom() : 0;
+      host.style.top = res ? res + 'px' : ''; host.style.maxHeight = res ? 'calc(100dvh - ' + (res + 8) + 'px)' : '';
+      if (res !== (window.HUB_RAIL_TOP || 0)) { window.HUB_RAIL_TOP = res; dispatchEvent(new Event('resize')); }
     };
-    let q = 0; const tick = () => { q = 0; if (!build() && rail) rail.refresh(); place(); };
+    // перенос группы: шапку отпустили у самого верха окна — в полосу; из полосы — ниже неё — обратно в столбец (место — по курсору)
+    const ZONE = 14; let drag = null;
+    const putAt = (key, id, n) => { const k = 'grozd:' + key; let v = {}; try { v = JSON.parse(localStorage.getItem(k)) || {}; } catch (_) {}
+      const o = (Array.isArray(v.order) ? v.order : []).filter(x => x !== id); o.splice(Math.min(n, o.length), 0, id); v.order = o; try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+    host.addEventListener('pointerdown', e => { const h = e.target.closest('.gz-head'); if (!h || e.button !== 0 || e.target.closest('.gz-pin') || !desk()) return;
+      drag = { id: h.closest('.gz-group')?.dataset.id, top: !!h.closest('.hubStrip'), x: e.clientX, y: e.clientY }; }, true);
+    addEventListener('pointermove', e => { if (drag && !drag.top) document.body.classList.toggle('hubStripHint', e.clientY < ZONE && Math.abs(e.clientY - drag.y) > 6); });
+    addEventListener('pointerup', e => {
+      const d = drag; drag = null; document.body.classList.remove('hubStripHint');
+      if (!d || !d.id || Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return;
+      if (!d.top && e.clientY < ZONE) { const n = [...strip.querySelectorAll('.gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.left + r.width / 2 < e.clientX; }).length; topIds.add(d.id); putAt('hubtop', d.id, n); }
+      else if (d.top && e.clientY > stripBottom() + 30) { const n = [...host.querySelectorAll(':scope > .gz-rail > .gz-group')].filter(g => { const r = g.getBoundingClientRect(); return r.top < e.clientY; }).length; topIds.delete(d.id); putAt('hub', d.id, n); }
+      else return;
+      try { localStorage.setItem(STK, JSON.stringify([...topIds])); } catch (_) {}
+      setTimeout(() => { sig = ''; tick(); }, 0);   // после того как grozd.js сам положил группу в щель и сохранил порядок
+    });
+    let q = 0; const tick = () => { q = 0; if (!build()) refreshAll(); place(); };
     const soon = () => { if (!q) q = requestAnimationFrame(tick); };
     new MutationObserver(soon).observe(document.getElementById('hubFieldTools'), { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'hidden', 'aria-expanded'] });
     document.addEventListener('click', () => requestAnimationFrame(soon), true);
