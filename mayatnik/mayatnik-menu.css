@@ -440,3 +440,11 @@ header #paintTools .pt-ochki #ochkiList{max-height:calc(100dvh - var(--ochki-top
 header #paintTools .pt-info #mayatnikInfoPanel{position:static;right:auto;bottom:auto;width:min(640px,92vw);max-width:none;height:auto;min-height:0;max-height:calc(100dvh - 90px);border:0;background:transparent;box-shadow:none;display:flex;flex-direction:column}
 header #paintTools .pt-info #mayatnikInfoPanel>summary{display:none}
 header #paintTools .pt-info #mayatnikInfoPanel #mayatnikStatus{overflow:auto}
+/* v0.183: «у всех кнопок убери заливку фоном при наведении и вообще — как в хабе, только границы»: наведение подсвечивает рамку, середина не заливается */
+#mayatnikRail .gz-hx:hover::before,#mayatnikRailR .gz-hx:hover::before,header #paintTools .gz-hx:hover::before,.gz-ladder .gz-hx:hover::before{background:var(--gz-bg,#121a30)}
+header #paintTools .pt-b.gz-hx:hover{background:color-mix(in srgb,var(--c) 55%,#fff);filter:drop-shadow(0 0 3px var(--c))}
+header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-l:focus-visible::before{background:var(--gz-bg,#121a30)}
+header #paintTools.pt-dd .pt-l:hover,header #paintTools.pt-dd .pt-l:focus-visible{background:var(--c)}
+#paintTools .pt-b:not(.gz-hx):hover{background:transparent;outline:1px solid var(--c,#ff9b50);outline-offset:-1px}
+#mayRhombs .may-rh:hover,#mayRhombs .may-rh:focus-visible{background:#121a30}
+#mayRhombs .may-rh:hover::after,#mayRhombs .may-rh:focus-visible::after{opacity:1}
