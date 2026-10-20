@@ -431,3 +431,6 @@ header #paintTools.pt-dd .pt-lib #templateLibraryChoices{display:flex;flex-direc
 body.may-zen #mayRhombs .may-rh{opacity:.35}
 body.may-zen #mayRhombs .may-rh:hover,body.may-zen #mayRhombs #mayRhRec.on{opacity:1}
 .mayatnik-menu-ready #mayCorner #mayZen,body.mayatnik-menu-ready.may-zen #mayZenOut{display:none!important}
+/* v0.180: сводка «Очков» — внутри выпадающей группы «👓 Очки» полосы */
+header #paintTools .pt-ochki #ochkiBox{grid-column:auto;grid-row:auto;border:0;background:transparent;padding:4px 12px;max-width:min(900px,92vw);min-width:420px;box-sizing:border-box}
+header #paintTools .pt-ochki #ochkiBox summary{white-space:normal}

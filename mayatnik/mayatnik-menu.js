@@ -274,13 +274,17 @@
   { const row = ptGroup('Шаблоны'), lib = railRIn.querySelector('.gz-group'); row.parentElement.classList.add('pt-lib'); row.parentElement.style.setProperty('--c', '#d9b9ff');
     if (lib) { row.append(...lib.querySelectorAll('.gz-soty > .gz-hx'), ...lib.querySelectorAll('.gz-wide > *')); lib.remove(); }
     railR.style.setProperty('display', 'none', 'important'); }
+  // v0.180: «это в верхнее меню, открытие кнопкой и скрытие, как выпадающее меню, только полем»: сводка «Очков» — не полосой под шапкой,
+  // а выпадающей группой «👓 Очки» в полосе (наведение / щелчок / закреп — как у остальных); группа видна, только пока «Очки» что-то показывают
+  { const row = ptGroup('👓 Очки'), g = row.parentElement, box = $('ochkiBox'); g.classList.add('pt-ochki'); g.style.setProperty('--c', '#ffb347'); row.append(box); box.open = true;
+    toolSync.push(() => { const hide = box.hidden; if ((g.style.display === 'none') !== hide) g.style.display = hide ? 'none' : ''; }); }
   { const col = document.createElement('div'); col.id = 'mayCorner'; tools.append(col); col.append($('mayZen'), $('mayHelp')); }
   // v0.179: «Видео (Запись, GIF) — ромбами как в хабе, справа по середине высоты, и Дзен также»: столбик ромбов у правого края,
   // виден и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет — ромбы жмут прежние кнопки
   { const col = document.createElement('div'); col.id = 'mayRhombs'; document.body.append(col);
     const mk = (id, src, label) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'may-rh'; b.textContent = label;
       b.addEventListener('click', () => $(src)?.click()); col.append(b); return b; };
-    const zen = mk('mayRhZen', 'mayZen', '◎\nДзен'), rec = mk('mayRhRec', 'bRec', '⏺\nЗапись'), gif = mk('mayRhGif', 'bGif', 'GIF');
+    const zen = mk('mayRhZen', 'mayZen', '◎\nДзен'), rec = mk('mayRhRec', 'bRec', '⏺\nВидео'), gif = mk('mayRhGif', 'bGif', 'GIF');
     const sync = () => { const z = document.body.classList.contains('may-zen'), t = z ? '◎\nМеню' : '◎\nДзен'; if (zen.textContent !== t) zen.textContent = t;
       zen.title = z ? 'Вернуть меню (Esc, щелчок колёсиком по полю)' : tip($('mayZen')); zen.setAttribute('aria-pressed', String(z));
       const r = $('bRec'), on = !!r && r.matches('[aria-pressed="true"],.on'); rec.classList.toggle('on', on); rec.title = r ? tip(r) : '';
