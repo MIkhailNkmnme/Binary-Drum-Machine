@@ -222,7 +222,7 @@
     // v0.208: вторая половина кнопки — «Гориз»: центр «Зеркала ↑» (точка встречи «Застыло») тянется по горизонтали, а не вверх-вниз
     const h = document.createElement('span'); h.className = 'pt-half'; h.textContent = 'Гориз';
     h.addEventListener('click', ev => { ev.stopPropagation(); window.mayFixHor?.set(!window.mayFixHor.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayFixHor?.get(); h.classList.toggle('on', on); h.title = 'Гориз: центр «Зеркала ↑» тянуть за голубую вертикаль влево-вправо (выкл — за зелёную горизонталь вверх-вниз) · сейчас ' + (on ? 'вкл' : 'выкл') + ' · двойной щелчок по линии — сдвиг снять'; });
+    toolSync.push(() => { const on = !!window.mayFixHor?.get(); h.classList.toggle('on', on); h.title = 'Гориз: прижать по горизонтали — масштаб не меняется (из «по ширине» замирает числом), поле не сдвигается вбок при смене кадров; «по ширине» — снять · сейчас ' + (on ? 'вкл' : 'выкл'); });
     b.append(h); }
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
   for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners'], ['geomCenter', 'axes'], ['cellInk', 'grid4']]) {   // v0.132: «Центр» (подсветка столба) снят
