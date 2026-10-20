@@ -216,20 +216,19 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-hx.gz-pair.gz-tri:not(.gz-rainbow){background:color-mix(in srgb,var(--c) 30%,#000)!important}
 .gz-hx.gz-pair.gz-tri.gz-any:not(.gz-rainbow){background:var(--c)!important}
 .gz-hx.gz-pair.gz-tri::before,.gz-hx.gz-pair.gz-tri:hover::before{background:var(--gz-bg)!important}
-/* Hub v0.384, «Стык — текст, потом 1, 2, 3, перелистываются: в ромбе выбранный, две — с края стрелкой, чуть шире»: [Стык ‹a ◇b c›] —
-   название слева, a — стрелкой влево, b — в ромбе, c — у правого острия кнопки (тоже стрелка) */
-.gz-pair.gz-tri .gz-pm{order:0;flex:1 1 0;min-width:0;padding-left:calc(var(--gz-n) + 1px);text-align:left;color:var(--gz-txt,inherit);font-size:12px;text-overflow:clip}
-.gz-pair.gz-tri .gz-half{flex:none;font-size:13px;color:var(--gz-mut,inherit);position:relative}
-.gz-pair.gz-tri .gz-h0{order:1;width:22px;padding-left:4px;box-sizing:border-box}
-.gz-pair.gz-tri .gz-h0::before{content:'';position:absolute;inset:3px 0 3px 0;z-index:-1;clip-path:polygon(7px 0,100% 0,100% 100%,7px 100%,0 50%);background:color-mix(in srgb,var(--c) 22%,var(--gz-bg))}
-.gz-pair.gz-tri .gz-h1{order:2;width:26px;margin:0 1px}
-.gz-pair.gz-tri .gz-h1::before,.gz-pair.gz-tri .gz-h1::after{content:'';position:absolute;left:50%;top:50%;z-index:-1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-.gz-pair.gz-tri .gz-h1::before{width:26px;height:22px;margin:-11px 0 0 -13px;background:color-mix(in srgb,var(--c) 55%,#000)}
-.gz-pair.gz-tri .gz-h1::after{width:23px;height:19px;margin:-9.5px 0 0 -11.5px;background:var(--gz-bg)}
-.gz-pair.gz-tri .gz-h1.gz-on::before{background:var(--c)}
-.gz-pair.gz-tri .gz-h1.gz-on::after{background:color-mix(in srgb,var(--c) 35%,var(--gz-bg))}
-.gz-pair.gz-tri .gz-h1:not(.gz-on){color:var(--gz-txt,inherit)}
-.gz-pair.gz-tri .gz-h2{order:3;width:calc(var(--gz-n) + 12px);padding-right:calc(var(--gz-n) - 3px);box-sizing:border-box;justify-content:center}
-.gz-pair.gz-tri .gz-h2::before{content:'';position:absolute;inset:3px 0 3px 0;z-index:-1;clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,calc(100% - 5px) 50%,calc(100% - var(--gz-n)) 100%,0 100%);background:color-mix(in srgb,var(--c) 22%,var(--gz-bg))}
-.gz-pair.gz-tri .gz-h0:hover,.gz-pair.gz-tri .gz-h2:hover{color:#fff}
-.gz-pair.gz-tri .gz-half.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
+/* Hub v0.386, «1 как сейчас, потом через отступ 2 ромбом, и зеркально 3 как 1; фон ромба — без вертикальной полосы»: [Стык ‹1 ◇2 3›] —
+   1 — стрелка влево, у которой правый край — уголок по грани ромба (вертикальной кромки нет), 2 — ромб с отступом, 3 — зеркало 1.
+   Выбранный номер — фигура цветом группы; включён стык — кайма всей кнопки (gz-any) */
+.gz-pair.gz-tri .gz-pm{order:0;flex:1 1 0;min-width:0;padding-left:calc(var(--gz-n) + 1px);text-align:left;color:var(--gz-txt,inherit);font-size:12px;text-overflow:clip;pointer-events:none}
+.gz-pair.gz-tri .gz-half{flex:none;position:relative;font-size:13px;color:var(--gz-mut,inherit)}
+.gz-pair.gz-tri .gz-half::before{content:'';position:absolute;z-index:-1;background:color-mix(in srgb,var(--c) 22%,var(--gz-bg))}
+.gz-pair.gz-tri .gz-h0{order:1;width:23px;padding-left:3px;box-sizing:border-box}
+.gz-pair.gz-tri .gz-h0::before{inset:3px 0;clip-path:polygon(7px 0,100% 0,calc(100% - 9px) 50%,100% 100%,7px 100%,0 50%)}
+.gz-pair.gz-tri .gz-h1{order:2;width:24px;margin:0 -6px}
+.gz-pair.gz-tri .gz-h1::before{left:50%;top:50%;width:22px;height:18px;margin:-9px 0 0 -11px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.gz-pair.gz-tri .gz-h2{order:3;width:23px;padding-right:3px;box-sizing:border-box;margin-right:calc(var(--gz-n) - 3px)}
+.gz-pair.gz-tri .gz-h2::before{inset:3px 0;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,0 100%,9px 50%)}
+.gz-pair.gz-tri .gz-half.gz-on::before{background:color-mix(in srgb,var(--c) 70%,var(--gz-bg))}
+.gz-pair.gz-tri.gz-any .gz-half.gz-on::before{background:var(--c)}
+.gz-pair.gz-tri .gz-half:hover{color:#fff}
+.gz-pair.gz-tri .gz-half.gz-on{color:#fff;text-shadow:0 0 4px #000}
