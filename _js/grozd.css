@@ -209,3 +209,6 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sec+.gz-sec,.gz-wide>.gz-hx+.gz-sec,.gz-sec+.gz-hx{margin-top:3px}
 .gz-sec>.gz-bot,.gz-sec>.gz-wide+.gz-wide{margin-top:3px}
 .gz-val .gz-vt.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
+/* ползунок с подписанными стрелками (it.arrows) — стрелки вдвое шире, подпись видна; бегунок со значком (it.thumb) — шире, значок на нём */
+.gz-sl.gz-al .gz-a:not(.gz-a2){width:40px;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;text-shadow:0 0 2px #000}
+.gz-sl.gz-thb .gz-th{width:30px;margin-left:-15px;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#0d1119;font-weight:700;cursor:pointer}

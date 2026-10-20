@@ -122,7 +122,9 @@
             refreshers.push(() => { const sh = !it.tail.show || it.tail.show(); t.style.display = sh ? '' : 'none'; if (it.tail.on) t.classList.toggle('gz-on', !!it.tail.on()); const n = it.tail.labelNow ? it.tail.labelNow() : it.tail.label; if (t.textContent !== n) t.textContent = n; }); }
           // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, ◂ ▸ — шаг
           if (it.frac && it.setFrac) {
-            b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'), TH = 8; mid.prepend(th);
+            b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'), TH = it.thumb ? 13 : 8; mid.prepend(th);
+            if (it.thumb) { b.classList.add('gz-thb'); refreshers.push(() => { const t = it.thumb.label(); if (th.textContent !== t) th.textContent = t; }); }
+            if (it.arrows) { b.classList.add('gz-al'); const as = b.querySelectorAll(':scope > .gz-a:not(.gz-a2)'); if (as[0]) as[0].textContent = it.arrows[0]; if (as[1]) as[1].textContent = it.arrows[1]; }   // it.arrows — подписи стрелок вместо ◂ ▸ (Маятник: −1 / +1)
             // «числа до и после бегунка»: «96 / 128» — 96 слева от бегунка, 128 справа; у края число не уходит за дорожку
             const vl = el('span', 'gz-vl'), vr = el('span', 'gz-vr'); mid.append(vl, vr); b.classList.add('gz-sl2');
             // «проверь на тормоза»: рейка обновляется часто — без перемен ползунок ничего не пишет и не меряет (замер ширины заставлял браузер пересчитывать раскладку всей страницы)
@@ -139,8 +141,9 @@
             b.addEventListener('pointerenter', () => { if (!tot.textContent) return; document.body.append(tot); seen = ''; refresh(); });
             b.addEventListener('pointerleave', () => tot.remove());
             const at = e => { const r = mid.getBoundingClientRect(); it.setFrac(Math.max(0, Math.min(1, (e.clientX - r.left - TH) / Math.max(1, r.width - 2 * TH)))); refresh(); };   // «не схватывает бегунок, когда прижат влево»: ход бегунка — внутри дорожки, на TH от краёв
-            mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); at(e);
-              const mv = ev => at(ev), up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); };
+            // it.thumb { label(), click() } — на бегунке значок, щелчок по нему (без сдвига) — действие, тянуть — как прежде (Маятник: ▶ / ❚❚ на кадре)
+            mid.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); mid.setPointerCapture(e.pointerId); const onTh = !!it.thumb && e.target === th, x0 = e.clientX; let moved = false; if (!onTh) at(e);
+              const mv = ev => { if (onTh && !moved && Math.abs(ev.clientX - x0) < 3) return; moved = true; at(ev); }, up = () => { mid.removeEventListener('pointermove', mv); mid.removeEventListener('pointerup', up); mid.removeEventListener('pointercancel', up); if (onTh && !moved) { it.thumb.click(); refresh(); } };
               mid.addEventListener('pointermove', mv); mid.addEventListener('pointerup', up); mid.addEventListener('pointercancel', up); });
             // 19.10: колесо над ползунком не трогает значение — прокручивает рейку («скрол вверх-вниз при переполнении»)
           }

@@ -71,13 +71,13 @@
     // v0.114: «объедини группы» — кнопки «Хорр» в «Анимации», отдельной группы «Хорр» нет; «Пара сразу» убрана («оставь только по очереди»).
     // v0.115: и «По очереди» убрана — «не нужна теперь, и так автоматом по очереди»
     { id: 'animation', title: 'Анимация', color: '#b9a2ff', items: [
-      button('bRowRun', 'down'),   // «+1 / −1 вершина — объедини стрелки»: отдельной «+1 вершина» нет — это стрелки ползунка кадра
+      button('bRowRun', 'down'), check('third', 'tri'),   // «До N/3 — в правую рейку вверх»: вторая по счёту — правый столбец, первая строка   // «+1 / −1 вершина — объедини стрелки»: отдельной «+1 вершина» нет — это стрелки ползунка кадра
       ...[...source.querySelectorAll('button.pre')].map(e => ({ type: 'action', name: e.textContent,
         icon: icon(e, 'field'), tip: e.title || `Построить ${e.dataset.n} строк и вершин (или до N/3)`, click: () => e.click() })),
-      check('third', 'tri'),
       { ...num('speed', { name: 'Анимация', tip: 'Скорость анимации', fmt: v => '×' + v, zero: 1 }), name: 'Анимация',   // «Анимация» — включатель внутри своего ползунка скорости
         head: { label: '▶ Анимация', on: () => $('bPlay').getAttribute('aria-pressed') === 'true', click: () => $('bPlay').click() } },
-      { ...num('frame', { name: 'Кадр', fmt: v => 'кадр ' + v, zero: 0 }), tip: 'Кадр = вершина · ‹ › — −1 / +1 вершина (в паре — пара) · тяни — к любой · двойной щелчок — 0' } ] },
+      { ...num('frame', { name: 'Кадр', fmt: v => 'кадр ' + v, zero: 0 }), tip: 'Кадр = вершина · −1 / +1 — на вершину (в паре — пара) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
+        arrows: ['−1', '+1'], thumb: { label: () => $('bPlay').getAttribute('aria-pressed') === 'true' ? '❚❚' : '▶', click: () => $('bPlay').click() } } ] },
     // v0.103: группа «Вид» целиком переехала в шапку («перемести всё в Вид сверху») — в рейке её нет
     { id: 'ochki', title: 'Очки', color: '#ffb347', items: [
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),

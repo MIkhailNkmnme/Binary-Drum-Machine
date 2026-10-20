@@ -1,11 +1,11 @@
-<!-- Zerkalius Маятник — v0.177. v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
+<!-- Zerkalius Маятник — v0.178. v0.178: ползунок кадра — бегунок шире со значком ▶ / ❚❚ (щелчок — пуск / пауза), стрелки вдвое шире с подписями −1 / +1; «До N/3» — в правом столбце «Анимации» наверху. v0.177: v0.177: «⋈ Зерк. ось» (Зеркала) — зеркальная ось одним концом на нижней границе последней строки (тянется вдоль низа), второй конец поворачивает её; отражение поля — под полем, по умолчанию ось по низу. v0.176: v0.176: верхняя полоса по логике хаба: семь видов — одной кнопкой «Вид» (щелчок / правый / колесо), цвета цифр и клеток — кнопками с ●, шрифт и размер цифр — кнопками, у «Заливки» своя ● цвета, «Центр 1 ●», «Центр 0 ●», «⇔ 2-й уровень» — кнопками; включённая кнопка — обводкой, не заливкой. Дубли с рейкой пока оставлены. v0.175: v0.175: «+1 вершина» — стрелками ползунка кадра (‹ − 1 · › + 1), отдельной кнопки в рейке нет. v0.174: v0.174: кнопки рейки — по логике хаба: строки, вершины и показ строк — ползунками в «Поле»; «▶ Анимация» внутри ползунка скорости; пары одной кнопкой (− Дальше | + Ближе, Заливка | ●, Центр 1 | ●, Центр 0 | ●, отмена | повтор, отражения, выше | ниже, строк ≥ | ≤, бит ≥ | ≤); дубли «Сохранить / Открыть / PNG / Кадр» в рейке убраны (есть в «Экспорте»); короткие надписи. XOR-маятник из Excel (_pzl.xlsm, модуль ТРЕУГСЖАТИЯ, листы «Лист19…»): конусы правила 90 от вершин якорь, −1, +1, −2, +2… -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник — v0.177</title>
+<title>Zerkalius Маятник — v0.178</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -110,7 +110,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 #cellInkBar button{color:inherit;background:#24394e;padding:5px 10px;border:0;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%)}#cellInkBar button[aria-pressed=true]{background:#007b91}#cellInkHint{flex-basis:100%;color:#b8cbd9;min-height:32px;line-height:16px}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
 </style>
-<link rel="stylesheet" href="../_js/grozd.css?v=42">
+<link rel="stylesheet" href="../_js/grozd.css?v=44">
 <!-- v0.162: пока не собралось меню (скрипты в конце страницы), сырая панель кнопок не мелькает; не соберётся — покажется после загрузки -->
 <style>html.may-boot .bar,html.may-boot header .sub,html.may-boot #mayatnikStatus{visibility:hidden}</style>
 <script>document.documentElement.classList.add('may-boot');addEventListener('load',()=>setTimeout(()=>document.documentElement.classList.remove('may-boot'),0));</script>
@@ -120,7 +120,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <body data-mi-scope="mayatnik">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.177</span>
+  <h1 id="appTitle">Маятник</h1><canvas class="may-logo" width="78" height="78" role="img" aria-label="Вращающийся Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas><span class="ver">v0.178</span>
   <button id="mayAbout" class="gz-hx" aria-haspopup="dialog" aria-controls="mayAboutDialog"><span>Что это такое?</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -2860,8 +2860,8 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
 <script src="../_js/hub-link.js?v=1"></script>
 <script src="../_js/recorder.js?v=1017" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=20"></script>
-<script src="../_js/grozd.js?v=42"></script>
-<script src="mayatnik-menu.js?v=178"></script>
+<script src="../_js/grozd.js?v=43"></script>
+<script src="mayatnik-menu.js?v=179"></script>
 <script src="mayatnik-tips.js?v=167"></script>
 <script src="mayatnik-zen-window.js?v=141"></script>
 </body>
