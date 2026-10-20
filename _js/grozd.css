@@ -212,3 +212,11 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 /* ползунок с подписанными стрелками (it.arrows) — стрелки вдвое шире, подпись видна; бегунок со значком (it.thumb) — шире, значок на нём */
 .gz-sl.gz-al .gz-a:not(.gz-a2){width:40px;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;text-shadow:0 0 2px #000}
 .gz-sl.gz-thb .gz-th{width:30px;margin-left:-15px;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#0d1119;font-weight:700;cursor:pointer}
+/* Hub v0.382, «все 3 стыка в одну кнопку с номерами 1, 2, 3»: [название | 1 | 2 | 3] — название слева, номера узкими ячейками справа; включён любой — яркая кайма */
+.gz-hx.gz-pair.gz-tri:not(.gz-rainbow){background:color-mix(in srgb,var(--c) 30%,#000)!important}
+.gz-hx.gz-pair.gz-tri.gz-any:not(.gz-rainbow){background:var(--c)!important}
+.gz-hx.gz-pair.gz-tri::before,.gz-hx.gz-pair.gz-tri:hover::before{background:var(--gz-bg)!important}
+.gz-pair.gz-tri .gz-pm{flex:1 1 0;text-align:left;padding-left:calc(var(--gz-n) + 1px);color:var(--gz-txt,inherit)}
+.gz-pair.gz-tri .gz-half{flex:none;width:17px;font-size:13px;color:var(--gz-mut,inherit)}
+.gz-pair.gz-tri .gz-half:last-child{margin-right:calc(var(--gz-n) - 3px)}
+.gz-pair.gz-tri .gz-half.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}

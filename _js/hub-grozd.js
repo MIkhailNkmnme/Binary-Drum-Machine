@@ -206,9 +206,12 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const shape = (m, d, tip) => ({ label: d, tip, on: () => M?.bitShape?.() === m, click: () => M?.setBitShape?.(M.bitShape() === m ? null : m) });
       if (r && M?.setBitShape) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · квадраты', mid: '', tip: 'Форма бита: ромбы · квадраты', parts: [shape('rhomb', '◇ Ромб.', 'Ромбы'), shape('square', '□ Квадр.', 'Квадраты')], key: 'bits|shape' });
       else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
-      if (p) out.get('bits').push({ ...leafItem(p), key: p.id });
-      if (M?.setPackMode) for (const [m, icon, name, tip] of [['styk1', '⇹', 'Стык1', 'Знаки целиком крупнее, без растяжки: каждый касается знака через одного'], ['styk2', '↔', 'Стык2', 'Знаки целиком крупнее, без растяжки: до касания с соседом, ни один не перекрывает другой']])
-        out.get('bits').push({ type: 'toggle', icon, name, tip, on: () => M.packMode() === m, click: () => M.setPackMode(m), key: 'bits|' + m });
+      // v0.382, «все 3 стыка в одну кнопку с номерами 1, 2, 3»: [⛶ Стык | 1 | 2 | 3] — 1 и 2 — Стык1 / Стык2, 3 — прежний «встык» (растяжка в клетку);
+      // ключ прежний (p.id) — кнопка остаётся на месте «Встык», куда её поставили
+      if (p) { const pv = leafItem(p), st = M?.setPackMode ? m => ({ label: m.slice(-1), on: () => M.packMode() === m, click: () => M.setPackMode(m) }) : null;
+        out.get('bits').push(st ? { type: 'pair', cls: 'gz-tri', name: '⛶ Стык', tip: 'Знаки встык: 1 — касаются через одного · 2 — касаются соседа, не перекрываются · 3 — растянуты на клетку · повторный щелчок — выкл', parts: [
+          { ...st('styk1'), tip: 'Стык 1: знак целиком крупнее, касается знака через одного' }, { ...st('styk2'), tip: 'Стык 2: знак целиком до касания с соседом, ни один не перекрывает другой' },
+          { label: '3', tip: 'Стык 3: знак растянут на всю клетку бита', on: pv.on, click: pv.click }], key: p.id } : { ...pv, key: p.id }); }
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }

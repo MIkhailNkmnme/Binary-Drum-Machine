@@ -142,32 +142,25 @@
     hull=lo.slice(0,-1).concat(up.slice(0,-1)).map(([x,y])=>[(x-S/2)/R,(y-S/2)/R]);
     inkHulls.set(text,hull);return hull;
   }
+  /* v0.382, «1 и 2 стык при автоплее удлиняются»: подбор по наклону менял размер на каждом повороте. Теперь знак вписан в круг
+     (радиус — дальняя точка чернил от его центра), и круги соседей касаются: при любом наклоне знаки не налезают, размер постоянный.
+     Черта, лежащая вдоль ряда, при этом касается соседки концом в конец — ровно как раньше. */
   let packFitKey='',packFitK=1;
   function packFit(size,width,height){
-    const key=[state.packMode,state.bitView,state.zero,state.one,state.hideZeroDigit,state.hideOneDigit,size,width,height].join('|');
+    const key=[state.packMode,state.bitView,state.hideZeroDigit,state.hideOneDigit,size,width,height].join('|');
     if(key===packFitKey)return packFitK;
-    const shapes=[];
+    let r=0;
     for(const bit of ['0','1']){
       if(state.bitView==='none'||(bit==='0'?state.hideZeroDigit:state.hideOneDigit))continue;
-      let P;if(state.bitView==='stars'){P=[];for(let i=0;i<24;i++){const a=i*Math.PI/12;P.push([Math.cos(a)*width/2,Math.sin(a)*width/2]);}}
-      else P=inkHull(bitGlyph(bit)).map(([x,y])=>[x*size,y*size]);
-      const t=(bit==='0'?state.zero:state.one)*Math.PI/180,co=Math.cos(t),si=Math.sin(t);
-      shapes.push(P.map(([x,y])=>[x*co-y*si,x*si+y*co]));
+      if(state.bitView==='stars')r=Math.max(r,width/2);
+      else for(const [x,y] of inkHull(bitGlyph(bit)))r=Math.max(r,Math.hypot(x,y)*size);
     }
     let k=1;
-    if(shapes.length){
+    if(r>0){
       // Решётка центров битов: стоя — шаг width по ряду и (width/2, height/2) к следующему ряду; лёжа (width > height) — повёрнута
-      const side=width>height,e1=side?[0,height]:[width,0],e2=side?[width/2,-height/2]:[width/2,height/2],V=[];
-      for(let a=-6;a<=6;a++)for(let b=-6;b<=6;b++)if(a||b)V.push([a*e1[0]+b*e2[0],a*e1[1]+b*e2[1]]);
-      const sup=(P,nx,ny)=>{let m=-Infinity;for(const p of P)m=Math.max(m,p[0]*nx+p[1]*ny);return m;};
-      const normals=P=>P.map((p,i)=>{const q=P[(i+1)%P.length],ex=q[0]-p[0],ey=q[1]-p[1],L=Math.hypot(ex,ey)||1;return [ey/L,-ex/L];});
-      let best=Infinity;
-      for(const P of shapes)for(const Q of shapes){
-        const N=[...normals(P),...normals(Q)];N.push(...N.map(([x,y])=>[-x,-y]));
-        const W=N.map(([nx,ny])=>sup(P,nx,ny)+sup(Q,-nx,-ny));
-        for(const [vx,vy] of V){let sv=0;for(let i=0;i<N.length;i++){const d=N[i][0]*vx+N[i][1]*vy;if(d>0&&W[i]>1e-9)sv=Math.max(sv,d/W[i]);}if(sv>0)best=Math.min(best,sv);}
-      }
-      if(Number.isFinite(best))k=best*(state.packMode==='styk1'?2:1);
+      const side=width>height,e1=side?[0,height]:[width,0],e2=side?[width/2,-height/2]:[width/2,height/2];let d=Infinity;
+      for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)if(a||b)d=Math.min(d,Math.hypot(a*e1[0]+b*e2[0],a*e1[1]+b*e2[1]));
+      k=d/(2*r)*(state.packMode==='styk1'?2:1);
     }
     packFitKey=key;packFitK=k;return k;
   }
