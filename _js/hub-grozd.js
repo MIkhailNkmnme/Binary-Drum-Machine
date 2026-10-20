@@ -294,8 +294,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       if (fl) fl.push({ type: 'action', icon: '↺', name: 'Сброс', key: 'file|reset', tip: 'Сброс на начальные настройки: ось, биты, цвета, потоки, вращения, замки. Раскладка рейки и закрепы остаются. Прежние настройки сохраняются копией (zerk_hub_pered_sbrosom)',
         click: () => { if (!confirm('Сбросить хаб на начальные настройки?\n(ось, биты, цвета, потоки, вращения, замки; раскладка рейки останется; прежние — копией)')) return;
           try { const bak = {}; for (const k of KEYS) { const v = localStorage.getItem(k); if (v != null) bak[k] = v; } localStorage.setItem('zerk_hub_pered_sbrosom', JSON.stringify({ at: new Date().toISOString(), keys: bak }));
-            for (const k of KEYS) localStorage.removeItem(k); } catch (_) {}
-          location.reload(); } });
+            sessionStorage.setItem('zerk_hub_reset', JSON.stringify(KEYS)); for (const k of KEYS) localStorage.removeItem(k); } catch (_) {}
+          location.reload(); } });   // «Сброс не возвратил»: при уходе со страницы модули записывали настройки обратно — стирает ещё раз первый скрипт <head> по отметке
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
