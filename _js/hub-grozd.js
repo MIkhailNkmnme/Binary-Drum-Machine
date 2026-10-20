@@ -360,15 +360,19 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
        в ближайшую к своему месту свободную ячейку — ни на столбец (его ячейка 0, пока в нём есть группы), ни на соседку. Только что поставленная
        (lastTop) выбирает первой, остальные уступают. Хранится место, куда отпустили (x), ячейка считается при раскладке */
     let lastTop = null;
+    // v0.402, «одностолбцовые рейки так вверху можно, чтоб было ставить впритык»: ячейка сетки — в одну кнопку (+6 px); группа одним столбцом занимает
+    // одну ячейку, в два столбца — две (раскрытая шире — сколько нужно), столбец слева — столько, сколько в нём ширины
     const putX = () => {
-      const col = host.querySelector(':scope > .gz-rail'), W = Math.max(120, col?.offsetWidth || 236) + 8, n = Math.max(1, Math.floor((strip.getBoundingClientRect().width + 8) / W));
-      const c0 = col && col.querySelector('.gz-group') ? 1 : 0, used = new Set(), boxes = [...strip.querySelectorAll('.gz-group')];
+      const col = host.querySelector(':scope > .gz-rail'), head = strip.querySelector('.gz-head') || col?.querySelector('.gz-head'), W = (head?.offsetWidth || 120) + 6, n = Math.max(1, Math.floor((strip.getBoundingClientRect().width + 6) / W));
+      const c0 = col && col.querySelector('.gz-group') ? Math.ceil((col.offsetWidth + 6) / W) : 0, used = new Set(), boxes = [...strip.querySelectorAll('.gz-group')];
+      const span = b => Math.max(b.classList.contains('gz-onecol') ? 1 : 2, Math.ceil((b.offsetWidth + 6) / W));
+      const free = (c, k) => { for (let t = c; t < c + k; t++) if (used.has(t)) return false; return true; };
       boxes.sort((a, b) => (b.dataset.id === lastTop) - (a.dataset.id === lastTop) || (topX.get(a.dataset.id) || 0) - (topX.get(b.dataset.id) || 0));
       for (const b of boxes) {
-        const want = Math.max(c0, Math.min(n - 1, Math.round((topX.get(b.dataset.id) || 0) / W)));
-        let c = want; for (let k = 1; used.has(c) && k < 2 * n; k++) { const t = want + (k % 2 ? 1 : -1) * Math.ceil(k / 2); if (t >= c0 && t < n && !used.has(t)) c = t; }
-        if (used.has(c)) for (let t = c0; t < 999; t++) if (!used.has(t)) { c = t; break; }   // мест в окне нет — дальше вправо
-        used.add(c); b.style.setProperty('--sx', c * W + 'px');
+        const k = span(b), hi = Math.max(c0, n - k), want = Math.max(c0, Math.min(hi, Math.round((topX.get(b.dataset.id) || 0) / W)));
+        let c = -1; for (let d = 0; d <= 2 * n && c < 0; d++) for (const t of d ? [want + d, want - d] : [want]) if (c < 0 && t >= c0 && t <= hi && free(t, k)) c = t;
+        if (c < 0) for (let t = c0; t < 999; t++) if (free(t, k)) { c = t; break; }   // мест в окне нет — дальше вправо
+        for (let t = c; t < c + k; t++) used.add(t); b.style.setProperty('--sx', c * W + 'px');
       }
     };
     const desk = () => matchMedia('(min-width:1101px)').matches;
