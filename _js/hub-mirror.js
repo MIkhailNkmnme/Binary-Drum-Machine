@@ -41,14 +41,14 @@
     ['Кибер · неон', '#00f0ff', '#00f0ff', '#fff200', '#ff2bd6'], ['Кибер · синапс', '#39ff14', '#39ff14', '#00e5ff', '#b026ff'], ['Кибер · нейросеть', '#7df9ff', '#7df9ff', '#a0ff4a', '#ff3d7f'],
     ['Кибер · плазма', '#00ffa3', '#00ffa3', '#3d7bff', '#ff00e5'], ['Кибер · ультрафиолет', '#c77dff', '#c77dff', '#ff4d6d', '#00f5d4'], ['Кибер · закат', '#ff6ec7', '#ff6ec7', '#ffe066', '#3df5ff'],
     ['Мята · всё одно', '#9fffc8', '#9fffc8', '#9fffc8', '#ffd166']];   // v0.134: и заворот от границ — того же цвета   // v0.129: и чёрно-белая   // v0.126: начальный наклон оси — как на снимке пользователя
-  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  const state = { on: true, axisColor: null, axis2: false, axis2Deg: 90, axis2Free: 45, autoPal: false, autoPalSec: 10, autoPalMode: 'pal', axisShown: true, angle: AX0, x: .5, y: .5, autoCenter: true, screenPin:true, orbitRadius:.22, bitView:'rhombs', bitRhomb:false, bitSquare:false, bitGrid:false, packedBits:false, packMode:null, bitFreeRotation:true, zero: 0, one: 0, trace: false, bitSymmetry: true, parallelSymmetry:false,hideZeroDigit:false,hideOneDigit:false, symmetryMinimums:{minPairs:2,minRows:4}, pattern: 'horr',horrDefaultRevision:1,magnet:false,axisRotate:false,spinSpeed:30,gold:true,foldIn:false,palette:2,defaultsRevision:2,symAlpha:.95,bitAlpha:1,foldAlpha:1,custom:null }, clamp = v => Math.max(.01, Math.min(.99, v)), turnAngle = a => ((a % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
   try {
     const saved = JSON.parse(localStorage.getItem('zerk_hub_mirror') || 'null');
     if (saved) {
       state.autoCenter = saved.autoCenter === true;   // своё расположение — не трогать
       state.on = saved.on !== false;state.axisShown=saved.axisShown!==false;if(Number.isFinite(saved.orbitRadius))state.orbitRadius=Math.max(0,Math.min(4,saved.orbitRadius));if(['rhombs','digits','brackets','parentheses','slashes','angles','stars','none'].includes(saved.bitView))state.bitView=saved.bitView;state.bitRhomb=saved.bitRhomb===true;state.bitSquare=saved.bitSquare===true;state.bitGrid=saved.bitGrid===true;
       state.bitFreeRotation=saved.bitFreeRotation!==false;
-      state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;
+      state.trace = saved.trace === true;state.packedBits=saved.packedBits===true;state.packMode=['styk1','styk2'].includes(saved.packMode)?saved.packMode:null;
       state.bitSymmetry = saved.bitSymmetry !== false;state.parallelSymmetry=saved.parallelSymmetry===true;state.hideZeroDigit=saved.hideZeroDigit===true;state.hideOneDigit=saved.hideOneDigit===true;
       for(const key of ['minRows','minPairs'])if(Number.isFinite(saved.symmetryMinimums?.[key]))state.symmetryMinimums[key]=Math.max(1,Math.round(saved.symmetryMinimums[key]));
       state.magnet=saved.magnet!==false;state.gold=saved.gold!==false;if(saved.defaultsRevision!==2){state.gold=true;state.magnet=false;}   // v0.137: один раз — ✦ вкл, 🧲 выкл, и у сохранённых
@@ -122,8 +122,58 @@
     const key=g.font+'|'+text;let offset=glyphMetrics.get(key);
     if(!offset){const m=g.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight??m.width,a=m.actualBoundingBoxAscent??size*.7,d=m.actualBoundingBoxDescent||0;offset=[(l-r)/2,(a-d)/2];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,offset);}return offset;
   }
+  /* Hub v0.381, «добавь кнопку Стык2 — чтобы не перекрывались знаки» и «Стык1 — чтобы через одну соприкасались»: знак не растягивается
+     в клетку (как «встык»), а увеличивается целиком, сохраняя вид. Стык2 — до касания с соседом, ни один знак ни на какой не налезает;
+     Стык1 — вдвое больше: касается знака через одного. Знак 0 и знак 1 берутся выпуклой оболочкой своих чернил в своём наклоне, и для
+     каждой пары (0·0, 0·1, 1·1) и каждого сдвига решётки битов ищется наибольший масштаб без пересечения (разделяющая ось). */
+  const inkHulls=new Map();
+  function inkHull(text){
+    let hull=inkHulls.get(text);if(hull)return hull;
+    const R=100,S=R*3,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+    g.font=`bold ${R}px monospace`;g.textAlign='left';g.textBaseline='alphabetic';g.fillStyle='#000';
+    const [ox,oy]=glyphOffset(g,text,R);g.fillText(text,S/2+ox,S/2+oy);
+    const d=g.getImageData(0,0,S,S).data,pts=[];
+    for(let y=0;y<S;y++){let l=-1,r=-1;for(let x=0;x<S;x++)if(d[(y*S+x)*4+3]>96){if(l<0)l=x;r=x;}if(l>=0)pts.push([l,y],[l,y+1],[r+1,y],[r+1,y+1]);}
+    if(!pts.length)pts.push([S/2-1,S/2-1],[S/2+1,S/2-1],[S/2+1,S/2+1],[S/2-1,S/2+1]);
+    pts.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);
+    const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+    for(const p of pts){while(lo.length>1&&cross(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+    for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>1&&cross(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+    hull=lo.slice(0,-1).concat(up.slice(0,-1)).map(([x,y])=>[(x-S/2)/R,(y-S/2)/R]);
+    inkHulls.set(text,hull);return hull;
+  }
+  let packFitKey='',packFitK=1;
+  function packFit(size,width,height){
+    const key=[state.packMode,state.bitView,state.zero,state.one,state.hideZeroDigit,state.hideOneDigit,size,width,height].join('|');
+    if(key===packFitKey)return packFitK;
+    const shapes=[];
+    for(const bit of ['0','1']){
+      if(state.bitView==='none'||(bit==='0'?state.hideZeroDigit:state.hideOneDigit))continue;
+      let P;if(state.bitView==='stars'){P=[];for(let i=0;i<24;i++){const a=i*Math.PI/12;P.push([Math.cos(a)*width/2,Math.sin(a)*width/2]);}}
+      else P=inkHull(bitGlyph(bit)).map(([x,y])=>[x*size,y*size]);
+      const t=(bit==='0'?state.zero:state.one)*Math.PI/180,co=Math.cos(t),si=Math.sin(t);
+      shapes.push(P.map(([x,y])=>[x*co-y*si,x*si+y*co]));
+    }
+    let k=1;
+    if(shapes.length){
+      // Решётка центров битов: стоя — шаг width по ряду и (width/2, height/2) к следующему ряду; лёжа (width > height) — повёрнута
+      const side=width>height,e1=side?[0,height]:[width,0],e2=side?[width/2,-height/2]:[width/2,height/2],V=[];
+      for(let a=-6;a<=6;a++)for(let b=-6;b<=6;b++)if(a||b)V.push([a*e1[0]+b*e2[0],a*e1[1]+b*e2[1]]);
+      const sup=(P,nx,ny)=>{let m=-Infinity;for(const p of P)m=Math.max(m,p[0]*nx+p[1]*ny);return m;};
+      const normals=P=>P.map((p,i)=>{const q=P[(i+1)%P.length],ex=q[0]-p[0],ey=q[1]-p[1],L=Math.hypot(ex,ey)||1;return [ey/L,-ex/L];});
+      let best=Infinity;
+      for(const P of shapes)for(const Q of shapes){
+        const N=[...normals(P),...normals(Q)];N.push(...N.map(([x,y])=>[-x,-y]));
+        const W=N.map(([nx,ny])=>sup(P,nx,ny)+sup(Q,-nx,-ny));
+        for(const [vx,vy] of V){let sv=0;for(let i=0;i<N.length;i++){const d=N[i][0]*vx+N[i][1]*vy;if(d>0&&W[i]>1e-9)sv=Math.max(sv,d/W[i]);}if(sv>0)best=Math.min(best,sv);}
+      }
+      if(Number.isFinite(best))k=best*(state.packMode==='styk1'?2:1);
+    }
+    packFitKey=key;packFitK=k;return k;
+  }
   function packedScale(g,text,size,width,height){
     if(!state.packedBits||rhombOn())return [1,1];
+    if(state.packMode){const k=packFit(size,width,height);return [k,k];}
     const key=g.font+'|'+text+'|ink';let bounds=glyphMetrics.get(key);
     if(!bounds){const m=g.measureText(text);bounds=[(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight??m.width),(m.actualBoundingBoxAscent??size*.7)+(m.actualBoundingBoxDescent||0)];if(glyphMetrics.size>=128)glyphMetrics.clear();glyphMetrics.set(key,bounds);}
     return [width/Math.max(.01,bounds[0]),height/Math.max(.01,bounds[1])];
@@ -248,8 +298,8 @@
     viewBox.addEventListener('pointerenter',e=>{if(!viewBox.dataset.nested&&e.pointerType!=='touch')viewBox.open=true;});viewBox.addEventListener('pointerleave',e=>{if(!viewBox.dataset.nested&&e.pointerType!=='touch'&&viewBox.dataset.groupPinned!=='true')viewBox.open=false;});
     viewBox.append(viewHead,viewArrows,viewOptions);document.body.append(viewBox);syncView();window.addEventListener('hubmirror',syncView);
     const packing=document.createElement('button');packing.id='hubBitPacking';packing.type='button';packing.textContent='↔\nвстык';packing.setAttribute('aria-label','Биты без отступов');packing.title='Увеличить знаки до соприкосновения, сохранив центры битов';
-    const syncPacking=()=>packing.setAttribute('aria-pressed',String(!!state.packedBits));
-    packing.onclick=()=>{state.packedBits=!state.packedBits;syncPacking();changed();save();};syncPacking();document.body.append(packing);
+    const syncPacking=()=>packing.setAttribute('aria-pressed',String(!!state.packedBits&&!state.packMode));
+    packing.onclick=()=>{if(state.packMode){state.packMode=null;state.packedBits=true;}else state.packedBits=!state.packedBits;syncPacking();changed();save();};syncPacking();window.addEventListener('hubmirror',syncPacking);document.body.append(packing);
     const toggle = document.createElement('label');
     enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = state.on;
     toggle.className='hubRhomb';toggle.title='Зеркало';enabled.setAttribute('aria-label','Зеркало');toggle.append(enabled, document.createTextNode('◇')); settings.append(toggle);
@@ -619,6 +669,8 @@
     bitShape(){return rhombOn()?(state.bitSquare?'square':'rhomb'):null;},
     // «3-й вариант»: квадраты ровной сеткой — шаг строк равен шагу битов (треугольник выше в 1,15 раза, не равносторонний); действует только при квадратах
     squareGrid(){return state.bitGrid===true&&rhombOn()&&state.bitSquare===true;},
+    packMode(){return state.packedBits?state.packMode:null;},
+    setPackMode(m){if(m&&state.packedBits&&state.packMode===m){state.packedBits=false;state.packMode=null;}else if(m){state.packedBits=true;state.packMode=m;}else state.packMode=null;changed();save();},
     setSquareGrid(on){state.bitGrid=!!on;changed();save();},
     setBitShape(m){if(m==='rhomb'||m==='square'){state.bitSquare=m==='square';state.bitRhomb=true;}else{state.bitRhomb=false;if(state.bitView==='rhombs'||state.bitView==='none')state.bitView='digits';}changed();save();},
     // «верт. отступ как у межсимвольного»: квадрат — шириной 2a (зазор в строке a/k − 2a), высотой — шаг строк b/2k минус тот же зазор
@@ -643,6 +695,7 @@
       g.save();g.translate(x,y);g.rotate(this.bitAngle(bit));
       if(state.bitView==='stars'){
         if(state.packedBits)size=width;
+        if(state.packedBits&&state.packMode&&this.symbolsOnly()){const k=packFit(size,width,height);g.scale(k,k);}
         if(bit==='0'){g.beginPath();g.arc(0,0,state.packedBits?width/2:Math.max(.35,size*.12),0,2*Math.PI);g.fill();}
         else{g.strokeStyle=g.fillStyle;g.lineWidth=Math.max(.35,size*.1);g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const a=i*Math.PI/3,dx=Math.cos(a)*size*.45,dy=Math.sin(a)*size*.45;g.moveTo(-dx,-dy);g.lineTo(dx,dy);}g.stroke();}
       }else{

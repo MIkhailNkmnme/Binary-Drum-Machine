@@ -58,7 +58,7 @@
   let spriteKey='',sprites=[];
   function lightSprites(){
     const mirror=window.HubMirror;if(!mirror)return [];
-    const st=mirror.state,key=JSON.stringify([lightSize,st.bitView,st.bitRhomb,st.packedBits,st.zero,st.one,st.hideZeroDigit,st.hideOneDigit,mirror.colors().sym]);
+    const st=mirror.state,key=JSON.stringify([lightSize,st.bitView,st.bitRhomb,st.packedBits,st.packMode,st.zero,st.one,st.hideZeroDigit,st.hideOneDigit,mirror.colors().sym]);
     if(key!==spriteKey){spriteKey=key;sprites=['0','1'].map(bit=>{const c=document.createElement('canvas'),side=Math.ceil(lightSize*2+6);c.width=c.height=side*2;const g=c.getContext('2d');g.setTransform(2,0,0,2,side,side);mirror.drawCenterBit(g,{bit,width:lightSize,height:lightSize*Math.sqrt(3)});return c;});}
     return sprites;
   }

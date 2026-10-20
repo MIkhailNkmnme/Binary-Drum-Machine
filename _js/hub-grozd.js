@@ -207,6 +207,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       if (r && M?.setBitShape) out.get('bits').push({ type: 'pair', cls: 'gz-split gz-bs', name: 'Ромбы · квадраты', mid: '', tip: 'Форма бита: ромбы · квадраты', parts: [shape('rhomb', '◇ Ромб.', 'Ромбы'), shape('square', '□ Квадр.', 'Квадраты')], key: 'bits|shape' });
       else if (r) out.get('bits').push({ ...leafItem(r), key: r.id });
       if (p) out.get('bits').push({ ...leafItem(p), key: p.id });
+      if (M?.setPackMode) for (const [m, icon, name, tip] of [['styk1', '⇹', 'Стык1', 'Знаки целиком крупнее, без растяжки: каждый касается знака через одного'], ['styk2', '↔', 'Стык2', 'Знаки целиком крупнее, без растяжки: до касания с соседом, ни один не перекрывает другой']])
+        out.get('bits').push({ type: 'toggle', icon, name, tip, on: () => M.packMode() === m, click: () => M.setPackMode(m), key: 'bits|' + m });
       if (M?.setSquareGrid) out.get('bits').push({ type: 'toggle', icon: '▦', name: 'Сетка', tip: 'Квадраты ровной сеткой: шаг строк = шагу битов, отступы одинаковые (треугольник выше). Только при квадратах',
         on: () => M.squareGrid(), click: () => { if (M.bitShape() !== 'square') M.setBitShape('square'); M.setSquareGrid(!M.squareGrid()); }, key: 'bits|squareGrid' });
     }
