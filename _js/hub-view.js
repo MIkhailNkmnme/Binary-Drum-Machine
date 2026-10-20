@@ -179,14 +179,14 @@
       tg.setTransform(1,0,0,1,0,0);tg.clearRect(0,0,tile.width,tile.height);tg.save();tg.translate(-bx,-by);tg.beginPath();tg.moveTo(...p0);tg.lineTo(...p1);tg.lineTo(...p2);tg.closePath();tg.clip();
       if(vector&&!vector.direct){tg.translate(shift[0]*k,shift[1]*k);tg.transform(...vector.base);vector.draw(tg);}else tg.drawImage(copy,shift[0]*k,shift[1]*k);tg.restore();
       for(const M of tri.mats){g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...M);g.drawImage(tile,bx,by);}
-      g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.beginPath();g.moveTo(...p0);g.lineTo(...p1);g.lineTo(...p2);g.closePath();g.setLineDash([4*k,4*k]);g.lineWidth=k/Math.max(.05,state.zoom);
-      g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--hubAxisC').trim()||'#ffe600';g.globalAlpha=.75;g.stroke();g.setLineDash([]);g.globalAlpha=1;
+      if(window.HubMirror?.state?.axisShown!==false){g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.beginPath();g.moveTo(...p0);g.lineTo(...p1);g.lineTo(...p2);g.closePath();g.setLineDash([4*k,4*k]);g.lineWidth=k/Math.max(.05,state.zoom);
+      g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--hubAxisC').trim()||'#ffe600';g.globalAlpha=.75;g.stroke();g.setLineDash([]);g.globalAlpha=1;}   // «когда ось скрыта — в режиме 2 ось тоже не показывай»
     } else {
     g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);const tx=(e+(a-1)*left)*k+shift[0]*k,ty=(f+b*left)*k+shift[1]*k;if(!vector||(!vector.direct&&a===1&&b===0&&c===0&&d===1&&!shift[0]&&!shift[1]&&Math.abs(tx-Math.round(tx))<1e-6&&Math.abs(ty-Math.round(ty))<1e-6))g.drawImage(copy,shift[0]*k,shift[1]*k);else layer();   // v0.130: сдвинутый исходник — заново ромбами, иначе край экрана обрезал картинку
     if(reflection&&!window.HubMirror?.axis2Replaces1?.()){const [ma,mb,mc,md,me,mf]=matrix(true);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...reflection);layer('mirror');}
     const L2=window.HubMirror?.axis2Layers?.(canvas,view)||[];
     for(const L of L2){const mir=L.pass==='mirror',[ma,mb,mc,md,me,mf]=matrix(mir);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...L.m);layer(mir?'mirror':undefined);}   // «2 ось»: остальные копии калейдоскопа
-    if(L2.star){const [sx0,sy0]=L2.star.c,R=Math.hypot(canvas.width,canvas.height)/Math.max(.05,state.zoom);g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.beginPath();   // ✳3 — пунктир трёх осей
+    if(L2.star&&window.HubMirror?.state?.axisShown!==false){const [sx0,sy0]=L2.star.c,R=Math.hypot(canvas.width,canvas.height)/Math.max(.05,state.zoom);g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.beginPath();   // ✳3 — пунктир трёх осей
       for(const t of L2.star.angles){g.moveTo(sx0-R*Math.cos(t),sy0-R*Math.sin(t));g.lineTo(sx0+R*Math.cos(t),sy0+R*Math.sin(t));}
       g.setLineDash([4*k,4*k]);g.lineWidth=k/Math.max(.05,state.zoom);g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--hubAxisC').trim()||'#ffe600';g.globalAlpha=.7;g.stroke();g.setLineDash([]);g.globalAlpha=1;}
     }
