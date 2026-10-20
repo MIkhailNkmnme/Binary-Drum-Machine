@@ -17,7 +17,7 @@
 (() => {
   'use strict';
   const locked=key=>window.HubLocks?.has(key)===true;
-  const state={centerBitPin:false,unlocked:false,zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,flipRate:1,pan:[0,0],sourcePan:[0,0],spinRate:.25,frameLocked:true,frameStep:.01,spinDirection:1},buffers=new WeakMap();let frame=null,revision=0,centerBitPinButton,centerTriPinButton,scaleText,angleText,rotationValue,minus,plus,flipButton,flipQuick,flipQuickShown=false,perpendicularButton,freezeButton,flipRateRange,flipRateValue,flipRunning=false,flipRaf=0,flipTime=0;
+  const state={centerBitPin:false,unlocked:false,zoom:1,angle:0,flip:0,mirrorFlip:0,freezeOriginal:false,flipRate:1,pan:[0,0],sourcePan:[0,0],spinRate:.25,frameLocked:true,frameStep:.01,spinDirection:1},buffers=new WeakMap(),triTile=document.createElement('canvas');let frame=null,revision=0,centerBitPinButton,centerTriPinButton,scaleText,angleText,rotationValue,minus,plus,flipButton,flipQuick,flipQuickShown=false,perpendicularButton,freezeButton,flipRateRange,flipRateValue,flipRunning=false,flipRaf=0,flipTime=0;
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(saved){state.unlocked=!!saved.unlocked;state.centerBitPin=saved.centerBitPin===true||saved.centerBitPin==='mass'?'mass':saved.centerBitPin==='tri'?'tri':false;for(const key of ['zoom','angle','flipRate'])if(Number.isFinite(saved[key]))state[key]=saved[key];if(Array.isArray(saved.pan)&&saved.pan.length===2&&saved.pan.every(Number.isFinite))state.pan=saved.pan;}}catch(_){}
   try{const saved=JSON.parse(localStorage.getItem('zerk_hub_view')||'null');if(Array.isArray(saved?.sourcePan)&&saved.sourcePan.length===2&&saved.sourcePan.every(Number.isFinite))state.sourcePan=saved.sourcePan;}catch(_){}
   state.zoom=Math.max(.2,Math.min(6,state.zoom));state.angle=state.angle===360?360:((state.angle%360)+360)%360;
@@ -172,9 +172,20 @@
     const fast=!view&&vector&&!vector.direct&&!!window.HubFastMove?.on&&nowMs()<movingUntil;   // v0.256: только при включённом «Быстро»
     const layer=(pass)=>{if(!vector){g.drawImage(copy,shift[0]*k,shift[1]*k);return;}
       if(fast){const c=vector.fastCopy||(vector.fastCopy={}),key=pass||'source';let mc=c[key];if(!mc||mc.width!==canvas.width||mc.height!==canvas.height){mc=c[key]=document.createElement('canvas');mc.width=canvas.width;mc.height=canvas.height;const mg=mc.getContext('2d');mg.setTransform(...vector.base);vector.draw(mg,pass);}g.drawImage(mc,shift[0]*k,shift[1]*k);return;}g.save();g.translate(shift[0]*k,shift[1]*k);g.transform(...vector.base);vector.draw(g,pass);g.restore();};   // v0.128: pass 'mirror' — своя палитра у отражения
+    const tri=window.HubMirror?.triLayers?.(canvas,view);
+    if(tri){   // «3 оси — треугольником»: исходник внутри треугольника зеркал — плиткой, её копии — всеми отражениями группы
+      const [p0,p1,p2]=tri.tri,bx=Math.floor(Math.min(p0[0],p1[0],p2[0]))-2,by=Math.floor(Math.min(p0[1],p1[1],p2[1]))-2,bw=Math.ceil(Math.max(p0[0],p1[0],p2[0]))+2-bx,bh=Math.ceil(Math.max(p0[1],p1[1],p2[1]))+2-by;
+      const tile=triTile.width===bw&&triTile.height===bh?triTile:Object.assign(triTile,{width:Math.max(1,bw),height:Math.max(1,bh)}),tg=tile.getContext('2d');
+      tg.setTransform(1,0,0,1,0,0);tg.clearRect(0,0,tile.width,tile.height);tg.save();tg.translate(-bx,-by);tg.beginPath();tg.moveTo(...p0);tg.lineTo(...p1);tg.lineTo(...p2);tg.closePath();tg.clip();
+      if(vector&&!vector.direct){tg.translate(shift[0]*k,shift[1]*k);tg.transform(...vector.base);vector.draw(tg);}else tg.drawImage(copy,shift[0]*k,shift[1]*k);tg.restore();
+      for(const M of tri.mats){g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...M);g.drawImage(tile,bx,by);}
+      g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.beginPath();g.moveTo(...p0);g.lineTo(...p1);g.lineTo(...p2);g.closePath();g.setLineDash([4*k,4*k]);g.lineWidth=k/Math.max(.05,state.zoom);
+      g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--hubAxisC').trim()||'#ffe600';g.globalAlpha=.75;g.stroke();g.setLineDash([]);g.globalAlpha=1;
+    } else {
     g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);const tx=(e+(a-1)*left)*k+shift[0]*k,ty=(f+b*left)*k+shift[1]*k;if(!vector||(!vector.direct&&a===1&&b===0&&c===0&&d===1&&!shift[0]&&!shift[1]&&Math.abs(tx-Math.round(tx))<1e-6&&Math.abs(ty-Math.round(ty))<1e-6))g.drawImage(copy,shift[0]*k,shift[1]*k);else layer();   // v0.130: сдвинутый исходник — заново ромбами, иначе край экрана обрезал картинку
     if(reflection){const [ma,mb,mc,md,me,mf]=matrix(true);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...reflection);layer('mirror');}
     for(const L of window.HubMirror?.axis2Layers?.(canvas,view)||[]){const mir=L.pass==='mirror',[ma,mb,mc,md,me,mf]=matrix(mir);g.setTransform(ma,mb,mc,md,(me+(ma-1)*left)*k,(mf+mb*left)*k);g.transform(...L.m);layer(mir?'mirror':undefined);}   // «2 ось»: остальные копии калейдоскопа
+    }
     g.restore();
     // v0.127: vector.extra — слой поверх в координатах поля (после сдвига и зеркала), только под камерой: «заворот» внутрь треугольника
     if(vector?.extra){g.save();g.setTransform(a,b,c,d,(e+(a-1)*left)*k,(f+b*left)*k);g.transform(...vector.base);vector.extra(g);g.restore();}
