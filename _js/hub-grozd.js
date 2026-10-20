@@ -289,6 +289,14 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         tail: { label: 'Палитры', labelNow: () => M.state.autoPalMode === 'rainbow' ? '🌈 Радуга' : 'Палитры', on: () => M.state.autoPalMode === 'rainbow', click: () => M.setAutoPalMode(M.state.autoPalMode === 'rainbow' ? 'pal' : 'rainbow') },   // «чисто радугу — антирадуга и радуга»
         get: () => M.state.autoPalSec + ' с', step: d => M.setAutoPalSec(M.state.autoPalSec + Math.sign(d) * (Math.abs(d) === 2 ? 5 : 1)), zero: () => M.setAutoPalSec(10),
         frac: () => (M.state.autoPalSec - 1) / 59, setFrac: f => M.setAutoPalSec(1 + f * 59) }); }
+    {   // «сюда Сброс на начальные настройки, и не оставляй пустоты в рейках»: ↺ Сброс в «Файле» (четвёртая — соты 2 × 2)
+      const fl = out.get('file'), KEYS = ['zerk_hub_view', 'zerk_hub_flow', 'zerk_hub_mirror', 'zerk_hub_visible_rows', 'zerk_hub_locks', 'zerk_hub_fast_move', 'zerk_hub_exact_tilt', 'zerk_hub_all7', 'zerk_hub_bitspin'];
+      if (fl) fl.push({ type: 'action', icon: '↺', name: 'Сброс', key: 'file|reset', tip: 'Сброс на начальные настройки: ось, биты, цвета, потоки, вращения, замки. Раскладка рейки и закрепы остаются. Прежние настройки сохраняются копией (zerk_hub_pered_sbrosom)',
+        click: () => { if (!confirm('Сбросить хаб на начальные настройки?\n(ось, биты, цвета, потоки, вращения, замки; раскладка рейки останется; прежние — копией)')) return;
+          try { const bak = {}; for (const k of KEYS) { const v = localStorage.getItem(k); if (v != null) bak[k] = v; } localStorage.setItem('zerk_hub_pered_sbrosom', JSON.stringify({ at: new Date().toISOString(), keys: bak }));
+            for (const k of KEYS) localStorage.removeItem(k); } catch (_) {}
+          location.reload(); } });
+    }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     {   // «Сетка — в правую рейку под Встык»: соты «Битов» — прежний порядок слева-справа, «Сетка» — правым столбцом
