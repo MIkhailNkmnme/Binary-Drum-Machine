@@ -401,6 +401,16 @@
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l');
         l.addEventListener('pointerdown', e => { if (e.button !== 0 || narrow.matches) return; d = { g, x: e.clientX, id: e.pointerId, on: false }; });
         if (!l.title) l.title = 'Щелчок — открыть · тянуть вбок — переставить группу'; } }
+    // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
+    // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
+    // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
+    { const MINI = 'mayatnik-dd-mini', ICO = { 'Краска': '✎', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
+      let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
+      const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
+      for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
+        const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = on ? k + ' · правый щелчок — развернуть' : 'Щелчок — открыть · тянуть вбок — переставить группу · правый щелчок — свернуть в ромб'; };
+        sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); } }
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });

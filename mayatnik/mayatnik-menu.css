@@ -474,3 +474,11 @@ header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
 #paintTools .pt-b .pt-half.on{color:#6cff6c;text-shadow:0 0 4px #6cff6c99}
 #paintTools .pt-r > .lg{box-sizing:border-box;width:100%;padding:5px 12px;flex-wrap:wrap;gap:4px 10px;color:#c7d3e6;border:1px solid color-mix(in srgb,var(--c,#7cbcff) 35%,transparent);border-radius:4px}   /* v0.200: подсветка в «Виде» */
 #paintTools .pt-r > .lg:hover{background:color-mix(in srgb,var(--c,#7cbcff) 18%,transparent)}
+/* v0.209: свёрнутое в ромб название группы полосы — только значок; соседи встают вплотную */
+#paintTools .pt-l .pt-ico{display:none}
+header #paintTools.pt-dd .pt-mini>.pt-l{font-size:0;gap:0;width:34px!important;min-width:0!important;padding:0;justify-content:center;
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+header #paintTools.pt-dd .pt-mini>.pt-l::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+header #paintTools.pt-dd .pt-mini>.pt-l::after,header #paintTools.pt-dd .pt-mini>.pt-l .pt-pin{display:none}
+header #paintTools.pt-dd .pt-mini>.pt-l .pt-ico{display:block;font-size:13px;line-height:1;color:var(--c)}
+header #paintTools.pt-dd .pt-mini.pt-open>.pt-l .pt-ico,header #paintTools.pt-dd .pt-mini.pt-has-on>.pt-l .pt-ico{color:#fff}
