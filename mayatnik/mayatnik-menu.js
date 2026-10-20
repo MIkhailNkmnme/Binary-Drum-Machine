@@ -245,9 +245,9 @@
       if (id === 'noband') { const nm = b.querySelector('.gz-nm'); if (nm) nm.textContent = ['Полосы', 'Без полос', 'До треуг.'][+e.dataset.mode || 0]; } });
     gView.append(b); }
   // v0.205: «Зеркало ↑» — нижний треугольник между линиями «Застыло» вверх от точки встречи; по кругу: выкл / все / шахм. 1 / шахм. 2 / XOR / AND
-  { const names = ['Зеркало ↑', 'Зерк. ↑ все', 'Зерк. ↑ шахм. 1', 'Зерк. ↑ шахм. 2', 'Зерк. ↑ XOR', 'Зерк. ↑ AND', 'Зерк. ↑ шахм. ход', 'Зерк. ↑ шахм. антиход'], Z = () => window.mayFixMirror, probe = document.createElement('button'); probe.title = 'Зеркало';
-    const b = ptBtn('fixMirror', 'mirror', probe, () => { Z()?.set(((Z().get()) + 1) % 8); placeTools(); });
-    b.oncontextmenu = ev => { ev.preventDefault(); Z()?.set((Z().get() + 7) % 8); placeTools(); };
+  { const names = ['Зеркало ↑', 'Зерк. ↑ все', 'Зерк. ↑ шахм. 1', 'Зерк. ↑ шахм. 2', 'Зерк. ↑ XOR', 'Зерк. ↑ AND', 'Зерк. ↑ шахм. ход', 'Зерк. ↑ шахм. антиход', 'Зерк. ↑ ход | антиход'], Z = () => window.mayFixMirror, probe = document.createElement('button'); probe.title = 'Зеркало';
+    const b = ptBtn('fixMirror', 'mirror', probe, () => { Z()?.set(((Z().get()) + 1) % 9); placeTools(); });
+    b.oncontextmenu = ev => { ev.preventDefault(); Z()?.set((Z().get() + 8) % 9); placeTools(); };
     toolSync.push(() => { const m = Z()?.get() || 0; b.classList.toggle('on', m > 0); const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== names[m]) nm.textContent = names[m];
       b.title = 'Зеркало вверх от точки встречи линий «Застыло»: нижний треугольник между диагоналями ложится на верхний, на каждом кадре · сейчас: ' + ['выкл', 'все биты', 'шахматка 1', 'шахматка 2', 'XOR верх ⊕ низ', 'AND верх ∧ низ', 'шахматка по ходу оси (на бите — 1, между — 2)', 'шахматка по антиходу оси'][m] + ' · щелчок — следующий, правый — предыдущий'; });
     gView.querySelector('[data-n="fixLines"]').after(b); }
@@ -666,7 +666,7 @@
     { const M = () => window.mayMir, L = () => window.mayMirLists;   // v0.210
       reg(tools.querySelector('[data-n="mirCol"]'), () => L().col.map(([v, name]) => ({ name, on: M()?.col() === v, pick: () => M()?.set('col', v) })));
       reg(tools.querySelector('[data-n="mirOp"]'), () => L().op.map(([v, name]) => ({ name, on: M()?.op() === v, pick: () => M()?.set('op', v) }))); }
-    { const Z = () => window.mayFixMirror; reg(tools.querySelector('[data-n="fixMirror"]'), () => ['Выкл', 'Все биты', 'Шахматка 1', 'Шахматка 2', 'XOR', 'AND', 'Шахм. ход', 'Шахм. антиход'].map((name, i) => ({ name, on: (Z()?.get() || 0) === i, pick: () => Z()?.set(i) }))); }
+    { const Z = () => window.mayFixMirror; reg(tools.querySelector('[data-n="fixMirror"]'), () => ['Выкл', 'Все биты', 'Шахматка 1', 'Шахматка 2', 'XOR', 'AND', 'Шахм. ход', 'Шахм. антиход', 'Ход | антиход'].map((name, i) => ({ name, on: (Z()?.get() || 0) === i, pick: () => Z()?.set(i) }))); }
     { const e = $('noband'), mode = () => +e.dataset.mode || 0;   // три положения по кругу: каждое change — следующее
       reg(tools.querySelector('[data-n="noband"]'), () => ['Полосы', 'Без полос', 'До треуг.'].map((name, i) => ({ name, on: mode() === i,
         pick: () => { for (let n = 0; n < 3 && mode() !== i; n++) e.dispatchEvent(new Event('change')); } }))); }
