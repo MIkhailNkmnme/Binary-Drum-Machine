@@ -81,7 +81,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
             const isBr = g.key === 'flow' && /^flow\|branch:/.test(c.id);
             const spd = isBr && (c.children || []).find(x => FLOW_SPEED.test(x.id));
             if (c.action && spd) { const h = headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent));   // «Свет / Снег / Вода — каждую со своим ползунком скорости»: слева вкл / выкл, справа скорость (видна всегда)
-              add(g.key, { ...leafItem(spd), sec: c.id, secColor: FLOW_C[c.id], name: h.name, tip: h.tip + ' · ползунок — скорость', head: { label: h.name, on: h.on, click: h.click } }, c.id); }
+              add(g.key, toBits['head:' + c.id] = { ...leafItem(spd), sec: c.id, secColor: FLOW_C[c.id], secHead: true, name: h.name, tip: h.tip + ' · ползунок — скорость', head: { label: h.name, on: h.on, click: h.click } }, c.id); }
             else if (c.action) add(g.key, isBr ? { ...headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent)), col: 1 } : fc(headItem(c, '', HEAD[c.id] || txt(c.node.querySelector('small')?.textContent))), c.id);
             walk(c, vis && (!c.gate || !!gateOn(c)), br || (isBr ? c.id : ''));
             continue;
@@ -113,6 +113,20 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           if (/автозума/.test(c.id) && c.node.matches('details')) { toBits.zoomVal = c; continue; }   // «Автозум — объедини с его ползунком»: ползунок — в кнопку «Автозум» (после обхода)
           if (/\|Наклон ромбов [01]$/.test(c.id)) continue;
           if (/^[^|]*\|Зеркало$/.test(c.id) || /\|Цвет отражённых/.test(c.id)) { toBits[/Зеркало$/.test(c.id) ? 'mirror' : 'mirrorColor'] = c; continue; }   // «Зерк. — и сюда же её цвет, дубль цвета удали»
+          { const m = /^flow\|hubLightRule-([01])-(pass|reflect)$/.exec(c.id);   // «0 Проп. 1» и «0 Отр. 1» — по типу «0 Прозр. 1»: бит 0 слева, бит 1 справа
+            if (m) { const k = 'rule:' + m[2], n = c.node, mk = () => txt(n.textContent).split(' ')[0];
+              const part = { label: '', labelNow: m[1] === '0' ? () => '0 ' + mk() : () => mk() + ' 1', tip: tipOf(n), on: () => n.getAttribute('aria-pressed') === 'true', click: () => n.click() };
+              if (!toBits[k]) { toBits[k] = { type: 'pair', cls: 'gz-split gz-mid', name: m[2] === 'pass' ? 'Проп.' : 'Отр.', mid: m[2] === 'pass' ? 'Проп.' : 'Отр.',
+                tip: 'Свет — ' + (m[2] === 'pass' ? 'пропускание' : 'отражение') + ': бит 0 · бит 1 · клик: нет → сверху → снизу → обе', disabled: flowOff, parts: [null, null] }; add(g.key, toBits[k], 'flow|' + k); }
+              toBits[k].parts[+m[1]] = part; continue; } }
+          if (/^flow\|(Свет из солнца|Радиус солнца)/.test(c.id)) {   // «Солнце — в свой ползунок радиуса»: слева вкл / выкл, справа радиус
+            const it = fc(leafItem(c)); toBits[/Радиус/.test(c.id) ? 'sunR' : 'sunOn'] = it;
+            if (!toBits.sun) { toBits.sun = { ...it, key: 'flow|sun' }; add(g.key, toBits.sun, 'flow|sun'); }
+            continue; }
+          if (/^flow\|(Свет в виде выбранных битов|Размер битов света)/.test(c.id)) {   // «Биты — объедини со своим ползунком»: слева вкл / выкл, справа размер
+            const it = fc(leafItem(c)); toBits[/Размер/.test(c.id) ? 'lbSize' : 'lbOn'] = it;
+            if (!toBits.lbits) { toBits.lbits = { ...it, key: 'flow|lightBits' }; add(g.key, toBits.lbits, 'flow|lightBits'); }
+            continue; }
           if (/^flow\|(Сплошной поток|hubFlowAxis$)/.test(c.id)) {   // «Плотно и От оси — объедини»: одна кнопка пополам, место держит первая
             toBits[/Сплошной/.test(c.id) ? 'fDense' : 'fAxis'] = leafItem(c);
             if (!toBits.flowPair) { toBits.flowPair = { ...fc(leafItem(c)), key: 'flow|dense-axis' }; add(g.key, toBits.flowPair, 'flow|dense-axis'); }
@@ -146,7 +160,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
       else if (root.action && g.key === 'flow') {   // «объедини, покажи Сброс — когда запущен Пуск»: пока пуск не идёт — одна кнопка «Пуск»
         const h = headItem(root, '', HEAD.flow), clr = () => document.querySelector('button[aria-label^="Очистить свет, снег и воду"]');
-        add('flow', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.flow, mid: '', tip: h.tip, one: () => !h.on(),
+        add('flow', { type: 'pair', cls: 'gz-split gz-bs', name: HEAD.flow, mid: '', tip: h.tip, one: () => !h.on() && !window.HubFlow?.traces,   // «Сброс — когда есть остатки потоков на холсте»
           parts: [{ label: HEAD.flow, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Очистить свет, снег и воду, остановить потоки', click: () => clr()?.click() }] }, 'flow'); }
       else if (root.action && g.key === 'axis' && window.HubMirror?.setAxisColor) {   // «Ось — добавь цвет»: слева показать / спрятать ось, справа её цвет
         const h = headItem(root, '', HEAD.axis), M = window.HubMirror, trig = document.createElement('span');
@@ -201,6 +215,16 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
         parts: [{ label: '⋈ Зерк.', tip: mi.tip, on: mi.on, click: mi.click }, { label: '●', tip: 'Цвет отражённых битов', on: mi.on, open: mc.open, ink: () => mc.get() }], key: 'symmetry|mirror' } : { ...mi, name: 'Зерк.', key: toBits.mirror.id };
       const sl = out.get('symmetry'); if (sl) { const k = sl.findIndex(i => i.key === 'symmetry'); sl.splice(k >= 0 ? k + 1 : 0, 0, it); }
     }
+    if (toBits.sun && toBits.sunOn && toBits.sunR) {
+      const t = toBits.sunOn, z = toBits.sun;
+      for (const k of Object.keys(z)) if (!['key', 'sec', 'secColor'].includes(k)) delete z[k];
+      Object.assign(z, toBits.sunR, { key: 'flow|sun', name: 'Солнце', tip: t.tip + ' · ползунок — радиус солнца', head: { label: '☀ Солнце', on: t.on, click: t.click } });
+    } else if (toBits.sun) Object.assign(toBits.sun, toBits.sunOn || toBits.sunR, { key: 'flow|sun' });
+    if (toBits.lbits && toBits.lbOn && toBits.lbSize) {
+      const t = toBits.lbOn, z = toBits.lbits;
+      for (const k of Object.keys(z)) if (!['key', 'sec', 'secColor'].includes(k)) delete z[k];
+      Object.assign(z, toBits.lbSize, { key: 'flow|lightBits', name: 'Биты', tip: t.tip + ' · ползунок — размер битов света', head: { label: '01 Биты', on: t.on, click: t.click } });
+    } else if (toBits.lbits) Object.assign(toBits.lbits, toBits.lbOn || toBits.lbSize, { key: 'flow|lightBits' });
     if (toBits.flowPair && toBits.fDense && toBits.fAxis) {
       const d = toBits.fDense, a = toBits.fAxis;
       Object.assign(toBits.flowPair, { type: 'pair', cls: 'gz-split gz-bs', name: 'Плотно · от оси', mid: '', tip: 'Плотно — сплошной поток света и воды сверху · От оси — поток от оси',
@@ -237,6 +261,10 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const r = leafItem(toBits.minR), p = leafItem(toBits.minP);
       out.get('symmetry')?.push({ type: 'vpair', name: 'Минимумы', tip: 'Минимумы поиска осей: строк · пар', parts: [{ ...r, name: 'Строк', tip: 'Минимум строк в найденной фигуре' }, { ...p, name: 'Пар', tip: 'Минимум пар битов в найденной фигуре' }], key: 'symmetry|mins' });
     } else for (const c of [toBits.minR, toBits.minP]) if (c) out.get('symmetry')?.push({ ...leafItem(c), key: c.id });
+    {   // «не меняй местами их»: блоки потоков всегда Свет · Снег · Вода, как бы ни включали (порядок в дереве меняется — включённые первыми)
+      const fl = out.get('flow'), rank = it => it.sec ? 1 + Object.keys(FLOW_C).indexOf(it.sec) : 0;
+      if (fl) { const s2 = fl.map((it, i) => [it, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]); fl.splice(0, fl.length, ...s2); }
+    }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     {   // «Сетка — в правую рейку под Встык»: соты «Битов» — прежний порядок слева-справа, «Сетка» — правым столбцом

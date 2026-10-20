@@ -63,7 +63,8 @@
     return sprites;
   }
   const invalidate=()=>{dirty=true;if(light||snow||water)wake();};
-  function reset(){rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
+  let tracesAt=-1e9,tracesHas=false;
+function reset(){tracesAt=-1e9;rays=[];beams=null;beamDistance=0;emission=snowEmission=waterEmission=accumulator=snowAccumulator=0;if(field){field.water.fill(0);field.drained=0;liquid.water.fill(0);liquid.activeRows.clear();liquid.drained=0;}ctx?.clearRect(0,0,canvas.width,canvas.height);}
   function sunSource(){if(axisFlow&&guide)return {x:guide.x,y:guide.y,radius:Math.min(sunRadius,innerWidth)};const left=matchMedia('(max-width:1100px)').matches?0:(window.HUB_MENU_W||300);return {x:left+(innerWidth-left)*.25,y:Math.min(110,innerHeight*.2),radius:Math.min(sunRadius,innerWidth)};}
   function size(){
     const w=innerWidth,h=innerHeight,W=axisFlow?Math.ceil(Math.hypot(w,h)):w,H=axisFlow?W:h,scale=axisFlow?Math.max(1,Math.sqrt(W*H/(w*h))):1;
@@ -243,6 +244,7 @@
   }
   window.HubFlow={invalidate,
     get playing(){return !paused&&(light||snow||water);},
+    get traces(){const t=performance.now();if(t-tracesAt>250){tracesAt=t;tracesHas=rays.length>0||beamDistance>0||!!field?.water.some(v=>v>0)||!!liquid?.water.some(v=>v>0);}return tracesHas;},   // «Сброс — показывать, когда есть остатки потоков на холсте» (проверка не чаще 4 раз в секунду)
     togglePause(){paused=!paused;lastTime=0;if(!paused)wake();window.dispatchEvent?.(new Event('hubflowstate'));},
     snapshot(){return {axis:axisFlow,dirX,dirY,light,snow,water,paused,rays:JSON.parse(JSON.stringify(rays)),emission,snowEmission,waterEmission,sample,beamDistance,accumulator,snowAccumulator,snowGrid:window.HubPresetCore.pack(field),waterGrid:window.HubPresetCore.pack(liquid)};},
     restore(s){

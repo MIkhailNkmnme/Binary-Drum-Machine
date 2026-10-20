@@ -99,7 +99,7 @@
         if (!S) { const box2 = el('div', 'gz-sec'); if (it.secColor) box2.style.setProperty('--c', it.secColor); S = { box: box2, top: el('div', 'gz-wide'), soty: el('div', 'gz-soty'), bot: el('div', 'gz-wide'), cells: [] }; box2.append(S.top, S.soty, S.bot); wide.append(box2); secs.set(it.sec, S); }
         return S; };
       for (const it of g.items) {
-        const S = secOf(it), toSoty = b => { (S ? S.cells : cells).push(b); (S ? S.soty : soty).append(b); }, toWide = b => { if (S) (S.top.children.length ? S.bot : S.top).append(b); else wide.append(b); };
+        const S = secOf(it), toSoty = b => { (S ? S.cells : cells).push(b); (S ? S.soty : soty).append(b); }, toWide = b => { if (S) (it.secHead ? S.top : S.bot).append(b); else wide.append(b); };   // it.secHead — строка-заголовок блока (ползунок потока), всегда сверху
         const b = el('div', 'gz-hx'); if (it.pan) b.dataset.pan = it.pan; b.tabIndex = 0; b.setAttribute('role', 'button'); withTip(b, it.tip || it.name); if (it.col != null) b.gzCol = it.col;
         if (it.type === 'control') {
           // Existing native fields retain typing, scrubbing, labels and page listeners.
@@ -118,7 +118,7 @@
             h.addEventListener('click', e => { e.stopPropagation(); it.head.click(); refresh(); }); refreshers.push(() => { const on = !!it.head.on(); h.classList.toggle('gz-on', on); b.classList.toggle('gz-on', on); }); }   // «обводки нет при включённой» — включён: обводка всей кнопки, как у остальных
           if (it.tail) { const t = el('span', 'gz-vt', it.tail.label); b.append(t);
             t.addEventListener('click', e => { e.stopPropagation(); it.tail.click(); refresh(); });
-            refreshers.push(() => { const sh = !it.tail.show || it.tail.show(); t.style.display = sh ? '' : 'none'; const n = it.tail.labelNow ? it.tail.labelNow() : it.tail.label; if (t.textContent !== n) t.textContent = n; }); }
+            refreshers.push(() => { const sh = !it.tail.show || it.tail.show(); t.style.display = sh ? '' : 'none'; if (it.tail.on) t.classList.toggle('gz-on', !!it.tail.on()); const n = it.tail.labelNow ? it.tail.labelNow() : it.tail.label; if (t.textContent !== n) t.textContent = n; }); }
           // значение с frac() / setFrac(f) — ползунок: пунктирная дорожка, ромб-бегунок, число по центру; тянут по середине, ◂ ▸ — шаг
           if (it.frac && it.setFrac) {
             b.classList.add('gz-sl'); b.title = it.tip || it.name; const th = el('span', 'gz-th'), TH = 8; mid.prepend(th);
@@ -166,7 +166,8 @@
           // пара — одна кнопка, одна обводка, пополам: parts[i] = { label, tip, on(), click() | open(anchor), fill(), ink() }; it.cls — свой класс (gz-rainbow — обводка радугой)
           b.classList.add('gz-pair'); if (it.cls) b.classList.add(...it.cls.split(' '));
           const hs = it.parts.map((p, i) => { const h = el('span', 'gz-half gz-h' + i, p.label);   // gz-h0 / gz-h1 — не :first/:last-child: в кнопку дописывают свои метки if (p.tip) withTip(h, p.tip);
-            h.addEventListener('click', e => { e.stopPropagation(); if (p.open) p.open(b); else if (p.click) p.click(); refresh(); }); return h; });
+            h.addEventListener('click', e => { e.stopPropagation(); if (it.disabled && it.disabled()) return; if (p.open) p.open(b); else if (p.click) p.click(); refresh(); }); return h; });
+          if (it.disabled) refreshers.push(() => b.classList.toggle('gz-off-dis', !!it.disabled()));   // пара тоже бывает притушена (правила потоков без потоков)
           // «в середине умести текст, а где 1 и 0 — там меньше; включение — как везде, обводкой граней»: [0 | название | 1], включённая сторона — яркая кайма своей половины
           b.append(hs[0], el('span', 'gz-pm', it.mid ?? it.name), hs[1]);
           refreshers.push(() => { if (it.one) b.classList.toggle('gz-one', !!it.one()); it.parts.forEach((p, i) => { if (p.labelNow) { const t = p.labelNow(); if (hs[i].textContent !== t) hs[i].textContent = t; } }); });   // labelNow — живая подпись половины   // it.one() — показывать одну левую половину во всю кнопку

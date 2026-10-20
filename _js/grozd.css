@@ -208,3 +208,4 @@ html.gz-pre :is(#w-cone .cgrp,#ringTbl,.zerk-grape){visibility:hidden!important}
 .gz-sec>.gz-soty{margin:3px 0 0}
 .gz-sec+.gz-sec,.gz-wide>.gz-hx+.gz-sec,.gz-sec+.gz-hx{margin-top:3px}
 .gz-sec>.gz-bot,.gz-sec>.gz-wide+.gz-wide{margin-top:3px}
+.gz-val .gz-vt.gz-on{color:#fff;text-shadow:0 0 6px var(--c)}
