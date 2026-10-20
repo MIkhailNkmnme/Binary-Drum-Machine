@@ -586,10 +586,11 @@
       const arcs=state.bitView==='brackets'||state.bitView==='parentheses';
       if(!arcs&&rotationBit.mirror!==mirror)return;
       const chosen=rotationBit.bit,points=arcs?bitCenters.filter(p=>p[2]===chosen):[bitCenters[rotationBit.index]];
-      const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=state.bitView==='stars'?1e5:Math.max(a,b)*6;   // v0.210: у звезды — до края поля
+      const a=bitCell.width*(state.packedBits?.5:.45),b=bitCell.height*(state.packedBits?.5:.45),size=state.packedBits&&state.bitView==='stars'?bitCell.width:Math.min(bitCell.width,bitCell.height)*.62,length=state.bitView==='stars'||slashOn()?1e5:Math.max(a,b)*6;   // v0.210: у звезды — до края поля; v0.391: у черты — тоже
       g.save();g.strokeStyle=this.colors()[mirror?'mirror':'bit'];g.globalAlpha=.3;g.shadowBlur=0;g.lineWidth=.7/Math.max(.2,window.HubView?.scale||1);
       for(const p of points){if(!p||p[2]!==chosen)continue;g.save();g.translate(p[0],p[1]);g.rotate(this.bitAngle(chosen));g.beginPath();
         if(arcs){if(state.packedBits){const text=state.bitView==='brackets'&&chosen==='0'?'()':chosen==='1'?')':'(';g.font=`bold ${size}px monospace`;g.scale(...packedScale(g,text,size,bitCell.width,bitCell.height));}const offsets=state.bitView==='brackets'&&chosen==='0'?[-.17,.17]:[chosen==='1'?-.37:.37];for(const offset of offsets){g.moveTo((offset+.55)*size,0);g.arc(offset*size,0,size*.55,0,2*Math.PI);}}
+        else if(slashOn()){const sg=chosen==='1'?-1:1,d=Math.SQRT1_2*length;g.moveTo(-d,-sg*d);g.lineTo(d,sg*d);}   // v0.391, «продолжение для черт вдоль самой черты до края поля»: прямая через бит по черте (было — грани ромба)
         else if(state.bitView==='stars'){for(let i=0;i<6;i++){const angle=i*Math.PI/3,x=Math.cos(angle),y=Math.sin(angle);g.moveTo(x*size*.45,y*size*.45);g.lineTo(x*length,y*length);}}
         else{const vertices=[[0,-b],[a,0],[0,b],[-a,0]];for(let i=0;i<4;i++){const p=vertices[i],q=vertices[(i+1)%4],d=Math.hypot(q[0]-p[0],q[1]-p[1]),x=(q[0]-p[0])/d*length,y=(q[1]-p[1])/d*length;g.moveTo(...p);g.lineTo(p[0]-x,p[1]-y);g.moveTo(...q);g.lineTo(q[0]+x,q[1]+y);}}
         g.stroke();g.restore();
