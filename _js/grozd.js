@@ -224,12 +224,16 @@
         const n = []; let h = 0, mc = 0;
         cells.forEach(b => { const c = b.gzCol || 0, r = n[c] = (n[c] || 0); n[c]++; put(b, c, r); h = Math.max(h, (r + 1) * DY - (flat ? 0 : (c % 2) * DY / 2)); mc = Math.max(mc, c); });
         soty.style.height = (h - 3) + 'px'; soty.style.width = (mc * (W - N + 4) + W) + 'px';
+      } else if (cfg.oneCol && soty === box.gzSoty && !wide.children.length && !secs.size) {
+        // Hub v0.399, «верхние закрепы: если в группе все кнопки одной ширины — столбцом одним» (cfg.oneCol): одна колонка, без сдвига на полкнопки
+        flat = true; cells.forEach((b, k) => put(b, 0, k)); flat = false; box.classList.add('gz-onecol');
+        soty.style.height = cells.length ? (cells.length * DY - 3) + 'px' : '0';
       } else {
         cells.forEach((b, k) => put(b, k % 2, k >> 1));
         const rows = Math.ceil(cells.length / 2);
         soty.style.height = cells.length ? (rows * DY - 3) + 'px' : '0';
       } };
-      lay(cells, soty);
+      box.gzSoty = soty; lay(cells, soty);
       flat = true; for (const S of secs.values()) { if (S.cells.length) lay(S.cells, S.soty); else S.soty.remove(); if (!S.bot.children.length) S.bot.remove(); }
       if (cells.length) box.append(soty);
       if (wide.children.length) box.append(wide);

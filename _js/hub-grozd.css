@@ -31,5 +31,6 @@ body.hubRailOn .gz-ladder{background:none!important;box-shadow:none!important;bo
 #hubRail .hubStrip .gz-slot{display:none}
 #hubRail .hubStrip .gz-group{pointer-events:auto}
 #hubRail .hubStrip .gz-group.gz-open{width:max-content;min-width:calc(var(--gz-w)*2 - var(--gz-n) + 4px)}
+#hubRail .hubStrip .gz-group.gz-onecol.gz-open{min-width:var(--gz-w)}   /* v0.399: группа одним столбцом — шириной в кнопку */
 body.hubStripHint #hubRail .hubStrip{min-height:26px;outline:1px dashed #8fa0c8;outline-offset:-1px}
 @media(max-width:1100px){#hubRail .hubStrip{display:none}}

@@ -321,6 +321,8 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           location.reload(); } });   // «Сброс не возвратил»: при уходе со страницы модули записывали настройки обратно — стирает ещё раз первый скрипт <head> по отметке
     }
     // «цвет убери, а палитру поставь самой верхней»: группы «Цвет» нет, палитра — первой в «Битах»
+    // v0.399, «[Разрешение PNG] в одну ширину кнопку»: список разрешения — одиночной кнопкой «PNG 4K», не во всю ширину
+    for (const a of out.values()) for (const it of a) if (it.type === 'list' && /Разрешение PNG/.test(it.tip || it.name || '')) { it.compact = true; it.name = 'PNG'; }
     const bl = out.get('bits'), pi = bl.findIndex(i => i.key === 'colour|palette'); if (pi > 0) bl.unshift(...bl.splice(pi, 1));
     {   // «Сетка — в правую рейку под Встык»: соты «Битов» — прежний порядок слева-справа, «Сетка» — правым столбцом
       const soty = it => !['value', 'vpair', 'control'].includes(it.type) && !(it.type === 'list' && !it.compact) && !it.wide;
@@ -373,7 +375,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
       const gs = GROUPS.filter(([k]) => m.get(k).length).map(([id, title, color]) => ({ id, title, color, items: m.get(id) }));
       const up = g => desk() && topX.has(g.id), ups = gs.filter(up);
       rail = window.ZerkGrozd.rail(host, { key: 'hub', groups: gs.filter(g => !up(g)) });
-      if (ups.length) { railTop = window.ZerkGrozd.rail(strip, { key: 'hubtop', groups: ups }); putX(); }
+      if (ups.length) { railTop = window.ZerkGrozd.rail(strip, { key: 'hubtop', groups: ups, oneCol: true }); putX(); }
       // подсказка — плашкой хаба (hub-tips.js читает title)
       for (const g of gs) { const box = host.querySelector('.gz-group[data-id="' + g.id + '"]'); if (!box) continue;
         const cells = [...box.querySelectorAll('.gz-soty > .gz-hx')], wide = [...box.querySelectorAll('.gz-wide > .gz-hx')];
