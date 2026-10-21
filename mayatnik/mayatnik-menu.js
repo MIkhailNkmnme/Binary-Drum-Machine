@@ -161,8 +161,9 @@
         const h = document.createElement('span'); h.className = 'may-hp-h'; h.dataset.n = e.dataset.n; h.textContent = e.textContent; h.title = e.title || ('Построить ' + e.textContent);
         h.onclick = ev => { ev.stopPropagation(); pop.hidden = true; e.click(); sync(); }; row.append(h); });
       pop.append(row); }
-    const sync = () => { const n = cur(), on = pres.some(e => e.dataset.n === n); b.querySelector('b').textContent = on ? n : ''; b.classList.toggle('on', !pop.hidden);
-      for (const h of pop.querySelectorAll('.may-hp-h')) h.classList.toggle('on', h.dataset.n === n); };
+    const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
+      b.classList.toggle('on', !pop.hidden);
+      for (const h of pop.querySelectorAll('.may-hp-h[data-n]')) h.classList.toggle('on', h.dataset.n === n); };   // v0.374: только кнопки размеров (не «N/3 | 4N»)
     // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор); v0.335: «фон не шире кнопок, без границ» — без каймы, по ширине кнопок
     const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp, .may-hp-sl, .may-hp-2'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
       pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
@@ -173,7 +174,7 @@
     b.onclick = ev => { ev.stopPropagation(); pop.hidden = !pop.hidden; sync(); hpFrame(); };
     document.addEventListener('pointerdown', ev => { if (!pop.hidden && !wrapH.contains(ev.target)) { pop.hidden = true; sync(); } });
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
-    $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
+    $('rows').addEventListener('change', sync); $('rows').addEventListener('input', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
     // v0.355: «эти сюда сверху» — «Строк», «Вершин», «Показ» из рейки «Поле» — наверху списка «Хорр»
     // v0.372: «ползунок с вершинами удали» — вершин ставит выбор «N/3 | 4N» (или N)
     bbCells['Вершин']?.remove();
