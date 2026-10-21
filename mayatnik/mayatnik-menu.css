@@ -663,3 +663,11 @@ body.may-zen .zl-hd{display:none}
 #zTopLine .ztl-del{position:absolute;top:50%;margin:-11px 0 0;z-index:1;width:22px;height:22px;padding:0;border:1px solid #ff7373;border-radius:50%;background:#121a30;color:#ff7373;font:700 13px/1 'Segoe UI',sans-serif;cursor:pointer}   /* v0.361 */
 #zTopLine .ztl-del:hover{background:#3a1820}
 .zl-b.zl-del{border-color:#ff7373;color:#ff7373}
+/* v0.368: ромб оси посередине «Правки» — замораживает масштаб («Верх» + «Вниз»); черта-разделитель вместо него спрятана */
+header #paintTools.pt-dd .pt-btn .pt-ud-sep{display:none}
+header #paintTools.pt-dd .pt-btn .pt-ud-ax{position:relative;flex:none;align-self:center;width:22px;height:22px;margin:0 2px;cursor:pointer;outline:none;
+  background:color-mix(in srgb,var(--c) 45%,#121a30);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+header #paintTools.pt-dd .pt-btn .pt-ud-ax::after{content:"";position:absolute;left:50%;top:2px;bottom:2px;border-left:1px dashed #dfe6f5;transform:translateX(-.5px)}
+header #paintTools.pt-dd .pt-btn .pt-ud-ax:hover,header #paintTools.pt-dd .pt-btn .pt-ud-ax:focus-visible{background:color-mix(in srgb,var(--c) 70%,#121a30)}
+header #paintTools.pt-dd .pt-btn .pt-ud-ax.on{background:var(--c);filter:drop-shadow(0 0 4px var(--c))}
+header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;border-color:#0d1119}

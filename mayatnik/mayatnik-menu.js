@@ -593,7 +593,14 @@
         s.addEventListener('click', go); s.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
         toolSync.push(() => { const off = !!e.disabled; s.classList.toggle('dis', off); s.title = tip(e) + (off ? ' — пока нечего' : ''); }); return s; };
       const sep = document.createElement('span'); sep.className = 'pt-ud-sep';
-      udL.append(half('bFillUndo', '↶', 'Отм.'), sep, half('bFillRedo', '↷', 'Повт.')); }
+      // v0.368: «эти кнопки такие же скопируй (↶ ◆ ↷ Синхрофазотрона), но ось здесь не сдвигается и ромб оси на месте; клик по нему — замораживает масштаб,
+      // то есть ставит «Верх» и «Вниз»»: ромб посередине «Правки» (она стоит над осью), горит — оба края держатся; ещё щелчок — оба снять
+      const ax = document.createElement('span'); ax.className = 'pt-ud-ax'; ax.setAttribute('role', 'button'); ax.tabIndex = 0;
+      const pz = id => $(id)?.getAttribute('aria-pressed') === 'true', axGo = ev => { ev?.stopPropagation(); const on = pz('zTop') && pz('zFitH');
+        for (const id of ['zTop', 'zFitH']) if (pz(id) === on) $(id).click(); placeTools(); };
+      ax.addEventListener('click', axGo); ax.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); axGo(ev); } });
+      toolSync.push(() => { const on = pz('zTop') && pz('zFitH'); ax.classList.toggle('on', on); ax.title = on ? 'Масштаб заморожен: держатся «Верх» и «Вниз» · щелчок — снять оба' : 'Заморозить масштаб: включить «Верх» и «Вниз» (верх и низ поля держатся, масштаб не меняется)'; });
+      udL.append(half('bFillUndo', '↶', 'Отм.'), sep, ax, half('bFillRedo', '↷', 'Повт.')); }
     for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), row = g.querySelector('.pt-r');
       l.tabIndex = 0; l.setAttribute('role', 'button'); l.setAttribute('aria-haspopup', 'true'); l.setAttribute('aria-expanded', 'false');
       const pin = document.createElement('span'); pin.className = 'pt-pin'; pin.title = 'Закрепить: список не закрывается';
@@ -673,9 +680,9 @@
           // v0.344: «поставь по центру над осью, как плей внизу» — ровно над серединой плея нижней полосы (без шага сетки), нет плея — середина шапки
           const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, cx = pr ? pr.left + pr.width / 2 : H.left + H.width / 2;
           ud.style.left = Math.round(Math.max(0, Math.min(B.W - w, cx - T.left - w / 2))) + 'px'; }
-        const rest = vis.filter(el => el !== ud), keyed = rest.filter(el => ok(at(el))).sort((x, y) => (+at(y)[2] || 0) - (+at(x)[2] || 0));
-        for (const el of keyed) { const w = el.offsetWidth, p = at(el); put(el, fit(occ, w, p[0], p[1], B), w); }
-        let cur = [0, 0]; for (const el of rest.filter(el => !ok(at(el)))) { const w = el.offsetWidth, p = seq(occ, w, B, cur); put(el, p, w); cur = [p[0] + Math.ceil((w + GAP) / SX), p[1]]; }
+        // v0.368: «верхнее меню сделай полосой одной»: все группы — в одну строку, порядок — как стояли (ряд, затем столбец), «Правку» над осью обходят
+        const rest = vis.filter(el => el !== ud), key = el => ok(at(el)) ? at(el)[1] * 1e4 + at(el)[0] : 1e9 + rest.indexOf(el);
+        let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth; while (busy(occ[0], c1 * SX, w)) c1++; put(el, [c1, 0], w); c1 += Math.ceil((w + GAP) / SX); }
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
         tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); };
