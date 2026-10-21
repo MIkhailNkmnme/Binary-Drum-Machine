@@ -616,7 +616,7 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 #zTopLine .ztl-mir{position:relative;z-index:1;margin-left:4px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;color:#7cbcff;font:700 12px/1 'Segoe UI',sans-serif;cursor:pointer}
 #zTopLine .ztl-mir:hover{background:#1d2b4d}
 #zTopLine .ztl-mir.on{background:#ff87cf;border-color:#ff87cf;color:#0d1119}
-body.may-zen #zTopLine{display:none}
+body.may-zen #zTopLine:not(.zen){display:none}   /* v0.353: закреплённая 📌 — видна и в дзене */
 
 /* v0.337: «Анимация» в нижней полосе — ×N | время кадра, слева */
 #mayBottomBar>#mayBbAnim{width:var(--gz-w);margin:0}   /* v0.338: стандартной ширины — правило ползунка полосы (>.gz-hx) его растягивало */
