@@ -612,5 +612,6 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 body.may-zen #zTopLine{display:none}
 
 /* v0.337: «Анимация» в нижней полосе — ×N | время кадра, слева */
+#mayBottomBar>#mayBbAnim{width:var(--gz-w);margin:0}   /* v0.338: стандартной ширины — правило ползунка полосы (>.gz-hx) его растягивало */
 #mayBbAnim{position:absolute;left:6px;top:50%;transform:translateY(-50%);--c:#73e4a5;cursor:default}
 #mayBbAnim .may-hp-h{position:relative;z-index:1;white-space:nowrap}
