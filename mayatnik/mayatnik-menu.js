@@ -88,7 +88,7 @@
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
-      pair(tgl('zOut'), tgl('zIn'), '− Дальше', '+ Ближе', { name: 'Масштаб', tip: 'Отдалить · приблизить' }), button('zFit', 'corners'), button('zFitH', 'down'), button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
+      button('zFit', 'corners'), button('zFitH', 'down'), button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -572,13 +572,17 @@
   { const col = document.createElement('div'); col.id = 'mayRhombs'; document.body.append(col);
     const mk = (id, src, label) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'may-rh'; b.textContent = label;
       b.addEventListener('click', () => $(src)?.click()); col.append(b); return b; };
+    // v0.417: + и − — отдельные ромбы над Дзеном.
+    const zoomIn = mk('mayRhZoomIn', 'zIn', '+'), zoomOut = mk('mayRhZoomOut', 'zOut', '−');
+    for (const b of [zoomIn, zoomOut]) b.classList.add('may-rh-zoom');
     const zen = mk('mayRhZen', 'mayZen', '◎\nДзен'), rec = mk('mayRhRec', 'bRec', '⏺\nВидео'), gif = mk('mayRhGif', 'bGif', 'GIF');
     const sync = () => { const z = document.body.classList.contains('may-zen'), t = z ? '◎\nМеню' : '◎\nДзен'; if (zen.textContent !== t) zen.textContent = t;
       zen.title = z ? 'Вернуть меню (Esc, щелчок колёсиком по полю)' : tip($('mayZen')); zen.setAttribute('aria-pressed', String(z));
+      for (const [b, id] of [[zoomIn, 'zIn'], [zoomOut, 'zOut']]) { const e = $(id); b.disabled = !e || e.disabled; b.title = e ? tip(e) : ''; b.setAttribute('aria-label', b.title); }
       const r = $('bRec'), on = !!r && r.matches('[aria-pressed="true"],.on'); rec.classList.toggle('on', on); rec.title = r ? tip(r) : '';
       const g = $('bGif'); gif.disabled = !!g?.disabled; gif.classList.toggle('on', g?.getAttribute('aria-pressed') === 'true'); gif.title = g ? tip(g) : ''; };
     const mo = new MutationObserver(sync); mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    for (const id of ['bRec', 'bGif']) if ($(id)) mo.observe($(id), { attributes: true, attributeFilter: ['aria-pressed', 'class', 'disabled', 'title'] });
+    for (const id of ['bRec', 'bGif', 'zIn', 'zOut']) if ($(id)) mo.observe($(id), { attributes: true, attributeFilter: ['aria-pressed', 'class', 'disabled', 'title'] });
     sync();
     const vg = [...tools.querySelectorAll('.pt-g')].find(g => g.querySelector('.pt-l')?.firstChild?.textContent.trim() === 'Видео'); if (vg) vg.remove(); }
   // v0.158: «меню в одну полоску, с выпадающими списками для каждой группы» — в шапке видны только названия групп;

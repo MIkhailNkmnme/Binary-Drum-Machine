@@ -750,3 +750,6 @@ header #paintTools .gz-group.pt-bot::after{display:none}
 #mayBottomBar .may-bb-play{left:50%!important}
 #mayBottomBar .may-bb-rs{left:calc(50% + 21px)!important}
 header #paintTools.pt-dd .pt-view .pt-sec{background:transparent!important;border-radius:0}   /* v0.403: «отступы поправь, как в выпадающем списке» — без цветной подложки блоков: кнопки стоят ровно, кайма видна одинаково */
+
+/* v0.417: знаки масштаба в ромбах над Дзеном. */
+#mayRhombs .may-rh-zoom{font-size:24px;font-weight:600}
