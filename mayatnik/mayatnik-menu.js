@@ -107,6 +107,7 @@
       button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
+  { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр'); }   // v0.332: «Хорр» — в нижней полосе
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
   // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
@@ -131,6 +132,25 @@
     b.title = 'Сброс: кадр 0 и очистка от всего — свёртки, вся краска и живая окраска, все зеркала, выделение шаблонов, поле заново';
     b.onclick = () => { const C = window.mayClear; if (C) { C.paintOff(); C.mirrorsOff(); C.selOff(); } $('bReset').click(); rail.refresh(); placeTools(); };
     $('mayBottomBar').prepend(b); }
+  // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
+  // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
+  { const pres = [...source.querySelectorAll('button.pre')], wrapH = document.createElement('div'); wrapH.id = 'mayBbHorr';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'gz-hx'; b.innerHTML = '<span>▦ Хорр <b></b> ▴</span>';
+    b.title = 'Сразу построить маятник: строк = N, вершин = N (или N/3 при «До N/3») · щелчок — список размеров';
+    const pop = document.createElement('div'); pop.className = 'may-hp-pop'; pop.hidden = true;
+    const cur = () => String(+$('rows').value || '');
+    for (let i = 0; i < pres.length; i += 2) { const row = document.createElement('div'); row.className = 'gz-hx may-hp';
+      pres.slice(i, i + 2).forEach((e, j) => { if (j) { const sep = document.createElement('i'); sep.className = 'may-hp-sep'; row.append(sep); }
+        const h = document.createElement('span'); h.className = 'may-hp-h'; h.dataset.n = e.dataset.n; h.textContent = e.textContent; h.title = e.title || ('Построить ' + e.textContent);
+        h.onclick = ev => { ev.stopPropagation(); pop.hidden = true; e.click(); sync(); }; row.append(h); });
+      pop.append(row); }
+    const sync = () => { const n = cur(), on = pres.some(e => e.dataset.n === n); b.querySelector('b').textContent = on ? n : ''; b.classList.toggle('on', !pop.hidden);
+      for (const h of pop.querySelectorAll('.may-hp-h')) h.classList.toggle('on', h.dataset.n === n); };
+    b.onclick = ev => { ev.stopPropagation(); pop.hidden = !pop.hidden; sync(); };
+    document.addEventListener('pointerdown', ev => { if (!pop.hidden && !wrapH.contains(ev.target)) { pop.hidden = true; sync(); } });
+    addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
+    $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
+    wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));

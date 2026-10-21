@@ -21,10 +21,22 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 #mayBottomBar{display:none}
 .mayatnik-menu-ready #mayBottomBar{display:flex;grid-column:1/-1;grid-row:6;justify-content:center;align-items:center;min-width:0;padding:3px 8px;border-top:1px solid var(--line);background:#0d1119}   /* v0.327: нижняя полоса меню */
 #mayBottomBar{--gz-w:120px;--gz-h:30px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:var(--gz-txt);font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;position:relative;min-height:42px;padding:6px 8px!important;box-sizing:border-box}   /* v0.330: переменные grozd (как в рейке) — ползунок не прозрачный; выше */
-#mayBottomBar>.gz-hx{width:min(520px,calc(100% - 260px));box-sizing:border-box}
+#mayBottomBar>.gz-hx{width:min(520px,calc(100% - 330px));box-sizing:border-box}
 #mayBottomBar>#mayBbReset{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:auto;--c:#ff7373;padding:0 16px;cursor:pointer;font:600 12px 'Segoe UI',sans-serif;color:#dfe6f5}
 #mayBbReset>span{position:relative;z-index:1}
-@media(max-width:600px){#mayBottomBar>.gz-hx{width:calc(100% - 110px);margin-left:100px}#mayBottomBar>#mayBbReset{left:6px;padding:0 10px}}
+@media(max-width:600px){#mayBottomBar>.gz-hx{width:calc(100% - 220px);margin-left:0}#mayBottomBar>#mayBbReset{left:6px;padding:0 10px}#mayBbHorr{right:6px}#mayBbHorr>.gz-hx{padding:0 10px}}
+/* v0.332: «Хорр» в нижней полосе — список вверх, по два размера в кнопке */
+#mayBbHorr{position:absolute;right:12px;top:50%;transform:translateY(-50%);--c:#73e4a5}
+#mayBbHorr>.gz-hx{width:auto;padding:0 16px;cursor:pointer;color:#dfe6f5;font:600 12px 'Segoe UI',sans-serif}
+#mayBbHorr>.gz-hx>span,#mayBbHorr .may-hp>*{position:relative;z-index:1}
+#mayBbHorr>.gz-hx b{color:var(--c);font-weight:700}
+.may-hp-pop{position:absolute;right:0;bottom:calc(100% + 8px);z-index:60;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:6px;background:#0d1119f2;box-shadow:0 6px 20px #000a}
+.may-hp-pop[hidden]{display:none}
+.may-hp{width:130px;padding:0 12px!important;gap:0;justify-content:space-between}
+.may-hp-h{flex:1 1 0;text-align:center;cursor:pointer;color:#c9d3e3;font:600 12px var(--mono,monospace);padding:0 4px}
+.may-hp-h:hover{color:#fff;text-shadow:0 0 6px var(--c)}
+.may-hp-h.on{color:var(--c)}
+.may-hp-sep{flex:none;align-self:stretch;width:1px;margin:5px 3px;background:color-mix(in srgb,var(--c) 60%,transparent)}
 body.may-zen #mayBottomBar{display:none!important}
 .mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:0 10px;align-items:center;min-width:0;padding:1px 50% 1px 4px;border-top:1px solid var(--line);background:var(--panel)}
 /* v0.069: меню без фона — кнопки прямо на поле. Поле тянется под меню; пустые места меню пропускают щелчки к полю. */
