@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Шаблоны Маятника — v0.001</title>
-<!-- Zerkalius Шаблоны Маятника — v0.001 (2026-10-21). «Нужна страница — библиотека шаблонов со статистикой».
+<title>Zerkalius Шаблоны Маятника — v0.002</title>
+<!-- Zerkalius Шаблоны Маятника — v0.002 (2026-10-21). v0.002: чёрные / пустые пиксели шаблона — цветом его бита. v0.001: «Нужна страница — библиотека шаблонов со статистикой».
   Читает библиотеку шаблонов Маятника из памяти браузера (IndexedDB «zerk-mayatnik-paint», ключ «templates»; скрытые — «template-hidden»)
   и встроенные (mayatnik-user-templates.js). Только показ: ничего не меняет и не удаляет — правка библиотеки остаётся в Маятнике.
   Сводка: шаблонов, из них автошаблонов, встреч (×N из «Автошаблоны → ✂ Вырезать все»), бит всего, из 1 / из 0, по цветам, столбики по размеру.
@@ -49,7 +49,7 @@ button{cursor:pointer}
 </style>
 </head>
 <body>
-<header><h1>Шаблоны Маятника</h1><span class="ver">v0.001</span><a href="Zerkalius-mayatnik.html">← Маятник</a><span class="ver" id="src"></span></header>
+<header><h1>Шаблоны Маятника</h1><span class="ver">v0.002</span><a href="Zerkalius-mayatnik.html">← Маятник</a><span class="ver" id="src"></span></header>
 <div class="sum" id="sum"></div>
 <div class="hist"><h2>Шаблонов по размеру (бит), светлое — из 1; щелчок — показать только этот размер</h2><div class="bars" id="bars"></div></div>
 <div class="ctl">
@@ -90,7 +90,9 @@ button{cursor:pointer}
   function draw(s) {
     const p = s.t.shape?.parts?.[0]; const c = document.createElement('canvas'); if (!p || !p.width) return c;
     c.width = p.width; c.height = p.height; const id = new ImageData(p.width, p.height), D = new Uint32Array(id.data.buffer);
-    for (let k = 0; k < D.length && k < p.data.length; k++) D[k] = p.data[k] >>> 0;
+    // v0.002: «шаблоны не видно — чёрные»: пиксель чёрного / пустого цвета (вырезан повторно с уже пустого кадра) — цветом своего бита: 1 светлый, 0 серый
+    const dark = u => { const r = u & 255, g = u >>> 8 & 255, b = u >>> 16 & 255; return r + g + b < 60; }, BIT = s.bit === 0 ? 0xff75645b : 0xfff5ede8;
+    for (let k = 0; k < D.length && k < p.data.length; k++) { const u = p.data[k] >>> 0; D[k] = u && dark(u) ? BIT : u; }
     c.getContext('2d').putImageData(id, 0, 0); const sc = Math.max(1, Math.floor(Math.min(140 / p.width, 96 / p.height)));
     c.style.width = p.width * sc + 'px'; c.style.height = p.height * sc + 'px'; return c;
   }
