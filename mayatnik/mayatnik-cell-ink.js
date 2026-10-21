@@ -98,7 +98,7 @@ window.MayatnikCellInk = function(o){
   addEventListener('keydown',e=>{
     if(!$('cellInk').checked||e.ctrlKey||e.altKey||e.metaKey||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
     const t=e.code==='KeyL'?'line':e.code==='Numpad5'?'top':e.code==='Numpad0'?'bottom':e.code==='Digit1'||e.code==='Numpad1'?'back':e.code==='Digit2'||e.code==='Numpad2'?'slash':null;
-    if(t){e.preventDefault();e.stopImmediatePropagation();choose(t);}else if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(pending){pending=null;drawLines();}else $('cellInk').click();}
+    if(t){e.preventDefault();e.stopImmediatePropagation();choose(t);}else if(e.key==='Escape'&&pending){e.preventDefault();e.stopImmediatePropagation();pending=null;drawLines();}   // Маятник v0.294: Esc — только отмена начатой линии; иначе он идёт дальше (снять выделение шаблона и пр.), «Грани» не выключает
   },true);
   $('cellInk').addEventListener('change',draw);choose(tool);
   return {draw};
