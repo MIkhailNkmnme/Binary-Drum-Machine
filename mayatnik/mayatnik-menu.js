@@ -163,7 +163,8 @@
       pop.append(row); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       b.classList.toggle('on', !pop.hidden);
-      for (const h of pop.querySelectorAll('.may-hp-h[data-n]')) h.classList.toggle('on', h.dataset.n === n); };   // v0.374: только кнопки размеров (не «N/3 | 4N»)
+      for (const h of pop.querySelectorAll('.may-hp-h[data-n]')) h.classList.toggle('on', h.dataset.n === n);
+      for (const r of pop.querySelectorAll('.may-hp:not(.may-hp-vm)')) r.classList.toggle('on', !!r.querySelector('.may-hp-h.on')); };   // v0.376: кнопка с выбранной половиной — каймой, как в Хабе   // v0.374: только кнопки размеров (не «N/3 | 4N»)
     // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор); v0.335: «фон не шире кнопок, без границ» — без каймы, по ширине кнопок
     const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp, .may-hp-sl, .may-hp-2'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
       pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
@@ -185,7 +186,7 @@
     bbCells.btns = (bbCells.btns || []).filter(c => c.isConnected);
     { const vm = document.createElement('div'); vm.className = 'gz-hx may-hp may-hp-vm';
       vm.innerHTML = '<span class="may-hp-h" data-v="n3">N/3</span><i class="may-hp-sep"></i><span class="may-hp-h" data-v="4n">4N</span>';
-      const V = () => window.mayVMode, vsync = () => { const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.may-hp-h')) { h.classList.toggle('on', h.dataset.v === m);
+      const V = () => window.mayVMode, vsync = () => { const m = V()?.get() || ''; vm.classList.toggle('on', !!m); for (const h of vm.querySelectorAll('.may-hp-h')) { h.classList.toggle('on', h.dataset.v === m);
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       for (const h of vm.querySelectorAll('.may-hp-h')) h.onclick = ev => { ev.stopPropagation(); V()?.pick(h.dataset.v); vsync(); rail.refresh(); placeTools(); };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)

@@ -673,3 +673,11 @@ header #paintTools.pt-dd .pt-btn .pt-ud-ax.on{background:var(--c);filter:drop-sh
 header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;border-color:#0d1119}
 .may-hp-pop>.may-hp-vm{width:100%!important}   /* v0.372: «N/3 | 4N» во всю ширину списка */
 .zl-hd.zl-last .zl-del{opacity:.3;cursor:default}   /* v0.373: последняя своей породы — не удаляется */
+/* v0.376: «кнопки нижнего меню — как в Хабе: фон не менять, только кайма цветом у нажатых»: ненажатая — тусклая кайма (20 % цвета),
+   нажатая — кайма цветом группы с лёгким свечением; фон внутри (::before) — всегда свой */
+#mayBottomBar .gz-hx{background:color-mix(in srgb,var(--c) 20%,#000)!important}
+#mayBottomBar .gz-hx::before{inset:1px;background:var(--gz-bg)!important}
+#mayBottomBar .gz-hx.on,#mayBottomBar .gz-hx.gz-on{background:var(--c)!important;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
+#mayBottomBar .gz-hx.on::before,#mayBottomBar .gz-hx.gz-on::before{inset:1.5px}
+#mayBottomBar .gz-hx:hover::before{background:color-mix(in srgb,var(--c) 22%,var(--gz-bg))!important}
+#mayBottomBar .gz-hx.on>*,#mayBottomBar .gz-hx.gz-on>*{color:#fff}
