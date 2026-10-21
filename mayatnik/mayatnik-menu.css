@@ -635,3 +635,5 @@ body.may-zen #zTopLine{display:none}
 /* v0.350: «Хорр» — в ряду, справа от ползунка */
 #mayBbHorr{position:relative;right:auto;top:auto;transform:none;flex:none;margin-left:2px}
 @media(max-width:600px){#mayBbHorr{right:auto}}
+#zTopLine .ztl-pin,#zTopLine .ztl-mir{position:absolute;top:50%;margin:-11px 0 0}   /* v0.352: места ставит zTopLine — у левого номера */
+#zTopLine .ztl-row{padding:0 2px}
