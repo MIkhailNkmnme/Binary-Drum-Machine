@@ -693,6 +693,13 @@
       let shown = new Map(), sig = '', d = null, rd = null, rdown = null, swallow = false;
       const sigOf = () => tools.clientWidth + ':' + items().map(el => el.getClientRects().length ? el.offsetWidth : 0).join(',');
       const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
+      // v0.389: «по середине на ось, чтоб ромб встал»: центр ромба «Правки» — на оси якоря (window.mayAxisX, экранный x); нет оси — середина плея / шапки.
+      // Зовёт и страница (прокрутка, масштаб) — window.mayUdPlace
+      const udPlace = () => { if (narrow.matches || !ud.getClientRects().length) return; const T = tools.getBoundingClientRect(), H = head.getBoundingClientRect(), w = ud.offsetWidth, axEl = ud.querySelector('.pt-ud-ax');
+        const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, axX = window.mayAxisX?.();
+        const cx = Number.isFinite(axX) ? axX : pr ? pr.left + pr.width / 2 : H.left + H.width / 2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
+        const v = Math.round(Math.max(0, Math.min(tools.clientWidth - w, cx - T.left - off))) + 'px'; if (ud.style.left !== v) ud.style.left = v; };
+      window.mayUdPlace = udPlace;
       const relayout = () => { const all = items();
         if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; } shown = new Map(); sig = ''; return; }
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
@@ -702,8 +709,7 @@
         if (vis.includes(ud)) { const w = ud.offsetWidth, H = head.getBoundingClientRect(), T = tools.getBoundingClientRect();   // «Правка» — по середине шапки, первой
           put(ud, [Math.max(0, Math.min(Math.floor((B.W - w) / SX), Math.round((H.left + H.width / 2 - T.left - w / 2) / SX))), 0], w);
           // v0.344: «поставь по центру над осью, как плей внизу» — ровно над серединой плея нижней полосы (без шага сетки), нет плея — середина шапки
-          const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, cx = pr ? pr.left + pr.width / 2 : H.left + H.width / 2;
-          ud.style.left = Math.round(Math.max(0, Math.min(B.W - w, cx - T.left - w / 2))) + 'px'; }
+          udPlace(); }
         // v0.368: «верхнее меню сделай полосой одной»: все группы — в одну строку, порядок — как стояли (ряд, затем столбец), «Правку» над осью обходят
         const rest = vis.filter(el => el !== ud), key = el => ok(at(el)) ? at(el)[0] + at(el)[1] * 1e-3 : 1e9 + rest.indexOf(el);   // v0.386: в одну строку — порядок по столбцу
         let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, hiC = Math.max(c1, Math.floor((B.W - w) / SX)); let c = Math.min(hiC, Math.max(c1, ok(at(el)) ? at(el)[0] : c1)); while (busy(occ[0], c * SX, w)) c++; put(el, [c, 0], w); c1 = c + Math.ceil((w + GAP) / SX); }   // v0.386: «не даёт разместить вправо» — свой столбец (куда перетащили), до правого края; друг на друга не налезают
