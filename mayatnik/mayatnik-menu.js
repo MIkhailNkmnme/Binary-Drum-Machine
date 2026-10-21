@@ -146,7 +146,14 @@
       pop.append(row); }
     const sync = () => { const n = cur(), on = pres.some(e => e.dataset.n === n); b.querySelector('b').textContent = on ? n : ''; b.classList.toggle('on', !pop.hidden);
       for (const h of pop.querySelectorAll('.may-hp-h')) h.classList.toggle('on', h.dataset.n === n); };
-    b.onclick = ev => { ev.stopPropagation(); pop.hidden = !pop.hidden; sync(); };
+    // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор), кайма цветом группы
+    const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
+      pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
+      pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
+      const c = getComputedStyle(pop).getPropertyValue('--c').trim() || '#73e4a5', d = pt.map(q => q.join(',')).join(' ');
+      pop.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
+      pop.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".97" stroke="${c}" stroke-width="3" stroke-linejoin="miter"/></svg>`) + '")'; };
+    b.onclick = ev => { ev.stopPropagation(); pop.hidden = !pop.hidden; sync(); hpFrame(); };
     document.addEventListener('pointerdown', ev => { if (!pop.hidden && !wrapH.contains(ev.target)) { pop.hidden = true; sync(); } });
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
     $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
