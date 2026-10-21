@@ -156,17 +156,23 @@
     b.title = 'Сразу построить маятник: строк = N, вершин = N (или N/3 при «До N/3») · щелчок — список размеров';
     const pop = document.createElement('div'); pop.className = 'may-hp-pop'; pop.hidden = true;
     const cur = () => String(+$('rows').value || '');
-    for (let i = 0; i < pres.length; i += 2) { const row = document.createElement('div'); row.className = 'gz-hx may-hp';
-      pres.slice(i, i + 2).forEach((e, j) => { if (j) { const sep = document.createElement('i'); sep.className = 'may-hp-sep'; row.append(sep); }
-        const h = document.createElement('span'); h.className = 'may-hp-h'; h.dataset.n = e.dataset.n; h.textContent = e.textContent; h.title = e.title || ('Построить ' + e.textContent);
-        h.onclick = ev => { ev.stopPropagation(); pop.hidden = true; e.click(); sync(); }; row.append(h); });
-      pop.append(row); }
+    // v0.380: «один стандарт кнопок» — пары размеров и «N/3 | 4N» — стандартная пара grozd (gz-pair gz-split, как «✛ 2 ось | ∆3» в Хабе):
+    // одна кнопка, косая черта посередине, у каждой половины своя кайма; включённая половина — кайма цветом (--gz-rI), прочая — 30 %
+    const gzPair = (parts) => { const row = document.createElement('div'); row.className = 'gz-hx gz-pair gz-split';
+      const hs = parts.map((pt, j) => { const h = document.createElement('span'); h.className = 'gz-half gz-h' + j; h.textContent = pt.label; h.title = pt.tip || ''; Object.assign(h.dataset, pt.data || {});
+        h.onclick = ev => { ev.stopPropagation(); pt.click(); }; return h; });
+      const pm = document.createElement('span'); pm.className = 'gz-pm'; row.append(hs[0], pm, ...hs.slice(1));
+      row.gzSync = () => parts.forEach((pt, j) => { const on = !!pt.on(); hs[j].classList.toggle('gz-on', on); row.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
+      return row; };
+    const sizeRows = [];
+    for (let i = 0; i < pres.length; i += 2) { const row = gzPair(pres.slice(i, i + 2).map(e => ({ label: e.textContent, tip: e.title || ('Построить ' + e.textContent), data: { n: e.dataset.n },
+        on: () => cur() === e.dataset.n, click: () => { pop.hidden = true; e.click(); sync(); } }))); sizeRows.push(row); pop.append(row); }
     const sync = () => { const n = cur(); b.querySelector('b').textContent = n;   // v0.374: число строк — всегда, и выставленное ползунком «Строк»
       b.classList.toggle('on', !pop.hidden);
-      for (const h of pop.querySelectorAll('.may-hp-h[data-n]')) h.classList.toggle('on', h.dataset.n === n);
+      for (const r of sizeRows) r.gzSync();   // v0.380
       };   // v0.379: «или-или — обводка одной кнопки, а не двух сразу»: каймой — только выбранная половина (CSS .may-hp-h.on), не вся кнопка   // v0.374: только кнопки размеров (не «N/3 | 4N»)
     // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор); v0.335: «фон не шире кнопок, без границ» — без каймы, по ширине кнопок
-    const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp, .may-hp-sl, .may-hp-2'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
+    const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.gz-pair, .may-hp-sl, .may-hp-2'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
       pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
       pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
       const d = pt.map(q => q.join(',')).join(' ');
@@ -184,11 +190,11 @@
     // вместо них — одна кнопка из двух половин; выбранная горит, щелчок по горящей — снова N вершин; выбор — для кнопок размеров и «Построить»
     const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();
     bbCells.btns = (bbCells.btns || []).filter(c => c.isConnected);
-    { const vm = document.createElement('div'); vm.className = 'gz-hx may-hp may-hp-vm';
-      vm.innerHTML = '<span class="may-hp-h" data-v="n3">N/3</span><i class="may-hp-sep"></i><span class="may-hp-h" data-v="4n">4N</span>';
-      const V = () => window.mayVMode, vsync = () => { const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.may-hp-h')) { h.classList.toggle('on', h.dataset.v === m);
+    { const V = () => window.mayVMode, pickV = v => { V()?.pick(v); vsync(); rail.refresh(); placeTools(); };
+      const vm = gzPair([{ label: 'N/3', data: { v: 'n3' }, on: () => (V()?.get() || '') === 'n3', click: () => pickV('n3') }, { label: '4N', data: { v: '4n' }, on: () => (V()?.get() || '') === '4n', click: () => pickV('4n') }]);
+      vm.classList.add('may-hp-vm');
+      function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
-      for (const h of vm.querySelectorAll('.may-hp-h')) h.onclick = ev => { ev.stopPropagation(); V()?.pick(h.dataset.v); vsync(); rail.refresh(); placeTools(); };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement, rows = []; for (let k = 0; k < bt.length; k += 2) { const r = document.createElement('div'); r.className = 'may-hp-2'; r.append(...bt.slice(k, k + 2)); rows.push(r); }
       if (rows.length) pop.prepend(...rows); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0'; }   // v0.358: по две в ряд, над ползунками

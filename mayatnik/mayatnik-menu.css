@@ -704,3 +704,7 @@ header #paintTools .pt-b.gz-hx.pt-tri3{padding:0!important}
 #paintTools .pt-tri3 .pt-t3.on:last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px)) 0,100% 50%,calc(100% - var(--gz-n,9px)) 100%,0 100%)}
 #paintTools .pt-tri3 .pt-t3.on:last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px) + 1px) 0,100% 50%,calc(100% - var(--gz-n,9px) + 1px) 100%,0 100%)}
 #paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:0;box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c,#b48cff) 45%,transparent)}
+/* v0.380: пары в списке «Хорр» — стандартная пара grozd; без свечения текста; во всю ширину списка */
+#mayBottomBar .gz-pair .gz-half.gz-on,#mayBottomBar .gz-pair .gz-half:hover{text-shadow:none}
+#mayBottomBar .gz-pair.gz-split .gz-half{font-size:12px;font-weight:600}
+#mayBottomBar .gz-hx.gz-pair::before{inset:1.5px}
