@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник: наклон — v0.002</title>
-<!-- Zerkalius Маятник: наклон — v0.002 (2026-10-21). v0.002: масштаб колесом мыши над полем — к точке под курсором (×1,25 за щелчок колеса). v0.001: «маятник на Серпинском не 90, а 30» — вариант 2: вершины маятника не на верхней строке
+<title>Zerkalius Маятник: наклон — v0.003</title>
+<!-- Zerkalius Маятник: наклон — v0.003 (2026-10-21). v0.003: вариант 3 — «конус»: клетка вширь на 1, 2, 3, 4, 6 или 8 строк (угол вершины конуса 90°, 53°, 37°, 28°, 19°, 14°).
+  При 1 — правило Маятника (клетки через одну, родители слева и справа сверху). При q ≥ 2 — все клетки подряд, по кругу из q строк: строка «влево» (родители над
+  клеткой и правее, конус шире на клетку влево), строка «вправо» (над и левее, шире вправо), остальные q − 2 — «вниз» (родитель над клеткой); бит = старый ⊕ родители.
+  Для одной вершины на пустом поле это треугольник Паскаля по модулю 2 (Серпинский), только узкий. v0.002: масштаб колесом мыши над полем — к точке под курсором (×1,25 за щелчок колеса). v0.001: «маятник на Серпинском не 90, а 30» — вариант 2: вершины маятника не на верхней строке
   (линия вершин под 90° к оси), а на наклонной: линия под углом θ к оси, вершина со сдвигом p начинает свой конус в строке r0 = round(|p| · ctg θ).
   Правило конуса то же, что в Маятнике (mayatnik-core.js, cone): клетки a − d … a + d через одну, бит = старый ⊕ левый сверху ⊕ правый сверху;
   клетка вершины на время первой строки — 1. Страница для пробы: поле, кадры, анимация, линия вершин. Дальше — вариант 3 (другое правило конуса). -->
@@ -33,12 +36,13 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
-<header><h1>Маятник: наклон</h1><span class="ver">v0.002</span><a href="Zerkalius-mayatnik.html">← Маятник</a></header>
+<header><h1>Маятник: наклон</h1><span class="ver">v0.003</span><a href="Zerkalius-mayatnik.html">← Маятник</a></header>
 <div class="ctl">
   <label title="Строк в поле">строк <input id="rows" type="number" min="8" max="2048" step="1" value="256"></label>
   <label title="Вершин маятника">вершин <input id="steps" type="number" min="1" max="4096" step="1" value="256"></label>
   <label title="Порядок вершин">ход <select id="mode"><option value="pend">лево-право</option><option value="pendR">право-лево</option><option value="right">вправо</option><option value="left">влево</option></select></label>
   <label title="Угол линии вершин к оси конусов: 90° — все вершины на верхней строке, как в Маятнике; меньше — вершина со сдвигом p начинает конус ниже, в строке |p| · ctg θ">наклон <select id="ang"><option value="90">90°</option><option value="75">75°</option><option value="60">60°</option><option value="45">45°</option><option value="30">30°</option><option value="15">15°</option></select></label>
+  <label title="Как быстро конус расширяется: на клетку в каждую сторону за 1 строку (90°, как в Маятнике) или за 2, 3, 4, 6, 8 строк — Серпинский уже">конус <select id="cone"><option value="1">1 строка · 90°</option><option value="2">2 строки · 53°</option><option value="3">3 строки · 37°</option><option value="4">4 строки · 28°</option><option value="6">6 строк · 19°</option><option value="8">8 строк · 14°</option></select></label>
   <button id="bBuild" title="Построить заново">Построить</button>
   <label title="Масштаб: по ширине окна или пикселей на бит">масштаб <select id="zoom"><option value="fit">по ширине</option><option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option><option value="custom" hidden></option></select></label>
   <label title="Линия вершин поверх поля"><input id="vline" type="checkbox" checked> линия вершин</label>
@@ -57,7 +61,7 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), KEY = 'zerk-mayatnik-naklon';
-  let st = { rows: 256, steps: 256, mode: 'pend', ang: 90, zoom: 'fit', vline: true, speed: 1 };
+  let st = { rows: 256, steps: 256, mode: 'pend', ang: 90, cone: 1, zoom: 'fit', vline: true, speed: 1 };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
   const COL = { one: [232, 237, 245], zero: [91, 100, 117], empty: [5, 7, 13] };
@@ -80,16 +84,32 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
       if (d === 1) val[i0] = apex;
     }
   }
+  // v0.003: вариант 3 — конус шире на клетку за q строк. По кругу из q строк: «влево» (родители up[c], up[c+1]), «вправо» (up[c−1], up[c]),
+  // «вниз» (up[c]); клетки конуса подряд; бит = старый ⊕ родители (как у Маятника — старый ⊕ левый ⊕ правый)
+  function coneQ(a, r0, q) {
+    const { W, H, val } = f; if (a < 0 || a >= W || r0 >= H) return;
+    const i0 = r0 * W + a; if (val[i0] === -1) val[i0] = 1;
+    const apex = val[i0]; val[i0] = 1; let wl = 0, wr = 0;
+    for (let d = 1; r0 + d < H; d++) {
+      const row = (r0 + d) * W, up = row - W, ph = (d - 1) % q, s0 = ph === 1 ? -1 : 0, s1 = ph === 0 ? 1 : ph === 1 ? 0 : null;
+      if (ph === 0) wl++; else if (ph === 1) wr++;
+      const x0 = Math.max(0, a - wl), x1 = Math.min(W - 1, a + wr), one = c => c >= 0 && c < W && val[up + c] === 1;
+      for (let c = x0; c <= x1; c++) { const i = row + c; val[i] = ((val[i] === 1) ^ one(c + s0) ^ (s1 !== null && one(c + s1))) ? 1 : 0; }
+      if (d === 1) val[i0] = apex;
+    }
+  }
   function build() {
     stop(); st.rows = Math.max(8, Math.min(2048, +$('rows').value | 0 || 256)); st.steps = Math.max(1, Math.min(4096, +$('steps').value | 0 || 256));
-    st.mode = $('mode').value; st.ang = +$('ang').value || 90; save();
-    S = st.steps; geo = MAYATNIK.geometry(st.mode, S, st.rows); f = MAYATNIK.field(geo.W, st.rows, 'empty', geo.anchor);
+    st.mode = $('mode').value; st.ang = +$('ang').value || 90; st.cone = Math.max(1, +$('cone').value | 0 || 1); save();
+    S = st.steps; geo = MAYATNIK.geometry(st.mode, S, st.rows);
+    if (st.cone > 1) { const pad = Math.ceil((st.rows - 1) / st.cone) + 1, lo = (st.rows - 1) - geo.anchor, hi = geo.W - 1 - (st.rows - 1) - geo.anchor; geo = { W: hi - lo + 2 * pad + 1, anchor: pad - lo }; }   // v0.003: узкий конус — поле уже
+    f = MAYATNIK.field(geo.W, st.rows, 'empty', geo.anchor);
     verts = []; for (let j = 0; j < S; j++) { const p = MAYATNIK.offset(st.mode, j); verts.push([p, startRow(p)]); }
     every = Math.max(8, Math.ceil(S / 24)); snaps = new Map([[0, f.val.slice()]]); k = 0;
     const cv = $('cv'); cv.width = geo.W; cv.height = st.rows; img = cv.getContext('2d').createImageData(geo.W, st.rows);
     $('frame').max = S; goTo(S); layout();
   }
-  function stepOne() { const [p, r0] = verts[k]; coneAt(geo.anchor + p, r0); k++; if (k % every === 0 && !snaps.has(k)) snaps.set(k, f.val.slice()); }
+  function stepOne() { const [p, r0] = verts[k]; if (st.cone > 1) coneQ(geo.anchor + p, r0, st.cone); else coneAt(geo.anchor + p, r0); k++; if (k % every === 0 && !snaps.has(k)) snaps.set(k, f.val.slice()); }
   function goTo(t) {
     t = Math.max(0, Math.min(S, t | 0));
     if (t < k || t - k > every) { let b = 0; for (const s of snaps.keys()) if (s <= t && s > b) b = s; if (b > k || t < k) { f.val.set(snaps.get(b)); k = b; } }
@@ -124,8 +144,8 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   function play() { if (playing) { stop(); return; } if (k >= S) goTo(0); playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = '❚❚'; raf = requestAnimationFrame(tick); }
   function stop() { playing = false; cancelAnimationFrame(raf); raf = 0; $('bPlay').setAttribute('aria-pressed', 'false'); $('bPlay').textContent = '▶'; }
 
-  $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('ang').value = String(st.ang); $('vline').checked = st.vline !== false; $('speed').value = st.speed;
-  $('bBuild').onclick = build; for (const id of ['mode', 'ang']) $(id).onchange = build;
+  $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('ang').value = String(st.ang); $('cone').value = String(st.cone || 1); $('vline').checked = st.vline !== false; $('speed').value = st.speed;
+  $('bBuild').onclick = build; for (const id of ['mode', 'ang', 'cone']) $(id).onchange = build;
   for (const id of ['rows', 'steps']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') build(); });
   $('zoom').onchange = () => { if ($('zoom').value === 'custom') return; st.zoom = $('zoom').value; save(); zoomSel(); layout(); };
   // v0.002: «масштаб по колесику» — колесо над полем: ×1,25 / ÷1,25 к точке под курсором (она остаётся на месте); в списке — «×N» своего масштаба
