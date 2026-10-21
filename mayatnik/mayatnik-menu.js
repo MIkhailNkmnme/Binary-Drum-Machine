@@ -134,7 +134,9 @@
     // v0.335: «Сброс прямо в ползунке рядом с плеем»: ромб «✖» в дорожке кадра, едет за бегунком (справа; у правого края — слева)
     const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
     if (mid) { b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown', e => e.stopPropagation()); mid.append(b);
-      const side = () => cell.classList.toggle('rs-l', th.offsetLeft > mid.clientWidth - 50);
+      // v0.336: «наложение текста — там полно места, с отступами»: подпись «кадр N» — в 8 px от крупного бегунка и от «✖» (grozd ставит её в 10 px от середины мелкого)
+      const vl = mid.querySelector('.gz-vl'), side = () => { const x = th.offsetLeft, W = mid.clientWidth, rsL = x > W - 60; cell.classList.toggle('rs-l', rsL);
+        if (!vl) return; const lw = vl.offsetWidth, lp = x - (rsL ? 52 : 25) - lw, v = (lp >= 0 ? lp : Math.min(W - lw, x + (rsL ? 25 : 52))) + 'px'; if (vl.style.left !== v) vl.style.left = v; };
       new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', side); side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
