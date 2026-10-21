@@ -580,3 +580,13 @@ header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:126px;max-
 header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #paintTools .pt-sec>.lg{height:auto!important;min-height:24px;flex-wrap:wrap!important;white-space:normal!important;row-gap:2px;column-gap:8px!important;padding:2px 8px!important}
 #paintTools .pt-sec>.lg>*{white-space:nowrap}
+
+/* v0.331: линия «Верха» — тянется рукой, булавка — закреп */
+#zTopLine{position:fixed;z-index:6;height:12px;margin-top:-6px;cursor:ns-resize;touch-action:none;display:flex;align-items:center}
+#zTopLine[hidden]{display:none}
+#zTopLine::before{content:"";position:absolute;left:0;right:0;top:5px;border-top:2px dashed #7cbcff;pointer-events:none}
+#zTopLine.drag::before,#zTopLine:hover::before{border-top-style:solid;filter:drop-shadow(0 0 3px #7cbcff)}
+#zTopLine .ztl-pin{position:relative;z-index:1;margin-left:6px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;font-size:12px;line-height:1;cursor:pointer}
+#zTopLine .ztl-pin:hover{background:#1d2b4d}
+#zTopLine .ztl-row{position:relative;margin-left:6px;padding:0 4px;border-radius:3px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);pointer-events:none}
+body.may-zen #zTopLine{display:none}
