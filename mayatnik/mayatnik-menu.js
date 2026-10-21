@@ -196,8 +196,12 @@
       function vsync() { vm.gzSync(); const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.gz-half')) {
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
-    { const bt = bbCells.btns || [], sot = bt[0]?.parentElement, rows = []; for (let k = 0; k < bt.length; k += 2) { const r = document.createElement('div'); r.className = 'may-hp-2'; r.append(...bt.slice(k, k + 2)); rows.push(r); }
-      if (rows.length) pop.prepend(...rows); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0'; }   // v0.358: по две в ряд, над ползунками
+    // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
+    { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
+      const bB = $('bBuild'), bR = $('bRowRun');
+      const bp = gzPair([{ label: 'Построить', tip: bB?.title || 'Построить', on: () => false, click: () => { bB?.click(); rail.refresh(); } },
+        { label: 'Построчно', tip: bR?.title || 'Построчно', on: () => bR?.getAttribute('aria-pressed') === 'true', click: () => { bR?.click(); bp.gzSync(); rail.refresh(); } }]);
+      bp.gzSync(); if (bR) new MutationObserver(() => bp.gzSync()).observe(bR, { attributes: true, attributeFilter: ['aria-pressed'] }); pop.prepend(bp); }
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
   // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)

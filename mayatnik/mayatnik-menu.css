@@ -739,3 +739,6 @@ header #paintTools.pt-dd .pt-bot .pt-r{top:auto!important;bottom:calc(100% + 3px
 header #paintTools .gz-group.pt-bot{display:flex;flex-direction:column-reverse}
 header #paintTools .gz-group.pt-bot::after{display:none}
 #mayBottomBar.may-bbdrop{box-shadow:inset 0 0 0 2px color-mix(in srgb,#7cbcff 70%,transparent)}
+/* v0.391: список «Хорр» — столбец кнопок стандартной ширины (пары — одна кнопка из двух частей) */
+.may-hp-pop{width:var(--gz-w)!important}
+.may-hp-pop>.gz-hx{width:100%!important}
