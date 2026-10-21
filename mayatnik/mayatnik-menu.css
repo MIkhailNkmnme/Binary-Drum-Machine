@@ -708,3 +708,11 @@ header #paintTools .pt-b.gz-hx.pt-tri3{padding:0!important}
 #mayBottomBar .gz-pair .gz-half.gz-on,#mayBottomBar .gz-pair .gz-half:hover{text-shadow:none}
 #mayBottomBar .gz-pair.gz-split .gz-half{font-size:12px;font-weight:600}
 #mayBottomBar .gz-hx.gz-pair::before{inset:1.5px}
+/* v0.381: «Точка | Сдвиг | Застыло» — стандартная пара grozd (gz-pair gz-split) с третьей частью: средняя — косой параллелограмм, крайние — с остриём */
+header #paintTools .pt-b.gz-hx.gz-pair{padding:0!important;gap:0!important}
+header #paintTools .pt-b.gz-hx.gz-pair:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 30%,#000)}
+.gz-pair.gz-split.gz-split3 .gz-half{width:calc(33.34% + 5px);font-size:11px;font-weight:400;text-shadow:none}
+.gz-pair.gz-split.gz-split3 .gz-half.gz-on{color:#fff;text-shadow:none}
+.gz-pair.gz-split.gz-split3 .gz-half.gz-h1{margin-left:-7px;clip-path:polygon(9px 0,100% 0,calc(100% - 8px) 100%,1px 100%)}
+.gz-pair.gz-split.gz-split3 .gz-half.gz-h2{margin-left:-7px;background:var(--gz-r2);clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%);padding:0 4px 0 6px}
+.gz-pair.gz-split.gz-split3 .gz-half.gz-h2::before{background:var(--gz-bg)!important}

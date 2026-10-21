@@ -522,10 +522,13 @@
   // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
   // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
   { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
-    if (parts.length === 3) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx pt-tri3'; b.dataset.n = 'fixTri';
-      for (const [src, l, t] of parts) { const sp = document.createElement('span'); sp.className = 'pt-t3'; sp.textContent = l;
-        sp.onclick = e => { e.stopPropagation(); src.click(); placeTools(); }; toolSync.push(() => { sp.classList.toggle('on', src.classList.contains('on')); sp.title = t + ': ' + (src.title || '') ; }); b.append(sp); }
-      // v0.379: кайма — только у включённой части (CSS .pt-t3.on), не у всей кнопки
+    // v0.381: «на стандартную кнопку из частей, как в Хабе»: пара grozd gz-pair gz-split с третьей частью (gz-split3) — части через косую черту,
+    // у каждой своя кайма (--gz-rI): включённая — цветом группы, прочие — 30 %; фон свой, без свечения текста
+    if (parts.length === 3) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split3'; b.dataset.n = 'fixTri';
+      parts.forEach(([src, l, t], j) => { const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l;
+        sp.onclick = e => { e.stopPropagation(); src.click(); placeTools(); };
+        toolSync.push(() => { const on = src.classList.contains('on'); sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = t + ': ' + (src.title || ''); });
+        b.append(sp); if (!j) { const pm = document.createElement('span'); pm.className = 'gz-pm'; b.append(pm); } });
       parts[2][0].before(b); for (const p of parts) p[0].style.display = 'none'; } }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
