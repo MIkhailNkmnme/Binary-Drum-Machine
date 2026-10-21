@@ -199,8 +199,8 @@
     // v0.391: «по 2 в одну кнопку шириной по стандарту»: «Построить | Построчно» — одна пара (как «N/3 | 4N»); ячейки сот из рейки убраны
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement; for (const c of bt) c.remove(); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0';
       const bB = $('bBuild'), bR = $('bRowRun');
-      const bp = gzPair([{ label: 'Построить', tip: bB?.title || 'Построить', on: () => false, click: () => { bB?.click(); rail.refresh(); } },
-        { label: 'Построчно', tip: bR?.title || 'Построчно', on: () => bR?.getAttribute('aria-pressed') === 'true', click: () => { bR?.click(); bp.gzSync(); rail.refresh(); } }]);
+      const bp = gzPair([{ label: 'Постро.', tip: bB?.title || 'Построить', on: () => false, click: () => { bB?.click(); rail.refresh(); } },
+        { label: 'По стрк.', tip: bR?.title || 'Построчно', on: () => bR?.getAttribute('aria-pressed') === 'true', click: () => { bR?.click(); bp.gzSync(); rail.refresh(); } }]);
       bp.gzSync(); if (bR) new MutationObserver(() => bp.gzSync()).observe(bR, { attributes: true, attributeFilter: ['aria-pressed'] }); pop.prepend(bp); }
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
