@@ -626,3 +626,5 @@ body.may-zen #zTopLine{display:none}
 :root{--bg:#000;--panel:#000}
 .mayatnik-menu-ready #mayatnikSidebar,.mayatnik-menu-ready #mayBottomBar{background:#000}   /* рейка на широком — прозрачная над полем, её не трогать */
 @media(max-width:600px){.mayatnik-menu-ready #mayatnikRail{background:#000}}
+/* v0.347: «не затемнять полосу»: слои поверх поля (шаблон, подсветки) ставятся по рамке холста и вылезали на нижнюю полосу — полоса выше них */
+.mayatnik-menu-ready #mayBottomBar{z-index:9}
