@@ -718,3 +718,13 @@ header #paintTools .pt-b.gz-hx.gz-pair:not(.on):not(:hover){background:color-mix
 .gz-pair.gz-split.gz-split3 .gz-half.gz-h2::before{background:var(--gz-bg)!important}
 #mayRhombs{top:auto;bottom:44px;transform:none}   /* v0.385: «сдвинь вниз» — ромбы «Дзен · Видео · GIF» у правого края над нижней полосой */
 body.may-zen #mayRhombs{bottom:10px}
+/* v0.387: «Зеркала» (и «Вид»): «выровняй отступы, убери скролл внизу; границы какие-то лишние» — все кнопки столбца шириной в столбец, отступы одни,
+   без прокрутки вбок; черты между блоками сняты; «Точка | Сдвиг | Застыло» не шире столбца */
+header #paintTools.pt-dd .pt-view .pt-r{overflow-x:hidden!important}
+header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:156px;max-width:156px;overflow:hidden}
+header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:126px;max-width:126px}
+header #paintTools.pt-dd .pt-view .pt-sec>.gz-hx,header #paintTools.pt-dd .pt-view .pt-sec>.pt-b{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;margin:0!important}
+header #paintTools.pt-dd .pt-sec+.pt-sec{box-shadow:none}
+header #paintTools.pt-dd .pt-view .pt-b.gz-pair.gz-split3{min-width:0;overflow:hidden}
+.gz-pair.gz-split.gz-split3 .gz-half{min-width:0;overflow:hidden;text-overflow:clip;font-size:10px;padding:0 2px 0 4px}
+@media(max-width:600px){header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col,header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:auto;max-width:none}}
