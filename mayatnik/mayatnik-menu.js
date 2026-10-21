@@ -126,6 +126,11 @@
   { const bar = document.createElement('div'); bar.id = 'mayBottomBar'; document.body.append(bar);
     const g = groups.find(x => x.id === 'build'), box = rail.el.querySelector('.gz-group[data-id="build"]'), i = g.items.filter(it => ['value', 'list', 'control', 'vpair'].includes(it.type)).findIndex(it => it.name === 'Кадр');
     const cell = box?.querySelectorAll('.gz-wide > .gz-hx')[i]; if (cell) { bar.style.setProperty('--c', g.color); bar.append(cell); } }
+  // v0.330: «помести туда Сброс — в 0 с очисткой от всего»: свёртки, окраска, зеркала, выделение шаблонов — выкл, затем «Очистить» (поле с кадра 0)
+  { const b = document.createElement('button'); b.type = 'button'; b.id = 'mayBbReset'; b.className = 'gz-hx'; b.innerHTML = '<span>✖ Сброс</span>';
+    b.title = 'Сброс: кадр 0 и очистка от всего — свёртки, вся краска и живая окраска, все зеркала, выделение шаблонов, поле заново';
+    b.onclick = () => { const C = window.mayClear; if (C) { C.paintOff(); C.mirrorsOff(); C.selOff(); } $('bReset').click(); rail.refresh(); placeTools(); };
+    $('mayBottomBar').prepend(b); }
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));

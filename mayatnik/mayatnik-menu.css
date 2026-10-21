@@ -20,7 +20,11 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
 #mayBottomBar{display:none}
 .mayatnik-menu-ready #mayBottomBar{display:flex;grid-column:1/-1;grid-row:6;justify-content:center;align-items:center;min-width:0;padding:3px 8px;border-top:1px solid var(--line);background:#0d1119}   /* v0.327: нижняя полоса меню */
-#mayBottomBar>.gz-hx{width:min(520px,100%);box-sizing:border-box}
+#mayBottomBar{--gz-w:120px;--gz-h:30px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:var(--gz-txt);font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;position:relative;min-height:42px;padding:6px 8px!important;box-sizing:border-box}   /* v0.330: переменные grozd (как в рейке) — ползунок не прозрачный; выше */
+#mayBottomBar>.gz-hx{width:min(520px,calc(100% - 260px));box-sizing:border-box}
+#mayBottomBar>#mayBbReset{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:auto;--c:#ff7373;padding:0 16px;cursor:pointer;font:600 12px 'Segoe UI',sans-serif;color:#dfe6f5}
+#mayBbReset>span{position:relative;z-index:1}
+@media(max-width:600px){#mayBottomBar>.gz-hx{width:calc(100% - 110px);margin-left:100px}#mayBottomBar>#mayBbReset{left:6px;padding:0 10px}}
 body.may-zen #mayBottomBar{display:none!important}
 .mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:0 10px;align-items:center;min-width:0;padding:1px 50% 1px 4px;border-top:1px solid var(--line);background:var(--panel)}
 /* v0.069: меню без фона — кнопки прямо на поле. Поле тянется под меню; пустые места меню пропускают щелчки к полю. */
