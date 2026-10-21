@@ -600,5 +600,6 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 #zTopLine.drag::before,#zTopLine:hover::before{border-top-style:solid;filter:drop-shadow(0 0 3px #7cbcff)}
 #zTopLine .ztl-pin{position:relative;z-index:1;margin-left:6px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;font-size:12px;line-height:1;cursor:pointer}
 #zTopLine .ztl-pin:hover{background:#1d2b4d}
+#zTopLine .ztl-pin.off{opacity:.45;filter:grayscale(1);border-style:dashed}   /* v0.333: откреплено */
 #zTopLine .ztl-row{position:relative;margin-left:6px;padding:0 4px;border-radius:3px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);pointer-events:none}
 body.may-zen #zTopLine{display:none}
