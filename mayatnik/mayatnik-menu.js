@@ -648,7 +648,10 @@
         shown = new Map(); let rows = 1;
         const put = (el, [c, r], w) => { (occ[r] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, r, w]); rows = Math.max(rows, r + 1); el.style.left = Math.round(c * SX) + 'px'; el.style.top = r * SY + 'px'; };
         if (vis.includes(ud)) { const w = ud.offsetWidth, H = head.getBoundingClientRect(), T = tools.getBoundingClientRect();   // «Правка» — по середине шапки, первой
-          put(ud, [Math.max(0, Math.min(Math.floor((B.W - w) / SX), Math.round((H.left + H.width / 2 - T.left - w / 2) / SX))), 0], w); }
+          put(ud, [Math.max(0, Math.min(Math.floor((B.W - w) / SX), Math.round((H.left + H.width / 2 - T.left - w / 2) / SX))), 0], w);
+          // v0.344: «поставь по центру над осью, как плей внизу» — ровно над серединой плея нижней полосы (без шага сетки), нет плея — середина шапки
+          const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, cx = pr ? pr.left + pr.width / 2 : H.left + H.width / 2;
+          ud.style.left = Math.round(Math.max(0, Math.min(B.W - w, cx - T.left - w / 2))) + 'px'; }
         const rest = vis.filter(el => el !== ud), keyed = rest.filter(el => ok(at(el))).sort((x, y) => (+at(y)[2] || 0) - (+at(x)[2] || 0));
         for (const el of keyed) { const w = el.offsetWidth, p = at(el); put(el, fit(occ, w, p[0], p[1], B), w); }
         let cur = [0, 0]; for (const el of rest.filter(el => !ok(at(el)))) { const w = el.offsetWidth, p = seq(occ, w, B, cur); put(el, p, w); cur = [p[0] + Math.ceil((w + GAP) / SX), p[1]]; }
