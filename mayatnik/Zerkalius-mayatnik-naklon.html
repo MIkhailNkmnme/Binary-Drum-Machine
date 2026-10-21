@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
-<title>Zerkalius Маятник: наклон — v0.001</title>
-<!-- Zerkalius Маятник: наклон — v0.001 (2026-10-21). v0.001: «маятник на Серпинском не 90, а 30» — вариант 2: вершины маятника не на верхней строке
+<title>Zerkalius Маятник: наклон — v0.002</title>
+<!-- Zerkalius Маятник: наклон — v0.002 (2026-10-21). v0.002: масштаб колесом мыши над полем — к точке под курсором (×1,25 за щелчок колеса). v0.001: «маятник на Серпинском не 90, а 30» — вариант 2: вершины маятника не на верхней строке
   (линия вершин под 90° к оси), а на наклонной: линия под углом θ к оси, вершина со сдвигом p начинает свой конус в строке r0 = round(|p| · ctg θ).
   Правило конуса то же, что в Маятнике (mayatnik-core.js, cone): клетки a − d … a + d через одну, бит = старый ⊕ левый сверху ⊕ правый сверху;
   клетка вершины на время первой строки — 1. Страница для пробы: поле, кадры, анимация, линия вершин. Дальше — вариант 3 (другое правило конуса). -->
@@ -33,14 +33,14 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
-<header><h1>Маятник: наклон</h1><span class="ver">v0.001</span><a href="Zerkalius-mayatnik.html">← Маятник</a></header>
+<header><h1>Маятник: наклон</h1><span class="ver">v0.002</span><a href="Zerkalius-mayatnik.html">← Маятник</a></header>
 <div class="ctl">
   <label title="Строк в поле">строк <input id="rows" type="number" min="8" max="2048" step="1" value="256"></label>
   <label title="Вершин маятника">вершин <input id="steps" type="number" min="1" max="4096" step="1" value="256"></label>
   <label title="Порядок вершин">ход <select id="mode"><option value="pend">лево-право</option><option value="pendR">право-лево</option><option value="right">вправо</option><option value="left">влево</option></select></label>
   <label title="Угол линии вершин к оси конусов: 90° — все вершины на верхней строке, как в Маятнике; меньше — вершина со сдвигом p начинает конус ниже, в строке |p| · ctg θ">наклон <select id="ang"><option value="90">90°</option><option value="75">75°</option><option value="60">60°</option><option value="45">45°</option><option value="30">30°</option><option value="15">15°</option></select></label>
   <button id="bBuild" title="Построить заново">Построить</button>
-  <label title="Масштаб: по ширине окна или пикселей на бит">масштаб <select id="zoom"><option value="fit">по ширине</option><option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></label>
+  <label title="Масштаб: по ширине окна или пикселей на бит">масштаб <select id="zoom"><option value="fit">по ширине</option><option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option><option value="custom" hidden></option></select></label>
   <label title="Линия вершин поверх поля"><input id="vline" type="checkbox" checked> линия вершин</label>
 </div>
 <div class="ctl">
@@ -124,10 +124,16 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   function play() { if (playing) { stop(); return; } if (k >= S) goTo(0); playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = '❚❚'; raf = requestAnimationFrame(tick); }
   function stop() { playing = false; cancelAnimationFrame(raf); raf = 0; $('bPlay').setAttribute('aria-pressed', 'false'); $('bPlay').textContent = '▶'; }
 
-  $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('ang').value = String(st.ang); $('zoom').value = String(st.zoom); $('vline').checked = st.vline !== false; $('speed').value = st.speed;
+  $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('ang').value = String(st.ang); $('vline').checked = st.vline !== false; $('speed').value = st.speed;
   $('bBuild').onclick = build; for (const id of ['mode', 'ang']) $(id).onchange = build;
   for (const id of ['rows', 'steps']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') build(); });
-  $('zoom').onchange = () => { st.zoom = $('zoom').value; save(); layout(); };
+  $('zoom').onchange = () => { if ($('zoom').value === 'custom') return; st.zoom = $('zoom').value; save(); zoomSel(); layout(); };
+  // v0.002: «масштаб по колесику» — колесо над полем: ×1,25 / ÷1,25 к точке под курсором (она остаётся на месте); в списке — «×N» своего масштаба
+  function zoomSel() { const z = $('zoom'), c = z.querySelector('[value="custom"]'), v = String(st.zoom), std = v === 'fit' || ['1', '2', '3', '4'].includes(v);
+    c.hidden = std; if (!std) c.textContent = '×' + String(+(+st.zoom).toFixed(2)).replace('.', ','); z.value = std ? v : 'custom'; }
+  $('wrap').addEventListener('wheel', e => { if (!geo || e.ctrlKey) return; e.preventDefault(); const w = $('wrap'), r = $('cv').getBoundingClientRect(), s0 = scale(), cx = (e.clientX - r.left) / s0, cy = (e.clientY - r.top) / s0;
+    const s1 = Math.max(.05, Math.min(32, s0 * (e.deltaY < 0 ? 1.25 : .8))); if (s1 === s0) return; st.zoom = +s1.toFixed(4); save(); zoomSel(); layout();
+    const r2 = $('cv').getBoundingClientRect(); w.scrollLeft += r2.left + cx * s1 - e.clientX; w.scrollTop += r2.top + cy * s1 - e.clientY; }, { passive: false });
   $('vline').onchange = () => { st.vline = $('vline').checked; save(); overlay(); };
   $('speed').onchange = () => { st.speed = Math.max(1, Math.min(64, +$('speed').value | 0 || 1)); save(); };
   $('frame').oninput = () => { stop(); goTo(+$('frame').value); };
@@ -136,7 +142,7 @@ button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
   addEventListener('keydown', e => { if (e.target.closest('input,select,textarea')) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); stop(); goTo(k - 1); } else if (e.key === 'ArrowRight') { e.preventDefault(); stop(); goTo(k + 1); } else if (e.key === ' ') { e.preventDefault(); play(); } });
   addEventListener('resize', layout);
-  build();
+  zoomSel(); build();
 })();
 </script>
 </body>
