@@ -716,3 +716,5 @@ header #paintTools .pt-b.gz-hx.gz-pair:not(.on):not(:hover){background:color-mix
 .gz-pair.gz-split.gz-split3 .gz-half.gz-h1{margin-left:-7px;clip-path:polygon(9px 0,100% 0,calc(100% - 8px) 100%,1px 100%)}
 .gz-pair.gz-split.gz-split3 .gz-half.gz-h2{margin-left:-7px;background:var(--gz-r2);clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%);padding:0 4px 0 6px}
 .gz-pair.gz-split.gz-split3 .gz-half.gz-h2::before{background:var(--gz-bg)!important}
+#mayRhombs{top:auto;bottom:44px;transform:none}   /* v0.385: «сдвинь вниз» — ромбы «Дзен · Видео · GIF» у правого края над нижней полосой */
+body.may-zen #mayRhombs{bottom:10px}
