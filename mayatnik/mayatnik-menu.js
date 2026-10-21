@@ -187,8 +187,8 @@
     b.onclick = () => e.click();
     // v0.050: правый клик по нажатому значку — выключить его режим.
     b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
-    toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' || id === 'bPaintMeet' || id === 'bPaintAxis' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
-      if (id === 'bPaintMeet' || id === 'bPaintAxis') { const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
+    toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' || id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
+      if (id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop') { const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
       b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
     // v0.121: «Симметрия» — включить и выключить оси симметрии (выключает и выбор оси с конусом, как «Скрыть оси»).
     if (id === 'sym') { const hide = $('mayHideAxes'); b.onclick = b.oncontextmenu = ev => { ev?.preventDefault?.(); if (!hide.hidden || e.checked) hide.click(); else if (ev.type === 'click') e.click(); };
