@@ -228,6 +228,7 @@ header #paintTools #templateActions>.gz-hx{display:none}
 /* v0.082: общий пульт Зеркалиуса для включённой горизонтальной свёртки. */
 .may-fold-win{position:fixed;z-index:9;display:flex;flex-direction:column;box-sizing:border-box;min-width:240px;min-height:180px;background:#0d1119f2;border:1px solid #80aee8;border-radius:6px;overflow:hidden;resize:both;box-shadow:0 4px 18px #0009}
 .may-fold-win[hidden]{display:none}
+.may-fold-win.may-fold-inline{min-height:0;resize:none}.may-fold-inline .may-fold-view{display:none}.may-fold-inline .may-fold-head{cursor:default}   /* v0.326: свёртка в поле — только пульт */
 .may-fold-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 8px;background:#121a30;color:#cfe0ff;font:12px 'Segoe UI',sans-serif;cursor:move;user-select:none;touch-action:none}
 .may-fold-x{border:0;background:transparent;color:#cfe0ff;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
 .may-fold-view{flex:1;min-height:0;width:100%;display:block;background:#05070b}

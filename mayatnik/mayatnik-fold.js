@@ -10,7 +10,9 @@
    v9: «СвёрткаВерт» — строки к центральной строке: та же модель на транспонированном поле (model({axis:'v'}), modelV); mount({axis:'v'}) — свой пульт.
    v10: два варианта — галка «застывшие» на пульте: только биты, которые построение уже не изменит, или все (capture({frozenOnly}));
    open(frame) — собрать заново и встать на тот же шаг: страница зовёт её на каждом шаге построения (свёртка пересчитывается).
-   v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново. */
+   v5: щелчок без сдвига красит («при свёртке не даёт ничего красить») — страница красит исходный столбец клетки (tap), свёртка снимает цвета заново.
+   v18: «свёртка прямо в поле без отдельного окна» — снова режим записи (data.write): на шаге apply(state) переписывает строки поля,
+   холста у окна нет, остаётся только пульт под полем; render() в этом режиме поле не трогает (его зовут на каждой отрисовке). */
 (() => {
   'use strict';
   // v17: «в свёртке также, чтобы работало по кнопке» — зеркало в чёрных треугольниках (Маятник v0.147) и в окне свёртки: ровные куски
@@ -70,7 +72,7 @@
   // v11: «свёртки в отдельных построениях показать» — свёртка рисуется в своём окне рядом с полем, поле не трогается.
   // Окна ↔ и ↕ открываются вместе; заголовок — перетащить, правый нижний угол — размер, место и размер помнятся.
   // capture() даёт снимок поля; open(frame) собирает заново на том же шаге (страница зовёт на каждом шаге построения).
-  function mount({button,capture,config,beforeStart,onClose,axis='h',canvas}) {
+  function mount({button,capture,config,beforeStart,onClose,apply,axis='h',canvas}) {
     const V=axis==='v',NAME=V?'СвёрткаВерт':'СвёрткаГориз',WORD=V?'вертикальной':'горизонтальной',KEY='mayatnik-fold-win2-'+axis;   // v13: прежние места у правого края забыты
     const win=document.createElement('section');win.className='may-fold-win';win.id=V?'mayFoldWinV':'mayFoldWin';win.hidden=true;win.setAttribute('aria-label','Окно '+WORD+' свёртки');
     win.innerHTML=`<header class="may-fold-head"><b>${V?'Свёртка ↕':'Свёртка ↔'}</b><button type="button" class="may-fold-x" title="Закрыть свёртку">×</button></header><canvas class="may-fold-view"></canvas>`;
@@ -93,9 +95,11 @@
       if(win.style.left!==x+'px')win.style.left=x+'px';if(win.style.top!==y+'px')win.style.top=y+'px';
       if(win.style.width!==w+'px')win.style.width=w+'px';if(win.style.height!==h+'px')win.style.height=h+'px';};
     function dock(){if(!state||!canvas)return;const r=canvas.getBoundingClientRect(),w=Math.max(240,Math.min(innerWidth-8,r.width));
-      const tot=Math.max(180,(win.querySelector('.may-fold-head').offsetHeight||24)+(panel.offsetHeight||96)+Math.round(w*state.height/state.width)+2);
+      const bar=(win.querySelector('.may-fold-head').offsetHeight||24)+(panel.offsetHeight||96)+2;
+      if(state.write){const w2=Math.min(w,480),x=Math.max(4,Math.min(innerWidth-w2-4,r.left+(r.width-w2)/2));setBox(x,Math.max(0,Math.min(innerHeight-bar-4,r.bottom+8)),w2,bar);return;}   // v18: только пульт
+      const tot=Math.max(180,bar+Math.round(w*state.height/state.width));
       const x=Math.max(4,Math.min(innerWidth-w-4,r.left)),y=r.bottom+8+(V?tot+8:0);setBox(x,Math.min(Math.max(0,innerHeight-60),y),w,tot);}
-    const place=()=>{if(saved)setBox(Math.max(0,Math.min(innerWidth-60,saved.x)),Math.max(0,Math.min(innerHeight-40,saved.y)),Math.min(innerWidth-16,saved.w),Math.min(innerHeight-16,saved.h));else dock();};
+    const place=()=>{if(saved&&!state.write)setBox(Math.max(0,Math.min(innerWidth-60,saved.x)),Math.max(0,Math.min(innerHeight-40,saved.y)),Math.min(innerWidth-16,saved.w),Math.min(innerHeight-16,saved.h));else dock();};
     const keep=()=>{saved={x:win.offsetLeft,y:win.offsetTop,w:win.offsetWidth,h:win.offsetHeight};try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(_){}};
     function sync(){
       button.setAttribute('aria-pressed',String(!!state));win.hidden=!state;if(!state)return;
@@ -110,7 +114,7 @@
     }
     // картинка «пиксель = бит» на весь холст окна, без сглаживания; бит везёт свой цвет с поля, центр — золотом
     function render(){
-      if(!state)return;if(!saved)dock();const W=state.width,H=state.height,mid=midOn(),mf=config?.()?.midFill;
+      if(!state)return;if(!saved||state.write)dock();if(state.write){sync();return;}const W=state.width,H=state.height,mid=midOn(),mf=config?.()?.midFill;
       // v14: «Центр краской» — та же заливка «Столбов» по центральному столбцу, но по картинке свёртки (в ↔ — её XOR-столбец)
       // v15: свои цвета у 1 и у 0 (оба — если оба заданы) и 2-й уровень — пары равных битов слева и справа от столбца, прозрачнее
       let fillM=null,wideM=null,fb=null;const col=mf?(V?mf.col:state.center):-1;
@@ -135,7 +139,8 @@
     }
     function pause(){running=false;cancelAnimationFrame(timer);timer=0;last=0;credit=0;sync();}
     function close(){pause();if(!state)return;state=null;sync();onClose?.();}
-    function seek(n){if(!state)return;state.seek(n);render();}
+    function show(){if(state.write)apply?.(state);render();}   // v18: в поле — строки переписывает страница
+    function seek(n){if(!state)return;state.seek(n);show();}
     function tick(now){if(!running||!state)return;if(last)credit+=Math.min(.25,(now-last)/1000)*rate();last=now;
       const n=Math.min(128,Math.floor(credit));if(n){credit-=n;seek(adv(state.frame,dir,n));}
       if((dir>0&&state.frame===state.max)||(dir<0&&state.frame===0)){pause();return;}
@@ -145,7 +150,8 @@
     try{frozenBox.checked=localStorage.getItem('mayatnik-fold-frozen')!=='0';}catch(_){frozenBox.checked=true;}
     try{pairBox.checked=localStorage.getItem('mayatnik-fold-pair')!=='0';}catch(_){pairBox.checked=true;}
     function open(frame=0){const was=!!state,data=capture({frozenOnly:frozenBox.checked});if(!data)return false;
-      state=model({...data,axis});if(frame)state.seek(Math.min(frame,state.max));if(!was)place();sync();render();return true;}
+      state=model({...data,axis});state.write=!!data.write;win.classList.toggle('may-fold-inline',state.write);
+      if(frame)state.seek(Math.min(frame,state.max));if(!was)place();sync();show();return true;}
     button.onclick=()=>{if(state){close();return;}beforeStart?.();open();};
     win.querySelector('.may-fold-x').onclick=close;
     frozenBox.onchange=()=>{try{localStorage.setItem('mayatnik-fold-frozen',frozenBox.checked?'1':'0');}catch(_){}if(state)open(state.frame);};
@@ -161,7 +167,7 @@
       play.addEventListener('pointermove',move);play.addEventListener('pointerup',end);play.addEventListener('pointercancel',end);});
     // перетаскивание за заголовок
     const head=win.querySelector('.may-fold-head');
-    head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;e.preventDefault();head.setPointerCapture(e.pointerId);
+    head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button')||state?.write)return;e.preventDefault();head.setPointerCapture(e.pointerId);
       const x=e.clientX-win.offsetLeft,y=e.clientY-win.offsetTop,x0=e.clientX,y0=e.clientY;let moved=false;
       const move=ev=>{if(!moved&&Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)return;moved=true;win.style.left=Math.max(0,Math.min(innerWidth-60,ev.clientX-x))+'px';win.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-y))+'px';};
       const end=()=>{head.removeEventListener('pointermove',move);head.removeEventListener('pointerup',end);if(moved)keep();};
@@ -169,7 +175,7 @@
     // размер — за угол (CSS resize); холст перерисовывается
     head.addEventListener('dblclick',e=>{if(e.target.closest('button'))return;saved=null;try{localStorage.removeItem(KEY);}catch(_){}render();});
     // растянул за угол сам (размер не тот, что ставили) — окно остаётся там, где есть
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(!state)return;if(lastSet&&(Math.abs(win.offsetWidth-lastSet.w)>2||Math.abs(win.offsetHeight-lastSet.h)>2))keep();render();}).observe(win);
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{if(!state||state.write)return;if(lastSet&&(Math.abs(win.offsetWidth-lastSet.w)>2||Math.abs(win.offsetHeight-lastSet.h)>2))keep();render();}).observe(win);
     addEventListener('resize',()=>{if(state)render();});addEventListener('scroll',()=>{if(state&&!saved)dock();},true);
     // клавиши — только когда мышь над окном или фокус в нём
     addEventListener('keydown',e=>{if(!state||e.target.closest?.('input,select,button,textarea'))return;if(!win.matches(':hover')&&!win.contains(document.activeElement))return;
