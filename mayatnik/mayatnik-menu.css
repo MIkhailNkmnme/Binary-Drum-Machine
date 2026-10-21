@@ -732,3 +732,4 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-pair.gz-split3{min-width:0;overflow:h
    и внутри блока, и на стыке блоков (у блоков нет своих полей, столбец ставит 4 px между ними) */
 header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:126px!important;max-width:126px!important;gap:4px}
 header #paintTools.pt-dd .pt-view .pt-sec{padding:0!important;gap:4px!important}
+@media(max-width:600px){header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:auto!important;max-width:none!important}}   /* v0.388: на телефоне — как было */
