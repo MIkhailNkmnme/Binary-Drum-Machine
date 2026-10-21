@@ -188,7 +188,7 @@
       const V = () => window.mayVMode, vsync = () => { const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.may-hp-h')) { h.classList.toggle('on', h.dataset.v === m);
         h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
       for (const h of vm.querySelectorAll('.may-hp-h')) h.onclick = ev => { ev.stopPropagation(); V()?.pick(h.dataset.v); vsync(); rail.refresh(); placeTools(); };
-      toolSync.push(vsync); vsync(); pop.prepend(vm); }
+      queueMicrotask(() => toolSync.push(vsync)); vsync(); pop.prepend(vm); }   // v0.375: toolSync объявлен ниже — при загрузке TDZ ронял всё меню (v0.372–v0.374)
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement, rows = []; for (let k = 0; k < bt.length; k += 2) { const r = document.createElement('div'); r.className = 'may-hp-2'; r.append(...bt.slice(k, k + 2)); rows.push(r); }
       if (rows.length) pop.prepend(...rows); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0'; }   // v0.358: по две в ряд, над ползунками
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
