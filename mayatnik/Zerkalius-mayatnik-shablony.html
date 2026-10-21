@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
+<title>Zerkalius Шаблоны Маятника — v0.001</title>
+<!-- Zerkalius Шаблоны Маятника — v0.001 (2026-10-21). «Нужна страница — библиотека шаблонов со статистикой».
+  Читает библиотеку шаблонов Маятника из памяти браузера (IndexedDB «zerk-mayatnik-paint», ключ «templates»; скрытые — «template-hidden»)
+  и встроенные (mayatnik-user-templates.js). Только показ: ничего не меняет и не удаляет — правка библиотеки остаётся в Маятнике.
+  Сводка: шаблонов, из них автошаблонов, встреч (×N из «Автошаблоны → ✂ Вырезать все»), бит всего, из 1 / из 0, по цветам, столбики по размеру.
+  Карточки: рисунок шаблона (пиксель = бит), название, бит, 1/0, рамка, ×встреч. Сортировка, фильтр по 1/0, по размеру, поиск по названию. -->
+<style>
+:root{--bg:#0f1218;--panel:#161b24;--line:#262e3b;--fg:#d8dee9;--mute:#8a95a8;--acc:#b48cff;--gold:#ffd35b;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--sans);padding:12px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:10px}
+h1{font-size:20px;margin:0}
+.ver{font:12px var(--mono);color:var(--mute)}
+a{color:var(--acc)}
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-width:110px}
+.tile b{display:block;font:600 18px var(--mono);color:var(--gold)}
+.tile span{font-size:12px;color:var(--mute)}
+.hist{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:12px;overflow-x:auto}
+.hist h2{font-size:13px;margin:0 0 6px;color:var(--mute);font-weight:500}
+.bars{display:flex;align-items:flex-end;gap:2px;height:110px;min-width:max-content}
+.bar{width:14px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font:10px var(--mono);color:var(--mute);cursor:pointer}
+.bar i{display:block;width:100%;background:var(--acc);border-radius:2px 2px 0 0;min-height:1px}
+.bar i.one{background:#e8edf5}.bar:hover i{filter:brightness(1.3)}
+.bar.on i{outline:2px solid var(--gold)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.ctl label{font-size:13px;color:var(--mute);display:flex;gap:4px;align-items:center}
+input,select,button{background:#121a30;color:var(--fg);border:1px solid #33405a;border-radius:4px;font:13px var(--sans);padding:3px 6px}
+input[type=number]{width:70px}
+button{cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;display:flex;flex-direction:column;gap:4px}
+.card .pic{height:96px;display:flex;align-items:center;justify-content:center;background:#05070d;border-radius:4px;overflow:hidden}
+.card canvas{image-rendering:pixelated;max-width:100%;max-height:96px}
+.card .nm{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .st{font:11px var(--mono);color:var(--mute);display:flex;flex-wrap:wrap;gap:2px 8px}
+.card .st .x{color:var(--gold)}
+.more{margin:12px 0;text-align:center}
+.empty{color:var(--mute);padding:30px 0;text-align:center}
+@media(max-width:600px){body{padding:8px 16px 30px}.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+</style>
+</head>
+<body>
+<header><h1>Шаблоны Маятника</h1><span class="ver">v0.001</span><a href="Zerkalius-mayatnik.html">← Маятник</a><span class="ver" id="src"></span></header>
+<div class="sum" id="sum"></div>
+<div class="hist"><h2>Шаблонов по размеру (бит), светлое — из 1; щелчок — показать только этот размер</h2><div class="bars" id="bars"></div></div>
+<div class="ctl">
+  <label>сортировка <select id="sort"><option value="n">размер ↑</option><option value="-n">размер ↓</option><option value="-count">встреч ↓</option><option value="-bits">бит всего ↓</option><option value="name">название</option><option value="id">как в библиотеке</option></select></label>
+  <label>биты <select id="bit"><option value="">все</option><option value="1">из 1</option><option value="0">из 0</option></select></label>
+  <label>вид <select id="kind"><option value="">все</option><option value="auto">автошаблоны</option><option value="own">свои</option></select></label>
+  <label>размер от <input id="nmin" type="number" min="0"> до <input id="nmax" type="number" min="0"></label>
+  <label>поиск <input id="q" type="search" placeholder="название"></label>
+  <button id="reset" type="button">Сбросить</button>
+  <button id="csv" type="button" title="Все отобранные — в буфер, CSV">Копировать CSV</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="more"><button id="more" type="button" hidden>Показать ещё</button></div>
+<script src="mayatnik-paint-cache.js?v=1"></script>
+<script src="mayatnik-user-templates.js?v=1"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), NL = String.fromCharCode(10), PAGE = 300;
+  let all = [], shown = PAGE, sizeOnly = null;
+  // цвет пикселя шаблона — 0xAABBGGRR (как ImageData в Uint32); семья — как в Маятнике (pxFam)
+  const fam = u => { const r = u & 255, g = u >>> 8 & 255, b = u >>> 16 & 255; if (!(r | g | b)) return 'пусто';
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (mx - mn < 45) return (r + g + b) / 3 >= 150 ? 'белые' : 'чёрные';
+    if (r >= 150 && g >= 150 && b < g - 60) return 'жёлтые';
+    if (b === mx && b - r > 40) return 'синие';
+    if (r === mx && r - g > 60 && r - b > 40) return 'красные';
+    return 'другие'; };
+  // из записи библиотеки — статистика: бит (непустых пикселей), рамка, 1/0, встреч
+  function stat(t, i) {
+    const p = t.shape?.parts?.[0] || {}, data = p.data || [], w = p.width || 0, h = p.height || 0, rk = t.shape?.rk || 1;
+    let n = 0, col = 0; for (const v of data) if (v) { n++; if (!col) col = v >>> 0; }
+    n = Math.round(n / (rk * rk));
+    const m = /авто · (\d+) бит · ([01])/.exec(t.name || ''), x = /×(\d+)\s*$/.exec(t.name || '');
+    const f = fam(col), bit = t.stats?.bit ?? (m ? +m[2] : f === 'белые' || f === 'синие' ? 1 : f === 'чёрные' || f === 'красные' ? 0 : null);
+    const count = t.stats?.count ?? (x ? +x[1] : 1);
+    return { t, i, name: t.name || t.id, n: t.stats?.n ?? (m ? +m[1] : n), w: Math.round(w / rk), h: Math.round(h / rk), bit, count, bits: (t.stats?.n ?? n) * count, fam: f, auto: String(t.id).startsWith('saved:auto:') || /^авто ·/.test(t.name || '') };
+  }
+  function draw(s) {
+    const p = s.t.shape?.parts?.[0]; const c = document.createElement('canvas'); if (!p || !p.width) return c;
+    c.width = p.width; c.height = p.height; const id = new ImageData(p.width, p.height), D = new Uint32Array(id.data.buffer);
+    for (let k = 0; k < D.length && k < p.data.length; k++) D[k] = p.data[k] >>> 0;
+    c.getContext('2d').putImageData(id, 0, 0); const sc = Math.max(1, Math.floor(Math.min(140 / p.width, 96 / p.height)));
+    c.style.width = p.width * sc + 'px'; c.style.height = p.height * sc + 'px'; return c;
+  }
+  const fmt = v => v.toLocaleString('ru-RU');
+  function list() {
+    const bit = $('bit').value, kind = $('kind').value, q = $('q').value.trim().toLowerCase(), lo = +$('nmin').value || 0, hi = +$('nmax').value || Infinity;
+    const r = all.filter(s => (bit === '' || String(s.bit) === bit) && (!kind || (kind === 'auto') === s.auto) && s.n >= lo && s.n <= hi && (sizeOnly == null || s.n === sizeOnly) && (!q || s.name.toLowerCase().includes(q)));
+    const k = $('sort').value, sg = k[0] === '-' ? -1 : 1, key = k.replace('-', '');
+    r.sort((a, b) => key === 'name' ? a.name.localeCompare(b.name, 'ru') : key === 'id' ? a.i - b.i : sg * (a[key] - b[key]) || a.n - b.n || a.i - b.i);
+    return r;
+  }
+  function summary() {
+    const auto = all.filter(s => s.auto), occ = all.reduce((a, s) => a + s.count, 0), bits = all.reduce((a, s) => a + s.bits, 0);
+    const one = all.filter(s => s.bit === 1), zero = all.filter(s => s.bit === 0), fams = new Map();
+    for (const s of all) fams.set(s.fam, (fams.get(s.fam) || 0) + 1);
+    const tile = (v, t) => `<div class="tile"><b>${v}</b><span>${t}</span></div>`;
+    $('sum').innerHTML = tile(fmt(all.length), 'шаблонов') + tile(fmt(auto.length), 'из них автошаблонов') + tile(fmt(occ), 'встреч в кадрах (×N)') + tile(fmt(bits), 'бит всего (размер × встреч)') +
+      tile(fmt(one.length) + ' / ' + fmt(zero.length), 'из 1 / из 0 (шаблонов)') + tile(fmt(one.reduce((a, s) => a + s.bits, 0)) + ' / ' + fmt(zero.reduce((a, s) => a + s.bits, 0)), 'бит из 1 / из 0') +
+      tile([...fams].sort((a, b) => b[1] - a[1]).map(([f, c]) => f + ' ' + fmt(c)).join(' · '), 'по цвету') +
+      tile(all.length ? fmt(Math.min(...all.map(s => s.n))) + ' … ' + fmt(Math.max(...all.map(s => s.n))) : '—', 'размер, бит');
+    const by = new Map(); for (const s of all) { const e = by.get(s.n) || { c: 0, one: 0 }; e.c++; if (s.bit === 1) e.one++; by.set(s.n, e); }
+    const sizes = [...by].sort((a, b) => a[0] - b[0]), mx = Math.max(1, ...sizes.map(([, e]) => e.c));
+    $('bars').innerHTML = sizes.slice(0, 400).map(([n, e]) => `<div class="bar${sizeOnly === n ? ' on' : ''}" data-n="${n}" title="${n} бит: ${e.c} шабл. (из 1 — ${e.one})"><i class="one" style="height:${e.one / mx * 90}px"></i><i style="height:${(e.c - e.one) / mx * 90}px"></i>${n}</div>`).join('');
+  }
+  function render() {
+    const r = list(), grid = $('grid'); grid.replaceChildren();
+    if (!r.length) { grid.innerHTML = '<div class="empty">' + (all.length ? 'Ничего не подошло — сбросьте фильтры' : 'Библиотека пуста. В Маятнике: «Шаблон» → «Автошаблоны: счёт» → «✂ Вырезать все», или сохраните свои шаблоны.') + '</div>'; $('more').hidden = true; return; }
+    for (const s of r.slice(0, shown)) { const c = document.createElement('div'); c.className = 'card'; const pic = document.createElement('div'); pic.className = 'pic'; pic.append(draw(s));
+      const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = s.name; nm.title = s.name;
+      const st = document.createElement('div'); st.className = 'st';
+      st.innerHTML = `<span>${s.n} бит</span><span>${s.bit == null ? '—' : 'из ' + s.bit}</span><span>${s.w}×${s.h}</span><span>${s.fam}</span>${s.count > 1 ? `<span class="x">×${s.count}</span>` : ''}`;
+      c.append(pic, nm, st); grid.append(c); }
+    $('more').hidden = r.length <= shown; $('more').textContent = 'Показать ещё (' + (r.length - shown) + ')';
+  }
+  const again = () => { shown = PAGE; render(); };
+  for (const id of ['sort', 'bit', 'kind', 'nmin', 'nmax', 'q']) $(id).addEventListener('input', again);
+  $('more').onclick = () => { shown += PAGE; render(); };
+  $('reset').onclick = () => { for (const id of ['bit', 'kind', 'nmin', 'nmax', 'q']) $(id).value = ''; $('sort').value = 'n'; sizeOnly = null; summary(); again(); };
+  $('bars').addEventListener('click', e => { const b = e.target.closest('.bar'); if (!b) return; const n = +b.dataset.n; sizeOnly = sizeOnly === n ? null : n; summary(); again(); });
+  $('csv').onclick = () => { const r = list(); navigator.clipboard?.writeText(['название;бит;1/0;ширина;высота;цвет;встреч;бит всего'].concat(r.map(s => [s.name, s.n, s.bit ?? '', s.w, s.h, s.fam, s.count, s.bits].join(';'))).join(NL));
+    $('csv').textContent = 'Скопировано: ' + r.length; setTimeout(() => { $('csv').textContent = 'Копировать CSV'; }, 1500); };
+  Promise.allSettled([window.MayatnikPaintCache?.read('templates'), window.MayatnikPaintCache?.read('template-hidden')]).then(([items, hidden]) => {
+    const removed = new Set(hidden.status === 'fulfilled' && Array.isArray(hidden.value) ? hidden.value : []);
+    const local = items.status === 'fulfilled' && Array.isArray(items.value) ? items.value.filter(t => !String(t.id).startsWith('standard:') && !removed.has(t.id)) : [];
+    const bundled = (window.MayatnikUserTemplates || []).filter(t => !removed.has(t.id)), ids = new Set(bundled.map(t => t.id));
+    const lib = [...bundled.map(t => local.find(x => x.id === t.id) || t), ...local.filter(t => !ids.has(t.id))];
+    all = lib.map(stat); $('src').textContent = 'из памяти этого браузера: своих ' + local.length + ', встроенных ' + bundled.length;
+    summary(); render();
+  });
+})();
+</script>
+</body>
+</html>
