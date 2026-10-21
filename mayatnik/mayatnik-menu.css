@@ -728,3 +728,7 @@ header #paintTools.pt-dd .pt-sec+.pt-sec{box-shadow:none}
 header #paintTools.pt-dd .pt-view .pt-b.gz-pair.gz-split3{min-width:0;overflow:hidden}
 .gz-pair.gz-split.gz-split3 .gz-half{min-width:0;overflow:hidden;text-overflow:clip;font-size:10px;padding:0 2px 0 4px}
 @media(max-width:600px){header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col,header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:auto;max-width:none}}
+/* v0.388: «ширина нужна стандартная, меньше — как в «Виде»; отступы — между кнопками»: оба столбца по 126 px; зазор между кнопками везде 4 px —
+   и внутри блока, и на стыке блоков (у блоков нет своих полей, столбец ставит 4 px между ними) */
+header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:126px!important;max-width:126px!important;gap:4px}
+header #paintTools.pt-dd .pt-view .pt-sec{padding:0!important;gap:4px!important}
