@@ -44,7 +44,7 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .may-hp-pop[hidden]{display:none}
 .may-hp{width:var(--gz-w);padding:0 12px!important;gap:0;justify-content:space-between}
 .may-hp-h{flex:1 1 0;text-align:center;cursor:pointer;color:#c9d3e3;font:600 12px var(--mono,monospace);padding:0 4px}
-.may-hp-h:hover{color:#fff;text-shadow:0 0 6px var(--c)}
+.may-hp-h:hover{color:#fff}
 .may-hp-h.on{color:var(--c)}
 .may-hp-sep{flex:none;align-self:stretch;width:1px;margin:5px 3px;background:color-mix(in srgb,var(--c) 60%,transparent)}
 body.may-zen #mayBottomBar{display:none!important}
@@ -553,7 +553,7 @@ header #paintTools.pt-dd .pt-view .pt-sec>.pt-vx{height:24px;box-sizing:border-b
 header #paintTools.pt-dd .pt-btn>.pt-l{justify-content:center;gap:0;padding:0 12px;cursor:default}
 header #paintTools.pt-dd .pt-btn>.pt-l::after,header #paintTools.pt-dd .pt-btn>.pt-l .pt-pin,header #paintTools.pt-dd .pt-btn>.pt-l .pt-ico{display:none}
 header #paintTools.pt-dd .pt-btn .pt-ud{flex:1 1 0;align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 3px;color:#c9d3e3;font-weight:600;white-space:nowrap;cursor:pointer;outline:none}
-header #paintTools.pt-dd .pt-btn .pt-ud:hover,header #paintTools.pt-dd .pt-btn .pt-ud:focus-visible{color:#fff;text-shadow:0 0 6px var(--c)}
+header #paintTools.pt-dd .pt-btn .pt-ud:hover,header #paintTools.pt-dd .pt-btn .pt-ud:focus-visible{color:#fff}
 header #paintTools.pt-dd .pt-btn .pt-ud.dis{opacity:.35;cursor:default;text-shadow:none}
 header #paintTools.pt-dd .pt-btn .pt-ud-g{color:var(--c);font-weight:400}
 header #paintTools.pt-dd .pt-btn .pt-ud-sep{flex:none;align-self:stretch;width:1px;margin:5px 3px;background:color-mix(in srgb,var(--c) 60%,transparent)}
@@ -645,7 +645,7 @@ body.may-zen #zTopLine:not(.zen){display:none}   /* v0.353: закреплённ
 header #paintTools .pt-b.gz-hx.pt-tri3{padding:0 9px!important;gap:0;justify-content:space-between}
 #paintTools .pt-tri3 .pt-t3{position:relative;z-index:1;flex:1 1 auto;text-align:center;padding:0 3px;font-size:11px;color:#8592ad;cursor:pointer;white-space:nowrap}
 #paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:1px solid color-mix(in srgb,var(--c,#b48cff) 55%,transparent)}
-#paintTools .pt-tri3 .pt-t3.on{color:#fff;text-shadow:0 0 4px var(--c,#b48cff)}
+#paintTools .pt-tri3 .pt-t3.on{color:#fff}
 #paintTools .pt-tri3 .pt-t3:hover{color:#dfe6f5}
 /* v0.358: кнопки «Поля» в списке «Хорр» — по две в ряд */
 .may-hp-2{display:flex;gap:0;width:100%}
@@ -683,3 +683,24 @@ header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;bor
 #mayBottomBar .gz-hx:hover:not(.on):not(.gz-on){background:color-mix(in srgb,var(--c) 55%,#000)!important}   /* наведение — только кайма ярче */
 #mayBottomBar .gz-hx:focus-visible{outline:none}
 #mayBottomBar .gz-hx.on>*,#mayBottomBar .gz-hx.gz-on>*{color:#fff}
+/* v0.379: «или-или: обводка одной какой-либо части, а не двух сразу; везде так; свечение текста не нужно».
+   Кнопки из частей — части во всю высоту, включённая — своя кайма цветом (как у нажатой кнопки), фон свой; у края кнопки — остриё шестиугольника */
+.may-hp{padding:0!important}
+.may-hp .may-hp-h{position:relative;z-index:1;align-self:stretch;display:flex;align-items:center;justify-content:center;text-shadow:none}
+.may-hp .may-hp-h.on{color:#fff}
+.may-hp .may-hp-h.on::before,.may-hp .may-hp-h.on::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.may-hp .may-hp-h.on::after{inset:1.5px;background:var(--gz-bg,#121a30)}
+.may-hp .may-hp-h.on:first-child::before{clip-path:polygon(var(--gz-n) 0,100% 0,100% 100%,var(--gz-n) 100%,0 50%)}
+.may-hp .may-hp-h.on:first-child::after{clip-path:polygon(calc(var(--gz-n) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n) - 1px) 100%,0 50%)}
+.may-hp .may-hp-h.on:last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%)}
+.may-hp .may-hp-h.on:last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n) + 1px) 0,100% 50%,calc(100% - var(--gz-n) + 1px) 100%,0 100%)}
+.may-hp .may-hp-sep{margin:5px 0}
+header #paintTools .pt-b.gz-hx.pt-tri3{padding:0!important}
+#paintTools .pt-tri3 .pt-t3{align-self:stretch;display:flex;align-items:center;justify-content:center;text-shadow:none}
+#paintTools .pt-tri3 .pt-t3.on::before,#paintTools .pt-tri3 .pt-t3.on::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c,#b48cff);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3.on::after{inset:1.5px;background:var(--gz-bg,#121a30)}
+#paintTools .pt-tri3 .pt-t3.on:first-child::before{clip-path:polygon(var(--gz-n,9px) 0,100% 0,100% 100%,var(--gz-n,9px) 100%,0 50%)}
+#paintTools .pt-tri3 .pt-t3.on:first-child::after{clip-path:polygon(calc(var(--gz-n,9px) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n,9px) - 1px) 100%,0 50%)}
+#paintTools .pt-tri3 .pt-t3.on:last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px)) 0,100% 50%,calc(100% - var(--gz-n,9px)) 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3.on:last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px) + 1px) 0,100% 50%,calc(100% - var(--gz-n,9px) + 1px) 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:0;box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c,#b48cff) 45%,transparent)}
