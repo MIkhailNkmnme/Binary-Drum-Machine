@@ -494,6 +494,14 @@
         for (const n of ns) { const e = pick(n); if (e) s.append(e); } if (s.children.length) col.append(s); } return col; });
     const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[0].append(s); }   // новая кнопка без темы — в конец «Вида»
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
+  // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
+  // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
+  { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
+    if (parts.length === 3) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx pt-tri3'; b.dataset.n = 'fixTri';
+      for (const [src, l, t] of parts) { const sp = document.createElement('span'); sp.className = 'pt-t3'; sp.textContent = l;
+        sp.onclick = e => { e.stopPropagation(); src.click(); placeTools(); }; toolSync.push(() => { sp.classList.toggle('on', src.classList.contains('on')); sp.title = t + ': ' + (src.title || '') ; }); b.append(sp); }
+      toolSync.push(() => b.classList.toggle('on', parts.some(p => p[0].classList.contains('on'))));
+      parts[2][0].before(b); for (const p of parts) p[0].style.display = 'none'; } }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);

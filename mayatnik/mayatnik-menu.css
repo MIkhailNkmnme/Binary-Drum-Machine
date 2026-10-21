@@ -641,3 +641,9 @@ body.may-zen #zTopLine:not(.zen){display:none}   /* v0.353: закреплённ
 /* v0.355: в списке «Хорр» сверху — ползунки «Строк», «Вершин», «Показ»; список шириной в две кнопки, над «Хорр» по центру */
 .may-hp-pop{left:50%!important;right:auto!important;width:calc(var(--gz-w) * 2);transform:translateX(-50%)}
 .may-hp-pop>.gz-hx{width:100%!important;box-sizing:border-box;margin:0}
+/* v0.356: «Точка | Сдвиг | Застыло» — одна кнопка из трёх частей */
+header #paintTools .pt-b.gz-hx.pt-tri3{padding:0 9px!important;gap:0;justify-content:space-between}
+#paintTools .pt-tri3 .pt-t3{position:relative;z-index:1;flex:1 1 auto;text-align:center;padding:0 3px;font-size:11px;color:#8592ad;cursor:pointer;white-space:nowrap}
+#paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:1px solid color-mix(in srgb,var(--c,#b48cff) 55%,transparent)}
+#paintTools .pt-tri3 .pt-t3.on{color:#fff;text-shadow:0 0 4px var(--c,#b48cff)}
+#paintTools .pt-tri3 .pt-t3:hover{color:#dfe6f5}
