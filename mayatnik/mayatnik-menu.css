@@ -22,15 +22,18 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #mayBottomBar{display:flex;grid-column:1/-1;grid-row:6;justify-content:center;align-items:center;min-width:0;padding:3px 8px;border-top:1px solid var(--line);background:#0d1119}   /* v0.327: нижняя полоса меню */
 #mayBottomBar{--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:var(--gz-txt);font:12px/1.2 "Segoe UI",Roboto,Arial,sans-serif;position:relative;min-height:0;padding:3px 4px!important;box-sizing:border-box}   /* v0.334: отступы вдвое меньше, кнопки — стандартной высоты 24 */
 #mayBottomBar .gz-hx{background:color-mix(in srgb,var(--c) 75%,#000)}   /* v0.334: обводка кнопок полосы — яркая, как у «Прозр.» */   /* v0.330: переменные grozd (как в рейке) — ползунок не прозрачный; выше */
-#mayBottomBar>.gz-hx{width:min(520px,calc(100% - 270px));box-sizing:border-box}
+#mayBottomBar>.gz-hx{width:min(260px,calc(100% - 270px));box-sizing:border-box}   /* v0.339: вдвое уже */
 /* v0.335: «Сброс прямо в ползунке рядом с плеем; плей побольше, ромб за границы немного»: ползунку полосы клип — шестиугольник плюс полосы над и под
    дорожкой (фон там не рисуется, видно только бегунок); бегунок 34 × 32, «✖» — ромбом у бегунка (справа, у правого края — слева) */
 #mayBottomBar>.gz-sl{clip-path:polygon(var(--gz-n) 0,var(--gz-n) -10px,calc(100% - var(--gz-n)) -10px,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,calc(100% - var(--gz-n)) calc(100% + 10px),var(--gz-n) calc(100% + 10px),var(--gz-n) 100%,0 50%)}
-#mayBottomBar>.gz-sl.gz-thb .gz-th{width:34px;height:32px;top:50%;margin:-16px 0 0 -17px;font-size:14px;z-index:4}
-#mayBottomBar .may-bb-rs{position:absolute;z-index:4;top:50%;left:calc(var(--thx) + 22px);width:22px;height:22px;margin-top:-11px;display:flex;align-items:center;justify-content:center;padding:0;border:0;
+#mayBottomBar>.gz-sl .gz-th{width:2px;height:34px;top:50%;margin:-17px 0 0 -1px;transform:none;clip-path:none;background:#fff;box-shadow:0 0 3px var(--c);z-index:10;cursor:ew-resize}   /* v0.339: бегунок — линия поверх всего */
+#mayBottomBar>.gz-sl .gz-th::after{content:"";position:absolute;inset:0 -6px}
+#mayBottomBar .may-bb-play{position:absolute;z-index:5;top:50%;left:50%;width:34px;height:32px;margin:-16px 0 0 -17px;display:flex;align-items:center;justify-content:center;padding:0;border:0;
+  background:var(--c);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);color:#0d1119;font:700 13px 'Segoe UI',sans-serif;cursor:pointer;pointer-events:auto}
+#mayBottomBar .may-bb-play:hover{filter:brightness(1.2)}
+#mayBottomBar .may-bb-rs{position:absolute;z-index:5;top:50%;left:calc(50% + 21px);width:22px;height:22px;margin-top:-11px;display:flex;align-items:center;justify-content:center;padding:0;border:0;
   background:#ff7373;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);color:#0d1119;font:700 10px 'Segoe UI',sans-serif;cursor:pointer;pointer-events:auto}
 #mayBottomBar .may-bb-rs:hover{background:#ff9b9b}
-#mayBottomBar .rs-l .may-bb-rs{left:calc(var(--thx) - 44px)}
 @media(max-width:600px){#mayBottomBar>.gz-hx{width:calc(100% - 140px);margin:0 auto 0 4px}#mayBbHorr{right:6px}#mayBbHorr>.gz-hx{padding:0 10px}}
 /* v0.332: «Хорр» в нижней полосе — список вверх, по два размера в кнопке */
 #mayBbHorr{position:absolute;right:6px;top:50%;transform:translateY(-50%);--c:#73e4a5}
