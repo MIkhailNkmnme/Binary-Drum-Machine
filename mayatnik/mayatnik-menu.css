@@ -624,5 +624,5 @@ body.may-zen #zTopLine{display:none}
 #mayBottomBar>.gz-sl .gz-mid{margin:0 -8px}   /* v0.341: «ползунок до краёв внутренних» — grozd держит бегунок в 8 px от краёв дорожки; дорожка шире на 8 px внутрь стрелок, кадр 0 и последний — у самых стрелок */
 /* v0.342: «сделай везде один фон» — фон страницы, шапки, панелей, рейки и нижней полосы — чёрный, как пустые клетки поля (EMPTY = 0, 0, 0) */
 :root{--bg:#000;--panel:#000}
-.mayatnik-menu-ready #mayatnikSidebar,.mayatnik-menu-ready #mayBottomBar,.mayatnik-menu-ready #mayatnikRail{background:#000}
+.mayatnik-menu-ready #mayatnikSidebar,.mayatnik-menu-ready #mayBottomBar{background:#000}   /* рейка на широком — прозрачная над полем, её не трогать */
 @media(max-width:600px){.mayatnik-menu-ready #mayatnikRail{background:#000}}
