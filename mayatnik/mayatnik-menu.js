@@ -148,7 +148,7 @@
       const pcx = () => mid.clientWidth / 2, playPlace = () => { const bar = $('mayBottomBar'), ax = window.mayAxisX?.(); if (!bar) return;
         const cur = parseFloat(bar.style.getPropertyValue('--axdx')) || 0, C = cell.getBoundingClientRect(), BR = bar.getBoundingClientRect(), c0 = C.left + C.width / 2 - cur;
         const grp = [...bar.children].filter(e => e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e => e.getBoundingClientRect()), L0 = Math.min(...grp.map(r => r.left)) - cur, R0 = Math.max(...grp.map(r => r.right)) - cur;
-        let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) bar.style.setProperty('--axdx', v); };
+        let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) { bar.style.setProperty('--axdx', v); window.mayBotPlace?.(); } };   // v0.406: связка сдвинулась — группы внизу обходят её заново
       window.mayPlayPlace = playPlace;
       const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, c0 = pcx(), zL = c0 - 21, zR = c0 + 47;
         const ok = p => p >= 0 && p + lw <= W && (p + lw <= zL || p >= zR); let p = x - 6 - lw;
@@ -694,6 +694,7 @@
       // v0.406: «в любое место нижней полосы группу поставить без наездов»: своё место — botX[id] (x на экране, куда отпустили); по порядку слева направо,
       // не налезая на соседние группы и на связку «×N | ползунок | время | Хорр», в пределах полосы
       let botX = {}; try { const o = JSON.parse(localStorage.getItem('mayatnik-botx') || '{}'); if (o && typeof o === 'object') botX = o; } catch (_) {}
+      queueMicrotask(() => { window.mayBotPlace = placeBot; });   // v0.406: зовёт сдвиг связки нижней полосы (playPlace)
       const saveBotX = () => { try { localStorage.setItem('mayatnik-botx', JSON.stringify(botX)); } catch (_) {} };
       const placeBot = () => { const bar = $('mayBottomBar'), R = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
         const list = []; for (const el of items()) { if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
