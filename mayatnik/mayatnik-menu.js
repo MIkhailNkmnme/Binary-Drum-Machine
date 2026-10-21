@@ -758,9 +758,9 @@
       const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); };
       addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
       const ghost = document.createElement('div'), bg0 = document.createElement('div'), bg1 = document.createElement('div'); ghost.className = 'pt-ghost'; bg0.className = bg1.className = 'pt-gridbg';
-      const showGrid = (B, w, c) => { const { W, neg } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
-        bg1.style.cssText = `left:${(-neg * SX).toFixed(2)}px;top:${SY}px;width:${(W + neg * SX).toFixed(2)}px;height:${(MAXR - 1) * SY - GAP}px`;
-        ghost.style.width = w + 'px'; ghost.style.display = ''; ghost.style.setProperty('--c', c || '#7cbcff'); tools.prepend(bg0, bg1); tools.append(ghost); };
+      const showGrid = (B, w, c) => { const { W } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
+        bg1.style.cssText = 'left:0;top:0;width:100%;height:100%';
+        ghost.style.width = w + 'px'; ghost.style.display = ''; ghost.style.setProperty('--c', c || '#7cbcff'); tools.prepend(bg0); $('mayBottomBar')?.prepend(bg1); tools.append(ghost); };
       const hideGrid = () => { ghost.remove(); bg0.remove(); bg1.remove(); $('mayatnikRail').classList.remove('may-drop'); document.body.classList.remove('may-raildrag'); };
       const occOf = skip => { const o = []; for (const [it, [c, r, w]] of shown) if (it !== skip) (o[r] ||= []).push([c * SX, c * SX + w]); return o; };
       const ghostAt = p => { ghost.style.left = Math.round(p[0] * SX) + 'px'; ghost.style.top = p[1] * SY + 'px'; };

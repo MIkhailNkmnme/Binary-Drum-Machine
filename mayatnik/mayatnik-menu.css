@@ -529,8 +529,8 @@ header #paintTools.pt-grid>.pt-g,header #paintTools.pt-grid>#mayCorner{position:
 header #paintTools.pt-grid>.pt-drag{z-index:60}
 #paintTools #mayCorner.pt-drag{opacity:.6}
 #paintTools .pt-ghost{position:absolute;z-index:55;height:24px;box-sizing:border-box;border:1.5px dashed var(--c,#7cbcff);border-radius:3px;background:color-mix(in srgb,var(--c,#7cbcff) 14%,transparent);pointer-events:none}
-/* v0.411: при перетаскивании группы — только метка места, без полос поверх поля. */
-#paintTools .pt-gridbg{display:none}
+/* v0.412: при перетаскивании — одна полоса в шапке и одна в нижней полосе. */
+#paintTools .pt-gridbg,#mayBottomBar>.pt-gridbg{position:absolute;pointer-events:none;background:#ffffff0b}
 #paintTools.pt-dragging #mayCorner,#paintTools.pt-dragging #mayCorner *{cursor:grabbing}
 /* v0.226: «Вид» — два столбца (.pt-col), в них блоки по темам своим фоном (.pt-sec, цвет темы — --s); блок: поля 2 px сверху и снизу, между блоками без зазора —
    ряд по-прежнему 28 px (кнопка 24 + 4), зубцы рамки против остриёв; тонкая черта цветом темы — граница блоков. На телефоне столбцы — две колонки сетки списка */
