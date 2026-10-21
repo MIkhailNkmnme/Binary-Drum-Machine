@@ -647,3 +647,6 @@ header #paintTools .pt-b.gz-hx.pt-tri3{padding:0 9px!important;gap:0;justify-con
 #paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:1px solid color-mix(in srgb,var(--c,#b48cff) 55%,transparent)}
 #paintTools .pt-tri3 .pt-t3.on{color:#fff;text-shadow:0 0 4px var(--c,#b48cff)}
 #paintTools .pt-tri3 .pt-t3:hover{color:#dfe6f5}
+/* v0.358: кнопки «Поля» в списке «Хорр» — по две в ряд */
+.may-hp-2{display:flex;gap:0;width:100%}
+.may-hp-2>.gz-hx{position:static!important;left:auto!important;top:auto!important;transform:none!important;width:50%!important;flex:1 1 50%;margin:0!important;box-sizing:border-box}
