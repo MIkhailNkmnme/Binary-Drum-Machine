@@ -705,8 +705,8 @@
           const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, cx = pr ? pr.left + pr.width / 2 : H.left + H.width / 2;
           ud.style.left = Math.round(Math.max(0, Math.min(B.W - w, cx - T.left - w / 2))) + 'px'; }
         // v0.368: «верхнее меню сделай полосой одной»: все группы — в одну строку, порядок — как стояли (ряд, затем столбец), «Правку» над осью обходят
-        const rest = vis.filter(el => el !== ud), key = el => ok(at(el)) ? at(el)[1] * 1e4 + at(el)[0] : 1e9 + rest.indexOf(el);
-        let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth; while (busy(occ[0], c1 * SX, w)) c1++; put(el, [c1, 0], w); c1 += Math.ceil((w + GAP) / SX); }
+        const rest = vis.filter(el => el !== ud), key = el => ok(at(el)) ? at(el)[0] + at(el)[1] * 1e-3 : 1e9 + rest.indexOf(el);   // v0.386: в одну строку — порядок по столбцу
+        let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, hiC = Math.max(c1, Math.floor((B.W - w) / SX)); let c = Math.min(hiC, Math.max(c1, ok(at(el)) ? at(el)[0] : c1)); while (busy(occ[0], c * SX, w)) c++; put(el, [c, 0], w); c1 = c + Math.ceil((w + GAP) / SX); }   // v0.386: «не даёт разместить вправо» — свой столбец (куда перетащили), до правого края; друг на друга не налезают
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
         tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); };
