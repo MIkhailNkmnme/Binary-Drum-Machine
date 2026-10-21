@@ -742,5 +742,5 @@ header #paintTools .gz-group.pt-bot::after{display:none}
 /* v0.391: список «Хорр» — столбец кнопок стандартной ширины (пары — одна кнопка из двух частей) */
 .may-hp-pop{width:var(--gz-w)!important}
 .may-hp-pop>.gz-hx{width:100%!important}
-#mayBottomBar .gz-sl .gz-vl{z-index:1}
-#mayBottomBar .gz-sl .gz-th{z-index:5}   /* v0.393: «бегунок вперёд текста» — ромб бегунка поверх подписи (в полосе и в списке «Хорр») */
+.may-hp-pop .gz-sl .gz-vl{z-index:1}
+.may-hp-pop .gz-sl .gz-th{z-index:5}   /* v0.393: «бегунок вперёд текста» — ромб бегунка поверх подписи (в полосе и в списке «Хорр») */
