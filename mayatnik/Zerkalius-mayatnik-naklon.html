@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
+<title>Zerkalius Маятник: наклон — v0.001</title>
+<!-- Zerkalius Маятник: наклон — v0.001 (2026-10-21). v0.001: «маятник на Серпинском не 90, а 30» — вариант 2: вершины маятника не на верхней строке
+  (линия вершин под 90° к оси), а на наклонной: линия под углом θ к оси, вершина со сдвигом p начинает свой конус в строке r0 = round(|p| · ctg θ).
+  Правило конуса то же, что в Маятнике (mayatnik-core.js, cone): клетки a − d … a + d через одну, бит = старый ⊕ левый сверху ⊕ правый сверху;
+  клетка вершины на время первой строки — 1. Страница для пробы: поле, кадры, анимация, линия вершин. Дальше — вариант 3 (другое правило конуса). -->
+<style>
+:root{--bg:#0f1218;--panel:#161b24;--line:#262e3b;--fg:#d8dee9;--mute:#8a95a8;--acc:#b48cff;--gold:#ffd35b;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--sans);padding:12px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:10px}
+h1{font-size:20px;margin:0}
+.ver{font:12px var(--mono);color:var(--mute)}
+a{color:var(--acc)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:10px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+.ctl label{font-size:13px;color:var(--mute);display:flex;gap:5px;align-items:center}
+input,select,button{background:#121a30;color:var(--fg);border:1px solid #33405a;border-radius:4px;font:13px var(--sans);padding:3px 6px}
+input[type=number]{width:72px}
+input[type=range]{width:min(420px,60vw);padding:0}
+button{cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+#frameLab{font:12px var(--mono);color:var(--fg);min-width:92px}
+#wrap{position:relative;overflow:auto;max-height:calc(100vh - 120px);background:#05070d;border:1px solid var(--line);border-radius:6px}
+#cv{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+#ov{position:absolute;left:0;top:0;pointer-events:none}
+</style>
+</head>
+<body>
+<header><h1>Маятник: наклон</h1><span class="ver">v0.001</span><a href="Zerkalius-mayatnik.html">← Маятник</a></header>
+<div class="ctl">
+  <label title="Строк в поле">строк <input id="rows" type="number" min="8" max="2048" step="1" value="256"></label>
+  <label title="Вершин маятника">вершин <input id="steps" type="number" min="1" max="4096" step="1" value="256"></label>
+  <label title="Порядок вершин">ход <select id="mode"><option value="pend">лево-право</option><option value="pendR">право-лево</option><option value="right">вправо</option><option value="left">влево</option></select></label>
+  <label title="Угол линии вершин к оси конусов: 90° — все вершины на верхней строке, как в Маятнике; меньше — вершина со сдвигом p начинает конус ниже, в строке |p| · ctg θ">наклон <select id="ang"><option value="90">90°</option><option value="75">75°</option><option value="60">60°</option><option value="45">45°</option><option value="30">30°</option><option value="15">15°</option></select></label>
+  <button id="bBuild" title="Построить заново">Построить</button>
+  <label title="Масштаб: по ширине окна или пикселей на бит">масштаб <select id="zoom"><option value="fit">по ширине</option><option value="1">×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></label>
+  <label title="Линия вершин поверх поля"><input id="vline" type="checkbox" checked> линия вершин</label>
+</div>
+<div class="ctl">
+  <button id="bPrev" title="Кадр назад (←)">−1</button>
+  <button id="bPlay" aria-pressed="false" title="Анимация (пробел) · двойной щелчок по полю — пауза">▶</button>
+  <button id="bNext" title="Кадр вперёд (→)">+1</button>
+  <input id="frame" type="range" min="0" max="256" step="1" value="256" title="Кадр = сколько вершин поставлено">
+  <span id="frameLab"></span>
+  <label title="Кадров за шаг анимации">скорость <input id="speed" type="number" min="1" max="64" step="1" value="1"></label>
+</div>
+<div id="wrap"><canvas id="cv"></canvas><canvas id="ov"></canvas></div>
+<script src="mayatnik-core.js?v=5"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id), KEY = 'zerk-mayatnik-naklon';
+  let st = { rows: 256, steps: 256, mode: 'pend', ang: 90, zoom: 'fit', vline: true, speed: 1 };
+  try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) {} };
+  const COL = { one: [232, 237, 245], zero: [91, 100, 117], empty: [5, 7, 13] };
+  let geo = null, f = null, k = 0, S = 0, snaps = new Map(), every = 16, playing = false, raf = 0, img = null, verts = [];
+
+  // вершина j: сдвиг p от якоря, строка начала r0 = round(|p| · ctg θ) (θ — угол линии вершин к оси; 90° — верхняя строка)
+  const startRow = p => { const t = Math.max(1, Math.min(90, +st.ang || 90)); return t >= 90 ? 0 : Math.round(Math.abs(p) / Math.tan(t * Math.PI / 180)); };
+  // конус вершины в клетке (r0, a): то же правило, что MAYATNIK.cone, только вершина не в строке 0
+  function coneAt(a, r0) {
+    const { W, H, val } = f; if (a < 0 || a >= W || r0 >= H) return;
+    const i0 = r0 * W + a; if (val[i0] === -1) val[i0] = 1;
+    const apex = val[i0]; val[i0] = 1;
+    for (let d = 1; r0 + d < H; d++) {
+      const row = (r0 + d) * W, up = row - W, end = a + d; let c = a - d;
+      if (c < 0) c += ((-c + 1) >> 1) << 1;
+      for (; c <= end && c < W; c += 2) {
+        const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0, i = row + c;
+        val[i] = ((val[i] === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+      }
+      if (d === 1) val[i0] = apex;
+    }
+  }
+  function build() {
+    stop(); st.rows = Math.max(8, Math.min(2048, +$('rows').value | 0 || 256)); st.steps = Math.max(1, Math.min(4096, +$('steps').value | 0 || 256));
+    st.mode = $('mode').value; st.ang = +$('ang').value || 90; save();
+    S = st.steps; geo = MAYATNIK.geometry(st.mode, S, st.rows); f = MAYATNIK.field(geo.W, st.rows, 'empty', geo.anchor);
+    verts = []; for (let j = 0; j < S; j++) { const p = MAYATNIK.offset(st.mode, j); verts.push([p, startRow(p)]); }
+    every = Math.max(8, Math.ceil(S / 24)); snaps = new Map([[0, f.val.slice()]]); k = 0;
+    const cv = $('cv'); cv.width = geo.W; cv.height = st.rows; img = cv.getContext('2d').createImageData(geo.W, st.rows);
+    $('frame').max = S; goTo(S); layout();
+  }
+  function stepOne() { const [p, r0] = verts[k]; coneAt(geo.anchor + p, r0); k++; if (k % every === 0 && !snaps.has(k)) snaps.set(k, f.val.slice()); }
+  function goTo(t) {
+    t = Math.max(0, Math.min(S, t | 0));
+    if (t < k || t - k > every) { let b = 0; for (const s of snaps.keys()) if (s <= t && s > b) b = s; if (b > k || t < k) { f.val.set(snaps.get(b)); k = b; } }
+    while (k < t) stepOne();
+    draw();
+  }
+  function draw() {
+    const { W, H, val } = f, px = new Uint32Array(img.data.buffer), rgba = c => (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0;
+    const one = rgba(COL.one), zero = rgba(COL.zero), empty = rgba(COL.empty);
+    for (let i = 0; i < W * H; i++) { const v = val[i]; px[i] = v < 0 ? empty : v ? one : zero; }
+    $('cv').getContext('2d').putImageData(img, 0, 0);
+    $('frame').value = k; const last = k ? verts[k - 1] : null;
+    $('frameLab').textContent = 'кадр ' + k + (last ? ' · ' + (last[0] > 0 ? '+' : '') + last[0] + ' / стр. ' + (last[1] + 1) : '');
+    overlay();
+  }
+  const scale = () => st.zoom === 'fit' ? Math.max(.05, ($('wrap').clientWidth - 2) / geo.W) : +st.zoom;
+  function layout() {
+    if (!geo) return; const s = scale(), cv = $('cv'), w = Math.round(geo.W * s), h = Math.round(st.rows * s);
+    cv.style.width = w + 'px'; cv.style.height = h + 'px'; overlay();
+  }
+  // линия вершин: поставленные вершины слева и справа от якоря, центры их клеток; последняя — золотая точка
+  function overlay() {
+    const ov = $('ov'), cv = $('cv'), d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+    ov.style.width = w + 'px'; ov.style.height = h + 'px'; const W = Math.round(w * d), H = Math.round(h * d); if (ov.width !== W || ov.height !== H) { ov.width = W; ov.height = H; }
+    const g = ov.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h); if (!st.vline || !k || !geo) return;
+    const s = w / geo.W, P = ([p, r]) => [(geo.anchor + p + .5) * s, (r + .5) * s], done = verts.slice(0, k);
+    const L = done.filter(v => v[0] <= 0).sort((a, b) => b[0] - a[0]), R = done.filter(v => v[0] >= 0).sort((a, b) => a[0] - b[0]);
+    g.strokeStyle = '#b48cff'; g.lineWidth = 1; for (const arm of [L, R]) { if (arm.length < 2) continue; g.beginPath(); arm.forEach((v, i) => { const [x, y] = P(v); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); }
+    const [x, y] = P(verts[k - 1]); g.fillStyle = '#ffd35b'; g.beginPath(); g.arc(x, y, Math.max(2, s * .6), 0, 2 * Math.PI); g.fill();
+  }
+  function tick() { if (!playing) return; if (k >= S) { stop(); return; } goTo(Math.min(S, k + Math.max(1, +st.speed || 1))); raf = requestAnimationFrame(tick); }
+  function play() { if (playing) { stop(); return; } if (k >= S) goTo(0); playing = true; $('bPlay').setAttribute('aria-pressed', 'true'); $('bPlay').textContent = '❚❚'; raf = requestAnimationFrame(tick); }
+  function stop() { playing = false; cancelAnimationFrame(raf); raf = 0; $('bPlay').setAttribute('aria-pressed', 'false'); $('bPlay').textContent = '▶'; }
+
+  $('rows').value = st.rows; $('steps').value = st.steps; $('mode').value = st.mode; $('ang').value = String(st.ang); $('zoom').value = String(st.zoom); $('vline').checked = st.vline !== false; $('speed').value = st.speed;
+  $('bBuild').onclick = build; for (const id of ['mode', 'ang']) $(id).onchange = build;
+  for (const id of ['rows', 'steps']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') build(); });
+  $('zoom').onchange = () => { st.zoom = $('zoom').value; save(); layout(); };
+  $('vline').onchange = () => { st.vline = $('vline').checked; save(); overlay(); };
+  $('speed').onchange = () => { st.speed = Math.max(1, Math.min(64, +$('speed').value | 0 || 1)); save(); };
+  $('frame').oninput = () => { stop(); goTo(+$('frame').value); };
+  $('bPrev').onclick = () => { stop(); goTo(k - 1); }; $('bNext').onclick = () => { stop(); goTo(k + 1); }; $('bPlay').onclick = play;
+  $('wrap').addEventListener('dblclick', () => { if (playing) stop(); });
+  addEventListener('keydown', e => { if (e.target.closest('input,select,textarea')) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); stop(); goTo(k - 1); } else if (e.key === 'ArrowRight') { e.preventDefault(); stop(); goTo(k + 1); } else if (e.key === ' ') { e.preventDefault(); play(); } });
+  addEventListener('resize', layout);
+  build();
+})();
+</script>
+</body>
+</html>
