@@ -80,7 +80,7 @@
       { ...num('speed', { name: 'Анимация', tip: 'Скорость анимации', fmt: v => '×' + v, zero: 1 }), name: 'Анимация',   // «Анимация» — включатель внутри своего ползунка скорости
         head: { label: '▶ Анимация', on: () => $('bPlay').getAttribute('aria-pressed') === 'true', click: () => $('bPlay').click() } },
       num('frameT', { name: 'Кадр, с', tip: 'Сколько длится каждый кадр анимации · шаг 0,05 с · двойной щелчок — 0 (как успевает экран)', fmt: v => v ? String(+(v * .05).toFixed(2)).replace('.', ',') + ' с / кадр' : 'кадр — без паузы', zero: 0 }),   // v0.263
-      { ...num('frame', { name: 'Кадр', fmt: v => 'кадр ' + v, zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
+      { ...num('frame', { name: 'Кадр', fmt: v => String(v), zero: 0 }), tip: 'Кадр = вершина · −N / +N — на столько вершин, какая скорость анимации (×N; в паре — пар) · бегунок: щелчок — ▶ пуск / ❚❚ пауза, тянуть — к любой · двойной щелчок — 0',
         // v0.317: «если ставлю ×2 — в стрелках кадра также пиши +2»: стрелки шагают на скорость анимации (подписи −N / +N обновляет toolSync ниже)
         step: d => { if (window.mayThirds?.on() && Math.abs(d) !== 2) { window.mayThirds.step(Math.sign(d)); return; }   // v0.318: «Трети»
           const e = $('frame'), N = Math.abs(d) === 2 ? Math.max(1, Math.round(((+e.max || 0) - (+e.min || 0)) / 20)) : Math.max(1, +$('speed').value || 1), v = Math.max(+e.min || 0, Math.min(+e.max, +e.value + Math.sign(d) * N)); if (String(v) !== e.value) { e.value = String(v); fire(e); } },
