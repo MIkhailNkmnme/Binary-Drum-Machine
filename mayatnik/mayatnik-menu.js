@@ -1,4 +1,4 @@
-/* Маятник v0.120 (меню полосой — v0.158): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.120 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -122,6 +122,10 @@
     const wide = t => ['value', 'list', 'control', 'vpair'].includes(t), a = g.items.filter(i => !wide(i.type)), b = g.items.filter(i => wide(i.type));
     const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
     a.forEach((it, i) => { if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if (cb[i] && it.type !== 'control' && it.type !== 'vpair' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
+  // v0.327: «внизу сделай полосу для меню и в центр перемести» — полоса во всю ширину под полем, в её центре — ползунок «кадр» из «Поля»
+  { const bar = document.createElement('div'); bar.id = 'mayBottomBar'; document.body.append(bar);
+    const g = groups.find(x => x.id === 'build'), box = rail.el.querySelector('.gz-group[data-id="build"]'), i = g.items.filter(it => ['value', 'list', 'control', 'vpair'].includes(it.type)).findIndex(it => it.name === 'Кадр');
+    const cell = box?.querySelectorAll('.gz-wide > .gz-hx')[i]; if (cell) { bar.style.setProperty('--c', g.color); bar.append(cell); } }
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));

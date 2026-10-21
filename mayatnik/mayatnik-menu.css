@@ -1,6 +1,6 @@
 /* Page layout only; button geometry, colours and groups come from grozd.css. */
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
-body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto;height:100dvh;overflow:hidden}
+body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
 .mayatnik-menu-ready>header{grid-column:1/-1;padding:8px 14px;gap:10px}
 .mayatnik-menu-ready header .sub{display:none}
 .mayatnik-menu-ready #mayMenu,.mayatnik-menu-ready #mayHelp,.mayatnik-menu-ready #mayAbout,.mayatnik-menu-ready #mayZen{display:inline-flex;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif}
@@ -18,6 +18,10 @@ body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);
 .mayatnik-menu-ready #imageStats{grid-column:2;grid-row:2;font-size:11px;padding:5px 12px;min-width:0;overflow-wrap:anywhere}
 .mayatnik-menu-ready #ochkiBox{grid-column:2;grid-row:3;min-width:0}
 .mayatnik-menu-ready #wrap{grid-column:2;grid-row:4;min-width:0;min-height:0}
+#mayBottomBar{display:none}
+.mayatnik-menu-ready #mayBottomBar{display:flex;grid-column:1/-1;grid-row:6;justify-content:center;align-items:center;min-width:0;padding:3px 8px;border-top:1px solid var(--line);background:#0d1119}   /* v0.327: нижняя полоса меню */
+#mayBottomBar>.gz-hx{width:min(520px,100%);box-sizing:border-box}
+body.may-zen #mayBottomBar{display:none!important}
 .mayatnik-menu-ready #mayatnikStatus{display:flex;grid-column:2;grid-row:5;flex-wrap:wrap;gap:0 10px;align-items:center;min-width:0;padding:1px 50% 1px 4px;border-top:1px solid var(--line);background:var(--panel)}
 /* v0.069: меню без фона — кнопки прямо на поле. Поле тянется под меню; пустые места меню пропускают щелчки к полю. */
 @media(min-width:601px){
@@ -45,7 +49,8 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #mayAboutDialog form button{font-size:20px;padding:0 8px;cursor:pointer}
 .may-about-note{color:#9baac3;font-size:12px}
 @media(max-width:600px){
-  body.mayatnik-menu-ready{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(140px,1fr) auto}
+  body.mayatnik-menu-ready{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(140px,1fr) auto auto}
+  .mayatnik-menu-ready #mayBottomBar{grid-row:7}
   .mayatnik-menu-ready>header{grid-column:1;padding:6px 8px;gap:6px}
   .mayatnik-menu-ready h1{font-size:17px}
   .mayatnik-menu-ready #mayatnikRail{grid-column:1;grid-row:2;max-height:38dvh;border-right:0;border-bottom:1px solid var(--line);padding:6px 12px}
