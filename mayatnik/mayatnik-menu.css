@@ -744,3 +744,7 @@ header #paintTools .gz-group.pt-bot::after{display:none}
 .may-hp-pop>.gz-hx{width:100%!important}
 .may-hp-pop .gz-sl .gz-vl{z-index:1}
 .may-hp-pop .gz-sl .gz-th{z-index:5}   /* v0.393: «бегунок вперёд текста» — ромб бегунка поверх подписи (в полосе и в списке «Хорр») */
+/* v0.399: середина ползунка кадра — на оси: связка нижней полосы сдвигается целиком (--axdx), ▶ / ✖ — в середине дорожки */
+#mayBottomBar>.may-bb-half,#mayBottomBar>.gz-sl,#mayBottomBar>#mayBbHorr{transform:translateX(var(--axdx,0px))}
+#mayBottomBar .may-bb-play{left:50%!important}
+#mayBottomBar .may-bb-rs{left:calc(50% + 21px)!important}

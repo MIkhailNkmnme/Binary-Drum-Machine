@@ -143,8 +143,12 @@
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
       // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
       // v0.395: «плей по центру оси»: ▶ и «✖» — на оси якоря (window.mayAxisX), прижаты к краям дорожки; страница зовёт при прокрутке и масштабе (window.mayPlayPlace)
-      const pcx = () => parseFloat(pl.style.left) || mid.clientWidth / 2, playPlace = () => { const W = mid.clientWidth, R = mid.getBoundingClientRect(), ax = window.mayAxisX?.();
-        const x = Math.round(Math.max(17, Math.min(W - 47, Number.isFinite(ax) ? ax - R.left : W / 2))); if (pl.style.left !== x + 'px') { pl.style.left = x + 'px'; b.style.left = (x + 21) + 'px'; side(); } };
+      // v0.399: «плей по середине ползунка, и ползунок по середине — на оси»: ▶ / ✖ — снова в середине дорожки; на ось ставится середина ползунка —
+      // сдвигом всей связки «×N | ползунок | время | Хорр» (--axdx у полосы), не дальше краёв полосы
+      const pcx = () => mid.clientWidth / 2, playPlace = () => { const bar = $('mayBottomBar'), ax = window.mayAxisX?.(); if (!bar) return;
+        const cur = parseFloat(bar.style.getPropertyValue('--axdx')) || 0, C = cell.getBoundingClientRect(), BR = bar.getBoundingClientRect(), c0 = C.left + C.width / 2 - cur;
+        const grp = [...bar.children].filter(e => e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e => e.getBoundingClientRect()), L0 = Math.min(...grp.map(r => r.left)) - cur, R0 = Math.max(...grp.map(r => r.right)) - cur;
+        let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) bar.style.setProperty('--axdx', v); };
       window.mayPlayPlace = playPlace;
       const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, c0 = pcx(), zL = c0 - 21, zR = c0 + 47;
         const ok = p => p >= 0 && p + lw <= W && (p + lw <= zL || p >= zR); let p = x - 6 - lw;
