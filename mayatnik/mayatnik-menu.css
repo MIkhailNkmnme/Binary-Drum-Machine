@@ -650,3 +650,13 @@ header #paintTools .pt-b.gz-hx.pt-tri3{padding:0 9px!important;gap:0;justify-con
 /* v0.358: кнопки «Поля» в списке «Хорр» — по две в ряд */
 .may-hp-2{display:flex;gap:0;width:100%}
 .may-hp-2>.gz-hx{position:static!important;left:auto!important;top:auto!important;transform:none!important;width:50%!important;flex:1 1 50%;margin:0!important;box-sizing:border-box}
+/* v0.359: свои линии (верт., диаг., ещё горизонтали) — ручки: «+», зеркало, «×», номер (тянуть) */
+.zl-hd{position:fixed;z-index:6;display:flex;align-items:center;gap:2px;height:18px;touch-action:none}
+.zl-hd[hidden]{display:none}
+.zl-b{width:16px;height:16px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;color:#7cbcff;font:700 11px/1 'Segoe UI',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.zl-b:hover{background:#1d2b4d}
+.zl-b.on{background:#ff87cf;border-color:#ff87cf;color:#0d1119}
+.zl-n{padding:0 2px;border-radius:2px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);user-select:none;white-space:nowrap}
+#zTopLine .ztl-add{position:absolute;top:50%;margin:-11px 0 0;z-index:1;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;color:#7cbcff;font:700 13px/1 'Segoe UI',sans-serif;cursor:pointer}
+#zTopLine .ztl-add:hover{background:#1d2b4d}
+body.may-zen .zl-hd{display:none}
