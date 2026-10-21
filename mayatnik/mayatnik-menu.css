@@ -621,3 +621,4 @@ body.may-zen #zTopLine{display:none}
 /* v0.340: ×N и время — полкнопками по бокам ползунка кадра */
 #mayBottomBar>.may-bb-half{width:calc(var(--gz-w) / 2 + 6px);flex:none;justify-content:center;padding:0 10px;--c:#73e4a5;margin:0 -4px}
 #mayBottomBar>.may-bb-half .may-hp-h{padding:0}
+#mayBottomBar>.gz-sl .gz-mid{margin:0 -8px}   /* v0.341: «ползунок до краёв внутренних» — grozd держит бегунок в 8 px от краёв дорожки; дорожка шире на 8 px внутрь стрелок, кадр 0 и последний — у самых стрелок */
