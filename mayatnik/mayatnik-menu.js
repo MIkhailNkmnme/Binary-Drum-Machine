@@ -131,7 +131,11 @@
   { const b = document.createElement('button'); b.type = 'button'; b.id = 'mayBbReset'; b.className = 'gz-hx'; b.innerHTML = '<span>✖ Сброс</span>';
     b.title = 'Сброс: кадр 0 и очистка от всего — свёртки, вся краска и живая окраска, все зеркала, выделение шаблонов, поле заново';
     b.onclick = () => { const C = window.mayClear; if (C) { C.paintOff(); C.mirrorsOff(); C.selOff(); } $('bReset').click(); rail.refresh(); placeTools(); };
-    $('mayBottomBar').prepend(b); }
+    // v0.335: «Сброс прямо в ползунке рядом с плеем»: ромб «✖» в дорожке кадра, едет за бегунком (справа; у правого края — слева)
+    const cell = $('mayBottomBar').querySelector('.gz-sl'), mid = cell?.querySelector('.gz-mid'), th = mid?.querySelector('.gz-th');
+    if (mid) { b.className = 'may-bb-rs'; b.removeAttribute('id'); b.textContent = '✖'; b.addEventListener('pointerdown', e => e.stopPropagation()); mid.append(b);
+      const side = () => cell.classList.toggle('rs-l', th.offsetLeft > mid.clientWidth - 50);
+      new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', side); side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
   { const pres = [...source.querySelectorAll('button.pre')], wrapH = document.createElement('div'); wrapH.id = 'mayBbHorr';
@@ -146,13 +150,13 @@
       pop.append(row); }
     const sync = () => { const n = cur(), on = pres.some(e => e.dataset.n === n); b.querySelector('b').textContent = on ? n : ''; b.classList.toggle('on', !pop.hidden);
       for (const h of pop.querySelectorAll('.may-hp-h')) h.classList.toggle('on', h.dataset.n === n); };
-    // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор), кайма цветом группы
+    // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор); v0.335: «фон не шире кнопок, без границ» — без каймы, по ширине кнопок
     const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
       pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
       pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
-      const c = getComputedStyle(pop).getPropertyValue('--c').trim() || '#73e4a5', d = pt.map(q => q.join(',')).join(' ');
+      const d = pt.map(q => q.join(',')).join(' ');
       pop.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
-      pop.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".97" stroke="${c}" stroke-width="3" stroke-linejoin="miter"/></svg>`) + '")'; };
+      pop.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".97" stroke="none"/></svg>`) + '")'; };
     b.onclick = ev => { ev.stopPropagation(); pop.hidden = !pop.hidden; sync(); hpFrame(); };
     document.addEventListener('pointerdown', ev => { if (!pop.hidden && !wrapH.contains(ev.target)) { pop.hidden = true; sync(); } });
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
