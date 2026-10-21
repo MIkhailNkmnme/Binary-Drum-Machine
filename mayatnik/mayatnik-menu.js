@@ -375,8 +375,9 @@
     const vfp = document.createElement('button'); vfp.title = 'Вспышка'; const bVf = ptBtn('vtxFlash', 'bolt', vfp, () => { const V = window.mayVtxFlash; V?.set(!V.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayVtxFlash?.get(); bVf.classList.toggle('on', on); bVf.title = 'Вспышка вершины: на каждом шаге все биты, пришедшие с новой вершины (её конус), подсвечиваются золотом и гаснут за секунду · ' + (on ? 'вкл' : 'выкл'); });
     // v0.254: «Подписи строк» — у каждой строки справа номер, битов, сколько 1 и 0
-    const rlp = document.createElement('button'); rlp.title = 'Строки'; const bRl = ptBtn('rowLab', 'bars', rlp, () => { const R = window.mayRowLab; R?.set(!R.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayRowLab?.get(); bRl.classList.toggle('on', on); bRl.title = 'Подписи строк: справа от каждой строки — номер, сколько в ней бит, сколько 1 и сколько 0 (мелко — каждая n-я) · ' + (on ? 'вкл' : 'выкл'); });
+    const rlp = document.createElement('button'); rlp.title = 'Строки'; const bRl = ptBtn('rowLab', 'bars', rlp, () => { const R = window.mayRowLab; R?.set(((R.get() | 0) + 1) % 3); placeTools(); });   // v0.369: по кругу выкл → подписи → таблица
+    toolSync.push(() => { const m = window.mayRowLab?.get() | 0, on = m > 0; bRl.classList.toggle('on', on); bRl.title = 'Подписи строк: номер, сколько видно бит (нарастающим итогом), сколько 1 и 0 · по кругу: выкл → после битов → таблица (правая половина спрятана, подписи от оси) · сейчас: ' + ['выкл', 'после битов', 'таблица'][m];
+      const nm = bRl.querySelector('.gz-nm'), t = m === 2 ? 'Таблица' : 'Подписи'; if (nm && nm.textContent !== t) nm.textContent = t; });
     // v0.252: «Точка встречи» — вертикаль, горизонталь и пунктир через точку встречи, отдельно от «Застыло» (при нём — на настоящей точке, без него — тянется руками)
     // v0.306: «очистка от зеркал от выделения шаблонов» — в «Очистке» ещё «Зеркала» (выключить все зеркала) и «Выделение» (снять выделение шаблона, как Esc)
     // v0.308: и «Окраска» (выключить живую окраску «Краски»); «Выделение» — у всех шаблонов: выбор и обводка
