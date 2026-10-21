@@ -519,7 +519,7 @@
        ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];
     const pick = n => n === 'lg' ? $('lg') : n === 'vx' ? gView.querySelector(':scope > .pt-vx') : gView.querySelector(':scope > [data-n="' + n + '"]');
     const cols = VIEW_COLS.map(secs => { const col = document.createElement('div'); col.className = 'pt-col';
-      for (const [t, c, ns] of secs) { const s = document.createElement('div'); s.className = 'pt-sec'; s.title = t; s.style.setProperty('--s', c);
+      for (const [t, c, ns] of secs) { const s = document.createElement('div'); s.className = 'pt-sec'; s.dataset.t = t; s.style.setProperty('--s', c);   // v0.392: «лишняя подсказка» — название блока не всплывает (было title)
         for (const n of ns) { const e = pick(n); if (e) s.append(e); } if (s.children.length) col.append(s); } return col; });
     const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[0].append(s); }   // новая кнопка без темы — в конец «Вида»
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
