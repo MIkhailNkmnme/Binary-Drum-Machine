@@ -107,7 +107,7 @@
       button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
       button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
-  { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе
+  { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
   // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
   // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
@@ -144,11 +144,15 @@
       pl.onclick = () => { P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
       // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
-      const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, zL = W / 2 - 21, zR = W / 2 + 47;
+      // v0.395: «плей по центру оси»: ▶ и «✖» — на оси якоря (window.mayAxisX), прижаты к краям дорожки; страница зовёт при прокрутке и масштабе (window.mayPlayPlace)
+      const pcx = () => parseFloat(pl.style.left) || mid.clientWidth / 2, playPlace = () => { const W = mid.clientWidth, R = mid.getBoundingClientRect(), ax = window.mayAxisX?.();
+        const x = Math.round(Math.max(17, Math.min(W - 47, Number.isFinite(ax) ? ax - R.left : W / 2))); if (pl.style.left !== x + 'px') { pl.style.left = x + 'px'; b.style.left = (x + 21) + 'px'; side(); } };
+      window.mayPlayPlace = playPlace;
+      const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, c0 = pcx(), zL = c0 - 21, zR = c0 + 47;
         const ok = p => p >= 0 && p + lw <= W && (p + lw <= zL || p >= zR); let p = x - 6 - lw;
-        if (!ok(p)) p = x + 6; if (!ok(p)) p = x < W / 2 ? zL - 4 - lw : zR + 4; if (!ok(p)) p = x < W / 2 ? zR + 4 : zL - 4 - lw;
+        if (!ok(p)) p = x + 6; if (!ok(p)) p = x < c0 ? zL - 4 - lw : zR + 4; if (!ok(p)) p = x < c0 ? zR + 4 : zL - 4 - lw;
         const v = Math.round(Math.max(0, Math.min(W - lw, p))) + 'px'; if (vl.style.left !== v) vl.style.left = v; };
-      new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', side); side(); } }
+      new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', () => { playPlace(); side(); }); playPlace(); side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
   { const pres = [...source.querySelectorAll('button.pre')], wrapH = document.createElement('div'); wrapH.id = 'mayBbHorr';
