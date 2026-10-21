@@ -124,8 +124,10 @@
     const ca = box.querySelectorAll('.gz-soty > .gz-hx'), cb = box.querySelectorAll('.gz-wide > .gz-hx');
     a.forEach((it, i) => { if (ca[i] && (it.tip || it.name)) ca[i].title = it.tip || it.name; }); b.forEach((it, i) => { if (cb[i] && it.type !== 'control' && it.type !== 'vpair' && (it.tip || it.name)) cb[i].title = it.tip || it.name; }); }
   // v0.327: «внизу сделай полосу для меню и в центр перемести» — полоса во всю ширину под полем, в её центре — ползунок «кадр» из «Поля»
+  const bbCells = {};   // v0.355: ползунки «Поля», что уходят в список «Хорр»
   { const bar = document.createElement('div'); bar.id = 'mayBottomBar'; document.body.append(bar);
     const g = groups.find(x => x.id === 'build'), box = rail.el.querySelector('.gz-group[data-id="build"]'), i = g.items.filter(it => ['value', 'list', 'control', 'vpair'].includes(it.type)).findIndex(it => it.name === 'Кадр');
+    { const wc = [...(box?.querySelectorAll('.gz-wide > .gz-hx') || [])], wi = g.items.filter(it => ['value', 'list', 'control', 'vpair'].includes(it.type)); for (const nm of ['Строк', 'Вершин', 'Показ']) { const j = wi.findIndex(it => it.name === nm); if (wc[j]) bbCells[nm] = wc[j]; } }   // v0.355
     const cell = box?.querySelectorAll('.gz-wide > .gz-hx')[i]; if (cell) { bar.style.setProperty('--c', g.color); bar.append(cell); } }
   // v0.330: «помести туда Сброс — в 0 с очисткой от всего»: свёртки, окраска, зеркала, выделение шаблонов — выкл, затем «Очистить» (поле с кадра 0)
   { const b = document.createElement('button'); b.type = 'button'; b.id = 'mayBbReset'; b.className = 'gz-hx'; b.innerHTML = '<span>✖ Сброс</span>';
@@ -160,7 +162,7 @@
     const sync = () => { const n = cur(), on = pres.some(e => e.dataset.n === n); b.querySelector('b').textContent = on ? n : ''; b.classList.toggle('on', !pop.hidden);
       for (const h of pop.querySelectorAll('.may-hp-h')) h.classList.toggle('on', h.dataset.n === n); };
     // v0.334: «фон и обводка как у кнопок, зубцами»: рамка списка — шестиугольники в столбик (шаг = кнопка + зазор); v0.335: «фон не шире кнопок, без границ» — без каймы, по ширине кнопок
-    const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
+    const hpFrame = () => { if (pop.hidden) return; pop.style.height = ''; const w = pop.offsetWidth, row = pop.querySelector('.may-hp, .may-hp-sl'), P = row ? row.offsetHeight + 4 : 28, n = Math.max(1, Math.round(pop.offsetHeight / P)), h = n * P, D = 12;
       pop.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]]; for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
       pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
       const d = pt.map(q => q.join(',')).join(' ');
@@ -170,6 +172,8 @@
     document.addEventListener('pointerdown', ev => { if (!pop.hidden && !wrapH.contains(ev.target)) { pop.hidden = true; sync(); } });
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
     $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
+    // v0.355: «эти сюда сверху» — «Строк», «Вершин», «Показ» из рейки «Поле» — наверху списка «Хорр»
+    const top = ['Строк', 'Вершин', 'Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
   // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)

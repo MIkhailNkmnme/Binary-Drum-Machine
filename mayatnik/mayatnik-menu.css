@@ -606,8 +606,8 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 /* v0.331: линия «Верха» — тянется рукой, булавка — закреп */
 #zTopLine{position:fixed;z-index:6;height:12px;margin-top:-6px;cursor:ns-resize;touch-action:none;display:flex;align-items:center}
 #zTopLine[hidden]{display:none}
-#zTopLine::before{content:"";position:absolute;left:0;right:0;top:5px;border-top:2px dashed #7cbcff;pointer-events:none}
-#zTopLine.drag::before,#zTopLine:hover::before{border-top-style:solid;filter:drop-shadow(0 0 3px #7cbcff)}
+#zTopLine::before{content:"";position:absolute;left:0;right:0;top:6px;border-top:1px dashed #7cbcff;pointer-events:none}   /* v0.355: «все линии тончайшие — 1 пиксель» */
+#zTopLine.drag::before,#zTopLine:hover::before{border-top-style:solid}
 #zTopLine .ztl-pin{position:relative;z-index:1;margin-left:6px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;font-size:12px;line-height:1;cursor:pointer}
 #zTopLine .ztl-pin:hover{background:#1d2b4d}
 #zTopLine .ztl-pin.off{opacity:.45;filter:grayscale(1);border-style:dashed}   /* v0.333: откреплено */
@@ -638,3 +638,6 @@ body.may-zen #zTopLine:not(.zen){display:none}   /* v0.353: закреплённ
 #zTopLine .ztl-pin,#zTopLine .ztl-mir{position:absolute;top:50%;margin:-11px 0 0}   /* v0.352: места ставит zTopLine — у левого номера */
 #zTopLine .ztl-row{padding:0 2px}
 #zTopLine .ztl-row{padding:0 1px;border-radius:2px}   /* v0.354 */
+/* v0.355: в списке «Хорр» сверху — ползунки «Строк», «Вершин», «Показ»; список шириной в две кнопки, над «Хорр» по центру */
+.may-hp-pop{left:50%!important;right:auto!important;width:calc(var(--gz-w) * 2);transform:translateX(-50%)}
+.may-hp-pop>.gz-hx{width:100%!important;box-sizing:border-box;margin:0}
