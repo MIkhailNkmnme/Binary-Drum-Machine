@@ -679,5 +679,7 @@ header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;bor
 #mayBottomBar .gz-hx::before{inset:1px;background:var(--gz-bg)!important}
 #mayBottomBar .gz-hx.on,#mayBottomBar .gz-hx.gz-on{background:var(--c)!important;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c) 70%,transparent))}
 #mayBottomBar .gz-hx.on::before,#mayBottomBar .gz-hx.gz-on::before{inset:1.5px}
-#mayBottomBar .gz-hx:hover::before{background:color-mix(in srgb,var(--c) 22%,var(--gz-bg))!important}
+#mayBottomBar .gz-hx:hover::before,#mayBottomBar .gz-hx:focus-visible::before{background:var(--gz-bg)!important}   /* v0.377: «фон кнопок меняется» — и при наведении фон свой */
+#mayBottomBar .gz-hx:hover:not(.on):not(.gz-on){background:color-mix(in srgb,var(--c) 55%,#000)!important}   /* наведение — только кайма ярче */
+#mayBottomBar .gz-hx:focus-visible{outline:none}
 #mayBottomBar .gz-hx.on>*,#mayBottomBar .gz-hx.gz-on>*{color:#fff}
