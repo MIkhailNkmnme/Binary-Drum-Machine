@@ -90,7 +90,7 @@
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
-      pair(tgl('zOut'), tgl('zIn'), '− Дальше', '+ Ближе', { name: 'Масштаб', tip: 'Отдалить · приблизить' }), button('zFit', 'corners'), button('zFitH', 'corners'), button('zLock', 'pin'), button('zVert', 'line'), button('zDiag', 'line'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
+      pair(tgl('zOut'), tgl('zIn'), '− Дальше', '+ Ближе', { name: 'Масштаб', tip: 'Отдалить · приблизить' }), button('zFit', 'corners'), button('zFitH', 'corners'), button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
