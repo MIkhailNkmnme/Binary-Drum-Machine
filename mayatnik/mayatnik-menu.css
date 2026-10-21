@@ -628,3 +628,6 @@ body.may-zen #zTopLine{display:none}
 @media(max-width:600px){.mayatnik-menu-ready #mayatnikRail{background:#000}}
 /* v0.347: «не затемнять полосу»: слои поверх поля (шаблон, подсветки) ставятся по рамке холста и вылезали на нижнюю полосу — полоса выше них */
 .mayatnik-menu-ready #mayBottomBar{z-index:9}
+/* v0.350: «Хорр» — в ряду, справа от ползунка */
+#mayBbHorr{position:relative;right:auto;top:auto;transform:none;flex:none;margin-left:2px}
+@media(max-width:600px){#mayBbHorr{right:auto}}

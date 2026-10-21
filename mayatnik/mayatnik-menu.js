@@ -185,7 +185,8 @@
     bs.onclick = () => spSet(1); bs.oncontextmenu = e => { e.preventDefault(); spSet(-1); };
     bf.onclick = () => ftSet(1); bf.oncontextmenu = e => { e.preventDefault(); ftSet(-1); };
     sp.addEventListener('input', sync); ft.addEventListener('input', sync); const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
-    if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync(); }
+    if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync();
+    const hr = $('mayBbHorr'); if (hr) bf.after(hr); }   // v0.350: «Хорр» — сразу справа от ползунка (за временем кадра)
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));
