@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.060. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.061. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -47,6 +47,9 @@
      v0.032: в 14¾ — опыт с тремя вершинами: шум начинается, как только вершины есть с обеих сторон; «виртуальной вершины»-точки нет.
      v0.033: Codex — независимый исследователь Хоррориуса: раздел 15, доказательство периодичности краевой полосы по степеням двойки, контрпример к n/2, воспроизводимый расчёт.
      v0.034: раздел 14⅞ «Конец ленты»: при высоте N картинка внутри конуса якоря застывает к ≈ 4N вершинам.
+     v0.061: телефон: полоса «Битмультфильмы» не вылезает за края (превью сеткой 2 × 2 во всю ширину), заголовок
+             в одну строку, широкие таблицы листаются вбок сами (страница — нет), картинки с заданной шириной не шире
+             экрана, картинка «Нового» во всю ширину, кнопки просмотра переносятся. На компьютере — без изменений.
      v0.060: раздел 7.6 — раскраска маятника по Точке Оси, вариант 1: видео пользователя (0:44, лежит в Битмультфильмах).
      v0.059: в просмотре картинки полоса кнопок прозрачная, кнопки 1:1 / ×2 / ×4 / ✕ крупнее и заметнее.
      v0.058: разделы пронумерованы подряд внутри тем (тема.номер: 1.1, 1.2…), ссылки «раздел N» в тексте переписаны; картинка «Нового» вдвое меньше.
@@ -70,7 +73,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.060</title>
+<title>Zerkalius Исследование — v0.061</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -185,6 +188,22 @@
     background:rgba(26,29,38,.88); color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.6); }
   #viewer .bar button.act, #viewer .bar button:hover{ border-color:var(--gold); color:var(--gold); background:rgba(26,29,38,.95); }
   #viewer .bar .nm{ pointer-events:auto; font-size:13px; color:var(--fg); text-shadow:0 1px 3px #000, 0 0 6px #000; }
+  /* v0.061: телефон — ничего не шире экрана. */
+  @media (max-width:560px){
+    .wrap{ padding:22px 14px 70px; }
+    h1{ font-size:17px; letter-spacing:2px; white-space:nowrap; }
+    .intro{ padding:10px 12px; }
+    .intro .polosa{ gap:14px; }
+    .intro .pl:first-child{ width:100%; }
+    .intro .pl:first-child span{ display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .intro .pl:first-child img{ width:100%; height:auto; }
+    .nv-pic{ width:100%; } .nv-pic img{ box-sizing:border-box; }
+    table{ display:block; max-width:100%; overflow-x:auto; }
+    td, th{ padding-right:10px; }
+    figure img{ max-width:100% !important; }
+    #viewer .bar{ flex-wrap:wrap; padding:8px; gap:6px; }
+    #viewer .bar button{ font-size:15px; padding:7px 12px; }
+  }
 </style>
 </head>
 <body>
