@@ -2745,7 +2745,7 @@ canvas{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:cri
     const sec=(r,c)=>{const dx=c-X,dr=r-Y,ad=Math.abs(dx);return ad<-dr?0:ad<dr?1:ad>Math.abs(dr)?(dx<0?2:3):-1;};
     const S4=[[],[],[],[]],T4=[[],[],[],[]];for(let r=0;r<H;r++)for(let c=0;c<VW;c++){const v=bit(r,c),z=sec(r,c);if(v>=0&&z>=0)S4[z].push(r*VW+c);
       if(z===0&&c!==X){const k=(v>=0?0:2)+(c<X?0:1);T4[k].push(r*VW+c);}}
-    add('верх',0,S4[0]);   // v0.303: «площадь считаем только у треугольников» — низ, лево, право (не треугольники) и параллелограммы — без площади['ромб ◁','ромб ▷','угол ◁','угол ▷'].forEach((nm,i)=>add(nm,1,T4[i]));
+    add('верх',0,S4[0]);['ромб ◁','ромб ▷','угол ◁','угол ▷'].forEach((nm,i)=>add(nm,1,T4[i]));   // v0.303: «площадь считаем только у треугольников» — низ, лево, право (не треугольники) и параллелограммы — без площади
     const poly=(nm,z,P,any)=>{let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;for(const[px,py]of P){x0=Math.min(x0,px);x1=Math.max(x1,px);y0=Math.min(y0,py);y1=Math.max(y1,py);}
       const cells=[];for(let r=Math.max(0,Math.floor(y0));r<=Math.min(H-1,Math.ceil(y1));r++)for(let c=Math.max(0,Math.floor(x0));c<=Math.min(VW-1,Math.ceil(x1));c++)if((any||bit(r,c)>=0)&&cellIn(P,c,r))cells.push(r*VW+c);add(nm,z,cells);};
     if(st.saw!==false)for(const[e,sg,t,nm]of[[a.eL-.5,-1,a.tL,'пила ◁'],[a.eR+.5,1,a.tR,'пила ▷']]){if(!(t>=.5))continue;let cx=e,cy=Y;
