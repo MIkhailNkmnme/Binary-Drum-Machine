@@ -139,7 +139,11 @@
       const P = $('bPlay'), plSync = () => { const on = P.getAttribute('aria-pressed') === 'true'; pl.textContent = on ? '❚❚' : '▶'; pl.title = on ? 'Пауза' : 'Анимация: пуск'; };
       pl.onclick = () => { P.click(); plSync(); rail.refresh(); }; new MutationObserver(plSync).observe(P, { attributes: true, attributeFilter: ['aria-pressed'] }); plSync(); mid.append(pl);
       // подпись «кадр N» — в 6 px от линии (слева, нет места — справа)
-      const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, lp = x - 6 - lw, v = (lp >= 0 ? lp : Math.min(W - lw, x + 6)) + 'px'; if (vl.style.left !== v) vl.style.left = v; };
+      // v0.348: «не видно номера кадра» — подпись обходит середину (▶ и «✖»): слева от линии, нет места или налезает — справа, иначе — сразу за краем ▶ / ✖ со стороны линии
+      const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, zL = W / 2 - 21, zR = W / 2 + 47;
+        const ok = p => p >= 0 && p + lw <= W && (p + lw <= zL || p >= zR); let p = x - 6 - lw;
+        if (!ok(p)) p = x + 6; if (!ok(p)) p = x < W / 2 ? zL - 4 - lw : zR + 4; if (!ok(p)) p = x < W / 2 ? zR + 4 : zL - 4 - lw;
+        const v = Math.round(Math.max(0, Math.min(W - lw, p))) + 'px'; if (vl.style.left !== v) vl.style.left = v; };
       new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', side); side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
