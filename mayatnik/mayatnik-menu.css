@@ -610,3 +610,7 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 #zTopLine .ztl-pin.off{opacity:.45;filter:grayscale(1);border-style:dashed}   /* v0.333: откреплено */
 #zTopLine .ztl-row{position:relative;margin-left:6px;padding:0 4px;border-radius:3px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);pointer-events:none}
 body.may-zen #zTopLine{display:none}
+
+/* v0.337: «Анимация» в нижней полосе — ×N | время кадра, слева */
+#mayBbAnim{position:absolute;left:6px;top:50%;transform:translateY(-50%);--c:#73e4a5;cursor:default}
+#mayBbAnim .may-hp-h{position:relative;z-index:1;white-space:nowrap}

@@ -164,6 +164,20 @@
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
     $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
+  // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
+  // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)
+  { const sp = $('speed'), ft = $('frameT'), T = [0, 1, 2, 4, 10, 20], TN = ['0 с', '1/20 с', '1/10 с', '1/5 с', '1/2 с', '1 с'];
+    const b = document.createElement('div'); b.id = 'mayBbAnim'; b.className = 'gz-hx may-hp';
+    b.innerHTML = '<span class="may-hp-h" data-k="sp"></span><i class="may-hp-sep"></i><span class="may-hp-h" data-k="ft"></span>';
+    const [hs, hf] = b.querySelectorAll('.may-hp-h');
+    hs.title = 'Скорость анимации: вершин за кадр · щелчок — +1 (после ×10 — ×1), правый — −1'; hf.title = 'Сколько длится кадр анимации · щелчок — следующее (0 · 1/20 · 1/10 · 1/5 · 1/2 · 1 с), правый — предыдущее';
+    const sync = () => { hs.textContent = '×' + (+sp.value || 1); const v = +ft.value || 0, i = T.indexOf(v); hf.textContent = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + ' с'; };
+    const spSet = d => { const v = +sp.value || 1; sp.value = String(d > 0 ? (v >= 10 ? 1 : v + 1) : (v <= 1 ? 10 : Math.min(10, v - 1))); fire(sp); sync(); rail.refresh(); };
+    const ftSet = d => { const v = +ft.value || 0; let i; if (d > 0) { i = T.findIndex(t => t > v); if (i < 0) i = 0; } else { i = T.length - 1; while (i >= 0 && T[i] >= v) i--; if (i < 0) i = T.length - 1; }
+      ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
+    hs.onclick = () => spSet(1); hs.oncontextmenu = e => { e.preventDefault(); spSet(-1); };
+    hf.onclick = () => ftSet(1); hf.oncontextmenu = e => { e.preventDefault(); ftSet(-1); };
+    sp.addEventListener('input', sync); ft.addEventListener('input', sync); $('mayBottomBar').append(b); sync(); }
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));
