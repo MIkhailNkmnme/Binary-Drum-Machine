@@ -671,3 +671,4 @@ header #paintTools.pt-dd .pt-btn .pt-ud-ax::after{content:"";position:absolute;l
 header #paintTools.pt-dd .pt-btn .pt-ud-ax:hover,header #paintTools.pt-dd .pt-btn .pt-ud-ax:focus-visible{background:color-mix(in srgb,var(--c) 70%,#121a30)}
 header #paintTools.pt-dd .pt-btn .pt-ud-ax.on{background:var(--c);filter:drop-shadow(0 0 4px var(--c))}
 header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;border-color:#0d1119}
+.may-hp-pop>.may-hp-vm{width:100%!important}   /* v0.372: «N/3 | 4N» во всю ширину списка */

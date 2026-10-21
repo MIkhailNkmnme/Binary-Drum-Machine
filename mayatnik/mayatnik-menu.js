@@ -175,7 +175,19 @@
     addEventListener('keydown', ev => { if (ev.key === 'Escape' && !pop.hidden) { pop.hidden = true; sync(); } });
     $('rows').addEventListener('change', sync); for (const e of pres) e.addEventListener('click', () => setTimeout(sync));
     // v0.355: «эти сюда сверху» — «Строк», «Вершин», «Показ» из рейки «Поле» — наверху списка «Хорр»
-    const top = ['Строк', 'Вершин', 'Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
+    // v0.372: «ползунок с вершинами удали» — вершин ставит выбор «N/3 | 4N» (или N)
+    bbCells['Вершин']?.remove();
+    const top = ['Строк', 'Показ'].map(n => bbCells[n]).filter(Boolean); if (top.length) { for (const c of top) c.classList.add('may-hp-sl'); pop.prepend(...top); }
+    // v0.372: «убери До N/3 — там дубль; 2 кнопки в одну N/3 и 4N, какая выбрана — по той и строй»: «До N/3», «N/3», «4N» из сот убраны,
+    // вместо них — одна кнопка из двух половин; выбранная горит, щелчок по горящей — снова N вершин; выбор — для кнопок размеров и «Построить»
+    const nm = c => c.querySelector('.gz-nm')?.textContent.trim(); for (const c of (bbCells.btns || [])) if (['N/3', '4N', 'До N/3'].includes(nm(c))) c.remove();
+    bbCells.btns = (bbCells.btns || []).filter(c => c.isConnected);
+    { const vm = document.createElement('div'); vm.className = 'gz-hx may-hp may-hp-vm';
+      vm.innerHTML = '<span class="may-hp-h" data-v="n3">N/3</span><i class="may-hp-sep"></i><span class="may-hp-h" data-v="4n">4N</span>';
+      const V = () => window.mayVMode, vsync = () => { const m = V()?.get() || ''; for (const h of vm.querySelectorAll('.may-hp-h')) { h.classList.toggle('on', h.dataset.v === m);
+        h.title = (h.dataset.v === 'n3' ? 'Вершин = N/3 с запасом — до гибели последней дыры' : 'Вершин = 4N — дальше новые конусы не достают до треугольника якоря') + ' · кнопки размеров строят так · щелчок — выбрать и построить, по горящей — снова N вершин'; } };
+      for (const h of vm.querySelectorAll('.may-hp-h')) h.onclick = ev => { ev.stopPropagation(); V()?.pick(h.dataset.v); vsync(); rail.refresh(); placeTools(); };
+      toolSync.push(vsync); vsync(); pop.prepend(vm); }
     { const bt = bbCells.btns || [], sot = bt[0]?.parentElement, rows = []; for (let k = 0; k < bt.length; k += 2) { const r = document.createElement('div'); r.className = 'may-hp-2'; r.append(...bt.slice(k, k + 2)); rows.push(r); }
       if (rows.length) pop.prepend(...rows); if (sot && !sot.querySelector('.gz-hx')) sot.style.height = '0'; }   // v0.358: по две в ряд, над ползунками
     wrapH.append(pop, b); $('mayBottomBar').append(wrapH); sync(); }
