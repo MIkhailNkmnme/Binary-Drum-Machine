@@ -611,7 +611,11 @@ header #paintTools.pt-dd .pt-view .pt-b.gz-hx .gz-nm{overflow:hidden;text-overfl
 #zTopLine .ztl-pin{position:relative;z-index:1;margin-left:6px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;font-size:12px;line-height:1;cursor:pointer}
 #zTopLine .ztl-pin:hover{background:#1d2b4d}
 #zTopLine .ztl-pin.off{opacity:.45;filter:grayscale(1);border-style:dashed}   /* v0.333: откреплено */
-#zTopLine .ztl-row{position:relative;margin-left:6px;padding:0 4px;border-radius:3px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);pointer-events:none}
+#zTopLine .ztl-row{position:absolute;top:50%;transform:translateY(-50%);padding:0 4px;border-radius:3px;background:#121a30cc;color:#9fc5ed;font:10px var(--mono);pointer-events:none;white-space:nowrap}   /* v0.351: у краёв битов строки */
+#zTopLine .ztl-row[hidden]{display:none}
+#zTopLine .ztl-mir{position:relative;z-index:1;margin-left:4px;width:22px;height:22px;padding:0;border:1px solid #7cbcff;border-radius:50%;background:#121a30;color:#7cbcff;font:700 12px/1 'Segoe UI',sans-serif;cursor:pointer}
+#zTopLine .ztl-mir:hover{background:#1d2b4d}
+#zTopLine .ztl-mir.on{background:#ff87cf;border-color:#ff87cf;color:#0d1119}
 body.may-zen #zTopLine{display:none}
 
 /* v0.337: «Анимация» в нижней полосе — ×N | время кадра, слева */
