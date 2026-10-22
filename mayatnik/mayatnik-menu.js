@@ -457,7 +457,7 @@
     // v0.224: «Наружу» — «Зеркало ↓» наоборот: нижний треугольник через диагонали в боковые клинья
     const op = document.createElement('button'); op.title = 'Наружу'; const bn = ptBtn('fixLowOut', 'swap', op, () => { const Lw = window.mayFixLow; Lw?.setOut(!Lw.out()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayFixLow?.out(); bn.classList.toggle('on', on); bn.title = 'Наружу: «Зеркало ↓» наоборот — нижний треугольник отражается через диагонали в боковые клинья · ' + (on ? 'вкл' : 'выкл'); });
-    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSw, bSf, bSc, bAr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bRc, bw, br, bk, bl, bn, bc, bo);
+    gView.querySelector('[data-n="fixMirror"]').after(bTc, bSf, bSc, bAr, bRl, bVf, bHt, bd, bf, bv, ba, bLk, bRc, bw, br, bk, bl, bn, bc, bo);
     window.mayFixAxisNames = AX;
     window.mayMirLists = { col: COL, op: OP }; }
   // v0.194: показ пикселей по цвету — пять кнопок: горит — пиксели этого цвета видны, погашена — скрыты (цветом пустоты)
