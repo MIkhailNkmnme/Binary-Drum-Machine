@@ -612,14 +612,11 @@
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
-    // v0.184: «исправь наложение» — открытые (закреплённые) списки не наезжают друг на друга: слева направо, следующий — не левее правого края предыдущего
-    const noOverlap = () => { if (narrow.matches) return; let edge = -Infinity;
-      for (const g of groupsAll().filter(x => x.classList.contains('pt-open')).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)) {
-        const r = g.querySelector('.pt-r'), b = r.getBoundingClientRect(); if (!b.width) continue;
-        if (b.left < edge + 4) { r.style.left = ((parseFloat(r.style.left) || 0) + edge + 4 - b.left) + 'px'; edge = edge + 4 + b.width; } else edge = b.right; } };
-    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(noOverlap)); };
+    // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
+    const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
+    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(alignOpen)); };
     const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
-    addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(noOverlap); });
+    addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(alignOpen); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
     const show = g => { if (open === g) return; shut(); open = g; if (!g.classList.contains('pt-open')) setOpen(g, true); };
     // v0.229: «отм. и повт. сделай одной кнопкой пополам, и это кнопка в меню» — «Правка» не раскрывается списком: само название — кнопка пополам
@@ -753,7 +750,7 @@
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
         tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); placeBot(); };
-      const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); };
+      const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); };
       addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
       const ghost = document.createElement('div'), bg0 = document.createElement('div'), bg1 = document.createElement('div'); ghost.className = 'pt-ghost'; bg0.className = bg1.className = 'pt-gridbg';
       const showGrid = (B, w, c) => { const { W } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
@@ -826,12 +823,12 @@
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
         const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(noOverlap); }); }
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
       // v0.227: «это тоже в ромб сворачивать» — «Что это такое?» правым щелчком — ромб «ℹ», ещё раз — обратно (та же память, ключ — надпись кнопки)
       { const a = $('mayAbout'), k = 'Что это такое?', ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = 'ℹ︎'; a.append(ic); a.setAttribute('aria-label', k);
         const sync = () => { const on = minis.has(k); a.classList.toggle('pt-mini', on); a.title = on ? k + ' · правый щелчок — развернуть' : 'Что такое маятник · правый щелчок — свернуть в ромб'; };
         sync(); a.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.relayout(); requestAnimationFrame(noOverlap); }); } }
+          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.relayout(); requestAnimationFrame(alignOpen); }); } }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
