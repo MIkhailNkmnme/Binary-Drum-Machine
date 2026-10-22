@@ -883,3 +883,8 @@ body.may-zen #mayFooterBar{display:none!important}
 #paintTools #lg input[type=color]{position:relative;z-index:1;flex:0 0 14px;outline:none!important;box-shadow:none!important}
 
 #paintTools #lg>.palette-half:is(:hover,:focus-visible,:active,.gz-on,[aria-pressed=true]){background:transparent!important}
+
+/* v0.446: keep the outer list edge; the inner chevron is shorter and inset. */
+.mayatnik-menu-ready .gz-hx.gz-lst{padding-right:24px!important}
+.mayatnik-menu-ready .gz-hx.gz-lst>.may-list-inner-arrow{position:absolute!important;right:8px;top:4px;width:8px;height:16px;z-index:3;pointer-events:none;color:color-mix(in srgb,var(--c,#7cbcff) 55%,#fff);filter:none!important}
+.mayatnik-menu-ready .may-list-inner-arrow>path{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter}

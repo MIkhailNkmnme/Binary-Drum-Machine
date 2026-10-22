@@ -902,6 +902,12 @@
   };
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
     Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});
+    // v0.446: an inset, shorter chevron complements the existing right edge.
+    if(!b.querySelector(':scope > .may-list-inner-arrow')){
+      const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.classList.add('may-list-inner-arrow');
+      arrow.setAttribute('viewBox','0 0 8 16');arrow.setAttribute('aria-hidden','true');arrow.setAttribute('focusable','false');
+      const line=document.createElementNS(arrow.namespaceURI,'path');line.setAttribute('d','M1 1L7 8L1 15');arrow.append(line);b.append(arrow);
+    }
   }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
