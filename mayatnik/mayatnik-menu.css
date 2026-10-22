@@ -495,11 +495,11 @@ header #paintTools.pt-dd .pt-l{min-width:126px;justify-content:space-between}
 header #paintTools .pt-b.gz-hx:not(.on):not(:hover){background:color-mix(in srgb,var(--c) 20%,#000)}
 header #paintTools .pt-b.gz-hx:not(.on)::before{inset:1px}
 header #paintTools .pt-b.gz-hx.on::before{inset:1.5px}
-/* v0.190 → v0.191: стрелка обводкой справа у кнопок-списков и столбец вариантов — общие из grozd (.gz-lst, .gz-ladder); здесь — ширина по самому длинному варианту */
-.gz-ladder .gz-hx{width:auto;min-width:var(--gz-w);padding-right:16px}
+/* v0.435: размер пунктов списка совпадает с кнопкой, которая его раскрывает; длинная подпись не растягивает столбец. */
+.gz-ladder .gz-hx{width:100%;min-width:0;max-width:100%;flex:none;padding-right:16px}
 /* v0.233: «те что справа списком вышли — отдели от наложения под ними, фоном, зубчатым в стык, как в хабе»: подложка столбца по контуру самих кнопок —
    тёмная кайма 3 px вокруг каждого шестиугольника (просветы между ними закрыты), пункты темнее кнопок под ними (как hub-grozd.css) */
-.gz-ladder{--gz-bg:#0a0f1d;filter:drop-shadow(3px 0 0 #05070d) drop-shadow(-3px 0 0 #05070d) drop-shadow(0 2px 0 #05070d) drop-shadow(0 -2px 0 #05070d) drop-shadow(0 3px 8px #000c)}
+.gz-ladder{--gz-bg:#0a0f1d;filter:none}
 .gz-ladder .gz-hx:not(.gz-on):not(:hover){background:color-mix(in srgb,var(--c) 13%,#000)}
 /* v0.193: перетаскивание групп полосы */
 #paintTools .pt-g.pt-drag{opacity:.6}#paintTools.pt-dragging .pt-l{cursor:grabbing}

@@ -64,7 +64,14 @@
   const ladLater = () => { clearTimeout(ladT); ladT = setTimeout(closeLadder, 250); };
   function ladderSync() { if (!ladder) return; const b = ladder.owner, o = b.gzList; if (!b.isConnected || !b.getClientRects().length) { closeLadder(); return; }
     const opts = o.options(); [...ladder.children].forEach((x, i) => x.classList.toggle('gz-on', !!opts[i]?.on));
-    const r = b.getBoundingClientRect(), c = o.col?.()?.getBoundingClientRect() || r, w = ladder.offsetWidth, h = ladder.offsetHeight;
+    const r = b.getBoundingClientRect();
+    if (o.placement === 'below') {
+      const style = getComputedStyle(b);
+      ladder.style.width = r.width + 'px'; ladder.style.setProperty('--gz-w', r.width + 'px');
+      ladder.style.setProperty('--gz-h', r.height + 'px'); ladder.style.font = style.font;
+      for (const key of ['--gz-n', '--gz-bg']) { const value = style.getPropertyValue(key).trim(); if (value) ladder.style.setProperty(key, value); }
+    }
+    const c = o.col?.()?.getBoundingClientRect() || r, w = ladder.offsetWidth, h = ladder.offsetHeight;
     if (o.placement === 'below') {
       const top = r.bottom + 4;
       ladder.style.left = Math.round(Math.max(4, Math.min(r.left, innerWidth - w - 4))) + 'px'; ladder.style.top = Math.round(top) + 'px';
