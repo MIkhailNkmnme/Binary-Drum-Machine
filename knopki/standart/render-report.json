@@ -1,0 +1,42 @@
+{
+  "version": "1.001",
+  "figures": [
+    "states",
+    "sizing",
+    "split",
+    "lists",
+    "overlap",
+    "slider",
+    "captions"
+  ],
+  "before": {
+    "w": 120,
+    "h": 24,
+    "stroke": "1px",
+    "text": "rgb(223, 230, 245)",
+    "shadow": "none",
+    "gradient": "radial-gradient(rgb(8, 13, 22) 0%, rgb(13, 23, 39) 38%, rgb(38, 59, 88) 100%)"
+  },
+  "hover": {
+    "w": 120,
+    "h": 24,
+    "stroke": "1px",
+    "text": "rgb(223, 230, 245)",
+    "shadow": "none",
+    "gradient": "radial-gradient(rgb(8, 13, 22) 0%, rgb(13, 23, 39) 38%, rgb(38, 59, 88) 100%)"
+  },
+  "down": {
+    "w": 120,
+    "h": 24,
+    "stroke": "3px",
+    "text": "rgb(223, 230, 245)",
+    "shadow": "none",
+    "gradient": "radial-gradient(rgb(8, 13, 22) 0%, rgb(13, 23, 39) 38%, rgb(38, 59, 88) 100%)"
+  },
+  "mobile": {
+    "page": 412,
+    "scroll": 952,
+    "figures": 7
+  },
+  "errors": []
+}
