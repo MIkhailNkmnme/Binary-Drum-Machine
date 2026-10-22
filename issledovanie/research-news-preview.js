@@ -1,4 +1,4 @@
-/* Исследования v0.067: медиа своего раздела и линия от активной строки к предпросмотру. */
+/* Исследования v0.068: горизонтальная линия от новости продолжается в рамку медиа с отступом 5 px. */
 (() => {
   'use strict';
   const news = document.querySelector('.novoe');
@@ -24,13 +24,16 @@
     const rects = [...text.getClientRects()].filter(rect => rect.width && rect.height);
     const last = rects[rects.length - 1] || activeLink.getBoundingClientRect();
     const sx = last.right - bounds.left + 6, sy = (last.top + last.bottom) / 2 - bounds.top;
+    const gap = 5;
+    const left = target.left - bounds.left - gap, right = target.right - bounds.left + gap;
+    const top = target.top - bounds.top - gap, bottom = target.bottom - bounds.top + gap;
     const list = news.querySelector('ol').getBoundingClientRect();
     if (target.top >= list.bottom - 1) {
-      const gutter = Math.max(list.right, target.right) - bounds.left + 6;
-      const tx = (target.left + target.right) / 2 - bounds.left, ty = target.top - bounds.top;
-      line.setAttribute('d', `M ${sx} ${sy} H ${gutter} V ${ty - 6} H ${tx} V ${ty}`);
+      const gutter = Math.max(list.right - bounds.left, right) + 6;
+      line.setAttribute('d', `M ${sx} ${sy} H ${gutter} V ${top} H ${left} V ${bottom} H ${right} V ${top}`);
     } else {
-      line.setAttribute('d', `M ${sx} ${sy} L ${target.left - bounds.left} ${(target.top + target.bottom) / 2 - bounds.top}`);
+      const join = Math.max(top, Math.min(bottom, sy));
+      line.setAttribute('d', `M ${sx} ${sy} H ${left} V ${join} V ${top} H ${right} V ${bottom} H ${left} V ${join}`);
     }
     connector.setAttribute('viewBox', `0 0 ${bounds.width} ${bounds.height}`);
     connector.removeAttribute('hidden');
