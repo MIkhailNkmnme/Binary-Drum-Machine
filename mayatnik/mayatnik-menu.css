@@ -755,3 +755,20 @@ header #paintTools.pt-dd .pt-view .pt-sec{background:transparent!important;borde
 /* v0.417: знаки масштаба в ромбах над Дзеном. */
 #mayRhombs .may-rh-zoom{font-size:24px;font-weight:600}
 
+/* v0.434: во всех группах одна кнопка в строке, без второго столбца сот. */
+.mayatnik-menu-ready .gz-rail{width:var(--gz-w)}
+.mayatnik-menu-ready .gz-group>.gz-soty{width:var(--gz-w)!important;height:auto!important}
+.mayatnik-menu-ready .gz-group.gz-open>.gz-soty{display:flex!important;flex-direction:column;gap:4px}
+.mayatnik-menu-ready .gz-group>.gz-soty>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:100%!important;margin:0!important;flex:none}
+.mayatnik-menu-ready .gz-group>.gz-wide{width:var(--gz-w)!important;margin-left:0!important;flex-direction:column!important;flex-wrap:nowrap!important}
+.mayatnik-menu-ready .gz-group>.gz-wide>.gz-control{width:100%!important;margin:0!important}
+header #paintTools.pt-grid>.gz-group>.gz-soty,header #paintTools.pt-grid>.gz-group>.gz-wide{margin-left:0!important}
+header #paintTools.pt-grid>.gz-group.gz-open::after{left:-8px;width:calc(var(--gz-w) + 16px)}
+header #paintTools.pt-dd .pt-g.pt-open>.pt-r{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;grid-auto-flow:row!important;align-items:stretch;column-gap:0!important}
+header #paintTools.pt-dd .pt-r.pt-cols{flex-direction:column!important;column-gap:0!important}
+header #paintTools.pt-dd .pt-r>.pt-col{flex:none;width:100%!important;max-width:none!important}
+header #paintTools.pt-dd .pt-r>.pt-col>.pt-sec{width:100%}
+/* Чб / Цвет — стандартная кнопка из двух половин. */
+#paintTools .pt-sec>#lg{display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap!important;width:100%;height:24px!important;min-height:24px;gap:0!important;padding:0!important;border:0;border-radius:0;background:none!important;--gz-h:24px}
+#paintTools #lg .gz-half{display:flex;align-items:center;justify-content:center}
+
