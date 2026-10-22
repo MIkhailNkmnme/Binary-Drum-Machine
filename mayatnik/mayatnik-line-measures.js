@@ -83,6 +83,23 @@
     });
     draw(proxy);return lines;
   }
+  // Крупные размеры первыми; подписи занимают не более малой доли окна.
+  function layoutLabels(candidates,width,height) {
+    const limit=Math.max(4,Math.min(32,Math.floor(width*height/24000))),gap=6,used=[];
+    const sorted=candidates.filter(c=>c.span+EPS>=Math.max(80,c.w+16)&&c.w<=width-4&&c.h<=height-4)
+      .sort((a,b)=>(b.span*(b.whole?1.4:1))-(a.span*(a.whole?1.4:1))||a.id.localeCompare(b.id));
+    for(const c of sorted){
+      let chosen=null;
+      for(const offset of [7,-c.h-7,24,-c.h-24,42,-c.h-42]){
+        const left=Math.max(2,Math.min(width-c.w-2,c.vertical?c.x+offset:c.x-c.w/2));
+        const top=Math.max(2,Math.min(height-c.h-2,c.vertical?c.y-c.h/2:c.y+offset));
+        const rect={left,top,right:left+c.w,bottom:top+c.h};
+        if(used.every(o=>rect.right+gap<=o.left||o.right+gap<=rect.left||rect.bottom+gap<=o.top||o.bottom+gap<=rect.top)){chosen=rect;break;}
+      }
+      if(!chosen)continue;used.push({...c,...chosen});if(used.length>=limit)break;
+    }
+    return used;
+  }
   function mount(host) {
     const root=document.createElement('div');root.id='mayLineMeasures';root.setAttribute('aria-label','Длины линий в битах');
     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),path=document.createElementNS(ns,'path');
@@ -91,6 +108,9 @@
     root.addEventListener('wheel',e=>{if(!host)return;const forwarded=new WheelEvent('wheel',{deltaX:e.deltaX,deltaY:e.deltaY,deltaZ:e.deltaZ,deltaMode:e.deltaMode,clientX:e.clientX,clientY:e.clientY,ctrlKey:e.ctrlKey,altKey:e.altKey,shiftKey:e.shiftKey,metaKey:e.metaKey,bubbles:true,cancelable:true});if(!host.dispatchEvent(forwarded))e.preventDefault();},{passive:false});
     const labels=new Map();let active=null,view=null,items=new Map(),cacheKey='',cache=[];
     const format=n=>Number(n.toFixed(2)).toLocaleString('ru-RU');
+    const probe=document.createElement('span');probe.className='may-line-value';probe.textContent='0';root.append(probe);
+    const style=getComputedStyle(probe),metrics=document.createElement('canvas').getContext('2d');metrics.font=style.fontSize+' '+style.fontFamily;
+    const padX=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight),labelH=parseFloat(style.lineHeight)+parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);probe.remove();
     const highlight=id=>{
       active=id;const item=items.get(id);for(const [key,node]of labels)node.classList.toggle('may-measure-active',key===id);
       if(!item||!view){path.removeAttribute('d');delete path.dataset.measure;return;}
@@ -109,38 +129,31 @@
       for(const line of foreground){const color=/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color,k=color+'|'+!!line.dash;
         if(!groups.has(k))groups.set(k,{color,dash:line.dash,paths:[]});groups.get(k).paths.push('M'+p(line.a).join(',')+'L'+p(line.b).join(','));}
       guides.replaceChildren(...[...groups.values()].map(group=>{const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',group.paths.join(''));if(group.dash)q.setAttribute('stroke-dasharray','4 3');return q;}));
-      items=new Map();const positions=[],box={left:-view.x/view.scale,top:-view.y/view.scale,right:(view.width-view.x)/view.scale,bottom:(view.height-view.y)/view.scale};
+      items=new Map();const candidates=[],box={left:-view.x/view.scale,top:-view.y/view.scale,right:(view.width-view.x)/view.scale,bottom:(view.height-view.y)/view.scale};
       for(const line of cache){
         const pieces=line.segments.length>1?[{...line,whole:true},...line.segments.map(s=>({...s,whole:false}))]:[{...line,whole:true}];
         pieces.forEach((piece,index)=>{
-          const visible=clip(piece.a,piece.b,box);if(!visible||length(...visible)*view.scale<24)return;
+          const visible=clip(piece.a,piece.b,box);if(!visible)return;
           const id=line.id+'/'+index,mid=at(...visible,piece.whole&&pieces.length>1 ? .18 : .5),prefix=piece.whole&&pieces.length>1?'Σ ':'';
+          const text=prefix+format(piece.length),span=length(...visible)*view.scale;
+          candidates.push({id,piece,line,text,whole:piece.whole,span,w:Math.ceil(metrics.measureText(text).width+padX),h:labelH,x:view.x+mid[0]*view.scale,y:view.y+mid[1]*view.scale,vertical:Math.abs(piece.b[1]-piece.a[1])>Math.abs(piece.b[0]-piece.a[0])});
+        });
+      }
+      const selected=layoutLabels(candidates,view.width,view.height);
+      for(const {id,piece,line,text,left,top}of selected){
           items.set(id,piece);let node=labels.get(id);
           if(!node){node=document.createElement('span');node.className='may-line-value';node.tabIndex=0;node.setAttribute('role','note');
             node.addEventListener('pointerenter',()=>highlight(id));node.addEventListener('pointerleave',()=>highlight(null));node.addEventListener('focus',()=>highlight(id));node.addEventListener('blur',()=>highlight(null));
             node.addEventListener('pointerdown',e=>e.stopPropagation());node.addEventListener('keydown',e=>{if(e.key==='Escape'){node.blur();highlight(null);}});root.append(node);labels.set(id,node);}
-          const text=prefix+format(piece.length);if(node.textContent!==text)node.textContent=text;
+          if(node.textContent!==text)node.textContent=text;
           node.dataset.length=String(piece.length);node.dataset.kind=piece.whole?'line':'segment';node.dataset.line=line.id;
           node.style.setProperty('--measure-color',/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color);
           node.title=(piece.whole?'Вся линия':'Участок между пересечениями')+' — '+format(piece.length)+' бит. Длина в шагах сетки, по диагонали — шаг по клетке.';
-          node.setAttribute('aria-label',node.title);positions.push({node,x:view.x+mid[0]*view.scale,y:view.y+mid[1]*view.scale,vertical:Math.abs(piece.b[1]-piece.a[1])>Math.abs(piece.b[0]-piece.a[0])});
-        });
+          node.setAttribute('aria-label',node.title);node.style.left=left+'px';node.style.top=top+'px';
       }
       for(const[id,node]of labels)if(!items.has(id)){node.remove();labels.delete(id);}
-      const used=[];
-      for(const {node,x,y,vertical}of positions){
-        const w=node.offsetWidth,h=node.offsetHeight;let chosen=null,best=Infinity;
-        for(const offset of [7,-h-7,24,-h-24,42,-h-42,60,-h-60]){
-          const left=Math.max(2,Math.min(view.width-w-2,vertical?x+offset:x-w/2));
-          const top=Math.max(2,Math.min(view.height-h-2,vertical?y-h/2:y+offset));
-          const rect={left,top,right:left+w,bottom:top+h};let overlap=0;
-          for(const other of used)overlap+=Math.max(0,Math.min(rect.right,other.right)-Math.max(rect.left,other.left))*Math.max(0,Math.min(rect.bottom,other.bottom)-Math.max(rect.top,other.top));
-          if(overlap<best){best=overlap;chosen=rect;}if(!overlap)break;
-        }
-        used.push(chosen);node.style.left=chosen.left+'px';node.style.top=chosen.top+'px';
-      }
       highlight(items.has(active)?active:null);
     }};
   }
-  return {clip,merge,split,capture,mount,length};
+  return {clip,merge,split,capture,mount,length,layoutLabels};
 });

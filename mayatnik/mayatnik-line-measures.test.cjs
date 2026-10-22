@@ -3,6 +3,24 @@ const {test}=require('node:test');
 const M=require('./mayatnik-line-measures.js');
 const line=(a,b)=>({a,b});
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
+const label=(id,x,y,span=100)=>({id,x,y,span,w:42,h:16,whole:false,vertical:false});
+
+test('dense dimensions have a viewport budget and never touch each other',()=>{
+  const candidates=[];for(let y=0;y<1000;y+=10)for(let x=0;x<1200;x+=10)candidates.push(label(x+':'+y,x,y));
+  for(const [w,h,max]of[[1200,1000,32],[400,500,8]]){
+    const placed=M.layoutLabels(candidates,w,h);assert.ok(placed.length>0&&placed.length<=max);
+    for(const a of placed){assert.ok(a.left>=2&&a.top>=2&&a.right<=w-2&&a.bottom<=h-2);
+      for(const b of placed)if(a!==b)assert.ok(a.right+6<=b.left||b.right+6<=a.left||a.bottom+6<=b.top||b.bottom+6<=a.top);
+    }
+  }
+});
+test('short dimensions wait for zoom and larger visible lines keep priority',()=>{
+  const short=label('short',50,50,79),large={...label('large',50,50,400),whole:true},small=label('small',50,50,100);
+  assert.deepEqual(M.layoutLabels([short],300,200),[]);
+  assert.equal(M.layoutLabels([{...short,span:80}],300,200).length,1);
+  const placed=M.layoutLabels([small,large],300,200);assert.equal(placed[0].id,'large');
+  assert.deepEqual(M.layoutLabels([large,small],300,200),placed);
+});
 
 test('crossings divide both lines; their parts sum to the full bit length',()=>{
   const lines=M.split([line([0,0],[10,0]),line([4,-4],[4,4])]);
