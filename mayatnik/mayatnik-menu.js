@@ -398,8 +398,6 @@
     // v0.400: «Пила полная» — пила продолжается внутрь, голубым, до низа поля
     const sfp = document.createElement('button'); sfp.title = 'Пила полная'; const bSf = ptBtn('sawFull', 'zigzag', sfp, () => { const P = window.maySawFull; P?.set(!P.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.maySawFull?.get(); bSf.classList.toggle('on', on); bSf.title = 'Пила полная: та же пила, отражённая через главную диагональ — голубые зубцы внутри нижнего сектора, до низа поля · ' + (on ? 'вкл' : 'выкл'); });
-    const swp = document.createElement('button'); swp.title = 'Пила'; const bSw = ptBtn('saw', 'zigzag', swp, () => { const P = window.maySaw; P?.set(!P.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.maySaw?.get(); bSw.classList.toggle('on', on); bSw.title = 'Пила: красные зубцы в боковых секторах — от края поля вниз до главной диагонали и обратно (рисуется при «Точке встречи») · ' + (on ? 'вкл' : 'выкл'); });
     // v0.281: «Площади» — треугольник ▼, секторы, зубец пилы — в клетках, совпадения
     const arp = document.createElement('button'); arp.title = 'Площади'; const bAr = ptBtn('areas', 'square', arp, () => { const A = window.mayAreas; A?.set(!A.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayAreas?.get(); bAr.classList.toggle('on', on); bAr.title = 'Площади в клетках: ▼ — самая большая сплошная область в нижнем секторе, секторы верх / низ / лево / право, зубец пилы; совпавшие — одним цветом и строкой «… = …» внизу слева · ' + (on ? 'вкл' : 'выкл'); });
@@ -527,7 +525,7 @@
       [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat', 'zTop', 'vx']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
-      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'saw', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
+      [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
        ['Зеркало ↓', '#ff87cf', ['fixLow', 'fixLowOut']],
        ['Все зеркала: цвет и наложение', '#ff9b50', ['mirCol', 'mirOp']],
        ['Пиксели по цвету: видны / скрыты', '#e8edf5', ['px_b', 'px_r', 'px_y', 'px_k', 'px_w']]] ];
