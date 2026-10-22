@@ -701,7 +701,7 @@
       queueMicrotask(() => { window.mayBotPlace = placeBot; });   // v0.406: зовёт сдвиг связки нижней полосы (playPlace)
       const saveBotX = () => { try { localStorage.setItem('mayatnik-botx', JSON.stringify(botX)); } catch (_) {} };
       const placeBot = () => { const bar = $('mayBottomBar'), R = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
-        const list = []; for (const el of items()) { if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
+        const list = []; for (const el of items()) { if (d?.on && d.el === el) continue; if (!isBot(el) || narrow.matches || !R) { if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; } continue; } list.push(el); }
         if (!R || !list.length) return;
         const busyX = [...bar.children].filter(e => e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e => e.getBoundingClientRect()).filter(r => r.width).map(r => [r.left - 6, r.right + 6]);
         let def = R.left + 8; const want = el => { const v = +botX[idOf(el)]; return Number.isFinite(v) ? v : def; };
@@ -770,8 +770,8 @@
       const ghostAt = p => { ghost.style.left = Math.round(p[0] * SX) + 'px'; ghost.style.top = p[1] * SY + 'px'; };
       // движение и отпускание слушаются на окне: элемент едет за мышью поверх всего
       addEventListener('pointermove', e => { if (!d || d.dead || e.pointerId !== d.id) return; const el = d.el;
-        if (!d.on) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; shut(); if (!gw) { d.fresh = true; snap(); } if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; }
-          const r = el.getBoundingClientRect(); Object.assign(d, { on: true, ox: d.x - r.left, oy: d.y - r.top, w: el.offsetWidth, B: room(), occ: occOf(el) });
+        if (!d.on) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; shut(); if (!gw) { d.fresh = true; snap(); } const r = el.getBoundingClientRect(); if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; }
+          Object.assign(d, { on: true, ox: d.x - r.left, oy: d.y - r.top, w: el.offsetWidth, B: room(), occ: occOf(el) });
           tools.classList.add('pt-dragging'); el.classList.add('pt-drag'); showGrid(d.B, d.w, getComputedStyle(el).getPropertyValue('--c').trim()); }
         e.preventDefault(); const T = tools.getBoundingClientRect(), x = e.clientX - d.ox - T.left, y = e.clientY - d.oy - T.top;
         el.style.left = x + 'px'; el.style.top = y + 'px';
