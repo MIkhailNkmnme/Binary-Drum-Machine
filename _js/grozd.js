@@ -47,7 +47,7 @@
   function withTip(b, text) { b.addEventListener('pointerenter', () => tipShow(b, text)); b.addEventListener('pointerleave', tipHide); }
 
   let ladder = null, ladT = 0, swT = 0, swB = null;
-  function closeLadder() { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder) { ladder.remove(); ladder = null; } document.querySelectorAll('.gz-under').forEach(x => x.classList.remove('gz-under')); }
+  function closeLadder() { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder) { const old = ladder; ladder = null; old.owner.gzList.closed?.(old, old.owner); old.remove(); } document.querySelectorAll('.gz-under').forEach(x => x.classList.remove('gz-under')); }
   // «когда список накладывается на рейку — затемняй рейку всю по этому столбцу в этой группе»
   function dimUnder(owner) { const g = owner.closest('.gz-group'); if (!g || !ladder) return; const L = ladder.getBoundingClientRect();
     for (const x of g.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')) { if (x === owner) continue; const r = x.getBoundingClientRect(); if (r.right > L.left + 2 && r.left < L.right - 2) x.classList.add('gz-under'); } }
@@ -59,11 +59,18 @@
   // ушла и с кнопки, и со столбца (250 мс), по щелчку мимо и Esc. Мышь по дороге к столбцу наискось задевает соседние кнопки-списки:
   // пока столбец открыт, другая кнопка забирает его, только если мышь на ней задержалась (280 мс).
   // o: { options() → [{ name, icon, on, pick() }], color() — цвет, after() — после выбора, host() — куда класть столбец (body),
-  //      col() — столбец кнопки: лесенка правее его правого края (иначе — правее самой кнопки) }
+  //      col() — столбец кнопки: лесенка правее его правого края (иначе — правее самой кнопки),
+  //      placement: 'below' — список под кнопкой; placed(list, owner), closed(list, owner) — необязательные обработчики }
   const ladLater = () => { clearTimeout(ladT); ladT = setTimeout(closeLadder, 250); };
   function ladderSync() { if (!ladder) return; const b = ladder.owner, o = b.gzList; if (!b.isConnected || !b.getClientRects().length) { closeLadder(); return; }
     const opts = o.options(); [...ladder.children].forEach((x, i) => x.classList.toggle('gz-on', !!opts[i]?.on));
     const r = b.getBoundingClientRect(), c = o.col?.()?.getBoundingClientRect() || r, w = ladder.offsetWidth, h = ladder.offsetHeight;
+    if (o.placement === 'below') {
+      const top = r.bottom + 4;
+      ladder.style.left = Math.round(Math.max(4, Math.min(r.left, innerWidth - w - 4))) + 'px'; ladder.style.top = Math.round(top) + 'px';
+      ladder.style.maxHeight = Math.max(24, innerHeight - top - 4) + 'px'; ladder.style.overflowY = 'auto';
+      o.placed?.(ladder, b); return;
+    }
     let x = Math.max(r.right, c.right) + 4; if (x + w > innerWidth - 4) x = Math.min(r.left, c.left) - w - 4;
     ladder.style.left = Math.round(Math.max(4, x)) + 'px'; ladder.style.top = Math.round(Math.max(4, Math.min(innerHeight - h - 4, r.top))) + 'px'; }
   function openLadder(b) { clearTimeout(ladT); clearTimeout(swT); swB = null; if (ladder && ladder.owner === b) { ladderSync(); return; }
@@ -71,7 +78,7 @@
     for (const x of o.options()) { const ob = el('div', 'gz-hx'); ob.title = x.name; ob.append(icon(x.icon || '·'), el('span', 'gz-nm', x.name));
       ob.addEventListener('click', e => { e.stopPropagation(); x.pick(); o.after?.(); ladderSync(); }); ladder.append(ob); }
     ladder.addEventListener('pointerenter', () => { clearTimeout(ladT); clearTimeout(swT); swB = null; }); ladder.addEventListener('pointerleave', ladLater);
-    (o.host?.() || document.body).append(ladder); ladderSync(); dimUnder(b); }
+    (o.host?.() || document.body).append(ladder); ladderSync(); if (o.placement !== 'below') dimUnder(b); }
   function listHover(b, o) { b.gzList = o; b.classList.add('gz-lst');
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'touch') return; clearTimeout(ladT); clearTimeout(swT); swB = null;
       if (!ladder || ladder.owner === b) { openLadder(b); return; } swB = b; swT = setTimeout(() => { swB = null; openLadder(b); }, 280); });
@@ -397,3 +404,4 @@
 
   window.ZerkGrozd = { version: 12, rail, adopt, listHover };
 })();
+

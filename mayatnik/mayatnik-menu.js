@@ -865,6 +865,21 @@
           reg(ca[i], () => [{ name: 'Плавно', on: !Z.on(), pick: () => Z.set(0) }, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map(b => ({ name: 'Кратный ×' + b, on: Z.on() && Z.base() === b, pick: () => Z.set(b) }))]); } });
       a.forEach((it, i) => { const names = ring[it.src], e = $(it.src); if (!names || !ca[i] || !e) return; const now = () => e.textContent.split(': ')[1];
         reg(ca[i], () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
+  // v0.433: варианты под своей кнопкой; нижние пункты скрыты без изменения раскладки.
+  const clearListUnder = () => document.querySelectorAll('.may-list-hidden').forEach(el => el.classList.remove('may-list-hidden'));
+  const hideListUnder = (_list, owner) => {
+    clearListUnder();
+    const root = owner.closest('.pt-r, .gz-group, .may-hp-pop') || owner.closest('.gz-rail');
+    if (!root) return;
+    const bottom = owner.getBoundingClientRect().bottom;
+    for (const el of root.querySelectorAll('.pt-b, .gz-hx, .gz-control')) {
+      if (el === owner || el.contains(owner) || !el.getClientRects().length) continue;
+      if (el.getBoundingClientRect().top >= bottom - 1) el.classList.add('may-list-hidden');
+    }
+  };
+  for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
+    Object.assign(b.gzList, {placement:'below', placed:hideListUnder, closed:clearListUnder});
+  }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
@@ -953,3 +968,4 @@
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
 })();
+

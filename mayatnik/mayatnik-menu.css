@@ -1,4 +1,5 @@
 /* Page layout only; button geometry, colours and groups come from grozd.css. */
+.may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
 .mayatnik-menu-ready>header{grid-column:1/-1;padding:8px 14px;gap:10px}
@@ -753,3 +754,4 @@ header #paintTools.pt-dd .pt-view .pt-sec{background:transparent!important;borde
 
 /* v0.417: знаки масштаба в ромбах над Дзеном. */
 #mayRhombs .may-rh-zoom{font-size:24px;font-weight:600}
+
