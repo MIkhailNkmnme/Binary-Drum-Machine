@@ -609,7 +609,7 @@
     const pinned = g => !narrow.matches && pins.has(keyOf(g)) && !g.classList.contains('pt-btn'), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
-      r.style.minWidth = narrow.matches ? '' : g.querySelector('.pt-l').offsetWidth + 'px'; requestAnimationFrame(() => zig(r));
+      r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
       if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
@@ -947,7 +947,7 @@
       const cells = [...list.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')].filter(el => !el.hidden && getComputedStyle(el).display !== 'none');
       const rows = Math.min(7, Math.max(1, Math.floor((innerHeight - 16) / (h + gap)))), cols = Math.max(1, Math.ceil(cells.length / rows)), r = head.getBoundingClientRect();
       const height = Math.min(rows, cells.length) * (h + gap) - gap, top = Math.max(4, Math.min(r.top, innerHeight - height - 8));
-      const styles = {left:(r.right + gap) + 'px',top:top + 'px',width:(cols * (w + gap) - gap) + 'px',maxWidth:Math.max(w, innerWidth - r.right - 8) + 'px',gridTemplateRows:`repeat(${Math.min(rows, Math.max(1, cells.length))}, ${h}px)`,gridAutoColumns:w + 'px'};
+      const styles = {left:(r.right + gap - 2) + 'px',top:top + 'px',width:(cols * (w + gap) - gap) + 'px',maxWidth:Math.max(w, innerWidth - r.right - 12) + 'px',gridTemplateRows:`repeat(${Math.min(rows, Math.max(1, cells.length))}, ${h}px)`,gridAutoColumns:w + 'px'};
       for (const [key, value] of Object.entries(styles)) if (list.style[key] !== value) list.style[key] = value;
     }
   }
@@ -1054,6 +1054,38 @@
   };
   rail.el.addEventListener('pointerdown', ctrlPin, true); tools.addEventListener('pointerdown', ctrlPin, true);   // v0.232: и из групп рейки в шапке
   setInterval(() => { rail.refresh(); relayout(); placeTools(); placePins(); }, 200);
+  // v0.438: сокращаем только отображение; ключи раскладки, исходные элементы и данные не меняются.
+  for(const group of tools.querySelectorAll('.pt-g'))if(!group.dataset.k)group.dataset.k=group.querySelector('.pt-l')?.firstChild?.textContent.trim()||'';
+  const shortCaption = text => text.replace(/[а-яё]+/giu, word => {
+    const compact=word.replace(/(?<=[бвгджзйклмнпрстфхцчшщ])[аеёиоуыэюя](?=[бвгджзйклмнпрстфхцчшщ])/giu,'');
+    return /[бвгджзйклмнпрстфхцчшщ]$/iu.test(compact) ? compact+(word===word.toLocaleUpperCase('ru')?'Ъ':'ъ') : compact;
+  });
+  const captionSources=new WeakMap(),captionAria=new WeakSet();
+  const captionOwner=node=>{
+    const parent=node.parentElement;
+    if(!parent||parent.closest('.bar,script,style,textarea,select,input,.template-entry>.gz-nm,[data-user-label]'))return null;
+    return parent.closest('button,[role="button"],.gz-hx,.pt-l,.may-hp-h,.pt-t3,.pt-half');
+  };
+  const captionsIn=root=>{
+    const owners=new Set();
+    const visit=node=>{
+      const owner=captionOwner(node);if(!owner)return;
+      const old=captionSources.get(node),full=old&&node.data===old.short?old.full:node.data,short=shortCaption(full);
+      captionSources.set(node,{full,short});if(node.data!==short)node.data=short;owners.add(owner);
+    };
+    if(root.nodeType===Node.TEXT_NODE)visit(root);
+    else {const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);while(walker.nextNode())visit(walker.currentNode);}
+    for(const owner of owners){
+      if(owner.hasAttribute('aria-label')&&!captionAria.has(owner))continue;
+      const walker=document.createTreeWalker(owner,NodeFilter.SHOW_TEXT),parts=[];
+      while(walker.nextNode())parts.push(captionSources.get(walker.currentNode)?.full||walker.currentNode.data);
+      const full=parts.join('').trim();if(full){owner.setAttribute('aria-label',full);captionAria.add(owner);if(!owner.title)owner.title=full;}
+    }
+  };
+  captionsIn(document.body);
+  new MutationObserver(records=>{
+    for(const record of records)if(record.type==='characterData')captionsIn(record.target);else for(const node of record.addedNodes)captionsIn(node);
+  }).observe(document.body,{subtree:true,childList:true,characterData:true});
   new ResizeObserver(() => dispatchEvent(new Event('resize'))).observe($('wrap'));
   dispatchEvent(new Event('resize'));
 })();

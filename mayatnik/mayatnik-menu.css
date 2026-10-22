@@ -690,21 +690,21 @@ header #paintTools.pt-dd .pt-btn .pt-ud-ax.on::after{border-left-style:solid;bor
 .may-hp{padding:0!important}
 .may-hp .may-hp-h{position:relative;z-index:1;align-self:stretch;display:flex;align-items:center;justify-content:center;text-shadow:none}
 .may-hp .may-hp-h.on{color:#fff}
-.may-hp .may-hp-h.on::before,.may-hp .may-hp-h.on::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-.may-hp .may-hp-h.on::after{inset:1.5px;background:var(--gz-bg,#121a30)}
-.may-hp .may-hp-h.on:first-child::before{clip-path:polygon(var(--gz-n) 0,100% 0,100% 100%,var(--gz-n) 100%,0 50%)}
-.may-hp .may-hp-h.on:first-child::after{clip-path:polygon(calc(var(--gz-n) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n) - 1px) 100%,0 50%)}
-.may-hp .may-hp-h.on:last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%)}
-.may-hp .may-hp-h.on:last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n) + 1px) 0,100% 50%,calc(100% - var(--gz-n) + 1px) 100%,0 100%)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible)::before,.may-hp .may-hp-h:is(.on,:hover,:focus-visible)::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible)::after{inset:1.5px;background:var(--gz-bg,#121a30)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible):first-child::before{clip-path:polygon(var(--gz-n) 0,100% 0,100% 100%,var(--gz-n) 100%,0 50%)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible):first-child::after{clip-path:polygon(calc(var(--gz-n) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n) - 1px) 100%,0 50%)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible):last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,0 100%)}
+.may-hp .may-hp-h:is(.on,:hover,:focus-visible):last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n) + 1px) 0,100% 50%,calc(100% - var(--gz-n) + 1px) 100%,0 100%)}
 .may-hp .may-hp-sep{margin:5px 0}
 header #paintTools .pt-b.gz-hx.pt-tri3{padding:0!important}
 #paintTools .pt-tri3 .pt-t3{align-self:stretch;display:flex;align-items:center;justify-content:center;text-shadow:none}
-#paintTools .pt-tri3 .pt-t3.on::before,#paintTools .pt-tri3 .pt-t3.on::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c,#b48cff);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-#paintTools .pt-tri3 .pt-t3.on::after{inset:1.5px;background:var(--gz-bg,#121a30)}
-#paintTools .pt-tri3 .pt-t3.on:first-child::before{clip-path:polygon(var(--gz-n,9px) 0,100% 0,100% 100%,var(--gz-n,9px) 100%,0 50%)}
-#paintTools .pt-tri3 .pt-t3.on:first-child::after{clip-path:polygon(calc(var(--gz-n,9px) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n,9px) - 1px) 100%,0 50%)}
-#paintTools .pt-tri3 .pt-t3.on:last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px)) 0,100% 50%,calc(100% - var(--gz-n,9px)) 100%,0 100%)}
-#paintTools .pt-tri3 .pt-t3.on:last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px) + 1px) 0,100% 50%,calc(100% - var(--gz-n,9px) + 1px) 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible)::before,#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible)::after{content:"";position:absolute;z-index:-1;inset:0;background:var(--c,#b48cff);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible)::after{inset:1.5px;background:var(--gz-bg,#121a30)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible):first-child::before{clip-path:polygon(var(--gz-n,9px) 0,100% 0,100% 100%,var(--gz-n,9px) 100%,0 50%)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible):first-child::after{clip-path:polygon(calc(var(--gz-n,9px) - 1px) 0,100% 0,100% 100%,calc(var(--gz-n,9px) - 1px) 100%,0 50%)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible):last-child::before{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px)) 0,100% 50%,calc(100% - var(--gz-n,9px)) 100%,0 100%)}
+#paintTools .pt-tri3 .pt-t3:is(.on,:hover,:focus-visible):last-child::after{clip-path:polygon(0 0,calc(100% - var(--gz-n,9px) + 1px) 0,100% 50%,calc(100% - var(--gz-n,9px) + 1px) 100%,0 100%)}
 #paintTools .pt-tri3 .pt-t3+.pt-t3{border-left:0;box-shadow:inset 1px 0 0 color-mix(in srgb,var(--c,#b48cff) 45%,transparent)}
 /* v0.380: пары в списке «Хорр» — стандартная пара grozd; без свечения текста; во всю ширину списка */
 #mayBottomBar .gz-pair .gz-half.gz-on,#mayBottomBar .gz-pair .gz-half:hover{text-shadow:none}
@@ -802,6 +802,33 @@ header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-open>.
 .mayatnik-menu-ready .may-group-covered,.mayatnik-menu-ready .may-group-covered *{visibility:hidden!important;pointer-events:none!important}
 .mayatnik-menu-ready .may-list-dim{opacity:.25!important;transition:opacity .12s}
 header #paintTools.pt-dd .pt-r{background-attachment:local}
+/* v0.438: боковая толщина подложки — 2 px, половина межкнопочного отступа 4 px. */
+.may-group-backdrop{stroke:#0d1119;stroke-width:4px;stroke-linejoin:round}
+#mayatnikRail .gz-group>.may-rail-list{padding:0 2px;box-sizing:content-box}
+header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
+/* v0.438: наведение — тонкая цветная кайма, текст и внутренний фон постоянные. */
+.mayatnik-menu-ready :is(.gz-hx,.gz-hx *,.pt-l,.pt-l *){text-shadow:none!important}
+.mayatnik-menu-ready :is(.gz-hx,.pt-l){filter:none!important}
+.mayatnik-menu-ready .gz-hx:not(.gz-pair):is(:hover,:focus-visible),
+.mayatnik-menu-ready #paintTools .pt-l:is(:hover,:focus-visible){background:var(--c,#7cbcff)!important}
+.mayatnik-menu-ready .gz-hx:not(.gz-pair):is(:hover,:focus-visible)::before,
+.mayatnik-menu-ready #paintTools .pt-l:is(:hover,:focus-visible)::before{inset:1px!important;background:var(--gz-bg,#121a30)!important}
+.mayatnik-menu-ready .gz-hx:not(.gz-pair):is(.gz-on,.on)::before,
+.mayatnik-menu-ready .gz-group.gz-open>.gz-head::before,
+.mayatnik-menu-ready #paintTools :is(.pt-open,.pt-has-on)>.pt-l::before{inset:1.5px!important}
+.mayatnik-menu-ready .gz-half{color:var(--gz-k,var(--gz-txt,#dfe6f5))!important}
+.mayatnik-menu-ready .gz-half:is(:hover,:focus-visible){background:var(--c,#7cbcff)!important}
+.mayatnik-menu-ready .gz-half:is(:hover,:focus-visible)::before{inset:1px!important;background:var(--gz-bg,#121a30)!important}
+.mayatnik-menu-ready .gz-half.gz-on::before{inset:1.5px!important}
+.mayatnik-menu-ready .gz-val :is(.gz-a,.gz-vh,.gz-vt):hover{color:inherit}
+#paintTools .pt-half:not(.on):hover{color:#8e98ad}
+#paintTools .pt-t3:not(.on):hover{color:#8592ad}
+#paintTools .pt-ud:not(.dis):hover,.may-hp .may-hp-h:not(.on):hover{color:#c9d3e3}
+.may-hp .may-hp-h:not(.on):hover::after,#paintTools .pt-t3:not(.on):hover::after{inset:1px}
+#paintTools .pt-ud:not(.dis):hover{box-shadow:inset 0 0 0 1px var(--c)}
+#mayBottomBar .may-bb-play:hover{filter:none}
+#mayBottomBar .may-bb-rs:hover{background:#ff7373}
+#mayRhombs .may-rh:hover{color:#8fd3ff}
 #paintTools #lg input[type=color]::-webkit-color-swatch-wrapper{padding:0}
 #paintTools #lg input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
 #paintTools #lg input[type=color]::-moz-color-swatch{border:0;border-radius:50%}
