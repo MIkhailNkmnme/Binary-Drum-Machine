@@ -160,11 +160,12 @@
         const grp = [...bar.children].filter(e => e.matches('.may-bb-half, .gz-sl, #mayBbHorr')).map(e => e.getBoundingClientRect()), L0 = Math.min(...grp.map(r => r.left)) - cur, R0 = Math.max(...grp.map(r => r.right)) - cur;
         let dx = Number.isFinite(ax) ? ax - c0 : 0; dx = Math.max(BR.left + 4 - L0, Math.min(BR.right - 4 - R0, dx)); const v = Math.round(dx) + 'px'; if (bar.style.getPropertyValue('--axdx') !== v) { bar.style.setProperty('--axdx', v); window.mayBotPlace?.(); } };   // v0.406: связка сдвинулась — группы внизу обходят её заново
       window.mayPlayPlace = playPlace;
-      const vl = mid.querySelector('.gz-vl'), side = () => { if (!vl) return; const x = th.offsetLeft, W = mid.clientWidth, lw = vl.offsetWidth, c0 = pcx(), zL = c0 - 21, zR = c0 + 47;
-        const ok = p => p >= 0 && p + lw <= W && (p + lw <= zL || p >= zR); let p = x - 6 - lw;
-        if (!ok(p)) p = x + 6; if (!ok(p)) p = x < c0 ? zL - 4 - lw : zR + 4; if (!ok(p)) p = x < c0 ? zR + 4 : zL - 4 - lw;
-        const v = Math.round(Math.max(0, Math.min(W - lw, p))) + 'px'; if (vl.style.left !== v) vl.style.left = v; };
-      new MutationObserver(side).observe(mid, { attributes: true, attributeFilter: ['style'] }); addEventListener('resize', () => { playPlace(); side(); }); playPlace(); side(); } }
+      // v0.442: число сразу под линией бегунка; вне шестиугольника, чтобы его не обрезало.
+      const vl = mid.querySelector('.gz-vl');if(vl){vl.classList.add('may-frame-value');cell.after(vl);}
+      const side = () => {if(!vl)return;const bar=cell.parentElement,t=th.getBoundingClientRect(),b=bar.getBoundingClientRect();
+        const x=(t.left+t.width/2-b.left-bar.clientLeft)+'px',y=(t.bottom-b.top-bar.clientTop)+'px';if(vl.style.left!==x)vl.style.left=x;if(vl.style.top!==y)vl.style.top=y;};
+      const valueObserver=new MutationObserver(side);valueObserver.observe(mid,{attributes:true,attributeFilter:['style']});if(vl)valueObserver.observe(vl,{attributes:true,attributeFilter:['style']});
+      new ResizeObserver(side).observe(cell);addEventListener('resize',()=>{playPlace();side();});playPlace();side(); } }
   // v0.332: «это в нижнюю полоску также, выпадающим наверх списком, но объедини по 2 в кнопку»: «Хорр N» справа в полосе; щелчок — над ней
   // столбец кнопок по два размера (256 | 512, 1024 | 2024, 4096); щелчок по половине — построить этот размер (как кнопки «хорр» панели)
   { const pres = [...source.querySelectorAll('button.pre')], wrapH = rail.el.querySelector('.gz-group[data-id="horr"]');
@@ -739,6 +740,7 @@
       // v0.389: «по середине на ось, чтоб ромб встал»: центр ромба «Правки» — на оси якоря (window.mayAxisX, экранный x); нет оси — середина плея / шапки.
       // Зовёт и страница (прокрутка, масштаб) — window.mayUdPlace
       const udPlace = () => { if (!ud.getClientRects().length) return;ud.classList.add('pt-bot');const R=footerBar.getBoundingClientRect(),w=ud.offsetWidth,axEl=ud.querySelector('.pt-ud-ax');
+        const controlWidth=udL.getBoundingClientRect().width+'px';if(frameBar.style.getPropertyValue('--may-frame-width')!==controlWidth)frameBar.style.setProperty('--may-frame-width',controlWidth);
         const pl = document.querySelector('#mayBottomBar .may-bb-play'), pr = pl && pl.getClientRects().length ? pl.getBoundingClientRect() : null, axX = window.mayAxisX?.();
         const cx = Number.isFinite(axX) ? axX : pr ? pr.left + pr.width / 2 : R.left+R.width/2, U = ud.getBoundingClientRect(), A = axEl?.getBoundingClientRect(), off = A && A.width ? A.left + A.width / 2 - U.left : w / 2;
         const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
