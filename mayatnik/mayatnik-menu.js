@@ -535,6 +535,9 @@
         for (const n of ns) { const e = pick(n); if (e) s.append(e); } if (s.children.length) col.append(s); } return col; });
     const rest = [...gView.children]; if (rest.length) { const s = document.createElement('div'); s.className = 'pt-sec'; s.style.setProperty('--s', '#7cbcff'); s.append(...rest); cols[0].append(s); }   // новая кнопка без темы — в конец «Вида»
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
+  const gAreas = ptGroup('Площади');
+  gAreas.parentElement.style.setProperty('--c', '#b48cff');
+  for (const n of ['sawFull', 'sectors', 'areas']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
   // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
   // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
   { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
@@ -692,6 +695,7 @@
       // Живут в шапке (её стили), стоят position: fixed над полосой; рейки — ещё и в up. Тянуть — как в шапке; отпустили над полосой — вниз, выше — наверх / в рейку
       let bot = []; try { const a = JSON.parse(localStorage.getItem('mayatnik-bot') || '[]'); if (Array.isArray(a)) bot = a.filter(x => typeof x === 'string'); } catch (_) {}
       const saveBot = () => { try { if (bot.length) localStorage.setItem('mayatnik-bot', JSON.stringify(bot)); else localStorage.removeItem('mayatnik-bot'); } catch (_) {} };
+      try { if (!localStorage.getItem('mayatnik-areas-bottom-v427')) { if (!bot.includes('Площади')) bot.push('Площади'); saveBot(); localStorage.setItem('mayatnik-areas-bottom-v427', '1'); } } catch (_) { if (!bot.includes('Площади')) bot.push('Площади'); }
       const isBot = el => bot.includes(idOf(el)), barTop = () => { const b = $('mayBottomBar'); return b && b.getClientRects().length ? b.getBoundingClientRect().top : Infinity; };
       // v0.406: «в любое место нижней полосы группу поставить без наездов»: своё место — botX[id] (x на экране, куда отпустили); по порядку слева направо,
       // не налезая на соседние группы и на связку «×N | ползунок | время | Хорр», в пределах полосы
