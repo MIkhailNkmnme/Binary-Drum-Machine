@@ -5,13 +5,59 @@
 <text x="1290" y="83" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">На следующем исходнике</text>
 <text x="1730" y="83" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">Полная сетка · GIF</text>
 <text x="920" y="117" text-anchor="middle" fill="#c8d8ee" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">Единица размеров — сторона бита первого рисунка; его высота H₀ = 8</text>
-<path d="M60 276H1760" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
-<path d="M60 552H1760" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
-<path d="M60 882H1760" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
-<path d="M370 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>
-<path d="M830 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>
-<path d="M1290 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>
-<path d="M1730 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>
+<g id="edge-guides" fill="none" stroke="#7b91ac" stroke-opacity=".55" stroke-width=".8" stroke-dasharray="1 5" stroke-linecap="round">
+<path data-edge-guide="horizontal" data-between="original-8 enlarged-8-to-16" d="M371 228H649"/>
+<path data-edge-guide="horizontal" data-between="original-8 enlarged-8-to-16" d="M371 276H649"/>
+<path data-edge-guide="horizontal" data-between="original-8 enlarged-8-to-16" d="M371 180H649"/>
+<path data-edge-guide="horizontal" data-between="enlarged-8-to-16 overlay-base-16" d="M831 228H1103"/>
+<path data-edge-guide="horizontal" data-between="enlarged-8-to-16 overlay-base-16" d="M831 276H1103"/>
+<path data-edge-guide="horizontal" data-between="enlarged-8-to-16 overlay-base-16" d="M831 180H1103"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-16 full-grid-16" d="M1291 228H1543"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-16 full-grid-16" d="M1291 276H1543"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-16 full-grid-16" d="M1291 180H1543"/>
+<path data-edge-guide="horizontal" data-between="original-16 enlarged-16-to-24" d="M371 456H550"/>
+<path data-edge-guide="horizontal" data-between="original-16 enlarged-16-to-24" d="M371 552H550"/>
+<path data-edge-guide="horizontal" data-between="original-16 enlarged-16-to-24" d="M371 408H550"/>
+<path data-edge-guide="horizontal" data-between="enlarged-16-to-24 overlay-base-24" d="M831 456H1007"/>
+<path data-edge-guide="horizontal" data-between="enlarged-16-to-24 overlay-base-24" d="M831 552H1007"/>
+<path data-edge-guide="horizontal" data-between="enlarged-16-to-24 overlay-base-24" d="M831 408H1007"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-24 full-grid-24" d="M1291 456H1447"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-24 full-grid-24" d="M1291 552H1447"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-24 full-grid-24" d="M1291 408H1447"/>
+<path data-edge-guide="horizontal" data-between="original-24 enlarged-24-to-32" d="M371 738H453"/>
+<path data-edge-guide="horizontal" data-between="original-24 enlarged-24-to-32" d="M371 882H453"/>
+<path data-edge-guide="horizontal" data-between="original-24 enlarged-24-to-32" d="M371 690H453"/>
+<path data-edge-guide="horizontal" data-between="enlarged-24-to-32 overlay-base-32" d="M831 738H911"/>
+<path data-edge-guide="horizontal" data-between="enlarged-24-to-32 overlay-base-32" d="M831 882H911"/>
+<path data-edge-guide="horizontal" data-between="enlarged-24-to-32 overlay-base-32" d="M831 690H911"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-32 full-grid-32" d="M1291 738H1351"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-32 full-grid-32" d="M1291 882H1351"/>
+<path data-edge-guide="horizontal" data-between="overlay-base-32 full-grid-32" d="M1291 690H1351"/>
+<path data-edge-guide="vertical" data-between="original-8 original-16" d="M280 277V455"/>
+<path data-edge-guide="vertical" data-between="original-8 original-16" d="M370 277V455"/>
+<path data-edge-guide="vertical" data-between="original-8 original-16" d="M184 277V455"/>
+<path data-edge-guide="vertical" data-between="original-16 original-24" d="M184 553V737"/>
+<path data-edge-guide="vertical" data-between="original-16 original-24" d="M370 553V737"/>
+<path data-edge-guide="vertical" data-between="original-16 original-24" d="M88 553V737"/>
+<path data-edge-guide="vertical" data-between="enlarged-8-to-16 enlarged-16-to-24" d="M650 277V407"/>
+<path data-edge-guide="vertical" data-between="enlarged-8-to-16 enlarged-16-to-24" d="M830 277V407"/>
+<path data-edge-guide="vertical" data-between="enlarged-8-to-16 enlarged-16-to-24" d="M551 277V407"/>
+<path data-edge-guide="vertical" data-between="enlarged-16-to-24 enlarged-24-to-32" d="M551 553V689"/>
+<path data-edge-guide="vertical" data-between="enlarged-16-to-24 enlarged-24-to-32" d="M830 553V689"/>
+<path data-edge-guide="vertical" data-between="enlarged-16-to-24 enlarged-24-to-32" d="M454 553V689"/>
+<path data-edge-guide="vertical" data-between="overlay-base-16 overlay-base-24" d="M1104 277V407"/>
+<path data-edge-guide="vertical" data-between="overlay-base-16 overlay-base-24" d="M1290 277V407"/>
+<path data-edge-guide="vertical" data-between="overlay-base-16 overlay-base-24" d="M1008 277V407"/>
+<path data-edge-guide="vertical" data-between="overlay-base-24 overlay-base-32" d="M1008 553V689"/>
+<path data-edge-guide="vertical" data-between="overlay-base-24 overlay-base-32" d="M1290 553V689"/>
+<path data-edge-guide="vertical" data-between="overlay-base-24 overlay-base-32" d="M912 553V689"/>
+<path data-edge-guide="vertical" data-between="full-grid-16 full-grid-24" d="M1544 277V407"/>
+<path data-edge-guide="vertical" data-between="full-grid-16 full-grid-24" d="M1730 277V407"/>
+<path data-edge-guide="vertical" data-between="full-grid-16 full-grid-24" d="M1448 277V407"/>
+<path data-edge-guide="vertical" data-between="full-grid-24 full-grid-32" d="M1448 553V689"/>
+<path data-edge-guide="vertical" data-between="full-grid-24 full-grid-32" d="M1730 553V689"/>
+<path data-edge-guide="vertical" data-between="full-grid-24 full-grid-32" d="M1352 553V689"/>
+</g>
 <g data-aligned-panel="original-8" data-row-bottom="276" data-column-right="370"><g id="original-8" data-source-rows="8" data-cell-size="6" data-height="48" data-grid-step="6" shape-rendering="crispEdges"><rect x="280" y="228" width="90" height="48" fill="#000"/>
 <rect data-bit="1" x="322" y="228" width="6" height="6" fill="#e8edf5"/>
 <rect data-bit="1" x="316" y="234" width="6" height="6" fill="#e8edf5"/>

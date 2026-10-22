@@ -36,8 +36,22 @@ export function makeSvg({gridPhase='overlay'}={}){
  txt(920,37,'Серпинский: увеличение и наложение',28,FG,'middle');
  txt(370,83,'Исходник',23);txt(830,83,'Увеличение',23);txt(1290,83,'На следующем исходнике',23);txt(1730,83,'Полная сетка · GIF',23);
  txt(920,117,'Единица размеров — сторона бита первого рисунка; его высота H₀ = 8',16,'#c8d8ee','middle');
- for(const y of B)s.push('<path d="M60 '+y+'H1760" fill="none" stroke="#273343" stroke-dasharray="3 5"/>');
- for(const x of R)s.push('<path d="M'+x+' 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>');
+ // Project both images' boundaries through each gap; never over the bitmaps.
+ s.push('<g id="edge-guides" fill="none" stroke="#7b91ac" stroke-opacity=".55" stroke-width=".8" stroke-dasharray="1 5" stroke-linecap="round">');
+ for(let row=0;row<3;row++){
+  const rowPanels=allPanels.filter(p=>p.row===row).sort((a,b)=>a.col-b.col);
+  const levels=[...new Set(rowPanels.flatMap(p=>[p.bottom-p.height,p.bottom]))];
+  for(let col=0;col<3;col++){
+   const left=rowPanels[col],right=rowPanels[col+1];
+   for(const y of levels)s.push('<path data-edge-guide="horizontal" data-between="'+left.id+' '+right.id+'" d="M'+(left.right+1)+' '+y+'H'+(right.right-right.width-1)+'"/>');
+  }
+ }
+ for(let col=0;col<4;col++)for(let row=1;row<3;row++){
+  const upper=allPanels.find(p=>p.col===col&&p.row===row-1),lower=allPanels.find(p=>p.col===col&&p.row===row);
+  const edges=[...new Set([upper.right-upper.width,upper.right,lower.right-lower.width,lower.right])];
+  for(const x of edges)s.push('<path data-edge-guide="vertical" data-between="'+upper.id+' '+lower.id+'" d="M'+x+' '+(upper.bottom+1)+'V'+(lower.bottom-lower.height-1)+'"/>');
+ }
+ s.push('</g>');
  for(const p of allPanels){
   const a=bitmap(p.rows),x=p.right-p.width,y=p.bottom-p.height;
   s.push('<g data-aligned-panel="'+p.id+'" data-row-bottom="'+p.bottom+'" data-column-right="'+p.right+'"><g id="'+p.id+'" data-source-rows="'+p.rows+'" data-cell-size="'+p.p+'" data-height="'+p.height+'" data-grid-step="'+U+'" shape-rendering="crispEdges"><rect x="'+x+'" y="'+y+'" width="'+p.width+'" height="'+p.height+'" fill="#000"/>');
