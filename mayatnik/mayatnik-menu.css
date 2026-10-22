@@ -815,11 +815,11 @@ header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
 .mayatnik-menu-ready #paintTools .pt-l:is(:hover,:focus-visible)::before{inset:1px!important;background:var(--gz-bg,#121a30)!important}
 .mayatnik-menu-ready .gz-hx:not(.gz-pair):is(.gz-on,.on)::before,
 .mayatnik-menu-ready .gz-group.gz-open>.gz-head::before,
-.mayatnik-menu-ready #paintTools :is(.pt-open,.pt-has-on)>.pt-l::before{inset:1.5px!important}
+.mayatnik-menu-ready #paintTools :is(.pt-open,.pt-has-on)>.pt-l::before{inset:2px!important}
 .mayatnik-menu-ready .gz-half{color:var(--gz-k,var(--gz-txt,#dfe6f5))!important}
 .mayatnik-menu-ready .gz-half:is(:hover,:focus-visible){background:var(--c,#7cbcff)!important}
 .mayatnik-menu-ready .gz-half:is(:hover,:focus-visible)::before{inset:1px!important;background:var(--gz-bg,#121a30)!important}
-.mayatnik-menu-ready .gz-half.gz-on::before{inset:1.5px!important}
+.mayatnik-menu-ready .gz-half.gz-on::before{inset:2px!important}
 .mayatnik-menu-ready .gz-val :is(.gz-a,.gz-vh,.gz-vt):hover{color:inherit}
 #paintTools .pt-half:not(.on):hover{color:#8e98ad}
 #paintTools .pt-t3:not(.on):hover{color:#8592ad}
@@ -829,6 +829,18 @@ header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
 #mayBottomBar .may-bb-play:hover{filter:none}
 #mayBottomBar .may-bb-rs:hover{background:#ff7373}
 #mayRhombs .may-rh:hover{color:#8fd3ff}
+/* v0.439: наведение — 1 px, включённая — 2 px, удержание нажатия — 3 px. */
+.mayatnik-menu-ready .gz-hx:not(.gz-pair)[aria-pressed=true]::before,
+.mayatnik-menu-ready .gz-half[aria-pressed=true]::before{inset:2px!important}
+.may-hp .may-hp-h.on::after,#paintTools .pt-t3.on::after{inset:2px!important}
+.mayatnik-menu-ready .gz-hx:not(.gz-pair,.pt-tri3,.may-hp):active,
+.mayatnik-menu-ready .gz-half:active,
+.mayatnik-menu-ready #paintTools .pt-l:active{background:var(--c,#7cbcff)!important}
+.mayatnik-menu-ready .gz-hx:not(.gz-pair,.pt-tri3,.may-hp):active::before,
+.mayatnik-menu-ready .gz-half:active::before,
+.mayatnik-menu-ready #paintTools .pt-l:active::before{inset:3px!important;background:var(--gz-bg,#121a30)!important}
+.may-hp .may-hp-h:active::after,#paintTools .pt-t3:active::after{inset:3px!important}
+#paintTools .pt-ud:not(.dis):active{box-shadow:inset 0 0 0 3px var(--c)}
 #paintTools #lg input[type=color]::-webkit-color-swatch-wrapper{padding:0}
 #paintTools #lg input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
 #paintTools #lg input[type=color]::-moz-color-swatch{border:0;border-radius:50%}

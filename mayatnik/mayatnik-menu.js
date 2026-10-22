@@ -88,7 +88,8 @@
       button('bOchki', 'eye'), check('ochkiInv', 'half'), check('ochkiRev', 'swap'), check('frozen', 'pin'), button('bBlackMirror', 'mirror'), button('bAnimHl', 'eye'),
       select('ochkiMode', 'line', {diag:'Диагонали',row:'Ряды'}),select('ochkiPattern','steps'),num('ochkiLength',{name:'От бит',slider:false}) ] },
     { id: 'zoom', title: 'Масштаб', color: '#7cbcff', items: [
-      button('zFit', 'corners'), button('zFitH', 'down'), button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zTop', 'pin'), button('zSnap', 'grid4') ] },
+      button('zFit', 'corners'), pair(tgl('zTop'),tgl('zFitH'),'Верх','Вниз',{name:'Верх · Вниз',cls:'may-zoom-edges'}),
+      button('zLock', 'pin'), button('zLines', 'line'), button('zVert', 'line'), button('zDiag', 'line'), button('zSnap', 'grid4') ] },
     { id: 'mirrors', title: 'Зеркала', color: '#ff87cf', items: [
       { type: 'toggle', icon: '⋈', name: 'Зерк. ось', tip: 'Зеркальная ось: один конец на нижней границе последней строки (тянется вдоль низа), второй — поворот · отражение поля под полем',   // v0.177
         on: () => !!window.MayMirAxis?.on, click: () => window.MayMirAxis?.toggle() },
@@ -107,6 +108,14 @@
   ];
   { const g0 = groups.find(x => x.id === 'build'); g0.items = g0.items.filter(it => it.name !== 'Хорр' && it.name !== 'Анимация' && it.name !== 'Кадр, с'); const fr = g0.items.find(it => it.name === 'Кадр'); if (fr) delete fr.thumb; }   // v0.339: бегунок кадра — линия, плей — своей кнопкой в середине   // v0.332: «Хорр» — в нижней полосе   // v0.395: «удали дубли» — «Анимация» и «Кадр, с» есть в нижней полосе (×N | время)
   const rail = ZerkGrozd.rail($('mayatnikRail'), { key: 'mayatnik', groups });
+  // v0.439: «Верх / Вниз» — одна стандартная кнопка, два независимых включателя.
+  for(const [index,id] of ['zTop','zFitH'].entries()){
+    const half=rail.el.querySelector('.may-zoom-edges .gz-h'+index),src=$(id);
+    half.dataset.source=id;half.title=tip(src);half.tabIndex=0;half.setAttribute('role','button');half.setAttribute('aria-label',index?'Вниз':'Верх');
+    const sync=()=>half.setAttribute('aria-pressed',src.getAttribute('aria-pressed')||'false');
+    new MutationObserver(sync).observe(src,{attributes:true,attributeFilter:['aria-pressed']});sync();
+    half.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();half.click();}});
+  }
   // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
   // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
   { const MINI = 'mayatnik-rail-mini', ICO = { 'Поле': '▦', 'Очки': '◎', 'Масштаб': '⤢', 'Зеркала': '⋈', 'Раскраска': '✎', 'Шаблон': '▣', 'Шаблоны': '▤', 'Экспорт': '⇩' };
