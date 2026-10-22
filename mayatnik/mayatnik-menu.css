@@ -772,3 +772,31 @@ header #paintTools.pt-dd .pt-r>.pt-col>.pt-sec{width:100%}
 #paintTools .pt-sec>#lg{display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap!important;width:100%;height:24px!important;min-height:24px;gap:0!important;padding:0!important;border:0;border-radius:0;background:none!important;--gz-h:24px}
 #paintTools #lg .gz-half{display:flex;align-items:center;justify-content:center}
 
+/* v0.436: боковые группы раскрываются вправо; подложки — только по зубцам кнопок. */
+#mayatnikRail .gz-rail{filter:none;gap:4px}
+.mayatnik-menu-ready #mayatnikRail{z-index:8}
+.mayatnik-menu-ready .gz-group,header #paintTools .pt-g,header #paintTools .pt-sec{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+header #paintTools.pt-grid>.gz-group.gz-open::after{display:none!important}
+.may-rail-list{display:contents}
+#mayatnikRail .gz-group>.may-rail-list{display:none;position:fixed;z-index:50;grid-auto-flow:column;gap:4px;overflow-x:auto;pointer-events:auto;background:transparent;border:0;border-radius:0;box-shadow:none}
+#mayatnikRail .gz-group.gz-open>.may-rail-list{display:grid}
+#mayatnikRail .may-rail-list .gz-soty,#mayatnikRail .may-rail-list .gz-wide,#mayatnikRail .may-rail-list .gz-sec{display:contents!important}
+#mayatnikRail .may-rail-list .gz-hx{position:relative!important;left:auto!important;top:auto!important;width:var(--gz-w)!important;height:var(--gz-h);margin:0!important}
+header #paintTools .may-rail-list>.gz-soty,header #paintTools .may-rail-list>.gz-wide{width:var(--gz-w)!important;height:auto!important;margin:0!important;gap:4px}
+header #paintTools .gz-group.gz-open>.may-rail-list>.gz-soty{display:flex!important;flex-direction:column}
+header #paintTools .may-rail-list>.gz-soty>.gz-hx{position:relative!important;left:auto!important;top:auto!important;width:100%!important;margin:0!important}
+header #paintTools.pt-dd .pt-r,header #paintTools.pt-dd .pt-col,header #paintTools.pt-dd .pt-sec,.gz-ladder{gap:4px!important}
+header #paintTools.pt-dd .pt-sec{padding:0!important}
+.mayatnik-menu-ready .gz-wide,.mayatnik-menu-ready .gz-soty{row-gap:4px!important;margin-top:4px}
+/* Фон кнопок постоянный: состояния меняют только кайму. */
+.mayatnik-menu-ready .gz-head::before,.mayatnik-menu-ready .gz-hx:hover::before,.mayatnik-menu-ready .gz-hx.gz-on::before,.mayatnik-menu-ready .gz-hx.gz-press::before{background:var(--gz-bg,#121a30)!important}
+header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-open>.pt-l::before{background:#121a30!important}
+#paintTools #lg::before{display:none}
+#paintTools #lg .palette-half{position:relative;isolation:isolate;height:24px;gap:6px;text-shadow:none}
+#paintTools #lg .palette-half::before{background:var(--gz-bg,#121a30)!important;z-index:-1}
+#paintTools #lg .palette-half:hover,#paintTools #lg .palette-half:focus-visible{background:var(--c)!important}
+#paintTools #lg input[type=color]{appearance:none;-webkit-appearance:none;box-sizing:border-box;width:14px;height:14px;min-width:14px;padding:0;margin:0;border:1px solid #ffffff55;border-radius:50%;background:none;overflow:hidden;cursor:pointer}
+#paintTools #lg input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+#paintTools #lg input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
+#paintTools #lg input[type=color]::-moz-color-swatch{border:0;border-radius:50%}
+

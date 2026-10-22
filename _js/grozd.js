@@ -63,16 +63,23 @@
   //      placement: 'below' — список под кнопкой; placed(list, owner), closed(list, owner) — необязательные обработчики }
   const ladLater = () => { clearTimeout(ladT); ladT = setTimeout(closeLadder, 250); };
   function ladderSync() { if (!ladder) return; const b = ladder.owner, o = b.gzList; if (!b.isConnected || !b.getClientRects().length) { closeLadder(); return; }
+    const placement = typeof o.placement === 'function' ? o.placement(b) : o.placement;
     const opts = o.options(); [...ladder.children].forEach((x, i) => x.classList.toggle('gz-on', !!opts[i]?.on));
     const r = b.getBoundingClientRect();
-    if (o.placement === 'below') {
+    if (placement === 'below' || placement === 'right') {
       const style = getComputedStyle(b);
       ladder.style.width = r.width + 'px'; ladder.style.setProperty('--gz-w', r.width + 'px');
       ladder.style.setProperty('--gz-h', r.height + 'px'); ladder.style.font = style.font;
       for (const key of ['--gz-n', '--gz-bg']) { const value = style.getPropertyValue(key).trim(); if (value) ladder.style.setProperty(key, value); }
     }
+    if (placement === 'right') {
+      const rows = Math.min(7, Math.max(1, opts.length)), gap = 4, cols = Math.ceil(opts.length / rows), top = Math.max(4, Math.min(r.top, innerHeight - rows * (r.height + gap)));
+      Object.assign(ladder.style, {display:'grid',gridAutoFlow:'column',gridTemplateRows:`repeat(${rows}, ${r.height}px)`,gridAutoColumns:r.width + 'px',gap:gap + 'px',width:(cols * (r.width + gap) - gap) + 'px',left:(r.right + gap) + 'px',top:top + 'px',maxWidth:Math.max(r.width, innerWidth - r.right - 8) + 'px',overflowX:'auto'});
+      o.placed?.(ladder, b); return;
+    }
     const c = o.col?.()?.getBoundingClientRect() || r, w = ladder.offsetWidth, h = ladder.offsetHeight;
-    if (o.placement === 'below') {
+    if (placement === 'below') {
+      Object.assign(ladder.style, {display:'flex',gridTemplateRows:'',gridAutoColumns:'',maxWidth:'',overflowX:''});
       const top = r.bottom + 4;
       ladder.style.left = Math.round(Math.max(4, Math.min(r.left, innerWidth - w - 4))) + 'px'; ladder.style.top = Math.round(top) + 'px';
       ladder.style.maxHeight = Math.max(24, innerHeight - top - 4) + 'px'; ladder.style.overflowY = 'auto';
@@ -85,7 +92,7 @@
     for (const x of o.options()) { const ob = el('div', 'gz-hx'); ob.title = x.name; ob.append(icon(x.icon || '·'), el('span', 'gz-nm', x.name));
       ob.addEventListener('click', e => { e.stopPropagation(); x.pick(); o.after?.(); ladderSync(); }); ladder.append(ob); }
     ladder.addEventListener('pointerenter', () => { clearTimeout(ladT); clearTimeout(swT); swB = null; }); ladder.addEventListener('pointerleave', ladLater);
-    (o.host?.() || document.body).append(ladder); ladderSync(); if (o.placement !== 'below') dimUnder(b); }
+    (o.host?.() || document.body).append(ladder); ladderSync(); if (!o.placement) dimUnder(b); }
   function listHover(b, o) { b.gzList = o; b.classList.add('gz-lst');
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'touch') return; clearTimeout(ladT); clearTimeout(swT); swB = null;
       if (!ladder || ladder.owner === b) { openLadder(b); return; } swB = b; swT = setTimeout(() => { swB = null; openLadder(b); }, 280); });

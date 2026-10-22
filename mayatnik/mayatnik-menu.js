@@ -492,6 +492,7 @@
   const ptColour = { 'Точка Ось':'#b48cff', 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
   for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
+    if (b.id === 'lg') return;
     if (b.classList.contains('pt-b') && b.dataset.n !== 'bRec') {
       b.classList.add('gz-hx'); b.querySelector('i').classList.add('gz-ic');
       const nm = document.createElement('span'); nm.className = 'gz-nm'; nm.textContent = ptNames[b.dataset.n] || ''; b.append(nm); return; }
@@ -869,6 +870,7 @@
   const clearListUnder = () => document.querySelectorAll('.may-list-hidden').forEach(el => el.classList.remove('may-list-hidden'));
   const hideListUnder = (_list, owner) => {
     clearListUnder();
+    if (owner.closest('#mayatnikRail')) return;
     const root = owner.closest('.pt-r, .gz-group, .may-hp-pop') || owner.closest('.gz-rail');
     if (!root) return;
     const bottom = owner.getBoundingClientRect().bottom;
@@ -878,7 +880,7 @@
     }
   };
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
-    Object.assign(b.gzList, {placement:'below', placed:hideListUnder, closed:clearListUnder});
+    Object.assign(b.gzList, {placement:owner => owner.closest('#mayatnikRail') ? 'right' : 'below', placed:hideListUnder, closed:clearListUnder});
   }
   // Сведения и действия выбранной фигуры — сворачиваемая панель справа внизу.
   const infoPanel=document.createElement('details');infoPanel.id='mayatnikInfoPanel';infoPanel.open=true;
@@ -921,7 +923,27 @@
   }, true);
   { const fb = rail.el.querySelector('.gz-al'); if (fb) toolSync.push(() => { const N = window.mayThirds?.on() ? '⅓' : Math.max(1, +$('speed').value || 1), as = fb.querySelectorAll(':scope > .gz-a:not(.gz-a2)');   // v0.317: подписи стрелок кадра — −N / +N; v0.318 — при «Третях» ±⅓
     if (as[0] && as[0].textContent !== '−' + N) as[0].textContent = '−' + N; if (as[1] && as[1].textContent !== '+' + N) as[1].textContent = '+' + N; }); }
-  const placeTools = () => { for (const f of toolSync) f(); };
+  // v0.436: слева заголовки остаются на месте, кнопки группы — вправо по 7 в столбце.
+  function syncRailFlyouts() {
+    for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #paintTools > .gz-group')) {
+      const left = !!box.closest('#mayatnikRail'); let list = box.querySelector(':scope > .may-rail-list');
+      if (!list && left) { list = document.createElement('div'); list.className = 'may-rail-list';
+        list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
+      if (!list) continue;
+      if (!left) { list.removeAttribute('style'); continue; }
+      const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
+      if (!box.classList.contains('gz-open')) continue;
+      const style = getComputedStyle(box), w = parseFloat(style.getPropertyValue('--gz-w')) || 120, h = parseFloat(style.getPropertyValue('--gz-h')) || 24, gap = 4;
+      const cells = [...list.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')].filter(el => !el.hidden && getComputedStyle(el).display !== 'none');
+      const rows = Math.min(7, Math.max(1, Math.floor((innerHeight - 16) / (h + gap)))), cols = Math.max(1, Math.ceil(cells.length / rows)), r = head.getBoundingClientRect();
+      const height = Math.min(rows, cells.length) * (h + gap) - gap, top = Math.max(4, Math.min(r.top, innerHeight - height - 8));
+      const styles = {left:(r.right + gap) + 'px',top:top + 'px',width:(cols * (w + gap) - gap) + 'px',maxWidth:Math.max(w, innerWidth - r.right - 8) + 'px',gridTemplateRows:`repeat(${Math.min(rows, Math.max(1, cells.length))}, ${h}px)`,gridAutoColumns:w + 'px'};
+      for (const [key, value] of Object.entries(styles)) if (list.style[key] !== value) list.style[key] = value;
+    }
+  }
+  const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); };
+  rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
+  $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});
   addEventListener('resize', placeTools); placeTools();
   // v0.048: любую кнопку рейки — Ctrl + тянуть на холст: там встаёт её копия и держится на месте при сдвиге и масштабе.
   // Копия нажимает настоящую кнопку; тянуть копию — переставить, правая кнопка — убрать.
