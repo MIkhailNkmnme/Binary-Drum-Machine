@@ -345,15 +345,6 @@
     toolSync.push(() => { const t = nameOf(sel.selectedOptions[0] || sel.options[0]); b.title = 'Вид: ' + t + ' · щелчок — следующий, правый — предыдущий, колесо — листать · ' + [...sel.options].map(nameOf).join(' · ');
       const nm = b.querySelector('.gz-nm'), sh = VIEW_SHORT[(sel.selectedOptions[0] || sel.options[0])?.value] || t; if (nm && nm.textContent !== sh) nm.textContent = sh; });
     gView.append(b); }
-  // v0.059: «Верх» — закрепить первую строку у верха при масштабе; на холсте в группе «Вид».
-  { const e = $('zTop'), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = 'zTop';
-    const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, 'pin'); b.append(mark); b.onclick = () => e.click();
-    toolSync.push(() => { b.title = tip(e); b.classList.toggle('on', e.matches('[aria-pressed="true"]')); }); gView.append(b);
-    // v0.208: вторая половина кнопки — «Гориз»: центр «Зеркала ↑» (точка встречи «Застыло») тянется по горизонтали, а не вверх-вниз
-    const h = document.createElement('span'); h.className = 'pt-half'; h.textContent = 'Гориз';
-    h.addEventListener('click', ev => { ev.stopPropagation(); window.mayFixHor?.set(!window.mayFixHor.get()); placeTools(); });
-    toolSync.push(() => { const on = !!window.mayFixHor?.get(); h.classList.toggle('on', on); h.title = 'Гориз: прижать по горизонтали — масштаб не меняется (из «по ширине» замирает числом), поле не сдвигается вбок при смене кадров; «по ширине» — снять · сейчас ' + (on ? 'вкл' : 'выкл'); });
-    b.append(h); }
   // v0.103: «Без полос» (по кругу: полосы / без полос / до треугольника) и «Обводка» — из рейки «Вид» сюда; «Свёртка» — последней
   for (const [id, kind] of [['noband', 'half'], ['outline', 'corners'], ['fixLines', 'corners'], ['geomCenter', 'axes'], ['cellInk', 'grid4']]) {   // v0.132: «Центр» (подсветка столба) снят
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
@@ -517,12 +508,12 @@
     const sz = $('digitSize'), szSet = d => { const v = Math.max(+sz.min, Math.min(+sz.max, (+sz.value || 80) + d * (+sz.step || 5))); if (v === +sz.value) return; sz.value = v; fire(sz); };
     const sb = ptBtn('sizeCtl', 'plus', sz, () => szSet(1)); sb.oncontextmenu = ev => { ev.preventDefault(); szSet(-1); }; sb.addEventListener('wheel', ev => { ev.preventDefault(); szSet(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
     toolSync.push(() => { const t = 'Цифры ' + sz.value + ' %'; sb.title = 'Размер цифр в клетке · щелчок — больше, правый — меньше, колесо'; const nm = sb.querySelector('.gz-nm'); if (nm && nm.textContent !== t) nm.textContent = t; }); gView.append(done(sb));
-    const box = document.createElement('span'); box.className = 'pt-vx'; const v = $('vrows'); v.title = tip(v); v.placeholder = 'строк'; v.classList.add('pt-vrows'); box.append(v); gView.append(box); }
+  }
   // v0.226: «и эту раздели в 2, отдели фоном или вложенностью, сделай по темам» — список «Вида» в два столбца (.pt-col), в них блоки по темам
   // своим фоном (.pt-sec, тема — в подсказке блока): слева — как выглядит поле, справа — «Застыло», зеркала и пиксели по цвету.
   // У блока поля 2 px сверху и снизу и нет зазора между блоками — шаг рядов (кнопка + зазор 4 px) тот же, зубцы рамки (zig) — против остриёв кнопок.
   { const VIEW_COLS = [
-      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat', 'zTop', 'vx']],
+      [['Показ поля', '#7cbcff', ['lg', 'viewCycle', 'noband', 'outline', 'geomCenter', 'cellInk', 'rowLab', 'vtxFlash', 'heat']],
        ['Сгиб и свёртки', '#73e4a5', ['bFoldCompare', 'bFoldHorizontal', 'bFoldVertical']],
        ['Цифры и клетки', '#ffd35b', ['c_digitOneColour', 'c_digitZeroColour', 'c_bitOneColour', 'c_bitZeroColour', 'fontCycle', 'sizeCtl']]],
       [['«Застыло» и Зеркало ↑', '#b48cff', ['fixLines', 'fixCross', 'sawFull', 'sectors', 'areas', 'fixMirror', 'fixDown', 'fixFold', 'fixFoldV', 'fixAxis', 'fixLock', 'rowCount', 'fixWide', 'fixRot', 'fixDragK']],
