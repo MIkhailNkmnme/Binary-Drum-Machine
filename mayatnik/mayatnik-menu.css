@@ -796,6 +796,12 @@ header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-open>.
 #paintTools #lg .palette-half::before{background:var(--gz-bg,#121a30)!important;z-index:-1}
 #paintTools #lg .palette-half:hover,#paintTools #lg .palette-half:focus-visible{background:var(--c)!important}
 #paintTools #lg input[type=color]{appearance:none;-webkit-appearance:none;box-sizing:border-box;width:14px;height:14px;min-width:14px;padding:0;margin:0;border:1px solid #ffffff55;border-radius:50%;background:none;overflow:hidden;cursor:pointer}
+/* v0.437: подложка зубцами за всей группой, включая приглушённые кнопки. */
+.mayatnik-menu-ready .gz-group{isolation:isolate}
+.may-group-backdrop{position:absolute;left:0;top:0;z-index:-1;fill:#0d1119;pointer-events:none;overflow:visible}
+.mayatnik-menu-ready .may-group-covered,.mayatnik-menu-ready .may-group-covered *{visibility:hidden!important;pointer-events:none!important}
+.mayatnik-menu-ready .may-list-dim{opacity:.25!important;transition:opacity .12s}
+header #paintTools.pt-dd .pt-r{background-attachment:local}
 #paintTools #lg input[type=color]::-webkit-color-swatch-wrapper{padding:0}
 #paintTools #lg input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
 #paintTools #lg input[type=color]::-moz-color-swatch{border:0;border-radius:50%}

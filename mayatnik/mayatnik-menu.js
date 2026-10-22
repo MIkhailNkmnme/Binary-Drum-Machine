@@ -6,7 +6,7 @@
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({zFit:'Шрна по Оси',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столбы',bDiag:'Диаг. .txt'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -591,7 +591,7 @@
       // v0.164: «стык в стык» — зубцы рамки той же высоты и скоса, что кнопки: острия кнопок входят в выемки рамки, прочее — целым числом рядов
       const b0 = r.querySelector(':scope > .gz-hx, :scope > .pt-col .gz-hx'), GAP = parseFloat(getComputedStyle(r).rowGap) || 0, P = b0 ? b0.offsetHeight + GAP : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;   // v0.184: шаг зубцов — кнопка + зазор
       for (const c of r.children) if (!c.matches('.gz-hx')) { c.style.minHeight = ''; const ch = c.offsetHeight; if (ch) c.style.minHeight = Math.ceil(ch / P) * P + 'px'; }
-      const w = r.offsetWidth, n = Math.max(1, Math.ceil(r.offsetHeight / P)), h = n * P;
+      const w = r.offsetWidth, n = Math.max(1, Math.ceil(Math.max(r.offsetHeight, r.scrollHeight) / P)), h = n * P;
       r.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]];
       for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
       pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
@@ -831,7 +831,11 @@
         sync(); a.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.relayout(); requestAnimationFrame(alignOpen); }); } }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
-    narrow.addEventListener('change', pinsSync); requestAnimationFrame(pinsSync);
+    narrow.addEventListener('change', pinsSync); requestAnimationFrame(() => {
+      pinsSync();
+      try { const key = localStorage.getItem('mayatnik-dd-open'); const g = groupsAll().find(g => keyOf(g) === key && !g.classList.contains('pt-btn')); if (g && !stay(g)) show(g); } catch (_) {}
+    });
+    addEventListener('pagehide', () => { try { localStorage.setItem('mayatnik-dd-open', open ? keyOf(open) : ''); } catch (_) {} });
     addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }
@@ -867,9 +871,14 @@
       a.forEach((it, i) => { const names = ring[it.src], e = $(it.src); if (!names || !ca[i] || !e) return; const now = () => e.textContent.split(': ')[1];
         reg(ca[i], () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // v0.433: варианты под своей кнопкой; нижние пункты скрыты без изменения раскладки.
-  const clearListUnder = () => document.querySelectorAll('.may-list-hidden').forEach(el => el.classList.remove('may-list-hidden'));
+  const clearListUnder = () => document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));
   const hideListUnder = (_list, owner) => {
     clearListUnder();
+    const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
+    if (group) for (const el of group.querySelectorAll('.pt-b, .gz-hx, .gz-control')) {
+      if (el === owner || el.contains(owner) || owner.contains(el) || el.closest('.gz-ladder') || el.matches('.gz-head') || el.parentElement.closest('.may-list-dim')) continue;
+      el.classList.add('may-list-dim');
+    }
     if (owner.closest('#mayatnikRail')) return;
     const root = owner.closest('.pt-r, .gz-group, .may-hp-pop') || owner.closest('.gz-rail');
     if (!root) return;
@@ -887,7 +896,8 @@
   const infoTitle=document.createElement('summary');infoTitle.textContent='Сведения';
   // v0.091: скрытые исходные «Сохранить»/«Цвет» с полем цвета — в группу «Шаблон» шапки, чтобы окно цвета открывалось там.
   tools.querySelector('[data-n="bTemplateColour"]')?.parentElement.parentElement.append($('templateActions'));
-  infoPanel.append(infoTitle,status);infoRow.append(infoPanel);infoPanel.open=true;   // v0.182: не в углу, а в выпадающей «Сведения» (всегда раскрыта внутри)
+  infoPanel.append(infoTitle,status);infoRow.append(infoPanel);
+  try { infoPanel.open=localStorage.getItem('mayatnik-info-closed')!=='1'; } catch (_) {}   // v0.437: помнить свёрнутые «Сведения».
   infoPanel.addEventListener('toggle',()=>{try{localStorage.setItem('mayatnik-info-closed',infoPanel.open?'0':'1');}catch(_){}});
   // v0.116: «сдвинь ширину под шаблоны ровно» — «Сведения» той же ширины и с тем же правым краем, что и панель «Шаблоны» (она по содержимому)
   if(0)toolSync.push(()=>{const r=railRIn.getBoundingClientRect();if(!r.width||innerWidth<=600){infoPanel.style.width=infoPanel.style.right='';return;}   // v0.182: панель в выпадающей группе — ширину не подгонять
@@ -941,7 +951,64 @@
       for (const [key, value] of Object.entries(styles)) if (list.style[key] !== value) list.style[key] = value;
     }
   }
-  const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); };
+  // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
+  const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';
+  const groupRanks = new WeakMap(), groupOpen = new WeakMap(); let groupRank = 0, groupFrame = 0;
+  const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  function groupBackdrop(group, open) {
+    const host = group.closest('#mayatnikRail') ? group.querySelector(':scope > .may-rail-list') : group;
+    if (!host) return;
+    let svg = host.querySelector(':scope > .may-group-backdrop');
+    if (!open) { svg?.remove(); return; }
+    const cells = [...host.querySelectorAll('.gz-hx')].filter(el => el.getClientRects().length && !el.parentElement.closest('.gz-hx'));
+    const base = host.getBoundingClientRect(), columns = new Map();
+    for (const cell of cells) {
+      const r = cell.getBoundingClientRect(), x = Math.round(r.left - base.left + host.scrollLeft);
+      if (!columns.has(x)) columns.set(x, []);
+      columns.get(x).push({x, y:r.top - base.top + host.scrollTop, w:r.width, h:r.height, n:parseFloat(getComputedStyle(cell).getPropertyValue('--gz-n')) || 9});
+    }
+    const polygons = []; let width = 0, height = 0;
+    for (const rows of columns.values()) {
+      rows.sort((a,b) => a.y - b.y); const first = rows[0], last = rows[rows.length-1], points = [[first.x+first.n,first.y]];
+      for (const r of rows) points.push([r.x+r.w-r.n,r.y], [r.x+r.w,r.y+r.h/2], [r.x+r.w-r.n,r.y+r.h]);
+      points.push([last.x+last.n,last.y+last.h]);
+      for (const r of [...rows].reverse()) points.push([r.x+r.n,r.y+r.h], [r.x,r.y+r.h/2], [r.x+r.n,r.y]);
+      polygons.push('<polygon points="' + points.map(p=>p.join(',')).join(' ') + '"/>');
+      for (const r of rows) { width=Math.max(width,r.x+r.w);height=Math.max(height,r.y+r.h); }
+    }
+    if (!svg) { svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('may-group-backdrop');svg.setAttribute('aria-hidden','true');host.prepend(svg); }
+    const content=polygons.join('');if(svg._shape!==content){svg.innerHTML=content;svg._shape=content;}
+    svg.setAttribute('width',String(Math.ceil(width)));svg.setAttribute('height',String(Math.ceil(height)));
+  }
+  function syncGroupOverlap() {
+    groupFrame = 0; const groups = [...document.querySelectorAll(groupSelector)], entries = [];
+    for (const group of groups) {
+      const open = group.matches('.pt-open, .gz-open');
+      if (open && groupOpen.get(group) === false) groupRanks.set(group, ++groupRank);
+      groupOpen.set(group,open); if (group.matches('.gz-group')) groupBackdrop(group,open);
+      const head = group.querySelector(':scope > .pt-l, :scope > .gz-head');
+      if (!head?.getClientRects().length) { group.classList.remove('may-group-covered'); continue; }
+      const rects = [head.getBoundingClientRect()];
+      if (open) {
+        const list = group.querySelector(':scope > .pt-r, :scope > .may-rail-list');
+        if (list && getComputedStyle(list).display !== 'contents' && list.getClientRects().length) rects.push(list.getBoundingClientRect());
+        else for (const cell of group.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')) if(cell.getClientRects().length)rects.push(cell.getBoundingClientRect());
+      }
+      entries.push({group,open,rects,rank:groupRanks.get(group)||0,index:entries.length});
+    }
+    entries.sort((a,b)=>Number(b.open)-Number(a.open)||b.rank-a.rank||a.rects[0].top-b.rects[0].top||b.index-a.index);
+    const visible=[];
+    for(const entry of entries){
+      const covered=visible.some(above=>above.open&&above.rects.some(a=>entry.rects.some(b=>overlaps(a,b))));
+      entry.group.classList.toggle('may-group-covered',covered);if(!covered)visible.push(entry);
+    }
+  }
+  const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
+  for (const host of [tools,rail.el]) {
+    for(const event of ['pointerdown','focusin'])host.addEventListener(event,e=>{const group=e.target.closest('.pt-g, .gz-group');if(group){groupRanks.set(group,++groupRank);scheduleGroups();}},true);
+    new MutationObserver(records=>{if(records.some(r=>r.target.matches?.('.pt-g, .gz-group') && /\b(?:pt-open|gz-open)\b/.test(r.oldValue||'')!==r.target.matches('.pt-open, .gz-open')))scheduleGroups();}).observe(host,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class']});
+  }
+  const placeTools = () => { for (const f of toolSync) f(); syncRailFlyouts(); scheduleGroups(); };
   rail.el.addEventListener('click', () => requestAnimationFrame(syncRailFlyouts));
   $('mayatnikRail').addEventListener('scroll', () => requestAnimationFrame(syncRailFlyouts), {passive:true});
   addEventListener('resize', placeTools); placeTools();
