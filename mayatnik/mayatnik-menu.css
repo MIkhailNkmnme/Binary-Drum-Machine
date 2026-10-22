@@ -849,6 +849,19 @@ header #paintTools.pt-dd .pt-r{padding:0 2px;margin-left:-2px}
 #mayLineMeasures[hidden]{display:none}
 #mayLineMeasures>svg{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none}
 #mayLineMeasures>svg path{fill:none;stroke:#ffd35b;stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke}
+#mayLineMeasures>svg .may-measure-guides path{stroke-width:1;stroke-linecap:butt}
+/* v0.441: управление кадром занимает прежнее место правки; правка — внизу на оси. */
+.mayatnik-menu-ready #mayFooterBar{display:block;position:relative;grid-column:1/-1;grid-row:6;min-height:30px;border-top:1px solid var(--line);background:#000;z-index:9}
+#mayFooterBar>.pt-gridbg{position:absolute;pointer-events:none;background:#ffffff0b}
+header #paintTools.pt-grid>#mayBottomBar{position:absolute;top:0;width:min(380px,calc(100vw - 28px));height:24px;min-height:24px;padding:0!important;border:0;background:transparent;overflow:visible}
+header #mayBottomBar>.gz-sl{flex:1;min-width:100px;width:auto;max-width:none}
+header #mayBottomBar>.may-bb-half,header #mayBottomBar>.gz-sl{transform:none!important}
+#mayFooterBar.may-bbdrop{box-shadow:inset 0 0 0 2px color-mix(in srgb,#7cbcff 70%,transparent)}
+body.may-zen #mayFooterBar{display:none!important}
+@media(max-width:600px){
+  .mayatnik-menu-ready #mayFooterBar{grid-row:7}
+  header>#mayBottomBar{position:relative!important;left:auto!important;top:auto!important;flex:1 0 100%;width:100%;height:30px;grid-column:auto;grid-row:auto;border:0;justify-content:center!important}
+}
 .may-line-value{position:absolute;pointer-events:auto;cursor:help;white-space:nowrap;padding:1px 3px;background:#05070de6;border-radius:2px;color:var(--measure-color,#b48cff);font:11px/14px var(--mono,monospace);font-variant-numeric:tabular-nums;text-shadow:none}
 .may-line-value:hover,.may-line-value:focus-visible,.may-line-value.may-measure-active{color:#ffd35b;outline:1px solid #ffd35b;outline-offset:0}
 

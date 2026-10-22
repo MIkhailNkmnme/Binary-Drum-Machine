@@ -86,7 +86,8 @@
   function mount(host) {
     const root=document.createElement('div');root.id='mayLineMeasures';root.setAttribute('aria-label','Длины линий в битах');
     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),path=document.createElementNS(ns,'path');
-    svg.setAttribute('aria-hidden','true');svg.append(path);root.append(svg);document.body.append(root);
+    const guides=document.createElementNS(ns,'g');guides.classList.add('may-measure-guides');
+    svg.setAttribute('aria-hidden','true');svg.append(guides,path);root.append(svg);document.body.append(root);
     root.addEventListener('wheel',e=>{if(!host)return;const forwarded=new WheelEvent('wheel',{deltaX:e.deltaX,deltaY:e.deltaY,deltaZ:e.deltaZ,deltaMode:e.deltaMode,clientX:e.clientX,clientY:e.clientY,ctrlKey:e.ctrlKey,altKey:e.altKey,shiftKey:e.shiftKey,metaKey:e.metaKey,bubbles:true,cancelable:true});if(!host.dispatchEvent(forwarded))e.preventDefault();},{passive:false});
     const labels=new Map();let active=null,view=null,items=new Map(),cacheKey='',cache=[];
     const format=n=>Number(n.toFixed(2)).toLocaleString('ru-RU');
@@ -103,6 +104,11 @@
       svg.setAttribute('viewBox',`0 0 ${view.width} ${view.height}`);
       const serialized=JSON.stringify(input.map(l=>[...l.a,...l.b,l.color].map(v=>typeof v==='number'?key(v):v)));
       if(serialized!==cacheKey){cache=split(input);cacheKey=serialized;}
+      const p=q=>[q[0]*view.scale+view.x,q[1]*view.scale+view.y];
+      const foreground=[...merge(input),...(view.axis?[view.axis]:[])],groups=new Map();
+      for(const line of foreground){const color=/^#0{3}(?:0{3})?$/i.test(line.color)?'#b48cff':line.color,k=color+'|'+!!line.dash;
+        if(!groups.has(k))groups.set(k,{color,dash:line.dash,paths:[]});groups.get(k).paths.push('M'+p(line.a).join(',')+'L'+p(line.b).join(','));}
+      guides.replaceChildren(...[...groups.values()].map(group=>{const q=document.createElementNS(ns,'path');q.style.stroke=group.color;q.setAttribute('d',group.paths.join(''));if(group.dash)q.setAttribute('stroke-dasharray','4 3');return q;}));
       items=new Map();const positions=[],box={left:-view.x/view.scale,top:-view.y/view.scale,right:(view.width-view.x)/view.scale,bottom:(view.height-view.y)/view.scale};
       for(const line of cache){
         const pieces=line.segments.length>1?[{...line,whole:true},...line.segments.map(s=>({...s,whole:false}))]:[{...line,whole:true}];
