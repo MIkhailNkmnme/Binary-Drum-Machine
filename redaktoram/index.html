@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- Редакторам Зеркалиуса — v0.001 · 2026-10-23 -->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Рабочая страница редакторов Зеркалиуса: задачи, прогресс, правила координатора, решения и журнал.">
+  <title>Редакторам Зеркалиуса · v0.001</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="editors.css?v=1">
+  <script defer src="../_js/hub-button-text.js"></script>
+  <script defer src="editors.js?v=1"></script>
+</head>
+<body>
+  <a class="skip" href="#content">К содержимому</a>
+  <header class="masthead">
+    <a class="brand" href="../" aria-label="Зеркалиус — главная"><span class="brand-symbol" aria-hidden="true">◈</span> ЗЕРКАЛИУС</a>
+    <span class="edition">РАБОЧАЯ СТРАНИЦА / РЕДАКТОРАМ</span>
+    <a class="site-link" href="../knopki/standart/">Стандарт кнопок ↗</a>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <p class="overline">ПРОЕКТ</p>
+      <nav class="gz-rail" aria-label="Документы проекта">
+        <a class="gz-hx nav-link" href="#tasks" data-view="tasks"><span class="gz-ic" aria-hidden="true">▤</span><span>Задачи</span></a>
+        <a class="gz-hx nav-link" href="#coordinator" data-view="coordinator"><span class="gz-ic" aria-hidden="true">◇</span><span>Координатор</span></a>
+        <a class="gz-hx nav-link" href="#handoff" data-view="handoff"><span class="gz-ic" aria-hidden="true">↗</span><span>Продолжить</span></a>
+        <a class="gz-hx nav-link" href="#decisions" data-view="decisions"><span class="gz-ic" aria-hidden="true">✓</span><span>Решения</span></a>
+        <a class="gz-hx nav-link" href="#journal" data-view="journal"><span class="gz-ic" aria-hidden="true">◷</span><span>Журнал</span></a>
+        <a class="gz-hx nav-link" href="#rules" data-view="rules"><span class="gz-ic" aria-hidden="true">≡</span><span>Правила</span></a>
+        <a class="gz-hx nav-link" href="#buttons" data-view="buttons"><span class="gz-ic" aria-hidden="true">⬡</span><span>Кнопки</span></a>
+      </nav>
+      <div class="sidebar-note"><span class="signal" aria-hidden="true"></span> Единое состояние проекта<p>Доступно с любого аккаунта.<br>Обновляется после публикации этапов.</p></div>
+      <a class="subtle" href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine">Проект на GitHub ↗</a>
+    </aside>
+    <main id="content" tabindex="-1">
+      <div class="page-intro">
+        <div><p class="overline">ОБЩЕЕ РАБОЧЕЕ МЕСТО</p><h1>Редакторам Зеркалиуса</h1><p class="lead">Что делаем, на каком этапе и как продолжить работу.</p></div>
+        <span class="version">v0.001</span>
+      </div>
+      <div class="toolbar gz-rail">
+        <button class="gz-hx" id="refresh" type="button"><span class="gz-ic" aria-hidden="true">↻</span><span>Обновить</span></button>
+        <button class="gz-hx" id="copy-prompt" type="button"><span class="gz-ic" aria-hidden="true">⧉</span><span>Продолжить</span></button>
+        <span id="load-state" role="status" aria-live="polite">Загружаем документы…</span>
+      </div>
+      <div id="copy-result" class="notice" role="status" hidden></div>
+      <section id="view" aria-label="Состояние проекта"><p class="empty">Загружаем актуальное состояние проекта…</p></section>
+      <noscript><p>Для загрузки документов включите JavaScript или откройте <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/ПРОДОЛЖИТЬ.md">инструкцию продолжения на GitHub</a>.</p></noscript>
+      <footer>Источник — документы проекта на GitHub. Проценты относятся к отдельным задачам, общий процент всего проекта не задан. <a href="../">Открыть Зеркалиус ↗</a></footer>
+    </main>
+  </div>
+</body>
+</html>
