@@ -230,6 +230,7 @@
     sp.addEventListener('input', sync); ft.addEventListener('input', sync); const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
     if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync();
     const hr = $('mayBbHorr'); if (hr) bf.after(hr); }   // v0.350: «Хорр» — сразу справа от ползунка (за временем кадра)
+  rail.el.querySelector('.gz-group[data-id="build"]')?.remove(); // Управление полем уже перенесено в нижний пульт.
   const status = $('mayatnikStatus');
   // v0.051: строки «Картинка…» и «Кадр…» — в подвал, к остальным надписям.
   status.append($('imageStats'));
