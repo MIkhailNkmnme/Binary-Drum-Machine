@@ -24,15 +24,15 @@ const esc=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;');
 function fraction(n,d=6){
  const q=Math.floor(n/d),r=n%d;
  if(!r)return String(q);
- const glyph=r*2===d?'½':r*3===d?'⅓':r*3===2*d?'⅔':null;
+ const glyph=r*2===d?'½':r*3===d?'⅓':r*3===2*d?'⅔':r*6===d?'⅙':r*6===5*d?'⅚':null;
  return glyph?(q?String(q):'')+glyph:n+'/'+d;
 }
 export function makeSvg(){
- const s=['<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1050" viewBox="0 0 1400 1050"><title>Серпинский: единая сетка и размеры в частях первого бита</title><desc>Девять изображений, три ряда и три столбца. Третий столбец: исходники 16, 24, 32 с красными квадратами предыдущего увеличения. Одна часть u равна стороне бита первого рисунка; H₀=8u. Размер клетки единичной сетки неизменен, 6 px. Размерные линии без стрелок: ширина снизу, высота слева.</desc><rect width="1400" height="1050" fill="'+BG+'"/>'];
+ const s=['<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1050" viewBox="0 0 1400 1050"><title>Серпинский: единая сетка и размеры в частях первого бита</title><desc>Девять изображений, три ряда и три столбца. Третий столбец: исходники 16, 24, 32 с красными квадратами предыдущего увеличения. Единица размеров равна стороне бита первого рисунка; H₀=8. Размер клетки единичной сетки неизменен, 6 px. Размерные линии без стрелок: ширина снизу, высота слева.</desc><rect width="1400" height="1050" fill="'+BG+'"/>'];
  const txt=(x,y,t,size=14,c=FG,anchor='end')=>s.push('<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" fill="'+c+'" font-family="DejaVu Sans,Arial,sans-serif" font-size="'+size+'">'+esc(t)+'</text>');
  txt(700,37,'Серпинский: увеличение и наложение',28,FG,'middle');
  txt(370,83,'Исходник',23);txt(830,83,'Увеличение',23);txt(1290,83,'На следующем исходнике',23);
- txt(700,117,'1 часть u = сторона бита первого рисунка; его высота H₀ = 8u',16,'#c8d8ee','middle');
+ txt(700,117,'Единица размеров — сторона бита первого рисунка; его высота H₀ = 8',16,'#c8d8ee','middle');
  for(const y of B)s.push('<path d="M60 '+y+'H1320" fill="none" stroke="#273343" stroke-dasharray="3 5"/>');
  for(const x of R)s.push('<path d="M'+x+' 145V882" fill="none" stroke="#1d2632" stroke-dasharray="2 6"/>');
  for(const p of panels){
@@ -63,19 +63,33 @@ export function makeSvg(){
   // Dimension annotations stay outside the aligned image group.
   const dy=p.bottom+12,dx=x-18,DC='#7cc7ff';
   s.push('<g class="panel-dimensions" data-for="'+p.id+'" fill="none" stroke="'+DC+'" stroke-width="1"><path data-dimension="width" data-value-units="'+p.width/U+'" d="M'+x+' '+dy+'H'+p.right+'M'+x+' '+(p.bottom+3)+'V'+(dy+5)+'M'+p.right+' '+(p.bottom+3)+'V'+(dy+5)+'"/><path data-dimension="height" data-value-units="'+p.height/U+'" d="M'+dx+' '+y+'V'+p.bottom+'M'+(dx-5)+' '+y+'H'+(x-3)+'M'+(dx-5)+' '+p.bottom+'H'+(x-3)+'"/></g>');
-  txt(x+p.width/2,p.bottom+30,fraction(p.width)+'u',14,DC,'middle');
-  txt(dx-8,y+p.height/2+5,fraction(p.height)+'u',14,DC);
+  txt(x+p.width/2,p.bottom+30,fraction(p.width),14,DC,'middle');
+  txt(dx-8,y+p.height/2+5,fraction(p.height),14,DC);
+  // Equal height parts use the first figure's full height (8 first bits).
+  const partHeight=8*U,partCount=p.height/partHeight,PC='#ff737a';
+  s.push('<g data-height-parts="'+p.id+'" data-part-size="8" data-part-count="'+partCount+'" fill="none" stroke="'+PC+'" stroke-width="1"><path d="M'+dx+' '+y+'V'+p.bottom+'"/>');
+  for(let k=0;k<=partCount;k++)s.push('<path d="M'+(dx-4)+' '+(y+k*partHeight)+'h8"/>');
+  s.push('</g>');
+  for(let k=0;k<partCount;k++)txt(dx+9,y+(k+.5)*partHeight+4,'8',11,PC,'middle');
   if(p.previous){
-   txt(p.right,p.bottom+50,'Белый бит: 1u · красный: '+fraction(p.previousP)+'u',13,MUT);
+   txt(p.right,p.bottom+50,'Белый бит: 1 · красный: '+fraction(p.previousP),13,MUT);
    txt(p.right,p.bottom+68,'Высота: '+p.ratio+'H₀ · красные линии 1 px',13,MUT);
   }else{
-   txt(p.right,p.bottom+50,'Бит: '+fraction(p.p)+'u · высота: '+(p.ratio==='1'?'H₀':p.ratio+'H₀'),13,MUT);
+   txt(p.right,p.bottom+50,'Бит: '+fraction(p.p)+' · высота: '+(p.ratio==='1'?'H₀':p.ratio+'H₀'),13,MUT);
    txt(p.right,p.bottom+68,p.rows+' исходных рядов'+(p.col===1?' · ×'+(p.p===12?'2':p.p===9?'1,5':'1⅓'):''),13,MUT);
   }
  }
- txt(700,985,'Размерные линии без стрелок: ширина снизу, высота слева. Все размеры — в частях u.',15,MUT,'middle');
- txt(700,1009,'Серая сетка: 1u везде; границы исходных битов заметнее. Красные квадраты — предыдущее увеличение.',14,MUT,'middle');
- txt(700,1033,'Высота первой фигуры H₀ = 8u. На этой схеме 1u = 6 px. Размеры даны точно, без округления.',14,MUT,'middle');
+ // Compare consecutive widths in each column, preserving the shared right edge.
+ for(let row=1;row<3;row++)for(let col=0;col<3;col++){
+  const previous=panels.find(p=>p.row===row-1&&p.col===col),current=panels.find(p=>p.row===row&&p.col===col);
+  const left=current.right-current.width,seam=previous.right-previous.width,right=current.right,by=row===1?370:649,PC='#ff737a';
+  s.push('<g data-width-parts="'+current.id+'" data-previous-width="'+previous.width/U+'" data-increase="'+(current.width-previous.width)/U+'" fill="none" stroke="'+PC+'" stroke-width="1"><path d="M'+left+' '+by+'H'+right+'M'+left+' '+(by-5)+'v10M'+seam+' '+(by-5)+'v10M'+right+' '+(by-5)+'v10"/></g>');
+  txt((left+seam)/2,by-9,'+'+fraction(current.width-previous.width),13,PC,'middle');
+  txt((seam+right)/2,by-9,fraction(previous.width),13,PC,'middle');
+ }
+ txt(700,985,'Голубые размеры — целиком; красные — части. Высота разбита на отрезки по 8.',15,MUT,'middle');
+ txt(700,1009,'Между рядами: прибавка к ширине со знаком + и прежняя ширина. Их сумма — новая ширина.',14,MUT,'middle');
+ txt(700,1033,'Единица размеров — первый бит (6 px); серая сетка — 1. Высота первой фигуры H₀ = 8. Дроби точные.',14,MUT,'middle');
  s.push('</svg>');return s.join('\n');
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){

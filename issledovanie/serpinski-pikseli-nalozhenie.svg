@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1050" viewBox="0 0 1400 1050"><title>Серпинский: единая сетка и размеры в частях первого бита</title><desc>Девять изображений, три ряда и три столбца. Третий столбец: исходники 16, 24, 32 с красными квадратами предыдущего увеличения. Одна часть u равна стороне бита первого рисунка; H₀=8u. Размер клетки единичной сетки неизменен, 6 px. Размерные линии без стрелок: ширина снизу, высота слева.</desc><rect width="1400" height="1050" fill="#080b11"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1050" viewBox="0 0 1400 1050"><title>Серпинский: единая сетка и размеры в частях первого бита</title><desc>Девять изображений, три ряда и три столбца. Третий столбец: исходники 16, 24, 32 с красными квадратами предыдущего увеличения. Единица размеров равна стороне бита первого рисунка; H₀=8. Размер клетки единичной сетки неизменен, 6 px. Размерные линии без стрелок: ширина снизу, высота слева.</desc><rect width="1400" height="1050" fill="#080b11"/>
 <text x="700" y="37" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="28">Серпинский: увеличение и наложение</text>
 <text x="370" y="83" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">Исходник</text>
 <text x="830" y="83" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">Увеличение</text>
 <text x="1290" y="83" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">На следующем исходнике</text>
-<text x="700" y="117" text-anchor="middle" fill="#c8d8ee" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">1 часть u = сторона бита первого рисунка; его высота H₀ = 8u</text>
+<text x="700" y="117" text-anchor="middle" fill="#c8d8ee" font-family="DejaVu Sans,Arial,sans-serif" font-size="16">Единица размеров — сторона бита первого рисунка; его высота H₀ = 8</text>
 <path d="M60 276H1320" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
 <path d="M60 552H1320" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
 <path d="M60 882H1320" fill="none" stroke="#273343" stroke-dasharray="3 5"/>
@@ -52,9 +52,14 @@
 </g>
 <text x="370" y="211" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">8 пикселей</text>
 <g class="panel-dimensions" data-for="original-8" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="15" d="M280 288H370M280 279V293M370 279V293"/><path data-dimension="height" data-value-units="8" d="M262 228V276M257 228H277M257 276H277"/></g>
-<text x="325" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">15u</text>
-<text x="254" y="257" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">8u</text>
-<text x="370" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1u · высота: H₀</text>
+<text x="325" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">15</text>
+<text x="254" y="257" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">8</text>
+<g data-height-parts="original-8" data-part-size="8" data-part-count="1" fill="none" stroke="#ff737a" stroke-width="1"><path d="M262 228V276"/>
+<path d="M258 228h8"/>
+<path d="M258 276h8"/>
+</g>
+<text x="271" y="256" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="370" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1 · высота: H₀</text>
 <text x="370" y="344" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">8 исходных рядов</text>
 <g data-aligned-panel="enlarged-8-to-16" data-row-bottom="276" data-column-right="830"><g id="enlarged-8-to-16" data-source-rows="8" data-cell-size="12" data-height="96" data-grid-step="6" shape-rendering="crispEdges"><rect x="650" y="180" width="180" height="96" fill="#000"/>
 <rect data-bit="1" x="734" y="180" width="12" height="12" fill="#e8edf5"/>
@@ -99,9 +104,16 @@
 </g>
 <text x="830" y="163" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">8 → 16 пикселей</text>
 <g class="panel-dimensions" data-for="enlarged-8-to-16" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="30" d="M650 288H830M650 279V293M830 279V293"/><path data-dimension="height" data-value-units="16" d="M632 180V276M627 180H647M627 276H647"/></g>
-<text x="740" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">30u</text>
-<text x="624" y="233" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16u</text>
-<text x="830" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 2u · высота: 2H₀</text>
+<text x="740" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">30</text>
+<text x="624" y="233" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16</text>
+<g data-height-parts="enlarged-8-to-16" data-part-size="8" data-part-count="2" fill="none" stroke="#ff737a" stroke-width="1"><path d="M632 180V276"/>
+<path d="M628 180h8"/>
+<path d="M628 228h8"/>
+<path d="M628 276h8"/>
+</g>
+<text x="641" y="208" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="641" y="256" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="830" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 2 · высота: 2H₀</text>
 <text x="830" y="344" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">8 исходных рядов · ×2</text>
 <g data-aligned-panel="overlay-base-16" data-row-bottom="276" data-column-right="1290"><g id="overlay-base-16" data-source-rows="16" data-cell-size="6" data-height="96" data-grid-step="6" shape-rendering="crispEdges"><rect x="1104" y="180" width="186" height="96" fill="#000"/>
 <rect data-bit="1" x="1194" y="180" width="6" height="6" fill="#e8edf5"/>
@@ -254,9 +266,16 @@
 </g>
 <text x="1290" y="163" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">16 + квадраты 8 → 16</text>
 <g class="panel-dimensions" data-for="overlay-base-16" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="31" d="M1104 288H1290M1104 279V293M1290 279V293"/><path data-dimension="height" data-value-units="16" d="M1086 180V276M1081 180H1101M1081 276H1101"/></g>
-<text x="1197" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">31u</text>
-<text x="1078" y="233" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16u</text>
-<text x="1290" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1u · красный: 2u</text>
+<text x="1197" y="306" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">31</text>
+<text x="1078" y="233" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16</text>
+<g data-height-parts="overlay-base-16" data-part-size="8" data-part-count="2" fill="none" stroke="#ff737a" stroke-width="1"><path d="M1086 180V276"/>
+<path d="M1082 180h8"/>
+<path d="M1082 228h8"/>
+<path d="M1082 276h8"/>
+</g>
+<text x="1095" y="208" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="1095" y="256" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="1290" y="326" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1 · красный: 2</text>
 <text x="1290" y="344" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Высота: 2H₀ · красные линии 1 px</text>
 <g data-aligned-panel="original-16" data-row-bottom="552" data-column-right="370"><g id="original-16" data-source-rows="16" data-cell-size="6" data-height="96" data-grid-step="6" shape-rendering="crispEdges"><rect x="184" y="456" width="186" height="96" fill="#000"/>
 <rect data-bit="1" x="274" y="456" width="6" height="6" fill="#e8edf5"/>
@@ -408,9 +427,16 @@
 </g>
 <text x="370" y="439" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">16 пикселей</text>
 <g class="panel-dimensions" data-for="original-16" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="31" d="M184 564H370M184 555V569M370 555V569"/><path data-dimension="height" data-value-units="16" d="M166 456V552M161 456H181M161 552H181"/></g>
-<text x="277" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">31u</text>
-<text x="158" y="509" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16u</text>
-<text x="370" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1u · высота: 2H₀</text>
+<text x="277" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">31</text>
+<text x="158" y="509" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">16</text>
+<g data-height-parts="original-16" data-part-size="8" data-part-count="2" fill="none" stroke="#ff737a" stroke-width="1"><path d="M166 456V552"/>
+<path d="M162 456h8"/>
+<path d="M162 504h8"/>
+<path d="M162 552h8"/>
+</g>
+<text x="175" y="484" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="175" y="532" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="370" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1 · высота: 2H₀</text>
 <text x="370" y="620" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">16 исходных рядов</text>
 <g data-aligned-panel="enlarged-16-to-24" data-row-bottom="552" data-column-right="830"><g id="enlarged-16-to-24" data-source-rows="16" data-cell-size="9" data-height="144" data-grid-step="6" shape-rendering="crispEdges"><rect x="551" y="408" width="279" height="144" fill="#000"/>
 <rect data-bit="1" x="686" y="408" width="9" height="9" fill="#e8edf5"/>
@@ -563,9 +589,18 @@
 </g>
 <text x="830" y="391" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">16 → 24 пикселя</text>
 <g class="panel-dimensions" data-for="enlarged-16-to-24" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="46.5" d="M551 564H830M551 555V569M830 555V569"/><path data-dimension="height" data-value-units="24" d="M533 408V552M528 408H548M528 552H548"/></g>
-<text x="690.5" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">46½u</text>
-<text x="525" y="485" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24u</text>
-<text x="830" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1½u · высота: 3H₀</text>
+<text x="690.5" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">46½</text>
+<text x="525" y="485" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24</text>
+<g data-height-parts="enlarged-16-to-24" data-part-size="8" data-part-count="3" fill="none" stroke="#ff737a" stroke-width="1"><path d="M533 408V552"/>
+<path d="M529 408h8"/>
+<path d="M529 456h8"/>
+<path d="M529 504h8"/>
+<path d="M529 552h8"/>
+</g>
+<text x="542" y="436" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="542" y="484" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="542" y="532" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="830" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1½ · высота: 3H₀</text>
 <text x="830" y="620" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">16 исходных рядов · ×1,5</text>
 <g data-aligned-panel="overlay-base-24" data-row-bottom="552" data-column-right="1290"><g id="overlay-base-24" data-source-rows="24" data-cell-size="6" data-height="144" data-grid-step="6" shape-rendering="crispEdges"><rect x="1008" y="408" width="282" height="144" fill="#000"/>
 <rect data-bit="1" x="1146" y="408" width="6" height="6" fill="#e8edf5"/>
@@ -898,9 +933,18 @@
 </g>
 <text x="1290" y="391" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">24 + квадраты 16 → 24</text>
 <g class="panel-dimensions" data-for="overlay-base-24" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="47" d="M1008 564H1290M1008 555V569M1290 555V569"/><path data-dimension="height" data-value-units="24" d="M990 408V552M985 408H1005M985 552H1005"/></g>
-<text x="1149" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">47u</text>
-<text x="982" y="485" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24u</text>
-<text x="1290" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1u · красный: 1½u</text>
+<text x="1149" y="582" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">47</text>
+<text x="982" y="485" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24</text>
+<g data-height-parts="overlay-base-24" data-part-size="8" data-part-count="3" fill="none" stroke="#ff737a" stroke-width="1"><path d="M990 408V552"/>
+<path d="M986 408h8"/>
+<path d="M986 456h8"/>
+<path d="M986 504h8"/>
+<path d="M986 552h8"/>
+</g>
+<text x="999" y="436" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="999" y="484" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="999" y="532" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="1290" y="602" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1 · красный: 1½</text>
 <text x="1290" y="620" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Высота: 3H₀ · красные линии 1 px</text>
 <g data-aligned-panel="original-24" data-row-bottom="882" data-column-right="370"><g id="original-24" data-source-rows="24" data-cell-size="6" data-height="144" data-grid-step="6" shape-rendering="crispEdges"><rect x="88" y="738" width="282" height="144" fill="#000"/>
 <rect data-bit="1" x="226" y="738" width="6" height="6" fill="#e8edf5"/>
@@ -1232,9 +1276,18 @@
 </g>
 <text x="370" y="721" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">24 пикселя</text>
 <g class="panel-dimensions" data-for="original-24" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="47" d="M88 894H370M88 885V899M370 885V899"/><path data-dimension="height" data-value-units="24" d="M70 738V882M65 738H85M65 882H85"/></g>
-<text x="229" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">47u</text>
-<text x="62" y="815" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24u</text>
-<text x="370" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1u · высота: 3H₀</text>
+<text x="229" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">47</text>
+<text x="62" y="815" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">24</text>
+<g data-height-parts="original-24" data-part-size="8" data-part-count="3" fill="none" stroke="#ff737a" stroke-width="1"><path d="M70 738V882"/>
+<path d="M66 738h8"/>
+<path d="M66 786h8"/>
+<path d="M66 834h8"/>
+<path d="M66 882h8"/>
+</g>
+<text x="79" y="766" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="79" y="814" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="79" y="862" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="370" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1 · высота: 3H₀</text>
 <text x="370" y="950" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">24 исходных рядов</text>
 <g data-aligned-panel="enlarged-24-to-32" data-row-bottom="882" data-column-right="830"><g id="enlarged-24-to-32" data-source-rows="24" data-cell-size="8" data-height="192" data-grid-step="6" shape-rendering="crispEdges"><rect x="454" y="690" width="376" height="192" fill="#000"/>
 <rect data-bit="1" x="638" y="690" width="8" height="8" fill="#e8edf5"/>
@@ -1567,9 +1620,20 @@
 </g>
 <text x="830" y="673" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">24 → 32 пикселя</text>
 <g class="panel-dimensions" data-for="enlarged-24-to-32" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="62.666666666666664" d="M454 894H830M454 885V899M830 885V899"/><path data-dimension="height" data-value-units="32" d="M436 690V882M431 690H451M431 882H451"/></g>
-<text x="642" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">62⅔u</text>
-<text x="428" y="791" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">32u</text>
-<text x="830" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1⅓u · высота: 4H₀</text>
+<text x="642" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">62⅔</text>
+<text x="428" y="791" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">32</text>
+<g data-height-parts="enlarged-24-to-32" data-part-size="8" data-part-count="4" fill="none" stroke="#ff737a" stroke-width="1"><path d="M436 690V882"/>
+<path d="M432 690h8"/>
+<path d="M432 738h8"/>
+<path d="M432 786h8"/>
+<path d="M432 834h8"/>
+<path d="M432 882h8"/>
+</g>
+<text x="445" y="718" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="445" y="766" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="445" y="814" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="445" y="862" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="830" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Бит: 1⅓ · высота: 4H₀</text>
 <text x="830" y="950" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">24 исходных рядов · ×1⅓</text>
 <g data-aligned-panel="overlay-base-32" data-row-bottom="882" data-column-right="1290"><g id="overlay-base-32" data-source-rows="32" data-cell-size="6" data-height="192" data-grid-step="6" shape-rendering="crispEdges"><rect x="912" y="690" width="378" height="192" fill="#000"/>
 <rect data-bit="1" x="1098" y="690" width="6" height="6" fill="#e8edf5"/>
@@ -2154,11 +2218,40 @@
 </g>
 <text x="1290" y="673" text-anchor="end" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">32 + квадраты 24 → 32</text>
 <g class="panel-dimensions" data-for="overlay-base-32" fill="none" stroke="#7cc7ff" stroke-width="1"><path data-dimension="width" data-value-units="63" d="M912 894H1290M912 885V899M1290 885V899"/><path data-dimension="height" data-value-units="32" d="M894 690V882M889 690H909M889 882H909"/></g>
-<text x="1101" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">63u</text>
-<text x="886" y="791" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">32u</text>
-<text x="1290" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1u · красный: 1⅓u</text>
+<text x="1101" y="912" text-anchor="middle" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">63</text>
+<text x="886" y="791" text-anchor="end" fill="#7cc7ff" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">32</text>
+<g data-height-parts="overlay-base-32" data-part-size="8" data-part-count="4" fill="none" stroke="#ff737a" stroke-width="1"><path d="M894 690V882"/>
+<path d="M890 690h8"/>
+<path d="M890 738h8"/>
+<path d="M890 786h8"/>
+<path d="M890 834h8"/>
+<path d="M890 882h8"/>
+</g>
+<text x="903" y="718" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="903" y="766" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="903" y="814" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="903" y="862" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="11">8</text>
+<text x="1290" y="932" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Белый бит: 1 · красный: 1⅓</text>
 <text x="1290" y="950" text-anchor="end" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">Высота: 4H₀ · красные линии 1 px</text>
-<text x="700" y="985" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Размерные линии без стрелок: ширина снизу, высота слева. Все размеры — в частях u.</text>
-<text x="700" y="1009" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">Серая сетка: 1u везде; границы исходных битов заметнее. Красные квадраты — предыдущее увеличение.</text>
-<text x="700" y="1033" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">Высота первой фигуры H₀ = 8u. На этой схеме 1u = 6 px. Размеры даны точно, без округления.</text>
+<g data-width-parts="original-16" data-previous-width="15" data-increase="16" fill="none" stroke="#ff737a" stroke-width="1"><path d="M184 370H370M184 365v10M280 365v10M370 365v10"/></g>
+<text x="232" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16</text>
+<text x="325" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">15</text>
+<g data-width-parts="enlarged-16-to-24" data-previous-width="30" data-increase="16.5" fill="none" stroke="#ff737a" stroke-width="1"><path d="M551 370H830M551 365v10M650 365v10M830 365v10"/></g>
+<text x="600.5" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16½</text>
+<text x="740" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">30</text>
+<g data-width-parts="overlay-base-24" data-previous-width="31" data-increase="16" fill="none" stroke="#ff737a" stroke-width="1"><path d="M1008 370H1290M1008 365v10M1104 365v10M1290 365v10"/></g>
+<text x="1056" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16</text>
+<text x="1197" y="361" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">31</text>
+<g data-width-parts="original-24" data-previous-width="31" data-increase="16" fill="none" stroke="#ff737a" stroke-width="1"><path d="M88 649H370M88 644v10M184 644v10M370 644v10"/></g>
+<text x="136" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16</text>
+<text x="277" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">31</text>
+<g data-width-parts="enlarged-24-to-32" data-previous-width="46.5" data-increase="16.166666666666668" fill="none" stroke="#ff737a" stroke-width="1"><path d="M454 649H830M454 644v10M551 644v10M830 644v10"/></g>
+<text x="502.5" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16⅙</text>
+<text x="690.5" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">46½</text>
+<g data-width-parts="overlay-base-32" data-previous-width="47" data-increase="16" fill="none" stroke="#ff737a" stroke-width="1"><path d="M912 649H1290M912 644v10M1008 644v10M1290 644v10"/></g>
+<text x="960" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">+16</text>
+<text x="1149" y="640" text-anchor="middle" fill="#ff737a" font-family="DejaVu Sans,Arial,sans-serif" font-size="13">47</text>
+<text x="700" y="985" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Голубые размеры — целиком; красные — части. Высота разбита на отрезки по 8.</text>
+<text x="700" y="1009" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">Между рядами: прибавка к ширине со знаком + и прежняя ширина. Их сумма — новая ширина.</text>
+<text x="700" y="1033" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">Единица размеров — первый бит (6 px); серая сетка — 1. Высота первой фигуры H₀ = 8. Дроби точные.</text>
 </svg>
