@@ -1,4 +1,4 @@
-<!-- Zerkalius Исследование — v0.064. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
+<!-- Zerkalius Исследование — v0.065. Что нашлось в цикле Аниматрицы (Zerkalius Code) на сцене «1»: числа,
      законы и картинки. Страница-отчёт: считается не здесь — картинки собраны вне страницы по журналу Аниматрицы
      (35.49) тем же правилом волны, что в Code; те же выводы кратко записаны в борт-журнале (v0.089).
      v0.001: заведена 2026-09-24 по слову пользователя («картинки — в отдельную папку сайта и в индекс»).
@@ -52,6 +52,7 @@
              экрана, картинка «Нового» во всю ширину, кнопки просмотра переносятся. На компьютере — без изменений.
      v0.062: раздел 7.7 — Серпинский: увеличение и наложение предыдущих квадратов; ряды выровнены снизу, столбцы справа.
      v0.064: Серпинский — три наложения 16/24/32, единая сетка первого бита и точные размеры в частях u.
+     v0.065: видео раздела 7.6 доступно в предпросмотре новости вместе с рисунками других разделов.
      v0.063: рисунок новости переключается при наведении или фокусе; раздел без рисунка оставляет пустую область.
      v0.060: раздел 7.6 — раскраска маятника по Точке Оси, вариант 1: видео пользователя (0:44, лежит в Битмультфильмах).
      v0.059: в просмотре картинки полоса кнопок прозрачная, кнопки 1:1 / ×2 / ×4 / ✕ крупнее и заметнее.
@@ -76,7 +77,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Исследование — v0.064</title>
+<title>Zerkalius Исследование — v0.065</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -186,6 +187,9 @@
   /* v0.058: разделы пронумерованы внутри тем (1.1, 1.2…); картинка «Нового» вдвое меньше. */
   .nv-pic{ justify-self:center; width:50%; display:block; aspect-ratio:1400 / 880; }
   .nv-pic img{ width:100%; height:100%; object-fit:contain; box-sizing:border-box; }
+  .nv-image-link{ display:block; width:100%; height:100%; }
+  .nv-video{ display:block; width:100%; height:100%; object-fit:contain; box-sizing:border-box; border:1px solid var(--line); border-radius:4px; background:#000; }
+  .nv-pic [hidden]{ display:none!important; }
   /* v0.059: полоса кнопок просмотра прозрачная, кнопки крупнее и заметнее. */
   #viewer .bar{ background:transparent; border-bottom:0; padding:12px 14px; gap:10px; pointer-events:none; }
   #viewer .bar button{ pointer-events:auto; font-size:17px; padding:9px 18px; border-radius:6px; border:2px solid #4a5168;
@@ -226,7 +230,7 @@
 <div class="novoe">
   <div><p class="sub nv-h">Новое:</p>
   <ol><li><a href="#serpinski-pikseli">7.7. Серпинский: увеличение и наложение</a> <span>23.10.2026</span></li><li><a href="#tochka-os-1">7.6. Маятник: раскраска по Точке Оси — вариант 1</a> <span>21.10.2026</span></li><li><a href="#mayatnik-boka">7.5. Маятник: одинаковые узоры по бокам по всей длине</a> <span>20.10.2026</span></li><li><a href="#mayatnik-zerkala">7.4. Маятник: подсветка, зеркало в чёрных треугольниках и застывшая зона</a> <span>17.10.2026</span></li></ol></div>
-  <a class="nv-pic" href="#serpinski-pikseli" title="7.7. Серпинский: увеличение и наложение"><img src="serpinski-pikseli-nalozhenie.svg?v=64" alt="Серпинский: оригиналы и увеличенные копии со стрелками"></a>
+  <div class="nv-pic"><a class="nv-image-link" href="#serpinski-pikseli" title="7.7. Серпинский: увеличение и наложение"><img src="serpinski-pikseli-nalozhenie.svg?v=64" alt="Серпинский: оригиналы и увеличенные копии со стрелками"></a><video class="nv-video" controls playsinline muted loop preload="metadata" hidden></video></div>
 </div>
 
 <nav id="toc">
@@ -1462,7 +1466,7 @@ Gaussian Blur радиусом 2 <b>экранных</b> пикселя, кор�
 })();
 </script>
 <a id="toTop" href="#toc" title="К оглавлению">↑ Оглавление</a>
-<script src="research-news-preview.js?v=63"></script>
+<script src="research-news-preview.js?v=65"></script>
 <script src="../_js/hub-link.js"></script>
 </body>
 </html>
