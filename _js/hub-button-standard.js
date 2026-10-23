@@ -130,7 +130,7 @@
     // arrow captions (−1 / +1 etc.) move to the tooltip: chevrons carry no glyphs
     if(b.classList.contains('gz-al')) for(const a of b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')) { const t=a.textContent.trim(); if(t&&!a.dataset.hubCap){a.dataset.hubCap=t;a.title=t+' · '+(b.title||'');a.setAttribute('aria-label',a.title);} }
     let tv=mid.querySelector(':scope > .hub-thumb-value'); if(!tv){tv=document.createElement('b');tv.className='hub-thumb-value';mid.append(tv);}
-    const sync=()=>{const cur=v.textContent.split('/')[0].trim();if(tv.textContent!==cur){tv.textContent=cur;fitValue(mid,tv);}}; sync();   // v0.435: в бегунке только текущее («60 / 70» → «60»), общее число уже справа
+    const sync=()=>{if(tv.textContent!==v.textContent){tv.textContent=v.textContent;fitValue(mid,tv);}}; sync();   // v0.436: в бегунке полное значение («60 / 70»), число за ползунком (.gz-vt) убрано как дубль
     if(thb){ // the sign (▶ / ❚❚ …) stays visible on the closed thumb; the thumb itself still takes the click
       let sg=mid.querySelector(':scope > .hub-thumb-sign'); if(!sg){sg=document.createElement('b');sg.className='hub-thumb-sign';mid.append(sg);}
       const ss=()=>{if(sg.textContent!==th.textContent)sg.textContent=th.textContent;}; ss(); if(!th.dataset.hubMo){th.dataset.hubMo='1';new MutationObserver(ss).observe(th,{childList:true,characterData:true,subtree:true});}
