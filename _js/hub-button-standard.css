@@ -151,3 +151,9 @@ body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.g
 /* v0.423: двойной слот 246 px — ползунок с короткой дорожкой (голова-включатель, хвост, длинное значение); бегунок отступает от шевронов ещё на 8 px */
 #hubRail#hubRail .gz-hx.hub-sl.hub-wide{width:246px!important;min-width:246px!important;max-width:246px!important;background-size:246px 24px!important}
 #hubRail .hub-sl.hub-wide>.gz-mid{--hub-pad:8px}
+
+/* v0.424 Р06: у группы с перекрытыми элементами подложка и скобки не рисуются (скрыты только перекрытые кнопки, остальные на местах) */
+#hubRail .hub-partial>.hub-contours{visibility:hidden}
+
+/* v0.425 Р02: строки группы вне окна прокрутки колонки скрыты (колесо листает) */
+#hubRail .hub-off{visibility:hidden!important;pointer-events:none!important}

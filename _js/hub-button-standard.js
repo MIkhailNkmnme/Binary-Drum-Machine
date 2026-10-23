@@ -54,18 +54,32 @@
   const setStyle = (e,k,v) => { if (e.style.getPropertyValue(k) !== v) e.style.setProperty(k,v); };
   let frontGroup = null;
   const allBoxes = () => [...document.querySelectorAll('#hubRail .gz-group')];
+  // v0.424, КНОПКИ v19 Р06/Р07: an open list or column hides ONLY the elements (header / buttons) of other groups that it lies on — the rest of that group stays in place.
+  // Nothing is written to the saved layout: hiding is a class + inert, recomputed on every call, so elements come back unchanged when the list closes or moves.
   function updateOcclusion() {
     const groups = allBoxes();
-    groups.forEach(g => { g.classList.remove('hub-occluded'); g.inert = false; });
+    document.querySelectorAll('#hubRail .hub-occluded').forEach(e => { e.classList.remove('hub-occluded'); e.inert = false; });
+    groups.forEach(g => g.classList.remove('hub-partial'));
     const active = groups.filter(g => g.classList.contains('gz-open')).sort((a,b)=>(b.dataset.id===frontGroup)-(a.dataset.id===frontGroup));
     const ladder = document.querySelector('.hub-standard-list');
-    const bounds=g=>[...g.querySelectorAll('.gz-hx,.hub-contours .cap')].filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect();return{left:r.left-1,right:r.right+1,top:r.top-1,bottom:r.bottom+1};});
-    for (const g of groups) {
-      const targets=bounds(g), rank=active.indexOf(g);
-      const foreign = active.some((a,i) => a !== g && (rank<0||i<rank) && !a.classList.contains('hub-occluded') && bounds(a).some(b=>targets.some(t=>overlap(t,b))));
-      const hidden = foreign || (ladder && ladder.owner?.closest('.gz-group') !== g && targets.some(t=>overlap(t,ladder.getBoundingClientRect())));
-      g.classList.toggle('hub-occluded',!!hidden); g.inert = !!hidden;
-    }
+    const box = e => { const r=e.getBoundingClientRect(); return {left:r.left-1,right:r.right+1,top:r.top-1,bottom:r.bottom+1}; };
+    const elsOf = g => [...g.querySelectorAll(':scope > .gz-head, .gz-hx:not(.gz-head)')].filter(e => e.getClientRects().length && !e.classList.contains('hub-off'));
+    const ladderRect = ladder && ladder.getClientRects().length ? ladder.getBoundingClientRect() : null;
+    const obstacles = [];
+    const process = (g, adds) => {
+      const mine = elsOf(g), ownLadder = ladder && ladder.owner?.closest('.gz-group') === g; let hid = 0;
+      for (const e of mine) {
+        const r = box(e);
+        if ((ladderRect && !ownLadder && overlap(r, ladderRect)) || obstacles.some(o => overlap(r, o))) { e.classList.add('hub-occluded'); e.inert = true; hid++; }
+      }
+      if (hid) g.classList.add('hub-partial');
+      if (adds) {
+        mine.filter(e => !e.classList.contains('hub-occluded')).forEach(e => obstacles.push(box(e)));
+        if (!hid) g.querySelectorAll('.hub-contours .cap').forEach(c => { if (c.getClientRects().length) obstacles.push(box(c)); });
+      }
+    };
+    active.forEach(g => process(g, true));
+    groups.filter(g => !active.includes(g)).forEach(g => process(g, false));
   }
   function setupList(b) {
     const o = b.gzList; if (!o || b.dataset.hubList) return; b.dataset.hubList = '1';
@@ -74,19 +88,21 @@
     o.placed = list => {
       list.classList.add('hub-standard-list'); b.classList.add('hub-list-owner'); roof(b,false);
       const options = [...list.children].filter(x => x.classList.contains('gz-hx'));
-      const r = b.getBoundingClientRect(), rows = Math.min(innerWidth<=1100?Infinity:7,options.length,Math.max(1,Math.floor((innerHeight-30)/26))), cols = Math.ceil(options.length/rows), width=cols*126-6;
+      const r = b.getBoundingClientRect(), rows = options.length, cols = 1, width=120, scroll = rows*26-2 > innerHeight-56;   // v0.425 Р02: one column; too tall — it scrolls inside
       const right = r.right+6, left=r.left-width-6;
       const rightSpace=innerWidth-right-3,leftSpace=r.left-5;
       const full=right+width<=innerWidth-3||left>=3;
       const useRight=rightSpace>=leftSpace;
       const visibleWidth=full?width:Math.min(width,Math.max(120,Math.floor(Math.max(rightSpace,leftSpace)/126)*126-6));
       let x = right+width <= innerWidth-3 ? right : left >= 3 ? left : useRight?right:r.left-visibleWidth-6;
-      const y=Math.max(14,Math.min(r.top,innerHeight-rows*26-14));
+      const y=scroll?1:Math.max(14,Math.min(r.top,innerHeight-rows*26-14));
       Object.assign(list.style,{display:'grid',gridAutoFlow:'column',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',columnGap:'6px',rowGap:'2px',width:visibleWidth+'px',left:x+'px',top:y+'px',maxWidth:'none',maxHeight:'none'});
-      list.style.setProperty('overflow-x',full?'visible':'auto','important');
+      list.style.setProperty('overflow-x',full&&!scroll?'visible':'auto','important');
+      if(scroll){Object.assign(list.style,{boxSizing:'border-box',width:(visibleWidth+8)+'px',height:(innerHeight-2)+'px',left:(x-4)+'px'});list.style.setProperty('padding','14px 4px','important');list.style.setProperty('overflow-y','auto','important');}
+      else{list.style.height='';list.style.removeProperty('overflow-y');list.style.removeProperty('padding');list.style.boxSizing='';}
       const cells=options.map((_,i)=>({x:Math.floor(i/rows)*126,y:i%rows*26})), caps=[];
       for(let col=0;col<cols;col++) caps.push({x:col*126,top:true},{x:col*126});
-      contours(list,cells,caps);
+      contours(list,cells,caps); const cs=list.querySelector(':scope > .hub-contours'); if(cs)cs.style.transform=scroll?'translate(4px,14px)':'';
       const g=b.closest('.gz-group'); g?.querySelectorAll('.gz-hx').forEach(x=>x.classList.toggle('hub-dim',x!==b));
       options.forEach(x => { x.tabIndex=0; x.setAttribute('role','button'); if(!x.dataset.hubKeyboard){x.dataset.hubKeyboard='1'; x.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();x.click();}});} });
       updateOcclusion();
@@ -191,6 +207,7 @@
     const w=b.classList.contains('gz-vhd') || (tail && tail.style.display!=='none') || (val && val.textContent.trim().length>4);
     if(w) b.dataset.hubWide='1'; return !!w;
   };
+  const vertical0 = () => !!document.querySelector('#hubRail') && innerWidth<=1100;
   function layout(root) {
     for(const box of root.querySelectorAll(':scope > .gz-group')) {
       if(box.classList.contains('gz-drag'))continue;
@@ -208,22 +225,25 @@
       }
       const items=[...box.querySelectorAll('.gz-hx:not(.gz-head)')];
       const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=top||mobile;
-      const r=head.getBoundingClientRect(), rows=vertical?items.length:Math.min(7,Math.max(1,Math.floor((innerHeight-r.top-16)/26)));
+      // v0.425, Р02: a group column is one column — never split by count; if it does not fit the window it scrolls (wheel) as a window of rows.
+      const r=head.getBoundingClientRect(), n=items.length, fit=Math.max(1,Math.floor((innerHeight-r.top-16)/26));
+      const rows=vertical?n:Math.min(n,fit), off=vertical?0:Math.max(0,Math.min(+box.dataset.hubOff||0,n-rows));
+      box.dataset.hubOff=String(off); box.dataset.hubRows=String(rows);
+      if(!box.dataset.hubWheel){box.dataset.hubWheel='1';box.addEventListener('wheel',e=>{
+        const nn=+box.dataset.hubN||0, rr=+box.dataset.hubRows||0; if(vertical0()||!box.classList.contains('gz-open')||nn<=rr||e.target.closest('.gz-head'))return;
+        e.preventDefault();e.stopPropagation();box.dataset.hubOff=String(Math.max(0,Math.min(nn-rr,(+box.dataset.hubOff||0)+(e.deltaY>0?1:-1))));layout(root);},{passive:false});}
+      box.dataset.hubN=String(n);
       const cells=[{x:0,y:0,w:mini?34:120,head:true}],caps=[];
-      const taken=new Set(); let k=0, ncols=Math.ceil(items.length/rows);
       items.forEach((b,i)=>{
         let x,y,wide=false;
+        const off1=!vertical && (i<off||i>=off+rows);
+        b.classList.toggle('hub-off',off1); b.inert=off1;
         if(vertical){ x=0; y=(i+1)*26; }
-        else {
-          while(taken.has(Math.floor(k/rows)+','+k%rows)) k++;
-          const col=Math.floor(k/rows), row=k%rows; k++;
-          wide=wantsWide(b); if(wide) taken.add((col+1)+','+row);
-          x=126+col*126; y=row*26; ncols=Math.max(ncols,col+(wide?2:1));
-        }
+        else { wide=wantsWide(b); x=126; y=off1?0:(i-off)*26; }
         b.classList.toggle('hub-wide',wide);
         setStyle(b,'--hub-x',x+'px');setStyle(b,'--hub-y',y+'px');
         const section=b.closest('.gz-sec');if(section)setStyle(b,'--c',section.style.getPropertyValue('--c'));
-        if(open){cells.push({x,y}); if(wide)cells.push({x:x+126,y});}
+        if(open&&!off1)cells.push({x,y});
       });
       const height=vertical && open ? (items.length+1)*26-2 :24;setStyle(box,'--hub-height',height+'px');
       if(top)setStyle(box,'height',height+'px');
@@ -232,7 +252,7 @@
         head.classList.add('hub-list-owner');
         if(mini)roof(head,true);else head.querySelector('.hub-roof')?.remove();
         if(vertical && items.length)caps.push({x:0});
-        else for(let col=0;col<ncols;col++)caps.push({x:126+col*126,top:true},{x:126+col*126});
+        else if(n)caps.push({x:126,top:true},{x:126});
       }else{head.classList.remove('hub-list-owner');head.querySelector('.hub-roof')?.remove();}
       contours(box,cells,caps,{merge:open&&vertical&&!mini&&items.length>0,roofTop:open&&!mini});setupParts(box);
     }
