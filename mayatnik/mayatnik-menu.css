@@ -820,7 +820,7 @@ header #paintTools.pt-dd .pt-l:hover::before,header #paintTools.pt-dd .pt-open>.
 /* v0.437: подложка зубцами за всей группой, включая приглушённые кнопки. */
 .mayatnik-menu-ready .gz-group{isolation:isolate}
 .may-group-backdrop{position:absolute;left:0;top:0;z-index:-1;fill:#0d1119;pointer-events:none;overflow:visible}
-.mayatnik-menu-ready .may-group-covered,.mayatnik-menu-ready .may-group-covered *{visibility:hidden!important;pointer-events:none!important}
+.mayatnik-menu-ready .may-el-covered,.mayatnik-menu-ready .may-el-covered *{visibility:hidden!important;pointer-events:none!important}
 .mayatnik-menu-ready .may-list-dim{opacity:.25!important;transition:opacity .12s}
 header #paintTools.pt-dd .pt-r{background-attachment:local}
 /* v0.438: боковая толщина подложки — 2 px, половина межкнопочного отступа 4 px. */

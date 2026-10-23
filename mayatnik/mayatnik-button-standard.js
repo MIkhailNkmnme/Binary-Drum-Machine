@@ -102,7 +102,7 @@
         g.querySelector(':scope > .may-closed-back')?.remove();
         if(host.classList.contains('may-rail-list'))shiftLeft(host,4);
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
-      g.inert=g.classList.contains('may-group-covered');
+      if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
     for(const list of ladders){list.classList.add('may-standard-list');fixLadder(list);if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,false);}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
   }

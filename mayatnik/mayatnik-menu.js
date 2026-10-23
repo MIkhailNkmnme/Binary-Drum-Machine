@@ -873,7 +873,7 @@
           reg(ca[i], () => [{ name: 'Плавно', on: !Z.on(), pick: () => Z.set(0) }, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map(b => ({ name: 'Кратный ×' + b, on: Z.on() && Z.base() === b, pick: () => Z.set(b) }))]); } });
       a.forEach((it, i) => { const names = ring[it.src], e = $(it.src); if (!names || !ca[i] || !e) return; const now = () => e.textContent.split(': ')[1];
         reg(ca[i], () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
-  // v0.441: варианты сбоку от столбца; перекрытая чужая группа скрывается целиком.
+  // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
   let activeList=null;
   const clearListUnder = () => {activeList=null;document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
   const hideListUnder = (list, owner) => {
@@ -1037,11 +1037,26 @@
       entries.push({group,open,rects,listOwner,rank:groupRanks.get(group)||0,index:entries.length});
     }
     entries.sort((a,b)=>Number(!!b.listOwner)-Number(!!a.listOwner)||Number(b.open)-Number(a.open)||b.rank-a.rank||a.rects[0].top-b.rects[0].top||b.index-a.index);
-    const visible=[];
+    // v0.452 (КНП-020, Р06/Р07): перекрытые элементы чужой группы скрываются по одному (шапка, кнопки), остальное остаётся на месте; сохранённая раскладка не меняется
+    const visible=[],hidden=new Set(),BACK='.may-group-backdrop,.may-standard-contours,.may-closed-back,.may-standard-roof';
     for(const entry of entries){
-      const covered=visible.some(above=>above.open&&above.rects.some(a=>entry.rects.some(b=>overlaps(a,b))));
-      entry.group.classList.toggle('may-group-covered',covered);if(!covered)visible.push(entry);
+      const group=entry.group,head=group.querySelector(':scope > .pt-l, :scope > .gz-head');group.classList.remove('may-group-covered');
+      const cover=[];for(const above of visible)if(above.open)cover.push(...above.rects);
+      const els=head?.getClientRects().length?[head]:[];
+      if(els.length&&entry.open)for(const el of group.querySelectorAll('.pt-b, .gz-hx, .gz-control'))if(el!==head&&!head.contains(el)&&el.getClientRects().length)els.push(el);
+      let free=0;
+      for(const el of els){const r=el.getBoundingClientRect();if(cover.some(c=>overlaps(c,r))){hidden.add(el);}else free++;}
+      for(const back of group.querySelectorAll(BACK)){
+        const br=back.getBoundingClientRect(),holes=cover.filter(c=>overlaps(c,br));
+        if(!holes.length){if(back.style.clipPath)back.style.clipPath='';continue;}
+        const M=4000;let d='M'+(-M)+' '+(-M)+'H'+M+'V'+M+'H'+(-M)+'Z';
+        for(const c of holes)d+='M'+(c.left-br.left)+' '+(c.top-br.top)+'h'+c.width+'v'+c.height+'h'+(-c.width)+'Z';
+        back.style.clipPath="path(evenodd,'"+d+"')";
+      }
+      if(free||!els.length)visible.push(entry);
     }
+    for(const el of document.querySelectorAll('.may-el-covered'))if(!hidden.has(el)){el.classList.remove('may-el-covered');if(el.dataset.mayCovInert==='1'){el.inert=false;delete el.dataset.mayCovInert;}}
+    for(const el of hidden){el.classList.add('may-el-covered');if(!el.inert){el.inert=true;el.dataset.mayCovInert='1';}}
   }
   const scheduleGroups = () => { if(!groupFrame)groupFrame=requestAnimationFrame(syncGroupOverlap); };
   for (const host of [tools,rail.el]) {
