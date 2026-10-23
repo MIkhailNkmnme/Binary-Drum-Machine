@@ -1,4 +1,4 @@
-/* Маятник v0.120 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.478 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -294,14 +294,14 @@
   const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
     const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = name; const row = document.createElement('div'); row.className = 'pt-r';
     g.append(l, row); tools.append(g); return row; };
-  const gPaint = ptGroup('Краска'), gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка'), gMeet = ptGroup('Точка Ось');   // v0.318: «отдельная кнопка Точка Ось меню — туда все её кнопки и заливки»
+  // v0.478: одна «Раскраска» — группа paint в общей рейке; её исходные контролы и обработчики сохранены.
+  const gEdit = ptGroup('Очистка'), gAxis = ptGroup('Оси'),gHistory=ptGroup('Правка'), gMeet = ptGroup('Точка Ось');   // v0.318: «отдельная кнопка Точка Ось меню — туда все её кнопки и заливки»
   gHistory.parentElement.classList.add('pt-history');
-  for (const id of ['bFill','bAutoVertical','bStolb','bPaintMid','bAutoAll','bFillGrow','fillMirror']) groupOf[id] = gPaint;
   for (const id of ['bPaintMeet','bPaintAxis','bThirds','bTriTop']) groupOf[id] = gMeet;
   for (const id of ['bFillUndo','bFillRedo']) groupOf[id] = gHistory;
   for (const id of ['bFillClear','bPaintNew','bReset']) groupOf[id] = gEdit;   // v0.168: «Очистить всё поле» — из рейки «Поле» сюда
   for (const id of ['sym','symV','symH','symD','symTriangles','bTriangleAxes','bFrameWindow','bAxisLine','bAxisMirror','bAxisXor','bAxisLinesClear','bRuler']) groupOf[id] = gAxis;
-  for (const [id, kind] of [['bFill','colour'],['bAutoVertical','line'],['bStolb','swap'],['bPaintMid','line'],['bAutoAll','steps'],['bPaintMeet','axes'],['bPaintAxis','axes'],['bThirds','steps'],['bTriTop','tri'],['bFillGrow','plus'],['fillMirror','mirror'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bReset','cross'],['sym','axes'],['symV','axes'],['symH','axes'],['symD','axes'],['symTriangles','tri'],['bTriangleAxes','tri'],['bFrameWindow','corners'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisXor','half'],['bAxisLinesClear','cross'],['bRuler','line']]) {
+  for (const [id, kind] of [['bPaintMeet','axes'],['bPaintAxis','axes'],['bThirds','steps'],['bTriTop','tri'],['bFillUndo','undo'],['bFillRedo','forward'],['bFillClear','cross'],['bPaintNew','reset'],['bReset','cross'],['sym','axes'],['symV','axes'],['symH','axes'],['symD','axes'],['symTriangles','tri'],['bTriangleAxes','tri'],['bFrameWindow','corners'],['bAxisLine','select'],['bAxisMirror','down'],['bAxisXor','half'],['bAxisLinesClear','cross'],['bRuler','line']]) {
     const e = $(id), b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = id;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(e, kind); b.append(mark);
     b.onclick = () => e.click();
@@ -323,19 +323,6 @@
   { const G = $('bFillGrow'), bg = ptBtn('meetGrow', 'plus', G, () => G.click());   // v0.318: в «Точке Оси» — свои «Рост» (та же кнопка) и цвет заливки
     toolSync.push(() => { bg.title = tip(G); bg.setAttribute('aria-label', bg.title); bg.classList.toggle('on', G.getAttribute('aria-pressed') === 'true'); }); gMeet.append(bg);
     const bc = ptBtn('meetCol', 'colour', $('fillColour'), null), dc = dotIn(bc, 'fillColour', 'Общий цвет Краски, Точки и ТочкиОси. Щелчок — открыть палитру.'); bc.onclick = () => dc.click(); toolSync.push(() => { bc.title = 'Цвет: выбирает общий цвет заливки для Краски, Точки и ТочкиОси. Сейчас: ' + $('fillColour').value + '. Следующий щелчок: открыть палитру. Правый щелчок — свернуть в ромб.'; bc.setAttribute('aria-label', bc.title); dc.title = bc.title; }); gMeet.append(bc); }
-  dotIn(gPaint.querySelector('[data-n="bFill"]'), 'fillColour', 'Цвет заливки · щелчок — палитра');
-  const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
-  colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
-  toolSync.push(() => { if (document.activeElement !== colour) colour.value = $('fillColour').value; });
-  // отдельного поля «Цвет» больше нет — ● в «Заливке»
-  // v0.135: настройки «Центра» — 1 и 0 со своими цветами (оба — красит оба), ⇔ — 2-й уровень (расширенная ось)
-  for (const [id, col, title] of [['midOneOn', 'midOneColour', 'Центр: заливать области 1'], ['midZeroOn', 'midZeroColour', 'Центр: заливать области 0 (вместе с 1 — оба)'], ['midWide', null, '2-й уровень — расширенная ось: пары равных битов слева и справа от центра, прозрачнее']]) {
-    const e = $(id), b = ptBtn(id, col ? 'line' : 'swap', e, () => e.click()); b.title = title + (col ? ' · ● — цвет' : '');
-    if (col) dotIn(b, col); toolSync.push(() => b.classList.toggle('on', e.checked)); gPaint.append(b); }
-  {const source=$('fillArea'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='fillArea';
-    const mark=document.createElement('i');mark.style.backgroundImage=icon(source,'grid4');b.append(mark);gPaint.append(b);
-    b.onclick=()=>{source.selectedIndex=(source.selectedIndex+1)%source.options.length;source.dispatchEvent(new Event('change',{bubbles:true}));};
-    toolSync.push(()=>{b.title='Область заливки: '+source.selectedOptions[0].textContent+' · щелчок — следующий режим';const label=b.querySelector('.gz-nm');if(label)label.textContent=source.selectedOptions[0].textContent;});}
   // v0.044: виды поля — значками на холсте, рядом с раскраской.
   const gView = ptGroup('Вид'), gMir = ptGroup('Зеркала');   // v0.238: «раздели на 2 вкладки — Вид и Зеркала»: правый столбец «Вида» — своей группой
   {const e=$('bFoldCompare'),b=document.createElement('button');b.type='button';b.className='pt-b';b.dataset.n='bFoldCompare';b.title=e.title;
@@ -508,7 +495,7 @@
     sectors:'Секторы', areas:'Площади', areaFreeze:'Заморозка', saw:'Пила', fixLock:'Замок ↔', fixWide:'Во всю ширину', fixRot:'Вывернутое', fixLow:'Зеркало ↓', fixDown:'Сверху вниз', fixLowOut:'Наружу', mirCol:'Зерк. все цвета', mirOp:'Зерк. копия', px_b:'Синие', px_r:'Красные', px_y:'Жёлтые', px_k:'Чёрные', px_w:'Белые', bReset:'Всё поле', clrPaint:'Окраска', clrMirrors:'Зеркала', clrSel:'Выделение', bFill:'Заливка', bAutoVertical:'Столбы', bStolb:'Проход', bPaintMid:'Центр', midBox:'1 · 0 · ⇔', bAutoAll:'Авто', bPaintMeet:'Точка', bPaintAxis:'ТочкаОсь', bThirds:'Трети', bTriTop:'▼ ← верх', meetGrow:'Рост', meetCol:'Цвет', bFillGrow:'Рост', fillMirror:'Зеркало', bFillUndo:'Отмена', bFillRedo:'Повтор', bFillClear:'Стереть', bPaintNew:'С нуля', sym:'Симметрия', symTriangles:'Тотемы', bTriangleAxes:'Оси пустот', bFrameWindow:'Кадр отдельно', symV:'Оси ↕', symH:'Оси ↔', symD:'Оси ╲╱', bAxisLine:'Ось', bAxisMirror:'Вниз', bAxisXor:'Хор', bAxisLinesClear:'Убрать', bRuler:'Линейка', col:'Цвета', bits:'Биты', digits:'Цифры', digitsOnly:'Только цифры', cellInk:'Грани', geomCenter:'Геоцентр', fixLines:'Застыло', bFoldCompare:'Сгиб', bFoldHorizontal:'Свёртка ↔', bFoldVertical:'Свёртка ↕', noband:'Без полос', outline:'Обводка', midCol:'Центр', romb0:'Ромб 0', romb1:'Ромб 1', romb2:'Обе', zTop:'Верх', bRec:'Запись', bGif:'GIF', bXor2:'Xor-Next', bTemplateQuickSave:'Сохранить', bTemplateColour:'Перекрасить', viewCycle:'Вид', c_digitOneColour:'Цифра 1', c_digitZeroColour:'Цифра 0', c_bitOneColour:'Клетка 1', c_bitZeroColour:'Клетка 0', fontCycle:'Шрифт', sizeCtl:'Размер', midOneOn:'Центр 1', midZeroOn:'Центр 0', midWide:'⇔ 2-й уровень' };
   // v0.073: значки заменены обычными длинными кнопками, как в меню: значок + название, по две строки в группе.
   // «Запись» и «Цвет» остаются маленькими, с подписью сверху.
-  const ptColour = { 'Точка Ось':'#b48cff', 'Краска':'#ff9b50', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
+  const ptColour = { 'Точка Ось':'#b48cff', 'Правка':'#ffd35b', 'Очистка':'#ffd35b', 'Оси':'#ff87cf', 'Вид':'#7cbcff', 'Зеркала':'#b48cff', 'Шаблон':'#ffd35b' };
   for (const g of tools.querySelectorAll('.pt-g')) { const c = ptColour[g.querySelector('.pt-l').textContent]; if (c) { g.style.setProperty('--c', c); g.classList.add('pt-long'); } }
   for (const row of tools.querySelectorAll('.pt-r')) [...row.children].forEach((b, k) => {
     if (b.id === 'lg') return;
@@ -851,7 +838,7 @@
     // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
     // правый щелчок по названию группы полосы — оно сворачивается в ромб со значком (соседи встают вплотную), ещё раз — разворачивается.
     // Список при этом открывается как прежде; свёрнутые — в памяти браузера (mayatnik-dd-mini).
-    { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Краска': '✎', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
+    { const MINI = 'mayatnik-dd-mini', ICO = { 'Точка Ось': '⊹', 'Очистка': '⌫', 'Оси': '✛', 'Правка': '↶', 'Вид': '◉', 'Зеркала': '⋈', 'Шаблон': '▣', 'Шаблоны': '▤', 'Видео': '⏺' };
       let minis = new Set(); try { minis = new Set(JSON.parse(localStorage.getItem(MINI) || '[]')); } catch (_) {}
       const glyph = k => ICO[k] || ([...k][0] && /[^\p{L}\p{N}]/u.test([...k][0]) ? [...k][0] : k.slice(0, 1));
       for (const g of groupsAll()) { const l = g.querySelector('.pt-l'), k = keyOf(g), ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = glyph(k); l.append(ic);
@@ -885,7 +872,6 @@
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
     reg(tools.querySelector('[data-n="viewCycle"]'), fromSelect($('view'), o => (viewIcons[o.value] || [, o.textContent])[1], o => viewIcon.get(o.value)));
     reg(tools.querySelector('[data-n="fontCycle"]'), fromSelect($('digitFont')));
-    reg(tools.querySelector('[data-n="fillArea"]'), fromSelect($('fillArea')));
     reg(tools.querySelector('[data-n="fixLow"]'), () => window.mayFixLowNames.map((name, i) => ({ name, on: (window.mayFixLow?.get() || 0) === i, pick: () => window.mayFixLow?.set(i) })));   // v0.222
     reg(tools.querySelector('[data-n="fixAxis"]'), () => window.mayFixAxisNames.map((name, i) => ({ name: name.slice(5), on: (window.mayFixAxis?.get() || 0) === i, pick: () => window.mayFixAxis?.set(i) })));   // v0.216
     { const M = () => window.mayMir, L = () => window.mayMirLists;   // v0.210
