@@ -1,4 +1,4 @@
-/* Hub v0.415 — button-standard adapter; source controls and grozd storage stay intact. */
+/* Hub v0.417 — button-standard adapter; source controls and grozd storage stay intact. */
 (() => {
   'use strict';
   const NS = 'http://www.w3.org/2000/svg', MINI_KEY = 'zerk_hub_mini_headers';
@@ -145,21 +145,24 @@
   function edgeCommands(){
     const commands=['hubZenToggle','hubZenPng','hubZenRec','hubZenSys'].map(id=>document.getElementById(id));
     if(commands.some(x=>!x))return;
-    const blockHeight=102,x=innerWidth-128;
+    const blockHeight=198,x=innerWidth-56;
     const obstacles=['#hubPult .hpZoom','#hubPultBot','#hubMobSwitch'].map(q=>document.querySelector(q)).filter(e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.right>x&&r.left<innerWidth-8);
     const zoom=document.querySelector('#hubPult .hpZoom')?.getBoundingClientRect();
     let y=Math.max(8,Math.min(innerHeight-blockHeight-8,zoom?.height?zoom.bottom+2:innerHeight-blockHeight-8));
-    // Prefer below zoom, then move the whole four-command column above a conflict.
+    // Four compact diamonds, kept clear of zoom and the transport.
     for(let i=0;i<obstacles.length+1;i++){
       const hit=obstacles.find(r=>y<r.bottom+2&&y+blockHeight>r.top-2);
       if(!hit)break;
       y=Math.max(8,hit.top-blockHeight-2);
     }
     commands.forEach((b,i)=>{
-      setStyle(b,'--hub-command-y',(Math.round(y)+i*26)+'px');
+      setStyle(b,'--hub-command-y',(Math.round(y)+i*50)+'px');
       if(i>1)b.setAttribute('aria-pressed',String(b.classList.contains('on')));
-      if(i===1&&!b.querySelector('.hub-command-icon')){const ic=document.createElement('span');ic.className='hub-command-icon';ic.setAttribute('aria-hidden','true');ic.textContent='▧';b.prepend(ic);}
-      if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');s.setAttribute('viewBox','0 0 120 24');shape(s,'polygon',{points:'12,0 108,0 120,12 108,24 12,24 0,12'});b.append(s);}
+      if(!b.querySelector('.hub-command-icon')){
+        const ic=svg('hub-command-icon');ic.setAttribute('viewBox','0 0 24 24');
+        shape(ic,'path',{d:['M3 12q9-12 18 0-9 12-18 0M15 12a3 3 0 11-6 0 3 3 0 016 0','M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.1','M18 12a6 6 0 11-12 0 6 6 0 0112 0','M5 9h4l5-4v14l-5-4H5zM17 8q5 4 0 8'][i]});b.prepend(ic);
+      }
+      if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');s.setAttribute('viewBox','0 0 48 48');shape(s,'polygon',{points:'24,0 48,24 24,48 0,24'});b.append(s);}
     });
   }
   addEventListener('resize',edgeCommands);
