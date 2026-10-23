@@ -11,7 +11,7 @@ const figures = ['states','sizing','split','lists','overlap','slider','captions'
  try {
   const page = await browser.newPage({viewport:{width:1100,height:950},deviceScaleFactor:2});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(process.argv[2]||'http://127.0.0.1:8766/knopki/standart/',{waitUntil:'networkidle'});
+  await page.goto(process.argv[2]||'http://127.0.0.1:8766/knopki/standart/illustrations.html',{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.buttonReferenceReady===true);
   await page.evaluate(()=>document.fonts.ready);
   const measure=()=>page.evaluate(()=>{
