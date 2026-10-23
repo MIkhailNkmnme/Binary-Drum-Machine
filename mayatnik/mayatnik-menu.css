@@ -648,6 +648,10 @@ body.may-zen #zTopLine:not(.zen){display:none}   /* v0.353: закреплённ
 /* v0.340: ×N и время — полкнопками по бокам ползунка кадра */
 #mayBottomBar>.may-bb-half{width:calc(var(--gz-w) / 2 + 6px);flex:none;justify-content:center;padding:0 10px;--c:#73e4a5;margin:0 -4px}
 #mayBottomBar>.may-bb-half .may-hp-h{padding:0}
+#mayBottomBar>.may-bb-half{padding:0 4px!important;gap:0;z-index:2}   /* v0.473: стрелки ◂ ▸ по краям полукнопок скорости и длительности кадра */
+#mayBottomBar>.may-bb-half .may-hp-h{min-width:0;overflow:hidden;font-size:11px;letter-spacing:-.3px}
+#mayBottomBar>.may-bb-half .may-bb-ar{flex:none;width:10px;position:relative;z-index:3;font-style:normal;font-size:10px;line-height:24px;text-align:center;color:#a9b4c9;cursor:pointer;user-select:none}
+#mayBottomBar>.may-bb-half .may-bb-ar:hover{color:#fff}
 #mayBottomBar>.gz-sl .gz-mid{margin:0 -8px}   /* v0.341: «ползунок до краёв внутренних» — grozd держит бегунок в 8 px от краёв дорожки; дорожка шире на 8 px внутрь стрелок, кадр 0 и последний — у самых стрелок */
 /* v0.342: «сделай везде один фон» — фон страницы, шапки, панелей, рейки и нижней полосы — чёрный, как пустые клетки поля (EMPTY = 0, 0, 0) */
 :root{--bg:#000;--panel:#000}

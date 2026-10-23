@@ -216,17 +216,28 @@
     wrapH.append(pop);sync(); }
   // v0.337: «Анимацию вниз копируй, но только число ×1…×10 — по нажатию меняется, пол-кнопки; вторая половина — время 0 … 1/20 … до 1 с, тоже по нажатию»:
   // слева в полосе одна кнопка из двух половин: скорость (щелчок +1, после ×10 — ×1; правый — назад) | длительность кадра (0, 1/20, 1/10, 1/5, 1/2, 1 с по кругу)
-  { const sp = $('speed'), ft = $('frameT'), T = [0, 1, 2, 4, 10, 20], TN = ['0 с', '1/20 с', '1/10 с', '1/5 с', '1/2 с', '1 с'];
+  { const sp = $('speed'), ft = $('frameT'), T = [0, 1, 2, 4, 10, 20], TN = ['0с', '1/20с', '1/10с', '1/5с', '1/2с', '1с'];   // v0.473: без пробела — помещается между стрелками
     // v0.340: «по обе стороны от бегунка раздели»: ×N — полкнопкой слева от ползунка кадра, время — справа
-    const half = k => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gz-hx may-bb-half'; e.dataset.k = k; e.innerHTML = '<span class="may-hp-h"></span>'; return e; };
-    const bs = half('sp'), bf = half('ft'), hs = bs.firstChild, hf = bf.firstChild;
+    // v0.473: «эти две крайние от ползунка — со стрелками, чтобы уменьшать и увеличивать»: ◂ ▸ по краям, без перескока по кругу, удержание повторяет
+    const half = k => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gz-hx may-bb-half'; e.dataset.k = k;
+      e.innerHTML = '<i class="may-bb-ar" data-d="-1" aria-hidden="true">◂</i><span class="may-hp-h"></span><i class="may-bb-ar" data-d="1" aria-hidden="true">▸</i>'; return e; };
+    const bs = half('sp'), bf = half('ft'), hs = bs.querySelector('.may-hp-h'), hf = bf.querySelector('.may-hp-h');
     hs.title = 'Скорость анимации: вершин за кадр · щелчок — +1 (после ×10 — ×1), правый — −1'; hf.title = 'Сколько длится кадр анимации · щелчок — следующее (0 · 1/20 · 1/10 · 1/5 · 1/2 · 1 с), правый — предыдущее';
-    const sync = () => { hs.textContent = '×' + (+sp.value || 1); const v = +ft.value || 0, i = T.indexOf(v); hf.textContent = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + ' с'; };
+    const sync = () => { hs.textContent = '×' + (+sp.value || 1); const v = +ft.value || 0, i = T.indexOf(v); hf.textContent = i >= 0 ? TN[i] : String(+(v * .05).toFixed(2)).replace('.', ',') + 'с'; };
     const spSet = d => { const v = +sp.value || 1; sp.value = String(d > 0 ? (v >= 10 ? 1 : v + 1) : (v <= 1 ? 10 : Math.min(10, v - 1))); fire(sp); sync(); rail.refresh(); };
     const ftSet = d => { const v = +ft.value || 0; let i; if (d > 0) { i = T.findIndex(t => t > v); if (i < 0) i = 0; } else { i = T.length - 1; while (i >= 0 && T[i] >= v) i--; if (i < 0) i = T.length - 1; }
       ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
-    bs.onclick = () => spSet(1); bs.oncontextmenu = e => { e.preventDefault(); spSet(-1); };
-    bf.onclick = () => ftSet(1); bf.oncontextmenu = e => { e.preventDefault(); ftSet(-1); };
+    bs.onclick = e => { if (bs.arDown) { bs.arDown = false; return; } if (!e.target.closest('.may-bb-ar')) spSet(1); }; bs.oncontextmenu = e => { e.preventDefault(); spSet(-1); };
+    bf.onclick = e => { if (bf.arDown) { bf.arDown = false; return; } if (!e.target.closest('.may-bb-ar')) ftSet(1); };   // arDown: нажали на стрелку — подпись могла сменить ширину и увести стрелку из-под мыши bf.oncontextmenu = e => { e.preventDefault(); ftSet(-1); };
+    const spStep = d => { const v = Math.max(1, Math.min(32, (+sp.value || 1) + d)); if (String(v) === sp.value) return; sp.value = String(v); fire(sp); sync(); rail.refresh(); };
+    const ftStep = d => { const v = +ft.value || 0; let i = T.indexOf(v); if (i < 0) i = d > 0 ? T.findIndex(t => t > v) - 1 : T.findIndex(t => t >= v); i = Math.max(0, Math.min(T.length - 1, (i < 0 ? T.length - 1 : i) + d));
+      if (T[i] === v) return; ft.value = String(T[i]); fire(ft); sync(); rail.refresh(); };
+    for (const [b, step, what] of [[bs, spStep, 'скорость'], [bf, ftStep, 'длительность кадра']]) for (const ar of b.querySelectorAll('.may-bb-ar')) {
+      const d = +ar.dataset.d; ar.title = (d < 0 ? 'Меньше' : 'Больше') + ' — ' + what + ' · удержание — подряд';
+      let hold = 0, rep = 0; const end = () => { clearTimeout(hold); clearInterval(rep); hold = rep = 0; };
+      ar.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); b.arDown = true; step(d); hold = setTimeout(() => { rep = setInterval(() => step(d), 90); }, 350); });
+      for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) ar.addEventListener(ev, end);
+      ar.addEventListener('click', e => { e.stopPropagation(); b.arDown = false; }); }
     sp.addEventListener('input', sync); ft.addEventListener('input', sync); const sl = $('mayBottomBar').querySelector(':scope > .gz-sl');
     if (sl) { sl.before(bs); sl.after(bf); } else $('mayBottomBar').append(bs, bf); sync();
     const hr = $('mayBbHorr'); if (hr) bf.after(hr); }   // v0.350: «Хорр» — сразу справа от ползунка (за временем кадра)
