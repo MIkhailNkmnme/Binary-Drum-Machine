@@ -1,4 +1,4 @@
-/* Маятник v0.464 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
+/* Маятник v0.471 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -132,6 +132,7 @@
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
     document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,#mayRhZen,#mayRhRec,#mayRhGif,.gz-ladder .gz-hx').forEach(b=>{
       if(b.closest('.pt-btn')||b.closest('#mayBottomBar')&&!b.classList.contains('gz-head'))return;
+      if(b.querySelector('#templateLibraryChoices'))return;   // v0.471: список шаблонов — не кнопка; кнопки — его записи (иначе список сжимался в одну строку 24 px и вылезал вверх)
       b.classList.add('may-standard');outline(b);parts(b);if(b.closest('.gz-ladder'))keyboard(b);
       const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);
     });
