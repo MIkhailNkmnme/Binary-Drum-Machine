@@ -1,4 +1,4 @@
-/* Hub v0.417 — scoped adapter of the shared grozd parts, КНОПКИ v13. */
+/* Hub v0.418 — scoped adapter of the shared grozd parts, КНОПКИ v14. */
 body{--hub-surface:radial-gradient(ellipse at 50% 50%,#10151e 0%,#17202c 42%,#344351 100%)}
 #hubRail{top:14px;overflow:visible;padding:1px;max-width:calc(100vw - 8px)}
 #hubRail .gz-rail{--gz-w:120px;--gz-h:24px;--gz-n:12px;width:120px;min-width:120px;gap:2px;font:12px/1.2 "Segoe UI",sans-serif}
@@ -25,9 +25,12 @@ body.hubRailOn #hubRail .gz-head.hub-mini{width:34px!important;min-width:34px!im
 body.hubRailOn #hubRail .gz-head.hub-mini::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background-size:34px 24px!important}
 #hubRail .gz-head.hub-mini>:is(.gz-nm,.gz-hr){display:none}
 body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.hub-list-owner:not(:active):not(.gz-press){--hub-stroke:1px;--hub-outline:#394657}
+/* Р13/В12: opened group header has no own background or border; the backing gradient shows through. */
+body.hubRailOn #hubRail .gz-head.hub-list-owner:not(.hub-mini):not(:active):not(.gz-press),body.hubRailOn #hubRail .gz-head.hub-list-owner:not(.hub-mini):not(:active):not(.gz-press)::before{background:transparent!important}
+#hubRail .gz-group:has(>.gz-head:is(:active,.gz-press)) .hub-contours .roof-top{visibility:hidden}
 .hub-contours{position:absolute!important;inset:0;overflow:visible;pointer-events:none;z-index:-2!important;width:100%;height:24px}
 .hub-roof{position:absolute!important;inset:0;width:100%;height:24px;pointer-events:none;z-index:4!important;overflow:visible}
-.hub-roof path,.hub-contours .cap{fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:miter}
+.hub-roof path,.hub-contours :is(.cap,.roof-top){fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:miter}
 .gz-hx:is(:active,.gz-press)>.hub-roof{visibility:hidden}
 #hubRail .gz-pair.gz-split{padding:0!important;gap:0;background:var(--hub-surface)!important}
 #hubRail .gz-pair.gz-split::before{display:none!important}
@@ -68,7 +71,7 @@ body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.hub-list-owner:not(:activ
 #hubRail .hub-occluded{visibility:hidden!important;pointer-events:none!important}
 #hubRail .gz-lst{padding-right:25px}
 .hub-inner-chevron{position:absolute!important;right:9px;top:5px;width:7px;height:14px;pointer-events:none;background:currentColor;clip-path:polygon(0 0,2px 0,7px 50%,2px 100%,0 100%,5px 50%)}
-body.hubRailOn .hub-standard-list{--gz-w:120px;--gz-h:24px;--gz-n:12px;background:none!important;filter:none!important;padding:0!important;margin:0!important;gap:2px!important;isolation:isolate;overflow:visible!important}
+body.hubRailOn .hub-standard-list{--gz-w:120px;--gz-h:24px;--gz-n:12px;background:none!important;filter:none!important;padding:0!important;margin:0!important;gap:2px 6px!important;isolation:isolate;overflow:visible!important}
 /* Navigation links are commands of the same size; transport retains its component geometry. */
 body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg{width:120px!important;height:24px!important;min-height:24px!important;font:12px/1.2 "Segoe UI",sans-serif!important;padding:0 12px!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--hub-surface)!important;color:#dfe6f5!important;text-shadow:none!important;filter:none!important;box-shadow:none!important}
 body:not(.hubSidebarCollapsed) .hub :is(.grid,.row,.mainrow){display:flex!important;flex-direction:column!important;gap:2px!important}

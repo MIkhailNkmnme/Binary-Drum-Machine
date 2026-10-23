@@ -1,4 +1,4 @@
-/* Hub v0.417 — button-standard adapter; source controls and grozd storage stay intact. */
+/* Hub v0.418 — button-standard adapter; source controls and grozd storage stay intact. */
 (() => {
   'use strict';
   const NS = 'http://www.w3.org/2000/svg', MINI_KEY = 'zerk_hub_mini_headers';
@@ -12,17 +12,43 @@
     const w = mini ? 34 : 120, d = `M1 12 L${mini ? 17 : 12} 1 ${mini ? '' : '108 1'} ${w-1} 12`;
     if (s.dataset.d !== d) { s.dataset.d = d; s.replaceChildren(); shape(s,'path',{d}); }
   };
-  const contours = (host, cells, caps) => {
+  let backingId = 0;
+  // КНОПКИ v14 В05/В12/В13/Р13: one radial-gradient backing per column, toothed sides (tip +2, valley 6 inward), brackets meet its ends.
+  // cells: {x,y,w,head}; caps: {x,top} (top bracket above / bottom bracket below the column at x); o.merge: header belongs to column x=0; o.roofTop: header top bracket drawn in this layer.
+  const contours = (host, cells, caps, o = {}) => {
     let s = host.querySelector(':scope > .hub-contours');
     if (!s) { s = svg('hub-contours'); if(host.classList.contains('gz-ladder'))host.append(s);else host.prepend(s); }
-    const signature = JSON.stringify([cells,caps]); if (s.dataset.signature === signature) return;
+    const signature = JSON.stringify([cells,caps,o]); if (s.dataset.signature === signature) return;
     s.dataset.signature = signature; s.replaceChildren();
-    for (const {x,y,w=120} of cells) {
-      shape(s,'polygon',{points:`${x-1},${y+12} ${x+12},${y-1} ${x+w-12},${y-1} ${x+w+1},${y+12} ${x+w-12},${y+25} ${x+12},${y+25}`,fill:'#05070d'});
-      // Fill only the centre between neighbours; the outer silhouette remains toothed.
-      if (cells.some(c => c.x === x && c.y === y+26)) shape(s,'rect',{x:x+12,y:y+23,width:w-24,height:4,fill:'#05070d'});
+    const id = 'hub-grad-' + (++backingId);
+    const defs = document.createElementNS(NS, 'defs'), g = document.createElementNS(NS, 'radialGradient');
+    for (const [k,v] of Object.entries({id,cx:'.5',cy:'.5',r:'.5'})) g.setAttribute(k,v);
+    for (const [off,col] of [[0,'#32393f'],[1,'#000']]) { const st = document.createElementNS(NS,'stop'); st.setAttribute('offset',off); st.setAttribute('stop-color',col); g.append(st); }
+    defs.append(g); s.append(defs);
+    const fill = `url(#${id})`, columns = new Map();
+    for (const c of cells) {
+      if (c.head && !o.merge) {
+        const {x,y,w=120} = c;
+        shape(s,'polygon',{points: w < 120 ? `${x-1},${y+12} ${x+w/2},${y-1} ${x+w+1},${y+12} ${x+w/2},${y+25}` : `${x-1},${y+12} ${x+12},${y-1} ${x+w-12},${y-1} ${x+w+1},${y+12} ${x+w-12},${y+25} ${x+12},${y+25}`, fill});
+      } else { if (!columns.has(c.x)) columns.set(c.x, []); columns.get(c.x).push(c); }
     }
-    for (const {x,y,top} of caps) shape(s,'path',{class:'cap',d:top ? `M${x} ${y+12} L${x+12} ${y} H${x+108} L${x+120} ${y+12}` : `M${x} ${y+12} L${x+12} ${y+24} H${x+108} L${x+120} ${y+12}`});
+    for (const [x, cs] of columns) {
+      cs.sort((a,b) => a.y - b.y);
+      const w = 120, xr = x + w, y0 = cs[0].y, yb = cs.at(-1).y + 24, capTop = caps.some(c => c.top && c.x === x), R = [], L = [];
+      if (capTop) { R.push([xr-12.4,y0-12],[xr-1,y0-1]); L.push([x+12.4,y0-12],[x+1,y0-1]); } else { R.push([xr-12.4,y0+1]); L.push([x+12.4,y0+1]); }
+      cs.forEach((c,i) => {
+        R.push([xr+2,c.y+12]); L.push([x-2,c.y+12]);
+        if (i < cs.length-1) { const ym = (c.y+24+cs[i+1].y)/2; R.push([xr+2-6,ym]); L.push([x-2+6,ym]); }
+      });
+      R.push([xr-1,yb+1],[xr-12.4,yb+12]); L.push([x+1,yb+1],[x+12.4,yb+12]);
+      shape(s,'polygon',{points:R.concat(L.reverse()).map(p => p[0].toFixed(2)+','+p[1].toFixed(2)).join(' '),fill});
+    }
+    for (const {x,top} of caps) {
+      const cs = columns.get(x); if (!cs) continue;
+      const y = top ? Math.min(...cs.map(c => c.y)) : Math.max(...cs.map(c => c.y)) + 24;
+      shape(s,'path',{class:'cap',d: top ? `M${x+1} ${y-1} L${x+12.4} ${y-12} H${x+107.6} L${x+119} ${y-1}` : `M${x+1} ${y+1} L${x+12.4} ${y+12} H${x+107.6} L${x+119} ${y+1}`});
+    }
+    if (o.roofTop) shape(s,'path',{class:'roof-top',d:'M1 12 L12.4 1 H107.6 L119 12'});
   };
   const overlap = (a,b) => a.left < b.right-1 && a.right > b.left+1 && a.top < b.bottom-1 && a.bottom > b.top+1;
   const setStyle = (e,k,v) => { if (e.style.getPropertyValue(k) !== v) e.style.setProperty(k,v); };
@@ -48,18 +74,18 @@
     o.placed = list => {
       list.classList.add('hub-standard-list'); b.classList.add('hub-list-owner'); roof(b,false);
       const options = [...list.children].filter(x => x.classList.contains('gz-hx'));
-      const r = b.getBoundingClientRect(), rows = Math.min(innerWidth<=1100?Infinity:7,options.length,Math.max(1,Math.floor((innerHeight-30)/26))), cols = Math.ceil(options.length/rows), width=cols*122-2;
-      const right = r.right+2, left=r.left-width-2;
+      const r = b.getBoundingClientRect(), rows = Math.min(innerWidth<=1100?Infinity:7,options.length,Math.max(1,Math.floor((innerHeight-30)/26))), cols = Math.ceil(options.length/rows), width=cols*126-6;
+      const right = r.right+6, left=r.left-width-6;
       const rightSpace=innerWidth-right-3,leftSpace=r.left-5;
       const full=right+width<=innerWidth-3||left>=3;
       const useRight=rightSpace>=leftSpace;
-      const visibleWidth=full?width:Math.min(width,Math.max(120,Math.floor(Math.max(rightSpace,leftSpace)/122)*122-2));
-      let x = right+width <= innerWidth-3 ? right : left >= 3 ? left : useRight?right:r.left-visibleWidth-2;
+      const visibleWidth=full?width:Math.min(width,Math.max(120,Math.floor(Math.max(rightSpace,leftSpace)/126)*126-6));
+      let x = right+width <= innerWidth-3 ? right : left >= 3 ? left : useRight?right:r.left-visibleWidth-6;
       const y=Math.max(14,Math.min(r.top,innerHeight-rows*26-14));
-      Object.assign(list.style,{display:'grid',gridAutoFlow:'column',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',width:visibleWidth+'px',left:x+'px',top:y+'px',maxWidth:'none',maxHeight:'none'});
+      Object.assign(list.style,{display:'grid',gridAutoFlow:'column',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',columnGap:'6px',rowGap:'2px',width:visibleWidth+'px',left:x+'px',top:y+'px',maxWidth:'none',maxHeight:'none'});
       list.style.setProperty('overflow-x',full?'visible':'auto','important');
-      const cells=options.map((_,i)=>({x:Math.floor(i/rows)*122,y:i%rows*26})), caps=[];
-      for(let col=0;col<cols;col++){ const last=Math.min(rows,options.length-col*rows)-1; caps.push({x:col*122,y:-12,top:true},{x:col*122,y:last*26+12}); }
+      const cells=options.map((_,i)=>({x:Math.floor(i/rows)*126,y:i%rows*26})), caps=[];
+      for(let col=0;col<cols;col++) caps.push({x:col*126,top:true},{x:col*126});
       contours(list,cells,caps);
       const g=b.closest('.gz-group'); g?.querySelectorAll('.gz-hx').forEach(x=>x.classList.toggle('hub-dim',x!==b));
       options.forEach(x => { x.tabIndex=0; x.setAttribute('role','button'); if(!x.dataset.hubKeyboard){x.dataset.hubKeyboard='1'; x.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();x.click();}});} });
@@ -113,9 +139,9 @@
       const items=[...box.querySelectorAll('.gz-hx:not(.gz-head)')];
       const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=top||mobile;
       const r=head.getBoundingClientRect(), rows=vertical?items.length:Math.min(7,Math.max(1,Math.floor((innerHeight-r.top-16)/26)));
-      const cells=[{x:0,y:0,w:mini?34:120}],caps=[];
+      const cells=[{x:0,y:0,w:mini?34:120,head:true}],caps=[];
       items.forEach((b,i)=>{
-        const x=vertical?0:122+Math.floor(i/rows)*122, y=vertical?(i+1)*26:i%rows*26;
+        const x=vertical?0:126+Math.floor(i/rows)*126, y=vertical?(i+1)*26:i%rows*26;
         setStyle(b,'--hub-x',x+'px');setStyle(b,'--hub-y',y+'px');
         const section=b.closest('.gz-sec');if(section)setStyle(b,'--c',section.style.getPropertyValue('--c'));
         if(open)cells.push({x,y});
@@ -124,11 +150,12 @@
       if(top)setStyle(box,'height',height+'px');
       box.classList.add('gz-onecol');
       if(open){
-        head.classList.add('hub-list-owner');roof(head,mini);
-        if(vertical && items.length)caps.push({x:0,y:items.length*26+12});
-        else for(let col=0;col<Math.ceil(items.length/rows);col++)caps.push({x:122+col*122,y:-12,top:true},{x:122+col*122,y:(Math.min(rows,items.length-col*rows)-1)*26+12});
+        head.classList.add('hub-list-owner');
+        if(mini)roof(head,true);else head.querySelector('.hub-roof')?.remove();
+        if(vertical && items.length)caps.push({x:0});
+        else for(let col=0;col<Math.ceil(items.length/rows);col++)caps.push({x:126+col*126,top:true},{x:126+col*126});
       }else{head.classList.remove('hub-list-owner');head.querySelector('.hub-roof')?.remove();}
-      contours(box,cells,caps);setupParts(box);
+      contours(box,cells,caps,{merge:open&&vertical&&!mini&&items.length>0,roofTop:open&&!mini});setupParts(box);
     }
     updateOcclusion();
   }
