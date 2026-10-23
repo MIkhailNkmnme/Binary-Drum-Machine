@@ -245,7 +245,7 @@
         const section=b.closest('.gz-sec');if(section)setStyle(b,'--c',section.style.getPropertyValue('--c'));
         if(open&&!off1)cells.push({x,y});
       });
-      const height=vertical && open ? (items.length+1)*26-2 :24;setStyle(box,'--hub-height',height+'px');
+      const height=vertical && open ? (items.length+1)*26-2+(items.length?12:0) :24;setStyle(box,'--hub-height',height+'px');
       if(top)setStyle(box,'height',height+'px');
       box.classList.add('gz-onecol');
       if(open){
