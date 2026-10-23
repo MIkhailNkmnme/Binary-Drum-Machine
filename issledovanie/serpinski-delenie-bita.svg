@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840" height="1240" viewBox="0 0 1840 1240"><title>Серпинский: как другая сетка делит бит</title><desc>Отдельная дополнительная схема. Для каждого перехода крупный бит разделён исходной сеткой, а единичный бит — сеткой увеличения. Положения R справа, G центр, B слева. Мелкая сетка с постоянным шагом половина первого бита перенесена с первой строки на вторую и третью. Это точные фрагменты реальных белых битов; новые биты не создаются.</desc><rect width="1840" height="1240" fill="#080b11"/>
+<text x="920" y="38" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="28">Как другая сетка делит бит</text>
+<text x="920" y="72" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">Дополнение к RGB-схеме · размеры в частях первого бита</text>
+<text x="920" y="103" text-anchor="middle" fill="#d4ad63" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">Тонкая золотая сетка: ½ из первой строки — тот же шаг на всех трёх уровнях</text>
+<text x="475" y="145" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">Крупный бит → исходная сетка 1</text>
+<text x="1390" y="145" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="23">Бит 1 → сетка увеличения</text>
+<path d="M920 155V1175" stroke="#263344"/>
+<text x="32" y="310" text-anchor="start" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">8 → 16</text>
+<text x="220" y="181" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="220" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 2 × 2</text>
+<g data-bit-sample="8-16-large-right" data-source-row="0" data-source-column="7" data-source-level="8" data-size-ticks="24" data-origin-x="180" data-origin-y="0" data-ticks-per-unit="12"><rect x="140" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-large-right" data-step-ticks="6" d="M180 225v160M220 225v160M260 225v160M140 265h160M140 305h160M140 345h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-large-right" data-x-parts="12 12" data-y-parts="12 12" d="M220 225v160M140 305h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="140" y="225" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="220" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1 + 1</text>
+<text x="220" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + 1</text>
+<text x="220" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 7] · уровень 8</text>
+<text x="1135" y="181" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="1135" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="8-16-small-right" data-source-row="1" data-source-column="16" data-source-level="16" data-size-ticks="12" data-origin-x="192" data-origin-y="12" data-ticks-per-unit="12"><rect x="1055" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-small-right" data-step-ticks="6" d="M1135 225v160M1055 305h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-small-right" data-x-parts="12" data-y-parts="12" d="" fill="none" stroke="#ff4048" stroke-width="2"/><rect x="1055" y="225" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="1135" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1</text>
+<text x="1135" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1</text>
+<text x="1135" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 16] · уровень 16</text>
+<text x="485" y="181" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="485" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 2 × 2</text>
+<g data-bit-sample="8-16-large-center" data-source-row="0" data-source-column="7" data-source-level="8" data-size-ticks="24" data-origin-x="174" data-origin-y="0" data-ticks-per-unit="12"><rect x="405" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-large-center" data-step-ticks="6" d="M445 225v160M485 225v160M525 225v160M405 265h160M405 305h160M405 345h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-large-center" data-x-parts="6 12 6" data-y-parts="12 12" d="M445 225v160M525 225v160M405 305h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="405" y="225" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="485" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ½ + 1 + ½</text>
+<text x="485" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + 1</text>
+<text x="485" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 7] · уровень 8</text>
+<text x="1400" y="181" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="1400" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="8-16-small-center" data-source-row="1" data-source-column="16" data-source-level="16" data-size-ticks="12" data-origin-x="192" data-origin-y="12" data-ticks-per-unit="12"><rect x="1320" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-small-center" data-step-ticks="6" d="M1400 225v160M1320 305h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-small-center" data-x-parts="6 6" data-y-parts="12" d="M1400 225v160" fill="none" stroke="#40dc70" stroke-width="2"/><rect x="1320" y="225" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="1400" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ½ + ½</text>
+<text x="1400" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1</text>
+<text x="1400" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 16] · уровень 16</text>
+<text x="750" y="181" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="750" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 2 × 2</text>
+<g data-bit-sample="8-16-large-left" data-source-row="0" data-source-column="7" data-source-level="8" data-size-ticks="24" data-origin-x="168" data-origin-y="0" data-ticks-per-unit="12"><rect x="670" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-large-left" data-step-ticks="6" d="M710 225v160M750 225v160M790 225v160M670 265h160M670 305h160M670 345h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-large-left" data-x-parts="12 12" data-y-parts="12 12" d="M750 225v160M670 305h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="670" y="225" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="750" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1 + 1</text>
+<text x="750" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + 1</text>
+<text x="750" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 7] · уровень 8</text>
+<text x="1665" y="181" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="1665" y="207" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="8-16-small-left" data-source-row="1" data-source-column="16" data-source-level="16" data-size-ticks="12" data-origin-x="192" data-origin-y="12" data-ticks-per-unit="12"><rect x="1585" y="225" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="8-16-small-left" data-step-ticks="6" d="M1665 225v160M1585 305h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="8-16-small-left" data-x-parts="12" data-y-parts="12" d="" fill="none" stroke="#408cff" stroke-width="2"/><rect x="1585" y="225" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="1665" y="410" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1</text>
+<text x="1665" y="434" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1</text>
+<text x="1665" y="460" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 16] · уровень 16</text>
+<text x="32" y="645" text-anchor="start" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">16 → 24</text>
+<text x="220" y="516" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="220" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1½ × 1½</text>
+<g data-bit-sample="16-24-large-right" data-source-row="0" data-source-column="15" data-source-level="16" data-size-ticks="18" data-origin-x="276" data-origin-y="0" data-ticks-per-unit="12"><rect x="140" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-large-right" data-step-ticks="6" d="M193.33333333333334 560v160M246.66666666666669 560v160M140 613.3333333333334h160M140 666.6666666666666h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-large-right" data-x-parts="12 6" data-y-parts="12 6" d="M246.66666666666669 560v160M140 666.6666666666666h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="140" y="560" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="220" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1 + ½</text>
+<text x="220" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ½</text>
+<text x="220" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 15] · уровень 16</text>
+<text x="1135" y="516" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="1135" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="16-24-small-right" data-source-row="1" data-source-column="24" data-source-level="24" data-size-ticks="12" data-origin-x="288" data-origin-y="12" data-ticks-per-unit="12"><rect x="1055" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-small-right" data-step-ticks="6" d="M1135 560v160M1055 640h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-small-right" data-x-parts="6 6" data-y-parts="6 6" d="M1135 560v160M1055 640h160" fill="none" stroke="#ff4048" stroke-width="2"/><rect x="1055" y="560" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="1135" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ½ + ½</text>
+<text x="1135" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ½ + ½</text>
+<text x="1135" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 24] · уровень 24</text>
+<text x="485" y="516" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="485" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1½ × 1½</text>
+<g data-bit-sample="16-24-large-center" data-source-row="0" data-source-column="15" data-source-level="16" data-size-ticks="18" data-origin-x="273" data-origin-y="0" data-ticks-per-unit="12"><rect x="405" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-large-center" data-step-ticks="6" d="M431.6666666666667 560v160M485 560v160M538.3333333333334 560v160M405 613.3333333333334h160M405 666.6666666666666h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-large-center" data-x-parts="3 12 3" data-y-parts="12 6" d="M431.6666666666667 560v160M538.3333333333334 560v160M405 666.6666666666666h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="405" y="560" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="485" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ¼ + 1 + ¼</text>
+<text x="485" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ½</text>
+<text x="485" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 15] · уровень 16</text>
+<text x="1400" y="516" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="1400" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="16-24-small-center" data-source-row="1" data-source-column="24" data-source-level="24" data-size-ticks="12" data-origin-x="288" data-origin-y="12" data-ticks-per-unit="12"><rect x="1320" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-small-center" data-step-ticks="6" d="M1400 560v160M1320 640h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-small-center" data-x-parts="3 9" data-y-parts="6 6" d="M1360 560v160M1320 640h160" fill="none" stroke="#40dc70" stroke-width="2"/><rect x="1320" y="560" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="1400" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ¼ + ¾</text>
+<text x="1400" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ½ + ½</text>
+<text x="1400" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 24] · уровень 24</text>
+<text x="750" y="516" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="750" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1½ × 1½</text>
+<g data-bit-sample="16-24-large-left" data-source-row="0" data-source-column="15" data-source-level="16" data-size-ticks="18" data-origin-x="270" data-origin-y="0" data-ticks-per-unit="12"><rect x="670" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-large-left" data-step-ticks="6" d="M723.3333333333334 560v160M776.6666666666666 560v160M670 613.3333333333334h160M670 666.6666666666666h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-large-left" data-x-parts="6 12" data-y-parts="12 6" d="M723.3333333333334 560v160M670 666.6666666666666h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="670" y="560" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="750" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ½ + 1</text>
+<text x="750" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ½</text>
+<text x="750" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 15] · уровень 16</text>
+<text x="1665" y="516" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="1665" y="542" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="16-24-small-left" data-source-row="1" data-source-column="24" data-source-level="24" data-size-ticks="12" data-origin-x="288" data-origin-y="12" data-ticks-per-unit="12"><rect x="1585" y="560" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="16-24-small-left" data-step-ticks="6" d="M1665 560v160M1585 640h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="16-24-small-left" data-x-parts="12" data-y-parts="6 6" d="M1585 640h160" fill="none" stroke="#408cff" stroke-width="2"/><rect x="1585" y="560" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="1665" y="745" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1</text>
+<text x="1665" y="769" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ½ + ½</text>
+<text x="1665" y="795" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 24] · уровень 24</text>
+<text x="32" y="980" text-anchor="start" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="18">24 → 32</text>
+<text x="220" y="851" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="220" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1⅓ × 1⅓</text>
+<g data-bit-sample="24-32-large-right" data-source-row="0" data-source-column="23" data-source-level="24" data-size-ticks="16" data-origin-x="372" data-origin-y="0" data-ticks-per-unit="12"><rect x="140" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-large-right" data-step-ticks="6" d="M200 895v160M260 895v160M140 955h160M140 1015h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-large-right" data-x-parts="12 4" data-y-parts="12 4" d="M260 895v160M140 1015h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="140" y="895" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="220" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1 + ⅓</text>
+<text x="220" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ⅓</text>
+<text x="220" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 23] · уровень 24</text>
+<text x="1135" y="851" text-anchor="middle" fill="#ff4048" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">R · справа</text>
+<text x="1135" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="24-32-small-right" data-source-row="1" data-source-column="32" data-source-level="32" data-size-ticks="12" data-origin-x="384" data-origin-y="12" data-ticks-per-unit="12"><rect x="1055" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-small-right" data-step-ticks="6" d="M1135 895v160M1055 975h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-small-right" data-x-parts="4 8" data-y-parts="4 8" d="M1108.3333333333333 895v160M1055 948.3333333333334h160" fill="none" stroke="#ff4048" stroke-width="2"/><rect x="1055" y="895" width="160" height="160" fill="none" stroke="#ff4048" stroke-width="2"/></g>
+<text x="1135" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ⅓ + ⅔</text>
+<text x="1135" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ⅓ + ⅔</text>
+<text x="1135" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 32] · уровень 32</text>
+<text x="485" y="851" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="485" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1⅓ × 1⅓</text>
+<g data-bit-sample="24-32-large-center" data-source-row="0" data-source-column="23" data-source-level="24" data-size-ticks="16" data-origin-x="370" data-origin-y="0" data-ticks-per-unit="12"><rect x="405" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-large-center" data-step-ticks="6" d="M425 895v160M485 895v160M545 895v160M405 955h160M405 1015h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-large-center" data-x-parts="2 12 2" data-y-parts="12 4" d="M425 895v160M545 895v160M405 1015h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="405" y="895" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="485" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ⅙ + 1 + ⅙</text>
+<text x="485" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ⅓</text>
+<text x="485" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 23] · уровень 24</text>
+<text x="1400" y="851" text-anchor="middle" fill="#40dc70" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">G · центр</text>
+<text x="1400" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="24-32-small-center" data-source-row="1" data-source-column="32" data-source-level="32" data-size-ticks="12" data-origin-x="384" data-origin-y="12" data-ticks-per-unit="12"><rect x="1320" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-small-center" data-step-ticks="6" d="M1400 895v160M1320 975h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-small-center" data-x-parts="2 10" data-y-parts="4 8" d="M1346.6666666666667 895v160M1320 948.3333333333334h160" fill="none" stroke="#40dc70" stroke-width="2"/><rect x="1320" y="895" width="160" height="160" fill="none" stroke="#40dc70" stroke-width="2"/></g>
+<text x="1400" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ⅙ + ⅚</text>
+<text x="1400" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ⅓ + ⅔</text>
+<text x="1400" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 32] · уровень 32</text>
+<text x="750" y="851" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="750" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1⅓ × 1⅓</text>
+<g data-bit-sample="24-32-large-left" data-source-row="0" data-source-column="23" data-source-level="24" data-size-ticks="16" data-origin-x="368" data-origin-y="0" data-ticks-per-unit="12"><rect x="670" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-large-left" data-step-ticks="6" d="M710 895v160M770 895v160M670 955h160M670 1015h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-large-left" data-x-parts="4 12" data-y-parts="12 4" d="M710 895v160M670 1015h160" fill="none" stroke="#45566c" stroke-width="2"/><rect x="670" y="895" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="750" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: ⅓ + 1</text>
+<text x="750" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: 1 + ⅓</text>
+<text x="750" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [0, 23] · уровень 24</text>
+<text x="1665" y="851" text-anchor="middle" fill="#408cff" font-family="DejaVu Sans,Arial,sans-serif" font-size="17">B · слева</text>
+<text x="1665" y="877" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Бит 1 × 1</text>
+<g data-bit-sample="24-32-small-left" data-source-row="1" data-source-column="32" data-source-level="32" data-size-ticks="12" data-origin-x="384" data-origin-y="12" data-ticks-per-unit="12"><rect x="1585" y="895" width="160" height="160" fill="#e8edf5"/>
+<path data-first-row-grid="24-32-small-left" data-step-ticks="6" d="M1665 895v160M1585 975h160" fill="none" stroke="#9b762f" stroke-width="1" stroke-dasharray="2 3"/>
+<path data-other-grid="24-32-small-left" data-x-parts="12" data-y-parts="4 8" d="M1585 948.3333333333334h160" fill="none" stroke="#408cff" stroke-width="2"/><rect x="1585" y="895" width="160" height="160" fill="none" stroke="#408cff" stroke-width="2"/></g>
+<text x="1665" y="1080" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш: 1</text>
+<text x="1665" y="1104" text-anchor="middle" fill="#e8edf5" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">В: ⅓ + ⅔</text>
+<text x="1665" y="1130" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="12">бит [1, 32] · уровень 32</text>
+<text x="920" y="1197" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="15">Ш и В — деление другой основной сеткой. Золотой пунктир отдельно показывает сетку ½.</text>
+<text x="920" y="1221" text-anchor="middle" fill="#aab5c6" font-family="DejaVu Sans,Arial,sans-serif" font-size="14">½ получена в первой строке: центральное наложение делит бит 1 пополам. Адреса битов — с нуля.</text>
+</svg>
