@@ -42,7 +42,7 @@
       col.forEach((c,i)=>{const ym=c.y+c.h/2;R.push([xr+2,ym]);L.push([x-2,ym]);if(i<col.length-1){const gm=(c.y+c.h+col[i+1].y)/2;R.push([xr+2-6,gm]);L.push([x-2+6,gm]);}});
       R.push([xr-1,yb+1],[xr-12.4,yb+12]);L.push([x+1,yb+1],[x+12.4,yb+12]);
       const id='may-back-'+(++gradN),pts=R.concat(L.reverse()).map(q=>f(q[0])+','+f(q[1])).join(' ');
-      out+=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#32393f"/><stop offset="1" stop-color="#000"/></radialGradient></defs><polygon points="${pts}" fill="url(#${id})"/>`;
+      out+=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts}" fill="url(#${id})"/>`;
       if(head)out+=`<path class="cap" d="M${x} ${f(y0+12)} L${x+12} ${y0} H${xr-12} L${xr} ${f(y0+12)}"/>`;
       else if(side)out+=`<path class="cap" d="M${x} ${y0} L${x+12} ${y0-12} H${xr-12} L${xr} ${y0}"/>`;
       out+=`<path class="cap" d="M${x} ${yb} L${x+12} ${yb+12} H${xr-12} L${xr} ${yb}"/>`;
@@ -59,7 +59,7 @@
     s.dataset.sig=sig;const mini=head.classList.contains('may-standard-mini'),m=h/2;
     const pts=mini?[[x+w/2,y-1],[x+w+2,y+m],[x+w/2,y+h+1],[x-2,y+m]]:[[x+12,y-1],[x+w-12,y-1],[x+w+2,y+m],[x+w-12,y+h+1],[x+12,y+h+1],[x-2,y+m]];
     const id='may-back-'+(++gradN);
-    s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#32393f"/><stop offset="1" stop-color="#000"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
+    s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
   }
   // v0.449: колонки списков и сеток стоят подложка к подложке через 2 px: острия кнопок в 6 px, шаг 126; позицию из mayatnik-menu.js правим один раз на каждое её значение
   function shiftLeft(list,dx){
@@ -80,7 +80,15 @@
     if(b.classList.contains('gz-wl')&&!halves[1].querySelector('.may-colour-swatch')){const dot=document.createElement('span');dot.className='may-colour-swatch';dot.setAttribute('aria-hidden','true');halves[1].append(dot);}
   }
   function keyboard(b){if(b.dataset.mayStandardKey||b.getAttribute('role')==='button'&&b.tabIndex>=0)return;b.dataset.mayStandardKey='1';b.tabIndex=0;set(b,'role','button');b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}});}
+  // v0.456: «цвет значков в цвет группы» — картинка значка становится маской, цвет даёт --c группы (раньше фильтр делал её белой)
+  function tintIcons(){
+    for(const i of document.querySelectorAll('#paintTools .pt-b > i, #mayatnikRail .pt-b > i, #mayatnikRailR .pt-b > i, .gz-hx > i.gz-ic')){
+      const bg=i.style.backgroundImage; if(!bg||bg==='none'||!bg.startsWith('url')||i.dataset.mayTint===bg)continue;
+      i.dataset.mayTint=bg; i.style.webkitMaskImage=bg; i.style.maskImage=bg; i.style.backgroundImage='none'; i.classList.add('may-tint');
+    }
+  }
   function refresh(){
+    tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
     document.querySelectorAll('#paintTools .gz-hx,#paintTools .pt-l,#mayatnikRail .gz-hx,#mayAbout,#mayHelp,#mayMenu,#mayRhZen,#mayRhRec,#mayRhGif,.gz-ladder .gz-hx').forEach(b=>{

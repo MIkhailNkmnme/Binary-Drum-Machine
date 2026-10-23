@@ -64,3 +64,6 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-l{justify-content:space-between}
 :is(.gz-hx,.gz-pair,.gz-half,.gz-head,.gz-control,.may-standard,.may-slide,.may-slide *,.zz-pult,.zz-pult *){-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}
 /* v0.451 (В11): только что выключенная щелчком кнопка / половина под указателем — без рамки наведения, как в покое */
 body.may-quiet-hover :is(.may-standard,.may-standard-pair>.gz-half):hover:not(:active):not(.on):not(.gz-on):not([aria-pressed=true]):not(.gz-press):not(.may-standard-held){--may-outline:#394657!important;--may-stroke:1px!important}
+/* v0.456: значки цветом группы (маска из картинки значка) */
+i.may-tint{filter:none!important;background-color:var(--c,#8fd3ff)!important;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.gz-hx > .gz-ic:not(i){color:var(--c,#8fd3ff)!important}

@@ -28,7 +28,7 @@
     const id = 'hub-grad-' + (++backingId);
     const defs = document.createElementNS(NS, 'defs'), g = document.createElementNS(NS, 'radialGradient');
     for (const [k,v] of Object.entries({id,cx:'.5',cy:'.5',r:'.5'})) sa(g,k,v);
-    for (const [off,col] of [[0,'#32393f'],[1,'#000']]) { const st = document.createElementNS(NS,'stop'); sa(st,'offset',off); sa(st,'stop-color',col); g.append(st); }
+    for (const [off,col] of [[0,'#0e1116'],[1,'#0e1116']]) { const st = document.createElementNS(NS,'stop'); sa(st,'offset',off); sa(st,'stop-color',col); g.append(st); }
     defs.append(g); s.append(defs);
     const fill = `url(#${id})`, columns = new Map();
     for (const c of cells) {
