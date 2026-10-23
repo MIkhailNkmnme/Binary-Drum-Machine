@@ -3661,7 +3661,7 @@ body.may-fold-active #cvGpu{opacity:0}
   // Ползунок кадра: на небольшом поле — сразу при движении, на большом — когда отпустили
   $('frame').addEventListener('input', () => { const t = +$('frame').value; $('frameV').textContent = t; if (f && f.val.length <= 2e6) goTo(t); });
   $('frame').addEventListener('change', () => goTo(+$('frame').value));
-  $('bReset').onclick = () => { foldCloseAll(); lockWipe(); reset(); };   // v0.326: «Очистить» — и сброс свёртки (закрыта, поле как было, следующая — с шага 0)   // v0.307: «Всё поле» снимает и застывшую краску (перестройка «хорр» — нет: замки живут, пока маятник тот же)
+  $('bReset').onclick = () => { foldCloseAll(); lockWipe(); window.mayAreaFreeze?.clear(); reset(); };   // v0.478: и заморозка ▼   // v0.326: «Очистить» — и сброс свёртки (закрыта, поле как было, следующая — с шага 0)   // v0.307: «Всё поле» снимает и застывшую краску (перестройка «хорр» — нет: замки живут, пока маятник тот же)
   $('bTxt').onclick = () => { if (f) download(fname('txt'), new Blob([rowsText()], { type: 'text/plain' })); };
   // v0.019: «выгрузить построчно как ромбы — левые и правые диагонали, у обеих сеток», «txt». Ромб касается соседей сторонами
   // вдоль двух диагоналей: правая ↘ — столбец − строка постоянно, левая ↙ — столбец + строка постоянно. Клетки решётки p —
@@ -4163,12 +4163,17 @@ body.may-fold-active #cvGpu{opacity:0}
   window.mayAreas={get:()=>!!st.areas,set(v){st.areas=!!v;save();if(f)draw();}};   // v0.281
   // v0.477: «запоминание тапа маски ▼ — границы площадей при нажатии замораживать, а маятник растёт»: «Заморозка» в «Площадях» — снимок всех ▼
   // текущего кадра (areaCalc().tris) в клетках поля: столбец — от якоря, строка — как есть, поэтому контуры стоят на месте, пока окно и маятник растут.
-  // Ещё раз — снять. st.areaFreeze = { k, tris: [[x от якоря, y, h], …] }; рисует areaFreezeDraw отдельным слоем
-  window.mayAreaFreeze={get:()=>st.areaFreeze||null,toggle(){
-    if(st.areaFreeze){st.areaFreeze=null;save();areaFreezeDraw();return true;}
-    const a=areaCalc();if(!a||!a.tris.length){$('paintCacheInfo').textContent='Заморозка: в этом кадре нет ▼ — нужна точка встречи («Застыло» / «Точка»)';return false;}
-    st.areaFreeze={k,tris:a.tris.map(t=>[t.x+VX-geo.anchor,t.y,t.h])};save();$('paintCacheInfo').textContent='Заморожено ▼: '+a.tris.length+' · кадр '+k;areaFreezeDraw();return true;}};
-  function areaFreezeDraw(){let o=areaFreezeDraw.o;const Z=st.areaFreeze,on=!!(Z&&Z.tris?.length&&f&&geo&&rombP()<0&&!document.body.classList.contains('may-fold-active'));
+  // v0.478: «каждое нажатие добавляет ▼ текущего кадра к замороженным», «снятие через очистить»: add() — ▼ этого кадра к прежним (одинаковые
+  // [x, y, h] не повторяются), clear() — снять все (зовёт «Очистить» / «Сброс»). st.areaFreeze = { ks: [кадры], tris: [[x от якоря, y, h, кадр], …] } (v0.477 — { k, tris } — читается)
+  const afNorm=Z=>!Z?null:Z.ks?Z:{ks:[Z.k],tris:(Z.tris||[]).map(t=>[t[0],t[1],t[2],Z.k])};
+  window.mayAreaFreeze={get:()=>afNorm(st.areaFreeze),
+    add(){const a=areaCalc();if(!a||!a.tris.length){$('paintCacheInfo').textContent='Заморозка: в этом кадре нет ▼ — нужна точка встречи («Застыло» / «Точка»)';return false;}
+      const Z=afNorm(st.areaFreeze)||{ks:[],tris:[]},seen=new Set(Z.tris.map(t=>t[0]+':'+t[1]+':'+t[2]));let n=0;
+      for(const t of a.tris){const x=t.x+VX-geo.anchor,key=x+':'+t.y+':'+t.h;if(seen.has(key))continue;seen.add(key);Z.tris.push([x,t.y,t.h,k]);n++;}
+      if(!Z.ks.includes(k))Z.ks.push(k);st.areaFreeze=Z;save();
+      $('paintCacheInfo').textContent='Заморозка: кадр '+k+' — новых ▼ '+n+', всего '+Z.tris.length+' (кадров '+Z.ks.length+')';areaFreezeDraw();return true;},
+    clear(){if(!st.areaFreeze)return false;st.areaFreeze=null;save();$('paintCacheInfo').textContent='Заморозка снята';areaFreezeDraw();return true;}};
+  function areaFreezeDraw(){let o=areaFreezeDraw.o;const Z=afNorm(st.areaFreeze),on=!!(Z&&Z.tris?.length&&f&&geo&&rombP()<0&&!document.body.classList.contains('may-fold-active'));
     if(!o){if(!on)return;const c=document.createElement('canvas');c.className='may-area-frz';Object.assign(c.style,{position:'fixed',pointerEvents:'none',zIndex:'2',margin:'0',background:'transparent'});document.body.append(c);
       o=areaFreezeDraw.o={c,g:c.getContext('2d'),raf:0};const q=()=>{if(!o.raf)o.raf=requestAnimationFrame(()=>{o.raf=0;areaFreezeDraw();});};wrap.addEventListener('scroll',q,{passive:true});addEventListener('resize',q);}
     if(!on){o.c.style.display='none';return;}

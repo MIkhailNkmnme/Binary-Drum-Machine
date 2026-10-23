@@ -392,8 +392,9 @@
     const arp = document.createElement('button'); arp.title = 'Площади'; const bAr = ptBtn('areas', 'square', arp, () => { const A = window.mayAreas; A?.set(!A.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.mayAreas?.get(); bAr.classList.toggle('on', on); bAr.title = 'Площади в клетках: ▼ — самая большая сплошная область в нижнем секторе, секторы верх / низ / лево / право, зубец пилы; совпавшие — одним цветом и строкой «… = …» внизу слева · ' + (on ? 'вкл' : 'выкл'); });
     // v0.477: «Заморозка» — снимок ▼ площадей текущего кадра, контуры стоят на месте, пока маятник растёт; ещё раз — снять
-    const afp = document.createElement('button'); afp.title = 'Заморозка'; const bAf = ptBtn('areaFreeze', 'pin', afp, () => { window.mayAreaFreeze?.toggle(); placeTools(); });
-    toolSync.push(() => { const Z = window.mayAreaFreeze?.get(); bAf.classList.toggle('on', !!Z); bAf.title = Z ? 'Заморожено ▼: ' + Z.tris.length + ' (кадр ' + Z.k + ') — контуры и площади стоят на месте, маятник растёт дальше · щелчок — снять' : 'Заморозка: запомнить все ▼ площади этого кадра — их контуры и h² останутся на месте, пока маятник растёт · нужна точка встречи'; });
+    // v0.478: щелчок — добавить ▼ этого кадра к замороженным; снять все — «Очистить» в «Очистке» («снятие через очистить»)
+    const afp = document.createElement('button'); afp.title = 'Заморозка'; const bAf = ptBtn('areaFreeze', 'pin', afp, () => { window.mayAreaFreeze?.add(); placeTools(); });
+    toolSync.push(() => { const Z = window.mayAreaFreeze?.get(); bAf.classList.toggle('on', !!Z); bAf.title = Z ? 'Заморожено ▼: ' + Z.tris.length + ' (кадры ' + Z.ks.join(', ') + ') — контуры и площади стоят на месте, маятник растёт · щелчок — добавить ▼ этого кадра; снять — «Очистить»' : 'Заморозка: щелчок — запомнить ▼ площади этого кадра (контуры и h² останутся на месте, пока маятник растёт; следующие щелчки добавляют ▼ других кадров); снять — «Очистить» · нужна точка встречи'; });
     // v0.270: «Секторы» — фон четырёх секторов вокруг точки встречи
     const scp = document.createElement('button'); scp.title = 'Секторы'; const bSc = ptBtn('sectors', 'grid4', scp, () => { const S = window.maySectors; S?.set(!S.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
@@ -901,11 +902,12 @@
     }
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
-    const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-28)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+2)/122)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*122-2;
+    // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
+    const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-28)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+6)/126)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*126-6;
     Object.assign(list.style,{width:width+'px',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-Math.min(rows,maxRows)*26-12))+'px',maxHeight:(maxRows*26-2)+'px'});
     list.style.setProperty('overflow-y',rows>maxRows?'auto':'visible','important');
     list.style.setProperty('overflow-x',rows>maxRows?'hidden':'visible','important');
-    const right=c.right+2,left=c.left-width-2;
+    const right=c.right+6,left=c.left-width-6;
     const x=right+width<=innerWidth-4?right:left>=4?left:Math.max(4,Math.min(right,innerWidth-width-4));
     list.style.left=x+'px';list.style.maxWidth=Math.min(width,Math.max(24,innerWidth-x-4))+'px';
     activeList={list,group};scheduleGroups();
