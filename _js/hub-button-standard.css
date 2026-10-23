@@ -1,0 +1,83 @@
+/* Hub v0.414 — scoped adapter of the shared grozd parts, КНОПКИ v12. */
+body{--hub-surface:radial-gradient(ellipse at 50% 50%,#10151e 0%,#17202c 42%,#344351 100%)}
+#hubRail{top:14px;overflow:visible;padding:1px;max-width:calc(100vw - 8px)}
+#hubRail .gz-rail{--gz-w:120px;--gz-h:24px;--gz-n:12px;width:120px;min-width:120px;gap:2px;font:12px/1.2 "Segoe UI",sans-serif}
+#hubRail .gz-group{width:120px;min-width:0!important;height:24px;isolation:isolate}
+#hubRail .hubStrip .gz-group{min-width:0!important}
+#hubRail .gz-group .gz-soty,#hubRail .gz-group .gz-wide,#hubRail .gz-group .gz-sec{display:contents!important}
+#hubRail .gz-group:not(.gz-open) :is(.gz-soty,.gz-wide){display:none!important}
+#hubRail .gz-group .gz-hx:not(.gz-head){position:absolute!important;left:var(--hub-x,0px)!important;top:var(--hub-y,26px)!important}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx{--hub-stroke:1px;--hub-outline:#394657;box-sizing:border-box;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;margin:0!important;border:0;border-radius:0;background:var(--hub-outline)!important;color:#dfe6f5!important;text-shadow:none!important;box-shadow:none!important;filter:none!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate;overflow:hidden}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx::before{content:"";display:block!important;position:absolute;z-index:-1!important;inset:var(--hub-stroke)!important;background:var(--hub-surface)!important;background-size:120px 24px!important;background-position:center!important;clip-path:polygon(calc(12px - var(--hub-stroke)) 0,calc(100% - 12px + var(--hub-stroke)) 0,100% 50%,calc(100% - 12px + var(--hub-stroke)) 100%,calc(12px - var(--hub-stroke)) 100%,0 50%)}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx:is(:hover,:focus-visible){--hub-outline:var(--c);outline:none}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.gz-on{--hub-stroke:2px;--hub-outline:var(--c)}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx:is(:active,.gz-press){--hub-stroke:3px;--hub-outline:var(--c)}
+#hubRail#hubRail .gz-hx.gz-sl{background:var(--hub-outline)!important;filter:none!important}
+#hubRail#hubRail .gz-hx.gz-sl::before{inset:var(--hub-stroke)!important;background:var(--hub-surface)!important}
+#hubRail .gz-hx *,.hub-standard-list .gz-hx *{text-shadow:none!important;filter:none!important;box-shadow:none!important}
+#hubRail .gz-head{padding:0 10px 0 13px;gap:3px}
+#hubRail .gz-head>.gz-ic{width:14px;height:14px;flex:none}
+#hubRail .gz-head>.gz-nm{flex:1;text-align:left}
+#hubRail .gz-head .gz-pin{width:12px;height:16px;opacity:.55}
+#hubRail .gz-head .gz-pin[aria-pressed=true]{color:var(--c);opacity:1}
+#hubRail .gz-head .gz-pin:focus-visible{outline:1px solid var(--c)}
+body.hubRailOn #hubRail .gz-head.hub-mini{width:34px!important;min-width:34px!important;max-width:34px!important;padding:0;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+body.hubRailOn #hubRail .gz-head.hub-mini::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background-size:34px 24px!important}
+#hubRail .gz-head.hub-mini>:is(.gz-nm,.gz-hr){display:none}
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.hub-list-owner:not(:active):not(.gz-press){--hub-stroke:1px;--hub-outline:#394657}
+.hub-contours{position:absolute!important;inset:0;overflow:visible;pointer-events:none;z-index:-2!important;width:100%;height:24px}
+.hub-roof{position:absolute!important;inset:0;width:100%;height:24px;pointer-events:none;z-index:4!important;overflow:visible}
+.hub-roof path,.hub-contours .cap{fill:none;stroke:var(--c);stroke-width:2;stroke-linejoin:miter}
+.gz-hx:is(:active,.gz-press)>.hub-roof{visibility:hidden}
+#hubRail .gz-pair.gz-split{padding:0!important;gap:0;background:var(--hub-surface)!important}
+#hubRail .gz-pair.gz-split::before{display:none!important}
+#hubRail .gz-pair.gz-split>.gz-half{--hub-stroke:1px;--hub-outline:#394657;position:relative;display:flex;align-items:center;justify-content:center;flex:none!important;width:64px!important;min-width:64px;height:24px;margin:0!important;padding:0 5px!important;font-size:11px!important;overflow:hidden;background:transparent!important;color:var(--gz-k,#dfe6f5)!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;isolation:isolate}
+#hubRail .gz-pair.gz-split>.gz-h1{margin-left:-8px!important;clip-path:polygon(0 0,52px 0,64px 12px,52px 24px,8px 24px)!important}
+#hubRail .gz-pair.hub-reverse>.gz-h0{clip-path:polygon(12px 0,64px 0,56px 24px,12px 24px,0 12px)!important}
+#hubRail .gz-pair.hub-reverse>.gz-h1{clip-path:polygon(8px 0,52px 0,64px 12px,52px 24px,0 24px)!important}
+#hubRail .gz-pair.gz-split>.gz-half::before{display:none!important}
+#hubRail .gz-pair.gz-split>.gz-half:is(:hover,:focus-visible){--hub-outline:var(--c);outline:none}
+#hubRail .gz-pair.gz-split>.gz-half.gz-on{--hub-stroke:2px;--hub-outline:var(--c)}
+#hubRail .gz-pair.gz-split>.gz-half:is(:active,.hub-held){--hub-stroke:3px;--hub-outline:var(--c)}
+.hub-half-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1!important}
+.hub-half-outline polygon{fill:none;stroke:var(--hub-outline);stroke-width:calc(2 * var(--hub-stroke));stroke-linejoin:miter}
+#hubRail .gz-pair.gz-one>.gz-h0{width:120px!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important}
+#hubRail .gz-pair.gz-one>.gz-h1{display:none!important}
+#hubRail .gz-pair.gz-mid>.gz-pm{font-size:10px!important;pointer-events:none}
+#hubRail .gz-sl .gz-vl,#hubRail .gz-sl .gz-vr{display:none!important}
+#hubRail .gz-sl .gz-mid>.gz-v{display:block;position:absolute;inset:0;text-align:center;font:11px/24px "Segoe UI",sans-serif;padding:0;background:none;pointer-events:none}
+#hubRail .gz-sl .gz-a{display:flex;width:18px;height:24px;background:transparent!important;color:inherit!important}
+#hubRail .gz-sl .gz-a2{display:none!important}
+#hubRail .gz-sl .gz-a::after{content:"";width:6px;height:14px;border-left:1px solid currentColor;transform:skew(-25deg)}
+#hubRail .gz-sl .gz-a::after{display:none}
+#hubRail .gz-sl .gz-a{position:relative;--arrow-stroke:0;outline:none!important}
+.hub-arrow-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none}
+.hub-arrow-outline path{fill:none;stroke:var(--c);stroke-width:var(--arrow-stroke)}
+#hubRail .gz-sl .gz-a:is(:hover,:focus-visible){--arrow-stroke:1px}
+#hubRail .gz-sl .gz-a:active{--arrow-stroke:3px}
+#hubRail .gz-sl .gz-vh,#hubRail .gz-sl .gz-vt{max-width:45px;min-width:0;overflow:hidden;padding:0 3px!important;font-size:10px}
+#hubRail .gz-sl .gz-mid{min-width:16px;margin:0!important}
+#hubRail .gz-sl.gz-vhd>.gz-vh,#hubRail .gz-sl.gz-vhd>.gz-vt{width:30px;max-width:30px;flex:none;text-overflow:ellipsis;white-space:nowrap}
+#hubRail .gz-sl.gz-vhd>.gz-a:not(.gz-a2){width:12px}
+#hubRail .gz-sl.gz-vhd>.gz-mid{min-width:0;flex:1}
+#hubRail .gz-under,#hubRail .hub-dim{opacity:.25!important;pointer-events:auto!important}
+#hubRail .hub-occluded{visibility:hidden!important;pointer-events:none!important}
+#hubRail .gz-lst{padding-right:25px}
+.hub-inner-chevron{position:absolute!important;right:9px;top:5px;width:7px;height:14px;pointer-events:none;background:currentColor;clip-path:polygon(0 0,2px 0,7px 50%,2px 100%,0 100%,5px 50%)}
+body.hubRailOn .hub-standard-list{--gz-w:120px;--gz-h:24px;--gz-n:12px;background:none!important;filter:none!important;padding:0!important;margin:0!important;gap:2px!important;isolation:isolate;overflow:visible!important}
+/* Navigation links are commands of the same size; transport retains its component geometry. */
+body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg{width:120px!important;height:24px!important;min-height:24px!important;font:12px/1.2 "Segoe UI",sans-serif!important;padding:0 12px!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--hub-surface)!important;color:#dfe6f5!important;text-shadow:none!important;filter:none!important;box-shadow:none!important}
+body:not(.hubSidebarCollapsed) .hub :is(.grid,.row,.mainrow){display:flex!important;flex-direction:column!important;gap:2px!important}
+body:not(.hubSidebarCollapsed) #hubSidebarMenu a.menu-btn.hubPg:not(.main-engine){padding:0 12px!important;gap:5px!important;font:12px/1.2 "Segoe UI",sans-serif!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important}
+.hub-navigation-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;--nav-stroke:0px}
+.hub-navigation-outline polygon{fill:none;stroke:var(--hub-theme-accent,#ff9a5a);stroke-width:calc(2 * var(--nav-stroke))}
+body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg:is(:hover,:focus-visible){outline:none!important;--nav-stroke:1px}
+body:not(.hubSidebarCollapsed) .hub a.menu-btn.hubPg:active{--nav-stroke:3px}
+.hub a.menu-btn:is(:hover,:focus-visible)>.hub-navigation-outline{--nav-stroke:1px}
+.hub a.menu-btn:active>.hub-navigation-outline{--nav-stroke:3px}
+body.hubSidebarCollapsed .hub-navigation-outline{display:none}
+:is(#hubPult,#hubPultBot) .hpB{--hub-stroke:1px;background:var(--hp-c)!important;filter:none!important;text-shadow:none!important}
+:is(#hubPult,#hubPultBot) .hpB::before{background:var(--hub-surface)!important;inset:var(--hub-stroke)!important}
+:is(#hubPult,#hubPultBot) .hpB[aria-pressed=true]{--hub-stroke:2px}
+:is(#hubPult,#hubPultBot) .hpB:active{--hub-stroke:3px}
+@media(max-width:1100px){#hubRail{left:4px!important;transform:none;top:64px;max-height:calc(100dvh - 72px);overflow:auto;width:calc(100vw - 8px);padding:1px 1px 12px}#hubRail>.gz-rail{width:max-content;min-width:120px}#hubRail .gz-group.gz-open{height:var(--hub-height,24px)}#hubRail .gz-rail{font-size:12px}}

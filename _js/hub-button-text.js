@@ -19,13 +19,16 @@
       const parts=[],walker=doc.createTreeWalker(owner,NodeFilter.SHOW_TEXT);
       while(walker.nextNode()){const node=walker.currentNode;if(ownerOf(node))parts.push(sources.get(node)?.full||node.data);}
       const full=parts.join('').trim();if(!full)return;
-      if(!owner.title||owner.title===managedTitle.get(owner)){
+      // hub-tips temporarily owns title while hovered. Restoring it here would
+      // make its observer remove it again forever and freeze pointer input.
+      const hoveredTip=owner.dataset.hubTip;
+      if(hoveredTip==null&&(!owner.title||owner.title===managedTitle.get(owner))){
         if(owner.title!==full)owner.title=full;managedTitle.set(owner,full);
       }
       const aria=owner.getAttribute('aria-label');
       if(aria===null||aria===managedAria.get(owner)){
         // У копируемых кнопок title также служит устойчивым ключом ромбосетки.
-        const label=owner.title||full;if(aria!==label)owner.setAttribute('aria-label',label);managedAria.set(owner,label);
+        const label=owner.title||hoveredTip||full;if(aria!==label)owner.setAttribute('aria-label',label);managedAria.set(owner,label);
       }
     }
     function apply(root){
