@@ -161,7 +161,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           parts: [{ label: HEAD.symmetry, labelNow: () => h.on() ? 'Поиск' : HEAD.symmetry, tip: h.tip, on: h.on, click: h.click }, { label: 'Парал.', tip: 'Симметрия параллельно: искать оси, параллельные главной', on: pon, click: () => { const n = par(); (n?.matches('input') ? n : n?.querySelector('input[type=checkbox]') || n)?.click(); } }] }, 'symmetry'); }
       else if (root.action && g.key === 'space') {   // «при включении — на полкнопки 3D вращ. / Сброс», «а тот сброс убери»: пока 3D не в покое — пара, иначе одна кнопка
         const h = headItem(root, '', HEAD.space), r3 = () => document.querySelector('button[aria-label^="Сбросить только 3D"]');
-        add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip, one: () => !window.HubView?.flipOn,
+        add('space', { type: 'pair', col: 0, cls: 'gz-split gz-bs', name: HEAD.space, mid: '', tip: h.tip,   // v0.419: «после сброса … пусть остаётся», пара всегда; «3D вращ.» только снимает выделение
           parts: [{ label: HEAD.space, tip: h.tip, on: h.on, click: h.click }, { label: 'Сброс', tip: 'Сбросить 3D: остановить, снять заморозку, вернуть обе плоскости', click: () => r3()?.click() }] }, 'space'); }
       else if (root.action && g.key === 'flow') {   // «объедини, покажи Сброс — когда запущен Пуск»: пока пуск не идёт — одна кнопка «Пуск»
         const h = headItem(root, '', HEAD.flow), clr = () => document.querySelector('button[aria-label^="Очистить свет, снег и воду"]');
@@ -173,7 +173,7 @@ const tipOf = n => tipCut(n.dataset.hubTip ?? n.getAttribute('title')) || tipCut
           parts: [{ label: '✣ Ось', tip: h.tip, on: h.on, click: h.click }, { label: '●', tip: 'Цвет оси', on: h.on, ink: () => M.axisColor(),
             open: a => window.HubColorPicker?.open({ trigger: trig, anchor: a, title: 'Цвет оси', color: M.axisColor(), opacity: 1, maxOpacity: 1, onChange: c => M.setAxisColor(c) }) }] }, 'axis'); }
       else if (root.action) add(g.key, g.key === 'flow' || g.key === 'axis' ? { ...headItem(root, '', HEAD[g.key] || g.name), col: 0 } : headItem(root, '', HEAD[g.key] || g.name), g.key);
-      walk(root, !root.gate || !!gateOn(root));
+      walk(root, g.key === 'space' || !root.gate || !!gateOn(root));   // v0.419: 3D — кнопки видны и после сброса
       if (g.key === 'colour') {   // «прозрачности объедини в одну кнопку, обводку пополам, и цвета 1 и 0 так же; прозрачности — в цвет битов, слово „Прозр.“ убери, и „Цвет“ — но там обводка радугой»
         const pc = () => { const c = window.HubMirror?.colors?.() || {}, a = window.HubMirror?.state?.zeroAlpha ?? .18, z = c.zero || c.bit || '#8fd3ff';
           return { f0: 'color-mix(in srgb,' + z + ' ' + Math.round(a * 100) + '%,#060a12)', k0: z, f1: c.bit || '#8fd3ff', k1: '#1c1c22' }; };
