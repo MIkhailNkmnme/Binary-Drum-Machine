@@ -1,4 +1,4 @@
-/* Маятник v0.447 — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
+/* Маятник v0.448 — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -20,12 +20,13 @@
   function contour(host,cells,side){
     let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');host.prepend(s);}
     const base=host.getBoundingClientRect(),cols=new Map();
-    for(const b of cells){const r=b.getBoundingClientRect();if(!r.width||!r.height)continue;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);if(!cols.has(x))cols.set(x,[]);cols.get(x).push({x,y,w:r.width,h:r.height});}
+    for(const b of cells){const r=b.getBoundingClientRect();if(!r.width||!r.height)continue;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height});}
     const sig=JSON.stringify([...cols]);if(s.dataset.sig===sig)return;s.dataset.sig=sig;s.replaceChildren();
     for(const col of cols.values()){
       col.sort((a,b)=>a.y-b.y);
       for(const {x,y,w,h}of col){shape(s,'polygon',{points:`${x-1},${y+h/2} ${x+12},${y-1} ${x+w-12},${y-1} ${x+w+1},${y+h/2} ${x+w-12},${y+h+1} ${x+12},${y+h+1}`,fill:'#05070d'});if(col.some(c=>Math.abs(c.y-y-h-2)<1))shape(s,'rect',{x:x+12,y:y+h-1,width:w-24,height:4,fill:'#05070d'});}
-      const first=col[0],last=col.at(-1);
+      // v0.448: полуобводки — по обычной кнопке столбца (самые частые x и ширина), чтобы список или поле внизу их не сдвигали
+      const mode=f=>{const m=new Map();let best=col[0][f],n=0;for(const c of col){const v=Math.round(c[f]),q=(m.get(v)||0)+1;m.set(v,q);if(q>n){n=q;best=v;}}return best;},cx=mode('x'),cw=mode('w'),first={x:cx,w:cw,y:col[0].y},bot=Math.max(...col.map(c=>c.y+c.h)),last={x:cx,w:cw,y:bot,h:0};
       if(side)shape(s,'path',{class:'cap',d:`M${first.x} ${first.y} L${first.x+12} ${first.y-12} H${first.x+first.w-12} L${first.x+first.w} ${first.y}`});
       shape(s,'path',{class:'cap',d:`M${last.x} ${last.y+last.h} L${last.x+12} ${last.y+last.h+12} H${last.x+last.w-12} L${last.x+last.w} ${last.y+last.h}`});
     }
