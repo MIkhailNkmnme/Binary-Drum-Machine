@@ -1,10 +1,10 @@
-<!-- Zerkalius Маятник на видеокарте — v0.002. v0.002: проверка и дочёта кусками (как при анимации). Проверка счёта WebGPU (mayatnik-gpu.js) против ядра MAYATNIK бит в бит и замер скорости. -->
+<!-- Zerkalius Маятник на видеокарте — v0.003. v0.003: модуль v3 (картинка и зеркала на видеокарте). v0.002: проверка и дочёта кусками (как при анимации). Проверка счёта WebGPU (mayatnik-gpu.js) против ядра MAYATNIK бит в бит и замер скорости. -->
 <!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zerkalius Маятник GPU — v0.002</title>
+<title>Zerkalius Маятник GPU — v0.003</title>
 <style>
   :root { color-scheme: dark; --bg: #0d1117; --fg: #d6dde8; --dim: #7d8899; --ok: #5fd38d; --bad: #ff6b6b; --acc: #7cbcff; }
   body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
@@ -18,7 +18,7 @@
 </style>
 </head>
 <body>
-<h1>Маятник на видеокарте <span class="ver">v0.002</span></h1>
+<h1>Маятник на видеокарте <span class="ver">v0.003</span></h1>
 <div class="dim" id="gpuInfo">видеокарта: …</div>
 <div class="row">
   <button id="bCheck" title="Сверить счёт видеокарты с ядром MAYATNIK бит в бит на малых полях">Сверка с ядром</button>
@@ -29,7 +29,7 @@
 <pre id="log"></pre>
 <canvas id="cv"></canvas>
 <script src="mayatnik-core.js?v=5"></script>
-<script src="mayatnik-gpu.js?v=2"></script>
+<script src="mayatnik-gpu.js?v=3"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id), log = (s, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = s; $('log').append(d); };

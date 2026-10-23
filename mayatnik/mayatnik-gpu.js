@@ -9,7 +9,8 @@
    в этой строке (шаг t − 2) и свою строку r − 1 (шаг t − 1) — порядок тот же, что у ядра конус за конусом.
    На n вершин — 2(n − 1) + H шагов, по одному dispatch на шаг; поле остаётся на видеокарте, дочёт идёт от текущего состояния.
    v2 (Маятник v0.468): поле живёт отдельно (field), дочёт run(), картинка render() — среднее цветов клеток под пикселем экрана
-   (тот же цвет, что у плоских видов страницы: биты или чётность перекрытий MAYATNIK.tint / tintPair), read() — поле в Int8 ядра. */
+   (тот же цвет, что у плоских видов страницы: биты или чётность перекрытий MAYATNIK.tint / tintPair), read() — поле в Int8 ядра.
+   v3 (Маятник v0.475): picture() — картинка окна с зеркалами в буфере видеокарты, render() рисует её; readPic() — для сверки. */
 (function (root) {
   const STEP_WGSL = /* wgsl */`
 struct P { W: u32, WW: u32, H: u32, K: u32, anchor: u32, bg: u32, _a: u32, _b: u32 }
@@ -91,26 +92,46 @@ fn unpack(@builtin(global_invocation_id) g: vec3<u32>) {
   outw[w] = o;
 }`;
 
-  // Картинка: пиксель экрана — среднее цветов клеток под ним (до 32 × 32 выборок), при увеличении — клетка под серединой пикселя
-  const RENDER_WGSL = /* wgsl */`
-struct R { x0: f32, y0: f32, step: f32, WW: u32, VX: i32, VW: i32, VH: i32, tint: u32,
-           lo: i32, hi: i32, k: i32, filled: u32, anchor: i32, _a: u32, _b: u32, _c: u32, col: array<vec4<f32>, 7> }
-@group(0) @binding(0) var<uniform> u: R;
-@group(0) @binding(1) var<storage, read> bits: array<u32>;
-@group(0) @binding(2) var<storage, read> has: array<u32>;
-@vertex fn vs(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
-  let x = f32((i << 1u) & 2u) * 2.0 - 1.0; let y = f32(i & 2u) * 2.0 - 1.0; return vec4<f32>(x, y, 0.0, 1.0);
-}
+  // v3 (Маятник v0.475): картинка окна — буфер pic (u32 RGBA на клетку окна VW × VH, как img у страницы): base — биты / цвета перекрытий
+  // («без полос» — по краям зоны ZL / ZR и сторонам треугольника со страницы), затем проходы зеркал в порядке draw. Каждый проход читает
+  // снимок pic2 (копия до прохода) и пишет в pic «на сбор»: клетка сама находит свой источник; из нескольких центров пишет последний, как
+  // у страницы. Правила — как у fixMirrorApply, fixLowApply, ztMirApply, zlMirApply и mirPut (цвет mirCol, XOR / AND mirOp).
+  // P — общие числа (см. picture()), Q — запись прохода: [вид, m, флаги, n, …] и центры по 4 числа с 8-го; полуцелые — удвоенными.
+  const PIC_WGSL = /* wgsl */`
+@group(0) @binding(0) var<storage, read> P: array<i32>;
+@group(0) @binding(1) var<storage, read> Q: array<i32>;
+@group(0) @binding(2) var<storage, read> bits: array<u32>;
+@group(0) @binding(3) var<storage, read> has: array<u32>;
+@group(0) @binding(4) var<storage, read> Z: array<i32>;
+@group(0) @binding(5) var<storage, read_write> pic: array<u32>;
+@group(0) @binding(6) var<storage, read> pic2: array<u32>;
 fn pm2(x: i32) -> i32 { return ((x % 2) + 2) % 2; }
-fn cnt(lo0: i32, hi0: i32, p: i32) -> i32 {   // число m в [lo, hi] ∩ [1, k] той же чётности, что p (MAYATNIK.tintPair)
-  let lo = max(lo0, 1); let hi = min(hi0, u.k); if (lo > hi) { return 0; }
+fn jr(x: f32) -> i32 { return i32(floor(x + 0.5)); }
+fn raw(r: i32, fc: i32) -> i32 {
+  if (r < 0 || r >= P[3] || fc < 0 || fc >= P[23]) { return -1; }
+  let q = u32(r) * u32(P[0]) + u32(fc >> 5); let m = 1u << u32(fc & 31);
+  if ((has[q] & m) == 0u) { return -1; } return select(0, 1, (bits[q] & m) != 0u);
+}
+fn outZone(r: i32, fc: i32) -> bool { let zl = P[11]; return zl > r && (fc < Z[r] || fc > Z[zl + r]); }
+fn triFill(r: i32, fc: i32) -> bool {
+  if (!outZone(r, fc) || raw(r, fc) < 0) { return false; }
+  let p = pm2(fc - P[9] - r); let sL = select(P[12], P[14], p == 1); let sR = select(P[13], P[15], p == 1);
+  return fc >= sL - r && fc <= sR + r;
+}
+fn shown(r: i32, c: i32) -> i32 {
+  let fc = c + P[1];
+  if (outZone(r, fc) && !(P[10] == 2 && triFill(r, fc))) { return -1; }
+  return raw(r, fc);
+}
+fn cnt(lo0: i32, hi0: i32, p: i32) -> i32 {
+  let lo = max(lo0, 1); let hi = min(hi0, P[7]); if (lo > hi) { return 0; }
   let first = lo + pm2(p - lo); if (first > hi) { return 0; } return ((hi - first) >> 1) + 1;
 }
-fn tintOf(r: i32, c: i32, v: i32) -> i32 {   // c — от якоря; 0 — чёрный, 1 — синий, 2 — красный
+fn tintOf(r: i32, c: i32, v: i32) -> i32 {
   if (r == 0) { return 0; }
   var n = 0;
-  if (u.tint == 1u) {
-    let a0 = max(u.lo, c - r); let a1 = min(u.hi, c + r);
+  if (P[4] == 1) {
+    let a0 = max(P[5], c - r); let a1 = min(P[6], c + r);
     if (a0 <= a1) { let first = a0 + pm2(c + r - a0); if (first <= a1) { n = ((a1 - first) >> 1) + 1; } }
   } else {
     let p = pm2(c + r); let ac = abs(c);
@@ -118,17 +139,122 @@ fn tintOf(r: i32, c: i32, v: i32) -> i32 {   // c — от якоря; 0 — ч�
     n = n + cnt(-c - r, -c + r, p) + cnt(c - r, c + r, p);
     if (ac <= r) { n = n - cnt(ac - r, r - ac, p); }
   }
-  if (u.filled != 0u) { n = n + 1; }
+  if (P[8] != 0) { n = n + 1; }
   if ((n & 1) == 1) { return 0; }
   return select(2, 1, v == 1);
 }
-fn cell(r: i32, c: i32) -> vec3<f32> {
-  let q = u32(r) * u.WW + u32(c >> 5); let m = 1u << u32(c & 31);
-  if ((has[q] & m) == 0u) { return u.col[6].rgb; }
-  let v = select(0, 1, (bits[q] & m) != 0u);
-  var t = 0; if (u.tint != 0u) { t = tintOf(r, c - u.anchor, v); }
-  return u.col[v * 3 + t].rgb;
+@compute @workgroup_size(64)
+fn base(@builtin(global_invocation_id) g: vec3<u32>) {
+  let VW = P[2]; let i = i32(g.x + g.y * 65535u * 64u); if (i >= VW * P[3]) { return; }
+  let y = i / VW; let c = i % VW; let v = shown(y, c);
+  if (v < 0) { pic[i] = u32(P[22]); return; }
+  var t = 0; if (P[4] != 0) { t = tintOf(y, c + P[1] - P[9], v); }
+  pic[i] = u32(P[16 + v * 3 + t]);
 }
+fn fam(u: u32) -> i32 {
+  let r = i32(u & 255u); let gr = i32((u >> 8u) & 255u); let b = i32((u >> 16u) & 255u);
+  if ((r | gr | b) == 0) { return 0; }
+  let mx = max(r, max(gr, b)); let mn = min(r, min(gr, b));
+  if (mx - mn < 45) { return select(2, 1, r + gr + b >= 450); }
+  if (r >= 150 && gr >= 150 && b < gr - 60) { return 3; }
+  if (b == mx && b - r > 40) { return 4; }
+  if (r == mx && r - gr > 60 && r - b > 40) { return 5; }
+  return 0;
+}
+fn pxBit(u: u32) -> i32 { let k = fam(u); if (k == 1 || k == 4) { return 1; } if (k == 2 || k == 5) { return 0; } return -1; }
+fn put(o: i32, v: u32) -> bool {
+  let mc = P[24]; if (mc != 0 && fam(v) != mc) { return false; }
+  let op = P[25];
+  if (op != 0) { let s = pxBit(v); let t = pxBit(pic2[o]); if (s < 0 || t < 0) { return false; } pic[o] = u32(P[26 + select(s & t, s ^ t, op == 1)]); return true; }
+  pic[o] = v | 0xff000000u; return true;
+}
+fn fixAt(Y: i32, C: i32, o: i32) {
+  let m = Q[1]; let wide = (Q[2] & 1) != 0; let rot = (Q[2] & 2) != 0; let down = (Q[2] & 4) != 0; let VW = P[2]; let VH = P[3];
+  for (var i = Q[3] - 1; i >= 0; i--) {
+    let x02 = Q[8 + 4 * i]; let y2 = Q[9 + 4 * i]; let x2 = Q[10 + 4 * i]; let x = f32(x2) * 0.5;   // y точки встречи бывает полуцелым — всё удвоенным
+    var r = Y; if (down) { r = y2 - Y; }
+    if (r < 0 || 2 * r >= y2) { continue; }
+    let sr = y2 - r; if (sr >= VH) { continue; }
+    let d = f32(y2) * 0.5 - f32(r);
+    var cA = 0; var cB = VW - 1; if (!wide) { cA = max(0, i32(ceil(x - d))); cB = min(VW - 1, i32(floor(x + d))); }
+    if (C < cA || C > cB) { continue; }
+    var sc = C; if (rot) { sc = x2 - C; }
+    if (sc < 0 || sc >= VW) { continue; }
+    let fr = select(sr, r, down);
+    let v = pic2[fr * VW + sc];
+    let fx = floor(x); let fr0 = select(0.0, 1.0, pm2(x02) != 0);
+    var xc = x; if (m == 6 || m == 7) { xc = fx + select(fr0, 1.0 - fr0, m == 7); }
+    let xcL = fx + fr0; let xcR = fx + (1.0 - fr0);
+    if (m == 8) { xc = select(xcR, xcL, f32(C) < x); } else if (m == 9) { xc = select(xcL, xcR, f32(C) < x); }
+    let mc = P[24]; if (mc != 0 && fam(v) != mc) { continue; }
+    if (m == 4 || m == 5) { let a = shown(Y, C); let b = shown(fr, sc); if (a < 0 || b < 0) { continue; } pic[o] = u32(P[26 + select(a & b, a ^ b, m == 4)]); return; }
+    if (m > 1 && pm2(Y + sc - i32(floor(xc))) != select(0, 1, m == 3)) { continue; }
+    if (put(o, v)) { return; }
+  }
+}
+fn lowSrc(r: i32, c: i32, Yf: f32, Xf: f32, m: i32) -> vec2<i32> {
+  let VW = P[2]; let VH = P[3];
+  if (r < i32(floor(Yf)) + 1 || r >= VH) { return vec2<i32>(-1, -1); }
+  let d = f32(r) - Yf;
+  if (c < max(0, i32(ceil(Xf - d))) || c > min(VW - 1, i32(floor(Xf + d)))) { return vec2<i32>(-1, -1); }
+  let fc = f32(c); if (fc == Xf) { return vec2<i32>(-1, -1); }
+  let L = fc < Xf; if ((L && (m & 1) == 0) || (!L && (m & 2) == 0)) { return vec2<i32>(-1, -1); }
+  var sr: i32; var sc: i32;
+  if (L) { sr = jr(Yf + Xf - fc); sc = jr(Xf + Yf - f32(r)); } else { sr = jr(Yf + fc - Xf); sc = jr(Xf + f32(r) - Yf); }
+  if (sr < 0 || sr >= VH || sc < 0 || sc >= VW) { return vec2<i32>(-1, -1); }
+  return vec2<i32>(sr, sc);
+}
+fn lowAt(Y: i32, C: i32, o: i32) {
+  let m = Q[1]; let outw = Q[2] != 0; let VW = P[2];
+  for (var i = Q[3] - 1; i >= 0; i--) {
+    let Yf = f32(Q[8 + 4 * i]) * 0.5; let Xf = f32(Q[9 + 4 * i]) * 0.5;
+    if (!outw) { let s = lowSrc(Y, C, Yf, Xf, m); if (s.x < 0) { continue; } if (put(o, pic2[s.x * VW + s.y])) { return; } continue; }
+    for (var side = 0; side < 2; side++) {
+      var c0: i32; var r0: i32;
+      if (side == 0) { c0 = jr(Xf + Yf - f32(Y)); r0 = jr(Xf + Yf - f32(C)); } else { c0 = jr(f32(Y) - Yf + Xf); r0 = jr(f32(C) - Xf + Yf); }
+      for (var dr = -1; dr <= 1; dr++) { for (var dc = -1; dc <= 1; dc++) {
+        let s = lowSrc(r0 + dr, c0 + dc, Yf, Xf, m);
+        if (s.x == Y && s.y == C) { if (put(o, pic2[(r0 + dr) * VW + c0 + dc])) { return; } }
+      } }
+    }
+  }
+}
+@compute @workgroup_size(64)
+fn mir(@builtin(global_invocation_id) g: vec3<u32>) {
+  let VW = P[2]; let VH = P[3]; let o = i32(g.x + g.y * 65535u * 64u); if (o >= VW * VH) { return; }
+  let Y = o / VW; let C = o % VW; let kind = Q[0]; let m = Q[1];
+  if (kind == 1) { fixAt(Y, C, o); return; }
+  if (kind == 2) { lowAt(Y, C, o); return; }
+  if (kind == 3) {
+    let L = Q[3]; let mid = Q[2] != 0; var src = -1;
+    if (m == 1) { let k = select(Y - L, Y - L - 1, mid); if (k >= 0 && L - 1 - k >= 0) { src = L - 1 - k; } }
+    else { let k = L - 1 - Y; if (k >= 0) { let b = select(L + k, L + 1 + k, mid); if (b < VH) { src = b; } } }
+    if (src >= 0) { put(o, pic2[src * VW + C]); }
+    return;
+  }
+  if (kind == 4) {
+    let t2 = Q[2]; let c2 = t2 - C; if (c2 == C || c2 < 0 || c2 >= VW) { return; }
+    let right = 2 * C > t2; if ((m == 1 && !right) || (m != 1 && right)) { return; }
+    put(o, pic2[Y * VW + c2]); return;
+  }
+  if (kind == 5) {
+    let kd = Q[2] == 1; let p = Q[3]; let aw = Q[4]; let u = C - aw;
+    let sd = select(u + Y - p, u - Y - p, kd); if (sd == 0 || (m == 1 && sd > 0) || (m != 1 && sd < 0)) { return; }
+    let su = select(p - Y, Y + p, kd); let sy = select(p - u, u - p, kd); let sc = su + aw;
+    if (sy < 0 || sy >= VH || sc < 0 || sc >= VW) { return; }
+    put(o, pic2[sy * VW + sc]); return;
+  }
+}`;
+
+  // Картинка на экран: пиксель холста — среднее цветов клеток окна под ним (до 32 × 32 выборок), при увеличении — клетка под серединой
+  const RENDER_WGSL = /* wgsl */`
+struct R { x0: f32, y0: f32, step: f32, _a: u32, VX: i32, VW: i32, VH: i32, _b: u32 }
+@group(0) @binding(0) var<uniform> u: R;
+@group(0) @binding(1) var<storage, read> pic: array<u32>;
+@vertex fn vs(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
+  let x = f32((i << 1u) & 2u) * 2.0 - 1.0; let y = f32(i & 2u) * 2.0 - 1.0; return vec4<f32>(x, y, 0.0, 1.0);
+}
+fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return vec3<f32>(f32(p & 255u), f32((p >> 8u) & 255u), f32((p >> 16u) & 255u)) / 255.0; }
 @fragment fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
   let fx = u.x0 + floor(pos.x) * u.step; let fy = u.y0 + floor(pos.y) * u.step;
   var c0: i32; var c1: i32; var r0: i32; var r1: i32;
@@ -141,6 +267,7 @@ fn cell(r: i32, c: i32) -> vec3<f32> {
   for (var r = r0; r < r1; r += sr) { for (var c = c0; c < c1; c += sc) { acc += cell(r, c); n += 1.0; } }
   return vec4<f32>(acc / n, 1.0);
 }`;
+
   const BG = { empty: 0, '1': 1, '0': 2, chess: 3 };
 
   async function create() {
@@ -163,7 +290,13 @@ fn cell(r: i32, c: i32) -> vec3<f32> {
     const format = navigator.gpu.getPreferredCanvasFormat(), renderModule = device.createShaderModule({ code: RENDER_WGSL });
     const pipeRender = device.createRenderPipeline({ layout: 'auto', vertex: { module: renderModule, entryPoint: 'vs' },
       fragment: { module: renderModule, entryPoint: 'fs', targets: [{ format }] }, primitive: { topology: 'triangle-list' } });
-    const ALIGN = device.limits.minUniformBufferOffsetAlignment;
+    const picModule = device.createShaderModule({ code: PIC_WGSL });
+    const picLayout = device.createBindGroupLayout({ entries: [0, 1, 2, 3, 4, 5, 6].map(b => ({ binding: b, visibility: GPUShaderStage.COMPUTE,
+      buffer: { type: b === 5 ? 'storage' : 'read-only-storage', hasDynamicOffset: b === 1 } })) });
+    const picPl = device.createPipelineLayout({ bindGroupLayouts: [picLayout] });
+    const pipeBase = device.createComputePipeline({ layout: picPl, compute: { module: picModule, entryPoint: 'base' } });
+    const pipeMir = device.createComputePipeline({ layout: picPl, compute: { module: picModule, entryPoint: 'mir' } });
+    const ALIGN = device.limits.minUniformBufferOffsetAlignment, SALIGN = device.limits.minStorageBufferOffsetAlignment;
     const info = adapter.info || {};
     const grid = n => [Math.min(n, 65535), Math.ceil(n / 65535)];
 
@@ -174,8 +307,11 @@ fn cell(r: i32, c: i32) -> vec3<f32> {
       const pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       const bitsBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
       const hasBuf = device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-      const uBuf = device.createBuffer({ size: 176, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const uBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+      const PBuf = device.createBuffer({ size: 32 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
       let tBuf = null, apBuf = null, bind = null, tCap = 0, apCap = 0, renderBind = null, dead = false;
+      let pic = null, pic2 = null, picN = 0, zBuf = null, zCap = 0, qBuf = null, qCap = 0, picBind = null, win = null;
+      const Q_INTS = 64;   // запись прохода: 8 чисел + до 14 центров по 4
       const setP = K => device.queue.writeBuffer(pBuf, 0, new Uint32Array([W, WW, H, K, anchor, BG[bg] ?? 0, 0, 0]));
       const bindFor = () => device.createBindGroup({ layout, entries: [
         { binding: 0, resource: { buffer: pBuf } }, { binding: 1, resource: { buffer: tBuf, size: 8 } },
@@ -229,23 +365,57 @@ fn cell(r: i32, c: i32) -> vec3<f32> {
         const val = into || new Int8Array(n); val.set(new Int8Array(rb.getMappedRange(), 0, n)); rb.unmap(); rb.destroy(); out.destroy();
         return val;
       }
-      // Картинка в context (GPUCanvasContext, уже configure): o = { x0, y0, step — клеток на пиксель холста; VX, VW, VH — окно;
-      // tint: 0 — нет, 1 — по размаху lo…hi, 2 — пара (k); filled; anchor; colours — 7 цветов [r, g, b] 0…255: T[0…5], пустота }
+      // Картинка окна (буфер pic, как img страницы): o = { VX, VW, VH — окно; tint: 0 — нет, 1 — по размаху lo…hi, 2 — пара (k); filled;
+      // T — 6 цветов u32 (как rgba страницы), empty; zl — Int32Array ZL, затем ZR (или null); nb2 — «до треугольника», sides — [L0, R0, L1, R1];
+      // mirCol (0 — все, 1 w, 2 k, 3 y, 4 b, 5 r), mirOp (0, 1 xor, 2 and), bitC — [0, 1] u32; passes — массивы чисел прохода (Q) по порядку }
+      function picture(o) {
+        if (dead) return false;
+        const n = o.VW * o.VH, bytesN = Math.max(16, n * 4);
+        if (bytesN > device.limits.maxStorageBufferBindingSize) return false;
+        if (n !== picN || !pic) { pic?.destroy(); pic2?.destroy(); picN = n;
+          pic = device.createBuffer({ size: bytesN, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+          pic2 = device.createBuffer({ size: bytesN, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = renderBind = null; }
+        const zl = o.zl && o.zl.length ? o.zl : null, zN = zl ? zl.length : 1;
+        if (!zBuf || zN > zCap) { zBuf?.destroy(); zCap = Math.max(zN, 64); zBuf = device.createBuffer({ size: zCap * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
+        const passes = o.passes || [], qN = Math.max(1, passes.length), slot = Math.max(SALIGN, Q_INTS * 4);
+        if (!qBuf || qN > qCap) { qBuf?.destroy(); qCap = Math.max(qN, 8); qBuf = device.createBuffer({ size: qCap * slot, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }); picBind = null; }
+        const P = new Int32Array(32), sd = o.sides || [1e9, -1e9, 1e9, -1e9];
+        P[0] = WW; P[1] = o.VX; P[2] = o.VW; P[3] = o.VH; P[4] = o.tint | 0; P[5] = o.lo | 0; P[6] = o.hi | 0; P[7] = o.k | 0; P[8] = o.filled ? 1 : 0; P[9] = anchor;
+        P[10] = o.nb2 ? 2 : 0; P[11] = zl ? zl.length / 2 : 0; for (let i = 0; i < 4; i++) P[12 + i] = Number.isFinite(sd[i]) ? sd[i] : (i % 2 ? -1e9 : 1e9);
+        for (let i = 0; i < 6; i++) P[16 + i] = o.T[i] | 0; P[22] = o.empty | 0; P[23] = W; P[24] = o.mirCol | 0; P[25] = o.mirOp | 0; P[26] = (o.bitC || [0, 0])[0] | 0; P[27] = (o.bitC || [0, 0])[1] | 0;
+        device.queue.writeBuffer(PBuf, 0, P); if (zl) device.queue.writeBuffer(zBuf, 0, zl);
+        if (passes.length) { const q = new Int32Array(qN * slot / 4); passes.forEach((r, i) => q.set(r.slice(0, Q_INTS), i * slot / 4)); device.queue.writeBuffer(qBuf, 0, q); }
+        if (!picBind) picBind = device.createBindGroup({ layout: picLayout, entries: [
+          { binding: 0, resource: { buffer: PBuf } }, { binding: 1, resource: { buffer: qBuf, size: Q_INTS * 4 } }, { binding: 2, resource: { buffer: bitsBuf } },
+          { binding: 3, resource: { buffer: hasBuf } }, { binding: 4, resource: { buffer: zBuf } }, { binding: 5, resource: { buffer: pic } }, { binding: 6, resource: { buffer: pic2 } }] });
+        const enc = device.createCommandEncoder(), [gx, gy] = grid(Math.ceil(n / 64));
+        let pass = enc.beginComputePass(); pass.setPipeline(pipeBase); pass.setBindGroup(0, picBind, [0]); pass.dispatchWorkgroups(gx, gy); pass.end();
+        passes.forEach((r, i) => { enc.copyBufferToBuffer(pic, 0, pic2, 0, n * 4);
+          pass = enc.beginComputePass(); pass.setPipeline(pipeMir); pass.setBindGroup(0, picBind, [i * slot]); pass.dispatchWorkgroups(gx, gy); pass.end(); });
+        device.queue.submit([enc.finish()]); win = { VX: o.VX, VW: o.VW, VH: o.VH };
+        return true;
+      }
+      // Картинка окна → Uint32Array (проверка против img страницы)
+      async function readPic() {
+        if (!pic || !picN) return null;
+        const rb = device.createBuffer({ size: picN * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ }), enc = device.createCommandEncoder();
+        enc.copyBufferToBuffer(pic, 0, rb, 0, picN * 4); device.queue.submit([enc.finish()]);
+        await rb.mapAsync(GPUMapMode.READ); const out = new Uint32Array(rb.getMappedRange().slice(0)); rb.unmap(); rb.destroy(); return out;
+      }
+      // На холст (GPUCanvasContext, уже configure) — последняя picture(): o = { x0, y0, step — клеток окна на пиксель холста }
       function render(context, o) {
-        if (dead) return;
-        const ub = new ArrayBuffer(176), f = new Float32Array(ub), i = new Int32Array(ub), w = new Uint32Array(ub);
-        f[0] = o.x0; f[1] = o.y0; f[2] = o.step; w[3] = WW; i[4] = o.VX; i[5] = o.VW; i[6] = o.VH; w[7] = o.tint | 0;
-        i[8] = o.lo | 0; i[9] = o.hi | 0; i[10] = o.k | 0; w[11] = o.filled ? 1 : 0; i[12] = o.anchor ?? anchor;
-        o.colours.forEach((c, n) => { f[16 + n * 4] = c[0] / 255; f[17 + n * 4] = c[1] / 255; f[18 + n * 4] = c[2] / 255; f[19 + n * 4] = 1; });
+        if (dead || !pic || !win) return;
+        const ub = new ArrayBuffer(32), f = new Float32Array(ub), i = new Int32Array(ub);
+        f[0] = o.x0; f[1] = o.y0; f[2] = o.step; i[4] = win.VX; i[5] = win.VW; i[6] = win.VH;
         device.queue.writeBuffer(uBuf, 0, ub);
         if (!renderBind) renderBind = device.createBindGroup({ layout: pipeRender.getBindGroupLayout(0), entries: [
-          { binding: 0, resource: { buffer: uBuf } }, { binding: 1, resource: { buffer: bitsBuf } }, { binding: 2, resource: { buffer: hasBuf } }] });
+          { binding: 0, resource: { buffer: uBuf } }, { binding: 1, resource: { buffer: pic } }] });
         const enc = device.createCommandEncoder(), pass = enc.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', clearValue: { r: 0, g: 0, b: 0, a: 0 }, storeOp: 'store' }] });
         pass.setPipeline(pipeRender); pass.setBindGroup(0, renderBind); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, read, render, done: () => device.queue.onSubmittedWorkDone(),
-        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, tBuf, apBuf]) x?.destroy(); } };
+      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, render, done: () => device.queue.onSubmittedWorkDone(),
+        destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту
     function attach(canvas) { const ctx = canvas.getContext('webgpu'); ctx.configure({ device, format, alphaMode: 'premultiplied' }); return ctx; }
