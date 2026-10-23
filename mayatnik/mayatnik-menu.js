@@ -991,10 +991,25 @@
   function syncRailFlyouts() {
     for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #paintTools > .gz-group')) {
       const left = !!box.closest('#mayatnikRail'); let list = box.querySelector(':scope > .may-rail-list');
-      if (!list && left) { list = document.createElement('div'); list.className = 'may-rail-list';
+      if (!list) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if (!left) { list.removeAttribute('style'); if (box.classList.contains('gz-open') && !box.classList.contains('pt-bot')) { const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(); Object.assign(list.style, { left: Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', top: (h.bottom + 2) + 'px', maxHeight: Math.max(24, innerHeight - h.bottom - 16) + 'px' }); } continue; }
+      if (!left) {
+        list.removeAttribute('style');
+        if (box.classList.contains('gz-open')) {
+          const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(), up = box.classList.contains('pt-bot');
+          const max = Math.max(24, up ? h.top - 14 : innerHeight - h.bottom - 16);
+          if (!up) Object.assign(list.style, { left: Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', top: (h.bottom + 2) + 'px' });
+          list.style.maxHeight = max + 'px';
+          // v0.464: внешняя скобка не обрезается overflow:auto у короткого списка;
+          // у длинного списка для неё есть место внутри прокручиваемого содержимого.
+          const scroll = list.scrollHeight > max + 1;
+          list.style.overflowY = scroll ? 'auto' : 'visible';
+          list.style.overflowX = scroll ? 'hidden' : 'visible';
+          if (scroll) list.style.setProperty(up ? 'padding-top' : 'padding-bottom', '14px', 'important');
+        }
+        continue;
+      }
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
       // v0.454 (Р02): список — столбец в потоке под шапкой, вбок не раскрывается; сдвиг остального даёт сама рейка, высоту ограничивает прокрутка рейки

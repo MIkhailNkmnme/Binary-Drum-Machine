@@ -1,4 +1,4 @@
-/* Маятник v0.462 — scoped grozd adapter, синхронное обновление контура после раскладки. Source controls stay intact. */
+/* Маятник v0.464 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -9,17 +9,17 @@
   function outline(b){
     let s=b.querySelector(':scope > .may-standard-outline');
     if(!s){s=svg('may-standard-outline');shape(s,'polygon',{points:polygon});b.append(s);}
-    const mini=b.classList.contains('may-standard-mini');set(s,'viewBox',mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',mini?'17,0 34,12 17,24 0,12':polygon);
+    const mini=b.classList.contains('may-standard-mini')||b.classList.contains('may-control-mini');set(s,'viewBox',mini?'0 0 34 24':'0 0 120 24');set(s.firstElementChild,'points',mini?'17,0 34,12 17,24 0,12':polygon);
   }
-  function roof(b,mini){
+  function roof(b,mini,up=false){
     let s=b.querySelector(':scope > .may-standard-roof');if(!s){s=svg('may-standard-roof');b.append(s);}
-    const w=mini?34:120,d=mini?'M1 12 L17 1 33 12':'M1 12 L12 1 H108 L119 12';
+    const w=mini?34:120,d=up?(mini?'M1 12 L17 23 33 12':'M1 12 L12 23 H108 L119 12'):(mini?'M1 12 L17 1 33 12':'M1 12 L12 1 H108 L119 12');
     set(s,'viewBox',`0 0 ${w} 24`);
     if(s.dataset.d!==d){s.dataset.d=d;s.replaceChildren();shape(s,'path',{d});}
   }
   let gradN=0;
   // v0.449: одна подложка на столбец — радиальный градиент #32393f → #000, зубцы по бокам (острие +2 px, впадина 6 px внутрь), верхняя и нижняя скобки в этом же слое
-  function contour(host,cells,side,headEl){
+  function contour(host,cells,side,headEl,upward=false){
     let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');host.prepend(s);}
     const base=host.getBoundingClientRect(),cols=new Map();
     const add=(b,head)=>{const r=b.getBoundingClientRect();if(!r.width||!r.height)return false;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){if(head)return false;k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height,head:!!head});return true;};
@@ -28,24 +28,27 @@
     if(headEl&&!headEl.classList.contains('may-standard-mini')&&getComputedStyle(host).overflowY==='visible'){
       const hr=headEl.getBoundingClientRect(),hy=Math.round(hr.top-base.top+host.scrollTop),hx=Math.round(hr.left-base.left+host.scrollLeft);
       const k=[...cols.keys()].find(c=>Math.abs(c-hx)<30);
-      if(k!==undefined&&hr.width&&hy+hr.height<=Math.min(...cols.get(k).map(c=>c.y))+1)hin=add(headEl,true);
+      if(k!==undefined&&hr.width){const col=cols.get(k),above=hy+hr.height<=Math.min(...col.map(c=>c.y))+1,below=hy>=Math.max(...col.map(c=>c.y+c.h))-1;if(above||below)hin=add(headEl,true);}
     }
-    const sig=JSON.stringify([...cols,hin]);if(s.dataset.sig===sig)return hin;s.dataset.sig=sig;s.replaceChildren();
+    const sig=JSON.stringify([...cols,hin,!!upward,!!side]);if(s.dataset.sig===sig)return hin;s.dataset.sig=sig;s.replaceChildren();
     const f=n=>n.toFixed(2);let out='';
     for(const col of cols.values()){
       col.sort((a,b)=>a.y-b.y);
       // v0.448: ширина и x — по обычной кнопке столбца, чтобы список или поле внизу их не сдвигали
-      const mode=k=>{const m=new Map();let best=col[0][k],n=0;for(const c of col){const v=Math.round(c[k]),q=(m.get(v)||0)+1;m.set(v,q);if(q>n){n=q;best=v;}}return best;},x=mode('x'),w=mode('w'),xr=x+w,y0=col[0].y,yb=Math.max(...col.map(c=>c.y+c.h)),R=[],L=[],head=!!col[0].head;
-      if(head||(side&&headEl)){R.push([xr-12,y0]);L.push([x+12,y0]);}   // v0.457: у группы, чей заголовок не над столбцом, верхняя скобка прилегает к первой кнопке
+      const mode=k=>{const m=new Map();let best=col[0][k],n=0;for(const c of col){const v=Math.round(c[k]),q=(m.get(v)||0)+1;m.set(v,q);if(q>n){n=q;best=v;}}return best;},x=mode('x'),w=mode('w'),xr=x+w,y0=col[0].y,yb=Math.max(...col.map(c=>c.y+c.h)),R=[],L=[],head=!!col[0].head,up=!!col[col.length-1].head&&!head;
+      if(up||upward){R.push([xr-12.4,y0-12],[xr-1,y0-1]);L.push([x+12.4,y0-12],[x+1,y0-1]);}
+      else if(head||(side&&headEl)){R.push([xr-12,y0]);L.push([x+12,y0]);}   // v0.457: у группы, чей заголовок не над столбцом, верхняя скобка прилегает к первой кнопке
       else if(side){R.push([xr-12.4,y0-12],[xr-1,y0-1]);L.push([x+12.4,y0-12],[x+1,y0-1]);}
       else{R.push([xr-12.4,y0+1]);L.push([x+12.4,y0+1]);}
       col.forEach((c,i)=>{const ym=c.y+c.h/2;R.push([xr+2,ym]);L.push([x-2,ym]);if(i<col.length-1){const gm=(c.y+c.h+col[i+1].y)/2;R.push([xr+2-6,gm]);L.push([x-2+6,gm]);}});
-      R.push([xr-1,yb+1],[xr-12.4,yb+12]);L.push([x+1,yb+1],[x+12.4,yb+12]);
+      if(up){R.push([xr-12,yb]);L.push([x+12,yb]);}else if(upward){R.push([xr-12.4,yb-1]);L.push([x+12.4,yb-1]);}else{R.push([xr-1,yb+1],[xr-12.4,yb+12]);L.push([x+1,yb+1],[x+12.4,yb+12]);}
       const id='may-back-'+(++gradN),pts=R.concat(L.reverse()).map(q=>f(q[0])+','+f(q[1])).join(' ');
       out+=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts}" fill="url(#${id})"/>`;
-      if(head||(side&&headEl))out+=`<path class="cap" d="M${x} ${f(y0+12)} L${x+12} ${y0} H${xr-12} L${xr} ${f(y0+12)}"/>`;
+      if(up||upward)out+=`<path class="cap" d="M${x} ${y0} L${x+12} ${y0-12} H${xr-12} L${xr} ${y0}"/>`;
+      else if(head||(side&&headEl))out+=`<path class="cap" d="M${x} ${f(y0+12)} L${x+12} ${y0} H${xr-12} L${xr} ${f(y0+12)}"/>`;
       else if(side)out+=`<path class="cap" d="M${x} ${y0} L${x+12} ${y0-12} H${xr-12} L${xr} ${y0}"/>`;
-      out+=`<path class="cap" d="M${x} ${yb} L${x+12} ${yb+12} H${xr-12} L${xr} ${yb}"/>`;
+      if(up)out+=`<path class="cap" d="M${x} ${yb-12} L${x+12} ${yb} H${xr-12} L${xr} ${yb-12}"/>`;
+      else if(!upward)out+=`<path class="cap" d="M${x} ${yb} L${x+12} ${yb+12} H${xr-12} L${xr} ${yb}"/>`;
     }
     s.innerHTML=out;return hin;
   }
@@ -87,6 +90,42 @@
       i.dataset.mayTint=bg; i.style.webkitMaskImage=bg; i.style.maskImage=bg; i.style.backgroundImage='none'; i.classList.add('may-tint');
     }
   }
+  const controlSelector='button,.gz-hx,[role="button"]', MINI_KEY='mayatnik-control-mini-v464';
+  let controlMinis=new Set();try{const a=JSON.parse(localStorage.getItem(MINI_KEY)||'[]');if(Array.isArray(a))controlMinis=new Set(a.filter(k=>typeof k==='string'));}catch(_){}
+  function controlTarget(el){
+    let b=el?.closest?.(controlSelector);if(!b)return null;
+    const pair=b.closest('.gz-pair');if(pair)b=pair;
+    if(b.matches('.pt-l,.gz-head,#mayAbout,.gz-pin,.pt-pin,.gz-a,.gz-a2,.may-bb-play,.may-bb-rs,.gz-sl,.gz-sl2,.zz-pult,.may-slide,.gz-control')||b.closest('.bar,.gz-tip,[role="tooltip"],.pt-btn')||b.matches('input,select,textarea')||b.closest('.gz-control')&&!b.matches('button,.gz-hx'))return null;
+    return b;
+  }
+  function controlKey(b){
+    if(b.id)return 'id:'+b.id;
+    const group=b.closest('[data-id],.pt-g,.gz-ladder'),owner=group?.dataset.id||group?.dataset.k||group?.querySelector(':scope > .pt-l')?.title||group?.id||'';
+    const token=b.dataset.n||b.dataset.k||b.dataset.v;
+    if(token)return 'group:'+owner+':data:'+token;
+    const parent=b.parentElement;if(!parent)return null;
+    const peers=[...parent.children].filter(e=>e.matches(controlSelector));
+    return 'group:'+owner+':parent:'+(parent.id||parent.className)+':slot:'+peers.indexOf(b);
+  }
+  function miniGlyph(b){
+    let g=b.querySelector(':scope > .may-mini-glyph');if(!g){g=document.createElement('span');g.className='may-mini-glyph';g.setAttribute('aria-hidden','true');b.append(g);}
+    const text=[...b.childNodes].filter(n=>n!==g&&!n.matches?.('svg')).map(n=>n.textContent||'').join('').trim();
+    g.textContent=(text.match(/[←→↶↷+−−×÷=?!⏺◎▶◀▲▼\d]/u)||[])[0]||[...(b.getAttribute('aria-label')||b.title||text||'◆')][0];
+  }
+  function compactControl(b,on){
+    const was=b.classList.contains('may-control-mini');
+    if(on&&!was&&!b.classList.contains('may-standard'))b.dataset.mayControlStandard='1';
+    b.classList.toggle('may-control-mini',on);
+    if(!on){if(was){b.querySelectorAll('.may-mini-half-outline').forEach(s=>s.remove());if(b.dataset.mayControlStandard){b.classList.remove('may-standard');b.querySelector(':scope > .may-standard-outline')?.remove();delete b.dataset.mayControlStandard;}}return;}
+    if(!b.title)b.title=b.getAttribute('aria-label')||b.textContent.trim();
+    b.classList.add('may-standard');outline(b);
+    const halves=[...b.querySelectorAll(':scope > .gz-half,:scope > .palette-half')];
+    if(halves.length===2){b.classList.add('may-control-pair');halves.forEach((h,i)=>{miniGlyph(h);let s=h.querySelector(':scope > .may-mini-half-outline');if(!s){s=svg('may-mini-half-outline');s.setAttribute('viewBox','0 0 17 24');shape(s,'polygon',{points:i?'0,0 17,12 0,24':'17,0 17,24 0,12'});h.append(s);}});}else miniGlyph(b);
+  }
+  function syncControlMinis(){
+    for(const el of document.querySelectorAll(controlSelector)){const b=controlTarget(el);if(!b||b!==el)continue;const k=controlKey(b);if(k)compactControl(b,controlMinis.has(k));}
+  }
+  document.addEventListener('contextmenu',e=>{const b=controlTarget(e.target);if(!b||!b.getClientRects().length)return;const k=controlKey(b);if(!k)return;e.preventDefault();e.stopImmediatePropagation();if(controlMinis.has(k))controlMinis.delete(k);else controlMinis.add(k);try{localStorage.setItem(MINI_KEY,JSON.stringify([...controlMinis]));}catch(_){}compactControl(b,controlMinis.has(k));refresh();dispatchEvent(new Event('resize'));},true);
   function refresh(){
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
@@ -96,6 +135,7 @@
       b.classList.add('may-standard');outline(b);parts(b);if(b.closest('.gz-ladder'))keyboard(b);
       const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);
     });
+    syncControlMinis();
     for(const g of document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')){
       const head=g.querySelector(':scope > .pt-l,:scope > .gz-head'),open=g.matches('.pt-open,.gz-open');if(!head)continue;
       if(g.classList.contains('pt-btn'))continue;
@@ -104,14 +144,14 @@
       if(!head.dataset.mayMiniKeys){head.dataset.mayMiniKeys='1';let last=0;head.addEventListener('keydown',e=>{if(e.target===head&&(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10')){e.preventDefault();e.stopPropagation();last=performance.now();head.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,button:2}));}});head.addEventListener('contextmenu',e=>{if(e.button!==2&&performance.now()-last<500)e.stopImmediatePropagation();},true);}
       const host=g.querySelector(':scope > .pt-r,:scope > .may-rail-list')||g;
       if(open){
-        if(host.classList.contains('pt-r')){const max=Math.max(24,g.classList.contains('pt-bot')?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';}
-        if(host.classList.contains('may-rail-list'))host.style.overflowX='';   // v0.454 (Р02): столбец рейки в потоке под шапкой, сам по себе не прокручивается — прокручивается рейка
-        const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>!b.matches('.pt-l,.gz-head')&&!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('.gz-ladder'));const hin=contour(host,cells,!!g.closest('#mayatnikRail'),head);head.classList.toggle('may-head-in',hin);if(hin)head.querySelector('.may-standard-roof')?.remove();else roof(head,head.classList.contains('may-standard-mini'));
+        if(host.classList.contains('pt-r')){const up=g.classList.contains('pt-bot'),max=Math.max(24,up?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.removeProperty('padding-top');host.style.removeProperty('padding-bottom');host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';if(scroll)host.style.setProperty(up?'padding-top':'padding-bottom','14px','important');}
+        // may-rail-list сохраняет обе оси overflow из syncRailFlyouts: hidden по X обрезал нижнюю скобку и при visible по Y.
+        const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>!b.matches('.pt-l,.gz-head')&&!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('.gz-ladder'));const hin=contour(host,cells,!!g.closest('#mayatnikRail'),head,g.classList.contains('pt-bot'));head.classList.toggle('may-head-in',hin);if(hin)head.querySelector('.may-standard-roof')?.remove();else roof(head,head.classList.contains('may-standard-mini'),g.classList.contains('pt-bot'));
         g.querySelector(':scope > .may-closed-back')?.remove();
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
-    for(const list of ladders){list.classList.add('may-standard-list');fixLadder(list);if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,false);}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    for(const list of ladders){list.classList.add('may-standard-list');fixLadder(list);if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
   // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)

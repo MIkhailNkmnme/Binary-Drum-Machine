@@ -1,4 +1,4 @@
-/* Маятник v0.454 — scoped surfaces and state outlines, КНОПКИ v12. */
+/* Маятник v0.464 — scoped surfaces, contours and compact controls, КНОПКИ v27. */
 body.mayatnik-menu-ready{--may-surface:#1b2430}   /* v0.455, В07 v23: ровный фон кнопок без градиента */
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
@@ -18,6 +18,14 @@ body.mayatnik-menu-ready{--may-surface:#1b2430}   /* v0.455, В07 v23: ровн�
 .may-standard-contours{position:absolute!important;left:0;top:0;width:100%;height:24px;z-index:-2;pointer-events:none;overflow:visible}
 /* v0.462: служебный SVG не получает старый отступ 12 px для элементов списка без .gz-hx. */
 body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.may-standard-contours{margin:0!important}
+/* v0.463: нижняя группа — единый столбец над заголовком, без скобки на их стыке. */
+body.mayatnik-menu-ready header #paintTools.pt-dd .pt-bot>.pt-r{bottom:calc(100% + 2px)!important}
+body.mayatnik-menu-ready header #paintTools>.gz-group.pt-bot{gap:2px}
+body.mayatnik-menu-ready header #paintTools>.gz-group.pt-bot>.may-rail-list{position:relative;display:none;flex-direction:column;width:120px!important;padding:0;margin:0!important;gap:2px;overflow:visible;isolation:isolate}
+body.mayatnik-menu-ready header #paintTools>.gz-group.pt-bot.gz-open>.may-rail-list{display:flex}
+body.mayatnik-menu-ready header #paintTools>.gz-group.pt-bot>.may-rail-list :is(.gz-soty,.gz-wide,.gz-sec){display:contents!important}
+body.mayatnik-menu-ready header #paintTools .pt-r,body.mayatnik-menu-ready header #paintTools>.gz-group>.may-rail-list{scrollbar-width:none}
+body.mayatnik-menu-ready header #paintTools .pt-r::-webkit-scrollbar,body.mayatnik-menu-ready header #paintTools>.gz-group>.may-rail-list::-webkit-scrollbar{display:none}
 .may-closed-back{position:absolute!important;left:0;top:0;width:1px;height:1px;z-index:-1;pointer-events:none;overflow:visible}
 .may-back-host{isolation:isolate}
 /* v0.449: шапка раскрытой группы без своего фона — за ней общая подложка, верхняя скобка в слое подложки */
@@ -90,3 +98,23 @@ header #paintTools.pt-grid>.gz-group.gz-open{z-index:60!important}
 }
 @media(min-width:601px) and (max-width:900px){body.mayatnik-menu-ready header #paintTools.pt-grid{flex:1 0 100%;width:100%;max-width:100%;margin:0}}
 @media(max-width:600px){body.mayatnik-menu-ready header #paintTools.pt-dd{flex-wrap:nowrap!important;height:28px!important;overflow-x:auto!important;overflow-y:hidden!important}body.mayatnik-menu-ready #mayCorner{flex-direction:row;width:max-content}body.mayatnik-menu-ready #paintTools.pt-dd>#mayCorner{align-self:flex-start}}
+/* v0.464: правый щелчок сворачивает команду; у пары остаются две самостоятельные половины ромба. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-mini,
+#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini{--gz-w:34px;width:34px!important;min-width:34px!important;max-width:34px!important;flex:0 0 34px!important;height:24px!important;min-height:24px!important;max-height:24px!important;padding:0!important;gap:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;font-size:0!important;justify-content:center}
+.may-mini-glyph{display:none}
+.may-control-mini>.may-mini-glyph,.may-control-mini :is(.gz-half,.palette-half)>.may-mini-glyph{display:flex!important;position:absolute!important;inset:0;align-items:center;justify-content:center;visibility:visible!important;pointer-events:none;z-index:3;font:11px/1 'Segoe UI',sans-serif!important;color:var(--c,#dfe6f5)}
+.may-control-mini>:not(svg):not(.gz-half):not(.palette-half):not(.may-mini-glyph){visibility:hidden!important}
+.may-control-mini>i,.may-control-mini>.gz-ic{visibility:visible!important;position:absolute!important;left:50%;top:50%;transform:translate(-50%,-50%);margin:0!important;z-index:4}
+.may-control-mini:has(>i,>.gz-ic)>.may-mini-glyph{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half),
+#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half{position:relative!important;visibility:visible!important;display:flex!important;flex:0 0 17px!important;width:17px!important;min-width:17px!important;max-width:17px!important;height:24px!important;padding:0!important;margin:0!important;gap:0!important;font-size:0!important;clip-path:polygon(100% 0,100% 100%,0 50%)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-control-mini.may-control-mini.may-control-mini.may-control-pair>:is(.gz-half,.palette-half)~:is(.gz-half,.palette-half),
+#paintTools #lg.gz-hx.gz-pair.gz-split.may-control-mini>.palette-half~.palette-half{clip-path:polygon(0 0,100% 50%,0 100%)!important}
+.may-control-mini.may-control-pair>.may-standard-outline,.may-control-mini :is(.gz-half,.palette-half)>.may-half-outline{display:none!important}
+.may-control-mini :is(.gz-half,.palette-half)>:not(.may-mini-glyph):not(.may-mini-half-outline):not(input){visibility:hidden!important}
+.may-mini-half-outline{position:absolute!important;inset:0;width:17px;height:24px;pointer-events:none;z-index:4;overflow:visible}
+.may-mini-half-outline polygon{fill:none;stroke:var(--may-outline,#394657);stroke-width:calc(2 * var(--may-stroke,1px))}
+.may-control-mini :is(.gz-half,.palette-half):is(:hover,:focus-visible){--may-outline:var(--c,#7cbcff)}
+.may-control-mini :is(.gz-half,.palette-half):is(.gz-on,[aria-pressed=true]){--may-outline:var(--c,#7cbcff);--may-stroke:2px}
+.may-control-mini :is(.gz-half,.palette-half):is(:active,.may-standard-held){--may-outline:var(--c,#7cbcff);--may-stroke:3px}
+.may-control-mini.may-control-mini:hover>.may-standard-outline polygon{stroke-dasharray:none!important}
