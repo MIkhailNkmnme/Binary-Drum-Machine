@@ -1,0 +1,90 @@
+<!-- Zerkalius Маятник на видеокарте — v0.001. Проверка счёта WebGPU (mayatnik-gpu.js) против ядра MAYATNIK бит в бит и замер скорости. -->
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerkalius Маятник GPU — v0.001</title>
+<style>
+  :root { color-scheme: dark; --bg: #0d1117; --fg: #d6dde8; --dim: #7d8899; --ok: #5fd38d; --bad: #ff6b6b; --acc: #7cbcff; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h1 .ver { color: var(--dim); font-weight: 400; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  button, input { font: inherit; color: var(--fg); background: #1a2230; border: 1px solid #2c3850; border-radius: 4px; padding: 4px 10px; }
+  input { width: 90px; }
+  pre { background: #111823; border: 1px solid #222c3c; padding: 10px; white-space: pre-wrap; margin: 0; min-height: 40px; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .dim { color: var(--dim); }
+  canvas { display: block; margin-top: 12px; max-width: 100%; image-rendering: pixelated; background: #000; }
+</style>
+</head>
+<body>
+<h1>Маятник на видеокарте <span class="ver">v0.001</span></h1>
+<div class="dim" id="gpuInfo">видеокарта: …</div>
+<div class="row">
+  <button id="bCheck" title="Сверить счёт видеокарты с ядром MAYATNIK бит в бит на малых полях">Сверка с ядром</button>
+  <label title="Строк поля">строк <input id="nRows" type="number" min="8" max="65536" value="4096"></label>
+  <button id="bBench" title="Посчитать всё поле на видеокарте и показать уменьшенную картинку">Посчитать</button>
+  <button id="bCpu" title="Для сравнения — то же поле ядром на процессоре (на больших полях долго)">То же на процессоре</button>
+</div>
+<pre id="log"></pre>
+<canvas id="cv"></canvas>
+<script src="mayatnik-core.js?v=5"></script>
+<script src="mayatnik-gpu.js?v=1"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), log = (s, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = s; $('log').append(d); };
+  let gpu = null;
+  const ready = (async () => { try { gpu = await MayatnikGPU.create(); const a = gpu.adapter; $('gpuInfo').textContent = 'видеокарта: ' + ([a.vendor, a.architecture, a.description].filter(Boolean).join(' · ') || 'есть'); }
+    catch (e) { $('gpuInfo').textContent = 'видеокарта: ' + e.message; $('gpuInfo').className = 'bad'; } })();
+  const conf = (rows, mode, pair, bg) => { const S = rows, g = MAYATNIK.geometry(pair ? 'pend' : mode, pair ? 2 * S + 1 : S, rows); return { W: g.W, H: rows, anchor: g.anchor, S, mode, pair, bg }; };
+  function cpuField(c) {
+    const f = MAYATNIK.field(c.W, c.H, c.bg, c.anchor);
+    for (let k = 0; k < c.S; k++) { if (c.pair) MAYATNIK.conePair(f, c.anchor - k - 1, c.anchor + k + 1, c.H); else MAYATNIK.cone(f, c.anchor + MAYATNIK.offset(c.mode, k), c.H); }
+    return f.val;
+  }
+  const gpuRun = c => gpu.build({ W: c.W, H: c.H, anchor: c.anchor, bg: c.bg, apexes: MayatnikGPU.apexList(MAYATNIK, { mode: c.mode, pair: c.pair, anchor: c.anchor, steps: c.S }) });
+  async function check() {
+    await ready; if (!gpu) return { ok: false, msg: 'нет видеокарты' };
+    const cases = []; let allOk = true;
+    for (const rows of [8, 33, 64, 200, 512]) for (const mode of ['pend', 'pendR', 'left', 'right', 'one']) for (const bg of ['empty', '1', '0', 'chess']) cases.push(conf(rows, mode, false, bg));
+    for (const rows of [16, 100, 300]) for (const bg of ['empty', '1', 'chess']) cases.push(conf(rows, 'pend', true, bg));
+    for (const c of cases) {
+      const want = cpuField(c), run = await gpuRun(c), got = await run.read(); run.destroy();
+      let bad = -1; for (let i = 0; i < want.length; i++) if (want[i] !== got[i]) { bad = i; break; }
+      const name = `${c.H} строк · ${c.pair ? 'пара' : c.mode} · фон ${c.bg} · ${c.W}×${c.H}`;
+      if (bad < 0) log('✓ ' + name, 'ok'); else { allOk = false; log(`✗ ${name}: первая разница в строке ${Math.floor(bad / c.W)}, столбце ${bad % c.W}: ядро ${want[bad]}, видеокарта ${got[bad]}`, 'bad'); }
+    }
+    log(allOk ? `Все ${cases.length} полей совпали бит в бит.` : 'Есть расхождения.', allOk ? 'ok' : 'bad');
+    return { ok: allOk, n: cases.length };
+  }
+  // уменьшенная картинка: доля единиц в клетке, пустое — тёмно-синим
+  function preview(val, W, H) {
+    const cv = $('cv'), s = Math.max(1, Math.ceil(Math.max(W / 1600, H / 800))), w = Math.ceil(W / s), h = Math.ceil(H / s);
+    cv.width = w; cv.height = h; const g = cv.getContext('2d'), im = g.createImageData(w, h), d = im.data;
+    const one = new Uint32Array(w * h), cnt = new Uint32Array(w * h);
+    for (let r = 0; r < H; r++) { const y = (r / s) | 0; for (let c = 0; c < W; c++) { const v = val[r * W + c]; if (v < 0) continue; const q = y * w + ((c / s) | 0); cnt[q]++; one[q] += v; } }
+    for (let q = 0; q < w * h; q++) { const p = q * 4; if (!cnt[q]) { d[p] = 10; d[p + 1] = 16; d[p + 2] = 34; } else { const t = one[q] / cnt[q]; d[p] = 40 + t * 205; d[p + 1] = 34 + t * 203; d[p + 2] = 30 + t * 202; } d[p + 3] = 255; }
+    g.putImageData(im, 0, 0);
+  }
+  async function bench(rows, show = true) {
+    await ready; if (!gpu) return null;
+    const c = conf(rows, 'pend', false, 'empty');
+    log(`Поле ${c.W}×${c.H} (${(c.W * c.H / 1e6).toFixed(1)} млн клеток), вершин ${c.S}…`, 'dim');
+    await new Promise(r => setTimeout(r, 30));
+    const run = await gpuRun(c); const res = { rows, W: c.W, H: c.H, steps: run.steps, gpuMs: Math.round(run.ms) };
+    log(`Видеокарта: ${res.gpuMs} мс (${run.steps} шагов волны)`, 'ok');
+    if (show && c.W * c.H <= 4e8) { const t = performance.now(), val = await run.read(); res.readMs = Math.round(performance.now() - t); log(`Чтение поля в память страницы: ${res.readMs} мс`, 'dim'); preview(val, c.W, c.H); }
+    run.destroy(); return res;
+  }
+  async function cpu(rows) {
+    const c = conf(rows, 'pend', false, 'empty'); log(`Процессор: ${c.W}×${c.H}…`, 'dim'); await new Promise(r => setTimeout(r, 30));
+    const t = performance.now(); cpuField(c); const ms = Math.round(performance.now() - t); log(`Процессор (ядро страницы): ${ms} мс`); return ms;
+  }
+  $('bCheck').onclick = () => { $('log').textContent = ''; check(); };
+  $('bBench').onclick = () => bench(Math.max(8, +$('nRows').value | 0));
+  $('bCpu').onclick = () => cpu(Math.max(8, +$('nRows').value | 0));
+  window.mayGpuTest = { ready, check, bench, cpu };
+})();
+</script>
+</body>
+</html>
