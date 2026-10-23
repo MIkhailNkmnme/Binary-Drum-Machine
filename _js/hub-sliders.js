@@ -42,7 +42,7 @@
   function paint(it) {
     const { r, host, th, val } = it, mn = +r.min || 0, mx = +r.max || 100, k = mx > mn ? (r.value - mn) / (mx - mn) : 0;
     const key = r.value + '|' + k;
-    const x = it.tr.clientWidth * k; th.style.left = x + 'px'; it.tr.style.setProperty('--tx', x + 'px');
+    const x = it.tr.clientWidth * k; th.style.left = Math.round(x) + 'px'; it.tr.style.setProperty('--tx', x + 'px');
     const t = valueOf(r, host); if (t !== val.textContent) val.textContent = t; if (t !== it.tv.textContent) { it.tv.textContent = t; fit(it); }
     it.last = key;
   }

@@ -127,10 +127,10 @@ body.hubRailOn #hubRail .gz-pair.gz-cut.gz-split>.gz-half{color:#dfe6f5!importan
 #hubRail .hub-sl>.gz-mid::before{left:0!important;right:0!important;clip-path:inset(0 var(--hub-th))}
 #hubRail .hub-sl>.gz-mid::after{content:none!important;display:none!important}
 #hubRail .hub-sl>.gz-mid:hover::before{-webkit-mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0);mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0)}
-#hubRail .hub-sl>.gz-mid>.gz-th{top:-2px!important;width:16px!important;height:28px!important;margin:0 0 0 -8px!important;clip-path:none!important;transform:none!important;pointer-events:none!important;z-index:2;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
-#hubRail .hub-sl>.gz-mid>.gz-th::before,#hubRail .hub-sl>.gz-mid>.gz-th::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
+#hubRail .hub-sl>.gz-mid>.gz-th{top:-2px!important;width:17px!important;height:28px!important;margin:0 0 0 -8px!important;clip-path:none!important;transform:none!important;pointer-events:none!important;z-index:2;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
+#hubRail .hub-sl>.gz-mid>.gz-th::before,#hubRail .hub-sl>.gz-mid>.gz-th::after{content:"";position:absolute;top:3px;width:8px;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
 #hubRail .hub-sl>.gz-mid>.gz-th::before{left:0;clip-path:polygon(100% 0,100% 100%,0 50%)}
-#hubRail .hub-sl>.gz-mid>.gz-th::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
+#hubRail .hub-sl>.gz-mid>.gz-th::after{left:9px;clip-path:polygon(0 0,100% 50%,0 100%)}
 #hubRail .hub-sl>.gz-mid:hover>.gz-th::before{transform:translateX(calc(-1 * var(--hub-s)));clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
 #hubRail .hub-sl>.gz-mid:hover>.gz-th::after{transform:translateX(var(--hub-s));clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
 #hubRail .hub-sl>.gz-mid:hover>.gz-th{background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center top/1px calc(50% - 7px) no-repeat,repeating-linear-gradient(to top,#fff 0 2px,transparent 2px 4px) center bottom/1px calc(50% - 7px) no-repeat!important}

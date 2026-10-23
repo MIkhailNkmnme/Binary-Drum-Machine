@@ -21,10 +21,10 @@
 #hubFieldTools .hubSlTr input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;position:absolute;top:0;left:-16px!important;right:-16px!important;width:auto!important;height:100%!important;margin:0;opacity:0;z-index:3;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
 #hubFieldTools .hubSlTr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:32px;height:24px;border:0}
 #hubFieldTools .hubSlTr input[type=range]::-moz-range-thumb{width:32px;height:24px;border:0}
-#hubFieldTools .hubSlTh{position:absolute;top:-2px;width:16px;height:28px;transform:translateX(-50%);background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat;pointer-events:none;z-index:2}
-#hubFieldTools .hubSlTh::before,#hubFieldTools .hubSlTh::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
+#hubFieldTools .hubSlTh{position:absolute;top:-2px;width:17px;height:28px;transform:translateX(-8px);background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat;pointer-events:none;z-index:2}
+#hubFieldTools .hubSlTh::before,#hubFieldTools .hubSlTh::after{content:"";position:absolute;top:3px;width:8px;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
 #hubFieldTools .hubSlTh::before{left:0;clip-path:polygon(100% 0,100% 100%,0 50%)}
-#hubFieldTools .hubSlTh::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
+#hubFieldTools .hubSlTh::after{left:9px;clip-path:polygon(0 0,100% 50%,0 100%)}
 #hubFieldTools .hubSlTr:hover .hubSlTh::before{transform:translateX(calc(-1 * var(--s,3px)));clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
 #hubFieldTools .hubSlTr:hover .hubSlTh::after{transform:translateX(var(--s,3px));clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
 #hubFieldTools .hubSlTr:hover .hubSlTh{background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center top/1px calc(50% - 7px) no-repeat,repeating-linear-gradient(to top,#fff 0 2px,transparent 2px 4px) center bottom/1px calc(50% - 7px) no-repeat}
