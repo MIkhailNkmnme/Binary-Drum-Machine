@@ -153,3 +153,8 @@ body.hubZen #hubPultBot{display:none}
 @keyframes hpSpinBlink{50%{filter:brightness(.6)}}
 /* Хаб v0.432: у малого пульта ширина ромба своя (15–24px), а общий раздвиг считал её по --zz-pw — половины выходили разными. Режем по середине своей ширины: по 3px от оси */
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult:hover .zz-pult-play{clip-path:polygon(calc(50% - 3px) 0,0 50%,calc(50% - 3px) 100%,calc(50% - 3px) 0,calc(50% + 3px) 0,100% 50%,calc(50% + 3px) 100%,calc(50% + 3px) 0)!important}
+/* Хаб v0.434: малый пульт — при наведении половины ромба расходятся на ширину числа, число — между ними; подпись сбоку на это время скрыта */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult:hover .zz-pult-play{width:calc(var(--hp-w,18px) + var(--hp-gap,6px))!important;clip-path:polygon(calc(var(--hp-w,18px) / 2) 0,0 50%,calc(var(--hp-w,18px) / 2) 100%,calc(var(--hp-w,18px) / 2) 0,calc(var(--hp-w,18px) / 2 + var(--hp-gap,6px)) 0,100% 50%,calc(var(--hp-w,18px) / 2 + var(--hp-gap,6px)) 100%,calc(var(--hp-w,18px) / 2 + var(--hp-gap,6px)) 0)!important}
+#hubPultBot .hpThNum{position:absolute;left:var(--zz-tx,50%);top:50%;transform:translate(-50%,-50%);font:700 9px/1 monospace;color:#fff;white-space:nowrap;pointer-events:none;z-index:7;visibility:hidden;background:#11141c;padding:1px}
+#hubPultBot .zz-pult:hover .hpThNum{visibility:visible}
+#hubPultBot .zz-pult:hover .hpRate{visibility:hidden}

@@ -78,7 +78,8 @@
     rateV = el('span', 'zz-pult-value hpRate', '', 'Шаг за кадр и обороты за кадр · щелчок — ввести точно (дробь 1/2 или число)');
     rateV.addEventListener('click', e => { e.stopPropagation(); const x = old.exact(); if (!x) return; const v = prompt('Обороты за кадр: дробь 1/2 или число 0.5', x.value); if (v == null) return; x.value = v; fire(x, 'input'); fire(x, 'change'); sync(); });
     const thLine = el('span', 'hpThLine');   // «при наведении на бегунок — вертикальный пунктир поверх, чуть выше»
-    pult.append(back, range, play, rateV, fwd, thLine);
+    const thNum = el('span', 'hpThNum');   // v0.434: «в середине между [половинами] покажи числа»
+    pult.append(back, range, play, rateV, fwd, thLine, thNum);
     range.addEventListener('dblclick', () => { range.value = 0; fire(range, 'input'); });   // v0.280: двойной щелчок по дорожке — скорость 0
 
     // 3. кадр и поворот битов: ▣ кадр · 0 ◂ 0° ▸ · 1 ◂ 0° ▸ · ↺ · 360°
@@ -172,6 +173,7 @@
     if (backB.textContent !== bt) backB.textContent = bt; if (fwdB.textContent !== ft) fwdB.textContent = ft;
     const t = (old.angle()?.textContent || '').trim(), rt = (old.rate()?.textContent || '').trim();   // подпись — шаг за кадр; обороты за кадр — в подсказке
     if (rateV.textContent !== t) rateV.textContent = t;
+    const tn = pult.querySelector(':scope > .hpThNum'); if (tn) { if (tn.textContent !== t) tn.textContent = t; pult.style.setProperty('--hp-gap', Math.max(6, tn.offsetWidth + 4) + 'px'); if (!pult.matches(':hover')) pult.style.setProperty('--hp-w', play.offsetWidth + 'px'); }   // зазор раскрытого ромба — по ширине числа
     const tip = 'Шаг за кадр ' + t + (rt ? ' · ' + rt : '') + ' · щелчок — ввести обороты за кадр точно (дробь 1/2 или число)'; if (rateV.title !== tip && !rateV.dataset.hubTip) rateV.title = tip;
     window.ZerkPult?.sync(pult, (+range.value || 0) / 601);
     frame.setAttribute('aria-pressed', old.frame()?.getAttribute('aria-pressed') || 'false');
