@@ -296,7 +296,7 @@
     b.onclick = () => e.click();
     // v0.050: правый клик по нажатому значку — выключить его режим.
     b.oncontextmenu = ev => { ev.preventDefault(); if (e.matches('[aria-pressed="true"]') || (e.type === 'checkbox' && e.checked)) e.click(); };
-    toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' || id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop' ? ' · сейчас: ' + e.textContent : ''); b.disabled = e.disabled;
+    toolSync.push(() => { b.title = tip(e) + (id === 'bAutoVertical' ? ' · сейчас: ' + e.textContent : ''); if (['bPaintMeet','bPaintAxis','bThirds','bTriTop'].includes(id)) b.setAttribute('aria-label', b.title); b.disabled = e.disabled;
       if (id === 'bPaintMeet' || id === 'bPaintAxis' || id === 'bTriTop') { const nm = b.querySelector('.gz-nm'); if (nm && nm.textContent !== e.dataset.miShort) nm.textContent = e.dataset.miShort; }   // v0.315: «Точка 1 / 0»
       b.classList.toggle('on', e.type === 'checkbox' ? e.checked : e.matches('[aria-pressed="true"]')); });
     // v0.121: «Симметрия» — включить и выключить оси симметрии (выключает и выбор оси с конусом, как «Скрыть оси»).
@@ -310,8 +310,8 @@
   const ptBtn = (n, kind, src, onclick) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b'; b.dataset.n = n;
     const mark = document.createElement('i'); mark.style.backgroundImage = icon(src, kind); b.append(mark); b.onclick = onclick; return b; };
   { const G = $('bFillGrow'), bg = ptBtn('meetGrow', 'plus', G, () => G.click());   // v0.318: в «Точке Оси» — свои «Рост» (та же кнопка) и цвет заливки
-    toolSync.push(() => { bg.title = tip(G); bg.classList.toggle('on', G.getAttribute('aria-pressed') === 'true'); }); gMeet.append(bg);
-    const bc = ptBtn('meetCol', 'colour', $('fillColour'), null), dc = dotIn(bc, 'fillColour', 'Цвет заливки «Точки» · щелчок — палитра'); bc.onclick = () => dc.click(); bc.title = 'Цвет заливки · щелчок — палитра'; gMeet.append(bc); }
+    toolSync.push(() => { bg.title = tip(G); bg.setAttribute('aria-label', bg.title); bg.classList.toggle('on', G.getAttribute('aria-pressed') === 'true'); }); gMeet.append(bg);
+    const bc = ptBtn('meetCol', 'colour', $('fillColour'), null), dc = dotIn(bc, 'fillColour', 'Общий цвет Краски, Точки и ТочкиОси. Щелчок — открыть палитру.'); bc.onclick = () => dc.click(); toolSync.push(() => { bc.title = 'Цвет: выбирает общий цвет заливки для Краски, Точки и ТочкиОси. Сейчас: ' + $('fillColour').value + '. Следующий щелчок: открыть палитру. Правый щелчок — свернуть в ромб.'; bc.setAttribute('aria-label', bc.title); dc.title = bc.title; }); gMeet.append(bc); }
   dotIn(gPaint.querySelector('[data-n="bFill"]'), 'fillColour', 'Цвет заливки · щелчок — палитра');
   const colour = document.createElement('input'); colour.type = 'color'; colour.className = 'pt-c'; colour.title = 'Цвет заливки';
   colour.oninput = () => { $('fillColour').value = colour.value; $('fillColour').dispatchEvent(new Event('input', { bubbles: true })); $('fillColour').dispatchEvent(new Event('change', { bubbles: true })); };
