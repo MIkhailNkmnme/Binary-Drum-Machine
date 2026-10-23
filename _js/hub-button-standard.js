@@ -249,11 +249,11 @@
       if(top)setStyle(box,'height',height+'px');
       box.classList.add('gz-onecol');
       if(open){
-        head.classList.add('hub-list-owner');
+        head.classList.add('hub-list-owner'); head.classList.toggle('hub-down',vertical);   // Р13 v20: прозрачен только заголовок, тело которого открыто вниз под ним
         if(mini)roof(head,true);else head.querySelector('.hub-roof')?.remove();
         if(vertical && items.length)caps.push({x:0});
         else if(n)caps.push({x:126,top:true},{x:126});
-      }else{head.classList.remove('hub-list-owner');head.querySelector('.hub-roof')?.remove();}
+      }else{head.classList.remove('hub-list-owner','hub-down');head.querySelector('.hub-roof')?.remove();}
       contours(box,cells,caps,{merge:open&&vertical&&!mini&&items.length>0,roofTop:open&&!mini});setupParts(box);
     }
     updateOcclusion();

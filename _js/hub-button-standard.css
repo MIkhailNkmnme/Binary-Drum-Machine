@@ -26,7 +26,7 @@ body.hubRailOn #hubRail .gz-head.hub-mini::before{clip-path:polygon(50% 0,100% 5
 #hubRail .gz-head.hub-mini>:is(.gz-nm,.gz-hr){display:none}
 body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.hub-list-owner:not(:active):not(.gz-press){--hub-stroke:1px;--hub-outline:#394657}
 /* Р13/В12: opened group header has no own background or border; the backing gradient shows through. */
-body.hubRailOn #hubRail .gz-head.hub-list-owner:not(.hub-mini):not(:active):not(.gz-press),body.hubRailOn #hubRail .gz-head.hub-list-owner:not(.hub-mini):not(:active):not(.gz-press)::before{background:transparent!important}
+body.hubRailOn #hubRail .gz-head.hub-list-owner.hub-down:not(.hub-mini):not(:active):not(.gz-press),body.hubRailOn #hubRail .gz-head.hub-list-owner.hub-down:not(.hub-mini):not(:active):not(.gz-press)::before{background:transparent!important}
 #hubRail .gz-group:has(>.gz-head:is(:active,.gz-press)) .hub-contours .roof-top{visibility:hidden}
 .hub-contours{position:absolute!important;inset:0;overflow:visible;pointer-events:none;z-index:-2!important;width:100%;height:24px}
 .hub-roof{position:absolute!important;inset:0;width:100%;height:24px;pointer-events:none;z-index:4!important;overflow:visible}
