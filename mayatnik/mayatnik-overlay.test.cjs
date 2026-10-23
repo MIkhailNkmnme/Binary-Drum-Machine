@@ -27,7 +27,7 @@ function env({saved,ready=true,gpu=false,dpr=2,rect,templates=false}={}){
     img:pic,present:{clean:{pic}},cv,gpuCv,gpuBig:gpu?{}:null,gpuRaf:gpu?7:0,wrap,k:7,sessionReady:ready,
     templateCanvas:{hidden:!templates},templateItems:templates?[{view:{visible:true}}]:[],
     paintTemplate(g,x,y,s,contentOnly){assert.equal(contentOnly,true);events.push('template-content');const t=canvas(8,8);t.pixels[10]=0xff00aa33;g.drawImage(t,0,0,4,4);},
-    scale:()=>.5,DPR:()=>dpr,rombP:()=>-1,gpuRender(){events.push('render');gpuCv.pixels.set(pixels);},
+    layout(){},scale:()=>.5,DPR:()=>dpr,rombP:()=>-1,gpuRender(){events.push('render');gpuCv.pixels.set(pixels);},
     cancelAnimationFrame(id){events.push('cancel:'+id);queue.delete(id);},requestAnimationFrame(fn){const id=++rid;queue.set(id,fn);return id;},addEventListener(){},
     save(){saves.push(JSON.parse(JSON.stringify(ctx.st.ovl)));},document:{body:{classList:{contains:()=>false},append:c=>appended.push(c)},createElement:tag=>{assert.equal(tag,'canvas');return canvas();},querySelectorAll(){throw Error('service layer capture forbidden');}}
   });ctx.window=ctx;vm.runInContext(source,ctx);
@@ -105,7 +105,7 @@ test('actual reset button is inserted, moved into Areas, and invokes reset witho
 });
 
 // Scroll/layout model uses the production margin and alignment functions. No bit computation or rebuild.
-function originalLayout(e,{blockedScroll=false,initialScale=.5,dpr=2,quantized=false}={}){
+function originalLayout(e,{blockedScroll=false,initialScale=.5,dpr=2,quantized=false,base=2}={}){
   const C=e.ctx;let left=0,top=0,m={left:0,right:0,top:0,bottom:0},calls=0;
   C.st.zoom=initialScale;C.scale=()=>C.st.zoom;C.DPR=()=>dpr;C.minScale=()=>.001;C.dispW=()=>8;C.VH=8;
   C.getComputedStyle=()=>({paddingLeft:'0',paddingRight:'0',paddingTop:'0',paddingBottom:'0'});
@@ -115,8 +115,8 @@ function originalLayout(e,{blockedScroll=false,initialScale=.5,dpr=2,quantized=f
   Object.defineProperties(e.wrap,{scrollLeft:{get:()=>left,set:v=>{left=blockedScroll?0:quantize(Math.min(maxX(),Math.max(0,v)));}},scrollTop:{get:()=>top,set:v=>{top=blockedScroll?0:quantize(Math.min(maxY(),Math.max(0,v)));}}});
   e.cv.getBoundingClientRect=()=>{const tr=e.cv.style.transform?.match(/translate3d\(([^p]+)px, ([^p]+)px, 0\)/),dx=tr?+tr[1]:0,dy=tr?+tr[2]:0;
     return {left:11+m.left-left+dx,top:21+m.top-top+dy,width:8*C.scale(),height:C.VH*C.scale(),right:11+m.left-left+8*C.scale()+dx,bottom:21+m.top-top+C.VH*C.scale()+dy};};
-  C.snap2=s=>2**Math.round(Math.log2(s));
-  C.layout=()=>{calls++;assert.ok(calls<100,'no layout recursion');m=C.ovlLinked()?C.ovlOriginalMargins(C.scale()):{left:0,right:0,top:0,bottom:0};C.ovlAlignOriginal();e.draw();};
+  C.st.zbase=base;vm.runInContext(html.match(/  const zB = [^\n]+/)[0]+'\n'+html.match(/  const snap2 = [^\n]+/)[0],C);
+  C.layout=()=>{calls++;assert.ok(calls<10000,'no layout recursion');m=C.ovlLinked()?C.ovlOriginalMargins(C.scale()):{left:0,right:0,top:0,bottom:0};C.ovlAlignOriginal();e.draw();};
   C.st.rows=256;C.VH=256; // support many overlay steps; field dimensions are independent of source raster
   return {info,margins:()=>m,calls:()=>calls};
 }
@@ -156,17 +156,17 @@ test('manual zoom uses frozen pivot both directions, including below source scal
   // Execute actual zoomTo entry; the frozen branch must ignore cursor coordinates.
   const code=html.slice(html.indexOf('  function zoomTo('),html.indexOf('  function fit()'));
   vm.runInContext(code,e.ctx);
-  for(const s of [2,.125,4,.0625]){e.ctx.zoomTo(s,-999,999);assert.equal(e.ctx.st.zoom,s);const r=e.cv.getBoundingClientRect();assert.ok(Math.abs(r.left+3.5*s-F.x)<=.5);assert.ok(Math.abs(r.top-F.y)<=.5);}
+  for(const [s,want] of [[2,2],[.125,1],[.125,.125],[4,1],[4,4],[.0625,1],[.0625,.0625]]){e.ctx.zoomTo(s,-999,999);assert.equal(e.ctx.st.zoom,want);const r=e.cv.getBoundingClientRect();assert.ok(Math.abs(r.left+3.5*want-F.x)<=.5);assert.ok(Math.abs(r.top-F.y)<=.5);}
   assert.ok(ui.margins().left>0);assert.ok(ui.margins().right>0);assert.equal(e.ctx.st.rows,256);
 });
 test('max40 and explicit zLock reject without changing zoom, scroll, snap, flags or linkage',()=>{
   const e=env();originalLayout(e);e.api.step();e.api.freeze();const old=e.ctx.st.zoom;e.ctx.st.zLock=true;e.ctx.st.zsnap=true;
-  assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.api.get().linked,false);assert.equal(e.wrap.scrollLeft,0);
-  e.ctx.st.zLock=false;e.ctx.ovlFrozen.scale=41;assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.ctx.st.zsnap,true);assert.equal(e.api.get().linked,false);
+  assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.api.get().linked,true);assert.equal(e.wrap.scrollLeft,0);
+  e.ctx.st.zLock=false;e.ctx.ovlFrozen.scale=41;assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.ctx.st.zsnap,true);assert.equal(e.api.get().linked,true);
 });
 test('unreachable scroll clamp rolls back zoom/scroll and linkage, without changing frozen bitmap',()=>{
   const e=env();originalLayout(e,{blockedScroll:true});e.api.step();e.api.freeze();const c=e.appended[0],pixels=c.pixels.slice();
-  const result=e.api.original();assert.equal(result.ok,false);assert.match(result.message,/прокрутки/);assert.equal(e.ctx.st.zoom,.5);assert.equal(e.wrap.scrollLeft,0);assert.equal(e.api.get().linked,false);assert.deepEqual(c.pixels,pixels);
+  const result=e.api.original();assert.equal(result.ok,false);assert.match(result.message,/прокрутки/);assert.equal(e.ctx.st.zoom,.5);assert.equal(e.wrap.scrollLeft,0);assert.equal(e.api.get().linked,true);assert.deepEqual(c.pixels,pixels);
 });
 test('unfreeze/reset release linkage and immediately remove temporary margins; F5 retains opacity only',()=>{
   const e=env(),ui=originalLayout(e);e.api.step();e.api.freeze();e.api.original();e.ctx.ovlOriginalZoom(.125);assert.ok(ui.margins().left>0);
@@ -180,4 +180,75 @@ test('early align/layout calls can inspect linkage without TDZ; legacy autoancho
   for(const name of ['midScroll','fitHold','zTopScroll','zBotScroll']){
     assert.ok(html.includes('function '+name+'() { if (ovlLinked()'));
   }
+});
+
+function zoomHandlers(e){
+  const C=e.ctx,handlers={},buttons={zIn:{},zOut:{}};
+  vm.runInContext(html.slice(html.indexOf('  function zoomTo('),html.indexOf('  function fit()')),C);
+  const old=C.$;C.$=id=>buttons[id]||old(id);
+  const begin=html.indexOf('  const zoomStep =');vm.runInContext(html.slice(begin,html.indexOf("  $('zFit').onclick",begin)),C);
+  e.wrap.addEventListener=(name,fn)=>handlers[name]=fn;
+  const wheel=html.indexOf("  wrap.addEventListener('wheel', e => {");
+  vm.runInContext(html.slice(wheel,html.indexOf('  // Тянуть',wheel)),C);
+  C.pts=new Map([[1,{x:0,y:0}],[2,{x:100,y:0}]]);C.pinch={d:100,s:C.scale()};C.pan=null;
+  const move=html.indexOf('    if (!pts.has(e.pointerId)) return;');
+  vm.runInContext('globalThis.pinchMove=e=>{'+html.slice(move,html.indexOf('  });',move))+'};',C);
+  return {step:dir=>buttons[dir>0?'zIn':'zOut'].onclick(),
+    wheel:dir=>handlers.wheel({deltaY:-dir*2,deltaMode:0,clientX:999,clientY:-999,preventDefault(){}}),
+    pinch:dir=>{const d=C.pts.get(2).x*Math.exp(dir*.005);C.pinchMove({pointerId:2,clientX:d,clientY:0});}};
+}
+function magneticEnv({base=2,total=3,initialScale=1,dpr=1.25,snap=true,pos='G'}={}){
+  const e=env({saved:{n:0,h0:8,pos}});originalLayout(e,{base,initialScale,dpr,quantized:true});e.ctx.st.zsnap=snap;
+  for(let n=1;n<total;n++)e.api.step();e.ctx.zWant=123;e.api.freeze();return e;
+}
+function assertGrid(e){
+  assert.equal(e.api.get().matched,true);const C=e.ctx,F=C.ovlFrozen,r=e.cv.getBoundingClientRect();
+  for(const dx of [-3,0,3])for(const row of [0,1,7])for(const phase of [0,.5,1]){
+    assert.ok(Math.abs(r.left+(C.geo.anchor-C.VX+dx+phase)*C.scale()-(F.x+(dx+phase-.5)*F.scale))<1e-9);
+    assert.ok(Math.abs(r.top+(row+phase)*C.scale()-(F.y+(row+phase)*F.scale))<1e-9);
+  }
+}
+test('freeze enables magnet immediately without Original or scale/data changes; button crossing catches non-power targets',()=>{
+  for(const base of [2,3,5])for(const total of [3,5])for(const pos of ['G','R','B']){
+    const e=magneticEnv({base,total,initialScale:.3,pos}),C=e.ctx,h=zoomHandlers(e),field=C.f,pixels=e.snapshot().layers[0].c.pixels.slice();
+    assert.equal(C.scale(),.3);assert.equal(C.zWant,0);assert.equal(e.api.get().linked,true);assert.equal(e.api.get().matched,false);
+    for(let n=0;!e.api.get().matched&&n<10;n++)h.step(1);assertGrid(e);
+    h.step(1);assert.ok(C.scale()>C.ovlFrozen.scale);assert.equal(e.api.get().matched,false);
+    for(let n=0;!e.api.get().matched&&n<10;n++)h.step(-1);assertGrid(e);
+    h.step(-1);assert.ok(C.scale()<C.ovlFrozen.scale);assert.equal(C.f,field);assert.equal(C.k,7);assert.equal(C.st.rows,256);assert.deepEqual(e.snapshot().layers[0].c.pixels,pixels);
+  }
+});
+test('directional release uses the actual B^k/DPR grid; target3 cannot jump up when zooming down',()=>{
+  for(const [dir,expected] of [[-1,1.6],[1,3.2]]){
+    const e=magneticEnv();e.api.original();assertGrid(e);e.ctx.ovlOriginalZoom(3*Math.exp(dir*.03));assert.equal(e.ctx.scale(),expected);
+  }
+});
+test('actual wheel and pinch handlers accumulate tiny motions, snap, release, reverse and recapture without stale requests',()=>{
+  for(const mode of ['wheel','pinch'])for(const base of [2,3,5])for(const total of [3,5])for(const snap of [true,false]){
+    const e=magneticEnv({base,total,initialScale:.3,snap,pos:'B'}),h=zoomHandlers(e),C=e.ctx;
+    const reach=dir=>{for(let i=0;i<800&&!e.api.get().matched;i++)h[mode](dir);assertGrid(e);assert.equal(C.zWant,0);};
+    reach(1);const target=C.scale();
+    h[mode](1);assert.equal(C.scale(),target,'tiny motion remains in detent');
+    for(let i=0;i<20&&e.api.get().matched;i++)h[mode](1);assert.ok(C.scale()>target,'next meaningful gesture releases upward');
+    reach(-1);
+    for(let i=0;i<20&&e.api.get().matched;i++)h[mode](-1);assert.ok(C.scale()<target,'release never reverses downward intent');
+    reach(1);assert.equal(e.api.original().ok,true);assert.equal(C.zWant,0);assert.equal(C.k,7);assert.equal(C.st.rows,256);
+    C.zWant=987;e.api.freeze();assert.equal(C.zWant,0);e.api.freeze();C.zWant=765;e.api.reset();assert.equal(C.zWant,0);
+  }
+});
+test('lock rejects magnetic capture without view mutations; out-of-range magnet never bypasses40',()=>{
+  const e=magneticEnv(),h=zoomHandlers(e),C=e.ctx;C.st.zLock=true;C.st.ztop=C.st.zBot=C.st.zMid=true;
+  const before=JSON.stringify(C.st),scroll=[e.wrap.scrollLeft,e.wrap.scrollTop];h.step(1);assert.equal(JSON.stringify(C.st),before);assert.deepEqual([e.wrap.scrollLeft,e.wrap.scrollTop],scroll);assert.equal(e.api.get().matched,false);
+  C.st.zLock=false;C.ovlFrozen.scale=41;assert.equal(e.api.original().ok,false);assert.equal(C.scale(),1);
+  C.zoomTo(100);assert.ok(C.scale()<=40);assert.equal(e.api.get().matched,false);assert.equal(C.st.ztop,true);assert.equal(C.st.zBot,true);assert.equal(C.st.zMid,true);
+});
+test('menu distinguishes magnetic linkage from exact matching; real sync highlights only aligned grid',()=>{
+  const menu=fs.readFileSync(path.join(__dirname,'mayatnik-menu.js'),'utf8'),buttons={},sync=[];
+  const e=magneticEnv(),ctx=vm.createContext({document:{createElement:()=>({})},window:{mayOvl:e.api},placeTools(){},toolSync:sync,
+    ptBtn(n,kind,src,onclick){const classes={};return buttons[n]={dataset:{},onclick,classList:{toggle:(k,v)=>classes[k]=v},classes,querySelector:()=>null,setAttribute(k,v){this[k]=v;}};}});
+  vm.runInContext(menu.slice(menu.indexOf('    const ovp ='),menu.indexOf('    // v0.270:')),ctx);
+  sync[0]();const button=buttons.ovlOriginal;assert.equal(button.classes.on,false);assert.equal(button['aria-pressed'],'false');
+  e.api.original();sync[0]();assert.equal(button.classes.on,true);assert.equal(button['aria-pressed'],'true');assert.match(button.title,/Сетка совмещена/);
+  e.ctx.ovlOriginalZoom(4);sync[0]();assert.equal(button.classes.on,false);assert.equal(e.api.get().linked,true);
+  e.api.reset();sync[0]();assert.equal(button.disabled,true);assert.equal(button.classes.on,false);
 });
