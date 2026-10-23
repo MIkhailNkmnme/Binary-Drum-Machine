@@ -62,6 +62,19 @@
       const up = () => { play.removeEventListener('pointermove', mv); play.removeEventListener('pointerup', up); play.removeEventListener('pointercancel', up); if (moved) play.addEventListener('click', e2 => e2.stopImmediatePropagation(), { capture: true, once: true }); };
       play.addEventListener('pointermove', mv); play.addEventListener('pointerup', up); play.addEventListener('pointercancel', up);
     });
+    // v0.433: «на краях … раздвинут — не тянется, если за середину»: нажатие в зазоре раскрытого ромба, попавшее не на ползунок и не на стрелку
+    // (у малого пульта у краёв под зазором сам пульт), тоже забирает ромб; стрелки и ползунок перехватывает общий zz-pult
+    pult.addEventListener('pointerdown', e => {
+      if (e.button || e.__zzPult) return; const t = e.target;
+      if (t.closest?.('.zz-pult-play, .zz-pult-back, .zz-pult-fwd, .zz-pult-range, .zz-pult-value')) return;
+      const r = play.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+      e.preventDefault(); e.stopPropagation();
+      const onClick = ev => { ev.preventDefault(); ev.stopImmediatePropagation(); play.click(); };
+      document.addEventListener('click', onClick, { capture: true, once: true });
+      document.addEventListener('pointerup', () => setTimeout(() => document.removeEventListener('click', onClick, true), 0), { once: true });
+      const ne = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY, button: 0, buttons: e.buttons, pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary });
+      ne.__zzPult = true; play.dispatchEvent(ne);
+    }, true);
     rateV = el('span', 'zz-pult-value hpRate', '', 'Шаг за кадр и обороты за кадр · щелчок — ввести точно (дробь 1/2 или число)');
     rateV.addEventListener('click', e => { e.stopPropagation(); const x = old.exact(); if (!x) return; const v = prompt('Обороты за кадр: дробь 1/2 или число 0.5', x.value); if (v == null) return; x.value = v; fire(x, 'input'); fire(x, 'change'); sync(); });
     const thLine = el('span', 'hpThLine');   // «при наведении на бегунок — вертикальный пунктир поверх, чуть выше»
