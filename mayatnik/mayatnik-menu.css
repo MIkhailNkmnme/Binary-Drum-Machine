@@ -1,4 +1,4 @@
-/* Page layout only; button geometry, colours and groups come from grozd.css. */
+/* Маятник v0.485 — page layout only; button geometry, colours and groups come from grozd.css. */
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
@@ -453,7 +453,7 @@ header #paintTools.pt-dd .pt-pinned>.pt-l .pt-pin{color:#fff}
 @media (max-width:600px){header #paintTools.pt-dd .pt-pin{display:none}}
 /* v0.165: «Шаблоны» — группой полоски: кнопки рейки и список шаблонов вплотную к рамке, как остальные */
 header #paintTools.pt-dd .pt-lib .pt-r{--gz-bg:#121a30;--gz-h:24px;--gz-n:9px;--gz-txt:#dfe6f5;--gz-mut:#8592ad;color:#dfe6f5;font:12px/1.2 'Segoe UI',sans-serif;min-width:200px}
-header #paintTools.pt-dd .pt-lib .pt-r>.gz-hx{position:static!important;width:100%;left:auto;top:auto;box-sizing:border-box}
+header #paintTools.pt-dd .pt-lib .pt-r>.gz-hx{position:relative!important;width:100%;left:auto;top:auto;box-sizing:border-box}
 header #paintTools.pt-dd .pt-lib .pt-r>.gz-control{width:auto;height:auto;background:none;clip-path:none;padding:0}
 header #paintTools.pt-dd .pt-lib .pt-r>.gz-control::before{display:none}
 header #paintTools.pt-dd .pt-lib .pt-r>.gz-control:has(#templateLibraryChoices:empty){display:none}

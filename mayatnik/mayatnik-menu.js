@@ -1,4 +1,4 @@
-/* Маятник v0.478 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.485 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -395,15 +395,16 @@
     // v0.478: щелчок — добавить ▼ этого кадра к замороженным; снять все — «Очистить» в «Очистке» («снятие через очистить»)
     const afp = document.createElement('button'); afp.title = 'Заморозка'; const bAf = ptBtn('areaFreeze', 'pin', afp, () => { window.mayAreaFreeze?.add(); placeTools(); });
     toolSync.push(() => { const Z = window.mayAreaFreeze?.get(); bAf.classList.toggle('on', !!Z); bAf.title = Z ? 'Заморожено ▼: ' + Z.tris.length + ' (кадры ' + Z.ks.join(', ') + ') — контуры и площади стоят на месте, маятник растёт · щелчок — добавить ▼ этого кадра; снять — «Очистить»' : 'Заморозка: щелчок — запомнить ▼ площади этого кадра (контуры и h² останутся на месте, пока маятник растёт; следующие щелчки добавляют ▼ других кадров); снять — «Очистить» · нужна точка встречи'; });
-    // v0.484: «Наложение», как в исследовании 7.7: щелчок — следующий шаг H → H + h0; сдвиг R / G / B / все; шаг h0
+    // v0.485: фиксированный снимок видимого поля; ×2, затем ×3/2, ×4/3 — итог ×2, ×3, ×4 от снимка.
     const ovp = document.createElement('button'); ovp.title = 'Наложение'; const bOv = ptBtn('ovlStep', 'plus', ovp, () => { window.mayOvl?.step(); placeTools(); });
     const opp = document.createElement('button'); opp.title = 'Сдвиг'; const bOp = ptBtn('ovlPos', 'swap', opp, () => { window.mayOvl?.pos(); placeTools(); });
     const ohp = document.createElement('button'); ohp.title = 'Шаг'; const bOh = ptBtn('ovlH0', 'grid4', ohp, () => { window.mayOvl?.h0(); placeTools(); });
-    toolSync.push(() => { const O = window.mayOvl?.get(); if (!O) return; const H = O.n * O.h0, k = O.n ? (H + O.h0) / H : 0;
-      bOv.classList.toggle('on', O.n > 0); bOv.title = O.n ? 'Наложение: ' + H + ' → ' + (H + O.h0) + ' строк, ×' + (+k.toFixed(4)) + ' — белые биты верхних ' + H + ' строк растянуты и лежат квадратами поверх ' + (H + O.h0) + ' строк · щелчок — следующий шаг (после последнего — выкл)' : 'Наложение, как в исследовании 7.7: верхние H строк кадра растягиваются до H + шаг и ложатся цветными квадратами поверх · щелчок — включить (' + O.h0 + ' → ' + 2 * O.h0 + ', ×2)';
-      const nb = bOv.querySelector('.gz-nm'); if (nb) { const t = O.n ? 'Налож. ' + H + '→' + (H + O.h0) : 'Наложение'; if (nb.textContent !== t) nb.textContent = t; }
-      const np = bOp.querySelector('.gz-nm'); if (np) { const t = 'Сдвиг ' + (O.pos === 'RGB' ? 'RGB' : O.pos); if (np.textContent !== t) np.textContent = t; } bOp.title = 'Сдвиг квадратов наложения: R — вправо на (k − 1)/2, G — по центру, B — влево, RGB — все три сразу · сейчас ' + O.pos;
-      const nh = bOh.querySelector('.gz-nm'); if (nh) { const t = 'Шаг ' + O.h0; if (nh.textContent !== t) nh.textContent = t; } bOh.title = 'Шаг наложения h0 — высота первого исходника и прибавка на каждом шаге: 8 → 16 → 32 → 64 → 128 · сейчас ' + O.h0 + ' (смена шага выключает наложение)'; });
+    toolSync.push(() => { const O = window.mayOvl?.get(); if (!O) return; const total = O.n+1, ratio = O.n ? total/O.n : 2;
+      bOv.classList.toggle('on', O.n > 0); bOv.title = (O.n ? 'Наложение: итог ×' + total + ' от снимка; переход ×' + O.n + ' → ×' + total + ' (ещё ×' + (+ratio.toFixed(4)).toString().replace('.', ',') + '). ' : 'Наложение: снять видимое поле в текущем масштабе и увеличить ×2. ') + 'Один снимок с исходными цветами и правками, без новых битов и сглаживания; увеличение от центра окна. Следующие щелчки: ×3, ×4 и далее; после последнего — выключить. Для нового снимка выключить и включить; после F5 снимок берётся заново.';
+      bOv.setAttribute('aria-label', bOv.title);
+      const nb = bOv.querySelector('.gz-nm'); if (nb) { const t = O.n ? 'Налож. ×' + total : 'Наложение'; if (nb.textContent !== t) nb.textContent = t; }
+      const np = bOp.querySelector('.gz-nm'); if (np) { const t = 'Сдвиг ' + O.pos; if (np.textContent !== t) np.textContent = t; } bOp.title = 'Сдвиг копии снимка: R — вправо на (k − 1)/2 клетки предыдущего размера, G — по центру, B — влево, RGB — копии по очереди R, G, B (непрозрачные участки верхней B закрывают нижние). k — отношение текущего шага; исходные цвета не меняются · сейчас ' + O.pos; bOp.setAttribute('aria-label', bOp.title);
+      const nh = bOh.querySelector('.gz-nm'); if (nh) { const t = 'Шаг ' + O.h0; if (nh.textContent !== t) nh.textContent = t; } bOh.title = 'Шаг h0: 8 → 16 → 32 → 64 → 128. Задаёт длину цикла до выключения по числу строк в момент снимка; не обрезает снимок. Смена шага выключает наложение; следующее включение возьмёт новый снимок · сейчас ' + O.h0; bOh.setAttribute('aria-label', bOh.title); });
     // v0.270: «Секторы» — фон четырёх секторов вокруг точки встречи
     const scp = document.createElement('button'); scp.title = 'Секторы'; const bSc = ptBtn('sectors', 'grid4', scp, () => { const S = window.maySectors; S?.set(!S.get()); placeTools(); });
     toolSync.push(() => { const on = !!window.maySectors?.get(); bSc.classList.toggle('on', on); bSc.title = 'Секторы вокруг точки встречи «Застыло»: верхний — застыл, больше не меняется (синий); нижний — меняется на каждом шаге (красный); левый / правый — только когда маятник на своей стороне, через шаг (жёлтые; когда вершин по сторонам не поровну — правый зелёный) · ' + (on ? 'вкл' : 'выкл'); });
@@ -570,7 +571,32 @@
   // Кнопки рейки переносятся как есть (их обновление и щелчки остаются), правая панель больше не показывается.
   { const row = ptGroup('Шаблоны'), lib = railRIn.querySelector('.gz-group'); row.parentElement.classList.add('pt-lib'); row.parentElement.style.setProperty('--c', '#d9b9ff');
     if (lib) { row.append(...lib.querySelectorAll('.gz-soty > .gz-hx'), ...lib.querySelectorAll('.gz-wide > *')); lib.remove(); }
+    // v0.485: команды выбранного шаблона и библиотека — одна группа; переносим живые узлы с прежними обработчиками.
+    const selected = [...tools.querySelectorAll('.pt-g')].find(g => g.querySelector('.pt-l')?.textContent === 'Шаблон');
+    if (selected) { row.prepend(...selected.querySelector('.pt-r').children); selected.remove(); }
+    row.parentElement.dataset.k = 'Шаблоны';
     railR.style.setProperty('display', 'none', 'important'); }
+  // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
+  try {
+    const mark = 'mayatnik-template-merge-v485', old = 'Шаблон', name = 'Шаблоны';
+    if (!localStorage.getItem(mark)) {
+      const keys = ['mayatnik-dd-grid','mayatnik-dd-order','mayatnik-dd-pins','mayatnik-dd-fold','mayatnik-dd-mini','mayatnik-dd-open','mayatnik-bot','mayatnik-botx','mayatnik-control-mini-v464'];
+      const saved = Object.fromEntries(keys.map(k => [k, localStorage.getItem(k)])), writes = [];
+      const read = (k, fallback) => { try { const value = JSON.parse(saved[k]); return Array.isArray(fallback) ? Array.isArray(value) ? value : fallback : value && typeof value === 'object' && !Array.isArray(value) ? value : fallback; } catch (_) { return fallback; } };
+      const grid = read(keys[0], {}), order = read(keys[1], []), bot = read('mayatnik-bot', []), bx = read('mayatnik-botx', {});
+      const hasLibraryPlace = Object.hasOwn(grid, name) || order.includes(name) || bot.includes(name) || Object.hasOwn(bx, name);
+      const inheritsPin = !read('mayatnik-dd-pins', []).includes(name) && read('mayatnik-dd-pins', []).includes(old);
+      for (const k of ['mayatnik-dd-grid','mayatnik-botx']) { const data = read(k, {}); if (!hasLibraryPlace && Object.hasOwn(data, old) && !Object.hasOwn(data, name)) { data[name] = data[old]; writes.push([k, JSON.stringify(data)]); } }
+      for (const k of ['mayatnik-dd-order','mayatnik-dd-pins','mayatnik-dd-fold','mayatnik-dd-mini','mayatnik-bot']) {
+        const data = read(k, []); if (Array.isArray(data) && data.includes(old) && !data.includes(name) && (k === 'mayatnik-dd-pins' || k === 'mayatnik-dd-fold' && inheritsPin || !hasLibraryPlace)) { data.splice(data.indexOf(old) + 1, 0, name); writes.push([k, JSON.stringify(data)]); }
+      }
+      if (saved['mayatnik-dd-open'] === old) writes.push(['mayatnik-dd-open', name]);
+      const miniKey = 'mayatnik-control-mini-v464', minis = read(miniKey, []);
+      if (Array.isArray(minis)) { const merged = [...new Set([...minis, ...minis.filter(k => typeof k === 'string' && k.startsWith('group:' + old + ':')).map(k => 'group:' + name + ':' + k.slice(('group:' + old + ':').length))])]; if (merged.length !== minis.length) writes.push([miniKey, JSON.stringify(merged)]); }
+      if (writes.length) { localStorage.setItem(mark + '-before', JSON.stringify(saved)); for (const [k,v] of writes) localStorage.setItem(k,v); }
+      localStorage.setItem(mark, '1');
+    }
+  } catch (_) {}
   // v0.180: «это в верхнее меню, открытие кнопкой и скрытие, как выпадающее меню, только полем»: сводка «Очков» — не полосой под шапкой,
   // а выпадающей группой «👓 Очки» в полосе (наведение / щелчок / закреп — как у остальных); группа видна, только пока «Очки» что-то показывают
   { const row = ptGroup('👓 Очки'), g = row.parentElement, box = $('ochkiBox'); g.classList.add('pt-ochki'); g.style.setProperty('--c', '#ffb347'); row.append(box); box.open = true;

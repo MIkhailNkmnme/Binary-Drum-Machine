@@ -1,4 +1,4 @@
-/* Маятник v0.482 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
+/* Маятник v0.485 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -91,6 +91,7 @@
   function controlKey(b){
     if(b.id)return 'id:'+b.id;
     const group=b.closest('[data-id],.pt-g,.gz-ladder'),owner=group?.dataset.id||group?.dataset.k||group?.querySelector(':scope > .pt-l')?.title||group?.id||'';
+    if(b.matches('.template-entry')&&b.closest('#templateLibraryChoices'))return 'group:'+owner+':parent:templateLibraryChoices:slot:'+[...document.querySelectorAll('#templateLibraryChoices .template-entry')].indexOf(b);
     const token=b.dataset.n||b.dataset.k||b.dataset.v;
     if(token)return 'group:'+owner+':data:'+token;
     const parent=b.parentElement;if(!parent)return null;
@@ -116,7 +117,21 @@
     for(const el of document.querySelectorAll(controlSelector)){const b=controlTarget(el);if(!b||b!==el)continue;const k=controlKey(b);if(k)compactControl(b,controlMinis.has(k));}
   }
   document.addEventListener('contextmenu',e=>{const b=controlTarget(e.target);if(!b||!b.getClientRects().length)return;const k=controlKey(b);if(!k)return;e.preventDefault();e.stopImmediatePropagation();if(controlMinis.has(k))controlMinis.delete(k);else controlMinis.add(k);try{localStorage.setItem(MINI_KEY,JSON.stringify([...controlMinis]));}catch(_){}compactControl(b,controlMinis.has(k));refresh();dispatchEvent(new Event('resize'));},true);
+  function libraryRows(){
+    // v0.485: имя и четыре действия не помещаются в одну кнопку 120 px. Сохраняем сами кнопки и их onclick в двух парных строках.
+    for(const card of document.querySelectorAll('#templateLibraryChoices > .template-entry')){
+      const actions=card.querySelector(':scope > .template-entry-actions');if(!actions)continue;
+      const record=document.createElement('div');record.className='template-record';card.before(record);record.append(card,actions);
+      const buttons=[...actions.children],names=['Сохранить','Скачать','Цвет','Удалить'];
+      buttons.forEach((b,i)=>{
+        if(i%2===0){const pair=document.createElement('div');pair.className='gz-hx gz-pair gz-split template-actions-pair';pair.dataset.n='template-actions:'+card.querySelector('.gz-nm')?.textContent+':'+i/2;actions.append(pair);}
+        b.classList.add('gz-half',i%2?'gz-h1':'gz-h0');
+        const name=document.createElement('span');name.className='gz-nm';name.textContent=names[i]||b.title;b.append(name);actions.lastElementChild.append(b);
+      });
+    }
+  }
   function refresh(){
+    libraryRows();
     tintIcons();
     const ladders=[...document.querySelectorAll('.gz-ladder')];
     document.querySelectorAll('.may-options-owner').forEach(b=>{if(!ladders.some(l=>l.owner===b)){b.classList.remove('may-options-owner','may-standard-open');b.querySelector('.may-standard-roof')?.remove();}});
@@ -137,7 +152,11 @@
       if(open){
         if(host.classList.contains('pt-r')){const up=g.classList.contains('pt-bot'),max=Math.max(24,up?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.removeProperty('padding-top');host.style.removeProperty('padding-bottom');host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';if(scroll)host.style.setProperty(up?'padding-top':'padding-bottom','14px','important');}
         // may-rail-list сохраняет обе оси overflow из syncRailFlyouts: hidden по X обрезал нижнюю скобку и при visible по Y.
-        const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>!b.matches('.pt-l,.gz-head')&&!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('.gz-ladder'));const hin=contour(host,cells,!!g.closest('#mayatnikRail'),head,g.classList.contains('pt-bot'));head.classList.toggle('may-head-in',hin);if(hin)head.querySelector('.may-standard-roof')?.remove();else roof(head,head.classList.contains('may-standard-mini'),g.classList.contains('pt-bot'));
+        const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>{
+          if(b.querySelector('#templateLibraryChoices'))return false;
+          if(b.closest('#templateLibraryChoices'))return b.matches('.template-entry,.template-actions-pair');
+          return !b.matches('.pt-l,.gz-head')&&!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('.gz-ladder');
+        });const hin=contour(host,cells,!!g.closest('#mayatnikRail'),head,g.classList.contains('pt-bot'));head.classList.toggle('may-head-in',hin);if(hin)head.querySelector('.may-standard-roof')?.remove();else roof(head,head.classList.contains('may-standard-mini'),g.classList.contains('pt-bot'));
         g.querySelector(':scope > .may-closed-back')?.remove();
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
