@@ -75,3 +75,16 @@ header #paintTools.pt-dd > .pt-g.pt-open,header #paintTools.pt-dd > .gz-group.pt
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard:not(.may-standard-mini):hover:not(.on):not(.gz-on):not([aria-pressed=true]):not(:active):not(.gz-press):not(.may-standard-held)>.may-standard-outline polygon{stroke-dasharray:0 96 33.94 96 33.94}
 /* v0.460: слой всей полосы выше пульта; дочерний z-index не выходит из контекста flex-элемента. */
 body.mayatnik-menu-ready header #paintTools.pt-dd:has(>.pt-open,>.gz-open){z-index:12}
+/* v0.461: только один верхний ряд; продолжение доступно горизонтальной прокруткой. */
+@media(min-width:601px){
+body.mayatnik-menu-ready header #paintTools.pt-grid{height:42px!important;min-height:42px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain}
+header #paintTools.pt-grid::-webkit-scrollbar{display:none}
+body.mayatnik-menu-ready header #paintTools.pt-grid>.pt-g:not(.pt-bot)>.pt-r{position:fixed}
+body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group:not(.pt-bot)>.may-rail-list{position:fixed;display:none;flex-direction:column;width:120px!important;gap:2px;overflow-y:auto;overflow-x:hidden;z-index:50}
+body.mayatnik-menu-ready header #paintTools.pt-grid>.gz-group.gz-open:not(.pt-bot)>.may-rail-list{display:flex}
+body.mayatnik-menu-ready header #paintTools.pt-grid>#mayBottomBar{background:#000;z-index:55}
+header #paintTools.pt-grid>.pt-drag{position:fixed!important;z-index:100!important}
+header #paintTools.pt-grid>.gz-group.gz-open{z-index:60!important}
+}
+@media(min-width:601px) and (max-width:900px){body.mayatnik-menu-ready header #paintTools.pt-grid{flex:1 0 100%;width:100%;max-width:100%;margin:0}}
+@media(max-width:600px){body.mayatnik-menu-ready header #paintTools.pt-dd{flex-wrap:nowrap!important;height:28px!important;overflow-x:auto!important;overflow-y:hidden!important}body.mayatnik-menu-ready #mayCorner{flex-direction:row;width:max-content}body.mayatnik-menu-ready #paintTools.pt-dd>#mayCorner{align-self:flex-start}}

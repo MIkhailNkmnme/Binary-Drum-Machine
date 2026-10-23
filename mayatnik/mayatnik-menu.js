@@ -610,7 +610,7 @@
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.460: фиксированный мобильный список привязан к своему заголовку, а не к левому краю окна.
-      if (narrow.matches) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, innerWidth - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
+      if (narrow.matches || !g.classList.contains('pt-bot')) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, innerWidth - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
@@ -658,9 +658,9 @@
     udL.onclick = udL.onkeydown = udL.onpointerenter = null; udL.tabIndex = -1; udL.removeAttribute('role'); udL.removeAttribute('aria-haspopup'); udL.removeAttribute('aria-expanded');   // v0.229: списка нет — жмут половинки
     // v0.193: «дай менять местами» — группу полосы тянут за название вбок, она встаёт между соседями; порядок — в памяти браузера (mayatnik-dd-order)
     // v0.225: «дай двигать кнопки маятника вверху в любое место в сетке, но чтоб не перекрывались» — названия групп, ромбы и «?» тянут куда угодно
-    // по невидимой сетке шапки: шаг вбок — t = 12/√3 ≈ 6,93 px (сетка треугольников), ряд — 28 px, рядов до MAXR; первый ряд — правее заголовка,
-    // ниже — во всю ширину шапки. Место занято — встаёт в ближайшее свободное (пока тянут, оно обведено пунктиром, ряды сетки видны).
-    // Шапка растёт рядами вниз, поле — под ней: на холст не налезает. Память — mayatnik-dd-grid { имя: [столбец, ряд, очерёдность] } — куда поставили;
+    // v0.461: единственная полоса приёма под заголовки, шаг вбок t = 12/√3 ≈ 6,93 px. Второго ряда нет.
+    // Место занято — ближайшее свободное в том же ряду; продолжение доступно горизонтальной прокруткой.
+    // Память — mayatnik-dd-grid { имя: [столбец, 0, очерёдность] }; старые ряды сохраняются отдельно перед уплотнением.
     // не влезло по ширине окна — место считается заново при раскладке (позже поставленное главнее), память при этом не трогается.
     // Двойной щелчок по пустому месту шапки — всё по умолчанию (прежнее — копией в mayatnik-dd-grid_pered_sbrosom), ещё раз — вернуть.
     // На телефоне сетки нет: полоса листается вбок, как была, порядок — по рядам сетки.
@@ -669,13 +669,14 @@
     // в сетке, кнопки — выпадающим списком под шапкой группы (mayatnik-dd-up — их id, место — в mayatnik-dd-grid как «gz:id»); оттуда — ниже шапки —
     // обратно в рейку. На телефоне такие группы — в рейке.
     { const ORDER = 'mayatnik-dd-order', GRID = 'mayatnik-dd-grid', BAK = 'mayatnik-dd-grid_pered_sbrosom', UPK = 'mayatnik-dd-up', head = tools.closest('header');
-      const SX = 12 / Math.sqrt(3), SY = 28, GAP = 4, MAXR = 6, factory = groupsAll().map(keyOf);
+      const SX = 12 / Math.sqrt(3), SY = 28, GAP = 4, factory = groupsAll().map(keyOf);
       const ups = () => [...tools.querySelectorAll(':scope > .gz-group')], items = () => [...groupsAll(), frameBar, $('mayCorner'), ...ups()].filter(Boolean);
       const idOf = el => el===frameBar?'@frame':el.id === 'mayCorner' ? '?' : el.classList.contains('gz-group') ? 'gz:' + el.dataset.id : keyOf(el);
       const arrange = keys => { const gs = groupsAll(), at = k => { const i = keys.indexOf(keyOf(k)); return i < 0 ? keys.length + gs.indexOf(k) : i; }, end = gs[gs.length - 1].nextSibling;
         for (const g of [...gs].sort((a, b) => at(a) - at(b))) tools.insertBefore(g, end); };
       try { const k = JSON.parse(localStorage.getItem(ORDER) || 'null'); if (Array.isArray(k)) arrange(k); } catch (_) {}
       let gw = null; try { const v = JSON.parse(localStorage.getItem(GRID) || 'null'); if (v && typeof v === 'object' && !Array.isArray(v)) gw = v; } catch (_) {}
+      let repairPending = true; try { repairPending = !localStorage.getItem('mayatnik-dd-single-row-v461'); } catch (_) {}
       const saveGrid = () => { if (gw && !Object.keys(gw).length) gw = null; try { if (gw) localStorage.setItem(GRID, JSON.stringify(gw)); else localStorage.removeItem(GRID); } catch (_) {} };
       const ok = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]), topT = () => Math.max(0, ...Object.values(gw || {}).map(p => +(p && p[2]) || 0));
       let up = []; try { const a = JSON.parse(localStorage.getItem(UPK) || '[]'); if (Array.isArray(a)) up = a.filter(x => typeof x === 'string'); } catch (_) {}
@@ -716,15 +717,14 @@
       const room = () => { const T = tools.getBoundingClientRect(), H = head.getBoundingClientRect(), pl = parseFloat(getComputedStyle(head).paddingLeft) || 0;
         return { W: tools.clientWidth, neg: Math.floor(Math.max(0, T.left - H.left - pl) / SX) }; };
       const busy = (row, x, w) => (row || []).some(([a, b]) => x < b + GAP && x + w + GAP > a);
-      // ближайшее к (c0, r0) свободное место шириной w — не ближе GAP к занятым; ряд «дороже» столбца, чтобы сперва искать вбок в том же ряду
+      // Ближайшее к c0 свободное место шириной w в единственном ряду, не ближе GAP к занятым.
       const fit = (occ, w, c0, r0, B) => { let best = null, bd = Infinity;
-        for (let r = 0; r < MAXR; r++) { const lo = r ? -B.neg : 0, hi = Math.max(lo, Math.floor((B.W - w) / SX));
-          for (let c = lo; c <= hi; c++) { if (busy(occ[r], c * SX, w)) continue;
-            const dd = Math.hypot((c - c0) * SX, (r - r0) * SY * 4); if (dd < bd) { bd = dd; best = [c, r]; } } }
-        if (best) return best; let r = MAXR; while (occ[r]?.length) r++; return [-B.neg, r]; };   // окно слишком узкое — ряд ниже всех
+        const end = Math.max(B.W, ...((occ[0] || []).map(p => p[1])), Math.max(0, c0) * SX) + w + GAP;
+        for (let c = 0; c <= Math.ceil(end / SX); c++) { if (busy(occ[0], c * SX, w)) continue;
+          const dd = Math.abs(c - c0); if (dd < bd) { bd = dd; best = [c, 0]; } }
+        return best; };   // v0.461: верх принимает кнопки только в один ряд, продолжение — вправо.
       // подряд, как текст: первое свободное место не раньше курсора (раскладка по умолчанию и кнопки без своего места)
-      const seq = (occ, w, B, [c0, r0]) => { const hi = Math.max(0, Math.floor((B.W - w) / SX));
-        for (let r = r0; ; r++) for (let c = r === r0 ? c0 : 0; c <= hi; c++) if (!busy(occ[r], c * SX, w)) return [c, r]; };
+      const seq = (occ, w, B, [c0]) => { for (let c = Math.max(0, c0); ; c++) if (!busy(occ[0], c * SX, w)) return [c, 0]; };
       let shown = new Map(), sig = '', d = null, rd = null, rdown = null, swallow = false;
       const sigOf = () => tools.clientWidth + ':' + items().map(el => el.getClientRects().length ? el.offsetWidth : 0).join(',');
       const snap = () => { gw = {}; let i = 0; for (const [it, [c, r]] of shown) if (it !== ud) gw[idOf(it)] = [c, r, i++]; };   // своей раскладки ещё нет — снять с того, как стоит сейчас
@@ -737,27 +737,29 @@
         const v=Math.round(Math.max(R.left+4,Math.min(R.right-w-4,cx-off)))+'px';if(ud.style.left!==v)ud.style.left=v;ud.style.top='';ud.style.bottom=Math.round(innerHeight-R.bottom+(R.height-ud.offsetHeight)/2)+'px'; };
       window.mayUdPlace = udPlace;
       let framePlaceRaf=0;
-      const framePlace=(refresh=true)=>{if(narrow.matches)return;const T=tools.getBoundingClientRect(),w=frameBar.offsetWidth,cx=window.mayAxisX?.(),x=Math.round(Math.max(0,Math.min(tools.clientWidth-w,(Number.isFinite(cx)?cx:innerWidth/2)-T.left-w/2)))+'px';
+      const framePlace=(refresh=true)=>{if(narrow.matches)return;const T=tools.getBoundingClientRect(),w=frameBar.offsetWidth,cx=window.mayAxisX?.(),x=Math.round(tools.scrollLeft+Math.max(0,Math.min(tools.clientWidth-w,(Number.isFinite(cx)?cx:innerWidth/2)-T.left-w/2)))+'px';
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
       window.mayFramePlace=framePlace;
-      const relayout = () => { const all = items();
+      const relayout = (compact = false) => { const all = items();
         if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); return; }
         if(frameBar.parentElement!==tools)tools.append(frameBar);
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
         const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el));
-        shown = new Map(); let rows = 1;
-        const put = (el, [c, r], w) => { (occ[r] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, r, w]); rows = Math.max(rows, r + 1); el.style.left = Math.round(c * SX) + 'px'; el.style.top = r * SY + 'px'; };
+        shown = new Map();
+        const put = (el, [c], w) => { (occ[0] ||= []).push([c * SX, c * SX + w]); shown.set(el, [c, 0, w]); el.style.left = Math.round(c * SX) + 'px'; el.style.top = '0px'; };
         if(vis.includes(frameBar)){framePlace(false);put(frameBar,[parseFloat(frameBar.style.left)/SX,0],frameBar.offsetWidth);}
         // v0.368: «верхнее меню сделай полосой одной»: все группы — в одну строку, порядок — как стояли (ряд, затем столбец), «Правку» над осью обходят
         const rest = vis.filter(el => el !== ud&&el!==frameBar), key = el => ok(at(el)) ? at(el)[0] + at(el)[1] * 1e-3 : 1e9 + rest.indexOf(el);   // v0.386: в одну строку — порядок по столбцу
-        let c1 = 0, r1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, pos = ok(at(el)) ? fit(occ, w, at(el)[0], at(el)[1], B) : seq(occ, w, B, [c1, r1]); put(el, pos, w); c1 = pos[0] + Math.ceil((w + GAP) / SX); r1 = pos[1]; }   // v0.386: «не даёт разместить вправо» — свой столбец (куда перетащили), до правого края; друг на друга не налезают
+        let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, pos = !compact && ok(at(el)) ? fit(occ, w, at(el)[0], 0, B) : seq(occ, w, B, [c1]); put(el, pos, w); c1 = pos[0] + Math.ceil((w + GAP) / SX); }
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
-        tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); placeBot(); };
+        tools.style.height = '42px'; sig = sigOf(); placeBot(); };
+      tools.addEventListener('scroll', () => { framePlace(false); if (shown.has(frameBar)) shown.set(frameBar, [parseFloat(frameBar.style.left) / SX, 0, frameBar.offsetWidth]); reopen(); syncRailFlyouts(); }, { passive: true });
+      tools.addEventListener('wheel', e => { if (narrow.matches || e.target.closest('.pt-r,.may-rail-list') || tools.scrollWidth <= tools.clientWidth) return; e.preventDefault(); e.stopPropagation(); tools.scrollLeft += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; }, { passive: false });
       const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); };
       addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
       const ghost = document.createElement('div'), bg0 = document.createElement('div'), bg1 = document.createElement('div'); ghost.className = 'pt-ghost'; bg0.className = bg1.className = 'pt-gridbg';
-      const showGrid = (B, w, c) => { const { W } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:${SY - GAP}px`;
+      const showGrid = (B, w, c) => { const { W } = B; bg0.style.cssText = `left:0;top:0;width:${W}px;height:24px`;
         bg1.style.cssText = 'left:0;top:0;width:100%;height:100%';
         ghost.style.width = w + 'px'; ghost.style.display = ''; ghost.style.setProperty('--c', c || '#7cbcff'); tools.prepend(bg0); footerBar.prepend(bg1); tools.append(ghost); };
       const hideGrid = () => { ghost.remove(); bg0.remove(); bg1.remove(); $('mayatnikRail').classList.remove('may-drop'); document.body.classList.remove('may-raildrag'); };
@@ -768,18 +770,20 @@
         if (!d.on) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; shut(); if (!gw) { d.fresh = true; snap(); } const r = el.getBoundingClientRect(); if (el.classList.contains('pt-bot')) { el.classList.remove('pt-bot'); el.style.bottom = ''; }
           Object.assign(d, { on: true, ox: d.x - r.left, oy: d.y - r.top, w: el.offsetWidth, B: room(), occ: occOf(el) });
           tools.classList.add('pt-dragging'); el.classList.add('pt-drag'); showGrid(d.B, d.w, getComputedStyle(el).getPropertyValue('--c').trim()); }
-        e.preventDefault(); const T = tools.getBoundingClientRect(), x = e.clientX - d.ox - T.left, y = e.clientY - d.oy - T.top;
-        el.style.left = x + 'px'; el.style.top = y + 'px';
+        e.preventDefault(); const T = tools.getBoundingClientRect(), x = e.clientX - d.ox - T.left + tools.scrollLeft, y = e.clientY - d.oy - T.top;
+        el.style.left = (e.clientX - d.ox) + 'px'; el.style.top = (e.clientY - d.oy) + 'px';
         d.bot = e.clientY > barTop() - 6;   // v0.390: над нижней полосой — вниз
         d.down = !d.bot && el.classList.contains('gz-group') && e.clientY > head.getBoundingClientRect().bottom + 24;   // группу рейки опустили ниже шапки — обратно в рейку
         $('mayatnikRail').classList.toggle('may-drop', d.down); $('mayFooterBar')?.classList.toggle('may-bbdrop', d.bot); ghost.style.display = d.down || d.bot ? 'none' : '';
-        d.at = fit(d.occ, d.w, Math.round(x / SX), Math.round(y / SY), d.B); ghostAt(d.at); });
+        d.acceptTop = e.clientY >= T.top - 6 && e.clientY <= T.top + 30;
+        d.at = d.acceptTop ? fit(d.occ, d.w, Math.round(x / SX), 0, d.B) : null;
+        ghost.style.display = d.acceptTop && !d.bot ? '' : 'none'; if (d.at) ghostAt(d.at); });
       const end = e => { if (!d || e.pointerId !== d.id) return; const { el, on: moved, at, dead, fresh, down, bot: toBot } = d; $('mayFooterBar')?.classList.remove('may-bbdrop');
         d = e.type === 'esc' ? { id: d.id, dead: true } : null;   // Esc — отмена; щелчок от отпускания потом проглотить
         if (dead) { swallow = e.type === 'pointerup'; setTimeout(() => { swallow = false; }, 0); return; }
-        if (!moved) return; if (e.type === 'pointerup') { swallow = true; setTimeout(() => { swallow = false; }, 0); }
+        if (!moved) return; const dropLeft = el.getBoundingClientRect().left; if (e.type === 'pointerup') { swallow = true; setTimeout(() => { swallow = false; }, 0); }
         tools.classList.remove('pt-dragging'); el.classList.remove('pt-drag'); hideGrid();
-        if (e.type === 'pointerup') { const id = idOf(el); bot = bot.filter(x => x !== id); if (toBot) { bot.push(id); botX[id] = Math.round(el.getBoundingClientRect().left); saveBotX(); if (el.classList.contains('gz-group') && !up.includes(el.dataset.id)) { up.push(el.dataset.id); saveUp(); } } saveBot(); }   // v0.390
+        if (e.type === 'pointerup' && (toBot || down || at)) { const id = idOf(el); bot = bot.filter(x => x !== id); if (toBot) { bot.push(id); botX[id] = Math.round(dropLeft); saveBotX(); if (el.classList.contains('gz-group') && !up.includes(el.dataset.id)) { up.push(el.dataset.id); saveUp(); } } saveBot(); }   // v0.390
         if (e.type === 'pointerup' && toBot) { if (fresh) gw = null; }
         else if (e.type === 'pointerup' && down) { if (fresh) gw = null; else if (gw) delete gw[idOf(el)]; up = up.filter(x => x !== el.dataset.id); saveUp(); saveGrid(); toRail(el, e.clientY); }
         else if (e.type === 'pointerup' && at) { gw[idOf(el)] = [at[0], at[1], topT() + 1]; saveGrid(); domSort(); } else if (fresh) gw = null;
@@ -798,8 +802,8 @@
       addEventListener('pointermove', e => { if (!rdown) return; const box = rail.el.querySelector(':scope > .gz-group.gz-drag'); if (!box) return;
         if (!rd) { rd = { box, w: box.querySelector('.gz-head').offsetWidth, B: room(), occ: occOf(null) }; document.body.classList.add('may-raildrag'); showGrid(rd.B, rd.w, getComputedStyle(box).getPropertyValue('--c').trim()); }
         box.style.left = (e.clientX - rdown.ox) + 'px';   // grozd в столбце тянет только вверх-вниз — вбок ведём сами
-        const T = tools.getBoundingClientRect(), over = e.clientY < head.getBoundingClientRect().bottom + 6;
-        rd.at = over ? fit(rd.occ, rd.w, Math.round((e.clientX - rdown.ox - T.left) / SX), Math.round((e.clientY - rdown.oy - T.top) / SY), rd.B) : null;
+        const T = tools.getBoundingClientRect(), over = e.clientY >= T.top - 6 && e.clientY <= T.top + 30;
+        rd.at = over ? fit(rd.occ, rd.w, Math.round((e.clientX - rdown.ox - T.left + tools.scrollLeft) / SX), 0, rd.B) : null;
         rd.bot = e.clientY > barTop() - 6; $('mayFooterBar')?.classList.toggle('may-bbdrop', rd.bot); if (rd.bot) rd.at = null;   // v0.390: группу рейки — вниз
         ghost.style.display = over && !rd.bot ? '' : 'none'; if (over && !rd.bot) ghostAt(rd.at); }, true);
       addEventListener('pointerup', ev => { const rox = rdown?.ox || 0; rdown = null; if (!rd) return; const { box, at, bot: toBot } = rd; rd = null; hideGrid(); $('mayFooterBar')?.classList.remove('may-bbdrop');
@@ -815,7 +819,17 @@
           gw = b.grid && typeof b.grid === 'object' && !Array.isArray(b.grid) ? b.grid : null; up = Array.isArray(b.up) ? b.up : []; saveGrid(); saveUp();
           try { if (b.order) { localStorage.setItem(ORDER, b.order); const k = JSON.parse(b.order); if (Array.isArray(k)) arrange(k); } localStorage.removeItem(BAK); } catch (_) {} placeUps(); domSort(); }
         shut(); relayout(); reopen(); });
-      grid = { relayout, tick: () => { if (!narrow.matches && !d?.on && !rd && sigOf() !== sig) relayout(); },
+      const repairSavedRows = () => {
+        if (!repairPending || narrow.matches || !tools.querySelector('.may-standard')) return;
+        repairPending = false;
+        try {
+          if (gw) localStorage.setItem('mayatnik-dd-grid-before-v461', JSON.stringify(gw));
+          relayout(true);
+          if (gw) { for (const [el, [c]] of shown) if (el !== frameBar && el !== ud) gw[idOf(el)] = [c, 0, gw[idOf(el)]?.[2] || 0]; saveGrid(); }
+          localStorage.setItem('mayatnik-dd-single-row-v461', '1');
+        } catch (_) {}
+      };
+      grid = { relayout, tick: () => { if (!narrow.matches && !d?.on && !rd) { repairSavedRows(); if (sigOf() !== sig) relayout(); } },
         touch: k => { if (gw && ok(gw[k])) { gw[k][2] = topT() + 1; saveGrid(); } relayout(); } };   // правый щелчок (ромб ↔ название): тот, кого меняли, остаётся на месте, соседи уступают
       narrow.addEventListener('change', () => { placeUps(); relayout(); }); placeUps(); domSort(); relayout(); toolSync.push(grid.tick); }
     // v0.209: «правой кнопкой по кнопке — свернуть кнопку в ромб со значком и сдвинуть все остальные на освободившееся место»:
@@ -978,7 +992,7 @@
       if (!list && left) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if (!left) { list.removeAttribute('style'); continue; }
+      if (!left) { list.removeAttribute('style'); if (box.classList.contains('gz-open') && !box.classList.contains('pt-bot')) { const h = box.querySelector(':scope > .gz-head').getBoundingClientRect(); Object.assign(list.style, { left: Math.max(4, Math.min(h.left, innerWidth - 124)) + 'px', top: (h.bottom + 2) + 'px', maxHeight: Math.max(24, innerHeight - h.bottom - 16) + 'px' }); } continue; }
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
       // v0.454 (Р02): список — столбец в потоке под шапкой, вбок не раскрывается; сдвиг остального даёт сама рейка, высоту ограничивает прокрутка рейки
