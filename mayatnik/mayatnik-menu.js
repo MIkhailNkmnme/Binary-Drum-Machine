@@ -535,7 +535,7 @@
     cols[0].classList.add('pt-colv'); gView.append(cols[0]); gMir.append(cols[1]); gView.classList.add('pt-cols'); gMir.classList.add('pt-cols'); }   // v0.238: левый столбец — «Вид», правый — «Зеркала»
   const gAreas = ptGroup('Площади');
   gAreas.parentElement.style.setProperty('--c', '#b48cff');
-  for (const n of ['sawFull', 'sectors', 'areas']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
+  for (const n of ['sawFull', 'sectors', 'areas', 'lineMeasures']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
   // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
   // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
   { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
