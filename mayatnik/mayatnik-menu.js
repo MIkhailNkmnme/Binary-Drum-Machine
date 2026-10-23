@@ -609,8 +609,8 @@
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
-      // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
-      if (narrow.matches) { r.style.top = (g.querySelector('.pt-l').getBoundingClientRect().bottom + 2) + 'px'; return; }
+      // v0.460: фиксированный мобильный список привязан к своему заголовку, а не к левому краю окна.
+      if (narrow.matches) { const h = g.querySelector('.pt-l').getBoundingClientRect(); r.style.left = Math.max(4, Math.min(h.left, innerWidth - r.offsetWidth - 4)) + 'px'; r.style.top = (h.bottom + 2) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
@@ -741,7 +741,7 @@
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
       window.mayFramePlace=framePlace;
       const relayout = () => { const all = items();
-        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';udPlace(); return; }
+        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); return; }
         if(frameBar.parentElement!==tools)tools.append(frameBar);
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
         const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el));
