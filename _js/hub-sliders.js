@@ -30,14 +30,20 @@
       b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
       return b; };
     r.before(box); tr.append(r, th, val); box.append(mk(-1), tr, mk(1));
-    const it = { r, host, th, tv, tr, val, last: '' }; items.push(it); paint(it);
+    const it = { r, host, th, tv, tr, val, last: '' }; items.push(it); paint(it); tr.addEventListener('pointerenter', () => fit(it));
     r.addEventListener('input', () => requestAnimationFrame(() => paint(it)));
+  }
+  // v0.422: a value wider than 14 px shrinks (8 px at least), then the thumb halves move further apart
+  function fit(it) {
+    const tv = it.tv; if (!tv.offsetWidth) return; tv.style.fontSize = ''; let w = tv.offsetWidth;
+    if (w > 14) { tv.style.fontSize = Math.max(8, Math.floor(9 * 14 / w * 2) / 2) + 'px'; w = tv.offsetWidth; }
+    it.tr.style.setProperty('--s', (w > 14 ? Math.min(14, Math.ceil(w / 2 + 1)) : 3) + 'px');
   }
   function paint(it) {
     const { r, host, th, val } = it, mn = +r.min || 0, mx = +r.max || 100, k = mx > mn ? (r.value - mn) / (mx - mn) : 0;
     const key = r.value + '|' + k;
     const x = it.tr.clientWidth * k; th.style.left = x + 'px'; it.tr.style.setProperty('--tx', x + 'px');
-    const t = valueOf(r, host); if (t !== val.textContent) val.textContent = t; if (t !== it.tv.textContent) it.tv.textContent = t;
+    const t = valueOf(r, host); if (t !== val.textContent) val.textContent = t; if (t !== it.tv.textContent) { it.tv.textContent = t; fit(it); }
     it.last = key;
   }
   document.addEventListener('animationend', e => { if (e.animationName === 'hubSlEcho') e.target.classList.remove('echo'); });

@@ -122,20 +122,28 @@ body.hubRailOn #hubRail .gz-pair.gz-cut.gz-split>.gz-half{color:#dfe6f5!importan
 #hubRail .hub-sl>.gz-a.hub-echo::after{animation:hubStepEcho .6s ease-out forwards}
 @keyframes hubStepEcho{from{opacity:.9;transform:translateX(0)}to{opacity:0;transform:translateX(var(--echo-dx))}}
 /* ход бегунка: центр mid = дорожка 72 px плюс по 8 px под шевроны; зона захвата — отдельный шестиугольник ±8 px */
-#hubRail .hub-sl>.gz-mid{margin:0 -8px!important;min-width:0;position:relative;overflow:visible;pointer-events:none;z-index:1}
-#hubRail .hub-sl>.gz-mid>.hub-slzone{position:absolute;left:-8px;right:-8px;top:0;bottom:0;pointer-events:auto;z-index:5;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
-#hubRail .hub-sl>.gz-mid::before{left:0!important;right:0!important;clip-path:inset(0 8px)}
+#hubRail .hub-sl>.gz-mid{--hub-th:8px;--hub-s:3px;margin:0 calc(-1 * var(--hub-th))!important;min-width:0;position:relative;overflow:visible;pointer-events:none;z-index:1}
+#hubRail .hub-sl>.gz-mid>.hub-slzone{position:absolute;left:calc(var(--hub-th) - 16px);right:calc(var(--hub-th) - 16px);top:0;bottom:0;pointer-events:auto;z-index:5;outline:none;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+#hubRail .hub-sl>.gz-mid::before{left:0!important;right:0!important;clip-path:inset(0 var(--hub-th))}
 #hubRail .hub-sl>.gz-mid::after{content:none!important;display:none!important}
 #hubRail .hub-sl>.gz-mid:hover::before{-webkit-mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0);mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0)}
 #hubRail .hub-sl>.gz-mid>.gz-th{top:-2px!important;width:16px!important;height:28px!important;margin:0 0 0 -8px!important;clip-path:none!important;transform:none!important;pointer-events:none!important;z-index:2;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
 #hubRail .hub-sl>.gz-mid>.gz-th::before,#hubRail .hub-sl>.gz-mid>.gz-th::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
 #hubRail .hub-sl>.gz-mid>.gz-th::before{left:0;clip-path:polygon(100% 0,100% 100%,0 50%)}
 #hubRail .hub-sl>.gz-mid>.gz-th::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
-#hubRail .hub-sl>.gz-mid:hover>.gz-th::before{transform:translateX(-3px);clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
-#hubRail .hub-sl>.gz-mid:hover>.gz-th::after{transform:translateX(3px);clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
+#hubRail .hub-sl>.gz-mid:hover>.gz-th::before{transform:translateX(calc(-1 * var(--hub-s)));clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
+#hubRail .hub-sl>.gz-mid:hover>.gz-th::after{transform:translateX(var(--hub-s));clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
 #hubRail .hub-sl>.gz-mid:hover>.gz-th{background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center top/1px calc(50% - 7px) no-repeat,repeating-linear-gradient(to top,#fff 0 2px,transparent 2px 4px) center bottom/1px calc(50% - 7px) no-repeat!important}
-#hubRail .hub-sl .hub-thumb-value{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 9px/1 monospace;color:#fff;opacity:0;pointer-events:none;z-index:1;white-space:nowrap}
-#hubRail .hub-sl>.gz-mid:hover .hub-thumb-value{opacity:1}
+#hubRail .hub-sl>.gz-mid>:is(.hub-thumb-value,.hub-thumb-sign){position:absolute;left:var(--thx,50%);top:50%;transform:translate(-50%,-50%);z-index:3;font:700 9px/1 monospace;color:#fff;opacity:0;pointer-events:none;z-index:1;white-space:nowrap}
+#hubRail .hub-sl>.gz-mid:hover>.hub-thumb-value{opacity:1}
+#hubRail .hub-sl>.gz-mid>.hub-thumb-sign{font:700 11px/1 'Segoe UI Symbol','Segoe UI',sans-serif;color:#fff;pointer-events:none;white-space:nowrap}
+#hubRail .hub-sl>.gz-mid:hover>.hub-thumb-sign{opacity:0}
+#hubRail .hub-sl.gz-thb>.gz-mid>.gz-th{font-size:0!important;color:transparent!important;pointer-events:auto!important;z-index:6}
 #hubRail .hub-sl>.gz-mid:hover>.gz-v{opacity:0}
 /* В11: только что выключенная щелчком кнопка или половина — без рамки наведения, как в покое */
 body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.gz-sl)):hover:not(.gz-on):not(:active):not(.gz-press):not(:focus-visible){--hub-outline:#394657;--hub-stroke:1px}
+
+/* v0.422: рамка фокуса — шестиугольник зоны захвата; включатель головы (Автозум) — обводка всей кнопки 2 px цветом группы */
+#hubRail .hub-sl>.gz-mid>.hub-slzone:focus::after{content:"";position:absolute;inset:0;background:var(--c);pointer-events:none;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.4px 1px,1.2px 50%,12.4px calc(100% - 1px),calc(100% - 12.4px) calc(100% - 1px),calc(100% - 1.2px) 50%,calc(100% - 12.4px) 1px,12.4px 1px)}
+#hubRail#hubRail .gz-hx.hub-sl.gz-vhd.gz-on::after{content:"";display:block;position:absolute;inset:0;background:var(--c);pointer-events:none;z-index:6;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.83px 2px,2.83px 50%,12.83px calc(100% - 2px),calc(100% - 12.83px) calc(100% - 2px),calc(100% - 2.83px) 50%,calc(100% - 12.83px) 2px,12.83px 2px)}
+#hubRail#hubRail .gz-hx.hub-sl.gz-vhd.gz-on::before{inset:0!important;background:var(--hub-surface)!important}

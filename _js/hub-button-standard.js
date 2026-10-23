@@ -94,14 +94,30 @@
     o.closed = () => { b.classList.remove('hub-list-owner'); b.querySelector('.hub-roof')?.remove(); document.querySelectorAll('#hubRail .hub-dim').forEach(x=>x.classList.remove('hub-dim')); queueMicrotask(updateOcclusion); };
   }
   // Hub v0.421, ПЛ01/ПЛ02: standard rail slider (not the Autozoom head variant) — grab zone to the chevrons' inner edge, value between split thumb halves.
-  const sliderOf = b => b.classList.contains('gz-sl') && !b.classList.contains('gz-vhd') && !b.classList.contains('gz-thb') && !b.classList.contains('gz-al');
+  const sliderOf = b => b.classList.contains('gz-sl');
+  // v0.422: value between split halves — wide text shrinks to 8 px at least, then the halves move apart further.
+  const fitValue = (mid, tv) => {
+    const w0 = tv.offsetWidth; if (!w0) return;
+    tv.style.fontSize = ''; let w = tv.offsetWidth;
+    if (w > 14) { const px = Math.max(8, Math.floor(9 * 14 / w * 2) / 2); tv.style.fontSize = px + 'px'; w = tv.offsetWidth; }
+    mid.style.setProperty('--hub-s', (w > 14 ? Math.min(14, Math.ceil(w / 2 + 1)) : 3) + 'px');
+  };
   function setupSlider(b) {
     if(!sliderOf(b)) return;
     const mid=b.querySelector(':scope > .gz-mid'), th=mid?.querySelector(':scope > .gz-th'), v=mid?.querySelector(':scope > .gz-v'); if(!mid||!th||!v) return;
-    b.classList.add('hub-sl');
-    if(!mid.querySelector(':scope > .hub-slzone')){const z=document.createElement('span');z.className='hub-slzone';mid.append(z);}
-    let tv=th.querySelector(':scope > .hub-thumb-value'); if(!tv){tv=document.createElement('b');tv.className='hub-thumb-value';th.append(tv);}
-    const sync=()=>{if(tv.textContent!==v.textContent)tv.textContent=v.textContent;}; sync();
+    b.classList.add('hub-sl'); const thb=b.classList.contains('gz-thb'); mid.style.setProperty('--hub-th', thb?'13px':'8px');
+    let z=mid.querySelector(':scope > .hub-slzone');
+    if(!z){z=document.createElement('span');z.className='hub-slzone';z.tabIndex=0;z.setAttribute('role','slider');z.setAttribute('aria-label',b.title||'');mid.append(z);
+      z.addEventListener('pointerenter',()=>fitValue(mid,tv));
+      z.addEventListener('keydown',e=>{const as=[...b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];const a=e.key==='ArrowLeft'||e.key==='ArrowDown'?as[0]:e.key==='ArrowRight'||e.key==='ArrowUp'?as.at(-1):null;if(a){e.preventDefault();e.stopPropagation();a.click();}});}
+    // arrow captions (−1 / +1 etc.) move to the tooltip: chevrons carry no glyphs
+    if(b.classList.contains('gz-al')) for(const a of b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')) { const t=a.textContent.trim(); if(t&&!a.dataset.hubCap){a.dataset.hubCap=t;a.title=t+' · '+(b.title||'');a.setAttribute('aria-label',a.title);} }
+    let tv=mid.querySelector(':scope > .hub-thumb-value'); if(!tv){tv=document.createElement('b');tv.className='hub-thumb-value';mid.append(tv);}
+    const sync=()=>{if(tv.textContent!==v.textContent){tv.textContent=v.textContent;fitValue(mid,tv);}}; sync();
+    if(thb){ // the sign (▶ / ❚❚ …) stays visible on the closed thumb; the thumb itself still takes the click
+      let sg=mid.querySelector(':scope > .hub-thumb-sign'); if(!sg){sg=document.createElement('b');sg.className='hub-thumb-sign';mid.append(sg);}
+      const ss=()=>{if(sg.textContent!==th.textContent)sg.textContent=th.textContent;}; ss(); if(!th.dataset.hubMo){th.dataset.hubMo='1';new MutationObserver(ss).observe(th,{childList:true,characterData:true,subtree:true});}
+    }
     if(!v.dataset.hubMo){v.dataset.hubMo='1';new MutationObserver(sync).observe(v,{childList:true,characterData:true,subtree:true});}
   }
   // The thumb (and 4 px around it) takes the press before chevrons and the grab zone: dragging starts from the grab point, no jump.
@@ -110,6 +126,8 @@
     document.addEventListener('pointerdown',e=>{
       if(e.button!==0||!e.isTrusted)return; const sl=e.target.closest?.('.hub-sl'); if(!sl)return;
       const th=sl.querySelector('.gz-th'), mid=sl.querySelector('.gz-mid'); if(!th||!mid)return;
+      if(e.target.closest('.hub-slzone, .gz-th'))sl.querySelector('.hub-slzone')?.focus({preventScroll:true});
+      if(sl.classList.contains('gz-thb'))return;   // the sign thumb takes its own press (click = action, drag = move)
       const r=th.getBoundingClientRect(); if(e.clientX<r.left-4||e.clientX>r.right+4||e.clientY<r.top||e.clientY>r.bottom)return;
       e.preventDefault();e.stopPropagation();
       const cx=r.left+r.width/2; drag={mid,d:e.clientX-cx,id:e.pointerId};
