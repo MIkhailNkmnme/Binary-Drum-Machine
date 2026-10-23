@@ -595,17 +595,8 @@
     const aboutHome = $('mayAbout').previousElementSibling, aboutPlace = () => { if (narrow.matches) $('mayCorner').append($('mayAbout')); else aboutHome.after($('mayAbout')); };
     narrow.addEventListener('change', () => { shut(); aboutPlace(); }); aboutPlace();
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
-    const zig = r => { if (!r.getClientRects().length) return; r.style.height = '';
-      // v0.164: «стык в стык» — зубцы рамки той же высоты и скоса, что кнопки: острия кнопок входят в выемки рамки, прочее — целым числом рядов
-      const b0 = r.querySelector(':scope > .gz-hx, :scope > .pt-col .gz-hx'), GAP = parseFloat(getComputedStyle(r).rowGap) || 0, P = b0 ? b0.offsetHeight + GAP : 24, D = b0 ? parseFloat(getComputedStyle(b0).getPropertyValue('--gz-n')) || 9 : 9;   // v0.184: шаг зубцов — кнопка + зазор
-      for (const c of r.children) if (!c.matches('.gz-hx')) { c.style.minHeight = ''; const ch = c.offsetHeight; if (ch) c.style.minHeight = Math.ceil(ch / P) * P + 'px'; }
-      const w = r.offsetWidth, n = Math.max(1, Math.ceil(Math.max(r.offsetHeight, r.scrollHeight) / P)), h = n * P;
-      r.style.height = h + 'px'; const pt = [[D, 0], [w - D, 0]];
-      for (let k = 0; k < n; k++) pt.push([w, k * P + P / 2], [w - D, (k + 1) * P]);
-      pt.push([D, h]); for (let k = n - 1; k >= 0; k--) pt.push([0, k * P + P / 2], [D, k * P]);
-      const c = getComputedStyle(r).getPropertyValue('--c').trim() || '#7cbcff', d = pt.map(q => q.join(',')).join(' ');
-      r.style.clipPath = 'polygon(' + pt.map(q => q[0] + 'px ' + q[1] + 'px').join(',') + ')';
-      r.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><polygon points="${d}" fill="#0d1119" fill-opacity=".96" stroke="none" stroke-linejoin="round"/></svg>`) + '")'; };
+    // v0.447: the scoped SVG adapter draws the silhouette from real control bounds.
+    const zig = r => { r.style.height = ''; r.style.clipPath = 'none'; r.style.backgroundImage = 'none'; };
     // v0.165: «у этих кнопок тоже закреп» — значок закрепа у названия группы, как в рейке: закреплённый список не закрывается
     // (щелчок мимо, Esc, открытие другой группы). На телефоне закреп не действует — там список один, на всю ширину.
     const PIN_DD = 'mayatnik-dd-pins', keyOf = g => g.dataset.k || g.querySelector('.pt-l').firstChild.textContent.trim();   // data-k — у «Правки»-кнопки (v0.229)
@@ -619,7 +610,7 @@
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.159: на телефоне список — под полоской на всю ширину экрана (position: fixed, полоска листается вбок и обрезала бы его)
-      if (narrow.matches) { r.style.top = Math.round(g.querySelector('.pt-l').getBoundingClientRect().bottom + 4) + 'px'; return; }
+      if (narrow.matches) { r.style.top = (g.querySelector('.pt-l').getBoundingClientRect().bottom + 2) + 'px'; return; }
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
@@ -759,7 +750,7 @@
         if(vis.includes(frameBar)){framePlace(false);put(frameBar,[parseFloat(frameBar.style.left)/SX,0],frameBar.offsetWidth);}
         // v0.368: «верхнее меню сделай полосой одной»: все группы — в одну строку, порядок — как стояли (ряд, затем столбец), «Правку» над осью обходят
         const rest = vis.filter(el => el !== ud&&el!==frameBar), key = el => ok(at(el)) ? at(el)[0] + at(el)[1] * 1e-3 : 1e9 + rest.indexOf(el);   // v0.386: в одну строку — порядок по столбцу
-        let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, hiC = Math.max(c1, Math.floor((B.W - w) / SX)); let c = Math.min(hiC, Math.max(c1, ok(at(el)) ? at(el)[0] : c1)); while (busy(occ[0], c * SX, w)) c++; put(el, [c, 0], w); c1 = c + Math.ceil((w + GAP) / SX); }   // v0.386: «не даёт разместить вправо» — свой столбец (куда перетащили), до правого края; друг на друга не налезают
+        let c1 = 0, r1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, pos = ok(at(el)) ? fit(occ, w, at(el)[0], at(el)[1], B) : seq(occ, w, B, [c1, r1]); put(el, pos, w); c1 = pos[0] + Math.ceil((w + GAP) / SX); r1 = pos[1]; }   // v0.386: «не даёт разместить вправо» — свой столбец (куда перетащили), до правого края; друг на друга не налезают
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
         tools.style.height = rows * SY - GAP + 'px'; sig = sigOf(); placeBot(); };
@@ -894,8 +885,11 @@
     }
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
-    const width=Math.min(parseFloat(list.style.width)||list.getBoundingClientRect().width,innerWidth-8);
-    const right=c.right+4,left=c.left-width-4;
+    const count=list.querySelectorAll(':scope > .gz-hx').length,maxRows=Math.max(1,Math.floor((innerHeight-28)/26)),space=Math.max(innerWidth-c.right-6,c.left-6),maxCols=Math.max(1,Math.floor((space+2)/122)),cols=Math.min(maxCols,Math.ceil(count/Math.min(7,maxRows))),rows=Math.ceil(count/cols),width=cols*122-2;
+    Object.assign(list.style,{width:width+'px',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-Math.min(rows,maxRows)*26-12))+'px',maxHeight:(maxRows*26-2)+'px'});
+    list.style.setProperty('overflow-y',rows>maxRows?'auto':'visible','important');
+    list.style.setProperty('overflow-x',rows>maxRows?'hidden':'visible','important');
+    const right=c.right+2,left=c.left-width-2;
     const x=right+width<=innerWidth-4?right:left>=4?left:Math.max(4,Math.min(right,innerWidth-width-4));
     list.style.left=x+'px';list.style.maxWidth=Math.min(width,Math.max(24,innerWidth-x-4))+'px';
     activeList={list,group};scheduleGroups();
@@ -961,10 +955,10 @@
       if (!left) { list.removeAttribute('style'); continue; }
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
-      const style = getComputedStyle(box), w = parseFloat(style.getPropertyValue('--gz-w')) || 120, h = parseFloat(style.getPropertyValue('--gz-h')) || 24, gap = 4;
+      const style = getComputedStyle(box), w = parseFloat(style.getPropertyValue('--gz-w')) || 120, h = parseFloat(style.getPropertyValue('--gz-h')) || 24, gap = 2;
       const cells = [...list.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')].filter(el => !el.hidden && getComputedStyle(el).display !== 'none');
       const rows = Math.min(7, Math.max(1, Math.floor((innerHeight - 16) / (h + gap)))), cols = Math.max(1, Math.ceil(cells.length / rows)), r = head.getBoundingClientRect();
-      const height = Math.min(rows, cells.length) * (h + gap) - gap, top = Math.max(4, Math.min(r.top, innerHeight - height - 8));
+      const height = Math.min(rows, cells.length) * (h + gap) - gap, top = Math.max(14, Math.min(r.top, innerHeight - height - 14));
       const styles = {left:(r.right + gap - 2) + 'px',top:top + 'px',width:(cols * (w + gap) - gap) + 'px',maxWidth:Math.max(w, innerWidth - r.right - 12) + 'px',gridTemplateRows:`repeat(${Math.min(rows, Math.max(1, cells.length))}, ${h}px)`,gridAutoColumns:w + 'px'};
       for (const [key, value] of Object.entries(styles)) if (list.style[key] !== value) list.style[key] = value;
     }

@@ -1,0 +1,52 @@
+/* Маятник v0.447 — scoped surfaces and state outlines, КНОПКИ v12. */
+body.mayatnik-menu-ready{--may-surface:radial-gradient(ellipse at center,#10151e 0%,#17202c 42%,#344351 100%)}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard *{text-shadow:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard:is(:hover,:focus-visible){--may-outline:var(--c,#7cbcff)}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard:is(.on,.gz-on,[aria-pressed=true]){--may-outline:var(--c,#7cbcff);--may-stroke:2px}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard:is(:active,.gz-press){--may-outline:var(--c,#7cbcff);--may-stroke:3px}
+.may-standard-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.may-standard-outline polygon{fill:none;stroke:var(--may-outline);stroke-width:calc(2 * var(--may-stroke));stroke-linejoin:miter}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-standard-mini{width:34px!important;min-width:34px!important;max-width:34px!important;padding:0!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;justify-content:center}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.may-standard-open:not(:active):not(.gz-press){--may-outline:#394657;--may-stroke:1px}
+.may-standard-open>.may-standard-outline{display:none}
+.may-standard-roof{position:absolute!important;inset:0;width:100%;height:24px;z-index:4;pointer-events:none;overflow:visible}
+.may-standard-roof path,.may-standard-contours .cap{fill:none;stroke:var(--c,#7cbcff);stroke-width:2;stroke-linejoin:miter}
+.may-standard:is(:active,.gz-press)>.may-standard-roof{display:none}
+.may-standard:is(:active,.gz-press)>.may-standard-outline{display:block}
+.may-standard-contours{position:absolute!important;left:0;top:0;width:100%;height:24px;z-index:-2;pointer-events:none;overflow:visible}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-r{width:120px!important;min-width:120px!important;max-width:120px!important;right:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;gap:2px!important;clip-path:none!important;background:none!important;isolation:isolate;overflow:visible;top:26px;max-height:calc(100dvh - 80px)}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-r :is(.pt-col,.pt-sec){display:contents!important;min-height:0!important;padding:0!important;margin:0!important}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-r>.pt-sep{display:none}
+body.mayatnik-menu-ready .gz-rail,body.mayatnik-menu-ready .may-rail-list,body.mayatnik-menu-ready .gz-ladder{gap:2px!important}
+body.mayatnik-menu-ready .gz-wide,body.mayatnik-menu-ready .gz-soty{gap:2px!important;row-gap:2px!important;margin-top:2px}
+body.mayatnik-menu-ready .gz-wide+.gz-wide{margin-top:2px}
+body.mayatnik-menu-ready #mayatnikRail .gz-group>.may-rail-list{padding:0!important;overflow:visible}
+.may-group-backdrop{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list{padding:0!important;margin:0!important;background:none!important;clip-path:none!important;filter:none!important;isolation:isolate;overflow:visible!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair{padding:0!important;gap:0!important}
+.may-standard-pair>.may-standard-outline{display:none}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half{--may-outline:#394657;--may-stroke:1px;position:relative!important;display:flex;align-items:center;justify-content:center;flex:0 0 64px!important;width:64px!important;min-width:64px!important;height:24px;margin:0!important;padding:0 5px!important;background:transparent!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;color:#dfe6f5!important;overflow:hidden;font-size:11px!important;isolation:isolate}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-h1{margin-left:-8px!important;clip-path:polygon(0 0,52px 0,64px 12px,52px 24px,8px 24px)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-reverse>.gz-h0{clip-path:polygon(12px 0,64px 0,56px 24px,12px 24px,0 12px)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-reverse>.gz-h1{clip-path:polygon(8px 0,52px 0,64px 12px,52px 24px,0 24px)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half::before{display:none!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half:is(:hover,:focus-visible){--may-outline:var(--c);outline:0}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half.gz-on{--may-outline:var(--c);--may-stroke:2px}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair>.gz-half:is(:active,.may-standard-held){--may-outline:var(--c);--may-stroke:3px}
+.may-half-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.may-half-outline polygon{fill:none;stroke:var(--may-outline);stroke-width:calc(2 * var(--may-stroke))}
+/* Colour circles are values, independent of the common surface. */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard .pt-dot{position:relative;z-index:4}
+body.mayatnik-menu-ready #paintTools #lg{background:var(--may-surface)!important}
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard.gz-wl>.gz-h1{font-size:0!important}
+.may-colour-swatch{width:14px;height:14px;flex:none;border-radius:50%;background:var(--gz-k);box-shadow:0 0 0 1px #ffffff66;pointer-events:none}
+body.mayatnik-menu-ready #mayRhombs{gap:2px;right:8px}
+body.mayatnik-menu-ready #mayRhombs .may-standard{justify-content:center;white-space:nowrap;animation:none!important;opacity:1!important}
+body.mayatnik-menu-ready #mayCorner{gap:2px}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-pin{position:relative;z-index:5;flex:none}
+body.mayatnik-menu-ready #paintTools.pt-dd .pt-l{justify-content:space-between}
+@media(max-width:600px){body.mayatnik-menu-ready #paintTools.pt-dd .pt-r{left:auto;max-height:60dvh;overflow-y:auto;overflow-x:hidden}body.mayatnik-menu-ready #mayCorner{display:flex;flex-direction:column;align-items:flex-start}}
+
+@media(max-width:600px){body.mayatnik-menu-ready header #paintTools.pt-dd{display:flex!important;flex-wrap:wrap!important;align-items:flex-start;gap:2px!important;overflow:visible!important;height:auto!important}body.mayatnik-menu-ready header #paintTools.pt-dd>.pt-g{flex:none;margin:0!important}body.mayatnik-menu-ready #mayCorner{flex:none;width:120px}}
