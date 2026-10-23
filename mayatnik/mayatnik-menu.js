@@ -971,7 +971,7 @@
   }, true);
   { const fb = rail.el.querySelector('.gz-al'); if (fb) toolSync.push(() => { const N = window.mayThirds?.on() ? '⅓' : Math.max(1, +$('speed').value || 1), as = fb.querySelectorAll(':scope > .gz-a:not(.gz-a2)');   // v0.317: подписи стрелок кадра — −N / +N; v0.318 — при «Третях» ±⅓
     if (as[0] && as[0].textContent !== '−' + N) as[0].textContent = '−' + N; if (as[1] && as[1].textContent !== '+' + N) as[1].textContent = '+' + N; }); }
-  // v0.436: слева заголовки остаются на месте, кнопки группы — вправо по 7 в столбце.
+  // v0.454 (Р02): слева заголовки остаются на месте, кнопки группы — одним столбцом вниз под шапкой, остальное сдвигается.
   function syncRailFlyouts() {
     for (const box of document.querySelectorAll('#mayatnikRail .gz-group, #paintTools > .gz-group')) {
       const left = !!box.closest('#mayatnikRail'); let list = box.querySelector(':scope > .may-rail-list');
@@ -981,13 +981,25 @@
       if (!left) { list.removeAttribute('style'); continue; }
       const head = box.querySelector(':scope > .gz-head'); head.setAttribute('aria-expanded', String(box.classList.contains('gz-open')));
       if (!box.classList.contains('gz-open')) continue;
-      const style = getComputedStyle(box), w = parseFloat(style.getPropertyValue('--gz-w')) || 120, h = parseFloat(style.getPropertyValue('--gz-h')) || 24, gap = 2;
-      const cells = [...list.querySelectorAll('.gz-soty > .gz-hx, .gz-wide > .gz-hx')].filter(el => !el.hidden && getComputedStyle(el).display !== 'none');
-      const rows = Math.min(7, Math.max(1, Math.floor((innerHeight - 16) / (h + gap)))), cols = Math.max(1, Math.ceil(cells.length / rows)), r = head.getBoundingClientRect();
-      const height = Math.min(rows, cells.length) * (h + gap) - gap, top = Math.max(14, Math.min(r.top, innerHeight - height - 14));
-      const styles = {left:(r.right + gap - 2) + 'px',top:top + 'px',width:(cols * (w + gap) - gap) + 'px',maxWidth:Math.max(w, innerWidth - r.right - 12) + 'px',gridTemplateRows:`repeat(${Math.min(rows, Math.max(1, cells.length))}, ${h}px)`,gridAutoColumns:w + 'px'};
-      for (const [key, value] of Object.entries(styles)) if (list.style[key] !== value) list.style[key] = value;
+      // v0.454 (Р02): список — столбец в потоке под шапкой, вбок не раскрывается; сдвиг остального даёт сама рейка, высоту ограничивает прокрутка рейки
+      for (const key of ['left', 'top', 'width', 'maxWidth', 'gridTemplateRows', 'gridAutoColumns']) if (list.style[key]) list.style[key] = '';
     }
+    pushStrip();
+  }
+  // v0.454 (Р02): в верхней полосе раскрытая группа раскрывается вниз и отодвигает вниз группы, стоящие под ней в той же полосе; при закрытии они возвращаются
+  function pushStrip() {
+    const tools = $('paintTools'); if (!tools) return;
+    const els = [...tools.querySelectorAll(':scope > .gz-group, :scope > .pt-g')].filter(g => !g.classList.contains('pt-bot') && !g.classList.contains('pt-btn') && !g.classList.contains('pt-drag'));
+    const want = new Map(els.map(g => [g, 0])), cur = g => parseFloat(g.dataset.pushY) || 0;
+    if (innerWidth > 600) for (const o of els) {
+      if (!o.matches('.pt-open, .gz-open')) continue;
+      const head = o.querySelector(':scope > .pt-l, :scope > .gz-head'), parts = [...o.querySelectorAll(':scope > .pt-r, :scope > .may-rail-list, :scope > .gz-soty, :scope > .gz-wide')].map(e => e.getBoundingClientRect()).filter(r => r.width && r.height);
+      if (!head || !parts.length) continue;
+      const hr = head.getBoundingClientRect(), L = Math.min(...parts.map(r => r.left)) - 4, R = Math.max(...parts.map(r => r.right)) + 4, H = Math.round(Math.max(...parts.map(r => r.bottom)) - hr.bottom + 4), nat = hr.bottom - cur(o);
+      for (const g of els) { if (g === o) continue; const r = g.getBoundingClientRect(), top = r.top - cur(g);
+        if (top >= nat - 1 && r.left < R && r.right > L) want.set(g, Math.max(want.get(g), H)); }
+    }
+    for (const [g, dy] of want) if (cur(g) !== dy) { g.dataset.pushY = dy; g.style.translate = dy ? '0 ' + dy + 'px' : ''; }
   }
   // v0.437: цельная зубчатая подложка включает и нижние ползунки; скрытие не меняет раскладку и закрепы.
   const groupSelector = '#paintTools > .pt-g, #paintTools > .gz-group, #mayatnikRail .gz-group';

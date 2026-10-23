@@ -1,4 +1,4 @@
-/* Маятник v0.451 — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
+/* Маятник v0.454 (Р02: группы только вниз) — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -97,10 +97,9 @@
       const host=g.querySelector(':scope > .pt-r,:scope > .may-rail-list')||g;
       if(open){
         if(host.classList.contains('pt-r')){const max=Math.max(24,g.classList.contains('pt-bot')?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';}
-        if(host.classList.contains('may-rail-list'))host.style.overflowX=host.scrollWidth>host.clientWidth+1?'auto':'visible';
+        if(host.classList.contains('may-rail-list'))host.style.overflowX='';   // v0.454 (Р02): столбец рейки в потоке под шапкой, сам по себе не прокручивается — прокручивается рейка
         const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>!b.matches('.pt-l,.gz-head')&&!b.parentElement.closest('.gz-hx,.gz-control')&&!b.closest('.gz-ladder'));const hin=contour(host,cells,!!g.closest('#mayatnikRail'),head);head.classList.toggle('may-head-in',hin);if(hin)head.querySelector('.may-standard-roof')?.remove();else roof(head,head.classList.contains('may-standard-mini'));
         g.querySelector(':scope > .may-closed-back')?.remove();
-        if(host.classList.contains('may-rail-list'))shiftLeft(host,4);
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }

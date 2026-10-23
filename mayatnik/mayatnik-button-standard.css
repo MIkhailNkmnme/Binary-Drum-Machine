@@ -1,4 +1,4 @@
-/* Маятник v0.451 — scoped surfaces and state outlines, КНОПКИ v12. */
+/* Маятник v0.454 — scoped surfaces and state outlines, КНОПКИ v12. */
 body.mayatnik-menu-ready{--may-surface:radial-gradient(ellipse at center,#10151e 0%,#17202c 42%,#344351 100%)}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
@@ -28,7 +28,10 @@ body.mayatnik-menu-ready .gz-rail{gap:2px!important}
 body.mayatnik-menu-ready .may-rail-list,body.mayatnik-menu-ready .gz-ladder{gap:2px 6px!important;width:max-content!important;max-width:none!important}
 body.mayatnik-menu-ready .gz-wide,body.mayatnik-menu-ready .gz-soty{gap:2px!important;row-gap:2px!important;margin-top:2px}
 body.mayatnik-menu-ready .gz-wide+.gz-wide{margin-top:2px}
-body.mayatnik-menu-ready #mayatnikRail .gz-group>.may-rail-list{padding:0!important;overflow:visible}
+/* v0.454 (Р02): группа рейки раскрывается только вниз под шапкой одним столбцом; рейка сдвигает остальное и прокручивается, если выше окна */
+body.mayatnik-menu-ready #mayatnikRail .gz-group>.may-rail-list{position:relative!important;left:auto!important;top:auto!important;width:var(--gz-w,120px)!important;max-width:none!important;display:none;flex-direction:column;gap:2px!important;padding:2px 0 14px!important;margin:0!important;overflow:visible!important;z-index:auto}
+body.mayatnik-menu-ready #mayatnikRail .gz-group.gz-open>.may-rail-list{display:flex!important}
+body.mayatnik-menu-ready #mayatnikRail .gz-group.gz-mini.gz-open>.may-rail-list{margin-top:12px!important}
 .may-group-backdrop{display:none!important}
 :is(body.mayatnik-menu-ready,#paintTools) .gz-ladder.may-standard-list{padding:0!important;margin:0!important;background:none!important;clip-path:none!important;filter:none!important;isolation:isolate;overflow:visible!important}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard-pair{padding:0!important;gap:0!important}

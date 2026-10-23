@@ -793,7 +793,7 @@ header #paintTools.pt-dd .pt-r>.pt-col>.pt-sec{width:100%}
 #paintTools .pt-sec>#lg{display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap!important;width:100%;height:24px!important;min-height:24px;gap:0!important;padding:0!important;border:0;border-radius:0;background:none!important;--gz-h:24px}
 #paintTools #lg .gz-half{display:flex;align-items:center;justify-content:center}
 
-/* v0.436: боковые группы раскрываются вправо; подложки — только по зубцам кнопок. */
+/* v0.436 (с v0.454 группы раскрываются только вниз, Р02): подложки — только по зубцам кнопок. */
 #mayatnikRail .gz-rail{filter:none;gap:4px}
 .mayatnik-menu-ready #mayatnikRail{z-index:8}
 .mayatnik-menu-ready .gz-group,header #paintTools .pt-g,header #paintTools .pt-sec{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
