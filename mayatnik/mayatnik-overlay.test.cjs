@@ -23,7 +23,7 @@ function env({saved,ready=true,gpu=false,dpr=2,rect,templates=false}={}){
   const cv=canvas(8,8,rect),gpuCv=canvas(8,8),pixels=Uint32Array.from({length:64},(_,i)=>i%7===0?0:(0xff000000|i*0x010307)>>>0);
   pixels[1]=0xff000000;const pic=data(8,8,pixels);cv.pixels.fill(AXIS); // decorated CPU canvas
   const wrap={clientWidth:4,clientHeight:4,clientLeft:1,clientTop:1,getBoundingClientRect:()=>({left:10,top:20}),addEventListener(){}};
-  const ctx=vm.createContext({st:{rows:256,ovl:saved},f:{get val(){throw Error('no new bits');}},geo:{anchor:3},VX:0,VH:256,
+  const ctx=vm.createContext({st:{rows:256,ovl:saved},ovlFrozen:null,zWant:0,f:{get val(){throw Error('no new bits');}},geo:{anchor:3},VX:0,VH:256,
     img:pic,present:{clean:{pic}},cv,gpuCv,gpuBig:gpu?{}:null,gpuRaf:gpu?7:0,wrap,k:7,sessionReady:ready,
     templateCanvas:{hidden:!templates},templateItems:templates?[{view:{visible:true}}]:[],
     paintTemplate(g,x,y,s,contentOnly){assert.equal(contentOnly,true);events.push('template-content');const t=canvas(8,8);t.pixels[10]=0xff00aa33;g.drawImage(t,0,0,4,4);},
@@ -75,12 +75,12 @@ test('R/G/B/RGB shift actual source without tint, alpha or recapture',()=>{
 });
 test('reset clears source, hides overlay, preserves h0/pos and field; next enable takes fresh data',()=>{
   const e=env({saved:{n:0,h0:16,pos:'B'}});e.api.step();const old=e.snapshot(),f=e.ctx.f,geo=e.ctx.geo,img=e.ctx.img,k=e.ctx.k;e.api.reset();
-  assert.equal(e.snapshot(),null);assert.equal(e.appended[0].style.display,'none');assert.deepEqual(e.saves.at(-1),{n:0,h0:16,pos:'B'});assert.equal(e.ctx.f,f);assert.equal(e.ctx.geo,geo);assert.equal(e.ctx.img,img);assert.equal(e.ctx.k,k);
+  assert.equal(e.snapshot(),null);assert.equal(e.appended[0].style.display,'none');assert.deepEqual(e.saves.at(-1),{n:0,h0:16,pos:'B',alpha:50});assert.equal(e.ctx.f,f);assert.equal(e.ctx.geo,geo);assert.equal(e.ctx.img,img);assert.equal(e.ctx.k,k);
   new Uint32Array(img.data.buffer).fill(0xffaabbcc);e.api.step();assert.notEqual(e.snapshot(),old);assert.equal(e.snapshot().layers[0].c.pixels[0],0xffaabbcc);
 });
 test('reset cancels pending F5 restore; normal F5 captures fresh live GPU',()=>{
   const e=env({saved:{n:2,h0:8,pos:'RGB'},ready:false});e.draw();e.flush();assert.equal(e.snapshot(),null);e.ctx.sessionReady=true;e.draw();assert.equal(e.queue.size,1);e.api.reset();assert.equal(e.queue.size,0);e.flush();assert.equal(e.snapshot(),null);
-  const fresh=env({gpu:true,saved:{n:2,h0:8,pos:'G'}});fresh.ctx.img=null;fresh.draw();fresh.flush();assert.ok(fresh.snapshot());assert.equal(fresh.api.get().n,2);assert.deepEqual(fresh.saves.at(-1),{n:2,h0:8,pos:'G'});
+  const fresh=env({gpu:true,saved:{n:2,h0:8,pos:'G'}});fresh.ctx.img=null;fresh.draw();fresh.flush();assert.ok(fresh.snapshot());assert.equal(fresh.api.get().n,2);assert.deepEqual(fresh.saves.at(-1),{n:2,h0:8,pos:'G',alpha:50});
 });
 test('h0/cycle/malformed state are safe; viewport resize does not change source scale',()=>{
   const e=env({saved:{n:-7,h0:0,pos:'?'}});e.ctx.VH=e.ctx.st.rows=4;assert.equal(e.api.step().n,1);const S=e.snapshot();e.wrap.clientWidth=6;e.draw();assert.equal(e.appended[0].calls.at(-1).w,S.layers[0].w*2);assert.equal(e.api.step().n,0);assert.equal(e.snapshot(),null);assert.equal(e.api.h0().h0,16);
@@ -99,4 +99,85 @@ test('actual reset button is inserted, moved into Areas, and invokes reset witho
   vm.runInContext(menu.slice(start,end)+'\n'+placement+'\n'+migration,ctx);
   const reset=areas.find(b=>b.dataset.n==='ovlReset');assert.ok(reset,'reset must actually reach the DOM group');
   assert.equal(reset.dataset.miShort,'Сброс налож.');assert.equal(reset.kind,'reset');reset.onclick();assert.equal(resets,1);assert.equal(layouts,1);
+  const actions=[];ctx.window.mayOvl.freeze=()=>actions.push('freeze');ctx.window.mayOvl.opacity=()=>actions.push('opacity');ctx.window.mayOvl.original=()=>actions.push('original');
+  for(const id of ['ovlFreeze','ovlAlpha','ovlOriginal']){const button=areas.find(b=>b.dataset.n===id);assert.ok(button,id+' actually reaches Areas');button.onclick();}
+  assert.deepEqual(actions,['freeze','opacity','original']);assert.equal(layouts,4);
+});
+
+// Scroll/layout model uses the production margin and alignment functions. No bit computation or rebuild.
+function originalLayout(e,{blockedScroll=false,initialScale=.5,dpr=2,quantized=false}={}){
+  const C=e.ctx;let left=0,top=0,m={left:0,right:0,top:0,bottom:0},calls=0;
+  C.st.zoom=initialScale;C.scale=()=>C.st.zoom;C.DPR=()=>dpr;C.minScale=()=>.001;C.dispW=()=>8;C.VH=8;
+  C.getComputedStyle=()=>({paddingLeft:'0',paddingRight:'0',paddingTop:'0',paddingBottom:'0'});
+  const info={textContent:''};C.$=id=>{assert.equal(id,'paintCacheInfo');return info;};
+  const maxX=()=>Math.max(0,m.left+8*C.scale()+m.right-e.wrap.clientWidth),maxY=()=>Math.max(0,m.top+C.VH*C.scale()+m.bottom-e.wrap.clientHeight);
+  const quantize=v=>quantized?Math.round(v*dpr)/dpr:v;
+  Object.defineProperties(e.wrap,{scrollLeft:{get:()=>left,set:v=>{left=blockedScroll?0:quantize(Math.min(maxX(),Math.max(0,v)));}},scrollTop:{get:()=>top,set:v=>{top=blockedScroll?0:quantize(Math.min(maxY(),Math.max(0,v)));}}});
+  e.cv.getBoundingClientRect=()=>{const tr=e.cv.style.transform?.match(/translate3d\(([^p]+)px, ([^p]+)px, 0\)/),dx=tr?+tr[1]:0,dy=tr?+tr[2]:0;
+    return {left:11+m.left-left+dx,top:21+m.top-top+dy,width:8*C.scale(),height:C.VH*C.scale(),right:11+m.left-left+8*C.scale()+dx,bottom:21+m.top-top+C.VH*C.scale()+dy};};
+  C.snap2=s=>2**Math.round(Math.log2(s));
+  C.layout=()=>{calls++;assert.ok(calls<100,'no layout recursion');m=C.ovlLinked()?C.ovlOriginalMargins(C.scale()):{left:0,right:0,top:0,bottom:0};C.ovlAlignOriginal();e.draw();};
+  C.st.rows=256;C.VH=256; // support many overlay steps; field dimensions are independent of source raster
+  return {info,margins:()=>m,calls:()=>calls};
+}
+test('freeze pins the already enlarged bitmap and CSS rectangle; opacity/resize/frame never resample it',()=>{
+  const e=env();e.api.step();e.api.step();e.api.freeze();const c=e.appended[0],pixels=c.pixels.slice(),rect=[c.style.left,c.style.top,c.style.width,c.style.height],count=c.calls.length;
+  assert.equal(e.api.get().fixed,true);assert.equal(c.style.opacity,'0.5');
+  assert.equal(c.style.visibility,'visible');assert.equal(c.style.zIndex,'5'); // survives may-nav and stays above original templates
+  e.ctx.k=99;e.ctx.geo.anchor=10000;e.ctx.img.data.fill(255);e.wrap.clientWidth=2;e.wrap.clientHeight=2;e.wrap.getBoundingClientRect=()=>({left:12,top:22});e.draw();
+  e.api.step();e.api.pos();e.api.h0();assert.equal(e.api.get().n,2);assert.equal(e.api.get().pos,'G');
+  e.api.opacity();assert.equal(c.style.opacity,'0.75');assert.deepEqual(c.pixels,pixels);assert.equal(c.calls.length,count);
+  assert.deepEqual([c.style.left,c.style.top,c.style.width,c.style.height],rect);assert.ok(c.style.clipPath.startsWith('inset('));
+  assert.equal(e.saves.at(-1).alpha,75);assert.ok(!('fixed' in e.saves.at(-1)));assert.ok(!('linked' in e.saves.at(-1)));
+});
+test('exact original command matches scale ×3 despite snap, anchors vertex, preserves field and all flags',()=>{
+  const e=env(),ui=originalLayout(e);e.ctx.st.zsnap=true;e.ctx.st.ztop=true;e.ctx.st.zBot=true;e.ctx.st.zMid=true;
+  e.api.step();e.api.step();e.api.freeze();const frozen=e.ctx.ovlFrozen,c=e.appended[0],pixels=c.pixels.slice(),frame=e.ctx.k,field=e.ctx.f;
+  e.ctx.zWant=123;assert.equal(e.api.original().ok,true);assert.equal(e.ctx.st.zoom,1.5);assert.equal(e.ctx.zWant,0);assert.equal(e.api.get().linked,true);
+  const r=e.cv.getBoundingClientRect();assert.equal(r.left+3.5*1.5,frozen.x);assert.equal(r.top,frozen.y);
+  assert.equal(e.ctx.k,frame);assert.equal(e.ctx.f,field);assert.equal(e.ctx.st.rows,256);for(const flag of ['zsnap','ztop','zBot','zMid'])assert.equal(e.ctx.st[flag],true);
+  assert.deepEqual(c.pixels,pixels);assert.ok(ui.calls()<4);
+});
+test('bit-for-bit grid phase: centres and boundaries on both sides, multiple rows, ×3/.3 CSS/DPR1.25/RGB shifts',()=>{
+  for(const pos of ['G','R','B','RGB']){
+    const e=env({saved:{n:0,h0:8,pos}});originalLayout(e,{initialScale:.3,dpr:1.25,quantized:true});
+    e.api.step();e.api.step();e.api.freeze();const F=e.ctx.ovlFrozen,S=e.snapshot();assert.equal(e.api.original().ok,true);
+    const r=e.cv.getBoundingClientRect(),s=e.ctx.scale();assert.ok(Math.abs(s-.9)<1e-12);
+    for(const dx of [-3,-1,0,1,3])for(const row of [0,1,7])for(const phase of [0,.5,1]){
+      const frozenX=F.x+(dx+phase-.5)*S.cell*F.total,frozenY=F.y+(row+phase)*S.cell*F.total;
+      const originalX=r.left+(e.ctx.geo.anchor-e.ctx.VX+dx+phase)*s,originalY=r.top+(row+phase)*s;
+      assert.ok(Math.abs(originalX-frozenX)<1e-10,pos+' cell x phase');assert.ok(Math.abs(originalY-frozenY)<1e-10,pos+' cell y phase');
+    }
+    const before={...e.cv.style};for(let i=0;i<10;i++)assert.equal(e.ctx.ovlAlignOriginal(),true);assert.deepEqual(e.cv.style,before,'alignment converges without drift');
+  }
+});
+test('manual zoom uses frozen pivot both directions, including below source scale with positive margins',()=>{
+  const e=env(),ui=originalLayout(e);e.api.step();e.api.freeze();assert.equal(e.api.original().ok,true);const F=e.ctx.ovlFrozen;
+  // Execute actual zoomTo entry; the frozen branch must ignore cursor coordinates.
+  const code=html.slice(html.indexOf('  function zoomTo('),html.indexOf('  function fit()'));
+  vm.runInContext(code,e.ctx);
+  for(const s of [2,.125,4,.0625]){e.ctx.zoomTo(s,-999,999);assert.equal(e.ctx.st.zoom,s);const r=e.cv.getBoundingClientRect();assert.ok(Math.abs(r.left+3.5*s-F.x)<=.5);assert.ok(Math.abs(r.top-F.y)<=.5);}
+  assert.ok(ui.margins().left>0);assert.ok(ui.margins().right>0);assert.equal(e.ctx.st.rows,256);
+});
+test('max40 and explicit zLock reject without changing zoom, scroll, snap, flags or linkage',()=>{
+  const e=env();originalLayout(e);e.api.step();e.api.freeze();const old=e.ctx.st.zoom;e.ctx.st.zLock=true;e.ctx.st.zsnap=true;
+  assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.api.get().linked,false);assert.equal(e.wrap.scrollLeft,0);
+  e.ctx.st.zLock=false;e.ctx.ovlFrozen.scale=41;assert.equal(e.api.original().ok,false);assert.equal(e.ctx.st.zoom,old);assert.equal(e.ctx.st.zsnap,true);assert.equal(e.api.get().linked,false);
+});
+test('unreachable scroll clamp rolls back zoom/scroll and linkage, without changing frozen bitmap',()=>{
+  const e=env();originalLayout(e,{blockedScroll:true});e.api.step();e.api.freeze();const c=e.appended[0],pixels=c.pixels.slice();
+  const result=e.api.original();assert.equal(result.ok,false);assert.match(result.message,/прокрутки/);assert.equal(e.ctx.st.zoom,.5);assert.equal(e.wrap.scrollLeft,0);assert.equal(e.api.get().linked,false);assert.deepEqual(c.pixels,pixels);
+});
+test('unfreeze/reset release linkage and immediately remove temporary margins; F5 retains opacity only',()=>{
+  const e=env(),ui=originalLayout(e);e.api.step();e.api.freeze();e.api.original();e.ctx.ovlOriginalZoom(.125);assert.ok(ui.margins().left>0);
+  e.api.freeze();assert.equal(e.api.get().fixed,false);assert.equal(e.api.get().linked,false);assert.equal(ui.margins().left,0);
+  e.api.freeze();e.api.original();e.api.opacity();e.api.reset();assert.equal(e.api.get().fixed,false);assert.equal(e.api.get().linked,false);assert.equal(e.snapshot(),null);assert.equal(ui.margins().left,0);
+  const fresh=env({saved:{n:2,h0:8,pos:'G',alpha:75,fixed:true,linked:true}});fresh.draw();fresh.flush();assert.equal(fresh.api.get().alpha,75);assert.equal(fresh.api.get().fixed,false);assert.equal(fresh.api.get().linked,false);
+});
+test('early align/layout calls can inspect linkage without TDZ; legacy autoanchors yield only while linked',()=>{
+  const early=html.indexOf('var ovlFrozen = null;');assert.ok(early>0&&early<html.indexOf('function cssLayout()'));
+  const t=vm.createContext({});vm.runInContext('var ovlFrozen;'+html.match(/function ovlLinked\(\) \{[^}]+\}/)[0],t);assert.equal(t.ovlLinked(),false);
+  for(const name of ['midScroll','fitHold','zTopScroll','zBotScroll']){
+    assert.ok(html.includes('function '+name+'() { if (ovlLinked()'));
+  }
 });
