@@ -1,4 +1,4 @@
-/* Маятник v0.454 (Р02: группы только вниз) — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
+/* Маятник v0.462 — scoped grozd adapter, синхронное обновление контура после раскладки. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -129,5 +129,6 @@
     });
     document.addEventListener('pointermove',e=>{if(!quiet)return;const b=hov(e.target);if(!b||id(b)!==quiet){quiet=null;document.body.classList.remove('may-quiet-hover');}});
   }
+  window.mayButtonStandardRefresh=refresh;
   addEventListener('resize',refresh);document.addEventListener('click',()=>requestAnimationFrame(refresh));setInterval(refresh,200);refresh();
 })();

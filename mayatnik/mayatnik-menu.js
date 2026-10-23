@@ -741,7 +741,7 @@
         if(frameBar.style.left!==x){frameBar.style.left=x;if(refresh&&!framePlaceRaf)framePlaceRaf=requestAnimationFrame(()=>{framePlaceRaf=0;relayout();});}};
       window.mayFramePlace=framePlace;
       const relayout = (compact = false) => { const all = items();
-        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); return; }
+        if (narrow.matches) { if (tools.classList.contains('pt-grid')) { tools.classList.remove('pt-grid'); head.classList.remove('may-grid'); tools.style.height = ''; for (const el of all) el.style.left = el.style.top = ''; }if(frameBar.parentElement!==head)head.append(frameBar);shown = new Map(); sig = '';placeBot(); alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); return; }
         if(frameBar.parentElement!==tools)tools.append(frameBar);
         tools.classList.add('pt-grid'); head.classList.add('may-grid'); if (!tools.getClientRects().length) return;   // дзен — шапки нет
         const B = room(), occ = [], at = el => gw?.[idOf(el)], held = d?.on && d.el, vis = all.filter(el => el.getClientRects().length && el !== held && !isBot(el));
@@ -753,8 +753,10 @@
         let c1 = 0; for (const el of rest.slice().sort((x, y) => key(x) - key(y))) { const w = el.offsetWidth, pos = !compact && ok(at(el)) ? fit(occ, w, at(el)[0], 0, B) : seq(occ, w, B, [c1]); put(el, pos, w); c1 = pos[0] + Math.ceil((w + GAP) / SX); }
         const T = tools.getBoundingClientRect(); for (const el of ups()) { const s = shown.get(el); if (!s) continue;   // список группы рейки — не за правый край окна
           const over = T.left + s[0] * SX + 244 - (innerWidth - 6); el.style.setProperty('--gdx', over > 0 ? -Math.ceil(over) + 'px' : '0px'); }
-        tools.style.height = '42px'; sig = sigOf(); placeBot(); };
-      tools.addEventListener('scroll', () => { framePlace(false); if (shown.has(frameBar)) shown.set(frameBar, [parseFloat(frameBar.style.left) / SX, 0, frameBar.offsetWidth]); reopen(); syncRailFlyouts(); }, { passive: true });
+        tools.style.height = '42px'; sig = sigOf(); placeBot();
+        // v0.462: после сдвига заголовков fixed-списки следуют за ними до следующей отрисовки контура.
+        alignOpen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); };
+      tools.addEventListener('scroll', () => { framePlace(false); if (shown.has(frameBar)) shown.set(frameBar, [parseFloat(frameBar.style.left) / SX, 0, frameBar.offsetWidth]); reopen(); syncRailFlyouts(); window.mayButtonStandardRefresh?.(); }, { passive: true });
       tools.addEventListener('wheel', e => { if (narrow.matches || e.target.closest('.pt-r,.may-rail-list') || tools.scrollWidth <= tools.clientWidth) return; e.preventDefault(); e.stopPropagation(); tools.scrollLeft += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; }, { passive: false });
       const reopen = () => { for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); };
       addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); swallow = false; } }, true);
