@@ -34,3 +34,8 @@
 #shared-pult button{--pult-stroke:1px;--pult-outline:#485468;text-shadow:none!important;filter:none!important}#shared-pult button:is(:hover,:focus-visible){--pult-outline:var(--c);outline:none}#shared-pult button:is(.on,[aria-pressed=true]){--pult-stroke:2px;--pult-outline:var(--c)}#shared-pult button:active{--pult-stroke:3px;--pult-outline:var(--c)}.pult-outline polygon{fill:none;stroke:var(--pult-outline);stroke-width:calc(2 * var(--pult-stroke));stroke-linejoin:miter}
 
 @media(max-width:650px){.field-bench{flex-wrap:nowrap;overflow:auto;max-width:100%;padding-top:30px;padding-bottom:30px}.field-bench #field-info{flex:none}}
+
+/* Р12: компактность меняет только заголовок; тело и закрепление независимы. */
+.group .head.mini-head{width:34px!important;min-width:34px!important;max-width:34px!important;padding:0!important;gap:0;justify-content:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.group .head.mini-head::before{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background-size:34px 24px!important}
+.group .head.mini-head>.gz-nm{display:none}.group .head.mini-head>.gz-ic{margin:0!important}
