@@ -60,6 +60,7 @@
     const groups = allBoxes();
     document.querySelectorAll('#hubRail .hub-occluded').forEach(e => { e.classList.remove('hub-occluded'); e.inert = false; });
     groups.forEach(g => g.classList.remove('hub-partial'));
+    return;   // v0.427, Р06 v21: «убери скрытие перекрывающихся» — открытый список ложится поверх, ничего не прячется
     const active = groups.filter(g => g.classList.contains('gz-open')).sort((a,b)=>(b.dataset.id===frontGroup)-(a.dataset.id===frontGroup));
     const ladder = document.querySelector('.hub-standard-list');
     const box = e => { const r=e.getBoundingClientRect(); return {left:r.left-1,right:r.right+1,top:r.top-1,bottom:r.bottom+1}; };

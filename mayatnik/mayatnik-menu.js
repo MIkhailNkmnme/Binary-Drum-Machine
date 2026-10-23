@@ -1019,7 +1019,11 @@
     svg.setAttribute('width',String(Math.ceil(width)));svg.setAttribute('height',String(Math.ceil(height)));
   }
   function syncGroupOverlap() {
-    groupFrame = 0; const groups = [...document.querySelectorAll(groupSelector)], entries = [];
+    groupFrame = 0;
+    // v0.453, Р06 v21: «убери скрытие перекрывающихся» — ничего не прячем, только снимаем прежние следы
+    for (const el of document.querySelectorAll('.may-el-covered')) { el.classList.remove('may-el-covered'); if (el.dataset.mayCovInert === '1') { el.inert = false; delete el.dataset.mayCovInert; } }
+    for (const b of document.querySelectorAll('.may-group-backdrop,.may-standard-contours,.may-closed-back,.may-standard-roof')) if (b.style.clipPath) b.style.clipPath = '';
+    return; const groups = [...document.querySelectorAll(groupSelector)], entries = [];
     for (const group of groups) {
       const open = group.matches('.pt-open, .gz-open');
       if (open && groupOpen.get(group) === false) groupRanks.set(group, ++groupRank);
