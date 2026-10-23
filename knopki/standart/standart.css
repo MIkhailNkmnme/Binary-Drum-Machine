@@ -1,4 +1,4 @@
-/* Интерактивный стандарт v1.044. Адаптер только витрины. */
+/* Интерактивный стандарт v1.045. Адаптер только витрины. */
 :root{color-scheme:dark;--page:#080c12;--ink:#e3eaf5;--mut:#9baec4;--c:#ffad68;--button-bg:#142033;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-txt:#e3eaf5}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:16px}body{margin:0;background:var(--page);color:var(--ink);font:14px/1.6 "Segoe UI",sans-serif}main{max-width:1160px;padding:32px 24px;margin:auto}header{padding:12px 0 32px}h1{font-size:clamp(28px,5vw,48px);line-height:1.15;margin:12px 0}h2{font-size:24px;line-height:1.3;margin:6px 0 16px}h3{font-size:15px;margin:0 0 7px}p{color:var(--mut);max-width:850px}a{color:#8bd1ff}nav{display:flex;gap:20px;flex-wrap:wrap}section{border-top:1px solid #263749;padding:32px 0;scroll-margin-top:12px}.eyebrow{font:11px/1.5 monospace;letter-spacing:2px;color:#80b8d9}.toolbar,.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar{margin:18px 0}.stack,.column{display:flex;flex-direction:column;gap:4px;align-items:flex-start}.bench{display:flex;flex-wrap:wrap;gap:32px;padding:24px 6px;align-items:flex-start}.bench>div{min-width:0}output{display:block;color:#a6dfc5;font:12px/1.7 monospace;white-space:pre-wrap}code,pre{font:12px/1.8 monospace;color:#bed6ef;overflow-wrap:anywhere}pre{white-space:pre-wrap}label{display:block;color:#b8cadc;font-size:12px}input:not([type=range]),select{max-width:100%;width:360px;padding:9px 12px;background:#111e2c;border:1px solid #40546a;color:var(--ink);font:14px "Segoe UI",sans-serif;margin:8px 0 14px}input[type=color]{width:60px;height:28px;padding:0}input[type=range]{accent-color:#8bd1ff;max-width:100%}details{margin:14px 0}summary{cursor:pointer;color:#b9d4ed}footer{color:var(--mut);font-size:12px;padding:25px 0}
 /* Scoped adapter of shared grozd; no product styles are changed. */
 .demo,.pair{--stroke:1px;--outline:#485468;position:relative;display:flex;align-items:center;justify-content:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;border:0!important;border-radius:0!important;margin:0;padding:0 12px;gap:5px;background:var(--outline)!important;color:var(--ink)!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate;font-size:12px;line-height:1;cursor:pointer;filter:none!important;box-shadow:none!important;text-shadow:none!important;touch-action:manipulation}.demo::before{content:"";position:absolute!important;inset:var(--stroke)!important;background:var(--button-bg)!important;clip-path:polygon(calc(12px - var(--stroke)) 0,calc(100% - 12px + var(--stroke)) 0,100% 50%,calc(100% - 12px + var(--stroke)) 100%,calc(12px - var(--stroke)) 100%,0 50%);z-index:-1!important;pointer-events:none}.demo::after,.pair::before,.pair::after{display:none!important}.demo:hover,.demo:focus-visible{--outline:var(--c);--stroke:1px;outline:0}.demo[aria-pressed=true],.demo[aria-expanded=true]{--outline:var(--c);--stroke:2px}.demo:active,.demo.down{--outline:var(--c);--stroke:3px}.demo:disabled{cursor:default;opacity:.35}.demo *{color:inherit!important;text-shadow:none!important;filter:none!important}.demo .gz-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.gz-ic{width:15px;height:15px;flex:none;pointer-events:none}.gz-ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.6}
@@ -7,7 +7,7 @@
 @media(max-width:650px){main{padding:18px 14px}header{padding-top:5px}section{padding:24px 0}.bench{gap:22px}.field-bench{gap:8px;flex-wrap:wrap}.rules{grid-template-columns:1fr}h2{font-size:21px}.toolbar{gap:10px 6px}.viewport{border-bottom:1px dashed #344d64}.rule p{line-height:1.7}}
 
 /* В07: поверхность одна, состояние меняет только внутреннюю обводку. */
-:root{--surface:radial-gradient(ellipse at 50% 50%,#10441e 0%,#17202c 42%,#344351 100%);--button-bg:var(--surface)}
+:root{--surface:#1b2430;--button-bg:var(--surface)}   /* v1.045, В07 v23: ровный фон */
 .demo::before{background:var(--surface)!important;background-size:120px 24px!important;background-position:center!important}
 .pair.gz-hx.gz-pair.gz-split{background:var(--surface)!important;overflow:hidden}
 .pair>.gz-half{width:64px!important;min-width:64px!important;max-width:64px!important;flex:none!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;background:transparent!important;--outline:#485468;--stroke:1px;overflow:hidden}
@@ -60,9 +60,9 @@
 
 /* КНП-015 (проект): подложка раскрытого списка */
 .list-backing{position:absolute;left:0;top:0;z-index:0;overflow:visible;pointer-events:none}.listed>.group-backdrop{display:none}
-/* КНП-015 v1.044: открытый заголовок группы — без своего фона и рамки, виден градиент подложки */
+/* КНП-015 v1.045: открытый заголовок группы — без своего фона и рамки, виден градиент подложки */
 .group .head.list-owner:not(.mini-head):not(:active):not(.down)::before{background:transparent!important}
-/* КНП-016 v1.044: ползунок — курсор рукой; ромб-бегунок при наведении делится пополам, половины расходятся на 2px; пунктир прежний */
+/* КНП-016 v1.045: ползунок — курсор рукой; ромб-бегунок при наведении делится пополам, половины расходятся на 2px; пунктир прежний */
 .track input{cursor:pointer!important}
 .diamond{clip-path:none!important;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
 .diamond::before,.diamond::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
@@ -70,65 +70,65 @@
 .diamond::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
 .track:hover .diamond::before{transform:translateX(-3px)}
 .track:hover .diamond::after{transform:translateX(3px)}
-/* КНП-016 v1.044: белый пунктир по оси бегунка виден в зазоре половин; края ползунка — треугольные острия самой формы; v1.044: половины бегунка по 2px от пунктира (всего 5px), края — закрашенные шевроны по форме острия, без значков и вертикальных черт */
+/* КНП-016 v1.045: белый пунктир по оси бегунка виден в зазоре половин; края ползунка — треугольные острия самой формы; v1.045: половины бегунка по 2px от пунктира (всего 5px), края — закрашенные шевроны по форме острия, без значков и вертикальных черт */
 .slider .step{font-size:0!important;color:transparent!important;outline:none!important;clip-path:none!important}
 .slider .step::before{content:"";position:absolute;inset:0;background:var(--c);opacity:.55;pointer-events:none}
 .slider>.step:first-of-type::before{clip-path:polygon(20px 0,12px 0,0 50%,12px 100%,20px 100%,8px 50%)}
 .slider>.step:last-of-type::before{clip-path:polygon(4px 0,12px 0,24px 50%,12px 100%,4px 100%,16px 50%)}
 .slider .step:is(:hover,:focus-visible)::before{opacity:.8}
 .slider .step:is(:active,.down)::before{opacity:1}
-/* КНП-016 v1.044: белый пунктир бегунка выходит на 3px выше и ниже ромба; форма ползунка рисуется слоем, чтобы его не обрезать */
+/* КНП-016 v1.045: белый пунктир бегунка выходит на 3px выше и ниже ромба; форма ползунка рисуется слоем, чтобы его не обрезать */
 .diamond{top:-2px!important;height:28px!important}
 .slider:not(.frame){clip-path:none!important;background:none!important;isolation:isolate}
 .slider:not(.frame)::before{content:"";position:absolute;inset:0;background:var(--surface);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);z-index:-1;pointer-events:none}
-/* КНП-018 v1.044: только что выключенная кнопка под указателем — без рамки наведения, как в покое */
+/* КНП-018 v1.045: только что выключенная кнопка под указателем — без рамки наведения, как в покое */
 body.quiet-hover :is(.demo,.pair>.gz-half,.gz-half):hover:not([aria-pressed=true]):not(:active):not(.down){--outline:#485468;--stroke:1px}
 body.quiet-hover .demo.list-owner:hover:not(:active):not(.down){--outline:transparent}
-/* КНП-016 v1.044: шевроны на 2px толще; зона захвата бегунка и её рамка фокуса — шестиугольник до внутреннего края шевронов */
+/* КНП-016 v1.045: шевроны на 2px толще; зона захвата бегунка и её рамка фокуса — шестиугольник до внутреннего края шевронов */
 .track input{left:-16px!important;right:-16px!important;width:auto!important;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
 .track:focus-within{outline:none!important}
 .track:focus-within::after{content:"";position:absolute;top:0;bottom:0;left:-16px;right:-16px;background:var(--c);pointer-events:none;z-index:4;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.4px 1px,1.2px 50%,12.4px calc(100% - 1px),calc(100% - 12.4px) calc(100% - 1px),calc(100% - 1.2px) 50%,calc(100% - 12.4px) 1px,12.4px 1px)}
-/* КНП-016 v1.044: ромб ▶ пульта — как бегунок: белый пунктир по оси (на 3px выше и ниже), при наведении на пульт половины расходятся на 3px. Только витрина; общий _js/zz-pult.* не менялся */
+/* КНП-016 v1.045: ромб ▶ пульта — как бегунок: белый пунктир по оси (на 3px выше и ниже), при наведении на пульт половины расходятся на 3px. Только витрина; общий _js/zz-pult.* не менялся */
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult::after{content:""!important;display:block!important;position:absolute!important;left:var(--zz-tx,50%)!important;top:-1px!important;bottom:-1px!important;width:1px!important;transform:translateX(-50%)!important;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px)!important;z-index:4!important;pointer-events:none!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult:hover .zz-pult-play{width:54px!important;clip-path:polygon(24px 0,0 50%,24px 100%,24px 0,30px 0,100% 50%,30px 100%,30px 0)!important}
-/* КНП-016 v1.044: бегунок не прыгает при нажатии — скрытый ползунок шире дорожки на 16px с каждой стороны, поэтому его системный бегунок 32px: значение под указателем совпадает с видимым ромбом */
+/* КНП-016 v1.045: бегунок не прыгает при нажатии — скрытый ползунок шире дорожки на 16px с каждой стороны, поэтому его системный бегунок 32px: значение под указателем совпадает с видимым ромбом */
 .track input{-webkit-appearance:none!important;appearance:none!important;background:transparent}
 .track input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:32px;height:24px;border:0}
 .track input::-moz-range-thumb{width:32px;height:24px;border:0}
-/* КНП-016 v1.044: тающий контур шеврона наружу при нажатии */
+/* КНП-016 v1.045: тающий контур шеврона наружу при нажатии */
 .slider .step{overflow:visible}
 .slider .step::after{content:"";position:absolute;top:0;width:30px;height:100%;background:var(--c);opacity:0;pointer-events:none}
 .slider>.step:first-of-type::after{left:-6px;clip-path:polygon(15px 0,16.5px 0,4.5px 50%,16.5px 100%,15px 100%,3px 50%);--echo-dx:-6px}
 .slider>.step:last-of-type::after{right:-6px;clip-path:polygon(15px 0,13.5px 0,25.5px 50%,13.5px 100%,15px 100%,27px 50%);--echo-dx:6px}
 .slider .step.echo::after{animation:stepEcho .6s ease-out forwards}
 @keyframes stepEcho{from{opacity:.9;transform:translateX(0)}to{opacity:0;transform:translateX(var(--echo-dx))}}
-/* КНП-016 v1.044: стрелки пульта — шевроны с выемкой; ромб на краях заходит в выемку с зазором 2px; курсор рукой; только витрина */
+/* КНП-016 v1.045: стрелки пульта — шевроны с выемкой; ромб на краях заходит в выемку с зазором 2px; курсор рукой; только витрина */
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult .zz-pult-play{left:var(--sv-tx,var(--zz-tx,50%))!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult::after{left:var(--sv-tx,var(--zz-tx,50%))!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult .zz-pult-back{clip-path:polygon(0 50%,28.8px 7.2px,18px 50%,28.8px 28.8px)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult .zz-pult-fwd{clip-path:polygon(100% 50%,19.2px 7.2px,30px 50%,19.2px 28.8px)!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult :is(.zz-pult-back,.zz-pult-fwd) .pult-caption{font-size:0!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult .zz-pult-range{cursor:pointer!important}
-/* КНП-016 v1.044: рука везде на ползунке и пульте — под раскрытым бегунком курсор не сменяется стрелкой */
+/* КНП-016 v1.045: рука везде на ползунке и пульте — под раскрытым бегунком курсор не сменяется стрелкой */
 .slider,.slider *{cursor:pointer!important}
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult,:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult *{cursor:pointer!important}
 
 /* КНП-019 (В06 v16): текст кнопок, ползунков и пультов не выделяется */
 .demo,.pair,.gz-half,.slider,.slider *,.group .head,.options,.zz-pult,.zz-pult *,#rule-map a{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}
-/* КНП-016 v1.044: в раскрытом бегунке — число между половинами; внутренние грани половин срезаны углом (выемка 4px), пунктир прерывается под числом, число в середине дорожки на это время скрыто */
+/* КНП-016 v1.045: в раскрытом бегунке — число между половинами; внутренние грани половин срезаны углом (выемка 4px), пунктир прерывается под числом, число в середине дорожки на это время скрыто */
 .thumb-value{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 9px/1 monospace;color:#fff;opacity:0;pointer-events:none;z-index:1;white-space:nowrap}
 .track:hover .thumb-value{opacity:1}
 .track:hover .diamond::before{clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
 .track:hover .diamond::after{clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
 .track:hover .diamond{background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center top/1px calc(50% - 7px) no-repeat,repeating-linear-gradient(to top,#fff 0 2px,transparent 2px 4px) center bottom/1px calc(50% - 7px) no-repeat!important}
 .track:hover .range-value{opacity:0}
-/* КНП-016 v1.044: в раскрытом бегунке число только между половинами (нижнее у кадра тоже скрыто), горизонтальный пунктир дорожки под бегунком прерывается */
+/* КНП-016 v1.045: в раскрытом бегунке число только между половинами (нижнее у кадра тоже скрыто), горизонтальный пунктир дорожки под бегунком прерывается */
 .track:hover::before{-webkit-mask:linear-gradient(to right,#000 calc(var(--tx,0px) - 11px),transparent 0 calc(var(--tx,0px) + 11px),#000 0);mask:linear-gradient(to right,#000 calc(var(--tx,0px) - 11px),transparent 0 calc(var(--tx,0px) + 11px),#000 0)}
-/* КНП-016 v1.044: пульт — пунктир ромба выходит на 1px; у серого «стекла» ползунка нет обводки, только заливка */
+/* КНП-016 v1.045: пульт — пунктир ромба выходит на 1px; у серого «стекла» ползунка нет обводки, только заливка */
 :is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #shared-pult.zz-pult .zz-pult-shape .glass{stroke:none!important}
-/* Р13 v20 (витрина v1.044): заголовок группы, раскрытой вбок, не прозрачный — обычный фон и рамка */
-/* Р02 v22 (витрина v1.044): в боковой рейке столбец группы — под заголовком, не сбоку */
+/* Р13 v20 (витрина v1.045): заголовок группы, раскрытой вбок, не прозрачный — обычный фон и рамка */
+/* Р02 v22 (витрина v1.045): в боковой рейке столбец группы — под заголовком, не сбоку */
 .group.side .group-body,.group.right-side .group-body{position:static!important;left:auto!important;right:auto!important;margin-top:2px!important}
-/* v1.044: бегунок 17px — белая ось 1px ровно между половинами по 8px (как Хаб v0.431) */
+/* v1.045: бегунок 17px — белая ось 1px ровно между половинами по 8px (как Хаб v0.431) */
 .diamond{width:17px!important}
 .diamond::before,.diamond::after{width:8px!important}

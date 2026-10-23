@@ -1,5 +1,5 @@
 /* Hub v0.418 — scoped adapter of the shared grozd parts, КНОПКИ v14. */
-body{--hub-surface:radial-gradient(ellipse at 50% 50%,#10151e 0%,#17202c 42%,#344351 100%)}
+body{--hub-surface:#1b2430}   /* v0.438, В07 v23: ровный фон кнопок без градиента */
 #hubRail{top:14px;overflow:visible;padding:1px;max-width:calc(100vw - 8px)}
 #hubRail .gz-rail{--gz-w:120px;--gz-h:24px;--gz-n:12px;width:120px;min-width:120px;gap:2px;font:12px/1.2 "Segoe UI",sans-serif}
 #hubRail .gz-group{width:120px;min-width:0!important;height:24px;isolation:isolate}
