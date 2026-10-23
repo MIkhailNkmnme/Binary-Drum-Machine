@@ -1,4 +1,4 @@
-/* Маятник v0.471 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
+/* Маятник v0.482 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -63,16 +63,6 @@
     const pts=mini?[[x+w/2,y-1],[x+w+2,y+m],[x+w/2,y+h+1],[x-2,y+m]]:[[x+12,y-1],[x+w-12,y-1],[x+w+2,y+m],[x+w-12,y+h+1],[x+12,y+h+1],[x-2,y+m]];
     const id='may-back-'+(++gradN);
     s.innerHTML=`<defs><radialGradient id="${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0e1116"/><stop offset="1" stop-color="#0e1116"/></radialGradient></defs><polygon points="${pts.map(q=>q.join(',')).join(' ')}" fill="url(#${id})"/>`;
-  }
-  // v0.449: колонки списков и сеток стоят подложка к подложке через 2 px: острия кнопок в 6 px, шаг 126; позицию из mayatnik-menu.js правим один раз на каждое её значение
-  function shiftLeft(list,dx){
-    const raw=list.style.left;if(!raw||raw===list.dataset.mayLeft)return;
-    list.style.left=(parseFloat(raw)+dx)+'px';list.dataset.mayLeft=list.style.left;
-  }
-  function fixLadder(list){
-    const raw=list.style.left;if(!raw||raw===list.dataset.mayLeft)return;
-    const w=parseFloat(list.style.width)||0,cols=Math.max(1,Math.round((w+2)/122)),extra=4*(cols-1),o=list.owner&&list.owner.getBoundingClientRect(),x=parseFloat(raw);
-    shiftLeft(list,!o||x>o.left?4:-4-extra);
   }
   function parts(b){
     const halves=[...b.querySelectorAll(':scope > .gz-half')];if(halves.length!==2||b.id==='lg')return;
@@ -152,7 +142,7 @@
       }else{host.querySelector(':scope > .may-standard-contours')?.remove();head.classList.remove('may-head-in');closedBack(g,head);}
       if(g.inert&&!g.querySelector('.may-el-covered'))g.inert=false;   // v0.452: группа целиком больше не гасится, гасятся элементы (may-el-covered)
     }
-    for(const list of ladders){list.classList.add('may-standard-list');fixLadder(list);if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
+    for(const list of ladders){list.classList.add('may-standard-list');if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,list.owner.classList.contains('may-control-mini'));}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
   // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)
