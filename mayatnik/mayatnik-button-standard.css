@@ -1,4 +1,4 @@
-/* Маятник v0.449 — scoped surfaces and state outlines, КНОПКИ v12. */
+/* Маятник v0.451 — scoped surfaces and state outlines, КНОПКИ v12. */
 body.mayatnik-menu-ready{--may-surface:radial-gradient(ellipse at center,#10151e 0%,#17202c 42%,#344351 100%)}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard{--may-outline:#394657;--may-stroke:1px;--gz-w:120px;--gz-h:24px;--gz-n:12px;box-sizing:border-box!important;position:relative;isolation:isolate;display:flex;align-items:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;flex-shrink:0;margin:0!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important;background:var(--may-surface)!important;color:#dfe6f5!important;filter:none!important;box-shadow:none!important;outline:0!important;text-shadow:none!important;font:12px/1.2 'Segoe UI',sans-serif!important;letter-spacing:0;white-space:nowrap;overflow:hidden;gap:4px}
 :is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::before,:is(body.mayatnik-menu-ready,#paintTools) .may-standard.may-standard.may-standard::after{display:none!important}
@@ -59,3 +59,5 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-l{justify-content:space-between}
 
 /* КНП-019 (В06 v16): текст кнопок, ползунков и пультов не выделяется */
 :is(.gz-hx,.gz-pair,.gz-half,.gz-head,.gz-control,.may-standard,.may-slide,.may-slide *,.zz-pult,.zz-pult *){-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}
+/* v0.451 (В11): только что выключенная щелчком кнопка / половина под указателем — без рамки наведения, как в покое */
+body.may-quiet-hover :is(.may-standard,.may-standard-pair>.gz-half):hover:not(:active):not(.on):not(.gz-on):not([aria-pressed=true]):not(.gz-press):not(.may-standard-held){--may-outline:#394657!important;--may-stroke:1px!important}

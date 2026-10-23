@@ -317,19 +317,40 @@ body.may-zen #mayZenOut:hover{opacity:1}
 body.mayatnik-menu-ready.may-zen #mayZenWin{display:inline-flex;position:fixed;left:44px;bottom:8px;z-index:10;--c:#80aee8;--gz-h:24px;--gz-n:10px;--gz-bg:#121a30;align-items:center;font:12px 'Segoe UI',sans-serif;opacity:.35}
 body.may-zen #mayZenWin:hover{opacity:1}
 /* v0.100 (правило кнопок): ползунок — шевроны «<» «>» по краям, ромб-бегунок цветом группы, пунктир-дорожка, значение по центру, без подписи. */
-.mayatnik-menu-ready label.may-slide{position:relative;gap:0!important;padding:0!important;--t:calc(12px / 1.7320508)}
-label.may-slide>.may-chev{flex:none;align-self:stretch;width:calc(3 * var(--t));min-height:22px;padding:0;margin:0;border:0;border-radius:0;background:#d6a838;cursor:pointer}
-label.may-slide>.may-chev.l{clip-path:polygon(var(--t) 0,calc(3 * var(--t)) 0,calc(2 * var(--t)) 50%,calc(3 * var(--t)) 100%,var(--t) 100%,0 50%)}
-label.may-slide>.may-chev.r{clip-path:polygon(0 0,calc(2 * var(--t)) 0,calc(3 * var(--t)) 50%,calc(2 * var(--t)) 100%,0 100%,var(--t) 50%)}
-label.may-slide>.may-chev:hover{filter:brightness(1.25)}
-label.may-slide>.may-chev:active{filter:brightness(.8)}
-.mayatnik-menu-ready label.may-slide>input[type=range]{-webkit-appearance:none;appearance:none;flex:1 1 0;width:auto!important;max-width:none!important;min-width:0;height:22px;margin:0 2px;padding:0;background:transparent;cursor:pointer}
-label.may-slide>input[type=range]::-webkit-slider-runnable-track{height:1px;border:0;background:repeating-linear-gradient(90deg,var(--c,#b48cff) 0 6px,transparent 6px 10px)}
-label.may-slide>input[type=range]::-moz-range-track{height:1px;border:0;background:repeating-linear-gradient(90deg,var(--c,#b48cff) 0 6px,transparent 6px 10px)}
-label.may-slide>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-9.5px;border:0;border-radius:0;background:var(--c,#b48cff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-label.may-slide>input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:0;background:var(--c,#b48cff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-label.may-slide>input[type=range]:hover::-webkit-slider-thumb{filter:brightness(1.25)}
-label.may-slide>.may-slide-v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff;font:11px/1 var(--mono);text-shadow:0 0 3px #000,0 0 3px #000}
+/* v0.451 (ПЛ01, ПЛ02, ПЛ04, КНП-016): ползунок — шестиугольник с шевронами 8 px на остриях, ромб-бегунок с белым пунктиром, при наведении делится на половины ±3 px, число между ними; кадр — число под бегунком. */
+.mayatnik-menu-ready label.may-slide{position:relative;display:flex;align-items:center;gap:0!important;padding:0!important;height:24px;isolation:isolate;cursor:pointer;--sc:var(--c,#d6a838)}
+label.may-slide::before{content:"";position:absolute;inset:0;background:var(--gz-bg,#121a30);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);z-index:-1;pointer-events:none}
+label.may-slide,label.may-slide *{cursor:pointer!important}
+label.may-slide>.may-chev{position:relative;flex:none;width:24px;min-width:24px;height:24px;padding:0;margin:0;border:0;border-radius:0;background:transparent;overflow:visible;font-size:0;color:transparent;outline:none}
+label.may-slide>.may-chev::before{content:"";position:absolute;inset:0;background:var(--sc);opacity:.55;pointer-events:none}
+label.may-slide>.may-chev.l::before{clip-path:polygon(20px 0,12px 0,0 50%,12px 100%,20px 100%,8px 50%)}
+label.may-slide>.may-chev.r::before{clip-path:polygon(4px 0,12px 0,24px 50%,12px 100%,4px 100%,16px 50%)}
+label.may-slide>.may-chev:is(:hover,:focus-visible)::before{opacity:.8}
+label.may-slide>.may-chev:active::before{opacity:1}
+label.may-slide>.may-chev::after{content:"";position:absolute;top:0;width:30px;height:100%;background:var(--sc);opacity:0;pointer-events:none}
+label.may-slide>.may-chev.l::after{left:-6px;clip-path:polygon(15px 0,16.5px 0,4.5px 50%,16.5px 100%,15px 100%,3px 50%);--echo-dx:-6px}
+label.may-slide>.may-chev.r::after{right:-6px;clip-path:polygon(15px 0,13.5px 0,25.5px 50%,13.5px 100%,15px 100%,27px 50%);--echo-dx:6px}
+label.may-slide>.may-chev.echo::after{animation:mayStepEcho .6s ease-out forwards}
+@keyframes mayStepEcho{from{opacity:.9;transform:translateX(0)}to{opacity:0;transform:translateX(var(--echo-dx))}}
+label.may-slide>.may-track{position:relative;flex:1 1 0;min-width:0;height:24px}
+label.may-slide>.may-track::before{content:"";position:absolute;left:0;right:0;top:12px;border-top:1px dashed var(--sc)}
+.mayatnik-menu-ready label.may-slide>.may-track>input[type=range]{-webkit-appearance:none;appearance:none;position:absolute;top:0;left:-16px;right:-16px;width:auto!important;max-width:none!important;height:24px;margin:0;padding:0;opacity:0;z-index:3;background:transparent;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+.may-track>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:32px;height:24px;border:0}
+.may-track>input[type=range]::-moz-range-thumb{width:32px;height:24px;border:0}
+.may-track:focus-within::after{content:"";position:absolute;top:0;bottom:0;left:-16px;right:-16px;background:var(--sc);pointer-events:none;z-index:4;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.4px 1px,1.2px 50%,12.4px calc(100% - 1px),calc(100% - 12.4px) calc(100% - 1px),calc(100% - 1.2px) 50%,calc(100% - 12.4px) 1px,12.4px 1px)}
+.may-dia{position:absolute;top:-2px;height:28px;width:16px;transform:translateX(-50%);pointer-events:none;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat}
+.may-dia::before,.may-dia::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--sc);transition:transform .08s}
+.may-dia::before{left:0;clip-path:polygon(100% 0,100% 100%,0 50%)}
+.may-dia::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
+.may-track:hover .may-dia::before{transform:translateX(-3px);clip-path:polygon(100% 0,calc(100% - 4px) 50%,100% 100%,0 50%)}
+.may-track:hover .may-dia::after{transform:translateX(3px);clip-path:polygon(0 0,4px 50%,0 100%,100% 50%)}
+.may-track:hover .may-dia{background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center top/1px calc(50% - 7px) no-repeat,repeating-linear-gradient(to top,#fff 0 2px,transparent 2px 4px) center bottom/1px calc(50% - 7px) no-repeat}
+.may-tv{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 9px/1 monospace;color:#fff;opacity:0;pointer-events:none;z-index:1;white-space:nowrap}
+.may-track:hover .may-tv{opacity:1}
+.may-track:hover::before{-webkit-mask:linear-gradient(to right,#000 calc(var(--tx,0px) - 11px),transparent 0 calc(var(--tx,0px) + 11px),#000 0);mask:linear-gradient(to right,#000 calc(var(--tx,0px) - 11px),transparent 0 calc(var(--tx,0px) + 11px),#000 0)}
+label.may-slide .may-slide-v{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max-content;margin:0;padding:0;pointer-events:none;color:#fff;font:11px/12px var(--mono,monospace);text-shadow:0 0 3px #000,0 0 3px #000}
+label.may-slide .may-slide-v.may-frame-v{left:var(--tx,0px);top:23px;transform:translateX(-50%)}
+.may-track:hover .may-slide-v{opacity:0}
 /* v0.103: «Вид» в шапке — всё сюда из рейки, компактно: три ряда, ниже кнопки, мельче шрифт. */
 header #paintTools .pt-view .pt-r{grid-template-rows:repeat(3,18px)!important;gap:1px 0}
 header #paintTools .pt-view .pt-b.gz-hx{height:18px;--gz-h:18px;--gz-n:7px;padding:0 6px 0 7px;gap:3px;font-size:10px}

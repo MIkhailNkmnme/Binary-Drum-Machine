@@ -1,4 +1,4 @@
-/* Маятник v0.449 — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
+/* Маятник v0.451 — scoped grozd adapter, КНОПКИ v12. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -107,5 +107,20 @@
     for(const list of ladders){list.classList.add('may-standard-list');fixLadder(list);if(list.owner){list.owner.classList.add('may-options-owner','may-standard-open');roof(list.owner,false);}contour(list,[...list.querySelectorAll(':scope > .gz-hx')],true);}
   }
   document.addEventListener('pointerdown',e=>{const b=e.target.closest('.may-standard-pair .gz-half');if(!b||e.button!==0)return;b.classList.add('may-standard-held');const stop=()=>{b.classList.remove('may-standard-held');removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);},true);
+  // v0.451 (В11, КНП-018): кнопка или половина, выключенная щелчком мыши, не показывает рамку наведения, пока указатель не уйдёт (кнопки пересоздаются — узнаём по подписи)
+  {
+    let quiet=null;const SEL='.may-standard,.gz-half';
+    const isOn=b=>b.matches('.on,.gz-on,[aria-pressed=true]');
+    const id=b=>b.getAttribute('aria-label')||b.textContent.trim();
+    const hov=t=>t?.closest?.(SEL);
+    const was=new WeakMap();
+    document.addEventListener('pointerdown',e=>{const b=hov(e.target);if(b&&e.button===0)was.set(b,isOn(b));},true);
+    document.addEventListener('click',e=>{
+      const b=hov(e.target);if(!b||!e.detail)return;const key=id(b),wasOn=was.get(b);
+      requestAnimationFrame(()=>{const now=[...document.querySelectorAll(SEL)].find(x=>id(x)===key&&x.matches(':hover'))||b;
+        if(wasOn&&!isOn(now)){quiet=key;document.body.classList.add('may-quiet-hover');}});
+    });
+    document.addEventListener('pointermove',e=>{if(!quiet)return;const b=hov(e.target);if(!b||id(b)!==quiet){quiet=null;document.body.classList.remove('may-quiet-hover');}});
+  }
   addEventListener('resize',refresh);document.addEventListener('click',()=>requestAnimationFrame(refresh));setInterval(refresh,200);refresh();
 })();

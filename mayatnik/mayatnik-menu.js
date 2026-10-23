@@ -932,7 +932,33 @@
       b.addEventListener('click', e => e.preventDefault());   // щелчок по кнопке внутри label не должен уводить фокус в ползунок
       return b; };
     label.prepend(chev('l', -1)); label.append(chev('r', 1));
+    // v0.451 (ПЛ01/ПЛ02/ПЛ04): дорожка, ромб-бегунок, число между половинами; у кадра — число под бегунком
+    const track = document.createElement('span'); track.className = 'may-track';
+    const dia = document.createElement('i'); dia.className = 'may-dia'; const tv = document.createElement('b'); tv.className = 'may-tv'; dia.append(tv);
+    const val = out || Object.assign(document.createElement('span'), { className: 'may-slide-v' });
+    if (id === 'frame') val.classList.add('may-frame-v');
+    el.before(track); track.append(dia, val, el);
+    let last = '';
+    const sync = () => { const lo = +el.min || 0, hi = +el.max || 1, w = track.clientWidth, k = el.value + '|' + w + '|' + hi; if (k === last) return; last = k;
+      const x = w * (+el.value - lo) / ((hi - lo) || 1); dia.style.left = x + 'px'; track.style.setProperty('--tx', x + 'px'); label.style.setProperty('--tx', x + 'px');
+      tv.textContent = el.value; if (!out) val.textContent = el.value; };
+    el.addEventListener('input', sync); el.addEventListener('change', sync); setInterval(sync, 120);
+    if (window.ResizeObserver) new ResizeObserver(sync).observe(track); sync();
   }
+  // v0.451 (КНП-016): раскрытый бегунок (±4 px) ловит нажатие раньше шеврона и скрытого ползунка — тянется от места захвата, без прыжка
+  document.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return; const sl = e.target.closest?.('label.may-slide'); if (!sl) return;
+    const d = sl.querySelector('.may-dia'), input = sl.querySelector('input[type=range]'); if (!d || !input) return;
+    const r = d.getBoundingClientRect(); if (e.clientX < r.left - 4 || e.clientX > r.right + 4 || e.clientY < r.top || e.clientY > r.bottom) return;
+    e.preventDefault(); e.stopPropagation();
+    const track = input.parentElement, lo = +input.min || 0, hi = +input.max || 1, x0 = e.clientX, v0 = +input.value, px = track.clientWidth / ((hi - lo) || 1);
+    const move = ev => { const v = Math.max(lo, Math.min(hi, Math.round(v0 + (ev.clientX - x0) / px))); if (v !== +input.value) { input.value = String(v); input.dispatchEvent(new Event('input', { bubbles: true })); } };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up); input.dispatchEvent(new Event('change', { bubbles: true })); };
+    addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up); input.focus({ preventScroll: true });
+  }, true);
+  // v0.451: тающий контур шеврона наружу при нажатии
+  document.addEventListener('pointerdown', e => { const b = e.target.closest?.('label.may-slide > .may-chev'); if (!b) return; b.classList.remove('echo'); void b.offsetWidth; b.classList.add('echo'); });
+  document.addEventListener('animationend', e => { if (e.animationName === 'mayStepEcho') e.target.classList.remove('echo'); });
   // v0.173: «везде двойной клик по ползункам — в 0»: двойной щелчок по ползунку (дорожке, его подписи со стрелками, значению рейки)
   // ставит 0, а если 0 меньше наименьшего — наименьшее (скорость — 1). У значений рейки — их кнопка «0».
   document.addEventListener('dblclick', e => {
