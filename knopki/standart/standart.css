@@ -1,4 +1,4 @@
-/* Интерактивный стандарт v1.024. Адаптер только витрины. */
+/* Интерактивный стандарт v1.025. Адаптер только витрины. */
 :root{color-scheme:dark;--page:#080c12;--ink:#e3eaf5;--mut:#9baec4;--c:#ffad68;--button-bg:#142033;--gz-w:120px;--gz-h:24px;--gz-n:12px;--gz-txt:#e3eaf5}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:16px}body{margin:0;background:var(--page);color:var(--ink);font:14px/1.6 "Segoe UI",sans-serif}main{max-width:1160px;padding:32px 24px;margin:auto}header{padding:12px 0 32px}h1{font-size:clamp(28px,5vw,48px);line-height:1.15;margin:12px 0}h2{font-size:24px;line-height:1.3;margin:6px 0 16px}h3{font-size:15px;margin:0 0 7px}p{color:var(--mut);max-width:850px}a{color:#8bd1ff}nav{display:flex;gap:20px;flex-wrap:wrap}section{border-top:1px solid #263749;padding:32px 0;scroll-margin-top:12px}.eyebrow{font:11px/1.5 monospace;letter-spacing:2px;color:#80b8d9}.toolbar,.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar{margin:18px 0}.stack,.column{display:flex;flex-direction:column;gap:4px;align-items:flex-start}.bench{display:flex;flex-wrap:wrap;gap:32px;padding:24px 6px;align-items:flex-start}.bench>div{min-width:0}output{display:block;color:#a6dfc5;font:12px/1.7 monospace;white-space:pre-wrap}code,pre{font:12px/1.8 monospace;color:#bed6ef;overflow-wrap:anywhere}pre{white-space:pre-wrap}label{display:block;color:#b8cadc;font-size:12px}input:not([type=range]),select{max-width:100%;width:360px;padding:9px 12px;background:#111e2c;border:1px solid #40546a;color:var(--ink);font:14px "Segoe UI",sans-serif;margin:8px 0 14px}input[type=color]{width:60px;height:28px;padding:0}input[type=range]{accent-color:#8bd1ff;max-width:100%}details{margin:14px 0}summary{cursor:pointer;color:#b9d4ed}footer{color:var(--mut);font-size:12px;padding:25px 0}
 /* Scoped adapter of shared grozd; no product styles are changed. */
 .demo,.pair{--stroke:1px;--outline:#485468;position:relative;display:flex;align-items:center;justify-content:center;width:120px!important;min-width:120px!important;max-width:120px!important;height:24px!important;min-height:24px!important;max-height:24px!important;border:0!important;border-radius:0!important;margin:0;padding:0 12px;gap:5px;background:var(--outline)!important;color:var(--ink)!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);isolation:isolate;font-size:12px;line-height:1;cursor:pointer;filter:none!important;box-shadow:none!important;text-shadow:none!important;touch-action:manipulation}.demo::before{content:"";position:absolute!important;inset:var(--stroke)!important;background:var(--button-bg)!important;clip-path:polygon(calc(12px - var(--stroke)) 0,calc(100% - 12px + var(--stroke)) 0,100% 50%,calc(100% - 12px + var(--stroke)) 100%,calc(12px - var(--stroke)) 100%,0 50%);z-index:-1!important;pointer-events:none}.demo::after,.pair::before,.pair::after{display:none!important}.demo:hover,.demo:focus-visible{--outline:var(--c);--stroke:1px;outline:0}.demo[aria-pressed=true],.demo[aria-expanded=true]{--outline:var(--c);--stroke:2px}.demo:active,.demo.down{--outline:var(--c);--stroke:3px}.demo:disabled{cursor:default;opacity:.35}.demo *{color:inherit!important;text-shadow:none!important;filter:none!important}.demo .gz-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.gz-ic{width:15px;height:15px;flex:none;pointer-events:none}.gz-ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.6}
@@ -7,7 +7,7 @@
 @media(max-width:650px){main{padding:18px 14px}header{padding-top:5px}section{padding:24px 0}.bench{gap:22px}.field-bench{gap:8px;flex-wrap:wrap}.rules{grid-template-columns:1fr}h2{font-size:21px}.toolbar{gap:10px 6px}.viewport{border-bottom:1px dashed #344d64}.rule p{line-height:1.7}}
 
 /* В07: поверхность одна, состояние меняет только внутреннюю обводку. */
-:root{--surface:radial-gradient(ellipse at 50% 50%,#10241e 0%,#17202c 42%,#344351 100%);--button-bg:var(--surface)}
+:root{--surface:radial-gradient(ellipse at 50% 50%,#10251e 0%,#17202c 42%,#344351 100%);--button-bg:var(--surface)}
 .demo::before{background:var(--surface)!important;background-size:120px 24px!important;background-position:center!important}
 .pair.gz-hx.gz-pair.gz-split{background:var(--surface)!important;overflow:hidden}
 .pair>.gz-half{width:64px!important;min-width:64px!important;max-width:64px!important;flex:none!important;clip-path:polygon(12px 0,56px 0,64px 24px,12px 24px,0 12px)!important;background:transparent!important;--outline:#485468;--stroke:1px;overflow:hidden}
@@ -60,20 +60,24 @@
 
 /* КНП-015 (проект): подложка раскрытого списка */
 .list-backing{position:absolute;left:0;top:0;z-index:0;overflow:visible;pointer-events:none}.listed>.group-backdrop{display:none}
-/* КНП-015 v1.024: открытый заголовок группы — без своего фона и рамки, виден градиент подложки */
+/* КНП-015 v1.025: открытый заголовок группы — без своего фона и рамки, виден градиент подложки */
 .group .head.list-owner:not(.mini-head):not(:active):not(.down)::before{background:transparent!important}
-/* КНП-016 v1.024: ползунок — курсор рукой; ромб-бегунок при наведении делится пополам, половины расходятся на 2px; пунктир прежний */
+/* КНП-016 v1.025: ползунок — курсор рукой; ромб-бегунок при наведении делится пополам, половины расходятся на 2px; пунктир прежний */
 .track input{cursor:pointer!important}
 .diamond{clip-path:none!important;background:repeating-linear-gradient(to bottom,#fff 0 2px,transparent 2px 4px) center/1px 100% no-repeat!important}
-.diamond::before,.diamond::after{content:"";position:absolute;top:0;width:50%;height:100%;background:var(--c);transition:transform .08s}
+.diamond::before,.diamond::after{content:"";position:absolute;top:3px;width:50%;height:calc(100% - 6px);background:var(--c);transition:transform .08s}
 .diamond::before{left:0;clip-path:polygon(100% 0,100% 100%,0 50%)}
 .diamond::after{right:0;clip-path:polygon(0 0,100% 50%,0 100%)}
 .track:hover .diamond::before{transform:translateX(-2px)}
 .track:hover .diamond::after{transform:translateX(2px)}
-/* КНП-016 v1.024: белый пунктир по оси бегунка виден в зазоре половин; края ползунка — треугольные острия самой формы; v1.024: половины бегунка по 2px от пунктира (всего 5px), края — закрашенные шевроны по форме острия, без значков и вертикальных черт */
+/* КНП-016 v1.025: белый пунктир по оси бегунка виден в зазоре половин; края ползунка — треугольные острия самой формы; v1.025: половины бегунка по 2px от пунктира (всего 5px), края — закрашенные шевроны по форме острия, без значков и вертикальных черт */
 .slider .step{font-size:0!important;color:transparent!important;outline:none!important;clip-path:none!important}
 .slider .step::before{content:"";position:absolute;inset:0;background:var(--c);opacity:.55;pointer-events:none}
 .slider>.step:first-of-type::before{clip-path:polygon(18px 0,12px 0,0 50%,12px 100%,18px 100%,6px 50%)}
 .slider>.step:last-of-type::before{clip-path:polygon(6px 0,12px 0,24px 50%,12px 100%,6px 100%,18px 50%)}
 .slider .step:is(:hover,:focus-visible)::before{opacity:.8}
 .slider .step:is(:active,.down)::before{opacity:1}
+/* КНП-016 v1.025: белый пунктир бегунка выходит на 3px выше и ниже ромба; форма ползунка рисуется слоем, чтобы его не обрезать */
+.diamond{top:-2px!important;height:28px!important}
+.slider:not(.frame){clip-path:none!important;background:none!important;isolation:isolate}
+.slider:not(.frame)::before{content:"";position:absolute;inset:0;background:var(--surface);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);z-index:-1;pointer-events:none}
