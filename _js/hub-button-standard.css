@@ -1,4 +1,4 @@
-/* Hub v0.415 — scoped adapter of the shared grozd parts, КНОПКИ v12. */
+/* Hub v0.416 — scoped adapter of the shared grozd parts, КНОПКИ v12. */
 body{--hub-surface:radial-gradient(ellipse at 50% 50%,#10151e 0%,#17202c 42%,#344351 100%)}
 #hubRail{top:14px;overflow:visible;padding:1px;max-width:calc(100vw - 8px)}
 #hubRail .gz-rail{--gz-w:120px;--gz-h:24px;--gz-n:12px;width:120px;min-width:120px;gap:2px;font:12px/1.2 "Segoe UI",sans-serif}
@@ -41,6 +41,10 @@ body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx.hub-list-owner:not(:activ
 #hubRail .gz-pair.gz-split>.gz-half:is(:active,.hub-held){--hub-stroke:3px;--hub-outline:var(--c)}
 .hub-half-outline{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1!important}
 .hub-half-outline polygon{fill:none;stroke:var(--hub-outline);stroke-width:calc(2 * var(--hub-stroke));stroke-linejoin:miter}
+/* Colour samples are values, independent of the constant button surface. */
+#hubRail .gz-pair.gz-rainbow>.gz-half::after{content:"";display:block;position:absolute;left:13px;top:7px;width:10px;height:10px;box-sizing:border-box;border:1px solid #ffffff70;border-radius:50%;background:var(--gz-k,#8fd3ff);pointer-events:none;z-index:1}
+#hubRail .gz-pair.gz-rainbow>.gz-h1::after{left:auto;right:13px;background:var(--gz-f1,#8fd3ff)}
+#hubRail .gz-pair.gz-rainbow>.gz-half{color:#dfe6f5!important}
 #hubRail .gz-pair.gz-one>.gz-h0{width:120px!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px)!important}
 #hubRail .gz-pair.gz-one>.gz-h1{display:none!important}
 #hubRail .gz-pair.gz-mid>.gz-pm{font-size:10px!important;pointer-events:none}
