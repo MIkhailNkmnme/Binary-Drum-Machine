@@ -10,7 +10,8 @@
    На n вершин — 2(n − 1) + H шагов, по одному dispatch на шаг; поле остаётся на видеокарте, дочёт идёт от текущего состояния.
    v2 (Маятник v0.468): поле живёт отдельно (field), дочёт run(), картинка render() — среднее цветов клеток под пикселем экрана
    (тот же цвет, что у плоских видов страницы: биты или чётность перекрытий MAYATNIK.tint / tintPair), read() — поле в Int8 ядра.
-   v3 (Маятник v0.475): picture() — картинка окна с зеркалами в буфере видеокарты, render() рисует её; readPic() — для сверки. */
+   v3 (Маятник v0.475): picture() — картинка окна с зеркалами в буфере видеокарты, render() рисует её; readPic() — для сверки.
+   v4 (Маятник v0.476): writePic() — картинка с краской, посчитанной страницей, обратно на видеокарту. */
 (function (root) {
   const STEP_WGSL = /* wgsl */`
 struct P { W: u32, WW: u32, H: u32, K: u32, anchor: u32, bg: u32, _a: u32, _b: u32 }
@@ -395,6 +396,8 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
         device.queue.submit([enc.finish()]); win = { VX: o.VX, VW: o.VW, VH: o.VH };
         return true;
       }
+      // Готовая картинка окна (с краской, посчитанной страницей) → видеокарта; размер — как у последней picture()
+      function writePic(px) { if (dead || !pic || px.length !== picN) return false; device.queue.writeBuffer(pic, 0, px); return true; }
       // Картинка окна → Uint32Array (проверка против img страницы)
       async function readPic() {
         if (!pic || !picN) return null;
@@ -414,7 +417,7 @@ fn cell(r: i32, c: i32) -> vec3<f32> { let p = pic[r * u.VW + c - u.VX]; return 
         pass.setPipeline(pipeRender); pass.setBindGroup(0, renderBind); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
       }
       reset();
-      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, render, done: () => device.queue.onSubmittedWorkDone(),
+      return { W, H, WW, anchor, reset, run, write, read, picture, readPic, writePic, render, done: () => device.queue.onSubmittedWorkDone(),
         destroy() { dead = true; for (const x of [pBuf, bitsBuf, hasBuf, uBuf, PBuf, tBuf, apBuf, pic, pic2, zBuf, qBuf]) x?.destroy(); } };
     }
     // Холст для render(): context, настроенный на эту видеокарту
