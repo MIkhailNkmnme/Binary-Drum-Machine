@@ -1,4 +1,4 @@
-/* Hub v0.418 — button-standard adapter; source controls and grozd storage stay intact. */
+/* Hub v0.421 — button-standard adapter; source controls and grozd storage stay intact. */
 (() => {
   'use strict';
   const NS = 'http://www.w3.org/2000/svg', MINI_KEY = 'zerk_hub_mini_headers';
@@ -93,9 +93,54 @@
     };
     o.closed = () => { b.classList.remove('hub-list-owner'); b.querySelector('.hub-roof')?.remove(); document.querySelectorAll('#hubRail .hub-dim').forEach(x=>x.classList.remove('hub-dim')); queueMicrotask(updateOcclusion); };
   }
+  // Hub v0.421, ПЛ01/ПЛ02: standard rail slider (not the Autozoom head variant) — grab zone to the chevrons' inner edge, value between split thumb halves.
+  const sliderOf = b => b.classList.contains('gz-sl') && !b.classList.contains('gz-vhd') && !b.classList.contains('gz-thb') && !b.classList.contains('gz-al');
+  function setupSlider(b) {
+    if(!sliderOf(b)) return;
+    const mid=b.querySelector(':scope > .gz-mid'), th=mid?.querySelector(':scope > .gz-th'), v=mid?.querySelector(':scope > .gz-v'); if(!mid||!th||!v) return;
+    b.classList.add('hub-sl');
+    if(!mid.querySelector(':scope > .hub-slzone')){const z=document.createElement('span');z.className='hub-slzone';mid.append(z);}
+    let tv=th.querySelector(':scope > .hub-thumb-value'); if(!tv){tv=document.createElement('b');tv.className='hub-thumb-value';th.append(tv);}
+    const sync=()=>{if(tv.textContent!==v.textContent)tv.textContent=v.textContent;}; sync();
+    if(!v.dataset.hubMo){v.dataset.hubMo='1';new MutationObserver(sync).observe(v,{childList:true,characterData:true,subtree:true});}
+  }
+  // The thumb (and 4 px around it) takes the press before chevrons and the grab zone: dragging starts from the grab point, no jump.
+  {
+    let drag=null;
+    document.addEventListener('pointerdown',e=>{
+      if(e.button!==0||!e.isTrusted)return; const sl=e.target.closest?.('.hub-sl'); if(!sl)return;
+      const th=sl.querySelector('.gz-th'), mid=sl.querySelector('.gz-mid'); if(!th||!mid)return;
+      const r=th.getBoundingClientRect(); if(e.clientX<r.left-4||e.clientX>r.right+4||e.clientY<r.top||e.clientY>r.bottom)return;
+      e.preventDefault();e.stopPropagation();
+      const cx=r.left+r.width/2; drag={mid,d:e.clientX-cx,id:e.pointerId};
+      mid.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,clientX:cx,clientY:e.clientY,button:0,buttons:1,pointerId:e.pointerId,pointerType:e.pointerType,isPrimary:e.isPrimary}));
+    },true);
+    document.addEventListener('pointermove',e=>{
+      if(!drag||!e.isTrusted||e.pointerId!==drag.id)return; e.stopImmediatePropagation();
+      drag.mid.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:e.clientX-drag.d,clientY:e.clientY,buttons:e.buttons,pointerId:e.pointerId,pointerType:e.pointerType,isPrimary:e.isPrimary}));
+    },true);
+    for(const t of ['pointerup','pointercancel'])document.addEventListener(t,e=>{if(drag&&e.isTrusted&&e.pointerId===drag.id)setTimeout(()=>{drag=null;},0);},true);
+    // Echo: a thin outline leaves the chevron outward and fades (0.6 s).
+    document.addEventListener('pointerdown',e=>{const a=e.target.closest?.('.hub-sl > .gz-a:not(.gz-a2)');if(!a||e.button!==0)return;a.classList.remove('hub-echo');void a.offsetWidth;a.classList.add('hub-echo');});
+    document.addEventListener('animationend',e=>{if(e.animationName==='hubStepEcho')e.target.classList.remove('hub-echo');});
+  }
+  // В11: a button or half turned off by a mouse click shows no hover outline until the pointer leaves it (buttons are re-rendered: identified by label).
+  {
+    let quiet=null;
+    const pick=t=>t?.closest?.('#hubRail .gz-half, #hubRail .gz-hx:not(.gz-head):not(.gz-sl)');
+    const key=b=>{const p=b.closest('.gz-pair');return (p?(p.title||p.dataset.hubTip||'')+'#'+[...p.children].indexOf(b)+'|':'')+(b.getAttribute('aria-label')||b.title||b.textContent.trim());};
+    document.addEventListener('click',e=>{
+      const b=pick(e.target); if(!b||!e.detail)return; const k=key(b), was=b.classList.contains('gz-on');
+      requestAnimationFrame(()=>{
+        const now=[...document.querySelectorAll('#hubRail .gz-half, #hubRail .gz-hx:not(.gz-head):not(.gz-sl)')].find(x=>key(x)===k&&x.matches(':hover'))||b;
+        if(was&&!now.classList.contains('gz-on')){quiet=k;document.body.classList.add('hub-quiet-hover');}
+      });
+    },true);
+    document.addEventListener('pointermove',e=>{if(!quiet)return;const b=pick(e.target);if(!b||key(b)!==quiet){quiet=null;document.body.classList.remove('hub-quiet-hover');}});
+  }
   function setupParts(box) {
     for(const b of box.querySelectorAll('.gz-hx:not(.gz-head)')) {
-      setupList(b);
+      setupList(b); setupSlider(b);
       const halves=[...b.querySelectorAll(':scope > .gz-half')];
       if(halves.length===2 && b.classList.contains('gz-split')) {
         // Only explicitly mutually exclusive product modes get a changing seam.
