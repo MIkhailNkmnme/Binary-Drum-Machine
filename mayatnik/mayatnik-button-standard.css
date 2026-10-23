@@ -71,3 +71,5 @@ i.may-tint{filter:none!important;background-color:var(--c,#8fd3ff)!important;-we
 header #paintTools.pt-dd .pt-open > .pt-l.may-head-in,header #paintTools.pt-dd .pt-open > .gz-head.may-head-in{position:relative;z-index:51!important}
 /* v0.458: раскрытая группа полосы — поверх соседних групп второго ряда */
 header #paintTools.pt-dd > .pt-g.pt-open,header #paintTools.pt-dd > .gz-group.pt-open{z-index:60!important}
+/* v0.459, В10 v25: наведение — только боковые углы (по контуру 120×24: верх 96, бок 33,94) */
+:is(body.mayatnik-menu-ready,#paintTools) .may-standard:not(.may-standard-mini):hover:not(.on):not(.gz-on):not([aria-pressed=true]):not(:active):not(.gz-press):not(.may-standard-held)>.may-standard-outline polygon{stroke-dasharray:0 96 33.94 96 33.94}

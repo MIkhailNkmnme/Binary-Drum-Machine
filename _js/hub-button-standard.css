@@ -164,3 +164,5 @@ body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.g
 #hubRail .gz-group.gz-open{height:var(--hub-height,24px)}
 /* v0.436: число за ползунком — дубль значения в бегунке, не показывать */
 #hubRail .gz-sl > .gz-vt,#hubRail .gz-vt{display:none!important}
+/* v0.440, В10 v25: наведение обводит только боковые углы, не всю кнопку */
+body.hubRailOn :is(#hubRail,.hub-standard-list) .gz-hx:hover:not(.gz-on):not([aria-pressed=true]):not(:active):not(.gz-press):not(.hub-held):not(.gz-mini):not(.hub-mini){background:linear-gradient(90deg,var(--c) 0 12px,#394657 12px calc(100% - 12px),var(--c) calc(100% - 12px))!important}
