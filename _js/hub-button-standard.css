@@ -122,8 +122,8 @@ body.hubRailOn #hubRail .gz-pair.gz-cut.gz-split>.gz-half{color:#dfe6f5!importan
 #hubRail .hub-sl>.gz-a.hub-echo::after{animation:hubStepEcho .6s ease-out forwards}
 @keyframes hubStepEcho{from{opacity:.9;transform:translateX(0)}to{opacity:0;transform:translateX(var(--echo-dx))}}
 /* ход бегунка: центр mid = дорожка 72 px плюс по 8 px под шевроны; зона захвата — отдельный шестиугольник ±8 px */
-#hubRail .hub-sl>.gz-mid{--hub-th:8px;--hub-s:3px;margin:0 calc(-1 * var(--hub-th))!important;min-width:0;position:relative;overflow:visible;pointer-events:none;z-index:1}
-#hubRail .hub-sl>.gz-mid>.hub-slzone{position:absolute;left:calc(var(--hub-th) - 16px);right:calc(var(--hub-th) - 16px);top:0;bottom:0;pointer-events:auto;z-index:5;outline:none;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+#hubRail .hub-sl>.gz-mid{--hub-th:8px;--hub-s:3px;margin:0 calc(var(--hub-pad,0px) - var(--hub-th))!important;min-width:0;position:relative;overflow:visible;pointer-events:none;z-index:1}
+#hubRail .hub-sl>.gz-mid>.hub-slzone{position:absolute;left:calc(var(--hub-th) - var(--hub-pad,0px) - 16px);right:calc(var(--hub-th) - var(--hub-pad,0px) - 16px);top:0;bottom:0;pointer-events:auto;z-index:5;outline:none;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
 #hubRail .hub-sl>.gz-mid::before{left:0!important;right:0!important;clip-path:inset(0 var(--hub-th))}
 #hubRail .hub-sl>.gz-mid::after{content:none!important;display:none!important}
 #hubRail .hub-sl>.gz-mid:hover::before{-webkit-mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0);mask:linear-gradient(to right,#000 calc(var(--thx,0px) - 11px),transparent 0 calc(var(--thx,0px) + 11px),#000 0)}
@@ -147,3 +147,7 @@ body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.g
 #hubRail .hub-sl>.gz-mid>.hub-slzone:focus::after{content:"";position:absolute;inset:0;background:var(--c);pointer-events:none;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.4px 1px,1.2px 50%,12.4px calc(100% - 1px),calc(100% - 12.4px) calc(100% - 1px),calc(100% - 1.2px) 50%,calc(100% - 12.4px) 1px,12.4px 1px)}
 #hubRail#hubRail .gz-hx.hub-sl.gz-vhd.gz-on::after{content:"";display:block;position:absolute;inset:0;background:var(--c);pointer-events:none;z-index:6;clip-path:polygon(evenodd,12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%,12px 0,12.83px 2px,2.83px 50%,12.83px calc(100% - 2px),calc(100% - 12.83px) calc(100% - 2px),calc(100% - 2.83px) 50%,calc(100% - 12.83px) 2px,12.83px 2px)}
 #hubRail#hubRail .gz-hx.hub-sl.gz-vhd.gz-on::before{inset:0!important;background:var(--hub-surface)!important}
+
+/* v0.423: двойной слот 246 px — ползунок с короткой дорожкой (голова-включатель, хвост, длинное значение); бегунок отступает от шевронов ещё на 8 px */
+#hubRail#hubRail .gz-hx.hub-sl.hub-wide{width:246px!important;min-width:246px!important;max-width:246px!important;background-size:246px 24px!important}
+#hubRail .hub-sl.hub-wide>.gz-mid{--hub-pad:8px}

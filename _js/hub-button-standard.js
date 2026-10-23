@@ -184,6 +184,13 @@
       }
     }
   }
+  // v0.423: a slider whose track is short (head toggle, visible tail, long value) takes a double slot 246 px = 2 × 120 + 6 (two neighbouring columns, same row).
+  const wantsWide = b => {
+    if(!b.classList.contains('gz-sl')) return false; if(b.dataset.hubWide) return true;
+    const tail=b.querySelector(':scope > .gz-vt'), val=b.querySelector(':scope > .gz-mid > .gz-v');
+    const w=b.classList.contains('gz-vhd') || (tail && tail.style.display!=='none') || (val && val.textContent.trim().length>4);
+    if(w) b.dataset.hubWide='1'; return !!w;
+  };
   function layout(root) {
     for(const box of root.querySelectorAll(':scope > .gz-group')) {
       if(box.classList.contains('gz-drag'))continue;
@@ -203,11 +210,20 @@
       const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=top||mobile;
       const r=head.getBoundingClientRect(), rows=vertical?items.length:Math.min(7,Math.max(1,Math.floor((innerHeight-r.top-16)/26)));
       const cells=[{x:0,y:0,w:mini?34:120,head:true}],caps=[];
+      const taken=new Set(); let k=0, ncols=Math.ceil(items.length/rows);
       items.forEach((b,i)=>{
-        const x=vertical?0:126+Math.floor(i/rows)*126, y=vertical?(i+1)*26:i%rows*26;
+        let x,y,wide=false;
+        if(vertical){ x=0; y=(i+1)*26; }
+        else {
+          while(taken.has(Math.floor(k/rows)+','+k%rows)) k++;
+          const col=Math.floor(k/rows), row=k%rows; k++;
+          wide=wantsWide(b); if(wide) taken.add((col+1)+','+row);
+          x=126+col*126; y=row*26; ncols=Math.max(ncols,col+(wide?2:1));
+        }
+        b.classList.toggle('hub-wide',wide);
         setStyle(b,'--hub-x',x+'px');setStyle(b,'--hub-y',y+'px');
         const section=b.closest('.gz-sec');if(section)setStyle(b,'--c',section.style.getPropertyValue('--c'));
-        if(open)cells.push({x,y});
+        if(open){cells.push({x,y}); if(wide)cells.push({x:x+126,y});}
       });
       const height=vertical && open ? (items.length+1)*26-2 :24;setStyle(box,'--hub-height',height+'px');
       if(top)setStyle(box,'height',height+'px');
@@ -216,7 +232,7 @@
         head.classList.add('hub-list-owner');
         if(mini)roof(head,true);else head.querySelector('.hub-roof')?.remove();
         if(vertical && items.length)caps.push({x:0});
-        else for(let col=0;col<Math.ceil(items.length/rows);col++)caps.push({x:126+col*126,top:true},{x:126+col*126});
+        else for(let col=0;col<ncols;col++)caps.push({x:126+col*126,top:true},{x:126+col*126});
       }else{head.classList.remove('hub-list-owner');head.querySelector('.hub-roof')?.remove();}
       contours(box,cells,caps,{merge:open&&vertical&&!mini&&items.length>0,roofTop:open&&!mini});setupParts(box);
     }
