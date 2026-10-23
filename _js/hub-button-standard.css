@@ -157,3 +157,8 @@ body.hub-quiet-hover.hubRailOn #hubRail :is(.gz-half,.gz-hx:not(.gz-head):not(.g
 
 /* v0.425 Р02: строки группы вне окна прокрутки колонки скрыты (колесо листает) */
 #hubRail .hub-off{visibility:hidden!important;pointer-events:none!important}
+
+/* v0.428, КНОПКИ v22 Р02: группа раскрывается вниз, её высота сдвигает остальное в рейке; рейка выше окна — прокручивается. Справа запас под двойной слот 246 px, мимо групп клики проходят. */
+@media(min-width:1101px){#hubRail{overflow-y:auto!important;overflow-x:hidden!important;max-height:calc(100dvh - 28px)!important;padding:1px 130px 8px 4px!important;margin-left:-4px;pointer-events:none;scrollbar-width:none}}
+#hubRail .gz-group{pointer-events:auto}
+#hubRail .gz-group.gz-open{height:var(--hub-height,24px)}

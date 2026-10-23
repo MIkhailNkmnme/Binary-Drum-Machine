@@ -225,7 +225,7 @@
         pin.tabIndex=0;pin.setAttribute('role','button');pin.setAttribute('aria-label','Закрепить группу');pin.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pin.click();}});
       }
       const items=[...box.querySelectorAll('.gz-hx:not(.gz-head)')];
-      const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=top||mobile;
+      const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=true;   // v0.428, Р02 v22: every group opens only downward under its header, one column; the group's height pushes the rest of the rail
       // v0.425, Р02: a group column is one column — never split by count; if it does not fit the window it scrolls (wheel) as a window of rows.
       const r=head.getBoundingClientRect(), n=items.length, fit=Math.max(1,Math.floor((innerHeight-r.top-16)/26));
       const rows=vertical?n:Math.min(n,fit), off=vertical?0:Math.max(0,Math.min(+box.dataset.hubOff||0,n-rows));
@@ -239,8 +239,7 @@
         let x,y,wide=false;
         const off1=!vertical && (i<off||i>=off+rows);
         b.classList.toggle('hub-off',off1); b.inert=off1;
-        if(vertical){ x=0; y=(i+1)*26; }
-        else { wide=wantsWide(b); x=126; y=off1?0:(i-off)*26; }
+        x=0; y=(i+1)*26; wide=!top&&!mobile&&wantsWide(b);
         b.classList.toggle('hub-wide',wide);
         setStyle(b,'--hub-x',x+'px');setStyle(b,'--hub-y',y+'px');
         const section=b.closest('.gz-sec');if(section)setStyle(b,'--c',section.style.getPropertyValue('--c'));
