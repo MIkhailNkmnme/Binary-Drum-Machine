@@ -101,3 +101,6 @@ body.hubRailOn :is(#hubZenToggle,#hubZenPng,#hubZenRec,#hubZenSys):active{--comm
 /* Cutout signs stay readable independently of the selected bit colours. */
 body.hubRailOn #hubRail .gz-pair.gz-cut.gz-split>.gz-half{color:#dfe6f5!important}
 .hub-command-icon{position:relative!important;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+
+/* КНП-019 (В06 v16): текст кнопок, ползунков и пультов не выделяется */
+#hubRail :is(.gz-hx,.gz-pair,.gz-half,.gz-head,.gz-control,.gz-control *,.zz-pult,.zz-pult *),.zerk-range-wrap,.zerk-range-wrap *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}

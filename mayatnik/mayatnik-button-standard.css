@@ -56,3 +56,6 @@ body.mayatnik-menu-ready #paintTools.pt-dd .pt-l{justify-content:space-between}
 @media(max-width:600px){body.mayatnik-menu-ready #paintTools.pt-dd .pt-r{left:auto;max-height:60dvh;overflow-y:auto;overflow-x:hidden}body.mayatnik-menu-ready #mayCorner{display:flex;flex-direction:column;align-items:flex-start}}
 
 @media(max-width:600px){body.mayatnik-menu-ready header #paintTools.pt-dd{display:flex!important;flex-wrap:wrap!important;align-items:flex-start;gap:2px!important;overflow:visible!important;height:auto!important}body.mayatnik-menu-ready header #paintTools.pt-dd>.pt-g{flex:none;margin:0!important}body.mayatnik-menu-ready #mayCorner{flex:none;width:120px}}
+
+/* КНП-019 (В06 v16): текст кнопок, ползунков и пультов не выделяется */
+:is(.gz-hx,.gz-pair,.gz-half,.gz-head,.gz-control,.may-standard,.may-slide,.may-slide *,.zz-pult,.zz-pult *){-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none}
