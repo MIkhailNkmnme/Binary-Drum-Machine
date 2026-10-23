@@ -991,7 +991,8 @@
     const tools = $('paintTools'); if (!tools) return;
     const els = [...tools.querySelectorAll(':scope > .gz-group, :scope > .pt-g')].filter(g => !g.classList.contains('pt-bot') && !g.classList.contains('pt-btn') && !g.classList.contains('pt-drag'));
     const want = new Map(els.map(g => [g, 0])), cur = g => parseFloat(g.dataset.pushY) || 0;
-    if (innerWidth > 600) for (const o of els) {
+    // v0.458: в верхней полосе группы под раскрытой не сдвигаем — уезжали вниз за список («слетело»); список ложится поверх (Р06)
+    if (false && innerWidth > 600) for (const o of els) {
       if (!o.matches('.pt-open, .gz-open')) continue;
       const head = o.querySelector(':scope > .pt-l, :scope > .gz-head'), parts = [...o.querySelectorAll(':scope > .pt-r, :scope > .may-rail-list, :scope > .gz-soty, :scope > .gz-wide')].map(e => e.getBoundingClientRect()).filter(r => r.width && r.height);
       if (!head || !parts.length) continue;
