@@ -1,4 +1,4 @@
-/* Hub v0.414 — button-standard adapter; source controls and grozd storage stay intact. */
+/* Hub v0.415 — button-standard adapter; source controls and grozd storage stay intact. */
 (() => {
   'use strict';
   const NS = 'http://www.w3.org/2000/svg', MINI_KEY = 'zerk_hub_mini_headers';
@@ -142,5 +142,28 @@
   };
   document.addEventListener('pointerdown',e=>{const h=e.target.closest('#hubRail .gz-half');if(!h||e.button!==0)return;h.classList.add('hub-held');const end=()=>{h.classList.remove('hub-held');removeEventListener('pointerup',end);removeEventListener('pointercancel',end);};addEventListener('pointerup',end);addEventListener('pointercancel',end);},true);
   const navigation=()=>document.querySelectorAll('.hub a.menu-btn.hubPg').forEach(a=>{if(a.querySelector('.hub-navigation-outline'))return;const s=svg('hub-navigation-outline');s.setAttribute('viewBox','0 0 120 24');shape(s,'polygon',{points:'12,0 108,0 120,12 108,24 12,24 0,12'});a.append(s);});
+  function edgeCommands(){
+    const commands=['hubZenToggle','hubZenPng','hubZenRec','hubZenSys'].map(id=>document.getElementById(id));
+    if(commands.some(x=>!x))return;
+    const blockHeight=102,x=innerWidth-128;
+    const obstacles=['#hubPult .hpZoom','#hubPultBot','#hubMobSwitch'].map(q=>document.querySelector(q)).filter(e=>e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.right>x&&r.left<innerWidth-8);
+    const zoom=document.querySelector('#hubPult .hpZoom')?.getBoundingClientRect();
+    let y=Math.max(8,Math.min(innerHeight-blockHeight-8,zoom?.height?zoom.bottom+2:innerHeight-blockHeight-8));
+    // Prefer below zoom, then move the whole four-command column above a conflict.
+    for(let i=0;i<obstacles.length+1;i++){
+      const hit=obstacles.find(r=>y<r.bottom+2&&y+blockHeight>r.top-2);
+      if(!hit)break;
+      y=Math.max(8,hit.top-blockHeight-2);
+    }
+    commands.forEach((b,i)=>{
+      setStyle(b,'--hub-command-y',(Math.round(y)+i*26)+'px');
+      if(i>1)b.setAttribute('aria-pressed',String(b.classList.contains('on')));
+      if(i===1&&!b.querySelector('.hub-command-icon')){const ic=document.createElement('span');ic.className='hub-command-icon';ic.setAttribute('aria-hidden','true');ic.textContent='▧';b.prepend(ic);}
+      if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');s.setAttribute('viewBox','0 0 120 24');shape(s,'polygon',{points:'12,0 108,0 120,12 108,24 12,24 0,12'});b.append(s);}
+    });
+  }
+  addEventListener('resize',edgeCommands);
+  document.addEventListener('click',()=>requestAnimationFrame(edgeCommands),true);
+  setInterval(edgeCommands,500);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',navigation);else navigation();
 })();
