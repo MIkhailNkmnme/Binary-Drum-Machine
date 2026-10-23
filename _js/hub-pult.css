@@ -151,3 +151,5 @@ body.hubZen #hubPultBot{display:none}
 #hubPultBot .hpSpinV{min-width:46px;font:12px/1 system-ui,sans-serif;color:var(--hp-b1,#8fd3ff);font-variant-numeric:tabular-nums}
 #hubPultBot .hpBits .hpReset.hpSpin{animation:hpSpinBlink 1s ease-in-out infinite}
 @keyframes hpSpinBlink{50%{filter:brightness(.6)}}
+/* Хаб v0.432: у малого пульта ширина ромба своя (15–24px), а общий раздвиг считал её по --zz-pw — половины выходили разными. Режем по середине своей ширины: по 3px от оси */
+:is(html,#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp#zp) #hubPultBot .zz-pult:hover .zz-pult-play{clip-path:polygon(calc(50% - 3px) 0,0 50%,calc(50% - 3px) 100%,calc(50% - 3px) 0,calc(50% + 3px) 0,100% 50%,calc(50% + 3px) 100%,calc(50% + 3px) 0)!important}
