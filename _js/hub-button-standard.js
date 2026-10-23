@@ -1,11 +1,16 @@
 /* Hub v0.421 — button-standard adapter; source controls and grozd storage stay intact. */
 (() => {
   'use strict';
+  // v0.437: пишем в DOM только при изменении — повторная запись того же класса, атрибута или стиля будила наблюдателей и пересчёт стилей в покое
+  const addC=(e,c)=>{if(!e.classList.contains(c))e.classList.add(c);};
+  const sa=(e,k,v)=>{v=String(v);if(e.getAttribute(k)!==v)e.setAttribute(k,v);};
+  const sp=(e,k,v,pr)=>{v=String(v);pr=pr||'';if(e.style.getPropertyValue(k)!==v||e.style.getPropertyPriority(k)!==pr)e.style.setProperty(k,v,pr);};
+  const sd=(e,k,v)=>{v=String(v);if(e.dataset[k]!==v)e.dataset[k]=v;};
   const NS = 'http://www.w3.org/2000/svg', MINI_KEY = 'zerk_hub_mini_headers';
   let minis = {}; try { minis = JSON.parse(localStorage.getItem(MINI_KEY)) || {}; } catch (_) {}
   const icons = { sound:'♪', bits:'01', symmetry:'⋈', axis:'✣', space:'◇', motion:'⟳', flow:'≋', file:'▧', locks:'⌑' };
-  const svg = cls => { const s = document.createElementNS(NS, 'svg'); s.setAttribute('aria-hidden', 'true'); s.classList.add(cls); return s; };
-  const shape = (s, tag, attrs) => { const p = document.createElementNS(NS, tag); for (const [k,v] of Object.entries(attrs)) p.setAttribute(k,v); s.append(p); return p; };
+  const svg = cls => { const s = document.createElementNS(NS, 'svg'); sa(s,'aria-hidden', 'true'); s.classList.add(cls); return s; };
+  const shape = (s, tag, attrs) => { const p = document.createElementNS(NS, tag); for (const [k,v] of Object.entries(attrs)) sa(p,k,v); s.append(p); return p; };
   const roof = (b, mini) => {
     let s = b.querySelector(':scope > .hub-roof');
     if (!s) { s = svg('hub-roof'); b.append(s); }
@@ -22,8 +27,8 @@
     s.dataset.signature = signature; s.replaceChildren();
     const id = 'hub-grad-' + (++backingId);
     const defs = document.createElementNS(NS, 'defs'), g = document.createElementNS(NS, 'radialGradient');
-    for (const [k,v] of Object.entries({id,cx:'.5',cy:'.5',r:'.5'})) g.setAttribute(k,v);
-    for (const [off,col] of [[0,'#32393f'],[1,'#000']]) { const st = document.createElementNS(NS,'stop'); st.setAttribute('offset',off); st.setAttribute('stop-color',col); g.append(st); }
+    for (const [k,v] of Object.entries({id,cx:'.5',cy:'.5',r:'.5'})) sa(g,k,v);
+    for (const [off,col] of [[0,'#32393f'],[1,'#000']]) { const st = document.createElementNS(NS,'stop'); sa(st,'offset',off); sa(st,'stop-color',col); g.append(st); }
     defs.append(g); s.append(defs);
     const fill = `url(#${id})`, columns = new Map();
     for (const c of cells) {
@@ -51,7 +56,7 @@
     if (o.roofTop) shape(s,'path',{class:'roof-top',d:'M1 12 L12.4 1 H107.6 L119 12'});
   };
   const overlap = (a,b) => a.left < b.right-1 && a.right > b.left+1 && a.top < b.bottom-1 && a.bottom > b.top+1;
-  const setStyle = (e,k,v) => { if (e.style.getPropertyValue(k) !== v) e.style.setProperty(k,v); };
+  const setStyle = (e,k,v) => { if (e.style.getPropertyValue(k) !== v) sp(e,k,v); };
   let frontGroup = null;
   const allBoxes = () => [...document.querySelectorAll('#hubRail .gz-group')];
   // v0.424, КНОПКИ v19 Р06/Р07: an open list or column hides ONLY the elements (header / buttons) of other groups that it lies on — the rest of that group stays in place.
@@ -71,9 +76,9 @@
       const mine = elsOf(g), ownLadder = ladder && ladder.owner?.closest('.gz-group') === g; let hid = 0;
       for (const e of mine) {
         const r = box(e);
-        if ((ladderRect && !ownLadder && overlap(r, ladderRect)) || obstacles.some(o => overlap(r, o))) { e.classList.add('hub-occluded'); e.inert = true; hid++; }
+        if ((ladderRect && !ownLadder && overlap(r, ladderRect)) || obstacles.some(o => overlap(r, o))) { addC(e,'hub-occluded'); e.inert = true; hid++; }
       }
-      if (hid) g.classList.add('hub-partial');
+      if (hid) addC(g,'hub-partial');
       if (adds) {
         mine.filter(e => !e.classList.contains('hub-occluded')).forEach(e => obstacles.push(box(e)));
         if (!hid) g.querySelectorAll('.hub-contours .cap').forEach(c => { if (c.getClientRects().length) obstacles.push(box(c)); });
@@ -87,7 +92,7 @@
     const c = document.createElement('span'); c.className='hub-inner-chevron'; b.append(c);
     o.placement='right';
     o.placed = list => {
-      list.classList.add('hub-standard-list'); b.classList.add('hub-list-owner'); roof(b,false);
+      addC(list,'hub-standard-list'); addC(b,'hub-list-owner'); roof(b,false);
       const options = [...list.children].filter(x => x.classList.contains('gz-hx'));
       const r = b.getBoundingClientRect(), rows = options.length, cols = 1, width=120, scroll = rows*26-2 > innerHeight-56;   // v0.425 Р02: one column; too tall — it scrolls inside
       const right = r.right+6, left=r.left-width-6;
@@ -98,14 +103,14 @@
       let x = right+width <= innerWidth-3 ? right : left >= 3 ? left : useRight?right:r.left-visibleWidth-6;
       const y=scroll?1:Math.max(14,Math.min(r.top,innerHeight-rows*26-14));
       Object.assign(list.style,{display:'grid',gridAutoFlow:'column',gridTemplateRows:`repeat(${rows},24px)`,gridAutoColumns:'120px',columnGap:'6px',rowGap:'2px',width:visibleWidth+'px',left:x+'px',top:y+'px',maxWidth:'none',maxHeight:'none'});
-      list.style.setProperty('overflow-x',full&&!scroll?'visible':'auto','important');
-      if(scroll){Object.assign(list.style,{boxSizing:'border-box',width:(visibleWidth+8)+'px',height:(innerHeight-2)+'px',left:(x-4)+'px'});list.style.setProperty('padding','14px 4px','important');list.style.setProperty('overflow-y','auto','important');}
+      sp(list,'overflow-x',full&&!scroll?'visible':'auto','important');
+      if(scroll){Object.assign(list.style,{boxSizing:'border-box',width:(visibleWidth+8)+'px',height:(innerHeight-2)+'px',left:(x-4)+'px'});sp(list,'padding','14px 4px','important');sp(list,'overflow-y','auto','important');}
       else{list.style.height='';list.style.removeProperty('overflow-y');list.style.removeProperty('padding');list.style.boxSizing='';}
       const cells=options.map((_,i)=>({x:Math.floor(i/rows)*126,y:i%rows*26})), caps=[];
       for(let col=0;col<cols;col++) caps.push({x:col*126,top:true},{x:col*126});
       contours(list,cells,caps); const cs=list.querySelector(':scope > .hub-contours'); if(cs)cs.style.transform=scroll?'translate(4px,14px)':'';
       const g=b.closest('.gz-group'); g?.querySelectorAll('.gz-hx').forEach(x=>x.classList.toggle('hub-dim',x!==b));
-      options.forEach(x => { x.tabIndex=0; x.setAttribute('role','button'); if(!x.dataset.hubKeyboard){x.dataset.hubKeyboard='1'; x.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();x.click();}});} });
+      options.forEach(x => { (x.tabIndex!==0&&(x.tabIndex=0)); sa(x,'role','button'); if(!x.dataset.hubKeyboard){sd(x,'hubKeyboard','1'); x.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();x.click();}});} });
       updateOcclusion();
     };
     o.closed = () => { b.classList.remove('hub-list-owner'); b.querySelector('.hub-roof')?.remove(); document.querySelectorAll('#hubRail .hub-dim').forEach(x=>x.classList.remove('hub-dim')); queueMicrotask(updateOcclusion); };
@@ -117,25 +122,25 @@
     const w0 = tv.offsetWidth; if (!w0) return;
     tv.style.fontSize = ''; let w = tv.offsetWidth;
     if (w > 14) { const px = Math.max(8, Math.floor(9 * 14 / w * 2) / 2); tv.style.fontSize = px + 'px'; w = tv.offsetWidth; }
-    mid.style.setProperty('--hub-s', (w > 14 ? Math.min(14, Math.ceil(w / 2 + 1)) : 3) + 'px');
+    sp(mid,'--hub-s', (w > 14 ? Math.min(14, Math.ceil(w / 2 + 1)) : 3) + 'px');
   };
   function setupSlider(b) {
     if(!sliderOf(b)) return;
     const mid=b.querySelector(':scope > .gz-mid'), th=mid?.querySelector(':scope > .gz-th'), v=mid?.querySelector(':scope > .gz-v'); if(!mid||!th||!v) return;
-    b.classList.add('hub-sl'); const thb=b.classList.contains('gz-thb'); mid.style.setProperty('--hub-th', thb?'13px':'8px');
+    addC(b,'hub-sl'); const thb=b.classList.contains('gz-thb'); sp(mid,'--hub-th', thb?'13px':'8px');
     let z=mid.querySelector(':scope > .hub-slzone');
-    if(!z){z=document.createElement('span');z.className='hub-slzone';z.tabIndex=0;z.setAttribute('role','slider');z.setAttribute('aria-label',b.title||'');mid.append(z);
+    if(!z){z=document.createElement('span');z.className='hub-slzone';(z.tabIndex!==0&&(z.tabIndex=0));sa(z,'role','slider');sa(z,'aria-label',b.title||'');mid.append(z);
       z.addEventListener('pointerenter',()=>fitValue(mid,tv));
       z.addEventListener('keydown',e=>{const as=[...b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')];const a=e.key==='ArrowLeft'||e.key==='ArrowDown'?as[0]:e.key==='ArrowRight'||e.key==='ArrowUp'?as.at(-1):null;if(a){e.preventDefault();e.stopPropagation();a.click();}});}
     // arrow captions (−1 / +1 etc.) move to the tooltip: chevrons carry no glyphs
-    if(b.classList.contains('gz-al')) for(const a of b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')) { const t=a.textContent.trim(); if(t&&!a.dataset.hubCap){a.dataset.hubCap=t;a.title=t+' · '+(b.title||'');a.setAttribute('aria-label',a.title);} }
+    if(b.classList.contains('gz-al')) for(const a of b.querySelectorAll(':scope > .gz-a:not(.gz-a2)')) { const t=a.textContent.trim(); if(t&&!a.dataset.hubCap){sd(a,'hubCap',t);a.title=t+' · '+(b.title||'');sa(a,'aria-label',a.title);} }
     let tv=mid.querySelector(':scope > .hub-thumb-value'); if(!tv){tv=document.createElement('b');tv.className='hub-thumb-value';mid.append(tv);}
     const sync=()=>{if(tv.textContent!==v.textContent){tv.textContent=v.textContent;fitValue(mid,tv);}}; sync();   // v0.436: в бегунке полное значение («60 / 70»), число за ползунком (.gz-vt) убрано как дубль
     if(thb){ // the sign (▶ / ❚❚ …) stays visible on the closed thumb; the thumb itself still takes the click
       let sg=mid.querySelector(':scope > .hub-thumb-sign'); if(!sg){sg=document.createElement('b');sg.className='hub-thumb-sign';mid.append(sg);}
-      const ss=()=>{if(sg.textContent!==th.textContent)sg.textContent=th.textContent;}; ss(); if(!th.dataset.hubMo){th.dataset.hubMo='1';new MutationObserver(ss).observe(th,{childList:true,characterData:true,subtree:true});}
+      const ss=()=>{if(sg.textContent!==th.textContent)sg.textContent=th.textContent;}; ss(); if(!th.dataset.hubMo){sd(th,'hubMo','1');new MutationObserver(ss).observe(th,{childList:true,characterData:true,subtree:true});}
     }
-    if(!v.dataset.hubMo){v.dataset.hubMo='1';new MutationObserver(sync).observe(v,{childList:true,characterData:true,subtree:true});}
+    if(!v.dataset.hubMo){sd(v,'hubMo','1');new MutationObserver(sync).observe(v,{childList:true,characterData:true,subtree:true});}
   }
   // The thumb (and 4 px around it) takes the press before chevrons and the grab zone: dragging starts from the grab point, no jump.
   {
@@ -156,7 +161,7 @@
     },true);
     for(const t of ['pointerup','pointercancel'])document.addEventListener(t,e=>{if(drag&&e.isTrusted&&e.pointerId===drag.id)setTimeout(()=>{drag=null;},0);},true);
     // Echo: a thin outline leaves the chevron outward and fades (0.6 s).
-    document.addEventListener('pointerdown',e=>{const a=e.target.closest?.('.hub-sl > .gz-a:not(.gz-a2)');if(!a||e.button!==0)return;a.classList.remove('hub-echo');void a.offsetWidth;a.classList.add('hub-echo');});
+    document.addEventListener('pointerdown',e=>{const a=e.target.closest?.('.hub-sl > .gz-a:not(.gz-a2)');if(!a||e.button!==0)return;a.classList.remove('hub-echo');void a.offsetWidth;addC(a,'hub-echo');});
     document.addEventListener('animationend',e=>{if(e.animationName==='hubStepEcho')e.target.classList.remove('hub-echo');});
   }
   // В11: a button or half turned off by a mouse click shows no hover outline until the pointer leaves it (buttons are re-rendered: identified by label).
@@ -168,7 +173,7 @@
       const b=pick(e.target); if(!b||!e.detail)return; const k=key(b), was=b.classList.contains('gz-on');
       requestAnimationFrame(()=>{
         const now=[...document.querySelectorAll('#hubRail .gz-half, #hubRail .gz-hx:not(.gz-head):not(.gz-sl)')].find(x=>key(x)===k&&x.matches(':hover'))||b;
-        if(was&&!now.classList.contains('gz-on')){quiet=k;document.body.classList.add('hub-quiet-hover');}
+        if(was&&!now.classList.contains('gz-on')){quiet=k;document.addC(body,'hub-quiet-hover');}
       });
     },true);
     document.addEventListener('pointermove',e=>{if(!quiet)return;const b=pick(e.target);if(!b||key(b)!==quiet){quiet=null;document.body.classList.remove('hub-quiet-hover');}});
@@ -183,18 +188,18 @@
         const reverse=exclusive && halves[1].classList.contains('gz-on') && !halves[0].classList.contains('gz-on');
         b.classList.toggle('hub-reverse',reverse);
         halves.forEach((h,i)=>{
-          h.setAttribute('role','button'); h.tabIndex=0; h.setAttribute('aria-pressed',String(h.classList.contains('gz-on')));
-          if(!h.dataset.hubKeyboard){h.dataset.hubKeyboard='1'; h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();h.click();}});}
+          sa(h,'role','button'); (h.tabIndex!==0&&(h.tabIndex=0)); sa(h,'aria-pressed',String(h.classList.contains('gz-on')));
+          if(!h.dataset.hubKeyboard){sd(h,'hubKeyboard','1'); h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();h.click();}});}
           let s=h.querySelector('.hub-half-outline');if(!s){s=svg('hub-half-outline');h.append(s);}
           const points=b.classList.contains('gz-one') && i===0 ? '12,0 108,0 120,12 108,24 12,24 0,12' : i===0 ? (reverse?'12,0 64,0 56,24 12,24 0,12':'12,0 56,0 64,24 12,24 0,12') : (reverse?'8,0 52,0 64,12 52,24 0,24':'0,0 52,0 64,12 52,24 8,24');
-          if(s.dataset.points!==points){s.dataset.points=points;s.replaceChildren();shape(s,'polygon',{points});}
+          if(s.dataset.points!==points){sd(s,'points',points);s.replaceChildren();shape(s,'polygon',{points});}
         });
       }
       for(const a of b.querySelectorAll('.gz-a:not(.gz-a2),.gz-vh,.gz-vt')) {
-        if(a.dataset.hubKeyboard)continue; a.dataset.hubKeyboard='1';a.tabIndex=0;a.setAttribute('role','button'); a.setAttribute('aria-label',a.classList.contains('gz-a') ? ((a.nextElementSibling?.classList.contains('gz-mid')?'Уменьшить':'Увеличить')+' · '+b.title) : a.textContent);
+        if(a.dataset.hubKeyboard)continue; sd(a,'hubKeyboard','1');(a.tabIndex!==0&&(a.tabIndex=0));sa(a,'role','button'); sa(a,'aria-label',a.classList.contains('gz-a') ? ((a.nextElementSibling?.classList.contains('gz-mid')?'Уменьшить':'Увеличить')+' · '+b.title) : a.textContent);
         a.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();a.click();}});
         if(a.classList.contains('gz-a')) {
-          const s=svg('hub-arrow-outline');s.setAttribute('viewBox','0 0 18 24');
+          const s=svg('hub-arrow-outline');sa(s,'viewBox','0 0 18 24');
           shape(s,'path',{d:a.nextElementSibling?.classList.contains('gz-mid')?'M17 1 H12 L1 12 L12 23 H17 L7 12 Z':'M1 1 H6 L17 12 L6 23 H1 L11 12 Z'});a.append(s);
           a.addEventListener('pointerdown',e=>{if(e.button!==0)return;let timer=setTimeout(()=>{a.click();timer=setInterval(()=>a.click(),90);},350);const stop=()=>{clearTimeout(timer);clearInterval(timer);removeEventListener('pointerup',stop);removeEventListener('pointercancel',stop);};addEventListener('pointerup',stop);addEventListener('pointercancel',stop);});
         }
@@ -206,39 +211,39 @@
     if(!b.classList.contains('gz-sl')) return false; if(b.dataset.hubWide) return true;
     const tail=b.querySelector(':scope > .gz-vt'), val=b.querySelector(':scope > .gz-mid > .gz-v');
     const w=b.classList.contains('gz-vhd') || (tail && tail.style.display!=='none') || (val && val.textContent.trim().length>4);
-    if(w) b.dataset.hubWide='1'; return !!w;
+    if(w) sd(b,'hubWide','1'); return !!w;
   };
   const vertical0 = () => !!document.querySelector('#hubRail') && innerWidth<=1100;
   function layout(root) {
     for(const box of root.querySelectorAll(':scope > .gz-group')) {
       if(box.classList.contains('gz-drag'))continue;
       const head=box.querySelector(':scope > .gz-head'), open=box.classList.contains('gz-open'), mini=!!minis[box.dataset.id];
-      head.classList.toggle('hub-mini',mini); head.setAttribute('aria-expanded',String(open));
+      head.classList.toggle('hub-mini',mini); sa(head,'aria-expanded',String(open));
       const pin=head.querySelector('.gz-pin');pin?.setAttribute('aria-pressed',String(box.classList.contains('gz-pinned')));
       if(!head.dataset.hubReady){
-        head.dataset.hubReady='1'; const ic=document.createElement('span');ic.className='gz-ic';ic.textContent=icons[box.dataset.id]||'◇';head.prepend(ic);
+        sd(head,'hubReady','1'); const ic=document.createElement('span');ic.className='gz-ic';ic.textContent=icons[box.dataset.id]||'◇';head.prepend(ic);
         head.title=(head.title||head.querySelector('.gz-nm').textContent)+' · Правая кнопка — компактный заголовок';
         let keyMenuAt=0;
         const toggleMini=()=>{minis[box.dataset.id]=!minis[box.dataset.id];try{localStorage.setItem(MINI_KEY,JSON.stringify(minis));}catch(_){}layout(root);};
         head.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();if(e.button===2||performance.now()-keyMenuAt>500)toggleMini();});
         head.addEventListener('keydown',e=>{if(e.target===head&&(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))){e.preventDefault();e.stopPropagation();keyMenuAt=performance.now();toggleMini();}});
-        pin.tabIndex=0;pin.setAttribute('role','button');pin.setAttribute('aria-label','Закрепить группу');pin.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pin.click();}});
+        (pin.tabIndex!==0&&(pin.tabIndex=0));sa(pin,'role','button');sa(pin,'aria-label','Закрепить группу');pin.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pin.click();}});
       }
       const items=[...box.querySelectorAll('.gz-hx:not(.gz-head)')];
       const top=!!box.closest('.hubStrip'), mobile=innerWidth<=1100, vertical=true;   // v0.428, Р02 v22: every group opens only downward under its header, one column; the group's height pushes the rest of the rail
       // v0.425, Р02: a group column is one column — never split by count; if it does not fit the window it scrolls (wheel) as a window of rows.
       const r=head.getBoundingClientRect(), n=items.length, fit=Math.max(1,Math.floor((innerHeight-r.top-16)/26));
       const rows=vertical?n:Math.min(n,fit), off=vertical?0:Math.max(0,Math.min(+box.dataset.hubOff||0,n-rows));
-      box.dataset.hubOff=String(off); box.dataset.hubRows=String(rows);
-      if(!box.dataset.hubWheel){box.dataset.hubWheel='1';box.addEventListener('wheel',e=>{
+      sd(box,'hubOff',String(off)); sd(box,'hubRows',String(rows));
+      if(!box.dataset.hubWheel){sd(box,'hubWheel','1');box.addEventListener('wheel',e=>{
         const nn=+box.dataset.hubN||0, rr=+box.dataset.hubRows||0; if(vertical0()||!box.classList.contains('gz-open')||nn<=rr||e.target.closest('.gz-head'))return;
-        e.preventDefault();e.stopPropagation();box.dataset.hubOff=String(Math.max(0,Math.min(nn-rr,(+box.dataset.hubOff||0)+(e.deltaY>0?1:-1))));layout(root);},{passive:false});}
-      box.dataset.hubN=String(n);
+        e.preventDefault();e.stopPropagation();sd(box,'hubOff',String(Math.max(0),Math.min(nn-rr,(+box.dataset.hubOff||0)+(e.deltaY>0?1:-1))));layout(root);},{passive:false});}
+      sd(box,'hubN',String(n));
       const cells=[{x:0,y:0,w:mini?34:120,head:true}],caps=[];
       items.forEach((b,i)=>{
         let x,y,wide=false;
         const off1=!vertical && (i<off||i>=off+rows);
-        b.classList.toggle('hub-off',off1); b.inert=off1;
+        b.classList.toggle('hub-off',off1); (b.inert!==!!off1&&(b.inert=!!off1));
         x=0; y=(i+1)*26; wide=!top&&!mobile&&wantsWide(b);
         b.classList.toggle('hub-wide',wide);
         setStyle(b,'--hub-x',x+'px');setStyle(b,'--hub-y',y+'px');
@@ -247,9 +252,9 @@
       });
       const height=vertical && open ? (items.length+1)*26-2+(items.length?14:0) :24;setStyle(box,'--hub-height',height+'px');
       if(top)setStyle(box,'height',height+'px');
-      box.classList.add('gz-onecol');
+      addC(box,'gz-onecol');
       if(open){
-        head.classList.add('hub-list-owner'); head.classList.toggle('hub-down',vertical);   // Р13 v20: прозрачен только заголовок, тело которого открыто вниз под ним
+        addC(head,'hub-list-owner'); head.classList.toggle('hub-down',vertical);   // Р13 v20: прозрачен только заголовок, тело которого открыто вниз под ним
         if(mini)roof(head,true);else head.querySelector('.hub-roof')?.remove();
         if(vertical && items.length)caps.push({x:0});
         else if(n)caps.push({x:126,top:true},{x:126});
@@ -266,8 +271,8 @@
     api.el.addEventListener('click',e=>{frontGroup=e.target.closest('.gz-group')?.dataset.id||frontGroup;queueMicrotask(()=>layout(api.el));});
     layout(api.el);return api;
   };
-  document.addEventListener('pointerdown',e=>{const h=e.target.closest('#hubRail .gz-half');if(!h||e.button!==0)return;h.classList.add('hub-held');const end=()=>{h.classList.remove('hub-held');removeEventListener('pointerup',end);removeEventListener('pointercancel',end);};addEventListener('pointerup',end);addEventListener('pointercancel',end);},true);
-  const navigation=()=>document.querySelectorAll('.hub a.menu-btn.hubPg').forEach(a=>{if(a.querySelector('.hub-navigation-outline'))return;const s=svg('hub-navigation-outline');s.setAttribute('viewBox','0 0 120 24');shape(s,'polygon',{points:'12,0 108,0 120,12 108,24 12,24 0,12'});a.append(s);});
+  document.addEventListener('pointerdown',e=>{const h=e.target.closest('#hubRail .gz-half');if(!h||e.button!==0)return;addC(h,'hub-held');const end=()=>{h.classList.remove('hub-held');removeEventListener('pointerup',end);removeEventListener('pointercancel',end);};addEventListener('pointerup',end);addEventListener('pointercancel',end);},true);
+  const navigation=()=>document.querySelectorAll('.hub a.menu-btn.hubPg').forEach(a=>{if(a.querySelector('.hub-navigation-outline'))return;const s=svg('hub-navigation-outline');sa(s,'viewBox','0 0 120 24');shape(s,'polygon',{points:'12,0 108,0 120,12 108,24 12,24 0,12'});a.append(s);});
   function edgeCommands(){
     const commands=['hubZenToggle','hubZenPng','hubZenRec','hubZenSys'].map(id=>document.getElementById(id));
     if(commands.some(x=>!x))return;
@@ -283,12 +288,12 @@
     }
     commands.forEach((b,i)=>{
       setStyle(b,'--hub-command-y',(Math.round(y)+i*50)+'px');
-      if(i>1)b.setAttribute('aria-pressed',String(b.classList.contains('on')));
+      if(i>1)sa(b,'aria-pressed',String(b.classList.contains('on')));
       if(!b.querySelector('.hub-command-icon')){
-        const ic=svg('hub-command-icon');ic.setAttribute('viewBox','0 0 24 24');
+        const ic=svg('hub-command-icon');sa(ic,'viewBox','0 0 24 24');
         shape(ic,'path',{d:['M3 12q9-12 18 0-9 12-18 0M15 12a3 3 0 11-6 0 3 3 0 016 0','M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.1','M18 12a6 6 0 11-12 0 6 6 0 0112 0','M5 9h4l5-4v14l-5-4H5zM17 8q5 4 0 8'][i]});b.prepend(ic);
       }
-      if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');s.setAttribute('viewBox','0 0 48 48');shape(s,'polygon',{points:'24,0 48,24 24,48 0,24'});b.append(s);}
+      if(!b.querySelector(':scope > .hub-command-outline')){const s=svg('hub-command-outline');sa(s,'viewBox','0 0 48 48');shape(s,'polygon',{points:'24,0 48,24 24,48 0,24'});b.append(s);}
     });
   }
   addEventListener('resize',edgeCommands);
