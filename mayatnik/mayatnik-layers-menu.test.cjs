@@ -107,11 +107,16 @@ test('real Площади button По оси is inserted, migrated and calls may
   centerable=true;sync[0]();assert.equal(button.disabled,false);button.onclick();assert.equal(centers,1);assert.equal(layouts,2);assert.equal(button['aria-label'],button.title);
 });
 
-test('only the three layer values use separate left/middle/right outlines and fixed X joints; original inputs still work',()=>{
- const e=setup();for(const key of ['opacity','x','y']){const box=e.button('layer-'+key),input=e.input(key),[left,middle,right,joints]=box.children;
-  assert.ok(box.classList.contains('zcf-control'));assert.equal(input.parentElement,middle);assert.equal(joints.classList.contains('zcf-joints'),true);assert.equal(joints.children[0].getAttribute('d'),'M18 0L30 24M30 0L18 24M90 0L102 24M102 0L90 24');
+test('layer controls keep independent outlines and native inputs; one movable X thumb replaces fixed joints',()=>{
+ const e=setup();for(const key of ['opacity','x','y']){const box=e.button('layer-'+key),input=e.input(key),[left,middle,right]=box.children;
+  assert.ok(box.classList.contains('zcf-control'));assert.equal(input.parentElement,middle);assert.equal(box.children.length,3);
   for(const n of [left,middle,right])assert.equal(n.children.filter(c=>c.classList.contains('zcf-outline')).length,1);
   const before=e.api.get()[key];right.fire('pointerdown',{button:0});assert.equal(right.classList.contains('zcf-held'),true);e.document.events.pointerup();assert.equal(right.classList.contains('zcf-held'),false);right.click();assert.equal(e.api.get()[key],key==='opacity'?Math.min(100,before+1):before+1);
   const prior=box.children.slice();e.ctx.ZerkControlFrame.attach(box,left,middle,right);assert.deepEqual(box.children,prior);
- }assert.equal(e.all().filter(n=>n.classList.contains('zcf-control')).length,3);
+ }
+ const range=e.input('opacity'),middle=range.parentElement;assert.ok(range.classList.contains('zcf-input'));assert.equal(range.type,'range');
+ for(const n of [0,11,50,51,100]){range.value=String(n);range.fire('input');assert.equal(e.api.get().opacity,n);assert.equal(middle.dataset.valueSide,n<=50?'right':'left');}
+ e.api.set('overlay',{opacity:25});assert.equal(Number(range.value),25);assert.equal(middle.dataset.valueSide,'right');assert.equal(e.input('x').classList.contains('zcf-input'),false);
+ assert.equal(e.all().filter(n=>n.classList.contains('zcf-control')).length,3);
+ const css=fs.readFileSync(path.join(__dirname,'../_js/control-frame.css'),'utf8');assert.match(css,/::-webkit-slider-thumb/);assert.match(css,/::-moz-range-thumb/);assert.match(css,/M1 1L13 23M13 1L1 23/);assert.doesNotMatch(css,/zcf-joints/);
 });

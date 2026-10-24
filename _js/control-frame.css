@@ -1,16 +1,33 @@
-/* v1. One 120×24 surface: left / value / right. X joints have their own neutral contour. */
+/* v2. Independent L/value/R contours; a single X moves with the native range value. */
 .zcf-control{--zcf-base:#394657;--zcf-surface:var(--may-surface,#1b2430)}
 .zcf-control>.zcf-side,.zcf-control>.zcf-middle{position:relative!important;display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:24px!important;min-height:24px;border:0;border-radius:0;margin:0!important;background:var(--zcf-surface)!important;color:#dfe6f5;--zcf-outline:var(--zcf-base);--zcf-stroke:2px;overflow:hidden}
 .zcf-control>.zcf-side{flex:0 0 24px!important;width:24px!important;min-width:24px!important;padding:0!important;z-index:4;cursor:pointer;font:15px/1 'Segoe UI',sans-serif!important;text-shadow:none!important}
-.zcf-control>.zcf-left{clip-path:polygon(12px 0,18px 0,24px 12px,18px 24px,12px 24px,0 12px)!important}
-.zcf-control>.zcf-right{clip-path:polygon(6px 0,12px 0,24px 12px,12px 24px,6px 24px,0 12px)!important}
-.zcf-control>.zcf-middle{flex:0 0 72px!important;width:72px!important;min-width:72px!important;padding:0 8px!important;gap:2px;clip-path:polygon(6px 0,66px 0,72px 12px,66px 24px,6px 24px,0 12px)!important}
+.zcf-control>.zcf-left{clip-path:polygon(12px 0,24px 0,24px 24px,12px 24px,0 12px)!important}
+.zcf-control>.zcf-right{clip-path:polygon(0 0,12px 0,24px 12px,12px 24px,0 24px)!important}
+.zcf-control>.zcf-middle{flex:0 0 72px!important;width:72px!important;min-width:72px!important;padding:0 8px!important;gap:2px;clip-path:none!important}
 .zcf-control>.zcf-side:is(:hover,:focus-visible):not(:disabled),.zcf-control>.zcf-middle:is(:hover,:focus-within){--zcf-outline:var(--c,#7cbcff);outline:0}
 .zcf-control>.zcf-side:is(:active,.zcf-held):not(:disabled){--zcf-outline:var(--c,#7cbcff);--zcf-stroke:4px}
 .zcf-control>.zcf-side:disabled{cursor:default;opacity:.4}
 .zcf-control .zcf-outline{position:absolute;inset:0;width:100%;height:24px;z-index:5;pointer-events:none}
 .zcf-control .zcf-outline path{fill:none;stroke:var(--zcf-outline);stroke-width:var(--zcf-stroke);stroke-linecap:butt;stroke-linejoin:miter}
-.zcf-control>.zcf-joints{position:absolute!important;inset:0;width:100%;height:24px;z-index:6;pointer-events:none}
-.zcf-control>.zcf-joints path{fill:none;stroke:var(--c,#7cbcff);stroke-width:2px;stroke-linecap:butt}
 .zcf-control>.may-standard-outline{display:none!important}
 .zcf-control>.zcf-side::before,.zcf-control>.zcf-side::after{display:none!important}
+
+.zcf-range{--zcf-thumb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 24'%3E%3Cpath d='M1 1L13 23M13 1L1 23' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E")}
+.zcf-range>.zcf-input{appearance:none;position:absolute;inset:0;width:100%!important;max-width:none;height:24px;margin:0;padding:0;border:0;border-radius:0;background:transparent;cursor:ew-resize;z-index:3}
+.zcf-range>.zcf-input::-webkit-slider-runnable-track{height:1px;background:repeating-linear-gradient(90deg,var(--c) 0 2px,transparent 2px 4px)}
+.zcf-range>.zcf-input::-webkit-slider-thumb{appearance:none;width:14px;height:24px;margin-top:-11.5px;border:0;border-radius:0;background:var(--c);clip-path:none;mask:var(--zcf-thumb) center/100% 100% no-repeat;cursor:ew-resize}
+.zcf-range>.zcf-input::-moz-range-track{height:1px;background:repeating-linear-gradient(90deg,var(--c) 0 2px,transparent 2px 4px)}
+.zcf-range>.zcf-input::-moz-range-thumb{width:14px;height:24px;border:0;border-radius:0;background:var(--c);clip-path:none;mask:var(--zcf-thumb) center/100% 100% no-repeat;cursor:ew-resize}
+.zcf-range>.zcf-value{position:absolute!important;top:0;height:24px;line-height:24px!important;margin:0!important;pointer-events:none;z-index:2}
+.zcf-range[data-value-side=right]>.zcf-value{right:2px;left:auto}
+.zcf-range[data-value-side=left]>.zcf-value{left:2px;right:auto}
+
+/* Closed diamond between two independent halves: the boundary itself is the both-toggle. */
+.zcf-switch-pair>.zcf-pair-switch{position:absolute;left:calc(50% - 12px);top:0;width:24px;height:24px;min-width:24px;margin:0;padding:0;border:0;border-radius:0;background:var(--may-surface,#1b2430);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);z-index:6;cursor:pointer;--zcf-diamond-stroke:2px;--zcf-diamond-colour:#394657}
+.zcf-switch-pair>.zcf-pair-switch svg{display:block;width:100%;height:100%;pointer-events:none}
+.zcf-switch-pair>.zcf-pair-switch polygon{fill:none;stroke:var(--zcf-diamond-colour);stroke-width:var(--zcf-diamond-stroke);stroke-linejoin:miter}
+.zcf-switch-pair>.zcf-pair-switch:is(:hover,:focus-visible){--zcf-diamond-colour:var(--c,#7cbcff);outline:0}
+.zcf-switch-pair>.zcf-pair-switch[aria-pressed=true]{--zcf-diamond-colour:var(--c,#7cbcff);--zcf-diamond-stroke:4px}
+.zcf-switch-pair>.zcf-pair-switch:active{--zcf-diamond-colour:var(--c,#7cbcff);--zcf-diamond-stroke:6px}
+.may-control-mini>.zcf-pair-switch{display:none}

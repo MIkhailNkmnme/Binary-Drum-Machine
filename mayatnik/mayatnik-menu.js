@@ -1,4 +1,4 @@
-/* Маятник v0.516 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.517 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -121,6 +121,13 @@
     const sync=()=>half.setAttribute('aria-pressed',src.getAttribute('aria-pressed')||'false');
     new MutationObserver(sync).observe(src,{attributes:true,attributeFilter:['aria-pressed']});sync();
     half.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();half.click();}});
+  }
+  // A closed diamond joins Верх/Вниз; it toggles both existing controls together.
+  {
+    const host=rail.el.querySelector('.may-zoom-edges'),ids=['zTop','zFitH'];
+    const read=()=>ids.map(id=>$(id).getAttribute('aria-pressed')==='true');
+    const joint=ZerkControlFrame.pairSwitch(host,{read,onToggle:target=>{for(const id of ids)if(($(id).getAttribute('aria-pressed')==='true')!==target)$(id).click();rail.refresh();}});
+    const observer=new MutationObserver(joint.sync);for(const id of ids)observer.observe($(id),{attributes:true,attributeFilter:['aria-pressed']});
   }
   // v0.255: «тут тоже — если правой, то в ромб»: правый щелчок по шапке группы рейки — она сворачивается в ромб со значком, ещё раз — обратно
   // (щелчок по ромбу открывает группу, как шапка); свёрнутые — в памяти браузера (mayatnik-rail-mini)
@@ -601,7 +608,7 @@
         let repeated=false,timer=0;b.onclick=event=>{if(!repeated||!event?.detail)step();repeated=false;};
         b.addEventListener('pointerdown',event=>{if(event.button!==0||b.disabled)return;repeated=false;clearTimeout(timer);const again=()=>{repeated=true;step();timer=setTimeout(again,80);};timer=setTimeout(again,350);
           const stop=()=>clearTimeout(timer);addEventListener('pointerup',stop,{once:true});addEventListener('pointercancel',stop,{once:true});});return b;});
-      box.append(arrows[0],mid,arrows[1]);ZerkControlFrame.attach(box,arrows[0],mid,arrows[1]);row.append(box);return {box,input,arrows,output};
+      box.append(arrows[0],mid,arrows[1]);const frame=ZerkControlFrame.attach(box,arrows[0],mid,arrows[1],{input,output});row.append(box);return {box,input,arrows,output,frame};
     };
     const opacity=valueControl('opacity','Видимость выбранного слоя, от 0 до 100 процентов','range'),x=valueControl('x','Сдвиг выбранного слоя X, CSS px','number'),y=valueControl('y','Сдвиг выбранного слоя Y, CSS px','number');
     const center=command('layerCenter','axes','По вертикальной оси оригинала: центрировать выбранное наложение или фиксацию только по X. Y и масштаб сохраняются.',()=>{const layer=current();if(layer?.centerable)api.center(layer.id);});row.append(center);
@@ -632,7 +639,7 @@
       visible.classList.toggle('gz-on',!!layer?.visible);visible.setAttribute('aria-pressed',String(!!layer?.visible));caption(visible,layer?.visible?'Виден':'Скрыт');
       tint.classList.toggle('gz-on',!!layer?.tint);native.classList.toggle('gz-on',!!layer&&!layer.tint);tint.setAttribute('aria-pressed',String(!!layer?.tint));native.setAttribute('aria-pressed',String(!!layer&&!layer.tint));
       for(const [key,control]of [['opacity',opacity],['x',x],['y',y]]){control.input.disabled=!layer;for(const arrow of control.arrows)arrow.disabled=!layer;
-        if(document.activeElement!==control.input)control.input.value=String(layer?.[key]??(key==='opacity'?100:0));if(control.output)control.output.textContent=(layer?.opacity??100)+'%';}
+        if(document.activeElement!==control.input)control.input.value=String(layer?.[key]??(key==='opacity'?100:0));if(control.output)control.output.textContent=(layer?.opacity??100)+'%';control.frame.sync();}
       if(openList?.isConnected)fillList(openList);
     };
     const unsubscribe=api.subscribe(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});sync();
