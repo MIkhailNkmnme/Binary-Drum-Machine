@@ -1,4 +1,4 @@
-/* Маятник v0.500 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.501 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -705,6 +705,19 @@
       b.classList.add('gz-any'); b.title = 'Ось «Зеркала ↑»: 0 — стоит, 1 — ход, −1 — антиход';
       // v0.500: «в Оси» — переключатель живёт в группе «Оси», после «Своей оси»
       const after = gAxis.querySelector('[data-n="bAxisLine"]'); if (after) after.after(b); else gAxis.append(b); src.style.display = 'none'; } }
+  // v0.501: «в одну кнопку Полосы, Треуг, Обвод» — [Полосы | Треуг | Обвод]: Полосы — режим 0 (щелчок — без полос / обратно),
+  // Треуг — режим 2 «до треугольника» (щелчок — к нему / к «без полос»); не горят обе — «без полос». Обвод — обводка, вкл / выкл.
+  { const nb = $('noband'), ol = $('outline'), sNb = tools.querySelector('[data-n="noband"]'), sOl = tools.querySelector('[data-n="outline"]');
+    if (nb && ol && sNb && sOl) { const mode = () => +nb.dataset.mode || 0, go = i => { for (let n = 0; n < 3 && mode() !== i; n++) nb.dispatchEvent(new Event('change')); };
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split3'; b.dataset.n = 'bandTri';
+      [['Полосы', () => mode() === 0, () => go(mode() === 0 ? 1 : 0), 'Полосы: показаны — щелчок убирает (без полос); убраны — щелчок возвращает'],
+       ['Треуг', () => mode() === 2, () => go(mode() === 2 ? 1 : 2), 'До треугольника: без полос, стороны треугольника и в обычных видах · щелчок — вкл / выкл'],
+       ['Обвод', () => ol.checked, () => ol.click(), 'Обводка: жёлтая ступенчатая линия по краю «шумной» зоны · щелчок — вкл / выкл']].forEach(([l, on, click, t], j) => {
+        const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.textContent = l; sp.title = t; b.append(sp);
+        sp.onclick = e => { e.stopPropagation(); click(); placeTools(); };
+        toolSync.push(() => { const v = on(); sp.classList.toggle('gz-on', v); b.style.setProperty('--gz-r' + j, v ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); });
+        if (!j) { const pm = document.createElement('span'); pm.className = 'gz-pm'; b.append(pm); } });
+      sNb.before(b); sNb.style.display = sOl.style.display = 'none'; } }
   // v0.500: «в одну кнопку 5 цветов» — пиксели по цвету одной кнопкой из пяти частей; часть горит — пиксели этого цвета видны.
   { const parts = ['b', 'r', 'y', 'k', 'w'].map(c => tools.querySelector('[data-n="px_' + c + '"]')).filter(Boolean);
     if (parts.length === 5) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split5'; b.dataset.n = 'pxAll'; b.title = 'Пиксели по цвету: горит — видны, погашена — скрыты';
