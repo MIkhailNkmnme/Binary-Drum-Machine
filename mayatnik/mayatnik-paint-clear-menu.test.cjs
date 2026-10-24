@@ -27,4 +27,3 @@ test('F5 mini migration preserves old keys and copies cleared slots to existing 
  assert.equal(e.storage.get('mayatnik-paint-clear-mini-before-v496'),JSON.stringify(keys));
  const f5=setup(saved);assert.equal(f5.storage.get('mayatnik-control-mini-v464'),JSON.stringify(saved));assert.equal(f5.parent.children.length,6);
 });
-
