@@ -1,4 +1,4 @@
-/* Маятник v0.496 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.497 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -859,8 +859,9 @@
       l.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); l.click(); } };
       l.onpointerenter = e => { if (e.pointerType === 'mouse' && !tools.classList.contains('pt-dragging') && open !== g && !g.classList.contains('pt-open')) { g._hoverAt = Date.now(); show(g); } };   // v0.170: «раскрывай сразу при наведении» — мышью без щелчка
       // v0.169: «не скрывается при уходе» — мышь ушла с названия и списка: незакреплённый список закрывается (с запасом 350 мс на переход)
-      g.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') return; clearTimeout(g._leave);
-        g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover')) shut(); }, 350); });
+      g._popupLeave = () => { clearTimeout(g._leave);
+        g._leave = setTimeout(() => { if (open === g && !stay(g) && !g.matches(':hover') && !popupContains(g)) shut(); }, 350); };
+      g.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') g._popupLeave(); });
       g.addEventListener('pointerenter', () => clearTimeout(g._leave));   // v0.159: на касании enter приходит перед щелчком и закрывал список
       toolSync.push(() => g.classList.toggle('pt-has-on', !!row.querySelector('.on'))); }
     udL.onclick = udL.onkeydown = udL.onpointerenter = null; udL.tabIndex = -1; udL.removeAttribute('role'); udL.removeAttribute('aria-haspopup'); udL.removeAttribute('aria-expanded');   // v0.229: списка нет — жмут половинки
@@ -1063,7 +1064,7 @@
       try { const key = localStorage.getItem('mayatnik-dd-open'); const g = groupsAll().find(g => keyOf(g) === key && !g.classList.contains('pt-btn')); if (g && !stay(g)) show(g); } catch (_) {}
     });
     addEventListener('pagehide', () => { try { localStorage.setItem('mayatnik-dd-open', open ? keyOf(open) : ''); } catch (_) {} });
-    addEventListener('pointerdown', e => { if (open && !open.contains(e.target)) shut(); }, true);
+    addEventListener('pointerdown', e => { if (open && !open.contains(e.target) && !popupContains(open, e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }
   // v0.190: «те кнопки, в которых список, — покажи выводом всех в соседний столбец при наведении, и у таких кнопок стрелки обводкой справа».
@@ -1098,17 +1099,25 @@
         reg(cell, () => names.map(name => ({ name, on: now() === name, pick: () => { for (let n = 0; n < names.length && now() !== name; n++) e.click(); } }))); }); } }
   // v0.441: варианты сбоку от столбца; перекрытые элементы чужой группы скрываются по одному (v0.452).
   let activeList=null;
-  function popupOwner(group) {
-    for(const el of document.querySelectorAll('.may-popup-owner'))if(el!==group)el.classList.remove('may-popup-owner');
-    group?.classList.add('may-popup-owner');
+  // v0.497: only the popup escapes group stacking contexts; its owner stays in place.
+  function popupContains(group, target) {
+    const list=activeList?.group===group && activeList.list;
+    return !!(list?.isConnected && (target ? list.contains(target) : list.matches(':hover')));
   }
-  const clearListUnder = () => {popupOwner(null);activeList=null;document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
+  const clearListUnder = () => {const group=activeList?.group;activeList=null;group?._popupLeave?.();document.querySelectorAll('.may-list-hidden, .may-list-dim').forEach(el => el.classList.remove('may-list-hidden', 'may-list-dim'));scheduleGroups();};
   // v0.482: «дрожание всех списков»: grozd пристраивает открытый список каждые 400 мс и зовёт эту функцию; прежде она снимала затемнение со всех,
   // мерила колонку (браузер успевал применить снятие) и ставила заново — переход opacity .12s заставлял кнопки под списком вспыхивать на каждом такте.
   // Теперь затемнение меняется только у тех, кому его надо снять или добавить.
   const hideListUnder = (list, owner) => {
     const group = owner.closest('.pt-g, .gz-group, .may-hp-pop');
-    popupOwner(group);
+    if(list.parentNode!==document.body){
+      // Shared grozd has already copied owner font/variables and installed option handlers.
+      document.body.append(list);
+    }
+    if(!list.classList.contains('may-popup-portal')){
+      list.classList.add('may-popup-portal');
+      list.addEventListener('pointerleave',()=>group?._popupLeave?.());
+    }
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
