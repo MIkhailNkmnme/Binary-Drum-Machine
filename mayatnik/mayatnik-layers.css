@@ -1,4 +1,4 @@
-/* Маятник v0.492: родная группа Слои, общие кнопки/пары; новые стили только для нативных полей. */
+/* Маятник v0.490: родная группа Слои, общие кнопки/пары; новые стили только для нативных полей. */
 #paintTools .pt-layers .may-layer-colour{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:0;top:24px}
 body.mayatnik-menu-ready #paintTools .pt-layers .may-layer-value.may-standard{padding:0!important;gap:0!important}
 #paintTools .pt-layers .may-layer-value>.gz-a{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:24px;padding:0;border:0;background:var(--c);color:var(--c);font-size:0;cursor:pointer;z-index:4}
@@ -15,4 +15,4 @@ body.mayatnik-menu-ready #paintTools .pt-layers .may-layer-value.may-standard{pa
 #paintTools .pt-layers .may-layer-opacity output{position:relative;margin:auto;padding:0 2px;background:var(--may-surface,#1b2430);font:11px 'Segoe UI',sans-serif;pointer-events:none;z-index:2}
 #paintTools .pt-layers :is(button,input):disabled{opacity:.3;cursor:default}
 #paintTools .pt-layers .may-layer-pair .gz-half{min-width:0;gap:2px}
-.may-layer-options:not(.may-staircase-host){display:flex!important;flex-direction:column!important;grid-auto-flow:row!important;width:120px!important;min-width:120px;max-width:120px!important;gap:2px!important}
+.may-layer-options{display:flex!important;flex-direction:column!important;grid-auto-flow:row!important;width:120px!important;min-width:120px;max-width:120px!important;gap:2px!important}

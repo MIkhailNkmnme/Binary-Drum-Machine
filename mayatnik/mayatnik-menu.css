@@ -1,4 +1,4 @@
-/* Маятник v0.492 — page layout only; button geometry, colours and groups come from grozd.css. */
+/* Маятник v0.485 — page layout only; button geometry, colours and groups come from grozd.css. */
 .may-list-hidden{visibility:hidden!important;pointer-events:none!important}
 #mayatnikRail,#mayatnikStatus,#mayMenu,#mayHelp,#mayAbout,#mayZen,#mayZenOut{display:none}
 body.mayatnik-menu-ready{display:grid;grid-template-columns:256px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;height:100dvh;overflow:hidden}
@@ -913,9 +913,3 @@ body.may-zen #mayFooterBar{display:none!important}
 .mayatnik-menu-ready .gz-hx.gz-lst{padding-right:24px!important}
 .mayatnik-menu-ready .gz-hx.gz-lst>.may-list-inner-arrow{position:absolute!important;right:8px;top:4px;width:8px;height:16px;z-index:3;pointer-events:none;color:color-mix(in srgb,var(--c,#7cbcff) 55%,#fff);filter:none!important}
 .mayatnik-menu-ready .may-list-inner-arrow>path{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter}
-/* v0.492, ПЛ12: геометрию задаёт mayStaircase; промежуточные секции не образуют своих containing blocks. */
-body.mayatnik-menu-ready :is(#paintTools,#mayatnikRail) .may-staircase-host :is(.pt-col,.pt-sec,.gz-soty,.gz-wide,.gz-sec,#templateLibraryChoices){display:contents!important;position:static!important;padding:0!important;margin:0!important}
-body.mayatnik-menu-ready #paintTools.pt-dd .pt-lib .may-staircase-host.may-staircase-host>.gz-control:has(#templateLibraryChoices){display:contents!important;position:static!important;padding:0!important;margin:0!important}
-body.mayatnik-menu-ready .may-staircase-host{isolation:isolate;pointer-events:auto;overscroll-behavior:contain;scrollbar-width:thin!important;scroll-padding:14px}
-body.mayatnik-menu-ready .may-staircase-host::-webkit-scrollbar{display:block!important;width:8px;height:8px}
-body.mayatnik-menu-ready .may-staircase-spacer{pointer-events:none!important;visibility:hidden!important}

@@ -21,7 +21,7 @@ class Element {
   getBoundingClientRect(){return {left:20,top:50,right:140,bottom:74,width:120,height:24};}
 }
 function setup(){
-  const calls=[],listeners=new Set(),events={},groups=[],timers=new Map(),layouts=[],document={activeElement:null,createElement:tag=>new Element(tag)};let tid=0;
+  const calls=[],listeners=new Set(),events={},groups=[],timers=new Map(),document={activeElement:null,createElement:tag=>new Element(tag)};let tid=0;
   let layers=[{id:'original',name:'Оригинал',kind:'original',removable:false},{id:'overlay',name:'Наложение',kind:'overlay',removable:false},{id:'template:7',name:'Мой особенный шаблон',kind:'template',removable:false}].map((d,i)=>({...d,visible:true,opacity:100,tint:null,x:0,y:0,order:i})),selected='overlay';
   const emit=()=>[...listeners].forEach(fn=>fn());
   const api={list:()=>layers.map(d=>({...d})),selected:()=>selected,get:(id=selected)=>layers.find(d=>d.id===id)||null,
@@ -33,19 +33,19 @@ function setup(){
     remove(id){calls.push(['remove',id]);layers=layers.filter(d=>d.id!==id);selected=layers[0]?.id;emit();},
     reset(id){calls.push(['reset',id]);Object.assign(this.get(id),{visible:true,opacity:100,tint:null,x:0,y:0});emit();},
     subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn);}};
-  const ctx=vm.createContext({document,window:{},ptNames:{},api,innerWidth:800,innerHeight:600,hideListUnder(list,owner){layouts.push([list,owner]);},stairApply(list,owner){layouts.push([list,owner]);},
+  const ctx=vm.createContext({document,ptNames:{},api,innerWidth:800,innerHeight:600,hideListUnder(){},
     ptGroup(name){const group=new Element(),head=new Element('button'),row=new Element();head.textContent=name;group.append(head,row);groups.push(group);return row;},
     ptBtn(n,kind,src,onclick){const b=new Element('button');b.dataset.n=n;b.dataset.miIcon=kind;b.onclick=onclick;b.append(new Element('i'));return b;},
     ZerkGrozd:{listHover(owner,options){owner.gzList=options;}},addEventListener(type,fn){events[type]=fn;},setTimeout(fn,delay){timers.set(++tid,{fn,delay});return tid;},clearTimeout(id){timers.delete(id);}});
   vm.runInContext(code+'\ninstallLayersMenu(api);',ctx);
   const group=groups[0],all=()=>{const out=[];const visit=e=>{out.push(e);e.children.forEach(visit);};visit(group);return out;},button=n=>all().find(e=>e.dataset.n===n),input=key=>all().find(e=>e.id==='mayLayer-'+key);
-  return {api,calls,emit,events,listeners,timers,layouts,group,all,button,input,document,ctx,tick(){const [id,t]=timers.entries().next().value;timers.delete(id);t.fn();return t.delay;}};
+  return {api,calls,emit,events,listeners,timers,group,all,button,input,document,ctx,tick(){const [id,t]=timers.entries().next().value;timers.delete(id);t.fn();return t.delay;}};
 }
 
 test('real installer creates one ordinary group and nested list; selection preserves user template labels and follows structure changes',()=>{
   const e=setup(),choose=e.button('layerSelect');assert.equal(e.group.dataset.k,'Слои');assert.equal(e.group.children[0].textContent,'Слои');
   assert.equal(choose.getAttribute('aria-haspopup'),'true');const list=new Element();choose.gzList.placed(list,choose);
-  assert.equal(list.children.length,3);assert.equal(e.layouts[0][0],list);assert.equal(e.layouts[0][1],choose,'layer list delegates to the common staircase placement');
+  assert.equal(list.children.length,3);assert.equal(list.style.flexDirection,'column');assert.equal(list.style.width,'120px');assert.ok(+list.style.left.slice(0,-2)>=146);
   const template=list.children.find(b=>b.dataset.layerId==='template:7');assert.equal(template.querySelector('.gz-nm').textContent,'Мой особенный шаблон');assert.equal(template.querySelector('.gz-nm').getAttribute('data-user-label'),'');template.click();
   assert.equal(e.api.selected(),'template:7');assert.equal(choose.querySelector('.gz-nm').textContent,'Мой особенный шаблон');assert.equal(choose.querySelector('.gz-nm').getAttribute('data-user-label'),'');
   e.button('layerCapture').click();assert.equal(list.children.length,4);assert.equal(e.api.selected(),'snapshot:1');assert.equal(list.children.filter(b=>b.classList.contains('gz-on')).length,1);

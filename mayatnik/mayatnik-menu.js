@@ -1,4 +1,4 @@
-/* Маятник v0.493 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.491 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -282,7 +282,6 @@
     const cells = [...soty.children], shown = cells.filter(b => !b.classList.contains('gz-off-dis'));
     const top = tools.contains(soty), key = (top ? 'u' : '') + shown.length + ':' + cells.map(b => +shown.includes(b)).join(''); if (soty.dataset.k === key) continue; soty.dataset.k = key;   // top — в шапке (v0.232)
     cells.forEach(b => { b.style.display = shown.includes(b) ? '' : 'none'; });
-    if(window.mayStaircase){soty.style.height='';soty.style.display=shown.length?'':'none';continue;}
     // v0.072: справа («Шаблоны») кнопки в одну строку, без сдвига сот.
     const flat = railR.contains(soty), st = flat || top ? 0 : 13.5;   // v0.232: в шапке — столбцы ровные, правый не лезет вверх на соседей полосы
     if (flat) { cells.forEach(b => { b.style.left = b.style.top = ''; }); soty.style.height = ''; soty.style.display = shown.length ? '' : 'none'; continue; }   // v0.075: справа — в строку с шапкой
@@ -292,30 +291,6 @@
   // v0.042: значки раскраски прямо на холсте, в левом верхнем углу; сдвиг и масштаб поля их не двигают.
   const tools = document.createElement('div'); tools.id = 'paintTools'; tools.setAttribute('aria-label', 'Раскраска на холсте');
   const toolSync = [];
-  // v0.492 (МАЯ-022): одна геометрия для всех раскрытий. Структурные обёртки прозрачны, части кнопок остаются внутри целого контрола.
-  function stairItems(host) {
-    const items=[];
-    const visit=node=>{
-      if(node.nodeType!==1||node.hidden||node.dataset.mayStairIgnore!=null||node.matches('svg,script,style,input[type="hidden"],.may-standard-outline,.may-standard-contours,.may-standard-roof,.may-group-backdrop,.may-closed-back'))return;
-      if(getComputedStyle(node).display==='none')return;
-      if(node.matches('.pt-col,.pt-sec,.gz-soty,.gz-wide,.gz-sec,#templateLibraryChoices')||node.querySelector('#templateLibraryChoices')){for(const child of node.children)visit(child);return;}
-      items.push(node);
-    };
-    for(const node of host.children)visit(node);return items;
-  }
-  function stairApply(host,anchor,preferAbove=false) {
-    if(!window.mayStaircase||!host||!anchor)return false;
-    window.mayStaircase.apply(host,{items:stairItems(host),anchor,preferAbove});return true;
-  }
-  window.mayStairItems=stairItems;
-  window.mayStairApply=stairApply;
-  window.mayStairRefresh=()=>{
-    for(const group of document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')){
-      const host=group.querySelector(':scope > .pt-r,:scope > .may-rail-list'),head=group.querySelector(':scope > .pt-l,:scope > .gz-head');if(!host||!head)continue;
-      if(group.matches('.pt-open,.gz-open'))stairApply(host,head,group.classList.contains('pt-bot'));else window.mayStaircase?.destroy(host);
-    }
-    for(const list of document.querySelectorAll('.gz-ladder'))if(list.owner)stairApply(list,list.owner);
-  };
   // v0.054: значки разбиты на группы с промежутками, над каждой группой — короткая подпись.
   const groupOf = {}; const ptGroup = name => { const g = document.createElement('div'); g.className = 'pt-g';
     const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = name; const row = document.createElement('div'); row.className = 'pt-r';
@@ -636,10 +611,13 @@
         for(const layer of layers){const b=command('layerSelect','grid4','Выбрать слой: '+layer.name,()=>api.select(layer.id));b.dataset.layerId=layer.id;caption(b,layer.name);
           if(layer.kind==='template')b.querySelector('.gz-nm').setAttribute('data-user-label','');list.append(b);}
       }
-      for(const b of list.children){if(b.dataset.mayStairIgnore!=null)continue;const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
+      for(const b of list.children){const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
     };
     ZerkGrozd.listHover(choose,{options:()=>api.list().map(layer=>({name:layer.name,on:layer.id===api.selected(),pick:()=>api.select(layer.id)})),color:()=>'#73e4a5',host:()=>group,
-      placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);},closed(){if(openList)window.mayStaircase?.destroy(openList);openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
+      placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);
+        const r=row.getBoundingClientRect(),h=Math.max(24,Math.min(api.list().length*26-2,Math.max(24,innerHeight-28))),left=r.right+126<=innerWidth-4?r.right+6:Math.max(4,r.left-126);
+        Object.assign(list.style,{display:'flex',flexDirection:'column',width:'120px',maxWidth:'120px',gridTemplateRows:'none',left:left+'px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-h-14))+'px',maxHeight:h+'px'});
+        list.style.setProperty('overflow-y',api.list().length*26-2>h?'auto':'visible','important');},closed(){openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
     const sync=()=>{
       const layer=current(),layers=api.list(),index=layer?layers.findIndex(item=>item.id===layer.id):-1;
       choose.disabled=!layers.length;for(const b of [visible,tint,native,capture,reset])b.disabled=!layer;
@@ -650,7 +628,7 @@
       tint.classList.toggle('gz-on',!!layer?.tint);native.classList.toggle('gz-on',!!layer&&!layer.tint);tint.setAttribute('aria-pressed',String(!!layer?.tint));native.setAttribute('aria-pressed',String(!!layer&&!layer.tint));
       for(const [key,control]of [['opacity',opacity],['x',x],['y',y]]){control.input.disabled=!layer;for(const arrow of control.arrows)arrow.disabled=!layer;
         if(document.activeElement!==control.input)control.input.value=String(layer?.[key]??(key==='opacity'?100:0));if(control.output)control.output.textContent=(layer?.opacity??100)+'%';}
-      if(openList?.isConnected){fillList(openList);stairApply(openList,choose);}
+      if(openList?.isConnected)fillList(openList);
     };
     const unsubscribe=api.subscribe(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});sync();
   }
@@ -776,7 +754,6 @@
     const saveDd = () => { try { localStorage.setItem(PIN_DD, JSON.stringify([...pins])); localStorage.setItem(FOLD_DD, JSON.stringify([...folds])); } catch (_) {} };
     const pinned = g => !narrow.matches && pins.has(keyOf(g)) && !g.classList.contains('pt-btn'), stay = g => pinned(g) && !folds.has(keyOf(g)), groupsAll = () => [...tools.querySelectorAll('.pt-g')];
     const place = g => { const r = g.querySelector('.pt-r'); r.style.left = r.style.top = '';
-      if(stairApply(r,g.querySelector('.pt-l'),g.classList.contains('pt-bot')))return;
       // v0.172: «ширину, где можно, сделай как у заголовка» — список не уже названия группы и не шире своих кнопок (CSS: width max-content)
       r.style.minWidth = narrow.matches ? '' : (g.querySelector('.pt-l').offsetWidth + 4) + 'px'; requestAnimationFrame(() => zig(r));
       // v0.460: фиксированный мобильный список привязан к своему заголовку, а не к левому краю окна.
@@ -784,7 +761,7 @@
       const b = r.getBoundingClientRect(); if (b.right > innerWidth - 4) r.style.left = Math.min(0, innerWidth - 4 - b.right) + 'px'; };
     // Списки стоят под своей шапкой; соседние раскрытые группы не сдвигают их вбок.
     const alignOpen = () => { for (const g of groupsAll()) if (g.classList.contains('pt-open')) place(g); };
-    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g);else window.mayStaircase?.destroy(g.querySelector('.pt-r')); requestAnimationFrame(() => requestAnimationFrame(alignOpen)); };
+    const setOpen = (g, on) => { g.classList.toggle('pt-open', on); g.classList.toggle('pt-pinned', pinned(g)); g.querySelector('.pt-l').setAttribute('aria-expanded', String(on)); if (on) place(g); requestAnimationFrame(() => requestAnimationFrame(alignOpen)); };
     const pinsSync = () => { for (const g of groupsAll()) { const on = stay(g) || g === open; if (g.classList.contains('pt-open') !== on) setOpen(g, on); else g.classList.toggle('pt-pinned', pinned(g)); } };
     addEventListener('resize', () => { grid?.relayout(); for (const g of groupsAll()) if (g.classList.contains('pt-open')) { place(g); zig(g.querySelector('.pt-r')); } requestAnimationFrame(alignOpen); });
     const shut = () => { if (!open) return; const g = open; open = null; if (!stay(g)) setOpen(g, false); };
@@ -1074,7 +1051,6 @@
     }
     document.querySelectorAll('.may-list-dim').forEach(el => { if (!want.has(el)) el.classList.remove('may-list-dim'); });
     for (const el of want) el.classList.add('may-list-dim');
-    if(stairApply(list,owner)){activeList={list,group};scheduleGroups();return;}
     const column=owner.closest('.pt-r, .may-rail-list')||owner.closest('.gz-soty, .gz-wide')||owner;
     const bounds=column.getBoundingClientRect(),c=bounds.width?bounds:owner.getBoundingClientRect();
     // v0.481: окончательная геометрия списка задаётся здесь; адаптер контура её больше не сдвигает своим таймером.
@@ -1172,10 +1148,6 @@
       if (!list) { list = document.createElement('div'); list.className = 'may-rail-list';
         list.append(...box.querySelectorAll(':scope > .gz-soty, :scope > .gz-wide')); box.append(list); }
       if (!list) continue;
-      if(window.mayStaircase){
-        const head=box.querySelector(':scope > .gz-head'),open=box.classList.contains('gz-open');head?.setAttribute('aria-expanded',String(open));
-        if(open)stairApply(list,head,box.classList.contains('pt-bot'));else window.mayStaircase.destroy(list);continue;
-      }
       if (!left) {
         list.removeAttribute('style');
         if (box.classList.contains('gz-open')) {

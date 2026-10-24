@@ -1,4 +1,4 @@
-/* Маятник v0.493 — scoped grozd adapter, ровные столбцы раскрытий и ромбы обычных кнопок. Source controls stay intact. */
+/* Маятник v0.485 — scoped grozd adapter, ромбы обычных кнопок с сохранением обеих частей. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -18,22 +18,9 @@
     if(s.dataset.d!==d){s.dataset.d=d;s.replaceChildren();shape(s,'path',{d});}
   }
   let gradN=0;
-  function stairContour(host,s){
-    const base=host.getBoundingClientRect(),rows=host._mayStaircase.items.map(({element})=>{const r=element.getBoundingClientRect();return {x:r.left-base.left+host.scrollLeft,y:r.top-base.top+host.scrollTop,w:r.width,h:r.height,mini:element.matches('.may-control-mini,.may-standard-mini')};}).filter(r=>r.w&&r.h);
-    const sig=JSON.stringify(rows);if(s.dataset.sig===sig)return false;s.dataset.sig=sig;
-    if(!rows.length){s.replaceChildren();return false;}
-    const first=rows[0],last=rows[rows.length-1],x=Math.min(...rows.map(r=>r.x)),xr=Math.max(...rows.map(r=>r.x+r.w)),fc=Math.min(12,first.h/2),lc=Math.min(12,last.h/2),right=[[xr-fc,first.y-2]],left=[[x+fc,first.y-2]];
-    rows.forEach((r,i)=>{const c=Math.min(12,r.h/2),yb=r.y+r.h;right.push([xr+2,r.y+c],[xr+2,yb-c]);left.push([x-2,r.y+c],[x-2,yb-c]);if(i<rows.length-1){const mid=(yb+rows[i+1].y)/2;right.push([xr-4,mid]);left.push([x+4,mid]);}});
-    right.push([xr-lc,last.y+last.h+2]);left.push([x+lc,last.y+last.h+2]);
-    s.replaceChildren();shape(s,'polygon',{points:right.concat(left.reverse()).map(([px,py])=>px.toFixed(2)+','+py.toFixed(2)).join(' '),fill:'#0e1116'});
-    shape(s,'path',{class:'cap',d:`M${x} ${first.y+fc} L${x+fc} ${first.y} H${xr-fc} L${xr} ${first.y+fc}`});
-    shape(s,'path',{class:'cap',d:`M${x} ${last.y+last.h-lc} L${x+lc} ${last.y+last.h} H${xr-lc} L${xr} ${last.y+last.h-lc}`});
-    return false;
-  }
   // v0.449: одна подложка на столбец — радиальный градиент #32393f → #000, зубцы по бокам (острие +2 px, впадина 6 px внутрь), верхняя и нижняя скобки в этом же слое
   function contour(host,cells,side,headEl,upward=false){
     let s=host.querySelector(':scope > .may-standard-contours');if(!s){s=svg('may-standard-contours');host.prepend(s);}
-    if(host._mayStaircase){if(host.lastElementChild!==s)host.append(s);return stairContour(host,s);}
     const base=host.getBoundingClientRect(),cols=new Map();
     const add=(b,head)=>{const r=b.getBoundingClientRect();if(!r.width||!r.height)return false;const x=Math.round(r.left-base.left+host.scrollLeft),y=Math.round(r.top-base.top+host.scrollTop);let k=[...cols.keys()].find(c=>Math.abs(c-x)<30);if(k===undefined){if(head)return false;k=x;cols.set(k,[]);}cols.get(k).push({x,y,w:r.width,h:r.height,head:!!head});return true;};
     for(const b of cells)add(b,false);
@@ -155,7 +142,6 @@
       const mini=b.matches('.gz-head')&&b.closest('.gz-mini')||b.matches('.pt-l')&&b.closest('.pt-mini')||b.id==='mayAbout'&&b.classList.contains('pt-mini');b.classList.toggle('may-standard-mini',!!mini);
     });
     syncControlMinis();
-    window.mayStairRefresh?.();
     for(const g of document.querySelectorAll('#paintTools > .pt-g,#paintTools > .gz-group,#mayatnikRail .gz-group')){
       const head=g.querySelector(':scope > .pt-l,:scope > .gz-head'),open=g.matches('.pt-open,.gz-open');if(!head)continue;
       if(g.classList.contains('pt-btn'))continue;
@@ -164,7 +150,7 @@
       if(!head.dataset.mayMiniKeys){head.dataset.mayMiniKeys='1';let last=0;head.addEventListener('keydown',e=>{if(e.target===head&&(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10')){e.preventDefault();e.stopPropagation();last=performance.now();head.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,button:2}));}});head.addEventListener('contextmenu',e=>{if(e.button!==2&&performance.now()-last<500)e.stopImmediatePropagation();},true);}
       const host=g.querySelector(':scope > .pt-r,:scope > .may-rail-list')||g;
       if(open){
-        if(host.classList.contains('pt-r')&&!host._mayStaircase){const up=g.classList.contains('pt-bot'),max=Math.max(24,up?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.removeProperty('padding-top');host.style.removeProperty('padding-bottom');host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';if(scroll)host.style.setProperty(up?'padding-top':'padding-bottom','14px','important');}
+        if(host.classList.contains('pt-r')){const up=g.classList.contains('pt-bot'),max=Math.max(24,up?head.getBoundingClientRect().top-14:innerHeight-host.getBoundingClientRect().top-14);host.style.removeProperty('padding-top');host.style.removeProperty('padding-bottom');host.style.maxHeight=max+'px';const scroll=host.scrollHeight>max+1;host.style.overflowY=scroll?'auto':'visible';host.style.overflowX=scroll?'hidden':'visible';if(scroll)host.style.setProperty(up?'padding-top':'padding-bottom','14px','important');}
         // may-rail-list сохраняет обе оси overflow из syncRailFlyouts: hidden по X обрезал нижнюю скобку и при visible по Y.
         const cells=[...host.querySelectorAll('.may-standard,.gz-control')].filter(b=>{
           if(b.querySelector('#templateLibraryChoices'))return false;
