@@ -1,4 +1,4 @@
-/* Маятник v0.509 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.513 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -1141,7 +1141,7 @@
   // v0.191: столбец — общий из grozd (ZerkGrozd.listHover; им же — списки рейки «Ход», «Поле», «Поиск», «Серии», «Область» и хаба);
   // здесь — кнопки полосы и кнопки рейки «по кругу» (Зеркало, Аниматрица).
   { const after = () => { rail.refresh(); placeTools(); };
-    const mountSegments=(b,options)=>{b.classList.add('may-segments','gz-pair');if(b.dataset.n==='fixLow')b.classList.add('may-mirror-three');b.replaceChildren();const nodes=options().map((o,i)=>{const part=document.createElement('span');part.className='gz-half';part.textContent=b.dataset.n==='mirOp'?['Zrk','Xr','And'][i]:({Левая:'Лев',Правая:'Прав',копия:'Коп.'})[o.name]||o.name;part.title=b.dataset.n==='fixLow'?'Зеркало ↓ — '+o.name+'. Выбрать эту сторону; повторный щелчок по выбранной части — выключить.':b.title+' — '+o.name;b.append(part);return part;});
+    const mountSegments=(b,options)=>{b.classList.add('may-segments','gz-pair');if(b.dataset.n==='fixLow')b.classList.add('may-independent-selector');b.replaceChildren();const nodes=options().map((o,i)=>{const part=document.createElement('span');part.className='gz-half';part.textContent=b.dataset.n==='mirOp'?['Zrk','Xr','And'][i]:({Левая:'Лев',Правая:'Прав',копия:'Коп.'})[o.name]||o.name;part.title=b.dataset.n==='fixLow'?'Зеркало ↓ — '+o.name+'. Включить или выключить эту сторону независимо от другой; две включённые части — обе стороны.':b.title+' — '+o.name;b.append(part);return part;});
       b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const i=nodes.indexOf(e.target.closest('.gz-half'));if(i>=0)options()[i].pick();after();},true);
       toolSync.push(()=>options().forEach((o,i)=>{nodes[i].classList.toggle('gz-on',!!o.on);nodes[i].setAttribute('aria-pressed',String(!!o.on));}));};
     const reg = (b, options) => { if(b&&['fixLow','mirOp'].includes(b.dataset.n)){mountSegments(b,options);return;} if (b) ZerkGrozd.listHover(b, { options, after, color: () => getComputedStyle(b).getPropertyValue('--c').trim() || '#7cbcff',
@@ -1151,7 +1151,7 @@
     const viewIcon = new Map(Object.entries(viewIcons).map(([v, [kind, t]]) => { const p = document.createElement('button'); p.title = t; return [v, icon(p, kind)]; }));
     reg(tools.querySelector('[data-n="viewCycle"]'), fromSelect($('view'), o => (viewIcons[o.value] || [, o.textContent])[1], o => viewIcon.get(o.value)));
     reg(tools.querySelector('[data-n="fontCycle"]'), fromSelect($('digitFont')));
-    reg(tools.querySelector('[data-n="fixLow"]'), () => [1,3,2].map(i => ({ name:window.mayFixLowNames[i], on: (window.mayFixLow?.get() || 0) === i, pick: () => window.mayFixLow?.set(window.mayFixLow.get()===i?0:i) })));   // v0.222
+    reg(tools.querySelector('[data-n="fixLow"]'), () => [1,2].map(i => ({ name:window.mayFixLowNames[i], on: !!((window.mayFixLow?.get() || 0) & i), pick: () => window.mayFixLow?.set((window.mayFixLow.get() || 0) ^ i) })));   // v0.222
     reg(tools.querySelector('[data-n="fixAxis"]'), () => window.mayFixAxisNames.map((name, i) => ({ name: name.slice(5), on: (window.mayFixAxis?.get() || 0) === i, pick: () => window.mayFixAxis?.set(i) })));   // v0.216
     { const M = () => window.mayMir, L = () => window.mayMirLists;   // v0.210
       reg(tools.querySelector('[data-n="mirCol"]'), () => L().col.map(([v, name]) => ({ name, on: M()?.col() === v, pick: () => M()?.set('col', v) })));

@@ -77,7 +77,7 @@
     return index===0?(rev?'12,0 56,0 64,24 12,24 0,12':'12,0 64,0 56,24 12,24 0,12'):(rev?'0,0 52,0 64,12 52,24 8,24':'8,0 52,0 64,12 52,24 0,24');
   }
   function parts(b){
-    const halves=[...b.querySelectorAll(':scope > .gz-half')],seg=b.classList.contains('may-segments');
+    const halves=[...b.querySelectorAll(':scope > .gz-half')],seg=b.classList.contains('may-segments')&&!b.classList.contains('may-independent-selector');
     if(b.id==='lg'||b.classList.contains('gz-tri')||halves.length<2)return;
     b.classList.toggle('may-parts-multi',!seg&&halves.length>2);
     const exclusive=seg||b.closest('[data-id="horr"]')&&(halves.every(h=>h.dataset.n)||halves.every(h=>h.dataset.v)||/Ход лево-право/.test(halves[0].title));
