@@ -90,7 +90,7 @@
       const w=triple?(i===1?48:44):separate?120/halves.length:halves.length===2?64:120/halves.length;
       let s=h.querySelector(':scope > .may-half-outline');if(!s){s=svg('may-half-outline');h.append(s);}s.setAttribute('viewBox','0 0 '+w+' 24');s.setAttribute('preserveAspectRatio','none');
       const face=`M${i===0?12:6} 0H${i===halves.length-1?w-12:w-6}L${w} 12 ${i===halves.length-1?w-12:w-6} 24H${i===0?12:6}L0 12Z`;
-      const points=choice?choiceShape(halves.length,i,selected):i===0?`12,0 ${w},0 ${w},24 12,24 0,12`:i===halves.length-1?`0,0 ${w-12},0 ${w},12 ${w-12},24 0,24`:`0,0 ${w},0 ${w},24 0,24`;
+      const points=choice?choiceShape(halves.length,i,b.classList.contains('may-mirror-three')?1:selected):i===0?`12,0 ${w},0 ${w},24 12,24 0,12`:i===halves.length-1?`0,0 ${w-12},0 ${w},12 ${w-12},24 0,24`:`0,0 ${w},0 ${w},24 0,24`;
       const signature=separate?face:points;
       if(s.dataset.p!==signature){s.dataset.p=signature;s.replaceChildren();shape(s,separate?'path':'polygon',separate?{class:'may-half-face',d:face}:{points});
         const side=separate?(i===0?'M12 0L0 12 12 24':'M6 0L0 12 6 24')+(i===halves.length-1?`M${w-12} 0L${w} 12 ${w-12} 24`:`M${w-6} 0L${w} 12 ${w-6} 24`):i===0?'M12 0L0 12 12 24':i===halves.length-1?`M${w-12} 0L${w} 12 ${w-12} 24`:'M0 0V24';shape(s,'path',{class:'may-half-side',d:side});}
