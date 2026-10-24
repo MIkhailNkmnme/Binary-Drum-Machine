@@ -747,7 +747,7 @@ header #paintTools .pt-b.gz-hx.gz-pair:not(.on):not(:hover){background:color-mix
 body.may-zen #mayRhombs{bottom:10px}
 /* v0.387: «Зеркала» (и «Вид»): «выровняй отступы, убери скролл внизу; границы какие-то лишние» — все кнопки столбца шириной в столбец, отступы одни,
    без прокрутки вбок; черты между блоками сняты; «Точка | Сдвиг | Застыло» не шире столбца */
-header #paintTools.pt-dd .pt-view .pt-r{overflow-x:hidden!important}
+header #paintTools.pt-dd .pt-view .pt-r{overflow-x:clip!important}   /* v0.500: clip, не hidden — hidden делал список прокручиваемым (overflow-y: auto), и заголовок выпадал из рамки группы */
 header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col{width:156px;max-width:156px;overflow:hidden}
 header #paintTools.pt-dd .pt-view .pt-r.pt-cols>.pt-col.pt-colv{width:126px;max-width:126px}
 header #paintTools.pt-dd .pt-view .pt-sec>.gz-hx,header #paintTools.pt-dd .pt-view .pt-sec>.pt-b{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;margin:0!important}
@@ -922,3 +922,16 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 #mayRhombs #mayRhZen,#mayRhombs #mayRhRec,#mayRhombs #mayRhGif,#mayRhombs #mayRhZen:hover,#mayRhombs #mayRhRec:hover,#mayRhombs #mayRhGif:hover{color:#73e4a5}
 #mayRhombs #mayRhZen[aria-pressed=true]{color:#ffd166}
 #mayRhombs #mayRhRec.on{color:#ff4d5e}
+/* v0.500: пиксели по цвету — одна кнопка из пяти частей (как «Точка | Сдвиг | Застыло»): крайние с остриём, средние — косые; в части — кружок цвета. */
+.gz-pair.gz-split.gz-split5 .gz-half{width:calc(20% + 6px);padding:0!important;justify-content:center;text-shadow:none}
+.gz-pair.gz-split.gz-split5 .gz-half:not(.gz-h0){margin-left:-7px}
+.gz-pair.gz-split.gz-split5 .gz-half.gz-h1,.gz-pair.gz-split.gz-split5 .gz-half.gz-h2,.gz-pair.gz-split.gz-split5 .gz-half.gz-h3{clip-path:polygon(9px 0,100% 0,calc(100% - 8px) 100%,1px 100%)}
+.gz-pair.gz-split.gz-split5 .gz-half.gz-h2{background:var(--gz-r2)}
+.gz-pair.gz-split.gz-split5 .gz-half.gz-h3{background:var(--gz-r3)}
+.gz-pair.gz-split.gz-split5 .gz-half.gz-h4{background:var(--gz-r4);clip-path:polygon(9px 0,calc(100% - var(--gz-n)) 0,100% 50%,calc(100% - var(--gz-n)) 100%,1px 100%)}
+.gz-pair.gz-split.gz-split5 .gz-half::before{background:var(--gz-bg)!important}
+#paintTools .gz-pair.gz-split5 .gz-half .pt-dot{order:0;margin:0;width:10px;height:10px;opacity:.3;pointer-events:none}
+#paintTools .gz-pair.gz-split5 .gz-half.gz-on .pt-dot{opacity:1}
+/* v0.500: «Цифра 1 | 0», «Клетка 1 | 0» — название по центру, кружки по краям; название щелчки пропускает к половинам. */
+.gz-pair.gz-split.gz-cpair .gz-pm{pointer-events:none;font-size:11px;font-weight:600}
+#paintTools .gz-pair.gz-cpair .gz-half .pt-dot{order:0;margin:0}

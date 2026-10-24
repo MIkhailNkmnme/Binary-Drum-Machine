@@ -1,4 +1,4 @@
-/* Маятник v0.499 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.500 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -703,7 +703,23 @@
         sp.onclick = e => { e.stopPropagation(); window.mayFixAxis?.set(v); placeTools(); };
         toolSync.push(() => { const on = (window.mayFixAxis?.get() || 0) === v; sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = 'Ось «Зеркала ↑»: ' + l + ' — ' + t; }); });
       b.classList.add('gz-any'); b.title = 'Ось «Зеркала ↑»: 0 — стоит, 1 — ход, −1 — антиход';
-      src.before(b); src.style.display = 'none'; } }
+      // v0.500: «в Оси» — переключатель живёт в группе «Оси», после «Своей оси»
+      const after = gAxis.querySelector('[data-n="bAxisLine"]'); if (after) after.after(b); else gAxis.append(b); src.style.display = 'none'; } }
+  // v0.500: «в одну кнопку 5 цветов» — пиксели по цвету одной кнопкой из пяти частей; часть горит — пиксели этого цвета видны.
+  { const parts = ['b', 'r', 'y', 'k', 'w'].map(c => tools.querySelector('[data-n="px_' + c + '"]')).filter(Boolean);
+    if (parts.length === 5) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-split5'; b.dataset.n = 'pxAll'; b.title = 'Пиксели по цвету: горит — видны, погашена — скрыты';
+      parts.forEach((src, j) => { const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; const d = src.querySelector('.pt-dot').cloneNode(); sp.append(d); b.append(sp);
+        sp.onclick = e => { e.stopPropagation(); src.click(); placeTools(); };
+        toolSync.push(() => { const on = src.classList.contains('on'); sp.classList.toggle('gz-on', on); b.style.setProperty('--gz-r' + j, on ? 'var(--c)' : 'color-mix(in srgb,var(--c) 30%,#000)'); sp.title = src.title; }); });
+      parts[0].before(b); for (const p of parts) p.style.display = 'none'; } }
+  // v0.500: «эти в 2 кнопки» — «Цифра 1 | 0» и «Клетка 1 | 0»: название по центру, по краям кружки цвета единиц и нулей (щелчок — палитра).
+  for (const [nm, one, zero] of [['Цифра', 'digitOneColour', 'digitZeroColour'], ['Клетка', 'bitOneColour', 'bitZeroColour']]) {
+    const s1 = tools.querySelector('[data-n="c_' + one + '"]'), s0 = tools.querySelector('[data-n="c_' + zero + '"]'); if (!s1 || !s0) continue;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-b gz-hx gz-pair gz-split gz-mid gz-cpair'; b.dataset.n = 'c2_' + one;
+    const pm = document.createElement('span'); pm.className = 'gz-pm'; pm.textContent = nm; b.append(pm);
+    [[s1, nm + ' 1'], [s0, nm + ' 0']].forEach(([src, t], j) => { const sp = document.createElement('span'); sp.className = 'gz-half gz-h' + j; sp.title = 'Цвет: ' + t.toLowerCase() + ' · щелчок — палитра';
+      const d = src.querySelector('.pt-dot'); sp.append(d); sp.onclick = e => { e.stopPropagation(); d.click(); }; b.append(sp); });
+    s1.before(b); s1.style.display = s0.style.display = 'none'; }
   // v0.085: «Отмена» и «Повтор» в одну строку, между ними вертикальная черта.
   { const sep = document.createElement('span'); sep.className = 'pt-sep'; gHistory.firstElementChild.after(sep); }
   $('mayAbout').after(tools);
