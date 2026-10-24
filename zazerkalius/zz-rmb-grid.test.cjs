@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const G=require('./zz-rmb-grid.js'),s=fs.readFileSync(path.join(__dirname,'zz-ui.js'),'utf8');
-const ctx=vm.createContext({Z:{rowsAlign:'center'}});vm.runInContext(s.slice(s.indexOf('function rmbLayout('),s.indexOf('/* v0.795,',s.indexOf('function rmbLayout('))),ctx);
+const ctx=vm.createContext({Z:{rowsAlign:'center'}});ctx.gridsState=()=>({align:ctx.Z.rowsAlign});vm.runInContext(s.slice(s.indexOf('function rmbLayout('),s.indexOf('/* v0.795,',s.indexOf('function rmbLayout('))),ctx);
 function covered(a,b,segments){
  const cross=(p,q,x)=>Math.abs((q[0]-p[0])*(x[1]-p[1])-(q[1]-p[1])*(x[0]-p[0]));
  return segments.some(([x0,y0,x1,y1])=>{const p=[x0,y0],q=[x1,y1];return cross(p,q,a)<1e-7&&cross(p,q,b)<1e-7&&[a,b].every(v=>v[0]>=Math.min(x0,x1)-1e-7&&v[0]<=Math.max(x0,x1)+1e-7&&v[1]>=Math.min(y0,y1)-1e-7&&v[1]<=Math.max(y0,y1)+1e-7);});
@@ -10,7 +10,7 @@ for(const alignment of ['l','r','zz','c'])test('grid exactly follows every trian
  for(const widths of [[6,6,6,6,6,6,6],[3,4,6,5,4,7,6]])for(const rowsAlign of ['left','center','right'])for(const cell of ['rmb','tri'])for(const view of [{tw:20,ox:300,oy:60,width:900,height:600},{tw:9,ox:35,oy:-20,width:240,height:160}]){
   const rows=widths.map(n=>'0'.repeat(n));ctx.Z.rowsAlign=rowsAlign;const {hs,u0}=ctx.rmbLayout(rows,rows.length,alignment,cell);
   const segments=G.segments({hs,u0,alignment,...view}),h=view.tw*Math.sqrt(3)/2;
-  for(let r=0;r<rows.length;r++)for(let k=0;k<(cell==='rmb'?2*rows[r].length:2*rows[r].length-1);k++){
+  for(let r=0;r<rows.length;r++)for(let k=0;k<(cell==='rmb'?2*rows[r].length:rows[r].length);k++){
    const x=view.ox+(hs[r]+k)*view.tw/2,y=view.oy+r*h,up=((k+u0)&1)===0;
    const points=up?[[x,y+h],[x+view.tw,y+h],[x+view.tw/2,y]]:[[x,y],[x+view.tw,y],[x+view.tw/2,y+h]];
    if(points.some(p=>p[0]<0||p[0]>view.width||p[1]<0||p[1]>view.height))continue;

@@ -5,7 +5,7 @@ const source=fs.readFileSync(path.join(__dirname,'zz-ui.js'),'utf8');
 const functions=source.slice(source.indexOf('const RMB_FONT ='),source.indexOf('function rmbType(){'));
 const plain=value=>JSON.parse(JSON.stringify(value));
 const bits=rows=>rows.map(row=>Uint8Array.from([...row].flatMap(c=>[+c,+c])));
-function api(extra={}){const c=vm.createContext(extra);vm.runInContext(functions,c);return c;}
+function api(extra={}){const c=vm.createContext({rmbSt:()=>({cell:"rmb"}),...extra});vm.runInContext(functions,c);return c;}
 test('per-letter bounding area equals ones plus zeros; repeated letters stay separate',()=>{
  const c=api(),layout=c.rmbTextLayout('II'),n=c.rmbLetterCounts(layout.rows,layout);
  assert.deepEqual(plain(n.entries.map(e=>[e.width,e.height,e.ones,e.zeros,e.rhombi])),[[3,7,11,10,21],[3,7,11,10,21]]);
@@ -65,8 +65,8 @@ test('table shows 1 / 0 / total, hover and focus select cells, edits refresh wit
  assert.deepEqual(body.children.map(r=>r.children[0].textContent),['1','0','Всего ◇']);
  const zero=body.children[1].children[1];zero.onpointerenter();assert.deepEqual(plain(vm.runInContext('rmbCountHighlight',c)),{index:1,kind:'zeros'});assert.equal(renders,1);
  zero.onpointerleave();assert.equal(vm.runInContext('rmbCountHighlight',c),null);zero.onfocus();zero.onblur();assert.equal(vm.runInContext('rmbCountHighlight',c),null);
- c.rmbTextStats();assert.equal(box.replaces,1);c.Z.rows=c.Z.rows.map(r=>r.replaceAll('1','0'));c.rmbVals=bits(c.Z.rows);c.rmbTextStats();assert.equal(box.replaces,2);assert.equal(box.children[1].children[1].children[2].children[1].textContent,'0');
- c.Z.rmbText='';c.rmbTextStats();assert.equal(box.hidden,true);
+ c.rmbTextStats();assert.equal(box.replaces,1);c.gridsState().rows=c.gridsState().rows.map(r=>r.replaceAll('1','0'));c.rmbVals=bits(c.gridsState().rows);c.rmbTextStats();assert.equal(box.replaces,2);assert.equal(box.children[1].children[1].children[2].children[1].textContent,'0');
+ c.gridsState().text='';c.rmbTextStats();assert.equal(box.hidden,true);
 });
 test('overlay draws selected cells without changing field data',()=>{
  class P{constructor(){this.paths=0;}moveTo(){this.paths++;}lineTo(){}closePath(){}}
@@ -75,15 +75,15 @@ test('overlay draws selected cells without changing field data',()=>{
  const before=JSON.stringify(c.Z.rows);let fill,stroke;const g={save(){},restore(){},fill(p){fill=p.paths;},stroke(p){stroke=p.paths;}};
  c.rmbDrawCountHighlight(g,{hs:[0,0,0,0,0],u0:0,rm:true,tw:10,ox:0,oy:0,M:5,Wc:100,Hc:100});assert.equal(fill,5);assert.equal(stroke,5);assert.equal(JSON.stringify(c.Z.rows),before);
 });
-test('typing snapshots old text before replacing it, undo restores character labels',()=>{
- const c=api({Z:{rmbText:'I',rows:['0']},rowsLocked:()=>false,prompt:()=> 'II',rowSel:{clear(){}},rmbSt:()=>({}),rmbFit(){},renderAll(){},save(){},say(){}});let old;
- c.snapshot=()=>{old=c.Z.rmbText;};vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.equal(old,'I');assert.equal(c.Z.rmbText,'II');
- c.document={getElementById:()=>null};vm.runInContext(source.slice(source.indexOf('function undoApply(u){'),source.indexOf('/* v0.643,',source.indexOf('function undoApply(u){'))),c);c.undoApply({rows:['0'],cur:0,rmbText:'I'});assert.equal(c.Z.rmbText,'I');
+test('typing modifies only independent grid data and snapshots the previous text',()=>{
+ const c=api({Z:{rmbText:'I',rows:['0']},prompt:()=> 'II',rmbSt:()=>({}),rmbFit(){},renderRmb(){},save(){},say(){}});let old;
+ c.gridsSnapshot=()=>{old=c.gridsState().text;};vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.equal(old,'I');assert.equal(c.gridsState().text,'II');assert.deepEqual(plain(c.Z.rows),['0']);assert.equal(c.Z.rmbText,'I');
 });
+
 test('opening a closed window rebuilds rendered values after field edits',()=>{
  const a=source.indexOf('function renderRmb(){'),b=source.indexOf('  const upK =',a);
  const c=vm.createContext({rmbWire(){},winOpen:()=>true,Z:{rows:['1']},rmbSt:()=>({al:'c',cell:'rmb'}),rmbW:{},window:{},rmbCur:null,rmbFrame:0,rmbClock:0,rmbLastA:null,rmbKey:'crmb0',rmbVals:[new Uint8Array([0,0])],rmbHeat:[],rmbAge:[],rmbLayout:()=>({hs:[0],ok:[true],u0:0,base:0})});
- vm.runInContext(source.slice(a,b)+'return rmbVals;}',c);assert.deepEqual(Array.from(c.renderRmb()[0]),[1,1]);
+ c.gridsState=()=>({rows:['1']});vm.runInContext(source.slice(a,b)+'return rmbVals;}',c);assert.deepEqual(Array.from(c.renderRmb()[0]),[1,1]);
 });
 
 test('black letter border cancels interior grid edges and encloses its whole area',()=>{
@@ -102,11 +102,9 @@ test('adding text preserves existing cells, separates rows and counts every text
  assert.equal(n.entries.length,3);assert.equal(n.entries[0].ones,12);assert.equal(n.entries[1].ones,n.entries[2].ones);
  const word=c.rmbTextLayout('WW'),expected=c.rmbLetterCounts(word.rows,word);assert.equal(n.entries[1].ones,expected.entries[0].ones);
 });
-test('undo of added text restores all old rows, text regions and shifted manual axes',()=>{
- let saved;const c=api({Z:{rmbText:'I',rmb:{al:'l',num:true,axes:[{id:1,a:[0,0],b:[1,1]}]}},rowsLocked:()=>false,prompt:()=> 'WW',rowSel:{clear(){}},rmbFit(){},renderAll(){},save(){},say(){},syncLane(){},hidCopy:()=>({}),document:{getElementById:()=>null}});
- c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;const old=plain(c.Z.rows);
- vm.runInContext(source.slice(source.indexOf('function undoState(){'),source.indexOf('function undoPush(')),c);
- c.snapshot=()=>saved=c.undoState();vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.ok(c.Z.rows.length>old.length);assert.ok(c.Z.rmb.axes[0].a[0]<0);assert.equal(c.Z.rmbTextBlocks.length,2);assert.equal(c.Z.rmb.al,'l');assert.equal(c.Z.rmb.num,true);
- vm.runInContext(source.slice(source.indexOf('function undoApply(u){'),source.indexOf('/* v0.643,',source.indexOf('function undoApply(u){'))),c);c.undoApply(saved);
- assert.deepEqual(plain(c.Z.rows),old);assert.equal(c.Z.rmbText,'I');assert.deepEqual(plain(c.Z.rmbTextBlocks),[]);assert.equal(c.Z.rmbTextFieldWidth,null);assert.deepEqual(plain(c.Z.rmb.axes),[{id:1,a:[0,0],b:[1,1]}]);
+test('grid text undo restores its own rows, labels and axes without touching ordinary rows',()=>{
+ let saved;const c=api({Z:{rmbText:'I',rmb:{al:'l',num:true,axes:[{id:1,a:[0,0],b:[1,1]}]}},prompt:()=> 'WW',rmbFit(){},renderRmb(){},save(){},say(){},rmbWStop(){}});
+ c.rmbSt=()=>c.Z.rmb;c.Z.rows=plain(c.rmbTextRows('I'));c.Z.cur=0;const ordinary=plain(c.Z.rows),old=plain(c.gridsState().rows);
+ c.gridsSnapshot=()=>saved=c.gridsSnap();vm.runInContext(source.slice(source.indexOf('function rmbType(){'),source.indexOf('function rmbFit(){')),c);c.rmbType();assert.ok(c.gridsState().rows.length>old.length);assert.ok(c.Z.rmb.axes[0].a[0]<0);assert.equal(c.gridsState().textBlocks.length,2);
+ c.gridsApply(saved);assert.deepEqual(plain(c.gridsState().rows),old);assert.deepEqual(plain(c.Z.rows),ordinary);assert.equal(c.gridsState().text,'I');assert.deepEqual(plain(c.Z.rmb.axes),[{id:1,a:[0,0],b:[1,1]}]);
 });

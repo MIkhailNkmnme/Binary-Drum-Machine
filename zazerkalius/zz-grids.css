@@ -1,0 +1,34 @@
+/* Common independent grid editor; the legacy constructor remains available to its callers. */
+#w-rmb .grids-workspace{display:flex;flex:1 1 auto;min-height:0;min-width:0;height:100%;gap:8px}
+#w-rmb .grids-canvas-area{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;min-height:0}
+#w-rmb #rmbCv{display:block;touch-action:none;cursor:grab;width:100%;flex:1 1 auto;min-height:200px}
+#gridsTools{flex-wrap:wrap;flex:0 0 auto;gap:4px}
+#gridsTools input[type=number]{width:38px}
+#gridsTools input[type=color]{width:28px;height:22px;padding:0}
+#gridsRowsPane{flex:0 0 260px;min-width:150px;max-width:45%;display:flex;flex-direction:column;min-height:0;border-left:1px solid var(--line);padding-left:6px;background:var(--bg)}
+.grids-rows-head{display:flex;align-items:center;justify-content:space-between;color:var(--acc);font-weight:700;letter-spacing:.05em}
+#gridsRowsPane .tools{display:flex;flex-wrap:wrap;gap:3px}
+#gridsRowsList{overflow:auto;flex:1 1 auto;min-height:140px;max-height:75vh;font:16px/26px var(--ff,Consolas,monospace)}
+#gridsRowsList .grids-row{display:grid;grid-template-columns:38px minmax(0,1fr);height:26px;align-items:center}
+#gridsRowsList .grids-row.current{background:color-mix(in srgb,var(--acc) 22%,transparent)}
+#gridsRowsList .grids-row>button{font:12px monospace;border:0;padding:0;background:none;color:var(--dim);height:26px}
+#gridsRowsList input{width:100%;min-width:0;box-sizing:border-box;font:inherit;letter-spacing:2px;height:26px;border:0;background:transparent;color:var(--txt);padding:0 4px;border-radius:0}
+#gridsRowsList input:focus{outline:1px solid var(--acc)}
+#gridsRowsInfo{font:12px monospace;padding:5px;color:var(--dim)}
+#gridsRowsLock.on{color:var(--gold)}
+#w-rmb #gridsTools{order:-2}
+@media(max-width:760px),(pointer:coarse) and (max-width:1100px){
+ #w-rmb .grids-workspace{height:auto;flex-direction:column}
+ #w-rmb .grids-canvas-area{flex:0 0 auto}
+ #w-rmb #rmbCv{order:2;flex:0 0 auto!important;height:clamp(220px,48svh,520px)!important}
+ #gridsRowsPane{flex:0 0 auto;max-width:100%;width:100%;box-sizing:border-box;border-left:0;border-top:1px solid var(--line);padding:6px 0}
+ #gridsRowsList{height:220px;max-height:220px}
+ #gridsRowsPane button{min-height:36px}
+ #gridsRowsList .grids-row,#gridsRowsList .grids-row>button,#gridsRowsList input{height:36px;min-height:36px}
+ #w-rmb:not(.rmb-settings-open) #gridsTools>:not([data-grid-tool]):not(:has(#gridsColor)){display:none!important}
+ #w-rmb #gridsTools button,#w-rmb #gridsTools label{min-height:44px!important}
+}
+
+body:not(.solo) #w-tri:not(:has(#triBind:not([hidden]))){display:none!important}
+
+#w-rmb #rmbCv.rmb-editing{cursor:crosshair}

@@ -279,7 +279,7 @@ function undoUi(){ const u = document.getElementById("bUndo"), r = document.getE
 const redoStack = [];
 function undoApply(u){
   if (Object.prototype.hasOwnProperty.call(u,"rmbText")) {Z.rmbText=u.rmbText;if(!Object.prototype.hasOwnProperty.call(u,"rmbTextBlocks")){Z.rmbTextBlocks=[];Z.rmbTextFieldWidth=null;}}
-  if (Object.prototype.hasOwnProperty.call(u,"rmbAxes")) rmbSt().axes=(u.rmbAxes||[]).map(a=>({...a,a:a.a.slice(),b:a.b.slice()}));
+  if (!Z.grids && Object.prototype.hasOwnProperty.call(u,"rmbAxes")) rmbSt().axes=(u.rmbAxes||[]).map(a=>({...a,a:a.a.slice(),b:a.b.slice()}));
   if (Object.prototype.hasOwnProperty.call(u,"rmbTextBlocks")) {Z.rmbTextBlocks=(u.rmbTextBlocks||[]).map(b=>({...b}));Z.rmbTextFieldWidth=u.rmbTextFieldWidth||null;}
   if (u.laneCount) { Z.laneCount = u.laneCount; Z.axisPos = u.axisPos; const lc = document.getElementById("laneCount"); if (lc) lc.value = String(Z.laneCount); }
   if (u.lanes) { Z.lanes = u.lanes; Z.lane = Math.max(0, Math.min(Z.laneCount - 1, u.lane | 0)); Z.rows = Z.lanes[Z.lane]; }
@@ -293,20 +293,20 @@ function undoApply(u){
    порядку. Шаг сетки — { tri: снимок сетки } (triSnap / triApply); замок строк 🔒 его не держит */
 function undo(){
   const top = undoStack[undoStack.length - 1];
-  if (!(top && (top.tri || top.zerk)) && rowsLocked()) return;   // v0.061
+  if (!(top && (top.tri || top.zerk || top.grids)) && rowsLocked()) return;   // v0.061
   const u = undoStack.pop();
   if (!u) { say("↩ Отменять нечего."); return; }
-  redoStack.push(u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (redoStack.length > 200) redoStack.shift();
-  if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
+  redoStack.push(u.grids ? {grids:gridsSnap()} : u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (redoStack.length > 200) redoStack.shift();
+  if(u.grids) gridsApply(u.grids); else if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
   undoUi(); say(u.zerk ? "↩ Отменено в Зеркалиусе. ↪ — повторить." : u.tri ? "↩ Отменено в △ Сетке. ↪ — повторить." : "↩ Отменено. ↪ — повторить.");
 }
 function redo(){
   const top = redoStack[redoStack.length - 1];
-  if (!(top && (top.tri || top.zerk)) && rowsLocked()) return;
+  if (!(top && (top.tri || top.zerk || top.grids)) && rowsLocked()) return;
   const u = redoStack.pop();
   if (!u) { say("↪ Повторять нечего."); return; }
-  undoStack.push(u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (undoStack.length > 200) undoStack.shift();
-  if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
+  undoStack.push(u.grids ? {grids:gridsSnap()} : u.zerk ? { zerk: window.zzZerkaliusSnap(u.zerk) } : u.tri ? { tri: triSnap() } : undoState()); if (undoStack.length > 200) undoStack.shift();
+  if(u.grids) gridsApply(u.grids); else if (u.zerk) window.zzZerkaliusApply(u.zerk); else if (u.tri) triApply(u.tri); else undoApply(u);
   undoUi(); say(u.zerk ? "↪ Повторено в Зеркалиусе." : u.tri ? "↪ Повторено в △ Сетке." : "↪ Повторено.");
 }
 /* Сделать рабочим поле k (и строку row, если задана). */
@@ -4553,10 +4553,10 @@ let rmbCur = null, rmbVals = [], rmbHeat = [], rmbAge = [], rmbFrame = 0, rmbKey
 const RMB_AGE = [[0.5, "#ff3b3b"], [1, "#ff8a3d"], [2, "#ffd166"], [4, "#9be564"], [8, "#22d3ee"], [16, "#5b7cfa"]];
 function rmbSt(){ if (!Z.rmb || typeof Z.rmb !== "object") Z.rmb = {}; const r = Z.rmb;
   if (!["c", "zz", "l", "r"].includes(r.al)) r.al = "zz"; if (!["each", "rmb", "grp", "none"].includes(r.ln)) r.ln = "each";
-  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; if (r.wave !== "mir") r.wave = "fld"; if (!["l", "d", "r"].includes(r.cpri)) r.cpri = "l"; return r; }
+  if (!["", "chg", "age", "pair"].includes(r.gl)) r.gl = ""; if (r.cell !== "rmb") r.cell = "tri"; r.wave = "mir"; if (!["l", "d", "r"].includes(r.cpri)) r.cpri = "l"; return r; }
 function rmbLayout(R, M, al, cell){   /* → hs — начало каждого ряда в полуклетках, ok — лежит ли ряд на сетке ряда выше, u0 — первый треугольник ряда ▼ (1)
    или ▲ (0), base — как стоят ряды. «▲ бит»: ряд i — ▲ j на hs[i] + 2j, ряды по центру. «◇ бит» (v0.794): бит j — треугольники 2j и 2j + 1, ряды — как в поле */
-  const rm = cell === "rmb", base = rm ? (Z.rowsAlign || "center") : "center", u0 = rm && al !== "l" ? 1 : 0;
+  const rm = cell === "rmb", base = rm ? (gridsState().align || "center") : "center", u0 = rm && al !== "l" ? 1 : 0;
   const hs = new Int32Array(M), ok = new Uint8Array(M); let z = -1;
   for (let i = 0; i < M; i++) {
     const n = (R[i] || "").length;
@@ -4580,27 +4580,15 @@ const rmbW = { on: 0, raf: 0, h: 0, pass: 0, start: null, last: "", seen: new Ma
 function rmbWHash(R){ let h1 = 0x811c9dc5, h2 = 0x1b873593; for (const s of R) { for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619); h2 = Math.imul(h2 ^ c, 2246822519); } h1 = Math.imul(h1 ^ 44, 16777619); }
   return (h1 >>> 0).toString(36) + ":" + (h2 >>> 0).toString(36) + ":" + R.length; }
 function rmbWStep(){
-  const R = Z.rows, N = R.length, r = rmbSt(); if (N < 2) return false;
+  const R = gridsState().rows, N = R.length, r = rmbSt(); if (N < 2) return false;
   const key = R.join(",");
-  if (key !== rmbW.last) { rmbW.h = 0; rmbW.pass = 0; rmbW.start = R.slice(); rmbW.seen = new Map([[rmbWHash(R), 0]]); snapshot(); }   // строки правили не этой волной — счёт заново, ↩ вернёт
+  if (key !== rmbW.last) { rmbW.h = 0; rmbW.pass = 0; rmbW.start = R.slice(); rmbW.startState=gridsSnap(); rmbW.seen = new Map([[rmbWHash(R), 0]]); gridsSnapshot(); }   // строки правили не этой волной — счёт заново, ↩ вернёт
   rmbW.used = true;
-  const M = Math.min(N, 4096), { hs } = rmbLayout(R, M, r.al, "tri"), a = Math.min(rmbW.h, M - 2);
-  const g = +r.wmask || 0, inv = !!r.winv, xr = !!r.wxor, src = R.slice(0, a + 1);
-  const up = (i, P) => { const s = src[i], k = P - hs[i]; return s && k >= 0 && !(k & 1) && (k >> 1) < s.length ? s.charCodeAt(k >> 1) & 1 : -1; };   // ▲ строки i на месте P
-  for (let k = 1; a + k < M && a + 1 - k >= 0; k++) {
-    const d = a + k, m = a + 1 - k, s = R[d], n = s.length; let o = "", ch = false;
-    for (let j = 0; j < n; j++) {
-      const old = s.charCodeAt(j) & 1;
-      if (g && Math.floor(j / g) % 2 !== 1) { o += old ? "1" : "0"; continue; }
-      const P = hs[d] + 2 * j, km = P - hs[m];   // над ▲ (d, j) в зеркале — ▼ строки m на том же месте: середина между её ▲, и ▲ строки m − 1 над ним
-      let v = -1;
-      if ((km & 1) && km > 0 && km < 2 * src[m].length - 1 && m > 0) { const u = up(m - 1, P); if (u >= 0) v = 1 - u; }
-      if (v < 0) { o += old ? "1" : "0"; continue; }
-      if (inv) v = 1 - v; if (xr) v ^= old;
-      if (v !== old) ch = true; o += v ? "1" : "0";
-    }
-    if (ch) R[d] = o;
-  }
+  const M=Math.min(N,4096),a=Math.min(rmbW.h,M-2),{hs,u0}=rmbLayout(R,M,r.al,r.cell),g={hs,u0,rm:r.cell==="rmb",tw:1,ox:0,oy:0};
+  const axis={a:[0,(a+1)*Math.sqrt(3)/2],b:[1,(a+1)*Math.sqrt(3)/2]},result=window.ZZRmbAxis.reflectRows(R,g,axis,"negative"),mask=+r.wmask||0;
+  const rows=result.rows.map((row,i)=>row.split("").map((bit,j)=>{if(i<=a||i>a+a+1||(mask&&Math.floor(j/mask)%2!==1))return R[i][j];let value=+bit;if(r.winv)value=1-value;if(r.wxor)value^=+R[i][j];return String(value);}).join(""));
+  const copies=result.copies.filter(([,to])=>to[0]>a&&to[0]<=a+a+1&&(!mask||Math.floor(to[1]/mask)%2===1));
+  window.ZZGrids.reconcile(gridsState(),rows,{copies});
   rmbW.h += Math.max(1, +r.whz || 1);
   if (rmbW.h >= M - 1) { rmbW.h = 0; rmbW.pass++;
     const hh = rmbWHash(R);
@@ -4613,8 +4601,8 @@ function rmbWReset(){ rmbW.per = 0; rmbW.per0 = 0; }
 function rmbWStop(){ if (rmbW.raf) cancelAnimationFrame(rmbW.raf); rmbW.raf = 0; rmbW.on = 0; save(); rmbUi(); }
 function rmbWPlay(){
   if (rmbW.on) { rmbWStop(); return; }
-  if (rowsLocked()) return;
-  if (Z.rows.join(",") !== rmbW.last) rmbWReset();
+  if (gridsLocked()) return;
+  if (gridsState().rows.join(",") !== rmbW.last) rmbWReset();
   rmbW.on = 1; rmbW.t = performance.now(); rmbW.acc = 0; rmbW.sv = rmbW.t;
   const tick = (now) => {
     if (!rmbW.on) return;
@@ -4622,7 +4610,7 @@ function rmbWPlay(){
     rmbW.acc = Math.min(rmbW.acc + (now - rmbW.t) / 1000 * sp, 4000); rmbW.t = now;
     let n = 0; const t0 = performance.now();
     while (rmbW.acc >= 1 && performance.now() - t0 < 30) { rmbW.acc--; if (!rmbWStep()) { rmbWStop(); return; } n++; }
-    if (n) { renderAll(); if (now - rmbW.sv > 3000) { rmbW.sv = now; save(); } }
+    if (n) { renderRmb(); if (now - rmbW.sv > 3000) { rmbW.sv = now; save(); } }
     rmbW.raf = requestAnimationFrame(tick);
   };
   rmbW.raf = requestAnimationFrame(tick); rmbUi();
@@ -4631,9 +4619,9 @@ function rmbWPlay(){
 function rmbWHome(){
   rmbWStop();
   if (!rmbW.start) { say("⇕ Зеркальная волна ещё не шла."); return; }
-  if (rowsLocked()) return;
-  snapshot(); Z.rows.splice(0, Z.rows.length, ...rmbW.start); rmbW.h = 0; rmbW.pass = 0; rmbW.last = Z.rows.join(","); rmbWReset();
-  rmbW.seen = new Map([[rmbWHash(Z.rows), 0]]); Z.cur = Math.min(Z.cur, Z.rows.length - 1); renderAll(); save(); say("⤺ Строки — какими были до зеркальной волны.");
+  if (gridsLocked()) return;
+  gridsSnapshot(); if(rmbW.startState)gridsApply(rmbW.startState);else gridsState().rows.splice(0, gridsState().rows.length, ...rmbW.start); rmbW.h = 0; rmbW.pass = 0; rmbW.last = gridsState().rows.join(","); rmbWReset();
+  rmbW.seen = new Map([[rmbWHash(gridsState().rows), 0]]); gridsState().cur = Math.min(gridsState().cur, gridsState().rows.length - 1); renderRmb(); save(); say("⤺ Строки — какими были до зеркальной волны.");
 }
 const RMB_WMASK = { 0: "все биты", 1: "чётные биты", 2: "чётные пары", 4: "чётные четвёрки", 8: "чётные восьмёрки", 16: "чётные по 16" };
 /* v0.809, по снимку ковра Ромбоидов — «Zazerkalius — можно этим набрать?», выбрано «строками в поле, ёлочкой»: «Аа» в «◇ Ромбоидах» — текст ложится
@@ -4708,8 +4696,8 @@ function rmbTextLayout(txt){   // → строки поля: 7 рядов бук
 }
 function rmbTextRows(txt){ return rmbTextLayout(txt).rows; }
 function rmbTextBlocks(){
-  const blocks=Array.isArray(Z.rmbTextBlocks)?Z.rmbTextBlocks.filter(b=>typeof b.text==="string"&&Number.isInteger(b.row)&&b.row>=0&&Number.isInteger(b.col)&&b.col>=0):[];
-  return blocks.length?blocks:(Z.rmbText?[{text:String(Z.rmbText),row:0,col:0}]:[]);
+  const blocks=Array.isArray(gridsState().textBlocks)?gridsState().textBlocks.filter(b=>typeof b.text==="string"&&Number.isInteger(b.row)&&b.row>=0&&Number.isInteger(b.col)&&b.col>=0):[];
+  return blocks.length?blocks:(gridsState().text?[{text:String(gridsState().text),row:0,col:0}]:[]);
 }
 function rmbDocumentLayout(blocks,width,rowCount){
   const letters=[];
@@ -4754,10 +4742,11 @@ function rmbHighlightCells(rows, counts, selection){
   return cells;
 }
 function rmbHighlightPolygon(row,col,{hs,u0,rm,tw,ox,oy}){
-  const half=tw/2,h=tw*Math.sqrt(3)/2,x=ox+(hs[row]+2*col)*half,y=oy+row*h,up=(u0&1)===0;
-  if(rm)return up?[[x+half,y],[x+tw+half,y],[x+tw,y+h],[x,y+h]]:[[x,y],[x+tw,y],[x+tw+half,y+h],[x+half,y+h]];
-  return up?[[x,y+h],[x+tw,y+h],[x+half,y]]:[[x,y],[x+tw,y],[x+half,y+h]];
+  const h=tw*Math.sqrt(3)/2,x=ox+(hs[row]+(rm?2*col:col))*tw/2,y=oy+row*h;
+  if(!rm)return ((col+u0)&1)?[[x,y],[x+tw,y],[x+tw/2,y+h]]:[[x,y+h],[x+tw,y+h],[x+tw/2,y]];
+  return (u0&1)?[[x,y],[x+tw,y],[x+tw*1.5,y+h],[x+tw/2,y+h]]:[[x+tw/2,y],[x+tw*1.5,y],[x+tw,y+h],[x,y+h]];
 }
+
 let rmbStatsCache = null, rmbCountHighlight = null;
 function rmbCountHighlightSet(selection){
   if(rmbCountHighlight?.index===selection?.index && rmbCountHighlight?.kind===selection?.kind)return;
@@ -4776,18 +4765,18 @@ function rmbCountCell(node,entry,kind){
 }
 function rmbTextStats(){
   const box = $("rmbTextStats"); if (!box) return;
-  const blocks=rmbTextBlocks(),text=blocks.map(b=>b.text).join(" · "),identity=JSON.stringify(blocks)+"/"+Z.rows.length+"/"+(Z.rmbTextFieldWidth||"");
+  const blocks=rmbTextBlocks(),text=blocks.map(b=>b.text).join(" · "),identity=JSON.stringify(blocks)+"/"+gridsState().rows.length+"/"+(gridsState().textWidth||"")+"/"+rmbSt().cell;
   if (!text) { box.hidden=true; rmbStatsCache=null;rmbCountHighlight=null;return; }
   if (rmbStatsCache?.identity === identity && rmbStatsCache.values === rmbVals) { box.hidden=false; return; }
-  const width=Z.rmbTextFieldWidth||rmbTextRows(blocks[0].text)[0].length;
-  const layout=rmbStatsCache?.identity===identity?rmbStatsCache.layout:rmbDocumentLayout(blocks,width,Z.rows.length);
-  const counts = rmbLetterCounts(Z.rows,layout);
+  const width=gridsState().textWidth||rmbTextRows(blocks[0].text)[0].length;
+  const layout=rmbStatsCache?.identity===identity?rmbStatsCache.layout:rmbDocumentLayout(blocks,width,gridsState().rows.length);
+  const counts = rmbLetterCounts(gridsState().rows,layout);
   rmbStatsCache = {text,identity,values:rmbVals,layout,counts};rmbCountHighlight=null;box.hidden=false;box.replaceChildren();
   const note = document.createElement("div"); note.className="rmb-count-note";
   note.textContent = counts ? "Буквы «"+text+"» · ◇ = 1 + 0 = ширина × высота · без промежутков" : "Ширина строк изменилась: прежняя разметка букв не соответствует полю.";
   box.append(note); if (!counts) return;
   const table=document.createElement("table"), head=document.createElement("thead"), body=document.createElement("tbody");
-  const entries=[...counts.entries,counts.total];
+  const entries=[...counts.entries,counts.total],shape=rmbSt().cell==="tri"?"△":"◇";
   const numbers=document.createElement("tr"), header=document.createElement("tr"), numberLabel=document.createElement("th");
   numberLabel.textContent="№";numberLabel.scope="row";numbers.append(numberLabel);
   for(const entry of entries){const th=document.createElement("th");th.textContent=String(entry.index||"");th.scope="col";if(entry.index)rmbCountCell(th,entry,"rhombi");numbers.append(th);}
@@ -4795,7 +4784,7 @@ function rmbTextStats(){
   for(const entry of entries){const th=document.createElement("th");th.textContent=entry.label===" "?"␣":entry.label;th.scope="col";
     if(entry.index){th.className="rmb-count-letter";if(entry.label===" ")th.title="Пробел";}header.append(th);}
   head.append(numbers,header);
-  for (const [label,key] of [["1","ones"],["0","zeros"],["Всего ◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
+  for (const [label,key] of [["1","ones"],["0","zeros"],["Всего "+shape,"rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
     for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]);
       td.title=entry.index?entry.width+" × "+entry.height+" = "+entry.rhombi+" ромбов; наведите для подсветки":"Сумма по буквам, без межбуквенных промежутков; наведите для подсветки";
       rmbCountCell(td,entry,key);row.append(td);}body.append(row); }
@@ -4823,29 +4812,41 @@ function rmbDrawLetterBorders(g,{hs,u0,rm,tw,ox,oy}){
   g.save();g.globalAlpha=1;g.lineWidth=2;g.strokeStyle="#000000";g.lineJoin="miter";g.stroke(path);g.restore();
 }
 let rmbEditor = null, rmbAxisTool = null, rmbTouch = null;
+function gridsState(){
+  if(!Z.grids){Z.grids={rows:Z.rows.slice(),cur:Z.cur||0,align:Z.rowsAlign||"center",text:Z.rmbText||"",textBlocks:JSON.parse(JSON.stringify(Z.rmbTextBlocks||[])),textWidth:Z.rmbTextFieldWidth||null,colors:{},dots:{},lines:{},groups:{},scenes:[],tool:"",version:1};}
+  return Z.grids;
+}
+function gridsLocked(){if(!gridsState().locked)return false;say("Строки сетки заперты — откройте их замок.");return true;}
+function gridsSnap(){return {data:JSON.parse(JSON.stringify(gridsState())),axes:JSON.parse(JSON.stringify(rmbSt().axes||[])),view:JSON.parse(JSON.stringify(rmbSt()))};}
+function gridsSnapshot(data){const snap=gridsSnap();if(data)snap.data=JSON.parse(JSON.stringify(data));undoPush({grids:snap});}
+function gridsApply(value){rmbWStop();Z.grids=JSON.parse(JSON.stringify(value.data));if(value.view)Z.rmb=JSON.parse(JSON.stringify(value.view));rmbSt().axes=JSON.parse(JSON.stringify(value.axes));rmbEditor?.clear();renderRmb();save();}
+
 const rmbIsMobile=()=>!!window.matchMedia?.("(max-width:760px), (pointer:coarse) and (max-width:1100px)").matches;
 function rmbEditorWire(cv){
   if(rmbEditor||!window.ZZRmbEditor)return;
-  const common={rows:()=>Z.rows,locked:rowsLocked,message:say,
-    geometry:()=>{const r=rmbSt();if(!r.s)rmbFit();const {hs,u0}=rmbLayout(Z.rows,Math.min(Z.rows.length,4096),r.al,r.cell);return {hs,u0,rm:true,tw:r.s,ox:r.ox,oy:r.oy};},
+  const common={rows:()=>gridsState().rows,locked:gridsLocked,message:say,
+    geometry:()=>{const r=rmbSt();if(!r.s)rmbFit();const {hs,u0}=rmbLayout(gridsState().rows,Math.min(gridsState().rows.length,4096),r.al,r.cell);return {hs,u0,rm:r.cell==="rmb",tw:r.s,ox:r.ox,oy:r.oy};},
     polygon:rmbHighlightPolygon,redraw:renderRmb,save,
     pan:(x,y)=>{const r=rmbSt();r.ox=x;r.oy=y;renderRmb();},
-    commit:rows=>{snapshot();Z.rows.splice(0,Z.rows.length,...rows);renderAll();save();}
+    commit:(rows,operation)=>{gridsSnapshot();window.ZZGrids.reconcile(gridsState(),rows,operation);renderRmb();save();}
   };
   if(window.ZZRmbTouch)rmbTouch=window.ZZRmbTouch.mount(cv,{
     view:()=>{const r=rmbSt();if(!r.s)rmbFit();return {s:r.s,ox:r.ox,oy:r.oy};},
     setView:v=>{Object.assign(rmbSt(),v);renderRmb();},save,
-    cancel:()=>{rmbEditor?.cancelGesture();rmbAxisTool?.cancel();cv._rmbCancelPan?.();}
+    cancel:()=>{rmbEditor?.cancelGesture();rmbAxisTool?.cancel();cv._rmbCancelPan?.();window.ZZGrids?.cancel();}
   });
+  window.ZZGrids?.mount(cv,{state:gridsState,geometry:common.geometry,polygon:rmbHighlightPolygon,hit:window.ZZRmbEditor.hit,
+    snapshot:gridsSnapshot,locked:gridsLocked,redraw:renderRmb,save,message:say,view:rmbSt,fit:rmbFit,stop:rmbWStop,
+    editor:()=>rmbEditor,axis:()=>rmbAxisTool,legacy:()=>({scenes:Z.triScenes||[],cells:Z.triCells||{},dots:Z.triDots||{},lines:Z.triLines||{}})});
   if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
-    enabled:()=>!!rmbSt().axisMode&&rmbSt().cell==="rmb",
+    enabled:()=>!!rmbSt().axisMode,
     axes:()=>Array.isArray(rmbSt().axes)?rmbSt().axes.filter(a=>window.ZZRmbAxis.basis(a)):[],
     setAxes:axes=>{rmbSt().axes=axes;}
   });
-  rmbEditor=window.ZZRmbEditor.mount(cv,{...common,options:()=>({multi:!!rmbSt().touchMulti,copy:!!rmbSt().touchCopy}),enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)&&rmbSt().cell==="rmb"});
+  rmbEditor=window.ZZRmbEditor.mount(cv,{...common,options:()=>({multi:!!rmbSt().touchMulti,copy:!!rmbSt().touchCopy}),enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)});
 }
 function rmbDrawCountHighlight(g,geometry){
-  const cells=rmbHighlightCells(Z.rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
+  const cells=rmbHighlightCells(gridsState().rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
   const path=new Path2D();
   for(const [row,col] of cells){
     if(row>=geometry.M)continue;
@@ -4856,23 +4857,23 @@ function rmbDrawCountHighlight(g,geometry){
   g.save();g.globalAlpha=1;g.fillStyle="rgba(255,230,102,.3)";g.strokeStyle="#fff4a3";g.lineWidth=1.5;g.lineJoin="miter";g.fill(path);g.stroke(path);g.restore();
 }
 function rmbType(){
-  if (rowsLocked()) return;
-  const t=prompt("Аа — добавить текст ниже существующего поля (латиница, кириллица, цифры). Старые ромбы останутся; выделяйте и удаляйте их в Правке:",Z.rmbText||"Zazerkalius");
+  if (gridsLocked()) return;
+  const t=prompt("Аа — добавить текст ниже существующего поля (латиница, кириллица, цифры). Старые ромбы останутся; выделяйте и удаляйте их в Правке:",gridsState().text||"Zazerkalius");
   if(t===null||!t.trim())return;
   let blocks=rmbTextBlocks();
-  if(!Z.rmbTextBlocks?.length&&blocks.length){const width=rmbTextRows(blocks[0].text)[0].length;if(Z.rows.some(row=>row.length!==width))blocks=[];}
-  const added=rmbAppendText(Z.rows,blocks,t.trim());if(added.rows.length>4096){say("Текст не добавлен: поле Ромбоидов показывает не более 4096 строк.");return;}
-  const oldWidth=Math.max(0,...Z.rows.map(row=>row.length));
-  snapshot();Z.rmbText=t.trim();Z.rmbTextBlocks=added.blocks;Z.rmbTextFieldWidth=added.width;
+  if(!gridsState().textBlocks?.length&&blocks.length){const width=rmbTextRows(blocks[0].text)[0].length;if(gridsState().rows.some(row=>row.length!==width))blocks=[];}
+  const added=rmbAppendText(gridsState().rows,blocks,t.trim());if(added.rows.length>4096){say("Текст не добавлен: поле Ромбоидов показывает не более 4096 строк.");return;}
+  const oldWidth=Math.max(0,...gridsState().rows.map(row=>row.length));
+  gridsSnapshot();gridsState().text=t.trim();gridsState().textBlocks=added.blocks;gridsState().textWidth=added.width;
   if(added.width!==oldWidth&&Array.isArray(rmbSt().axes)){const dx=(oldWidth-added.width)/2;rmbSt().axes=rmbSt().axes.map(a=>({...a,a:[a.a[0]+dx,a.a[1]],b:[a.b[0]+dx,a.b[1]]}));}
-  Z.rows.splice(0,Z.rows.length,...added.rows);Z.cur=added.blocks.at(-1).row;rowSel.clear();
+  gridsState().rows.splice(0,gridsState().rows.length,...added.rows);gridsState().cur=added.blocks.at(-1).row;
   const r=rmbSt();r.cell="rmb";rmbFit();
-  renderAll();save();say(`Добавлено «${Z.rmbText}». Старое поле сохранено; Правка: рамка / Shift — выделить, Ctrl+A — всё, Delete — стереть. ↩ отменит добавление.`);
+  renderRmb();save();say(`Добавлено «${gridsState().text}». Старое поле сохранено; Правка: рамка / Shift — выделить, Ctrl+A — всё, Delete — стереть. ↩ отменит добавление.`);
 }
 function rmbFit(){
-  const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = Z.rows, M = Math.min(R.length, 4096); if (!M) return;
+  const cv = $("rmbCv"); if (!cv) return; const r = rmbSt(), R = gridsState().rows, M = Math.min(R.length, 4096); if (!M) return;
   const { hs } = rmbLayout(R, M, r.al, r.cell), rm = r.cell === "rmb"; let a = Infinity, b = -Infinity;
-  for (let i = 0; i < M; i++) { const n = (R[i] || "").length; if (!n) continue; a = Math.min(a, hs[i]); b = Math.max(b, hs[i] + 2 * n + (rm ? 1 : 0)); }
+  for (let i = 0; i < M; i++) { const n = (R[i] || "").length; if (!n) continue; a = Math.min(a, hs[i]); b = Math.max(b, hs[i] + (rm ? 2 * n + 1 : n + 1)); }
   if (!isFinite(a)) return;
   const W = cv.clientWidth || 300, H = cv.clientHeight || 200, pd = 10, pl = r.num ? 34 : pd;   // v0.794: с «№» слева место под номера строк
   const tw = Math.max(2, Math.min(80, (W - pl - pd) / Math.max(1, (b - a) / 2), (H - 2 * pd) / (M * 0.8660254)));
@@ -4880,7 +4881,7 @@ function rmbFit(){
 }
 function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
-  {rmbEditor?.sync();const edit=!!r.edit&&r.cell==="rmb",axis=!!r.axisMode&&r.cell==="rmb",hint=$("rmbEditHint");
+  {rmbEditor?.sync();const edit=!!r.edit,axis=!!r.axisMode,hint=$("rmbEditHint");
     for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
     if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — одним пальцем · два пальца — масштаб и сдвиг":"Касание 0 создаёт 1 · тащите ромбы · два пальца — масштаб и сдвиг"):axis?"Проведите ось · концы — угол и длина · линия — перенос · выберите направление отражения · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
     $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
@@ -4900,7 +4901,7 @@ function rmbUi(){
   const bl = $("bRmbLn"); if (bl && bl.textContent !== L[r.ln]) bl.textContent = L[r.ln];
   const bg = $("bRmbGl"); if (bg) { if (bg.textContent !== G[r.gl]) bg.textContent = G[r.gl]; bg.classList.toggle("on", !!r.gl); }
   [["bRmbNum", r.num], ["bRmbSh", r.sh], ["bRmbOut", r.out], ["bRmbFol", r.fol]].forEach(([id, v]) => { const b = $(id); if (b) b.classList.toggle("on", !!v); });
-  const p = $("bRmbPlay"), a = $("bAnimPlay"); if (p && a) { const on = r.wave === "mir" ? !!rmbW.on : a.classList.contains("on"); p.classList.toggle("on", on); const t = on ? "⏸" : "▶"; if (p.textContent !== t) p.textContent = t; }
+  const p = $("bRmbPlay"); if (p) { const on = !!rmbW.on; p.classList.toggle("on", on); const t = on ? "⏸" : "▶"; if (p.textContent !== t) p.textContent = t; }
   { const mw = r.wave === "mir"; const el = $("rmbWOpt"); if (el && el.hidden === mw) el.hidden = !mw;   // v0.795: варианты зеркальной волны — только при ней
     const ws = $("rmbWave"); if (ws && document.activeElement !== ws && ws.value !== r.wave) ws.value = r.wave;
     [["rmbWHz", String(+r.whz || 1)], ["rmbWMask", String(+r.wmask || 0)], ["rmbWSp", String(+r.wsp >= 0 ? +r.wsp : 40)]].forEach(([id, v]) => { const el = $(id); if (el && document.activeElement !== el && el.value !== v) el.value = v; });
@@ -4912,8 +4913,8 @@ function rmbWire(){
   const W = $("w-rmb"), cv = $("rmbCv"); if (!W || !cv || cv._wired) return; cv._wired = 1;
   rmbEditorWire(cv);
   const re = () => { rmbUi(); save(); renderRmb(); };
-  $("bRmbEdit").onclick=()=>{const r=rmbSt();r.edit=!(r.edit&&r.cell==="rmb");r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){r.cell="rmb";if(rmbW.on)rmbWStop();if($("bAnimPlay").classList.contains("on"))$("bAnimPlay").click();rmbFit();cv.focus({preventScroll:true});}re();};
-  $("bRmbAxis").onclick=()=>{const r=rmbSt();r.axisMode=!(r.axisMode&&r.cell==="rmb");r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(r.cell!=="rmb"){r.cell="rmb";rmbFit();}if(rmbW.on)rmbWStop();if($("bAnimPlay").classList.contains("on"))$("bAnimPlay").click();cv.focus({preventScroll:true});}re();};
+  $("bRmbEdit").onclick=()=>{const r=rmbSt();gridsState().tool="";r.edit=!r.edit;r.axisMode=false;rmbAxisTool?.cancel();rmbEditor?.clear();if(r.edit){if(rmbW.on)rmbWStop();rmbFit();cv.focus({preventScroll:true});}re();};
+  $("bRmbAxis").onclick=()=>{const r=rmbSt();gridsState().tool="";r.axisMode=!r.axisMode;r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(rmbW.on)rmbWStop();cv.focus({preventScroll:true});}re();};
   $("bRmbAxisPos").onclick=()=>rmbAxisTool?.apply("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.apply("negative");
   $("bRmbAxisLimit").onclick=()=>rmbAxisTool?.toggleSegment();$("bRmbAxisDel").onclick=()=>rmbAxisTool?.remove();
   $("bRmbSettings").onclick=()=>{const open=W.classList.toggle("rmb-settings-open");$("bRmbSettings").setAttribute("aria-expanded",String(open));};
@@ -4935,10 +4936,10 @@ function rmbWire(){
   $("bRmbDef").onclick = () => { const r = rmbSt(); delete r.bg; delete r.c1; delete r.c0; delete r.lc; re(); };
   [["rmbBg", "bg"], ["rmbC1", "c1"], ["rmbC0", "c0"], ["rmbLnC", "lc"]].forEach(([id, k]) => { const el = $(id); el.oninput = () => { rmbSt()[k] = el.value; renderRmb(); }; el.onchange = () => save(); });
   const mir = () => rmbSt().wave === "mir";
-  $("bRmbPlay").onclick = () => { if (mir()) { rmbWPlay(); return; } $("bAnimPlay").click(); setTimeout(rmbUi, 0); };
-  $("bRmbStep").onclick = () => { if (!mir()) { $("bAnimStep").click(); return; } if (rowsLocked()) return; if (Z.rows.join(",") !== rmbW.last) rmbWReset(); rmbWStep(); renderAll(); save(); };
-  $("bRmbHome").onclick = () => { if (mir()) rmbWHome(); else $("bAnimHome").click(); };
-  $("rmbWave").onchange = (e) => { if (rmbW.on) rmbWStop(); if ($("bAnimPlay").classList.contains("on")) $("bAnimPlay").click(); rmbSt().wave = e.target.value; re(); };
+  $("bRmbPlay").onclick = rmbWPlay;
+  $("bRmbStep").onclick = () => { if (gridsLocked()) return; if (gridsState().rows.join(",") !== rmbW.last) rmbWReset(); rmbWStep(); renderRmb(); save(); };
+  $("bRmbHome").onclick = rmbWHome;
+  $("rmbWave").onchange = (e) => { if (rmbW.on) rmbWStop(); rmbSt().wave = e.target.value; re(); };
   $("rmbWHz").onchange = (e) => { rmbSt().whz = +e.target.value; re(); };
   $("rmbWMask").onchange = (e) => { rmbSt().wmask = +e.target.value; re(); };
   $("rmbWSp").oninput = (e) => { rmbSt().wsp = +e.target.value; }; $("rmbWSp").onchange = () => save();
@@ -4956,7 +4957,7 @@ function rmbWire(){
   const up = (e) => { if (!dr) return; const was = dr; dr = null; cv.style.cursor = "";
     if (was.mv) { save(); return; }
     const r = rmbSt(), h = r.s * 0.8660254, i = Math.floor((e.offsetY - r.oy) / h);
-    if (i >= 0 && i < Z.rows.length && i !== Z.cur) { Z.cur = i; renderAll(); save(); } };
+    if (i >= 0 && i < gridsState().rows.length && i !== gridsState().cur) { gridsState().cur = i; renderRmb(); save(); } };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", () => { dr = null; cv.style.cursor = ""; });
   cv.addEventListener("dblclick", () => { rmbFit(); save(); renderRmb(); });
   rmbUi();
@@ -4993,9 +4994,9 @@ const rmbFace = (up, c) => !c ? 3 : up ? (c === 1 ? 2 : c === 2 ? 0 : 1) : (c ==
 function renderRmb(){
   rmbWire();
   if (!winOpen("w-rmb")) { rmbCur = null;rmbCountHighlight=null;return; }   // свёрнуто — не считаем; след начнётся заново, когда окно откроют
-  const R = Z.rows, r = rmbSt(), M = Math.min(R.length, 4096);
+  const R = gridsState().rows, r = rmbSt(), M = Math.min(R.length, 4096);
   let fresh = false, rowsChanged = false;
-  const AN = r.wave === "mir" && rmbW.used ? { on: !!rmbW.on, row: rmbW.h, pass: rmbW.pass } : typeof window.zzAnim === "function" ? window.zzAnim() : null;   // v0.795: часы возраста и ⇣ — от той волны, что идёт
+  const AN = r.wave === "mir" && rmbW.used ? { on: !!rmbW.on, row: rmbW.h, pass: rmbW.pass } : null;   // v0.795: часы возраста и ⇣ — от той волны, что идёт
   if (!rmbCur || rmbCur.length !== R.length || rmbCur.some((s, i) => s !== R[i])) { rowsChanged = true; fresh = !!rmbCur; rmbCur = R.slice(); rmbFrame++;
     const t = AN ? AN.pass + AN.row / Math.max(1, M) : null;   // часы в проходах волны: идут вперёд всегда (⤺ и правки руками — на шаг)
     rmbClock += t !== null && rmbLastA !== null && t > rmbLastA ? t - rmbLastA : 1 / Math.max(1, M); rmbLastA = t; }
@@ -5004,11 +5005,9 @@ function renderRmb(){
   if (rowsChanged || rmbKey !== key || rmbVals.length !== M) {
     const NV = [];
     for (let i = 0; i < M; i++) {
-      const s = R[i] || "", n = s.length, v = new Uint8Array(Math.max(0, rm ? 2 * n : 2 * n - 1)), ps = i ? R[i - 1] || "" : "";
+      const s = R[i] || "", n = s.length, v = new Uint8Array(Math.max(0, rm ? 2 * n : n)), ps = i ? R[i - 1] || "" : "";
       for (let k = 0; k < v.length; k++) {
-        if (rm || !(k & 1)) { v[k] = s[k >> 1] === "1" ? 1 : 0; continue; }
-        const m = ok[i] ? (hs[i] + k - hs[i - 1]) >> 1 : k >> 1, c = i ? ps[m] : undefined;
-        v[k] = c === undefined || m < 0 ? 9 : cpInv(c) === "1" ? 1 : 0;
+        v[k] = s[rm ? k >> 1 : k] === "1" ? 1 : 0;
       }
       if (fresh && rmbKey === key) { const o = rmbVals[i]; let H = rmbHeat[i], A = rmbAge[i];
         if (!H || H.length !== v.length) H = rmbHeat[i] = new Float64Array(v.length).fill(-1e9);
@@ -5021,7 +5020,7 @@ function renderRmb(){
   }
   const upK = (k) => ((k + u0) & 1) === 0, cube = !!r.cube;
   if (cube && (rmbPairOf !== rmbVals || rmbPairKey !== key + r.cpri)) { rmbPair = rmbPairs(M, hs, upK, rm, r.cpri); rmbPairOf = rmbVals; rmbPairKey = key + r.cpri; }
-  rmbUi(); rmbTextStats();
+  rmbUi(); rmbTextStats(); window.ZZGrids?.sync();
   const cv = $("rmbCv"); if (!cv) return;
   const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
   if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); }
@@ -5039,7 +5038,7 @@ function renderRmb(){
     g.strokeStyle="rgba(160,170,190,.16)";g.lineWidth=1;g.stroke(grid);
   }
   const i0 = Math.max(0, Math.floor(-r.oy / h) - 1), i1 = Math.min(M - 1, Math.ceil((Hc - r.oy) / h) + 1);
-  if (Z.cur >= i0 && Z.cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(Z.cur), Wc, h); g.globalAlpha = 1; }
+  if (gridsState().cur >= i0 && gridsState().cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(gridsState().cur), Wc, h); g.globalAlpha = 1; }
   const P = { u1: new Path2D(), u0: new Path2D(), d1: new Path2D(), d0: new Path2D(), e: new Path2D() }, HT = [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]);
   const L = new Path2D(), TL = Math.max(1, M), gm = r.gl, lm = r.ln, digs = r.num && tw >= (rm ? 18 : 22) ? [] : null;   // v0.794: цифры — только крупно
   const AG = gm === "age" ? RMB_AGE.map(() => [new Path2D(), new Path2D()]) : null;
@@ -5103,7 +5102,7 @@ function renderRmb(){
   if (digs) { g.font = `700 ${Math.round(tw * 0.42)}px ${coneCss("--ff", "monospace")}`; g.textAlign = "center"; g.textBaseline = "middle";
     for (let q = 0; q < digs.length; q += 4) { g.fillStyle = digs[q + 3] && !digs[q + 2] ? "#fff7d6" : "#05070b"; g.fillText(String(digs[q + 2]), digs[q], digs[q + 1]); } g.textAlign = "left"; }
   const editGeometry={hs,u0,rm,tw,ox:r.ox,oy:r.oy,M,Wc,Hc};
-  rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);if(rm)rmbAxisTool?.paint(g,editGeometry);
+  window.ZZGrids?.paint(g,editGeometry);rmbDrawLetterBorders(g,editGeometry);rmbDrawCountHighlight(g,editGeometry);rmbEditor?.paint(g,editGeometry);rmbAxisTool?.paint(g,editGeometry);
 }
 function bipyGeo(i){   // v0.785: { P — ячеек, rot — поворот в ячейках } кольца бипирамиды или null (строка 1, выключено)
   const n = (Z.rows[i] || "").length, m = bipyMode(); if (!m || i < 1 || n < 2) return null;
@@ -17002,7 +17001,7 @@ function init(){
   $("bShowFix").onclick = () => showFixSet(true);
   $("bShowFixIr").onclick = () => showFixSet("ir");
   $("rowsAlign").value = Z.rowsAlign || "center";
-  $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); if (Z.rmb && Z.rmb.cell === "rmb") renderRmb(); };   // v0.794: «◇ бит» в Ромбоидах стоит, как поле
+  $("rowsAlign").onchange = (e) => { Z.rowsAlign = e.target.value; renderRows(); save(); };   // independent grids keep their own alignment
   if ($("bitView")) { $("bitView").value = Z.bitView || "txt";   // v0.456: вид бит — цифры, квадраты, ромбы
     $("bitView").onchange = (e) => { Z.bitView = e.target.value; renderRows(); save();
       if (Z.bitView === "rg") say("◇ Сетка: каждый бит — ромб, как зубец края поля; ряд — 24 px, при смене шрифта — вдвое: 12 / 24 / 48 / 96.");
@@ -17138,6 +17137,7 @@ function init(){
     /* v0.619, по снимку списка «Окна» слева и шапки — «эти все дублируй в верхнее меню»: после закреплённых — кнопки всех окон, как в списке слева
        (горит — окно развёрнуто на столе; щелчок — свернуть / развернуть и показать). Закреплённые 📌 окна второй раз не повторяются */
     PIN_WINS.map(id => $(id)).filter(Boolean).forEach(el => {
+      if (el.id === "w-tri") return;
       if (el.classList.contains("popped")) return;
       const t = ({ "w-pyr": "▲ Паскаль", "w-okt": "◆ Бирамида" })[el.id] || el.dataset.title || el.id, op = !el.dataset.parked && !el.classList.contains("collapsed") && el.style.display !== "none";   // v0.622, «Паскаль»: в шапке — короче
       h += `<button data-aw="${el.id}" class="pinw${op ? " on" : ""}" title="${esc(op ? "Окно «" + t + "» развёрнуто — щелчок: свернуть" : "Окно «" + t + "»: показать на всё поле, остальные вкладки — свернуть")}">${winLab(el, t)}</button>`;
@@ -17160,6 +17160,7 @@ function init(){
     say(k >= 0 ? `📌 «${pinLabel(p) || p.id}» откреплено.` : `📌 «${pinLabel(p) || p.id}» — вверху. Ещё кнопки — щёлкай дальше; выход — 📌 или Esc.`);
   };
   const winShow = (id) => {
+    if(id==="w-tri"&&!Z.triBind)id="w-rmb";
     const el = $(id); if (!el) return;
     { const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); }   // v0.410: и из списка окон слева
     if (el.classList.contains("collapsed")) el.querySelector(".bc").click();
@@ -17168,19 +17169,20 @@ function init(){
     el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800);
   };
   window.zzWinShow = winShow;   // v0.452: конструктор открывает «△ Сетку»
-  $("pinBar").onclick = (e) => {
-    { const a = e.target.closest("button[data-aw]"); if (a) { const el = $(a.dataset.aw); if (!el) return;   // v0.619: кнопка окна — как в списке «Окна»
-        /* v0.629, «если нажать — пусть либо-либо переключает: только одно окно оставляет, и сразу развёрнутым»: из шести окон шапки развёрнуто одно —
-           нажатое; остальные пять сворачиваются (в список слева или до шапки). Прочие окна не трогаются */
+  const openPinnedWindow = id => {
+    const el = $(id); if (!el || el.classList.contains("popped")) return;
         const isOpen = (w) => !w.dataset.parked && !w.classList.contains("collapsed") && w.style.display !== "none";
         PIN_WINS.forEach(id => { const w = $(id); if (!w || w === el || !isOpen(w)) return;
           const pb = document.querySelector('#paneWins button[data-w="' + id + '"]'); if (pb) pb.click(); else { const bc = w.querySelector(".bc"); if (bc) bc.click(); } });
-        winShow(el.id);
+        if (!isOpen(el)) winShow(el.id);
         /* v0.630, «разворачивать сразу на все поле»: нажатое окно встаёт на весь стол — тем же ⛶ из его шапки (уже развёрнутое во всю ширину не трогается,
            иначе ⛶ вернул бы его на прежнее место) */
         const bm = el.querySelector(":scope > .whead .bm") || el.querySelector(".bm"), desk = $("desk");
         if (bm && !(el.classList.contains("maxed") && el.offsetWidth >= desk.clientWidth - 40)) bm.click();
-        return; } }
+    renderPins(); save();
+  };
+  $("pinBar").onclick = (e) => {
+    const a = e.target.closest("button[data-aw]"); if (a) { openPinnedWindow(a.dataset.aw); return; }
     const b = e.target.closest("button[data-k]"); if (!b) return;
     const p = Z.pins[+b.dataset.k]; if (!p) return;
     if (p.t === "w") winShow(p.id); else { const src = $(p.id); if (src) src.click(); else say("📌 Этой кнопки больше нет."); }

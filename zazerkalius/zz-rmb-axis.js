@@ -1,4 +1,4 @@
-/* Manual mirror axes v2. Binary reflection resamples source rhombs at target cell centres. */
+/* Manual mirror axes v3. Binary reflection resamples source rhombs at target cell centres. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./zz-rmb-editor.js'):root.ZZRmbEditor);if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbAxis=api;})(globalThis,function(Editor){
   'use strict';const K=Math.sqrt(3)/2;
   function basis(axis){
@@ -10,24 +10,24 @@
   }
   function reflected(point,axis){const b=basis(axis);if(!b)return point.slice();const d=(point[0]-axis.a[0])*b.nx+(point[1]-axis.a[1])*b.ny;return [point[0]-2*d*b.nx,point[1]-2*d*b.ny];}
   function reflectRows(rows,g,axis,side='positive'){
-    const b=basis(axis);if(!b)return {ok:false,changed:false,rows};const next=rows.slice(),sign=side==='negative'?-1:1,world={...g,tw:1,ox:0,oy:0};
+    const b=basis(axis);if(!b)return {ok:false,changed:false,rows};const next=rows.slice(),copies=[],sign=side==='negative'?-1:1,world={...g,tw:1,ox:0,oy:0};
     for(let r=0;r<rows.length&&r<g.hs.length;r++){
       const row=rows[r].split('');
       for(let c=0;c<row.length;c++){
-        const p=[g.hs[r]/2+c+.75,(r+.5)*K],x=p[0]-axis.a[0],y=p[1]-axis.a[1],distance=x*b.nx+y*b.ny;
+        const p=g.rm===false?[g.hs[r]/2+c/2+.5,(r+(((c+g.u0)&1)?1/3:2/3))*K]:[g.hs[r]/2+c+.75,(r+.5)*K],x=p[0]-axis.a[0],y=p[1]-axis.a[1],distance=x*b.nx+y*b.ny;
         if(distance*sign>=-1e-8)continue;
         const along=x*b.dx+y*b.dy;if(axis.segment&&(along<0||along>b.length))continue;
-        const q=reflected(p,axis),source=Editor.hit(rows,world,q[0],q[1]);row[c]=source?rows[source[0]][source[1]]:'0';
+        const q=reflected(p,axis),source=Editor.hit(rows,world,q[0],q[1]);row[c]=source?rows[source[0]][source[1]]:'0';copies.push([source,[r,c]]);
       }
       next[r]=row.join('');
     }
-    return {ok:true,rows:next,changed:next.some((s,i)=>s!==rows[i])};
+    return {ok:true,rows:next,copies,changed:next.some((s,i)=>s!==rows[i])};
   }
   function snapVertex(rows,g,p){
     let best=null,distance=Infinity;const r0=Math.floor(p[1]/K),candidates=new Set([r0-1,r0,r0+1].map(r=>Math.max(0,Math.min(rows.length-1,r))));
-    for(const r of candidates){if(!rows[r]?.length||g.hs[r]===undefined)continue;const c0=Math.floor(p[0]-g.hs[r]/2);
-      for(const raw of [c0-2,c0-1,c0,c0+1]){const c=Math.max(0,Math.min(rows[r].length-1,raw)),x=g.hs[r]/2+c,y=r*K;
-        const vertices=(g.u0&1)?[[x,y],[x+1,y],[x+1.5,y+K],[x+.5,y+K]]:[[x+.5,y],[x+1.5,y],[x+1,y+K],[x,y+K]];
+    for(const r of candidates){if(!rows[r]?.length||g.hs[r]===undefined)continue;const c0=Math.floor((p[0]-g.hs[r]/2)*(g.rm===false?2:1));
+      for(const raw of [c0-2,c0-1,c0,c0+1]){const c=Math.max(0,Math.min(rows[r].length-1,raw)),x=g.hs[r]/2+c*(g.rm===false?.5:1),y=r*K;
+        const vertices=g.rm===false?(((c+g.u0)&1)?[[x,y],[x+1,y],[x+.5,y+K]]:[[x,y+K],[x+1,y+K],[x+.5,y]]):(g.u0&1)?[[x,y],[x+1,y],[x+1.5,y+K],[x+.5,y+K]]:[[x+.5,y],[x+1.5,y],[x+1,y+K],[x,y+K]];
         for(const q of vertices){const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<distance){distance=d;best=q;}}
       }
     }
@@ -74,7 +74,7 @@
     function remove(){if(!selected())return;cfg.setAxes(cfg.axes().filter(a=>a.id!==selectedId));selectedId=cfg.axes().at(-1)?.id;cfg.save();cfg.redraw();}
     function toggleSegment(){const axis=selected();if(!axis)return;cfg.setAxes(cfg.axes().map(a=>a===axis?{...a,segment:!a.segment}:a));cfg.save();cfg.redraw();}
     function apply(side){const axis=selected();if(!axis){cfg.message('Сначала проведите ось по границам ромбов.');return;}if(cfg.locked())return;
-      const result=reflectRows(cfg.rows(),cfg.geometry(),axis,side);if(result.changed)cfg.commit(result.rows);else cfg.message('Отражение не изменило клетки.');}
+      const result=reflectRows(cfg.rows(),cfg.geometry(),axis,side);if(result.changed)cfg.commit(result.rows,result);else cfg.message('Отражение не изменило клетки.');}
     function paint(g,geometry){
       const axes=cfg.axes().filter(a=>!drag||a.id!==drag.preview.id);if(drag)axes.push(drag.preview);
       if(!axes.length)return;g.save();g.globalAlpha=1;

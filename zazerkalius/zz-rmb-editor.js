@@ -1,4 +1,4 @@
-/* Rhomboid field editor v2: edits source bits, one shared undo step per gesture. */
+/* Rhomboid field editor v3: edits source bits, one shared undo step per gesture. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbEditor=api;})(globalThis,function(){
   'use strict';
   const key=([r,c])=>r+','+c;
@@ -11,6 +11,10 @@
     const h=g.tw*Math.sqrt(3)/2;let row=gridFloor((y-g.oy)/h);
     if(clamp)row=Math.max(0,Math.min(rows.length-1,row));
     if(row<0||row>=rows.length||!rows[row].length||g.hs[row]===undefined)return null;
+    if(g.rm===false){const px=(x-g.ox)/g.tw-g.hs[row]/2,fy=(y-g.oy)/h-row,c0=Math.floor(px*2);
+      for(const c of [c0,c0-1]){if(c<0||c>=rows[row].length)continue;const local=px-c/2,down=(c+(g.u0||0))&1,left=down?fy/2:(1-fy)/2;if(local>=left-1e-10&&local<=1-left+1e-10)return [row,c];}
+      return clamp?[row,Math.max(0,Math.min(rows[row].length-1,c0))]:null;
+    }
     const f=Math.max(0,Math.min(1,(y-g.oy)/h-row)),left=g.ox+g.hs[row]*g.tw/2+((g.u0&1)?f:1-f)*g.tw/2;
     let col=gridFloor((x-left)/g.tw);if(clamp)col=Math.max(0,Math.min(rows[row].length-1,col));
     return inside(rows,[row,col])?[row,col]:null;
@@ -29,7 +33,7 @@
     if(!copy&&!create)source.forEach(p=>write(p,'0'));
     if(!erase)target.forEach(p=>write(p,'1'));
     const next=rows.map((s,r)=>edits.has(r)?edits.get(r).join(''):s);
-    return {ok:true,changed:!same(rows,next),rows:next,selection:erase?[]:target};
+    return {ok:true,changed:!same(rows,next),rows:next,selection:erase?[]:target,moves:erase?[]:source.map((p,i)=>[p,target[i]]),copy:copy||create};
   }
   function mount(cv,cfg){
     let selected=[],drag=null,hover=null,clipboard=[],space=false,known=cfg.rows().slice();
@@ -41,7 +45,7 @@
     function commit(result){
       if(!result.ok){cfg.message('Перенос выходит за границы поля.');return false;}
       if(cfg.locked())return false;
-      if(result.changed){known=result.rows.slice();selected=result.selection;cfg.commit(result.rows);}else{selected=result.selection;redraw();}
+      if(result.changed){known=result.rows.slice();selected=result.selection;cfg.commit(result.rows,result);}else{selected=result.selection;redraw();}
       return true;
     }
     function finish(cancel=false,e){const d=drag;drag=null;if(!d)return;
@@ -112,7 +116,7 @@
       g.save();g.strokeStyle=color;g.lineWidth=2;g.lineJoin='miter';if(fill){g.globalAlpha=.25;g.fillStyle=color;g.fill(path);}g.globalAlpha=1;g.stroke(path);g.restore();
     }
     function selectAll(){selected=[];for(let r=0;r<cfg.rows().length;r++)for(let c=0;c<cfg.rows()[r].length;c++)if(cfg.rows()[r][c]==='1')selected.push([r,c]);redraw();}
-    return {paint,sync,selectAll,erase(){commit(apply(cfg.rows(),selected,{erase:true}));},cancelGesture(){if(drag)finish(true);space=false;},clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
+    return {paint,sync,selectAll,setSelection(cells){selected=unique(cells).filter(p=>inside(cfg.rows(),p));redraw();},erase(){commit(apply(cfg.rows(),selected,{erase:true}));},cancelGesture(){if(drag)finish(true);space=false;},clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
   }
   return {inside,hit,rectangle,apply,mount};
 });
