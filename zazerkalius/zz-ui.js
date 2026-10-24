@@ -4709,10 +4709,11 @@ function rmbTextRows(txt){ return rmbTextLayout(txt).rows; }
 function rmbLetterCounts(rows, layout, values){
   const width = layout.rows[0].length;
   if (!rows.length || rows.some(row => row.length !== width)) return null;
-  const entries = layout.letters.map((letter, index) => ({...letter, index:index + 1, triangles:0}));
-  const outside = {label:"Вне букв", triangles:0}, total = {label:"Итого", triangles:0};
+  const entries = layout.letters.map((letter, index) => ({...letter, index:index + 1, ones:0, triangles:0}));
+  const outside = {label:"Вне букв", ones:0, triangles:0}, total = {label:"Итого", ones:0, triangles:0};
   const owner = Array(width).fill(outside);
   for (const entry of entries) for (let col=entry.start;col<entry.end;col++) owner[col]=entry;
+  for (const row of rows) for (let col=0;col<row.length;col++) if (row[col]==="1") { owner[col].ones++; total.ones++; }
   for (const row of values) for (let k=0;k<row.length;k++) if (row[k]===1) { (owner[k>>1] || outside).triangles++; total.triangles++; }
   for (const entry of [...entries,outside,total]) entry.rhombi = entry.triangles / 2;
   return {entries,outside,total};
@@ -4728,14 +4729,17 @@ function rmbTextStats(){
   const counts = rmbLetterCounts(Z.rows,layout,rmbVals);
   rmbStatsCache = {text,values:rmbVals,mode,layout}; box.hidden=false; box.replaceChildren();
   const note = document.createElement("div"); note.className="rmb-count-note";
-  note.textContent = counts ? "Единицы по областям букв «"+text+"» · △ — треугольники · ◇ "+(mode==="rmb" ? "— ромбы" : "— площадь в ромбах (△ ÷ 2)") : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
+  note.textContent = counts ? "Буквы «"+text+"» · 1 — единицы поля · △ — треугольники · ◇ "+(mode==="rmb" ? "— ромбы" : "— площадь в ромбах (△ ÷ 2)") : "Ширина строк изменилась: наберите текст через Аа, чтобы задать области букв заново.";
   box.append(note); if (!counts) return;
   const table=document.createElement("table"), head=document.createElement("thead"), body=document.createElement("tbody");
-  const entries=[...counts.entries,...(counts.outside.triangles?[counts.outside]:[]),counts.total];
-  const header=document.createElement("tr");
-  for (const label of ["Буква",...entries.map(e=>e.index ? e.index+" · "+(e.label===" "?"пробел":e.label):e.label)]) { const th=document.createElement("th");th.textContent=label;th.scope="col";header.append(th); }
-  head.append(header);
-  for (const [label,key] of [["△","triangles"],["◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";row.append(th);
+  const entries=[...counts.entries,...(counts.outside.ones || counts.outside.triangles ? [counts.outside]:[]),counts.total];
+  const numbers=document.createElement("tr"), header=document.createElement("tr");
+  for (const label of ["№",...entries.map(e=>e.index || "")]) { const th=document.createElement("th");th.textContent=String(label);th.scope="col";numbers.append(th); }
+  const name=document.createElement("th");name.textContent="Буква";name.scope="row";header.append(name);
+  for(const entry of entries){const th=document.createElement("th");th.textContent=entry.label===" "?"␣":entry.label;th.scope="col";
+    if(entry.index){th.className="rmb-count-letter";if(entry.label===" ")th.title="Пробел";}header.append(th);}
+  head.append(numbers,header);
+  for (const [label,key] of [["1","ones"],["△","triangles"],["◇","rhombi"]]) { const row=document.createElement("tr"), th=document.createElement("th");th.textContent=label;th.scope="row";if(key==="ones")th.title="Единицы в исходных строках поля";row.append(th);
     for(const entry of entries){const td=document.createElement("td");td.textContent=String(entry[key]).replace(".",",");row.append(td);}body.append(row); }
   table.append(head,body);box.append(table);
 }
