@@ -4761,12 +4761,18 @@ function rmbHighlightPolygon(row,col,{hs,u0,rm,tw,ox,oy}){
 let rmbStatsCache = null, rmbCountHighlight = null;
 function rmbCountHighlightSet(selection){
   if(rmbCountHighlight?.index===selection?.index && rmbCountHighlight?.kind===selection?.kind)return;
-  rmbCountHighlight=selection;renderRmb();
+  rmbCountHighlight=selection;
+  document.querySelectorAll?.("#rmbTextStats .rmb-count-value").forEach(node=>node.classList.toggle("rmb-count-selected",!!selection&&node._rmbSelection?.index===selection.index&&node._rmbSelection?.kind===selection.kind));
+  renderRmb();
 }
 function rmbCountCell(node,entry,kind){
-  node.className=(node.className||"")+" rmb-count-value";node.tabIndex=0;
-  node.onpointerenter=node.onfocus=()=>rmbCountHighlightSet({index:entry.index||0,kind});
-  node.onpointerleave=node.onblur=()=>rmbCountHighlightSet(null);
+  node.className=(node.className||"")+" rmb-count-value";node.tabIndex=0;node._rmbSelection={index:entry.index||0,kind};
+  node.onpointerdown=e=>{node._rmbTouch=e.pointerType==="touch";};
+  node.onpointerenter=e=>{if(e?.pointerType!=="touch")rmbCountHighlightSet(node._rmbSelection);};
+  node.onpointerleave=e=>{if(e?.pointerType!=="touch")rmbCountHighlightSet(null);};
+  node.onfocus=()=>{if(!node._rmbTouch)rmbCountHighlightSet(node._rmbSelection);};
+  node.onblur=()=>{if(!node._rmbTouch)rmbCountHighlightSet(null);node._rmbTouch=false;};
+  node.onclick=e=>{if(e.pointerType!=="touch"&&!node._rmbTouch)return;const same=rmbCountHighlight?.index===node._rmbSelection.index&&rmbCountHighlight?.kind===kind;rmbCountHighlightSet(same?null:node._rmbSelection);};
 }
 function rmbTextStats(){
   const box = $("rmbTextStats"); if (!box) return;
@@ -4816,7 +4822,8 @@ function rmbDrawLetterBorders(g,{hs,u0,rm,tw,ox,oy}){
   for(const [a,b] of edges){path.moveTo(ox+a[0]*tw/2,oy+a[1]*h);path.lineTo(ox+b[0]*tw/2,oy+b[1]*h);}
   g.save();g.globalAlpha=1;g.lineWidth=2;g.strokeStyle="#000000";g.lineJoin="miter";g.stroke(path);g.restore();
 }
-let rmbEditor = null, rmbAxisTool = null;
+let rmbEditor = null, rmbAxisTool = null, rmbTouch = null;
+const rmbIsMobile=()=>!!window.matchMedia?.("(max-width:760px), (pointer:coarse) and (max-width:1100px)").matches;
 function rmbEditorWire(cv){
   if(rmbEditor||!window.ZZRmbEditor)return;
   const common={rows:()=>Z.rows,locked:rowsLocked,message:say,
@@ -4825,12 +4832,17 @@ function rmbEditorWire(cv){
     pan:(x,y)=>{const r=rmbSt();r.ox=x;r.oy=y;renderRmb();},
     commit:rows=>{snapshot();Z.rows.splice(0,Z.rows.length,...rows);renderAll();save();}
   };
+  if(window.ZZRmbTouch)rmbTouch=window.ZZRmbTouch.mount(cv,{
+    view:()=>{const r=rmbSt();if(!r.s)rmbFit();return {s:r.s,ox:r.ox,oy:r.oy};},
+    setView:v=>{Object.assign(rmbSt(),v);renderRmb();},save,
+    cancel:()=>{rmbEditor?.cancelGesture();rmbAxisTool?.cancel();cv._rmbCancelPan?.();}
+  });
   if(window.ZZRmbAxis)rmbAxisTool=window.ZZRmbAxis.mount(cv,{...common,
     enabled:()=>!!rmbSt().axisMode&&rmbSt().cell==="rmb",
     axes:()=>Array.isArray(rmbSt().axes)?rmbSt().axes.filter(a=>window.ZZRmbAxis.basis(a)):[],
     setAxes:axes=>{rmbSt().axes=axes;}
   });
-  rmbEditor=window.ZZRmbEditor.mount(cv,{...common,enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)&&rmbSt().cell==="rmb"});
+  rmbEditor=window.ZZRmbEditor.mount(cv,{...common,options:()=>({multi:!!rmbSt().touchMulti,copy:!!rmbSt().touchCopy}),enabled:()=>!!(rmbSt().edit||rmbSt().axisMode)&&rmbSt().cell==="rmb"});
 }
 function rmbDrawCountHighlight(g,geometry){
   const cells=rmbHighlightCells(Z.rows,rmbStatsCache?.counts,rmbCountHighlight);if(!cells.length)return;
@@ -4868,13 +4880,17 @@ function rmbFit(){
 }
 function rmbUi(){
   const r = rmbSt(), q = (s) => document.querySelectorAll("#w-rmb " + s);
-  {const edit=!!r.edit&&r.cell==="rmb",axis=!!r.axisMode&&r.cell==="rmb",hint=$("rmbEditHint");
+  {rmbEditor?.sync();const edit=!!r.edit&&r.cell==="rmb",axis=!!r.axisMode&&r.cell==="rmb",hint=$("rmbEditHint");
     for(const [id,on] of [["bRmbEdit",edit],["bRmbAxis",axis]]){const b=$(id);if(b){b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));}}
-    if(hint){hint.hidden=!edit&&!axis;hint.textContent=axis?"Проведите ось · концы — угол и длина · линия — перенос · выберите направление отражения · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
+    if(hint){hint.hidden=!edit&&!axis;hint.textContent=rmbIsMobile()?(axis?"Ось — одним пальцем · два пальца — масштаб и сдвиг":"Касание 0 создаёт 1 · тащите ромбы · два пальца — масштаб и сдвиг"):axis?"Проведите ось · концы — угол и длина · линия — перенос · выберите направление отражения · пробел — вид":"0 → щелчок → 1 · тащить — перенос · Ctrl — копия · Shift / рамка — выделить · Delete — стереть · пробел + тащить — вид";}
     $("rmbCv")?.classList.toggle("rmb-editing",edit||axis);const tools=$("rmbAxisTools");if(tools)tools.hidden=!axis;
     const selected=rmbAxisTool?.selected(),basis=selected&&window.ZZRmbAxis?.basis(selected);
     for(const [id,from,to] of [["bRmbAxisPos",basis?.positive||"Право",basis?.negative||"Лево"],["bRmbAxisNeg",basis?.negative||"Лево",basis?.positive||"Право"]]){const b=$(id);if(b){b.textContent=from+" → "+to;b.disabled=!selected;b.title="Отразить "+from.toLowerCase()+" → "+to.toLowerCase()+" в клетки поля; нули тоже копируются. ↩ отменяет действие.";}}
     const limit=$("bRmbAxisLimit"),del=$("bRmbAxisDel");if(limit){limit.textContent=selected?.segment?"Отрезок":"Вся ось";limit.disabled=!selected;}if(del)del.disabled=!selected;
+    const actionBox=$("rmbTouchEdit");if(actionBox)actionBox.hidden=!edit;
+    for(const [id,on] of [["bRmbMulti",!!r.touchMulti],["bRmbCopy",!!r.touchCopy]]){const button=$(id);if(button){button.classList.toggle("on",on);button.setAttribute("aria-pressed",String(on));}}
+    const count=rmbEditor?.selection().length||0;for(const id of ["bRmbErase","bRmbNone"]){const button=$(id);if(button)button.disabled=!count;}
+    if($("bRmbUndo"))$("bRmbUndo").disabled=!undoStack.length;if($("bRmbRedo"))$("bRmbRedo").disabled=!redoStack.length;
   }
   q("button[data-ral]").forEach(b => b.classList.toggle("on", b.dataset.ral === r.al));
   const L = { each: "▵ каждый", rmb: "◇ ромбы", grp: "⬡ группы", none: "без границ" }, G = { "": "👓", chg: "👓 изм.", age: "👓 возраст", pair: "👓 пары" };
@@ -4900,6 +4916,10 @@ function rmbWire(){
   $("bRmbAxis").onclick=()=>{const r=rmbSt();r.axisMode=!(r.axisMode&&r.cell==="rmb");r.edit=false;rmbEditor?.clear();rmbAxisTool?.cancel();if(r.axisMode){if(r.cell!=="rmb"){r.cell="rmb";rmbFit();}if(rmbW.on)rmbWStop();if($("bAnimPlay").classList.contains("on"))$("bAnimPlay").click();cv.focus({preventScroll:true});}re();};
   $("bRmbAxisPos").onclick=()=>rmbAxisTool?.apply("positive");$("bRmbAxisNeg").onclick=()=>rmbAxisTool?.apply("negative");
   $("bRmbAxisLimit").onclick=()=>rmbAxisTool?.toggleSegment();$("bRmbAxisDel").onclick=()=>rmbAxisTool?.remove();
+  $("bRmbSettings").onclick=()=>{const open=W.classList.toggle("rmb-settings-open");$("bRmbSettings").setAttribute("aria-expanded",String(open));};
+  $("bRmbMulti").onclick=()=>{rmbSt().touchMulti=!rmbSt().touchMulti;re();};$("bRmbCopy").onclick=()=>{rmbSt().touchCopy=!rmbSt().touchCopy;re();};
+  $("bRmbErase").onclick=()=>rmbEditor?.erase();$("bRmbAll").onclick=()=>rmbEditor?.selectAll();$("bRmbNone").onclick=()=>{rmbEditor?.clear();renderRmb();};
+  $("bRmbUndo").onclick=()=>undo();$("bRmbRedo").onclick=()=>redo();
   W.querySelectorAll("button[data-ral]").forEach(b => b.onclick = () => { rmbSt().al = b.dataset.ral; re(); });
   $("bRmbLn").onclick = () => { const r = rmbSt(), o = ["each", "rmb", "grp", "none"]; r.ln = o[(o.indexOf(r.ln) + 1) % o.length]; re(); };
   $("bRmbGl").onclick = () => { const r = rmbSt(), o = ["", "chg", "age", "pair"]; r.gl = o[(o.indexOf(r.gl) + 1) % o.length]; re(); };
@@ -4929,7 +4949,7 @@ function rmbWire(){
   cv.addEventListener("wheel", (e) => { e.preventDefault(); const r = rmbSt(); if (!r.s) rmbFit();
     const k = Math.pow(1.0015, -e.deltaY), s = Math.max(2, Math.min(160, r.s * k)), f = s / r.s, mx = e.offsetX, my = e.offsetY;
     r.ox = mx - (mx - r.ox) * f; r.oy = my - (my - r.oy) * f; r.s = s; renderRmb(); clearTimeout(cv._sv); cv._sv = setTimeout(save, 400); }, { passive: false });
-  let dr = null;
+  let dr = null;cv._rmbCancelPan=()=>{dr=null;cv.style.cursor="";};
   cv.addEventListener("pointerdown", (e) => { if (e.button) return; const r = rmbSt(); if (!r.s) rmbFit(); dr = { x: e.clientX, y: e.clientY, ox: r.ox, oy: r.oy, mv: false }; cv.setPointerCapture(e.pointerId); });
   cv.addEventListener("pointermove", (e) => { if (!dr) return; const dx = e.clientX - dr.x, dy = e.clientY - dr.y; if (Math.abs(dx) + Math.abs(dy) > 3) dr.mv = true;
     if (dr.mv) { const r = rmbSt(); r.ox = dr.ox + dx; r.oy = dr.oy + dy; cv.style.cursor = "grabbing"; renderRmb(); } });
@@ -5005,6 +5025,7 @@ function renderRmb(){
   const cv = $("rmbCv"); if (!cv) return;
   const dpr = window.devicePixelRatio || 1, Wc = cv.clientWidth, Hc = cv.clientHeight; if (Wc < 10 || Hc < 10) return;
   if (cv.width !== Math.round(Wc * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(Wc * dpr); cv.height = Math.round(Hc * dpr); }
+  const mobileSize=rmbIsMobile()?Wc+"x"+Hc:null;if(mobileSize&&cv._rmbMobileSize!==mobileSize)rmbFit();cv._rmbMobileSize=mobileSize;
   if (!r.s) rmbFit();
   if (r.fol && AN && AN.on) r.oy = Hc * 0.4 - Math.min(AN.row, M - 1) * r.s * 0.8660254;   // ⇣ за волной: строка волны — на 2/5 высоты окна
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);

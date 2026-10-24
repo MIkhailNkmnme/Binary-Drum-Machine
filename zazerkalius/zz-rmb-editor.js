@@ -1,4 +1,4 @@
-/* Rhomboid field editor v1: edits source bits, one shared undo step per gesture. */
+/* Rhomboid field editor v2: edits source bits, one shared undo step per gesture. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbEditor=api;})(globalThis,function(){
   'use strict';
   const key=([r,c])=>r+','+c;
@@ -62,12 +62,12 @@
       if(!enabled()||(e.button!==0&&e.button!==1))return;consume(e);sync();cv.focus({preventScroll:true});
       const [x,y]=xy(e),g=cfg.geometry();
       if(e.button===1||space){drag={kind:'pan',x,y,ox:g.ox,oy:g.oy};cv.setPointerCapture(e.pointerId);return;}
-      if(cfg.locked())return;const cell=at(e);if(!cell)return;hover=cell;
+      if(cfg.locked())return;const options=cfg.options?.()||{},multi=e.shiftKey||options.multi;const cell=at(e);if(!cell)return;hover=cell;
       if(cfg.rows()[cell[0]][cell[1]]==='1'){
         const has=selected.some(p=>key(p)===key(cell));
-        if(e.shiftKey)selected=has?selected.filter(p=>key(p)!==key(cell)):[...selected,cell];else if(!has)selected=[cell];
-        drag={kind:'move',rows:cfg.rows().slice(),cells:selected.slice(),anchor:cell,x,y,moved:false,dr:0,dc:0,copy:e.ctrlKey||e.metaKey};
-      }else drag={kind:'box',rows:cfg.rows().slice(),anchor:cell,end:cell,base:e.shiftKey?selected.slice():[],add:e.shiftKey,x,y,moved:false};
+        if(multi)selected=has?selected.filter(p=>key(p)!==key(cell)):[...selected,cell];else if(!has)selected=[cell];
+        drag={kind:'move',rows:cfg.rows().slice(),cells:selected.slice(),anchor:cell,x,y,moved:false,dr:0,dc:0,copy:e.ctrlKey||e.metaKey||!!options.copy};
+      }else drag={kind:'box',rows:cfg.rows().slice(),anchor:cell,end:cell,base:multi?selected.slice():[],add:multi,x,y,moved:false};
       cv.setPointerCapture(e.pointerId);redraw();
     },true);
     cv.addEventListener('pointermove',e=>{
@@ -75,7 +75,7 @@
       if(drag.kind==='pan'){cv.style.cursor='grabbing';cfg.pan(drag.ox+x-drag.x,drag.oy+y-drag.y);return;}
       if(Math.abs(x-drag.x)+Math.abs(y-drag.y)>3)drag.moved=true;
       const cell=at(e,true);if(!cell)return;
-      if(drag.kind==='move'){drag.dr=cell[0]-drag.anchor[0];drag.dc=cell[1]-drag.anchor[1];drag.copy=e.ctrlKey||e.metaKey;cv.style.cursor=drag.copy?'copy':'grabbing';}
+      if(drag.kind==='move'){drag.dr=cell[0]-drag.anchor[0];drag.dc=cell[1]-drag.anchor[1];drag.copy=e.ctrlKey||e.metaKey||!!cfg.options?.().copy;cv.style.cursor=drag.copy?'copy':'grabbing';}
       else drag.end=cell;redraw();
     },true);
     cv.addEventListener('pointerup',e=>{if(!drag)return;consume(e);finish(false,e);},true);
@@ -88,7 +88,7 @@
       if(e.key===' '){consume(e);space=true;return;}
       if(e.key==='Escape'){consume(e);if(drag)finish(true);else{selected=[];redraw();}return;}
       const mod=e.ctrlKey||e.metaKey,letter=e.key.toLowerCase();
-      if(mod&&letter==='a'){consume(e);selected=[];for(let r=0;r<cfg.rows().length;r++)for(let c=0;c<cfg.rows()[r].length;c++)if(cfg.rows()[r][c]==='1')selected.push([r,c]);redraw();return;}
+      if(mod&&letter==='a'){consume(e);selectAll();return;}
       if(mod&&(letter==='c'||letter==='x')){
         if(!selected.length)return;consume(e);const r=Math.min(...selected.map(p=>p[0])),c=Math.min(...selected.map(p=>p[1]));clipboard=selected.map(p=>[p[0]-r,p[1]-c]);
         if(letter==='x')commit(apply(cfg.rows(),selected,{erase:true}));return;
@@ -111,7 +111,8 @@
       for(const [r,c] of cells){if(!inside(cfg.rows(),[r,c])||r>=geometry.M)continue;const points=cfg.polygon(r,c,geometry);path.moveTo(...points[0]);for(const p of points.slice(1))path.lineTo(...p);path.closePath();}
       g.save();g.strokeStyle=color;g.lineWidth=2;g.lineJoin='miter';if(fill){g.globalAlpha=.25;g.fillStyle=color;g.fill(path);}g.globalAlpha=1;g.stroke(path);g.restore();
     }
-    return {paint,clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
+    function selectAll(){selected=[];for(let r=0;r<cfg.rows().length;r++)for(let c=0;c<cfg.rows()[r].length;c++)if(cfg.rows()[r][c]==='1')selected.push([r,c]);redraw();}
+    return {paint,sync,selectAll,erase(){commit(apply(cfg.rows(),selected,{erase:true}));},cancelGesture(){if(drag)finish(true);space=false;},clear(){selected=[];drag=null;space=false;known=cfg.rows().slice();},selection:()=>selected.map(p=>p.slice())};
   }
   return {inside,hit,rectangle,apply,mount};
 });

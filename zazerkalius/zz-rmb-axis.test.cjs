@@ -63,3 +63,8 @@ test('multiple axes, endpoint edit, cancellation, deletion, and lock keep data s
  f.lock(true);f.api.apply('positive');assert.equal(f.commits(),0);
  f.fire('keydown',{key:'Delete'});assert.equal(f.axes().length,1);assert.equal(f.commits(),0);
 });
+test('touch chooses the nearest endpoint where the larger handle hit areas overlap',()=>{
+ const f=fixture();f.line([1,0],[2,0]);const a=f.api.selected().a.slice();
+ f.fire('pointerdown',{...f.at(1.85,0),pointerType:'touch'});f.fire('pointermove',{...f.at(3,0),pointerType:'touch'});f.fire('pointerup',{...f.at(3,0),pointerType:'touch'});
+ assert.deepEqual(f.api.selected().a,a);assert.deepEqual(f.api.selected().b,[3,0]);assert.equal(f.commits(),0);
+});

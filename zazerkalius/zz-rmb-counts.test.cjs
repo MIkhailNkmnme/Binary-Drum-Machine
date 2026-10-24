@@ -50,6 +50,14 @@ test('highlight geometry follows row alignment, orientation, pan and zoom',()=>{
  const scaled=c.rmbHighlightPolygon(0,1,{...g,tw:20,ox:14,oy:22});assert.deepEqual(plain(scaled),plain(c.rmbHighlightPolygon(0,1,g)).map(p=>p.map(x=>x*2)));
 });
 class El{constructor(){this.children=[];this.hidden=false;this.textContent='';this.replaces=0;}append(...n){this.children.push(...n);}replaceChildren(){this.children=[];this.replaces++;}}
+test('touch on a count pins its highlight through leave and blur, and a second tap clears it',()=>{
+ const c=api({document:{},renderRmb(){}}),node=new El();c.rmbCountCell(node,{index:2},'zeros');
+ node.onpointerenter({pointerType:'touch'});assert.equal(vm.runInContext('rmbCountHighlight',c),null);
+ node.onpointerdown({pointerType:'touch'});node.onfocus();node.onclick({pointerType:'touch'});
+ node.onpointerleave({pointerType:'touch'});node.onblur();assert.deepEqual(plain(vm.runInContext('rmbCountHighlight',c)),{index:2,kind:'zeros'});
+ node.onpointerdown({pointerType:'touch'});node.onfocus();node.onclick({pointerType:'touch'});assert.equal(vm.runInContext('rmbCountHighlight',c),null);
+ node.onpointerdown({pointerType:'mouse'});node.onpointerenter({pointerType:'mouse'});assert.equal(vm.runInContext('rmbCountHighlight',c).index,2);node.onpointerleave({pointerType:'mouse'});assert.equal(vm.runInContext('rmbCountHighlight',c),null);
+});
 test('table shows 1 / 0 / total, hover and focus select cells, edits refresh without pan rebuilds',()=>{
  const box=new El();let renders=0;const c=api({Z:{rmbText:'II'},$:()=>box,document:{createElement:()=>new El()},renderRmb(){renders++;}});
  c.Z.rows=plain(c.rmbTextRows('II'));c.rmbVals=bits(c.Z.rows);c.rmbTextStats();assert.equal(box.hidden,false);assert.equal(box.replaces,1);

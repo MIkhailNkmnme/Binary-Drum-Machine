@@ -1,0 +1,40 @@
+/* Rhomboids mobile v1: local layout, existing controls keep their handlers. */
+#rmbTouchActions,#bRmbSettings{display:none!important}
+#rmbTextStats .rmb-count-selected{outline:2px solid #ffe066;outline-offset:-2px}
+@media(max-width:760px),(pointer:coarse) and (max-width:1100px){
+  #w-rmb.win{position:relative!important;left:auto!important;top:auto!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;min-width:0!important;height:auto!important;resize:none;margin:6px!important;box-sizing:border-box}
+  #w-rmb.win>.wbody{min-width:0;width:100%;box-sizing:border-box;padding:6px;overflow-x:hidden!important;display:flex;flex-direction:column}
+  #w-rmb>.whead{min-height:40px;touch-action:pan-y}
+  #w-rmb>.whead button,#w-rmb>.whead button.tz.tz.tz{height:44px!important;min-height:44px!important;min-width:36px!important}
+  #w-rmb>.wgrip{display:none!important}
+  #w-rmb .tools.lpw{gap:4px!important;row-gap:4px!important;min-width:0;max-width:100%;margin-bottom:4px}
+  #w-rmb .tools.lpw :is(button,select,label).tz.tz.tz,#w-rmb .tools :is(button,select){height:44px!important;min-height:44px!important;margin-bottom:0!important;font-size:13px!important;touch-action:manipulation;box-sizing:border-box}
+  #w-rmb .tools input[type=range]{min-height:32px;max-width:100%}
+  #w-rmb .tools input[type=color]{width:28px!important;height:28px!important;flex-basis:28px!important}
+  #rmbMainTools{order:0}
+  #w-rmb:not(.rmb-settings-open) #rmbMainTools>:not(#bRmbType):not(#bRmbEdit):not(#bRmbAxis):not(#rmbAxisTools):not(#bRmbFit):not(#bRmbSettings){display:none!important}
+  #w-rmb:not(.rmb-settings-open) :is(#rmbPaintTools,#rmbWaveTools){display:none!important}
+  #bRmbSettings{display:inline-flex!important}
+  #rmbEditHint{order:1;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+  #w-rmb .wbody>#rmbCv{order:2;flex:0 0 auto!important;width:100%!important;max-width:100%;height:clamp(220px,48vh,520px)!important;height:clamp(220px,48svh,520px)!important;min-height:220px!important;touch-action:none}
+  #w-rmb #rmbTouchActions{order:3;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px!important;width:100%;margin:6px 0}
+  #rmbTouchEdit:not([hidden]){display:contents}
+  #w-rmb #rmbTouchActions button{grid-column:span 2;width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;font-size:13px!important;padding:2px!important}
+  #w-rmb #rmbTouchActions :is(#bRmbUndo,#bRmbRedo){grid-column:span 1}
+  #rmbTextStats{order:4;max-height:240px;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;font-size:14px;width:100%;box-sizing:border-box}
+  #rmbTextStats th,#rmbTextStats td{min-width:44px;height:44px;padding:4px 8px;box-sizing:border-box}
+  #rmbTextStats th:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
+  #rmbTextStats thead th{position:sticky;background:var(--panel);z-index:2}
+  #rmbTextStats thead tr:first-child th{top:0}
+  #rmbTextStats thead tr:nth-child(2) th{top:44px}
+  #rmbTextStats thead th:first-child{z-index:3}
+  #rmbTextStats .rmb-count-note{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+  #rmbPaintTools{order:5}#rmbWaveTools{order:6}
+}
+/* A wide phone/tablet must not squeeze this window into the desktop side columns. */
+@media(pointer:coarse) and (min-width:761px) and (max-width:1100px){
+  #w-rmb.win:not(.collapsed){position:fixed!important;left:0!important;top:36px!important;bottom:0!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;overflow:auto!important;z-index:1000!important}
+}
+@media(pointer:coarse) and (max-width:1100px) and (orientation:landscape){
+  #w-rmb .wbody>#rmbCv{height:65vh!important;height:65svh!important;min-height:180px!important}
+}

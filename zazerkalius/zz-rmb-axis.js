@@ -1,4 +1,4 @@
-/* Manual mirror axes v1. Binary reflection resamples source rhombs at target cell centres. */
+/* Manual mirror axes v2. Binary reflection resamples source rhombs at target cell centres. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./zz-rmb-editor.js'):root.ZZRmbEditor);if(typeof module==='object'&&module.exports)module.exports=api;else root.ZZRmbAxis=api;})(globalThis,function(Editor){
   'use strict';const K=Math.sqrt(3)/2;
   function basis(axis){
@@ -35,7 +35,7 @@
   }
   const segmentDistance=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy,t=n?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/n)):0;return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);};
   function mount(cv,cfg){
-    let selectedId=cfg.axes().at(-1)?.id,drag=null,space=false;
+    let selectedId=cfg.axes().at(-1)?.id,drag=null,space=false,touchHandles=false;
     const selected=()=>cfg.axes().find(a=>a.id===selectedId)||null;
     const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
     const world=e=>{const box=cv.getBoundingClientRect(),g=cfg.geometry();return [(e.clientX-box.left-g.ox)/g.tw,(e.clientY-box.top-g.oy)/g.tw];};
@@ -44,11 +44,11 @@
       if(!cancel&&basis(d.preview)){const axes=cfg.axes().filter(a=>a.id!==d.preview.id);axes.push(d.preview);selectedId=d.preview.id;cfg.setAxes(axes);cfg.save();}cfg.redraw();
     }
     cv.addEventListener('pointerdown',e=>{
-      if(!cfg.enabled()||e.button!==0||space)return;consume(e);cv.focus({preventScroll:true});const p=world(e),tol=9/cfg.geometry().tw;
+      if(!cfg.enabled()||e.button!==0||space)return;consume(e);cv.focus({preventScroll:true});touchHandles=e.pointerType==='touch';const p=world(e),tol=(touchHandles?22:9)/cfg.geometry().tw;
       let found=null,part='line';
       for(const axis of [...cfg.axes()].reverse()){
-        if(Math.hypot(p[0]-axis.a[0],p[1]-axis.a[1])<=tol){found=axis;part='a';break;}
-        if(Math.hypot(p[0]-axis.b[0],p[1]-axis.b[1])<=tol){found=axis;part='b';break;}
+        const da=Math.hypot(p[0]-axis.a[0],p[1]-axis.a[1]),db=Math.hypot(p[0]-axis.b[0],p[1]-axis.b[1]);
+        if(Math.min(da,db)<=tol){found=axis;part=da<=db?'a':'b';break;}
         if(segmentDistance(p,axis.a,axis.b)<=tol){found=axis;break;}
       }
       const point=snap(p);if(!point)return;
@@ -81,7 +81,7 @@
       const screen=p=>[geometry.ox+p[0]*geometry.tw,geometry.oy+p[1]*geometry.tw];
       for(const axis of axes){const a=screen(axis.a),b=screen(axis.b),active=axis.id===selectedId;
         g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle='#000';g.lineWidth=4;g.stroke();g.strokeStyle=active?'#ffbf69':'#b59bff';g.lineWidth=1.5;g.stroke();
-        if(active&&cfg.enabled())for(const p of [a,b]){g.beginPath();g.moveTo(p[0],p[1]-5);g.lineTo(p[0]+5,p[1]);g.lineTo(p[0],p[1]+5);g.lineTo(p[0]-5,p[1]);g.closePath();g.fillStyle='#ffbf69';g.fill();}
+        if(active&&cfg.enabled())for(const p of [a,b]){const size=touchHandles?9:5;g.beginPath();g.moveTo(p[0],p[1]-size);g.lineTo(p[0]+size,p[1]);g.lineTo(p[0],p[1]+size);g.lineTo(p[0]-size,p[1]);g.closePath();g.fillStyle='#ffbf69';g.fill();}
       }g.restore();
     }
     return {selected,apply,remove,toggleSegment,paint,cancel(){if(drag)finish(true);space=false;}};
