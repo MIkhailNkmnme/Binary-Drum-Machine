@@ -5011,13 +5011,12 @@ function renderRmb(){
   const tw = r.s, hw = tw / 2, h = tw * 0.8660254, X = (p) => r.ox + p * hw, Y = (i) => r.oy + i * h;
   const c1 = r.c1 || coneCss("--b1", "#22d3ee"), c0 = r.c0 || coneCss("--b0", "#7d8699");
   g.fillStyle = r.bg || coneCss("--panel2", "#141a24"); g.fillRect(0, 0, Wc, Hc);
-  // ▦ сетка — решётка на всё окно, от ряда 1
-  if (r.out && M) { const E = new Path2D(), sl = hw / h, y1 = Y(1), base = hs[0];
-    for (let i = Math.floor(-r.oy / h); i <= Math.ceil((Hc - r.oy) / h); i++) { E.moveTo(0, Y(i)); E.lineTo(Wc, Y(i)); }
-    const span = Hc * sl + tw, j0 = Math.floor((-span - X(base)) / tw) - 1, j1 = Math.ceil((Wc + span - X(base)) / tw) + 1;
-    if (j1 - j0 < 4000) for (let j = j0; j <= j1; j++) { const xb = X(base) + j * tw;
-      E.moveTo(xb + y1 * sl, 0); E.lineTo(xb - (Hc - y1) * sl, Hc); E.moveTo(xb - y1 * sl, 0); E.lineTo(xb + (Hc - y1) * sl, Hc); }
-    g.strokeStyle = "rgba(160,170,190,.16)"; g.lineWidth = 1; g.stroke(E); }
+  // Grid follows the very same hs/u0 coordinates as the cells in every inclination.
+  if(r.out&&M&&window.ZZRmbGrid){const grid=new Path2D();
+    const segments=window.ZZRmbGrid.segments({hs,u0,alignment:r.al,tw,ox:r.ox,oy:r.oy,width:Wc,height:Hc});
+    for(const [x0,y0,x1,y1] of segments){grid.moveTo(x0,y0);grid.lineTo(x1,y1);}
+    g.strokeStyle="rgba(160,170,190,.16)";g.lineWidth=1;g.stroke(grid);
+  }
   const i0 = Math.max(0, Math.floor(-r.oy / h) - 1), i1 = Math.min(M - 1, Math.ceil((Hc - r.oy) / h) + 1);
   if (Z.cur >= i0 && Z.cur <= i1) { g.fillStyle = coneCss("--acc", "#b98cf0"); g.globalAlpha = 0.12; g.fillRect(0, Y(Z.cur), Wc, h); g.globalAlpha = 1; }
   const P = { u1: new Path2D(), u0: new Path2D(), d1: new Path2D(), d0: new Path2D(), e: new Path2D() }, HT = [0, 1, 2, 3].map(() => [new Path2D(), new Path2D()]);
