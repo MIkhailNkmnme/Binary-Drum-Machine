@@ -1,4 +1,4 @@
-/* Маятник v0.490 · МАЯ-019. Display layers; field bits and source canvases are never edited. */
+/* Маятник v0.491 · МАЯ-019/020. Display layers; field bits and source canvases are never edited. */
 (function(root){
   'use strict';
   function tintPixels(bytes,hex){
@@ -14,7 +14,8 @@
     let stored={};try{stored=options.load?.()||{};}catch(_){}
     const settings=d=>({visible:d.visible,opacity:d.opacity,tint:d.tint,x:d.x,y:d.y,order:d.order});
     const ready=i=>!!(i?.source&&i.rect&&i.enabled!==false);
-    const desc=i=>i?{id:i.id,name:i.name,kind:i.kind,...settings(i),removable:i.removable,capturable:ready(i)}:null;
+    const centerable=i=>ready(i)&&['overlay','snapshot'].includes(i.kind)&&Number.isFinite(i.pivot?.x)&&Number.isFinite(options.axisX?.());
+    const desc=i=>i?{id:i.id,name:i.name,kind:i.kind,...settings(i),removable:i.removable,capturable:ready(i),centerable:centerable(i)}:null;
     const ordered=()=>[...items.values()].sort((a,b)=>a.order-b.order);
     const persist=()=>{const prefs={...stored};for(const i of items.values())if(i.kind!=='snapshot')prefs[i.id]=settings(i);stored=prefs;try{options.save?.(prefs);}catch(_){}};
     const notify=()=>{persist();for(const fn of listeners)fn();};
@@ -47,6 +48,11 @@
         [a[n],a[j]]=[a[j],a[n]];a.forEach((i,k)=>i.order=k);redraw();notify();return true;},
       remove(id=selected){const i=items.get(id);if(!i||!i.removable)return false;items.delete(id);i.node?.remove?.();if(selected===id)selected=ordered()[0]?.id||null;options.remove?.(id,i.kind);redraw();notify();return true;},
       reset(id=selected){return api.set(id,{visible:true,opacity:100,tint:null,x:0,y:0});},
+      center(id=selected){const i=items.get(id);if(!centerable(i))return false;
+        const delta=options.axisX()-api._pivot(id).x,x=i.x+delta;if(!Number.isFinite(x)||Math.abs(x)>1e6)return false;
+        if(Math.abs(delta)<1e-9)return true;
+        // The adapter compensates a linked original before its reference axis moves. Never select/rebind here.
+        options.beforeCenter?.(id,delta);api.set(id,{x});return true;},
       capture(id=selected){const i=items.get(id);if(!i?.source||!i.rect||i.enabled===false)return null;
         const raw=make();raw.width=i.source.width;raw.height=i.source.height;raw.getContext('2d').drawImage(i.source,0,0);
         const key='snapshot:'+(++serial),copy=add(key,{name:'Фиксация '+serial,kind:'snapshot',opacity:i.opacity,tint:i.tint});

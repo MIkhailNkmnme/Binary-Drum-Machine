@@ -28,6 +28,7 @@ function setup(){
     select(id){calls.push(['select',id]);selected=id;emit();},
     set(id,patch){calls.push(['set',id,JSON.parse(JSON.stringify(patch))]);Object.assign(this.get(id),patch);emit();},
     move(id,delta){calls.push(['move',id,delta]);const i=layers.findIndex(d=>d.id===id),j=i+delta;if(j>=0&&j<layers.length)[layers[i],layers[j]]=[layers[j],layers[i]];emit();},
+    center(id){calls.push(['center',id]);this.get(id).x=0;emit();},
     capture(id){calls.push(['capture',id]);layers.push({...this.get(id),id:'snapshot:1',name:'Фиксация 1',kind:'snapshot',removable:true});selected='snapshot:1';emit();},
     remove(id){calls.push(['remove',id]);layers=layers.filter(d=>d.id!==id);selected=layers[0]?.id;emit();},
     reset(id){calls.push(['reset',id]);Object.assign(this.get(id),{visible:true,opacity:100,tint:null,x:0,y:0});emit();},
@@ -83,4 +84,23 @@ test('arrow hold repeats through registry and stops on release; absent raster di
   e.events.pointerup();assert.equal(e.timers.size,0);arrow.onclick({detail:1});assert.equal(e.api.get().x,-2,'release click does not add another step');arrow.onclick({detail:1});assert.equal(e.api.get().x,-3);
   Object.assign(e.api.get(),{capturable:false});e.emit();assert.equal(e.button('layerCapture').disabled,true);const count=e.calls.length;e.button('layerCapture').click();assert.equal(e.calls.length,count);
   e.api.select('missing');assert.equal(e.button('layerSelect').disabled,false,'existing layers remain selectable');assert.equal(e.input('x').disabled,true);assert.equal(e.button('layerVisible').disabled,true);assert.equal(e.button('layerReset').disabled,true);
+});
+
+test('По оси uses selected layer registry capability; does not edit Y/opacity or operate on incompatible layers',()=>{
+  const e=setup(),button=e.button('layerCenter');assert.equal(button.disabled,true);const before=e.calls.length;button.click();assert.equal(e.calls.length,before);
+  e.api.set('overlay',{centerable:true,x:19,y:-7,opacity:0,visible:false});button.click();assert.deepEqual(e.calls.at(-1),['center','overlay']);assert.equal(e.api.get().x,0);assert.equal(e.api.get().y,-7);assert.equal(e.api.get().opacity,0);assert.equal(e.api.get().visible,false);
+  assert.equal(button.getAttribute('aria-label'),button.title);assert.match(button.title,/оси оригинала/);
+  e.api.select('original');assert.equal(button.disabled,true);e.api.select('template:7');assert.equal(button.disabled,true);e.api.select('overlay');e.button('layerCapture').click();assert.equal(button.disabled,false);button.click();assert.deepEqual(e.calls.at(-1),['center','snapshot:1']);
+});
+
+test('real Площади button По оси is inserted, migrated and calls mayOvl.center only when capability allows',()=>{
+  const buttons={},inserted=[],areas=[],sync=[];let centers=0,layouts=0,centerable=false;
+  const e=vm.createContext({document:{createElement:()=>({})},window:{mayOvl:{get:()=>({n:1,h0:8,pos:'G',alpha:50,centerable}),center(){centers++;}}},placeTools(){layouts++;},toolSync:sync,
+    ptBtn(n,kind,src,onclick){return buttons[n]={dataset:{n},onclick,classList:{toggle(){}},querySelector:()=>null,setAttribute(k,v){this[k]=v;}};},
+    gView:{querySelector:()=>({after(...nodes){inserted.push(...nodes);}})},tools:{querySelector:s=>inserted.find(b=>s==='[data-n='+b.dataset.n+']')},gAreas:{append:b=>areas.push(b)}});
+  const placement=menu.match(/gView\.querySelector\('\[data-n="fixMirror"\]'\)\.after\([^;]+;/)[0],migration=menu.split('\n').find(line=>line.includes("for (const n of ['sawFull'")&&line.includes("'ovlCenter'"));
+  const block=menu.slice(menu.indexOf('    const ovp ='),menu.indexOf('    // v0.270:'));
+  for(const name of placement.slice(placement.indexOf('.after(')+7,-2).split(',').map(x=>x.trim()))e[name]={dataset:{n:name}};
+  vm.runInContext(block+'\n'+placement+'\n'+migration,e);const button=areas.find(b=>b.dataset.n==='ovlCenter');assert.ok(button);sync[0]();assert.equal(button.disabled,true);button.onclick();assert.equal(centers,0);
+  centerable=true;sync[0]();assert.equal(button.disabled,false);button.onclick();assert.equal(centers,1);assert.equal(layouts,2);assert.equal(button['aria-label'],button.title);
 });

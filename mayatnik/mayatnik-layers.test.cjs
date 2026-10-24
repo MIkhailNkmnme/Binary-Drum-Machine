@@ -97,3 +97,30 @@ test('individual template adapter and hit testing use display offsets/order whil
   assert.equal(C.hitTemplate(.5,.5),null);assert.equal(C.hitTemplate(4.5,2.5).item,item);assert.equal(JSON.stringify(item.view),before);assert.deepEqual(item.parts[0].canvas.bytes,source);
   M.set('template:t',{visible:false});assert.equal(C.hitTemplate(4.5,2.5),null);assert.equal(M.get('template:t').capturable,true);
 });
+test('center live R/B/RGB uses the current field axis, keeps vertical position/scale/pixels/opacity and is idempotent',()=>{
+  for(const pos of ['R','B','RGB'])for(const dpr of [1.25,1.5]){
+    const e=adapter({dpr}),C=e.ctx,M=C.mayLayers;C.st.ovl={n:0,h0:8,pos};e.api.step();M.set('overlay',{x:1.35,y:-.7,opacity:25,tint:'#5522ff'});
+    const E=M._entry('overlay'),pixels=E.source.bytes.slice(),size=[E.source.width,E.source.height],before=M.get('overlay'),source=e.snapshot(),field=C.f,scale=C.scale(),r=e.cv.getBoundingClientRect(),axis=r.left+(C.geo.anchor-C.VX+.5)*scale;
+    assert.equal(e.api.get().centerable,true);assert.equal(e.api.center(),true);assert.ok(Math.abs(M._pivot('overlay').x-axis)<1e-12);assert.notEqual(axis,13,'axis is not viewport centre');
+    const after=M.get('overlay');for(const k of ['y','opacity','tint','visible','order'])assert.equal(after[k],before[k]);assert.equal(e.api.get().pos,pos);assert.equal(C.scale(),scale);assert.equal(C.f,field);assert.equal(e.snapshot(),source);assert.deepEqual(E.source.bytes,pixels);assert.deepEqual([E.source.width,E.source.height],size);
+    let changes=0;const stop=M.subscribe(()=>changes++);assert.equal(e.api.center(),true);assert.equal(changes,0);stop();
+  }
+});
+test('center active fixed layer compensates original X: actual original position, both Y coordinates and scale stay fixed',()=>{
+  const e=adapter(),C=e.ctx,M=C.mayLayers;e.api.step();e.api.step();e.api.freeze();const id=C.ovlFrozen.layerId;
+  M.set(id,{x:1.23,y:2.17,opacity:0});M.set('original',{x:2.45,y:1.13});
+  const r=e.cv.getBoundingClientRect(),before={x:r.left,y:r.top,scale:C.scale(),oy:M.get('original').y,sy:M.get(id).y,fy:C.ovlFrozen.y},pixels=M._entry(id).source.bytes.slice(),axis=r.left+3.5*C.scale();
+  assert.equal(M.get(id).centerable,true);assert.equal(M.center(id),true);assert.ok(Math.abs(M._pivot(id).x-axis)<1e-12);const after=e.cv.getBoundingClientRect();
+  assert.ok(Math.abs(after.left-before.x)<1e-10);assert.ok(Math.abs(after.top-before.y)<1e-10);assert.ok(Math.abs(M.get('original').x)<1e-10);assert.equal(M.get('original').y,before.oy);assert.equal(M.get(id).y,before.sy);assert.equal(C.ovlFrozen.y,before.fy);assert.equal(C.scale(),before.scale);assert.equal(M.get(id).opacity,0);assert.deepEqual(M._entry(id).source.bytes,pixels);
+  assert.equal(M.center(id),true);assert.equal(C.ovlFrozen.layerId,id);assert.equal(e.api.get().linked,true);
+});
+test('center inactive copy neither selects it nor changes the active magnet or original offsets',()=>{
+  const e=adapter(),C=e.ctx,M=C.mayLayers;e.api.step();e.api.freeze();const older=C.ovlFrozen.layerId;e.api.freeze();e.api.step();e.api.freeze();const active=C.ovlFrozen.layerId;
+  M.set('original',{x:1.4,y:.9});M.set(older,{x:-2.2,y:-1.6});M.select('original');const original=M.get('original'),r=e.cv.getBoundingClientRect(),activeBefore={...C.ovlFrozen};
+  assert.equal(M.center(older),true);assert.ok(Math.abs(M._pivot(older).x-(r.left+3.5*C.scale()))<1e-10);assert.equal(M.selected(),'original');assert.equal(C.ovlFrozen.layerId,active);assert.deepEqual({...C.ovlFrozen},activeBefore);assert.deepEqual(M.get('original'),original);assert.equal(M.get(older).y,-1.6);assert.deepEqual(e.cv.getBoundingClientRect(),r);
+});
+test('center capability excludes original, absent source/geometry and templates without pivot',()=>{
+  const e=adapter(),C=e.ctx,M=C.mayLayers;assert.equal(M.get('original').centerable,false);assert.equal(M.get('overlay').centerable,false);assert.equal(M.center('original'),false);assert.equal(e.api.center(),false);
+  frame(M,'template:no-pivot',undefined,{kind:'template'});M._frame('template:no-pivot',{pivot:null});const copy=M.capture('template:no-pivot');assert.equal(M.get(copy).centerable,false);assert.equal(M.center(copy),false);
+  e.api.step();assert.equal(M.get('overlay').centerable,true);C.geo=null;const before=M.get('overlay');assert.equal(before.centerable,false);assert.equal(M.center('overlay'),false);assert.deepEqual(M.get('overlay'),before);
+});
