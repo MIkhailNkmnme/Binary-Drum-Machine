@@ -1,4 +1,4 @@
-/* Маятник v0.489 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.490 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -560,6 +560,74 @@
   const gAreas = ptGroup('Площади');
   gAreas.parentElement.style.setProperty('--c', '#b48cff');
   for (const n of ['sawFull', 'sectors', 'areas', 'areaFreeze', 'ovlStep', 'ovlPos', 'ovlH0', 'ovlFreeze', 'ovlAlpha', 'ovlOriginal', 'ovlReset', 'lineMeasures']) { const b = tools.querySelector('[data-n=' + n + ']'); if (b) gAreas.append(b); }
+  // v0.490 (МАЯ-019): группа — только клиент реестра; настройки не пересчитывают поле и не меняют исходные пиксели.
+  function installLayersMenu(api) {
+    if(!api)return;
+    Object.assign(ptNames,{layerSelect:'Слой',layerVisible:'Виден',layerTint:'Цвет',layerNative:'Родные',layerBack:'Назад',layerFront:'Вперёд',layerCapture:'Копия',layerRemove:'Удалить',layerReset:'Сброс слоя'});
+    const row=ptGroup('Слои'),group=row.parentElement;group.classList.add('pt-layers');group.style.setProperty('--c','#73e4a5');group.dataset.k='Слои';
+    const current=()=>api.get(),change=patch=>{const layer=current();if(layer)api.set(layer.id,patch);};
+    const caption=(b,text)=>{const label=b.querySelector('.gz-nm');if(label&&label.textContent!==text)label.textContent=text;};
+    const describe=(b,text)=>{b.title=text;b.setAttribute('aria-label',text);};
+    const command=(id,kind,help,run)=>{const source=document.createElement('button');source.title=help;const b=ptBtn(id,kind,source,()=>{if(!b.disabled)run();});
+      b.classList.add('gz-hx');b.querySelector('i')?.classList.add('gz-ic');const label=document.createElement('span');label.className='gz-nm';label.textContent=ptNames[id];b.append(label);describe(b,help);return b;};
+    const pair=(left,right)=>{const p=document.createElement('div');p.className='gz-hx gz-pair gz-split may-layer-pair';p.dataset.n=left.dataset.n+'-'+right.dataset.n;
+      for(const [i,b]of [left,right].entries()){b.className='gz-half gz-h'+i;p.append(b);}return p;};
+    const choose=command('layerSelect','grid4','Выбрать содержательный слой: оригинал, наложение, фиксацию или шаблон.',()=>{});
+    choose.onclick=null;choose.setAttribute('aria-haspopup','true');choose.setAttribute('aria-expanded','false');row.append(choose);
+    const visible=command('layerVisible','eye','Показать или скрыть выбранный слой без изменения его исходника.',()=>{const layer=current();if(layer)change({visible:!layer.visible});});row.append(visible);
+    const colour=document.createElement('input');colour.type='color';colour.className='may-layer-colour';colour.tabIndex=-1;colour.setAttribute('aria-label','Цвет выбранного слоя');
+    colour.addEventListener('input',()=>change({tint:colour.value}));
+    const tint=command('layerTint','colour','Оттенки выбранного цвета для слоя. Исходные пиксели и родные цвета не переписываются.',()=>{const layer=current();if(!layer)return;colour.value=layer.tint||'#73e4a5';try{colour.showPicker();}catch(_){colour.click();}});
+    const native=command('layerNative','reset','Родные цвета выбранного слоя: снять цветовой оттенок.',()=>change({tint:null}));row.append(pair(tint,native));group.append(colour);
+    const valueControl=(key,label,type)=>{
+      const box=document.createElement('div');box.className='gz-hx gz-control gz-val may-layer-value may-standard';box.dataset.n='layer-'+key;describe(box,label);
+      const input=document.createElement('input');input.type=type;input.id='mayLayer-'+key;input.setAttribute('aria-label',label);input.step=type==='range'?'1':'any';
+      if(type==='range'){input.min='0';input.max='100';box.classList.add('may-layer-opacity');}
+      const mid=document.createElement('label');mid.className='gz-mid';mid.htmlFor=input.id;
+      const tag=document.createElement('span');tag.className='may-layer-axis';tag.textContent=type==='range'?'':key.toUpperCase();mid.append(tag,input);
+      let output=null;if(type==='range'){output=document.createElement('output');output.htmlFor=input.id;mid.append(output);}
+      input.addEventListener(type==='range'?'input':'change',()=>{if(input.disabled||input.value.trim()==='')return;const n=Number(input.value);if(Number.isFinite(n))change({[key]:type==='range'?Math.max(0,Math.min(100,n)):n});});
+      const arrows=[-1,1].map(delta=>{const b=document.createElement('button');b.type='button';b.className='gz-a';b.textContent=delta<0?'‹':'›';describe(b,label+(delta<0?' — уменьшить на 1':' — увеличить на 1'));
+        const step=()=>{const layer=current();if(!layer||b.disabled)return;const n=Number(layer[key])+delta;change({[key]:type==='range'?Math.max(0,Math.min(100,n)):n});};
+        let repeated=false,timer=0;b.onclick=event=>{if(!repeated||!event?.detail)step();repeated=false;};
+        b.addEventListener('pointerdown',event=>{if(event.button!==0||b.disabled)return;repeated=false;clearTimeout(timer);const again=()=>{repeated=true;step();timer=setTimeout(again,80);};timer=setTimeout(again,350);
+          const stop=()=>clearTimeout(timer);addEventListener('pointerup',stop,{once:true});addEventListener('pointercancel',stop,{once:true});});return b;});
+      box.append(arrows[0],mid,arrows[1]);row.append(box);return {box,input,arrows,output};
+    };
+    const opacity=valueControl('opacity','Видимость выбранного слоя, от 0 до 100 процентов','range'),x=valueControl('x','Сдвиг выбранного слоя X, CSS px','number'),y=valueControl('y','Сдвиг выбранного слоя Y, CSS px','number');
+    const back=command('layerBack','back','Назад: переместить выбранный слой на один уровень ниже.',()=>{const layer=current();if(layer)api.move(layer.id,-1);});
+    const front=command('layerFront','forward','Вперёд: переместить выбранный слой на один уровень выше.',()=>{const layer=current();if(layer)api.move(layer.id,1);});row.append(pair(back,front));
+    const capture=command('layerCapture','copy','Снимок-копия выбранного слоя: новая самостоятельная фиксация в текущем сеансе.',()=>{const layer=current();if(layer)api.capture(layer.id);});
+    const remove=command('layerRemove','cross','Удалить выбранную допустимую копию. Оригинал, наложение и шаблоны не удаляются.',()=>{const layer=current();if(layer?.removable)api.remove(layer.id);});row.append(pair(capture,remove));
+    const reset=command('layerReset','reset','Сброс выбранного слоя: родные цвета, видимость 100%, X=0, Y=0 и показать. Остальные слои не меняются.',()=>{const layer=current();if(layer)api.reset(layer.id);});row.append(reset);
+    let openList=null,listSignature='';
+    const fillList=list=>{
+      const layers=api.list(),signature=JSON.stringify(layers.map(layer=>[layer.id,layer.name,layer.kind]));
+      if(signature!==listSignature||!list.children.length){listSignature=signature;list.replaceChildren();
+        for(const layer of layers){const b=command('layerSelect','grid4','Выбрать слой: '+layer.name,()=>api.select(layer.id));b.dataset.layerId=layer.id;caption(b,layer.name);
+          if(layer.kind==='template')b.querySelector('.gz-nm').setAttribute('data-user-label','');list.append(b);}
+      }
+      for(const b of list.children){const on=b.dataset.layerId===api.selected();b.classList.toggle('gz-on',on);b.setAttribute('aria-pressed',String(on));}
+    };
+    ZerkGrozd.listHover(choose,{options:()=>api.list().map(layer=>({name:layer.name,on:layer.id===api.selected(),pick:()=>api.select(layer.id)})),color:()=>'#73e4a5',host:()=>group,
+      placement:'below',placed(list,owner){openList=list;choose.setAttribute('aria-expanded','true');list.classList.add('may-layer-options');fillList(list);hideListUnder(list,owner);
+        const r=row.getBoundingClientRect(),h=Math.max(24,Math.min(api.list().length*26-2,Math.max(24,innerHeight-28))),left=r.right+126<=innerWidth-4?r.right+6:Math.max(4,r.left-126);
+        Object.assign(list.style,{display:'flex',flexDirection:'column',width:'120px',maxWidth:'120px',gridTemplateRows:'none',left:left+'px',top:Math.max(14,Math.min(owner.getBoundingClientRect().top,innerHeight-h-14))+'px',maxHeight:h+'px'});
+        list.style.setProperty('overflow-y',api.list().length*26-2>h?'auto':'visible','important');},closed(){openList=null;listSignature='';choose.setAttribute('aria-expanded','false');}});
+    const sync=()=>{
+      const layer=current(),layers=api.list(),index=layer?layers.findIndex(item=>item.id===layer.id):-1;
+      choose.disabled=!layers.length;for(const b of [visible,tint,native,capture,reset])b.disabled=!layer;
+      back.disabled=!layer||index<=0;front.disabled=!layer||index>=layers.length-1;remove.disabled=!layer?.removable;capture.disabled=!layer||layer.capturable===false;colour.disabled=!layer;
+      const selectedName=layer?.name||'Нет слоёв',label=choose.querySelector('.gz-nm');label.toggleAttribute('data-user-label',layer?.kind==='template');caption(choose,selectedName);describe(choose,'Выбранный слой: '+selectedName+'. Открыть список слоёв.');
+      visible.classList.toggle('gz-on',!!layer?.visible);visible.setAttribute('aria-pressed',String(!!layer?.visible));caption(visible,layer?.visible?'Виден':'Скрыт');
+      tint.classList.toggle('gz-on',!!layer?.tint);native.classList.toggle('gz-on',!!layer&&!layer.tint);tint.setAttribute('aria-pressed',String(!!layer?.tint));native.setAttribute('aria-pressed',String(!!layer&&!layer.tint));
+      for(const [key,control]of [['opacity',opacity],['x',x],['y',y]]){control.input.disabled=!layer;for(const arrow of control.arrows)arrow.disabled=!layer;
+        if(document.activeElement!==control.input)control.input.value=String(layer?.[key]??(key==='opacity'?100:0));if(control.output)control.output.textContent=(layer?.opacity??100)+'%';}
+      if(openList?.isConnected)fillList(openList);
+    };
+    const unsubscribe=api.subscribe(sync);addEventListener('pagehide',()=>unsubscribe?.(),{once:true});sync();
+  }
+  installLayersMenu(window.mayLayers);
   // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
   // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
   { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
@@ -966,7 +1034,8 @@
     activeList={list,group};scheduleGroups();
   };
   for (const b of document.querySelectorAll('.gz-lst')) if (b.gzList) {
-    Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});
+    if(b.dataset.n==='layerSelect'){const closed=b.gzList.closed;b.gzList.closed=(...args)=>{closed?.(...args);clearListUnder();};}
+    else Object.assign(b.gzList, {placement:'right', placed:hideListUnder, closed:clearListUnder});
     // v0.446: an inset, shorter chevron complements the existing right edge.
     if(!b.querySelector(':scope > .may-list-inner-arrow')){
       const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.classList.add('may-list-inner-arrow');
