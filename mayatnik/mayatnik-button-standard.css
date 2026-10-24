@@ -156,12 +156,12 @@ body.mayatnik-menu-ready header #paintTools.pt-dd .pt-lib .template-actions-pair
 .may-overlap-shade{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:20;fill:#000;opacity:.42}
 
 /* One diamond, retaining the live About and Help buttons as its two halves. */
-#mayCorner #mayInfoDiamond{display:flex;width:36px;height:48px;flex:0 0 36px;gap:0;--c:#80aee8}
-#mayCorner #mayInfoDiamond>button.gz-hx{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 18px!important;width:18px!important;min-width:18px!important;max-width:18px!important;height:48px!important;min-height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:#dfe6f5;font-size:11px!important;cursor:pointer;box-shadow:none!important}
+#mayCorner #mayInfoDiamond{display:flex;width:48px;height:48px;flex:0 0 48px;gap:0;--c:#80aee8}
+#mayCorner #mayInfoDiamond>button.gz-hx{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 24px!important;width:24px!important;min-width:24px!important;max-width:24px!important;height:48px!important;min-height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;color:#dfe6f5;font-size:11px!important;cursor:pointer;box-shadow:none!important}
 #mayCorner #mayInfoDiamond>#mayAbout{clip-path:polygon(100% 0,100% 100%,0 50%)!important}
 #mayCorner #mayInfoDiamond>#mayHelp{clip-path:polygon(0 0,100% 50%,0 100%)!important}
 #mayInfoDiamond>button::before,#mayInfoDiamond>button::after{display:none!important}
-#mayInfoDiamond>button>svg{position:absolute;inset:0;width:18px;height:48px;fill:#1b2430;stroke:#52688c;stroke-width:1px;pointer-events:none}
+#mayInfoDiamond>button>svg{position:absolute;inset:0;width:24px;height:48px;fill:#1b2430;stroke:#52688c;stroke-width:1px;pointer-events:none}
 #mayInfoDiamond>button>span{position:relative;pointer-events:none}
 #mayInfoDiamond>#mayAbout>span{transform:translateX(3px)}
 #mayInfoDiamond>#mayHelp>span{transform:translateX(-3px)}

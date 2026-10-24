@@ -1,4 +1,4 @@
-/* Маятник v0.506 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.507 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -848,7 +848,7 @@
     // v0.506: both original actions share one split diamond at every viewport width.
     const infoDiamond=document.createElement('div');infoDiamond.id='mayInfoDiamond';infoDiamond.dataset.noMini='';$('mayCorner').append(infoDiamond);
     infoDiamond.append($('mayAbout'),$('mayHelp'));
-    for(const [id,label,title,points] of [['mayAbout','i','Что такое маятник','17,1 17,47 1,24'],['mayHelp','?','Подсказки к кнопкам и координаты','1,1 17,24 1,47']]){const b=$(id);b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.innerHTML='<svg viewBox="0 0 18 48" aria-hidden="true"><polygon points="'+points+'"/></svg><span>'+label+'</span>';}
+    for(const [id,label,title,points] of [['mayAbout','i','Что такое маятник','23,1 23,47 1,24'],['mayHelp','?','Подсказки к кнопкам и координаты','1,1 23,24 1,47']]){const b=$(id);b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.innerHTML='<svg viewBox="0 0 24 48" aria-hidden="true"><polygon points="'+points+'"/></svg><span>'+label+'</span>';}
     narrow.addEventListener('change', () => shut());
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
     // v0.447: the scoped SVG adapter draws the silhouette from real control bounds.
@@ -905,7 +905,7 @@
         window.MayatnikTemplatePanel.attachControls(row);
         g.id='mayTemplateLauncher';g.setAttribute('data-no-mini','');document.body.append(g);
         l.className='pt-l';l.title='Шаблоны';l.setAttribute('aria-label','Шаблоны');
-        l.innerHTML='<svg class="may-template-diamond" viewBox="0 0 36 48" aria-hidden="true"><path d="M18 1L35 24 18 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
+        l.innerHTML='<svg class="may-template-diamond" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 1L47 24 24 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
 
         const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());l.setAttribute('aria-expanded',on);l.setAttribute('aria-pressed',on);};
         l.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
