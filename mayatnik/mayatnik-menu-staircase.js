@@ -1,4 +1,4 @@
-/* Маятник v0.492 · МАЯ-022: одна цепочка пунктов вправо-вниз, без изменения их содержимого. */
+/* Маятник v0.493 · МАЯ-022: один ровный столбец справа от владельца, без изменения содержимого. */
 (function (root, factory) {
   'use strict';
   const api = factory();
@@ -8,9 +8,9 @@
   'use strict';
   const states = new WeakMap();
   const finite = (n, fallback = 0) => Number.isFinite(Number(n)) ? Number(n) : fallback;
-  const step = (r, gap) => { const cut = Math.min(12, r.width / 2, r.height / 2); return {x:r.width-cut+gap,y:r.height-cut+gap}; };
-  function plan(items, {gap = 2} = {}) {
-    gap = Math.max(0, finite(gap, 2));
+  const step = (r, gap) => ({x:0,y:r.height+gap});
+  function plan(items, {gap = 0} = {}) {
+    gap = Math.max(0, finite(gap, 0));
     let x=0,y=0,width=0,height=0;
     const rows = items.map(item => {
       const w=finite(item.width),h=finite(item.height);
@@ -24,11 +24,12 @@
     pad=Math.max(0,finite(pad,14));
     const v={left:finite(viewport.left),top:finite(viewport.top),width:Math.max(1,finite(viewport.width,1)),height:Math.max(1,finite(viewport.height,1))};
     const contentWidth=p.width+2*pad,contentHeight=p.height+2*pad;
-    const a={width:Math.max(1,finite(anchor.width,120)),height:Math.max(1,finite(anchor.height,24))},d=step(a,p.gap);
+    const a={width:Math.max(1,finite(anchor.width,120)),height:Math.max(1,finite(anchor.height,24))};
     const first=p.items[0]||a,minW=Math.min(v.width,first.width+2*pad),minH=Math.min(v.height,first.height+2*pad);
     const clamp=(n,lo,hi)=>Math.max(lo,Math.min(n,hi));
-    const left=clamp(finite(anchor.left)+d.x-pad,v.left,v.left+v.width-minW);
-    const desiredTop=preferAbove?finite(anchor.top)-contentHeight-p.gap:finite(anchor.top)+d.y-pad;
+    const cut=Math.min(12,a.width/2,a.height/2);
+    const left=clamp(finite(anchor.right,finite(anchor.left)+a.width)-cut-pad,v.left,v.left+v.width-minW);
+    const desiredTop=finite(anchor.top)+a.height-cut-pad;
     const top=clamp(desiredTop,v.top,v.top+v.height-minH);
     const width=Math.min(contentWidth,v.left+v.width-left),height=Math.min(contentHeight,v.top+v.height-top);
     return {left,top,width,height,contentWidth,contentHeight,offsetX:pad,offsetY:pad,overflowX:contentWidth>width,overflowY:contentHeight>height};
@@ -46,7 +47,7 @@
     for(const [el,saved]of s.items)restoreItem(el,saved);
     restore(host,s.host);s.spacer?.remove();host.classList.remove('may-staircase-host');delete host.dataset.mayStaircase;delete host._mayStaircase;states.delete(host);
   }
-  function apply(host, {items=[],anchor,preferAbove=false,viewport,pad=14,gap=2} = {}) {
+  function apply(host, {items=[],anchor,preferAbove=false,viewport,pad=14,gap=0} = {}) {
     if(!host||!anchor)return null;
     const win=host.ownerDocument.defaultView;
     viewport=viewport||{left:4,top:4,width:Math.max(1,win.innerWidth-8),height:Math.max(1,win.innerHeight-8)};
@@ -67,7 +68,7 @@
     const p=plan(measured,{gap}),g=place(p,{anchor:anchor.getBoundingClientRect(),viewport,preferAbove,pad});
     const scrollLeft=host.scrollLeft,scrollTop=host.scrollTop;
     host.classList.add('may-staircase-host');host.dataset.mayStaircase='1';
-    for(const [k,v]of Object.entries({position:'fixed',left:px(g.left),top:px(g.top),right:'auto',bottom:'auto',display:'block','box-sizing':'border-box',padding:'0',margin:'0',width:px(g.width),height:px(g.height),'min-width':'0','min-height':'0','max-width':px(g.width),'max-height':px(g.height),'overflow-x':g.overflowX||g.overflowY?'auto':'visible','overflow-y':g.overflowX||g.overflowY?'auto':'visible'}))put(host,k,v);
+    for(const [k,v]of Object.entries({position:'fixed',left:px(g.left),top:px(g.top),right:'auto',bottom:'auto',display:'block','box-sizing':'border-box',padding:'0',margin:'0',width:px(g.width),height:px(g.height),'min-width':'0','min-height':'0','max-width':px(g.width),'max-height':px(g.height),'overflow-x':g.overflowX?'auto':'hidden','overflow-y':g.overflowY?'auto':'hidden'}))put(host,k,v);
     const rows=p.items.map((r,i)=>({...r,x:r.x+g.offsetX,y:r.y+g.offsetY,element:measured[i].element}));
     for(const r of rows){const el=r.element;el.classList.add('may-staircase-item');
       for(const [k,v]of Object.entries({position:'absolute',left:'var(--may-stair-x)',top:'var(--may-stair-y)',right:'auto',bottom:'auto',margin:'0','--may-stair-x':px(r.x),'--may-stair-y':px(r.y),width:px(r.width),height:px(r.height),'min-width':px(r.width),'max-width':px(r.width),'min-height':px(r.height),'max-height':px(r.height)}))put(el,k,v);

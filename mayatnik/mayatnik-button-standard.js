@@ -1,4 +1,4 @@
-/* Маятник v0.492 — scoped grozd adapter, лесенки раскрытий и ромбы обычных кнопок. Source controls stay intact. */
+/* Маятник v0.493 — scoped grozd adapter, ровные столбцы раскрытий и ромбы обычных кнопок. Source controls stay intact. */
 (() => {
   'use strict';
   const NS='http://www.w3.org/2000/svg';
@@ -22,16 +22,12 @@
     const base=host.getBoundingClientRect(),rows=host._mayStaircase.items.map(({element})=>{const r=element.getBoundingClientRect();return {x:r.left-base.left+host.scrollLeft,y:r.top-base.top+host.scrollTop,w:r.width,h:r.height,mini:element.matches('.may-control-mini,.may-standard-mini')};}).filter(r=>r.w&&r.h);
     const sig=JSON.stringify(rows);if(s.dataset.sig===sig)return false;s.dataset.sig=sig;
     if(!rows.length){s.replaceChildren();return false;}
-    const upper=[],lower=[],point=(x,y)=>x.toFixed(2)+','+y.toFixed(2);
-    for(const r of rows){const c=Math.min(12,r.w/2,r.h/2),nx=r.mini?r.w/2:c,ny=c,xr=r.x+r.w,yb=r.y+r.h;
-      upper.push([r.x+nx,r.y-2],[xr-nx,r.y-2],[xr+2,r.y+ny],[xr+2,yb-ny]);
-      lower.unshift([xr-nx,yb+2],[r.x+nx,yb+2],[r.x-2,yb-ny],[r.x-2,r.y+ny]);
-    }
-    const first=rows[0],last=rows[rows.length-1],fc=Math.min(12,first.w/2,first.h/2),lc=Math.min(12,last.w/2,last.h/2);
-    const fx=first.mini?first.w/2:fc,lx=last.mini?last.w/2:lc;
-    s.replaceChildren();shape(s,'polygon',{points:upper.concat(lower).map(([x,y])=>point(x,y)).join(' '),fill:'#0e1116'});
-    shape(s,'path',{class:'cap',d:`M${first.x} ${first.y+fc} L${first.x+fx} ${first.y} H${first.x+first.w-fx} L${first.x+first.w} ${first.y+fc}`});
-    shape(s,'path',{class:'cap',d:`M${last.x} ${last.y+last.h-lc} L${last.x+lx} ${last.y+last.h} H${last.x+last.w-lx} L${last.x+last.w} ${last.y+last.h-lc}`});
+    const first=rows[0],last=rows[rows.length-1],x=Math.min(...rows.map(r=>r.x)),xr=Math.max(...rows.map(r=>r.x+r.w)),fc=Math.min(12,first.h/2),lc=Math.min(12,last.h/2),right=[[xr-fc,first.y-2]],left=[[x+fc,first.y-2]];
+    rows.forEach((r,i)=>{const c=Math.min(12,r.h/2),yb=r.y+r.h;right.push([xr+2,r.y+c],[xr+2,yb-c]);left.push([x-2,r.y+c],[x-2,yb-c]);if(i<rows.length-1){const mid=(yb+rows[i+1].y)/2;right.push([xr-4,mid]);left.push([x+4,mid]);}});
+    right.push([xr-lc,last.y+last.h+2]);left.push([x+lc,last.y+last.h+2]);
+    s.replaceChildren();shape(s,'polygon',{points:right.concat(left.reverse()).map(([px,py])=>px.toFixed(2)+','+py.toFixed(2)).join(' '),fill:'#0e1116'});
+    shape(s,'path',{class:'cap',d:`M${x} ${first.y+fc} L${x+fc} ${first.y} H${xr-fc} L${xr} ${first.y+fc}`});
+    shape(s,'path',{class:'cap',d:`M${x} ${last.y+last.h-lc} L${x+lc} ${last.y+last.h} H${xr-lc} L${xr} ${last.y+last.h-lc}`});
     return false;
   }
   // v0.449: одна подложка на столбец — радиальный градиент #32393f → #000, зубцы по бокам (острие +2 px, впадина 6 px внутрь), верхняя и нижняя скобки в этом же слое

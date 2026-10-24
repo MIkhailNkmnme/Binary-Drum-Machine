@@ -2,18 +2,18 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const stair=require('./mayatnik-menu-staircase.js');
 const button={width:120,height:24};
-test('every entry advances 110/14, including the first entry from its header',()=>{
+test('every entry stays in one vertical column to the right of its header',()=>{
   const p=stair.plan(Array.from({length:20},()=>button));
-  p.items.forEach((r,i)=>assert.deepEqual(r,{x:110*i,y:14*i,...button}));
-  assert.deepEqual([p.width,p.height],[2210,290]);
-  const g=stair.place(p,{anchor:{left:18,top:7,...button},viewport:{left:0,top:0,width:250,height:57},pad:0});
-  assert.equal(g.left+g.offsetX,128);assert.equal(g.top+g.offsetY,21);
-  assert.equal(g.overflowX,true);assert.equal(g.overflowY,true);
+  p.items.forEach((r,i)=>assert.deepEqual(r,{x:0,y:24*i,...button}));
+  assert.deepEqual([p.width,p.height],[120,480]);
+  const g=stair.place(p,{anchor:{left:18,top:7,...button},viewport:{left:0,top:0,width:400,height:57},pad:0});
+  assert.equal(g.left+g.offsetX,126);assert.equal(g.top+g.offsetY,19);
+  assert.equal(g.overflowX,false);assert.equal(g.overflowY,true);
 });
 test('a library record remains one tall item and clears its last pair before the next step',()=>{
   const p=stair.plan([button,{width:120,height:80},button,{width:34,height:24},button]);
-  assert.deepEqual(p.items.map(r=>[r.x,r.y]),[[0,0],[110,14],[220,84],[330,98],[354,112]]);
-  assert.equal(p.items[2].y-p.items[1].y,70);
+  assert.deepEqual(p.items.map(r=>[r.x,r.y]),[[0,0],[0,24],[0,104],[0,128],[0,152]]);
+  assert.equal(p.items[2].y-p.items[1].y,80);
   assert.equal(p.items.length,5);
 });
 test('narrow viewport clips and scrolls without resizing or wrapping any entry',()=>{
@@ -21,13 +21,13 @@ test('narrow viewport clips and scrolls without resizing or wrapping any entry',
   const g=stair.place(p,{anchor:{left:210,top:250,...button},viewport:{left:4,top:4,width:92,height:200}});
   assert.equal(g.width,92);assert.ok(g.height<=200);assert.equal(g.left,4);
   assert.equal(g.contentWidth,p.width+28);assert.equal(g.contentHeight,p.height+28);
-  assert.equal(JSON.stringify(p),before);assert.equal(p.items[99].x,10890);
+  assert.equal(JSON.stringify(p),before);assert.equal(p.items[99].y,2376);
 });
-test('bottom headers place the viewport above while entry order remains right/down',()=>{
+test('bottom headers keep top alignment and scroll instead of reversing the column',()=>{
   const p=stair.plan([button,button,button]);
   const g=stair.place(p,{anchor:{left:10,top:460,...button},viewport:{left:4,top:4,width:800,height:500},preferAbove:true});
-  assert.ok(g.top+g.height<=460);assert.equal(g.contentHeight,80);
-  assert.ok(p.items[2].x>p.items[1].x&&p.items[2].y>p.items[1].y);
+  assert.ok(g.top+g.offsetY<=472);assert.equal(g.contentHeight,100);assert.equal(g.overflowY,true);
+  assert.equal(p.items[2].x,p.items[1].x);assert.ok(p.items[2].y>p.items[1].y);
 });
 class Style {
   constructor(){this.values=new Map();}
@@ -47,11 +47,11 @@ function fixture(){const doc={defaultView:{innerWidth:320,innerHeight:200},creat
 test('apply preserves DOM/handlers and repeated layout retains two-axis scroll; destroy restores styles',()=>{
   const {host,anchor,items}=fixture();const pick=()=>42;items[0].onclick=pick;host.style.setProperty('width','126px');items[0].style.setProperty('left','7px','important');
   const g=stair.apply(host,{items,anchor});assert.equal(host.children.length,13);assert.equal(g.items[0].element,items[0]);
-  assert.equal(g.left+g.items[0].x,128);assert.equal(g.top+g.items[0].y,21);
+  assert.equal(g.left+g.items[0].x,126);assert.equal(g.top+g.items[0].y,19);
   assert.equal(items[0].parentNode,host);assert.equal(items[0].onclick,pick);assert.equal(g.items.length,12);
   const spacer=host.children[12];assert.equal(spacer.dataset.mayStairIgnore,'1');assert.equal(spacer.attrs['aria-hidden'],'true');
   host.scrollLeft=100;host.scrollTop=10;stair.apply(host,{items,anchor});
-  assert.equal(host.scrollLeft,100);assert.equal(host.scrollTop,10);assert.equal(host.children[12],spacer);
+  assert.equal(host.scrollLeft,0);assert.equal(host.scrollTop,10);assert.equal(host.children[12],spacer);
   stair.destroy(host);assert.equal(host.children.length,12);assert.equal(host.style.getPropertyValue('width'),'126px');
   assert.equal(items[0].style.getPropertyValue('left'),'7px');assert.equal(items[0].style.getPropertyPriority('left'),'important');assert.equal(host._mayStaircase,undefined);
 });
@@ -59,8 +59,8 @@ test('live mini/record size changes are measured naturally, no old inline width 
   const {host,anchor,items}=fixture();stair.apply(host,{items,anchor});
   items[0].natural.width=34;items[1].natural.height=80;
   const g=stair.apply(host,{items,anchor});
-  assert.equal(g.items[0].width,34);assert.equal(g.items[1].x-g.items[0].x,24);
-  assert.equal(g.items[2].y-g.items[1].y,70);
+  assert.equal(g.items[0].width,34);assert.equal(g.items[1].x-g.items[0].x,0);
+  assert.equal(g.items[2].y-g.items[1].y,80);
   assert.equal(items[0].style.getPropertyValue('width'),'34px');
 });
 test('removed/hidden controls and recreated option lists leave no stale steps or spacer',()=>{
@@ -73,7 +73,7 @@ test('removed/hidden controls and recreated option lists leave no stale steps or
 test('a first visit to an inline mini can return to full then mini; original styles survive teardown',()=>{
   const {host,anchor,items}=fixture(),b=items[0];b.classList.add('may-standard','may-control-mini');b.style.setProperty('width','34px','important');b.style.setProperty('min-width','34px','important');
   assert.equal(stair.apply(host,{items,anchor}).items[0].width,34);
-  b.classList.remove('may-control-mini');let g=stair.apply(host,{items,anchor});assert.equal(g.items[0].width,120);assert.equal(g.items[1].x-g.items[0].x,110);
-  b.classList.add('may-control-mini');g=stair.apply(host,{items,anchor});assert.equal(g.items[0].width,34);assert.equal(g.items[1].x-g.items[0].x,24);
+  b.classList.remove('may-control-mini');let g=stair.apply(host,{items,anchor});assert.equal(g.items[0].width,120);assert.equal(g.items[1].x-g.items[0].x,0);
+  b.classList.add('may-control-mini');g=stair.apply(host,{items,anchor});assert.equal(g.items[0].width,34);assert.equal(g.items[1].x-g.items[0].x,0);
   stair.destroy(host);assert.equal(b.style.getPropertyValue('width'),'34px');assert.equal(b.style.getPropertyPriority('width'),'important');
 });
