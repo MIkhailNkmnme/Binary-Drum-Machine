@@ -1,4 +1,4 @@
-/* Маятник v0.495 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.496 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -658,6 +658,30 @@
     return row;
   }
   installManualAxesMenu(railSourceButtons);
+  // v0.496: очистка доступна только в «Очистке»; прежние номера закрепов Раскраски остаются адресами тех же команд.
+  function removePaintClearDuplicates(railButtons) {
+    const box=railButtons.get('bPaintNew')?.closest('.gz-group');if(!box)return;
+    const original=[...box.querySelectorAll('.gz-soty > .gz-hx')],legacy=[...original],moves=[];
+    for(const [i,node]of original.entries()){
+      const parent=node.parentElement,from=node.dataset.n?'group:paint:data:'+node.dataset.n:'group:paint:parent:'+(parent.id||parent.className)+':slot:'+i;
+      if(!node.dataset.n)node.dataset.n='paint-slot:'+i;
+      node.dataset.mayPinGroup='paint';node.dataset.mayPinIndex=String(i);
+      let to='group:paint:data:'+node.dataset.n;
+      for(const id of ['bPaintNew','bFillClear'])if(node===railButtons.get(id)){
+        const proxy=gEdit.querySelector('[data-n="'+id+'"]');if(!proxy)continue;
+        proxy.dataset.mayPinGroup='paint';proxy.dataset.mayPinIndex=String(i);
+        legacy[i]=proxy;railButtons.set(id,proxy);to='group:Очистка:data:'+id;node.remove();
+      }
+      moves.push([from,to]);
+    }
+    manualLegacyCells.set('paint',legacy);
+    try{const key='mayatnik-control-mini-v464',raw=localStorage.getItem(key),saved=JSON.parse(raw||'[]');if(Array.isArray(saved)){
+      const merged=new Set(saved);for(const [from,to]of moves)if(merged.has(from))merged.add(to);
+      if(merged.size!==saved.length){const backup='mayatnik-paint-clear-mini-before-v496';if(!localStorage.getItem(backup))localStorage.setItem(backup,raw);localStorage.setItem(key,JSON.stringify([...merged]));}
+    }}catch(_){}
+  }
+  removePaintClearDuplicates(railSourceButtons);
+
   // v0.356: «точка встречи пусть включена по умолчанию и привязана к Сдвигу кадром и Застыло — все 3 кнопки объедини в одну, как в Хабе, только 3 части»:
   // одна кнопка «Точка | Сдвиг | Застыло» на месте «Застыло»; каждая часть — своя прежняя кнопка (они спрятаны и работают), горит — включена
   { const parts = [['fixCross', 'Точка', 'Точка встречи'], ['fixDragK', 'Сдвиг', 'Сдвиг кадром'], ['fixLines', 'Застыло', 'Застыло']].map(([n, l, t]) => [tools.querySelector('[data-n="' + n + '"]'), l, t]).filter(p => p[0]);
@@ -675,6 +699,42 @@
   // v0.441: кадр — наверху, «Отмена / ось / Повтор» — в нижней полосе.
   const frameBar=$('mayBottomBar'),footerBar=document.createElement('div');footerBar.id='mayFooterBar';document.body.append(footerBar);tools.append(frameBar);
   frameBar.style.setProperty('--axdx','0px');frameBar.setAttribute('aria-label','Управление кадром');
+  // v0.496: оставшаяся рейка шаблона входит в ту же библиотеку; пары и ползунки переносятся целиком.
+  function mergeTemplateRail(row,railButtons) {
+    const box=railButtons.get('bAutoTpl')?.closest('.gz-group');if(!box)return;
+    const cells=[...box.querySelectorAll('.gz-soty > .gz-hx')],wide=[...box.querySelectorAll('.gz-wide > .gz-hx')],legacy=[...cells],moves=[];
+    const before=row.querySelector('.gz-control:has(#templateLibraryChoices)');
+    for(const [i,node]of [...cells,...wide].entries()){
+      const peers=i<cells.length?cells:wide,slot=peers.indexOf(node),parent=node.parentElement;
+      const from=node.dataset.n?'group:template:data:'+node.dataset.n:'group:template:parent:'+(parent.id||parent.className)+':slot:'+slot;
+      const source=[...railButtons].find(([id,el])=>el===node)?.[0],existing=source?row.querySelector('[data-n="'+source+'"]'):null;
+      const target=existing||node;
+      if(!target.dataset.n)target.dataset.n=source||'template-'+(i<cells.length?'cell:':'wide:')+slot;
+      if(i<cells.length){target.dataset.mayPinGroup='template';target.dataset.mayPinIndex=String(slot);legacy[slot]=target;}
+      moves.push([from,'group:Шаблоны:data:'+target.dataset.n]);
+      if(existing){node.remove();railButtons.set(source,target);}else{row.insertBefore(node,before);node.style.left=node.style.top='';}
+    }
+    manualLegacyCells.set('template',legacy);box.remove();
+    try{
+      const mark='mayatnik-template-rail-merge-v496',keys=['mayatnik-control-mini-v464','mayatnik-dd-grid','mayatnik-dd-order','mayatnik-dd-pins','mayatnik-dd-fold','mayatnik-dd-mini','mayatnik-dd-open','mayatnik-bot','mayatnik-botx','mayatnik-dd-up','grozd:mayatnik','mayatnik-rail-mini'];
+      const raw=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));
+      const read=(k,def)=>{try{const v=JSON.parse(raw[k]);return v&&typeof v===typeof def&&Array.isArray(v)===Array.isArray(def)?v:def;}catch(_){return def;}};
+      const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+      if(!localStorage.getItem(mark+'-before'))localStorage.setItem(mark+'-before',JSON.stringify(raw));
+      const minis=new Set(read(keys[0],[]));for(const [from,to]of moves)if(minis.has(from))minis.add(to);write(keys[0],[...minis]);
+      if(!localStorage.getItem(mark)){
+        const name='Шаблоны',old='gz:template',grid=read('mayatnik-dd-grid',{}),order=read('mayatnik-dd-order',[]),bot=read('mayatnik-bot',[]),bx=read('mayatnik-botx',{});
+        const placed=Object.hasOwn(grid,name)||order.includes(name)||bot.includes(name)||Object.hasOwn(bx,name);
+        for(const [key,data]of [['mayatnik-dd-grid',grid],['mayatnik-botx',bx]]){if(!placed&&Object.hasOwn(data,old)&&!Object.hasOwn(data,name))data[name]=data[old];delete data[old];write(key,data);}
+        for(const key of ['mayatnik-dd-order','mayatnik-bot']){const list=read(key,[]);write(key,[...new Set(list.flatMap(k=>k===old?placed?[]:[name]:[k]))]);}
+        const grozd=read('grozd:mayatnik',{}),pinned=grozd.pin?.includes('template');
+        for(const key of ['mayatnik-dd-pins','mayatnik-dd-fold','mayatnik-dd-mini']){const list=read(key,[]),inherit=key==='mayatnik-dd-pins'?pinned:key==='mayatnik-dd-fold'?pinned&&grozd.shut?.includes('template'):read('mayatnik-rail-mini',[]).includes('Шаблон');write(key,[...new Set([...list.filter(k=>k!==old),...(list.includes(old)||inherit?[name]:[])])]);}
+        if(raw['mayatnik-dd-open']===old||grozd.open==='template'&&!raw['mayatnik-dd-open'])localStorage.setItem('mayatnik-dd-open',name);
+        write('mayatnik-dd-up',read('mayatnik-dd-up',[]).filter(id=>id!=='template'));
+        localStorage.setItem(mark,'1');
+      }
+    }catch(_){}
+  }
   // v0.124: «Дзен» и «?» — столбиком, одна над другой, у правого края шапки.
   // v0.125: столбик «Дзен» / «?» — в той же верхней полосе меню, последним.
   // v0.165: «шаблоны туда же» — список шаблонов (правая панель «Шаблоны») — выпадающей группой в полоске меню, с закрепом.
@@ -685,6 +745,7 @@
     const selected = [...tools.querySelectorAll('.pt-g')].find(g => g.querySelector('.pt-l')?.textContent === 'Шаблон');
     if (selected) { row.prepend(...selected.querySelector('.pt-r').children); selected.remove(); }
     row.parentElement.dataset.k = 'Шаблоны';
+    mergeTemplateRail(row,railSourceButtons);
     railR.style.setProperty('display', 'none', 'important'); }
   // v0.485: библиотека сохраняет своё место. Если сохранён только старый «Шаблон», наследуем его раскладку; исходные ключи остаются в резервной копии.
   try {
