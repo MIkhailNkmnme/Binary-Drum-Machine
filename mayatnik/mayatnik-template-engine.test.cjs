@@ -59,3 +59,19 @@ test('current-row filtering hides absent templates, preserves library IDs and ca
 test('existence scan returns early without allocating a full selection mask',async()=>{
  const found=await M.find({width:3,height:1,data:Int8Array.from([1,1,0])},[M.compile({width:3,height:1,data:[1,1,0]})],{existsOnly:true});assert.equal(found.count,1);assert.equal(found.selected,undefined);
 });
+
+test('Delete removes just the selected field copy; common undo/redo restores it without touching the library',()=>{
+ const c=actualHistory();c.templateLocks=null;c.colourTemplate=c.templateItems[0];c.selectTemplate=t=>{c.colourTemplate=t;};
+ c.templateItems.push({...c.templateItems[0],id:'second'});const library=c.templateLibrary[0],data=c.f.val.slice();
+ vm.runInContext(html.slice(html.indexOf('  function removeSelectedTemplate('),html.indexOf("  $('bTemplateRemove').onclick=")),c);
+ assert.equal(c.removeSelectedTemplate(),true);assert.deepEqual(c.templateItems.map(t=>t.id),['second']);assert.equal(c.colourTemplate,null);assert.equal(c.removeSelectedTemplate(),false);assert.equal(c.templateLibrary[0],library);assert.deepEqual(c.f.val,data);
+ c.historyStep(false);assert.equal(c.templateItems.length,2);assert.equal(c.colourTemplate.id,'copy');c.historyStep(true);assert.equal(c.templateItems.length,1);assert.equal(c.templateLibrary[0].id,'a');
+});
+test('production Delete hotkey respects text editing, composition and active drag',()=>{
+ let handler,deletes=0;const c={addEventListener:(name,fn)=>handler=fn,colourTemplate:{id:'a'},templateDragging:false,axisSelected:0,$:()=>({click:()=>deletes++})};vm.createContext(c);
+ const a=html.lastIndexOf("  addEventListener('keydown', e => {",html.indexOf("// v0.104: Delete")),b=html.indexOf("  cv.addEventListener('pointermove'",a);assert.ok(a>0);vm.runInContext(html.slice(a,b),c);
+ const event=editing=>({key:'Delete',target:{closest:()=>editing},preventDefault(){this.defaultPrevented=true;}});
+ handler(event(false));assert.equal(deletes,1);handler(event(true));assert.equal(deletes,1);handler({...event(false),isComposing:true});assert.equal(deletes,1);
+ c.templateDragging={};handler(event(false));assert.equal(deletes,1);
+ const hit=html.slice(html.indexOf('if(hit){axisSelected=0;'),html.indexOf('      if(part){',html.indexOf('if(hit){axisSelected=0;')));assert.ok(hit.includes('wrap.focus({preventScroll:true})'));assert.ok(hit.includes('selectTemplate(hit.item,false)'));
+});

@@ -47,3 +47,13 @@ body.may-template-panel-open #cellInkBar{left:37.5vw;max-width:calc(75vw - 24px)
 #mayatnikTemplatePanel .mtp-source-controls>[hidden]{display:none!important}
 #mayatnikTemplatePanel button:disabled,#mayatnikTemplatePanel input:disabled{opacity:.45;cursor:default}
 @media(max-width:600px){body{--may-template-panel-width:100vw}body.may-template-panel-open{padding-right:0}#mayatnikTemplatePanel .mtp-card-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#mayatnikTemplatePanel .mtp-card-actions>.mtp-command,#mayatnikTemplatePanel .mtp-more>summary{min-height:28px;height:28px}}
+
+/* Fixed field-corner launcher, outside every movable menu group. */
+#mayTemplateLauncher{position:fixed!important;top:8px!important;right:10px!important;left:auto!important;bottom:auto!important;transform:none!important;translate:none!important;width:36px!important;height:48px!important;padding:0!important;margin:0!important;z-index:2147483640;--c:#d9b9ff}
+body.may-template-panel-open #mayTemplateLauncher{right:calc(var(--may-template-panel-width) + 10px)!important}
+#mayTemplateLauncher>.pt-l{position:relative;display:flex;align-items:center;justify-content:center;width:36px!important;min-width:36px!important;height:48px!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;cursor:pointer;color:var(--c)}
+#mayTemplateLauncher .may-template-diamond{position:absolute;inset:0;width:36px;height:48px;fill:#1b2430;stroke:#6d597f;stroke-width:1px;pointer-events:none}
+#mayTemplateLauncher .may-template-puzzle{width:20px;height:22px;position:relative;fill:none;stroke:currentColor;stroke-width:1.5px;pointer-events:none}
+#mayTemplateLauncher>.pt-l:is(:hover,:focus-visible) .may-template-diamond{stroke:var(--c)}
+#mayTemplateLauncher>.pt-l[aria-pressed=true] .may-template-diamond{stroke:var(--c);stroke-width:2px}
+#mayTemplateLauncher>.pt-l:active .may-template-diamond{stroke:var(--c);stroke-width:3px}

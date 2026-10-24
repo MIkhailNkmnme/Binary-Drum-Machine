@@ -1,4 +1,4 @@
-/* Маятник v0.505 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
+/* Маятник v0.506 (меню полосой — v0.158; нижняя полоса — v0.327): page adapter for the shared ZerkGrozd rail.
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
@@ -845,9 +845,11 @@
   // щелчок по названию раскрывает её кнопки списком под ним (открыт один), щелчок мимо или Esc — закрыть.
   // Пока какой-то список открыт, наведение на соседнее название переключает на него. Точка у названия — в группе что-то включено.
   { tools.classList.add('pt-dd'); let open = null, grid = null; const narrow = matchMedia('(max-width:600px)');   // grid — раскладка по сетке (v0.225)
-    // v0.159: на телефоне «Что это такое?» — в конец полоски меню, чтобы шапка была в одну строку
-    const aboutHome = $('mayAbout').previousElementSibling, aboutPlace = () => { if (narrow.matches) $('mayCorner').append($('mayAbout')); else aboutHome.after($('mayAbout')); };
-    narrow.addEventListener('change', () => { shut(); aboutPlace(); }); aboutPlace();
+    // v0.506: both original actions share one split diamond at every viewport width.
+    const infoDiamond=document.createElement('div');infoDiamond.id='mayInfoDiamond';infoDiamond.dataset.noMini='';$('mayCorner').append(infoDiamond);
+    infoDiamond.append($('mayAbout'),$('mayHelp'));
+    for(const [id,label,title,points] of [['mayAbout','i','Что такое маятник','17,1 17,47 1,24'],['mayHelp','?','Подсказки к кнопкам и координаты','1,1 17,24 1,47']]){const b=$(id);b.className='gz-hx';b.title=title;b.setAttribute('aria-label',title);b.innerHTML='<svg viewBox="0 0 18 48" aria-hidden="true"><polygon points="'+points+'"/></svg><span>'+label+'</span>';}
+    narrow.addEventListener('change', () => shut());
     // v0.163: (getClientRects, а не offsetParent: у fixed-списка на телефоне он null) рамка списка — зубцами по бокам (ряд 24 px, как кнопки), высота — целым числом рядов; рисунок — SVG фоном, тот же контур — clip-path
     // v0.447: the scoped SVG adapter draws the silhouette from real control bounds.
     const zig = r => { r.style.height = ''; r.style.clipPath = 'none'; r.style.backgroundImage = 'none'; };
@@ -901,6 +903,10 @@
         for(const b of row.querySelectorAll('.gz-pair'))if(/Отм/.test(b.textContent)&&/Повт/.test(b.textContent))b.remove();
         row.querySelector('#templateLibraryChoices')?.closest('.gz-control')?.style.setProperty('display','none','important');
         window.MayatnikTemplatePanel.attachControls(row);
+        g.id='mayTemplateLauncher';g.setAttribute('data-no-mini','');document.body.append(g);
+        l.className='pt-l';l.title='Шаблоны';l.setAttribute('aria-label','Шаблоны');
+        l.innerHTML='<svg class="may-template-diamond" viewBox="0 0 36 48" aria-hidden="true"><path d="M18 1L35 24 18 47 1 24Z"/></svg><svg class="may-template-puzzle" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5V4a3 3 0 0 1 6 0v1h5v5h-1a3 3 0 0 0 0 6h1v5h-5v-1a3 3 0 0 0-6 0v1H4v-5H3a3 3 0 0 1 0-6h1Z"/></svg>';
+
         const sync=()=>{const on=String(window.MayatnikTemplatePanel.isOpen());l.setAttribute('aria-expanded',on);l.setAttribute('aria-pressed',on);};
         l.onclick=()=>{window.MayatnikTemplatePanel.toggle();sync();};
         l.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click();}};
@@ -1112,11 +1118,7 @@
         const sync = () => { const on = minis.has(k); g.classList.toggle('pt-mini', on); l.title = g.classList.contains('pt-btn') ? 'Правка: ↶ отмена · ↷ повтор · стоит по середине шапки · правый щелчок — ' + (on ? 'развернуть' : 'свернуть в ромб') : on ?k + ' · правый щелчок — развернуть · тянуть — переставить' : 'Щелчок — открыть · тянуть — поставить в любое место шапки (по сетке) · правый щелчок — свернуть в ромб · двойной щелчок по пустому месту шапки — раскладка по умолчанию'; };
         sync(); l.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
           try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.touch(k); for (const o of groupsAll()) if (o.classList.contains('pt-open')) place(o); requestAnimationFrame(alignOpen); }); }
-      // v0.227: «это тоже в ромб сворачивать» — «Что это такое?» правым щелчком — ромб «ℹ», ещё раз — обратно (та же память, ключ — надпись кнопки)
-      { const a = $('mayAbout'), k = 'Что это такое?', ic = document.createElement('span'); ic.className = 'pt-ico'; ic.textContent = 'ℹ︎'; a.append(ic); a.setAttribute('aria-label', k);
-        const sync = () => { const on = minis.has(k); a.classList.toggle('pt-mini', on); a.title = on ? k + ' · правый щелчок — развернуть' : 'Что такое маятник · правый щелчок — свернуть в ромб'; };
-        sync(); a.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (minis.has(k)) minis.delete(k); else minis.add(k);
-          try { localStorage.setItem(MINI, JSON.stringify([...minis])); } catch (_) {} sync(); grid?.relayout(); requestAnimationFrame(alignOpen); }); } }
+    }
     grid.relayout();   // v0.225: ромбы v0.209 уже свёрнуты — ширины верные
     narrow.addEventListener('change', pinsSync); requestAnimationFrame(() => {
       pinsSync();
