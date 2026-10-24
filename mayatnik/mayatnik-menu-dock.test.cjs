@@ -37,12 +37,12 @@ test('Escape and pointercancel restore last slot without changing storage',()=>{
 test('resize relocates right slots while preserving stored preference and mobile disables fixed docking',()=>{
  const f=fixture({'mayatnik-menu-dock-v509':JSON.stringify({g0:{edge:'right',index:2}})});f.resize(800);assert.equal(f.gs[0].style['--may-dock-x'],'676px');f.resize(500);assert.equal(f.gs[0].classList.contains('may-docked'),false);f.resize(1000);assert.equal(f.gs[0].style['--may-dock-x'],'876px');
 });
-test('centre hover hits the point only, not every axis inside radius 50',()=>{
+test('centre hover hits the point only, not every axis inside radius 20',()=>{
  assert.deepEqual(H.nearest([[100,100],[200,200]],106,100),[100,100]);assert.equal(H.nearest([[100,100]],109,100),null);
 });
-test('only incident axes highlight; radius stays 50 in screen space at different zooms',()=>{
- for(const scale of [.25,1,8]){const lines=[{a:[-1000*scale,0],b:[1000*scale,0]},{a:[0,-1000*scale],b:[0,1000*scale]},{a:[2,2],b:[30,2]}],out=H.incident(lines,[0,0]);assert.equal(out.length,2);for(const l of out)for(const p of [l.a,l.b])assert.ok(Math.abs(Math.hypot(...p)-50)<1e-8);}
- const diagonal=H.incident([{a:[-100,-100],b:[100,100]}],[0,0])[0];assert.ok(Math.abs(Math.hypot(...diagonal.b)-50)<1e-8);
+test('only incident axes highlight; radius stays 20 in screen space at different zooms',()=>{
+ for(const scale of [.25,1,8]){const lines=[{a:[-1000*scale,0],b:[1000*scale,0]},{a:[0,-1000*scale],b:[0,1000*scale]},{a:[2,2],b:[30,2]}],out=H.incident(lines,[0,0]);assert.equal(out.length,2);for(const l of out)for(const p of [l.a,l.b])assert.ok(Math.abs(Math.hypot(...p)-20)<1e-8);}
+ const diagonal=H.incident([{a:[-100,-100],b:[100,100]}],[0,0])[0];assert.ok(Math.abs(Math.hypot(...diagonal.b)-20)<1e-8);
 });
 test('actual three-choice geometry implements /Xr/, backslash-Xr-slash, and two backslashes',()=>{
  const src=fs.readFileSync(require.resolve('./mayatnik-button-standard.js'),'utf8'),code=src.slice(src.indexOf('  function choiceShape('),src.indexOf('  function parts(')),ctx={};vm.runInNewContext(code,ctx);

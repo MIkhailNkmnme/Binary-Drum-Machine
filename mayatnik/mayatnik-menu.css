@@ -941,3 +941,7 @@ body.mayatnik-menu-ready>.gz-ladder.may-popup-portal{position:fixed!important;z-
 #paintTools .gz-pair.gz-cpair .gz-half.gz-h0{justify-content:flex-start!important;padding:0 0 0 17px!important}
 #paintTools .gz-pair.gz-cpair .gz-half.gz-h1{justify-content:flex-end!important;padding:0 17px 0 0!important}
 #paintTools .gz-pair.gz-tri .gz-half.gz-on::before{inset:auto!important;left:50%!important;top:50%!important;width:22px!important;height:18px!important;margin:-9px 0 0 -11px!important;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;background:var(--c)!important}
+
+/* v0.510: centre hover is a hand; an actual captured centre drag is a grip. */
+#wrap.may-center-hover,#wrap.may-center-hover canvas{cursor:grab!important}
+#wrap.may-center-drag,#wrap.may-center-drag canvas{cursor:grabbing!important}
